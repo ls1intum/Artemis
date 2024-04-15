@@ -8,7 +8,7 @@
             }
             <button type="button" class="btn-close" (click)="close()"></button>
         </div>
-        <!-- do not allow these actions when creating a new knowledge area -->
+        <!-- do not allow these actions when creating a new knowledge area because it is not saved yet -->
         @if (knowledgeArea.id) {
             <div class="mb-1">
                 <jhi-button [icon]="faPlus" [btnSize]="ButtonSize.SMALL" title="artemisApp.knowledgeArea.details.createCompetencyButton" (onClick)="openNewCompetency()" />
