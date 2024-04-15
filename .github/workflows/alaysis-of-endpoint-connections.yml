@@ -9,6 +9,23 @@ on:
       - 'LICENSE'
       - 'SECURITY.md'
       - 'docs/**'
-      - '.github/**'
+#      - '.github/**'
       - '!.github/workflows/build.yml'
       - '!.github/workflows/testserver.yml'
+
+jobs:
+  show-modified-files:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Get list of modified files
+        id: files
+        run: |
+          echo "::set-output name=modified::$(git diff --name-only ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }})"
+
+      - name: Display modified files
+        run: |
+          echo "Modified files in this pull request:"
+          echo "${{ steps.files.outputs.modified }}"
