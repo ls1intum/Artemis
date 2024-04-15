@@ -127,7 +127,6 @@ export class CodeEditorMonacoComponent implements OnChanges {
             this.newFeedbackLines = [];
             this.renderFeedbackWidgets();
             if (this.isTutorAssessment && !this.readOnlyManualFeedback) {
-                this.editor.setFoldingEnabled(false);
                 this.setupAddFeedbackButton();
             }
             this.onFileLoad.emit(this.selectedFile);
