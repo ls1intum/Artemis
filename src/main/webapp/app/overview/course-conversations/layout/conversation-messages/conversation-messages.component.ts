@@ -161,7 +161,6 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             this.metisConversationService.conversationsOfUser$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversations: ConversationDTO[]) => {
                 this.currentPostContextFilter!.courseWideChannelIds = conversations.map((conversation) => conversation!.id!);
                 this.currentPostContextFilter!.sortingOrder = SortDirection.ASCENDING;
-                console.log(conversations);
             });
         } else {
             this.currentPostContextFilter.conversationId = this._activeConversation?.id;
