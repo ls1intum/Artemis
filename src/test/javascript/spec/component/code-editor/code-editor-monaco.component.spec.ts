@@ -17,7 +17,6 @@ import { SimpleChange } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { CodeEditorHeaderComponent } from 'app/exercises/programming/shared/code-editor/header/code-editor-header.component';
 import { CommitState, CreateFileChange, DeleteFileChange, EditorState, FileType, RenameFileChange } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
-import { expect } from '@jest/globals';
 import { Feedback } from 'app/entities/feedback.model';
 
 describe('CodeEditorMonacoComponent', () => {
