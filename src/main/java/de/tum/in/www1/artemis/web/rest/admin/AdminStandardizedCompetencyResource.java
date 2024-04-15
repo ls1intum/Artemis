@@ -150,6 +150,12 @@ public class AdminStandardizedCompetencyResource {
         return ResponseEntity.ok().build();
     }
 
+    /**
+     * PUT api/admin/standardized-competencies/import : Imports standardized competencies, knowledge areas and sources
+     *
+     * @param knowledgeAreasForImportDTO the DTO containing knowledge areas (and their competencies) and sources
+     * @return the ResponseEntity with status 200 (OK)
+     */
     @PutMapping("standardized-competencies/import")
     @EnforceAdmin
     public ResponseEntity<Void> importStandardizedCompetencies(@RequestBody @Valid KnowledgeAreasForImportDTO knowledgeAreasForImportDTO) {

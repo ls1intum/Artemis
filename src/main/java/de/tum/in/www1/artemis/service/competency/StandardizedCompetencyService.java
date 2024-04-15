@@ -146,6 +146,11 @@ public class StandardizedCompetencyService {
         return knowledgeAreasForTreeView;
     }
 
+    /**
+     * Imports the knowledge areas, standardized competencies and sources given in the DTO into Artemis
+     *
+     * @param knowledgeAreasForImportDTO the DTO containing the data to import
+     */
     public void adminImportStandardizedCompetencies(KnowledgeAreasForImportDTO knowledgeAreasForImportDTO) {
         List<KnowledgeAreaForImportDTO> topLevelKnowledgeAreas = knowledgeAreasForImportDTO.knowledgeAreas() != null ? knowledgeAreasForImportDTO.knowledgeAreas()
                 : Collections.emptyList();
@@ -169,6 +174,13 @@ public class StandardizedCompetencyService {
         }
     }
 
+    /**
+     * Recursively verifies that all competencies in the given knowledge area and its descendants have a sourceId that is contained in the given sourceId list (or don't have a
+     * source)
+     *
+     * @param knowledgeArea the knowledge area to check
+     * @param sourceIds     the list of valid source ids
+     */
     private void verifySourcesForSelfAndDescendants(KnowledgeAreaForImportDTO knowledgeArea, List<Long> sourceIds) {
         List<KnowledgeAreaForImportDTO> children = knowledgeArea.children() != null ? knowledgeArea.children() : Collections.emptyList();
         List<StandardizedCompetencyForImportDTO> competencies = knowledgeArea.competencies() != null ? knowledgeArea.competencies() : Collections.emptyList();
@@ -184,6 +196,13 @@ public class StandardizedCompetencyService {
         }
     }
 
+    /**
+     * Recursively imports a knowledge area, its competencies and its children into Artemis
+     *
+     * @param knowledgeArea the knowledge area to import
+     * @param parent        the parent of the knowledge area or null (needed to set the parent attribute)
+     * @param sourceMap     the map of sourceId to source object
+     */
     private void importSelfAndDescendants(KnowledgeAreaForImportDTO knowledgeArea, KnowledgeArea parent, Map<Long, Source> sourceMap) {
         // import self without competencies and children
         var knowledgeAreaToImport = new KnowledgeArea(knowledgeArea.title(), knowledgeArea.shortTitle(), knowledgeArea.description());
