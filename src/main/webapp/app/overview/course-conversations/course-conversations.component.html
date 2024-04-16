@@ -4,12 +4,12 @@
         <input
             name="searchText"
             id="search"
-            [(ngModel)]="searchText"
+            [(ngModel)]="searchInput"
             class="form-control"
             (keyup.enter)="onSearch()"
             placeholder="{{ 'artemisApp.metis.discussionSection.searchBarDefault' | artemisTranslate }}"
         />
-        <jhi-button [btnType]="ButtonType.SECONDARY" [icon]="faTimes" (onClick)="searchText = ''" />
+        <jhi-button [btnType]="ButtonType.SECONDARY" [icon]="faTimes" (onClick)="searchInput = ''" />
         <jhi-button id="search-submit" class="ms-1" [icon]="faSearch" (onClick)="onSearch()" />
         <jhi-documentation-button [type]="documentationType" class="information-button" />
     </div>
@@ -34,8 +34,8 @@
             }
             <div class="col pe-0 flex-grow-1" [ngClass]="{ 'card-border': activeConversation }" style="min-width: 200px">
                 @if (activeConversation) {
-                    <jhi-conversation-header />
-                    <jhi-conversation-messages (openThread)="postInThread = $event" [course]="course" [courseWideSearchInput]="this.searchText ?? ''" />
+                    <jhi-conversation-header [searchTerm]="headerSearchTerm" />
+                    <jhi-conversation-messages (openThread)="postInThread = $event" [course]="course" [courseWideSearchTerm]="searchInput ?? ''" />
                 }
             </div>
             @if (activeConversation) {

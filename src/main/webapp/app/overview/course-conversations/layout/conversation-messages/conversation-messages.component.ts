@@ -42,7 +42,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     @Output() openThread = new EventEmitter<Post>();
 
     @Input()
-    courseWideSearchInput: string;
+    courseWideSearchTerm: string;
 
     @ViewChild('searchInput')
     searchInput: ElementRef;
@@ -131,7 +131,9 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         this.updateIsAllMessagesPage();
         if (this.course && this._activeConversation) {
             if (this.searchInput) {
-                this.searchInput.nativeElement.value = this.searchText = this.isAllMessagesPage ? this.courseWideSearchInput : '';
+                console.log('courseWideSearchTerm: ' + this.courseWideSearchTerm);
+                this.searchInput.nativeElement.value = this.searchText = this.isAllMessagesPage ? this.courseWideSearchTerm : '';
+                console.log('search text in messages page: ' + this.searchText);
             }
             this.onSearch();
             this.createEmptyPost();
@@ -160,7 +162,6 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         if (this.isAllMessagesPage) {
             this.metisConversationService.conversationsOfUser$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversations: ConversationDTO[]) => {
                 this.currentPostContextFilter!.courseWideChannelIds = conversations.map((conversation) => conversation!.id!);
-                this.currentPostContextFilter!.sortingOrder = SortDirection.ASCENDING;
             });
         } else {
             this.currentPostContextFilter.conversationId = this._activeConversation?.id;

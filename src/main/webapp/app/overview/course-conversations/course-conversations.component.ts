@@ -34,7 +34,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
     readonly documentationType: DocumentationType = 'Communications';
     readonly ButtonType = ButtonType;
-    searchText?: string;
+    searchInput?: string;
+    headerSearchTerm?: string;
     // Icons
     faPlus = faPlus;
     faTimes = faTimes;
@@ -151,6 +152,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     onSearch() {
+        this.headerSearchTerm = this.searchInput;
         const index = this.conversationsOfUser.findIndex((channel) => getAsChannelDTO(channel)?.name == 'all-messages');
         this.metisConversationService.setActiveConversation(this.conversationsOfUser[index]);
     }

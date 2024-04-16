@@ -1,7 +1,7 @@
 @if (course) {
     <div class="row p-3 justify-content-center conversation-messages">
         <div class="justify-content-center">
-            <div class="row justify-content-center p-0">
+            <div class="row justify-content-center p-0" [hidden]="isAllMessagesPage">
                 <!-- search bar -->
                 <div class="input-group ps-0" [class.search-active]="!!searchText">
                     <span class="input-group-text">
