@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.exception.ApiVersionRangeNotValidException;
  */
 public class VersionRangesRequestCondition implements RequestCondition<VersionRangesRequestCondition> {
 
-    // Expect optional leading slash, "api/", optional numerical version with a "v" prefix and some path afterwards
+    // Expect optional leading slash, "api/", optional numerical version with a "v" prefix and some path afterward
     private static final Pattern PATH_PATTERN = Pattern.compile("^/?api(?:/v(\\d+))?/.+$");
 
     private static final Logger log = LoggerFactory.getLogger(VersionRangesRequestCondition.class);
@@ -33,7 +33,7 @@ public class VersionRangesRequestCondition implements RequestCondition<VersionRa
     private final List<Integer> apiVersions;
 
     // Comparison codes that specify whether two ranges collide or not
-    private final Set<VersionRangeComparisonType> inRangeCodes = Set.of(A_INCLUDES_B, B_INCLUDES_A, EQUALS);
+    private final Set<VersionRangeComparisonType> inRangeCodes = Set.of(A_CUT_B, B_CUT_A, A_INCLUDES_B, B_INCLUDES_A, EQUALS);
 
     public VersionRangesRequestCondition(@NotNull List<Integer> apiVersions, @NotNull VersionRange... ranges) {
         this(apiVersions, Arrays.asList(ranges));
@@ -47,7 +47,7 @@ public class VersionRangesRequestCondition implements RequestCondition<VersionRa
     public VersionRangesRequestCondition(@NotNull List<Integer> apiVersions, @NotNull Collection<VersionRange> ranges) {
         this.apiVersions = apiVersions;
         var distinct = ranges.stream().distinct().toList();
-        if (distinct.size() != 1 || distinct.get(0) != null) {
+        if (distinct.size() != 1 || distinct.getFirst() != null) {
             checkRangesValidity(distinct);
             this.ranges = Set.copyOf(distinct);
         }
@@ -114,6 +114,7 @@ public class VersionRangesRequestCondition implements RequestCondition<VersionRa
                 ranges.add(range);
             }
             else {
+                // Fallback. Exception would've been already thrown earlier in the constructor
                 throw new ApiVersionRangeNotValidException();
             }
         });
@@ -147,7 +148,7 @@ public class VersionRangesRequestCondition implements RequestCondition<VersionRa
             limitStart = limit.value()[0];
             // Select ranges outside the limit
             while (!rangePool.isEmpty()) {
-                var range = rangePool.remove(0);
+                var range = rangePool.removeFirst();
                 if (range.value()[0] >= limitStart) {
                     // Already part of limit
                     continue;
@@ -187,7 +188,7 @@ public class VersionRangesRequestCondition implements RequestCondition<VersionRa
         // As long as there are ranges in the pool, pop the first one and check against all other ranges
         // If there is an overlap, remove the second range, combine the two ranges, and add the new range to the pool
         while (!rangePool.isEmpty()) {
-            var selectedRange = rangePool.remove(0);
+            var selectedRange = rangePool.removeFirst();
             boolean combined = false;
             for (VersionRange range : rangePool) {
                 boolean canCombine = switch (VersionRangeComparator.compare(selectedRange, range)) {

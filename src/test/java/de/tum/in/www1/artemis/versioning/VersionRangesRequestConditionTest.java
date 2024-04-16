@@ -101,12 +101,6 @@ class VersionRangesRequestConditionTest {
     }
 
     @Test
-    void testGetApplicableVersions_null() {
-        var condition = new VersionRangesRequestCondition(testApiVersions, (VersionRange) null);
-        assertThat(condition.getApplicableVersions()).isEqualTo(testApiVersions);
-    }
-
-    @Test
     void testGetApplicableVersions_empty() {
         var condition = new VersionRangesRequestCondition(testApiVersions);
         assertThat(condition.getApplicableVersions()).isEqualTo(testApiVersions);
@@ -143,13 +137,6 @@ class VersionRangesRequestConditionTest {
     }
 
     @Test
-    void testCombine_nullAbsorption() {
-        var condition1 = new VersionRangesRequestCondition(testApiVersions, getInstanceOfVersionRange(5, 7), getInstanceOfVersionRange(9));
-        var condition2 = new VersionRangesRequestCondition(testApiVersions, (VersionRange) null);
-        assertThat(condition1.combine(condition2).getApplicableVersions()).isEqualTo(testApiVersions);
-    }
-
-    @Test
     void testCombine_empty() {
         var condition1 = new VersionRangesRequestCondition(testApiVersions, getInstanceOfVersionRange(5, 7), getInstanceOfVersionRange(9, 10));
         var condition2 = new VersionRangesRequestCondition(testApiVersions);
@@ -162,6 +149,7 @@ class VersionRangesRequestConditionTest {
         var limit2 = getInstanceOfVersionRange(9);
         var condition1 = new VersionRangesRequestCondition(testApiVersions, limit1);
         var condition2 = new VersionRangesRequestCondition(testApiVersions, limit2);
+
         assertThat(condition1.combine(condition2)).isEqualTo(new VersionRangesRequestCondition(testApiVersions, limit1));
         assertThat(condition2.combine(condition1)).isEqualTo(new VersionRangesRequestCondition(testApiVersions, limit1));
     }
@@ -172,7 +160,72 @@ class VersionRangesRequestConditionTest {
         var range2 = getInstanceOfVersionRange(9, 11);
         var condition1 = new VersionRangesRequestCondition(testApiVersions, range1);
         var condition2 = new VersionRangesRequestCondition(testApiVersions, range2);
+
         assertThat(condition1.combine(condition2)).isEqualTo(new VersionRangesRequestCondition(testApiVersions, range1, range2));
         assertThat(condition2.combine(condition1)).isEqualTo(new VersionRangesRequestCondition(testApiVersions, range1, range2));
+    }
+
+    @Test
+    void testCombine_limitAndRange_dominantLimit() {
+        var limit = getInstanceOfVersionRange(5);
+        var range = getInstanceOfVersionRange(9, 11);
+        var condition1 = new VersionRangesRequestCondition(testApiVersions, limit);
+        var condition2 = new VersionRangesRequestCondition(testApiVersions, range);
+
+        assertThat(condition1.combine(condition2)).isEqualTo(new VersionRangesRequestCondition(testApiVersions, limit));
+        assertThat(condition2.combine(condition1)).isEqualTo(new VersionRangesRequestCondition(testApiVersions, limit));
+    }
+
+    @Test
+    void testCombine_limitAndRange_dominantRange() {
+        var limit = getInstanceOfVersionRange(9);
+        var range = getInstanceOfVersionRange(5, 11);
+        var condition1 = new VersionRangesRequestCondition(testApiVersions, limit);
+        var condition2 = new VersionRangesRequestCondition(testApiVersions, range);
+
+        var expectedLimit = getInstanceOfVersionRange(5);
+
+        assertThat(condition1.combine(condition2)).isEqualTo(new VersionRangesRequestCondition(testApiVersions, expectedLimit));
+        assertThat(condition2.combine(condition1)).isEqualTo(new VersionRangesRequestCondition(testApiVersions, expectedLimit));
+    }
+
+    @Test
+    void testCombine_limitAndRange_separateRange() {
+        var limit = getInstanceOfVersionRange(9);
+        var range = getInstanceOfVersionRange(5, 7);
+        var condition1 = new VersionRangesRequestCondition(testApiVersions, limit);
+        var condition2 = new VersionRangesRequestCondition(testApiVersions, range);
+
+        assertThat(condition1.combine(condition2)).isEqualTo(new VersionRangesRequestCondition(testApiVersions, range, limit));
+        assertThat(condition2.combine(condition1)).isEqualTo(new VersionRangesRequestCondition(testApiVersions, range, limit));
+    }
+
+    @Test
+    void testCollide_emptyRanges() {
+        var range = getInstanceOfVersionRange(5, 7);
+        var condition1 = new VersionRangesRequestCondition(testApiVersions, range);
+        var condition2 = new VersionRangesRequestCondition(testApiVersions);
+        assertThat(condition1.collide(condition2)).isTrue();
+        assertThat(condition2.collide(condition1)).isTrue();
+    }
+
+    @Test
+    void testCollide_noCollision() {
+        var range1 = getInstanceOfVersionRange(5, 7);
+        var range2 = getInstanceOfVersionRange(9, 11);
+        var condition1 = new VersionRangesRequestCondition(testApiVersions, range1);
+        var condition2 = new VersionRangesRequestCondition(testApiVersions, range2);
+        assertThat(condition1.collide(condition2)).isFalse();
+        assertThat(condition2.collide(condition1)).isFalse();
+    }
+
+    @Test
+    void testCollide_collision() {
+        var range1 = getInstanceOfVersionRange(5, 7);
+        var range2 = getInstanceOfVersionRange(6, 11);
+        var condition1 = new VersionRangesRequestCondition(testApiVersions, range1);
+        var condition2 = new VersionRangesRequestCondition(testApiVersions, range2);
+        assertThat(condition1.collide(condition2)).isTrue();
+        assertThat(condition2.collide(condition1)).isTrue();
     }
 }

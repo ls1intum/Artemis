@@ -62,9 +62,13 @@ public class VersionRangeComparator {
             // Range starts end ends before the limit
             return FIRST_B_NO_INTERSECT;
         }
+        else if (range.get(1) < limitVersion) {
+            // Range touches the limit
+            return B_THEN_A;
+        }
         else {
             // Range starts before the limit does, but intersects
-            return B_THEN_A;
+            return B_CUT_A;
         }
     }
 
@@ -98,8 +102,11 @@ public class VersionRangeComparator {
             if (range1.get(1) + 1 < range2.getFirst()) {
                 return FIRST_A_NO_INTERSECT;
             }
-            else {
+            else if (range1.get(1) < range2.getFirst()) {
                 return A_THEN_B;
+            }
+            else {
+                return A_CUT_B;
             }
         }
         else {
@@ -109,8 +116,11 @@ public class VersionRangeComparator {
             if (range2.get(1) + 1 < range1.getFirst()) {
                 return FIRST_B_NO_INTERSECT;
             }
-            else {
+            else if (range2.get(1) < range1.getFirst()) {
                 return B_THEN_A;
+            }
+            else {
+                return B_CUT_A;
             }
         }
     }

@@ -62,22 +62,30 @@ class VersioningComparatorTest {
 
     @Test
     void testCompare_shiftSecondRangeStartsFirst() {
-        assertThat(VersionRangeComparator.compare(range2_6, range1_5)).isEqualTo(B_THEN_A);
-        assertThat(VersionRangeComparator.compare(range5_9, range1_5)).isEqualTo(B_THEN_A);
-        assertThat(VersionRangeComparator.compare(range6_10, range1_5)).isEqualTo(B_THEN_A);
-        assertThat(VersionRangeComparator.compare(limit5, range2_6)).isEqualTo(B_THEN_A);
-        assertThat(VersionRangeComparator.compare(limit6, range2_6)).isEqualTo(B_THEN_A);
-        assertThat(VersionRangeComparator.compare(limit6, range1_5)).isEqualTo(B_THEN_A);
+        assertThat(VersionRangeComparator.compare(range2_6, range1_5)).isEqualTo(B_CUT_A);
+        assertThat(VersionRangeComparator.compare(range5_9, range1_5)).isEqualTo(B_CUT_A);
+        assertThat(VersionRangeComparator.compare(limit5, range2_6)).isEqualTo(B_CUT_A);
+        assertThat(VersionRangeComparator.compare(limit6, range2_6)).isEqualTo(B_CUT_A);
     }
 
     @Test
     void testCompare_shiftFirstRangeStartsFirst() {
-        assertThat(VersionRangeComparator.compare(range1_5, range2_6)).isEqualTo(A_THEN_B);
-        assertThat(VersionRangeComparator.compare(range1_5, range5_9)).isEqualTo(A_THEN_B);
+        assertThat(VersionRangeComparator.compare(range1_5, range2_6)).isEqualTo(A_CUT_B);
+        assertThat(VersionRangeComparator.compare(range1_5, range5_9)).isEqualTo(A_CUT_B);
+        assertThat(VersionRangeComparator.compare(range2_6, limit5)).isEqualTo(A_CUT_B);
+        assertThat(VersionRangeComparator.compare(range2_6, limit6)).isEqualTo(A_CUT_B);
+    }
+
+    @Test
+    void testCompare_RangesFollowEachOther() {
         assertThat(VersionRangeComparator.compare(range1_5, range6_10)).isEqualTo(A_THEN_B);
-        assertThat(VersionRangeComparator.compare(range2_6, limit5)).isEqualTo(A_THEN_B);
-        assertThat(VersionRangeComparator.compare(range2_6, limit6)).isEqualTo(A_THEN_B);
+        assertThat(VersionRangeComparator.compare(range6_10, range1_5)).isEqualTo(B_THEN_A);
+    }
+
+    @Test
+    void testCompare_LimitFollowsRange() {
         assertThat(VersionRangeComparator.compare(range1_5, limit6)).isEqualTo(A_THEN_B);
+        assertThat(VersionRangeComparator.compare(limit6, range1_5)).isEqualTo(B_THEN_A);
     }
 
     @Test
