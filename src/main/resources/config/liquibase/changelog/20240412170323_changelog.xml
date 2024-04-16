@@ -11,10 +11,10 @@
             <column name="result_id" type="bigint"/>
         </addColumn>
         <createIndex tableName="build_job" indexName="idx_build_job_build_job_id" unique="true">
-            <column name="build_job_id"></column>
+            <column name="build_job_id"/>
         </createIndex>
         <createIndex tableName="build_job" indexName="idx_build_job_result_id" unique="false">
-            <column name="result_id"></column>
+            <column name="result_id"/>
         </createIndex>
     </changeSet>
 </databaseChangeLog>
