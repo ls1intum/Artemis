@@ -53,7 +53,7 @@ You can also see the commit message, the author of the commit, the date of the c
 
 As an instructor, you can use the repository to view the submissions of your students. For this purpose, you need to navigate to the exercise participations page.
 Here you can see all the students participations for the exercise and navigate to the repository of the student by pressing the '*Open Repository*' button.
-This will show you the repository of the student just like it is shown to the student.
+This will show the repository of the student just like it is shown to the student.
 
 .. figure:: programming/participations-open-repository.png
    :alt: Open Repository Button in Participations Page
