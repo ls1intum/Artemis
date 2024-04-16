@@ -2,7 +2,6 @@
     "type": "multiple-choice",
     "randomizeOrder": false,
     "invalid": false,
-    "exportQuiz": false,
     "title": "<Some title>",
     "text": "A longer more detailed question",
     "hint": "A general hint",

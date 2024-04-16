@@ -95,7 +95,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     // This is used to revert the select if the user cancels to override the new selected programming language.
     private selectedProgrammingLanguageValue: ProgrammingLanguage;
     // This is used to revert the select if the user cancels to override the new selected project type.
-    private selectedProjectTypeValue: ProjectType;
+    private selectedProjectTypeValue?: ProjectType;
     maxPenaltyPattern = '^([0-9]|([1-9][0-9])|100)$';
     // Java package name Regex according to Java 14 JLS (https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1),
     // with the restriction to a-z,A-Z,_ as "Java letter" and 0-9 as digits due to JavaScript/Browser Unicode character class limitations
@@ -150,11 +150,11 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     };
     public originalStaticCodeAnalysisEnabled: boolean | undefined;
 
-    public projectTypes: ProjectType[] = [];
+    public projectTypes?: ProjectType[] = [];
     // flag describing if the template and solution projects should include a dependency
     public withDependenciesValue = false;
 
-    public modePickerOptions: ModePickerOption<ProjectType>[] = [];
+    public modePickerOptions?: ModePickerOption<ProjectType>[] = [];
 
     // Icons
     faQuestionCircle = faQuestionCircle;
@@ -251,8 +251,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.testwiseCoverageAnalysisSupported = programmingLanguageFeature.testwiseCoverageAnalysisSupported;
         this.auxiliaryRepositoriesSupported = programmingLanguageFeature.auxiliaryRepositoriesSupported;
         // filter out MAVEN_MAVEN and GRADLE_GRADLE because they are not directly selectable but only via a checkbox
-        this.projectTypes = programmingLanguageFeature.projectTypes.filter((projectType) => projectType !== ProjectType.MAVEN_MAVEN && projectType !== ProjectType.GRADLE_GRADLE);
-        this.modePickerOptions = this.projectTypes.map((projectType) => ({
+        this.projectTypes = programmingLanguageFeature.projectTypes?.filter((projectType) => projectType !== ProjectType.MAVEN_MAVEN && projectType !== ProjectType.GRADLE_GRADLE);
+        this.modePickerOptions = this.projectTypes?.map((projectType) => ({
             value: projectType,
             labelKey: 'artemisApp.programmingExercise.projectTypes.' + projectType.toString(),
             btnClass: 'btn-secondary',
@@ -260,8 +260,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
         if (languageChanged) {
             // Reset project type when changing programming language as not all programming languages support (the same) project types
-            this.programmingExercise.projectType = this.projectTypes[0];
-            this.selectedProjectTypeValue = this.projectTypes[0]!;
+            this.programmingExercise.projectType = this.projectTypes?.[0];
+            this.selectedProjectTypeValue = this.projectTypes?.[0];
             this.withDependenciesValue = false;
             this.buildPlanLoaded = false;
             this.programmingExercise.windFile = undefined;
@@ -274,8 +274,14 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             this.programmingExercise.maxStaticCodeAnalysisPenalty = undefined;
         }
 
-        // Automatically enable the checkout of the solution repository for Haskell exercises
-        this.programmingExercise.checkoutSolutionRepository = this.checkoutSolutionRepositoryAllowed && language === ProgrammingLanguage.HASKELL;
+        if (language == ProgrammingLanguage.HASKELL || language == ProgrammingLanguage.OCAML) {
+            // Instructors typically test against the example solution for Haskell and OCAML exercises.
+            // If supported by the current CI configuration, this line activates the option per default.
+            this.programmingExercise.checkoutSolutionRepository = this.checkoutSolutionRepositoryAllowed;
+        }
+        if (!this.checkoutSolutionRepositoryAllowed) {
+            this.programmingExercise.checkoutSolutionRepository = false;
+        }
 
         // Only load problem statement template when creating a new exercise and not when importing an existing exercise
         if (this.programmingExercise.id === undefined && !this.isImportFromFile) {
@@ -306,7 +312,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         }
     }
 
-    get selectedProjectType() {
+    get selectedProjectType(): ProjectType | undefined {
         return this.selectedProjectTypeValue;
     }
 
