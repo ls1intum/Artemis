@@ -129,7 +129,7 @@
                                         [jhiFeatureToggleHide]="hiddenItem.featureToggle"
                                         [title]="hiddenItem.title"
                                     >
-                                        <ng-template *ngTemplateOutlet="navIconAndText; context: { $implicit: hiddenItem }" />
+                                        <ng-template *ngTemplateOutlet="navIconAndTextHidden; context: { $implicit: hiddenItem }" />
                                     </a>
                                 } @else {
                                     <a
@@ -145,7 +145,7 @@
                                         [jhiFeatureToggleHide]="hiddenItem.featureToggle"
                                         [title]="hiddenItem.title"
                                     >
-                                        <ng-template *ngTemplateOutlet="navIconAndText; context: { $implicit: hiddenItem }" />
+                                        <ng-template *ngTemplateOutlet="navIconAndTextHidden; context: { $implicit: hiddenItem }" />
                                     </a>
                                 }
                             </li>
@@ -202,5 +202,12 @@
     }
     @if (!isNavbarCollapsed) {
         <span class="auto-collapse" [jhiTranslate]="sidebarItem.translation"></span>
+    }
+</ng-template>
+
+<ng-template #navIconAndTextHidden let-sidebarItem>
+    @if (sidebarItem.icon) {
+        <fa-icon [fixedWidth]="true" [icon]="sidebarItem.icon" class="ms-2 me-3" />
+        <span [jhiTranslate]="sidebarItem.translation"></span>
     }
 </ng-template>
