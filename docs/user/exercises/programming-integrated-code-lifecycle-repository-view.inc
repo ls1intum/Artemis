@@ -9,10 +9,10 @@ As a student, you can use the repository to view your course submissions.
 To access your submissions, you need to navigate to the exercise and press the '*Open Repository*' button.
 
 .. figure:: programming/open-repository-button.png
-   :alt: Online Repository Button
+   :alt: Open Repository Button
    :align: center
 
-   Online Repository Button
+   Open Repository Button
 
 After pressing the button, you will be redirected to the **Latest Commit** page of the repository.
 This view shows the latest commit in a read-only code editor. You can view the code, but you cannot edit it.
