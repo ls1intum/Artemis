@@ -27,7 +27,7 @@ the '*Clone Repository*' button and see the full commit history by pressing the 
    Latest Commit View
 
 When you press the '*Open Commit History*' button, you will be redirected to the **Commit History** page.
-This page shows all the commits that have been made to the repository. The commits are ordered from the latest to the oldest.
+This page shows all the commits that you uploaded to the repository. The commits are ordered from the latest to the oldest.
 You can see the commit message, the author of the commit, the date of the commit, the commit hash and the result of the commit.
 If you created a submission with multiple commits, you can see all of them here but only the last commit has the result of the submission.
 Lastly, you can also view the code of the commit by pressing on the commit hash.
