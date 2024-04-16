@@ -23,9 +23,8 @@ jobs:
         id: files
         run: |
           git diff --name-only origin/${{ github.event.pull_request.base.ref }} HEAD > modified_files.txt
-          echo "MODIFIED_FILES=$(cat modified_files.txt)" >> $GITHUB_ENV
 
       - name: Display modified files
         run: |
           echo "Modified files in this pull request:"
-          echo "${{ env.MODIFIED_FILES }}"
+          cat modified_files.txt
