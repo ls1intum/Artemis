@@ -275,7 +275,7 @@ public class ParticipationService {
      */
     public StudentParticipation startPracticeMode(Exercise exercise, Participant participant, Optional<StudentParticipation> optionalGradedStudentParticipation,
             boolean useGradedParticipation) {
-        if (!(exercise instanceof ProgrammingExercise)) {
+        if (!(exercise instanceof ProgrammingExercise programmingExercise)) {
             throw new IllegalStateException("Only programming exercises support the practice mode at the moment");
         }
 
