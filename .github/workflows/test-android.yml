@@ -49,7 +49,7 @@ jobs:
           path: android-repo
 
       - name: Gradle Wrapper Verification
-        uses: gradle/wrapper-validation-action@v3
+        uses: gradle/actions/wrapper-validation@v3
 
         # sanity cleanup
       - name: Stop mysql server
