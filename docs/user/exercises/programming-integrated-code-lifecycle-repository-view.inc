@@ -6,7 +6,7 @@ It is demonstrated using course programming exercises, but the same principles a
 - **For Students:**
 
 As a student, you can use the repository to view your course submissions.
-To access your submissions, you need to navigate to the exercise an press the '*Open Repository*' button.
+To access your submissions, you need to navigate to the exercise and press the '*Open Repository*' button.
 
 .. figure:: programming/open-repository-button.png
    :alt: Online Repository Button
