@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.config;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.util.List;
@@ -16,7 +17,7 @@ import de.tum.in.www1.artemis.versioning.VersionRequestMappingHandlerMapping;
  * Overwrites the default RequestMappingHandlerMapping with a versioned one.
  */
 @Configuration
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_CORE + " | " + PROFILE_BUILDAGENT)
 public class RequestMappingConfiguration {
 
     private final List<Integer> apiVersions;

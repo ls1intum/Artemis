@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.config;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.util.List;
@@ -24,7 +25,7 @@ import io.swagger.v3.oas.models.info.License;
  * Configures the available API versions and the versioned OpenAPI/Swagger documentation.
  */
 @Configuration
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_CORE + " | " + PROFILE_BUILDAGENT)
 public class VersioningConfiguration implements BeanDefinitionRegistryPostProcessor {
 
     /**
