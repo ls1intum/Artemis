@@ -15,7 +15,7 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 /**
  * Contains the one automatic test covering all rest endpoints for authorization tests.
  */
-class AuthorizationJenkinsGitlabTest extends AbstractSpringIntegrationJenkinsGitlabTest {
+class AuthorizationJenkinsGitlabEndpointTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     @Autowired
     private ApplicationContext applicationContext;

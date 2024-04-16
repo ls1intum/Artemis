@@ -15,7 +15,7 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 /**
  * Contains the one automatic test covering all rest endpoints for authorization tests.
  */
-class AuthorizationEndpointTest extends AbstractSpringIntegrationIndependentTest {
+class AuthorizationGeneralAndIndependentEndpointTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private ApplicationContext applicationContext;
