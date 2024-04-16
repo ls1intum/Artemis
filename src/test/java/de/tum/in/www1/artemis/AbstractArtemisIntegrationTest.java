@@ -233,4 +233,14 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
 
         );
     }
+
+    /**
+     * To ensure developers who add a new test environment also add the corresponding versioning test class, they have to specify if there is a class for each environment.
+     * Examples are {@link de.tum.in.www1.artemis.versioning.VersioningJenkinsGitlabTest} or {@link de.tum.in.www1.artemis.versioning.VersioningGitlabCiGitlabSamlTest}.
+     * <p>
+     * Please implement this method in the direct subclasses, not in the actual test classes and only if you have created a corresponding class for the environment.
+     *
+     * @return the class of the authorization test for the current environment
+     */
+    abstract boolean hasMatchingVersioningTestClass();
 }

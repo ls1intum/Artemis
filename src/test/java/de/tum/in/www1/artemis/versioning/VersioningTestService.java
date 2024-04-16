@@ -10,17 +10,16 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
+import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
-
-class VersioningTest extends AbstractSpringIntegrationIndependentTest {
+@Service
+class VersioningTestService {
 
     @Autowired
     private List<Integer> apiVersions;
@@ -32,8 +31,6 @@ class VersioningTest extends AbstractSpringIntegrationIndependentTest {
      * Tests for each controller if there exist two methods representing the same API route while the annotated
      * version ranges collide
      */
-    // TODO: Find solution to test this for all different profiles
-    @Test
     void testDuplicateRoutes() {
         var requestMappingHandlerMapping = applicationContext.getBean("requestMappingHandlerMapping", RequestMappingHandlerMapping.class);
         Map<RequestMappingInfo, HandlerMethod> map = requestMappingHandlerMapping.getHandlerMethods();
