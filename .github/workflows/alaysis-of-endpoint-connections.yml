@@ -20,7 +20,7 @@ jobs:
       - name: Get list of modified files
         id: files
         run: |
-          git diff --name-only ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} > modified_files.txt
+          git diff --name-only origin/main..$GITHUB_SHA > modified_files.txt
           echo "MODIFIED_FILES=$(cat modified_files.txt)" >> $GITHUB_ENV
 
       - name: Display modified files
