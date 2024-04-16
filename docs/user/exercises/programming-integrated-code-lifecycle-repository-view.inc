@@ -17,7 +17,7 @@ To access your submissions, you need to navigate to the exercise and press the '
 After pressing the button, you will be redirected to the **Latest Commit** page of the repository.
 This view shows the latest commit in a read-only code editor. You can view the code, but you cannot edit it.
 You can also navigate through the whole code base by clicking on the file names in the left file directory.
-The right side of the screen problem statement. You can see the result of the submission. Lastly, you can also clone the repository to your local machine by pressing
+To the right side of the screen, above the problem statement, you can see the result of the submission. Lastly, you can also clone the repository to your local machine by pressing
 the '*Clone Repository*' button and see the full commit history by pressing the '*Open Commit History*' button.
 
 .. figure:: programming/latest-commit-view.png
