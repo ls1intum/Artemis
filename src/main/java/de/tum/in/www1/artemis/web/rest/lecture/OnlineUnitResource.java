@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.web.rest.lecture;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -35,6 +34,7 @@ import de.tum.in.www1.artemis.repository.OnlineUnitRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.LectureUnitService;
 import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.web.rest.dto.OnlineResourceDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -57,12 +57,15 @@ public class OnlineUnitResource {
 
     private final CompetencyProgressService competencyProgressService;
 
+    private final LectureUnitService lectureUnitService;
+
     public OnlineUnitResource(LectureRepository lectureRepository, AuthorizationCheckService authorizationCheckService, OnlineUnitRepository onlineUnitRepository,
-            CompetencyProgressService competencyProgressService) {
+            CompetencyProgressService competencyProgressService, LectureUnitService lectureUnitService) {
         this.lectureRepository = lectureRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.onlineUnitRepository = onlineUnitRepository;
         this.competencyProgressService = competencyProgressService;
+        this.lectureUnitService = lectureUnitService;
     }
 
     /**
@@ -98,7 +101,7 @@ public class OnlineUnitResource {
         }
 
         checkOnlineUnitCourseAndLecture(onlineUnit, lectureId);
-        validateUrlStringAndReturnUrl(onlineUnit.getSource());
+        lectureUnitService.validateUrlStringAndReturnUrl(onlineUnit.getSource());
 
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, onlineUnit.getLecture().getCourse(), null);
 
@@ -123,7 +126,7 @@ public class OnlineUnitResource {
             throw new BadRequestException();
         }
 
-        validateUrlStringAndReturnUrl(onlineUnit.getSource());
+        lectureUnitService.validateUrlStringAndReturnUrl(onlineUnit.getSource());
 
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId);
         if (lecture.getCourse() == null) {
@@ -154,7 +157,7 @@ public class OnlineUnitResource {
     @EnforceAtLeastEditor
     public ResponseEntity<OnlineResourceDTO> getOnlineResource(@RequestParam("link") String link) {
         // Ensure that the link is a correctly formed URL
-        URL url = validateUrlStringAndReturnUrl(link);
+        URL url = lectureUnitService.validateUrlStringAndReturnUrl(link);
 
         if (!"http".equalsIgnoreCase(url.getProtocol()) && !"https".equalsIgnoreCase(url.getProtocol())) {
             throw new BadRequestException("The specified link uses an unsupported protocol");
@@ -197,15 +200,6 @@ public class OnlineUnitResource {
             return element.attr("content");
         }
         return "";
-    }
-
-    private URL validateUrlStringAndReturnUrl(String url) {
-        try {
-            return new URI(url).toURL();
-        }
-        catch (URISyntaxException | MalformedURLException | IllegalArgumentException e) {
-            throw new BadRequestException();
-        }
     }
 
     /**

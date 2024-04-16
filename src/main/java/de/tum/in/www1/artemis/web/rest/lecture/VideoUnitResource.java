@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.repository.VideoUnitRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.LectureUnitService;
 import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
@@ -40,12 +41,15 @@ public class VideoUnitResource {
 
     private final CompetencyProgressService competencyProgressService;
 
+    private final LectureUnitService lectureUnitService;
+
     public VideoUnitResource(LectureRepository lectureRepository, AuthorizationCheckService authorizationCheckService, VideoUnitRepository videoUnitRepository,
-            CompetencyProgressService competencyProgressService) {
+            CompetencyProgressService competencyProgressService, LectureUnitService lectureUnitService) {
         this.lectureRepository = lectureRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.videoUnitRepository = videoUnitRepository;
         this.competencyProgressService = competencyProgressService;
+        this.lectureUnitService = lectureUnitService;
     }
 
     /**
@@ -82,7 +86,7 @@ public class VideoUnitResource {
 
         checkVideoUnitCourseAndLecture(videoUnit, lectureId);
         normalizeVideoUrl(videoUnit);
-        validateVideoUrl(videoUnit);
+        lectureUnitService.validateUrlStringAndReturnUrl(videoUnit.getSource());
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, videoUnit.getLecture().getCourse(), null);
 
         VideoUnit result = videoUnitRepository.save(videoUnit);
@@ -109,7 +113,7 @@ public class VideoUnitResource {
         }
 
         normalizeVideoUrl(videoUnit);
-        validateVideoUrl(videoUnit);
+        lectureUnitService.validateUrlStringAndReturnUrl(videoUnit.getSource());
 
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId);
         if (lecture.getCourse() == null) {
@@ -156,19 +160,4 @@ public class VideoUnitResource {
             videoUnit.setSource(videoUnit.getSource().strip());
         }
     }
-
-    /**
-     * Validates the provided video Url.
-     *
-     * @param videoUnit provided video unit
-     */
-    private void validateVideoUrl(VideoUnit videoUnit) {
-        try {
-            new URI(videoUnit.getSource());
-        }
-        catch (URISyntaxException exception) {
-            throw new BadRequestException();
-        }
-    }
-
 }
