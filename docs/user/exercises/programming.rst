@@ -165,7 +165,7 @@ Each one represents a single test case feedback and should have the format:
 Integrated Code Lifecycle
 -------------------------
 
-The following sections describes programming exercise features that are part of the integrated code lifecycle system.
+The following sections describe programming exercise features that are part of the integrated code lifecycle system.
 
 Repository View
 ^^^^^^^^^^^^^^^
