@@ -160,7 +160,6 @@ public class ProgrammingExerciseFactory {
         toBeImported.setExerciseHints(null);
         toBeImported.setSolutionParticipation(null);
         toBeImported.setTemplateParticipation(null);
-        toBeImported.setPublishBuildPlanUrl(template.isPublishBuildPlanUrl());
         toBeImported.setSequentialTestRuns(template.hasSequentialTestRuns());
         toBeImported.setProblemStatement(template.getProblemStatement());
         toBeImported.setMaxPoints(template.getMaxPoints());
@@ -403,7 +402,6 @@ public class ProgrammingExerciseFactory {
         programmingExercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(3));
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusDays(5));
         programmingExercise.setBonusPoints(0D);
-        programmingExercise.setPublishBuildPlanUrl(false);
         programmingExercise.setMaxPoints(42.0);
         programmingExercise.setDifficulty(DifficultyLevel.EASY);
         programmingExercise.setMode(ExerciseMode.INDIVIDUAL);

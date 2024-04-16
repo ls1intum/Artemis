@@ -5,7 +5,6 @@ structural_tests () {
   echo '⚙️ executing structural_tests'
   chmod +x ./gradlew
   ./gradlew clean structuralTests
-
 }
 
 behavior_tests () {

@@ -53,21 +53,12 @@ linkcheck_ignore = [
     r'https://doi.org/10.1109/CSEET58097.2023.00037',
     r'https://doi.org/10.1109/ITHET50392.2021.9759809',
 ]
-# when upgrading to Sphinx 7.1 or newer we can use
-# `linkcheck_anchors_ignore_for_url` instead to exclude the angular.io and
-# GitHub URLs completely instead of excluding specific anchors here
-linkcheck_anchors_ignore = [
-    # Angular guide
-    r'deprecated-deep--and-ng-deep',
-    r'testing-http-requests',
-    r'no_errors_schema',
-    r'stubbing-unneeded-components',
-    # end Angular guide
-    r'readme',  # links to GitHub readmes
-    r'testing-of-pull-requests',  # Orion readme
-    r'L[0-9]+(-L[0-9]+)?',  # links referring to concrete line numbers in the GitHub UI
-    r'environment-variables',  # GitHub Spring wiki
-    r'installation'  # k3d guide
+# do not check anchors on websites that need JavaScript to load the content
+# the anchor points to
+linkcheck_anchors_ignore_for_url = [
+    r"https://angular.io/guide/.*",
+    r"https://github.com/.*",
+    r"https://k3d.io/.*"
 ]
 
 # -- Publications ------------------------------------------------------------
