@@ -124,7 +124,7 @@ public class AdminCourseResource {
             onlineCourseConfigurationService.get().createOnlineCourseConfiguration(course);
         }
 
-        courseService.createOrValidateGroups(course);
+        courseService.setDefaultGroupsIfNotSet(course);
 
         Course createdCourse = courseRepository.save(course);
 

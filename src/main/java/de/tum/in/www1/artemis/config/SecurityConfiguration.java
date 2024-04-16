@@ -5,9 +5,6 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import java.util.List;
 import java.util.Optional;
 
-import jakarta.annotation.PostConstruct;
-
-import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,6 +13,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -35,6 +33,7 @@ import org.springframework.web.filter.CorsFilter;
 import org.zalando.problem.spring.web.advice.security.SecurityProblemSupport;
 
 import de.tum.in.www1.artemis.config.lti.CustomLti13Configurer;
+import de.tum.in.www1.artemis.security.DomainUserDetailsService;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.jwt.JWTConfigurer;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
@@ -49,15 +48,9 @@ import de.tum.in.www1.artemis.web.filter.SpaWebFilter;
 @Profile(PROFILE_CORE)
 public class SecurityConfiguration {
 
-    private final AuthenticationManagerBuilder authenticationManagerBuilder;
-
-    private final UserDetailsService userDetailsService;
-
     private final TokenProvider tokenProvider;
 
     private final PasswordService passwordService;
-
-    private final Optional<AuthenticationProvider> remoteUserAuthenticationProvider;
 
     private final CorsFilter corsFilter;
 
@@ -68,39 +61,39 @@ public class SecurityConfiguration {
     @Value("#{'${spring.prometheus.monitoringIp:127.0.0.1}'.split(',')}")
     private List<String> monitoringIpAddresses;
 
-    public SecurityConfiguration(AuthenticationManagerBuilder authenticationManagerBuilder, UserDetailsService userDetailsService, TokenProvider tokenProvider,
-            PasswordService passwordService, Optional<AuthenticationProvider> remoteUserAuthenticationProvider, CorsFilter corsFilter, SecurityProblemSupport problemSupport,
+    public SecurityConfiguration(TokenProvider tokenProvider, PasswordService passwordService, CorsFilter corsFilter, SecurityProblemSupport problemSupport,
             ProfileService profileService) {
-        this.authenticationManagerBuilder = authenticationManagerBuilder;
-        this.userDetailsService = userDetailsService;
         this.tokenProvider = tokenProvider;
         this.passwordService = passwordService;
-        this.remoteUserAuthenticationProvider = remoteUserAuthenticationProvider;
         this.corsFilter = corsFilter;
         this.problemSupport = problemSupport;
         this.profileService = profileService;
     }
 
     /**
-     * Initialize the security configuration by specifying the user details service for internal users and, optionally, an external authentication provider
-     * (e.g., {@link de.tum.in.www1.artemis.service.connectors.ldap.LdapAuthenticationProvider}).
-     * Spring Security will attempt to authenticate with the providers in the order they're added. If an external provider is configured, it will be queried
-     * first; the internal database is used as a fallback if external authentication fails or is not configured.
+     * Spring Security will attempt to authenticate with the providers in the order they're added. If an external provider is configured, it will be queried first;
+     * the internal database is used as a fallback if external authentication fails or is not configured.
+     *
+     * @param http                             The {@link HttpSecurity} to configure.
+     * @param userDetailsService               The {@link UserDetailsService} to use for internal authentication. See {@link DomainUserDetailsService} for the current
+     *                                             implementation.
+     * @param remoteUserAuthenticationProvider An optional {@link AuthenticationProvider} for external authentication (e.g., LDAP).
+     *
+     * @return The {@link AuthenticationManager} to use for authenticating users.
      */
-    @PostConstruct
-    public void init() {
-        try {
-            // Configure the user details service for internal authentication using the Artemis database.
-            authenticationManagerBuilder.userDetailsService(userDetailsService);
-            // Optionally configure an external authentication provider (e.g., {@link de.tum.in.www1.artemis.service.connectors.ldap.LdapAuthenticationProvider}) for remote user
-            // authentication.
-            remoteUserAuthenticationProvider.ifPresent(authenticationManagerBuilder::authenticationProvider);
-            // Spring Security processes authentication providers in the order they're added. If an external provider is configured,
-            // it will be tried first. The internal database-backed provider serves as a fallback if external authentication is not available or fails.
-        }
-        catch (Exception e) {
-            throw new BeanInitializationException("Security configuration failed", e);
-        }
+    @Bean
+    public AuthenticationManager authenticationManager(HttpSecurity http, UserDetailsService userDetailsService, Optional<AuthenticationProvider> remoteUserAuthenticationProvider)
+            throws Exception {
+        var builder = http.getSharedObject(AuthenticationManagerBuilder.class);
+        // Configure the user details service for internal authentication using the Artemis database.
+        builder.userDetailsService(userDetailsService);
+        // Optionally configure an external authentication provider (e.g., {@link de.tum.in.www1.artemis.service.connectors.ldap.LdapAuthenticationProvider}) for remote user
+        // authentication.
+        remoteUserAuthenticationProvider.ifPresent(builder::authenticationProvider);
+        // Spring Security processes authentication providers in the order they're added. If an external provider is configured,
+        // it will be tried first. The internal database-backed provider serves as a fallback if external authentication is not available or fails.
+
+        return builder.build();
     }
 
     @Bean

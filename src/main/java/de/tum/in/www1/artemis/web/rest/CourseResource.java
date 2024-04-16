@@ -62,7 +62,6 @@ import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
-import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
@@ -239,17 +238,7 @@ public class CourseResource {
         Set<String> changedGroupNames = new HashSet<>(newGroupNames);
         changedGroupNames.removeAll(existingGroupNames);
 
-        if (authCheckService.isAdmin(user)) {
-            // if an admin changes a group, we need to check that the changed group exists
-            try {
-                changedGroupNames.forEach(courseService::checkIfGroupsExists);
-            }
-            catch (ArtemisAuthenticationException ex) {
-                // a specified group does not exist, notify the client
-                throw new BadRequestAlertException(ex.getMessage(), Course.ENTITY_NAME, "groupNotFound", true);
-            }
-        }
-        else {
+        if (!authCheckService.isAdmin(user)) {
             // this means the user must be an instructor, who has NO Admin rights.
             // instructors are not allowed to change group names, because this would lead to security problems
             if (!changedGroupNames.isEmpty()) {

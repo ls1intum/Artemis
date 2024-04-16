@@ -42,7 +42,6 @@ import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.UserPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EmailAlreadyUsedException;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.errors.LoginAlreadyUsedException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
@@ -130,9 +129,6 @@ public class AdminUserResource {
         else if (userRepository.findOneByEmailIgnoreCase(managedUserVM.getEmail()).isPresent()) {
             throw new EmailAlreadyUsedException();
         }
-        else if (managedUserVM.getGroups().stream().anyMatch(group -> !artemisAuthenticationProvider.isGroupAvailable(group))) {
-            throw new EntityNotFoundException("Not all groups are available: " + managedUserVM.getGroups());
-        }
         else {
             User newUser = userCreationService.createUser(managedUserVM);
 
@@ -165,10 +161,6 @@ public class AdminUserResource {
         var existingUserByLogin = userRepository.findOneWithGroupsAndAuthoritiesByLogin(managedUserVM.getLogin().toLowerCase());
         if (existingUserByLogin.isPresent() && (!existingUserByLogin.get().getId().equals(managedUserVM.getId()))) {
             throw new LoginAlreadyUsedException();
-        }
-
-        if (managedUserVM.getGroups().stream().anyMatch(group -> !artemisAuthenticationProvider.isGroupAvailable(group))) {
-            throw new EntityNotFoundException("Not all groups are available: " + managedUserVM.getGroups());
         }
 
         var existingUser = userRepository.findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(managedUserVM.getId());

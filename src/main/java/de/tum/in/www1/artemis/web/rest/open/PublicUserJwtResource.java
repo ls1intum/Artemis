@@ -17,9 +17,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.saml2.provider.service.authentication.Saml2AuthenticatedPrincipal;
@@ -49,13 +49,13 @@ public class PublicUserJwtResource {
 
     private final JWTCookieService jwtCookieService;
 
-    private final AuthenticationManagerBuilder authenticationManagerBuilder;
+    private final AuthenticationManager authenticationManager;
 
     private final Optional<SAML2Service> saml2Service;
 
-    public PublicUserJwtResource(JWTCookieService jwtCookieService, AuthenticationManagerBuilder authenticationManagerBuilder, Optional<SAML2Service> saml2Service) {
+    public PublicUserJwtResource(JWTCookieService jwtCookieService, AuthenticationManager authenticationManager, Optional<SAML2Service> saml2Service) {
         this.jwtCookieService = jwtCookieService;
-        this.authenticationManagerBuilder = authenticationManagerBuilder;
+        this.authenticationManager = authenticationManager;
         this.saml2Service = saml2Service;
     }
 
@@ -79,7 +79,7 @@ public class PublicUserJwtResource {
 
         try {
             authenticationToken.setDetails(Pair.of("userAgent", userAgent));
-            Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
+            Authentication authentication = authenticationManager.authenticate(authenticationToken);
             SecurityContextHolder.getContext().setAuthentication(authentication);
             boolean rememberMe = loginVM.isRememberMe() != null && loginVM.isRememberMe();
 
