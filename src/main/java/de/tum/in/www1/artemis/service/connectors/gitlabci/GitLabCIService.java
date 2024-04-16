@@ -98,7 +98,6 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
     public GitLabCIService(GitLabApi gitlab, UriService uriService, BuildPlanRepository buildPlanRepository, GitLabCIBuildPlanService buildPlanService,
             ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
-        super();
         this.gitlab = gitlab;
         this.uriService = uriService;
         this.buildPlanRepository = buildPlanRepository;

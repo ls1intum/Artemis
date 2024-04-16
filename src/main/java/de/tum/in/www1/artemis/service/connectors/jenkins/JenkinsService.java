@@ -68,7 +68,6 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     public JenkinsService(JenkinsServer jenkinsServer, @Qualifier("shortTimeoutJenkinsRestTemplate") RestTemplate shortTimeoutRestTemplate,
             JenkinsBuildPlanService jenkinsBuildPlanService, JenkinsJobService jenkinsJobService, JenkinsInternalUrlService jenkinsInternalUrlService,
             Optional<AeolusTemplateService> aeolusTemplateService, ProfileService profileService, ProgrammingExerciseRepository programmingExerciseRepository) {
-        super();
         this.jenkinsServer = jenkinsServer;
         this.jenkinsBuildPlanService = jenkinsBuildPlanService;
         this.jenkinsJobService = jenkinsJobService;

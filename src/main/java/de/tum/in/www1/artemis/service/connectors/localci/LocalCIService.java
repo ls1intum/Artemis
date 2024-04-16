@@ -43,7 +43,6 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
 
     public LocalCIService(BuildScriptProviderService buildScriptProviderService, AeolusTemplateService aeolusTemplateService,
             ProgrammingExerciseRepository programmingExerciseRepository) {
-        super();
         this.buildScriptProviderService = buildScriptProviderService;
         this.aeolusTemplateService = aeolusTemplateService;
         this.programmingExerciseRepository = programmingExerciseRepository;
