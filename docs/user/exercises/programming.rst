@@ -160,3 +160,13 @@ Each one represents a single test case feedback and should have the format:
   Defaults to ``false`` if not present.
 * ``message``: The message shown as additional information to the student.
   **Required for non-successful tests/feedback**, optional otherwise.
+
+
+Integrated Code Lifecycle
+-------------------------
+
+The following sections describes programming exercise features that are part of the integrated code lifecycle system.
+
+Repository View
+^^^^^^^^^^^^^^^
+.. include:: programming-integrated-code-lifecycle-repository-view.inc
