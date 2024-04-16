@@ -46,6 +46,7 @@ export class CourseLectureDetailsComponent extends AbstractScienceComponent impl
     profileSubscription?: Subscription;
     isProduction = true;
     isTestServer = false;
+    endsSameDay = false;
 
     readonly LectureUnitType = LectureUnitType;
     readonly isCommunicationEnabled = isCommunicationEnabled;
@@ -110,6 +111,7 @@ export class CourseLectureDetailsComponent extends AbstractScienceComponent impl
                             // We need to manually update the lecture property of the student questions component
                             this.discussionComponent.lecture = this.lecture;
                         }
+                        this.endsSameDay = !!this.lecture?.startDate && !!this.lecture.endDate && dayjs(this.lecture.startDate).isSame(this.lecture.endDate, 'day');
                     },
                     error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
                 });

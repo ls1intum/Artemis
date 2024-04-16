@@ -132,7 +132,7 @@ public class ExamUserService {
             examUserRepository.save(examUser);
 
             if (oldPathString != null) {
-                Path oldPath = FilePathService.actualPathForPublicPath(URI.create(examUser.getStudentImagePath()));
+                Path oldPath = FilePathService.actualPathForPublicPath(URI.create(oldPathString));
                 fileService.schedulePathForDeletion(oldPath, 0);
             }
         }
