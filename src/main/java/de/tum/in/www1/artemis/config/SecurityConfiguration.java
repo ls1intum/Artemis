@@ -16,6 +16,7 @@ import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authorization.AuthorizationDecision;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -188,7 +189,8 @@ public class SecurityConfiguration {
                 .requestMatchers("/management/prometheus/**").access((authentication, context) -> new AuthorizationDecision(monitoringIpAddresses.contains(context.getRequest().getRemoteAddr())))
                 .requestMatchers("/**").authenticated()
             )
-            .with(securityConfigurerAdapter(), configurer -> configurer.configure(http));
+            .with(securityConfigurerAdapter(), configurer -> configurer.configure(http))
+            .httpBasic(Customizer.withDefaults());
         // @formatter:on
 
         if (profileService.isLtiActive()) {
