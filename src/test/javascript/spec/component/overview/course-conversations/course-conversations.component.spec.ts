@@ -150,5 +150,21 @@ examples.forEach((activeConversation) => {
             const searchInput = getElement(fixture.debugElement, 'input[name=searchText]');
             expect(searchInput.textContent).toBe('');
         });
+
+        it('should update the course-wide search text correctly given an input', () => {
+            fixture.detectChanges();
+            const searchInput = getElement(fixture.debugElement, 'input[name=searchText]');
+            searchInput.value = 'test input';
+            searchInput.dispatchEvent(new Event('input'));
+            fixture.detectChanges();
+            expect(component.searchInput).toBe('test input');
+        });
+
+        it('should set search text in the conversation header correctly', () => {
+            component.searchInput = 'test';
+            component.onSearch();
+            fixture.detectChanges();
+            expect(component.headerSearchTerm).toBe(component.searchInput);
+        });
     });
 });
