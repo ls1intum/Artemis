@@ -226,7 +226,6 @@ jobs:
       DEPLOYMENT_USER: ${{ matrix.user }}
       DEPLOYMENT_HOSTS: ${{ matrix.hosts }}
       DEPLOYMENT_FOLDER: ${{ matrix.folder }}
-      DEPLOYMENT_HOST_PUBLIC_KEYS: ${{ matrix.host_keys }}
       GATEWAY_USER: "jump"
       GATEWAY_HOST: "gateway.artemis.in.tum.de:2010"
       GATEWAY_HOST_PUBLIC_KEY: "[gateway.artemis.in.tum.de]:2010 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKtTLiKRILjKZ+Qg4ReWKsG7mLDXkzHfeY5nalSQUNQ4"
@@ -307,7 +306,6 @@ jobs:
           ssh-add - <<< $GATEWAY_SSH_KEY
           ssh-add - <<< $DEPLOYMENT_SSH_KEY
           cat - <<< $GATEWAY_HOST_PUBLIC_KEY >> ~/.ssh/known_hosts
-          cat - <<< $(sed 's/\\n/\n/g' <<< "$DEPLOYMENT_HOST_PUBLIC_KEYS") >> ~/.ssh/known_hosts
 
       - name: Deploy Artemis with Docker
         env:
