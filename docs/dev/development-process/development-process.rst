@@ -79,6 +79,14 @@ Furthermore it is important to include a description of the user flow that refer
     :alt: UI/UX Design Workflow - Activity Diagram
     :figclass: align-center
 
+.. raw:: html
+
+    <div style="text-align: center;">
+        <iframe src="https://live.rbg.tum.de/w/artemisintro/46233?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="300">
+            Watch this video on TUM-Live.
+        </iframe>
+    </div>
+
 To facilitate this process, we have introduced UICompanion, a tool that integrates seamlessly with GitHub and Figma to assist developers through the UI/UX design phase.
 
 What is UICompanion?
