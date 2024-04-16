@@ -169,4 +169,10 @@ The following sections describes programming exercise features that are part of 
 
 Repository View
 ^^^^^^^^^^^^^^^
+
 .. include:: programming-integrated-code-lifecycle-repository-view.inc
+
+Build Agent View
+^^^^^^^^^^^^^^^^
+
+.. include:: programming-integrated-code-lifecycle-build-agent-view.inc
