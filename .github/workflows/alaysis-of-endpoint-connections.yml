@@ -9,7 +9,7 @@ on:
       - 'LICENSE'
       - 'SECURITY.md'
       - 'docs/**'
-#      - '.github/**'
+      - '.github/**'
       - '!.github/workflows/build.yml'
       - '!.github/workflows/testserver.yml'
 
@@ -23,9 +23,10 @@ jobs:
       - name: Get list of modified files
         id: files
         run: |
-          echo "::set-output name=modified::$(git diff --name-only ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }})"
+          git diff --name-only ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} > modified_files.txt
+          echo "MODIFIED_FILES=$(cat modified_files.txt)" >> $GITHUB_ENV
 
       - name: Display modified files
         run: |
           echo "Modified files in this pull request:"
-          echo "${{ steps.files.outputs.modified }}"
+          echo "${{ env.MODIFIED_FILES }}"
