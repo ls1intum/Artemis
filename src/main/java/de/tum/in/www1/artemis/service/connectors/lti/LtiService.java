@@ -27,7 +27,6 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.exception.LtiEmailAlreadyInUseException;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
@@ -163,14 +162,6 @@ public class LtiService {
             groups.add(courseStudentGroupName);
             user.setGroups(groups);
             userCreationService.saveUser(user);
-
-            // try to sync with authentication service
-            try {
-                artemisAuthenticationProvider.addUserToGroup(user, courseStudentGroupName);
-            }
-            catch (ArtemisAuthenticationException e) {
-                // This might throw exceptions, for example if the group does not exist on the authentication service. We can safely ignore it
-            }
         }
     }
 
