@@ -211,7 +211,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.updateMenuOffset();
     }
 
-    // Listen window resizement event by height
+    /** Listen window resizement event by height */
     @HostListener('window: resize', ['$event'])
     onResize() {
         this.dropdownOpen = false;
@@ -220,7 +220,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.updateMenuOffset();
     }
 
-    // Listen click event on anywhere outside of the dropdown menu
+    /** Listen click event on anywhere outside of the dropdown menu */
     @HostListener('document: click', ['$event'])
     onClickOutsideDropdownMenu() {
         if (this.dropdownOpen) {
@@ -232,7 +232,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         }
     }
 
-    // Update sidebar item's hidden property based on the window height to display three-dots
+    /** Update sidebar item's hidden property based on the window height to display three-dots */
     updateVisibility(height: number) {
         const thresholds: number[] = [];
         let threshold = this.calculateThreshHold();
@@ -254,7 +254,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         });
     }
 
-    // Calculate dropdown-menu position based on the number of entries in the sidebar
+    /** Calculate dropdown-menu position based on the number of entries in the sidebar */
     updateMenuOffset() {
         const leftSidebarItems: number = this.sidebarItems.length - this.hiddenItems.length;
         if (leftSidebarItems === 1) {
@@ -267,7 +267,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         }
     }
 
-    // Calculating threshold levels based on the number of entries in the sidebar
+    /** Calculating threshold levels based on the number of entries in the sidebar */
     calculateThreshHold() {
         const maxThreshold: number = 650;
         const numberOfSidebarItems: number = this.sidebarItems.length;
