@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.authorization;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static org.assertj.core.api.Fail.fail;
 
 import java.lang.annotation.Annotation;
@@ -67,7 +68,14 @@ public class AuthorizationTestService {
      * @return true if the endpoint depends on a profile, false otherwise
      */
     private boolean isConditionalEndpoint(HandlerMethod handlerMethod) {
-        return handlerMethod.getMethod().getAnnotation(Profile.class) != null || handlerMethod.getMethod().getDeclaringClass().getAnnotation(Profile.class) != null;
+        var methodProfileAnnotation = handlerMethod.getMethod().getAnnotation(Profile.class);
+        var classProfileAnnotation = handlerMethod.getMethod().getDeclaringClass().getAnnotation(Profile.class);
+        // No null-check required for classes because we have tests ensuring Profile annotations on classes
+        return (methodProfileAnnotation != null && isNonCoreProfile(methodProfileAnnotation)) || isNonCoreProfile(classProfileAnnotation);
+    }
+
+    private boolean isNonCoreProfile(Profile profileAnnotation) {
+        return !(profileAnnotation.value().length == 1 && profileAnnotation.value()[0].equals(PROFILE_CORE));
     }
 
     /**
