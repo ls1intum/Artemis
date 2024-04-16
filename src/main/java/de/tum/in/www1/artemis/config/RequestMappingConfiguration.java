@@ -1,10 +1,13 @@
 package de.tum.in.www1.artemis.config;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.List;
 
 import org.springframework.boot.autoconfigure.web.servlet.WebMvcRegistrations;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 import de.tum.in.www1.artemis.versioning.VersionRequestMappingHandlerMapping;
@@ -13,6 +16,7 @@ import de.tum.in.www1.artemis.versioning.VersionRequestMappingHandlerMapping;
  * Overwrites the default RequestMappingHandlerMapping with a versioned one.
  */
 @Configuration
+@Profile(PROFILE_CORE)
 public class RequestMappingConfiguration {
 
     private final List<Integer> apiVersions;

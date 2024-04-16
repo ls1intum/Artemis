@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.config;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.List;
 
 import jakarta.validation.constraints.NotNull;
@@ -11,6 +13,7 @@ import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 
 import io.swagger.v3.oas.models.ExternalDocumentation;
 import io.swagger.v3.oas.models.OpenAPI;
@@ -21,6 +24,7 @@ import io.swagger.v3.oas.models.info.License;
  * Configures the available API versions and the versioned OpenAPI/Swagger documentation.
  */
 @Configuration
+@Profile(PROFILE_CORE)
 public class VersioningConfiguration implements BeanDefinitionRegistryPostProcessor {
 
     /**
