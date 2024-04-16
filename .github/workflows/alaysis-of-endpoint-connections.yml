@@ -9,9 +9,6 @@ on:
       - 'LICENSE'
       - 'SECURITY.md'
       - 'docs/**'
-      - '.github/**'
-      - '!.github/workflows/build.yml'
-      - '!.github/workflows/testserver.yml'
 
 jobs:
   show-modified-files:
