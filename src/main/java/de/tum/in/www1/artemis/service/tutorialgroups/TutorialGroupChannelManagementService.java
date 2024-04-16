@@ -256,6 +256,12 @@ public class TutorialGroupChannelManagementService {
             return channelName;
         }
 
+        // try to make it unique by adding a random number to the end of the channel name
+        // if already max length remove the last 3 characters to get some space to try to make it unique
+        if (channelName.length() >= 30) {
+            channelName = channelName.substring(0, 27);
+        }
+
         do {
             channelName += ThreadLocalRandom.current().nextInt(0, 10);
         }

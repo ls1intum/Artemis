@@ -51,7 +51,7 @@ public class AuthorizationCheckService {
 
     private final ExamDateService examDateService;
 
-    // TODO: we should move this into some kind of EnrollmentService todo
+    // TODO: we should move this into some kind of EnrollmentService
     @Deprecated(forRemoval = true) // will be removed in 7.0.0
     @Value("${artemis.user-management.course-registration.allowed-username-pattern:#{null}}")
     private Pattern allowedCourseRegistrationUsernamePattern;
