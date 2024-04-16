@@ -49,7 +49,8 @@ You can also see the commit message, the author of the commit, the date of the c
 
    Commit Diff View
 
-- **For Instructors:**
+For Instructors
+"""""""""""""""
 
 As an instructor, you can use the repository to view the submissions of your students. For this purpose, you need to navigate to the exercise participations page.
 Here you can see all the students’ participations for the exercise and navigate to the repository of a student by pressing the '*Open Repository*' button.
