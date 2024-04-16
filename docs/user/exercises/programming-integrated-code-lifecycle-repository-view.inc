@@ -38,7 +38,7 @@ Lastly, you can also view the code of the commit by pressing on the commit hash.
 
    Commit History View
 
-When you press on the commit hash, you will be redirected to the **Commit Diff** page. This page shows the changes that have been made in the commit.
+By clicking on a commit hash, you are redirected to the **Commit Diff** page. This page shows the changes that you made in this commit.
 You can see the changes in the code, the files that have been added, the files that have been deleted and the files that have been modified.
 Green color indicates the lines that have been added and red color indicates the lines that have been deleted.
 You can also see the commit message, the author of the commit, the date of the commit and the commit hash.
