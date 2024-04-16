@@ -509,7 +509,7 @@ Integrated Code Lifecycle
 The integrated code lifecycle (ICL) can integrate build agents into a multi instance server setup. In ICL, we differentiate between two types of server node types: **core nodes** and **build agent nodes**.
 Core nodes provide the full Artemis functionality, while build agents simply execute build jobs for the testing of programming exercises.
 Both node types run the Artemis application, albeit with different profile sets and different application configuration files.
-Compared to core nodes, build agents nodes are much more lightweight, as they have less service dependencies and provide less functionality. Thus, they require less system resources and start much quicker than core nodes.
+Compared to core nodes, build agents nodes are much more light-weight, as they have less service dependencies and provide less functionality. Thus, they require less system resources and start much quicker than core nodes.
 
 The previously mentioned steps concerning the multiple Artemis instance setup remain unchanged, as we only need to adapt the run and application configurations for each node.
 
