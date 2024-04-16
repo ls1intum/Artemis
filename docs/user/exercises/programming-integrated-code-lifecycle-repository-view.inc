@@ -3,7 +3,8 @@ These changes are stored in a repository. A repository is a collection of files 
 How to navigate through the repository and view the code is explained in the following sections. This guide is divided into two parts: one for students and one for instructors.
 It is demonstrated using course programming exercises, but the same principles apply to exams as well.
 
-- **For Students:**
+For Students
+""""""""""""
 
 As a student, you can use the repository to view your course submissions.
 To access your submissions, you need to navigate to the exercise and press the '*Open Repository*' button.
