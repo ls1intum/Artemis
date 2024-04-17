@@ -1,9 +1,6 @@
 package de.tum.in.www1.artemis.exam;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.http.HttpStatus.OK;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -298,25 +295,25 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest
     void testVerifyAttendance() throws Exception {
         // User started an exam, but attendance wasn't checked yet
         var attendanceCheckResponse = request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/attendance", HttpStatus.OK, Boolean.class);
-        assertFalse(attendanceCheckResponse);
+        assertThat(attendanceCheckResponse).isFalse();
 
         // Verify attendance
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
         ExamUserDTO examUserDTO = new ExamUserDTO(TEST_PREFIX + "student2", "", "", "", "", "", "", "", true, true, true, true, "");
         var examUserResponse = request.performMvcRequest(buildUpdateExamUser(examUserDTO, true, course1.getId(), exam1.getId())).andExpect(status().isOk()).andReturn();
         ExamUser examUser = mapper.readValue(examUserResponse.getResponse().getContentAsString(), ExamUser.class);
-        assertTrue(examUser.getDidCheckRegistrationNumber());
-        assertTrue(examUser.getDidCheckImage());
-        assertTrue(examUser.getDidCheckName());
-        assertTrue(examUser.getDidCheckLogin());
-        assertNotNull(examUser.getSigningImagePath());
+        assertThat(examUser.getDidCheckRegistrationNumber()).isTrue();
+        assertThat(examUser.getDidCheckImage()).isTrue();
+        assertThat(examUser.getDidCheckName()).isTrue();
+        assertThat(examUser.getDidCheckLogin()).isTrue();
+        assertThat(examUser.getSigningImagePath()).isNotEmpty();
 
         // Switch back to student2
         userUtilService.changeUser(TEST_PREFIX + "student2");
 
         // Check attendance again
         attendanceCheckResponse = request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/attendance", HttpStatus.OK, Boolean.class);
-        assertTrue(attendanceCheckResponse);
+        assertThat(attendanceCheckResponse).isTrue();
     }
 
     private void verifySignedExamUsersHaveSignature(long examId, List<Long> unsignedExamUserIds) throws Exception {
