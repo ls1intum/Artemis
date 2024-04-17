@@ -563,6 +563,11 @@ instances will also use a ActiveMQ Artemis broker to synchronize WebSocket messa
    .. figure:: distributed/multi-node-setup.drawio.png
       :align: center
 
+   .. note::
+
+        You don't have to start the client manually. The client files are served by the Artemis instances and can be
+        accessed through the load balancer on ``http(s)://localhost``.
+
 Linux setup
 """""""""""
 
@@ -599,6 +604,7 @@ Linux setup
 
         docker compose -f docker/test-server-multi-node-mysql-localci.yml up
 
+#. You can now access artemis on ``http(s)://localhost`` and the registry on ``http://localhost:8761``.
 
 Windows setup
 """""""""""""
@@ -617,3 +623,5 @@ Windows setup
     .. code:: bash
 
         docker compose -f docker/test-server-multi-node-mysql-localci.yml up
+
+#. You can now access artemis on ``http(s)://localhost`` and the registry on ``http://localhost:8761``.
