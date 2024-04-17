@@ -19,6 +19,7 @@
                 [tutorialGroup]="tutorialGroup"
                 [showIdColumn]="false"
                 [isReadOnly]="!course.isAtLeastTutor"
+                (attendanceUpdated)="recalculateAttendanceDetails()"
             />
         </div>
     } @else {
