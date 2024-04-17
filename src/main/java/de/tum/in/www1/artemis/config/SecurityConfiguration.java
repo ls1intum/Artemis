@@ -212,7 +212,7 @@ public class SecurityConfiguration {
                     }
 
                     // All other requests must be authenticated. Additional authorization happens on the endpoints themselves.
-                   requests .requestMatchers("/**").authenticated();
+                   requests.requestMatchers("/**").authenticated();
                 }
             )
             // Applies additional configurations defined in a custom security configurer adapter.
