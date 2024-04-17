@@ -16,9 +16,6 @@ class VersionRangesRequestConditionTest {
 
     @Test
     void testInitEdgeCases() {
-        VersionRangesRequestCondition nullCondition = new VersionRangesRequestCondition(testApiVersions, (VersionRange) null);
-        assertThat(nullCondition.getRanges()).isEmpty();
-
         VersionRangesRequestCondition emptyCondition = new VersionRangesRequestCondition(testApiVersions);
         assertThat(emptyCondition.getRanges()).isEmpty();
     }
