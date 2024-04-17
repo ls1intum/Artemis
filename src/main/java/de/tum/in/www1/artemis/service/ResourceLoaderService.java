@@ -47,7 +47,7 @@ public class ResourceLoaderService {
     /**
      * Files that start with a prefix that is included in this list can be overwritten from the file system
      */
-    private static final List<Path> ALLOWED_OVERRIDE_PREFIXES = List.of(Path.of("templates", "jenkins"));
+    private static final List<Path> ALLOWED_OVERRIDE_PREFIXES = List.of(Path.of("templates"));
 
     public ResourceLoaderService(ResourceLoader resourceLoader) {
         this.resourceLoader = ResourcePatternUtils.getResourcePatternResolver(resourceLoader);
