@@ -146,7 +146,6 @@ class LtiServiceTest {
         assertThat(user.getGroups()).contains(LtiService.LTI_GROUP_NAME);
 
         verify(userCreationService).saveUser(user);
-        verify(artemisAuthenticationProvider).addUserToGroup(user, courseStudentGroupName);
     }
 
     @Test

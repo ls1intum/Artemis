@@ -23,7 +23,7 @@
             }
         </select>
     </div>
-    @if (programmingExercise.programmingLanguage && programmingExerciseCreationConfig.projectTypes && programmingExerciseCreationConfig.projectTypes.length > 0) {
+    @if (programmingExercise.programmingLanguage && programmingExerciseCreationConfig.projectTypes?.length && programmingExerciseCreationConfig.modePickerOptions) {
         <div class="form-group mt-2">
             <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.projectType" for="field_projectType"></label>
             <jhi-mode-picker
