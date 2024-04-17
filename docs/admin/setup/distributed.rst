@@ -527,7 +527,8 @@ For ICL, the run configuration for core nodes need to include the additional pro
 
 Core nodes do not require further adjustments to the ``application-prod.yml``, as long as you have added the necessary variables as described in the :ref:`Integrated Code Lifecycle Setup <Integrated Code Lifecycle Setup>`.
 
-**Build Agents**
+Build Agents
+""""""""""""
 
 Build agents can be added to and removed from the server cluster depending on the build capacity needed to conduct the automatic
 assessment of programming exercises. If desired, build agents can execute multiple build jobs concurrently. In this case, you need to make sure that the server node your build agents is running on has enough resources.
