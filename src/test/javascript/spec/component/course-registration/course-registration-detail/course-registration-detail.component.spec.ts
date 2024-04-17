@@ -57,7 +57,7 @@ describe('CourseRegistrationDetailComponent', () => {
 
                 // by default, assume that the course is not fully accessible but only available for registration
                 jest.spyOn(courseService, 'findOneForRegistration').mockReturnValue(of(new HttpResponse<Course>({ body: course1 })));
-                jest.spyOn(courseService, 'findOneForDashboard').mockReturnValue(throwError(new HttpErrorResponse({ status: 403 })));
+                jest.spyOn(courseService, 'findOneForDashboard').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
             });
     });
 
