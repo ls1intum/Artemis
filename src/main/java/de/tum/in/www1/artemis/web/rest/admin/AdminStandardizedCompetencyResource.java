@@ -5,7 +5,7 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import jakarta.ws.rs.BadRequestException;
+import jakarta.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,11 +19,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.in.www1.artemis.domain.competency.KnowledgeArea;
 import de.tum.in.www1.artemis.domain.competency.StandardizedCompetency;
 import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 import de.tum.in.www1.artemis.service.competency.KnowledgeAreaService;
 import de.tum.in.www1.artemis.service.competency.StandardizedCompetencyService;
+import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreaRequestDTO;
+import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreaResultDTO;
+import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.StandardizedCompetencyRequestDTO;
+import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.StandardizedCompetencyResultDTO;
 
 /**
  * Admin REST controller for managing {@link StandardizedCompetency} entities.
@@ -53,12 +56,12 @@ public class AdminStandardizedCompetencyResource {
      */
     @PostMapping("standardized-competencies")
     @EnforceAdmin
-    public ResponseEntity<StandardizedCompetency> createStandardizedCompetency(@RequestBody StandardizedCompetency competency) throws URISyntaxException {
+    public ResponseEntity<StandardizedCompetencyResultDTO> createStandardizedCompetency(@RequestBody @Valid StandardizedCompetencyRequestDTO competency) throws URISyntaxException {
         log.debug("REST request to create standardized competency : {}", competency);
 
         var persistedCompetency = standardizedCompetencyService.createStandardizedCompetency(competency);
 
-        return ResponseEntity.created(new URI("/api/standardized-competencies/" + persistedCompetency.getId())).body(persistedCompetency);
+        return ResponseEntity.created(new URI("/api/standardized-competencies/" + persistedCompetency.getId())).body(StandardizedCompetencyResultDTO.of(persistedCompetency));
     }
 
     /**
@@ -70,16 +73,13 @@ public class AdminStandardizedCompetencyResource {
      */
     @PutMapping("standardized-competencies/{competencyId}")
     @EnforceAdmin
-    public ResponseEntity<StandardizedCompetency> updateStandardizedCompetency(@PathVariable long competencyId, @RequestBody StandardizedCompetency competency) {
+    public ResponseEntity<StandardizedCompetencyResultDTO> updateStandardizedCompetency(@PathVariable long competencyId,
+            @RequestBody @Valid StandardizedCompetencyRequestDTO competency) {
         log.debug("REST request to update standardized competency : {}", competency);
 
-        if (competencyId != competency.getId()) {
-            throw new BadRequestException("The competency id in the body and path do not match");
-        }
+        var persistedCompetency = standardizedCompetencyService.updateStandardizedCompetency(competencyId, competency);
 
-        var persistedCompetency = standardizedCompetencyService.updateStandardizedCompetency(competency);
-
-        return ResponseEntity.ok(persistedCompetency);
+        return ResponseEntity.ok(StandardizedCompetencyResultDTO.of(persistedCompetency));
     }
 
     /**
@@ -107,12 +107,46 @@ public class AdminStandardizedCompetencyResource {
      */
     @PostMapping("standardized-competencies/knowledge-areas")
     @EnforceAdmin
-    public ResponseEntity<KnowledgeArea> createKnowledgeArea(@RequestBody KnowledgeArea knowledgeArea) throws URISyntaxException {
+    public ResponseEntity<KnowledgeAreaResultDTO> createKnowledgeArea(@RequestBody @Valid KnowledgeAreaRequestDTO knowledgeArea) throws URISyntaxException {
         log.debug("REST request to create knowledge area : {}", knowledgeArea);
 
         var persistedKnowledgeArea = knowledgeAreaService.createKnowledgeArea(knowledgeArea);
 
-        return ResponseEntity.created(new URI("/api/standardized-competencies/knowledge-areas" + persistedKnowledgeArea.getId())).body(persistedKnowledgeArea);
+        return ResponseEntity.created(new URI("/api/standardized-competencies/knowledge-areas" + persistedKnowledgeArea.getId()))
+                .body(KnowledgeAreaResultDTO.of(persistedKnowledgeArea));
+    }
+
+    /**
+     * PUT api/admin/standardized-competencies/knowledge-areas/{knowledgeAreaId} : Updates an existing knowledge area
+     *
+     * @param knowledgeAreaId the id of the knowledge area that should be updated
+     * @param knowledgeArea   the updated knowledge area
+     * @return the ResponseEntity with status 200 (OK) and with body the updated knowledge area
+     */
+    @PutMapping("standardized-competencies/knowledge-areas/{knowledgeAreaId}")
+    @EnforceAdmin
+    public ResponseEntity<KnowledgeAreaResultDTO> updateKnowledgeArea(@PathVariable long knowledgeAreaId, @RequestBody @Valid KnowledgeAreaRequestDTO knowledgeArea) {
+        log.debug("REST request to update knowledge area : {}", knowledgeArea);
+
+        var persistedKnowledgeArea = knowledgeAreaService.updateKnowledgeArea(knowledgeAreaId, knowledgeArea);
+
+        return ResponseEntity.ok(KnowledgeAreaResultDTO.of(persistedKnowledgeArea));
+    }
+
+    /**
+     * DELETE api/admin/standardized-competencies/knowledge-areas/{knowledgeAreaId} : Deletes a knowledge area
+     *
+     * @param knowledgeAreaId the id of the knowledge area that should be deleted
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @DeleteMapping("standardized-competencies/knowledge-areas/{knowledgeAreaId}")
+    @EnforceAdmin
+    public ResponseEntity<Void> deleteKnowledgeArea(@PathVariable long knowledgeAreaId) {
+        log.debug("REST request to delete knowledge area : {}", knowledgeAreaId);
+
+        knowledgeAreaService.deleteKnowledgeAreaElseThrow(knowledgeAreaId);
+
+        return ResponseEntity.ok().build();
     }
 
 }
