@@ -186,7 +186,7 @@ public class SecurityConfiguration {
                 .permissionsPolicy(permissions -> permissions.policy("camera=(), fullscreen=(*), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), sync-xhr=()")))
             // Configures sessions to be stateless; appropriate for REST APIs where no session is required.
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            // Configures authorization for various URL patterns.
+            // Configures authorization for various URL patterns. The patterns are considered in order.
             .authorizeHttpRequests(requests -> {
                 requests
                     // Client related URLs and publicly accessible information (allowed for everyone).
@@ -204,14 +204,15 @@ public class SecurityConfiguration {
                     .requestMatchers("/websocket/**").permitAll()
                     .requestMatchers("/.well-known/jwks.json").permitAll()
                     // Prometheus endpoint protected by IP address.
-                    .requestMatchers("/management/prometheus/**").access((authentication, context) -> new AuthorizationDecision(monitoringIpAddresses.contains(context.getRequest().getRemoteAddr())))
-                    // All other requests must be authenticated. Additional authorization happens on the endpoints themselves.
-                    .requestMatchers("/**").authenticated();
+                    .requestMatchers("/management/prometheus/**").access((authentication, context) -> new AuthorizationDecision(monitoringIpAddresses.contains(context.getRequest().getRemoteAddr())));
 
                     // LocalVC related URLs: LocalVCPushFilter and LocalVCFetchFilter handle authentication on their own
                     if (profileService.isLocalVcsActive()) {
                         requests.requestMatchers("/git/**").permitAll();
                     }
+
+                    // All other requests must be authenticated. Additional authorization happens on the endpoints themselves.
+                   requests .requestMatchers("/**").authenticated();
                 }
             )
             // Applies additional configurations defined in a custom security configurer adapter.
