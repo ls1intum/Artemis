@@ -102,7 +102,7 @@ describe('Exercise Update Plagiarism Component', () => {
         expect(comp.formValid).toBeTrue();
 
         // @ts-ignore
-        comp.fieldCPCEnabled.valid = true;
+        comp.fieldCPCEnabled!.valid = true;
         comp.exercise.plagiarismDetectionConfig!.continuousPlagiarismControlEnabled = true;
         (comp.fieldCPCEnabled!.valueChanges! as Subject<boolean>).next(true);
 
