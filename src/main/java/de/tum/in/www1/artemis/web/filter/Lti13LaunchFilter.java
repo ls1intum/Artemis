@@ -19,7 +19,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.google.gson.Gson;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.config.lti.CustomLti13Configurer;
 import de.tum.in.www1.artemis.domain.lti.Claims;
@@ -123,7 +123,7 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
 
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
-        writer.print(new Gson().toJson(jsonResponse));
+        writer.print(new ObjectMapper().writeValueAsString(jsonResponse));
         writer.flush();
     }
 }

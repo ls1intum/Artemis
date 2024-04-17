@@ -87,7 +87,6 @@ export class ProgrammingExercise extends Exercise {
     public templateParticipation?: TemplateProgrammingExerciseParticipation;
     public solutionParticipation?: SolutionProgrammingExerciseParticipation;
     public testRepositoryUri?: string;
-    public publishBuildPlanUrl?: boolean;
     public customizeBuildPlanWithAeolus?: boolean;
     public allowOnlineEditor?: boolean;
     public staticCodeAnalysisEnabled?: boolean;
@@ -135,7 +134,6 @@ export class ProgrammingExercise extends Exercise {
         this.exerciseGroup = exerciseGroup;
         this.templateParticipation = new TemplateProgrammingExerciseParticipation();
         this.solutionParticipation = new SolutionProgrammingExerciseParticipation();
-        this.publishBuildPlanUrl = false; // default value
         this.allowOnlineEditor = false; // default value
         this.staticCodeAnalysisEnabled = false; // default value
         this.allowOfflineIde = true; // default value
