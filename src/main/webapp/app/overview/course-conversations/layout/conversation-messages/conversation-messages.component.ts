@@ -42,7 +42,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     @Output() openThread = new EventEmitter<Post>();
 
     @Input()
-    courseWideSearchTerm: string;
+    courseWideSearchCriterion: courseWideSearchConfig;
 
     @ViewChild('searchInput')
     searchInput: ElementRef;
@@ -252,4 +252,13 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     updateIsAllMessagesPage() {
         this.isAllMessagesPage = this.getAsChannel(this._activeConversation)?.name == 'all-messages';
     }
+}
+
+interface courseWideSearchConfig {
+    courseWideSearchTerm: string;
+    filterToUnresolved: boolean;
+    filterToOwn: boolean;
+    filterToAnsweredOrReacted: boolean;
+    postSortCriterion: PostSortCriterion;
+    sortingOrder: SortDirection;
 }
