@@ -131,9 +131,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         this.updateIsAllMessagesPage();
         if (this.course && this._activeConversation) {
             if (this.searchInput) {
-                console.log('courseWideSearchTerm: ' + this.courseWideSearchTerm);
                 this.searchInput.nativeElement.value = this.searchText = this.isAllMessagesPage ? this.courseWideSearchTerm : '';
-                console.log('search text in messages page: ' + this.searchText);
             }
             this.onSearch();
             this.createEmptyPost();
