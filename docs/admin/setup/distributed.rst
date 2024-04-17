@@ -538,7 +538,7 @@ The run configuration contains just two profiles:
 
 ::
 
-    --spring.profiles.active:prod,buildagent
+    --spring.profiles.active=prod,buildagent
 
 Build agents depend on much less services than the core nodes, thus we can adapt the ``application-prod.yml`` to exclude some of these dependencies.
 This heavily reduces the application start up time and resource demand.
