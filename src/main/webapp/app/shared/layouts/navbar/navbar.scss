@@ -209,6 +209,10 @@ a:not(.btn):hover {
             display: inline;
         }
     }
+
+    .breadcrumb-divider {
+        color: var(--bs-breadcrumb-divider-color)
+    }
 }
 
 @media not all and (min-resolution: 0.001dpcm) {
