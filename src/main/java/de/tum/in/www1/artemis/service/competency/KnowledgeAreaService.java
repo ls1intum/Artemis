@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.competency.KnowledgeArea;
 import de.tum.in.www1.artemis.repository.competency.KnowledgeAreaRepository;
+import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreaRequestDTO;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Service for managing {@link KnowledgeArea} entities.
@@ -29,32 +31,55 @@ public class KnowledgeAreaService {
      * @param knowledgeArea the knowledge area to create
      * @return the created knowledge area
      */
-    public KnowledgeArea createKnowledgeArea(KnowledgeArea knowledgeArea) {
-        knowledgeAreaIsValidOrElseThrow(knowledgeArea);
-
+    public KnowledgeArea createKnowledgeArea(KnowledgeAreaRequestDTO knowledgeArea) {
         // fetch the parent from the database if it exists
-        KnowledgeArea parent = knowledgeArea.getParent();
-        if (parent != null) {
-            parent = knowledgeAreaRepository.findByIdElseThrow(parent.getId());
+        KnowledgeArea parent = null;
+        if (knowledgeArea.parentId() != null) {
+            parent = knowledgeAreaRepository.findByIdElseThrow(knowledgeArea.parentId());
         }
 
-        var knowledgeAreaToCreate = new KnowledgeArea(knowledgeArea.getTitle(), knowledgeArea.getShortTitle(), knowledgeArea.getDescription());
+        var knowledgeAreaToCreate = new KnowledgeArea(knowledgeArea.title(), knowledgeArea.shortTitle(), knowledgeArea.description());
         knowledgeAreaToCreate.setParent(parent);
         return knowledgeAreaRepository.save(knowledgeAreaToCreate);
     }
 
     /**
-     * Verifies that a knowledge area that should be created is valid or throws a BadRequestException
+     * Updates an existing knowledge area with the provided data
      *
-     * @param knowledgeArea the knowledge area to verify
+     * @param knowledgeAreaId the id of the knowledge area to update
+     * @param knowledgeArea   the new knowledge area values
+     * @return the updated knowledge area
      */
-    private void knowledgeAreaIsValidOrElseThrow(KnowledgeArea knowledgeArea) throws BadRequestException {
-        boolean titleIsInvalid = knowledgeArea.getTitle() == null || knowledgeArea.getTitle().isBlank() || knowledgeArea.getTitle().length() > KnowledgeArea.MAX_TITLE_LENGTH;
-        boolean shortTitleIsInvalid = knowledgeArea.getShortTitle() == null || knowledgeArea.getShortTitle().isBlank()
-                || knowledgeArea.getShortTitle().length() > KnowledgeArea.MAX_SHORT_TITLE_LENGTH;
+    public KnowledgeArea updateKnowledgeArea(long knowledgeAreaId, KnowledgeAreaRequestDTO knowledgeArea) {
+        var existingKnowledgeArea = knowledgeAreaRepository.findByIdElseThrow(knowledgeAreaId);
 
-        if (titleIsInvalid || shortTitleIsInvalid) {
-            throw new BadRequestException();
+        existingKnowledgeArea.setTitle(knowledgeArea.title());
+        existingKnowledgeArea.setShortTitle(knowledgeArea.shortTitle());
+        existingKnowledgeArea.setDescription(knowledgeArea.description());
+
+        if (knowledgeArea.parentId() == null) {
+            existingKnowledgeArea.setParent(null);
         }
+        else if (existingKnowledgeArea.getParent() == null || !knowledgeArea.parentId().equals(existingKnowledgeArea.getParent().getId())) {
+            var newParent = knowledgeAreaRepository.findByIdElseThrow(knowledgeArea.parentId());
+            if (knowledgeAreaRepository.isDescendantOf(newParent.getId(), knowledgeAreaId)) {
+                throw new BadRequestException("A knowledge area cannot have itself or one of its descendants as parent");
+            }
+            existingKnowledgeArea.setParent(newParent);
+        }
+
+        return knowledgeAreaRepository.save(existingKnowledgeArea);
+    }
+
+    /**
+     * Deletes an existing knowledge area with the given id or throws an EntityNotFoundException
+     *
+     * @param knowledgeAreaId the id of the knowledge area to delete
+     */
+    public void deleteKnowledgeAreaElseThrow(long knowledgeAreaId) throws EntityNotFoundException {
+        if (!knowledgeAreaRepository.existsById(knowledgeAreaId)) {
+            throw new EntityNotFoundException("KnowledgeArea", knowledgeAreaId);
+        }
+        knowledgeAreaRepository.deleteById(knowledgeAreaId);
     }
 }
