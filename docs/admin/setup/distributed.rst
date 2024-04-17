@@ -513,7 +513,8 @@ Compared to core nodes, build agents nodes are much more light-weight, as they h
 
 The previously mentioned steps concerning the multiple Artemis instance setup remain unchanged, as we only need to adapt the run and application configurations for each node.
 
-**Core nodes**
+Core nodes
+""""""""""
 
 Core nodes serve the main functionality of Artemis. In ICL, this additionally includes the :ref:`CI Management <ci_management>`,
 responsible for managing and interacting with the build job queue (adding, cancelling and viewing build jobs), and the :ref:`Local VC system <local_vc>`.
