@@ -209,10 +209,6 @@ a:not(.btn):hover {
             display: inline;
         }
     }
-
-    .breadcrumb-item:not(:first-of-type)::before {
-        content: '>';
-    }
 }
 
 @media not all and (min-resolution: 0.001dpcm) {

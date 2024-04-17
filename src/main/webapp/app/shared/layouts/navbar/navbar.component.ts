@@ -51,6 +51,7 @@ import {
     faUser,
     faUserPlus,
     faWrench,
+    faChevronRight,
 } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 import { Exercise } from 'app/entities/exercise.model';

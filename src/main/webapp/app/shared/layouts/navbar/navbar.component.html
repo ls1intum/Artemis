@@ -332,6 +332,9 @@
         <div>
             <ol class="breadcrumb">
                 @for (breadcrumb of breadcrumbs; track breadcrumb; let i = $index) {
+                @if (i != 0) {
+                    <fa-icon [icon]="faChevronRight" />
+                }
                     <li class="breadcrumb-item">
                         @if (breadcrumb && breadcrumb.translate) {
                             <a
