@@ -2,13 +2,14 @@ import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { Post } from 'app/entities/metis/post.model';
 import { ActivatedRoute, Router } from '@angular/router';
+import { FormGroup } from '@angular/forms';
 import { Subject, take, takeUntil } from 'rxjs';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { Course } from 'app/entities/course.model';
-import { PageType } from 'app/shared/metis/metis.util';
-import { faFilter, faPlus, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { PageType, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
+import { faFilter, faLongArrowAltDown, faLongArrowAltUp, faPlus, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared/components/button.component';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 
@@ -41,6 +42,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     faTimes = faTimes;
     faFilter = faFilter;
     faSearch = faSearch;
+    faLongArrowAltUp = faLongArrowAltUp;
+    faLongArrowAltDown = faLongArrowAltDown;
 
     // MetisConversationService is created in course overview, so we can use it here
     constructor(
@@ -156,4 +159,24 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         const index = this.conversationsOfUser.findIndex((channel) => getAsChannelDTO(channel)?.name == 'all-messages');
         this.metisConversationService.setActiveConversation(this.conversationsOfUser[index]);
     }
+
+    onSelectContext(): void {}
+
+    comparePostSortOptionFn(option1: PostSortCriterion | SortDirection, option2: PostSortCriterion | SortDirection) {
+        return option1 === option2;
+    }
+
+    onChangeSortDir(): void {
+        // flip sort direction
+        this.currentSortDirection = this.currentSortDirection === SortDirection.DESCENDING ? SortDirection.ASCENDING : SortDirection.DESCENDING;
+        this.onSelectContext();
+    }
+
+    currentSortDirection = SortDirection.DESCENDING;
+
+    protected readonly SortDirection = SortDirection;
+
+    formGroup: FormGroup;
+
+    readonly SortBy = PostSortCriterion;
 }
