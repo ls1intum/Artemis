@@ -36,8 +36,6 @@ export class ExerciseAssessmentDashboardPage {
     }
 
     async checkComplaintText(complaintText: string) {
-        // await this.page.locator(this.complaintTextAreaSelector).waitFor({ state: 'attached' });
         await expect(this.getComplaintText()).toHaveValue(complaintText);
-        // expect(await hasAttributeWithValue(this.page, this.complaintTextAreaSelector, complaintText)).toBe(true);
     }
 }

@@ -37,8 +37,6 @@ export class StudentAssessmentPage {
     }
 
     async checkComplaintResponseText(text: string) {
-        await this.getComplaintResponse().waitFor({ state: 'attached' });
         await expect(this.getComplaintResponse()).toHaveValue(text);
-        // expect(await hasAttributeWithValue(this.page, this.complaintResponseSelector, text)).toBe(true);
     }
 }
