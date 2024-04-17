@@ -45,7 +45,12 @@ describe('ParticipationComponent', () => {
     let submissionService: ProgrammingSubmissionService;
     let alertService: AlertService;
 
-    const exercise: Exercise = { numberOfAssessmentsOfCorrectionRounds: [], studentAssignedTeamIdComputed: false, id: 1, secondCorrectionEnabled: true };
+    const exercise: Exercise = {
+        numberOfAssessmentsOfCorrectionRounds: [],
+        studentAssignedTeamIdComputed: false,
+        id: 1,
+        secondCorrectionEnabled: true,
+    };
 
     const route = { params: of({ exerciseId: '1' } as Params) } as ActivatedRoute;
 
@@ -131,7 +136,10 @@ describe('ParticipationComponent', () => {
         const participation: StudentParticipation = { id: 3, student };
         const participationFindStub = jest.spyOn(participationService, 'findAllParticipationsByExercise').mockReturnValue(of(new HttpResponse({ body: [participation] })));
 
-        const submissionState: ProgrammingSubmissionStateObj = { participationId: participation.id!, submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION };
+        const submissionState: ProgrammingSubmissionStateObj = {
+            participationId: participation.id!,
+            submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION,
+        };
         const submissionGetStateStub = jest.spyOn(submissionService, 'getSubmissionStateOfExercise').mockReturnValue(of(submissionState));
 
         component.ngOnInit();
@@ -203,7 +211,10 @@ describe('ParticipationComponent', () => {
 
         // Test different submission states
         Object.values(ProgrammingSubmissionState).forEach((programmingSubmissionState) => {
-            const submissionState: ProgrammingSubmissionStateObj = { participationId: participation.id!, submissionState: programmingSubmissionState };
+            const submissionState: ProgrammingSubmissionStateObj = {
+                participationId: participation.id!,
+                submissionState: programmingSubmissionState,
+            };
             component.exerciseSubmissionState = { 1: submissionState };
             const expectedBoolean = programmingSubmissionState === ProgrammingSubmissionState.HAS_FAILED_SUBMISSION;
             expect(component.filterParticipationByProp(participation)).toBe(expectedBoolean);
@@ -278,7 +289,7 @@ describe('ParticipationComponent', () => {
 
     it('should error on save changedDueDate', () => {
         const errorSpy = jest.spyOn(alertService, 'error');
-        jest.spyOn(participationService, 'updateIndividualDueDates').mockReturnValue(throwError(new HttpResponse({ body: null })));
+        jest.spyOn(participationService, 'updateIndividualDueDates').mockReturnValue(throwError(() => new HttpResponse({ body: null })));
         component.saveChangedDueDates();
         expect(errorSpy).toHaveBeenCalledOnce();
     });

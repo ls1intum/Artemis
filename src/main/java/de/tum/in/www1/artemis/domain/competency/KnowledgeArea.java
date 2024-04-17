@@ -31,6 +31,9 @@ public class KnowledgeArea extends DomainObject {
     @JsonIgnore
     public static final int MAX_SHORT_TITLE_LENGTH = 10;
 
+    @JsonIgnore
+    public static final int MAX_DESCRIPTION_LENGTH = 2000;
+
     @Column(name = "title", nullable = false)
     private String title;
 

@@ -1016,6 +1016,14 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
         expect(calculateFormValidSectionsSpy).toHaveBeenCalledTimes(6);
 
+        comp.programmingExercise.allowOfflineIde = false;
+        comp.programmingExercise.allowOnlineEditor = false;
+        comp.calculateFormStatusSections();
+        expect(comp.formStatusSections[1].valid).toBeFalse();
+        comp.programmingExercise.allowOnlineEditor = true;
+        comp.calculateFormStatusSections();
+        expect(comp.formStatusSections[1].valid).toBeTrue();
+
         comp.ngOnDestroy();
 
         for (const subscription of comp.inputFieldSubscriptions) {

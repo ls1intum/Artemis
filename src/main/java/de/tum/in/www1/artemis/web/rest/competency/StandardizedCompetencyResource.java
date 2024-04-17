@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.repository.competency.KnowledgeAreaRepository;
 import de.tum.in.www1.artemis.repository.competency.StandardizedCompetencyRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.service.competency.StandardizedCompetencyService;
-import de.tum.in.www1.artemis.web.rest.dto.competency.KnowledgeAreaDTO;
+import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreaResultDTO;
 
 /**
  * REST controller for managing {@link StandardizedCompetency} entities.
@@ -65,12 +65,12 @@ public class StandardizedCompetencyResource {
      */
     @GetMapping("standardized-competencies/for-tree-view")
     @EnforceAtLeastInstructor
-    public ResponseEntity<List<KnowledgeAreaDTO>> getAllForTreeView() {
+    public ResponseEntity<List<KnowledgeAreaResultDTO>> getAllForTreeView() {
         log.debug("REST request to all knowledge areas for tree view");
 
-        List<KnowledgeAreaDTO> knowledgeAreas = standardizedCompetencyService.getAllForTreeView();
+        var knowledgeAreas = standardizedCompetencyService.getAllForTreeView();
 
-        return ResponseEntity.ok().body(knowledgeAreas);
+        return ResponseEntity.ok().body(knowledgeAreas.stream().map(KnowledgeAreaResultDTO::of).toList());
     }
 
     /**
