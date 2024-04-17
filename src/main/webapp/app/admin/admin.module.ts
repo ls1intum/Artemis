@@ -43,6 +43,7 @@ import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.mo
 import { UserImportModule } from 'app/shared/user-import/user-import.module';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
 import { BuildAgentDetailsComponent } from 'app/localci/build-agents/build-agent-details/build-agent-details/build-agent-details.component';
+import { KnowledgeAreaDetailComponent } from 'app/admin/standardized-competencies/knowledge-area-detail.component';
 
 const ENTITY_STATES = [...adminState];
 
@@ -92,6 +93,7 @@ const ENTITY_STATES = [...adminState];
         BuildAgentSummaryComponent,
         BuildAgentDetailsComponent,
         StandardizedCompetencyDetailComponent,
+        KnowledgeAreaDetailComponent,
         StandardizedCompetencyManagementComponent,
     ],
 })
