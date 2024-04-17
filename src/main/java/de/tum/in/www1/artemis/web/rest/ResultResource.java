@@ -164,16 +164,16 @@ public class ResultResource {
      */
     @GetMapping("participations/{participationId}/results/logs-available")
     @EnforceAtLeastTutor
-    public ResponseEntity<Map<Long, Boolean>> getLogsAvailabilityForResultsOfParticipation(@PathVariable long participationId) {
+    public ResponseEntity<Map<Long, Long>> getLogsAvailabilityForResultsOfParticipation(@PathVariable long participationId) {
         log.debug("REST request to get logs availability for results of participation : {}", participationId);
         Participation participation = participationRepository.findByIdElseThrow(participationId);
         List<Result> results = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(participationId);
 
-        Map<Long, Boolean> logsAvailable = resultService.getLogsAvailabilityForResults(results);
+        Map<Long, Long> resultBuildJobMap = resultService.getLogsAvailabilityForResults(results);
 
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
 
-        return new ResponseEntity<>(logsAvailable, HttpStatus.OK);
+        return new ResponseEntity<>(resultBuildJobMap, HttpStatus.OK);
     }
 
     /**

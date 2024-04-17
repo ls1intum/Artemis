@@ -352,7 +352,7 @@ public class BuildLogEntryService {
         }
     }
 
-    public boolean resultHasLogFile(String buildJobId) {
+    public boolean buildJobHasLogFile(String buildJobId) {
         Path logPath = buildLogsPath.resolve(buildJobId + ".log");
         return Files.exists(logPath);
     }
