@@ -547,66 +547,66 @@ You can make following adaptations to the ``application-prod.yml``:
 
 1. Disable Liquibase and loadbalancer cache:
 
-.. code-block:: yaml
+    .. code-block:: yaml
 
-    spring:
-        liquibase:
-            enabled: false
-        cloud:
-            loadbalancer:
-                cache:
-                    enabled: false
+        spring:
+            liquibase:
+                enabled: false
+            cloud:
+                loadbalancer:
+                    cache:
+                        enabled: false
 
 2. Autoconfigure exclusions
 
-.. code-block:: yaml
+    .. code-block:: yaml
 
-    spring:
-        autoconfigure:
-            exclude:
-                # Hibernate and DataSource are not needed in the build agent
-                - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
-                - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
-                # Those metrics are repeated here, because overriding the `exclude` array is not possible
-                - org.springframework.boot.actuate.autoconfigure.metrics.data.RepositoryMetricsAutoConfiguration
-                - org.springframework.boot.actuate.autoconfigure.metrics.jdbc.DataSourcePoolMetricsAutoConfiguration
-                - org.springframework.boot.actuate.autoconfigure.metrics.startup.StartupTimeMetricsListenerAutoConfiguration
-                - org.springframework.boot.actuate.autoconfigure.metrics.task.TaskExecutorMetricsAutoConfiguration
-                - org.springframework.boot.actuate.autoconfigure.metrics.web.tomcat.TomcatMetricsAutoConfiguration
+        spring:
+            autoconfigure:
+                exclude:
+                    # Hibernate and DataSource are not needed in the build agent
+                    - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
+                    - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+                    # Those metrics are repeated here, because overriding the `exclude` array is not possible
+                    - org.springframework.boot.actuate.autoconfigure.metrics.data.RepositoryMetricsAutoConfiguration
+                    - org.springframework.boot.actuate.autoconfigure.metrics.jdbc.DataSourcePoolMetricsAutoConfiguration
+                    - org.springframework.boot.actuate.autoconfigure.metrics.startup.StartupTimeMetricsListenerAutoConfiguration
+                    - org.springframework.boot.actuate.autoconfigure.metrics.task.TaskExecutorMetricsAutoConfiguration
+                    - org.springframework.boot.actuate.autoconfigure.metrics.web.tomcat.TomcatMetricsAutoConfiguration
 
 Furthermore, you will need some configuration related to version control and continuous integration.
 
 3. Build agents require access to the VC server. Therefore, you need to add Artemis admin credentials so the build agent can access the repositories:
 
-.. code-block:: yaml
+    .. code-block:: yaml
 
-    artemis:
-        version-control:
-            url: <url-to-your-vc-server>
-            default-branch: main # The branch that should be used as default branch for all newly created repositories. This does NOT have to be equal to the default branch of the VCS
-            # Artemis admin credentials
-            user: <artemis-admin>
-            password: <artemis-admin-password>
+        artemis:
+            version-control:
+                url: <url-to-your-vc-server>
+                default-branch: main # The branch that should be used as default branch for all newly created repositories. This does NOT have to be equal to the default branch of the VCS
+                # Artemis admin credentials
+                user: <artemis-admin>
+                password: <artemis-admin-password>
 
 4. Configuration related to the execution of build jobs:
 
-.. code-block:: yaml
+    .. code-block:: yaml
 
-    artemis:
-        continuous-integration:
-            docker-connection-uri: unix:///var/run/docker.sock
-            specify-concurrent-builds: true                     # Set to false, if the number of concurrent build jobs will be chosen automatically based on system resources
-            concurrent-build-size: 1                            # If previous value is true: Set to desired value but keep available system resources in mind
-            asynchronous: true
-            timeout-seconds: 240                                # Time limit of a build before it will be cancelled
-            build-container-prefix: local-ci-
-            image-cleanup:
-                enabled: true                                   # If set to true (recommended), old Docker images will be deleted on a schedule.
-                expiry-days: 2                                  # The number of days since the last use after which a Docker image is considered outdated and can be removed.
-                cleanup-schedule-time: 0 0 3 * * *              # CRON expression for cleanup schedule
-            container-cleanup:
-                expiry-minutes: 5                               # Time after a hanging container will automatically be removed
-                cleanup-schedule-minutes: 60                    # Schedule for container cleanup
+        artemis:
+            continuous-integration:
+                docker-connection-uri: unix:///var/run/docker.sock
+                specify-concurrent-builds: true                     # Set to false, if the number of concurrent build jobs should be chosen automatically based on system resources
+                concurrent-build-size: 1                            # If previous value is true: Set to desired value but keep available system resources in mind
+                asynchronous: true
+                timeout-seconds: 240                                # Time limit of a build before it will be cancelled
+                build-container-prefix: local-ci-
+                image-cleanup:
+                    enabled: true                                   # If set to true (recommended), old Docker images will be deleted on a schedule.
+                    expiry-days: 2                                  # The number of days since the last use after which a Docker image is considered outdated and can be removed.
+                    cleanup-schedule-time: 0 0 3 * * *              # CRON expression for cleanup schedule
+                container-cleanup:
+                    expiry-minutes: 5                               # Time after a hanging container will automatically be removed
+                    cleanup-schedule-minutes: 60                    # Schedule for container cleanup
 
 
 Build agents run as `Hazelcast Lite Members <https://docs.hazelcast.com/hazelcast/5.3/maintain-cluster/lite-members>`__ and require a full member, in our case a core node, to be running.
