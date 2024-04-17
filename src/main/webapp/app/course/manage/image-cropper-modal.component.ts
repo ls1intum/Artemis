@@ -27,18 +27,13 @@ export class ImageCropperModalComponent {
      * Method is called when the process is canceled.
      */
     onCancel(): void {
-        this.close();
-    }
-
-    onSave(): void {
-        this.closeWithSaving();
-    }
-
-    private close(): void {
         this.activeModal.close();
     }
 
-    private closeWithSaving(): void {
+    /**
+     * Method is called when the process is saved.
+     */
+    onSave(): void {
         this.activeModal.close(this.croppedImage);
     }
 }

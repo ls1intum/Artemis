@@ -26,8 +26,7 @@
                     <div class="col">
                         @if (!course.id) {
                             <h4 id="jhi-course-heading-create" jhiTranslate="artemisApp.course.home.createLabel"></h4>
-                        }
-                        @if (course.id) {
+                        } @else {
                             <h4 id="jhi-course-heading-edit" jhiTranslate="artemisApp.course.home.editLabel"></h4>
                         }
                     </div>
@@ -129,7 +128,7 @@
                             [error]="!isValidDate"
                         />
                         @if (!isValidDate) {
-                            <span class="invalid-feedback"> {{ 'artemisApp.course.form.endDate.invalid' | artemisTranslate } }</span>
+                            <span class="invalid-feedback"> {{ 'artemisApp.course.form.endDate.invalid' | artemisTranslate }}</span>
                         }
                     </div>
                 </div>
