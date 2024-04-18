@@ -154,6 +154,6 @@ public class ExamUserService {
     /**
      * Contains the information about an exam user with image
      */
-    record ExamUserWithImageDTO(String studentRegistrationNumber, ImageDTO image) {
+    public record ExamUserWithImageDTO(String studentRegistrationNumber, ImageDTO image) {
     }
 }

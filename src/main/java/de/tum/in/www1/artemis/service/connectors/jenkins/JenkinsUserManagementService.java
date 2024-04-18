@@ -209,7 +209,8 @@ public class JenkinsUserManagementService implements CIUserManagementService {
      * @param password       the user's password
      * @param groupsToAdd    groups to add the user to
      * @param groupsToRemove groups to remove the user from
-     * @throws ContinuousIntegrationException
+     *
+     * @throws ContinuousIntegrationException if something went wrong updating the user
      */
     @Override
     public void updateUserAndGroups(String oldLogin, User user, String password, Set<String> groupsToAdd, Set<String> groupsToRemove) throws ContinuousIntegrationException {

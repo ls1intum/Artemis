@@ -260,10 +260,8 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         List<AuxiliaryRepository> auxiliaryRepositories = auxiliaryRepositoryRepository.findByExerciseId(exercise.getId());
 
         // Export the auxiliary repositories and add them to list
-        auxiliaryRepositories.forEach(auxiliaryRepository -> {
-            pathsToBeZipped
-                    .add(exportInstructorAuxiliaryRepositoryForExercise(exercise.getId(), auxiliaryRepository, workingDir, outputDir, exportErrors).map(File::toPath).orElse(null));
-        });
+        auxiliaryRepositories.forEach(auxiliaryRepository -> pathsToBeZipped
+                .add(exportInstructorAuxiliaryRepositoryForExercise(exercise.getId(), auxiliaryRepository, workingDir, outputDir, exportErrors).map(File::toPath).orElse(null)));
 
         // Setup path to store the zip file for the exported repositories
         var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
