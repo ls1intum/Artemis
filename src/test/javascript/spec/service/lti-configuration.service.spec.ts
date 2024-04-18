@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { LtiPlatformConfiguration } from 'app/admin/lti-configuration/lti-configuration.model';
 import { LtiConfigurationService } from 'app/admin/lti-configuration/lti-configuration.service';
+import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 
 describe('LtiConfigurationService', () => {
     let service: LtiConfigurationService;
@@ -56,12 +57,18 @@ describe('LtiConfigurationService', () => {
             },
         ];
 
-        service.findAll().subscribe((platforms) => {
-            expect(platforms.length).toHaveLength(2);
-            expect(platforms).toEqual(dummyLtiPlatforms);
-        });
+        service
+            .query({
+                page: 0,
+                size: ITEMS_PER_PAGE,
+                sort: ['id', 'desc'],
+            })
+            .subscribe((platforms) => {
+                expect(platforms.body?.length).toHaveLength(2);
+                expect(platforms).toEqual(dummyLtiPlatforms);
+            });
 
-        const req = httpMock.expectOne('api/lti-platforms');
+        const req = httpMock.expectOne('api/lti-platforms?page=0&size=50&sort=id&sort=desc');
         expect(req.request.method).toBe('GET');
         req.flush(dummyLtiPlatforms);
     });
