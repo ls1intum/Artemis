@@ -102,8 +102,8 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
 
             // Validate that template and repository have the same number of pom.xml files, otherwise no upgrade will take place
             if (templatePoms.length == 1 && repositoryPoms.size() == 1) {
-                Model updatedRepoModel = upgradeProjectObjectModel(templatePoms[0], repositoryPoms.get(0), Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled()));
-                writeProjectObjectModel(updatedRepoModel, repositoryPoms.get(0));
+                Model updatedRepoModel = upgradeProjectObjectModel(templatePoms[0], repositoryPoms.getFirst(), Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled()));
+                writeProjectObjectModel(updatedRepoModel, repositoryPoms.getFirst());
             }
 
             if (repositoryType == RepositoryType.TESTS) {

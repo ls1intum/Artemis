@@ -205,9 +205,7 @@ public class TutorialGroupChannelManagementService {
      */
     public void removeUsersFromAllTutorialGroupChannelsInCourse(Course course, Set<User> users) {
         var tutorialGroups = tutorialGroupRepository.findAllByCourseId(course.getId());
-        tutorialGroups.forEach(tutorialGroup -> {
-            removeUsersFromTutorialGroupChannel(tutorialGroup, users);
-        });
+        tutorialGroups.forEach(tutorialGroup -> removeUsersFromTutorialGroupChannel(tutorialGroup, users));
     }
 
     /**
@@ -263,6 +261,7 @@ public class TutorialGroupChannelManagementService {
         if (channelName.length() >= 30) {
             channelName = channelName.substring(0, 27);
         }
+
         do {
             channelName += ThreadLocalRandom.current().nextInt(0, 10);
         }
@@ -319,9 +318,7 @@ public class TutorialGroupChannelManagementService {
      */
     public void changeChannelModeForCourse(Course course, Boolean tutorialGroupChannelsPublic) {
         var channels = tutorialGroupRepository.findAllByCourseIdWithChannel(course.getId()).stream().map(this::createChannelForTutorialGroup).collect(Collectors.toSet());
-        channels.forEach(channel -> {
-            channel.setIsPublic(tutorialGroupChannelsPublic);
-        });
+        channels.forEach(channel -> channel.setIsPublic(tutorialGroupChannelsPublic));
         channelRepository.saveAll(channels);
         log.debug("Changed public for all tutorial group channels of course with id {} to {}", course.getId(), tutorialGroupChannelsPublic);
     }

@@ -939,7 +939,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                     if (!relevantResults.isEmpty()) {
                         // make sure to take the latest result
                         relevantResults.sort((r1, r2) -> r2.getCompletionDate().compareTo(r1.getCompletionDate()));
-                        Result correctResult = relevantResults.get(0);
+                        Result correctResult = relevantResults.getFirst();
                         relevantResults.clear();
                         relevantResults.add(correctResult);
                     }
