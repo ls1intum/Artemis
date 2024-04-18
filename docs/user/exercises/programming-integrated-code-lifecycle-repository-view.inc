@@ -1,4 +1,4 @@
-For the programming exercises, we use a version control system called **Git**. Git is a distributed version control system that allows you to track changes in your code.
+Programming exercises use a version control system called **Git**. Git is a distributed version control system that allows you to track changes in your code.
 These changes are stored in a repository. A repository is a collection of files and directories that are tracked by Git.
 How to navigate through the repository and view the code is explained in the following sections. This guide is divided into two parts: one for students and one for instructors.
 It is demonstrated using course programming exercises, but the same principles apply to exams as well.
