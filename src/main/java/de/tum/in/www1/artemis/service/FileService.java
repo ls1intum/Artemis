@@ -575,7 +575,9 @@ public class FileService implements DisposableBean {
         String pathString = startPath.toString();
         if (pathString.contains(targetString)) {
             log.debug("Target String found, replacing..");
-            String targetPath = pathString.replace(targetString, replacementString);
+            // The client already provides a clean package name, but we have to make sure that no one abuses the API for injection.
+            final String cleanReplacementString = replacementString.replaceAll("[^\\w/\\\\]", "");
+            String targetPath = pathString.replace(targetString, cleanReplacementString);
             renameDirectory(startPath, Path.of(targetPath));
             directory = new File(targetPath);
         }
