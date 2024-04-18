@@ -396,18 +396,18 @@ export class CourseUpdateComponent implements OnInit {
     changeOnlineCourse() {
         this.course.onlineCourse = !this.course.onlineCourse;
         if (this.course.onlineCourse) {
-            // registration enabled cannot be activated if online course is active
+            // enrollment enabled cannot be activated if online course is active
             this.courseForm.controls['registrationEnabled'].setValue(false);
         }
         this.courseForm.controls['onlineCourse'].setValue(this.course.onlineCourse);
     }
     /**
-     * Enable or disable student course registration
+     * Enable or disable student course enrollment
      */
-    changeRegistrationEnabled() {
+    changeEnrollmentEnabled() {
         this.course.enrollmentEnabled = !this.course.enrollmentEnabled;
         if (this.course.enrollmentEnabled) {
-            // online course cannot be activated if registration enabled is set
+            // online course cannot be activated if enrollment enabled is set
             this.courseForm.controls['onlineCourse'].setValue(false);
             if (!this.course.enrollmentStartDate || !this.course.enrollmentEndDate) {
                 this.course.enrollmentStartDate = this.course.startDate;
@@ -525,10 +525,10 @@ export class CourseUpdateComponent implements OnInit {
     }
 
     /**
-     * Updates registrationConfirmationMessage on markdown change
-     * @param message new registrationConfirmationMessage
+     * Updates enrollmentConfirmationMessage on markdown change
+     * @param message new enrollmentConfirmationMessage
      */
-    updateRegistrationConfirmationMessage(message: string) {
+    updateEnrollmentConfirmationMessage(message: string) {
         this.courseForm.controls['registrationConfirmationMessage'].setValue(message);
     }
 
@@ -618,7 +618,7 @@ export class CourseUpdateComponent implements OnInit {
 
 const CourseValidator: ValidatorFn = (formGroup: FormGroup) => {
     const onlineCourse = formGroup.controls['onlineCourse'].value;
-    const registrationEnabled = formGroup.controls['registrationEnabled'].value;
+    const enrollmentEnabled = formGroup.controls['registrationEnabled'].value;
     // it cannot be the case that both values are true
-    return onlineCourse != undefined && registrationEnabled != undefined && !(onlineCourse && registrationEnabled) ? null : { range: true };
+    return onlineCourse != undefined && enrollmentEnabled != undefined && !(onlineCourse && enrollmentEnabled) ? null : { range: true };
 };

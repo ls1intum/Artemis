@@ -432,7 +432,7 @@
                             name="registrationEnabled"
                             id="field_registrationEnabled"
                             [checked]="course.enrollmentEnabled"
-                            (change)="this.changeRegistrationEnabled()"
+                            (change)="this.changeEnrollmentEnabled()"
                         />
                         <label class="form-control-label" jhiTranslate="artemisApp.course.enrollmentEnabled.title" for="field_registrationEnabled"></label>
                         <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.enrollmentEnabled.description' | artemisTranslate }}" />
@@ -474,7 +474,7 @@
                         <jhi-markdown-editor
                             class="markdown-editor"
                             [(markdown)]="course.enrollmentConfirmationMessage"
-                            (markdownChange)="updateRegistrationConfirmationMessage($event)"
+                            (markdownChange)="updateEnrollmentConfirmationMessage($event)"
                         />
                     </div>
                 }

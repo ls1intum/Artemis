@@ -357,7 +357,7 @@ describe('Course Management Update Component', () => {
             });
             expect(comp.courseForm.controls['registrationEnabled'].value).toBeFalse();
             expect(comp.courseForm.controls['onlineCourse'].value).toBeTrue();
-            comp.changeRegistrationEnabled();
+            comp.changeEnrollmentEnabled();
             expect(comp.courseForm.controls['onlineCourse'].value).toBeFalse();
             expect(comp.courseForm.controls['registrationEnabled'].value).toBeTrue();
             expect(comp.course.enrollmentEnabled).toBeTrue();
@@ -374,7 +374,7 @@ describe('Course Management Update Component', () => {
                 enrollmentStartDate: new FormControl(),
                 enrollmentEndDate: new FormControl(),
             });
-            comp.changeRegistrationEnabled();
+            comp.changeEnrollmentEnabled();
             expect(enabelunrollSpy).toHaveBeenCalledOnce();
         });
     });
