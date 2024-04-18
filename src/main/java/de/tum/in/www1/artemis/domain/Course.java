@@ -924,7 +924,7 @@ public class Course extends DomainObject {
      * <li>and the start and end date of the enrollment is before the end date of the course.</li>
      * </ul>
      *
-     * @throws BadRequestAlertException
+     * @throws BadRequestAlertException if the enrollment period is invalid
      */
     public void validateEnrollmentStartAndEndDate() {
         if (getEnrollmentStartDate() == null || getEnrollmentEndDate() == null) {
@@ -960,7 +960,7 @@ public class Course extends DomainObject {
      * <li>and the end date for unenrollment is not after the end date of the course.</li>
      * </ul>
      *
-     * @throws BadRequestAlertException
+     * @throws BadRequestAlertException if the unenrollment end date is invalid
      */
     public void validateUnenrollmentEndDate() {
         if (getUnenrollmentEndDate() == null) {
