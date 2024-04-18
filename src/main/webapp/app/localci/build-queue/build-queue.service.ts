@@ -3,8 +3,9 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { throwError } from 'rxjs';
-
-import { BuildJob } from 'app/entities/build-job.model';
+import { BuildJob, FinishedBuildJob } from 'app/entities/build-job.model';
+import { createRequestOption } from 'app/shared/util/request.util';
+import { HttpResponse } from '@angular/common/http';
 
 @Injectable({ providedIn: 'root' })
 export class BuildQueueService {
@@ -121,5 +122,24 @@ export class BuildQueueService {
                 return throwError(() => new Error(`Failed to cancel all running build jobs in course ${courseId}\n${err.message}`));
             }),
         );
+    }
+
+    /**
+     * Get all finished build jobs
+     * @param req The query request
+     */
+    getFinishedBuildJobs(req?: any): Observable<HttpResponse<FinishedBuildJob[]>> {
+        const options = createRequestOption(req);
+        return this.http.get<FinishedBuildJob[]>(`${this.adminResourceUrl}/finished-jobs`, { params: options, observe: 'response' });
+    }
+
+    /**
+     * Get all finished build jobs associated with a course
+     * @param courseId the id of the course
+     * @param req The query request
+     */
+    getFinishedBuildJobsByCourseId(courseId: number, req?: any): Observable<HttpResponse<FinishedBuildJob[]>> {
+        const options = createRequestOption(req);
+        return this.http.get<FinishedBuildJob[]>(`${this.resourceUrl}/courses/${courseId}/finished-jobs`, { params: options, observe: 'response' });
     }
 }

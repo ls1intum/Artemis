@@ -67,6 +67,7 @@ import { ArtemisLearningPathManagementModule } from 'app/course/learning-paths/l
 import { IrisModule } from 'app/iris/iris.module';
 import { DetailModule } from 'app/detail-overview-list/detail.module';
 import { BuildQueueComponent } from 'app/localci/build-queue/build-queue.component';
+import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
 
 @NgModule({
     imports: [
@@ -120,6 +121,7 @@ import { BuildQueueComponent } from 'app/localci/build-queue/build-queue.compone
         ArtemisLearningPathManagementModule,
         IrisModule,
         DetailModule,
+        SubmissionResultStatusModule,
     ],
     declarations: [
         CourseManagementComponent,

@@ -6,7 +6,10 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
@@ -15,7 +18,7 @@ import de.tum.in.www1.artemis.service.connectors.localci.dto.DockerImageBuild;
 
 @Profile(PROFILE_CORE)
 @Repository
-public interface BuildJobRepository extends JpaRepository<BuildJob, Long> {
+public interface BuildJobRepository extends JpaRepository<BuildJob, Long>, JpaSpecificationExecutor<BuildJob> {
 
     Optional<BuildJob> findFirstByParticipationIdOrderByBuildStartDateDesc(Long participationId);
 
@@ -28,5 +31,7 @@ public interface BuildJobRepository extends JpaRepository<BuildJob, Long> {
             GROUP BY b.dockerImage
             """)
     Set<DockerImageBuild> findAllLastBuildDatesForDockerImages();
+
+    Page<BuildJob> findAllByCourseId(Long courseId, Pageable pageable);
 
 }

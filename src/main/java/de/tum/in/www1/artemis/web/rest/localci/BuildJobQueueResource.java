@@ -5,16 +5,25 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Page;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import de.tum.in.www1.artemis.domain.BuildJob;
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.repository.BuildJobRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.localci.SharedQueueManagementService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
+import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.util.PageUtil;
+import tech.jhipster.web.util.PaginationUtil;
 
 @Profile("localci")
 @RestController
@@ -29,10 +38,14 @@ public class BuildJobQueueResource {
 
     private final CourseRepository courseRepository;
 
-    public BuildJobQueueResource(SharedQueueManagementService localCIBuildJobQueueService, AuthorizationCheckService authorizationCheckService, CourseRepository courseRepository) {
+    private final BuildJobRepository buildJobRepository;
+
+    public BuildJobQueueResource(SharedQueueManagementService localCIBuildJobQueueService, AuthorizationCheckService authorizationCheckService, CourseRepository courseRepository,
+            BuildJobRepository buildJobRepository) {
         this.localCIBuildJobQueueService = localCIBuildJobQueueService;
         this.authorizationCheckService = authorizationCheckService;
         this.courseRepository = courseRepository;
+        this.buildJobRepository = buildJobRepository;
     }
 
     /**
@@ -131,6 +144,26 @@ public class BuildJobQueueResource {
         localCIBuildJobQueueService.cancelAllRunningBuildJobsForCourse(courseId);
 
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Get all finished build jobs for a course
+     *
+     * @param courseId the id of the course
+     * @param search   the search criteria
+     * @return the page of finished build jobs
+     */
+    @GetMapping("/courses/{courseId}/finished-jobs")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<List<BuildJob>> getFinishedBuildJobsForCourse(@PathVariable long courseId, PageableSearchDTO<String> search) {
+        log.debug("REST request to get the finished build jobs for course {}", courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null)) {
+            throw new AccessForbiddenException("You are not allowed to access finished build jobs of this course!");
+        }
+        final Page<BuildJob> page = buildJobRepository.findAllByCourseId(courseId, PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.BUILD_JOB));
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
+        return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
 
 }
