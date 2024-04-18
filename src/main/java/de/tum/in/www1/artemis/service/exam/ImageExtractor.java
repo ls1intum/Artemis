@@ -85,7 +85,7 @@ public class ImageExtractor extends PDFStreamEngine {
     protected void processOperator(Operator operator, List<COSBase> operands) throws IOException {
         String operation = operator.getName();
         if (INVOKE_OPERATOR.equals(operation)) {
-            COSName objectName = (COSName) operands.get(0);
+            COSName objectName = (COSName) operands.getFirst();
             PDXObject pdxObject = getResources().getXObject(objectName);
             if (pdxObject instanceof PDImageXObject image) {
 

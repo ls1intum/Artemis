@@ -708,7 +708,7 @@ public class ParticipationService {
 
     /**
      * Updates the individual due date for each given participation.
-     *
+     * <p>
      * Only sets individual due dates if the exercise has a due date and the
      * individual due date is after this regular due date.
      *
