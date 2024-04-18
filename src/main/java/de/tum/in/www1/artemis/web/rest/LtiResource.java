@@ -19,7 +19,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import com.google.gson.JsonObject;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nimbusds.jwt.SignedJWT;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -92,9 +93,9 @@ public class LtiResource {
 
         String targetLink = ltiDeepLinkingService.performDeepLinking(idToken, clientRegistrationId, courseId, exerciseIds);
 
-        JsonObject json = new JsonObject();
-        json.addProperty("targetLinkUri", targetLink);
-        return ResponseEntity.ok(json.toString());
+        ObjectNode json = new ObjectMapper().createObjectNode();
+        json.put("targetLinkUri", targetLink);
+        return ResponseEntity.ok(json.asText());
     }
 
     /**

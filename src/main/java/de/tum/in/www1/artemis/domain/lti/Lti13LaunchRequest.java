@@ -4,7 +4,8 @@ import org.springframework.security.oauth2.core.oidc.IdTokenClaimNames;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.util.Assert;
 
-import com.google.gson.Gson;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * Represents an LTI 1.3 Launch Request, encapsulating the necessary information
@@ -43,8 +44,13 @@ public record Lti13LaunchRequest(String iss, String sub, String deploymentId, St
     }
 
     private static String extractResourceLinkId(OidcIdToken ltiIdToken) {
-        var resourceLinkClaim = ltiIdToken.getClaim(Claims.RESOURCE_LINK);
-        return resourceLinkClaim != null ? new Gson().toJsonTree(resourceLinkClaim).getAsJsonObject().get("id").getAsString() : null;
+        Object resourceLinkClaim = ltiIdToken.getClaim(Claims.RESOURCE_LINK);
+        if (resourceLinkClaim != null) {
+            JsonNode resourceLinkJson = new ObjectMapper().convertValue(resourceLinkClaim, JsonNode.class);
+            JsonNode idNode = resourceLinkJson.get("id");
+            return idNode != null ? idNode.asText() : null;
+        }
+        return null;
     }
 
     private static void validateRequiredFields(String iss, String sub, String deploymentId, String resourceLinkId, String targetLinkUri, String clientRegistrationId) {

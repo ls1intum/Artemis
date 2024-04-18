@@ -27,7 +27,9 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.google.gson.JsonObject;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.lti.*;
@@ -217,16 +219,16 @@ public class Lti13Service {
             return;
         }
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.valueOf("application/vnd.ims.lis.v1.score+json"));
-        headers.setBearerAuth(token);
-        String body = getScoreBody(launch.getSub(), comment, score);
-        HttpEntity<String> httpRequest = new HttpEntity<>(body, headers);
         try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.valueOf("application/vnd.ims.lis.v1.score+json"));
+            headers.setBearerAuth(token);
+            String body = getScoreBody(launch.getSub(), comment, score);
+            HttpEntity<String> httpRequest = new HttpEntity<>(body, headers);
             restTemplate.postForEntity(scoreLineItemUrl, httpRequest, Object.class);
             log.info("Submitted score for {} to client {}", launch.getUser().getLogin(), clientRegistration.getClientId());
         }
-        catch (HttpClientErrorException e) {
+        catch (HttpClientErrorException | JsonProcessingException e) {
             String message = "Could not submit score for " + launch.getUser().getLogin() + " to client " + clientRegistration.getClientId() + ": " + e.getMessage();
             log.error(message);
         }
@@ -244,16 +246,17 @@ public class Lti13Service {
         return builder.insert(index, "/scores").toString(); // Adds "/scores" before the "?" in case there are query parameters
     }
 
-    private String getScoreBody(String userId, String comment, Double score) {
-        JsonObject requestBody = new JsonObject();
-        requestBody.addProperty("userId", userId);
-        requestBody.addProperty("timestamp", (new DateTime()).toString());
-        requestBody.addProperty("activityProgress", "Submitted");
-        requestBody.addProperty("gradingProgress", "FullyGraded");
-        requestBody.addProperty("comment", comment);
-        requestBody.addProperty("scoreGiven", score);
-        requestBody.addProperty("scoreMaximum", 100D);
-        return requestBody.toString();
+    private String getScoreBody(String userId, String comment, Double score) throws JsonProcessingException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectNode requestBody = objectMapper.createObjectNode();
+        requestBody.put("userId", userId);
+        requestBody.put("timestamp", new DateTime().toString());
+        requestBody.put("activityProgress", "Submitted");
+        requestBody.put("gradingProgress", "FullyGraded");
+        requestBody.put("comment", comment);
+        requestBody.put("scoreGiven", score);
+        requestBody.put("scoreMaximum", 100D);
+        return new ObjectMapper().writeValueAsString(requestBody);
     }
 
     /**

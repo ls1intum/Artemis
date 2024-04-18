@@ -4,7 +4,8 @@ import java.util.*;
 
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 
-import com.google.gson.*;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * A wrapper record for an LTI 1.3 Assignment and Grading Services Claim. We support the Score Publishing Service in order to transmit scores.
@@ -24,23 +25,24 @@ public record Lti13AgsClaim(List<String> scope, String lineItem) {
         }
 
         try {
-            JsonObject agsClaimJson = new Gson().toJsonTree(idToken.getClaim(Claims.AGS_CLAIM)).getAsJsonObject();
-            JsonArray scopes = agsClaimJson.get("scope").getAsJsonArray();
+            ObjectMapper objectMapper = new ObjectMapper();
+            JsonNode agsClaimJson = objectMapper.convertValue(idToken.getClaim(Claims.AGS_CLAIM), JsonNode.class);
 
+            JsonNode scopes = agsClaimJson.get("scope");
             List<String> scopeList = null;
-            if (scopes != null && scopes.contains(new JsonPrimitive(Scopes.AGS_SCORE))) {
+            if (scopes != null && scopes.isArray() && scopes.has(Scopes.AGS_SCORE)) {
                 scopeList = Collections.singletonList(Scopes.AGS_SCORE);
             }
 
-            JsonElement lineItemElement;
+            JsonNode lineItemNode;
             if (agsClaimJson.get("lineitem") == null) {
-                lineItemElement = agsClaimJson.get("lineitems");
+                lineItemNode = agsClaimJson.get("lineitems");
             }
             else {
-                lineItemElement = agsClaimJson.get("lineitem");
+                lineItemNode = agsClaimJson.get("lineitem");
             }
 
-            String lineItem = lineItemElement != null ? lineItemElement.getAsString() : null;
+            String lineItem = lineItemNode != null ? lineItemNode.asText() : null;
             return Optional.of(new Lti13AgsClaim(scopeList, lineItem));
         }
         catch (IllegalStateException | ClassCastException ex) {
