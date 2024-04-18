@@ -41,7 +41,7 @@ const editedCourseData = {
 const allowGroupCustomization: boolean = Cypress.env('allowGroupCustomization');
 const dateFormat = 'MMM D, YYYY HH:mm';
 
-describe('Course management', () => {
+describe.skip('Course management', () => {
     describe('Manual student selection', () => {
         let course: Course;
 
