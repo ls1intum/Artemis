@@ -24,6 +24,9 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
@@ -439,6 +442,17 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         // Note: save will automatically remove deleted questions from the exercise and deleted answer options from the questions
         // and delete the now orphaned entries from the database
         log.debug("Save quiz exercise to database: {}", quizExercise);
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        for (QuizQuestion question : quizExercise.getQuizQuestions()) {
+            try {
+                String jsonObject = objectMapper.writeValueAsString(question);
+                question.setJsonObject(jsonObject);
+            }
+            catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+        }
         return quizExerciseRepository.saveAndFlush(quizExercise);
     }
 }
