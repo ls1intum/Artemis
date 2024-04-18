@@ -28,13 +28,11 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.GitLabCIException;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.UriService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.ci.AbstractContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.ci.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.TestResultsDTO;
-import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 
 @Profile("gitlabci")
 @Service
@@ -98,11 +96,8 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     @Value("${artemis.version-control.token}")
     private String gitlabToken;
 
-    public GitLabCIService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository, BuildLogEntryService buildLogService,
-            GitLabApi gitlab, UriService uriService, BuildPlanRepository buildPlanRepository, GitLabCIBuildPlanService buildPlanService,
-            ProgrammingLanguageConfiguration programmingLanguageConfiguration, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository,
-            TestwiseCoverageService testwiseCoverageService) {
-        super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, testwiseCoverageService);
+    public GitLabCIService(GitLabApi gitlab, UriService uriService, BuildPlanRepository buildPlanRepository, GitLabCIBuildPlanService buildPlanService,
+            ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
         this.gitlab = gitlab;
         this.uriService = uriService;
         this.buildPlanRepository = buildPlanRepository;
