@@ -575,7 +575,7 @@ public class StudentExamResource {
         List<ExamLiveEventDTO> examLiveEvents = examLiveEventRepository.findAllByStudentExamIdOrGlobalByExamId(examId, studentExam.getId()).stream().map(ExamLiveEvent::asDTO)
                 .toList();
 
-        log.info("getExamLiveEvents done in {}ms for user {}", System.currentTimeMillis() - start, currentUser.getLogin());
+        log.debug("getExamLiveEvents done in {}ms for user {}", System.currentTimeMillis() - start, currentUser.getLogin());
         return ResponseEntity.ok(examLiveEvents);
     }
 

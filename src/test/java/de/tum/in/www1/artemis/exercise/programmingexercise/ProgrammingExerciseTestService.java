@@ -121,6 +121,7 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionTestRepository;
 import de.tum.in.www1.artemis.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
@@ -313,6 +314,9 @@ public class ProgrammingExerciseTestService {
 
     private String userPrefix;
 
+    @Autowired
+    private ProgrammingExerciseTestRepository programmingExerciseTestRepository;
+
     public void setupTestUsers(String userPrefix, int additionalStudents, int additionalTutors, int additionalEditors, int additionalInstructors) {
         this.userPrefix = userPrefix;
         userUtilService.addUsers(userPrefix, numberOfStudents + additionalStudents, additionalTutors + 1, additionalEditors + 1, additionalInstructors + 1);
@@ -486,7 +490,7 @@ public class ProgrammingExerciseTestService {
                     },
                     {
                       "name": "valid-action1",
-                      "platform": "bamboo",
+                      "platform": "jenkins",
                       "runAlways": true
                     },
                     {
@@ -697,7 +701,7 @@ public class ProgrammingExerciseTestService {
         var staticCodeAnalysisCategories = staticCodeAnalysisCategoryRepository.findByExerciseId(generatedExercise.getId());
         assertThat(staticCodeAnalysisCategories).usingRecursiveFieldByFieldElementComparatorIgnoringFields("id", "exercise")
                 .isEqualTo(StaticCodeAnalysisConfigurer.staticCodeAnalysisConfiguration().get(exercise.getProgrammingLanguage()));
-        StaticCodeAnalysisConfigurer.staticCodeAnalysisConfiguration().get(exercise.getProgrammingLanguage()).forEach(config -> config.getCategoryMappings().forEach(mapping -> {
+        StaticCodeAnalysisConfigurer.staticCodeAnalysisConfiguration().get(exercise.getProgrammingLanguage()).forEach(config -> config.categoryMappings().forEach(mapping -> {
             assertThat(mapping.tool()).isNotNull();
             assertThat(mapping.category()).isNotNull();
         }));
@@ -1930,16 +1934,16 @@ public class ProgrammingExerciseTestService {
         assertThat(studentExamRepository.findByExamId(exam.getId())).hasSize(registeredStudents.size());
 
         // start exercises
-        List<ProgrammingExercise> programmingExercises = new ArrayList<>();
-        for (var exercise : exam.getExerciseGroups().get(6).getExercises()) {
-            var programmingExercise = (ProgrammingExercise) exercise;
-            programmingExercises.add(programmingExercise);
+        Set<Long> peIds = exam.getExerciseGroups().get(6).getExercises().stream().map(Exercise::getId).collect(Collectors.toSet());
+        List<ProgrammingExercise> programmingExercises = programmingExerciseTestRepository.findAllWithTemplateAndSolutionParticipationByIdIn(peIds);
+        exam.getExerciseGroups().get(6).setExercises(new HashSet<>(programmingExercises));
+        for (var exercise : programmingExercises) {
 
-            setupRepositoryMocks(programmingExercise);
+            setupRepositoryMocks(exercise);
             for (var examUser : exam.getExamUsers()) {
                 var repo = new LocalRepository(defaultBranch);
                 repo.configureRepos("studentRepo", "studentOriginRepo");
-                setupRepositoryMocksParticipant(programmingExercise, examUser.getUser().getLogin(), repo);
+                setupRepositoryMocksParticipant(exercise, examUser.getUser().getLogin(), repo);
                 studentRepos.add(repo);
             }
         }
@@ -2234,7 +2238,6 @@ public class ProgrammingExerciseTestService {
         exercise3 = programmingExerciseRepository.save(exercise3);
 
         var exercise4 = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(5), ZonedDateTime.now().minusDays(4), course);
-        exercise4.setPublishBuildPlanUrl(true);
         exercise4 = programmingExerciseRepository.save(exercise4);
 
         // Note participationXa will always be cleaned up, while participationXb will NOT be cleaned up

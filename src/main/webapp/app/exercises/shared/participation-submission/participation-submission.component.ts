@@ -57,6 +57,7 @@ export class ParticipationSubmissionComponent implements OnInit {
 
     // Icons
     faTrash = faTrash;
+
     constructor(
         private route: ActivatedRoute,
         private submissionService: SubmissionService,
@@ -142,7 +143,7 @@ export class ParticipationSubmissionComponent implements OnInit {
             });
         });
 
-        // Get active profiles, to distinguish between Bitbucket and GitLab
+        // Get active profiles, to distinguish between VC systems
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             this.commitHashURLTemplate = profileInfo.commitHashURLTemplate;
         });

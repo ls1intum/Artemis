@@ -21,7 +21,11 @@
                 [importOptions]="importOptions"
             />
             <hr class="mb-5" />
-            <jhi-programming-exercise-difficulty [programmingExercise]="programmingExercise" [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()" />
+            <jhi-programming-exercise-difficulty
+                [programmingExercise]="programmingExercise"
+                [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
+                (triggerValidation)="calculateFormStatusSections()"
+            />
             <hr class="mb-5" />
             <jhi-programming-exercise-language [programmingExercise]="programmingExercise" [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()" />
             <hr class="mb-5" />

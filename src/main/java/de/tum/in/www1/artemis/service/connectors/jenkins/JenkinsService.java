@@ -26,11 +26,7 @@ import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.JenkinsException;
-import de.tum.in.www1.artemis.repository.BuildLogStatisticsEntryRepository;
-import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
-import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
@@ -40,7 +36,6 @@ import de.tum.in.www1.artemis.service.connectors.ci.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.TestResultsDTO;
 import de.tum.in.www1.artemis.service.connectors.jenkins.build_plan.JenkinsBuildPlanService;
 import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobService;
-import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 
 @Profile("jenkins")
 @Service
@@ -70,12 +65,9 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    public JenkinsService(JenkinsServer jenkinsServer, ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository,
-            @Qualifier("shortTimeoutJenkinsRestTemplate") RestTemplate shortTimeoutRestTemplate, BuildLogEntryService buildLogService,
-            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, JenkinsBuildPlanService jenkinsBuildPlanService, JenkinsJobService jenkinsJobService,
-            JenkinsInternalUrlService jenkinsInternalUrlService, TestwiseCoverageService testwiseCoverageService, Optional<AeolusTemplateService> aeolusTemplateService,
-            ProfileService profileService, ProgrammingExerciseRepository programmingExerciseRepository) {
-        super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, testwiseCoverageService);
+    public JenkinsService(JenkinsServer jenkinsServer, @Qualifier("shortTimeoutJenkinsRestTemplate") RestTemplate shortTimeoutRestTemplate,
+            JenkinsBuildPlanService jenkinsBuildPlanService, JenkinsJobService jenkinsJobService, JenkinsInternalUrlService jenkinsInternalUrlService,
+            Optional<AeolusTemplateService> aeolusTemplateService, ProfileService profileService, ProgrammingExerciseRepository programmingExerciseRepository) {
         this.jenkinsServer = jenkinsServer;
         this.jenkinsBuildPlanService = jenkinsBuildPlanService;
         this.jenkinsJobService = jenkinsJobService;
@@ -215,7 +207,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         }
         catch (Exception emAll) {
             log.warn(emAll.getMessage());
-            // in case of an error message, we assume the project exist (like in Bamboo service)
+            // in case of an error message, we assume the project exist
             return "The project already exists on the Continuous Integration Server. Please choose a different title and short name!";
         }
     }

@@ -13,7 +13,7 @@ export class StandardizedCompetencyDetailStubComponent {
     @Input() dialogError: Observable<string>;
 
     @Output() onSave = new EventEmitter<StandardizedCompetencyDTO>();
-    @Output() onDelete = new EventEmitter<void>();
+    @Output() onDelete = new EventEmitter<number>();
     @Output() onClose = new EventEmitter<void>();
     @Output() isEditingChange = new EventEmitter<boolean>();
 }

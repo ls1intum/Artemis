@@ -51,16 +51,7 @@ public class TutorParticipationService {
     /**
      * Wraps the information of tutor feedback validation (during tutor training).
      */
-    static class FeedbackCorrectionError {
-
-        public String reference;
-
-        public FeedbackCorrectionErrorType type;
-
-        public FeedbackCorrectionError(String reference, FeedbackCorrectionErrorType type) {
-            this.reference = reference;
-            this.type = type;
-        }
+    record FeedbackCorrectionError(String reference, FeedbackCorrectionErrorType type) {
     }
 
     public TutorParticipationService(TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionRepository exampleSubmissionRepository,
@@ -184,7 +175,7 @@ public class TutorParticipationService {
                 throw new IllegalStateException("Multiple instructor feedback exist with the same reference");
             }
 
-            return tutorFeedbackMatchesInstructorFeedback(tutorFeedback, matchingInstructorFeedback.get(0));
+            return tutorFeedbackMatchesInstructorFeedback(tutorFeedback, matchingInstructorFeedback.getFirst());
         }
     }
 
