@@ -16,6 +16,7 @@ import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authorization.AuthorizationDecision;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -163,41 +164,78 @@ public class SecurityConfiguration {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         // @formatter:off
         http
+            // Disables CSRF (Cross-Site Request Forgery) protection; useful in stateless APIs where the token management is unnecessary.
             .csrf(AbstractHttpConfigurer::disable)
+            // Adds a CORS (Cross-Origin Resource Sharing) filter before the username/password authentication to handle cross-origin requests.
             .addFilterBefore(corsFilter, UsernamePasswordAuthenticationFilter.class)
+            // Configures exception handling with a custom entry point and access denied handler for authentication issues.
             .exceptionHandling(handler -> handler.authenticationEntryPoint(problemSupport).accessDeniedHandler(problemSupport))
+            // Adds a custom filter for Single Page Applications (SPA), i.e. the client, after the basic authentication filter.
             .addFilterAfter(new SpaWebFilter(), BasicAuthenticationFilter.class)
+            // Configures security headers.
             .headers(headers -> headers
+                // Sets Content Security Policy (CSP) directives to prevent XSS attacks.
                 .contentSecurityPolicy(csp -> csp.policyDirectives("script-src 'self' 'unsafe-inline' 'unsafe-eval'"))
+                // Prevents the website from being framed, avoiding clickjacking attacks.
                 .frameOptions(HeadersConfigurer.FrameOptionsConfig::deny)
+                // Sets Referrer Policy to limit the amount of referrer information sent with requests.
                 .referrerPolicy(referrer -> referrer.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
-                .httpStrictTransportSecurity((HeadersConfigurer.HstsConfig::disable)) // this is already configured using nginx
+                // Disables HTTP Strict Transport Security as it is managed at the reverse proxy level (typically nginx).
+                .httpStrictTransportSecurity((HeadersConfigurer.HstsConfig::disable))
+                // Defines Permissions Policy to restrict what features the browser is allowed to use.
                 .permissionsPolicy(permissions -> permissions.policy("camera=(), fullscreen=(*), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), sync-xhr=()")))
+            // Configures sessions to be stateless; appropriate for REST APIs where no session is required.
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(requests -> requests
-                .requestMatchers("/", "/index.html", "/public/**").permitAll()
-                .requestMatchers("/*.js", "/*.css", "/*.map", "/*.json").permitAll()
-                .requestMatchers("/manifest.webapp", "/robots.txt").permitAll()
-                .requestMatchers("/content/**", "/i18n/*.json", "/logo/*").permitAll()
-                .requestMatchers("/management/info", "/management/health").permitAll()
-                .requestMatchers("/api/admin/**").hasAuthority(Role.ADMIN.getAuthority())
-                .requestMatchers("/api/public/**").permitAll()
-                .requestMatchers("/websocket/**").permitAll()
-                .requestMatchers("/.well-known/jwks.json").permitAll()
-                .requestMatchers("/git/**").permitAll()
-                .requestMatchers("/management/prometheus/**").access((authentication, context) -> new AuthorizationDecision(monitoringIpAddresses.contains(context.getRequest().getRemoteAddr())))
-                .requestMatchers("/**").authenticated()
+            // Configures authorization for various URL patterns. The patterns are considered in order.
+            .authorizeHttpRequests(requests -> {
+                requests
+                    // Client related URLs and publicly accessible information (allowed for everyone).
+                    .requestMatchers("/", "/index.html", "/public/**").permitAll()
+                    .requestMatchers("/*.js", "/*.css", "/*.map", "/*.json").permitAll()
+                    .requestMatchers("/manifest.webapp", "/robots.txt").permitAll()
+                    .requestMatchers("/content/**", "/i18n/*.json", "/logo/*").permitAll()
+                    // Information and health endpoints do not need authentication
+                    .requestMatchers("/management/info", "/management/health").permitAll()
+                    // Admin area requires specific authority.
+                    .requestMatchers("/api/admin/**").hasAuthority(Role.ADMIN.getAuthority())
+                    // Publicly accessible API endpoints (allowed for everyone).
+                    .requestMatchers("/api/public/**").permitAll()
+                    // Websocket and other specific endpoints allowed without authentication.
+                    .requestMatchers("/websocket/**").permitAll()
+                    .requestMatchers("/.well-known/jwks.json").permitAll()
+                    // Prometheus endpoint protected by IP address.
+                    .requestMatchers("/management/prometheus/**").access((authentication, context) -> new AuthorizationDecision(monitoringIpAddresses.contains(context.getRequest().getRemoteAddr())));
+
+                    // LocalVC related URLs: LocalVCPushFilter and LocalVCFetchFilter handle authentication on their own
+                    if (profileService.isLocalVcsActive()) {
+                        requests.requestMatchers("/git/**").permitAll();
+                    }
+
+                    // All other requests must be authenticated. Additional authorization happens on the endpoints themselves.
+                   requests.requestMatchers("/**").authenticated();
+                }
             )
-            .with(securityConfigurerAdapter(), configurer -> configurer.configure(http));
+            // Applies additional configurations defined in a custom security configurer adapter.
+            .with(securityConfigurerAdapter(), configurer -> configurer.configure(http))
+            // Enable HTTP Basic authentication so that people can authenticate using username and password against the server's REST API
+            .httpBasic(Customizer.withDefaults());
         // @formatter:on
 
+        // Conditionally adds configuration for LTI if it is active.
         if (profileService.isLtiActive()) {
             http.with(new CustomLti13Configurer(), configurer -> configurer.configure(http));
         }
 
+        // Builds and returns the SecurityFilterChain.
         return http.build();
     }
 
+    /**
+     * Creates and returns a JWTConfigurer instance. This configurer is responsible for integrating JWT-based authentication
+     * into the Spring Security filter chain. It configures how the security framework handles JWTs for authorizing requests.
+     *
+     * @return JWTConfigurer configured with a token provider that generates and validates JWT tokens.
+     */
     private JWTConfigurer securityConfigurerAdapter() {
         return new JWTConfigurer(tokenProvider);
     }

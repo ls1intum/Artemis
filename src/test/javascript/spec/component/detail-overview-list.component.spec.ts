@@ -73,7 +73,19 @@ describe('DetailOverviewList', () => {
 
     it('should escape all falsy values', () => {
         component.sections = [
-            { headline: 'some-section', details: [null as any as Detail, undefined, false, { type: DetailType.Text, title: 'title', data: { text: 'A Title' } }] },
+            {
+                headline: 'some-section',
+                details: [
+                    null as any as Detail,
+                    undefined,
+                    false,
+                    {
+                        type: DetailType.Text,
+                        title: 'title',
+                        data: { text: 'A Title' },
+                    },
+                ],
+            },
         ];
         fixture.detectChanges();
         const detailListTitleDOMElements = fixture.nativeElement.querySelectorAll('dt[id^=detail-title]');
@@ -105,7 +117,7 @@ describe('DetailOverviewList', () => {
     });
 
     it('should error on download apollon Diagram fail', () => {
-        jest.spyOn(modelingService, 'convertToPdf').mockReturnValue(throwError(new HttpResponse({ body: new Blob() })));
+        jest.spyOn(modelingService, 'convertToPdf').mockReturnValue(throwError(() => new HttpResponse({ body: new Blob() })));
         const errorSpy = jest.spyOn(alertServide, 'error');
         component.downloadApollonDiagramAsPDf({} as UMLModel, 'title');
         expect(errorSpy).toHaveBeenCalledOnce();

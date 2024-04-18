@@ -87,7 +87,7 @@ public class DataExportResource {
             return true;
         }
         // because we order by request date desc, the first data export is the latest one
-        var latestDataExport = dataExports.get(0);
+        var latestDataExport = dataExports.getFirst();
         var olderThanDaysBetweenDataExports = Duration.between(latestDataExport.getCreatedDate().atZone(ZoneId.systemDefault()), ZonedDateTime.now())
                 .toDays() >= DAYS_BETWEEN_DATA_EXPORTS;
 

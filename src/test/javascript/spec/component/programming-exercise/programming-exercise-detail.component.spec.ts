@@ -307,7 +307,7 @@ describe('ProgrammingExercise Management Detail Component', () => {
     });
 
     it('should alert on combine template commit error', () => {
-        const combineCommitsSpy = jest.spyOn(exerciseService, 'combineTemplateRepositoryCommits').mockReturnValue(throwError(new HttpResponse({ body: null })));
+        const combineCommitsSpy = jest.spyOn(exerciseService, 'combineTemplateRepositoryCommits').mockReturnValue(throwError(() => new HttpResponse({ body: null })));
         const errorSpy = jest.spyOn(alertService, 'error');
         comp.programmingExercise = mockProgrammingExercise;
         comp.combineTemplateCommits();
@@ -350,7 +350,7 @@ describe('ProgrammingExercise Management Detail Component', () => {
     });
 
     it('should error on unlock all repositories', () => {
-        const unlockSpy = jest.spyOn(exerciseService, 'unlockAllRepositories').mockReturnValue(throwError(new HttpResponse({ body: 2 })));
+        const unlockSpy = jest.spyOn(exerciseService, 'unlockAllRepositories').mockReturnValue(throwError(() => new HttpResponse({ body: 2 })));
         const errorSpy = jest.spyOn(alertService, 'error');
         comp.programmingExercise = mockProgrammingExercise;
         comp.unlockAllRepositories();
