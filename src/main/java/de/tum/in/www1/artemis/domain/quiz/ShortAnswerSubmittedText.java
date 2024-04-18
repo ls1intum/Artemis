@@ -78,7 +78,7 @@ public class ShortAnswerSubmittedText extends DomainObject {
     }
 
     /**
-     * This function checks if the submittedText (typos included) matches the solution. https://github.com/xdrop/fuzzywuzzy
+     * This function checks if the submittedText (typos included) matches the solution. <a href="https://github.com/xdrop/fuzzywuzzy">...</a>
      *
      * @param submittedText for a short answer question
      * @param solution      of the short answer question

@@ -701,7 +701,7 @@ public class ProgrammingExerciseTestService {
         var staticCodeAnalysisCategories = staticCodeAnalysisCategoryRepository.findByExerciseId(generatedExercise.getId());
         assertThat(staticCodeAnalysisCategories).usingRecursiveFieldByFieldElementComparatorIgnoringFields("id", "exercise")
                 .isEqualTo(StaticCodeAnalysisConfigurer.staticCodeAnalysisConfiguration().get(exercise.getProgrammingLanguage()));
-        StaticCodeAnalysisConfigurer.staticCodeAnalysisConfiguration().get(exercise.getProgrammingLanguage()).forEach(config -> config.getCategoryMappings().forEach(mapping -> {
+        StaticCodeAnalysisConfigurer.staticCodeAnalysisConfiguration().get(exercise.getProgrammingLanguage()).forEach(config -> config.categoryMappings().forEach(mapping -> {
             assertThat(mapping.tool()).isNotNull();
             assertThat(mapping.category()).isNotNull();
         }));
