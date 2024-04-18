@@ -72,12 +72,12 @@ When setting up the Artemis server, the following values need to be added/update
 
     spring:
         datasource:
-            url: "jdbc:postgresql://<IP/HOSTNAME of PostgreSQL database host>/Artemis?ssl=false"
-            username: <YOUR_DB_USER>
-            password: <YOUR_DB_PASSWORD>
+            url: jdbc:postgresql://localhost:5432/Artemis?ssl=false
+            username: Artemis
         jpa:
             database: POSTGRESQL
+            database-platform: org.hibernate.dialect.PostgreSQLDialect
 
 .. note::
-    This example assumes that the database is called ``Artemis``.
-    You might have to update this part of ``spring.datasource.url`` as well if you chose a different name.
+    This example assumes that you use the mentioned Docker Compose file on your localhost, so database is called ``Artemis``, runs on port ``5432`` and no password is necessary.
+    You might have to update ``spring.datasource.url`` if you use another configuration and set the password in ``spring.datasource.password``.
