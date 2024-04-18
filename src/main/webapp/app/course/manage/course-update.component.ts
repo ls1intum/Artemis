@@ -296,14 +296,6 @@ export class CourseUpdateComponent implements OnInit {
             course['courseInformationSharingConfiguration'] = CourseInformationSharingConfiguration.DISABLED;
         }
 
-        // TODO: this has to be removed once the refactoring from course 'registration' to 'enrollment' is complete
-        course['enrollmentEnabled'] = course['registrationEnabled'];
-        delete course['registrationEnabled'];
-        if (course['enrollmentEnabled'] == true) {
-            course['enrollmentConfirmationMessage'] = course['registrationConfirmationMessage'];
-            delete course['registrationConfirmationMessage'];
-        }
-
         if (this.course.id !== undefined) {
             this.subscribeToSaveResponse(this.courseManagementService.update(this.course.id, course, file));
         } else {
