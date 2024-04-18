@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { finalize } from 'rxjs';
@@ -10,18 +10,29 @@ import { LOGIN_PATTERN } from 'app/shared/constants/input.constants';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { LtiPlatformConfiguration } from 'app/admin/lti-configuration/lti-configuration.model';
 import { LtiConfigurationService } from 'app/admin/lti-configuration/lti-configuration.service';
+import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
+import { HttpHeaders, HttpResponse } from '@angular/common/http';
+import { fromEvent } from 'rxjs';
+import { debounceTime, distinctUntilChanged, filter, tap } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-edit-course-lti-configuration',
     templateUrl: './edit-course-lti-configuration.component.html',
 })
 export class EditCourseLtiConfigurationComponent implements OnInit {
+    @ViewChild('scrollableContent') scrollableContent: ElementRef;
+
     course: Course;
     onlineCourseConfiguration: OnlineCourseConfiguration;
     onlineCourseConfigurationForm: FormGroup;
-    ltiConfiguredPlatforms: LtiPlatformConfiguration[];
+    ltiConfiguredPlatforms: LtiPlatformConfiguration[] = [];
+
+    page = 1;
+    itemsPerPage = ITEMS_PER_PAGE;
+    totalItems = 0;
 
     isSaving = false;
+    loading = false;
 
     // Icons
     faBan = faBan;
@@ -33,6 +44,13 @@ export class EditCourseLtiConfigurationComponent implements OnInit {
         private router: Router,
         private ltiConfigurationService: LtiConfigurationService,
     ) {}
+
+    handleScroll = (): void => {
+        const target = this.scrollableContent.nativeElement;
+        if (target.scrollTop + target.clientHeight >= target.scrollHeight) {
+            this.loadMorePlatforms();
+        }
+    };
 
     /**
      * Gets the configuration for the course encoded in the route and prepares the form
@@ -52,7 +70,57 @@ export class EditCourseLtiConfigurationComponent implements OnInit {
             ltiPlatformConfiguration: new FormControl(''),
         });
 
-        this.getPreconfiguredPlatforms();
+        this.loadInitialPlatforms();
+        this.setupScrollListener();
+    }
+
+    loadInitialPlatforms() {
+        this.loading = true;
+        this.ltiConfigurationService
+            .query({
+                page: 0,
+                size: this.itemsPerPage,
+                sort: ['id', 'asc'],
+            })
+            .subscribe({
+                next: (res: HttpResponse<LtiPlatformConfiguration[]>) => {
+                    if (res.body) {
+                        this.ltiConfiguredPlatforms = res.body;
+                        this.totalItems = Number(res.headers.get('X-Total-Count'));
+                    }
+                    this.loading = false;
+                },
+                error: (err) => {
+                    console.error('Failed to load platforms:', err);
+                    this.loading = false;
+                },
+            });
+    }
+
+    setupScrollListener() {
+        fromEvent(window, 'scroll')
+            .pipe(
+                debounceTime(100),
+                filter(() => window.scrollY + window.innerHeight >= document.documentElement.scrollHeight),
+                distinctUntilChanged(),
+                tap(() => this.loadMorePlatforms()),
+            )
+            .subscribe();
+    }
+
+    loadMorePlatforms() {
+        if (this.ltiConfiguredPlatforms.length < this.totalItems) {
+            this.page++;
+            this.ltiConfigurationService
+                .query({
+                    page: this.page - 1,
+                    size: this.itemsPerPage,
+                    sort: ['id', 'asc'],
+                })
+                .subscribe((res: HttpResponse<LtiPlatformConfiguration[]>) => {
+                    this.ltiConfiguredPlatforms = this.ltiConfiguredPlatforms.concat(res.body || []);
+                });
+        }
     }
 
     /**
@@ -99,11 +167,13 @@ export class EditCourseLtiConfigurationComponent implements OnInit {
      * Gets the LTI 1.3 pre-configured platforms
      */
     getPreconfiguredPlatforms() {
-        this.ltiConfigurationService.findAll().subscribe((configuredLtiPlatforms) => {
-            if (configuredLtiPlatforms) {
-                this.ltiConfiguredPlatforms = configuredLtiPlatforms;
-            }
-        });
+        this.ltiConfigurationService
+            .query({
+                page: this.page - 1,
+                size: this.itemsPerPage,
+                sort: ['id', 'asc'],
+            })
+            .subscribe((res: HttpResponse<LtiPlatformConfiguration[]>) => this.onSuccess(res.body, res.headers));
     }
 
     setPlatform(platform: LtiPlatformConfiguration) {
@@ -116,5 +186,10 @@ export class EditCourseLtiConfigurationComponent implements OnInit {
         const originalUrl = platform.originalUrl ? platform.originalUrl : '';
 
         return customName + ' ' + originalUrl;
+    }
+
+    private onSuccess(platforms: LtiPlatformConfiguration[] | null, headers: HttpHeaders): void {
+        this.totalItems = Number(headers.get('X-Total-Count'));
+        this.ltiConfiguredPlatforms = platforms || [];
     }
 }

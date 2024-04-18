@@ -48,17 +48,24 @@
                         }}
                     </button>
                     <div ngbDropdownMenu>
-                        @for (platform of ltiConfiguredPlatforms; track platform) {
-                            <button
-                                type="button"
-                                (click)="setPlatform(platform)"
-                                [class.selected]="platform.id === onlineCourseConfiguration.ltiPlatformConfiguration?.id"
-                                [ngbTooltip]="platform.customName"
-                                ngbDropdownItem
-                            >
-                                {{ getLtiPlatform(platform) }}
-                            </button>
-                        }
+                        <div #scrollableContent style="overflow-y: auto; height: 400px">
+                            @if (ltiConfiguredPlatforms.length > 0) {
+                                @for (platform of ltiConfiguredPlatforms; track platform) {
+                                    <button
+                                        type="button"
+                                        (click)="setPlatform(platform)"
+                                        [class.selected]="platform.id === onlineCourseConfiguration.ltiPlatformConfiguration?.id"
+                                        [ngbTooltip]="platform.customName"
+                                        ngbDropdownItem
+                                    >
+                                        {{ getLtiPlatform(platform) }}
+                                    </button>
+                                }
+                            }
+                            @if (loading) {
+                                <span>Loading more...</span>
+                            }
+                        </div>
                     </div>
                 </div>
             </div>
