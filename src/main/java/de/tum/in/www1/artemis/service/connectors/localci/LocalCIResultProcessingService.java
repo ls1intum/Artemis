@@ -153,7 +153,7 @@ public class LocalCIResultProcessingService {
             }
             finally {
                 // save build job to database
-                savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.SUCCESSFUL, result != null ? result : null);
+                savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.SUCCESSFUL, result);
             }
         }
         else {
