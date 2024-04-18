@@ -130,7 +130,6 @@ public class ComponentDiagramParser {
      *
      * @param allUmlElementsMap  map of uml elements and ids to find owner element
      * @param ownerRelationships map of uml elements and ids of their owners
-     * @return the UMLComponent object parsed from the JSON object
      */
     protected static void resolveParentComponent(Map<String, UMLElement> allUmlElementsMap, Map<UMLElement, String> ownerRelationships) {
         for (var ownerEntry : ownerRelationships.entrySet()) {
@@ -147,7 +146,6 @@ public class ComponentDiagramParser {
      * @param ownerRelationships map of uml relationship elements and their ids
      * @param jsonObject         json representation of element
      * @param umlElement         uml element
-     * @return the UMLComponent object parsed from the JSON object
      */
     protected static void findOwner(Map<UMLElement, String> ownerRelationships, JsonObject jsonObject, UMLElement umlElement) {
         if (jsonObject.has(ELEMENT_OWNER) && !jsonObject.get(ELEMENT_OWNER).isJsonNull()) {

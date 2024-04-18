@@ -1272,7 +1272,7 @@ public class GitService {
         try (Git git = new Git(repo)) {
             resetToOriginHead(repo);
             List<RevCommit> commits = StreamSupport.stream(git.log().call().spliterator(), false).toList();
-            RevCommit firstCommit = commits.get(commits.size() - 1);
+            RevCommit firstCommit = commits.getLast();
             // If there is a first commit, combine all other commits into it.
             if (firstCommit != null) {
                 git.reset().setMode(ResetCommand.ResetType.SOFT).setRef(firstCommit.getId().getName()).call();

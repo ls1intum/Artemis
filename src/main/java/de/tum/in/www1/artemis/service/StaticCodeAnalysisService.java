@@ -46,8 +46,9 @@ public class StaticCodeAnalysisService {
         }
 
         // Create new static code analysis using the default configuration as a template
-        List<StaticCodeAnalysisCategory> newCategories = defaultConfiguration.stream().map(category -> category.toStaticCodeAnalysisCategory(programmingExercise)).toList();
-        staticCodeAnalysisCategoryRepository.saveAll(newCategories);
+        List<StaticCodeAnalysisCategory> newCategoriesWithDefaultConfiguration = defaultConfiguration.stream()
+                .map(category -> category.toStaticCodeAnalysisCategory(programmingExercise)).toList();
+        staticCodeAnalysisCategoryRepository.saveAll(newCategoriesWithDefaultConfiguration);
     }
 
     /**
