@@ -827,7 +827,7 @@ public class StudentExamService {
         // StudentExams are saved in the called method
         HashSet<User> userHashSet = new HashSet<>();
         userHashSet.add(student);
-        return studentExamRepository.createRandomStudentExams(exam, userHashSet, examQuizQuestionsGenerator).get(0);
+        return studentExamRepository.createRandomStudentExams(exam, userHashSet, examQuizQuestionsGenerator).getFirst();
     }
 
     /**

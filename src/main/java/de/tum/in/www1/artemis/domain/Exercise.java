@@ -606,7 +606,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
 
         if (!submissionsWithRatedResult.isEmpty()) {
             if (submissionsWithRatedResult.size() == 1) {
-                return submissionsWithRatedResult.get(0);
+                return submissionsWithRatedResult.getFirst();
             }
             else {
                 // this means we have more than one submission, we want the one with the last submission date
@@ -621,7 +621,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
                 return null;
             }
             if (submissionsWithUnratedResult.size() == 1) {
-                return submissionsWithUnratedResult.get(0);
+                return submissionsWithUnratedResult.getFirst();
             }
             else { // this means with have more than one submission, we want the one with the last submission date
                    // make sure that submissions without submission date do not lead to null pointer exception in the comparison
@@ -630,7 +630,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         }
         else if (!submissionsWithoutResult.isEmpty()) {
             if (submissionsWithoutResult.size() == 1) {
-                return submissionsWithoutResult.get(0);
+                return submissionsWithoutResult.getFirst();
             }
             else { // this means with have more than one submission, we want the one with the last submission date
                    // make sure that submissions without submission date do not lead to null pointer exception in the comparison

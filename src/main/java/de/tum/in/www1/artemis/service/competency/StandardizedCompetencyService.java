@@ -4,7 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 import jakarta.ws.rs.BadRequestException;
@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.domain.competency.StandardizedCompetency;
 import de.tum.in.www1.artemis.repository.SourceRepository;
 import de.tum.in.www1.artemis.repository.competency.KnowledgeAreaRepository;
 import de.tum.in.www1.artemis.repository.competency.StandardizedCompetencyRepository;
-import de.tum.in.www1.artemis.web.rest.dto.competency.KnowledgeAreaDTO;
+import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.StandardizedCompetencyRequestDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -49,20 +49,15 @@ public class StandardizedCompetencyService {
      * @param competency the standardized competency to create
      * @return the created standardized competency
      */
-    public StandardizedCompetency createStandardizedCompetency(StandardizedCompetency competency) {
-        standardizedCompetencyIsValidOrElseThrow(competency);
+    public StandardizedCompetency createStandardizedCompetency(StandardizedCompetencyRequestDTO competency) {
 
-        // fetch the knowledge area and source from the database if they exists
-        KnowledgeArea knowledgeArea = competency.getKnowledgeArea();
-        if (knowledgeArea != null) {
-            knowledgeArea = knowledgeAreaRepository.findByIdElseThrow(knowledgeArea.getId());
-        }
-        Source source = competency.getSource();
-        if (source != null) {
-            source = sourceRepository.findByIdElseThrow(source.getId());
+        KnowledgeArea knowledgeArea = knowledgeAreaRepository.findByIdElseThrow(competency.knowledgeAreaId());
+        Source source = null;
+        if (competency.sourceId() != null) {
+            source = sourceRepository.findByIdElseThrow(competency.sourceId());
         }
 
-        var competencyToCreate = new StandardizedCompetency(competency.getTitle().trim(), competency.getDescription(), competency.getTaxonomy(), FIRST_VERSION);
+        var competencyToCreate = new StandardizedCompetency(competency.title().trim(), competency.description(), competency.taxonomy(), FIRST_VERSION);
         competencyToCreate.setKnowledgeArea(knowledgeArea);
         competencyToCreate.setSource(source);
 
@@ -75,35 +70,31 @@ public class StandardizedCompetencyService {
     /**
      * Updates an existing standardized competency with the provided competency data
      *
-     * @param competency competency object containing the data to update
+     * @param competencyId the id of the competency to update
+     * @param competency   competency object containing the data to update
      * @return the updated standardized competency
      */
-    public StandardizedCompetency updateStandardizedCompetency(StandardizedCompetency competency) {
-        standardizedCompetencyIsValidOrElseThrow(competency);
-        var existingCompetency = standardizedCompetencyRepository.findByIdElseThrow(competency.getId());
+    public StandardizedCompetency updateStandardizedCompetency(long competencyId, StandardizedCompetencyRequestDTO competency) {
+        var existingCompetency = standardizedCompetencyRepository.findByIdElseThrow(competencyId);
 
-        if (competency.getVersion() != null && !competency.getVersion().equals(existingCompetency.getVersion())) {
+        if (competency.version() != null && !competency.version().equals(existingCompetency.getVersion())) {
             throw new BadRequestException("You cannot change the version of a standardized competency");
         }
-        if (competency.getFirstVersion() != null && !competency.getFirstVersion().equals(existingCompetency.getFirstVersion())) {
-            throw new BadRequestException("You cannot change the first version of a standardized competency");
-        }
 
-        existingCompetency.setTitle(competency.getTitle());
-        existingCompetency.setDescription(competency.getDescription());
-        existingCompetency.setTaxonomy(competency.getTaxonomy());
-        if (competency.getSource() == null) {
+        existingCompetency.setTitle(competency.title());
+        existingCompetency.setDescription(competency.description());
+        existingCompetency.setTaxonomy(competency.taxonomy());
+
+        if (competency.sourceId() == null) {
             existingCompetency.setSource(null);
         }
-        else if (!competency.getSource().equals(existingCompetency.getSource())) {
-            var source = sourceRepository.findByIdElseThrow(competency.getSource().getId());
+        else if (existingCompetency.getSource() == null || !competency.sourceId().equals(existingCompetency.getSource().getId())) {
+            var source = sourceRepository.findByIdElseThrow(competency.sourceId());
             existingCompetency.setSource(source);
         }
-        if (competency.getKnowledgeArea() == null) {
-            existingCompetency.setKnowledgeArea(null);
-        }
-        else if (!competency.getKnowledgeArea().equals(existingCompetency.getKnowledgeArea())) {
-            var knowledgeArea = knowledgeAreaRepository.findByIdElseThrow(competency.getKnowledgeArea().getId());
+
+        if (!competency.knowledgeAreaId().equals(existingCompetency.getKnowledgeArea().getId())) {
+            var knowledgeArea = knowledgeAreaRepository.findByIdElseThrow(competency.knowledgeAreaId());
             existingCompetency.setKnowledgeArea(knowledgeArea);
         }
 
@@ -127,14 +118,14 @@ public class StandardizedCompetencyService {
      *
      * @return the list of knowledge areas with no parent, containing all their descendants and competencies
      */
-    public List<KnowledgeAreaDTO> getAllForTreeView() {
+    public List<KnowledgeArea> getAllForTreeView() {
         var knowledgeAreasForTreeView = new ArrayList<KnowledgeArea>();
         var idMap = new HashMap<Long, KnowledgeArea>();
 
         var knowledgeAreas = knowledgeAreaRepository.findAllWithCompetenciesByOrderByTitleAsc();
-
         for (var knowledgeArea : knowledgeAreas) {
-            knowledgeArea.setChildren(new HashSet<>());
+            // use a linked hash set to retain order
+            knowledgeArea.setChildren(new LinkedHashSet<>());
             idMap.put(knowledgeArea.getId(), knowledgeArea);
         }
 
@@ -152,22 +143,6 @@ public class StandardizedCompetencyService {
             parent.addToChildren(knowledgeArea);
         }
 
-        return knowledgeAreasForTreeView.stream().map(KnowledgeAreaDTO::of).toList();
-    }
-
-    /**
-     * Verifies that a standardized competency that is valid or throws a BadRequestException
-     *
-     * @param competency the standardized competency to verify
-     */
-    private void standardizedCompetencyIsValidOrElseThrow(StandardizedCompetency competency) throws BadRequestException {
-        boolean titleIsInvalid = competency.getTitle() == null || competency.getTitle().trim().isEmpty()
-                || competency.getTitle().length() > StandardizedCompetency.MAX_TITLE_LENGTH;
-        boolean descriptionIsInvalid = competency.getDescription() != null && competency.getDescription().length() > StandardizedCompetency.MAX_DESCRIPTION_LENGTH;
-        boolean knowledgeAreaIsInvalid = competency.getKnowledgeArea() == null;
-
-        if (titleIsInvalid || descriptionIsInvalid || knowledgeAreaIsInvalid) {
-            throw new BadRequestException();
-        }
+        return knowledgeAreasForTreeView;
     }
 }

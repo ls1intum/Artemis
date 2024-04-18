@@ -79,7 +79,7 @@ public abstract class PushNotificationService implements InstantNotificationServ
     }
 
     /**
-     * Sends the actual request to the Hermes Relay Service (see here: https://github.com/ls1intum/Hermes)
+     * Sends the actual request to the Hermes Relay Service (see here: <a href="https://github.com/ls1intum/Hermes">...</a>)
      * It uses exponential backoff to retry once the request fails
      *
      * @param body               to be sent to Hermes. Differs between iOS and Android
