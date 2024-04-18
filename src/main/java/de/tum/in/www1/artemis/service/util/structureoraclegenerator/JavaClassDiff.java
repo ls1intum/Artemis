@@ -22,25 +22,25 @@ public class JavaClassDiff {
 
     private final String packageName;
 
-    boolean isInterfaceDifferent;
+    final boolean isInterfaceDifferent;
 
-    boolean isEnumDifferent;
+    final boolean isEnumDifferent;
 
-    boolean isAbstractDifferent;
+    final boolean isAbstractDifferent;
 
-    String superClassNameDiff;
+    final String superClassNameDiff;
 
-    List<JavaClass> superInterfacesDiff;
+    final List<JavaClass> superInterfacesDiff;
 
-    List<JavaAnnotation> annotationsDiff;
+    final List<JavaAnnotation> annotationsDiff;
 
-    List<JavaField> attributesDiff;
+    final List<JavaField> attributesDiff;
 
-    List<JavaField> enumsDiff;
+    final List<JavaField> enumsDiff;
 
-    List<JavaConstructor> constructorsDiff;
+    final List<JavaConstructor> constructorsDiff;
 
-    List<JavaMethod> methodsDiff;
+    final List<JavaMethod> methodsDiff;
 
     JavaClassDiff(JavaClass solutionClass, JavaClass templateClass) {
         this.solutionClass = solutionClass;

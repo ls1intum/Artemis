@@ -125,7 +125,7 @@ public class DataExportService {
                 return new DataExportDTO(dataExport.getId(), dataExport.getDataExportState(), dataExport.getCreatedDate().atZone(ZoneId.systemDefault()), nextRequestDate);
             }
         }
-        var latestDataExport = dataExportsFromUser.get(0);
+        var latestDataExport = dataExportsFromUser.getFirst();
         return new DataExportDTO(null, latestDataExport.getDataExportState(), latestDataExport.getCreatedDate().atZone(ZoneId.systemDefault()),
                 retrieveNextRequestDate(latestDataExport));
     }
