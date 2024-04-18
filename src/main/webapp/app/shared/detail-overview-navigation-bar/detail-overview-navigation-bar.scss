@@ -1,6 +1,6 @@
 nav {
     position: sticky;
-    top: -2px;
+    top: var(--header-height);
     z-index: 2;
     padding: 1rem 0;
     background: var(--bs-card-bg);
