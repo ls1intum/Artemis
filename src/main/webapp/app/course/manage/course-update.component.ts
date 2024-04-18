@@ -471,17 +471,34 @@ export class CourseUpdateComponent implements OnInit {
     changeCustomizeGroupNames() {
         if (!this.customizeGroupNames) {
             this.customizeGroupNames = true;
-            this.courseForm.controls['studentGroupName'].setValue(this.course.studentGroupName ?? 'artemis-dev');
-            this.courseForm.controls['teachingAssistantGroupName'].setValue(this.course.teachingAssistantGroupName ?? 'artemis-dev');
-            this.courseForm.controls['editorGroupName'].setValue(this.course.editorGroupName ?? 'artemis-dev');
-            this.courseForm.controls['instructorGroupName'].setValue(this.course.instructorGroupName ?? 'artemis-dev');
+            this.setGroupNameValuesInCourseForm(
+                this.course.studentGroupName ?? 'artemis-dev',
+                this.course.teachingAssistantGroupName ?? 'artemis-dev',
+                this.course.editorGroupName ?? 'artemis-dev',
+                this.course.instructorGroupName ?? 'artemis-dev',
+            );
         } else {
             this.customizeGroupNames = false;
-            this.courseForm.controls['studentGroupName'].setValue(undefined);
-            this.courseForm.controls['teachingAssistantGroupName'].setValue(undefined);
-            this.courseForm.controls['editorGroupName'].setValue(undefined);
-            this.courseForm.controls['instructorGroupName'].setValue(undefined);
+            if (!this.course.id) {
+                // Creating: clear the values so groups are no longer customized
+                this.setGroupNameValuesInCourseForm(undefined, undefined, undefined, undefined);
+            } else {
+                // Editing: restore the old values -> no change.
+                this.setGroupNameValuesInCourseForm(
+                    this.course.studentGroupName,
+                    this.course.teachingAssistantGroupName,
+                    this.course.editorGroupName,
+                    this.course.instructorGroupName,
+                );
+            }
         }
+    }
+
+    private setGroupNameValuesInCourseForm(studentGroupName?: string, teachingAssistantGroupName?: string, editorGroupName?: string, instructorGroupName?: string) {
+        this.courseForm.controls['studentGroupName'].setValue(studentGroupName);
+        this.courseForm.controls['teachingAssistantGroupName'].setValue(teachingAssistantGroupName);
+        this.courseForm.controls['editorGroupName'].setValue(editorGroupName);
+        this.courseForm.controls['instructorGroupName'].setValue(instructorGroupName);
     }
 
     /**
