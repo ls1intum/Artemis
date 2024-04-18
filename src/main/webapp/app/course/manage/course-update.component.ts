@@ -212,10 +212,10 @@ export class CourseUpdateComponent implements OnInit {
                     validators: [Validators.required, Validators.min(0)],
                 }),
                 restrictedAthenaModulesAccess: new FormControl(this.course.restrictedAthenaModulesAccess),
-                registrationEnabled: new FormControl(this.course.enrollmentEnabled),
+                enrollmentEnabled: new FormControl(this.course.enrollmentEnabled),
                 enrollmentStartDate: new FormControl(this.course.enrollmentStartDate),
                 enrollmentEndDate: new FormControl(this.course.enrollmentEndDate),
-                registrationConfirmationMessage: new FormControl(this.course.enrollmentConfirmationMessage, {
+                enrollmentConfirmationMessage: new FormControl(this.course.enrollmentConfirmationMessage, {
                     validators: [Validators.maxLength(2000)],
                 }),
                 unenrollmentEnabled: new FormControl(this.course.unenrollmentEnabled),
@@ -397,7 +397,7 @@ export class CourseUpdateComponent implements OnInit {
         this.course.onlineCourse = !this.course.onlineCourse;
         if (this.course.onlineCourse) {
             // enrollment enabled cannot be activated if online course is active
-            this.courseForm.controls['registrationEnabled'].setValue(false);
+            this.courseForm.controls['enrollmentEnabled'].setValue(false);
         }
         this.courseForm.controls['onlineCourse'].setValue(this.course.onlineCourse);
     }
@@ -420,7 +420,7 @@ export class CourseUpdateComponent implements OnInit {
                 this.changeUnenrollmentEnabled();
             }
         }
-        this.courseForm.controls['registrationEnabled'].setValue(this.course.enrollmentEnabled);
+        this.courseForm.controls['enrollmentEnabled'].setValue(this.course.enrollmentEnabled);
     }
 
     /**
@@ -529,7 +529,7 @@ export class CourseUpdateComponent implements OnInit {
      * @param message new enrollmentConfirmationMessage
      */
     updateEnrollmentConfirmationMessage(message: string) {
-        this.courseForm.controls['registrationConfirmationMessage'].setValue(message);
+        this.courseForm.controls['enrollmentConfirmationMessage'].setValue(message);
     }
 
     /**
@@ -618,7 +618,7 @@ export class CourseUpdateComponent implements OnInit {
 
 const CourseValidator: ValidatorFn = (formGroup: FormGroup) => {
     const onlineCourse = formGroup.controls['onlineCourse'].value;
-    const enrollmentEnabled = formGroup.controls['registrationEnabled'].value;
+    const enrollmentEnabled = formGroup.controls['enrollmentEnabled'].value;
     // it cannot be the case that both values are true
     return onlineCourse != undefined && enrollmentEnabled != undefined && !(onlineCourse && enrollmentEnabled) ? null : { range: true };
 };
