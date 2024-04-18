@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.lti;
 
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
@@ -267,9 +267,9 @@ public class Lti13Service {
 
         String targetLinkPath;
         try {
-            targetLinkPath = (new URL(targetLinkUrl)).getPath();
+            targetLinkPath = new URI(targetLinkUrl).getPath();
         }
-        catch (MalformedURLException ex) {
+        catch (URISyntaxException ex) {
             log.info("Malformed target link url: {}", targetLinkUrl);
             return Optional.empty();
         }
@@ -308,9 +308,7 @@ public class Lti13Service {
         launch.setUser(user);
 
         Optional<LtiPlatformConfiguration> ltiPlatformConfiguration = ltiPlatformConfigurationRepository.findByRegistrationId(launchRequest.clientRegistrationId());
-        if (ltiPlatformConfiguration.isPresent()) {
-            launch.setLtiPlatformConfiguration(ltiPlatformConfiguration.get());
-        }
+        ltiPlatformConfiguration.ifPresent(launch::setLtiPlatformConfiguration);
 
         launchRepository.save(launch);
     }

@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
  * If it encompasses the addition of an entire file, previousLine will be null.
  * If it deletes an entire file, line will be null.
  * previousLine and line will be different when there are other changes higher up in the file.
- *
+ * <p>
  * Example:
  * A print statement gets changed:
  * <code>

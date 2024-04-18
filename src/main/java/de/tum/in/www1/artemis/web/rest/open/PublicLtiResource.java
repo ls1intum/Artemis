@@ -40,7 +40,7 @@ public class PublicLtiResource {
     /**
      * POST lti13/auth-callback Redirects an LTI 1.3 Authorization Request Response to the client
      * POST lti13/deep-link: Redirects an LTI 1.3 Deep Linking Request Response to the client
-     *
+     * <p>
      * Consolidates handling for both 'auth-callback' and 'deep-link' endpoints to simplify client interactions.
      * This approach ensures consistent processing and user experience for authentication and deep linking flows.
      *
@@ -88,10 +88,7 @@ public class PublicLtiResource {
     private boolean isValidJwtIgnoreSignature(String token) {
         try {
             SignedJWT parsedToken = SignedJWT.parse(token);
-            if (parsedToken.getJWTClaimsSet().getExpirationTime().before(Date.from(Instant.now()))) {
-                return false;
-            }
-            return true;
+            return !parsedToken.getJWTClaimsSet().getExpirationTime().before(Date.from(Instant.now()));
         }
         catch (ParseException e) {
             log.info("LTI request: JWT token is invalid: {}", token, e);
