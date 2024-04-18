@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.PlantUmlService;
 
 /**
@@ -38,6 +39,7 @@ public class PlantUmlResource {
      * @throws IOException if generateImage can't create the PNG
      */
     @GetMapping("plantuml/png")
+    @EnforceAtLeastStudent
     public ResponseEntity<byte[]> generatePng(@RequestParam("plantuml") String plantuml, @RequestParam(value = "useDarkTheme", defaultValue = "false") boolean useDarkTheme)
             throws IOException {
         long start = System.nanoTime();
@@ -59,6 +61,7 @@ public class PlantUmlResource {
      * @throws IOException if generateImage can't create the PNG
      */
     @GetMapping("plantuml/svg")
+    @EnforceAtLeastStudent
     public ResponseEntity<String> generateSvg(@RequestParam("plantuml") String plantuml, @RequestParam(value = "useDarkTheme", defaultValue = "false") boolean useDarkTheme)
             throws IOException {
         long start = System.nanoTime();
