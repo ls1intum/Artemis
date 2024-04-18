@@ -416,10 +416,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
      */
     default Set<Exercise> findAllExercisesByExamId(long examId) {
         var exam = findWithExerciseGroupsAndExercisesById(examId);
-        if (exam.isEmpty()) {
-            return Set.of();
-        }
-        return exam.get().getExerciseGroups().stream().map(ExerciseGroup::getExercises).flatMap(Collection::stream).collect(Collectors.toSet());
+        return exam.map(value -> value.getExerciseGroups().stream().map(ExerciseGroup::getExercises).flatMap(Collection::stream).collect(Collectors.toSet())).orElseGet(Set::of);
     }
 
     /**

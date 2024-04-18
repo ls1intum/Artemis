@@ -157,7 +157,7 @@ public class TutorialGroupService {
         else {
             var nextSessions = tutorialGroupSessionRepository.findNextSessionsOfStatus(tutorialGroup.getId(), ZonedDateTime.now(), TutorialGroupSessionStatus.ACTIVE);
             if (!nextSessions.isEmpty()) {
-                nextSessionOptional = Optional.of(nextSessions.get(0));
+                nextSessionOptional = Optional.of(nextSessions.getFirst());
             }
         }
         nextSessionOptional.ifPresent(tutorialGroupSession -> {
