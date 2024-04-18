@@ -69,9 +69,9 @@ public abstract class QuizQuestion extends DomainObject {
     @JsonView(QuizView.Before.class)
     private Long quizGroupId;
 
-    @Column(name = "json_object")
+    @Column(name = "content")
     @JsonView(QuizView.Before.class)
-    private String jsonObject;
+    private String content;
 
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     @JoinColumn(unique = true)
@@ -187,8 +187,8 @@ public abstract class QuizQuestion extends DomainObject {
         this.quizGroupId = quizGroupId;
     }
 
-    public void setJsonObject(String jsonObject) {
-        this.jsonObject = jsonObject;
+    public void setContent(String content) {
+        this.content = content;
     }
 
     @JsonProperty(value = "quizGroup", access = JsonProperty.Access.READ_ONLY)

@@ -442,17 +442,42 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         // Note: save will automatically remove deleted questions from the exercise and deleted answer options from the questions
         // and delete the now orphaned entries from the database
         log.debug("Save quiz exercise to database: {}", quizExercise);
+        processQuizQuestions(quizExercise);
+
+        return quizExerciseRepository.saveAndFlush(quizExercise);
+    }
+
+    /**
+     * Processes a list of quiz questions by converting each question into a JSON string
+     * and setting it as the content of the question. This method iterates over all
+     * questions in the given quiz exercise.
+     *
+     * @param quizExercise the QuizExercise object containing the list of quiz questions. It must not be null.
+     * @throws RuntimeException if there is a problem in serializing the question object to JSON.
+     */
+    private void processQuizQuestions(QuizExercise quizExercise) {
         ObjectMapper objectMapper = new ObjectMapper();
 
         for (QuizQuestion question : quizExercise.getQuizQuestions()) {
-            try {
-                String jsonObject = objectMapper.writeValueAsString(question);
-                question.setJsonObject(jsonObject);
-            }
-            catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
+            question.setContent(serializeToJson(question, objectMapper));
         }
-        return quizExerciseRepository.saveAndFlush(quizExercise);
+    }
+
+    /**
+     * Serializes a QuizQuestion object to its JSON representation using the provided ObjectMapper.
+     * This method is called for each individual question during the quiz processing.
+     *
+     * @param question     the QuizQuestion object to serialize. It must not be null.
+     * @param objectMapper the ObjectMapper instance used for serialization. It must not be null.
+     * @return String representing the JSON serialized form of the QuizQuestion.
+     * @throws RuntimeException if JSON processing fails, encapsulating the underlying JsonProcessingException.
+     */
+    private String serializeToJson(QuizQuestion question, ObjectMapper objectMapper) {
+        try {
+            return objectMapper.writeValueAsString(question);
+        }
+        catch (JsonProcessingException e) {
+            throw new RuntimeException("Error processing JSON", e);
+        }
     }
 }
