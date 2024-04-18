@@ -105,12 +105,12 @@
                 }
             },
             "registrationEnabled": {
-                "title": "Kursregistrierung für Studierende aktiviert",
-                "description": "Aktiviere diese Checkbox, damit sich Studierende selbständig im Kurs registrieren können, sofern dieser aktiv ist (zwischen Start und Ende des Kurses). Du kannst optional eine Nachricht eingeben, die Studierende bei der Registrierung bestätigen müssen."
+                "title": "Kurseinschreibung für Studierende aktiviert",
+                "description": "Aktiviere diese Checkbox, damit sich Studierende selbständig im Kurs einschreiben können, sofern dieser aktiv ist (zwischen Start und Ende des Kurses). Du kannst optional eine Nachricht eingeben, die Studierende bei der Einschreibung bestätigen müssen."
             },
             "enrollmentStartDate": "Einschreibungs Start",
             "enrollmentEndDate": "Einschreibungs Ende",
-            "registrationConfirmationMessage": "Nachricht zur Bestätigung der Registrierung",
+            "registrationConfirmationMessage": "Nachricht zur Bestätigung der Einschreibung",
             "unenrollmentEnabled": {
                 "title": "Austragen aus dem Kurs für Studierende aktiviert",
                 "description": "Aktiviere diese Checkbox, damit sich Studierende selbstständig vom Kurs austragen können. Du kannst das späteste Datum hierfür einstellen, andernfalls ist es den Studenten bis zum Ende des Kurses möglich sich auszutragen."
