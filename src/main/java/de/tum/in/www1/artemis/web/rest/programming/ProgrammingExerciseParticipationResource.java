@@ -7,6 +7,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -51,6 +52,11 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public class ProgrammingExerciseParticipationResource {
 
     private static final String ENTITY_NAME = "programmingExerciseParticipation";
+
+    /**
+     * A valid commitId is a 40 digits hexadecimal number
+     */
+    private static final Pattern commitIdPattern = Pattern.compile("^[a-fA-F0-9]{40}$");
 
     private final ParticipationRepository participationRepository;
 
@@ -327,6 +333,7 @@ public class ProgrammingExerciseParticipationResource {
         ProgrammingExercise exercise = programmingExerciseRepository.findByParticipationId(participationId).orElseThrow();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
         var participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
+        ProgrammingExerciseParticipationResource.sanitiseCommitId(commitId);
         return new ModelAndView("forward:/api/repository/" + participation.getId() + "/files-content/" + commitId);
     }
 
@@ -363,6 +370,7 @@ public class ProgrammingExerciseParticipationResource {
             }
         }
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+        ProgrammingExerciseParticipationResource.sanitiseCommitId(commitId);
         return new ModelAndView("forward:/api/repository/" + participation.getId() + "/files-content/" + commitId).addObject("repositoryType", repositoryType);
     }
 
@@ -381,6 +389,12 @@ public class ProgrammingExerciseParticipationResource {
             if (isStudent && exerciseNotStarted) {
                 throw new AccessForbiddenException("Participation not yet started");
             }
+        }
+    }
+
+    private static void sanitiseCommitId(String commitId) {
+        if (!commitIdPattern.matcher(commitId).matches()) {
+            throw new BadRequestAlertException("Incorrect commit ID", ENTITY_NAME, "incorrectCommitID");
         }
     }
 

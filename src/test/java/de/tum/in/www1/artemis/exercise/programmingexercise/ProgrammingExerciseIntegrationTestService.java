@@ -2383,6 +2383,17 @@ class ProgrammingExerciseIntegrationTestService {
                 null);
     }
 
+    void testRedirectGetParticipationRepositoryFilesWithContentAtCommitBadRequest(BiFunction<ProgrammingExercise, Map<String, String>, ProgrammingSubmission> setupRepositoryMock)
+            throws Exception {
+        var submission = setupRepositoryMock.apply(programmingExercise, Map.ofEntries(Map.entry("A.java", "abc"), Map.entry("B.java", "cde"), Map.entry("C.java", "efg")));
+        // without forwarding the redirectUrl is null
+        for (String commitID : new String[] { "%3fadmin%3dtrue", submission.getCommitHash() + "%3fadmin%3dtrue", "%3Fadmin%3Dtrue", submission.getCommitHash() + "%3Fadmin%3Dtrue",
+                "..", submission.getCommitHash() + "..", "%2e%2e%2f%2e%2e%2fetc%2fpasswd", submission.getCommitHash() + "%2e%2e%2f%2e%2e%2fetc%2fpasswd",
+                "%2E%2E%2F%2E%2E%2Fetc%2Fpasswd", submission.getCommitHash() + "%2E%2E%2F%2E%2E%2Fetc%2Fpasswd" }) {
+            request.getWithForwardedUrl("/api/programming-exercise-participations/" + participation1.getId() + "/files-content/" + commitID, HttpStatus.BAD_REQUEST, null);
+        }
+    }
+
     private long getMaxProgrammingExerciseId() {
         return programmingExerciseRepository.findAll(PageRequest.of(0, 1, Sort.by(Sort.Direction.DESC, "id"))).stream().mapToLong(ProgrammingExercise::getId).max().orElse(1L);
     }

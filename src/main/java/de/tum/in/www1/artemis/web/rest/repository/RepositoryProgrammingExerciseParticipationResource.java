@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -64,6 +65,7 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipati
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -73,6 +75,13 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @RestController
 @RequestMapping("api/")
 public class RepositoryProgrammingExerciseParticipationResource extends RepositoryResource {
+
+    private static final String ENTITY_NAME = "programmingExerciseParticipation";
+
+    /**
+     * A valid commitId is a 40 digits hexadecimal number
+     */
+    private static final Pattern commitIdPattern = Pattern.compile("^[a-fA-F0-9]{40}$");
 
     private final ParticipationAuthorizationCheckService participationAuthCheckService;
 
@@ -225,10 +234,9 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         log.debug("REST request to files for domainId {} at commitId {}", participationId, commitId);
         var participation = getProgrammingExerciseParticipation(participationId);
         var programmingExercise = programmingExerciseRepository.findByParticipationIdOrElseThrow(participationId);
-
         repositoryAccessService.checkAccessRepositoryElseThrow(participation, userRepository.getUserWithGroupsAndAuthorities(), programmingExercise, RepositoryActionType.READ);
-
         return executeAndCheckForExceptions(() -> {
+            RepositoryProgrammingExerciseParticipationResource.sanitiseCommitId(commitId);
             Repository repository;
             // if the repository type is tests, we need to check out the tests repository
             if (repositoryType != null && repositoryType.equals(RepositoryType.TESTS)) {
@@ -491,5 +499,11 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         // Load the logs from the database
         List<BuildLogEntry> buildLogs = buildLogService.getLatestBuildLogs(programmingSubmission);
         return new ResponseEntity<>(buildLogs, HttpStatus.OK);
+    }
+
+    private static void sanitiseCommitId(String commitId) {
+        if (!commitIdPattern.matcher(commitId).matches()) {
+            throw new BadRequestAlertException("Incorrect commit ID", ENTITY_NAME, "incorrectCommitID");
+        }
     }
 }
