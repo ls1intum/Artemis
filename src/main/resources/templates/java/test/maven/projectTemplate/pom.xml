@@ -100,7 +100,7 @@
             <plugin>
                 <groupId>com.github.spotbugs</groupId>
                 <artifactId>spotbugs-maven-plugin</artifactId>
-                <version>4.8.3.1</version>
+                <version>4.8.4.0</version>
                 <configuration>
                     <!-- Do not analyze the files in the test directory -->
                     <includeTests>${analyzeTests}</includeTests>
@@ -183,7 +183,7 @@
                 <dependency>
                     <groupId>com.teamscale</groupId>
                     <artifactId>impacted-test-engine</artifactId>
-                    <version>33.1.2</version>
+                    <version>33.2.0</version>
                 </dependency>
             </dependencies>
             <build>
@@ -201,7 +201,7 @@
                     <plugin>
                         <groupId>com.teamscale</groupId>
                         <artifactId>teamscale-maven-plugin</artifactId>
-                        <version>33.1.2</version>
+                        <version>33.2.0</version>
                         <configuration>
                             <teamscaleUrl>http://localhost</teamscaleUrl>
                             <accessToken>dummy</accessToken>

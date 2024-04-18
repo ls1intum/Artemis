@@ -160,7 +160,7 @@
                 <dependency>
                     <groupId>com.teamscale</groupId>
                     <artifactId>impacted-test-engine</artifactId>
-                    <version>30.1.1</version>
+                    <version>33.2.0</version>
                 </dependency>
             </dependencies>
             <build>
@@ -178,7 +178,7 @@
                     <plugin>
                         <groupId>com.teamscale</groupId>
                         <artifactId>teamscale-maven-plugin</artifactId>
-                        <version>30.1.1</version>
+                        <version>33.2.0</version>
                         <configuration>
                             <teamscaleUrl>http://localhost</teamscaleUrl>
                             <accessToken>dummy</accessToken>
