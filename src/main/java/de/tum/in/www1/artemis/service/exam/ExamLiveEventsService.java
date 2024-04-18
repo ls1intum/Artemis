@@ -135,9 +135,15 @@ public class ExamLiveEventsService {
      * @param exercise The exam exercise the problem statement was updated for
      * @param message  The message to send
      */
-    @Async
+
     public void createAndSendProblemStatementUpdateEvent(Exercise exercise, String message) {
+        // User cannot be obtained in the method annotated with @Async
         User instructor = userRepository.getUser();
+        this.createAndSendProblemStatementUpdateEvent(exercise, message, instructor);
+    }
+
+    @Async
+    protected void createAndSendProblemStatementUpdateEvent(Exercise exercise, String message, User instructor) {
         Exam exam = exercise.getExamViaExerciseGroupOrCourseMember();
         studentExamRepository.findAllWithExercisesByExamId(exam.getId()).stream().filter(studentExam -> studentExam.getExercises().contains(exercise))
                 .forEach(studentExam -> this.createAndSendProblemStatementUpdateEvent(studentExam, exercise, message, instructor));
