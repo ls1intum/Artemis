@@ -4,8 +4,6 @@ import static de.tum.in.www1.artemis.versioning.VersionRangeFactory.getInstanceO
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import java.util.List;
-
 import org.junit.jupiter.api.Test;
 
 import de.tum.in.www1.artemis.exception.ApiVersionRangeNotValidException;
@@ -46,88 +44,88 @@ class VersionRangeFactoryTest {
 
     @Test
     void testCombine_equalRanges() {
-        List<Integer> actualRangesSameVersions = VersionRangeService.versionRangeToIntegerList(VersionRangeFactory.combine(range3_5, range3_5));
-        assertThat(actualRangesSameVersions).isEqualTo(List.of(3, 5));
+        VersionRange range = VersionRangeFactory.combine(range3_5, range3_5);
+        assertThatVersionRangesEqual(range, range3_5);
     }
 
     @Test
     void testCombine_neighboringRanges() {
         var actual1 = VersionRangeFactory.combine(range6_9, range3_5);
         var actual2 = VersionRangeFactory.combine(range3_5, range6_9);
-        assertThat(actual1.value()).isEqualTo(range3_9.value());
-        assertThat(actual2.value()).isEqualTo(range3_9.value());
+        assertThatVersionRangesEqual(actual1, range3_9);
+        assertThatVersionRangesEqual(actual2, range3_9);
     }
 
     @Test
     void testCombine_neighboringRanges_startEndSame() {
         var actual1 = VersionRangeFactory.combine(range5_9, range3_5);
         var actual2 = VersionRangeFactory.combine(range3_5, range5_9);
-        assertThat(actual1.value()).isEqualTo(range3_9.value());
-        assertThat(actual2.value()).isEqualTo(range3_9.value());
+        assertThatVersionRangesEqual(actual1, range3_9);
+        assertThatVersionRangesEqual(actual2, range3_9);
     }
 
     @Test
     void testCombine_overlappingRanges() {
         var actual1 = VersionRangeFactory.combine(range4_9, range3_5);
         var actual2 = VersionRangeFactory.combine(range3_5, range4_9);
-        assertThat(actual1.value()).isEqualTo(range3_9.value());
-        assertThat(actual2.value()).isEqualTo(range3_9.value());
+        assertThatVersionRangesEqual(actual1, range3_9);
+        assertThatVersionRangesEqual(actual2, range3_9);
     }
 
     @Test
     void testCombine_ranges_sameStart_differentEnd() {
         var actual1 = VersionRangeFactory.combine(range3_9, range3_5);
         var actual2 = VersionRangeFactory.combine(range3_5, range3_9);
-        assertThat(actual1.value()).isEqualTo(range3_9.value());
-        assertThat(actual2.value()).isEqualTo(range3_9.value());
+        assertThatVersionRangesEqual(actual1, range3_9);
+        assertThatVersionRangesEqual(actual2, range3_9);
     }
 
     @Test
     void testCombine_ranges_differentStart_sameEnd() {
         var actual1 = VersionRangeFactory.combine(range1_5, range3_5);
         var actual2 = VersionRangeFactory.combine(range3_5, range1_5);
-        assertThat(actual1.value()).isEqualTo(range1_5.value());
-        assertThat(actual2.value()).isEqualTo(range1_5.value());
+        assertThatVersionRangesEqual(actual1, range1_5);
+        assertThatVersionRangesEqual(actual2, range1_5);
     }
 
     @Test
     void testCombine_limitNeighboringRangeStart() {
         var actual1 = VersionRangeFactory.combine(limit2, range3_5);
         var actual2 = VersionRangeFactory.combine(range3_5, limit2);
-        assertThat(actual1.value()).isEqualTo(limit2.value());
-        assertThat(actual2.value()).isEqualTo(limit2.value());
+        assertThatVersionRangesEqual(actual1, limit2);
+        assertThatVersionRangesEqual(actual2, limit2);
     }
 
     @Test
     void testCombine_limitOnStartOfRange() {
         var actual1 = VersionRangeFactory.combine(limit3, range3_5);
         var actual2 = VersionRangeFactory.combine(range3_5, limit3);
-        assertThat(actual1.value()).isEqualTo(limit3.value());
-        assertThat(actual2.value()).isEqualTo(limit3.value());
+        assertThatVersionRangesEqual(actual1, limit3);
+        assertThatVersionRangesEqual(actual2, limit3);
     }
 
     @Test
     void testCombine_limitOnEndOfRange() {
         var actual1 = VersionRangeFactory.combine(limit5, range3_5);
         var actual2 = VersionRangeFactory.combine(range3_5, limit5);
-        assertThat(actual1.value()).isEqualTo(limit3.value());
-        assertThat(actual2.value()).isEqualTo(limit3.value());
+        assertThatVersionRangesEqual(actual1, limit3);
+        assertThatVersionRangesEqual(actual2, limit3);
     }
 
     @Test
     void testCombine_limitNeighboringRangeEnd() {
         var actual1 = VersionRangeFactory.combine(limit6, range3_5);
         var actual2 = VersionRangeFactory.combine(range3_5, limit6);
-        assertThat(actual1.value()).isEqualTo(limit3.value());
-        assertThat(actual2.value()).isEqualTo(limit3.value());
+        assertThatVersionRangesEqual(actual1, limit3);
+        assertThatVersionRangesEqual(actual2, limit3);
     }
 
     @Test
     void testCombine_limitBeforeRange() {
         var actual1 = VersionRangeFactory.combine(limit1, range3_5);
         var actual2 = VersionRangeFactory.combine(range3_5, limit1);
-        assertThat(actual1.value()).isEqualTo(limit1.value());
-        assertThat(actual2.value()).isEqualTo(limit1.value());
+        assertThatVersionRangesEqual(actual1, limit1);
+        assertThatVersionRangesEqual(actual2, limit1);
     }
 
     @Test
@@ -139,14 +137,19 @@ class VersionRangeFactoryTest {
     @Test
     void testCombine_sameLimits() {
         var actual = VersionRangeFactory.combine(limit1, limit1);
-        assertThat(actual.value()).isEqualTo(limit1.value());
+        assertThatVersionRangesEqual(actual, limit1);
     }
 
     @Test
     void testCombine_differentLimits() {
         var actual1 = VersionRangeFactory.combine(limit1, limit2);
         var actual2 = VersionRangeFactory.combine(limit2, limit1);
-        assertThat(actual1.value()).isEqualTo(limit1.value());
-        assertThat(actual2.value()).isEqualTo(limit1.value());
+        assertThatVersionRangesEqual(actual1, limit1);
+        assertThatVersionRangesEqual(actual2, limit1);
+    }
+
+    private void assertThatVersionRangesEqual(VersionRange a, VersionRange b) {
+        assertThat(a.start()).as("Check starting versions").isEqualTo(b.start());
+        assertThat(a.end()).as("Check ending versions").isEqualTo(b.end());
     }
 }

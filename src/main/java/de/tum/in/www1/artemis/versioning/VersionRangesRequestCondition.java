@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.versioning;
 
 import static de.tum.in.www1.artemis.versioning.VersionRangeComparisonType.*;
 import static de.tum.in.www1.artemis.versioning.VersionRangeFactory.getInstanceOfVersionRange;
-import static de.tum.in.www1.artemis.versioning.VersionRangeService.versionRangeToIntegerList;
 
 import java.util.*;
 import java.util.regex.Pattern;
@@ -48,24 +47,11 @@ public class VersionRangesRequestCondition implements RequestCondition<VersionRa
         this.apiVersions = apiVersions;
         var distinct = ranges.stream().distinct().toList();
         if (distinct.size() != 1 || distinct.getFirst() != null) {
-            checkRangesValidity(distinct);
             this.ranges = Set.copyOf(distinct);
         }
         else {
             this.ranges = Collections.emptySet();
         }
-    }
-
-    private void checkRangesValidity(Collection<VersionRange> ranges) {
-        if (ranges.isEmpty()) {
-            return;
-        }
-        ranges.forEach(range -> {
-            int length = range.value().length;
-            if (length != 1 && length != 2) {
-                throw new ApiVersionRangeNotValidException();
-            }
-        });
     }
 
     /**
@@ -107,15 +93,11 @@ public class VersionRangesRequestCondition implements RequestCondition<VersionRa
         Set<VersionRange> ranges = new HashSet<>();
 
         combinedRanges.forEach(range -> {
-            if (range.value().length == 1) {
+            if (range.end() == VersionRange.UNDEFINED) {
                 limits.add(range);
             }
-            else if (range.value().length == 2) {
-                ranges.add(range);
-            }
             else {
-                // Fallback. Exception would've been already thrown earlier in the constructor
-                throw new ApiVersionRangeNotValidException();
+                ranges.add(range);
             }
         });
 
@@ -124,7 +106,7 @@ public class VersionRangesRequestCondition implements RequestCondition<VersionRa
 
         // Return new condition of limit if no ranges exist
         if (resultLimit != null && ranges.isEmpty()) {
-            return new VersionRangesRequestCondition(apiVersions, getInstanceOfVersionRange(resultLimit.value()[0]));
+            return new VersionRangesRequestCondition(apiVersions, getInstanceOfVersionRange(resultLimit.start()));
         }
 
         // Combine limit with ranges
@@ -145,20 +127,20 @@ public class VersionRangesRequestCondition implements RequestCondition<VersionRa
 
         // If limit exists, ignore ranges within the limit, otherwise add all ranges to the pool
         if (limit != null) {
-            limitStart = limit.value()[0];
+            limitStart = limit.start();
             // Select ranges outside the limit
             while (!rangePool.isEmpty()) {
                 var range = rangePool.removeFirst();
-                if (range.value()[0] >= limitStart) {
+                if (range.start() >= limitStart) {
                     // Already part of limit
                     continue;
                 }
-                if (range.value()[1] < limitStart - 1) {
+                if (range.end() < limitStart - 1) {
                     // range is completely before limit
                     newRanges.add(range);
                 }
                 else {
-                    limitStart = range.value()[0];
+                    limitStart = range.start();
                 }
             }
         }
@@ -169,7 +151,7 @@ public class VersionRangesRequestCondition implements RequestCondition<VersionRa
         var simplifyRanges = simplifyRanges(newRanges);
 
         // Build new condition and return it
-        List<VersionRange> annotationList = simplifyRanges.stream().map(range -> getInstanceOfVersionRange(range.value()[0], range.value()[1]))
+        List<VersionRange> annotationList = simplifyRanges.stream().map(range -> getInstanceOfVersionRange(range.start(), range.end()))
                 .collect(Collectors.toCollection(ArrayList::new));
         if (limitStart != null) {
             annotationList.add(getInstanceOfVersionRange(limitStart));
@@ -313,12 +295,9 @@ public class VersionRangesRequestCondition implements RequestCondition<VersionRa
      * @return true if the requested version is part of the version range
      */
     private boolean checkVersion(@NotNull VersionRange range, int requestedVersion) {
-        List<Integer> versions = versionRangeToIntegerList(range);
         // only allowed versions here
         if (apiVersions.contains(requestedVersion)) {
-            int startVersion = versions.get(0);
-
-            return requestedVersion >= startVersion && (versions.size() == 1 || requestedVersion <= versions.get(1));
+            return requestedVersion >= range.start() && (range.end() == VersionRange.UNDEFINED || requestedVersion <= range.end());
         }
         return false;
     }
@@ -337,8 +316,8 @@ public class VersionRangesRequestCondition implements RequestCondition<VersionRa
             return false;
         }
 
-        var thisRanges = ranges.stream().map(range -> Arrays.stream(range.value()).boxed().toList()).collect(Collectors.toSet());
-        var otherRanges = that.ranges.stream().map(range -> Arrays.stream(range.value()).boxed().toList()).collect(Collectors.toSet());
+        var thisRanges = ranges.stream().map(range -> List.of(range.start(), range.end())).collect(Collectors.toSet());
+        var otherRanges = that.ranges.stream().map(range -> List.of(range.start(), range.end())).collect(Collectors.toSet());
 
         return thisRanges.equals(otherRanges);
     }

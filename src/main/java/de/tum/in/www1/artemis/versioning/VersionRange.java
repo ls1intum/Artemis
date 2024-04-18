@@ -5,18 +5,34 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import org.springframework.core.annotation.AliasFor;
+
 /**
- * Depicts a range of versions and can contain one or two values.
- * The first value is the lower bound and the second, optional, value is the upper bound.
+ * Depicts a range of versions. Start and end value are part of the range itself. If only the start value is given, the range is considered a lower limit matching all versions
+ * greater or equal to the start value.
  */
 @Target({ ElementType.METHOD })
 @Retention(RetentionPolicy.RUNTIME)
 public @interface VersionRange {
 
+    int UNDEFINED = -1;
+
+    @AliasFor("start")
+    int value();
+
     /**
-     * Specifies the range by version numbers
+     * The start of the version range or a lower limit.
      *
-     * @return array of version numbers
+     * @return the starting version number.
      */
-    int[] value();
+    @AliasFor("value")
+    int start();
+
+    /**
+     * The end of the version range inclusive. If set to -1, the range is considered open-ended. Technically, 0 would already be enough, but -1 is more expressive. A null value is
+     * not allowed.
+     *
+     * @return the ending version number.
+     */
+    int end() default -1;
 }

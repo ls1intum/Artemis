@@ -1,9 +1,6 @@
 package de.tum.in.www1.artemis.versioning;
 
-import static de.tum.in.www1.artemis.versioning.VersionRangeService.versionRangeToIntegerList;
-
 import java.lang.annotation.Annotation;
-import java.util.List;
 
 import de.tum.in.www1.artemis.exception.ApiVersionRangeNotValidException;
 
@@ -12,13 +9,18 @@ import de.tum.in.www1.artemis.exception.ApiVersionRangeNotValidException;
  */
 public class VersionRangeFactory {
 
+    public static VersionRange getInstanceOfVersionRange(int start) {
+        return getInstanceOfVersionRange(start, VersionRange.UNDEFINED);
+    }
+
     /**
      * Factory method for {@link VersionRange} instances.
      *
-     * @param value the version numbers to pass
+     * @param start the starting version of the range
+     * @param end   the ending version of the range, see {@link VersionRange#UNDEFINED} for an undefined end
      * @return the created {@link VersionRange} instance
      */
-    public static VersionRange getInstanceOfVersionRange(int... value) {
+    public static VersionRange getInstanceOfVersionRange(int start, int end) {
         return new VersionRange() {
 
             @Override
@@ -27,65 +29,77 @@ public class VersionRangeFactory {
             }
 
             @Override
-            public int[] value() {
-                return value;
+            public int value() {
+                return start;
+            }
+
+            @Override
+            public int start() {
+                return start;
+            }
+
+            @Override
+            public int end() {
+                return end;
             }
         };
     }
 
     /**
-     * Combines two combinable ranges into one range.
+     * Combines two potentially combinable ranges into one range.
      *
-     * @param range1 The first range
-     * @param range2 The second range
+     * @param rangeA The first range
+     * @param rangeB The second range
      * @return The combined range
-     * @throws ApiVersionRangeNotValidException if the ranges are not valid or the two ranges can't be combined
+     * @throws ApiVersionRangeNotValidException if the ranges can't be combined
      */
-    public static VersionRange combine(VersionRange range1, VersionRange range2) {
-        List<Integer> versions1 = versionRangeToIntegerList(range1);
-        List<Integer> versions2 = versionRangeToIntegerList(range2);
-        if (versions1.size() == 2 && versions2.size() == 2) {
-            // Both are finite. If they don't overlap, we can't combine them, otherwise we return the combined range
-            if ((versions1.get(1) < versions2.get(0) && versions1.get(1) + 1 < versions2.get(0))
-                    || (versions2.get(1) < versions1.get(0) && versions2.get(1) + 1 < versions1.get(0))) {
-                // Not concatenated ranges => not valid combination
-                throw new ApiVersionRangeNotValidException();
+    public static VersionRange combine(VersionRange rangeA, VersionRange rangeB) {
+        if (rangeA.end() == VersionRange.UNDEFINED && rangeB.end() == VersionRange.UNDEFINED) {
+            // Both are infinite. Redefine start limit
+            if (rangeA.start() < rangeB.start()) {
+                return getInstanceOfVersionRange(rangeA.start());
             }
             else {
-                int newStart = Math.min(versions1.get(0), versions2.get(0));
-                int newEnd = Math.max(versions1.get(1), versions2.get(1));
-                return getInstanceOfVersionRange(newStart, newEnd);
+                return getInstanceOfVersionRange(rangeB.start());
             }
         }
-        else if ((versions1.size() == 2 && versions2.size() == 1) || (versions1.size() == 1 && versions2.size() == 2)) {
+        else if (rangeA.end() == VersionRange.UNDEFINED || rangeB.end() == VersionRange.UNDEFINED) {
             // One is finite and one is infinite.
-            int limit = versions1.size() == 1 ? versions1.getFirst() : versions2.getFirst();
-            List<Integer> range = versions1.size() == 2 ? versions1 : versions2;
+            int limit;
+            VersionRange range;
+            if (rangeA.end() == VersionRange.UNDEFINED) {
+                limit = rangeA.start();
+                range = rangeB;
+            }
+            else {
+                limit = rangeB.start();
+                range = rangeA;
+            }
 
-            if (range.get(1) + 1 < limit) {
+            if (range.end() + 1 < limit) {
                 // there is a range and then there is a start limit afterward => not a valid combination
                 throw new ApiVersionRangeNotValidException();
             }
-            else if (limit <= range.get(0)) {
+            else if (limit <= range.start()) {
                 // start limit dominates range (includes)
                 return getInstanceOfVersionRange(limit);
             }
             else {
                 // start limit is within the range => create a start limit from the beginning of range
-                return getInstanceOfVersionRange(range.getFirst());
+                return getInstanceOfVersionRange(range.start());
             }
         }
-        else if (versions1.size() == 1 && versions2.size() == 1) {
-            // Both are infinite. Redefine start limit
-            if (versions1.getFirst() < versions2.getFirst()) {
-                return getInstanceOfVersionRange(versions1.getFirst());
+        else {
+            // Both are finite. If they don't overlap, we can't combine them, otherwise we return the combined range
+            if ((rangeA.end() < rangeB.start() && rangeA.end() + 1 < rangeB.start()) || (rangeB.end() < rangeA.start() && rangeB.end() + 1 < rangeA.start())) {
+                // Not concatenated ranges => not valid combination
+                throw new ApiVersionRangeNotValidException();
             }
             else {
-                return getInstanceOfVersionRange(versions2.getFirst());
+                int newStart = Math.min(rangeA.start(), rangeB.start());
+                int newEnd = Math.max(rangeA.end(), rangeB.end());
+                return getInstanceOfVersionRange(newStart, newEnd);
             }
         }
-
-        // There should be no other case as we except both lists to be of size 1 or 2
-        throw new ApiVersionRangeNotValidException();
     }
 }
