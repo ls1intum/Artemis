@@ -3,12 +3,15 @@ package de.tum.in.www1.artemis.architecture;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.methods;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.ModelAndView;
 
+import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.lang.ArchRule;
+
+import de.tum.in.www1.artemis.web.rest.ogparser.LinkPreviewResource;
 
 class ResourceArchitectureTest extends AbstractArchitectureTest {
 
@@ -25,10 +28,13 @@ class ResourceArchitectureTest extends AbstractArchitectureTest {
         rule.check(productionClasses);
     }
 
-    // TODO: enable this test once the existing endpoints are migrated (Follow-up PR)
-    @Disabled
     @Test
     void allPublicMethodsShouldReturnResponseEntity() {
-        methods().that().areDeclaredInClassesThat().areAnnotatedWith(RestController.class).and().arePublic().should().haveRawReturnType(ResponseEntity.class).check(allClasses);
+        // REST controller methods should return ResponseEntity ("normal" endpoints) or ModelAndView (for redirects)
+        ArchRule rule = methods().that().areDeclaredInClassesThat().areAnnotatedWith(RestController.class).and().arePublic().should().haveRawReturnType(ResponseEntity.class)
+                .orShould().haveRawReturnType(ModelAndView.class);
+        // We exclude the LinkPreviewResource from this check, as it is a special case that requires the serialization of the response which is not possible with ResponseEntities
+        JavaClasses classes = classesExcept(allClasses, LinkPreviewResource.class);
+        rule.check(classes);
     }
 }

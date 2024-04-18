@@ -4,7 +4,6 @@ import java.util.HashSet;
 import java.util.stream.Collectors;
 
 import de.tum.in.www1.artemis.service.hestia.behavioral.BehavioralBlackboard;
-import de.tum.in.www1.artemis.service.hestia.behavioral.BehavioralSolutionEntryGenerationException;
 
 /**
  * Remove all {@link de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffEntry} from the
@@ -25,7 +24,7 @@ public class DropRemovedGitDiffEntries extends BehavioralKnowledgeSource {
     }
 
     @Override
-    public boolean executeAction() throws BehavioralSolutionEntryGenerationException {
+    public boolean executeAction() {
         var nonRemovedEntries = blackboard.getGitDiffReport().getEntries().stream().filter(entry -> entry.getStartLine() != null && entry.getLineCount() != null)
                 .collect(Collectors.toCollection(HashSet::new));
         blackboard.getGitDiffReport().setEntries(nonRemovedEntries);

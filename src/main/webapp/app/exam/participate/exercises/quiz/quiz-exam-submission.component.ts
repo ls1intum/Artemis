@@ -1,26 +1,25 @@
 import { ChangeDetectorRef, Component, Input, OnInit, QueryList, ViewChildren } from '@angular/core';
-import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
-import { MultipleChoiceQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
-import { DragAndDropQuestionComponent } from 'app/exercises/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
-import { ShortAnswerQuestionComponent } from 'app/exercises/quiz/shared/questions/short-answer-question/short-answer-question.component';
-import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
-import * as smoothscroll from 'smoothscroll-polyfill';
+import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { AbstractQuizSubmission } from 'app/entities/quiz/abstract-quiz-exam-submission.model';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
-import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitted-text.model';
-import { MultipleChoiceSubmittedAnswer } from 'app/entities/quiz/multiple-choice-submitted-answer.model';
 import { DragAndDropSubmittedAnswer } from 'app/entities/quiz/drag-and-drop-submitted-answer.model';
-import { ShortAnswerSubmittedAnswer } from 'app/entities/quiz/short-answer-submitted-answer.model';
-import { AbstractQuizSubmission } from 'app/entities/quiz/abstract-quiz-exam-submission.model';
-import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
-import { cloneDeep } from 'lodash-es';
-import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
-import { Submission } from 'app/entities/submission.model';
-import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
-import { SubmissionVersion } from 'app/entities/submission-version.model';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { MultipleChoiceSubmittedAnswer } from 'app/entities/quiz/multiple-choice-submitted-answer.model';
 import { QuizConfiguration } from 'app/entities/quiz/quiz-configuration.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
+import { ShortAnswerSubmittedAnswer } from 'app/entities/quiz/short-answer-submitted-answer.model';
+import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitted-text.model';
+import { SubmissionVersion } from 'app/entities/submission-version.model';
+import { Submission } from 'app/entities/submission.model';
+import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
+import { DragAndDropQuestionComponent } from 'app/exercises/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
+import { MultipleChoiceQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
+import { ShortAnswerQuestionComponent } from 'app/exercises/quiz/shared/questions/short-answer-question/short-answer-question.component';
+import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
+import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
+import { cloneDeep } from 'lodash-es';
+import * as smoothscroll from 'smoothscroll-polyfill';
 
 @Component({
     selector: 'jhi-quiz-submission-exam',
@@ -49,12 +48,9 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
     shortAnswerQuestionComponents: QueryList<ShortAnswerQuestionComponent>;
 
     // IMPORTANT: this reference must be contained in this.studentParticipation.submissions[0] otherwise the parent component will not be able to react to changes
-    @Input()
-    studentSubmission: AbstractQuizSubmission;
-
+    @Input() studentSubmission: AbstractQuizSubmission;
     @Input() exercise: QuizExercise;
     @Input() examTimeline = false;
-
     @Input() quizConfiguration: QuizConfiguration;
 
     selectedAnswerOptions = new Map<number, AnswerOption[]>();
@@ -102,17 +98,22 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
 
         if (this.quizConfiguration.quizQuestions) {
             this.quizConfiguration.quizQuestions.forEach((question) => {
-                if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
-                    // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                    this.selectedAnswerOptions.set(question.id!, []);
-                } else if (question.type === QuizQuestionType.DRAG_AND_DROP) {
-                    // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                    this.dragAndDropMappings.set(question.id!, []);
-                } else if (question.type === QuizQuestionType.SHORT_ANSWER) {
-                    // add the array of submitted texts to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                    this.shortAnswerSubmittedTexts.set(question.id!, []);
-                } else {
-                    console.error('Unknown question type: ' + question);
+                switch (question.type) {
+                    case QuizQuestionType.MULTIPLE_CHOICE:
+                        // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
+                        this.selectedAnswerOptions.set(question.id!, []);
+                        break;
+                    case QuizQuestionType.DRAG_AND_DROP:
+                        // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
+                        this.dragAndDropMappings.set(question.id!, []);
+                        break;
+                    case QuizQuestionType.SHORT_ANSWER:
+                        // add the array of submitted texts to the dictionary (add an empty array, if there is no submittedAnswer for this question)
+                        this.shortAnswerSubmittedTexts.set(question.id!, []);
+                        break;
+                    default:
+                        console.error('Unknown question type: ' + question);
+                        break;
                 }
             }, this);
         }
@@ -158,38 +159,43 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
                     return answer.quizQuestion?.id === question.id;
                 });
 
-                if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
-                    // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                    if (submittedAnswer) {
-                        const selectedOptions = (submittedAnswer as MultipleChoiceSubmittedAnswer).selectedOptions;
-                        // needs to be cloned, because of two-way binding, otherwise -> instant update in submission
-                        this.selectedAnswerOptions.set(question.id!, selectedOptions ? cloneDeep(selectedOptions) : []);
-                    } else {
-                        // not found, set to empty array
-                        this.selectedAnswerOptions.set(question.id!, []);
-                    }
-                } else if (question.type === QuizQuestionType.DRAG_AND_DROP) {
-                    // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                    if (submittedAnswer) {
-                        const mappings = (submittedAnswer as DragAndDropSubmittedAnswer).mappings;
-                        // needs to be cloned, because of two-way binding, otherwise -> instant update in submission
-                        this.dragAndDropMappings.set(question.id!, mappings ? cloneDeep(mappings) : []);
-                    } else {
-                        // not found, set to empty array
-                        this.dragAndDropMappings.set(question.id!, []);
-                    }
-                } else if (question.type === QuizQuestionType.SHORT_ANSWER) {
-                    // add the array of submitted texts to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                    if (submittedAnswer) {
-                        const submittedTexts = (submittedAnswer as ShortAnswerSubmittedAnswer).submittedTexts;
-                        // needs to be cloned, because of two-way binding, otherwise -> instant update in submission
-                        this.shortAnswerSubmittedTexts.set(question.id!, submittedTexts ? cloneDeep(submittedTexts) : []);
-                    } else {
-                        // not found, set to empty array
-                        this.shortAnswerSubmittedTexts.set(question.id!, []);
-                    }
-                } else {
-                    console.error('Unknown question type: ' + question);
+                switch (question.type) {
+                    case QuizQuestionType.MULTIPLE_CHOICE:
+                        // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
+                        if (submittedAnswer) {
+                            const selectedOptions = (submittedAnswer as MultipleChoiceSubmittedAnswer).selectedOptions;
+                            // needs to be cloned, because of two-way binding, otherwise -> instant update in submission
+                            this.selectedAnswerOptions.set(question.id!, selectedOptions ? cloneDeep(selectedOptions) : []);
+                        } else {
+                            // not found, set to empty array
+                            this.selectedAnswerOptions.set(question.id!, []);
+                        }
+                        break;
+                    case QuizQuestionType.DRAG_AND_DROP:
+                        // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
+                        if (submittedAnswer) {
+                            const mappings = (submittedAnswer as DragAndDropSubmittedAnswer).mappings;
+                            // needs to be cloned, because of two-way binding, otherwise -> instant update in submission
+                            this.dragAndDropMappings.set(question.id!, mappings ? cloneDeep(mappings) : []);
+                        } else {
+                            // not found, set to empty array
+                            this.dragAndDropMappings.set(question.id!, []);
+                        }
+                        break;
+                    case QuizQuestionType.SHORT_ANSWER:
+                        // add the array of submitted texts to the dictionary (add an empty array, if there is no submittedAnswer for this question)
+                        if (submittedAnswer) {
+                            const submittedTexts = (submittedAnswer as ShortAnswerSubmittedAnswer).submittedTexts;
+                            // needs to be cloned, because of two-way binding, otherwise -> instant update in submission
+                            this.shortAnswerSubmittedTexts.set(question.id!, submittedTexts ? cloneDeep(submittedTexts) : []);
+                        } else {
+                            // not found, set to empty array
+                            this.shortAnswerSubmittedTexts.set(question.id!, []);
+                        }
+                        break;
+                    default:
+                        console.error('Unknown question type: ' + question);
+                        break;
                 }
             }, this);
         }

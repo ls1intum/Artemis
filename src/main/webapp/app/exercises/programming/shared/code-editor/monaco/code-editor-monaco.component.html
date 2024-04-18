@@ -17,7 +17,7 @@
         <jhi-monaco-editor
             (textChanged)="onFileTextChanged($event)"
             [hidden]="!selectedFile || isLoading"
-            [readOnly]="isTutorAssessment || this.commitState === CommitState.CONFLICT"
+            [readOnly]="editorLocked"
             [textChangedEmitDelay]="200"
             #editor
             [id]="'monaco-editor-' + sessionId"

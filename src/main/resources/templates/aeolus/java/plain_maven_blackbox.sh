@@ -30,7 +30,6 @@ checkers () {
   export testfiles_base_path="./testsuite/testfiles"
   export tool=$(find testsuite -name "*.tests" -type d -printf "%f" | sed 's#.tests$##')
   sed -i "s#TESTFILES_DIRECTORY#../${testfiles_base_path}#" testsuite/${tool}.tests/*.exp
-
 }
 
 secrettests () {
@@ -52,7 +51,6 @@ secrettests () {
   if [ -f "${testfiles_base_path}/secret" ]; then
     rm "${testfiles_base_path}/secret"
   fi
-
 }
 
 publictests () {
@@ -67,7 +65,6 @@ publictests () {
   timeout 60s runtest --tool ${tool} ${step}.exp || true
   cd ..
   pipeline-helper -o customFeedbacks dejagnu -n "dejagnu[${step}]" -l testsuite/${tool}.log
-
 }
 
 advancedtests () {
@@ -82,7 +79,6 @@ advancedtests () {
   timeout 60s runtest --tool ${tool} ${step}.exp || true
   cd ..
   pipeline-helper -o customFeedbacks dejagnu -n "dejagnu[${step}]" -l testsuite/${tool}.log
-
 }
 
 main () {
