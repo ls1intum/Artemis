@@ -490,7 +490,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
      * It is needed if
      * 1. the config option is enabled, and
      * 2. the user does not yet have an access token
-     *
+     * <p>
      * The GitLab user will be extracted from the Gitlab user API
      *
      * @param user the Artemis user (where the token will be stored)

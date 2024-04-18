@@ -121,7 +121,7 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
 
     /**
      * Removes all individual due dates of participations for which the individual due date is before the updated due date of the exercise.
-     *
+     * <p>
      * Only considers regular course exercises when the due date actually changed.
      *
      * @param exercise   for which the participations should be updated.
