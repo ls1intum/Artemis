@@ -135,7 +135,6 @@ public class ExamLiveEventsService {
      * @param exercise The exam exercise the problem statement was updated for
      * @param message  The message to send
      */
-
     public void createAndSendProblemStatementUpdateEvent(Exercise exercise, String message) {
         // User cannot be obtained in the method annotated with @Async
         User instructor = userRepository.getUser();
