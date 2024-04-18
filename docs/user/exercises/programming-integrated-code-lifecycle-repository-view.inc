@@ -1,4 +1,4 @@
-For the programming exercises, we use a version control system called **Git**. Git is a distributed version control system that allows you to track changes in your code.
+Programming exercises use a version control system called **Git**. Git is a distributed version control system that allows you to track changes in your code.
 These changes are stored in a repository. A repository is a collection of files and directories that are tracked by Git.
 How to navigate through the repository and view the code is explained in the following sections. This guide is divided into two parts: one for students and one for instructors.
 It is demonstrated using course programming exercises, but the same principles apply to exams as well.
@@ -15,20 +15,19 @@ To access your submissions, you need to navigate to the exercise and press the '
 
    Open Repository Button
 
-After pressing the button, you will be redirected to the **Latest Commit** page of the repository.
-This view shows the latest commit in a read-only code editor. You can view the code, but you cannot edit it.
+After pressing the button, you will be redirected to the **Current Repository Content** page of the repository.
+This view shows the current content of the repository with the latest changes in a read-only code editor. You can view the code, but you cannot edit it.
 You can also navigate through the whole code by clicking on the file names in the file browser on the left side.
 To the right side of the screen, above the problem statement, you can see the result of the submission. Lastly, you can copy the repository URI by pressing
 the '*Clone Repository*' button to clone the repository to your local machine and see the full commit history by pressing the '*Open Commit History*' button.
 
-.. figure:: programming/latest-commit-view.png
-   :alt: Latest Commit View
+.. figure:: programming/current-repository-content-view.png
+   :alt: Current Repository Content
    :align: center
 
-   Latest Commit View
+   Current Repository Content
 
-You can view the whole **Commit History** by clicking on the '*Open Commit History*' button.
-This page shows all the commits that you uploaded to the repository. The commits are ordered from the latest to the oldest.
+The *Commit History* page shows all the commits that you uploaded to the repository. The commits are ordered from the latest to the oldest.
 You can see the commit message, the author of the commit, the date of the commit, the commit hash and the result of the commit.
 If you created a submission with multiple commits, you can see all of them here but only the last commit has the result of the submission.
 Lastly, you can also view the code of the commit by pressing on the commit hash.
