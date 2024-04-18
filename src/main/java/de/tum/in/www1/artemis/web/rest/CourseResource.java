@@ -1394,7 +1394,7 @@ public class CourseResource {
     }
 
     /**
-     * Get courses/{courseId}/allowed-complaints get the number of complaints that a student or team is still allowed to submit in the given course.
+     * GET courses/{courseId}/allowed-complaints: Get the number of complaints that a student or team is still allowed to submit in the given course.
      * It is determined by the max. complaint limit and the current number of open or rejected complaints of the student or team in the course.
      * Students use their personal complaints for individual exercises and team complaints for team-based exercises, i.e. each student has
      * maxComplaints for personal complaints and additionally maxTeamComplaints for complaints by their team in the course.

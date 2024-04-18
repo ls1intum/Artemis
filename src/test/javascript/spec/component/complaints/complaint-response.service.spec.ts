@@ -10,7 +10,7 @@ import { MockProvider } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 import { User } from 'app/core/user/user.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
-import { Action, ComplaintResponseUpdateDTO } from 'app/entities/complaint-response-dto.model';
+import { ComplaintAction, ComplaintResponseUpdateDTO } from 'app/entities/complaint-response-dto.model';
 
 describe('ComplaintResponseService', () => {
     let complaintResponseService: ComplaintResponseService;
@@ -41,11 +41,11 @@ describe('ComplaintResponseService', () => {
                 defaultComplaintResponse.complaint.id = 1;
 
                 complaintResponseResolve = new ComplaintResponseUpdateDTO();
-                complaintResponseResolve.action = Action.RESOLVE_COMPLAINT;
+                complaintResponseResolve.action = ComplaintAction.RESOLVE_COMPLAINT;
                 complaintResponseResolve.responseText = 'response_text';
                 complaintResponseResolve.complaintIsAccepted = true;
                 complaintResponseRefresh = new ComplaintResponseUpdateDTO();
-                complaintResponseRefresh.action = Action.REFRESH_LOCK;
+                complaintResponseRefresh.action = ComplaintAction.REFRESH_LOCK;
             });
     });
 

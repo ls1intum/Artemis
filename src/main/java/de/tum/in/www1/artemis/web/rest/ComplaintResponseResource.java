@@ -78,7 +78,7 @@ public class ComplaintResponseResource {
     }
 
     /**
-     * PUT /complaints/{complaintId}/response: resolve a complaint by updating the complaint and the associated empty complaint response
+     * PATCH /complaints/{complaintId}/response: resolve a complaint by updating the complaint and the associated empty complaint response
      *
      * @param complaintId             - id of the complaint to resolve
      * @param complaintResponseUpdate the complaint response used for resolving the complaint
@@ -104,10 +104,10 @@ public class ComplaintResponseResource {
      * Refreshes the complaint response for a specified complaint ID.
      *
      * This method retrieves the complaint from the database based on the provided ID, checks access rights, and then refreshes the complaint response representing
-     * the updated complaint. It removes sensitive information from the refreshed complaint response before returning it as a ResponseEntity with HTTP status CREATED.
+     * the updated complaint. It removes sensitive information from the refreshed complaint response before returning it as a ResponseEntity with HTTP status OK.
      *
      * @param complaintId The ID of the complaint to refresh.
-     * @return A ResponseEntity containing the refreshed ComplaintResponse representing the updated complaint with HTTP status CREATED.
+     * @return A ResponseEntity containing the refreshed ComplaintResponse representing the updated complaint with HTTP status OK.
      */
     private ResponseEntity<ComplaintResponse> refreshLockOnComplaint(long complaintId) {
         log.debug("REST request to refresh empty complaint response for complaint with id: {}", complaintId);
