@@ -314,7 +314,7 @@ public class QuizExerciseResource {
     public ResponseEntity<List<QuizExercise>> getQuizExercisesForExam(@PathVariable Long examId) {
         log.info("REST request to get all quiz exercises for the exam with id : {}", examId);
         List<QuizExercise> quizExercises = quizExerciseRepository.findByExamId(examId);
-        Course course = quizExercises.get(0).getCourseViaExerciseGroupOrCourseMember();
+        Course course = quizExercises.getFirst().getCourseViaExerciseGroupOrCourseMember();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
         for (QuizExercise quizExercise : quizExercises) {
