@@ -8,8 +8,12 @@
     <changeSet id="20240412170323" author="laurenzfb">
         <addColumn tableName="build_job">
             <column name="build_job_id" type="varchar(255)"/>
-            <column name="result_id" type="bigint"/>
+            <column name="result_id" type="bigint">
+                <constraints nullable="true" />
+            </column>
         </addColumn>
+        <addForeignKeyConstraint baseTableName="build_job" baseColumnNames="result_id" constraintName="fk_build_job_result" referencedTableName="result"
+                                 referencedColumnNames="id" onDelete="SET NULL"/>
         <createIndex tableName="build_job" indexName="idx_build_job_build_job_id" unique="true">
             <column name="build_job_id"/>
         </createIndex>

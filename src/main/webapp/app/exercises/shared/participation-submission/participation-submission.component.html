@@ -100,7 +100,7 @@
                                         {{ 'artemisApp.result.delete.buttonText' | artemisTranslate }}
                                     </span>
                                     @if (result?.logsAvailable) {
-                                        <a class="detail-link" (click)="viewBuildLogs(result.id)" jhiTranslate="artemisApp.result.buildLogs.viewLogs"></a>
+                                        <a class="detail-link" (click)="viewBuildLogs(result.logsAvailable)" jhiTranslate="artemisApp.result.buildLogs.viewLogs"></a>
                                     }
                                 }
                             </div>

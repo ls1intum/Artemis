@@ -30,8 +30,9 @@ public class BuildJob extends DomainObject {
     @Column(name = "participation_id")
     private Long participationId;
 
-    @Column(name = "result_id")
-    private Long resultId;
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(unique = true)
+    private Result result;
 
     @Column(name = "build_agent_address")
     private String buildAgentAddress;
@@ -72,13 +73,13 @@ public class BuildJob extends DomainObject {
     public BuildJob() {
     }
 
-    public BuildJob(LocalCIBuildJobQueueItem queueItem, BuildStatus result, Long resultId) {
+    public BuildJob(LocalCIBuildJobQueueItem queueItem, BuildStatus buildStatus, Result result) {
         this.buildJobId = queueItem.id();
         this.name = queueItem.name();
         this.exerciseId = queueItem.exerciseId();
         this.courseId = queueItem.courseId();
         this.participationId = queueItem.participationId();
-        this.resultId = resultId;
+        this.result = result;
         this.buildAgentAddress = queueItem.buildAgentAddress();
         this.buildStartDate = queueItem.jobTimingInfo().buildStartDate();
         this.buildCompletionDate = queueItem.jobTimingInfo().buildCompletionDate();
@@ -88,7 +89,7 @@ public class BuildJob extends DomainObject {
         this.retryCount = queueItem.retryCount();
         this.priority = queueItem.priority();
         this.triggeredByPushTo = queueItem.repositoryInfo().triggeredByPushTo();
-        this.buildStatus = result;
+        this.buildStatus = buildStatus;
         this.dockerImage = queueItem.buildConfig().dockerImage();
     }
 
@@ -132,12 +133,12 @@ public class BuildJob extends DomainObject {
         this.participationId = participationId;
     }
 
-    public Long getResultId() {
-        return resultId;
+    public Result getResult() {
+        return result;
     }
 
-    public void setResultId(Long resultId) {
-        this.resultId = resultId;
+    public void setResultId(Result result) {
+        this.result = result;
     }
 
     public String getBuildAgentAddress() {

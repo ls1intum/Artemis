@@ -23,7 +23,7 @@ export class Result implements BaseEntity {
     public testCaseCount?: number;
     public passedTestCaseCount?: number;
     public codeIssueCount?: number;
-    public logsAvailable?: boolean;
+    public logsAvailable?: string;
 
     public submission?: Submission;
     public assessor?: User;

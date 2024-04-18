@@ -416,17 +416,17 @@ public class ResultService {
      * @param results the results for which to check the availability of build logs
      * @return a map of result ids to respective build job ids if the build log files exist, null otherwise
      */
-    public Map<Long, Long> getLogsAvailabilityForResults(List<Result> results) {
+    public Map<Long, String> getLogsAvailabilityForResults(List<Result> results) {
 
-        Map<Long, Long> logsAvailability = new HashMap<>();
+        Map<Long, String> logsAvailability = new HashMap<>();
 
         List<Long> resultIds = results.stream().map(Result::getId).collect(Collectors.toList());
 
-        Map<Long, Long> resultBuildJobSet = buildJobRepository.findBuildJobIdsForResultIds(resultIds).stream()
+        Map<Long, String> resultBuildJobSet = buildJobRepository.findBuildJobIdsForResultIds(resultIds).stream()
                 .collect(Collectors.toMap(ResultBuildJob::resultId, ResultBuildJob::buildJobId, (existing, replacement) -> existing));
 
         for (Long resultId : resultIds) {
-            Long buildJobId = resultBuildJobSet.get(resultId);
+            String buildJobId = resultBuildJobSet.get(resultId);
             if (buildJobId != null) {
 
                 if (buildLogEntryService.buildJobHasLogFile(buildJobId.toString())) {

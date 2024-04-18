@@ -153,7 +153,7 @@ public class LocalCIResultProcessingService {
             }
             finally {
                 // save build job to database
-                savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.SUCCESSFUL, result != null ? result.getId() : null);
+                savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.SUCCESSFUL, result != null ? result : null);
             }
         }
         else {
@@ -185,7 +185,7 @@ public class LocalCIResultProcessingService {
 
         if (!buildLogs.isEmpty()) {
             if (savedBuildJob != null) {
-                buildLogEntryService.saveBuildLogsToFile(buildLogs, savedBuildJob.getId().toString());
+                buildLogEntryService.saveBuildLogsToFile(buildLogs, savedBuildJob.getBuildJobId());
             }
             else {
                 log.warn("Couldn't save build logs as build job {} was not saved", buildJob.id());
@@ -241,9 +241,9 @@ public class LocalCIResultProcessingService {
      * @param queueItem the build job object from the queue
      * @param result    the result of the build job (SUCCESSFUL, FAILED, CANCELLED)
      */
-    public BuildJob saveFinishedBuildJob(LocalCIBuildJobQueueItem queueItem, BuildStatus result, Long resultId) {
+    public BuildJob saveFinishedBuildJob(LocalCIBuildJobQueueItem queueItem, BuildStatus buildStatus, Result result) {
         try {
-            BuildJob buildJob = new BuildJob(queueItem, result, resultId);
+            BuildJob buildJob = new BuildJob(queueItem, buildStatus, result);
             return buildJobRepository.save(buildJob);
         }
         catch (Exception e) {

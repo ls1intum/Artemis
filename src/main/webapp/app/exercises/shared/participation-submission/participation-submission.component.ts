@@ -53,7 +53,7 @@ export class ParticipationSubmissionComponent implements OnInit {
     eventSubscriber: Subscription;
     isLoading = true;
     commitHashURLTemplate?: string;
-    logsAvailable?: { [key: string]: boolean };
+    logsAvailable?: { [key: string]: string };
 
     // Icons
     faTrash = faTrash;

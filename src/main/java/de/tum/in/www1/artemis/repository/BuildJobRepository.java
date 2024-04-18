@@ -33,11 +33,11 @@ public interface BuildJobRepository extends JpaRepository<BuildJob, Long> {
 
     @Query("""
              SELECT new de.tum.in.www1.artemis.service.connectors.localci.dto.ResultBuildJob(
-                 b.resultId,
-                 b.id
+                 b.result.id,
+                 b.buildJobId
              )
              FROM BuildJob b
-             WHERE b.resultId IN :resultIds
+             WHERE b.result.id IN :resultIds
             """)
     Set<ResultBuildJob> findBuildJobIdsForResultIds(List<Long> resultIds);
 
