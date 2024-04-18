@@ -130,12 +130,8 @@ export class CourseUpdateComponent implements OnInit {
 
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
-                if (profileInfo.inProduction) {
-                    // in production mode, the groups should not be customized by default when creating a course
-                    // when editing a course, only admins can customize groups automatically
-                    this.customizeGroupNames = !!this.course.id;
-                } else {
-                    // developers typically want to customize the groups, therefore this is prefilled
+                if (!profileInfo.inProduction) {
+                    // developers may want to customize the groups, therefore this is prefilled
                     this.customizeGroupNames = true;
                     if (!this.course.studentGroupName) {
                         this.course.studentGroupName = 'artemis-dev';
@@ -475,10 +471,10 @@ export class CourseUpdateComponent implements OnInit {
     changeCustomizeGroupNames() {
         if (!this.customizeGroupNames) {
             this.customizeGroupNames = true;
-            this.courseForm.controls['studentGroupName'].setValue('artemis-dev');
-            this.courseForm.controls['teachingAssistantGroupName'].setValue('artemis-dev');
-            this.courseForm.controls['editorGroupName'].setValue('artemis-dev');
-            this.courseForm.controls['instructorGroupName'].setValue('artemis-dev');
+            this.courseForm.controls['studentGroupName'].setValue(this.course.studentGroupName ?? 'artemis-dev');
+            this.courseForm.controls['teachingAssistantGroupName'].setValue(this.course.teachingAssistantGroupName ?? 'artemis-dev');
+            this.courseForm.controls['editorGroupName'].setValue(this.course.editorGroupName ?? 'artemis-dev');
+            this.courseForm.controls['instructorGroupName'].setValue(this.course.instructorGroupName ?? 'artemis-dev');
         } else {
             this.customizeGroupNames = false;
             this.courseForm.controls['studentGroupName'].setValue(undefined);
