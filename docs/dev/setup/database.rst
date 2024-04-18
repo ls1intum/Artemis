@@ -64,7 +64,7 @@ PostgreSQL Setup
 No special PostgreSQL settings are required.
 You can either use your package manager’s version, or set it up using a container.
 An example Docker Compose setup based on the `official container image <https://hub.docker.com/_/postgres>`_
-is provided in ``src/main/docker/postgres.yml``.
+is provided in ``docker/postgres.yml``.
 
 When setting up the Artemis server, the following values need to be added/updated in the server configuration (see setup steps below) to connect to PostgreSQL instead of MySQL:
 
