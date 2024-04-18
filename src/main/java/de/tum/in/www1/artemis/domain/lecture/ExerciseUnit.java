@@ -5,7 +5,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import jakarta.persistence.*;
-import jakarta.persistence.Entity;
 
 import org.hibernate.Hibernate;
 import org.hibernate.annotations.*;

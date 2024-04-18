@@ -1,0 +1,16 @@
+.rotate-icon {
+    display: inline-block;
+    transition: transform 0.3s ease;
+}
+
+.rotate-icon.rotated {
+    transform: rotate(90deg);
+}
+
+.bg-module {
+    background-color: var(--module-bg);
+}
+
+hr {
+    border-top-color: var(--overview-light-border-color);
+}

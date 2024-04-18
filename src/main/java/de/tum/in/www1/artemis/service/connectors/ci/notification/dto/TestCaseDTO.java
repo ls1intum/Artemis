@@ -4,7 +4,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import org.apache.commons.collections.CollectionUtils;
+import org.springframework.util.ObjectUtils;
 
 import com.fasterxml.jackson.annotation.*;
 
@@ -19,7 +19,7 @@ public record TestCaseDTO(String name, String classname, double time, @JsonPrope
 
     @JsonIgnore
     public boolean isSuccessful() {
-        return CollectionUtils.isEmpty(errors) && CollectionUtils.isEmpty(failures);
+        return ObjectUtils.isEmpty(errors) && ObjectUtils.isEmpty(failures);
     }
 
     @Override
@@ -38,25 +38,25 @@ public record TestCaseDTO(String name, String classname, double time, @JsonPrope
      * @return the most helpful message that can be added to an automatic {@link Feedback}.
      */
     private Optional<String> extractMessage() {
-        boolean hasErrors = !CollectionUtils.isEmpty(errors());
-        boolean hasFailures = !CollectionUtils.isEmpty(failures());
-        boolean hasSuccessInfos = !CollectionUtils.isEmpty(successInfos());
+        boolean hasErrors = !ObjectUtils.isEmpty(errors());
+        boolean hasFailures = !ObjectUtils.isEmpty(failures());
+        boolean hasSuccessInfos = !ObjectUtils.isEmpty(successInfos());
         boolean successful = isSuccessful();
 
-        if (successful && hasSuccessInfos && successInfos().get(0).getMostInformativeMessage() != null) {
-            return Optional.of(successInfos().get(0).getMostInformativeMessage());
+        if (successful && hasSuccessInfos && successInfos().getFirst().getMostInformativeMessage() != null) {
+            return Optional.of(successInfos().getFirst().getMostInformativeMessage());
         }
-        else if (hasErrors && errors().get(0).getMostInformativeMessage() != null) {
-            return Optional.of(errors().get(0).getMostInformativeMessage());
+        else if (hasErrors && errors().getFirst().getMostInformativeMessage() != null) {
+            return Optional.of(errors().getFirst().getMostInformativeMessage());
         }
-        else if (hasFailures && failures().get(0).getMostInformativeMessage() != null) {
-            return Optional.of(failures().get(0).getMostInformativeMessage());
+        else if (hasFailures && failures().getFirst().getMostInformativeMessage() != null) {
+            return Optional.of(failures().getFirst().getMostInformativeMessage());
         }
-        else if (hasErrors && errors().get(0).type() != null) {
-            return Optional.of(String.format("Unsuccessful due to an error of type: %s", errors().get(0).type()));
+        else if (hasErrors && errors().getFirst().type() != null) {
+            return Optional.of(String.format("Unsuccessful due to an error of type: %s", errors().getFirst().type()));
         }
-        else if (hasFailures && failures().get(0).type() != null) {
-            return Optional.of(String.format("Unsuccessful due to an error of type: %s", failures().get(0).type()));
+        else if (hasFailures && failures().getFirst().type() != null) {
+            return Optional.of(String.format("Unsuccessful due to an error of type: %s", failures().getFirst().type()));
         }
         else if (!successful) {
             // this is an edge case which typically does not happen

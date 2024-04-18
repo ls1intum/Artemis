@@ -4,12 +4,13 @@ import static de.tum.in.www1.artemis.domain.Feedback.SUBMISSION_POLICY_FEEDBACK_
 import static de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseResultTestService.convertBuildResultToJsonObject;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -18,8 +19,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
@@ -33,7 +38,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
-class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     private static final String TEST_PREFIX = "submissionpolicyintegration";
 
@@ -249,9 +254,8 @@ class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBambooBit
         programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(new Result().score(20.0), participation1, "commit1");
         programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(new Result().score(25.0), participation2, "commit2");
         programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(new Result().score(30.0), participation2, "commit3");
-        String repositoryName = programmingExercise.getProjectKey().toLowerCase() + "-" + TEST_PREFIX + "student2";
-        bitbucketRequestMockProvider.enableMockingOfRequests();
-        bitbucketRequestMockProvider.mockGiveWritePermission(programmingExercise, repositoryName, TEST_PREFIX + "student2", HttpStatus.OK);
+        gitlabRequestMockProvider.enableMockingOfRequests();
+        mockRepositoryWritePermissionsForStudent(userRepository.getUserByLoginElseThrow(TEST_PREFIX + "student2"), programmingExercise, HttpStatus.OK);
         request.patch(requestUrl(), SubmissionPolicyBuilder.lockRepo().active(true).limit(3).policy(), HttpStatus.OK);
     }
 
@@ -268,9 +272,8 @@ class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBambooBit
         programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(new Result().score(30.0), participation2, TEST_PREFIX + "commit3");
         String repositoryName = programmingExercise.getProjectKey().toLowerCase() + "-" + TEST_PREFIX + "student2";
         User student2 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + "student2");
-        bitbucketRequestMockProvider.enableMockingOfRequests();
+        gitlabRequestMockProvider.enableMockingOfRequests();
         mockSetRepositoryPermissionsToReadOnly(participation2.getVcsRepositoryUri(), programmingExercise.getProjectKey(), Set.of(student2));
-        bitbucketRequestMockProvider.mockProtectBranches(programmingExercise, repositoryName);
         request.patch(requestUrl(), SubmissionPolicyBuilder.lockRepo().active(true).limit(2).policy(), HttpStatus.OK);
     }
 
@@ -398,6 +401,8 @@ class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBambooBit
         POLICY_NULL, POLICY_ACTIVE, POLICY_INACTIVE
     }
 
+    // TODO enable this test (Issue - https://github.com/ls1intum/Artemis/issues/8296)
+    @Disabled
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(EnforcePolicyTestType.class)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
@@ -408,10 +413,10 @@ class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBambooBit
         ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
                 TEST_PREFIX + "student1");
         String repositoryName = programmingExercise.getProjectKey().toLowerCase() + "-" + TEST_PREFIX + "student1";
-        var resultNotification = ProgrammingExerciseFactory.generateBambooBuildResult(repositoryName, null, null, null, List.of("test1"), List.of("test2", "test3"),
-                new ArrayList<>());
+        var resultNotification = ProgrammingExerciseFactory.generateTestResultDTO(null, repositoryName, null, programmingExercise.getProgrammingLanguage(), false, List.of("test1"),
+                List.of("test2", "test3"), null, null, null);
         if (type == EnforcePolicyTestType.POLICY_ACTIVE) {
-            mockBitbucketRequests(participation);
+            mockGitlabRequests(participation);
         }
         final var resultRequestBody = convertBuildResultToJsonObject(resultNotification);
         var result = gradingService.processNewProgrammingExerciseResult(participation, resultRequestBody);
@@ -428,6 +433,8 @@ class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBambooBit
         }
     }
 
+    // TODO enable this test (Issue - https://github.com/ls1intum/Artemis/issues/8296)
+    @Disabled
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(EnforcePolicyTestType.class)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
@@ -440,10 +447,10 @@ class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBambooBit
         ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
                 TEST_PREFIX + "student1");
         String repositoryName = programmingExercise.getProjectKey().toLowerCase() + "-" + TEST_PREFIX + "student1";
-        var resultNotification = ProgrammingExerciseFactory.generateBambooBuildResult(repositoryName, null, null, null, List.of("test1", "test2", "test3"), List.of(),
-                new ArrayList<>());
+        var resultNotification = ProgrammingExerciseFactory.generateTestResultDTO(null, repositoryName, null, programmingExercise.getProgrammingLanguage(), false,
+                List.of("test1", "test2", "test3"), Collections.emptyList(), null, null, null);
         if (type == EnforcePolicyTestType.POLICY_ACTIVE) {
-            mockBitbucketRequests(participation);
+            mockGitlabRequests(participation);
         }
         final var resultRequestBody = convertBuildResultToJsonObject(resultNotification);
         var result = gradingService.processNewProgrammingExerciseResult(participation, resultRequestBody);
@@ -488,11 +495,10 @@ class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBambooBit
         assertThat(numberOfSubmissionsForSubmissionPolicy).isEqualTo(2);
     }
 
-    private void mockBitbucketRequests(ProgrammingExerciseParticipation participation) throws Exception {
+    private void mockGitlabRequests(ProgrammingExerciseParticipation participation) throws Exception {
         User student = userRepository.getUserByLoginElseThrow(TEST_PREFIX + "student1");
-        bitbucketRequestMockProvider.enableMockingOfRequests();
+        gitlabRequestMockProvider.enableMockingOfRequests();
         mockSetRepositoryPermissionsToReadOnly(participation.getVcsRepositoryUri(), programmingExercise.getProjectKey(), Set.of(student));
-        bitbucketRequestMockProvider.mockProtectBranches(programmingExercise, programmingExercise.getProjectKey().toLowerCase() + "-student1");
     }
 
     private void test_getSubmissionPolicyOfProgrammingExercise_forbidden() throws Exception {

@@ -4,11 +4,16 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.web.websocket.ResultWebsocketService.getExerciseIdFromNonPersonalExerciseResultDestination;
 import static de.tum.in.www1.artemis.web.websocket.ResultWebsocketService.isNonPersonalExerciseResultDestination;
 import static de.tum.in.www1.artemis.web.websocket.localci.LocalCIWebsocketMessagingService.*;
-import static de.tum.in.www1.artemis.web.websocket.team.ParticipationTeamWebsocketService.*;
+import static de.tum.in.www1.artemis.web.websocket.team.ParticipationTeamWebsocketService.getParticipationIdFromDestination;
+import static de.tum.in.www1.artemis.web.websocket.team.ParticipationTeamWebsocketService.isParticipationTeamDestination;
 
 import java.net.InetSocketAddress;
 import java.security.Principal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 import jakarta.servlet.http.Cookie;
@@ -49,11 +54,13 @@ import org.springframework.web.util.WebUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Iterators;
 
-import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.jwt.JWTFilter;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
@@ -98,11 +105,9 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     @Value("${spring.websocket.broker.password}")
     private String brokerPassword;
 
-    private final CourseRepository courseRepository;
-
     public WebsocketConfiguration(MappingJackson2HttpMessageConverter springMvcJacksonConverter, TaskScheduler messageBrokerTaskScheduler, TokenProvider tokenProvider,
             StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService, ExerciseRepository exerciseRepository,
-            UserRepository userRepository, ExamRepository examRepository, CourseRepository courseRepository) {
+            UserRepository userRepository, ExamRepository examRepository) {
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
         this.messageBrokerTaskScheduler = messageBrokerTaskScheduler;
         this.tokenProvider = tokenProvider;
@@ -111,7 +116,6 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         this.exerciseRepository = exerciseRepository;
         this.userRepository = userRepository;
         this.examRepository = examRepository;
-        this.courseRepository = courseRepository;
     }
 
     @Override
@@ -145,8 +149,8 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
      * Create a TCP client that will connect to the broker defined in the config.
      * If multiple brokers are configured, the client will connect to the first one and fail over to the next one in case a broker goes down.
      * If the last broker goes down, the first one is retried.
-     * Also see https://github.com/spring-projects/spring-framework/issues/17057 and
-     * https://docs.spring.io/spring/docs/current/spring-framework-reference/web.html#websocket-stomp-handle-broker-relay-configure
+     * Also see <a href="https://github.com/spring-projects/spring-framework/issues/17057">...</a> and
+     * <a href="https://docs.spring.io/spring/docs/current/spring-framework-reference/web.html#websocket-stomp-handle-broker-relay-configure">...</a>
      *
      * @return a TCP client with a round-robin use
      */
@@ -283,22 +287,15 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
              * use case.
              */
 
-            if (isBuildQueueAdminDestination(destination)) {
-                var user = userRepository.getUserWithAuthorities(principal.getName());
-                return authorizationCheckService.isAdmin(user);
-            }
+            final var login = principal.getName();
 
-            if (isBuildAgentDestination(destination)) {
-                log.debug("Allowing subscription to build agent destination: {}", destination);
-                var user = userRepository.getUserWithAuthorities(principal.getName());
-                return authorizationCheckService.isAdmin(user);
+            if (isBuildQueueAdminDestination(destination) || isBuildAgentDestination(destination)) {
+                return authorizationCheckService.isAdmin(login);
             }
 
             Optional<Long> courseId = isBuildQueueCourseDestination(destination);
             if (courseId.isPresent()) {
-                Course course = courseRepository.findByIdElseThrow(courseId.get());
-                var user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
-                return authorizationCheckService.isAtLeastInstructorInCourse(course, user);
+                return authorizationCheckService.isAtLeastInstructorInCourse(login, courseId.get());
             }
 
             if (isParticipationTeamDestination(destination)) {
@@ -306,23 +303,22 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                 return isParticipationOwnedByUser(principal, participationId);
             }
             if (isNonPersonalExerciseResultDestination(destination)) {
-                Long exerciseId = getExerciseIdFromNonPersonalExerciseResultDestination(destination);
+                final var exerciseId = getExerciseIdFromNonPersonalExerciseResultDestination(destination).orElseThrow();
 
                 // TODO: Is it right that TAs are not allowed to subscribe to exam exercises?
-                Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-                if (exercise.isExamExercise()) {
-                    return isUserInstructorOrHigherForExercise(principal, exercise);
+                if (exerciseRepository.isExamExercise(exerciseId)) {
+                    Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+                    return authorizationCheckService.isAtLeastInstructorInCourse(login, exercise.getCourseViaExerciseGroupOrCourseMember().getId());
                 }
                 else {
-                    return isUserTAOrHigherForExercise(principal, exercise);
+                    return authorizationCheckService.isAtLeastTeachingAssistantInExercise(login, exerciseId);
                 }
             }
 
             var examId = getExamIdFromExamRootDestination(destination);
             if (examId.isPresent()) {
                 var exam = examRepository.findByIdElseThrow(examId.get());
-                var user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
-                return authorizationCheckService.isAtLeastInstructorInCourse(exam.getCourse(), user);
+                return authorizationCheckService.isAtLeastInstructorInCourse(login, exam.getCourse().getId());
             }
             return true;
         }

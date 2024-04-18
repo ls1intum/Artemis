@@ -58,16 +58,6 @@ public class ProfileService {
     // VC & CI profiles
 
     /**
-     * Checks if the bamboo profile is active
-     *
-     * @return true if the bamboo profile is active, false otherwise
-     */
-    @Deprecated
-    public boolean isBambooActive() {
-        return isProfileActive("bamboo");
-    }
-
-    /**
      * Checks if the gitlabci or jenkins profile is active
      *
      * @return true if the gitlabci or jenkins profile is active, false otherwise
@@ -130,5 +120,14 @@ public class ProfileService {
      */
     public boolean isLtiActive() {
         return isProfileActive(Constants.PROFILE_LTI);
+    }
+
+    /**
+     * Checks if the production profile is active
+     *
+     * @return true if the production profile is active, false otherwise
+     */
+    public boolean isProductionActive() {
+        return isProfileActive(JHipsterConstants.SPRING_PROFILE_PRODUCTION);
     }
 }
