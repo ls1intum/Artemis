@@ -27,6 +27,7 @@ import { MetisConversationService } from 'app/shared/metis/metis-conversation.se
 import { OneToOneChat, isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { canCreateNewMessageInConversation } from 'app/shared/metis/conversations/conversation-permissions.utils';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { CourseWideSearchConfig } from 'app/overview/course-conversations/course-conversations.component';
 
 @Component({
     selector: 'jhi-conversation-messages',
@@ -42,7 +43,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     @Output() openThread = new EventEmitter<Post>();
 
     @Input()
-    courseWideSearchCriterion: courseWideSearchConfig;
+    courseWideSearchConfig: CourseWideSearchConfig;
 
     @ViewChild('searchInput')
     searchInput: ElementRef;
@@ -131,9 +132,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         this.updateIsAllMessagesPage();
         if (this.course && this._activeConversation) {
             if (this.searchInput) {
-                console.log('courseWideSearchTerm: ' + this.courseWideSearchTerm);
-                this.searchInput.nativeElement.value = this.searchText = this.isAllMessagesPage ? this.courseWideSearchTerm : '';
-                console.log('search text in messages page: ' + this.searchText);
+                this.searchInput.nativeElement.value = this.searchText = this.isAllMessagesPage ? this.courseWideSearchConfig.courseWideSearchTerm : '';
             }
             this.onSearch();
             this.createEmptyPost();
@@ -163,6 +162,11 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             this.metisConversationService.conversationsOfUser$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversations: ConversationDTO[]) => {
                 this.currentPostContextFilter!.courseWideChannelIds = conversations.map((conversation) => conversation!.id!);
             });
+            this.currentPostContextFilter.postSortCriterion = this.courseWideSearchConfig.postSortCriterion;
+            this.currentPostContextFilter.filterToUnresolved = this.courseWideSearchConfig.filterToUnresolved;
+            this.currentPostContextFilter.filterToOwn = this.courseWideSearchConfig.filterToOwn;
+            this.currentPostContextFilter.filterToAnsweredOrReacted = this.courseWideSearchConfig.filterToAnsweredOrReacted;
+            this.currentPostContextFilter.sortingOrder = this.courseWideSearchConfig.sortingOrder;
         } else {
             this.currentPostContextFilter.conversationId = this._activeConversation?.id;
         }
@@ -252,13 +256,4 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     updateIsAllMessagesPage() {
         this.isAllMessagesPage = this.getAsChannel(this._activeConversation)?.name == 'all-messages';
     }
-}
-
-interface courseWideSearchConfig {
-    courseWideSearchTerm: string;
-    filterToUnresolved: boolean;
-    filterToOwn: boolean;
-    filterToAnsweredOrReacted: boolean;
-    postSortCriterion: PostSortCriterion;
-    sortingOrder: SortDirection;
 }

@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { Post } from 'app/entities/metis/post.model';
 import { ActivatedRoute, Router } from '@angular/router';
-import { FormGroup } from '@angular/forms';
+import { FormBuilder, FormGroup } from '@angular/forms';
 import { Subject, take, takeUntil } from 'rxjs';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
@@ -33,9 +33,12 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     isCodeOfConductAccepted?: boolean;
     isCodeOfConductPresented: boolean = false;
 
+    formGroup: FormGroup;
     readonly documentationType: DocumentationType = 'Communications';
     readonly ButtonType = ButtonType;
-    searchInput?: string;
+    readonly SortBy = PostSortCriterion;
+    readonly SortDirection = SortDirection;
+    courseWideSearchConfig: CourseWideSearchConfig;
     headerSearchTerm?: string;
     // Icons
     faPlus = faPlus;
@@ -51,6 +54,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         private activatedRoute: ActivatedRoute,
         private metisConversationService: MetisConversationService,
         private metisService: MetisService,
+        private formBuilder: FormBuilder,
     ) {}
 
     getAsChannel = getAsChannelDTO;
@@ -83,6 +87,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                 this.subscribeToConversationsOfUser();
                 this.subscribeToLoading();
                 this.updateQueryParameters();
+                this.initializeCourseWideSearchConfig();
+                this.resetFormGroup();
                 this.metisConversationService.checkIsCodeOfConductAccepted(this.course!);
                 this.isServiceSetUp = true;
             }
@@ -155,28 +161,52 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     onSearch() {
-        this.headerSearchTerm = this.searchInput;
+        this.headerSearchTerm = this.courseWideSearchConfig.courseWideSearchTerm;
         const index = this.conversationsOfUser.findIndex((channel) => getAsChannelDTO(channel)?.name == 'all-messages');
         this.metisConversationService.setActiveConversation(this.conversationsOfUser[index]);
     }
 
-    onSelectContext(): void {}
+    onSelectContext(): void {
+        this.courseWideSearchConfig.filterToUnresolved = this.formGroup.get('filterToUnresolved')?.value;
+        this.courseWideSearchConfig.filterToOwn = this.formGroup.get('filterToOwn')?.value;
+        this.courseWideSearchConfig.filterToAnsweredOrReacted = this.formGroup.get('filterToAnsweredOrReacted')?.value;
+        this.courseWideSearchConfig.postSortCriterion = this.formGroup.get('sortBy')?.value;
+    }
 
     comparePostSortOptionFn(option1: PostSortCriterion | SortDirection, option2: PostSortCriterion | SortDirection) {
         return option1 === option2;
     }
 
     onChangeSortDir(): void {
-        // flip sort direction
-        this.currentSortDirection = this.currentSortDirection === SortDirection.DESCENDING ? SortDirection.ASCENDING : SortDirection.DESCENDING;
+        this.courseWideSearchConfig.sortingOrder = this.courseWideSearchConfig.sortingOrder === SortDirection.DESCENDING ? SortDirection.ASCENDING : SortDirection.DESCENDING;
         this.onSelectContext();
     }
 
-    currentSortDirection = SortDirection.DESCENDING;
+    initializeCourseWideSearchConfig() {
+        this.courseWideSearchConfig = new CourseWideSearchConfig();
+        this.courseWideSearchConfig.courseWideSearchTerm = '';
+        this.courseWideSearchConfig.filterToUnresolved = false;
+        this.courseWideSearchConfig.filterToOwn = false;
+        this.courseWideSearchConfig.filterToAnsweredOrReacted = false;
+        this.courseWideSearchConfig.postSortCriterion = PostSortCriterion.CREATION_DATE;
+        this.courseWideSearchConfig.sortingOrder = SortDirection.ASCENDING;
+    }
 
-    protected readonly SortDirection = SortDirection;
+    resetFormGroup(): void {
+        this.formGroup = this.formBuilder.group({
+            sortBy: [PostSortCriterion.CREATION_DATE],
+            filterToUnresolved: false,
+            filterToOwn: false,
+            filterToAnsweredOrReacted: false,
+        });
+    }
+}
 
-    formGroup: FormGroup;
-
-    readonly SortBy = PostSortCriterion;
+export class CourseWideSearchConfig {
+    courseWideSearchTerm: string;
+    filterToUnresolved: boolean;
+    filterToOwn: boolean;
+    filterToAnsweredOrReacted: boolean;
+    postSortCriterion: PostSortCriterion;
+    sortingOrder: SortDirection;
 }

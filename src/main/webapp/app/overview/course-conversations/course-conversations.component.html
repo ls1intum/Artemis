@@ -4,12 +4,12 @@
         <input
             name="searchText"
             id="search"
-            [(ngModel)]="searchInput"
+            [(ngModel)]="courseWideSearchConfig.courseWideSearchTerm"
             class="form-control"
             (keyup.enter)="onSearch()"
             placeholder="{{ 'artemisApp.metis.discussionSection.searchBarDefault' | artemisTranslate }}"
         />
-        <jhi-button [btnType]="ButtonType.SECONDARY" [icon]="faTimes" (onClick)="searchInput = ''" />
+        <jhi-button [btnType]="ButtonType.SECONDARY" [icon]="faTimes" (onClick)="courseWideSearchConfig.courseWideSearchTerm = ''" />
         <jhi-button id="search-submit" class="ms-1" [icon]="faSearch" (onClick)="onSearch()" />
         <jhi-documentation-button [type]="documentationType" class="information-button" />
     </div>
@@ -39,9 +39,9 @@
                     </div>
                     <div class="col-auto p-0 clickable" role="button" (click)="onChangeSortDir()">
                         <fa-icon
-                            [icon]="currentSortDirection === SortDirection.ASCENDING ? faLongArrowAltUp : faLongArrowAltDown"
+                            [icon]="courseWideSearchConfig.sortingOrder === SortDirection.ASCENDING ? faLongArrowAltUp : faLongArrowAltDown"
                             [ngbTooltip]="
-                                currentSortDirection === SortDirection.ASCENDING
+                                courseWideSearchConfig.sortingOrder === SortDirection.ASCENDING
                                     ? ('artemisApp.metis.overview.sortAscending' | artemisTranslate)
                                     : ('artemisApp.metis.overview.sortDescending' | artemisTranslate)
                             "
@@ -107,7 +107,7 @@
             <div class="col pe-0 flex-grow-1" [ngClass]="{ 'card-border': activeConversation }" style="min-width: 200px">
                 @if (activeConversation) {
                     <jhi-conversation-header [searchTerm]="headerSearchTerm" />
-                    <jhi-conversation-messages (openThread)="postInThread = $event" [course]="course" [courseWideSearchTerm]="searchInput ?? ''" />
+                    <jhi-conversation-messages (openThread)="postInThread = $event" [course]="course" [courseWideSearchConfig]="this.courseWideSearchConfig" />
                 }
             </div>
             @if (activeConversation) {
