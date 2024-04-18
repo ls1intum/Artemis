@@ -66,16 +66,13 @@ public class AttachmentResource {
 
     private final FileService fileService;
 
-    private final FilePathService filePathService;
-
     public AttachmentResource(AttachmentRepository attachmentRepository, GroupNotificationService groupNotificationService, AuthorizationCheckService authorizationCheckService,
-            UserRepository userRepository, FileService fileService, FilePathService filePathService) {
+            UserRepository userRepository, FileService fileService) {
         this.attachmentRepository = attachmentRepository;
         this.groupNotificationService = groupNotificationService;
         this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
         this.fileService = fileService;
-        this.filePathService = filePathService;
     }
 
     /**
@@ -128,8 +125,8 @@ public class AttachmentResource {
             attachment.setLink(FilePathService.publicPathForActualPath(savePath, originalAttachment.getLecture().getId()).toString());
             // Delete the old file
             URI oldPath = URI.create(originalAttachment.getLink());
-            fileService.schedulePathForDeletion(filePathService.actualPathForPublicPathOrThrow(oldPath), 0);
-            this.fileService.evictCacheForPath(filePathService.actualPathForPublicPathOrThrow(oldPath));
+            fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(oldPath), 0);
+            this.fileService.evictCacheForPath(FilePathService.actualPathForPublicPathOrThrow(oldPath));
         }
 
         Attachment result = attachmentRepository.save(attachment);
@@ -202,7 +199,7 @@ public class AttachmentResource {
         try {
             if (AttachmentType.FILE.equals(attachment.getAttachmentType())) {
                 URI oldPath = URI.create(attachment.getLink());
-                fileService.schedulePathForDeletion(filePathService.actualPathForPublicPathOrThrow(oldPath), 0);
+                fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(oldPath), 0);
                 this.fileService.evictCacheForPath(actualPathForPublicPath(oldPath));
             }
         }

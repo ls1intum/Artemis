@@ -130,7 +130,7 @@ public class TextUnitResource {
         textUnit.setLecture(lecture);
         lecture.addLectureUnit(textUnit);
         Lecture updatedLecture = lectureRepository.save(lecture);
-        TextUnit persistedTextUnit = (TextUnit) updatedLecture.getLectureUnits().get(updatedLecture.getLectureUnits().size() - 1);
+        TextUnit persistedTextUnit = (TextUnit) updatedLecture.getLectureUnits().getLast();
 
         competencyProgressService.updateProgressByLearningObjectAsync(persistedTextUnit);
 

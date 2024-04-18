@@ -27,7 +27,7 @@ public class AppleAppSiteAssociationResource {
 
     /**
      * Provides the apple-app-site-association json content for the iOS client universal link feature.
-     * More information on the json content can be found <a href="URL#https://developer.apple.com/documentation/xcode/supporting-associated-domains">here</a>
+     * More information on the json content can be found <a href="https://developer.apple.com/documentation/xcode/supporting-associated-domains">here</a>
      *
      * @return apple-app-site-association as json
      */
@@ -54,7 +54,7 @@ public class AppleAppSiteAssociationResource {
         return ResponseEntity.ok(appleAppSiteAssociation);
     }
 
-    record AppleAppSiteAssociation(Applinks applinks, Webcredentials webcredentials) {
+    public record AppleAppSiteAssociation(Applinks applinks, Webcredentials webcredentials) {
 
         record Webcredentials(String[] apps) {
         }

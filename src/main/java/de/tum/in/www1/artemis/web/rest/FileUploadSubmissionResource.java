@@ -66,7 +66,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
             ExerciseRepository exerciseRepository, GradingCriterionRepository gradingCriterionRepository, ExamSubmissionService examSubmissionService,
             StudentParticipationRepository studentParticipationRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository,
             SingleUserNotificationService singleUserNotificationService) {
-        super(submissionRepository, resultService, authCheckService, userRepository, exerciseRepository, fileUploadSubmissionService, studentParticipationRepository);
+        super(submissionRepository, authCheckService, userRepository, exerciseRepository, fileUploadSubmissionService, studentParticipationRepository);
         this.fileUploadSubmissionService = fileUploadSubmissionService;
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.gradingCriterionRepository = gradingCriterionRepository;

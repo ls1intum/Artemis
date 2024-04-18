@@ -53,7 +53,7 @@ public class NotificationSettingsResource {
 
     /**
      * GET notification-settings : Get all NotificationSettings for current user
-     *
+     * <p>
      * Fetches the NotificationSettings for the current user from the server.
      * If the user has not yet modified the settings there will be none in the database, then
      *
@@ -73,7 +73,7 @@ public class NotificationSettingsResource {
 
     /**
      * PUT notification-settings : Save NotificationSettings for current user
-     *
+     * <p>
      * Saves the provided NotificationSettings to the server.
      *
      * @param notificationSettings which should be saved to the notificationSetting database.

@@ -38,7 +38,6 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.exam.ExamService;
 
 /**
  * REST controller for managing FileUploadAssessment.
@@ -57,8 +56,8 @@ public class FileUploadAssessmentResource extends AssessmentResource {
 
     public FileUploadAssessmentResource(AuthorizationCheckService authCheckService, AssessmentService assessmentService, UserRepository userRepository,
             FileUploadExerciseRepository fileUploadExerciseRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository, ExerciseRepository exerciseRepository,
-            ResultRepository resultRepository, ExamService examService, ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository) {
-        super(authCheckService, userRepository, exerciseRepository, assessmentService, resultRepository, examService, exampleSubmissionRepository, submissionRepository);
+            ResultRepository resultRepository, ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository) {
+        super(authCheckService, userRepository, exerciseRepository, assessmentService, resultRepository, exampleSubmissionRepository, submissionRepository);
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
     }

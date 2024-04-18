@@ -66,7 +66,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
             TextSubmissionService textSubmissionService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository,
             GradingCriterionRepository gradingCriterionRepository, TextAssessmentService textAssessmentService, ExamSubmissionService examSubmissionService,
             PlagiarismService plagiarismService) {
-        super(submissionRepository, resultService, authCheckService, userRepository, exerciseRepository, textSubmissionService, studentParticipationRepository);
+        super(submissionRepository, authCheckService, userRepository, exerciseRepository, textSubmissionService, studentParticipationRepository);
         this.textSubmissionRepository = textSubmissionRepository;
         this.exerciseRepository = exerciseRepository;
         this.textExerciseRepository = textExerciseRepository;

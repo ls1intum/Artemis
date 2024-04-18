@@ -32,7 +32,7 @@ public class AndroidAppSiteAssociationResource {
 
     /**
      * Provides the assetlinks json content for the Android client deeplink link feature.
-     * More information on the json content can be found <a href="URL#https://developer.android.com/training/app-links/verify-android-applinks">here</a>
+     * More information on the json content can be found <a href="https://developer.android.com/training/app-links/verify-android-applinks">here</a>
      *
      * @return assetslinks as json
      */
@@ -54,7 +54,7 @@ public class AndroidAppSiteAssociationResource {
         return ResponseEntity.ok(List.of(handleAllUrls, getLoginCredentials));
     }
 
-    record AndroidAssetLinksEntry(List<String> relation, AndroidTarget target) {
+    public record AndroidAssetLinksEntry(List<String> relation, AndroidTarget target) {
 
         record AndroidTarget(String namespace, String package_name, List<String> sha256_cert_fingerprints) {
         }

@@ -151,8 +151,8 @@ public class SubmissionResource {
 
         var testRunParticipations = studentParticipationRepository.findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(user.getId(),
                 List.of(exercise));
-        if (!testRunParticipations.isEmpty() && testRunParticipations.get(0).findLatestSubmission().isPresent()) {
-            var latestSubmission = testRunParticipations.get(0).findLatestSubmission().get();
+        if (!testRunParticipations.isEmpty() && testRunParticipations.getFirst().findLatestSubmission().isPresent()) {
+            var latestSubmission = testRunParticipations.getFirst().findLatestSubmission().get();
             if (latestSubmission.getManualResults().isEmpty()) {
                 latestSubmission.addResult(submissionService.prepareTestRunSubmissionForAssessment(latestSubmission));
             }

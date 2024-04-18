@@ -45,16 +45,13 @@ public class ExamUserResource {
 
     private final ExamUserService examUserService;
 
-    private final FilePathService filePathURI;
-
     public ExamUserResource(ExamUserService examUserService, UserRepository userRepository, FileService fileService, ExamAccessService examAccessService,
-            ExamUserRepository examUserRepository, FilePathService filePathURI) {
+            ExamUserRepository examUserRepository) {
         this.userRepository = userRepository;
         this.fileService = fileService;
         this.examUserRepository = examUserRepository;
         this.examAccessService = examAccessService;
         this.examUserService = examUserService;
-        this.filePathURI = filePathURI;
     }
 
     /**

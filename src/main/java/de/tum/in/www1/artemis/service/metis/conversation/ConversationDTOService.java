@@ -250,7 +250,7 @@ public class ConversationDTOService {
     private Set<ConversationParticipant> getConversationParticipants(Conversation conversation) {
         Set<ConversationParticipant> conversationParticipants;
         var participantsInitialized = Persistence.getPersistenceUtil().isLoaded(conversation, "conversationParticipants") && conversation.getConversationParticipants() != null
-                && conversation.getConversationParticipants().size() > 0;
+                && !conversation.getConversationParticipants().isEmpty();
         if (participantsInitialized) {
             conversationParticipants = conversation.getConversationParticipants();
         }

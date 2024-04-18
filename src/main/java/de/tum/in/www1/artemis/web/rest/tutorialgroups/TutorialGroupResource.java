@@ -296,7 +296,7 @@ public class TutorialGroupResource {
     @PutMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}")
     @EnforceAtLeastInstructor
     @FeatureToggle(Feature.TutorialGroups)
-    public ResponseEntity<TutorialGroup> update(@PathVariable Long courseId, @PathVariable Long tutorialGroupId,
+    public ResponseEntity<TutorialGroup> update(@PathVariable long courseId, @PathVariable long tutorialGroupId,
             @RequestBody @Valid TutorialGroupUpdateDTO tutorialGroupUpdateDTO) {
         TutorialGroup updatedTutorialGroup = tutorialGroupUpdateDTO.tutorialGroup();
         log.debug("REST request to update TutorialGroup : {}", updatedTutorialGroup);
@@ -305,7 +305,7 @@ public class TutorialGroupResource {
         }
         var oldTutorialGroup = this.tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsElseThrow(tutorialGroupId);
         updatedTutorialGroup.setCourse(oldTutorialGroup.getCourse());
-        checkEntityIdMatchesPathIds(oldTutorialGroup, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupId));
+        checkEntityIdMatchesPathIds(oldTutorialGroup, Optional.of(courseId), Optional.of(tutorialGroupId));
         var responsibleUser = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, oldTutorialGroup.getCourse(), responsibleUser);
 
@@ -358,7 +358,7 @@ public class TutorialGroupResource {
         if (StringUtils.hasText(tutorialGroupUpdateDTO.notificationText())) {
             tutorialGroupNotificationService.notifyAboutTutorialGroupUpdate(oldTutorialGroup,
                     updatedTutorialGroup.getTeachingAssistant() == null || !updatedTutorialGroup.getTeachingAssistant().equals(responsibleUser),
-                    StringUtils.trimWhitespace(tutorialGroupUpdateDTO.notificationText()));
+                    tutorialGroupUpdateDTO.notificationText().strip());
         }
 
         overrideValues(updatedTutorialGroup, oldTutorialGroup);
@@ -433,13 +433,13 @@ public class TutorialGroupResource {
     @PostMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/register-multiple")
     @EnforceAtLeastInstructor
     @FeatureToggle(Feature.TutorialGroups)
-    public ResponseEntity<Set<StudentDTO>> registerMultipleStudentsToTutorialGroup(@PathVariable Long courseId, @PathVariable Long tutorialGroupId,
+    public ResponseEntity<Set<StudentDTO>> registerMultipleStudentsToTutorialGroup(@PathVariable long courseId, @PathVariable long tutorialGroupId,
             @RequestBody Set<StudentDTO> studentDtos) {
         log.debug("REST request to register {} to tutorial group {}", studentDtos, tutorialGroupId);
         var tutorialGroupFromDatabase = this.tutorialGroupRepository.findByIdElseThrow(tutorialGroupId);
         var responsibleUser = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupFromDatabase.getCourse(), responsibleUser);
-        checkEntityIdMatchesPathIds(tutorialGroupFromDatabase, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupId));
+        checkEntityIdMatchesPathIds(tutorialGroupFromDatabase, Optional.of(courseId), Optional.of(tutorialGroupId));
         Set<StudentDTO> notFoundStudentDtos = tutorialGroupService.registerMultipleStudents(tutorialGroupFromDatabase, studentDtos,
                 TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION, responsibleUser);
         return ResponseEntity.ok().body(notFoundStudentDtos);

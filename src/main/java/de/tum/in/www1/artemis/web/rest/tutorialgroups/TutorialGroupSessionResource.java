@@ -262,7 +262,7 @@ public class TutorialGroupSessionResource {
         checkEntityIdMatchesPathIds(sessionToCancel, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupId), Optional.of(sessionId));
         tutorialGroupService.isAllowedToModifySessionsOfTutorialGroup(sessionToCancel.getTutorialGroup(), null);
         sessionToCancel.setStatus(TutorialGroupSessionStatus.CANCELLED);
-        if (tutorialGroupStatusDTO != null && tutorialGroupStatusDTO.status_explanation() != null && tutorialGroupStatusDTO.status_explanation().trim().length() > 0) {
+        if (tutorialGroupStatusDTO != null && tutorialGroupStatusDTO.status_explanation() != null && !tutorialGroupStatusDTO.status_explanation().trim().isEmpty()) {
             sessionToCancel.setStatusExplanation(tutorialGroupStatusDTO.status_explanation().trim());
         }
         sessionToCancel = tutorialGroupSessionRepository.save(sessionToCancel);
@@ -280,13 +280,13 @@ public class TutorialGroupSessionResource {
     @PostMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/activate")
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.TutorialGroups)
-    public ResponseEntity<TutorialGroupSession> activate(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId) throws URISyntaxException {
+    public ResponseEntity<TutorialGroupSession> activate(@PathVariable long courseId, @PathVariable long tutorialGroupId, @PathVariable long sessionId) throws URISyntaxException {
         log.debug("REST request to activate session: {} of tutorial group: {} of course {}", sessionId, tutorialGroupId, courseId);
         var sessionToActivate = tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
         if (sessionToActivate.getTutorialGroupFreePeriod() != null) {
             throw new BadRequestException("You can not activate a session that is cancelled by a overlapping with a free period");
         }
-        checkEntityIdMatchesPathIds(sessionToActivate, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupId), Optional.ofNullable(sessionId));
+        checkEntityIdMatchesPathIds(sessionToActivate, Optional.of(courseId), Optional.of(tutorialGroupId), Optional.of(sessionId));
         tutorialGroupService.isAllowedToModifySessionsOfTutorialGroup(sessionToActivate.getTutorialGroup(), null);
         sessionToActivate.setStatus(TutorialGroupSessionStatus.ACTIVE);
         sessionToActivate.setStatusExplanation(null);
