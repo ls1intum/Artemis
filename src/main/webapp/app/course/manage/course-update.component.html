@@ -434,8 +434,8 @@
                             [checked]="course.enrollmentEnabled"
                             (change)="this.changeRegistrationEnabled()"
                         />
-                        <label class="form-control-label" jhiTranslate="artemisApp.course.registrationEnabled.title" for="field_registrationEnabled"></label>
-                        <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.registrationEnabled.description' | artemisTranslate }}" />
+                        <label class="form-control-label" jhiTranslate="artemisApp.course.enrollmentEnabled.title" for="field_registrationEnabled"></label>
+                        <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.enrollmentEnabled.description' | artemisTranslate }}" />
                     </div>
                 }
                 @if (course.enrollmentEnabled) {
@@ -468,8 +468,8 @@
                 }
                 @if (course.enrollmentEnabled) {
                     <div class="form-group" id="field_registrationConfirmationMessage">
-                        <label class="form-control-label" jhiTranslate="artemisApp.course.registrationConfirmationMessage" for="field_registrationConfirmationMessage"
-                            >Registration Confirmation Message</label
+                        <label class="form-control-label" jhiTranslate="artemisApp.course.enrollmentConfirmationMessage" for="field_registrationConfirmationMessage"
+                            >Enrollment Confirmation Message</label
                         >
                         <jhi-markdown-editor
                             class="markdown-editor"

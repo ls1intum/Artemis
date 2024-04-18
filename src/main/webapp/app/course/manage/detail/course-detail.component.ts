@@ -317,7 +317,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
                 { type: DetailType.Date, title: 'artemisApp.course.enrollmentEndDate', data: { date: this.course.enrollmentEndDate } },
                 {
                     type: DetailType.Markdown,
-                    title: 'artemisApp.course.registrationConfirmationMessage',
+                    title: 'artemisApp.course.enrollmentConfirmationMessage',
                     data: { innerHtml: this.markdownService.safeHtmlForMarkdown(this.course.enrollmentConfirmationMessage) },
                 },
             );
