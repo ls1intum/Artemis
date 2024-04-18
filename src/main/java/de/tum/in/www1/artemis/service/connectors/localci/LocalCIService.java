@@ -16,18 +16,13 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
-import de.tum.in.www1.artemis.repository.BuildLogStatisticsEntryRepository;
-import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
-import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.connectors.BuildScriptProviderService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
 import de.tum.in.www1.artemis.service.connectors.ci.AbstractContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.ci.CIPermission;
-import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 
 /**
  * Implementation of ContinuousIntegrationService for local CI. Contains methods for communication with the local CI system.
@@ -46,10 +41,8 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    public LocalCIService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository, BuildLogEntryService buildLogService,
-            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService,
-            BuildScriptProviderService buildScriptProviderService, AeolusTemplateService aeolusTemplateService, ProgrammingExerciseRepository programmingExerciseRepository) {
-        super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, testwiseCoverageService);
+    public LocalCIService(BuildScriptProviderService buildScriptProviderService, AeolusTemplateService aeolusTemplateService,
+            ProgrammingExerciseRepository programmingExerciseRepository) {
         this.buildScriptProviderService = buildScriptProviderService;
         this.aeolusTemplateService = aeolusTemplateService;
         this.programmingExerciseRepository = programmingExerciseRepository;

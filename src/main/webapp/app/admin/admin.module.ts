@@ -42,6 +42,7 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
 import { UserImportModule } from 'app/shared/user-import/user-import.module';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
+import { KnowledgeAreaDetailComponent } from 'app/admin/standardized-competencies/knowledge-area-detail.component';
 
 const ENTITY_STATES = [...adminState];
 
@@ -90,6 +91,7 @@ const ENTITY_STATES = [...adminState];
         EditLtiConfigurationComponent,
         BuildAgentsComponent,
         StandardizedCompetencyDetailComponent,
+        KnowledgeAreaDetailComponent,
         StandardizedCompetencyManagementComponent,
     ],
 })
