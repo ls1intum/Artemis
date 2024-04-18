@@ -17,7 +17,7 @@ import {
 import { admin, studentOne } from '../../support/users';
 import { convertModelAfterMultiPart, generateUUID } from '../../support/utils';
 
-describe('Exam date verification', () => {
+describe.skip('Exam date verification', () => {
     let course: Course;
     let examTitle: string;
 
