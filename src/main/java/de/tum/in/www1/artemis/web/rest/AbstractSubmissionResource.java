@@ -10,7 +10,6 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.SubmissionService;
 
 /**
@@ -19,8 +18,6 @@ import de.tum.in.www1.artemis.service.SubmissionService;
 public abstract class AbstractSubmissionResource {
 
     protected final SubmissionRepository submissionRepository;
-
-    protected final ResultService resultService;
 
     protected final AuthorizationCheckService authCheckService;
 
@@ -32,11 +29,9 @@ public abstract class AbstractSubmissionResource {
 
     protected final StudentParticipationRepository studentParticipationRepository;
 
-    public AbstractSubmissionResource(SubmissionRepository submissionRepository, ResultService resultService, AuthorizationCheckService authCheckService,
-            UserRepository userRepository, ExerciseRepository exerciseRepository, SubmissionService submissionService,
-            StudentParticipationRepository studentParticipationRepository) {
+    public AbstractSubmissionResource(SubmissionRepository submissionRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
+            ExerciseRepository exerciseRepository, SubmissionService submissionService, StudentParticipationRepository studentParticipationRepository) {
         this.submissionRepository = submissionRepository;
-        this.resultService = resultService;
         this.exerciseRepository = exerciseRepository;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;

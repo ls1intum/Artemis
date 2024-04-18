@@ -297,7 +297,7 @@ public class CompetencyProgressService {
     public CourseCompetencyProgressDTO getCompetencyCourseProgress(@NotNull Competency competency, @NotNull Course course) {
         var numberOfStudents = competencyProgressRepository.countByCompetency(competency.getId());
         var numberOfMasteredStudents = competencyProgressRepository.countByCompetencyAndProgressAndConfidenceGreaterThanEqual(competency.getId(), 100.0,
-                (double) competency.getMasteryThreshold());
+                competency.getMasteryThreshold());
         var averageStudentScore = RoundingUtil.roundScoreSpecifiedByCourseSettings(competencyProgressRepository.findAverageConfidenceByCompetencyId(competency.getId()).orElse(0.0),
                 course);
         return new CourseCompetencyProgressDTO(competency.getId(), numberOfStudents, numberOfMasteredStudents, averageStudentScore);

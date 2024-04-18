@@ -20,9 +20,9 @@ import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 @Service
 public abstract class InternalUrlService {
 
-    protected Optional<URL> internalCiUrl;
+    protected final Optional<URL> internalCiUrl;
 
-    protected Optional<URL> internalVcsUrl;
+    protected final Optional<URL> internalVcsUrl;
 
     private static final Logger log = LoggerFactory.getLogger(InternalUrlService.class);
 
@@ -68,7 +68,7 @@ public abstract class InternalUrlService {
 
         if (vcsRepositoryUri == null) {
             log.warn("Cannot replace url to internal url {} because the url is null.", internalVcsUrl);
-            return vcsRepositoryUri;
+            return null;
         }
 
         return replaceUrl(vcsRepositoryUri, internalVcsUrl.get());
