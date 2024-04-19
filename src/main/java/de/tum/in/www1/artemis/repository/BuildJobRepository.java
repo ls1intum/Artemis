@@ -13,6 +13,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.BuildJob;
+import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.DockerImageBuild;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.ResultBuildJob;
 
@@ -21,6 +22,8 @@ import de.tum.in.www1.artemis.service.connectors.localci.dto.ResultBuildJob;
 public interface BuildJobRepository extends JpaRepository<BuildJob, Long> {
 
     Optional<BuildJob> findFirstByParticipationIdOrderByBuildStartDateDesc(Long participationId);
+
+    Optional<BuildJob> findBuildJobByResult(@Param("result") Result result);
 
     @Query("""
             SELECT new de.tum.in.www1.artemis.service.connectors.localci.dto.DockerImageBuild(
