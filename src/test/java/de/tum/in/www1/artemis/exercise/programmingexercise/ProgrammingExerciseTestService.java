@@ -901,7 +901,7 @@ public class ProgrammingExerciseTestService {
         params.add("recreateBuildPlans", String.valueOf(false));
 
         // Import the exercise and load all referenced entities
-        var importedExercise = request.postWithResponseBody("/api/programming-exercises/import/" + sourceExercise, exerciseToBeImported, ProgrammingExercise.class, params,
+        var importedExercise = request.postWithResponseBody("/api/programming-exercises/import/" + sourceExercise.getId(), exerciseToBeImported, ProgrammingExercise.class, params,
                 HttpStatus.OK);
 
         // other calls are for repository URI replacements, we only care about build plan URL replacements
@@ -956,7 +956,7 @@ public class ProgrammingExerciseTestService {
         var params = new LinkedMultiValueMap<String, String>();
         params.add("recreateBuildPlans", "false");
         params.add("updateTemplate", "true");
-        request.postWithResponseBody("/api/programming-exercises/import/" + sourceExercise, exerciseToBeImported, ProgrammingExercise.class, params,
+        request.postWithResponseBody("/api/programming-exercises/import/" + sourceExercise.getId(), exerciseToBeImported, ProgrammingExercise.class, params,
                 HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
@@ -1150,7 +1150,8 @@ public class ProgrammingExerciseTestService {
         mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false, false);
         setupMocksForConsistencyChecksOnImport(sourceExercise);
 
-        exerciseToBeImported = request.postWithResponseBody("/api/programming-exercises/import/" + sourceExercise, exerciseToBeImported, ProgrammingExercise.class, HttpStatus.OK);
+        exerciseToBeImported = request.postWithResponseBody("/api/programming-exercises/import/" + sourceExercise.getId(), exerciseToBeImported, ProgrammingExercise.class,
+                HttpStatus.OK);
 
         assertThat(exerciseToBeImported.getSubmissionPolicy()).isNull();
 
