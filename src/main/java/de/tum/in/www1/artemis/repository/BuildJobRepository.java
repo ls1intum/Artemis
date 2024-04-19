@@ -21,9 +21,9 @@ import de.tum.in.www1.artemis.service.connectors.localci.dto.ResultBuildJob;
 @Repository
 public interface BuildJobRepository extends JpaRepository<BuildJob, Long> {
 
-    Optional<BuildJob> findFirstByParticipationIdOrderByBuildStartDateDesc(@Param("participationId") Long participationId);
+    Optional<BuildJob> findFirstByParticipationIdOrderByBuildStartDateDesc(Long participationId);
 
-    Optional<BuildJob> findBuildJobByResult(@Param("result") Result result);
+    Optional<BuildJob> findBuildJobByResult(Result result);
 
     @Query("""
             SELECT new de.tum.in.www1.artemis.service.connectors.localci.dto.DockerImageBuild(
