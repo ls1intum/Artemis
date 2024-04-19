@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.service.connectors.localci.dto.ResultBuildJob;
 @Repository
 public interface BuildJobRepository extends JpaRepository<BuildJob, Long> {
 
-    Optional<BuildJob> findFirstByParticipationIdOrderByBuildStartDateDesc(Long participationId);
+    Optional<BuildJob> findFirstByParticipationIdOrderByBuildStartDateDesc(@Param("participationId") Long participationId);
 
     Optional<BuildJob> findBuildJobByResult(@Param("result") Result result);
 
