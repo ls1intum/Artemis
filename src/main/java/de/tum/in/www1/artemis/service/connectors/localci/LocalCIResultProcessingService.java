@@ -241,7 +241,7 @@ public class LocalCIResultProcessingService {
      * @param queueItem   the build job object from the queue
      * @param buildStatus the status of the build job (SUCCESSFUL, FAILED, CANCELLED)
      *
-     * @param result      the saved the build job
+     * @return the saved the build job
      */
     public BuildJob saveFinishedBuildJob(LocalCIBuildJobQueueItem queueItem, BuildStatus buildStatus, Result result) {
         try {
