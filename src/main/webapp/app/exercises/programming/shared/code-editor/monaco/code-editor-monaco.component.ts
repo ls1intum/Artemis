@@ -198,6 +198,10 @@ export class CodeEditorMonacoComponent implements OnChanges {
         this.editor.setGlyphMarginHoverButton(this.addFeedbackButton.nativeElement, (lineNumber) => this.addNewFeedback(lineNumber));
     }
 
+    /**
+     * Adds a new feedback widget to the specified line and renders it.
+     * @param lineNumber The line (as shown in the editor) to render the widget in.
+     */
     addNewFeedback(lineNumber: number): void {
         // TODO for a follow-up: in the future, there might be multiple feedback items on the same line.
         const lineNumberZeroBased = lineNumber - 1;
@@ -207,14 +211,18 @@ export class CodeEditorMonacoComponent implements OnChanges {
         }
     }
 
+    /**
+     * Updates an existing feedback item and renders it. If necessary, an unsaved feedback item will be converted into an actual feedback item.
+     * @param feedback The feedback item to save.
+     */
     updateFeedback(feedback: Feedback) {
         const line = Feedback.getReferenceLine(feedback);
         const existingFeedbackIndex = this.feedbacks.findIndex((f) => f.reference === feedback.reference);
         if (existingFeedbackIndex !== -1) {
-            // Existing feedback
+            // Existing feedback -> update only
             this.feedbacks[existingFeedbackIndex] = feedback;
         } else {
-            // New feedback -> save
+            // New feedback -> save as actual feedback.
             this.feedbacks.push(feedback);
             this.newFeedbackLines = this.newFeedbackLines.filter((l) => l !== line);
         }
@@ -222,6 +230,10 @@ export class CodeEditorMonacoComponent implements OnChanges {
         this.onUpdateFeedback.emit(this.feedbacks);
     }
 
+    /**
+     * Cancels the edit of a feedback item, removing the widget if necessary.
+     * @param line The line the feedback item refers to.
+     */
     cancelFeedback(line: number) {
         // We only have to remove new feedback.
         if (this.newFeedbackLines.includes(line)) {
@@ -230,12 +242,20 @@ export class CodeEditorMonacoComponent implements OnChanges {
         }
     }
 
+    /**
+     * Removes an existing feedback item and renders the updated state.
+     * @param feedback The feedback to remove.
+     */
     deleteFeedback(feedback: Feedback) {
         this.feedbacks = this.feedbacks.filter((f) => !Feedback.areIdentical(f, feedback));
         this.onUpdateFeedback.emit(this.feedbacks);
         this.renderFeedbackWidgets();
     }
 
+    /**
+     * Accepts a feedback suggestion by storing a feedback suggestion as actual feedback.
+     * @param feedback The feedback item of the feedback suggestion.
+     */
     acceptSuggestion(feedback: Feedback): void {
         this.feedbackSuggestions = this.feedbackSuggestions.filter((f) => f !== feedback);
         feedback.text = (feedback.text ?? FEEDBACK_SUGGESTION_IDENTIFIER).replace(FEEDBACK_SUGGESTION_IDENTIFIER, FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER);
@@ -243,6 +263,10 @@ export class CodeEditorMonacoComponent implements OnChanges {
         this.onAcceptSuggestion.emit(feedback);
     }
 
+    /**
+     * Discards a feedback suggestion and removes its widget.
+     * @param feedback The feedback item of the feedback suggestion.
+     */
     discardSuggestion(feedback: Feedback): void {
         this.feedbackSuggestions = this.feedbackSuggestions.filter((f) => f !== feedback);
         this.renderFeedbackWidgets();
@@ -250,7 +274,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
     }
 
     protected renderFeedbackWidgets() {
-        // Since the feedback widgets rely on the DOM nodes of each feedback item, Angular needs to re-render each node.
+        // Since the feedback widgets rely on the DOM nodes of each feedback item, Angular needs to re-render each node, hence the timeout.
         this.changeDetectorRef.detectChanges();
         setTimeout(() => {
             this.editor.disposeWidgets();
@@ -258,10 +282,9 @@ export class CodeEditorMonacoComponent implements OnChanges {
                 this.addLineWidgetWithFeedback(feedback);
             }
 
+            // New, unsaved feedback has no associated object yet.
             for (const line of this.newFeedbackLines) {
-                // TODO adjust addLineWidget function
                 const feedbackNode = this.getInlineFeedbackNode(line);
-                // The lines are 0-based for Ace, but 1-based for Monaco -> increase by 1 to ensure it works in both editors.
                 this.editor.addLineWidget(line + 1, 'feedback-new-' + line, feedbackNode);
             }
         }, 0);
