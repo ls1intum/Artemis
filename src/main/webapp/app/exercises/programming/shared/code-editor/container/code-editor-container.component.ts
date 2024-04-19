@@ -284,8 +284,9 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     }
 
     highlightLines(startLine: number, endLine: number): void {
-        this.monacoEditor?.highlightLines(startLine, endLine);
+        // Workaround: increase line number by 1 for monaco
         // Will be removed once ace is gone from every instance of this component
+        this.monacoEditor?.highlightLines(startLine + 1, endLine + 1);
         this.aceEditor?.highlightLines(startLine, endLine, 'diff-newLine', 'gutter-diff-newLine');
     }
 
