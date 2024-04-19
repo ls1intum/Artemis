@@ -172,6 +172,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     disposeEditorElements(): void {
         this.disposeAnnotations();
         this.disposeWidgets();
+        this.disposeLineHighlights();
         this.glyphMarginHoverButton?.dispose();
     }
 

@@ -194,11 +194,17 @@ describe('MonacoEditorComponent', () => {
         fixture.detectChanges();
         comp.setAnnotations(buildAnnotationArray);
         comp.addLineWidget(1, 'widget', document.createElement('div'));
+        comp.setGlyphMarginHoverButton(document.createElement('div'), jest.fn());
+        comp.highlightLines(1, 1);
         const disposeAnnotationSpy = jest.spyOn(comp.editorBuildAnnotations[0], 'dispose');
         const disposeWidgetSpy = jest.spyOn(comp.lineWidgets[0], 'dispose');
+        const disposeHoverButtonSpy = jest.spyOn(comp.glyphMarginHoverButton!, 'dispose');
+        const disposeLineHighlightSpy = jest.spyOn(comp.lineHighlights[0], 'dispose');
         comp.ngOnDestroy();
         expect(disposeWidgetSpy).toHaveBeenCalledOnce();
         expect(disposeAnnotationSpy).toHaveBeenCalledOnce();
+        expect(disposeHoverButtonSpy).toHaveBeenCalledOnce();
+        expect(disposeLineHighlightSpy).toHaveBeenCalledOnce();
     });
 
     it('should switch to and update the text of a single model', () => {
