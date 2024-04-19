@@ -420,7 +420,7 @@ public class ResultService {
 
         Map<Long, String> logsAvailability = new HashMap<>();
 
-        List<Long> resultIds = results.stream().map(Result::getId).collect(Collectors.toList());
+        List<Long> resultIds = results.stream().map(Result::getId).toList();
 
         Map<Long, String> resultBuildJobSet = buildJobRepository.findBuildJobIdsForResultIds(resultIds).stream()
                 .collect(Collectors.toMap(ResultBuildJob::resultId, ResultBuildJob::buildJobId, (existing, replacement) -> existing));

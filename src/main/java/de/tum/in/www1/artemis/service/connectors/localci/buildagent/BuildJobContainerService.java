@@ -113,6 +113,7 @@ public class BuildJobContainerService {
      * Run the script in the container and wait for it to finish before returning.
      *
      * @param containerId the id of the container in which the script should be run
+     * @param buildJobId  the id of the build job that is currently being executed
      */
 
     public void runScriptInContainer(String containerId, String buildJobId) {
