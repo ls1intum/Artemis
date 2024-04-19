@@ -76,7 +76,6 @@ When setting up the Artemis server, the following values need to be added/update
             username: Artemis
         jpa:
             database: POSTGRESQL
-            database-platform: org.hibernate.dialect.PostgreSQLDialect
 
 .. note::
     This example assumes that you use the mentioned Docker Compose file on your localhost, so database is called ``Artemis``, runs on port ``5432`` and no password is necessary.
