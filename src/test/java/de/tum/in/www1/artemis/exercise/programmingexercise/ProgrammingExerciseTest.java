@@ -121,7 +121,7 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationJenkinsGitlabTest
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateProblemStatement() throws Exception {
         final var newProblem = "a new problem statement";
-        final var endpoint = "/api/programming-exercises/{exerciseId}/problem-statement".replace("{exerciseId}", String.valueOf(programmingExerciseId));
+        final var endpoint = "/api/programming-exercises/" + programmingExerciseId + "/problem-statement";
         ProgrammingExercise updatedProgrammingExercise = request.patchWithResponseBody(endpoint, newProblem, ProgrammingExercise.class, HttpStatus.OK, MediaType.TEXT_PLAIN);
 
         assertThat(updatedProgrammingExercise.getProblemStatement()).isEqualTo(newProblem);

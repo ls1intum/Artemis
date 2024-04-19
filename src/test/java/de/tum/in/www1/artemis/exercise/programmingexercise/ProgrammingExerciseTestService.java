@@ -1231,8 +1231,8 @@ public class ProgrammingExerciseTestService {
         exercise.setChannelName("testchannel-pe");
 
         final var generatedExercise = request.postWithResponseBody("/api/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED);
-        String response = request.putWithResponseBody("/api/programming-exercises/{exerciseId}/generate-tests".replace("{exerciseId}", String.valueOf(generatedExercise.getId())),
-                generatedExercise, String.class, HttpStatus.OK);
+        String response = request.putWithResponseBody("/api/programming-exercises/" + generatedExercise.getId() + "/generate-tests", generatedExercise, String.class,
+                HttpStatus.OK);
         assertThat(response).startsWith("Successfully generated the structure oracle");
 
         List<RevCommit> testRepoCommits = testRepo.getAllLocalCommits();
@@ -1247,8 +1247,8 @@ public class ProgrammingExerciseTestService {
         // Second time leads to a bad request because the file did not change
         var expectedHeaders = new HashMap<String, String>();
         expectedHeaders.put("X-artemisApp-alert", "Did not update the oracle because there have not been any changes to it.");
-        request.putWithResponseBody("/api/programming-exercises/{exerciseId}/generate-tests".replace("{exerciseId}", String.valueOf(generatedExercise.getId())), generatedExercise,
-                String.class, HttpStatus.BAD_REQUEST, expectedHeaders);
+        request.putWithResponseBody("/api/programming-exercises/" + generatedExercise.getId() + "/generate-tests", generatedExercise, String.class, HttpStatus.BAD_REQUEST,
+                expectedHeaders);
         assertThat(response).startsWith("Successfully generated the structure oracle");
     }
 
@@ -1271,7 +1271,7 @@ public class ProgrammingExerciseTestService {
             participant = setupTeam(user);
         }
         mockDelegate.mockConnectorRequestsForStartParticipation(exercise, participant.getParticipantIdentifier(), participant.getParticipants(), true);
-        final var path = "/api/exercises/{exerciseId}/participations".replace("{exerciseId}", String.valueOf(exercise.getId()));
+        final var path = "/api/exercises/" + exercise.getId() + "/participations";
         final var participation = request.postWithResponseBody(path, null, ProgrammingExerciseStudentParticipation.class, HttpStatus.CREATED);
         assertThat(participation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
     }
@@ -1289,7 +1289,7 @@ public class ProgrammingExerciseTestService {
 
         mockDelegate.mockConnectorRequestsForStartParticipation(exercise, participant.getParticipantIdentifier(), participant.getParticipants(), true);
 
-        final var path = "/api/exercises/{exerciseId}/participations".replace("{exerciseId}", String.valueOf(exercise.getId()));
+        final var path = "/api/exercises/" + exercise.getId() + "/participations";
         final var participation = request.postWithResponseBody(path, null, ProgrammingExerciseStudentParticipation.class, HttpStatus.CREATED);
         assertThat(participation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
     }
@@ -2358,7 +2358,7 @@ public class ProgrammingExerciseTestService {
     }
 
     private ProgrammingExerciseStudentParticipation createUserParticipation() throws Exception {
-        final var path = "/api/exercises/{exerciseId}/participations".replace("{exerciseId}", String.valueOf(exercise.getId()));
+        final var path = "/api/exercises/" + exercise.getId() + "/participations";
         return request.postWithResponseBody(path, null, ProgrammingExerciseStudentParticipation.class, HttpStatus.CREATED);
     }
 
