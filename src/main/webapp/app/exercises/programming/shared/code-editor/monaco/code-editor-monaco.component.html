@@ -1,7 +1,7 @@
 <div class="card">
     <div [hidden]="true">
-        <div #addFeedbackButton>
-            <fa-icon [icon]="faPlusSquare" size="lg" />
+        <div class="monaco-add-feedback-button" #addFeedbackButton>
+            <fa-icon size="lg" [icon]="faPlusSquare" />
         </div>
     </div>
     <jhi-code-editor-header [showTabSizeSelector]="false" [filename]="selectedFile!" [isLoading]="isLoading" />

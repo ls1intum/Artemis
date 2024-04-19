@@ -3,6 +3,10 @@
     padding: unset;
 }
 
+.monaco-add-feedback-button {
+    cursor: pointer;
+}
+
 .monaco-diff-line-highlight {
     background-color: var(--monaco-editor-diff-line-highlight);
 }
