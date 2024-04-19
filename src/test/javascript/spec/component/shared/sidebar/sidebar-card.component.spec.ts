@@ -30,6 +30,7 @@ describe('SidebarCardComponent', () => {
             title: 'testTitle',
             id: 'testId',
         };
+        component.itemSelected = true;
         fixture.detectChanges();
     });
 
@@ -69,6 +70,8 @@ describe('SidebarCardComponent', () => {
     it('should navigate to the item URL on click', async () => {
         const mockFn = jest.fn();
         component.emitStoreLastSelectedItem = mockFn;
+        component.itemSelected = true;
+        fixture.detectChanges();
         const itemElement = fixture.nativeElement.querySelector('#test-sidebar-card');
         itemElement.click();
         await fixture.whenStable();
@@ -76,5 +79,19 @@ describe('SidebarCardComponent', () => {
         expect(router.navigateByUrl).toHaveBeenCalled();
         const navigationArray = router.navigateByUrl.mock.calls[0][0];
         expect(navigationArray).toBe('../testId');
+    });
+
+    it('should navigate to the when no item was selected before', async () => {
+        const mockFn = jest.fn();
+        component.emitStoreLastSelectedItem = mockFn;
+        component.itemSelected = false;
+        fixture.detectChanges();
+        const itemElement = fixture.nativeElement.querySelector('#test-sidebar-card');
+        itemElement.click();
+        await fixture.whenStable();
+        expect(mockFn).toHaveBeenCalledWith('testId');
+        expect(router.navigateByUrl).toHaveBeenCalled();
+        const navigationArray = router.navigateByUrl.mock.calls[0][0];
+        expect(navigationArray).toBe('./testId');
     });
 });
