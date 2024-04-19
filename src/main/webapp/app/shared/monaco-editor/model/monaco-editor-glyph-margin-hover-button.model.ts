@@ -24,6 +24,8 @@ export class MonacoEditorGlyphMarginHoverButton extends MonacoCodeEditorElement 
         this.clickEventCallback = () => {
             clickCallback(this.getCurrentLineNumber());
         };
+        // The button is only visible once the mouse triggers its appearance.
+        this.setVisible(false);
         this.glyphMarginWidget = new MonacoEditorGlyphMarginWidget(editor, id, domNode, 1);
         this.setupListeners();
     }
