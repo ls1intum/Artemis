@@ -296,7 +296,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
 
     private addLineWidgetWithFeedback(feedback: Feedback): void {
         const line = Feedback.getReferenceLine(feedback);
-        if (!line) {
+        if (line === undefined) {
             throw new Error('No line found for feedback ' + feedback.id);
         }
         // In the future, there may be more than one feedback node per line.
