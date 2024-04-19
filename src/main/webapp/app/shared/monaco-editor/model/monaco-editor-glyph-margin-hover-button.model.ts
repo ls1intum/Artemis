@@ -1,12 +1,24 @@
 import * as monaco from 'monaco-editor';
 import { MonacoCodeEditorElement } from 'app/shared/monaco-editor/model/monaco-code-editor-element.model';
 import { MonacoEditorGlyphMarginWidget } from 'app/shared/monaco-editor/model/monaco-editor-glyph-margin-widget.model';
+
+/**
+ * Class representing a button on the glyph margin of the Monaco editor.
+ * It becomes visible when the user hovers over the corresponding line and uses a {@link MonacoEditorGlyphMarginWidget} for the button.
+ */
 export class MonacoEditorGlyphMarginHoverButton extends MonacoCodeEditorElement {
     readonly glyphMarginWidget: MonacoEditorGlyphMarginWidget;
     private mouseMoveListener?: monaco.IDisposable;
     private mouseLeaveListener?: monaco.IDisposable;
     private readonly clickEventCallback: () => void;
 
+    /**
+     * @param editor The editor to render this button in.
+     * @param id The id of this annotation.
+     * @param domNode The DOM node to display as the button. An event listener will be attached to this node.
+     * @param clickCallback The callback to execute when the button is clicked. It receives the line number (as written in the editor)
+     * of the line where the button was positioned during the click.
+     */
     constructor(editor: monaco.editor.ICodeEditor, id: string, domNode: HTMLElement, clickCallback: (lineNumber: number) => void) {
         super(editor, id);
         this.clickEventCallback = () => {
@@ -27,7 +39,7 @@ export class MonacoEditorGlyphMarginHoverButton extends MonacoCodeEditorElement 
     protected setupListeners(): void {
         this.getDomNode().addEventListener('click', this.clickEventCallback);
         this.mouseMoveListener = this.editor.onMouseMove((editorMouseEvent: monaco.editor.IEditorMouseEvent) => {
-            const lineNumber = editorMouseEvent.target?.range?.startLineNumber;
+            const lineNumber = editorMouseEvent.target?.range?.startLineNumber ?? 1;
             this.moveAndUpdate(lineNumber);
         });
 
@@ -36,8 +48,12 @@ export class MonacoEditorGlyphMarginHoverButton extends MonacoCodeEditorElement 
         });
     }
 
-    moveAndUpdate(lineNumber?: number) {
-        if (!!lineNumber && lineNumber !== this.getCurrentLineNumber()) {
+    /**
+     * Moves and re-renders the button if necessary.
+     * @param lineNumber The new line to place the button in. If the button is already in this line, nothing will happen.
+     */
+    moveAndUpdate(lineNumber: number): void {
+        if (lineNumber !== this.getCurrentLineNumber()) {
             this.glyphMarginWidget.setLineNumber(lineNumber);
             this.updateInEditor();
         }
