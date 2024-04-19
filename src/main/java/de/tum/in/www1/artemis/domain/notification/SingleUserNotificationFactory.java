@@ -323,11 +323,9 @@ public class SingleUserNotificationFactory {
             throw new IllegalArgumentException("No user provided for notification");
         }
         SingleUserNotification notification = switch (notificationType) {
-            case CONVERSATION_CREATE_ONE_TO_ONE_CHAT -> {
-                // text is null because the notification is not shown
-                yield new SingleUserNotification(user, title, null, false, createPlaceholdersConversationCreateOneToOneChat())
+            case CONVERSATION_CREATE_ONE_TO_ONE_CHAT -> // text is null because the notification is not shown
+                new SingleUserNotification(user, title, null, false, createPlaceholdersConversationCreateOneToOneChat())
                         .transientAndStringTarget(createConversationCreationTarget(conversation, conversation.getCourse().getId()));
-            }
             case CONVERSATION_CREATE_GROUP_CHAT, CONVERSATION_ADD_USER_GROUP_CHAT -> {
                 String[] placeholders = createPlaceholdersForUserGroupChat(conversation.getCourse().getTitle(), responsibleForAction.getName());
                 yield new SingleUserNotification(user, title, CONVERSATION_ADD_USER_GROUP_CHAT_TEXT, true, placeholders)

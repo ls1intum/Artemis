@@ -43,20 +43,20 @@ public record TestCaseDTO(String name, String classname, double time, @JsonPrope
         boolean hasSuccessInfos = !ObjectUtils.isEmpty(successInfos());
         boolean successful = isSuccessful();
 
-        if (successful && hasSuccessInfos && successInfos().get(0).getMostInformativeMessage() != null) {
-            return Optional.of(successInfos().get(0).getMostInformativeMessage());
+        if (successful && hasSuccessInfos && successInfos().getFirst().getMostInformativeMessage() != null) {
+            return Optional.of(successInfos().getFirst().getMostInformativeMessage());
         }
-        else if (hasErrors && errors().get(0).getMostInformativeMessage() != null) {
-            return Optional.of(errors().get(0).getMostInformativeMessage());
+        else if (hasErrors && errors().getFirst().getMostInformativeMessage() != null) {
+            return Optional.of(errors().getFirst().getMostInformativeMessage());
         }
-        else if (hasFailures && failures().get(0).getMostInformativeMessage() != null) {
-            return Optional.of(failures().get(0).getMostInformativeMessage());
+        else if (hasFailures && failures().getFirst().getMostInformativeMessage() != null) {
+            return Optional.of(failures().getFirst().getMostInformativeMessage());
         }
-        else if (hasErrors && errors().get(0).type() != null) {
-            return Optional.of(String.format("Unsuccessful due to an error of type: %s", errors().get(0).type()));
+        else if (hasErrors && errors().getFirst().type() != null) {
+            return Optional.of(String.format("Unsuccessful due to an error of type: %s", errors().getFirst().type()));
         }
-        else if (hasFailures && failures().get(0).type() != null) {
-            return Optional.of(String.format("Unsuccessful due to an error of type: %s", failures().get(0).type()));
+        else if (hasFailures && failures().getFirst().type() != null) {
+            return Optional.of(String.format("Unsuccessful due to an error of type: %s", failures().getFirst().type()));
         }
         else if (!successful) {
             // this is an edge case which typically does not happen

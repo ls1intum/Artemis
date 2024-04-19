@@ -30,8 +30,7 @@ public class GitLabCIResultService extends AbstractContinuousIntegrationResultSe
     public GitLabCIResultService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository, BuildLogEntryService buildLogService,
             BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService,
             ProgrammingExerciseFeedbackCreationService feedbackCreationService, ProgrammingExerciseTestCaseRepository testCaseRepository) {
-        super(programmingSubmissionRepository, feedbackRepository, testCaseRepository, buildLogService, buildLogStatisticsEntryRepository, testwiseCoverageService,
-                feedbackCreationService);
+        super(testCaseRepository, buildLogStatisticsEntryRepository, testwiseCoverageService, feedbackCreationService);
     }
 
     @Override
@@ -58,7 +57,7 @@ public class GitLabCIResultService extends AbstractContinuousIntegrationResultSe
             return;
         }
         ZonedDateTime jobStarted = getTimestampForLogEntry(buildLogEntries, ""); // First entry;
-        ZonedDateTime jobFinished = buildLogEntries.get(buildLogEntries.size() - 1).getTime(); // Last entry
+        ZonedDateTime jobFinished = buildLogEntries.getLast().getTime(); // Last entry
         ZonedDateTime testsStarted = getTimestampForLogEntry(buildLogEntries, "Scanning for projects...");
         ZonedDateTime testsFinished = getTimestampForLogEntry(buildLogEntries, "Total time:");
         Integer dependenciesDownloadedCount = countMatchingLogs(buildLogEntries, "Downloaded from");
