@@ -118,7 +118,6 @@ import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseResetOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.plagiarism.PlagiarismResultDTO;
-import de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseTestCaseResource;
 import de.tum.in.www1.artemis.web.websocket.dto.ProgrammingExerciseTestCaseStateDTO;
 
 /**
@@ -385,8 +384,7 @@ class ProgrammingExerciseIntegrationTestService {
 
         // Export with excludePracticeSubmissions
         var participationIds = programmingExerciseStudentParticipationRepository.findAll().stream().map(participation -> participation.getId().toString()).toList();
-        final var path = "/api/programming-exercises/{exerciseId}/export-repos-by-participation-ids/{participationIds}"
-                .replace("{exerciseId}", String.valueOf(programmingExercise.getId())).replace("{participationIds}", String.join(",", participationIds));
+        final var path = "/api/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participation-ids/" + String.join(",", participationIds);
         var exportOptions = new RepositoryExportOptionsDTO();
         exportOptions.setExcludePracticeSubmissions(excludePracticeSubmissions);
 
@@ -506,8 +504,7 @@ class ProgrammingExerciseIntegrationTestService {
         doReturn(repository2).when(gitService).getOrCheckoutRepository(eq(participation2.getVcsRepositoryUri()), anyString(), anyBoolean());
 
         var participationIds = programmingExerciseStudentParticipationRepository.findAll().stream().map(participation -> participation.getId().toString()).toList();
-        final var path = "/api/programming-exercises/{exerciseId}/export-repos-by-participation-ids/{participationIds}"
-                .replace("{exerciseId}", String.valueOf(programmingExercise.getId())).replace("{participationIds}", String.join(",", participationIds));
+        final var path = "/api/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participation-ids/" + String.join(",", participationIds);
         // all options false by default, only test if export works at all
         var exportOptions = new RepositoryExportOptionsDTO();
 
@@ -537,8 +534,7 @@ class ProgrammingExerciseIntegrationTestService {
         GitService.commit(localGit).setMessage("commit").setAuthor("user1", "email1").call();
 
         // Rest call
-        final var path = "/api/programming-exercises/{exerciseId}/export-repos-by-participation-ids/{participationIds}"
-                .replace("{exerciseId}", String.valueOf(programmingExercise.getId())).replace("{participationIds}", String.valueOf(participation1.getId()));
+        final var path = "/api/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participation-ids/" + participation1.getId();
         var exportOptions = getOptions();
         exportOptions.setAddParticipantName(false);
         downloadedFile = request.postWithResponseBodyFile(path, getOptions(), HttpStatus.OK);
@@ -571,16 +567,14 @@ class ProgrammingExerciseIntegrationTestService {
     }
 
     void testExportSubmissionsByParticipationIds_invalidParticipationId_badRequest() throws Exception {
-        final var path = "/api/programming-exercises/{exerciseId}/export-repos-by-participation-ids/{participationIds}"
-                .replace("{exerciseId}", String.valueOf(programmingExercise.getId())).replace("{participationIds}", "10");
+        final var path = "/api/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participation-ids/10";
         request.postWithResponseBodyFile(path, getOptions(), HttpStatus.BAD_REQUEST);
     }
 
     void testExportSubmissionsByParticipationIds_instructorNotInCourse_forbidden() throws Exception {
         userUtilService.addInstructor("other-instructors", userPrefix + "instructoralt");
         var participationIds = programmingExerciseStudentParticipationRepository.findAll().stream().map(participation -> participation.getId().toString()).toList();
-        final var path = "/api/programming-exercises/{exerciseId}/export-repos-by-participation-ids/{participationIds}"
-                .replace("{exerciseId}", String.valueOf(programmingExercise.getId())).replace("{participationIds}", String.join(",", participationIds));
+        final var path = "/api/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participation-ids/" + String.join(",", participationIds);
         request.postWithResponseBodyFile(path, getOptions(), HttpStatus.FORBIDDEN);
     }
 
@@ -599,8 +593,8 @@ class ProgrammingExerciseIntegrationTestService {
         var repository2 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile2.toPath(), null);
         doReturn(repository1).when(gitService).getOrCheckoutRepository(eq(participation1.getVcsRepositoryUri()), anyString(), anyBoolean());
         doReturn(repository2).when(gitService).getOrCheckoutRepository(eq(participation2.getVcsRepositoryUri()), anyString(), anyBoolean());
-        final var path = "/api/programming-exercises/{exerciseId}/export-repos-by-participant-identifiers/{participantIdentifiers}"
-                .replace("{exerciseId}", String.valueOf(programmingExercise.getId())).replace("{participantIdentifiers}", userPrefix + "student1," + userPrefix + "student2");
+        final var path = "/api/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participant-identifiers/" + userPrefix + "student1," + userPrefix
+                + "student2";
         return request.postWithResponseBodyFile(path, getOptions(), expectedStatus);
     }
 
@@ -1066,13 +1060,13 @@ class ProgrammingExerciseIntegrationTestService {
 
     void updateProblemStatement_instructorNotInCourse_forbidden() throws Exception {
         userUtilService.addInstructor("other-instructors", userPrefix + "instructoralt");
-        final var endpoint = "/api/programming-exercises/{exerciseId}/problem-statement".replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        final var endpoint = "/api/programming-exercises/" + programmingExercise.getId() + "/problem-statement";
         request.patchWithResponseBody(endpoint, "a new problem statement", ProgrammingExercise.class, HttpStatus.FORBIDDEN, MediaType.TEXT_PLAIN);
     }
 
     void updateProblemStatement_invalidId_notFound() throws Exception {
         programmingExercise.setId(getMaxProgrammingExerciseId() + 1);
-        final var endpoint = "/api/programming-exercises/{exerciseId}/problem-statement".replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        final var endpoint = "/api/programming-exercises/" + programmingExercise.getId() + "/problem-statement";
         request.patchWithResponseBody(endpoint, "a new problem statement", ProgrammingExercise.class, HttpStatus.NOT_FOUND, MediaType.TEXT_PLAIN);
     }
 
@@ -1524,7 +1518,7 @@ class ProgrammingExerciseIntegrationTestService {
     }
 
     void getTestCases_asTutor() throws Exception {
-        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.TEST_CASES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/test-cases";
         final List<ProgrammingExerciseTestCase> returnedTests = request.getList("/api" + endpoint, HttpStatus.OK, ProgrammingExerciseTestCase.class);
         final List<ProgrammingExerciseTestCase> testsInDB = new ArrayList<>(programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()));
         returnedTests.forEach(testCase -> testCase.setExercise(programmingExercise));
@@ -1532,13 +1526,13 @@ class ProgrammingExerciseIntegrationTestService {
     }
 
     void getTestCases_asStudent_forbidden() throws Exception {
-        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.TEST_CASES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/test-cases";
         request.getList("/api" + endpoint, HttpStatus.FORBIDDEN, ProgrammingExerciseTestCase.class);
     }
 
     void getTestCases_tutorInOtherCourse_forbidden() throws Exception {
         userUtilService.addTeachingAssistant("other-teaching-assistants", userPrefix + "other-teaching-assistant");
-        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.TEST_CASES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/test-cases";
 
         request.getList("/api" + endpoint, HttpStatus.FORBIDDEN, ProgrammingExerciseTestCase.class);
     }
@@ -1557,7 +1551,7 @@ class ProgrammingExerciseIntegrationTestService {
             testCaseUpdate.setBonusPoints(testCase.getId() + 2.0);
             return testCaseUpdate;
         }).toList();
-        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.UPDATE_TEST_CASES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/update-test-cases";
 
         final var testCasesResponse = request.patchWithResponseBody("/api" + endpoint, updates, new TypeReference<List<ProgrammingExerciseTestCase>>() {
         }, HttpStatus.OK);
@@ -1589,7 +1583,7 @@ class ProgrammingExerciseIntegrationTestService {
             testCaseUpdate.setBonusPoints(testCase.getId() + 2.0);
             return testCaseUpdate;
         }).toList();
-        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.UPDATE_TEST_CASES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/update-test-cases";
 
         final var testCasesResponse = request.patchWithResponseBody("/api" + endpoint, updates, new TypeReference<List<ProgrammingExerciseTestCase>>() {
         }, HttpStatus.OK);
@@ -1599,14 +1593,14 @@ class ProgrammingExerciseIntegrationTestService {
 
     void updateTestCases_nonExistingExercise_notFound() throws Exception {
         final var update = new ProgrammingExerciseTestCaseDTO();
-        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.UPDATE_TEST_CASES.replace("{exerciseId}", String.valueOf(programmingExercise.getId() + 1337));
+        final var endpoint = "/programming-exercises/" + (programmingExercise.getId() + 1337) + "/update-test-cases";
         request.patchWithResponseBody("/api" + endpoint, List.of(update), String.class, HttpStatus.NOT_FOUND);
     }
 
     void updateTestCases_instructorInWrongCourse_forbidden() throws Exception {
         userUtilService.addInstructor("other-instructors", userPrefix + "other-instructor");
         final var update = new ProgrammingExerciseTestCaseDTO();
-        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.UPDATE_TEST_CASES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/update-test-cases";
 
         request.patchWithResponseBody("/api" + endpoint, List.of(update), String.class, HttpStatus.FORBIDDEN);
     }
@@ -1622,7 +1616,7 @@ class ProgrammingExerciseIntegrationTestService {
             testCaseUpdate.setBonusPoints(testCase.getId() + 2.0);
             return testCaseUpdate;
         }).toList();
-        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.UPDATE_TEST_CASES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/update-test-cases";
 
         request.patchWithResponseBody("/api" + endpoint, updates, String.class, HttpStatus.BAD_REQUEST);
     }
@@ -1631,7 +1625,7 @@ class ProgrammingExerciseIntegrationTestService {
         final var testCases = List.copyOf(programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()));
         final var updates = transformTestCasesToDto(testCases);
         updates.get(0).setBonusMultiplier(-1.0);
-        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.UPDATE_TEST_CASES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/update-test-cases";
 
         request.performMvcRequest(
                 MockMvcRequestBuilders.patch(new URI("/api" + endpoint)).contentType(MediaType.APPLICATION_JSON).content(request.getObjectMapper().writeValueAsString(updates)))
@@ -1656,7 +1650,7 @@ class ProgrammingExerciseIntegrationTestService {
 
         final var updates = transformTestCasesToDto(testCases);
         updates.get(0).setBonusPoints(null);
-        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.UPDATE_TEST_CASES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/update-test-cases";
 
         final var testCasesResponse = request.patchWithResponseBody("/api" + endpoint, updates, new TypeReference<List<ProgrammingExerciseTestCase>>() {
         }, HttpStatus.OK);
@@ -1681,7 +1675,7 @@ class ProgrammingExerciseIntegrationTestService {
         programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExercise.getId()).orElseThrow();
         mockDelegate.mockTriggerBuild(programmingExercise.getSolutionParticipation());
         mockDelegate.mockTriggerBuild(programmingExercise.getTemplateParticipation());
-        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.RESET.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/test-cases/reset";
         programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()).forEach(test -> {
             test.setWeight(42.0);
             programmingExerciseTestCaseRepository.saveAndFlush(test);
@@ -1701,7 +1695,7 @@ class ProgrammingExerciseIntegrationTestService {
 
     void resetTestCaseWeights_instructorInWrongCourse_forbidden() throws Exception {
         userUtilService.addInstructor("other-instructors", userPrefix + "other-instructor");
-        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.RESET.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/test-cases/reset";
         request.patchWithResponseBody("/api" + endpoint, "{}", String.class, HttpStatus.FORBIDDEN);
     }
 
@@ -1790,7 +1784,7 @@ class ProgrammingExerciseIntegrationTestService {
                 .findWithTemplateAndSolutionParticipationById(exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class).getId()).orElseThrow();
         prepareTwoStudentAndOneInstructorRepositoriesForPlagiarismChecks(programmingExercise);
 
-        final var path = "/api/programming-exercises/{exerciseId}/check-plagiarism".replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        final var path = "/api/programming-exercises/" + programmingExercise.getId() + "/check-plagiarism";
         var result = request.get(path, HttpStatus.OK, PlagiarismResultDTO.class, plagiarismUtilService.getDefaultPlagiarismOptions());
         assertPlagiarismResult(programmingExercise, result, 100.0);
     }
@@ -1805,7 +1799,7 @@ class ProgrammingExerciseIntegrationTestService {
 
         prepareTwoTeamRepositoriesForPlagiarismChecks(programmingExercise);
 
-        final var path = "/api/programming-exercises/{exerciseId}/check-plagiarism".replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        final var path = "/api/programming-exercises/" + programmingExercise.getId() + "/check-plagiarism";
         var result = request.get(path, HttpStatus.OK, PlagiarismResultDTO.class, plagiarismUtilService.getDefaultPlagiarismOptions());
         assertPlagiarismResult(programmingExercise, result, 100.0);
     }
@@ -1816,7 +1810,7 @@ class ProgrammingExerciseIntegrationTestService {
                 .findWithTemplateAndSolutionParticipationById(exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class).getId()).orElseThrow();
         prepareTwoStudentAndOneInstructorRepositoriesForPlagiarismChecks(programmingExercise);
 
-        final var path = "/api/programming-exercises/{exerciseId}/check-plagiarism-jplag-report".replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        final var path = "/api/programming-exercises/" + programmingExercise.getId() + "/check-plagiarism-jplag-report";
         var jplagZipArchive = request.getFile(path, HttpStatus.OK, plagiarismUtilService.getDefaultPlagiarismOptions());
         assertThat(jplagZipArchive).isNotNull();
         assertThat(jplagZipArchive).exists();
@@ -2207,11 +2201,11 @@ class ProgrammingExerciseIntegrationTestService {
     }
 
     private String defaultResetEndpoint(Long exerciseId) {
-        return "/api/programming-exercises/{exerciseId}/reset".replace("{exerciseId}", exerciseId.toString());
+        return "/api/programming-exercises/" + exerciseId + "/reset";
     }
 
     private String defaultGetAuxReposEndpoint(Long exerciseId) {
-        return "/api/programming-exercises/{exerciseId}/auxiliary-repository".replace("{exerciseId}", exerciseId.toString());
+        return "/api/programming-exercises/" + exerciseId + "/auxiliary-repository";
     }
 
     private String defaultExportInstructorAuxiliaryRepository(Long exerciseId, Long repositoryId) {
