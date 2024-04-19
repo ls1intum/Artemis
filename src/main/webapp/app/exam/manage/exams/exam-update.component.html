@@ -27,6 +27,13 @@
                     [hideChannelName]="hideChannelNameInput"
                     [initChannelName]="isImport || exam.id === undefined"
                 />
+                @if (!isNonEmptyTitle) {
+                    <span class="invalid-feedback"> {{ 'artemisApp.exam.validation.titleNonEmptyValidation' | artemisTranslate }}</span>
+                }
+
+                @if (isNonEmptyTitle && !isValidTitle) {
+                    <span class="invalid-feedback"> {{ 'artemisApp.exam.validation.titleInputValidation' | artemisTranslate }}</span>
+                }
             </div>
             <div class="form-group">
                 <div>

@@ -20,6 +20,8 @@ import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-au
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { examWorkingTime, normalWorkingTime } from 'app/exam/participate/exam.utils';
 
+export const examTitleRegex = new RegExp('^[a-zA-Z0-9- ]+$');
+
 @Component({
     selector: 'jhi-exam-update',
     templateUrl: './exam-update.component.html',
@@ -283,14 +285,24 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
         const examMaxPointsValid = this.isValidMaxPoints;
         const examValidWorkingTime = this.validateWorkingTime;
         const examValidExampleSolutionPublicationDate = this.isValidExampleSolutionPublicationDate;
+        const examTitleValid = this.isValidTitle;
         return (
             examConductionDatesValid &&
             examReviewDatesValid &&
             examNumberOfCorrectionsValid &&
             examMaxPointsValid &&
             examValidWorkingTime &&
-            examValidExampleSolutionPublicationDate
+            examValidExampleSolutionPublicationDate &&
+            examTitleValid
         );
+    }
+
+    get isNonEmptyTitle(): boolean {
+        return !!this.exam.title;
+    }
+
+    get isValidTitle(): boolean {
+        return !!this.exam.title && examTitleRegex.test(this.exam.title);
     }
 
     /**

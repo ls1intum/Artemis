@@ -14,6 +14,8 @@ import {
 import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop-question-util.service';
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
 
+export const titleRegex = new RegExp('^[a-zA-Z0-9- ]+$');
+
 @Directive()
 export abstract class QuizExerciseValidationDirective {
     // Make constants available to html for comparison
@@ -65,6 +67,7 @@ export abstract class QuizExerciseValidationDirective {
         const isGenerallyValid =
             this.quizExercise.title != undefined &&
             this.quizExercise.title !== '' &&
+            titleRegex.test(this.quizExercise.title) &&
             this.quizExercise.title.length < MAX_QUIZ_QUESTION_LENGTH_THRESHOLD &&
             this.quizExercise.duration !== 0 &&
             this.quizExercise.quizQuestions != undefined &&
@@ -135,6 +138,14 @@ export abstract class QuizExerciseValidationDirective {
                 translateValues: { threshold: MAX_QUIZ_QUESTION_LENGTH_THRESHOLD },
             });
         }
+
+        if (!titleRegex.test(this.quizExercise.title!)) {
+            invalidReasons.push({
+                translateKey: 'artemisApp.quizExercise.invalidReasons.quizTitleInvalid',
+                translateValues: { threshold: MAX_QUIZ_QUESTION_LENGTH_THRESHOLD },
+            });
+        }
+
         if (!this.quizExercise.duration) {
             invalidReasons.push({
                 translateKey: 'artemisApp.quizExercise.invalidReasons.quizDuration',

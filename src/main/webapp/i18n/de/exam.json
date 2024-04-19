@@ -162,7 +162,9 @@
                 "numberOfExercisesInExamNotSet": "Die Anzahl an Aufgaben in der Klausur ist nicht gesetzt.",
                 "tooFewExerciseGroups": "Die Anzahl der Aufgabengruppen ist zu klein.",
                 "tooManyMandatoryExerciseGroups": "Die Anzahl verpflichtender Aufgabengruppen ist zu groß.",
-                "maxPointsNotSet": "Die maximale Punktzahl in der Klausur ist nicht gesetzt."
+                "maxPointsNotSet": "Die maximale Punktzahl in der Klausur ist nicht gesetzt.",
+                "titleNonEmptyValidation": "Titel ist erforderlich!",
+                "titleInputValidation": "Titel dürfen nur Buchstaben, Zahlen, Leerzeichen und Bindestriche enthalten."
             },
             "error": {
                 "cannotRegisterInstructor": "Du kannst keine Personen aus der Lehr- oder Administrationsgruppe zu Klausuren anmelden.",

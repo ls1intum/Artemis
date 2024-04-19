@@ -162,7 +162,9 @@
                 "numberOfExercisesInExamNotSet": "The number of exercises in the exam is not set.",
                 "tooFewExerciseGroups": "The number of exercise groups is too small.",
                 "tooManyMandatoryExerciseGroups": "The number of mandatory exercise groups is too large.",
-                "maxPointsNotSet": "The exam max points are not set."
+                "maxPointsNotSet": "The exam max points are not set.",
+                "titleNonEmptyValidation": "Title is required!",
+                "titleInputValidation": "Titles can only contain letters, numbers, spaces and dashes."
             },
             "error": {
                 "cannotRegisterInstructor": "You cannot register instructors or administrators for exams.",
