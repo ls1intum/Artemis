@@ -60,7 +60,6 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingServ
 import de.tum.in.www1.artemis.service.util.RoundingUtil;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGradingStatisticsDTO;
-import de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseGradingResource;
 
 /**
  * Tests the {@link ProgrammingExerciseGradingService}.
@@ -610,7 +609,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         changeTestCaseWeights(testCases);
 
         // re-evaluate
-        final var endpoint = ProgrammingExerciseGradingResource.RE_EVALUATE.replace("{exerciseId}", programmingExercise.getId().toString());
+        final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/grading/re-evaluate";
         final var response = request.putWithResponseBody("/api" + endpoint, "{}", Integer.class, HttpStatus.OK);
         assertThat(response).isEqualTo(7);
 
@@ -669,7 +668,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         changeTestCaseWeights(testCases);
 
         // re-evaluate
-        final var endpoint = ProgrammingExerciseGradingResource.RE_EVALUATE.replace("{exerciseId}", programmingExercise.getId().toString());
+        final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/grading/re-evaluate";
         final var response = request.putWithResponseBody("/api" + endpoint, "{}", Integer.class, HttpStatus.OK);
         assertThat(response).isEqualTo(7);
 
@@ -1223,7 +1222,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         createTestParticipationsWithResults();
 
         // get statistics
-        final var endpoint = ProgrammingExerciseGradingResource.STATISTICS.replace("{exerciseId}", programmingExerciseSCAEnabled.getId().toString());
+        final var endpoint = "/programming-exercises/" + programmingExerciseSCAEnabled.getId() + "/grading/statistics";
         final var statistics = request.get("/api" + endpoint, HttpStatus.OK, ProgrammingExerciseGradingStatisticsDTO.class);
 
         assertThat(statistics.getNumParticipations()).isEqualTo(5);
