@@ -40,6 +40,7 @@ import de.tum.in.www1.artemis.security.jwt.JWTConfigurer;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.user.PasswordService;
+import de.tum.in.www1.artemis.web.filter.ArtemisBasicAuthenticationFilter;
 import de.tum.in.www1.artemis.web.filter.SpaWebFilter;
 
 @Configuration
@@ -119,6 +120,11 @@ public class SecurityConfiguration {
         DefaultMethodSecurityExpressionHandler expressionHandler = new DefaultMethodSecurityExpressionHandler();
         expressionHandler.setRoleHierarchy(roleHierarchy());
         return expressionHandler;
+    }
+
+    @Bean
+    public BasicAuthenticationFilter basicAuthenticationFilter(AuthenticationManager authenticationManager) {
+        return new ArtemisBasicAuthenticationFilter(authenticationManager);
     }
 
     /**
