@@ -75,8 +75,6 @@ public class BuildJobExecutionService {
 
     private final BuildLogsMap buildLogsMap;
 
-    private String buildJobId = null;
-
     @Value("${artemis.version-control.url}")
     private URL localVCBaseUrl;
 
@@ -106,12 +104,9 @@ public class BuildJobExecutionService {
      */
     public LocalCIBuildResult runBuildJob(LocalCIBuildJobQueueItem buildJob, String containerName) {
 
-        // Set the build job id for logging purposes
-        buildJobId = buildJob.id();
-
-        String msg = "~~~~~~~~~~~~~~~~~~~~ Start Build Job " + buildJobId + " ~~~~~~~~~~~~~~~~~~~~";
+        String msg = "~~~~~~~~~~~~~~~~~~~~ Start Build Job " + buildJob.id() + " ~~~~~~~~~~~~~~~~~~~~";
         log.debug(msg);
-        buildLogsMap.addSingleBuildLog(buildJobId, new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
+        buildLogsMap.addSingleBuildLog(buildJob.id(), new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
 
         // Check if the Docker image is available. If not, pull it.
         try {
@@ -119,7 +114,7 @@ public class BuildJobExecutionService {
         }
         catch (LocalCIException e) {
             msg = "Could not pull Docker image " + buildJob.buildConfig().dockerImage();
-            buildLogsMap.addSingleBuildLog(buildJobId, new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
+            buildLogsMap.addSingleBuildLog(buildJob.id(), new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
             throw new LocalCIException(msg, e);
         }
 
@@ -138,7 +133,7 @@ public class BuildJobExecutionService {
             }
             catch (EntityNotFoundException e) {
                 msg = "Could not find last commit hash for assignment repository " + assignmentRepoUri.repositorySlug();
-                buildLogsMap.addSingleBuildLog(buildJobId, new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
+                buildLogsMap.addSingleBuildLog(buildJob.id(), new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
                 throw new LocalCIException(msg, e);
             }
         }
@@ -148,7 +143,7 @@ public class BuildJobExecutionService {
         }
         catch (EntityNotFoundException e) {
             msg = "Could not find last commit hash for test repository " + testsRepoUri.repositorySlug();
-            buildLogsMap.addSingleBuildLog(buildJobId, new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
+            buildLogsMap.addSingleBuildLog(buildJob.id(), new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
             throw new LocalCIException(msg, e);
         }
 
@@ -160,14 +155,14 @@ public class BuildJobExecutionService {
          */
         if (buildJob.buildConfig().commitHash() != null && !isPushToTestOrAuxRepository) {
             // Clone the assignment repository into a temporary directory with the name of the commit hash and then checkout the commit hash.
-            assignmentRepositoryPath = cloneRepository(assignmentRepoUri, assignmentCommitHash, true);
+            assignmentRepositoryPath = cloneRepository(assignmentRepoUri, assignmentCommitHash, true, buildJob.id());
         }
         else {
             // Clone the assignment to use the latest commit of the default branch
-            assignmentRepositoryPath = cloneRepository(assignmentRepoUri, assignmentCommitHash, false);
+            assignmentRepositoryPath = cloneRepository(assignmentRepoUri, assignmentCommitHash, false, buildJob.id());
         }
 
-        Path testsRepositoryPath = cloneRepository(testsRepoUri, assignmentCommitHash, false);
+        Path testsRepositoryPath = cloneRepository(testsRepoUri, assignmentCommitHash, false, buildJob.id());
 
         LocalVCRepositoryUri solutionRepoUri = null;
         Path solutionRepositoryPath = null;
@@ -178,7 +173,7 @@ public class BuildJobExecutionService {
                 solutionRepositoryPath = assignmentRepositoryPath;
             }
             else {
-                solutionRepositoryPath = cloneRepository(solutionRepoUri, assignmentCommitHash, false);
+                solutionRepositoryPath = cloneRepository(solutionRepoUri, assignmentCommitHash, false, buildJob.id());
             }
         }
 
@@ -189,7 +184,7 @@ public class BuildJobExecutionService {
         int index = 0;
         for (String auxiliaryRepositoryUri : auxiliaryRepositoryUriList) {
             auxiliaryRepositoriesUris[index] = new LocalVCRepositoryUri(auxiliaryRepositoryUri, localVCBaseUrl);
-            auxiliaryRepositoriesPaths[index] = cloneRepository(auxiliaryRepositoriesUris[index], assignmentCommitHash, false);
+            auxiliaryRepositoriesPaths[index] = cloneRepository(auxiliaryRepositoriesUris[index], assignmentCommitHash, false, buildJob.id());
             index++;
         }
 
@@ -216,25 +211,25 @@ public class BuildJobExecutionService {
 
         buildJobContainerService.startContainer(containerId);
 
-        String msg = "Started container " + containerName + " for build job " + buildJobId;
-        buildLogsMap.addSingleBuildLog(buildJobId, new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
+        String msg = "Started container " + containerName + " for build job " + buildJob.id();
+        buildLogsMap.addSingleBuildLog(buildJob.id(), new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
 
         log.info(msg, containerName);
 
         msg = "Populating build job container with repositories and build script";
-        buildLogsMap.addSingleBuildLog(buildJobId, new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
+        buildLogsMap.addSingleBuildLog(buildJob.id(), new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
         log.debug(msg);
         buildJobContainerService.populateBuildJobContainer(containerId, assignmentRepositoryPath, testsRepositoryPath, solutionRepositoryPath, auxiliaryRepositoriesPaths,
                 buildJob.repositoryInfo().auxiliaryRepositoryCheckoutDirectories(), buildJob.buildConfig().programmingLanguage());
 
-        msg = "~~~~~~~~~~~~~~~~~~~~ Executing Build Script for Build job " + buildJobId + " ~~~~~~~~~~~~~~~~~~~~";
-        buildLogsMap.addSingleBuildLog(buildJobId, new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
+        msg = "~~~~~~~~~~~~~~~~~~~~ Executing Build Script for Build job " + buildJob.id() + " ~~~~~~~~~~~~~~~~~~~~";
+        buildLogsMap.addSingleBuildLog(buildJob.id(), new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
         log.debug(msg);
 
         buildJobContainerService.runScriptInContainer(containerId, buildJob.id());
 
-        msg = "~~~~~~~~~~~~~~~~~~~~ Finished Executing Build Script for Build job " + buildJobId + " ~~~~~~~~~~~~~~~~~~~~";
-        buildLogsMap.addSingleBuildLog(buildJobId, new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
+        msg = "~~~~~~~~~~~~~~~~~~~~ Finished Executing Build Script for Build job " + buildJob.id() + " ~~~~~~~~~~~~~~~~~~~~";
+        buildLogsMap.addSingleBuildLog(buildJob.id(), new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
         log.info(msg);
 
         ZonedDateTime buildCompletedDate = ZonedDateTime.now();
@@ -250,7 +245,7 @@ public class BuildJobExecutionService {
         }
         catch (NotFoundException e) {
             msg = "Could not find test results in container " + containerName;
-            buildLogsMap.addSingleBuildLog(buildJobId, new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
+            buildLogsMap.addSingleBuildLog(buildJob.id(), new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
             log.error(msg, e);
             // If the test results are not found, this means that something went wrong during the build and testing of the submission.
             return constructFailedBuildResult(buildJob.buildConfig().branch(), assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate);
@@ -259,14 +254,14 @@ public class BuildJobExecutionService {
             buildJobContainerService.stopContainer(containerName);
 
             // Delete the cloned repositories
-            deleteCloneRepo(assignmentRepositoryUri, assignmentRepoCommitHash);
-            deleteCloneRepo(testRepositoryUri, assignmentRepoCommitHash);
+            deleteCloneRepo(assignmentRepositoryUri, assignmentRepoCommitHash, buildJob.id());
+            deleteCloneRepo(testRepositoryUri, assignmentRepoCommitHash, buildJob.id());
             // do not try to delete the temp repository if it does not exist or is the same as the assignment reposity
             if (solutionRepositoryUri != null && !Objects.equals(assignmentRepositoryUri.repositorySlug(), solutionRepositoryUri.repositorySlug())) {
-                deleteCloneRepo(solutionRepositoryUri, assignmentRepoCommitHash);
+                deleteCloneRepo(solutionRepositoryUri, assignmentRepoCommitHash, buildJob.id());
             }
             for (VcsRepositoryUri auxiliaryRepositoryUri : auxiliaryRepositoriesUris) {
-                deleteCloneRepo(auxiliaryRepositoryUri, assignmentRepoCommitHash);
+                deleteCloneRepo(auxiliaryRepositoryUri, assignmentRepoCommitHash, buildJob.id());
             }
 
             try {
@@ -274,25 +269,26 @@ public class BuildJobExecutionService {
             }
             catch (IOException e) {
                 msg = "Could not delete " + CHECKED_OUT_REPOS_TEMP_DIR + " directory";
-                buildLogsMap.addSingleBuildLog(buildJobId, new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
+                buildLogsMap.addSingleBuildLog(buildJob.id(), new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
                 log.error(msg, e);
             }
         }
 
         LocalCIBuildResult buildResult;
         try {
-            buildResult = parseTestResults(testResultsTarInputStream, buildJob.buildConfig().branch(), assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate);
+            buildResult = parseTestResults(testResultsTarInputStream, buildJob.buildConfig().branch(), assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate,
+                    buildJob.id());
             buildResult.setBuildLogEntries(buildLogsMap.getBuildLogs(buildJob.id()));
         }
         catch (IOException | XMLStreamException | IllegalStateException e) {
             msg = "Error while parsing test results";
-            buildLogsMap.addSingleBuildLog(buildJobId, new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
+            buildLogsMap.addSingleBuildLog(buildJob.id(), new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
             throw new LocalCIException(msg, e);
         }
 
         msg = "Building and testing submission for repository " + assignmentRepositoryUri.repositorySlug() + " and commit hash " + assignmentRepoCommitHash + " took "
                 + TimeLogUtil.formatDurationFrom(timeNanoStart);
-        buildLogsMap.addSingleBuildLog(buildJobId, new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
+        buildLogsMap.addSingleBuildLog(buildJob.id(), new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
         log.info(msg);
 
         return buildResult;
@@ -301,7 +297,7 @@ public class BuildJobExecutionService {
     // --- Helper methods ----
 
     private LocalCIBuildResult parseTestResults(TarArchiveInputStream testResultsTarInputStream, String assignmentRepoBranchName, String assignmentRepoCommitHash,
-            String testsRepoCommitHash, ZonedDateTime buildCompletedDate) throws IOException, XMLStreamException {
+            String testsRepoCommitHash, ZonedDateTime buildCompletedDate, String buildJobId) throws IOException, XMLStreamException {
 
         List<LocalCIBuildResult.LocalCITestJobDTO> failedTests = new ArrayList<>();
         List<LocalCIBuildResult.LocalCITestJobDTO> successfulTests = new ArrayList<>();
@@ -322,7 +318,7 @@ public class BuildJobExecutionService {
             try {
                 // Check if the file is a static code analysis report file
                 if (StaticCodeAnalysisTool.getToolByFilePattern(fileName).isPresent()) {
-                    processStaticCodeAnalysisReportFile(fileName, xmlString, staticCodeAnalysisReports);
+                    processStaticCodeAnalysisReportFile(fileName, xmlString, staticCodeAnalysisReports, buildJobId);
                 }
                 else {
                     // ugly workaround because in swift result files \n\t breaks the parsing
@@ -376,7 +372,7 @@ public class BuildJobExecutionService {
      * @param xmlString                 the content of the static code analysis report file
      * @param staticCodeAnalysisReports the list of static code analysis reports
      */
-    private void processStaticCodeAnalysisReportFile(String fileName, String xmlString, List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports) {
+    private void processStaticCodeAnalysisReportFile(String fileName, String xmlString, List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports, String buildJobId) {
         Document document = XmlFileUtils.readFromString(xmlString);
         document.setDocumentURI(fileName);
         try {
@@ -532,7 +528,7 @@ public class BuildJobExecutionService {
                 staticCodeAnalysisReports);
     }
 
-    private Path cloneRepository(VcsRepositoryUri repositoryUri, String commitHash, boolean checkout) {
+    private Path cloneRepository(VcsRepositoryUri repositoryUri, String commitHash, boolean checkout, String buildJobId) {
         try {
             // Clone the assignment repository into a temporary directory
             Repository repository = gitService.getOrCheckoutRepository(repositoryUri, Paths.get(CHECKED_OUT_REPOS_TEMP_DIR, commitHash, repositoryUri.folderNameForRepositoryUri()),
@@ -550,7 +546,7 @@ public class BuildJobExecutionService {
         }
     }
 
-    private void deleteCloneRepo(VcsRepositoryUri repositoryUri, String commitHash) {
+    private void deleteCloneRepo(VcsRepositoryUri repositoryUri, String commitHash, String buildJobId) {
         String msg;
         try {
             Repository repository = gitService.getExistingCheckedOutRepositoryByLocalPath(
