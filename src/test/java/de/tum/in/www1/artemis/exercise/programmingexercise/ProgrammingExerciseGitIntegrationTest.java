@@ -42,7 +42,7 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegrationInd
 
     private static final String TEST_PREFIX = "progexgitintegration";
 
-    private static final String COMBINE_COMMITS_ENDPOINT = "/api" + "/programming-exercises/{exerciseId}/combine-template-commits";
+    private static final String COMBINE_COMMITS_ENDPOINT = "/api/programming-exercises/{exerciseId}/combine-template-commits";
 
     @Autowired
     private GitUtilService gitUtilService;

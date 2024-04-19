@@ -141,7 +141,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
         newExercise.setChannelName("testchannelname-pe");
         aeolusRequestMockProvider.enableMockingOfRequests();
         aeolusRequestMockProvider.mockFailedGenerateBuildPlan(AeolusTarget.CLI);
-        ProgrammingExercise createdExercise = request.postWithResponseBody("/api" + "/programming-exercises/setup", newExercise, ProgrammingExercise.class, HttpStatus.CREATED);
+        ProgrammingExercise createdExercise = request.postWithResponseBody("/api/programming-exercises/setup", newExercise, ProgrammingExercise.class, HttpStatus.CREATED);
 
         // Check that the repository folders were created in the file system for the template, solution, and tests repository.
         localVCLocalCITestService.verifyRepositoryFoldersExist(createdExercise, localVCBasePath);
@@ -156,7 +156,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
     void testUpdateProgrammingExercise() throws Exception {
         programmingExercise.setReleaseDate(ZonedDateTime.now().plusHours(1));
 
-        ProgrammingExercise updatedExercise = request.putWithResponseBody("/api" + "/programming-exercises", programmingExercise, ProgrammingExercise.class, HttpStatus.OK);
+        ProgrammingExercise updatedExercise = request.putWithResponseBody("/api/programming-exercises", programmingExercise, ProgrammingExercise.class, HttpStatus.OK);
 
         assertThat(updatedExercise.getReleaseDate()).isEqualTo(programmingExercise.getReleaseDate());
     }
@@ -165,11 +165,11 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateProgrammingExercise_templateRepositoryUriIsInvalid() throws Exception {
         programmingExercise.setTemplateRepositoryUri("http://localhost:9999/some/invalid/url.git");
-        request.put("/api" + "/programming-exercises", programmingExercise, HttpStatus.BAD_REQUEST);
+        request.put("/api/programming-exercises", programmingExercise, HttpStatus.BAD_REQUEST);
 
         programmingExercise.setTemplateRepositoryUri(
                 "http://localhost:49152/invalidUrlMapping/" + programmingExercise.getProjectKey() + "/" + programmingExercise.getProjectKey().toLowerCase() + "-exercise.git");
-        request.put("/api" + "/programming-exercises", programmingExercise, HttpStatus.BAD_REQUEST);
+        request.put("/api/programming-exercises", programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -179,7 +179,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
         var params = new LinkedMultiValueMap<String, String>();
         params.add("deleteStudentReposBuildPlans", "true");
         params.add("deleteBaseReposBuildPlans", "true");
-        request.delete("/api" + "/programming-exercises" + "/" + programmingExercise.getId(), HttpStatus.OK, params);
+        request.delete("/api/programming-exercises/" + programmingExercise.getId(), HttpStatus.OK, params);
 
         // Assert that the repository folders do not exist anymore.
         LocalVCRepositoryUri templateRepositoryUri = new LocalVCRepositoryUri(programmingExercise.getTemplateRepositoryUri(), localVCBaseUrl);
@@ -221,7 +221,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
         params.add("recreateBuildPlans", "true");
         exerciseToBeImported.setChannelName("testchannel-pe-imported");
         var importedExercise = request.postWithResponseBody(
-                "/api" + "/programming-exercises/import/{sourceExerciseId}".replace("{sourceExerciseId}", programmingExercise.getId().toString()), exerciseToBeImported,
+                "/api/programming-exercises/import/{sourceExerciseId}".replace("{sourceExerciseId}", programmingExercise.getId().toString()), exerciseToBeImported,
                 ProgrammingExercise.class, params, HttpStatus.OK);
 
         // Assert that the repositories were correctly created for the imported exercise.

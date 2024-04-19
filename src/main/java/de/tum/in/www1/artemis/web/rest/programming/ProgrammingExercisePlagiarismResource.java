@@ -41,7 +41,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class ProgrammingExercisePlagiarismResource {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExercisePlagiarismResource.class);
@@ -70,7 +70,7 @@ public class ProgrammingExercisePlagiarismResource {
      * @param exerciseId ID of the programming exercise for which the plagiarism result should be returned
      * @return The ResponseEntity with status 200 (Ok) or with status 400 (Bad Request) if the parameters are invalid
      */
-    @GetMapping("/programming-exercises/{exerciseId}/plagiarism-result")
+    @GetMapping("programming-exercises/{exerciseId}/plagiarism-result")
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<PlagiarismResultDTO<TextPlagiarismResult>> getPlagiarismResult(@PathVariable long exerciseId) {
@@ -93,7 +93,7 @@ public class ProgrammingExercisePlagiarismResource {
      * @throws ExitException is thrown if JPlag exits unexpectedly
      * @throws IOException   is thrown for file handling errors
      */
-    @GetMapping("/programming-exercises/{exerciseId}/check-plagiarism")
+    @GetMapping("programming-exercises/{exerciseId}/check-plagiarism")
     @EnforceAtLeastEditor
     @FeatureToggle({ Feature.ProgrammingExercises, Feature.PlagiarismChecks })
     public ResponseEntity<PlagiarismResultDTO<TextPlagiarismResult>> checkPlagiarism(@PathVariable long exerciseId, @RequestParam int similarityThreshold,
@@ -126,7 +126,7 @@ public class ProgrammingExercisePlagiarismResource {
      * @return The ResponseEntity with status 201 (Created) or with status 400 (Bad Request) if the parameters are invalid
      * @throws IOException is thrown for file handling errors
      */
-    @GetMapping(value = "/programming-exercises/{exerciseId}/check-plagiarism-jplag-report")
+    @GetMapping(value = "programming-exercises/{exerciseId}/check-plagiarism-jplag-report")
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Resource> checkPlagiarismWithJPlagReport(@PathVariable long exerciseId, @RequestParam int similarityThreshold, @RequestParam int minimumScore,

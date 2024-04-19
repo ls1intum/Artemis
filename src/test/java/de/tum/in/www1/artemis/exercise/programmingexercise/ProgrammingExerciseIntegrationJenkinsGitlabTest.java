@@ -128,7 +128,7 @@ class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpringInte
     void testProgrammingExerciseDelete_buildPlanNotFoundInJenkins() throws Exception {
         var programmingExercise = programmingExerciseIntegrationTestService.programmingExercise;
         final var projectKey = programmingExercise.getProjectKey();
-        final var path = "/api" + "/programming-exercises/{exerciseId}".replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        final var path = "/api/programming-exercises/{exerciseId}".replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         var params = new LinkedMultiValueMap<String, String>();
         params.add("deleteStudentReposBuildPlans", "true");
         params.add("deleteBaseReposBuildPlans", "true");
@@ -146,7 +146,7 @@ class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpringInte
     void testProgrammingExerciseDelete_buildPlanFailsInJenkins() throws Exception {
         var programmingExercise = programmingExerciseIntegrationTestService.programmingExercise;
         final var projectKey = programmingExercise.getProjectKey();
-        final var path = "/api" + "/programming-exercises/{exerciseId}".replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        final var path = "/api/programming-exercises/{exerciseId}".replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         var params = new LinkedMultiValueMap<String, String>();
         params.add("deleteStudentReposBuildPlans", "true");
         params.add("deleteBaseReposBuildPlans", "true");

@@ -463,7 +463,7 @@ public class ProgrammingExerciseTestService {
         exercise.setChannelName("testchannel-pe");
         setupRepositoryMocks(exercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
         mockDelegate.mockConnectorRequestsForSetup(exercise, false, false, false);
-        validateProgrammingExercise(request.postWithResponseBody("/api" + "/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED));
+        validateProgrammingExercise(request.postWithResponseBody("/api/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED));
     }
 
     // TEST
@@ -504,7 +504,7 @@ public class ProgrammingExerciseTestService {
         exercise.setChannelName("testchannel-pe");
         setupRepositoryMocks(exercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
         mockDelegate.mockConnectorRequestsForSetup(exercise, false, true, customBuildPlanWorks);
-        validateProgrammingExercise(request.postWithResponseBody("/api" + "/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED));
+        validateProgrammingExercise(request.postWithResponseBody("/api/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED));
     }
 
     // TEST
@@ -512,7 +512,7 @@ public class ProgrammingExerciseTestService {
         exercise.setMode(mode);
         exercise.setChannelName("testchannel-pe");
         mockDelegate.mockConnectorRequestsForSetup(exercise, false, false, false);
-        validateProgrammingExercise(request.postWithResponseBody("/api" + "/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED));
+        validateProgrammingExercise(request.postWithResponseBody("/api/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED));
     }
 
     // TEST
@@ -524,7 +524,7 @@ public class ProgrammingExerciseTestService {
         exercise.setProjectType(programmingLanguageFeature.projectTypes().isEmpty() ? null : programmingLanguageFeature.projectTypes().get(0));
         mockDelegate.mockConnectorRequestsForSetup(exercise, false, false, false);
         exercise.setChannelName("testchannel-pe");
-        validateProgrammingExercise(request.postWithResponseBody("/api" + "/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED));
+        validateProgrammingExercise(request.postWithResponseBody("/api/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED));
     }
 
     // TEST
@@ -532,7 +532,7 @@ public class ProgrammingExerciseTestService {
         exercise.setBonusPoints(null);
         mockDelegate.mockConnectorRequestsForSetup(exercise, false, false, false);
         exercise.setChannelName("testchannel-pe");
-        var generatedExercise = request.postWithResponseBody("/api" + "/programming-exercises/setup", exercise, ProgrammingExercise.class);
+        var generatedExercise = request.postWithResponseBody("/api/programming-exercises/setup", exercise, ProgrammingExercise.class);
         var savedExercise = programmingExerciseRepository.findById(generatedExercise.getId()).orElseThrow();
         assertThat(generatedExercise.getBonusPoints()).isZero();
         assertThat(savedExercise.getBonusPoints()).isZero();
@@ -548,8 +548,8 @@ public class ProgrammingExerciseTestService {
         var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
         var course = courseUtilService.addEmptyCourse();
         exercise.setChannelName("testchannel-pe");
-        var importedExercise = request.postWithMultipartFile("/api" + "/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise",
-                file, ProgrammingExercise.class, HttpStatus.OK);
+        var importedExercise = request.postWithMultipartFile("/api/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
+                ProgrammingExercise.class, HttpStatus.OK);
         assertThat(importedExercise).isNotNull();
         assertThat(importedExercise.getProgrammingLanguage()).isEqualTo(JAVA);
         assertThat(importedExercise.getMode()).isEqualTo(ExerciseMode.INDIVIDUAL);
@@ -592,7 +592,7 @@ public class ProgrammingExerciseTestService {
 
         var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
         exercise.setChannelName("testchannel-pe");
-        request.postWithMultipartFile("/api" + "/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
+        request.postWithMultipartFile("/api/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
                 ProgrammingExercise.class, HttpStatus.OK);
     }
 
@@ -614,7 +614,7 @@ public class ProgrammingExerciseTestService {
         var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
         exercise.setChannelName("testchannel-pe");
 
-        request.postWithMultipartFile("/api" + "/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
+        request.postWithMultipartFile("/api/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
                 ProgrammingExercise.class, HttpStatus.OK);
         assertThat(FilePathService.getMarkdownFilePath()).isDirectoryContaining(path -> embeddedFileName1.equals(path.getFileName().toString()))
                 .isDirectoryContaining(path -> embeddedFileName2.equals(path.getFileName().toString()));
@@ -626,8 +626,8 @@ public class ProgrammingExerciseTestService {
         var resource = new ClassPathResource("test-data/import-from-file/import-with-build-plan.zip");
         var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
         exercise.setChannelName("testchannel-pe");
-        var importedExercise = request.postWithMultipartFile("/api" + "/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise",
-                file, ProgrammingExercise.class, HttpStatus.OK);
+        var importedExercise = request.postWithMultipartFile("/api/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
+                ProgrammingExercise.class, HttpStatus.OK);
         var buildPlan = buildPlanRepository.findByProgrammingExercises_Id(importedExercise.getId());
         assertThat(buildPlan).isPresent();
         assertThat(buildPlan.orElseThrow().getBuildPlan()).isEqualTo("my super cool build plan");
@@ -637,14 +637,14 @@ public class ProgrammingExerciseTestService {
     void importFromFile_missingExerciseDetailsJson_badRequest() throws Exception {
         Resource resource = new ClassPathResource("test-data/import-from-file/missing-json.zip");
         var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
-        request.postWithMultipartFile("/api" + "/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
+        request.postWithMultipartFile("/api/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
                 ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     void importFromFile_fileNoZip_badRequest() throws Exception {
         Resource resource = new ClassPathResource("test-data/import-from-file/valid-import.zip");
         var file = new MockMultipartFile("file", "test.txt", "application/zip", resource.getInputStream());
-        request.postWithMultipartFile("/api" + "/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
+        request.postWithMultipartFile("/api/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
                 ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
     }
 
@@ -652,14 +652,14 @@ public class ProgrammingExerciseTestService {
         course.setInstructorGroupName("test");
         courseRepository.save(course);
         var file = new MockMultipartFile("file", "test.zip", "application/zip", new byte[0]);
-        request.postWithMultipartFile("/api" + "/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
+        request.postWithMultipartFile("/api/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
                 ProgrammingExercise.class, HttpStatus.FORBIDDEN);
     }
 
     void importFromFile_missingRepository_BadRequest() throws Exception {
         Resource resource = new ClassPathResource("test-data/import-from-file/missing-repository.zip");
         var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
-        request.postWithMultipartFile("/api" + "/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
+        request.postWithMultipartFile("/api/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
                 ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
     }
 
@@ -670,7 +670,7 @@ public class ProgrammingExerciseTestService {
         var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
         var course = courseUtilService.addEmptyCourse();
         exercise.setChannelName("testchannel-pe");
-        request.postWithMultipartFile("/api" + "/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
+        request.postWithMultipartFile("/api/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
                 ProgrammingExercise.class, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
@@ -690,7 +690,7 @@ public class ProgrammingExerciseTestService {
         }
         mockDelegate.mockConnectorRequestsForSetup(exercise, false, false, false);
         exercise.setChannelName("testchannel-pe");
-        var generatedExercise = request.postWithResponseBody("/api" + "/programming-exercises/setup", exercise, ProgrammingExercise.class);
+        var generatedExercise = request.postWithResponseBody("/api/programming-exercises/setup", exercise, ProgrammingExercise.class);
 
         exercise.setId(generatedExercise.getId());
         assertThat(exercise).isEqualTo(generatedExercise);
@@ -708,7 +708,7 @@ public class ProgrammingExerciseTestService {
         exercise.setMode(ExerciseMode.INDIVIDUAL);
         exercise.setChannelName("testchannel-pe");
         mockDelegate.mockConnectorRequestsForSetup(exercise, true, false, false);
-        var programmingExercise = request.postWithResponseBody("/api" + "/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.INTERNAL_SERVER_ERROR);
+        var programmingExercise = request.postWithResponseBody("/api/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(programmingExercise).isNull();
     }
 
@@ -717,7 +717,7 @@ public class ProgrammingExerciseTestService {
         setupRepositoryMocks(examExercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
 
         mockDelegate.mockConnectorRequestsForSetup(examExercise, false, false, false);
-        final var generatedExercise = request.postWithResponseBody("/api" + "/programming-exercises/setup", examExercise, ProgrammingExercise.class, HttpStatus.CREATED);
+        final var generatedExercise = request.postWithResponseBody("/api/programming-exercises/setup", examExercise, ProgrammingExercise.class, HttpStatus.CREATED);
 
         examExercise.setId(generatedExercise.getId());
         assertThat(examExercise).isEqualTo(generatedExercise);
@@ -730,7 +730,7 @@ public class ProgrammingExerciseTestService {
         setupRepositoryMocks(examExercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
         mockDelegate.mockConnectorRequestsForSetup(examExercise, false, false, false);
 
-        request.postWithResponseBody("/api" + "/programming-exercises/setup", dates.applyTo(examExercise), ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/programming-exercises/setup", dates.applyTo(examExercise), ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     // TEST
@@ -740,7 +740,7 @@ public class ProgrammingExerciseTestService {
         ZonedDateTime someMoment = ZonedDateTime.of(2000, 6, 15, 0, 0, 0, 0, ZoneId.of("Z"));
         examExercise.setDueDate(someMoment);
 
-        request.postWithResponseBody("/api" + "/programming-exercises/setup", examExercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/programming-exercises/setup", examExercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     private AuxiliaryRepository addAuxiliaryRepositoryToProgrammingExercise(ProgrammingExercise sourceExercise) {
@@ -757,7 +757,7 @@ public class ProgrammingExerciseTestService {
         exercise.setProjectType(ProjectType.MAVEN_MAVEN);
         exercise.setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
         exercise.setChannelName("testchannel-pe");
-        var sourceExercise = request.postWithResponseBody("/api" + "/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED);
+        var sourceExercise = request.postWithResponseBody("/api/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED);
         sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
 
         javaTemplateUpgradeService.upgradeTemplate(sourceExercise);
@@ -803,9 +803,8 @@ public class ProgrammingExerciseTestService {
         // Import the exercise and load all referenced entities
         exerciseToBeImported.setChannelName("testchannel-pe-import");
 
-        var importedExercise = request.postWithResponseBody(
-                "/api" + "/programming-exercises/import/{sourceExerciseId}".replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,
-                ProgrammingExercise.class, params, HttpStatus.OK);
+        var importedExercise = request.postWithResponseBody("/api/programming-exercises/import/{sourceExerciseId}".replace("{sourceExerciseId}", sourceExercise.getId().toString()),
+                exerciseToBeImported, ProgrammingExercise.class, params, HttpStatus.OK);
         importedExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(importedExercise);
 
         // Check that the tasks were imported correctly (see #5474)
@@ -840,9 +839,8 @@ public class ProgrammingExerciseTestService {
         params.add("recreateBuildPlans", String.valueOf(recreateBuildPlans));
 
         // Import the exercise and load all referenced entities
-        var importedExercise = request.postWithResponseBody(
-                "/api" + "/programming-exercises/import/{sourceExerciseId}".replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,
-                ProgrammingExercise.class, params, HttpStatus.OK);
+        var importedExercise = request.postWithResponseBody("/api/programming-exercises/import/{sourceExerciseId}".replace("{sourceExerciseId}", sourceExercise.getId().toString()),
+                exerciseToBeImported, ProgrammingExercise.class, params, HttpStatus.OK);
         importedExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(importedExercise);
 
         if (staticCodeAnalysisEnabled) {
@@ -903,9 +901,8 @@ public class ProgrammingExerciseTestService {
         params.add("recreateBuildPlans", String.valueOf(false));
 
         // Import the exercise and load all referenced entities
-        var importedExercise = request.postWithResponseBody(
-                "/api" + "/programming-exercises/import/{sourceExerciseId}".replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,
-                ProgrammingExercise.class, params, HttpStatus.OK);
+        var importedExercise = request.postWithResponseBody("/api/programming-exercises/import/{sourceExerciseId}".replace("{sourceExerciseId}", sourceExercise.getId().toString()),
+                exerciseToBeImported, ProgrammingExercise.class, params, HttpStatus.OK);
 
         // other calls are for repository URI replacements, we only care about build plan URL replacements
         List<String> toBeReplacedURLs = toBeReplacedCaptor.getAllValues().subList(0, 2);
@@ -937,8 +934,8 @@ public class ProgrammingExerciseTestService {
         var params = new LinkedMultiValueMap<String, String>();
         params.add("recreateBuildPlans", "false");
         params.add("updateTemplate", "true");
-        request.postWithResponseBody("/api" + "/programming-exercises/import/{sourceExerciseId}".replace("{sourceExerciseId}", sourceExercise.getId().toString()),
-                exerciseToBeImported, ProgrammingExercise.class, params, HttpStatus.INTERNAL_SERVER_ERROR);
+        request.postWithResponseBody("/api/programming-exercises/import/{sourceExerciseId}".replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,
+                ProgrammingExercise.class, params, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     // TEST
@@ -960,8 +957,8 @@ public class ProgrammingExerciseTestService {
         var params = new LinkedMultiValueMap<String, String>();
         params.add("recreateBuildPlans", "false");
         params.add("updateTemplate", "true");
-        request.postWithResponseBody("/api" + "/programming-exercises/import/{sourceExerciseId}".replace("{sourceExerciseId}", sourceExercise.getId().toString()),
-                exerciseToBeImported, ProgrammingExercise.class, params, HttpStatus.INTERNAL_SERVER_ERROR);
+        request.postWithResponseBody("/api/programming-exercises/import/{sourceExerciseId}".replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,
+                ProgrammingExercise.class, params, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     // TEST
@@ -991,9 +988,8 @@ public class ProgrammingExerciseTestService {
         mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false, false);
         setupMocksForConsistencyChecksOnImport(sourceExercise);
 
-        exerciseToBeImported = request.postWithResponseBody(
-                "/api" + "/programming-exercises/import/{sourceExerciseId}".replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,
-                ProgrammingExercise.class, HttpStatus.OK);
+        exerciseToBeImported = request.postWithResponseBody("/api/programming-exercises/import/{sourceExerciseId}".replace("{sourceExerciseId}", sourceExercise.getId().toString()),
+                exerciseToBeImported, ProgrammingExercise.class, HttpStatus.OK);
         assertThat(exerciseToBeImported.getMode()).isEqualTo(TEAM);
         assertThat(exerciseToBeImported.getTeamAssignmentConfig().getMinTeamSize()).isEqualTo(teamAssignmentConfig.getMinTeamSize());
         assertThat(exerciseToBeImported.getTeamAssignmentConfig().getMaxTeamSize()).isEqualTo(teamAssignmentConfig.getMaxTeamSize());
@@ -1035,9 +1031,8 @@ public class ProgrammingExerciseTestService {
         mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false, false);
         setupMocksForConsistencyChecksOnImport(sourceExercise);
 
-        exerciseToBeImported = request.postWithResponseBody(
-                "/api" + "/programming-exercises/import/{sourceExerciseId}".replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,
-                ProgrammingExercise.class, HttpStatus.OK);
+        exerciseToBeImported = request.postWithResponseBody("/api/programming-exercises/import/{sourceExerciseId}".replace("{sourceExerciseId}", sourceExercise.getId().toString()),
+                exerciseToBeImported, ProgrammingExercise.class, HttpStatus.OK);
 
         assertThat(exerciseToBeImported.getMode()).isEqualTo(ExerciseMode.INDIVIDUAL);
         assertThat(exerciseToBeImported.getTeamAssignmentConfig()).isNull();
@@ -1067,9 +1062,8 @@ public class ProgrammingExerciseTestService {
         var params = new LinkedMultiValueMap<String, String>();
         params.add("recreateBuildPlans", "true");
         params.add("updateTemplate", "true");
-        exerciseToBeImported = request.postWithResponseBody(
-                "/api" + "/programming-exercises/import/{sourceExerciseId}".replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,
-                ProgrammingExercise.class, params, HttpStatus.OK);
+        exerciseToBeImported = request.postWithResponseBody("/api/programming-exercises/import/{sourceExerciseId}".replace("{sourceExerciseId}", sourceExercise.getId().toString()),
+                exerciseToBeImported, ProgrammingExercise.class, params, HttpStatus.OK);
 
         // Assertions
         assertThat(exerciseToBeImported.isStaticCodeAnalysisEnabled()).isTrue();
@@ -1097,9 +1091,8 @@ public class ProgrammingExerciseTestService {
         var params = new LinkedMultiValueMap<String, String>();
         params.add("recreateBuildPlans", "true");
         params.add("updateTemplate", "true");
-        exerciseToBeImported = request.postWithResponseBody(
-                "/api" + "/programming-exercises/import/{sourceExerciseId}".replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,
-                ProgrammingExercise.class, params, HttpStatus.OK);
+        exerciseToBeImported = request.postWithResponseBody("/api/programming-exercises/import/{sourceExerciseId}".replace("{sourceExerciseId}", sourceExercise.getId().toString()),
+                exerciseToBeImported, ProgrammingExercise.class, params, HttpStatus.OK);
 
         // Assertions
         var staticCodeAnalysisCategories = staticCodeAnalysisCategoryRepository.findWithExerciseByExerciseId(exerciseToBeImported.getId());
@@ -1127,9 +1120,8 @@ public class ProgrammingExerciseTestService {
         mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false, false);
         setupMocksForConsistencyChecksOnImport(sourceExercise);
 
-        exerciseToBeImported = request.postWithResponseBody(
-                "/api" + "/programming-exercises/import/{sourceExerciseId}".replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,
-                ProgrammingExercise.class, HttpStatus.OK);
+        exerciseToBeImported = request.postWithResponseBody("/api/programming-exercises/import/{sourceExerciseId}".replace("{sourceExerciseId}", sourceExercise.getId().toString()),
+                exerciseToBeImported, ProgrammingExercise.class, HttpStatus.OK);
 
         assertThat(exerciseToBeImported.getSubmissionPolicy().getClass()).isEqualTo(LockRepositoryPolicy.class);
         assertThat(exerciseToBeImported.getSubmissionPolicy().getSubmissionLimit()).isEqualTo(5);
@@ -1159,9 +1151,8 @@ public class ProgrammingExerciseTestService {
         mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false, false);
         setupMocksForConsistencyChecksOnImport(sourceExercise);
 
-        exerciseToBeImported = request.postWithResponseBody(
-                "/api" + "/programming-exercises/import/{sourceExerciseId}".replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,
-                ProgrammingExercise.class, HttpStatus.OK);
+        exerciseToBeImported = request.postWithResponseBody("/api/programming-exercises/import/{sourceExerciseId}".replace("{sourceExerciseId}", sourceExercise.getId().toString()),
+                exerciseToBeImported, ProgrammingExercise.class, HttpStatus.OK);
 
         assertThat(exerciseToBeImported.getSubmissionPolicy()).isNull();
 
@@ -1241,10 +1232,9 @@ public class ProgrammingExerciseTestService {
         mockDelegate.mockConnectorRequestsForSetup(exercise, false, false, false);
         exercise.setChannelName("testchannel-pe");
 
-        final var generatedExercise = request.postWithResponseBody("/api" + "/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED);
-        String response = request.putWithResponseBody(
-                "/api" + "/programming-exercises/{exerciseId}/generate-tests".replace("{exerciseId}", String.valueOf(generatedExercise.getId())), generatedExercise, String.class,
-                HttpStatus.OK);
+        final var generatedExercise = request.postWithResponseBody("/api/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED);
+        String response = request.putWithResponseBody("/api/programming-exercises/{exerciseId}/generate-tests".replace("{exerciseId}", String.valueOf(generatedExercise.getId())),
+                generatedExercise, String.class, HttpStatus.OK);
         assertThat(response).startsWith("Successfully generated the structure oracle");
 
         List<RevCommit> testRepoCommits = testRepo.getAllLocalCommits();
@@ -1259,8 +1249,8 @@ public class ProgrammingExerciseTestService {
         // Second time leads to a bad request because the file did not change
         var expectedHeaders = new HashMap<String, String>();
         expectedHeaders.put("X-artemisApp-alert", "Did not update the oracle because there have not been any changes to it.");
-        request.putWithResponseBody("/api" + "/programming-exercises/{exerciseId}/generate-tests".replace("{exerciseId}", String.valueOf(generatedExercise.getId())),
-                generatedExercise, String.class, HttpStatus.BAD_REQUEST, expectedHeaders);
+        request.putWithResponseBody("/api/programming-exercises/{exerciseId}/generate-tests".replace("{exerciseId}", String.valueOf(generatedExercise.getId())), generatedExercise,
+                String.class, HttpStatus.BAD_REQUEST, expectedHeaders);
         assertThat(response).startsWith("Successfully generated the structure oracle");
     }
 
@@ -1270,7 +1260,7 @@ public class ProgrammingExerciseTestService {
         courseRepository.save(course);
         mockDelegate.mockConnectorRequestsForSetup(exercise, false, false, false);
         exercise.setChannelName("testchannel-pe");
-        final var generatedExercise = request.postWithResponseBody("/api" + "/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED);
+        final var generatedExercise = request.postWithResponseBody("/api/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED);
         validateProgrammingExercise(generatedExercise);
     }
 
@@ -2409,7 +2399,7 @@ public class ProgrammingExerciseTestService {
         setupMocksForConsistencyChecksOnImport(sourceExercise);
 
         ProgrammingExercise newProgrammingExercise = request.postWithResponseBody(
-                "/api" + "/programming-exercises/import/{sourceExerciseId}".replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,
+                "/api/programming-exercises/import/{sourceExerciseId}".replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,
                 ProgrammingExercise.class, HttpStatus.OK);
         assertThat(newProgrammingExercise.getExampleSolutionPublicationDate()).as("programming example solution publication date was correctly set to null in the response")
                 .isNull();
@@ -2431,13 +2421,13 @@ public class ProgrammingExerciseTestService {
 
         mockDelegate.mockConnectorRequestsForSetup(exercise, false, false, false);
 
-        request.postWithResponseBody("/api" + "/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
 
         exercise.setReleaseDate(baseTime.plusHours(3));
         exercise.setDueDate(null);
         exercise.setExampleSolutionPublicationDate(baseTime.plusHours(2));
 
-        request.postWithResponseBody("/api" + "/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     // TEST
@@ -2453,7 +2443,7 @@ public class ProgrammingExerciseTestService {
         exercise.setChannelName("testchannel-pe");
         mockDelegate.mockConnectorRequestsForSetup(exercise, false, false, false);
 
-        var result = request.postWithResponseBody("/api" + "/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED);
+        var result = request.postWithResponseBody("/api/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED);
         assertThat(result.getExampleSolutionPublicationDate()).isCloseTo(exampleSolutionPublicationDate, within(1, ChronoUnit.MILLIS));
     }
 

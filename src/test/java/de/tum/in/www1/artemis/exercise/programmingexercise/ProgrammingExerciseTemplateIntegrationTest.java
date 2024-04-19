@@ -279,7 +279,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
         if (testwiseCoverageAnalysis) {
             exercise.setTestwiseCoverageEnabled(true);
         }
-        request.postWithResponseBody("/api" + "/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED);
+        request.postWithResponseBody("/api/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED);
 
         moveAssignmentSourcesOf(repository);
         int exitCode;
