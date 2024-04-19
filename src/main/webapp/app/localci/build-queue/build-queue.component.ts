@@ -178,7 +178,7 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
                         sortedColumn: this.predicate,
                     })
                     .subscribe({
-                        next: (res: HttpResponse<BuildJob[]>) => {
+                        next: (res: HttpResponse<FinishedBuildJob[]>) => {
                             this.onSuccess(res.body || [], res.headers);
                         },
                         error: (res: HttpErrorResponse) => {
@@ -194,7 +194,7 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
                         sortedColumn: this.predicate,
                     })
                     .subscribe({
-                        next: (res: HttpResponse<BuildJob[]>) => {
+                        next: (res: HttpResponse<FinishedBuildJob[]>) => {
                             this.onSuccess(res.body || [], res.headers);
                         },
                         error: (res: HttpErrorResponse) => {
@@ -211,7 +211,7 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
      * @param headers The headers of the response
      * @private
      */
-    private onSuccess(finishedBuildJobs: BuildJob[], headers: HttpHeaders) {
+    private onSuccess(finishedBuildJobs: FinishedBuildJob[], headers: HttpHeaders) {
         this.totalItems = Number(headers.get('X-Total-Count'));
         this.finishedBuildJobs = finishedBuildJobs;
         this.setFinishedBuildJobsDuration();

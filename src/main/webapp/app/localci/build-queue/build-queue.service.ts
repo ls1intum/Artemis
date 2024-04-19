@@ -130,7 +130,11 @@ export class BuildQueueService {
      */
     getFinishedBuildJobs(req?: any): Observable<HttpResponse<FinishedBuildJob[]>> {
         const options = createRequestOption(req);
-        return this.http.get<FinishedBuildJob[]>(`${this.adminResourceUrl}/finished-jobs`, { params: options, observe: 'response' });
+        return this.http.get<FinishedBuildJob[]>(`${this.adminResourceUrl}/finished-jobs`, { params: options, observe: 'response' }).pipe(
+            catchError((err) => {
+                return throwError(() => new Error(`Failed to get all finished build jobs\n${err.message}`));
+            }),
+        );
     }
 
     /**
@@ -140,6 +144,10 @@ export class BuildQueueService {
      */
     getFinishedBuildJobsByCourseId(courseId: number, req?: any): Observable<HttpResponse<FinishedBuildJob[]>> {
         const options = createRequestOption(req);
-        return this.http.get<FinishedBuildJob[]>(`${this.resourceUrl}/courses/${courseId}/finished-jobs`, { params: options, observe: 'response' });
+        return this.http.get<FinishedBuildJob[]>(`${this.resourceUrl}/courses/${courseId}/finished-jobs`, { params: options, observe: 'response' }).pipe(
+            catchError((err) => {
+                return throwError(() => new Error(`Failed to get all finished build jobs in course ${courseId}\n${err.message}`));
+            }),
+        );
     }
 }
