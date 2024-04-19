@@ -59,16 +59,16 @@ describe('SidebarCardComponent', () => {
     });
 
     it('should store route on click', () => {
-        jest.spyOn(component, 'storeLastSelectedItem');
+        jest.spyOn(component, 'emitStoreLastSelectedItem');
         const element: HTMLElement = fixture.nativeElement.querySelector('#test-sidebar-card');
         element.click();
         fixture.detectChanges();
-        expect(component.storeLastSelectedItem).toHaveBeenCalledWith(component.sidebarItem.id);
+        expect(component.emitStoreLastSelectedItem).toHaveBeenCalledWith(component.sidebarItem.id);
     });
 
     it('should navigate to the item URL on click', async () => {
         const mockFn = jest.fn();
-        component.storeLastSelectedItem = mockFn;
+        component.emitStoreLastSelectedItem = mockFn;
         const itemElement = fixture.nativeElement.querySelector('#test-sidebar-card');
         itemElement.click();
         await fixture.whenStable();

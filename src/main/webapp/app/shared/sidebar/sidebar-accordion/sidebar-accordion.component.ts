@@ -23,6 +23,7 @@ export class SidebarAccordionComponent implements OnChanges, OnInit {
     @Input() groupedData: AccordionGroups;
     @Input() sidebarType?: SidebarTypes;
     @Input() storageId?: string = '';
+    @Input() courseId?: number;
 
     collapseState = DEFAULT_EXERCISE_COLLAPSE_STATE;
 
@@ -43,7 +44,7 @@ export class SidebarAccordionComponent implements OnChanges, OnInit {
     }
 
     setStoredCollapseState() {
-        const storedCollapseState: string | null = sessionStorage.getItem('sidebar.accordion.collapseState.' + this.storageId);
+        const storedCollapseState: string | null = sessionStorage.getItem('sidebar.accordion.collapseState.' + this.storageId + '.byCourse.' + this.courseId);
         if (storedCollapseState) this.collapseState = JSON.parse(storedCollapseState);
     }
 
@@ -70,6 +71,6 @@ export class SidebarAccordionComponent implements OnChanges, OnInit {
 
     toggleGroupCategoryCollapse(groupCategoryKey: string) {
         this.collapseState[groupCategoryKey] = !this.collapseState[groupCategoryKey];
-        sessionStorage.setItem('sidebar.accordion.collapseState.' + this.storageId, JSON.stringify(this.collapseState));
+        sessionStorage.setItem('sidebar.accordion.collapseState.' + this.storageId + '.byCourse.' + this.courseId, JSON.stringify(this.collapseState));
     }
 }
