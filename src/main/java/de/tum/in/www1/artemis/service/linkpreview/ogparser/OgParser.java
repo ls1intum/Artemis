@@ -5,22 +5,21 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.stereotype.Component;
+
 import de.tum.in.www1.artemis.service.linkpreview.ogparser.htmlparser.OgMetaElement;
 import de.tum.in.www1.artemis.service.linkpreview.ogparser.htmlparser.OgMetaElementHtmlParser;
 
 /**
  * Parses the Open Graph meta tags of a website.
  */
+@Component
 public class OgParser {
 
     private final OgMetaElementHtmlParser ogMetaElementHtmlParser;
 
     public OgParser() {
         this.ogMetaElementHtmlParser = new OgMetaElementHtmlParser();
-    }
-
-    public OgParser(OgMetaElementHtmlParser ogMetaElementHtmlParser) {
-        this.ogMetaElementHtmlParser = ogMetaElementHtmlParser;
     }
 
     /**
