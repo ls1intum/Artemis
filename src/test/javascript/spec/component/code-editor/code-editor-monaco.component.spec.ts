@@ -444,6 +444,6 @@ describe('CodeEditorMonacoComponent', () => {
         const highlightStub = jest.spyOn(comp.editor, 'highlightLines').mockImplementation();
         fixture.detectChanges();
         comp.highlightLines(1, 2);
-        expect(highlightStub).toHaveBeenCalledExactlyOnceWith(1, 2, CodeEditorMonacoComponent.CLASS_LINE_HIGHLIGHT, CodeEditorMonacoComponent.CLASS_MARGIN_HIGHLIGHT);
+        expect(highlightStub).toHaveBeenCalledExactlyOnceWith(1, 2, CodeEditorMonacoComponent.CLASS_DIFF_LINE_HIGHLIGHT, CodeEditorMonacoComponent.CLASS_DIFF_MARGIN_HIGHLIGHT);
     });
 });

@@ -3,11 +3,10 @@
     padding: unset;
 }
 
-.monaco-line-highlight {
-    /* TODO: define colors in theme */
-    background: var(--code-editor-diff-newline-background);
+.monaco-diff-line-highlight {
+    background-color: var(--monaco-editor-diff-line-highlight);
 }
 
-.monaco-margin-highlight {
-    background: var(--code-editor-gutter-newline-background);
+.monaco-diff-margin-highlight {
+    background-color: var(--monaco-editor-diff-margin-highlight);
 }

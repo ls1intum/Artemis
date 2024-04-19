@@ -101,8 +101,8 @@ export class CodeEditorMonacoComponent implements OnChanges {
 
     faPlusSquare = faPlusSquare;
 
-    static readonly CLASS_LINE_HIGHLIGHT = 'monaco-line-highlight';
-    static readonly CLASS_MARGIN_HIGHLIGHT = 'monaco-margin-highlight';
+    static readonly CLASS_DIFF_LINE_HIGHLIGHT = 'monaco-diff-line-highlight';
+    static readonly CLASS_DIFF_MARGIN_HIGHLIGHT = 'monaco-diff-margin-highlight';
 
     // Expose to template
     protected readonly Feedback = Feedback;
@@ -191,7 +191,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
     }
 
     highlightLines(startLine: number, endLine: number) {
-        this.editor.highlightLines(startLine, endLine, CodeEditorMonacoComponent.CLASS_LINE_HIGHLIGHT, CodeEditorMonacoComponent.CLASS_MARGIN_HIGHLIGHT);
+        this.editor.highlightLines(startLine, endLine, CodeEditorMonacoComponent.CLASS_DIFF_LINE_HIGHLIGHT, CodeEditorMonacoComponent.CLASS_DIFF_MARGIN_HIGHLIGHT);
     }
 
     setupAddFeedbackButton(): void {
