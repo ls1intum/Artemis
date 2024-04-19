@@ -76,6 +76,6 @@ public interface IrisChatSessionRepository extends JpaRepository<IrisChatSession
         if (result.isEmpty()) {
             throw new EntityNotFoundException("Iris Chat Session");
         }
-        return result.get(0);
+        return result.getFirst();
     }
 }

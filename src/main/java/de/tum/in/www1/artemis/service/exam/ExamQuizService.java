@@ -153,7 +153,7 @@ public class ExamQuizService {
      * 2. mark submission and participation as evaluated
      * 3. Create a new result for the selected submission and calculate scores
      * 4. Save the updated submission & participation and the newly created result
-     *
+     * <p>
      * After processing all participations, the created results will be returned for further processing
      * Note: We ignore test run participations
      * // @formatter:on
@@ -185,7 +185,7 @@ public class ExamQuizService {
 
                         // Load submission with highest id
                         submissionsList.sort(Comparator.comparing(Submission::getId).reversed());
-                        quizSubmission = (QuizSubmission) submissionsList.get(0);
+                        quizSubmission = (QuizSubmission) submissionsList.getFirst();
                     }
                     else {
                         quizSubmission = (QuizSubmission) submissions.iterator().next();
