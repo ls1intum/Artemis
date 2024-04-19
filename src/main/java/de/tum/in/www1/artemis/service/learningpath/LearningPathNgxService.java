@@ -276,10 +276,10 @@ public class LearningPathNgxService {
         }
         else {
             // add edge from competency start to first learning object
-            addEdgeFromCompetencyStartToLearningObject(competency, recommendedLearningObjects.get(0), edges);
+            addEdgeFromCompetencyStartToLearningObject(competency, recommendedLearningObjects.getFirst(), edges);
 
             // add edge from last learning object to competency end
-            addEdgeFromLearningObjectToCompetencyEnd(competency, recommendedLearningObjects.get(recommendedLearningObjects.size() - 1), edges);
+            addEdgeFromLearningObjectToCompetencyEnd(competency, recommendedLearningObjects.getLast(), edges);
         }
 
         nodes.addAll(currentCluster);
