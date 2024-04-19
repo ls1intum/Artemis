@@ -57,15 +57,9 @@ public final class Constants {
 
     public static final String NEW_RESULT_RESOURCE_API_PATH = "/api/public/programming-exercises/new-result";
 
-    public static final String PROGRAMMING_SUBMISSION_RESOURCE_API_PATH = "/api/programming-submissions/";
-
     public static final String PROGRAMMING_SUBMISSION_TOPIC = "/newSubmissions";
 
     public static final String NEW_SUBMISSION_TOPIC = "/topic" + PROGRAMMING_SUBMISSION_TOPIC;
-
-    public static final String APOLLON_CONVERSION_API_PATH = "/api/apollon/convert-to-pdf";
-
-    public static final String ATHENA_PROGRAMMING_EXERCISE_REPOSITORY_API_PATH = "/api/public/athena/programming-exercises/";
 
     // short names should have at least 3 characters and must start with a letter
     public static final String SHORT_NAME_REGEX = "^[a-zA-Z][a-zA-Z0-9]{2,}";
