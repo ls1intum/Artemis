@@ -358,7 +358,7 @@ public class ResultService {
                 .findWithResultsAndExerciseAndTeamStudentsByBuildPlanId(planKey);
         ProgrammingExerciseStudentParticipation participation = null;
         if (!participations.isEmpty()) {
-            participation = participations.get(0);
+            participation = participations.getFirst();
             if (participations.size() > 1) {
                 // in the rare case of multiple participations, take the latest one.
                 for (ProgrammingExerciseStudentParticipation otherParticipation : participations) {

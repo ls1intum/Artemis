@@ -104,7 +104,7 @@ public class AthenaRepositoryExportService {
             var submission = programmingSubmissionRepository.findById(submissionId).orElseThrow();
             // Load participation with eager submissions
             var participation = (ProgrammingExerciseStudentParticipation) programmingExerciseStudentParticipationRepository
-                    .findWithSubmissionsById(submission.getParticipation().getId()).get(0);
+                    .findWithSubmissionsById(submission.getParticipation().getId()).getFirst();
             zipFile = programmingExerciseExportService.createZipForRepositoryWithParticipation(programmingExercise, participation, exportOptions, exportDir, exportDir);
         }
         else {

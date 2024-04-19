@@ -109,7 +109,7 @@ public class IrisCompetencyGenerationSessionService implements IrisButtonBasedFe
 
     @Override
     public List<Competency> executeRequest(IrisCompetencyGenerationSession session) {
-        var userMessageContent = irisMessageRepository.findFirstWithContentBySessionIdAndSenderOrderBySentAtDesc(session.getId(), IrisMessageSender.USER).getContent().get(0);
+        var userMessageContent = irisMessageRepository.findFirstWithContentBySessionIdAndSenderOrderBySentAtDesc(session.getId(), IrisMessageSender.USER).getContent().getFirst();
         if (!(userMessageContent instanceof IrisTextMessageContent) || userMessageContent.getContentAsString() == null) {
             throw new InternalServerErrorException("Unable to get last user message!");
         }
