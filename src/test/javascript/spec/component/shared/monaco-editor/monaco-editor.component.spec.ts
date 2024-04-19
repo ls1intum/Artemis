@@ -8,6 +8,7 @@ import { BehaviorSubject } from 'rxjs';
 import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 import { MonacoEditorBuildAnnotationType } from 'app/shared/monaco-editor/model/monaco-editor-build-annotation.model';
 import { MonacoCodeEditorElement } from 'app/shared/monaco-editor/model/monaco-code-editor-element.model';
+import { MonacoEditorGlyphMarginHoverButton } from 'app/shared/monaco-editor/model/monaco-editor-glyph-margin-hover-button.model';
 
 describe('MonacoEditorComponent', () => {
     let fixture: ComponentFixture<MonacoEditorComponent>;
@@ -180,6 +181,20 @@ describe('MonacoEditorComponent', () => {
         marginElement.click();
         expect(clickCallbackStub).toHaveBeenNthCalledWith(1, 1);
         expect(clickCallbackStub).toHaveBeenNthCalledWith(2, 3);
+    });
+
+    it('should hide the glyph margin hover button when no line number is available', () => {
+        fixture.detectChanges();
+        comp.setText(multiLineText);
+        comp.setGlyphMarginHoverButton(document.createElement('div'), () => {});
+        const button: MonacoEditorGlyphMarginHoverButton = comp.glyphMarginHoverButton!;
+        // Case 1 - by default
+        expect(button.isVisible()).toBeFalse();
+        button.moveAndUpdate(1);
+        expect(button.isVisible()).toBeTrue();
+        // Case 2 - undefined is passed as line number
+        button.moveAndUpdate(undefined);
+        expect(button.isVisible()).toBeFalse();
     });
 
     it('should not allow editing in readonly mode', () => {
