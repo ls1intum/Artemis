@@ -78,5 +78,5 @@ When setting up the Artemis server, the following values need to be added/update
             database: POSTGRESQL
 
 .. note::
-    This example assumes that you use the mentioned Docker Compose file on your localhost, so database is called ``Artemis``, runs on port ``5432`` and no password is necessary.
+    This example assumes that you use the mentioned Docker Compose file on your localhost, leading to a database called ``Artemis`` that runs on port ``5432`` and where no password is necessary.
     You might have to update ``spring.datasource.url`` if you use another configuration and set the password in ``spring.datasource.password``.
