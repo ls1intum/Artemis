@@ -24,6 +24,11 @@
                                         {{ 'artemisApp.competency.createCompetency.titleMaxLengthValidationError' | artemisTranslate: { max: competencyValidators.TITLE_MAX } }}
                                     </div>
                                 }
+                                @if (titleControl?.errors?.pattern) {
+                                    <div>
+                                        {{ 'artemisApp.competency.createCompetency.titlePatternValidationError' | artemisTranslate }}
+                                    </div>
+                                }
                                 @if (titleControl?.errors?.titleUnique) {
                                     <div>
                                         {{ 'artemisApp.competency.createCompetency.titleUniqueValidationError' | artemisTranslate }}
