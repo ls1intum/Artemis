@@ -12,6 +12,7 @@ export class SidebarCardComponent {
     DifficultyLevel = DifficultyLevel;
     @Input() sidebarItem: SidebarCardElement;
     @Input() sidebarType?: SidebarTypes;
+    @Input() itemSelected?: boolean;
 
     isSelected: boolean = false;
 

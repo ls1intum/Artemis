@@ -24,6 +24,7 @@ export class SidebarAccordionComponent implements OnChanges, OnInit {
     @Input() sidebarType?: SidebarTypes;
     @Input() storageId?: string = '';
     @Input() courseId?: number;
+    @Input() itemSelected?: boolean;
 
     collapseState = DEFAULT_EXERCISE_COLLAPSE_STATE;
 

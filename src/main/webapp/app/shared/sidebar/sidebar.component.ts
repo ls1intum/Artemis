@@ -15,6 +15,7 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     @Input() searchFieldEnabled: boolean = true;
     @Input() sidebarData: SidebarData;
     @Input() courseId?: number;
+    @Input() itemSelected?: boolean;
 
     searchValue = '';
     isCollapsed: boolean = false;
