@@ -30,6 +30,8 @@ import { FileService } from 'app/shared/http/file.service';
 import { onError } from 'app/shared/util/global.utils';
 import { getSemesters } from 'app/utils/semester-utils';
 
+export const courseTitleRegex = new RegExp('^[a-zA-Z0-9- ]+$');
+
 @Component({
     selector: 'jhi-course-update',
     templateUrl: './course-update.component.html',
@@ -161,7 +163,7 @@ export class CourseUpdateComponent implements OnInit {
         this.courseForm = new FormGroup(
             {
                 id: new FormControl(this.course.id),
-                title: new FormControl(this.course.title, [Validators.required]),
+                title: new FormControl(this.course.title, [Validators.required, Validators.pattern(courseTitleRegex)]),
                 shortName: new FormControl(
                     { value: this.course.shortName, disabled: !!this.course.id },
                     {
@@ -257,6 +259,10 @@ export class CourseUpdateComponent implements OnInit {
 
     get timeZoneChanged() {
         return this.course?.id && this.originalTimeZone && this.originalTimeZone !== this.courseForm.value.timeZone;
+    }
+
+    get titleControl() {
+        return this.courseForm.get('title');
     }
 
     /**

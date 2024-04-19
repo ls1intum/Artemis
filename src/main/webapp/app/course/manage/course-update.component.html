@@ -22,6 +22,21 @@
                         <div class="form-group">
                             <label class="form-control-label" jhiTranslate="artemisApp.course.title" for="field_title"></label>
                             <input type="text" class="form-control" name="title" id="field_title" formControlName="title" required />
+                            @if (titleControl?.invalid && (titleControl?.dirty || titleControl?.touched)) {
+                                <div class="alert alert-danger">
+                                    @if (titleControl?.errors?.required) {
+                                        <div>
+                                            {{ 'artemisApp.course.form.titleInput.requiredValidationError' | artemisTranslate }}
+                                        </div>
+                                    }
+
+                                    @if (!titleControl?.errors?.required && titleControl?.errors?.pattern) {
+                                        <div>
+                                            {{ 'artemisApp.course.form.titleInput.regexValidationError' | artemisTranslate }}
+                                        </div>
+                                    }
+                                </div>
+                            }
                         </div>
                     </div>
                     <div class="col-2">
