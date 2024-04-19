@@ -468,6 +468,17 @@
                             }
                         </ng-template>
                     </ngx-datatable-column>
+                    <ngx-datatable-column prop="buildAgentAddress" [minWidth]="100">
+                        <ng-template ngx-datatable-header-template>
+                            <span class="datatable-header-cell-wrapper" (click)="controls.onSort('buildAgentAddress')">
+                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.buildAgent"></span>
+                                <fa-icon [icon]="controls.iconForSortPropField('buildAgentAddress')" />
+                            </span>
+                        </ng-template>
+                        <ng-template ngx-datatable-cell-template let-value="value">
+                            <span>{{ value }}</span>
+                        </ng-template>
+                    </ngx-datatable-column>
                     <ngx-datatable-column prop="participationId" [minWidth]="100">
                         <ng-template ngx-datatable-header-template>
                             <span class="datatable-header-cell-wrapper" (click)="controls.onSort('participationId')">
@@ -574,17 +585,6 @@
                         </ng-template>
                         <ng-template ngx-datatable-cell-template let-value="value">
                             <a [routerLink]="['/course-management', value]">{{ value }}</a>
-                        </ng-template>
-                    </ngx-datatable-column>
-                    <ngx-datatable-column prop="priority" [minWidth]="100">
-                        <ng-template ngx-datatable-header-template>
-                            <span class="datatable-header-cell-wrapper" (click)="controls.onSort('priority')">
-                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.priority"></span>
-                                <fa-icon [icon]="controls.iconForSortPropField('priority')" />
-                            </span>
-                        </ng-template>
-                        <ng-template ngx-datatable-cell-template let-value="value">
-                            <span>{{ value }}</span>
                         </ng-template>
                     </ngx-datatable-column>
                     <ngx-datatable-column prop="buildDuration" [minWidth]="300">
