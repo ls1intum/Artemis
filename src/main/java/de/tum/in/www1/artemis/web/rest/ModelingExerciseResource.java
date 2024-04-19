@@ -227,7 +227,7 @@ public class ModelingExerciseResource {
         exerciseService.checkExampleSubmissions(updatedModelingExercise);
 
         if (modelingExerciseBeforeUpdate.isExamExercise() && !Objects.equals(modelingExerciseBeforeUpdate.getProblemStatement(), updatedModelingExercise.getProblemStatement())) {
-            this.examLiveEventsService.createAndSendProblemStatementUpdateEvent(modelingExerciseBeforeUpdate, notificationText);
+            this.examLiveEventsService.createAndSendProblemStatementUpdateEvent(updatedModelingExercise, notificationText);
         }
         else if (modelingExercise.isCourseExercise()) {
             groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(modelingExerciseBeforeUpdate, modelingExercise, notificationText);

@@ -265,7 +265,7 @@ public class FileUploadExerciseResource {
         exerciseService.updatePointsInRelatedParticipantScores(fileUploadExerciseBeforeUpdate, updatedExercise);
         participationRepository.removeIndividualDueDatesIfBeforeDueDate(updatedExercise, fileUploadExerciseBeforeUpdate.getDueDate());
         if (fileUploadExercise.isExamExercise() && !Objects.equals(fileUploadExerciseBeforeUpdate.getProblemStatement(), updatedExercise.getProblemStatement())) {
-            this.examLiveEventsService.createAndSendProblemStatementUpdateEvent(fileUploadExerciseBeforeUpdate, notificationText);
+            this.examLiveEventsService.createAndSendProblemStatementUpdateEvent(updatedExercise, notificationText);
         }
         else if (fileUploadExercise.isCourseExercise()) {
             groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(fileUploadExerciseBeforeUpdate, updatedExercise, notificationText);

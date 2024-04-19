@@ -248,7 +248,7 @@ public class TextExerciseResource {
         instanceMessageSendService.sendTextExerciseSchedule(updatedTextExercise.getId());
         exerciseService.checkExampleSubmissions(updatedTextExercise);
         if (textExerciseBeforeUpdate.isExamExercise() && !Objects.equals(textExerciseBeforeUpdate.getProblemStatement(), updatedTextExercise.getProblemStatement())) {
-            this.examLiveEventsService.createAndSendProblemStatementUpdateEvent(textExerciseBeforeUpdate, notificationText);
+            this.examLiveEventsService.createAndSendProblemStatementUpdateEvent(updatedTextExercise, notificationText);
         }
         else if (textExerciseBeforeUpdate.isCourseExercise()) {
             groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(textExerciseBeforeUpdate, updatedTextExercise, notificationText);
