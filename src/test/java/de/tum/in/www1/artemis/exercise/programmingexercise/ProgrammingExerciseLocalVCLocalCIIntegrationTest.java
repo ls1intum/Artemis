@@ -220,9 +220,8 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
         var params = new LinkedMultiValueMap<String, String>();
         params.add("recreateBuildPlans", "true");
         exerciseToBeImported.setChannelName("testchannel-pe-imported");
-        var importedExercise = request.postWithResponseBody(
-                "/api/programming-exercises/import/{sourceExerciseId}".replace("{sourceExerciseId}", programmingExercise.getId().toString()), exerciseToBeImported,
-                ProgrammingExercise.class, params, HttpStatus.OK);
+        var importedExercise = request.postWithResponseBody("/api/programming-exercises/import/" + programmingExercise.getId(), exerciseToBeImported, ProgrammingExercise.class,
+                params, HttpStatus.OK);
 
         // Assert that the repositories were correctly created for the imported exercise.
         ProgrammingExercise importedExerciseWithParticipations = programmingExerciseRepository.findWithAllParticipationsById(importedExercise.getId()).orElseThrow();

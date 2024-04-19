@@ -162,16 +162,14 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void importExercise_tutor_forbidden() throws Exception {
         final var toBeImported = createToBeImported();
-        request.post("/api/programming-exercises/import/{sourceExerciseId}".replace("{sourceExerciseId}", programmingExercise.getId().toString()), toBeImported,
-                HttpStatus.FORBIDDEN);
+        request.post("/api/programming-exercises/import/" + programmingExercise.getId(), toBeImported, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "user1", roles = "USER")
     void importExercise_user_forbidden() throws Exception {
         final var toBeImported = createToBeImported();
-        request.post("/api/programming-exercises/import/{sourceExerciseId}".replace("{sourceExerciseId}", programmingExercise.getId().toString()), toBeImported,
-                HttpStatus.FORBIDDEN);
+        request.post("/api/programming-exercises/import/" + programmingExercise.getId(), toBeImported, HttpStatus.FORBIDDEN);
     }
 
     @Test

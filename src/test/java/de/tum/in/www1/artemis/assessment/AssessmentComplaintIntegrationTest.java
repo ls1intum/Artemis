@@ -836,7 +836,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(examExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
         var examExerciseComplaint = new Complaint().result(textSubmission.getLatestResult()).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
         examExerciseComplaint.setId(1L);
-        final String url = "/api/complaints/exam/{examId}".replace("{examId}", String.valueOf(examId));
+        final String url = "/api/complaints/exam/" + examId;
         request.post(url, examExerciseComplaint, HttpStatus.BAD_REQUEST);
     }
 
@@ -848,7 +848,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         final TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("This is my submission", Language.ENGLISH, true);
         textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(examExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
         final var examExerciseComplaint = new Complaint().result(null).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
-        final String url = "/api/complaints/exam/{examId}".replace("{examId}", String.valueOf(examId));
+        final String url = "/api/complaints/exam/" + examId;
         request.post(url, examExerciseComplaint, HttpStatus.BAD_REQUEST);
     }
 
@@ -861,7 +861,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(examExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
         final var examExerciseComplaint = new Complaint().result(textSubmission.getLatestResult()).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
 
-        final String url = "/api/complaints/exam/{examId}".replace("{examId}", String.valueOf(examId));
+        final String url = "/api/complaints/exam/" + examId;
         request.post(url, examExerciseComplaint, HttpStatus.CREATED);
 
         Optional<Complaint> storedComplaint = complaintRepo.findByResultId(textSubmission.getLatestResult().getId());
@@ -905,7 +905,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         final TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("This is my submission", Language.ENGLISH, true);
         textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(examExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
         final var examExerciseComplaint = new Complaint().result(null).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
-        final String url = "/api/complaints/exam/{examId}".replace("{examId}", String.valueOf(examId));
+        final String url = "/api/complaints/exam/" + examId;
         request.post(url, examExerciseComplaint, HttpStatus.BAD_REQUEST);
     }
 
@@ -932,7 +932,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         final TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("This is my submission", Language.ENGLISH, true);
         textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(examExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
         final var examExerciseComplaint = new Complaint().result(textSubmission.getLatestResult()).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
-        final String url = "/api/complaints/exam/{examId}".replace("{examId}", String.valueOf(examId));
+        final String url = "/api/complaints/exam/" + examId;
         request.post(url, examExerciseComplaint, HttpStatus.CREATED);
 
         Optional<Complaint> storedComplaint = complaintRepo.findByResultId(textSubmission.getLatestResult().getId());
@@ -1018,7 +1018,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(examExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
         Complaint examExerciseComplaint = new Complaint().result(textSubmission.getLatestResult()).complaintType(ComplaintType.COMPLAINT);
         examExerciseComplaint.setComplaintText(complaintText);
-        String url = "/api/complaints/exam/{examId}".replace("{examId}", String.valueOf(examExercise.getExamViaExerciseGroupOrCourseMember().getId()));
+        String url = "/api/complaints/exam/" + examExercise.getExamViaExerciseGroupOrCourseMember().getId();
         request.post(url, examExerciseComplaint, expectedStatus);
         return textSubmission;
     }
