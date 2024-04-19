@@ -86,7 +86,7 @@ public class TextPlagiarismDetectionService {
      * @return a zip file that can be returned to the client
      * @throws ExitException is thrown if JPlag exits unexpectedly
      */
-    public TextPlagiarismResult checkPlagiarism(TextExercise textExercise, float similarityThreshold, int minimumScore, int minimumSize) throws ExitException {
+    public TextPlagiarismResult checkPlagiarism(TextExercise textExercise, float similarityThreshold, int minimumScore, int minimumSize) {
         // Only one plagiarism check per course allowed
         var courseId = textExercise.getCourseViaExerciseGroupOrCourseMember().getId();
 

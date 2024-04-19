@@ -37,7 +37,7 @@ public class ModelingExerciseImportService extends ExerciseImportService {
     /**
      * Imports a modeling exercise creating a new entity, copying all basic values and saving it in the database.
      * All basic include everything except Student-, Tutor participations, and student questions. <br>
-     * This method calls {@link #copyModelingExerciseBasis(Exercise, Map<Long, GradingInstruction>)} to set up the basis of the exercise
+     * This method calls {@link #copyModelingExerciseBasis(Exercise, Map)} to set up the basis of the exercise
      * {@link #copyExampleSubmission(Exercise, Exercise)} for a hard copy of the example submissions.
      *
      * @param templateExercise The template exercise which should get imported

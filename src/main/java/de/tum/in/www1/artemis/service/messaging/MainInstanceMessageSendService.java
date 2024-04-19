@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 @Profile("scheduling")
 public class MainInstanceMessageSendService implements InstanceMessageSendService {
 
-    public InstanceMessageReceiveService instanceMessageReceiveService;
+    public final InstanceMessageReceiveService instanceMessageReceiveService;
 
     public MainInstanceMessageSendService(InstanceMessageReceiveService instanceMessageReceiveService) {
         this.instanceMessageReceiveService = instanceMessageReceiveService;
