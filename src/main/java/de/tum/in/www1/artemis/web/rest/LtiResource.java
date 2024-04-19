@@ -101,6 +101,7 @@ public class LtiResource {
     /**
      * GET lti platforms : Get all configured lti platforms
      *
+     * @param pageable Pageable
      * @return ResponseEntity containing a list of all lti platforms with status 200 (OK)
      */
     @GetMapping("lti-platforms")

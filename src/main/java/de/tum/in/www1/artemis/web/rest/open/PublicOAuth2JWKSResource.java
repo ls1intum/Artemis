@@ -32,6 +32,11 @@ public class PublicOAuth2JWKSResource {
         this.jwksService = jwksService;
     }
 
+    /**
+     * GET JWKS: Retrieves the JSON Web Key Set (JWKS).
+     *
+     * @return ResponseEntity containing the JWKS as a JSON string with status 200 (OK). If an error occurs, returns null.
+     */
     @GetMapping("/.well-known/jwks.json")
     @EnforceNothing
     @ManualConfig

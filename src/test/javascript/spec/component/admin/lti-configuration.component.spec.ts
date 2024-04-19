@@ -70,7 +70,6 @@ describe('LtiConfigurationComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: mockActivatedRoute },
                 { provide: LtiConfigurationService, useValue: mockLtiConfigurationService },
-                { provide: SortService, useValue: mockSortService },
             ],
             schemas: [NO_ERRORS_SCHEMA],
         }).compileComponents();
