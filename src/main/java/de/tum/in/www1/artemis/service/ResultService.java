@@ -429,7 +429,7 @@ public class ResultService {
             String buildJobId = resultBuildJobSet.get(resultId);
             if (buildJobId != null) {
 
-                if (buildLogEntryService.buildJobHasLogFile(buildJobId.toString())) {
+                if (buildLogEntryService.buildJobHasLogFile(buildJobId)) {
                     logsAvailability.put(resultId, buildJobId);
                 }
                 else {
