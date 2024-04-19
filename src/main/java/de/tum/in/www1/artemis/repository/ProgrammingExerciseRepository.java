@@ -118,7 +118,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
         if (exercises.size() != 1) {
             throw new EntityNotFoundException("No exercise or multiple exercises found for the given project key: " + projectKey);
         }
-        return exercises.get(0);
+        return exercises.getFirst();
     }
 
     /**

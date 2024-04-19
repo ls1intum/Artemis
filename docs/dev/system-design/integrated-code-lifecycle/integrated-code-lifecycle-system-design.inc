@@ -146,3 +146,84 @@ The ephemeral nature of Docker containers allows the ``BuildJobExecutionService`
 Finally, when the build ran through successfully, the ``SharedQueueProcessingService`` puts the build result into the result queue so it can then be processed by the CI Management.
 If there were any errors, the ``BuildJobManagementService`` stops the Docker container and ``SharedQueueProcessingService`` relays the exception message to the CI Management via the result queue.
 
+Hazelcast Distributed Data Structures
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The integration employs various Hazelcast distributed data structures to streamline the processing of build jobs across the network.
+These structures include the ``buildJobQueue``, an ``IQueue`` used for queuing all build jobs awaiting processing;
+the ``processingJobs``, an ``IMap`` tracking build jobs currently under processing;
+and the ``canceledBuildJobsTopic``, an ``ITopic`` utilized to signal build agents to cancel specific build jobs.
+
+Here we can see an overview of all Hazelcast data structures used in Local CI and their purpose:
+
++----------------------------+------------+-------------------------------------------------------------------------+
+| Name                       | Type       | Description                                                             |
++============================+============+=========================================================================+
+| ``buildJobQueue``          | ``IQueue`` | Queue for all build jobs that are waiting to be processed.              |
++----------------------------+------------+-------------------------------------------------------------------------+
+| ``processingJobs``         | ``IMap``   | Map including all build jobs that are currently being processed.        |
++----------------------------+------------+-------------------------------------------------------------------------+
+| ``buildAgentInformation``  | ``IMap``   | Map containing information on each build agent.                         |
++----------------------------+------------+-------------------------------------------------------------------------+
+| ``canceledBuildsTopic``    | ``ITopic`` | Topic to order build agents to cancel a specific build job.             |
++----------------------------+------------+-------------------------------------------------------------------------+
+| ``buildJobResultQueue``    | ``IQueue`` | Queue containing the results produced by the build job execution.       |
++----------------------------+------------+-------------------------------------------------------------------------+
+| ``dockerImageCleanupInfo`` | ``IMap``   | Map containing information about the last date of use of Docker images. |
++----------------------------+------------+-------------------------------------------------------------------------+
+
+
+This approach ensures the efficient synchronization of build job processing.
+The CI Management also provides REST endpoints and supports WebSocket connections.
+These endpoints and real-time connections allow users to monitor and manage both queued and running jobs along with the build agents themselves,
+enhancing the system's operability and user interaction capabilities.
+Additionally, the ``processingJobs``, ``buildJobQueue`` and ``canceledBuildJobsTopic`` are enhanced with Hazelcast ``EntryListener``, ``ItemListener`` and ``MessageListener``, enabling immediate detection of changes such as additions, removals, and updates.
+
+Build Job Cancellation
+^^^^^^^^^^^^^^^^^^^^^^
+
+The build job cancellation mechanism is a crucial feature of the CI system.
+It allows users to cancel build jobs that are taking too long or are no longer needed.
+The following diagram shows an overview of the components in the build job cancellation mechanism:
+
+.. figure:: /dev/system-design/integrated-code-lifecycle/Integrated_Code_Lifecycle_Class_Diagram_Build_Job_Cancellation.png
+   :align: center
+   :width: 800
+   :alt: Build Job Cancellation
+
+
+   Build Job Cancellation Class Diagram
+
+The build job cancellation mechanism is implemented using Hazelcast's distributed data structures.
+As shown in the `Build Job Cancellation Class Diagram` we have services such as the ``SharedQueueManagementService`` that run on the core Artemis node and are responsible for managing Hazelcast's distributed datatypes.
+However, the real processing of each build job runs independently on each build agent. Therefore we have separate services such as the ``SharedQueueProcessingService`` in a build agent package .
+
+The processing of build jobs gets triggered by the insertion or removal of jobs from the ``buildJobQueue``.
+The queue listener in the ``SharedQueueProcessingService`` is then responsible for invoking the ``checkAvailabilityAndProcessNextBuild()`` method.
+If a build agent has available threads, the job is moved from the ``buildJobQueue`` to the ``processingJobs``.
+Subsequently, the ``processBuild(LocalCIBuildJobQueueItem buildJob)`` method is called, which in turn invokes ``executeBuildJob(LocalCIBuildJobQueueItem buildJob)`` in the ``BuildJobManagementService``.
+This method is tasked with asynchronously executing the build job in the ``BuildJobExecutionService``, by creating a future.
+Upon creating the new future, it is added to a local ``Map<String, Future<LocalCIBuildResult>> runningFutures``, which is unique to each build agent and contains only the futures of that agent.
+This future is then processed, with outcomes such as completion, failure, or cancellation being sent back and managed within the ``processBuild(...)`` method.
+This includes removing the build job from the ``processingJobs`` and initiating a new cycle by calling ``checkAvailabilityAndProcessNextBuild()``.
+
+.. figure:: /dev/system-design/integrated-code-lifecycle/Integrated_Code_Lifecycle_Communication_Diagram_Cancellation.png
+   :align: center
+   :width: 800
+   :alt: Build Job Cancellation
+
+   Build Job Cancellation Communication Diagram for a Processing Build Job
+
+
+The above Communication Diagram sets the stage for understanding the cancellation mechanism.
+Upon receiving a cancellation request through the ``@DeleteMapping("cancel-job/{buildJobId}")`` endpoint in either the ``AdminBuildJobQueueResource`` or ``BuildJobQueueResource``,
+the ``cancelBuildJob(String buildJobId)`` method within the ``SharedQueueManagementService`` is activated.
+Initially, it checks whether the build job is queued but not yet in process. If so, it is simply removed from the ``buildJobQueue``.
+The process becomes more complex for jobs already in process, involving the ``canceledBuildJobsTopic`` ``ITopic```.
+A cancellation message for the build job ID is broadcast to all build agents, with the ``BuildJobManagementService`` listening for these messages via Hazelcast's ``MessageListener``.
+Every build agent then checks its ``runningFutures`` map to see if it holds the specific build job future.
+Should a build agent currently process the specified job, it executes ``cancelBuildJob(String buildJobId)`` within the ``BuildJobManagementService``.
+This step involves canceling the future and recording the job ID in ``Set<String> cancelledBuildJobs``.
+The cancellation triggers an Exception which is caught and managed in ``processBuild(...)`` within the ``SharedQueueProcessingService``.
+The build status is set to ``CANCELLED``, the job is removed from ``processingJobs``, and the process reinitialized with ``checkAvailabilityAndProcessNextBuild()``.
+Modifications to ``processingJobs`` trigger WebSocket updates, consequently removing the canceled job from the client's build queue display.
