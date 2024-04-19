@@ -137,7 +137,7 @@ public class BuildJob extends DomainObject {
         return result;
     }
 
-    public void setResultId(Result result) {
+    public void setResult(Result result) {
         this.result = result;
     }
 
