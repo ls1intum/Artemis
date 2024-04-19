@@ -10,9 +10,9 @@
         <jhi-help-icon text="artemisApp.lti.edit.userPrefixTooltip" />
         <input required type="text" class="form-control" name="userPrefix" id="field_userPrefix" formControlName="userPrefix" />
         @if (userPrefix.invalid && (userPrefix.dirty || userPrefix.touched)) {
-            @if ((userPrefix.errors! | removekeys: ['required']).length > 0) {
+            @if ((userPrefix.errors! | keyvalue | removekeys: ['required']).length > 0) {
                 <div class="alert alert-danger">
-                    @for (e of userPrefix.errors! | removekeys: ['required']; track e) {
+                    @for (e of userPrefix.errors! | keyvalue | removekeys: ['required']; track e) {
                         <div>
                             <div [jhiTranslate]="'artemisApp.lti.edit.form.userPrefix' + '.' + e.key"></div>
                         </div>
@@ -75,7 +75,7 @@
         <button type="button" id="cancel-save" class="btn btn-secondary" (click)="navigateToLtiConfigurationPage()">
             <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
         </button>
-        <button type="submit" id="save-entity" [disabled]="isSaving" class="btn btn-primary ms-2">
+        <button type="submit" id="save-entity" [disabled]="onlineCourseConfigurationForm.invalid || isSaving" class="btn btn-primary ms-2">
             <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
         </button>
     </div>
