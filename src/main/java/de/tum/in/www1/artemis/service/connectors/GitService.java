@@ -85,7 +85,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.File;
@@ -101,9 +100,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.service.FileService;
-import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.ZipFileService;
-import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUri;
 import de.tum.in.www1.artemis.web.rest.dto.CommitInfoDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -112,10 +109,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public class GitService {
 
     private static final Logger log = LoggerFactory.getLogger(GitService.class);
-
-    private final Environment environment;
-
-    private final ProfileService profileService;
 
     @Value("${artemis.version-control.url}")
     private URL gitUrl;
@@ -166,13 +159,11 @@ public class GitService {
 
     private static final String REMOTE_NAME = "origin";
 
-    public GitService(Environment environment, ProfileService profileService, ZipFileService zipFileService) {
-        this.profileService = profileService;
-        log.info("file.encoding={}", System.getProperty("file.encoding"));
+    public GitService(ZipFileService zipFileService) {
+        log.info("file.encoding={}", Charset.defaultCharset().displayName());
         log.info("sun.jnu.encoding={}", System.getProperty("sun.jnu.encoding"));
         log.info("Default Charset={}", Charset.defaultCharset());
         log.info("Default Charset in Use={}", new OutputStreamWriter(new ByteArrayOutputStream()).getEncoding());
-        this.environment = environment;
         this.zipFileService = zipFileService;
     }
 
@@ -227,76 +218,25 @@ public class GitService {
 
         CredentialsProvider.setDefault(credentialsProvider);
 
-        var sshSessionFactory = new SshdSessionFactoryBuilder().setKeyPasswordProvider(keyPasswordProvider -> new KeyPasswordProvider() {
+        // @formatter:off
+        try (var sshSessionFactory = new SshdSessionFactoryBuilder()
+            .setKeyPasswordProvider(keyPasswordProvider -> new MyKeyPasswordProvider())
+            .setConfigStoreFactory((homeDir, configFile, localUserName) -> new MySshConfigStore())
+            .setSshDirectory(new java.io.File(gitSshPrivateKeyPath.orElseThrow()))
+            .setHomeDirectory(new java.io.File(System.getProperty("user.home")))
+            .build(new JGitKeyCache())) {
+        // @formatter:on
 
-            @Override
-            public char[] getPassphrase(URIish uri, int attempt) {
-                // Example: /Users/artemis/.ssh/artemis/id_rsa contains /Users/artemis/.ssh/artemis
-                if (gitSshPrivateKeyPath.isPresent() && gitSshPrivateKeyPassphrase.isPresent() && uri.getPath().contains(gitSshPrivateKeyPath.get())) {
-                    return gitSshPrivateKeyPassphrase.get().toCharArray();
+            sshCallback = transport -> {
+                if (transport instanceof SshTransport sshTransport) {
+                    transport.setTimeout(JGIT_TIMEOUT_IN_SECONDS);
+                    sshTransport.setSshSessionFactory(sshSessionFactory);
                 }
                 else {
-                    return null;
+                    log.error("Cannot use ssh properly because of mismatch of Jgit transport object: {}", transport);
                 }
-            }
-
-            @Override
-            public void setAttempts(int maxNumberOfAttempts) {
-            }
-
-            @Override
-            public boolean keyLoaded(URIish uri, int attempt, Exception error) {
-                return false;
-            }
-        }).setConfigStoreFactory((homeDir, configFile, localUserName) -> new SshConfigStore() {
-
-            @Override
-            public HostConfig lookup(String hostName, int port, String userName) {
-                return new HostConfig() {
-
-                    @Override
-                    public String getValue(String key) {
-                        return null;
-                    }
-
-                    @Override
-                    public List<String> getValues(String key) {
-                        return Collections.emptyList();
-                    }
-
-                    @Override
-                    public Map<String, String> getOptions() {
-                        log.debug("getOptions: {}:{}", hostName, port);
-                        if (hostName.equals(gitUrl.getHost())) {
-                            return Collections.singletonMap(SshConstants.STRICT_HOST_KEY_CHECKING, SshConstants.NO);
-                        }
-                        else {
-                            return Collections.emptyMap();
-                        }
-                    }
-
-                    @Override
-                    public Map<String, List<String>> getMultiValuedOptions() {
-                        return Collections.emptyMap();
-                    }
-                };
-            }
-
-            @Override
-            public HostConfig lookupDefault(String hostName, int port, String userName) {
-                return lookup(hostName, port, userName);
-            }
-        }).setSshDirectory(new java.io.File(gitSshPrivateKeyPath.orElseThrow())).setHomeDirectory(new java.io.File(System.getProperty("user.home"))).build(new JGitKeyCache());
-
-        sshCallback = transport -> {
-            if (transport instanceof SshTransport sshTransport) {
-                transport.setTimeout(JGIT_TIMEOUT_IN_SECONDS);
-                sshTransport.setSshSessionFactory(sshSessionFactory);
-            }
-            else {
-                log.error("Cannot use ssh properly because of mismatch of Jgit transport object: {}", transport);
-            }
-        };
+            };
+        }
     }
 
     private boolean useSsh() {
@@ -309,23 +249,15 @@ public class GitService {
     }
 
     /**
-     * Get the URI for a {@link VcsRepositoryUri}. This either retrieves the SSH URI, if SSH is used, the HTTP(S) URI, or the path to the repository's folder if the local VCS is
-     * used.
+     * Get the URI for a {@link VcsRepositoryUri}. This either retrieves the SSH URI, if SSH is used, or the HTTP(S) URI.
      * This method is for internal use (getting the URI for cloning the repository into the Artemis file system).
      * For GitLab, the URI is the same internally as the one that is used by the students to clone the repository using their local Git client.
-     * For the local VCS however, the repository is cloned from the folder defined in the environment variable "artemis.version-control.local-vcs-repo-path".
      *
      * @param vcsRepositoryUri the {@link VcsRepositoryUri} for which to get the URI
      * @return the URI (SSH, HTTP(S), or local path)
      * @throws URISyntaxException if SSH is used and the SSH URI could not be retrieved.
      */
     private URI getGitUri(VcsRepositoryUri vcsRepositoryUri) throws URISyntaxException {
-        if (profileService.isLocalVcsCiActive()) {
-            // Create less generic LocalVCRepositoryUri out of VcsRepositoryUri.
-            LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(vcsRepositoryUri.toString(), gitUrl);
-            String localVCBasePath = environment.getProperty("artemis.version-control.local-vcs-repo-path");
-            return localVCRepositoryUri.getLocalRepositoryPath(localVCBasePath).toUri();
-        }
         return useSsh() ? getSshUri(vcsRepositoryUri) : vcsRepositoryUri.getURI();
     }
 
@@ -1474,5 +1406,68 @@ public class GitService {
 
     public void clearCachedRepositories() {
         cachedRepositories.clear();
+    }
+
+    private class MySshConfigStore implements SshConfigStore {
+
+        @Override
+        public HostConfig lookup(String hostName, int port, String userName) {
+            return new HostConfig() {
+
+                @Override
+                public String getValue(String key) {
+                    return null;
+                }
+
+                @Override
+                public List<String> getValues(String key) {
+                    return Collections.emptyList();
+                }
+
+                @Override
+                public Map<String, String> getOptions() {
+                    log.debug("getOptions: {}:{}", hostName, port);
+                    if (hostName.equals(gitUrl.getHost())) {
+                        return Collections.singletonMap(SshConstants.STRICT_HOST_KEY_CHECKING, SshConstants.NO);
+                    }
+                    else {
+                        return Collections.emptyMap();
+                    }
+                }
+
+                @Override
+                public Map<String, List<String>> getMultiValuedOptions() {
+                    return Collections.emptyMap();
+                }
+            };
+        }
+
+        @Override
+        public HostConfig lookupDefault(String hostName, int port, String userName) {
+            return lookup(hostName, port, userName);
+        }
+    }
+
+    private class MyKeyPasswordProvider implements KeyPasswordProvider {
+
+        @Override
+        public char[] getPassphrase(URIish uri, int attempt) {
+            // Example: /Users/artemis/.ssh/artemis/id_rsa contains /Users/artemis/.ssh/artemis
+            if (gitSshPrivateKeyPath.isPresent() && gitSshPrivateKeyPassphrase.isPresent() && uri.getPath().contains(gitSshPrivateKeyPath.get())) {
+                return gitSshPrivateKeyPassphrase.get().toCharArray();
+            }
+            else {
+                return null;
+            }
+        }
+
+        @Override
+        public void setAttempts(int maxNumberOfAttempts) {
+        }
+
+        @Override
+        public boolean keyLoaded(URIish uri, int attempt, Exception error) {
+            return false;
+        }
     }
 }
