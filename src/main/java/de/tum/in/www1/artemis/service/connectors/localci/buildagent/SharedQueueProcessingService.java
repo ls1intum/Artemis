@@ -267,11 +267,10 @@ public class SharedQueueProcessingService {
                     buildJob.buildConfig(), null);
 
             List<BuildLogEntry> buildLogs = buildLogsMap.getBuildLogs(buildJob.id());
+            buildLogsMap.removeBuildLogs(buildJob.id());
 
             ResultQueueItem resultQueueItem = new ResultQueueItem(buildResult, finishedJob, buildLogs, null);
             resultQueue.add(resultQueueItem);
-
-            buildLogsMap.removeBuildLogs(buildJob.id());
 
             // after processing a build job, remove it from the processing jobs
             processingJobs.remove(buildJob.id());
@@ -299,11 +298,10 @@ public class SharedQueueProcessingService {
             job = new LocalCIBuildJobQueueItem(buildJob, completionDate, status);
 
             List<BuildLogEntry> buildLogs = buildLogsMap.getBuildLogs(buildJob.id());
+            buildLogsMap.removeBuildLogs(buildJob.id());
 
             ResultQueueItem resultQueueItem = new ResultQueueItem(null, job, buildLogs, ex);
             resultQueue.add(resultQueueItem);
-
-            buildLogsMap.removeBuildLogs(buildJob.id());
 
             processingJobs.remove(buildJob.id());
             localProcessingJobs.decrementAndGet();
