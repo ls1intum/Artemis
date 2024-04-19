@@ -221,7 +221,7 @@ public class SharedQueueProcessingService {
         // TODO: Make this number configurable
         if (recentBuildJob != null) {
             if (recentBuildJobs.size() >= 20) {
-                recentBuildJobs.remove(0);
+                recentBuildJobs.removeFirst();
             }
             recentBuildJobs.add(recentBuildJob);
         }

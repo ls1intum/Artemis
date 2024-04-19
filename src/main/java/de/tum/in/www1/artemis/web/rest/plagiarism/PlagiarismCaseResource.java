@@ -102,7 +102,7 @@ public class PlagiarismCaseResource {
 
         var plagiarismCases = plagiarismCaseRepository.findByExamIdWithPlagiarismSubmissionsAndComparison(examId);
         if (!plagiarismCases.isEmpty()) {
-            var plagiarismCase = plagiarismCases.get(0);
+            var plagiarismCase = plagiarismCases.getFirst();
             var exam = plagiarismCase.getExercise().getExerciseGroup().getExam();
             if (!exam.getCourse().getId().equals(courseId)) {
                 throw new ConflictException("Exam with id " + exam.getId() + " is not related to the given course id " + courseId, ENTITY_NAME, "courseMismatch");

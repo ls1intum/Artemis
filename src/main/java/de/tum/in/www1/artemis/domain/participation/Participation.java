@@ -252,7 +252,7 @@ public abstract class Participation extends DomainObject implements Participatio
         if (sortedResultsWithCompletionDate.isEmpty()) {
             return null;
         }
-        return sortedResultsWithCompletionDate.get(0);
+        return sortedResultsWithCompletionDate.getFirst();
     }
 
     /**
