@@ -28,6 +28,7 @@
         .text {
             font-size: 12px;
             margin-bottom: 10px;
+            line-height: initial;
         }
     }
 
@@ -44,7 +45,7 @@
 
 .icon-button-wrapper {
     position: absolute;
-    background-color: var(--gray-500);
+    background-color: var(--bs-body-bg);
     border-radius: 50%;
     display: inline-flex;
     justify-content: center;
@@ -57,12 +58,13 @@
 .delete-button {
     top: 70px;
     right: 85px;
-    color: var(--red);
-    border: 1px solid var(--red);
+    color: var(--danger);
+    border: 1px solid var(--danger);
 }
 
 .edit-button {
     top: 70px;
     right: 25px;
-    border: 1px solid var(--black);
+    color: var(--secondary);
+    border: 1px solid var(--secondary);
 }
