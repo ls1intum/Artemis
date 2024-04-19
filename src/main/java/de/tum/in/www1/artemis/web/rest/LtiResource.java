@@ -95,7 +95,7 @@ public class LtiResource {
 
         ObjectNode json = new ObjectMapper().createObjectNode();
         json.put("targetLinkUri", targetLink);
-        return ResponseEntity.ok(json.asText());
+        return ResponseEntity.ok(json.toString());
     }
 
     /**
