@@ -294,56 +294,19 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         );
     }
 
-    onFileLoadMonaco(selectedFile: string) {
-        if (selectedFile && this.codeEditorContainer?.selectedFile && this.codeEditorContainer.monacoEditor) {
+    /**
+     * For a file, computes the diff between the template and the submission currently being viewed, then highlights changed or edited lines in the editor.
+     * If the file did not exist in the template, all lines will be highlighted.
+     * @param selectedFile The file that has been selected in the editor.
+     */
+    highlightChangedLines(selectedFile: string) {
+        if (selectedFile && this.codeEditorContainer?.selectedFile) {
             if (!this.templateFileSession[selectedFile]) {
                 const lastLine = this.codeEditorContainer.getNumberOfLines();
                 this.highlightLines(0, lastLine);
             } else {
                 // Calculation of the diff, see: https://github.com/google/diff-match-patch/wiki/Line-or-Word-Diffs
                 const diffArray = this.diffMatchPatch.diff_linesToChars(this.templateFileSession[selectedFile], this.codeEditorContainer.getText());
-                const lineText1 = diffArray.chars1;
-                const lineText2 = diffArray.chars2;
-                const lineArray = diffArray.lineArray;
-                const diffs = this.diffMatchPatch.diff_main(lineText1, lineText2, false);
-                this.diffMatchPatch.diff_charsToLines(diffs, lineArray);
-
-                // Setup counter to know on which range to highlight in the code editor
-                let counter = 0;
-                diffs.forEach((diffElement) => {
-                    // No changes
-                    if (diffElement[0] === 0) {
-                        const lines = diffElement[1].split(/\r?\n/);
-                        counter += lines.length - 1;
-                    }
-                    // Newly added
-                    if (diffElement[0] === 1) {
-                        const lines = diffElement[1].split(/\r?\n/).filter(Boolean);
-                        const firstLineToHighlight = counter;
-                        const lastLineToHighlight = counter + lines.length - 1;
-                        this.highlightLines(firstLineToHighlight, lastLineToHighlight);
-                        counter += lines.length;
-                    }
-                });
-            }
-        }
-    }
-
-    /**
-     * Triggers when a new file was selected in the code editor. Compares the content of the file with the template (if available), calculates the diff
-     * and highlights the changed/added lines or all lines if the file is not in the template.
-     *
-     * @param selectedFile name of the file which is currently displayed
-     */
-    onFileLoad(selectedFile: string): void {
-        if (selectedFile && this.codeEditorContainer?.selectedFile && this.codeEditorContainer.aceEditor) {
-            // When the selectedFile is not part of the template, then this is a new file and all lines in code editor are highlighted
-            if (!this.templateFileSession[selectedFile]) {
-                const lastLine = this.codeEditorContainer.aceEditor.editorSession.getLength() - 1;
-                this.highlightLines(0, lastLine);
-            } else {
-                // Calculation of the diff, see: https://github.com/google/diff-match-patch/wiki/Line-or-Word-Diffs
-                const diffArray = this.diffMatchPatch.diff_linesToChars(this.templateFileSession[selectedFile], this.codeEditorContainer.aceEditor.editorSession.getValue());
                 const lineText1 = diffArray.chars1;
                 const lineText2 = diffArray.chars2;
                 const lineArray = diffArray.lineArray;

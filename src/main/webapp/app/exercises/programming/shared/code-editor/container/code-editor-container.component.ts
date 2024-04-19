@@ -277,6 +277,9 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     }
 
     getNumberOfLines(): number {
+        if (this.aceEditor) {
+            return this.aceEditor.editorSession.getLength();
+        }
         return this.monacoEditor?.getNumberOfLines() ?? 0;
     }
 
