@@ -253,7 +253,7 @@ jhi-secured-image {
     max-height: 150px;
     padding-top: 5px;
     padding-bottom: 5px;
-    border: 1px solid #d7d7d7;
+    border: 1px solid var(--bs-body-bg);
     border-radius: 5px;
-    background-color: rgb(255, 255, 255);
+    background-color: var(--link-item-bg);
 }
