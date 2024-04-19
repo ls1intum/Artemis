@@ -296,8 +296,8 @@ export class CourseUpdateComponent implements OnInit {
             course['courseInformationSharingConfiguration'] = CourseInformationSharingConfiguration.DISABLED;
         }
 
-        if (!course['enrollmentEnabled']) {
-            course['enrollmentConfirmationMessage'] = undefined;
+        if (!course.enrollmentEnabled) {
+            course.enrollmentConfirmationMessage = undefined;
         }
 
         if (this.course.id !== undefined) {
