@@ -18,6 +18,7 @@
             [minTitleLength]="3"
             [isExamMode]="isExamMode"
             [isImport]="isImport"
+            [titlePattern]="'^[a-zA-Z0-9- ]+$'"
         />
         @if (!isExamMode) {
             <div class="form-group position-relative">
