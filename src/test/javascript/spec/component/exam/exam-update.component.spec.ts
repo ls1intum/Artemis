@@ -35,12 +35,14 @@ import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { User } from 'app/core/user/user.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { DifficultyBadgeComponent } from 'app/exercises/shared/exercise-headers/difficulty-badge.component';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
+import { UMLDiagramType } from '@ls1intum/apollon';
+import { TextExercise } from 'app/entities/text-exercise.model';
 
 @Component({
     template: '',
@@ -319,6 +321,92 @@ describe('ExamUpdateComponent', () => {
             expect(component.validateWorkingTime).toBeTrue();
         });
 
+        it('validates the visible from for real exams correctly', () => {
+            examWithoutExercises.testExam = false;
+
+            examWithoutExercises.visibleDate = undefined;
+            fixture.detectChanges();
+
+            expect(component.isVisibleDateSet).toBeFalse();
+
+            examWithoutExercises.visibleDate = dayjs().add(2, 'hours');
+            expect(component.isVisibleDateSet).toBeTrue();
+        });
+
+        it('validates the start of working time for real exams correctly', () => {
+            examWithoutExercises.testExam = false;
+
+            examWithoutExercises.startDate = undefined;
+            examWithoutExercises.visibleDate = undefined;
+            fixture.detectChanges();
+
+            expect(component.isStartDateSet).toBeFalse();
+
+            examWithoutExercises.startDate = dayjs().add(2, 'hours');
+            expect(component.isStartDateSet).toBeTrue();
+
+            examWithoutExercises.visibleDate = dayjs().add(3, 'hours');
+            expect(component.isValidStartDate).toBeFalse();
+
+            examWithoutExercises.visibleDate = dayjs().subtract(3, 'hours');
+            expect(component.isValidStartDate).toBeTrue();
+        });
+
+        it('validates the end of working time for real exams correctly', () => {
+            examWithoutExercises.testExam = false;
+
+            examWithoutExercises.startDate = undefined;
+            examWithoutExercises.endDate = undefined;
+            fixture.detectChanges();
+
+            expect(component.isEndDateSet).toBeFalse();
+
+            examWithoutExercises.endDate = dayjs().add(2, 'hours');
+            expect(component.isEndDateSet).toBeTrue();
+
+            examWithoutExercises.startDate = dayjs().add(3, 'hours');
+            expect(component.isValidEndDate).toBeFalse();
+
+            examWithoutExercises.startDate = dayjs().subtract(3, 'hours');
+            expect(component.isValidEndDate).toBeTrue();
+        });
+
+        it('validates the visible from value for real exams correctly', () => {
+            examWithoutExercises.testExam = false;
+
+            examWithoutExercises.visibleDate = dayjs('this is not a date');
+            fixture.detectChanges();
+
+            expect(component.isValidVisibleDateValue).toBeFalse();
+
+            examWithoutExercises.visibleDate = dayjs().add(2, 'hours');
+            expect(component.isValidVisibleDateValue).toBeTrue();
+        });
+
+        it('validates the start of working time value for real exams correctly', () => {
+            examWithoutExercises.testExam = false;
+
+            examWithoutExercises.startDate = dayjs('this is not a date');
+            fixture.detectChanges();
+
+            expect(component.isValidStartDateValue).toBeFalse();
+
+            examWithoutExercises.startDate = dayjs().add(2, 'hours');
+            expect(component.isValidStartDateValue).toBeTrue();
+        });
+
+        it('validates the end of working time value for real exams correctly', () => {
+            examWithoutExercises.testExam = false;
+
+            examWithoutExercises.endDate = dayjs('this is not a date');
+            fixture.detectChanges();
+
+            expect(component.isValidEndDateValue).toBeFalse();
+
+            examWithoutExercises.endDate = dayjs().add(2, 'hours');
+            expect(component.isValidEndDateValue).toBeTrue();
+        });
+
         it('should correctly catch HTTPError when updating the examWithoutExercises', fakeAsync(() => {
             const alertService = TestBed.inject(AlertService);
             const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
@@ -440,7 +528,10 @@ describe('ExamUpdateComponent', () => {
         const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, exerciseGroup1);
         modelingExercise.id = 1;
         modelingExercise.title = 'ModelingExercise';
-        exerciseGroup1.exercises = [modelingExercise];
+        const textExercise = new TextExercise(undefined, exerciseGroup1);
+        textExercise.id = 2;
+        textExercise.title = 'TextExercise';
+        exerciseGroup1.exercises = [modelingExercise, textExercise];
 
         const timeNow = dayjs();
 
@@ -588,6 +679,35 @@ describe('ExamUpdateComponent', () => {
 
             expect(importSpy).toHaveBeenCalledOnce();
             expect(importSpy).toHaveBeenCalledWith(1, expectedExam);
+            expect(navigateSpy).toHaveBeenCalledOnce();
+            expect(navigateSpy).toHaveBeenCalledWith(['course-management', course.id, 'exams', examForImport.id]);
+            expect(alertSpy).not.toHaveBeenCalled();
+        });
+
+        it('should perform import of an exam with only selected exercises successfully', () => {
+            fixture.detectChanges();
+            const expectedExam = prepareExamForImport(examForImport);
+            expectedExam.course = course;
+            // Only import one of two exercises
+            component.examExerciseImportComponent.selectedExercises = new Map([[exerciseGroup1, new Set([textExercise])]]);
+            const alertSpy = jest.spyOn(alertService, 'error');
+            const navigateSpy = jest.spyOn(router, 'navigate');
+            const importSpy = jest.spyOn(examManagementService, 'import').mockReturnValue(
+                of(
+                    new HttpResponse({
+                        status: 200,
+                        body: examForImport,
+                    }),
+                ),
+            );
+
+            fixture.detectChanges();
+            component.save();
+
+            expect(importSpy).toHaveBeenCalledOnce();
+            expect(importSpy).toHaveBeenCalledWith(1, expectedExam);
+            // We expect to have imported only one exercise group and only one of two exercises
+            expect(expectedExam.exerciseGroups?.at(0)?.exercises).toHaveLength(1);
             expect(navigateSpy).toHaveBeenCalledOnce();
             expect(navigateSpy).toHaveBeenCalledWith(['course-management', course.id, 'exams', examForImport.id]);
             expect(alertSpy).not.toHaveBeenCalled();

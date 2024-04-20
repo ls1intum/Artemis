@@ -1,0 +1,34 @@
+@if (currentCommit) {
+    <h3>
+        {{ 'artemisApp.repository.commitHistory.commitDetails.commit' | artemisTranslate }} <span class="text-primary">{{ currentCommit.hash }} </span>
+    </h3>
+
+    <div>
+        <p>
+            <span
+                ><strong>{{ 'artemisApp.repository.commitHistory.commitDetails.author' | artemisTranslate }}</strong
+                >: {{ currentCommit.author }}, <span class="text-primary">{{ currentCommit.authorEmail }}</span></span
+            >
+            <span style="margin-left: 40px"
+                ><strong>{{ 'artemisApp.repository.commitHistory.commitDetails.date' | artemisTranslate }}</strong
+                >: {{ currentCommit.timestamp | artemisDate: 'long' : true }}</span
+            >
+            <span style="margin-left: 40px"
+                ><strong>{{ 'artemisApp.repository.commitHistory.commitDetails.commitMessage' | artemisTranslate }}</strong
+                >: {{ currentCommit.message }}</span
+            >
+        </p>
+    </div>
+    <br />
+
+    @if (report && leftCommitFileContentByPath && rightCommitFileContentByPath) {
+        <jhi-git-diff-report
+            [report]="report"
+            [diffForTemplateAndSolution]="false"
+            [templateFileContentByPath]="leftCommitFileContentByPath"
+            [solutionFileContentByPath]="rightCommitFileContentByPath"
+            [isRepositoryView]="true"
+            [diffForTemplateAndEmptyRepository]="isTemplate"
+        />
+    }
+}

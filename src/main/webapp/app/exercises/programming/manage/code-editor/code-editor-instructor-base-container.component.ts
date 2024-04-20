@@ -157,7 +157,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
 
     /**
      * Get the next available participation, highest priority has the participation given to the method.
-     * Removes participations without a repositoryUrl (could be invalid).
+     * Removes participations without a repositoryUri (could be invalid).
      * Returns undefined if no valid participation can be found.
      *
      * @param preferredParticipationId
@@ -169,7 +169,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
             this.exercise.studentParticipations && this.exercise.studentParticipations.length ? this.exercise.studentParticipations[0] : undefined,
         ].filter(Boolean);
         const selectedParticipation = availableParticipations.find(({ id }: ProgrammingExerciseStudentParticipation) => id === preferredParticipationId);
-        return [selectedParticipation, ...availableParticipations].filter(Boolean).find(({ repositoryUrl }: ProgrammingExerciseStudentParticipation) => !!repositoryUrl);
+        return [selectedParticipation, ...availableParticipations].filter(Boolean).find(({ repositoryUri }: ProgrammingExerciseStudentParticipation) => !!repositoryUri);
     }
 
     /**
@@ -225,8 +225,8 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         }
     }
 
-    repositoryUrl(participation?: Participation) {
-        return (participation as ProgrammingExerciseStudentParticipation)?.repositoryUrl;
+    repositoryUri(participation?: Participation) {
+        return (participation as ProgrammingExerciseStudentParticipation)?.repositoryUri;
     }
 
     /**

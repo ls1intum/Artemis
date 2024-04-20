@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.awt.*;
 import java.awt.geom.Line2D;
 import java.awt.image.BufferedImage;
@@ -17,6 +19,7 @@ import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.graphics.image.LosslessFactory;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.quiz.DragAndDropMapping;
@@ -27,18 +30,13 @@ import de.tum.in.www1.artemis.domain.quiz.DropLocation;
 /**
  * Service for converting a DragAndDropSubmittedAnswer to a PDF file displaying the submitted answer.
  */
+@Profile(PROFILE_CORE)
 @Service
 public class DragAndDropQuizAnswerConversionService {
-
-    private final FilePathService filePathService;
 
     // Drop locations in quiz exercises are relatively positioned and sized using integers in the interval [0, 200]
     // this value needs to be consistent with MAX_SIZE_UNIT in quiz-exercise-generator.ts
     private static final int MAX_SIZE_UNIT = 200;
-
-    public DragAndDropQuizAnswerConversionService(FilePathService filePathService) {
-        this.filePathService = filePathService;
-    }
 
     /**
      * Generates a pdf file of the submitted answer for a drag and drop quiz question.
@@ -50,7 +48,7 @@ public class DragAndDropQuizAnswerConversionService {
     public void convertDragAndDropQuizAnswerAndStoreAsPdf(DragAndDropSubmittedAnswer dragAndDropSubmittedAnswer, Path outputDir, boolean showResult) throws IOException {
         DragAndDropQuestion question = (DragAndDropQuestion) dragAndDropSubmittedAnswer.getQuizQuestion();
         String backgroundFilePath = question.getBackgroundFilePath();
-        BufferedImage backgroundImage = ImageIO.read(filePathService.actualPathForPublicPath(URI.create(backgroundFilePath)).toFile());
+        BufferedImage backgroundImage = ImageIO.read(FilePathService.actualPathForPublicPath(URI.create(backgroundFilePath)).toFile());
 
         generateDragAndDropSubmittedAnswerImage(backgroundImage, dragAndDropSubmittedAnswer, showResult);
         Path dndSubmissionPathPdf = outputDir.resolve(
@@ -121,7 +119,7 @@ public class DragAndDropQuizAnswerConversionService {
     }
 
     private void drawPictureDragItem(Graphics2D graphics, DropLocationCoordinates dropLocationCoordinates, DragAndDropMapping mapping) throws IOException {
-        BufferedImage dragItem = ImageIO.read(filePathService.actualPathForPublicPath(URI.create(mapping.getDragItem().getPictureFilePath())).toFile());
+        BufferedImage dragItem = ImageIO.read(FilePathService.actualPathForPublicPath(URI.create(mapping.getDragItem().getPictureFilePath())).toFile());
         Dimension scaledDimForDragItem = getScaledDimension(new Dimension(dragItem.getWidth(), dragItem.getHeight()),
                 new Dimension(dropLocationCoordinates.width, dropLocationCoordinates.height));
         graphics.drawImage(dragItem, dropLocationCoordinates.x, dropLocationCoordinates.y, (int) scaledDimForDragItem.getWidth(), (int) scaledDimForDragItem.getHeight(), null);

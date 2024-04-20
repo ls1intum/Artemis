@@ -1,13 +1,16 @@
 package de.tum.in.www1.artemis.service.exam;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.security.SecureRandom;
 import java.util.*;
 import java.util.function.BiFunction;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.web.util.matcher.IpAddressMatcher;
 import org.springframework.stereotype.Service;
 
@@ -21,18 +24,35 @@ import inet.ipaddr.IPAddressString;
 /**
  * Service Implementation for managing ExamSession.
  */
+@Profile(PROFILE_CORE)
 @Service
 public class ExamSessionService {
 
-    private final Logger log = LoggerFactory.getLogger(ExamSessionService.class);
+    private static final Logger log = LoggerFactory.getLogger(ExamSessionService.class);
 
     private final ExamSessionRepository examSessionRepository;
 
     private final StudentExamRepository studentExamRepository;
 
+    private final BiFunction<Long, ExamSession, Set<ExamSession>> filterSessionsForIpAndFingerprint;
+
+    private final BiFunction<Long, ExamSession, Set<ExamSession>> filterSessionsForIp;
+
+    private final BiFunction<Long, ExamSession, Set<ExamSession>> filterSessionsForFingerprint;
+
     public ExamSessionService(ExamSessionRepository examSessionRepository, StudentExamRepository studentExamRepository) {
         this.examSessionRepository = examSessionRepository;
         this.studentExamRepository = studentExamRepository;
+
+        this.filterSessionsForIpAndFingerprint = (Long internalExamId, ExamSession examSession) -> examSessionRepository
+                .findAllExamSessionsWithTheSameIpAddressAndBrowserFingerprintByExamIdAndExamSession(internalExamId, examSession.getId(), examSession.getStudentExam().getId(),
+                        examSession.getIpAddress(), examSession.getBrowserFingerprintHash());
+        this.filterSessionsForIp = (Long internalExamId, ExamSession examSession) -> examSessionRepository
+                .findAllExamSessionsWithTheSameIpAddressAndBrowserFingerprintByExamIdAndExamSession(internalExamId, examSession.getId(), examSession.getStudentExam().getId(),
+                        examSession.getIpAddress(), null);
+        this.filterSessionsForFingerprint = (Long internalExamId, ExamSession examSession) -> examSessionRepository
+                .findAllExamSessionsWithTheSameIpAddressAndBrowserFingerprintByExamIdAndExamSession(internalExamId, examSession.getId(), examSession.getStudentExam().getId(), null,
+                        examSession.getBrowserFingerprintHash());
     }
 
     /**
@@ -165,18 +185,15 @@ public class ExamSessionService {
             Set<ExamSession> filteredSessions) {
         if (analysisOptions.sameIpAddressDifferentStudentExams() && analysisOptions.sameBrowserFingerprintDifferentStudentExams()) {
             // first step find all sessions that have matching browser fingerprint and ip address
-            findSuspiciousSessionsForGivenCriteria(filteredSessions, examId,
-                    examSessionRepository::findAllExamSessionsWithTheSameIpAddressAndBrowserFingerprintByExamIdAndExamSession, suspiciousExamSessions, true, true);
+            findSuspiciousSessionsForGivenCriteria(filteredSessions, examId, filterSessionsForIpAndFingerprint, suspiciousExamSessions, true, true);
         }
         if (analysisOptions.sameBrowserFingerprintDifferentStudentExams()) {
             // second step find all sessions that have only matching browser fingerprint
-            findSuspiciousSessionsForGivenCriteria(filteredSessions, examId, examSessionRepository::findAllExamSessionsWithTheSameBrowserFingerprintByExamIdAndExamSession,
-                    suspiciousExamSessions, false, true);
+            findSuspiciousSessionsForGivenCriteria(filteredSessions, examId, filterSessionsForFingerprint, suspiciousExamSessions, false, true);
         }
         if (analysisOptions.sameIpAddressDifferentStudentExams()) {
             // third step find all sessions that have only matching ip address
-            findSuspiciousSessionsForGivenCriteria(filteredSessions, examId, examSessionRepository::findAllExamSessionsWithTheSameIpAddressByExamIdAndExamSession,
-                    suspiciousExamSessions, true, false);
+            findSuspiciousSessionsForGivenCriteria(filteredSessions, examId, filterSessionsForIp, suspiciousExamSessions, true, false);
         }
     }
 

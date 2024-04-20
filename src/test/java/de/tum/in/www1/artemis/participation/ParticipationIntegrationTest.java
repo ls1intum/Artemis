@@ -1,14 +1,27 @@
 package de.tum.in.www1.artemis.participation;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyBoolean;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 import java.net.URI;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.IntStream;
 
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Isolated;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -20,17 +33,37 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.assessment.GradingScaleUtilService;
 import de.tum.in.www1.artemis.course.CourseUtilService;
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.FileUploadExercise;
+import de.tum.in.www1.artemis.domain.GradingScale;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.Team;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.enumeration.Language;
+import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.domain.quiz.*;
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.domain.quiz.QuizPointStatistic;
+import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
+import de.tum.in.www1.artemis.domain.quiz.ShortAnswerQuestion;
+import de.tum.in.www1.artemis.domain.quiz.ShortAnswerSpot;
+import de.tum.in.www1.artemis.domain.quiz.ShortAnswerSubmittedAnswer;
+import de.tum.in.www1.artemis.domain.quiz.ShortAnswerSubmittedText;
 import de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseFactory;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService;
@@ -39,7 +72,12 @@ import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseFactory;
 import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.service.GradingScaleService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.QuizBatchService;
@@ -49,7 +87,7 @@ import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
-class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     private static final String TEST_PREFIX = "participationintegration";
 
@@ -328,7 +366,8 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         prepareMocksForProgrammingExercise(user.getLogin(), true);
-        mockConnectorRequestsForStartPractice(programmingExercise, TEST_PREFIX + "student1", Set.of(user), true);
+
+        mockConnectorRequestsForStartPractice(programmingExercise, TEST_PREFIX + "student1", Set.of(user));
 
         StudentParticipation participation = request.postWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/participations/practice", null,
                 StudentParticipation.class, HttpStatus.CREATED);
@@ -362,8 +401,8 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     private void prepareMocksForProgrammingExercise(String userLogin, boolean practiceMode) throws Exception {
         programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
-        bitbucketRequestMockProvider.enableMockingOfRequests(true);
-        bambooRequestMockProvider.enableMockingOfRequests(true);
+        gitlabRequestMockProvider.enableMockingOfRequests();
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
         programmingExerciseTestService.setupRepositoryMocks(programmingExercise);
         var repo = new LocalRepository(defaultBranch);
         repo.configureRepos("studentRepo", "studentOriginRepo");
@@ -477,10 +516,10 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         var localRepo = new LocalRepository(defaultBranch);
         localRepo.configureRepos("testLocalRepo", "testOriginRepo");
 
-        participation.setRepositoryUrl(ParticipationFactory.getMockFileRepositoryUrl(localRepo).getURI().toString());
+        participation.setRepositoryUri(ParticipationFactory.getMockFileRepositoryUri(localRepo).getURI().toString());
         participationRepo.save(participation);
 
-        gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUrl());
+        gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUri());
 
         var result = ParticipationFactory.generateResult(true, 90).participation(participation);
         result.setCompletionDate(ZonedDateTime.now());
@@ -526,10 +565,10 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         var localRepo = new LocalRepository(defaultBranch);
         localRepo.configureRepos("testLocalRepo", "testOriginRepo");
 
-        participation.setRepositoryUrl(ParticipationFactory.getMockFileRepositoryUrl(localRepo).getURI().toString());
+        participation.setRepositoryUri(ParticipationFactory.getMockFileRepositoryUri(localRepo).getURI().toString());
         participationRepo.save(participation);
 
-        gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUrl());
+        gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUri());
 
         var result = ParticipationFactory.generateResult(true, 100).participation(participation);
         result.setCompletionDate(ZonedDateTime.now());
@@ -554,9 +593,9 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         var localRepo = new LocalRepository(defaultBranch);
         localRepo.configureRepos("testLocalRepo", "testOriginRepo");
-        participation.setRepositoryUrl(ParticipationFactory.getMockFileRepositoryUrl(localRepo).getURI().toString());
+        participation.setRepositoryUri(ParticipationFactory.getMockFileRepositoryUri(localRepo).getURI().toString());
         participationRepo.save(participation);
-        gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUrl());
+        gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUri());
         var updatedParticipation = request.putWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/resume-programming-participation/" + participation.getId(), null,
                 ProgrammingExerciseStudentParticipation.class, HttpStatus.OK);
         assertThat(updatedParticipation.getInitializationState()).isEqualTo(InitializationState.INITIALIZED);
@@ -726,25 +765,24 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
             assertThat(exercise.getGradingInstructions()).isNull();
             assertThat(exercise.getDifficulty()).isNull();
             assertThat(exercise.getMode()).isEqualTo(ExerciseMode.INDIVIDUAL);
-            if (exercise instanceof ProgrammingExercise aProgrammingExercise) {
-                assertThat(aProgrammingExercise.getSolutionParticipation()).isNull();
-                assertThat(aProgrammingExercise.getTemplateParticipation()).isNull();
-                assertThat(aProgrammingExercise.getTestRepositoryUrl()).isNull();
-                assertThat(aProgrammingExercise.getShortName()).isNull();
-                assertThat(aProgrammingExercise.isPublishBuildPlanUrl()).isNull();
-                assertThat(aProgrammingExercise.getProgrammingLanguage()).isNull();
-                assertThat(aProgrammingExercise.getPackageName()).isNull();
-                assertThat(aProgrammingExercise.isAllowOnlineEditor()).isNull();
-            }
-            else if (exercise instanceof QuizExercise quizExercise) {
-                assertThat(quizExercise.getQuizQuestions()).isEmpty();
-            }
-            else if (exercise instanceof TextExercise aTextExercise) {
-                assertThat(aTextExercise.getExampleSolution()).isNull();
-            }
-            else if (exercise instanceof ModelingExercise aModelingExercise) {
-                assertThat(aModelingExercise.getExampleSolutionModel()).isNull();
-                assertThat(aModelingExercise.getExampleSolutionExplanation()).isNull();
+            switch (exercise) {
+                case ProgrammingExercise aProgrammingExercise -> {
+                    assertThat(aProgrammingExercise.getSolutionParticipation()).isNull();
+                    assertThat(aProgrammingExercise.getTemplateParticipation()).isNull();
+                    assertThat(aProgrammingExercise.getTestRepositoryUri()).isNull();
+                    assertThat(aProgrammingExercise.getShortName()).isNull();
+                    assertThat(aProgrammingExercise.getProgrammingLanguage()).isNull();
+                    assertThat(aProgrammingExercise.getPackageName()).isNull();
+                    assertThat(aProgrammingExercise.isAllowOnlineEditor()).isNull();
+                }
+                case QuizExercise quizExercise -> assertThat(quizExercise.getQuizQuestions()).isEmpty();
+                case TextExercise aTextExercise -> assertThat(aTextExercise.getExampleSolution()).isNull();
+                case ModelingExercise aModelingExercise -> {
+                    assertThat(aModelingExercise.getExampleSolutionModel()).isNull();
+                    assertThat(aModelingExercise.getExampleSolutionExplanation()).isNull();
+                }
+                default -> {
+                }
             }
         });
     }
@@ -1039,13 +1077,12 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
      * When using {@code List<StudentParticipation>} directly as body in the unit tests, the deserialization fails as
      * there no longer is a {@code type} attribute due to type erasure. Therefore, Jackson does not know which subtype
      * of {@link Participation} is stored in the list.
-     *
+     * <p>
      * Using this wrapper-class avoids this issue.
      */
     private static class StudentParticipationList extends ArrayList<StudentParticipation> {
 
         public StudentParticipationList(StudentParticipation... participations) {
-            super();
             this.addAll(Arrays.asList(participations));
         }
     }
@@ -1095,8 +1132,8 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
             programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
             exerciseRepo.save(programmingExercise);
         }
-        bambooRequestMockProvider.enableMockingOfRequests();
-        bambooRequestMockProvider.mockDeleteBambooBuildPlan(participation.getBuildPlanId(), false);
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
+        mockDeleteBuildPlan(programmingExercise.getProjectKey(), participation.getBuildPlanId(), false);
         var actualParticipation = request.putWithResponseBody("/api/participations/" + participation.getId() + "/cleanupBuildPlan", null, Participation.class, HttpStatus.OK);
         assertThat(actualParticipation).isEqualTo(participation);
         assertThat(actualParticipation.getInitializationState()).isEqualTo(!practiceMode && afterDueDate ? InitializationState.FINISHED : InitializationState.INACTIVE);

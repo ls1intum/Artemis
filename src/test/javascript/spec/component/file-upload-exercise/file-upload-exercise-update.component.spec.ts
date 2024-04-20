@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, UrlSegment } from '@angular/router';
-import { of } from 'rxjs';
+import { Subject, of } from 'rxjs';
 
 import { ArtemisTestModule } from '../../test.module';
 import { FileUploadExerciseUpdateComponent } from 'app/exercises/file-upload/manage/file-upload-exercise-update.component';
@@ -20,6 +20,9 @@ import dayjs from 'dayjs/esm';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { Exam } from 'app/entities/exam.model';
 import { fileUploadExercise } from '../../helpers/mocks/service/mock-file-upload-exercise.service';
+import { ExerciseTitleChannelNameComponent } from 'app/exercises/shared/exercise-title-channel-name/exercise-title-channel-name.component';
+import { TeamConfigFormGroupComponent } from 'app/exercises/shared/team-config-form-group/team-config-form-group.component';
+import { NgModel } from '@angular/forms';
 
 describe('FileUploadExerciseUpdateComponent', () => {
     let comp: FileUploadExerciseUpdateComponent;
@@ -140,6 +143,30 @@ describe('FileUploadExerciseUpdateComponent', () => {
             expect(comp.isExamMode).toBeFalse();
             expect(comp.fileUploadExercise).toEqual(fileUploadExercise);
         }));
+
+        it('should calculate valid sections', () => {
+            const calculateValidSpy = jest.spyOn(comp, 'calculateFormSectionStatus');
+            comp.exerciseTitleChannelNameComponent = { titleChannelNameComponent: { formValidChanges: new Subject() } } as ExerciseTitleChannelNameComponent;
+            comp.teamConfigFormGroupComponent = { formValidChanges: new Subject() } as TeamConfigFormGroupComponent;
+            comp.bonusPoints = { valueChanges: new Subject(), valid: true } as unknown as NgModel;
+            comp.points = { valueChanges: new Subject(), valid: true } as unknown as NgModel;
+
+            comp.ngOnInit();
+            comp.ngAfterViewInit();
+            expect(comp.titleChannelNameComponentSubscription).toBeDefined();
+
+            comp.exerciseTitleChannelNameComponent.titleChannelNameComponent.formValid = true;
+            comp.exerciseTitleChannelNameComponent.titleChannelNameComponent.formValidChanges.next(true);
+            expect(calculateValidSpy).toHaveBeenCalledOnce();
+            expect(comp.formStatusSections).toBeDefined();
+            expect(comp.formStatusSections[0].valid).toBeTrue();
+
+            comp.validateDate();
+            expect(calculateValidSpy).toHaveBeenCalledTimes(2);
+
+            comp.ngOnDestroy();
+            expect(comp.titleChannelNameComponentSubscription?.closed).toBeTrue();
+        });
     });
     describe('imported exercise', () => {
         const course = { id: 1 } as Course;

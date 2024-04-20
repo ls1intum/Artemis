@@ -1,14 +1,14 @@
 import { Course } from 'app/entities/course.model';
 import { BehaviorSubject, EMPTY, Observable } from 'rxjs';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
-import { GroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
+import { GroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 
 export class MockMetisConversationService {
     get course(): Course | undefined {
         return undefined;
     }
 
-    get activeConversation$(): Observable<ConversationDto | undefined> {
+    get activeConversation$(): Observable<ConversationDTO | undefined> {
         return EMPTY;
     }
 
@@ -16,8 +16,8 @@ export class MockMetisConversationService {
         return new BehaviorSubject(true).asObservable();
     }
 
-    get conversationsOfUser$(): Observable<ConversationDto[]> {
-        return new BehaviorSubject([new GroupChatDto()]).asObservable();
+    get conversationsOfUser$(): Observable<ConversationDTO[]> {
+        return new BehaviorSubject([new GroupChatDTO()]).asObservable();
     }
 
     get isLoading$(): Observable<boolean> {
@@ -34,7 +34,7 @@ export class MockMetisConversationService {
 
     checkIsCodeOfConductAccepted(): void {}
 
-    setActiveConversation(conversationIdentifier: ConversationDto | number | undefined) {}
+    setActiveConversation(conversationIdentifier: ConversationDTO | number | undefined) {}
 
     setUpConversationService = (course: Course): Observable<never> => {
         return EMPTY;
@@ -43,6 +43,8 @@ export class MockMetisConversationService {
     forceRefresh(notifyActiveConversationSubscribers = true, notifyConversationsSubscribers = true): Observable<never> {
         return EMPTY;
     }
+
+    markAsRead(): void {}
 
     acceptCodeOfConduct(course: Course) {}
 }

@@ -38,16 +38,17 @@ const esModules = [
     'd3-time',
     'd3-transition',
     'dayjs/esm',
+    'export-to-csv',
     'franc-min',
     'internmap',
     'lodash-es',
+    'monaco-editor',
     'n-gram',
     'ngx-device-detector',
     'ngx-infinite-scroll',
-    'ngx-slider-v2',
     'ngx-webstorage',
     'rxjs/operators',
-    'trigram-utils'
+    'trigram-utils',
 ].join('|');
 
 const {
@@ -100,10 +101,10 @@ module.exports = {
     coverageThreshold: {
         global: {
             // TODO: in the future, the following values should increase to at least 90%
-            statements: 86.7,
-            branches: 73.6,
-            functions: 80.6,
-            lines: 86.7,
+            statements: 87.2,
+            branches: 73.8,
+            functions: 81.6,
+            lines: 87.3,
         },
     },
     coverageReporters: ['clover', 'json', 'lcov', 'text-summary'],
@@ -147,6 +148,8 @@ module.exports = {
         '@src/(.*)': '<rootDir>/src/src/$1',
         '@state/(.*)': '<rootDir>/src/app/state/$1',
         '^lodash-es$': 'lodash',
-        "@sentry/angular-ivy": "<rootDir>/node_modules/@sentry/angular-ivy/bundles/sentry-angular-ivy.umd.js"
+        '@sentry/angular-ivy': '<rootDir>/node_modules/@sentry/angular-ivy/bundles/sentry-angular-ivy.umd.js',
+        '\\.css$': '<rootDir>/stub.js',
+        '^monaco-editor$': '<rootDir>/node_modules/monaco-editor/esm/vs/editor/editor.api.js',
     },
 };

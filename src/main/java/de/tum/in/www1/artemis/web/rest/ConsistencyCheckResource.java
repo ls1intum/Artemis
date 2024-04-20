@@ -1,9 +1,12 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,11 +24,12 @@ import de.tum.in.www1.artemis.service.dto.ConsistencyErrorDTO;
 /**
  * REST controller for consistency checks
  */
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 public class ConsistencyCheckResource {
 
-    private final Logger log = LoggerFactory.getLogger(ConsistencyCheckResource.class);
+    private static final Logger log = LoggerFactory.getLogger(ConsistencyCheckResource.class);
 
     private final AuthorizationCheckService authCheckService;
 

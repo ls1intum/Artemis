@@ -29,7 +29,7 @@ import de.tum.in.www1.artemis.web.rest.errors.ServiceUnavailableException;
 @Profile("athena")
 public class AthenaRepositoryExportService {
 
-    private final Logger log = LoggerFactory.getLogger(AthenaRepositoryExportService.class);
+    private static final Logger log = LoggerFactory.getLogger(AthenaRepositoryExportService.class);
 
     // The downloaded repos should be cloned into another path in order to not interfere with the repo used by the student
     // We reuse the same directory as the programming exercise export service for this.
@@ -63,7 +63,7 @@ public class AthenaRepositoryExportService {
      * @throws AccessForbiddenException if the feedback suggestions are not enabled for the given exercise
      */
     private void checkFeedbackSuggestionsEnabledElseThrow(Exercise exercise) {
-        if (!exercise.getFeedbackSuggestionsEnabled()) {
+        if (!exercise.areFeedbackSuggestionsEnabled()) {
             log.error("Feedback suggestions are not enabled for exercise {}", exercise.getId());
             throw new ServiceUnavailableException("Feedback suggestions are not enabled for exercise");
         }
@@ -104,7 +104,7 @@ public class AthenaRepositoryExportService {
             var submission = programmingSubmissionRepository.findById(submissionId).orElseThrow();
             // Load participation with eager submissions
             var participation = (ProgrammingExerciseStudentParticipation) programmingExerciseStudentParticipationRepository
-                    .findWithSubmissionsById(submission.getParticipation().getId()).get(0);
+                    .findWithSubmissionsById(submission.getParticipation().getId()).getFirst();
             zipFile = programmingExerciseExportService.createZipForRepositoryWithParticipation(programmingExercise, participation, exportOptions, exportDir, exportDir);
         }
         else {

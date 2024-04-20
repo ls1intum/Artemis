@@ -182,7 +182,7 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
 
         verify(gitlab, atLeastOnce()).getPipelineApi();
         verify(gitlab.getPipelineApi(), atLeastOnce()).createPipelineTrigger(any(), anyString());
-        verify(gitlab.getPipelineApi()).triggerPipeline(eq(urlService.getRepositoryPathFromRepositoryUrl(participation.getVcsRepositoryUrl())), any(Trigger.class), anyString(),
+        verify(gitlab.getPipelineApi()).triggerPipeline(eq(uriService.getRepositoryPathFromRepositoryUri(participation.getVcsRepositoryUri())), any(Trigger.class), anyString(),
                 isNull());
     }
 
@@ -196,7 +196,7 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
         assertThatThrownBy(() -> continuousIntegrationTriggerService.triggerBuild(participation)).isInstanceOf(GitLabCIException.class);
 
         verify(gitlab, atLeastOnce()).getPipelineApi();
-        verify(gitlab.getPipelineApi(), never()).triggerPipeline(eq(urlService.getRepositoryPathFromRepositoryUrl(participation.getVcsRepositoryUrl())), any(Trigger.class),
+        verify(gitlab.getPipelineApi(), never()).triggerPipeline(eq(uriService.getRepositoryPathFromRepositoryUri(participation.getVcsRepositoryUri())), any(Trigger.class),
                 anyString(), isNull());
     }
 
@@ -216,7 +216,7 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
         mockAddBuildPlanToGitLabRepositoryConfiguration(true);
 
         ProgrammingExerciseStudentParticipation participation = new ProgrammingExerciseStudentParticipation();
-        participation.setRepositoryUrl("http://some.test.url/PROJECTNAME/REPONAME-exercise.git");
+        participation.setRepositoryUri("http://some.test.url/PROJECTNAME/REPONAME-exercise.git");
         assertThatThrownBy(() -> continuousIntegrationService.configureBuildPlan(participation, "main")).isInstanceOf(GitLabCIException.class);
     }
 
@@ -225,10 +225,10 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
     void testCreateBuildPlanForExercise() throws GitLabApiException {
         final ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
         final ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
-        final String repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(participation.getVcsRepositoryUrl());
+        final String repositoryPath = uriService.getRepositoryPathFromRepositoryUri(participation.getVcsRepositoryUri());
         mockAddBuildPlanToGitLabRepositoryConfiguration(false);
 
-        continuousIntegrationService.createBuildPlanForExercise(exercise, "TEST-EXERCISE", participation.getVcsRepositoryUrl(), null, null);
+        continuousIntegrationService.createBuildPlanForExercise(exercise, "TEST-EXERCISE", participation.getVcsRepositoryUri(), null, null);
 
         verify(gitlab, atLeastOnce()).getProjectApi();
         verify(gitlab.getProjectApi(), atLeastOnce()).getProject(eq(repositoryPath));

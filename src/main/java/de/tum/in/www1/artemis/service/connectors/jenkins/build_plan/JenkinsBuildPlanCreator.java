@@ -8,7 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -137,9 +137,9 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
     private Map<String, String> getReplacements(final InternalVcsRepositoryURLs internalVcsRepositoryURLs, final boolean checkoutSolution, final String buildPlanUrl) {
         final Map<String, String> replacements = new HashMap<>();
 
-        replacements.put(REPLACE_TEST_REPO, internalVcsRepositoryURLs.testRepositoryUrl().getURI().toString());
-        replacements.put(REPLACE_ASSIGNMENT_REPO, internalVcsRepositoryURLs.assignmentRepositoryUrl().getURI().toString());
-        replacements.put(REPLACE_SOLUTION_REPO, internalVcsRepositoryURLs.solutionRepositoryUrl().getURI().toString());
+        replacements.put(REPLACE_TEST_REPO, internalVcsRepositoryURLs.testRepositoryUri().getURI().toString());
+        replacements.put(REPLACE_ASSIGNMENT_REPO, internalVcsRepositoryURLs.assignmentRepositoryUri().getURI().toString());
+        replacements.put(REPLACE_SOLUTION_REPO, internalVcsRepositoryURLs.solutionRepositoryUri().getURI().toString());
         replacements.put(REPLACE_GIT_CREDENTIALS, gitCredentialsKey);
         replacements.put(REPLACE_ASSIGNMENT_CHECKOUT_PATH, Constants.ASSIGNMENT_CHECKOUT_PATH);
         replacements.put(REPLACE_TESTS_CHECKOUT_PATH, Constants.TESTS_CHECKOUT_PATH);

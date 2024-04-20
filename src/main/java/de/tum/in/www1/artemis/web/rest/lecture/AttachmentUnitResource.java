@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.lecture;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -11,12 +13,13 @@ import java.util.Objects;
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.google.gson.Gson;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.Attachment;
 import de.tum.in.www1.artemis.domain.Lecture;
@@ -26,19 +29,19 @@ import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitInformationDTO;
 import de.tum.in.www1.artemis.web.rest.errors.*;
 
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 public class AttachmentUnitResource {
 
-    private final Logger log = LoggerFactory.getLogger(AttachmentUnitResource.class);
+    private static final Logger log = LoggerFactory.getLogger(AttachmentUnitResource.class);
 
     private static final String ENTITY_NAME = "attachmentUnit";
-
-    private static final Gson GSON = new Gson();
 
     private final AttachmentUnitRepository attachmentUnitRepository;
 
@@ -146,9 +149,9 @@ public class AttachmentUnitResource {
             throw new BadRequestAlertException("A new attachment cannot already have an ID", ENTITY_NAME, "idexists");
         }
 
-        Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId);
         if (lecture.getCourse() == null) {
-            throw new ConflictException("Specified lecture is not part of a course", "AttachmentUnit", "courseMissing");
+            throw new BadRequestAlertException("Specified lecture is not part of a course", ENTITY_NAME, "courseMissing");
         }
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
 
@@ -183,7 +186,7 @@ public class AttachmentUnitResource {
         }
         try {
             String filename = lectureUnitProcessingService.saveTempFileForProcessing(lectureId, file, minutesUntilDeletion);
-            return ResponseEntity.ok().body(GSON.toJson(filename));
+            return ResponseEntity.ok().body(new ObjectMapper().writeValueAsString(filename));
         }
         catch (IOException e) {
             log.error("Could not save file {}", originalFilename, e);
@@ -211,7 +214,7 @@ public class AttachmentUnitResource {
         try {
             byte[] fileBytes = fileService.getFileForPath(filePath);
             List<AttachmentUnit> savedAttachmentUnits = lectureUnitProcessingService.splitAndSaveUnits(lectureUnitInformationDTO, fileBytes,
-                    lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId));
+                    lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId));
             savedAttachmentUnits.forEach(attachmentUnitService::prepareAttachmentUnitForClient);
             savedAttachmentUnits.forEach(competencyProgressService::updateProgressByLearningObjectAsync);
             return ResponseEntity.ok().body(savedAttachmentUnits);
@@ -284,10 +287,10 @@ public class AttachmentUnitResource {
      */
     private void checkAttachmentUnitCourseAndLecture(AttachmentUnit attachmentUnit, Long lectureId) {
         if (attachmentUnit.getLecture() == null || attachmentUnit.getLecture().getCourse() == null) {
-            throw new ConflictException("Lecture unit must be associated to a lecture of a course", "AttachmentUnit", "lectureOrCourseMissing");
+            throw new BadRequestAlertException("Lecture unit must be associated to a lecture of a course", ENTITY_NAME, "lectureOrCourseMissing");
         }
         if (!attachmentUnit.getLecture().getId().equals(lectureId)) {
-            throw new ConflictException("Requested lecture unit is not part of the specified lecture", "AttachmentUnit", "lectureIdMismatch");
+            throw new BadRequestAlertException("Requested lecture unit is not part of the specified lecture", ENTITY_NAME, "lectureIdMismatch");
         }
     }
 
@@ -297,9 +300,9 @@ public class AttachmentUnitResource {
      * @param lectureId The id of the lecture
      */
     private void checkLecture(Long lectureId) {
-        Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId);
         if (lecture.getCourse() == null) {
-            throw new ConflictException("Specified lecture is not part of a course", "AttachmentUnit", "courseMissing");
+            throw new BadRequestAlertException("Specified lecture is not part of a course", ENTITY_NAME, "courseMissing");
         }
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
     }

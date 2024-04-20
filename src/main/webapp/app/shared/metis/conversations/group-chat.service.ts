@@ -1,6 +1,6 @@
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
-import { GroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
+import { GroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { Observable, map } from 'rxjs';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
@@ -16,15 +16,15 @@ export class GroupChatService {
         private accountService: AccountService,
     ) {}
 
-    create(courseId: number, loginsOfChatPartners: string[]): Observable<HttpResponse<GroupChatDto>> {
+    create(courseId: number, loginsOfChatPartners: string[]): Observable<HttpResponse<GroupChatDTO>> {
         return this.http
             .post<OneToOneChatDTO>(`${this.resourceUrl}${courseId}/group-chats`, loginsOfChatPartners, { observe: 'response' })
             .pipe(map(this.conversationService.convertDateFromServer));
     }
 
-    update(courseId: number, groupChatId: number, groupChatDTO: GroupChatDto): Observable<HttpResponse<GroupChatDto>> {
+    update(courseId: number, groupChatId: number, groupChatDTO: GroupChatDTO): Observable<HttpResponse<GroupChatDTO>> {
         return this.http
-            .put<GroupChatDto>(`${this.resourceUrl}${courseId}/group-chats/${groupChatId}`, groupChatDTO, { observe: 'response' })
+            .put<GroupChatDTO>(`${this.resourceUrl}${courseId}/group-chats/${groupChatId}`, groupChatDTO, { observe: 'response' })
             .pipe(map(this.conversationService.convertDateFromServer));
     }
 

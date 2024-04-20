@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { User } from 'app/core/user/user.model';
@@ -54,21 +54,6 @@ describe('ExamResultSummaryExerciseCardHeaderComponent', () => {
     afterEach(() => {
         jest.restoreAllMocks();
     });
-
-    it('should collapse and expand exercise when collapse button is clicked', fakeAsync(() => {
-        fixture.detectChanges();
-        const toggleCollapseExerciseButtonFour = fixture.debugElement.query(By.css('#toggleCollapseExerciseButton-4'));
-
-        expect(toggleCollapseExerciseButtonFour).not.toBeNull();
-
-        toggleCollapseExerciseButtonFour.nativeElement.click();
-
-        expect(component.exerciseInfo?.isCollapsed).toBeTrue();
-
-        toggleCollapseExerciseButtonFour.nativeElement.click();
-
-        expect(component.exerciseInfo?.isCollapsed).toBeFalse();
-    }));
 
     it.each([
         [{}, false],

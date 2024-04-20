@@ -9,7 +9,6 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.dto.BuildJobDTOInterface;
 import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
@@ -17,13 +16,7 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseFeedbackCre
 
 public abstract class AbstractContinuousIntegrationResultService implements ContinuousIntegrationResultService {
 
-    protected final ProgrammingSubmissionRepository programmingSubmissionRepository;
-
-    protected final FeedbackRepository feedbackRepository;
-
     protected final ProgrammingExerciseTestCaseRepository testCaseRepository;
-
-    protected final BuildLogEntryService buildLogService;
 
     protected final BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
 
@@ -31,13 +24,10 @@ public abstract class AbstractContinuousIntegrationResultService implements Cont
 
     protected final ProgrammingExerciseFeedbackCreationService feedbackCreationService;
 
-    protected AbstractContinuousIntegrationResultService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository,
-            ProgrammingExerciseTestCaseRepository testCaseRepository, BuildLogEntryService buildLogService, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository,
-            TestwiseCoverageService testwiseCoverageService, ProgrammingExerciseFeedbackCreationService feedbackCreationService) {
-        this.programmingSubmissionRepository = programmingSubmissionRepository;
-        this.feedbackRepository = feedbackRepository;
+    protected AbstractContinuousIntegrationResultService(ProgrammingExerciseTestCaseRepository testCaseRepository,
+            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService,
+            ProgrammingExerciseFeedbackCreationService feedbackCreationService) {
         this.testCaseRepository = testCaseRepository;
-        this.buildLogService = buildLogService;
         this.buildLogStatisticsEntryRepository = buildLogStatisticsEntryRepository;
         this.testwiseCoverageService = testwiseCoverageService;
         this.feedbackCreationService = feedbackCreationService;
@@ -51,6 +41,7 @@ public abstract class AbstractContinuousIntegrationResultService implements Cont
         result.setAssessmentType(AssessmentType.AUTOMATIC);
         result.setSuccessful(buildResult.isBuildSuccessful());
         result.setCompletionDate(buildResult.getBuildRunDate());
+        // this only sets the score to a temporary value, the real score is calculated in the grading service
         result.setScore(buildResult.getBuildScore(), exercise.getCourseViaExerciseGroupOrCourseMember());
         result.setParticipation((Participation) participation);
 
@@ -82,13 +73,14 @@ public abstract class AbstractContinuousIntegrationResultService implements Cont
         var activeTestCases = testCaseRepository.findByExerciseIdAndActive(programmingExercise.getId(), true);
         for (final var job : jobs) {
             for (final var failedTest : job.getFailedTests()) {
-                result.addFeedback(feedbackCreationService.createFeedbackFromTestCase(failedTest.getName(), failedTest.getMessage(), false, programmingExercise, activeTestCases));
+                result.addFeedback(
+                        feedbackCreationService.createFeedbackFromTestCase(failedTest.getName(), failedTest.getTestMessages(), false, programmingExercise, activeTestCases));
             }
             result.setTestCaseCount(result.getTestCaseCount() + job.getFailedTests().size());
 
             for (final var successfulTest : job.getSuccessfulTests()) {
                 result.addFeedback(
-                        feedbackCreationService.createFeedbackFromTestCase(successfulTest.getName(), successfulTest.getMessage(), true, programmingExercise, activeTestCases));
+                        feedbackCreationService.createFeedbackFromTestCase(successfulTest.getName(), successfulTest.getTestMessages(), true, programmingExercise, activeTestCases));
             }
 
             result.setTestCaseCount(result.getTestCaseCount() + job.getSuccessfulTests().size());

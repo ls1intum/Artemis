@@ -1,0 +1,86 @@
+{
+    "artemisApp": {
+        "standardizedCompetency": {
+            "title": "Standardisierte Kompetenzen",
+            "manage": {
+                "title": "Standardisierte Kompetenzen Verwalten",
+                "filter": "Kompetenzen Filtern",
+                "expandButtonTooltip": "Alle Wissensgebiete ausklappen",
+                "collapseButtonTooltip": "Alle Wissensgebiete einklappen",
+                "updateTreeError": "Bei der Aktualisierung des Wissensbereichsbaums ist ein Fehler aufgetreten. Bitte lade die Seite neu",
+                "deleteModal": {
+                    "question": "Willst du wirklich die standardisierte Kompetenz <strong>{{ title }}</strong> löschen? Du kannst diese Aktion nicht rückgängig machen!",
+                    "typeNameToConfirm": "Bitte gib zur Bestätigung den Namen der standardisierten Kompetenz ein."
+                },
+                "cancelModal": {
+                    "title": "Warnung: Ungespeicherte Änderungen",
+                    "text": "Willst du wirklich die Bearbeitung der standardisierten Kompetenz <strong>{{title}}</strong> abbrechen? Klicke auf Abbrechen, um zurückzugehen, oder Bestätigen, um fortzufahren."
+                },
+                "successAlerts": {
+                    "create": "Erfolgreich die standardisierte Kompetenz <strong>{{title}}</strong> erstellt",
+                    "update": "Erfolgreich die standardisierte Kompetenz <strong>{{title}}</strong> aktualisiert",
+                    "delete": "Erfolgreich die standardisierte Kompetenz <strong>{{title}}</strong> gelöscht"
+                }
+            },
+            "model": {
+                "title": "Titel",
+                "description": "Beschreibung",
+                "taxonomy": "Taxonomie",
+                "knowledgeArea": "Wissensgebiet",
+                "version": "Version"
+            },
+            "details": {
+                "title": "Standardisierte Kompetenz",
+                "titleCreate": "Standardisierte Kompetenz Erstellen",
+                "titleEdit": "Standardisierte Kompetenz Bearbeiten",
+                "error": {
+                    "titleRequired": "Eine standardisierte Kompetenz muss einen Titel haben",
+                    "titleMaxLength": "Der Titel einer standardisierten Kompetenz darf maximal {{max}} Zeichen lang sein",
+                    "descriptionMaxLength": "Die Beschreibung einer standardisierten Kompetenz darf maximal {{max}} Zeichen lang sein",
+                    "knowledgeAreaRequired": "Eine standardisierte Kompetenz muss ein Wissensgebiet haben"
+                }
+            }
+        },
+        "knowledgeArea": {
+            "empty": "Dieses Wissensgebiet hat noch keinen Inhalt",
+            "model": {
+                "title": "Titel",
+                "description": "Beschreibung",
+                "shortTitle": "Kurztitel",
+                "parent": "Übergeordnetes Wissensgebiet"
+            },
+            "manage": {
+                "createButtonTooltip": "Wissensgebiet erstellen",
+                "detailsTooltip": "Wissensgebiet-Details öffnen",
+                "deleteModal": {
+                    "question": "Willst du wirklich das Wissensgebiet <strong>{{ title }}</strong> löschen? Du kannst diese Aktion nicht rückgängig machen! <strong>Damit werden auch alle enthaltenen Wissensgebiete und standardisierten Kompetenzen gelöscht!</strong>",
+                    "typeNameToConfirm": "Bitte gib zur Bestätigung den Namen des Wissensgebiets ein."
+                },
+                "cancelModal": {
+                    "title": "Warnung: Ungespeicherte Änderungen",
+                    "text": "Willst du wirklich die Bearbeitung des Wissensgebiets <strong>{{title}}</strong> abbrechen? Klicke auf Abbrechen, um zurückzugehen, oder Bestätigen, um fortzufahren."
+                },
+                "successAlerts": {
+                    "create": "Erfolgreich das Wissensgebiet <strong>{{title}}</strong> erstellt",
+                    "update": "Erfolgreich das Wissensgebiet <strong>{{title}}</strong> aktualisiert",
+                    "delete": "Erfolgreich das Wissensgebiet <strong>{{title}}</strong> gelöscht"
+                }
+            },
+            "details": {
+                "title": "Wissensgebiet",
+                "titleCreate": "Wissensgebiet Erstellen",
+                "titleEdit": "Wissensgebiet Bearbeiten",
+                "createKnowledgeAreaButton": "Wissensgebiet hinzufügen",
+                "createCompetencyButton": "Kompetenz hinzufügen",
+                "error": {
+                    "titleRequired": "Ein Wissensgebiet muss einen Titel haben",
+                    "titleMaxLength": "Der Titel eines Wissensgebietes darf maximal {{max}} Zeichen lang sein",
+                    "shortTitleRequired": "Ein Wissensgebiet muss einen Kurztitel haben",
+                    "shortTitleMaxLength": "Der Kurztitel eines Wissensgebietes darf maximal {{max}} Zeichen lang sein",
+                    "descriptionMaxLength": "Die Beschreibung eines Wissensgebietes darf maximal {{max}} Zeichen lang sein",
+                    "parentIdCircle": "Ein Wissensgebiet kann nicht sich selbst oder einem seiner untergeordneten Wissensgebiete untergeordnet sein"
+                }
+            }
+        }
+    }
+}

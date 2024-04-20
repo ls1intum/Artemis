@@ -8,7 +8,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { QuizPoolComponent } from 'app/exercises/quiz/manage/quiz-pool.component';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { QuizPoolService } from 'app/exercises/quiz/manage/quiz-pool.service';
-import { of, throwError } from 'rxjs';
+import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { QuizPool } from 'app/entities/quiz/quiz-pool.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
@@ -77,7 +77,7 @@ describe('QuizPoolComponent', () => {
     });
 
     it('should initialize quiz pool with new object if existing quiz pool is not found', () => {
-        jest.spyOn(quizPoolService, 'find').mockReturnValue(throwError(() => ({ status: 404 })));
+        jest.spyOn(quizPoolService, 'find').mockReturnValue(of(new HttpResponse<QuizPool>({ body: null })));
         component.ngOnInit();
         expect(component.quizPool.quizGroups).toBeArrayOfSize(0);
         expect(component.quizPool.quizQuestions).toBeArrayOfSize(0);

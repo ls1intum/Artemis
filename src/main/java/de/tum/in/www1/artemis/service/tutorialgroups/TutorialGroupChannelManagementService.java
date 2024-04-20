@@ -1,16 +1,17 @@
 package de.tum.in.www1.artemis.service.tutorialgroups;
 
-import static javax.persistence.Persistence.getPersistenceUtil;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+import static jakarta.persistence.Persistence.getPersistenceUtil;
 
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -27,6 +28,7 @@ import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 /**
  * Service for managing the channel connected to a tutorial group.
  */
+@Profile(PROFILE_CORE)
 @Service
 public class TutorialGroupChannelManagementService {
 
@@ -40,7 +42,7 @@ public class TutorialGroupChannelManagementService {
 
     private final ChannelRepository channelRepository;
 
-    private final Logger log = LoggerFactory.getLogger(TutorialGroupChannelManagementService.class);
+    private static final Logger log = LoggerFactory.getLogger(TutorialGroupChannelManagementService.class);
 
     public TutorialGroupChannelManagementService(ChannelService channelService, ConversationService conversationService, TutorialGroupRepository tutorialGroupRepository,
             TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository, ChannelRepository channelRepository) {
@@ -203,9 +205,7 @@ public class TutorialGroupChannelManagementService {
      */
     public void removeUsersFromAllTutorialGroupChannelsInCourse(Course course, Set<User> users) {
         var tutorialGroups = tutorialGroupRepository.findAllByCourseId(course.getId());
-        tutorialGroups.forEach(tutorialGroup -> {
-            removeUsersFromTutorialGroupChannel(tutorialGroup, users);
-        });
+        tutorialGroups.forEach(tutorialGroup -> removeUsersFromTutorialGroupChannel(tutorialGroup, users));
     }
 
     /**
@@ -247,24 +247,25 @@ public class TutorialGroupChannelManagementService {
      * @throws IllegalStateException if a unique channel name could not be determined
      */
     private String determineUniqueTutorialGroupChannelName(TutorialGroup tutorialGroup) {
-        Function<TutorialGroup, String> determineInitialTutorialGroupChannelName = (TutorialGroup tg) -> {
-            var cleanedTitle = tg.getTitle().replaceAll("\\s", "-").toLowerCase();
-            return "tutorgroup-" + cleanedTitle.substring(0, Math.min(cleanedTitle.length(), 18));
-        };
+        Course course = tutorialGroup.getCourse();
+        String cleanedGroupTitle = tutorialGroup.getTitle().replaceAll("\\s", "-").toLowerCase();
+        String channelName = "tutorgroup-" + cleanedGroupTitle.substring(0, Math.min(cleanedGroupTitle.length(), 18));
 
-        var channelName = determineInitialTutorialGroupChannelName.apply(tutorialGroup);
-        if (channelRepository.findChannelByCourseIdAndName(tutorialGroup.getCourse().getId(), channelName).isEmpty()) {
+        if (!channelRepository.existsChannelByNameAndCourseId(channelName, course.getId())) {
+            // No channel with this name exists in the course yet, so it can be used.
             return channelName;
         }
 
         // try to make it unique by adding a random number to the end of the channel name
         // if already max length remove the last 3 characters to get some space to try to make it unique
-        if (channelName.length() == 30) {
+        if (channelName.length() >= 30) {
             channelName = channelName.substring(0, 27);
         }
-        while (!channelRepository.findChannelByCourseIdAndName(tutorialGroup.getCourse().getId(), channelName).isEmpty() && channelName.length() <= 30) {
+
+        do {
             channelName += ThreadLocalRandom.current().nextInt(0, 10);
         }
+        while (channelRepository.existsChannelByNameAndCourseId(channelName, course.getId()) && channelName.length() <= 30);
 
         if (channelName.length() > 30) {
             // very unlikely to happen
@@ -317,9 +318,7 @@ public class TutorialGroupChannelManagementService {
      */
     public void changeChannelModeForCourse(Course course, Boolean tutorialGroupChannelsPublic) {
         var channels = tutorialGroupRepository.findAllByCourseIdWithChannel(course.getId()).stream().map(this::createChannelForTutorialGroup).collect(Collectors.toSet());
-        channels.forEach(channel -> {
-            channel.setIsPublic(tutorialGroupChannelsPublic);
-        });
+        channels.forEach(channel -> channel.setIsPublic(tutorialGroupChannelsPublic));
         channelRepository.saveAll(channels);
         log.debug("Changed public for all tutorial group channels of course with id {} to {}", course.getId(), tutorialGroupChannelsPublic);
     }

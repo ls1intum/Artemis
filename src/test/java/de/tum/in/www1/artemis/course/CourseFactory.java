@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.LtiPlatformConfiguration;
 import de.tum.in.www1.artemis.domain.OnlineCourseConfiguration;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 
@@ -182,15 +183,13 @@ public class CourseFactory {
      * Generates an online course configuration.
      *
      * @param course      The course for which an online configuration is to be generated.
-     * @param key         The lti key of the configuration.
-     * @param secret      The lti secret of the configuration.
      * @param userPrefix  The prefix of user groups in the course.
      * @param originalUrl The original url of the configuration.
      * @return the newly generated online course configuration.
      */
-    public static OnlineCourseConfiguration generateOnlineCourseConfiguration(Course course, String key, String secret, String userPrefix, String originalUrl) {
+    public static OnlineCourseConfiguration generateOnlineCourseConfiguration(Course course, String userPrefix, String originalUrl) {
         OnlineCourseConfiguration onlineCourseConfiguration = new OnlineCourseConfiguration();
-        updateOnlineCourseConfiguration(onlineCourseConfiguration, key, secret, userPrefix, originalUrl, UUID.randomUUID().toString());
+        updateOnlineCourseConfiguration(onlineCourseConfiguration, userPrefix, originalUrl, UUID.randomUUID().toString());
         course.setOnlineCourseConfiguration(onlineCourseConfiguration);
         return onlineCourseConfiguration;
     }
@@ -198,19 +197,16 @@ public class CourseFactory {
     /**
      * Updates the online course configuration.
      *
-     * @param onlineCourseConfiguration The online course configuration to be updated.
-     * @param key                       The lti key of the configuration.
-     * @param secret                    The lti secret of the configuration.
+     * @param onlineCourseConfiguration The online course configuration to be updated..
      * @param userPrefix                The prefix of user groups in the course.
      * @param originalUrl               The original url of the configuration.
      * @param registrationId            The registration id of the configuration.
      */
-    public static void updateOnlineCourseConfiguration(OnlineCourseConfiguration onlineCourseConfiguration, String key, String secret, String userPrefix, String originalUrl,
-            String registrationId) {
-        onlineCourseConfiguration.setLtiKey(key);
-        onlineCourseConfiguration.setLtiSecret(secret);
+    public static void updateOnlineCourseConfiguration(OnlineCourseConfiguration onlineCourseConfiguration, String userPrefix, String originalUrl, String registrationId) {
         onlineCourseConfiguration.setUserPrefix(userPrefix);
-        onlineCourseConfiguration.setOriginalUrl(originalUrl);
-        onlineCourseConfiguration.setRegistrationId(registrationId);
+
+        LtiPlatformConfiguration ltiPlatformConfiguration = new LtiPlatformConfiguration();
+        ltiPlatformConfiguration.setTokenUri(originalUrl);
+        ltiPlatformConfiguration.setRegistrationId(registrationId);
     }
 }

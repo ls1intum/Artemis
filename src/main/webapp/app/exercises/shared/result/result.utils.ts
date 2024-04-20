@@ -13,7 +13,7 @@ import { faCheckCircle, faQuestionCircle, faTimesCircle } from '@fortawesome/fre
 import { isModelingOrTextOrFileUpload, isParticipationInDueTime, isProgrammingOrQuiz } from 'app/exercises/shared/participation/participation.utils';
 import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { Participation } from 'app/entities/participation/participation.model';
+import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import dayjs from 'dayjs/esm';
 import { ResultWithPointsPerGradingCriterion } from 'app/entities/result-with-points-per-grading-criterion.model';
 import { TestCaseResult } from 'app/entities/test-case-result.model';
@@ -273,6 +273,14 @@ export const resultIsPreliminary = (result: Result) => {
     return (
         result.participation && isProgrammingExerciseStudentParticipation(result.participation) && isResultPreliminary(result, result.participation.exercise as ProgrammingExercise)
     );
+};
+
+/**
+ * Returns true if the specified result is a student Participation
+ * @param result the result.
+ */
+export const isStudentParticipation = (result: Result) => {
+    return Boolean(result.participation && result.participation.type !== ParticipationType.TEMPLATE && result.participation.type !== ParticipationType.SOLUTION);
 };
 
 /**

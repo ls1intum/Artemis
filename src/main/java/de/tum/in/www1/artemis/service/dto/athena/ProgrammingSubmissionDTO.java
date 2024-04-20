@@ -2,14 +2,14 @@ package de.tum.in.www1.artemis.service.dto.athena;
 
 import static de.tum.in.www1.artemis.config.Constants.ATHENA_PROGRAMMING_EXERCISE_REPOSITORY_API_PATH;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 
 /**
  * A DTO representing a ProgrammingSubmission, for transferring data to Athena
  */
-public record ProgrammingSubmissionDTO(long id, long exerciseId, String repositoryUrl) implements SubmissionDTO {
+public record ProgrammingSubmissionDTO(long id, long exerciseId, String repositoryUri) implements SubmissionDTO {
 
     /**
      * Creates a new ProgrammingSubmissionDTO from a ProgrammingSubmission. The DTO also contains the exerciseId of the exercise the submission belongs to.

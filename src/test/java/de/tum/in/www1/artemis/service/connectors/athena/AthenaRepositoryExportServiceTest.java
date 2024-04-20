@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.athena;
 
+import static de.tum.in.www1.artemis.connector.AthenaRequestMockProvider.ATHENA_MODULE_PROGRAMMING_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
@@ -15,8 +16,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
@@ -25,7 +28,7 @@ import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.web.rest.errors.ServiceUnavailableException;
 
-class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "athenarepositoryexport";
 
@@ -61,13 +64,13 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationBambooB
     void shouldExportRepository() throws Exception {
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         var programmingExercise = programmingExerciseRepository.findByCourseIdWithLatestResultForTemplateSolutionParticipations(course.getId()).stream().iterator().next();
-        programmingExercise.setFeedbackSuggestionsEnabled(true);
+        programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
         programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
         var programmingExerciseWithId = programmingExerciseRepository.save(programmingExercise);
 
         ProgrammingExerciseStudentParticipation participation = new ProgrammingExerciseStudentParticipation();
-        participation.setRepositoryUrl("git://test");
+        participation.setRepositoryUri("git://test");
         participation.setProgrammingExercise(programmingExerciseWithId);
         ProgrammingSubmission submission = new ProgrammingSubmission();
         submission.setParticipation(participation);
@@ -85,7 +88,7 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationBambooB
     @Test
     void shouldThrowServiceUnavailableWhenFeedbackSuggestionsNotEnabled() {
         var programmingExercise = new ProgrammingExercise();
-        programmingExercise.setFeedbackSuggestionsEnabled(false);
+        programmingExercise.setFeedbackSuggestionModule(null);
         var programmingExerciseWithId = programmingExerciseRepository.save(programmingExercise);
 
         assertThatExceptionOfType(ServiceUnavailableException.class)

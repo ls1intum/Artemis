@@ -17,6 +17,7 @@ import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.dire
 import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { MockRouter } from '../../helpers/mocks/mock-router';
+import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
 
 describe('Course Management Tab Bar Component', () => {
     let component: CourseManagementTabBarComponent;
@@ -25,6 +26,7 @@ describe('Course Management Tab Bar Component', () => {
     let courseManagementService: CourseManagementService;
     let courseAdminService: CourseAdminService;
     let eventManager: EventManager;
+    let courseAccessStorageService: CourseAccessStorageService;
 
     const router = new MockRouter();
     router.setUrl('');
@@ -60,6 +62,7 @@ describe('Course Management Tab Bar Component', () => {
                 },
                 { provide: Router, useValue: router },
                 MockProvider(CourseManagementService),
+                MockProvider(CourseAccessStorageService),
             ],
         })
             .compileComponents()
@@ -69,6 +72,7 @@ describe('Course Management Tab Bar Component', () => {
                 courseManagementService = TestBed.inject(CourseManagementService);
                 courseAdminService = TestBed.inject(CourseAdminService);
                 eventManager = TestBed.inject(EventManager);
+                courseAccessStorageService = TestBed.inject(CourseAccessStorageService);
             });
     });
 
@@ -81,11 +85,14 @@ describe('Course Management Tab Bar Component', () => {
         jest.restoreAllMocks();
     });
 
-    it('should register changes in course on init', () => {
+    it('should register changes in course and notify courseAccessStorageService on init', () => {
+        const spy = jest.spyOn(courseAccessStorageService, 'onCourseAccessed');
+
         componentFixture.detectChanges();
         component.ngOnInit();
 
         expect(component.course).toEqual(course);
+        expect(spy).toHaveBeenCalledWith(course.id);
     });
 
     it('should destroy event subscriber onDestroy', () => {

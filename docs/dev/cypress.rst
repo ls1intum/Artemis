@@ -13,7 +13,7 @@ To accomplish this we need to be able to dynamically deploy multiple different i
 An ideal setup would be to deploy the whole Artemis system using Kubernetes.
 However, this setup is too complex at the moment.
 The main reason for the complexity is that it is very hard to automatically setup Docker containers for
-the external services (Jira, Bitbucket and Bamboo) and connect them directly with Artemis.
+the external services (e.g. Gitlab, Jenkins) and connect them directly with Artemis.
 
 Therefore, the current setup only dynamically deploys the Artemis server and configures it to connect to
 the prelive system, which is already properly setup in the university data center.
@@ -235,9 +235,9 @@ In total there are three Docker containers started in the Bamboo build agent:
   Upon creation of the Artemis Docker image the executable is copied into the image together with configuration files
   for the Artemis server.
 
-  The main configuration of the Artemis server is contained in the
-  `application.yml file <https://github.com/ls1intum/Artemis/blob/develop/docker/cypress/application.yml>`__.
-  However, this file does not contain any security relevant information.
+  The main configuration of the Artemis server are contained in the
+  `Cypress environment configuration files <https://github.com/ls1intum/Artemis/tree/develop/docker/artemis/config>`__.
+  However, those files do not contain any security relevant information.
   Security relevant settings like the credentials to the Jira admin account in the prelive system are instead passed to
   the Docker container via environment variables.
   This information is accessible to the Bamboo build agent via
@@ -319,7 +319,7 @@ Since the Cypress test suite simulates a real user, it makes sense to execute th
 the latest Chrome browser.
 The Cypress Docker image we use always has a specific Chrome version installed.
 Therefore, the
-`docker-compose file <https://github.com/ls1intum/Artemis/blob/develop/docker/cypress/docker-compose.yml>`__
+`docker-compose file <https://github.com/ls1intum/Artemis/blob/develop/docker/cypress.yml>`__
 as well as the
 `build plan configuration for the Cypress tests on test server 3 <https://bamboo.ase.in.tum.de/build/admin/edit/editBuildDocker.action?buildKey=ARTEMIS-AETBB-QE>`__
 should be updated every month to make sure that the latest Cypress image for the Chrome browser is used.

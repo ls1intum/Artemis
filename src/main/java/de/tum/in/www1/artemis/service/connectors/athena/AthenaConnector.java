@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.athena;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,7 +30,7 @@ import de.tum.in.www1.artemis.service.util.TimeLogUtil;
  */
 class AthenaConnector<RequestType, ResponseType> {
 
-    private final Logger log = LoggerFactory.getLogger(AthenaConnector.class);
+    private static final Logger log = LoggerFactory.getLogger(AthenaConnector.class);
 
     private final RestTemplate restTemplate;
 

@@ -30,6 +30,7 @@ import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import dayjs from 'dayjs/esm';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 
 describe('CourseCompetenciesDetails', () => {
     let fixture: ComponentFixture<CourseCompetenciesDetailsComponent>;
@@ -55,6 +56,7 @@ describe('CourseCompetenciesDetails', () => {
                 MockComponent(FaIconComponent),
                 MockComponent(FireworksComponent),
                 MockPipe(ArtemisTimeAgoPipe),
+                MockPipe(HtmlForMarkdownPipe),
             ],
             providers: [
                 MockProvider(LectureUnitService),

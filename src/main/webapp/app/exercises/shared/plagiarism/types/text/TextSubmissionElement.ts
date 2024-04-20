@@ -10,6 +10,7 @@ export class FromToElement {
 }
 
 export class TextSubmissionElement extends PlagiarismSubmissionElement {
+    id: number;
     column: number;
     line: number;
     file: string;

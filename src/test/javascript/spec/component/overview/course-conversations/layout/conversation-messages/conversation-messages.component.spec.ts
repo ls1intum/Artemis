@@ -12,15 +12,15 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { Post } from 'app/entities/metis/post.model';
 import { BehaviorSubject } from 'rxjs';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../helpers/conversationExampleModels';
 import { Directive, EventEmitter, Input, Output } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { Course } from 'app/entities/course.model';
-import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 
-const examples: ConversationDto[] = [
+const examples: ConversationDTO[] = [
     generateOneToOneChatDTO({}),
     generateExampleGroupChatDTO({}),
     generateExampleChannelDTO({}),
@@ -47,7 +47,7 @@ class InfiniteScrollStubDirective {
     @Input() fromRoot = false;
 }
 examples.forEach((activeConversation) => {
-    describe('ConversationMessagesComponent with ' + (getAsChannelDto(activeConversation)?.isAnnouncementChannel ? 'announcement ' : '') + activeConversation.type, () => {
+    describe('ConversationMessagesComponent with ' + (getAsChannelDTO(activeConversation)?.isAnnouncementChannel ? 'announcement ' : '') + activeConversation.type, () => {
         let component: ConversationMessagesComponent;
         let fixture: ComponentFixture<ConversationMessagesComponent>;
         let metisService: MetisService;
@@ -134,12 +134,12 @@ examples.forEach((activeConversation) => {
             const createEmptyPostForContextSpy = jest.spyOn(metisService, 'createEmptyPostForContext').mockReturnValue(new Post());
             component.createEmptyPost();
             expect(createEmptyPostForContextSpy).toHaveBeenCalledOnce();
-            const conversation = createEmptyPostForContextSpy.mock.calls[0][4];
+            const conversation = createEmptyPostForContextSpy.mock.calls[0][0];
             expect(conversation!.type).toEqual(activeConversation.type);
             expect(conversation!.id).toEqual(activeConversation.id);
         }));
 
-        if (getAsChannelDto(activeConversation)?.isAnnouncementChannel) {
+        if (getAsChannelDTO(activeConversation)?.isAnnouncementChannel) {
             it('should display the "new announcement" button when the conversation is an announcement channel', fakeAsync(() => {
                 const announcementButton = fixture.debugElement.query(By.css('.btn.btn-md.btn-primary'));
                 expect(announcementButton).toBeTruthy(); // Check if the button is present

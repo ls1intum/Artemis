@@ -43,8 +43,6 @@ spring:
                 prepStmtCacheSqlLimit: 2048
                 useServerPrepStmts: true
     jpa:
-        database-platform: org.hibernate.dialect.MySQL8Dialect
-        database: MYSQL
         show-sql: false
     liquibase:
         contexts: dev
@@ -115,7 +113,7 @@ info:
             - programming_exercise_fail_tour: 'test'
             - programming_exercise_success_tour: 'test'
             - tutor_assessment_tour: 'Patterns in Software Engineering'
-    contact: artemis.in@tum.de  #default value, can be overridden if needed
+    contact: artemis@xcit.tum.de  #default value, can be overridden if needed
     # Specifies whether text assessment analytics service (TextAssessmentEventResource) is enabled/disabled
     # default value set to true for development environment
     text-assessment-analytics-enabled: true

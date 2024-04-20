@@ -15,6 +15,8 @@ export enum FeatureToggle {
     Exports = 'Exports',
     TutorialGroups = 'TutorialGroups',
     LearningPaths = 'LearningPaths',
+    Science = 'Science',
+    StandardizedCompetencies = 'StandardizedCompetencies',
 }
 export type ActiveFeatureToggles = Array<FeatureToggle>;
 

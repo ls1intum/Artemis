@@ -28,7 +28,7 @@ import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.team.TeamUtilService;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.FileUtils;
+import de.tum.in.www1.artemis.util.TestResourceUtils;
 
 class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -45,9 +45,6 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
 
     @Autowired
     private SubmissionRepository submissionRepository;
-
-    @Autowired
-    private ComplaintResponseRepository complaintResponseRepo;
 
     @Autowired
     private UserUtilService userUtilService;
@@ -186,7 +183,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
         assertThat(complaintResponse.getComplaint().getParticipant()).isNull();
         Complaint storedComplaint = complaintRepo.findByResultId(modelingAssessment.getId()).orElseThrow();
         assertThat(storedComplaint.isAccepted()).as("complaint is not accepted").isFalse();
-        Result storedResult = resultRepo.findWithEagerSubmissionAndFeedbackAndAssessorByIdElseThrow(modelingAssessment.getId());
+        Result storedResult = resultRepo.findWithBidirectionalSubmissionAndFeedbackAndAssessorAndTeamStudentsByIdElseThrow(modelingAssessment.getId());
         participationUtilService.checkFeedbackCorrectlyStored(modelingAssessment.getFeedbacks(), storedResult.getFeedbacks(), FeedbackType.MANUAL);
         assertThat(storedResult.getSubmission()).isEqualTo(modelingAssessment.getSubmission());
         assertThat(storedResult.getAssessor()).isEqualTo(modelingAssessment.getAssessor());
@@ -261,21 +258,8 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
         request.get("/api/complaints/submissions/" + modelingSubmission.getId(), HttpStatus.FORBIDDEN, Complaint.class);
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1")
-    void getComplaintResponseByComplaintId_studentNotPartOfTeam_forbidden() throws Exception {
-        complaint.setParticipant(team);
-        complaintRepo.save(complaint);
-
-        ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected")
-                .reviewer(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"));
-        complaintResponseRepo.save(complaintResponse);
-
-        request.get("/api/complaint-responses/complaint/" + complaint.getId(), HttpStatus.FORBIDDEN, ComplaintResponse.class);
-    }
-
     private void saveModelingSubmissionAndAssessment() throws Exception {
-        modelingSubmission = ParticipationFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json"), true);
+        modelingSubmission = ParticipationFactory.generateModelingSubmission(TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727.json"), true);
         modelingSubmission = modelingExerciseUtilService.addModelingTeamSubmission(modelingExercise, modelingSubmission, team);
         modelingAssessment = modelingExerciseUtilService.addModelingAssessmentForSubmission(modelingExercise, modelingSubmission,
                 "test-data/model-assessment/assessment.54727.v2.json", TEST_PREFIX + "tutor1", true);

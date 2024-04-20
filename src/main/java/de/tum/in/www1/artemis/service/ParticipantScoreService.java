@@ -1,24 +1,42 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
 import java.util.stream.Stream;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.GradingScale;
+import de.tum.in.www1.artemis.domain.Team;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.scores.ParticipantScore;
-import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.web.rest.dto.ScoreDTO;
+import de.tum.in.www1.artemis.repository.StudentScoreRepository;
+import de.tum.in.www1.artemis.repository.TeamRepository;
+import de.tum.in.www1.artemis.repository.TeamScoreRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.web.rest.dto.score.ScoreDTO;
+import de.tum.in.www1.artemis.web.rest.dto.score.StudentScoreSum;
+import de.tum.in.www1.artemis.web.rest.dto.score.TeamScoreSum;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
+@Profile(PROFILE_CORE)
 @Service
 public class ParticipantScoreService {
 
@@ -32,13 +50,16 @@ public class ParticipantScoreService {
 
     private final PresentationPointsCalculationService presentationPointsCalculationService;
 
+    private final TeamRepository teamRepository;
+
     public ParticipantScoreService(UserRepository userRepository, StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository,
-            GradingScaleService gradingScaleService, PresentationPointsCalculationService presentationPointsCalculationService) {
+            GradingScaleService gradingScaleService, PresentationPointsCalculationService presentationPointsCalculationService, TeamRepository teamRepository) {
         this.userRepository = userRepository;
         this.studentScoreRepository = studentScoreRepository;
         this.teamScoreRepository = teamScoreRepository;
         this.gradingScaleService = gradingScaleService;
         this.presentationPointsCalculationService = presentationPointsCalculationService;
+        this.teamRepository = teamRepository;
     }
 
     /**
@@ -86,9 +107,9 @@ public class ParticipantScoreService {
 
         // we want the score for everybody who can perform exercises in the course (students, tutors and instructors)
         Set<User> usersOfCourse = new HashSet<>();
-        usersOfCourse.addAll(userRepository.findAllInGroupWithAuthorities(course.getStudentGroupName()));
-        usersOfCourse.addAll(userRepository.findAllInGroupWithAuthorities(course.getTeachingAssistantGroupName()));
-        usersOfCourse.addAll(userRepository.findAllInGroupWithAuthorities(course.getInstructorGroupName()));
+        usersOfCourse.addAll(userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getStudentGroupName()));
+        usersOfCourse.addAll(userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getTeachingAssistantGroupName()));
+        usersOfCourse.addAll(userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getInstructorGroupName()));
 
         // we only consider released exercises that are not optional
         Set<Exercise> exercisesToConsider = course.getExercises().stream().filter(Exercise::isCourseExercise)
@@ -114,52 +135,41 @@ public class ParticipantScoreService {
             return List.of();
         }
 
-        Set<Exercise> individualExercises = exercises.stream().filter(exercise -> !exercise.isTeamMode()).collect(Collectors.toSet());
+        Set<Exercise> individualExercises = exercises.stream().filter(Predicate.not(Exercise::isTeamMode)).collect(Collectors.toSet());
         Set<Exercise> teamExercises = exercises.stream().filter(Exercise::isTeamMode).collect(Collectors.toSet());
 
         Course course = exercises.stream().findAny().orElseThrow(() -> new EntityNotFoundException("The result you are referring to does not exist"))
                 .getCourseViaExerciseGroupOrCourseMember();
 
-        // For every student we want to calculate the score
-        Map<Long, ScoreDTO> userIdToScores = users.stream().collect(Collectors.toMap(User::getId, user -> new ScoreDTO(user.getId(), user.getLogin(), 0.0, 0.0, 0.0)));
-
         // individual exercises
-        // [0] -> User
-        // [1] -> sum of achieved points in exercises
-        List<Object[]> studentAndAchievedPoints = studentScoreRepository.getAchievedPointsOfStudents(individualExercises);
-        for (Object[] rawData : studentAndAchievedPoints) {
-            User user = (User) rawData[0];
-            double achievedPoints = rawData[1] != null ? ((Number) rawData[1]).doubleValue() : 0.0;
-            if (userIdToScores.containsKey(user.getId())) {
-                userIdToScores.get(user.getId()).pointsAchieved += achievedPoints;
-            }
-        }
+        final Set<StudentScoreSum> studentAndAchievedPoints = studentScoreRepository.getAchievedPointsOfStudents(individualExercises);
+        Map<Long, Double> pointsAchieved = studentAndAchievedPoints.stream().collect(Collectors.toMap(StudentScoreSum::userId, StudentScoreSum::sumPointsAchieved));
 
-        // team exercises
-        // [0] -> Team
-        // [1] -> sum of achieved points in exercises
-        List<Object[]> teamAndAchievedPoints = teamScoreRepository.getAchievedPointsOfTeams(teamExercises);
-        for (Object[] rawData : teamAndAchievedPoints) {
-            Team team = (Team) rawData[0];
-            double achievedPoints = rawData[1] != null ? ((Number) rawData[1]).doubleValue() : 0.0;
+        // We have to retrieve this separately because the students are not directly retrievable due to the taxonomy structure
+        Set<TeamScoreSum> teamScoreSums = teamScoreRepository.getAchievedPointsOfTeams(teamExercises);
+        Set<Long> teamIds = teamScoreSums.stream().map(TeamScoreSum::teamId).collect(Collectors.toSet());
+        var teamList = teamRepository.findAllWithStudentsByIdIn(teamIds);
+        var teamMap = teamList.stream().collect(Collectors.toMap(Team::getId, Function.identity()));
+        final Set<Long> userIds = users.stream().map(User::getId).collect(Collectors.toSet());
+        for (TeamScoreSum teamScoreSum : teamScoreSums) {
+            Team team = teamMap.get(teamScoreSum.teamId());
             for (User student : team.getStudents()) {
-                if (userIdToScores.containsKey(student.getId())) {
-                    userIdToScores.get(student.getId()).pointsAchieved += achievedPoints;
+                if (userIds.contains(student.getId())) {
+                    pointsAchieved.merge(student.getId(), teamScoreSum.sumPointsAchieved(), Double::sum);
                 }
             }
         }
 
-        // add presentationPoints to ScoreDTOs
-        presentationPointsCalculationService.addPresentationPointsToScoreDTOs(gradingScale, userIdToScores.values(), achievablePresentationPoints);
+        // add presentationPoints to pointsAchieved
+        presentationPointsCalculationService.addPresentationPointsToPointsAchieved(gradingScale, pointsAchieved, achievablePresentationPoints);
 
-        // calculating achieved score
-        for (ScoreDTO scoreDTO : userIdToScores.values()) {
-            scoreDTO.scoreAchieved = roundScoreSpecifiedByCourseSettings((scoreDTO.pointsAchieved / scoreCalculationDenominator) * 100.0, course);
-            // sending this for debugging purposes to find out why the scores' calculation could be wrong
-            scoreDTO.regularPointsAchievable = scoreCalculationDenominator;
-        }
+        // calculating achieved scores
+        Map<Long, Double> scoreAchieved = pointsAchieved.entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, entry -> roundScoreSpecifiedByCourseSettings(entry.getValue() / scoreCalculationDenominator * 100.0, course)));
 
-        return new ArrayList<>(userIdToScores.values());
+        return users.stream()
+                .map(user -> ScoreDTO.of(user, pointsAchieved.getOrDefault(user.getId(), 0D), scoreAchieved.getOrDefault(user.getId(), 0D), scoreCalculationDenominator))
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 
     /**

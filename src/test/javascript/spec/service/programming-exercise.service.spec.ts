@@ -67,6 +67,25 @@ describe('ProgrammingExercise Service', () => {
             tick();
         }));
 
+        it('should find with template and solution participation and results', fakeAsync(() => {
+            const returnedFromService = {
+                ...defaultProgrammingExercise,
+                releaseDate: undefined,
+                dueDate: undefined,
+                assessmentDueDate: undefined,
+                buildAndTestStudentSubmissionsAfterDueDate: undefined,
+                studentParticipations: [],
+            };
+            const expected = { ...returnedFromService };
+            service
+                .findWithTemplateAndSolutionParticipation(123)
+                .pipe(take(1))
+                .subscribe((resp) => expect(resp.body).toEqual(expected));
+            const req = httpMock.expectOne({ method: 'GET' });
+            req.flush(returnedFromService);
+            tick();
+        }));
+
         it('should create a ProgrammingExercise', fakeAsync(() => {
             const returnedFromService = {
                 ...defaultProgrammingExercise,
@@ -156,10 +175,9 @@ describe('ProgrammingExercise Service', () => {
         it('should update a ProgrammingExercise', fakeAsync(() => {
             const returnedFromService = {
                 ...defaultProgrammingExercise,
-                templateRepositoryUrl: 'BBBBBB',
-                solutionRepositoryUrl: 'BBBBBB',
+                templateRepositoryUri: 'BBBBBB',
+                solutionRepositoryUri: 'BBBBBB',
                 templateBuildPlanId: 'BBBBBB',
-                publishBuildPlanUrl: true,
                 allowOnlineEditor: true,
                 releaseDate: undefined,
                 dueDate: undefined,
@@ -200,10 +218,9 @@ describe('ProgrammingExercise Service', () => {
         it('should return a list of ProgrammingExercise', fakeAsync(() => {
             const returnedFromService = {
                 ...defaultProgrammingExercise,
-                templateRepositoryUrl: 'BBBBBB',
-                solutionRepositoryUrl: 'BBBBBB',
+                templateRepositoryUri: 'BBBBBB',
+                solutionRepositoryUri: 'BBBBBB',
                 templateBuildPlanId: 'BBBBBB',
-                publishBuildPlanUrl: true,
                 allowOnlineEditor: true,
                 releaseDate: undefined,
                 dueDate: undefined,
@@ -295,6 +312,118 @@ describe('ProgrammingExercise Service', () => {
         req.flush(expected);
         tick();
     }));
+
+    it('should make GET request to retrieve diff between commits for CommitDetailsView', fakeAsync(() => {
+        const exerciseId = 1;
+        const participationId = 2;
+        const commitId = '2';
+        const commitId2 = '3';
+        const repositoryType = 'TEMPLATE';
+        const expected = { id: 1, entries: [new ProgrammingExerciseGitDiffEntry()] } as unknown as ProgrammingExerciseGitDiffReport;
+        service.getDiffReportForCommits(exerciseId, participationId, commitId, commitId2, repositoryType).subscribe((resp) => expect(resp).toEqual(expected));
+        const url = `${resourceUrl}/${exerciseId}/participation/${participationId}/commits/${commitId}/diff-report/${commitId2}?repositoryType=${repositoryType}`;
+        const req = httpMock.expectOne({ method: 'GET', url });
+        req.flush(expected);
+        tick();
+    }));
+
+    it('should generate Structure Oracle', fakeAsync(() => {
+        const exerciseId = 1;
+        const expectedResult = 'oracle-structure';
+        service.generateStructureOracle(exerciseId).subscribe((structure) => expect(structure).toEqual(expectedResult));
+        const url = `${resourceUrl}/${exerciseId}/generate-tests`;
+        const req = httpMock.expectOne({ method: 'PUT', url });
+        req.flush(expectedResult);
+        tick();
+    }));
+
+    it('should reset Exercise', fakeAsync(() => {
+        const exerciseId = 1;
+        const options = {
+            deleteBuildPlans: true,
+            deleteRepositories: true,
+            deleteParticipationsSubmissionsAndResults: true,
+            recreateBuildPlans: true,
+        };
+        const expectedResult = 'success';
+        service.reset(exerciseId, options).subscribe((response) => expect(response).toEqual(expectedResult));
+        const url = `${resourceUrl}/${exerciseId}/reset`;
+        const req = httpMock.expectOne({ method: 'PUT', url });
+        req.flush(expectedResult);
+        tick();
+    }));
+
+    it('should combine Template Repository Commits', () => {
+        const exerciseId = 1;
+        service.combineTemplateRepositoryCommits(exerciseId).subscribe();
+        const url = `${resourceUrl}/${exerciseId}/combine-template-commits`;
+        const req = httpMock.expectOne({ method: 'PUT', url });
+        req.flush({ body: 'something' });
+    });
+
+    it.each(['unlock', 'lock'])('should unlock all repositories', (lockUnlock) => {
+        const exerciseId = 1;
+        if (lockUnlock === 'unlock') {
+            service.unlockAllRepositories(exerciseId).subscribe();
+        } else {
+            service.lockAllRepositories(exerciseId).subscribe();
+        }
+        const url = `${resourceUrl}/${exerciseId}/${lockUnlock}-all-repositories`;
+        const req = httpMock.expectOne({ method: 'POST', url });
+        req.flush({ body: 'something' });
+    });
+
+    it('export instructor repository', fakeAsync(() => {
+        const exerciseId = 1;
+        service.exportInstructorRepository(exerciseId, 'AUXILIARY', undefined).subscribe();
+        const url = `${resourceUrl}/${exerciseId}/export-instructor-repository/AUXILIARY`;
+        const req = httpMock.expectOne({ method: 'GET', url });
+        req.flush(new Blob());
+        tick();
+    }));
+
+    it('should export Student Requested Repository', fakeAsync(() => {
+        const exerciseId = 1;
+        service.exportStudentRequestedRepository(exerciseId, true).subscribe();
+        const url = `${resourceUrl}/${exerciseId}/export-student-requested-repository?includeTests=true`;
+        const req = httpMock.expectOne({ method: 'GET', url });
+        req.flush(new Blob());
+        tick();
+    }));
+
+    it('should check plagiarism report', fakeAsync(() => {
+        const exerciseId = 1;
+        service.checkPlagiarismJPlagReport(exerciseId).subscribe();
+        const url = `${resourceUrl}/${exerciseId}/check-plagiarism-jplag-report`;
+        const req = httpMock.expectOne({ method: 'GET', url });
+        req.flush(new Blob());
+        tick();
+    }));
+
+    it.each([
+        { uri: 'template-files-content', method: 'getTemplateRepositoryTestFilesWithContent' },
+        { uri: 'solution-files-content', method: 'getSolutionRepositoryTestFilesWithContent' },
+        { uri: 'with-participations', method: 'findWithTemplateAndSolutionParticipationAndResults' },
+        { uri: 'check-plagiarism', method: 'checkPlagiarism' },
+        { uri: 'plagiarism-result', method: 'getLatestPlagiarismResult' },
+        { uri: 'test-case-state', method: 'getProgrammingExerciseTestCaseState' },
+        { uri: 'tasks', method: 'getTasksAndTestsExtractedFromProblemStatement' },
+        { uri: 'diff-report', method: 'getDiffReport' },
+        { uri: 'full-testwise-coverage-report', method: 'getLatestFullTestwiseCoverageReport' },
+        { uri: 'file-names', method: 'getSolutionFileNames' },
+        { uri: 'exercise-hints', method: 'getCodeHintsForExercise' },
+        { uri: 'test-cases', method: 'getAllTestCases' },
+        { uri: 'build-log-statistics', method: 'getBuildLogStatistics' },
+    ])('should call correct exercise endpoint', (test) =>
+        fakeAsync(() => {
+            const exerciseId = 1;
+            service[test.method](exerciseId).subscribe();
+            const url = `${resourceUrl}/${exerciseId}/${test.uri}`;
+            const req = httpMock.expectOne({ method: 'GET', url });
+            req.flush({});
+            tick();
+        })(),
+    );
 
     afterEach(() => {
         httpMock.verify();

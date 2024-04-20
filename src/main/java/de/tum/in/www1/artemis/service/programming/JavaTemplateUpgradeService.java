@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.programming;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.io.*;
 import java.nio.file.Path;
 import java.util.*;
@@ -15,6 +17,7 @@ import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
@@ -31,6 +34,7 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 /**
  * Service for upgrading of Java template files
  */
+@Profile(PROFILE_CORE)
 @Service
 public class JavaTemplateUpgradeService implements TemplateUpgradeService {
 
@@ -42,7 +46,7 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
 
     private static final List<String> FILES_TO_OVERWRITE = List.of("AttributeTest.java", "ClassTest.java", "ConstructorTest.java", "MethodTest.java");
 
-    private final Logger log = LoggerFactory.getLogger(JavaTemplateUpgradeService.class);
+    private static final Logger log = LoggerFactory.getLogger(JavaTemplateUpgradeService.class);
 
     private final ProgrammingExerciseRepositoryService programmingExerciseRepositoryService;
 
@@ -87,19 +91,19 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
      * @param repositoryType The type of repository to be updated
      */
     private void upgradeTemplateFiles(ProgrammingExercise exercise, RepositoryType repositoryType) {
-        if (repositoryType == RepositoryType.AUXILIARY) {
+        if (repositoryType == RepositoryType.AUXILIARY || repositoryType == RepositoryType.USER) {
             return;
         }
         try {
-            String templatePomDir = repositoryType == RepositoryType.TESTS ? "test/projectTemplate" : repositoryType.getName();
+            String templatePomDir = repositoryType == RepositoryType.TESTS ? "test/maven/projectTemplate" : repositoryType.getName();
             Resource[] templatePoms = getTemplateResources(exercise, templatePomDir + "/**/" + POM_FILE);
             Repository repository = gitService.getOrCheckoutRepository(exercise.getRepositoryURL(repositoryType), true);
             List<File> repositoryPoms = gitService.listFiles(repository).stream().filter(file -> Objects.equals(file.getName(), POM_FILE)).toList();
 
             // Validate that template and repository have the same number of pom.xml files, otherwise no upgrade will take place
             if (templatePoms.length == 1 && repositoryPoms.size() == 1) {
-                Model updatedRepoModel = upgradeProjectObjectModel(templatePoms[0], repositoryPoms.get(0), Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled()));
-                writeProjectObjectModel(updatedRepoModel, repositoryPoms.get(0));
+                Model updatedRepoModel = upgradeProjectObjectModel(templatePoms[0], repositoryPoms.getFirst(), Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled()));
+                writeProjectObjectModel(updatedRepoModel, repositoryPoms.getFirst());
             }
 
             if (repositoryType == RepositoryType.TESTS) {

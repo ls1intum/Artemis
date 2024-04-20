@@ -134,6 +134,7 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
     rateLimit: number;
     rateLimitTimeframeHours: number;
     importExerciseUrl: string;
+    stepError: string;
 
     // User preferences
     userAccepted: boolean;
@@ -365,7 +366,7 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
                 // will be cleared by the store automatically
                 this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.IRIS_SERVER_RESPONSE_TIMEOUT));
                 this.scrollToBottom('smooth');
-            }, 20000);
+            }, 60000);
             this.stateStore
                 .dispatchAndThen(new StudentMessageSentAction(message, timeoutId))
                 .then(() => this.sessionService.sendMessage(this.sessionId, message))
@@ -385,7 +386,7 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
             // will be cleared by the store automatically
             this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.IRIS_SERVER_RESPONSE_TIMEOUT));
             this.scrollToBottom('smooth');
-        }, 2000000);
+        }, 60000);
         this.stateStore
             .dispatchAndThen(new StudentMessageSentAction(message, timeoutId))
             .then(() => {
@@ -771,9 +772,9 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
         plan.executing = false;
         step.executionStage = ExecutionStage.FAILED;
         if (!errorTranslationKey) {
-            this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.TECHNICAL_ERROR_RESPONSE));
+            this.stepError = this.translateService.instant(IrisErrorMessageKey.TECHNICAL_ERROR_RESPONSE);
         } else {
-            this.stateStore.dispatch(new ConversationErrorOccurredAction(errorTranslationKey, translationParams));
+            this.stepError = this.translateService.instant(errorTranslationKey, translationParams);
         }
     }
 
@@ -831,7 +832,7 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
             case ExecutionStage.COMPLETE:
                 return 'Changes applied.';
             case ExecutionStage.FAILED:
-                return 'Encountered an error.';
+                return this.stepError ?? 'Encountered an error.';
         }
     }
 
@@ -854,9 +855,9 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
 
     toggleScrollLock(lockParent: boolean): void {
         if (lockParent) {
-            document.body.classList.add('cdk-global-scrollblock');
+            document.body.classList.add('cdk-global-scroll');
         } else {
-            document.body.classList.remove('cdk-global-scrollblock');
+            document.body.classList.remove('cdk-global-scroll');
         }
     }
 
@@ -879,11 +880,11 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
 
     getConvertedErrorMap() {
         if (this.error?.paramsMap) {
-            if (typeof this.error.paramsMap === 'object') {
-                return this.error.paramsMap;
-            } else {
+            // Check if paramsMap is iterable.
+            if (typeof this.error?.paramsMap[Symbol.iterator] === 'function') {
                 return Object.fromEntries(this.error.paramsMap);
             }
+            return this.error.paramsMap;
         }
         return null;
     }

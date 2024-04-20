@@ -2,8 +2,6 @@
 Server
 ******
 
-WORK IN PROGRESS
-
 0. Folder structure
 ===================
 
@@ -73,10 +71,10 @@ Avoid code duplication. If we cannot reuse a method elsewhere, then the method i
 
 * Write performant queries that can also deal with more than 1000 objects in a reasonable time.
 * Prefer one query that fetches additional data instead of many small queries, but don't overdo it. A good rule of thumb is to query not more than 3 associations at the same time.
-* Think about lazy vs. eager fetching when modeling the data types.
-* Only if it is inevitable, use nested queries. You should try use as few tables as possible.
+* Think about lazy vs. eager fetching when modeling the data types. Generally avoid ``fetch = FetchType.EAGER``.
+* Do NOT use nested queries, because those hava a bad performance, in particular for many objects.
 * Simple datatypes: immediately think about whether ``null`` should be supported as additional state or not. In most cases it is preferable to avoid ``null``.
-* Use ``Datetime`` instead of ``Timestamp``. ``Datetime`` occupies more storage space compared to ``Timestamp``, however it covers a greater date range that justifies its use in the long run.
+* Use ``Datetime`` instead of ``Timestamp``. ``Datetime`` occupies more storage space compared to ``Timestamp``, however it covers a greater date range that justifies its use in the long run. Always use ``datetime(3)``
 
 8. Comments
 ===========
@@ -140,22 +138,32 @@ Additional notes on the controller methods:
 
 .. _server-guideline-dto-usage:
 
-12. Use DTOs for data transfer
-==============================
+12. Use DTOs for Efficient Data Transfer
+========================================
 
-Use data transfer objects (DTOs) to send data from the server to the client, i.e. responses of RestControllers and WebSocket messages.
+Purpose of DTOs
+---------------
 
-Definition and Characteristics of DTOs:
+Data Transfer Objects (DTOs) are pivotal in the efficient transfer of data from the server to the client, specifically for the responses from RestControllers and messages via WebSocket. These objects are designed to streamline the data exchange process by ensuring data is immutable, relevant, and precisely tailored to the needs of the client application.
 
-1. Java Records: DTOs are implemented as Java records. Records do not support inheritance, so duplication for DTOs is ok.
-2. No Entity Objects: DTOs must not contain entity objects, but only primitive types (or the corresponding wrapper classes), enums or other DTOs.
-3. Minimal Data: DTOs should only include the minimum amount of data required by the client application. Avoid adding any unnecessary or redundant information.
-4. Single Responsibility: Keep DTOs focused on specific tasks and data subsets to maintain a clear and concise data representation. Avoid using a single DTO for multiple payloads unless the data transferred is exactly the same. Create separate records for new or updated payloads.
-5. Avoid Adding Methods: Refrain from adding methods to DTOs. They should only serve as simple data containers without any business logic.
+Guidelines for Implementing DTOs
+--------------------------------
 
-Not utilizing DTOs can result in accidentally sending excessive data to clients, leading to unnecessary load on the underlying systems.
-In the worst-case scenario, this might lead to the inadvertent exposure of sensitive data.
-For instance, in a direct message chat, without employing DTOs, the following amount of information is transmitted via WebSocket for just one new message:
+1. **Immutable Java Records**: Implement DTOs as Java records to guarantee immutability. While Java records preclude inheritance, resulting in potential duplication, this is considered acceptable in the context of DTOs to ensure data integrity and simplicity.
+
+2. **Primitive data types and composition**: DTOs should strictly encapsulate primitive data types, their corresponding wrapper classes, enums, or compositions of other DTOs. This exclusion of entity objects from DTOs ensures that data remains decoupled from the database entities, facilitating a cleaner and more secure data transfer mechanism.
+
+3. **Minimum necessary data**: Adhere to the principle of including only the minimal data required by the client within DTOs. This practice reduces the overall data footprint, enhances performance, and mitigates the risk of inadvertently exposing unnecessary or sensitive data.
+
+4. **Single responsibility principle**: Each DTO should be dedicated to a specific task or subset of data. Avoid the temptation to reuse DTOs across different data payloads unless the data is identical. This approach maintains clarity and purpose within the data transfer objects.
+
+5. **Simplicity over complexity**: Refrain from embedding methods or business logic within DTOs. Their role is to serve as straightforward data carriers without additional functionalities that could complicate their structure or purpose.
+
+Implications of Not Using DTOs
+------------------------------
+
+Neglecting the use of DTOs can lead to the transmission of excessive or irrelevant data to clients. This not only imposes unnecessary strain on network and system resources but also heightens the risk of exposing sensitive information leading to data privacy issues. A typical example is a direct message chat application where, in the absence of DTOs, a single message might inadvertently include excessive metadata, user details, or other unintended information:
+
 
 .. code-block:: json
 
@@ -386,8 +394,8 @@ We prefer to write SQL statements all in upper case. Split queries onto multiple
             """)
     Optional<Result> findByIdWithEagerFeedbacks(@Param("resultId") Long resultId);
 
-20. Avoid the usage of Sub-queries
-==================================
+20. Do NOT use Sub-queries
+==========================
 
 SQL statements which do not contain sub-queries are preferable as they are more readable and have a better performance.
 So instead of:
@@ -431,25 +439,19 @@ For more details, please visit the :doc:`./criteria-builder` page.
 22. REST endpoint best practices for authorization
 ==================================================
 
-To reject unauthorized requests as early as possible, Artemis employs a two-step system:
+To reject unauthorized requests as early as possible, Artemis employs two solutions:
 
-#. ``PreAuthorize`` and ``Enforce`` annotations are responsible for blocking users with wrong or missing authorization roles without querying the database.
-#. The ``AuthorizationCheckService`` is responsible for checking access rights to individual resources by querying the database.
+#. Implicit pre- and post-authorization annotations:
+    #. ``EnforceRoleInResource`` (e.g. ``EnforceAtLeastInstructorInCourse``) annotations are responsible for blocking users with *wrong or missing authorization roles* without querying the database.
+    #. If necessary, these annotations check for access rights to individual resources within the database via light-weight queries.
+    #. Currently we offer the following annotations: ``EnforceRoleInCourse`` and ``EnforceRoleInExercise``
+#. Explicit authorization checks (which operate in two steps):
+    #. ``EnforceAtLeastRole`` (e.g. ``EnforceAtLeastInstructor``) annotations are responsible for blocking users with wrong or missing authorization roles without querying the database.
+    #. The ``AuthorizationCheckService`` is responsible for checking access rights to individual resources by querying the database. *Important*: these checks have to be performed explicitly.
 
-Because the first method without database queries is substantially faster, always annotate your REST endpoints with the corresponding annotation. Always use the annotation for the minimum role that has access.
-The following example makes the call only accessible to ADMIN and INSTRUCTOR users:
+Because the first solution (Implicit pre- and post-authorization) increases maintainability and is faster in most cases, always annotate your REST endpoints with the corresponding ``EnforceRoleInResource`` annotation. Always use the annotation for the minimum role that has access.
 
-.. code-block:: java
-
-    @EnforceAtLeastInstructor
-    public ResponseEntity<ProgrammingExercise> getProgrammingExercise(@PathVariable long exerciseId) {
-        var exercise = programmingExerciseRepository.findById(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
-        [...]
-        return ResponseEntity.ok(programmingExerciseRepository.findById(exerciseId));
-    }
-
-Artemis distinguishes between six different roles: ADMIN, INSTRUCTOR, EDITOR, TA (teaching assistant), USER and ANONYMOUS.
+Artemis distinguishes between six different roles: ADMIN, INSTRUCTOR, EDITOR, TA (teaching assistant/tutor), USER and ANONYMOUS.
 Each of the roles has the all the access rights of the roles following it, e.g. ANONYMOUS has almost no rights, while ADMIN users can access every page.
 
 The table contains all annotations for the corresponding minimum role including the required path prefix for all their endpoints and the package they should reside in. Different annotations get used during migration.
@@ -459,18 +461,66 @@ The table contains all annotations for the corresponding minimum role including 
 +------------------+----------------------------------------+-----------------+----------------+
 | ADMIN            | @EnforceAdmin                          | /api/admin/     | web.rest.admin |
 +------------------+----------------------------------------+-----------------+----------------+
-| INSTRUCTOR       | @EnforceAtLeastInstructor              | /api/           | web.rest       |
+| INSTRUCTOR       | @EnforceAtLeastInstructorInResource    | /api/           | web.rest       |
 +------------------+----------------------------------------+-----------------+----------------+
-| EDITOR           | @EnforceAtLeastEditor                  | /api/           | web.rest       |
+| EDITOR           | @EnforceAtLeastEditorInResource        | /api/           | web.rest       |
 +------------------+----------------------------------------+-----------------+----------------+
-| TA               | @EnforceAtLeastTutor                   | /api/           | web.rest       |
+| TA               | @EnforceAtLeastTutorInResource         | /api/           | web.rest       |
 +------------------+----------------------------------------+-----------------+----------------+
-| USER             | @EnforceAtLeastStudent                 | /api/           | web.rest       |
+| USER             | @EnforceAtLeastStudentInResource       | /api/           | web.rest       |
 +------------------+----------------------------------------+-----------------+----------------+
 | ANONYMOUS        | @EnforceNothing                        | /api/public/    | web.rest.open  |
 +------------------+----------------------------------------+-----------------+----------------+
 
 If, for some reason, you need to deviate from these rules, use ``@ManualConfig``. Use this annotation only if absolutely necessary as it will exclude the endpoint from the automatic authorization tests.
+
+Implicit pre- and post-authorization annotations
+------------------------------------------------
+
+The following example makes the call only accessible to ADMIN and INSTRUCTOR users and then checks the access rights to the course in the database:
+
+Do **not** write
+
+.. code-block:: java
+
+    @EnforceAtLeastInstructor
+    public ResponseEntity<Void> enableLearningPathsForCourse(@PathVariable long courseId) {
+        var course = courseRepository.findById(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+        [...]
+        return ResponseEntity.ok().build();
+    }
+
+Instead, use the following annotation:
+
+.. code-block:: java
+
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<Void> enableLearningPathsForCourse(@PathVariable long courseId) {
+        [...]
+        return ResponseEntity.ok().build();
+    }
+
+Explicit authorization checks
+-----------------------------
+
+CAUTION: Be aware that this solution should be used only in those two cases:
+    #. when you need to load user **AND** the resource anyway,
+    #. when no matching ``EnforceRoleInResource`` annotation exists.
+
+Always annotate your REST endpoints with the annotation for the minimum role that has access.
+
+The following example makes the call only accessible to ADMIN and INSTRUCTOR users:
+
+.. code-block:: java
+
+    @EnforceAtLeastInstructor
+    public ResponseEntity<Void> enableLearningPath(@PathVariable long courseId) {
+        var course = courseRepository.findById(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+        [...]
+        return ResponseEntity.ok().build();
+    }
 
 If a user passes the pre-authorization, the access to individual resources like courses and exercises still has to be checked. For example, a user can be a teaching assistant in one course, but only a student in another.
 However, do not fetch the user from the database yourself (unless you need to re-use the user object), but only hand a role to the ``AuthorizationCheckService``:
@@ -495,5 +545,10 @@ To reduce duplication, do not add explicit checks for authorization or existence
         return ResponseEntity.ok().body(exercises);
     }
 
-
 The course repository call takes care of throwing a ``404 Not Found`` exception if there exists no matching course. The ``AuthorizationCheckService`` throws a ``403 Forbidden`` exception if the user with the given role is unauthorized. Afterwards delegate to a service or repository method. The code becomes much shorter, cleaner and more maintainable.
+
+
+22. JSON serialization and deserialization
+==========================================
+
+Always use ObjectMapper (Jackson) and do not use other libraries. If you find code that relies on gson, please consider to migrate it to use ObjectMapper!

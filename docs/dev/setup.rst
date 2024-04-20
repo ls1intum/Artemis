@@ -3,10 +3,13 @@
 Setup Guide
 ===========
 
+Setting up Artemis in your development environment or a demo production environment is really easy following
+the instructions on this page. When you want to support programming exercises, we recommend using the :ref:`Integrated Code Lifecycle Setup <Integrated Code Lifecycle Setup>`.
+
 In this guide, you learn how to set up the development environment of
 Artemis. Artemis is based on `JHipster <https://jhipster.github.io>`__,
 i.e. \ `Spring Boot <http://projects.spring.io/spring-boot>`__
-development on the application server using Java 17, and TypeScript
+development on the application server using Java 21, and TypeScript
 development on the application client in the browser using
 `Angular <https://angular.io>`__. To get an overview of the
 used technology, have a look at the `JHipster Technology stack <https://jhipster.github.io/tech-stack>`__
@@ -29,10 +32,10 @@ following dependencies/tools on your machine:
 2. `MySQL Database Server 8 <https://dev.mysql.com/downloads/mysql>`__, or `PostgreSQL <https://www.postgresql.org/>`_:
    Artemis uses Hibernate to store entities in an SQL database and Liquibase to
    automatically apply schema transformations when updating Artemis.
-3. `Node.js <https://nodejs.org/en/download>`__: We use Node LTS (>=18.17.0 < 19) to compile
+3. `Node.js <https://nodejs.org/en/download>`__: We use Node LTS (>=20.10.0 < 21) to compile
    and run the client Angular application. Depending on your system, you
    can install Node either from source or as a pre-packaged bundle.
-4. `Npm <https://nodejs.org/en/download>`__: We use Npm (>=9.4.0) to
+4. `Npm <https://nodejs.org/en/download>`__: We use Npm (>=10.2.3) to
    manage client side dependencies. Npm is typically bundled with Node.js,
    but can also be installed separately.
 5. ( `Graphviz <https://www.graphviz.org/download/>`__: We use Graphviz to generate graphs within exercise task
@@ -42,10 +45,9 @@ following dependencies/tools on your machine:
 6. A **version control** and **build** system is necessary for the **programming exercise** feature of Artemis.
    There are multiple stacks available for the integration with Artemis:
 
-   * `GitLab and Jenkins <#jenkins-and-gitlab-setup>`__
-   * `GitLab and GitLab CI <#gitlab-ci-and-gitlab-setup>`__ (experimental, not yet production ready)
-   * `Bamboo, Bitbucket and Jira <#bamboo-bitbucket-and-jira-setup>`__
-   * `Local CI and local VC <#local-ci-and-local-vc-setup>`__ (experimental, not yet production ready)
+   * :ref:`Integrated Code Lifecycle Setup <Integrated Code Lifecycle Setup>`
+   * :ref:`GitLab and Jenkins <Jenkins and GitLab Setup>`
+   * :ref:`GitLab and GitLab CI <GitLab CI and GitLab Setup>` (experimental, not yet production ready)
 
 ------------------------------------------------------------------------------------------------------------------------
 
@@ -71,10 +73,10 @@ following dependencies/tools on your machine:
    setup/database
    setup/server
    setup/client
-   setup/bamboo-bitbucket-jira
    setup/jenkins-gitlab
    setup/gitlabci-gitlab
-   setup/localci-localvc
+   setup/integrated-code-lifecycle
+   setup/aeolus
    setup/common-problems
    setup/docker-compose
    setup/local-database-tests

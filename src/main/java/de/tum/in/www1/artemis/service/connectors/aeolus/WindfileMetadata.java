@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.connectors.aeolus;
 
 /**
  * Represents the metadata of a {@link Windfile}
+ * TODO: convert to Record
  */
 public class WindfileMetadata {
 
@@ -18,6 +19,8 @@ public class WindfileMetadata {
     private DockerConfig docker;
 
     private String resultHook;
+
+    private String resultHookCredentials;
 
     public String getName() {
         return name;
@@ -73,5 +76,13 @@ public class WindfileMetadata {
 
     public void setResultHook(String resultHook) {
         this.resultHook = resultHook;
+    }
+
+    public void setResultHookCredentials(String resultHookCredentials) {
+        this.resultHookCredentials = resultHookCredentials;
+    }
+
+    public String getResultHookCredentials() {
+        return resultHookCredentials;
     }
 }

@@ -2,10 +2,7 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.ZonedDateTime;
@@ -32,7 +29,9 @@ import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
-import de.tum.in.www1.artemis.domain.quiz.*;
+import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestion;
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.CourseRepository;
@@ -44,7 +43,7 @@ import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.websocket.QuizSubmissionWebsocketService;
 
 @Isolated
-class LtiQuizIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class LtiQuizIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "ltiquizsubmissiontest";
 
@@ -82,7 +81,7 @@ class LtiQuizIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     void init() {
         // do not use the schedule service based on a time interval in the tests, because this would result in flaky tests that run much slower
         quizScheduleService.stopSchedule();
-        arrangeLtiServiceMocks();
+        doNothing().when(lti13Service).onNewResult(any());
     }
 
     @AfterEach
@@ -110,7 +109,6 @@ class LtiQuizIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         assertThat(submissionRepository.countByExerciseIdSubmitted(quizExercise.getId())).isZero();
         quizScheduleService.processCachedQuizSubmissions();
 
-        verifyNoInteractions(lti10Service);
         verifyNoInteractions(lti13Service);
 
         // End the quiz right now
@@ -121,7 +119,6 @@ class LtiQuizIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
 
         quizScheduleService.processCachedQuizSubmissions();
 
-        verify(lti10Service).onNewResult(any());
         verify(lti13Service).onNewResult(any());
 
     }
@@ -153,7 +150,6 @@ class LtiQuizIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         assertThat(quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getPointCounters()).hasSize(10);
         assertThat(quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getParticipantsRated()).isEqualTo(numberOfParticipants);
 
-        verify(lti10Service, times(10)).onNewResult(any());
         verify(lti13Service, times(10)).onNewResult(any());
 
     }
@@ -168,15 +164,11 @@ class LtiQuizIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         return quizExercise;
     }
 
-    private void arrangeLtiServiceMocks() {
-        doNothing().when(lti10Service).onNewResult(any());
-        doNothing().when(lti13Service).onNewResult(any());
-    }
-
     private QuizExercise createQuizExercise(ZonedDateTime releaseDate) throws Exception {
         QuizExercise quizExercise = createSimpleQuizExercise(releaseDate, 3600);
 
-        QuizExercise quizExerciseServer = createQuizExerciseWithFiles(quizExercise, HttpStatus.CREATED);
+        QuizExercise quizExerciseServer = createQuizExerciseWithFiles(quizExercise);
+        assertThat(quizExerciseServer).isNotNull();
         QuizExercise quizExerciseDatabase = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExerciseServer.getId());
         assertThat(quizExerciseServer).isNotNull();
         assertThat(quizExerciseDatabase).isNotNull();
@@ -184,12 +176,12 @@ class LtiQuizIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         return quizExerciseDatabase;
     }
 
-    private QuizExercise createQuizExerciseWithFiles(QuizExercise quizExercise, HttpStatus expectedStatus) throws Exception {
+    private QuizExercise createQuizExerciseWithFiles(QuizExercise quizExercise) throws Exception {
         var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/quiz-exercises");
         addFilesToBuilderAndModifyExercise(builder, quizExercise);
         builder.file(new MockMultipartFile("exercise", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsBytes(quizExercise)))
                 .contentType(MediaType.MULTIPART_FORM_DATA);
-        MvcResult result = request.getMvc().perform(builder).andExpect(status().is(expectedStatus.value())).andReturn();
+        MvcResult result = request.performMvcRequest(builder).andExpect(status().is(HttpStatus.CREATED.value())).andReturn();
         request.restoreSecurityContext();
         if (HttpStatus.valueOf(result.getResponse().getStatus()).is2xxSuccessful()) {
             assertThat(result.getResponse().getContentAsString()).isNotBlank();

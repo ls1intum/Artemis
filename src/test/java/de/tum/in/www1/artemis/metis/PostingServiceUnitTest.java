@@ -78,7 +78,7 @@ class PostingServiceUnitTest {
 
         parseUserMentions.invoke(postingService, course, content);
 
-        verify(userRepository).findAllByLogins(anySet());
+        verify(userRepository).findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndLoginIn(anySet());
         verify(authorizationCheckService, times(2)).isAtLeastStudentInCourse(eq(course), any(User.class));
     }
 
@@ -173,14 +173,14 @@ class PostingServiceUnitTest {
     }
 
     /**
-     * This helper method sets up the mock for the UserRepository.findAllByLogins method in a way,
+     * This helper method sets up the mock for the UserRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndLoginIn method in a way,
      * so that it asserts the correct input
      *
      * @param expectedUserLogins expected set of user logins found in the message content
-     * @param usersInDatabase    the mocked return value of UserRepository.findAllByLogins
+     * @param usersInDatabase    the mocked return value of UserRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndLoginIn
      */
     private void setupUserRepository(Set<String> expectedUserLogins, Set<User> usersInDatabase) {
-        when(userRepository.findAllByLogins(anySet())).thenAnswer(invocation -> {
+        when(userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndLoginIn(anySet())).thenAnswer(invocation -> {
             Set<String> logins = invocation.getArgument(0);
             assertThat(logins).isEqualTo(expectedUserLogins);
             return usersInDatabase;

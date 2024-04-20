@@ -2,7 +2,7 @@ import { Exam } from 'app/entities/exam.model';
 
 import multipleChoiceTemplate from '../../../fixtures/exercise/quiz/multiple_choice/template.json';
 import { examAPIRequests, exerciseAPIRequest } from '../../artemis';
-import { AdditionalData, BASE_API, ExerciseType, POST, PUT } from '../../constants';
+import { AdditionalData, COURSE_BASE, ExerciseType, POST, PUT } from '../../constants';
 import { convertModelAfterMultiPart, generateUUID } from '../../utils';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { Visibility } from 'app/entities/programming-exercise-test-case.model';
@@ -20,13 +20,13 @@ export class ExamExerciseGroupCreationPage {
     }
 
     clickSave() {
-        cy.intercept({ method: POST, url: `${BASE_API}courses/*/exams/*/exerciseGroups` }).as('createExerciseGroup');
+        cy.intercept({ method: POST, url: `${COURSE_BASE}/*/exams/*/exerciseGroups` }).as('createExerciseGroup');
         cy.get('#save-group').click();
         return cy.wait('@createExerciseGroup');
     }
 
     update() {
-        cy.intercept({ method: PUT, url: `${BASE_API}courses/*/exams/*/exerciseGroups` }).as('updateExerciseGroup');
+        cy.intercept({ method: PUT, url: `${COURSE_BASE}/*/exams/*/exerciseGroups` }).as('updateExerciseGroup');
         cy.get('#save-group').click();
         cy.wait('@updateExerciseGroup');
     }

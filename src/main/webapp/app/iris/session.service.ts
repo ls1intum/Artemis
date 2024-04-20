@@ -33,14 +33,10 @@ export abstract class IrisSessionService {
     getCurrentSessionOrCreate(exerciseId: number): void {
         let sessionId: number;
 
-        this.httpSessionService
-            .getCurrentSession(exerciseId)
-            .toPromise()
+        firstValueFrom(this.httpSessionService.getCurrentSession(exerciseId))
             .then((irisSessionResponse: HttpResponse<IrisSession>) => {
                 sessionId = irisSessionResponse.body!.id;
-                return this.httpMessageService
-                    .getMessages(sessionId)
-                    .toPromise()
+                return firstValueFrom(this.httpMessageService.getMessages(sessionId))
                     .then((messagesResponse: HttpResponse<IrisMessage[]>) => {
                         const messages = messagesResponse.body!;
                         messages.sort((a, b) => {
@@ -70,12 +66,14 @@ export abstract class IrisSessionService {
      * @param exerciseId The exercise ID for which to create a new session.
      */
     createNewSession(exerciseId: number): void {
-        this.httpSessionService.createSession(exerciseId).subscribe(
-            (irisSessionResponse: any) => {
+        this.httpSessionService.createSession(exerciseId).subscribe({
+            next: (irisSessionResponse: IrisSession) => {
                 this.dispatchSuccess(irisSessionResponse.id, []);
             },
-            () => this.dispatchError(IrisErrorMessageKey.SESSION_CREATION_FAILED),
-        );
+            error: () => this.dispatchError(IrisErrorMessageKey.SESSION_CREATION_FAILED),
+            // If you have a completion callback, you can include it as well
+            // complete: () => { /* completion logic here */ }
+        });
     }
 
     /**

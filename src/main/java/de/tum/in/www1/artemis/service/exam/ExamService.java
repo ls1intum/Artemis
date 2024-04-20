@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.service.exam;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
+import static java.time.ZonedDateTime.now;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -20,8 +22,8 @@ import java.util.OptionalDouble;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
@@ -29,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
@@ -65,6 +68,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.domain.quiz.QuizPool;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmittedAnswerCount;
 import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
@@ -87,6 +91,7 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.BonusService;
 import de.tum.in.www1.artemis.service.CourseScoreCalculationService;
 import de.tum.in.www1.artemis.service.ExerciseDeletionService;
+import de.tum.in.www1.artemis.service.QuizPoolService;
 import de.tum.in.www1.artemis.service.TutorLeaderboardService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.export.CourseExamExportService;
@@ -100,11 +105,11 @@ import de.tum.in.www1.artemis.web.rest.dto.BonusSourceResultDTO;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.dto.ExamChecklistDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
-import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.StudentExamWithGradeDTO;
 import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
+import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -113,6 +118,7 @@ import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 /**
  * Service Implementation for managing exams.
  */
+@Profile(PROFILE_CORE)
 @Service
 public class ExamService {
 
@@ -121,7 +127,7 @@ public class ExamService {
     @Value("${artemis.course-archives-path}")
     private Path examArchivesDirPath;
 
-    private final Logger log = LoggerFactory.getLogger(ExamService.class);
+    private static final Logger log = LoggerFactory.getLogger(ExamService.class);
 
     private final UserRepository userRepository;
 
@@ -132,6 +138,10 @@ public class ExamService {
     private final QuizExerciseRepository quizExerciseRepository;
 
     private final ExamQuizService examQuizService;
+
+    private final ExamDateService examDateService;
+
+    private final ExamLiveEventsService examLiveEventsService;
 
     private final InstanceMessageSendService instanceMessageSendService;
 
@@ -173,20 +183,24 @@ public class ExamService {
 
     private final CourseRepository courseRepository;
 
+    private final QuizPoolService quizPoolService;
+
     private final ObjectMapper defaultObjectMapper;
 
     private static final boolean IS_TEST_RUN = false;
 
     private static final String NOT_ALLOWED_TO_ACCESS_THE_GRADE_SUMMARY = "You are not allowed to access the grade summary of a student exam ";
 
-    public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, ExamQuizService examQuizService,
+    public ExamService(ExamDateService examDateService, ExamRepository examRepository, StudentExamRepository studentExamRepository, ExamQuizService examQuizService,
             InstanceMessageSendService instanceMessageSendService, TutorLeaderboardService tutorLeaderboardService, StudentParticipationRepository studentParticipationRepository,
             ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, UserRepository userRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, QuizExerciseRepository quizExerciseRepository, ResultRepository resultRepository,
-            SubmissionRepository submissionRepository, CourseExamExportService courseExamExportService, GitService gitService, GroupNotificationService groupNotificationService,
-            GradingScaleRepository gradingScaleRepository, PlagiarismCaseRepository plagiarismCaseRepository, AuthorizationCheckService authorizationCheckService,
-            BonusService bonusService, ExerciseDeletionService exerciseDeletionService, SubmittedAnswerRepository submittedAnswerRepository,
-            AuditEventRepository auditEventRepository, CourseScoreCalculationService courseScoreCalculationService, CourseRepository courseRepository) {
+            ProgrammingExerciseRepository programmingExerciseRepository, QuizExerciseRepository quizExerciseRepository, ExamLiveEventsService examLiveEventsService,
+            ResultRepository resultRepository, SubmissionRepository submissionRepository, CourseExamExportService courseExamExportService, GitService gitService,
+            GroupNotificationService groupNotificationService, GradingScaleRepository gradingScaleRepository, PlagiarismCaseRepository plagiarismCaseRepository,
+            AuthorizationCheckService authorizationCheckService, BonusService bonusService, ExerciseDeletionService exerciseDeletionService,
+            SubmittedAnswerRepository submittedAnswerRepository, AuditEventRepository auditEventRepository, CourseScoreCalculationService courseScoreCalculationService,
+            CourseRepository courseRepository, QuizPoolService quizPoolService) {
+        this.examDateService = examDateService;
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -197,6 +211,7 @@ public class ExamService {
         this.complaintRepository = complaintRepository;
         this.complaintResponseRepository = complaintResponseRepository;
         this.quizExerciseRepository = quizExerciseRepository;
+        this.examLiveEventsService = examLiveEventsService;
         this.resultRepository = resultRepository;
         this.submissionRepository = submissionRepository;
         this.tutorLeaderboardService = tutorLeaderboardService;
@@ -212,6 +227,7 @@ public class ExamService {
         this.auditEventRepository = auditEventRepository;
         this.courseScoreCalculationService = courseScoreCalculationService;
         this.courseRepository = courseRepository;
+        this.quizPoolService = quizPoolService;
         this.defaultObjectMapper = new ObjectMapper();
     }
 
@@ -311,10 +327,12 @@ public class ExamService {
         }
 
         // the second correction has started if it is enabled in the exam and at least one exercise was started
-        var hasSecondCorrectionAndStarted = exam.getNumberOfCorrectionRoundsInExam() > 1
-                && exam.getExerciseGroups().stream().flatMap(exerciseGroup -> exerciseGroup.getExercises().stream()).anyMatch(Exercise::getSecondCorrectionEnabled);
-
+        var hasSecondCorrectionAndStarted = exam.getNumberOfCorrectionRoundsInExam() > 1 && isSecondCorrectionEnabled(exam);
         return new ExamScoresDTO(exam.getId(), exam.getTitle(), exam.getExamMaxPoints(), averagePointsAchieved, hasSecondCorrectionAndStarted, exerciseGroups, studentResults);
+    }
+
+    private static boolean isSecondCorrectionEnabled(Exam exam) {
+        return exam.getExerciseGroups().stream().flatMap(exerciseGroup -> exerciseGroup.getExercises().stream()).anyMatch(Exercise::getSecondCorrectionEnabled);
     }
 
     /**
@@ -418,7 +436,8 @@ public class ExamService {
             StudentExam studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(targetUser.getId(), examId, IS_TEST_RUN)
                     .orElseThrow(() -> new EntityNotFoundException("No student exam found for examId " + examId + " and userId " + studentId));
 
-            StudentExamWithGradeDTO studentExamWithGradeDTO = getStudentExamGradesForSummaryAsStudent(targetUser, studentExam, IS_TEST_RUN);
+            StudentExamWithGradeDTO studentExamWithGradeDTO = getStudentExamGradesForSummary(targetUser, studentExam,
+                    authorizationCheckService.isAtLeastInstructorInCourse(studentExam.getExam().getCourse(), targetUser));
             var studentResult = studentExamWithGradeDTO.studentResult();
             return Map.of(studentId, new BonusSourceResultDTO(studentResult.overallPointsAchieved(), studentResult.mostSeverePlagiarismVerdict(), null, null,
                     Boolean.TRUE.equals(studentResult.submitted())));
@@ -437,20 +456,19 @@ public class ExamService {
      * <p>
      * See {@link StudentExamWithGradeDTO} for more explanation.
      *
-     * @param targetUser  the user who submitted the studentExam
-     * @param studentExam the student exam to be evaluated
-     * @param isTestRun   set if an instructor executes a test run
+     * @param targetUser                       the user who submitted the studentExam
+     * @param studentExam                      the student exam to be evaluated
+     * @param accessingUserIsAtLeastInstructor is passed to decide the access (e.g. for test runs access will be needed regardless of submission or published dates)
      * @return the student exam result with points and grade
      */
-    public StudentExamWithGradeDTO getStudentExamGradesForSummaryAsStudent(User targetUser, StudentExam studentExam, boolean isTestRun) {
-
+    public StudentExamWithGradeDTO getStudentExamGradesForSummary(User targetUser, StudentExam studentExam, boolean accessingUserIsAtLeastInstructor) {
         loadQuizExercisesForStudentExam(studentExam);
-
+        boolean accessToSummaryAlwaysAllowed = studentExam.isTestRun() || accessingUserIsAtLeastInstructor;
         // check that the studentExam has been submitted, otherwise /student-exams/conduction should be used
-        if (!Boolean.TRUE.equals(studentExam.isSubmitted()) && !isTestRun) {
+        if (!Boolean.TRUE.equals(studentExam.isSubmitted()) && !accessToSummaryAlwaysAllowed) {
             throw new AccessForbiddenException(NOT_ALLOWED_TO_ACCESS_THE_GRADE_SUMMARY + "which was NOT submitted!");
         }
-        if (!studentExam.areResultsPublishedYet() && !isTestRun) {
+        if (!studentExam.areResultsPublishedYet() && !accessToSummaryAlwaysAllowed) {
             throw new AccessForbiddenException(NOT_ALLOWED_TO_ACCESS_THE_GRADE_SUMMARY + "before the release date of results");
         }
 
@@ -556,7 +574,7 @@ public class ExamService {
         }
 
         if (exercise instanceof ProgrammingExercise programmingExercise) {
-            programmingExercise.setTestRepositoryUrl(null);
+            programmingExercise.setTestRepositoryUri(null);
         }
 
         // get user's participation for the exercise
@@ -1000,7 +1018,8 @@ public class ExamService {
         List<Long> numberOfParticipationsForAssessmentGeneratedByExercise = new ArrayList<>();
 
         // loop over all exercises and retrieve all needed counts for the properties at once
-        exam.getExerciseGroups().forEach(exerciseGroup -> exerciseGroup.getExercises().forEach(exercise -> {
+        var exercises = getAllExercisesForExam(exam);
+        exercises.forEach(exercise -> {
             // number of complaints open
             numberOfComplaintsOpenByExercise.add(complaintRepository.countByResultParticipationExerciseIdAndComplaintTypeIgnoreTestRuns(exercise.getId(), ComplaintType.COMPLAINT));
 
@@ -1032,7 +1051,7 @@ public class ExamService {
             if (!(exercise instanceof QuizExercise || AssessmentType.AUTOMATIC == exercise.getAssessmentType())) {
                 numberOfParticipationsForAssessmentGeneratedByExercise.add(submissionRepository.countByExerciseIdSubmittedBeforeDueDateIgnoreTestRuns(exercise.getId()));
             }
-        }));
+        });
 
         long totalNumberOfComplaints = 0;
         long totalNumberOfComplaintResponse = 0;
@@ -1108,27 +1127,20 @@ public class ExamService {
     }
 
     /**
-     * Evaluates all the quiz exercises of an exam
+     * Evaluates all the quiz exercises of an exam (which must be loaded from database with exercise groups and exercises)
      *
-     * @param exam the exam for which the quiz exercises should be evaluated (including exercises)
+     * @param exam the exam for which the quiz exercises should be evaluated (including exercise groups and exercises)
      * @return number of evaluated exercises
      */
     public Integer evaluateQuizExercises(Exam exam) {
 
         // Collect all quiz exercises for the given exam
-        Set<QuizExercise> quizExercises = new HashSet<>();
-        for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
-            for (Exercise exercise : exerciseGroup.getExercises()) {
-                if (exercise instanceof QuizExercise) {
-                    quizExercises.add((QuizExercise) exercise);
-                }
-            }
-        }
+        var quizExercises = getAllExercisesForExamByType(exam, QuizExercise.class);
 
         long start = System.nanoTime();
         log.debug("Evaluating {} quiz exercises in exam {}", quizExercises.size(), exam.getId());
         // Evaluate all quizzes for that exercise
-        quizExercises.forEach(quiz -> examQuizService.evaluateQuizAndUpdateStatistics(quiz.getId()));
+        quizExercises.stream().map(Exercise::getId).forEach(examQuizService::evaluateQuizAndUpdateStatistics);
         if (log.isDebugEnabled()) {
             log.debug("Evaluated {} quiz exercises in exam {} in {}", quizExercises.size(), exam.getId(), TimeLogUtil.formatDurationFrom(start));
         }
@@ -1136,51 +1148,43 @@ public class ExamService {
     }
 
     /**
-     * Unlocks all repositories of an exam
+     * Unlocks all repositories of an exam (only for external version control services)
      *
      * @param examId id of the exam for which the repositories should be unlocked
      * @return number of exercises for which the repositories are unlocked
      */
     public Integer unlockAllRepositories(Long examId) {
-        var programmingExercises = getAllProgrammingExercisesForExam(examId);
-
-        for (ProgrammingExercise programmingExercise : programmingExercises) {
-            // Run the runnable immediately so that the repositories are unlocked as fast as possible
-            instanceMessageSendService.sendUnlockAllStudentRepositories(programmingExercise.getId());
-        }
-
+        var programmingExercises = getAllExercisesForExamByType(examId, ProgrammingExercise.class);
+        // Run the runnable immediately so that the repositories are unlocked as fast as possible
+        programmingExercises.stream().map(Exercise::getId).forEach(instanceMessageSendService::sendUnlockAllStudentRepositories);
         return programmingExercises.size();
     }
 
-    private Set<ProgrammingExercise> getAllProgrammingExercisesForExam(Long examId) {
+    private <T extends Exercise> Set<T> getAllExercisesForExamByType(Long examId, Class<T> exerciseType) {
         var exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
+        return getAllExercisesForExamByType(exam, exerciseType);
+    }
 
-        // Collect all programming exercises for the given exam
-        Set<ProgrammingExercise> programmingExercises = new HashSet<>();
-        for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
-            for (Exercise exercise : exerciseGroup.getExercises()) {
-                if (exercise instanceof ProgrammingExercise) {
-                    programmingExercises.add((ProgrammingExercise) exercise);
-                }
-            }
-        }
-        return programmingExercises;
+    private static Set<Exercise> getAllExercisesForExam(Exam exam) {
+        return getAllExercisesForExamByType(exam, Exercise.class);
+    }
+
+    private static <T extends Exercise> Set<T> getAllExercisesForExamByType(Exam exam, Class<T> exerciseType) {
+        return exam.getExerciseGroups().stream().flatMap(exerciseGroup -> exerciseGroup.getExercises().stream())
+                // this also filters potential null values
+                .filter(exerciseType::isInstance).map(exerciseType::cast).collect(Collectors.toSet());
     }
 
     /**
-     * Locks all repositories of an exam
+     * Locks all repositories of an exam (only for external version control services)
      *
      * @param examId id of the exam for which the repositories should be locked
      * @return number of exercises for which the repositories are locked
      */
     public Integer lockAllRepositories(Long examId) {
-        var programmingExercises = getAllProgrammingExercisesForExam(examId);
-
-        for (ProgrammingExercise programmingExercise : programmingExercises) {
-            // Run the runnable immediately so that the repositories are locked as fast as possible
-            instanceMessageSendService.sendLockAllStudentRepositories(programmingExercise.getId());
-        }
-
+        var programmingExercises = getAllExercisesForExamByType(examId, ProgrammingExercise.class);
+        // Run the runnable immediately so that the repositories are locked as fast as possible
+        programmingExercises.stream().map(Exercise::getId).forEach(instanceMessageSendService::sendLockAllStudentRepositories);
         return programmingExercises.size();
     }
 
@@ -1202,6 +1206,19 @@ public class ExamService {
         });
         // set transient number of registered users
         examRepository.setNumberOfExamUsersForExams(Collections.singletonList(exam));
+    }
+
+    /**
+     * Set properties for quiz exercises in exam
+     *
+     * @param exam The exam for which to set the properties
+     */
+    public void setQuizExamProperties(Exam exam) {
+        Optional<QuizPool> optionalQuizPool = quizPoolService.findByExamId(exam.getId());
+        if (optionalQuizPool.isPresent()) {
+            QuizPool quizPool = optionalQuizPool.get();
+            exam.setQuizExamMaxPoints(quizPool.getMaxPoints());
+        }
     }
 
     /**
@@ -1298,17 +1315,17 @@ public class ExamService {
      * @param exam - the exam which template commits should be combined
      */
     public void combineTemplateCommitsOfAllProgrammingExercisesInExam(Exam exam) {
-        exam.getExerciseGroups().forEach(group -> group.getExercises().stream().filter(exercise -> exercise instanceof ProgrammingExercise).forEach(exercise -> {
+        var programmingExercises = getAllExercisesForExamByType(exam, ProgrammingExercise.class);
+        programmingExercises.forEach(exercise -> {
             try {
-                ProgrammingExercise programmingExerciseWithTemplateParticipation = programmingExerciseRepository
-                        .findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
-                gitService.combineAllCommitsOfRepositoryIntoOne(programmingExerciseWithTemplateParticipation.getTemplateParticipation().getVcsRepositoryUrl());
-                log.debug("Finished combination of template commits for programming exercise {}", programmingExerciseWithTemplateParticipation);
+                var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
+                gitService.combineAllCommitsOfRepositoryIntoOne(programmingExercise.getTemplateParticipation().getVcsRepositoryUri());
+                log.debug("Finished combination of template commits for programming exercise {}", programmingExercise);
             }
             catch (GitAPIException e) {
                 log.error("An error occurred when trying to combine template commits for exam {}.", exam.getId(), e);
             }
-        }));
+        });
     }
 
     /**
@@ -1318,13 +1335,13 @@ public class ExamService {
      * @param exam - the exam whose modeling exercises will be scheduled
      */
     public void scheduleModelingExercises(Exam exam) {
+        var modelingExercises = getAllExercisesForExamByType(exam, ModelingExercise.class);
         // for all modeling exercises in the exam, send their ids for scheduling
-        exam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream()).filter(exercise -> exercise instanceof ModelingExercise).map(Exercise::getId)
-                .forEach(instanceMessageSendService::sendModelingExerciseSchedule);
+        modelingExercises.stream().map(Exercise::getId).forEach(instanceMessageSendService::sendModelingExerciseSchedule);
     }
 
     /**
-     * Search for all exams fitting a {@link PageableSearchDTO search query}. The result is paged,
+     * Search for all exams fitting a {@link SearchTermPageableSearchDTO search query}. The result is paged,
      * meaning that there is only a predefined portion of the result returned to the user, so that the server doesn't
      * have to send hundreds/thousands of exams if there are that many in Artemis.
      *
@@ -1333,8 +1350,8 @@ public class ExamService {
      * @param withExercises If only exams with exercises should be searched
      * @return A wrapper object containing a list of all found exercises and the total number of pages
      */
-    public SearchResultPageDTO<Exam> getAllOnPageWithSize(final PageableSearchDTO<String> search, final User user, final boolean withExercises) {
-        final var pageable = PageUtil.createExamPageRequest(search);
+    public SearchResultPageDTO<Exam> getAllOnPageWithSize(final SearchTermPageableSearchDTO<String> search, final User user, final boolean withExercises) {
+        final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.EXAM);
         final var searchTerm = search.getSearchTerm();
         final Page<Exam> examPage;
         if (authorizationCheckService.isAdmin(user)) {
@@ -1380,18 +1397,59 @@ public class ExamService {
         final var auditEvent = new AuditEvent(principal.getName(), Constants.CLEANUP_EXAM, "exam=" + examId);
         auditEventRepository.add(auditEvent);
 
-        // The Objects::nonNull is needed here because the relationship exam -> exercise groups is ordered and
-        // hibernate sometimes adds nulls into the list of exercise groups to keep the order
-        Set<Exercise> examExercises = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(examId).getExerciseGroups().stream().filter(Objects::nonNull)
-                .map(ExerciseGroup::getExercises).flatMap(Collection::stream).collect(Collectors.toSet());
-
-        examExercises.forEach(exercise -> {
-            if (exercise instanceof ProgrammingExercise) {
-                exerciseDeletionService.cleanup(exercise.getId(), true);
-            }
-        });
-
+        var programmingExercises = getAllExercisesForExamByType(examId, ProgrammingExercise.class);
+        programmingExercises.forEach(exercise -> exerciseDeletionService.cleanup(exercise.getId(), true));
         log.info("The exam {} has been cleaned up!", examId);
+    }
+
+    /**
+     * Updates the working times for student exams based on a given change in working time and reschedules exercises accordingly.
+     * This method considers any existing time extensions for individual students and adjusts their working times relative to the original exam duration and the specified change.
+     * After updating the working times, it saves the changes and, if the exam is already visible, notifies both the students and relevant instances about the update.
+     * Additionally, if the current time is before the latest individual exam end date, it potentially triggers a rescheduling of the clustering of modeling submissions,
+     * considering the use of Compass.
+     *
+     * @param exam                 The exam entity for which the student exams and exercises need to be updated and rescheduled. The student exams must be already loaded.
+     * @param originalExamDuration The original duration of the exam, in minutes, before any changes.
+     * @param workingTimeChange    The amount of time, in minutes, to add or subtract from the exam's original duration and the student's working time. This value can be positive
+     *                                 (to extend time) or negative (to reduce time).
+     */
+    public void updateStudentExamsAndRescheduleExercises(Exam exam, Integer originalExamDuration, Integer workingTimeChange) {
+        var now = now();
+        User instructor = userRepository.getUser();
+
+        var studentExams = exam.getStudentExams();
+        for (var studentExam : studentExams) {
+            Integer originalStudentWorkingTime = studentExam.getWorkingTime();
+            int originalTimeExtension = originalStudentWorkingTime - originalExamDuration;
+            // NOTE: take the original working time extensions into account
+            if (originalTimeExtension == 0) {
+                studentExam.setWorkingTime(originalStudentWorkingTime + workingTimeChange);
+            }
+            else {
+                double relativeTimeExtension = (double) originalTimeExtension / (double) originalExamDuration;
+                int newNormalWorkingTime = originalExamDuration + workingTimeChange;
+                int timeAdjustment = Math.toIntExact(Math.round(newNormalWorkingTime * relativeTimeExtension));
+                int adjustedWorkingTime = Math.max(newNormalWorkingTime + timeAdjustment, 0);
+                studentExam.setWorkingTime(adjustedWorkingTime);
+            }
+
+            // NOTE: if the exam is already visible, notify the student about the working time change
+            if (now.isAfter(exam.getVisibleDate())) {
+                examLiveEventsService.createAndSendWorkingTimeUpdateEvent(studentExam, studentExam.getWorkingTime(), originalStudentWorkingTime, true, instructor);
+            }
+        }
+        studentExamRepository.saveAll(studentExams);
+
+        // NOTE: if the exam is already visible, notify instances about the working time change
+        if (now.isAfter(exam.getVisibleDate())) {
+            instanceMessageSendService.sendRescheduleAllStudentExams(exam.getId());
+        }
+
+        // NOTE: potentially re-schedule clustering of modeling submissions (in case Compass is active)
+        if (now.isBefore(examDateService.getLatestIndividualExamEndDate(exam))) {
+            scheduleModelingExercises(exam);
+        }
     }
 
     /**

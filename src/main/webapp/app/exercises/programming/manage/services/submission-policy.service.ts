@@ -1,11 +1,11 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { SubmissionPolicy } from 'app/entities/submission-policy.model';
 
 export interface ISubmissionPolicyService {
     addSubmissionPolicyToProgrammingExercise: (submissionPolicy: SubmissionPolicy, exerciseId: number) => Observable<SubmissionPolicy>;
-    getSubmissionPolicyOfProgrammingExercise: (exerciseId: number) => Observable<SubmissionPolicy>;
+    getSubmissionPolicyOfProgrammingExercise: (exerciseId: number) => Observable<SubmissionPolicy | undefined>;
     removeSubmissionPolicyFromProgrammingExercise: (exerciseId: number) => Observable<HttpResponse<void>>;
     enableSubmissionPolicyOfProgrammingExercise: (exerciseId: number) => Observable<HttpResponse<void>>;
     disableSubmissionPolicyOfProgrammingExercise: (exerciseId: number) => Observable<HttpResponse<void>>;
@@ -24,8 +24,14 @@ export class SubmissionPolicyService implements ISubmissionPolicyService {
      *
      * @param exerciseId of the programming exercise for which the submission policy should be loaded
      */
-    getSubmissionPolicyOfProgrammingExercise(exerciseId: number): Observable<SubmissionPolicy> {
-        return this.http.get<SubmissionPolicy>(this.requestUrl(exerciseId));
+    getSubmissionPolicyOfProgrammingExercise(exerciseId: number): Observable<SubmissionPolicy | undefined> {
+        return this.http.get<SubmissionPolicy | undefined>(this.requestUrl(exerciseId)).pipe(
+            // using any as it can be null
+            map((response: any) => {
+                // Ensure that null is replaced by undefined
+                return response === null ? undefined : response;
+            }),
+        );
     }
 
     /**

@@ -12,12 +12,10 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { ArtemisProgrammingExerciseStatusModule } from 'app/exercises/programming/manage/status/programming-exercise-status.module';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 import { ArtemisProgrammingExerciseModule } from 'app/exercises/programming/shared/programming-exercise.module';
-import { ExerciseDetailsModule } from 'app/exercises/shared/exercise/exercise-details/exercise-details.module';
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
 import { ProgrammingExerciseEditSelectedComponent } from 'app/exercises/programming/manage/programming-exercise-edit-selected.component';
 import { OrionModule } from 'app/shared/orion/orion.module';
 import { ArtemisPlagiarismModule } from 'app/exercises/shared/plagiarism/plagiarism.module';
-import { ProgrammingExerciseInstructorRepoDownloadComponent } from '../shared/actions/programming-exercise-instructor-repo-download.component';
 import { ArtemisProgrammingExerciseLifecycleModule } from 'app/exercises/programming/shared/lifecycle/programming-exercise-lifecycle.module';
 import { ProgrammingExerciseInstructorExerciseDownloadComponent } from '../shared/actions/programming-exercise-instructor-exercise-download.component';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
@@ -28,7 +26,9 @@ import { ArtemisCodeHintGenerationOverviewModule } from 'app/exercises/programmi
 import { BuildPlanEditorComponent } from 'app/exercises/programming/manage/build-plan-editor.component';
 import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
 import { ArtemisCodeEditorModule } from 'app/exercises/programming/shared/code-editor/code-editor.module';
+import { DetailModule } from 'app/detail-overview-list/detail.module';
 import { IrisModule } from 'app/iris/iris.module';
+import { ArtemisExerciseModule } from 'app/exercises/shared/exercise/exercise.module';
 
 @NgModule({
     imports: [
@@ -45,7 +45,6 @@ import { IrisModule } from 'app/iris/iris.module';
         ArtemisProgrammingExerciseUpdateModule,
         ArtemisProgrammingExerciseStatusModule,
         FeatureToggleModule,
-        ExerciseDetailsModule,
         AssessmentInstructionsModule,
         OrionModule,
         ArtemisProgrammingExerciseLifecycleModule,
@@ -55,12 +54,13 @@ import { IrisModule } from 'app/iris/iris.module';
         ArtemisCodeHintGenerationOverviewModule,
         AceEditorModule,
         ArtemisCodeEditorModule,
+        ArtemisExerciseModule,
+        DetailModule,
         IrisModule,
     ],
     declarations: [
         ProgrammingExerciseDetailComponent,
         ProgrammingExerciseEditSelectedComponent,
-        ProgrammingExerciseInstructorRepoDownloadComponent,
         ProgrammingExerciseInstructorExerciseDownloadComponent,
         ProgrammingExerciseExampleSolutionRepoDownloadComponent,
         BuildPlanEditorComponent,

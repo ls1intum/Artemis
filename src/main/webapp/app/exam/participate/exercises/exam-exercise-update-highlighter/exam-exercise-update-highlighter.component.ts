@@ -12,7 +12,7 @@ import { Diff, DiffMatchPatch, DiffOperation } from 'diff-match-patch-typescript
 export class ExamExerciseUpdateHighlighterComponent implements OnInit, OnDestroy {
     subscriptionToLiveExamExerciseUpdates: Subscription;
     themeSubscription: Subscription;
-    previousProblemStatementUpdate: string;
+    previousProblemStatementUpdate?: string;
     updatedProblemStatementWithHighlightedDifferences: string;
     updatedProblemStatement: string;
     showHighlightedDifferences = true;
@@ -37,7 +37,9 @@ export class ExamExerciseUpdateHighlighterComponent implements OnInit, OnDestroy
      * Switches the view between the new(updated) problem statement without the difference
      * with the view showing the difference between the new and old problem statement and vice versa.
      */
-    toggleHighlightedProblemStatement(): void {
+    toggleHighlightedProblemStatement(event: MouseEvent): void {
+        // prevents the jhi-resizeable-container from collapsing the right panel on a button click
+        event.stopPropagation();
         if (this.showHighlightedDifferences) {
             this.exercise.problemStatement = this.updatedProblemStatement;
         } else {
@@ -112,7 +114,10 @@ export class ExamExerciseUpdateHighlighterComponent implements OnInit, OnDestroy
         });
     }
 
-    private removeAnyPlantUmlDiagramsInProblemStatement(problemStatement: string): { problemStatementWithoutPlantUmlDiagrams: string; removedDiagrams: string[] } {
+    private removeAnyPlantUmlDiagramsInProblemStatement(problemStatement: string): {
+        problemStatementWithoutPlantUmlDiagrams: string;
+        removedDiagrams: string[];
+    } {
         // Regular expression to match content between @startuml and @enduml
         const plantUmlSequenceRegex = /@startuml([\s\S]*?)@enduml/g;
         const removedDiagrams: string[] = [];

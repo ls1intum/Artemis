@@ -6,7 +6,7 @@ Alternative: Docker Compose Setup
 Getting Started with Docker Compose
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-1. Install `Docker Desktop <https://docs.docker.com/desktop/#docker-for-mac>`__ or
+1. Install `Docker Desktop <https://docs.docker.com/desktop/install/mac-install/>`__ or
    `Docker Engine and Docker CLI with the Docker Compose Plugin <https://docs.docker.com/compose/install/>`__
    (``docker compose`` command).
 
@@ -50,9 +50,6 @@ In the directory ``docker/`` you can find the following *docker compose* files f
 * ``artemis-prod-mysql.yml``: **Artemis-Prod-MySQL** Setup containing the production build of Artemis and a MySQL DB
 * ``artemis-prod-postgres.yml``: **Artemis-Prod-Postgres** Setup containing the production build of Artemis and
   a PostgreSQL DB
-* ``atlassian.yml``: **Atlassian** Setup containing a Jira, Bitbucket and Bamboo instance
-  (see `Bamboo, Bitbucket and Jira Setup Guide <#bamboo-bitbucket-and-jira-setup>`__
-  for the configuration of this setup)
 * ``gitlab-gitlabci.yml``: **GitLab-GitLabCI** Setup containing a GitLab and GitLabCI instance
 * ``gitlab-jenkins.yml``: **GitLab-Jenkins** Setup containing a GitLab and Jenkins instance
   (see `Gitlab Server Quickstart Guide <#gitlab-server-quickstart>`__ for the configuration of this setup)

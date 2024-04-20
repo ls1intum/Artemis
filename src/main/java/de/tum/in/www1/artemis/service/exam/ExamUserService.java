@@ -1,16 +1,23 @@
 package de.tum.in.www1.artemis.service.exam;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.awt.Rectangle;
 import java.io.IOException;
+import java.net.URI;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripperByArea;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,6 +26,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.repository.ExamUserRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.web.rest.dto.ExamUsersNotFoundDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ImageDTO;
@@ -27,10 +35,11 @@ import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 /**
  * Service Implementation for managing Exam Users.
  */
+@Profile(PROFILE_CORE)
 @Service
 public class ExamUserService {
 
-    private final Logger log = LoggerFactory.getLogger(ExamUserService.class);
+    private static final Logger log = LoggerFactory.getLogger(ExamUserService.class);
 
     private final ExamUserRepository examUserRepository;
 
@@ -102,34 +111,49 @@ public class ExamUserService {
         List<String> notFoundExamUsersRegistrationNumbers = new ArrayList<>();
         List<ExamUserWithImageDTO> examUserWithImageDTOs = parsePDF(file);
 
-        examUserWithImageDTOs.forEach(examUserWithImageDTO -> {
+        for (var examUserWithImageDTO : examUserWithImageDTOs) {
             Optional<User> user = userRepository.findUserWithGroupsAndAuthoritiesByRegistrationNumber(examUserWithImageDTO.studentRegistrationNumber());
-            if (user.isPresent()) {
-                Optional<ExamUser> examUserOptional = examUserRepository.findByExamIdAndUserId(examId, user.get().getId());
-                if (examUserOptional.isPresent()) {
-                    ExamUser examUser = examUserOptional.get();
-                    MultipartFile studentImageFile = fileService.convertByteArrayToMultipart(examUserWithImageDTO.studentRegistrationNumber() + "_student_image", ".png",
-                            examUserWithImageDTO.image().imageInBytes());
-                    String responsePath = fileService.handleSaveFile(studentImageFile, false, false).toString();
-                    examUser.setStudentImagePath(responsePath);
-                    examUserRepository.save(examUser);
-                }
-                else {
-                    notFoundExamUsersRegistrationNumbers.add(examUserWithImageDTO.studentRegistrationNumber());
-                }
-            }
-            else {
+            if (user.isEmpty()) {
                 notFoundExamUsersRegistrationNumbers.add(examUserWithImageDTO.studentRegistrationNumber());
+                continue;
             }
-        });
+            Optional<ExamUser> examUserOptional = examUserRepository.findByExamIdAndUserId(examId, user.get().getId());
+            if (examUserOptional.isEmpty()) {
+                notFoundExamUsersRegistrationNumbers.add(examUserWithImageDTO.studentRegistrationNumber());
+                continue;
+            }
+
+            ExamUser examUser = examUserOptional.get();
+            String oldPathString = examUser.getStudentImagePath();
+            MultipartFile studentImageFile = fileService.convertByteArrayToMultipart("student_image", ".png", examUserWithImageDTO.image().imageInBytes());
+            Path savedPath = fileService.saveFile(studentImageFile, FilePathService.getStudentImageFilePath(), false);
+
+            examUser.setStudentImagePath(FilePathService.publicPathForActualPathOrThrow(savedPath, examUser.getId()).toString());
+            examUserRepository.save(examUser);
+
+            if (oldPathString != null) {
+                Path oldPath = FilePathService.actualPathForPublicPath(URI.create(oldPathString));
+                fileService.schedulePathForDeletion(oldPath, 0);
+            }
+        }
 
         return new ExamUsersNotFoundDTO(notFoundExamUsersRegistrationNumbers.size(), examUserWithImageDTOs.size() - notFoundExamUsersRegistrationNumbers.size(),
                 notFoundExamUsersRegistrationNumbers);
     }
 
     /**
+     * Deletes signature and student image of an exam user if they exist
+     *
+     * @param user the exam user whose images should be deleted
+     */
+    public void deleteAvailableExamUserImages(ExamUser user) {
+        Stream.of(user.getSigningImagePath(), user.getStudentImagePath()).filter(Objects::nonNull).map(URI::create).map(FilePathService::actualPathForPublicPath)
+                .forEach(path -> fileService.schedulePathForDeletion(path, 0));
+    }
+
+    /**
      * Contains the information about an exam user with image
      */
-    record ExamUserWithImageDTO(String studentRegistrationNumber, ImageDTO image) {
+    public record ExamUserWithImageDTO(String studentRegistrationNumber, ImageDTO image) {
     }
 }

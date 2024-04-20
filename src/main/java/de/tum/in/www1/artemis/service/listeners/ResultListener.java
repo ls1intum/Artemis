@@ -1,11 +1,14 @@
 package de.tum.in.www1.artemis.service.listeners;
 
-import javax.persistence.PostPersist;
-import javax.persistence.PostUpdate;
-import javax.persistence.PreRemove;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
+import jakarta.persistence.PostPersist;
+import jakarta.persistence.PostUpdate;
+import jakarta.persistence.PreRemove;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import de.tum.in.www1.artemis.domain.Result;
@@ -18,6 +21,7 @@ import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
  *
  * @see ParticipantScoreScheduleService
  */
+@Profile(PROFILE_CORE)
 @Component
 public class ResultListener {
 

@@ -14,17 +14,17 @@ import {
     ViewEncapsulation,
 } from '@angular/core';
 import { faCircleNotch, faEnvelope, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { Conversation, ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { Conversation, ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { Subject, map, takeUntil } from 'rxjs';
 import { Post } from 'app/entities/metis/post.model';
 import { Course } from 'app/entities/course.model';
 import { PageType, PostContextFilter, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
 import { MetisService } from 'app/shared/metis/metis.service';
-import { Channel, getAsChannelDto, isChannelDto } from 'app/entities/metis/conversation/channel.model';
-import { GroupChat, isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
+import { Channel, getAsChannelDTO, isChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { GroupChat, isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { ButtonType } from 'app/shared/components/button.component';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
-import { OneToOneChat, isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
+import { OneToOneChat, isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { canCreateNewMessageInConversation } from 'app/shared/metis/conversations/conversation-permissions.utils';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
@@ -51,7 +51,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     @Input()
     course?: Course;
 
-    getAsChannel = getAsChannelDto;
+    getAsChannel = getAsChannelDTO;
 
     canCreateNewMessageInConversation = canCreateNewMessageInConversation;
 
@@ -61,7 +61,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     currentPostContextFilter?: PostContextFilter;
     private readonly search$ = new Subject<string>();
     searchText = '';
-    _activeConversation?: ConversationDto;
+    _activeConversation?: ConversationDTO;
 
     newPost?: Post;
     posts: Post[] = [];
@@ -88,7 +88,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     }
 
     private subscribeToActiveConversation() {
-        this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDto) => {
+        this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDTO) => {
             this._activeConversation = conversation;
             this.onActiveConversationChange();
         });
@@ -193,20 +193,20 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             return undefined;
         }
         let conversation: Conversation;
-        if (isChannelDto(this._activeConversation)) {
+        if (isChannelDTO(this._activeConversation)) {
             const channel = new Channel();
             channel.isAnnouncementChannel = this._activeConversation.isAnnouncementChannel;
             conversation = channel;
-        } else if (isGroupChatDto(this._activeConversation)) {
+        } else if (isGroupChatDTO(this._activeConversation)) {
             conversation = new GroupChat();
-        } else if (isOneToOneChatDto(this._activeConversation)) {
+        } else if (isOneToOneChatDTO(this._activeConversation)) {
             conversation = new OneToOneChat();
         } else {
             throw new Error('Conversation type not supported');
         }
         conversation.id = this._activeConversation.id;
         this.refreshMetisConversationPostContextFilter();
-        return this.metisService.createEmptyPostForContext(undefined, undefined, undefined, undefined, conversation);
+        return this.metisService.createEmptyPostForContext(conversation);
     }
 
     postsTrackByFn = (index: number, post: Post): number => post.id!;

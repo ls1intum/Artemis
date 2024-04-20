@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.TreeSet;
 
 import de.tum.in.www1.artemis.service.hestia.behavioral.BehavioralBlackboard;
-import de.tum.in.www1.artemis.service.hestia.behavioral.BehavioralSolutionEntryGenerationException;
 import de.tum.in.www1.artemis.service.hestia.behavioral.GroupedFile;
 
 /**
@@ -25,7 +24,7 @@ public class CombineChangeBlocks extends BehavioralKnowledgeSource {
     }
 
     @Override
-    public boolean executeAction() throws BehavioralSolutionEntryGenerationException {
+    public boolean executeAction() {
         boolean didChanges = false;
 
         for (GroupedFile groupedFile : blackboard.getGroupedFiles()) {
@@ -38,8 +37,8 @@ public class CombineChangeBlocks extends BehavioralKnowledgeSource {
                     if (i < currentChangeBlocks.size() - 1) {
                         var nextChangeBlock = currentChangeBlocks.get(i + 1);
                         if (currentChangeBlock.intersectsOrTouches(nextChangeBlock)) {
-                            var lines = new TreeSet<>(currentChangeBlock.getLines());
-                            lines.addAll(nextChangeBlock.getLines());
+                            var lines = new TreeSet<>(currentChangeBlock.lines());
+                            lines.addAll(nextChangeBlock.lines());
                             newChangeBlocks.add(new GroupedFile.ChangeBlock(lines));
                             // Skip the next change block, as it has already been processed
                             i++;

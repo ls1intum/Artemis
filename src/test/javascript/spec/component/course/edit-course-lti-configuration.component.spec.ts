@@ -19,6 +19,7 @@ import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { ArtemisTestModule } from '../../test.module';
 import { regexValidator } from 'app/shared/form/shortname-validator.directive';
 import { LOGIN_PATTERN } from 'app/shared/constants/input.constants';
+import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
 
 describe('Edit Course LTI Configuration Component', () => {
     let comp: EditCourseLtiConfigurationComponent;
@@ -29,15 +30,8 @@ describe('Edit Course LTI Configuration Component', () => {
 
     const onlineCourseConfiguration = {
         id: 1,
-        ltiKey: 'key',
-        ltiSecret: 'secret',
         userPrefix: 'prefix',
         requireExistingUser: false,
-        registrationId: 'regId',
-        clientId: 'clientId',
-        jwkSetUri: 'jwkUri',
-        authorizationUri: 'authUri',
-        tokenUri: 'tokenUri',
     } as OnlineCourseConfiguration;
     const course = {
         id: 123,
@@ -56,6 +50,7 @@ describe('Edit Course LTI Configuration Component', () => {
                 MockDirective(SortDirective),
                 MockDirective(SortByDirective),
                 MockComponent(HelpIconComponent),
+                MockDirective(MockHasAnyAuthorityDirective),
             ],
             providers: [
                 MockProvider(CourseManagementService),
@@ -94,15 +89,8 @@ describe('Edit Course LTI Configuration Component', () => {
             expect(comp.course).toEqual(course);
             expect(comp.onlineCourseConfiguration).toEqual(course.onlineCourseConfiguration);
             expect(comp.onlineCourseConfigurationForm.get(['id'])?.value).toBe(onlineCourseConfiguration.id);
-            expect(comp.onlineCourseConfigurationForm.get(['ltiKey'])?.value).toBe(onlineCourseConfiguration.ltiKey);
-            expect(comp.onlineCourseConfigurationForm.get(['ltiSecret'])?.value).toBe(onlineCourseConfiguration.ltiSecret);
             expect(comp.onlineCourseConfigurationForm.get(['userPrefix'])?.value).toBe(onlineCourseConfiguration.userPrefix);
             expect(comp.onlineCourseConfigurationForm.get(['requireExistingUser'])?.value).toBe(onlineCourseConfiguration.requireExistingUser);
-            expect(comp.onlineCourseConfigurationForm.get(['registrationId'])?.value).toBe(onlineCourseConfiguration.registrationId);
-            expect(comp.onlineCourseConfigurationForm.get(['clientId'])?.value).toBe(onlineCourseConfiguration.clientId);
-            expect(comp.onlineCourseConfigurationForm.get(['authorizationUri'])?.value).toBe(onlineCourseConfiguration.authorizationUri);
-            expect(comp.onlineCourseConfigurationForm.get(['tokenUri'])?.value).toBe(onlineCourseConfiguration.tokenUri);
-            expect(comp.onlineCourseConfigurationForm.get(['jwkSetUri'])?.value).toBe(onlineCourseConfiguration.jwkSetUri);
         });
     });
 
@@ -111,20 +99,12 @@ describe('Edit Course LTI Configuration Component', () => {
 
         const changedConfiguration = {
             ...onlineCourseConfiguration,
-            ltiKey: 'ChangedKey',
         } as OnlineCourseConfiguration;
 
         comp.onlineCourseConfigurationForm = new FormGroup({
             id: new FormControl(changedConfiguration.id),
-            ltiKey: new FormControl(changedConfiguration.ltiKey),
-            ltiSecret: new FormControl(changedConfiguration.ltiSecret),
             userPrefix: new FormControl(changedConfiguration.userPrefix, { validators: [regexValidator(LOGIN_PATTERN)] }),
             requireExistingUser: new FormControl(changedConfiguration.requireExistingUser),
-            registrationId: new FormControl(changedConfiguration.registrationId),
-            clientId: new FormControl(changedConfiguration.clientId),
-            authorizationUri: new FormControl(changedConfiguration.authorizationUri),
-            tokenUri: new FormControl(changedConfiguration.tokenUri),
-            jwkSetUri: new FormControl(changedConfiguration.jwkSetUri),
         });
 
         const updateResponse: HttpResponse<OnlineCourseConfiguration> = new HttpResponse({

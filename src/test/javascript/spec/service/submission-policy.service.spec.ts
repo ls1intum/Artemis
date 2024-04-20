@@ -63,21 +63,26 @@ describe('Submission Policy Service', () => {
             addPolicySubscription.unsubscribe();
         }));
 
-        it('should get submission policy from exercise', fakeAsync(() => {
-            const getPolicySubscription = submissionPolicyService
-                .getSubmissionPolicyOfProgrammingExercise(programmingExercise.id!)
-                .pipe(take(1))
-                .subscribe((submissionPolicy) => {
-                    expect(submissionPolicy).toBe(lockRepositoryPolicy);
-                });
-            tick();
+        // Using functions to avoid a serialization error
+        it.each([() => ({ input: null, expected: undefined }), () => ({ input: lockRepositoryPolicy, expected: lockRepositoryPolicy })])(
+            'should get submission policy from exercise',
+            fakeAsync((fun: any) => {
+                const { input, expected } = fun();
+                const getPolicySubscription = submissionPolicyService
+                    .getSubmissionPolicyOfProgrammingExercise(programmingExercise.id!)
+                    .pipe(take(1))
+                    .subscribe((submissionPolicy) => {
+                        expect(submissionPolicy).toBe(expected);
+                    });
+                tick();
 
-            const request = httpMock.expectOne({ method: 'GET', url: expectedUrl });
-            request.flush(lockRepositoryPolicy);
-            tick();
+                const request = httpMock.expectOne({ method: 'GET', url: expectedUrl });
+                request.flush(input);
+                tick();
 
-            getPolicySubscription.unsubscribe();
-        }));
+                getPolicySubscription.unsubscribe();
+            }),
+        );
 
         it('should issue delete request', fakeAsync(() => {
             const removePolicySubscription = submissionPolicyService.removeSubmissionPolicyFromProgrammingExercise(programmingExercise.id!).subscribe((response) => {

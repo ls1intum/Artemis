@@ -1,14 +1,18 @@
 package de.tum.in.www1.artemis.web.rest.metis;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
+import java.util.Collections;
 import java.util.List;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
@@ -24,7 +28,6 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
-import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.metis.ConversationMessagingService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
@@ -36,11 +39,12 @@ import tech.jhipster.web.util.PaginationUtil;
 /**
  * REST controller for managing Message Posts.
  */
+@Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class ConversationMessageResource {
 
-    private final Logger log = LoggerFactory.getLogger(getClass());
+    private static final Logger log = LoggerFactory.getLogger(ConversationMessageResource.class);
 
     private final ConversationMessagingService conversationMessagingService;
 
@@ -79,9 +83,13 @@ public class ConversationMessageResource {
         }
         CreatedConversationMessage createdMessageData = conversationMessagingService.createMessage(courseId, post);
         conversationMessagingService.notifyAboutMessageCreation(createdMessageData);
+
+        Post sendToUserPost = createdMessageData.messageWithHiddenDetails();
+        sendToUserPost.setConversation(sendToUserPost.getConversation().copy());
+        sendToUserPost.getConversation().setConversationParticipants(Collections.emptySet());
+
         log.info("createMessage took {}", TimeLogUtil.formatDurationFrom(start));
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/messages/" + createdMessageData.messageWithHiddenDetails().getId()))
-                .body(createdMessageData.messageWithHiddenDetails());
+        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/messages/" + sendToUserPost.getId())).body(sendToUserPost);
     }
 
     /**
@@ -182,9 +190,37 @@ public class ConversationMessageResource {
      *         or with status 400 (Bad Request) if the checks on user, course or post validity fail
      */
     @PutMapping("courses/{courseId}/messages/{postId}/display-priority")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastStudent
     public ResponseEntity<Post> updateDisplayPriority(@PathVariable Long courseId, @PathVariable Long postId, @RequestParam DisplayPriority displayPriority) {
         Post postWithUpdatedDisplayPriority = conversationMessagingService.changeDisplayPriority(courseId, postId, displayPriority);
         return ResponseEntity.ok().body(postWithUpdatedDisplayPriority);
+    }
+
+    /**
+     * POST /courses/{courseId}/messages/similarity-check : trigger a similarity check for post to be created
+     *
+     * @param courseId id of the course the post should be published in
+     * @param post     post to create
+     * @return ResponseEntity with status 200 (OK)
+     */
+    @PostMapping("courses/{courseId}/messages/similarity-check")
+    @EnforceAtLeastStudent
+    public ResponseEntity<List<Post>> computeSimilarityScoresWitCoursePosts(@PathVariable Long courseId, @RequestBody Post post) {
+        List<Post> similarPosts = conversationMessagingService.getSimilarPosts(courseId, post);
+        return ResponseEntity.ok().body(similarPosts);
+    }
+
+    /**
+     * GET /courses/{courseId}/posts/tags : Get all tags for posts in a certain course
+     *
+     * @param courseId id of the course the post belongs to
+     * @return the ResponseEntity with status 200 (OK) and with body all tags for posts in that course,
+     *         or 400 (Bad Request) if the checks on user or course validity fail
+     */
+    @GetMapping("courses/{courseId}/messages/tags")
+    @EnforceAtLeastStudent
+    public ResponseEntity<List<String>> getAllPostTagsForCourse(@PathVariable Long courseId) {
+        List<String> tags = conversationMessagingService.getAllCourseTags(courseId);
+        return new ResponseEntity<>(tags, null, HttpStatus.OK);
     }
 }

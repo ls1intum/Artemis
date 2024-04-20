@@ -20,11 +20,16 @@ describe('CourseRegistrationComponent', () => {
     const course1 = {
         id: 1,
         title: 'Course A',
+        semester: 'SS25/26',
     } as Course;
 
     const course2 = {
         id: 2,
         title: 'Course B',
+        semester: 'WS22/23',
+    };
+    const course3 = {
+        id: 3,
     };
 
     beforeEach(() => {
@@ -54,7 +59,6 @@ describe('CourseRegistrationComponent', () => {
 
     it('should show registrable courses', () => {
         component.loadRegistrableCourses();
-
         expect(component.coursesToSelect).toHaveLength(1);
         expect(findAllForRegistrationStub).toHaveBeenCalledOnce();
     });
@@ -66,11 +70,52 @@ describe('CourseRegistrationComponent', () => {
         expect(component.coursesToSelect).toHaveLength(0);
     });
 
-    it('should sort registrable courses by title', () => {
-        findAllForRegistrationStub.mockReturnValue(of(new HttpResponse({ body: [course2, course1] })));
+    it('should filter registrable courses based on search term', () => {
+        findAllForRegistrationStub.mockReturnValue(of(new HttpResponse({ body: [course1, course2, course3] })));
 
         component.loadRegistrableCourses();
+        component.searchTermString = 'Course A';
+        component.applySearch();
 
-        expect(component.coursesToSelect).toEqual([course1, course2]);
+        expect(component.filteredCoursesToSelect).toHaveLength(1);
+        expect(component.filteredCoursesToSelect[0]).toEqual(course1);
+    });
+
+    it('should sort registrable courses by title in ascending order', () => {
+        findAllForRegistrationStub.mockReturnValue(of(new HttpResponse({ body: [course3, course2, course1] })));
+
+        component.predicate = 'title';
+        component.ascending = true;
+        component.loadRegistrableCourses();
+
+        expect(component.filteredCoursesToSelect).toEqual([course1, course2, course3]);
+    });
+
+    it('should sort registrable courses by title in descending order', () => {
+        findAllForRegistrationStub.mockReturnValue(of(new HttpResponse({ body: [course1, course3, course2] })));
+
+        component.predicate = 'title';
+        component.ascending = false;
+        component.loadRegistrableCourses();
+
+        expect(component.filteredCoursesToSelect).toEqual([course3, course2, course1]);
+    });
+
+    it('should sort registrable courses by semester in ascending order', () => {
+        findAllForRegistrationStub.mockReturnValue(of(new HttpResponse({ body: [course2, course3, course1] })));
+        component.predicate = 'semester';
+        component.ascending = true;
+        component.loadRegistrableCourses();
+
+        expect(component.filteredCoursesToSelect).toEqual([course1, course2, course3]);
+    });
+
+    it('should sort registrable courses by semester in descending order', async () => {
+        findAllForRegistrationStub.mockReturnValue(of(new HttpResponse({ body: [course2, course3, course1] })));
+        component.predicate = 'semester';
+        component.ascending = false;
+        component.loadRegistrableCourses();
+
+        expect(component.filteredCoursesToSelect).toEqual([course3, course2, course1]);
     });
 });

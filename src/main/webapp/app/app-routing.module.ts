@@ -33,15 +33,6 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                     loadChildren: () => import('./core/about-us/artemis-about-us.module').then((module) => module.ArtemisAboutUsModule),
                 },
                 {
-                    path: 'courses/:courseId/lectures/:lectureId',
-                    loadChildren: () => import('./overview/course-lectures/course-lecture-details.module').then((m) => m.ArtemisCourseLectureDetailsModule),
-                },
-                {
-                    // TODO: check that the LTI integration still works correctly (if not, we should implement it differently)
-                    path: 'courses/:courseId/exercises/:exerciseId',
-                    loadChildren: () => import('./overview/exercise-details/course-exercise-details.module').then((m) => m.CourseExerciseDetailsModule),
-                },
-                {
                     path: 'courses/:courseId/competencies/:competencyId',
                     loadChildren: () => import('./overview/course-competencies/course-competencies-details.module').then((m) => m.ArtemisCourseCompetenciesDetailsModule),
                 },
@@ -75,10 +66,19 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                     path: 'course-management/:courseId/text-exercises/:exerciseId/example-submissions/:exampleSubmissionId',
                     loadChildren: () => import('./exercises/text/manage/example-text-submission/example-text-submission.module').then((m) => m.ArtemisExampleTextSubmissionModule),
                 },
+                {
+                    path: 'course-management/:courseId/programming-exercises/:exerciseId',
+                    loadChildren: () =>
+                        import('./exercises/programming/manage/programming-exercise-management-routing.module').then((m) => m.ArtemisProgrammingExerciseManagementRoutingModule),
+                },
                 // ===== COURSES =====
                 {
                     path: 'courses/:courseId/programming-exercises/:exerciseId/code-editor',
                     loadChildren: () => import('./exercises/programming/participate/programming-participation.module').then((m) => m.ArtemisProgrammingParticipationModule),
+                },
+                {
+                    path: 'courses/:courseId/exercises/:exerciseId/repository',
+                    loadChildren: () => import('./exercises/programming/participate/programming-repository.module').then((m) => m.ArtemisProgrammingRepositoryModule),
                 },
                 {
                     path: 'courses/:courseId/modeling-exercises/:exerciseId',

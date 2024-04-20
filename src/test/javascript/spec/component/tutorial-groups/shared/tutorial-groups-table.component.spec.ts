@@ -27,7 +27,7 @@ class MockExtraColumnComponent {
     template: `
         <jhi-tutorial-groups-table [tutorialGroups]="tutorialGroups" [course]="course" [showIdColumn]="true">
             <ng-template let-tutorialGroup>
-                <jhi-mock-extra-column [tutorialGroup]="tutorialGroup"></jhi-mock-extra-column>
+                <jhi-mock-extra-column [tutorialGroup]="tutorialGroup" />
             </ng-template>
         </jhi-tutorial-groups-table>
     `,

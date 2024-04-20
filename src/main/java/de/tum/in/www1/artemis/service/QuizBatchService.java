@@ -1,14 +1,17 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.security.SecureRandom;
 import java.time.ZonedDateTime;
 import java.util.*;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.config.Constants;
@@ -19,6 +22,7 @@ import de.tum.in.www1.artemis.exception.QuizJoinException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 
+@Profile(PROFILE_CORE)
 @Service
 public class QuizBatchService {
 
@@ -30,7 +34,7 @@ public class QuizBatchService {
         SECURE_RANDOM.nextBytes(new byte[64]);
     }
 
-    private final Logger log = LoggerFactory.getLogger(QuizBatchService.class);
+    private static final Logger log = LoggerFactory.getLogger(QuizBatchService.class);
 
     private final QuizBatchRepository quizBatchRepository;
 

@@ -218,7 +218,7 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Nested
-    class GetStudentExamGradesForSummaryAsStudentTest {
+    class GetStudentExamGradesForSummaryTest {
 
         private static final int NUMBER_OF_STUDENTS = 1;
 
@@ -229,8 +229,6 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
         private User student1;
 
         private StudentExam studentExam;
-
-        private boolean isTestRun;
 
         @BeforeEach
         void initializeTest() {
@@ -247,9 +245,9 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
         @WithMockUser(username = "student1", roles = "STUDENT")
         void testThrowsExceptionIfNotSubmitted() {
             studentExam.setSubmitted(false);
-            isTestRun = false;
+            boolean isInstructor = false;
 
-            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> examService.getStudentExamGradesForSummaryAsStudent(student1, studentExam, isTestRun))
+            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> examService.getStudentExamGradesForSummary(student1, studentExam, isInstructor))
                     .withMessage("You are not allowed to access the grade summary of a student exam which was NOT submitted!");
         }
 
@@ -257,24 +255,24 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
         @WithMockUser(username = "student1", roles = "STUDENT")
         void testThrowsExceptionIfNotPublished() {
             studentExam.setSubmitted(true);
-            isTestRun = false;
             studentExam.getExam().setPublishResultsDate(ZonedDateTime.now().plusDays(5));
+            boolean isInstructor = false;
 
-            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> examService.getStudentExamGradesForSummaryAsStudent(student1, studentExam, isTestRun))
+            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> examService.getStudentExamGradesForSummary(student1, studentExam, isInstructor))
                     .withMessage("You are not allowed to access the grade summary of a student exam before the release date of results");
         }
 
         @Test
         @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-        void testDoesNotThrowExceptionForTestRuns() {
+        void testDoesNotThrowExceptionForInstructors() {
             studentExam.setSubmitted(false);
             studentExam.getExam().setPublishResultsDate(ZonedDateTime.now().plusDays(5));
+            studentExam.getExam().setTestExam(true); // test runs are an edge case where instructors want to have access before the publishing date of results
             studentExam.setUser(instructor1);
-            isTestRun = true;
+            boolean isInstructor = true;
 
-            examService.getStudentExamGradesForSummaryAsStudent(instructor1, studentExam, isTestRun);
+            examService.getStudentExamGradesForSummary(student1, studentExam, isInstructor);
         }
-
     }
 
     private Exam createExam(int numberOfExercisesInExam, Long id, Integer maxPoints) {

@@ -4,8 +4,8 @@ import static de.tum.in.www1.artemis.config.Constants.MAX_QUIZ_SHORT_ANSWER_TEXT
 
 import java.util.Objects;
 
-import javax.persistence.*;
-import javax.validation.constraints.Size;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.Size;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -78,7 +78,7 @@ public class ShortAnswerSubmittedText extends DomainObject {
     }
 
     /**
-     * This function checks if the submittedText (typos included) matches the solution. https://github.com/xdrop/fuzzywuzzy
+     * This function checks if the submittedText (typos included) matches the solution. <a href="https://github.com/xdrop/fuzzywuzzy">...</a>
      *
      * @param submittedText for a short answer question
      * @param solution      of the short answer question

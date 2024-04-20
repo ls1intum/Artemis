@@ -39,16 +39,6 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
             return;
         }
 
-        // 'state' was manually written into session storage by spring-security-lti13
-        // because of that it needs to be manually retrieved from there
-        const storedState = window.sessionStorage.getItem('state');
-
-        if (storedState !== state) {
-            console.error('LTI launch state mismatch');
-            this.isLaunching = false;
-            return;
-        }
-
         const requestBody = new HttpParams().set('state', state).set('id_token', idToken);
 
         this.http
@@ -84,9 +74,6 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
     }
 
     redirectUserToTargetLink(data: any): void {
-        // const ltiIdToken = error.headers.get('ltiIdToken');
-        // const clientRegistrationId = error.headers.get('clientRegistrationId');
-
         const ltiIdToken = data.error['ltiIdToken'];
         const clientRegistrationId = data.error['clientRegistrationId'];
 

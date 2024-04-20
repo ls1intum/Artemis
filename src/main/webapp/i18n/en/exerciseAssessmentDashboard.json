@@ -29,7 +29,7 @@
             "youAssessedSoFar": "You have assessed {{numberOfTutorAssessments}} submissions so far",
             "needToReadGradingInstructions": "You need to read the assessment instructions before starting assessing",
             "readGradingInstructions": "Read assessment instructions",
-            "startYourParticipation": "Start participating in the exercise",
+            "startYourParticipation": "Start manual assessment",
             "gradingInstructions": "Assessment instructions",
             "structuredGradingInstructions": "Structured assessment instructions",
             "problemStatement": "Problem statement",

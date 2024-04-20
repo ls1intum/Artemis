@@ -4,7 +4,7 @@ import { catchError } from 'rxjs/operators';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ActivatedRoute } from '@angular/router';
 import { SortService } from 'app/shared/service/sort.service';
-import { ExportToCsv } from 'export-to-csv';
+import { download, generateCsv, mkConfig } from 'export-to-csv';
 import {
     AggregatedExamResult,
     AggregatedExerciseGroupResult,
@@ -626,9 +626,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         });
 
         if (customCsvOptions) {
-            // required because the currently used library for exporting to csv does not quote the header fields (keys)
-            const quotedKeys = headers.map((header) => customCsvOptions.quoteStrings + header + customCsvOptions.quoteStrings);
-            this.exportAsCsv(quotedKeys, rows, customCsvOptions);
+            this.exportAsCsv(headers, rows, customCsvOptions);
         } else {
             this.exportAsExcel(headers, rows);
         }
@@ -666,12 +664,12 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             filename: `${this.examScoreDTO.title} Exam Results`,
             useTextFile: false,
             useBom: true,
-            headers,
+            columnHeaders: headers,
         };
 
-        const combinedOptions = Object.assign(options, customOptions);
-        const csvExporter = new ExportToCsv(combinedOptions);
-        csvExporter.generateCsv(rows);
+        const csvExportOptions = mkConfig(Object.assign(options, customOptions));
+        const csvData = generateCsv(csvExportOptions)(rows);
+        download(csvExportOptions)(csvData);
     }
 
     /**

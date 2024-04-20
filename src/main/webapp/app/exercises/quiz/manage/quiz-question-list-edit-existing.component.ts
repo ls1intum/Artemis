@@ -5,7 +5,6 @@ import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-questi
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
 import { QuizConfirmImportInvalidQuestionsModalComponent } from 'app/exercises/quiz/manage/quiz-confirm-import-invalid-questions-modal.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
@@ -62,7 +61,6 @@ export class QuizQuestionListEditExistingComponent implements OnChanges {
     constructor(
         private modalService: NgbModal,
         private fileService: FileService,
-        private fileUploaderService: FileUploaderService,
         private courseManagementService: CourseManagementService,
         private examManagementService: ExamManagementService,
         private quizExerciseService: QuizExerciseService,

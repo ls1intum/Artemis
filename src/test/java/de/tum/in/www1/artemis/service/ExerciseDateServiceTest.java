@@ -208,6 +208,8 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         @Test
         void testExamExerciseDueDate_duringRegularWorkingTime() {
+            var student = TEST_PREFIX + "student1";
+            examUtilService.addStudentExamWithUser(exam, student);
             Participation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student1");
             boolean result = exerciseDateService.isAfterDueDate(participation);
             assertThat(result).isFalse(); // Exam is not started yet
@@ -216,7 +218,9 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationIndependentTest {
         @Test
         void testExamExerciseDueDate_workingTimeEnded() {
             updateExamDatesToPast();
-            Participation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student1");
+            var student = TEST_PREFIX + "student1";
+            examUtilService.addStudentExamWithUser(exam, student);
+            Participation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, student);
 
             boolean result = exerciseDateService.isAfterDueDate(participation);
             assertThat(result).isTrue(); // Exam working period is over
@@ -229,8 +233,9 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationIndependentTest {
 
             StudentExam studentExam = examUtilService.addStudentExamWithUser(exam, ownerOfStudentExam);
             studentExam.setWorkingTime(exam.getWorkingTime() + 20 * 60);
-            studentExam = studentExamRepository.save(studentExam);
-            Participation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student1");
+
+            studentExamRepository.save(studentExam);
+            Participation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, ownerOfStudentExam);
 
             boolean result = exerciseDateService.isAfterDueDate(participation);
             assertThat(result).isFalse(); // Exam working period is over but the time extension is still active
@@ -295,6 +300,7 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationIndependentTest {
         @Test
         void testTestExamExerciseDueDate_duringOwnWorkingTime() {
             Participation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student1");
+            examUtilService.addStudentExamWithUser(testExam, TEST_PREFIX + "student1");
 
             boolean result = exerciseDateService.isAfterDueDate(participation);
             assertThat(result).isFalse();
@@ -304,7 +310,7 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationIndependentTest {
         void testTestExamExerciseDueDate_afterSubmittingOwnExam() {
             StudentExam studentExam = examUtilService.addStudentExamWithUser(testExam, TEST_PREFIX + "student1");
             studentExam.setSubmitted(true);
-            studentExam = studentExamRepository.save(studentExam);
+            studentExamRepository.save(studentExam);
             Participation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student1");
 
             boolean result = exerciseDateService.isAfterDueDate(participation);

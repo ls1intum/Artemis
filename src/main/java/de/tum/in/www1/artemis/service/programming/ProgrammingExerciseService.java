@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.programming;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
 
@@ -8,12 +9,19 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
@@ -21,24 +29,49 @@ import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
+
+import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
+import de.tum.in.www1.artemis.domain.Repository;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
+import de.tum.in.www1.artemis.repository.ParticipationRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseGitDiffReportRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.ExerciseSpecificationService;
+import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.ProfileService;
+import de.tum.in.www1.artemis.service.SubmissionPolicyService;
+import de.tum.in.www1.artemis.service.connectors.BuildScriptGenerationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
+import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
 import de.tum.in.www1.artemis.service.connectors.ci.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
@@ -50,12 +83,13 @@ import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.util.structureoraclegenerator.OracleGenerator;
-import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
+import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 
+@Profile(PROFILE_CORE)
 @Service
 public class ProgrammingExerciseService {
 
@@ -77,7 +111,7 @@ public class ProgrammingExerciseService {
 
     private final Pattern packageNamePatternForSwift = Pattern.compile(SWIFT_PACKAGE_NAME_REGEX);
 
-    private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseService.class);
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseService.class);
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -133,6 +167,14 @@ public class ProgrammingExerciseService {
 
     private final Optional<IrisSettingsService> irisSettingsService;
 
+    private final Optional<AeolusTemplateService> aeolusTemplateService;
+
+    private final Optional<BuildScriptGenerationService> buildScriptGenerationService;
+
+    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+
+    private final ProfileService profileService;
+
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, GitService gitService, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
@@ -144,7 +186,9 @@ public class ProgrammingExerciseService {
             ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository, ExerciseSpecificationService exerciseSpecificationService,
             ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, AuxiliaryRepositoryService auxiliaryRepositoryService,
             SubmissionPolicyService submissionPolicyService, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService, ChannelService channelService,
-            ProgrammingSubmissionService programmingSubmissionService, Optional<IrisSettingsService> irisSettingsService) {
+            ProgrammingSubmissionService programmingSubmissionService, Optional<IrisSettingsService> irisSettingsService, Optional<AeolusTemplateService> aeolusTemplateService,
+            Optional<BuildScriptGenerationService> buildScriptGenerationService,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProfileService profileService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.gitService = gitService;
         this.versionControlService = versionControlService;
@@ -172,6 +216,10 @@ public class ProgrammingExerciseService {
         this.channelService = channelService;
         this.programmingSubmissionService = programmingSubmissionService;
         this.irisSettingsService = irisSettingsService;
+        this.aeolusTemplateService = aeolusTemplateService;
+        this.buildScriptGenerationService = buildScriptGenerationService;
+        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
+        this.profileService = profileService;
     }
 
     /**
@@ -181,7 +229,6 @@ public class ProgrammingExerciseService {
      * <li>All repositories (test, exercise, solution)</li>
      * <li>The template and solution participation</li>
      * <li>VCS webhooks</li>
-     * <li>Bamboo build plans</li>
      * </ul>
      * The exercise gets set up in the following order:
      * <ol>
@@ -198,46 +245,81 @@ public class ProgrammingExerciseService {
      * @throws GitAPIException If something during the communication with the remote Git repository went wrong
      * @throws IOException     If the template files couldn't be read
      */
-    @Transactional // TODO: apply the transaction on a smaller scope
-    // ok because we create many objects in a rather complex way and need a rollback in case of exceptions
     public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise, boolean isImportedFromFile) throws GitAPIException, IOException {
-        programmingExercise.generateAndSetProjectKey();
         final User exerciseCreator = userRepository.getUser();
-
         VersionControlService versionControl = versionControlService.orElseThrow();
-        programmingExercise.setBranch(versionControl.getDefaultBranchOfArtemis());
-        programmingExerciseRepositoryService.createRepositoriesForNewExercise(programmingExercise);
-        initParticipations(programmingExercise);
-        setURLsAndBuildPlanIDsForNewExercise(programmingExercise);
 
-        // Save participations to get the ids required for the webhooks
-        connectBaseParticipationsToExerciseAndSave(programmingExercise);
+        // The client sends a solution and template participation object (filled with null values) when creating a programming exercise.
+        // When saving the object leads to an exception at runtime.
+        // As the participations objects are just dummy values representing the data structure in the client, we set this to null.
+        // See https://github.com/ls1intum/Artemis/pull/7451/files#r1459228917
+        programmingExercise.setSolutionParticipation(null);
+        programmingExercise.setTemplateParticipation(null);
 
-        connectAuxiliaryRepositoriesToExercise(programmingExercise);
+        // We save once in order to generate an id for the programming exercise
+        var savedProgrammingExercise = programmingExerciseRepository.saveForCreation(programmingExercise);
 
-        programmingExerciseRepositoryService.setupExerciseTemplate(programmingExercise, exerciseCreator);
-        programmingSubmissionService.createInitialSubmissions(programmingExercise);
+        // Step 1: Setting constant facts for a programming exercise
+        savedProgrammingExercise.generateAndSetProjectKey();
+        savedProgrammingExercise.setBranch(versionControl.getDefaultBranchOfArtemis());
 
-        // make sure that plagiarism detection config does not use existing id
-        Optional.ofNullable(programmingExercise.getPlagiarismDetectionConfig()).ifPresent(it -> it.setId(null));
+        // Step 2: Creating repositories for new exercise
+        programmingExerciseRepositoryService.createRepositoriesForNewExercise(savedProgrammingExercise);
+        // Step 3: Initializing solution and template participation
+        initParticipations(savedProgrammingExercise);
 
-        // Save programming exercise to prevent transient exception
-        ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
+        // Step 4a: Setting build plan IDs and URLs for template and solution participation
+        setURLsAndBuildPlanIDsForNewExercise(savedProgrammingExercise);
 
+        // Step 4b: Connecting base participations with the exercise
+        connectBaseParticipationsToExerciseAndSave(savedProgrammingExercise);
+
+        savedProgrammingExercise = programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
+
+        // Step 4c: Connect auxiliary repositories
+        connectAuxiliaryRepositoriesToExercise(savedProgrammingExercise);
+
+        // Step 5: Setup exercise template
+        programmingExerciseRepositoryService.setupExerciseTemplate(savedProgrammingExercise, exerciseCreator);
+
+        // Step 6: Create initial submission
+        programmingSubmissionService.createInitialSubmissions(savedProgrammingExercise);
+
+        // Step 7: Make sure that plagiarism detection config does not use existing id
+        Optional.ofNullable(savedProgrammingExercise.getPlagiarismDetectionConfig()).ifPresent(it -> it.setId(null));
+
+        // Step 8: For LocalCI and Aeolus, we store the build plan definition in the database as a windfile, we don't do that for Jenkins as
+        // we want to use the default approach of Jenkinsfiles and Build Plans if no customizations are made
+        if (aeolusTemplateService.isPresent() && savedProgrammingExercise.getBuildPlanConfiguration() == null && !profileService.isJenkinsActive()) {
+            Windfile windfile = aeolusTemplateService.get().getDefaultWindfileFor(savedProgrammingExercise);
+            if (windfile != null) {
+                savedProgrammingExercise.setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(windfile));
+                savedProgrammingExercise = programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
+            }
+            else {
+                log.warn("No windfile for the settings of exercise {}", savedProgrammingExercise.getId());
+            }
+        }
+
+        // Step 9: Create exercise channel
         channelService.createExerciseChannel(savedProgrammingExercise, Optional.ofNullable(programmingExercise.getChannelName()));
 
+        // Step 10: Setup build plans for template and solution participation
         setupBuildPlansForNewExercise(savedProgrammingExercise, isImportedFromFile);
-        // save to get the id required for the webhook
-        savedProgrammingExercise = programmingExerciseRepository.saveAndFlush(savedProgrammingExercise);
+        savedProgrammingExercise = programmingExerciseRepository.findForCreationByIdElseThrow(savedProgrammingExercise.getId());
 
+        // Step 11: Update task from problem statement
         programmingExerciseTaskService.updateTasksFromProblemStatement(savedProgrammingExercise);
 
-        // The creation of the webhooks must occur after the initial push, because the participation is
-        // not yet saved in the database, so we cannot save the submission accordingly (see ProgrammingSubmissionService.processNewProgrammingSubmission)
+        // Step 12: Webhooks and scheduling
+        // Step 12a: Create web hooks for version control
         versionControl.addWebHooksForExercise(savedProgrammingExercise);
+        // Step 12b: Schedule operations
         scheduleOperations(savedProgrammingExercise.getId());
+        // Step 12c: Check notifications for new exercise
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(savedProgrammingExercise);
-        return savedProgrammingExercise;
+
+        return programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
     }
 
     public void scheduleOperations(Long programmingExerciseId) {
@@ -274,10 +356,6 @@ public class ProgrammingExerciseService {
         // Check if checkout solution repository is enabled
         if (programmingExercise.getCheckoutSolutionRepository() && !programmingLanguageFeature.checkoutSolutionRepositoryAllowed()) {
             throw new BadRequestAlertException("Checkout solution repository is not supported for this programming language", "Exercise", "checkoutSolutionRepositoryNotSupported");
-        }
-        // Check if publish build plan URL is enabled
-        if (Boolean.TRUE.equals(programmingExercise.isPublishBuildPlanUrl()) && !programmingLanguageFeature.publishBuildPlanUrlAllowed()) {
-            throw new BadRequestAlertException("Publishing the build plan URL is not supported for this language", "Exercise", "publishBuildPlanUrlNotSupported");
         }
 
         // Check if testwise coverage analysis is enabled
@@ -355,21 +433,29 @@ public class ProgrammingExerciseService {
     public void setupBuildPlansForNewExercise(ProgrammingExercise programmingExercise, boolean isImportedFromFile) {
         String projectKey = programmingExercise.getProjectKey();
         // Get URLs for repos
-        var exerciseRepoUrl = programmingExercise.getVcsTemplateRepositoryUrl();
-        var testsRepoUrl = programmingExercise.getVcsTestRepositoryUrl();
-        var solutionRepoUrl = programmingExercise.getVcsSolutionRepositoryUrl();
+        var exerciseRepoUri = programmingExercise.getVcsTemplateRepositoryUri();
+        var testsRepoUri = programmingExercise.getVcsTestRepositoryUri();
+        var solutionRepoUri = programmingExercise.getVcsSolutionRepositoryUri();
 
         ContinuousIntegrationService continuousIntegration = continuousIntegrationService.orElseThrow();
         continuousIntegration.createProjectForExercise(programmingExercise);
         // template build plan
-        continuousIntegration.createBuildPlanForExercise(programmingExercise, TEMPLATE.getName(), exerciseRepoUrl, testsRepoUrl, solutionRepoUrl);
+        continuousIntegration.createBuildPlanForExercise(programmingExercise, TEMPLATE.getName(), exerciseRepoUri, testsRepoUri, solutionRepoUri);
         // solution build plan
-        continuousIntegration.createBuildPlanForExercise(programmingExercise, SOLUTION.getName(), solutionRepoUrl, testsRepoUrl, solutionRepoUrl);
+        continuousIntegration.createBuildPlanForExercise(programmingExercise, SOLUTION.getName(), solutionRepoUri, testsRepoUri, solutionRepoUri);
 
         // Give appropriate permissions for CI projects
         continuousIntegration.removeAllDefaultProjectPermissions(projectKey);
 
         giveCIProjectPermissions(programmingExercise);
+
+        Windfile windfile = programmingExercise.getWindfile();
+        if (windfile != null && buildScriptGenerationService.isPresent() && programmingExercise.getBuildScript() == null) {
+            String script = buildScriptGenerationService.get().getScript(programmingExercise);
+            programmingExercise.setBuildPlanConfiguration(new Gson().toJson(windfile));
+            programmingExercise.setBuildScript(script);
+            programmingExercise = programmingExerciseRepository.saveForCreation(programmingExercise);
+        }
 
         // if the exercise is imported from a file, the changes fixing the project name will trigger a first build anyway, so
         // we do not trigger them here
@@ -422,15 +508,15 @@ public class ProgrammingExerciseService {
 
         VersionControlService versionControl = versionControlService.orElseThrow();
         templateParticipation.setBuildPlanId(templatePlanId); // Set build plan id to newly created BaseBuild plan
-        templateParticipation.setRepositoryUrl(versionControl.getCloneRepositoryUrl(projectKey, exerciseRepoName).toString());
+        templateParticipation.setRepositoryUri(versionControl.getCloneRepositoryUri(projectKey, exerciseRepoName).toString());
         solutionParticipation.setBuildPlanId(solutionPlanId);
-        solutionParticipation.setRepositoryUrl(versionControl.getCloneRepositoryUrl(projectKey, solutionRepoName).toString());
-        programmingExercise.setTestRepositoryUrl(versionControl.getCloneRepositoryUrl(projectKey, testRepoName).toString());
+        solutionParticipation.setRepositoryUri(versionControl.getCloneRepositoryUri(projectKey, solutionRepoName).toString());
+        programmingExercise.setTestRepositoryUri(versionControl.getCloneRepositoryUri(projectKey, testRepoName).toString());
     }
 
     private void setURLsForAuxiliaryRepositoriesOfExercise(ProgrammingExercise programmingExercise) {
-        programmingExercise.getAuxiliaryRepositories().forEach(repo -> repo.setRepositoryUrl(versionControlService.orElseThrow()
-                .getCloneRepositoryUrl(programmingExercise.getProjectKey(), programmingExercise.generateRepositoryName(repo.getName())).toString()));
+        programmingExercise.getAuxiliaryRepositories().forEach(repo -> repo.setRepositoryUri(versionControlService.orElseThrow()
+                .getCloneRepositoryUri(programmingExercise.getProjectKey(), programmingExercise.generateRepositoryName(repo.getName())).toString()));
     }
 
     public static Path getProgrammingLanguageProjectTypePath(ProgrammingLanguage programmingLanguage, ProjectType projectType) {
@@ -452,6 +538,8 @@ public class ProgrammingExerciseService {
         setURLsForAuxiliaryRepositoriesOfExercise(updatedProgrammingExercise);
         connectAuxiliaryRepositoriesToExercise(updatedProgrammingExercise);
 
+        updateBuildPlanForExercise(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
+
         channelService.updateExerciseChannel(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
 
         String problemStatementWithTestNames = updatedProgrammingExercise.getProblemStatement();
@@ -466,6 +554,39 @@ public class ProgrammingExerciseService {
         scheduleOperations(updatedProgrammingExercise.getId());
         groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(programmingExerciseBeforeUpdate, savedProgrammingExercise, notificationText);
         return savedProgrammingExercise;
+    }
+
+    /**
+     * This method updates the build plan for the given programming exercise.
+     * It deletes the old build plan and creates a new one if the build plan configuration has changed.
+     *
+     * @param programmingExerciseBeforeUpdate the original programming exercise with its old values
+     * @param updatedProgrammingExercise      the changed programming exercise with its new values
+     */
+    private void updateBuildPlanForExercise(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise) {
+        if (continuousIntegrationService.isEmpty()
+                || Objects.equals(programmingExerciseBeforeUpdate.getBuildPlanConfiguration(), updatedProgrammingExercise.getBuildPlanConfiguration())) {
+            return;
+        }
+        // we only update the build plan configuration if it has changed and is not null, otherwise we
+        // do not have a valid exercise anymore
+        if (updatedProgrammingExercise.getBuildPlanConfiguration() != null) {
+            if (!profileService.isLocalCiActive()) {
+                continuousIntegrationService.get().deleteProject(updatedProgrammingExercise.getProjectKey());
+                continuousIntegrationService.get().createProjectForExercise(updatedProgrammingExercise);
+                continuousIntegrationService.get().recreateBuildPlansForExercise(updatedProgrammingExercise);
+                resetAllStudentBuildPlanIdsForExercise(updatedProgrammingExercise);
+            }
+            if (buildScriptGenerationService.isPresent()) {
+                String script = buildScriptGenerationService.get().getScript(updatedProgrammingExercise);
+                updatedProgrammingExercise.setBuildScript(script);
+                programmingExerciseRepository.save(updatedProgrammingExercise);
+            }
+        }
+        else {
+            // if the user does not change the build plan configuration, we have to set the old one again
+            updatedProgrammingExercise.setBuildPlanConfiguration(programmingExerciseBeforeUpdate.getBuildPlanConfiguration());
+        }
     }
 
     /**
@@ -551,20 +672,20 @@ public class ProgrammingExerciseService {
      * This method calls the StructureOracleGenerator, generates the string out of the JSON representation of the structure oracle of the programming exercise and returns true if
      * the file was updated or generated, false otherwise. This can happen if the contents of the file have not changed.
      *
-     * @param solutionRepoURL The URL of the solution repository.
-     * @param exerciseRepoURL The URL of the exercise repository.
-     * @param testRepoURL     The URL of the tests' repository.
+     * @param solutionRepoUri The URL of the solution repository.
+     * @param exerciseRepoUri The URL of the exercise repository.
+     * @param testRepoUri     The URL of the tests' repository.
      * @param testsPath       The path to the tests' folder, e.g. the path inside the repository where the structure oracle file will be saved in.
      * @param user            The user who has initiated the action
      * @return True, if the structure oracle was successfully generated or updated, false if no changes to the file were made.
      * @throws IOException     If the URLs cannot be converted to actual {@link Path paths}
      * @throws GitAPIException If the checkout fails
      */
-    public boolean generateStructureOracleFile(VcsRepositoryUrl solutionRepoURL, VcsRepositoryUrl exerciseRepoURL, VcsRepositoryUrl testRepoURL, String testsPath, User user)
+    public boolean generateStructureOracleFile(VcsRepositoryUri solutionRepoUri, VcsRepositoryUri exerciseRepoUri, VcsRepositoryUri testRepoUri, String testsPath, User user)
             throws IOException, GitAPIException {
-        Repository solutionRepository = gitService.getOrCheckoutRepository(solutionRepoURL, true);
-        Repository exerciseRepository = gitService.getOrCheckoutRepository(exerciseRepoURL, true);
-        Repository testRepository = gitService.getOrCheckoutRepository(testRepoURL, true);
+        Repository solutionRepository = gitService.getOrCheckoutRepository(solutionRepoUri, true);
+        Repository exerciseRepository = gitService.getOrCheckoutRepository(exerciseRepoUri, true);
+        Repository testRepository = gitService.getOrCheckoutRepository(testRepoUri, true);
 
         gitService.resetToOriginHead(solutionRepository);
         gitService.pullIgnoreConflicts(solutionRepository);
@@ -684,7 +805,7 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * Search for all programming exercises fitting a {@link PageableSearchDTO search query}. The result is paged,
+     * Search for all programming exercises fitting a {@link SearchTermPageableSearchDTO search query}. The result is paged,
      * meaning that there is only a predefined portion of the result returned to the user, so that the server doesn't
      * have to send hundreds/thousands of exercises if there are that many in Artemis.
      *
@@ -694,13 +815,13 @@ public class ProgrammingExerciseService {
      * @param user           The user for whom to fetch all available exercises
      * @return A wrapper object containing a list of all found exercises and the total number of pages
      */
-    public SearchResultPageDTO<ProgrammingExercise> getAllOnPageWithSize(final PageableSearchDTO<String> search, final boolean isCourseFilter, final boolean isExamFilter,
+    public SearchResultPageDTO<ProgrammingExercise> getAllOnPageWithSize(final SearchTermPageableSearchDTO<String> search, final boolean isCourseFilter, final boolean isExamFilter,
             final User user) {
         if (!isCourseFilter && !isExamFilter) {
             return new SearchResultPageDTO<>(Collections.emptyList(), 0);
         }
         String searchTerm = search.getSearchTerm();
-        PageRequest pageable = PageUtil.createExercisePageRequest(search);
+        PageRequest pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.EXERCISE);
         Specification<ProgrammingExercise> specification = exerciseSpecificationService.getExerciseSearchSpecification(searchTerm, isCourseFilter, isExamFilter, user, pageable);
         return getAllOnPageForSpecification(pageable, specification);
     }
@@ -715,13 +836,13 @@ public class ProgrammingExerciseService {
      * @param programmingLanguage The result will only include exercises in this language
      * @return A wrapper object containing a list of all found exercises and the total number of pages
      */
-    public SearchResultPageDTO<ProgrammingExercise> getAllWithSCAOnPageWithSize(PageableSearchDTO<String> search, boolean isCourseFilter, boolean isExamFilter,
+    public SearchResultPageDTO<ProgrammingExercise> getAllWithSCAOnPageWithSize(SearchTermPageableSearchDTO<String> search, boolean isCourseFilter, boolean isExamFilter,
             ProgrammingLanguage programmingLanguage, User user) {
         if (!isCourseFilter && !isExamFilter) {
             return new SearchResultPageDTO<>(Collections.emptyList(), 0);
         }
         String searchTerm = search.getSearchTerm();
-        PageRequest pageable = PageUtil.createExercisePageRequest(search);
+        PageRequest pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.EXERCISE);
         Specification<ProgrammingExercise> specification = exerciseSpecificationService.getExerciseSearchSpecification(searchTerm, isCourseFilter, isExamFilter, user, pageable);
         specification = specification.and(exerciseSpecificationService.createSCAFilter(programmingLanguage));
         return getAllOnPageForSpecification(pageable, specification);
@@ -816,5 +937,9 @@ public class ProgrammingExerciseService {
                 .map(ProgrammingExerciseTestCase::getSolutionEntries).flatMap(Collection::stream).collect(Collectors.toSet());
         programmingExerciseTaskRepository.deleteAll(tasks);
         programmingExerciseSolutionEntryRepository.deleteAll(solutionEntries);
+    }
+
+    private void resetAllStudentBuildPlanIdsForExercise(ProgrammingExercise programmingExercise) {
+        programmingExerciseStudentParticipationRepository.unsetBuildPlanIdForExercise(programmingExercise.getId());
     }
 }

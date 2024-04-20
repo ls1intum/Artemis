@@ -46,7 +46,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
     private String ARTEMIS_AUTHENTICATION_TOKEN_VALUE;
 
     @Autowired
-    private ProgrammingSubmissionRepository submissionRepository;
+    private ProgrammingSubmissionTestRepository submissionRepository;
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
@@ -149,13 +149,13 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, ProgrammingLanguage.JAVA, List.of(), logs, null, new ArrayList<>());
         postResult(notification, HttpStatus.OK);
 
-        var statistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatisticsEntryForExercise(exercise);
-        assertThat(statistics.getBuildCount()).isEqualTo(1);
-        assertThat(statistics.getAgentSetupDuration()).isEqualTo(90);
-        assertThat(statistics.getTestDuration()).isEqualTo(10);
-        assertThat(statistics.getScaDuration()).isNull();
-        assertThat(statistics.getTotalJobDuration()).isEqualTo(110);
-        assertThat(statistics.getDependenciesDownloadedCount()).isEqualTo(1);
+        var statistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatistics(exercise);
+        assertThat(statistics.buildCount()).isEqualTo(1);
+        assertThat(statistics.agentSetupDuration()).isEqualTo(90);
+        assertThat(statistics.testDuration()).isEqualTo(10);
+        assertThat(statistics.scaDuration()).isNull();
+        assertThat(statistics.totalJobDuration()).isEqualTo(110);
+        assertThat(statistics.dependenciesDownloadedCount()).isEqualTo(1);
     }
 
     @Test
@@ -178,13 +178,13 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, ProgrammingLanguage.JAVA, List.of(), logs, null, new ArrayList<>());
         postResult(notification, HttpStatus.OK);
 
-        var statistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatisticsEntryForExercise(exercise);
-        assertThat(statistics.getBuildCount()).isEqualTo(1);
-        assertThat(statistics.getAgentSetupDuration()).isNull();
-        assertThat(statistics.getTestDuration()).isEqualTo(20);
-        assertThat(statistics.getScaDuration()).isNull();
-        assertThat(statistics.getTotalJobDuration()).isEqualTo(20);
-        assertThat(statistics.getDependenciesDownloadedCount()).isNull();
+        var statistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatistics(exercise);
+        assertThat(statistics.buildCount()).isEqualTo(1);
+        assertThat(statistics.agentSetupDuration()).isNull();
+        assertThat(statistics.testDuration()).isEqualTo(20);
+        assertThat(statistics.scaDuration()).isNull();
+        assertThat(statistics.totalJobDuration()).isEqualTo(20);
+        assertThat(statistics.dependenciesDownloadedCount()).isNull();
     }
 
     @Test
@@ -212,13 +212,13 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, ProgrammingLanguage.JAVA, List.of(), logs, null, new ArrayList<>());
         postResult(notification, HttpStatus.OK);
 
-        var statistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatisticsEntryForExercise(exercise);
-        assertThat(statistics.getBuildCount()).isEqualTo(1);
-        assertThat(statistics.getAgentSetupDuration()).isEqualTo(90);
-        assertThat(statistics.getTestDuration()).isEqualTo(10);
-        assertThat(statistics.getScaDuration()).isEqualTo(11);
-        assertThat(statistics.getTotalJobDuration()).isEqualTo(120);
-        assertThat(statistics.getDependenciesDownloadedCount()).isEqualTo(2);
+        var statistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatistics(exercise);
+        assertThat(statistics.buildCount()).isEqualTo(1);
+        assertThat(statistics.agentSetupDuration()).isEqualTo(90);
+        assertThat(statistics.testDuration()).isEqualTo(10);
+        assertThat(statistics.scaDuration()).isEqualTo(11);
+        assertThat(statistics.totalJobDuration()).isEqualTo(120);
+        assertThat(statistics.dependenciesDownloadedCount()).isEqualTo(2);
     }
 
     @Test
@@ -242,14 +242,14 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, ProgrammingLanguage.PYTHON, List.of(), logs, null, new ArrayList<>());
         postResult(notification, HttpStatus.OK);
 
-        var statistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatisticsEntryForExercise(exercise);
+        var statistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatistics(exercise);
         // Should not extract any statistics
-        assertThat(statistics.getBuildCount()).isZero();
-        assertThat(statistics.getAgentSetupDuration()).isNull();
-        assertThat(statistics.getTestDuration()).isNull();
-        assertThat(statistics.getScaDuration()).isNull();
-        assertThat(statistics.getTotalJobDuration()).isNull();
-        assertThat(statistics.getDependenciesDownloadedCount()).isNull();
+        assertThat(statistics.buildCount()).isZero();
+        assertThat(statistics.agentSetupDuration()).isNull();
+        assertThat(statistics.testDuration()).isNull();
+        assertThat(statistics.scaDuration()).isNull();
+        assertThat(statistics.totalJobDuration()).isNull();
+        assertThat(statistics.dependenciesDownloadedCount()).isNull();
     }
 
     private static Stream<Arguments> shouldSaveBuildLogsOnStudentParticipationArguments() {
@@ -302,7 +302,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
 
         // Build result for first commit is received
         var firstBuildCompleteDate = ZonedDateTime.now();
-        var firstVcsDTO = new CommitDTO(firstCommitHash, urlService.getRepositorySlugFromRepositoryUrl(testService.participation.getVcsRepositoryUrl()), defaultBranch);
+        var firstVcsDTO = new CommitDTO(firstCommitHash, uriService.getRepositorySlugFromRepositoryUri(testService.participation.getVcsRepositoryUri()), defaultBranch);
         var notificationDTOFirstCommit = createJenkinsNewResultNotification(testService.programmingExercise.getProjectKey(), userLogin, JAVA, List.of(), new ArrayList<>(),
                 firstBuildCompleteDate, List.of(firstVcsDTO));
 
@@ -310,7 +310,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
 
         // Build result for second commit is received
         var secondBuildCompleteDate = ZonedDateTime.now();
-        var secondVcsDTO = new CommitDTO(secondCommitHash, urlService.getRepositorySlugFromRepositoryUrl(testService.participation.getVcsRepositoryUrl()), defaultBranch);
+        var secondVcsDTO = new CommitDTO(secondCommitHash, uriService.getRepositorySlugFromRepositoryUri(testService.participation.getVcsRepositoryUri()), defaultBranch);
         var notificationDTOSecondCommit = createJenkinsNewResultNotification(testService.programmingExercise.getProjectKey(), userLogin, JAVA, List.of(), new ArrayList<>(),
                 secondBuildCompleteDate, List.of(secondVcsDTO));
 

@@ -1,16 +1,27 @@
-<jhi-split-pane-header [files]="files" (selectFile)="handleFileSelect($event)" studentLogin="{{ plagiarismSubmission?.studentLogin }}"></jhi-split-pane-header>
-
-<div class="text-submission-viewer" [innerHTML]="fileContent || ' '" [ngClass]="{ 'no-file': !fileContent, 'is-code': isProgrammingExercise }" *ngIf="!loading && !binaryFile!!">
-    {{ 'artemisApp.plagiarism.noFileSelected' | artemisTranslate }}
-</div>
-
-<div class="plagiarism-submission-loader" *ngIf="loading">
-    <div class="spinner-border text-primary" role="status">
-        <span class="sr-only">Loading...</span>
+<jhi-split-pane-header [files]="files" (selectFile)="handleFileSelect($event)" studentLogin="{{ plagiarismSubmission?.studentLogin }}" />
+@if (cannotLoadFiles) {
+    <div class="text-submission-viewer text-warning">
+        <div class="text-submission-viewer-warning">
+            <fa-icon [icon]="faExclamationTriangle" class="icon" />
+            <span jhiTranslate="artemisApp.plagiarism.cannotLoadFiles"></span>
+        </div>
     </div>
-</div>
-
-<div class="binaryFileDialogue" *ngIf="binaryFile">
-    <span class="me-1">{{ 'artemisApp.plagiarism.binaryFileNotRendered' | artemisTranslate }}</span>
-    <a class="text-primary" (click)="downloadCurrentFile()">{{ 'entity.action.download' | artemisTranslate }}</a>
-</div>
+}
+@if (!loading && !binaryFile!! && !cannotLoadFiles) {
+    <div class="text-submission-viewer" [innerHTML]="fileContent || ' '" [ngClass]="{ 'no-file': !fileContent, 'is-code': isProgrammingExercise }">
+        {{ 'artemisApp.plagiarism.noFileSelected' | artemisTranslate }}
+    </div>
+}
+@if (loading && !cannotLoadFiles) {
+    <div class="plagiarism-submission-loader">
+        <div class="spinner-border text-primary" role="status">
+            <span class="sr-only">Loading...</span>
+        </div>
+    </div>
+}
+@if (binaryFile && !cannotLoadFiles) {
+    <div class="binaryFileDialogue">
+        <span class="me-1">{{ 'artemisApp.plagiarism.binaryFileNotRendered' | artemisTranslate }}</span>
+        <a class="text-primary" (click)="downloadCurrentFile()">{{ 'entity.action.download' | artemisTranslate }}</a>
+    </div>
+}

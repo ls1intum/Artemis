@@ -12,7 +12,8 @@
             "DeploymentDiagram": "Verteilungsdiagramm",
             "PetriNet": "Petri-Netz",
             "SyntaxTree": "Syntaxbaum",
-            "Flowchart": "Flussdiagramm"
+            "Flowchart": "Flussdiagramm",
+            "BPMN": "BPMN"
         }
     }
 }

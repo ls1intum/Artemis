@@ -29,12 +29,12 @@ export enum CachingStrategy {
 @Component({
     selector: 'jhi-secured-image',
     template: `
-        <ng-template [ngIf]="!this.mobileDragAndDrop">
+        @if (!this.mobileDragAndDrop) {
             <img [attr.src]="dataUrl | async" alt="alt" />
-        </ng-template>
-        <ng-template [ngIf]="this.mobileDragAndDrop">
+        }
+        @if (this.mobileDragAndDrop) {
             <img [attr.src]="dataUrl | async" class="dnd-drag-start" draggable="true" alt="alt" cdkDrag />
-        </ng-template>
+        }
     `,
 })
 export class SecuredImageComponent implements OnChanges, OnInit {

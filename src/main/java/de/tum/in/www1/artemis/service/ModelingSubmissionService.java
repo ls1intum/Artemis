@@ -1,13 +1,16 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -27,10 +30,11 @@ import de.tum.in.www1.artemis.service.connectors.athena.AthenaSubmissionSelectio
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
+@Profile(PROFILE_CORE)
 @Service
 public class ModelingSubmissionService extends SubmissionService {
 
-    private final Logger log = LoggerFactory.getLogger(ModelingSubmissionService.class);
+    private static final Logger log = LoggerFactory.getLogger(ModelingSubmissionService.class);
 
     private final ModelingSubmissionRepository modelingSubmissionRepository;
 

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.config;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static java.net.URLDecoder.decode;
 
 import java.io.File;
@@ -7,9 +8,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.EnumSet;
 
-import javax.servlet.DispatcherType;
-import javax.servlet.FilterRegistration;
-import javax.servlet.ServletContext;
+import jakarta.servlet.DispatcherType;
+import jakarta.servlet.FilterRegistration;
+import jakarta.servlet.ServletContext;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,22 +21,24 @@ import org.springframework.boot.web.servlet.ServletContextInitializer;
 import org.springframework.boot.web.servlet.server.ConfigurableServletWebServerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
+import de.tum.in.www1.artemis.web.filter.CachingHttpHeadersFilter;
 import tech.jhipster.config.JHipsterProperties;
-import tech.jhipster.web.filter.CachingHttpHeadersFilter;
 
 /**
  * Configuration of web application with Servlet 3.0 APIs.
  */
+@Profile(PROFILE_CORE)
 @Configuration
 public class WebConfigurer implements ServletContextInitializer, WebServerFactoryCustomizer<WebServerFactory> {
 
-    private final Logger log = LoggerFactory.getLogger(WebConfigurer.class);
+    private static final Logger log = LoggerFactory.getLogger(WebConfigurer.class);
 
     private final Environment env;
 

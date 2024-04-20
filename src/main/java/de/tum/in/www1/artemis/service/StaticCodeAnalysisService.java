@@ -1,10 +1,13 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.config.StaticCodeAnalysisConfigurer;
@@ -12,10 +15,11 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.in.www1.artemis.service.programming.ProgrammingTriggerService;
 
+@Profile(PROFILE_CORE)
 @Service
 public class StaticCodeAnalysisService {
 
-    private final Logger log = LoggerFactory.getLogger(StaticCodeAnalysisService.class);
+    private static final Logger log = LoggerFactory.getLogger(StaticCodeAnalysisService.class);
 
     private final StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository;
 
@@ -45,10 +49,10 @@ public class StaticCodeAnalysisService {
         List<StaticCodeAnalysisCategory> newCategories = new ArrayList<>();
         for (var defaultCategory : defaultConfiguration) {
             StaticCodeAnalysisCategory newCategory = new StaticCodeAnalysisCategory();
-            newCategory.setName(defaultCategory.getName());
-            newCategory.setPenalty(defaultCategory.getPenalty());
-            newCategory.setMaxPenalty(defaultCategory.getMaxPenalty());
-            newCategory.setState(defaultCategory.getState());
+            newCategory.setName(defaultCategory.name());
+            newCategory.setPenalty(defaultCategory.penalty());
+            newCategory.setMaxPenalty(defaultCategory.maxPenalty());
+            newCategory.setState(defaultCategory.state());
             newCategory.setProgrammingExercise(programmingExercise);
             newCategories.add(newCategory);
         }
@@ -106,11 +110,11 @@ public class StaticCodeAnalysisService {
 
         // Restore the default configuration. Ignore unknown categories by iterating over the default categories
         for (var defaultCategory : defaultCategories) {
-            var matchingCategory = categories.stream().filter(category -> Objects.equals(defaultCategory.getName(), category.getName())).findFirst();
+            var matchingCategory = categories.stream().filter(category -> Objects.equals(defaultCategory.name(), category.getName())).findFirst();
             matchingCategory.ifPresent(cat -> {
-                cat.setPenalty(defaultCategory.getPenalty());
-                cat.setMaxPenalty(defaultCategory.getMaxPenalty());
-                cat.setState(defaultCategory.getState());
+                cat.setPenalty(defaultCategory.penalty());
+                cat.setMaxPenalty(defaultCategory.maxPenalty());
+                cat.setState(defaultCategory.state());
             });
         }
         staticCodeAnalysisCategoryRepository.saveAll(categories);

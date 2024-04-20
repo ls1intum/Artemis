@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.compass.umlmodel;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import de.tum.in.www1.artemis.service.compass.umlmodel.deployment.UMLNode;
 
@@ -22,7 +23,7 @@ public abstract class UMLContainerElement extends UMLElement implements Serializ
      * empty constructor used to make mockito happy
      */
     public UMLContainerElement() {
-        super();
+        // default empty constructor
     }
 
     public UMLContainerElement(String jsonElementID) {
@@ -55,6 +56,11 @@ public abstract class UMLContainerElement extends UMLElement implements Serializ
     public void removeSubElement(UMLNode umlElement) {
         this.subElements.remove(umlElement);
         umlElement.setParentElement(null);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), subElements);
     }
 
     @Override

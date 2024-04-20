@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
@@ -13,6 +15,11 @@ import org.apache.commons.text.StringEscapeUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
 
@@ -24,12 +31,13 @@ import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 /**
  * Service that provides utilities for managing files in a git repository.
  */
+@Profile(PROFILE_CORE)
 @Service
 public class RepositoryService {
 
     private final GitService gitService;
 
-    private final Logger log = LoggerFactory.getLogger(RepositoryService.class);
+    private static final Logger log = LoggerFactory.getLogger(RepositoryService.class);
 
     public RepositoryService(GitService gitService) {
         this.gitService = gitService;
@@ -351,25 +359,43 @@ public class RepositoryService {
     /**
      * Retrieve the status of the repository. Also pulls the repository.
      *
-     * @param repositoryUrl of the repository to check the status for.
+     * @param repositoryUri of the repository to check the status for.
      * @return a dto to determine the status of the repository.
      * @throws GitAPIException if the repository status can't be retrieved.
      */
-    public boolean isClean(VcsRepositoryUrl repositoryUrl) throws GitAPIException {
-        Repository repository = gitService.getOrCheckoutRepository(repositoryUrl, true);
+    public boolean isClean(VcsRepositoryUri repositoryUri) throws GitAPIException {
+        Repository repository = gitService.getOrCheckoutRepository(repositoryUri, true);
         return gitService.isClean(repository);
     }
 
     /**
      * Retrieve the status of the repository. Also pulls the repository.
      *
-     * @param repositoryUrl of the repository to check the status for.
+     * @param repositoryUri of the repository to check the status for.
      * @param defaultBranch the already used default branch in the remote repository
      * @return a dto to determine the status of the repository.
      * @throws GitAPIException if the repository status can't be retrieved.
      */
-    public boolean isClean(VcsRepositoryUrl repositoryUrl, String defaultBranch) throws GitAPIException {
-        Repository repository = gitService.getOrCheckoutRepository(repositoryUrl, true, defaultBranch);
+    public boolean isClean(VcsRepositoryUri repositoryUri, String defaultBranch) throws GitAPIException {
+        Repository repository = gitService.getOrCheckoutRepository(repositoryUri, true, defaultBranch);
         return gitService.isClean(repository);
+    }
+
+    /**
+     * Get the content of a file from the given repository.
+     *
+     * @param filename   of the file to retrieve.
+     * @param repository the repository to retrieve the file from.
+     * @return the file if available.
+     * @throws IOException if the file can't be retrieved.
+     */
+    public ResponseEntity<byte[]> getFileFromRepository(String filename, Repository repository) throws IOException {
+        byte[] out = getFile(repository, filename);
+        HttpHeaders responseHeaders = new HttpHeaders();
+        var contentType = getFileType(repository, filename);
+        responseHeaders.add("Content-Type", contentType);
+        // Prevent the file from being interpreted as HTML by the browser when opened directly:
+        responseHeaders.setContentDisposition(ContentDisposition.builder("attachment").filename(filename).build());
+        return new ResponseEntity<>(out, responseHeaders, HttpStatus.OK);
     }
 }

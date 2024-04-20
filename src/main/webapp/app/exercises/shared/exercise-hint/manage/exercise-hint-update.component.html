@@ -5,38 +5,34 @@
                 Create or edit a Exercise Hint
             </h2>
             <div>
-                <div class="form-group" [hidden]="!exerciseHint?.id">
-                    <label for="id" jhiTranslate="global.field.id">ID</label>
-                    <input type="text" class="form-control" id="id" name="id" readonly [(ngModel)]="exerciseHint.id" />
-                </div>
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="artemisApp.exerciseHint.title" for="field_title">Title</label>
+                    <label class="form-control-label" jhiTranslate="artemisApp.exerciseHint.title" for="field_title"></label>
                     <input type="text" required minlength="3" class="form-control" name="title" id="field_title" [(ngModel)]="exerciseHint.title" />
                 </div>
-
                 <div class="form-group">
                     <div>
-                        <label class="label-narrow" jhiTranslate="artemisApp.exerciseHint.description" for="field_description">Description</label>
-                        <jhi-help-icon text="artemisApp.exerciseHint.descriptionTooltip"></jhi-help-icon>
+                        <label class="label-narrow" jhiTranslate="artemisApp.exerciseHint.description" for="field_description"></label>
+                        <jhi-help-icon text="artemisApp.exerciseHint.descriptionTooltip" />
                     </div>
                     <input type="text" required minlength="3" class="form-control" name="description" id="field_description" [(ngModel)]="exerciseHint.description" />
                 </div>
                 <div class="form-group">
                     <div>
-                        <label class="label-narrow" jhiTranslate="artemisApp.exerciseHint.task" for="field_task">Task</label>
-                        <ng-container *ngIf="exerciseHint.type === 'code'">
-                            <jhi-help-icon text="artemisApp.exerciseHint.taskTooltip"></jhi-help-icon>
-                        </ng-container>
+                        <label class="label-narrow" jhiTranslate="artemisApp.exerciseHint.task" for="field_task"></label>
+                        @if (exerciseHint.type === 'code') {
+                            <jhi-help-icon text="artemisApp.exerciseHint.taskTooltip" />
+                        }
                     </div>
                     <select class="form-select" required name="task" [(ngModel)]="this.exerciseHint.programmingExerciseTask" id="field_task">
-                        <option *ngFor="let task of tasks" [ngValue]="task">{{ task.taskName }}</option>
+                        @for (task of tasks; track task) {
+                            <option [ngValue]="task">{{ task.taskName }}</option>
+                        }
                     </select>
                 </div>
-
                 <div class="form-group">
                     <div>
-                        <label class="label-narrow" jhiTranslate="artemisApp.exerciseHint.displayThreshold" for="field_description">Display Threshold</label>
-                        <jhi-help-icon text="artemisApp.exerciseHint.displayThresholdTooltip"></jhi-help-icon>
+                        <label class="label-narrow" jhiTranslate="artemisApp.exerciseHint.displayThreshold" for="field_description"></label>
+                        <jhi-help-icon text="artemisApp.exerciseHint.displayThresholdTooltip" />
                     </div>
                     <input
                         type="number"
@@ -49,19 +45,21 @@
                         [(ngModel)]="exerciseHint.displayThreshold"
                     />
                 </div>
-
-                <div *ngIf="exerciseHint.type === HintType.CODE && irisSettings?.irisHestiaSettings?.enabled" class="d-flex justify-content-end">
-                    <jhi-button
-                        id="generateDescriptionButton"
-                        (click)="generateDescriptionForCodeHint()"
-                        [shouldSubmit]="false"
-                        [isLoading]="isGeneratingDescription"
-                        [title]="'artemisApp.codeHint.management.step4.iris.generateDescription.label'"
-                        [tooltip]="'artemisApp.codeHint.management.step4.iris.generateDescription.tooltip'"
-                        >Generate description
-                    </jhi-button>
-                </div>
-
+                @if (exerciseHint.type === HintType.CODE && irisSettings?.irisHestiaSettings?.enabled) {
+                    <div class="d-flex justify-content-end">
+                        <jhi-iris-logo-button
+                            id="generateDescriptionButton"
+                            (click)="generateDescriptionForCodeHint()"
+                            [btnType]="ButtonType.PRIMARY_OUTLINE"
+                            [shouldSubmit]="false"
+                            [isLoading]="isGeneratingDescription"
+                            [title]="'artemisApp.codeHint.management.step4.iris.generateDescription.label'"
+                            [tooltip]="'artemisApp.codeHint.management.step4.iris.generateDescription.tooltip'"
+                            [disabled]="((exerciseHint | castToCodeHint).solutionEntries?.length ?? 0) === 0"
+                            >Generate description
+                        </jhi-iris-logo-button>
+                    </div>
+                }
                 <div class="form-group hint-form__editor-wrapper">
                     <jhi-markdown-editor
                         [markdown]="exerciseHint.content"
@@ -70,40 +68,44 @@
                         [resizableMaxHeight]="MarkdownEditorHeight.LARGE"
                         [domainCommands]="domainCommands"
                         [editorMode]="editorMode"
-                    ></jhi-markdown-editor>
-                </div>
-                <div *ngIf="exerciseHint.type === HintType.CODE" class="form-group hint-form__editor-wrapper">
-                    <jhi-code-hint-container [codeHint]="exerciseHint | castToCodeHint" [enableEditing]="true"></jhi-code-hint-container>
-                </div>
-                <div *ngIf="exerciseHint.type === HintType.CODE" class="btn-group">
-                    <button
-                        type="button"
-                        class="btn btn-primary"
-                        jhiTranslate="artemisApp.codeHint.management.step3.createManualFragmentButton.label"
-                        (click)="openManualEntryCreationModal()"
-                    >
-                        Create new Solution Code Snippets
-                    </button>
-                </div>
-                <div *ngIf="exercise?.id" class="form-group mt-3">
-                    <label class="form-control-label" jhiTranslate="artemisApp.exerciseHint.exercise" for="field_exercise">Exercise</label>
-                    <input
-                        type="text"
-                        required
-                        class="form-control"
-                        name="exercise"
-                        id="field_exercise"
-                        [disabled]="true"
-                        [ngModel]="exercise && exercise.title + ' (ID: ' + exercise.id + ')'"
                     />
                 </div>
+                @if (exerciseHint.type === HintType.CODE) {
+                    <div class="form-group hint-form__editor-wrapper">
+                        <jhi-code-hint-container [codeHint]="exerciseHint | castToCodeHint" [enableEditing]="true" />
+                    </div>
+                }
+                @if (exerciseHint.type === HintType.CODE) {
+                    <div class="btn-group">
+                        <button
+                            type="button"
+                            class="btn btn-primary"
+                            jhiTranslate="artemisApp.codeHint.management.step3.createManualFragmentButton.label"
+                            (click)="openManualEntryCreationModal()"
+                        ></button>
+                    </div>
+                }
+                @if (exercise?.id) {
+                    <div class="form-group mt-3">
+                        <label class="form-control-label" jhiTranslate="artemisApp.exerciseHint.exercise" for="field_exercise"></label>
+                        <input
+                            type="text"
+                            required
+                            class="form-control"
+                            name="exercise"
+                            id="field_exercise"
+                            [disabled]="true"
+                            [ngModel]="exercise && exercise.title + ' (ID: ' + exercise.id + ')'"
+                        />
+                    </div>
+                }
             </div>
             <div>
                 <button type="button" id="cancel-save" class="btn btn-secondary" (click)="previousState()">
-                    <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+                    <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
                 </button>
                 <button type="submit" id="save-entity" [disabled]="hintForm.invalid || isSaving || !exercise.id" class="btn btn-primary">
-                    <fa-icon [icon]="faSave"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+                    <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
                 </button>
             </div>
         </form>

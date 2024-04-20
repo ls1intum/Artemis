@@ -12,7 +12,7 @@ import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { ExportToCsv } from 'export-to-csv';
+import { download, generateCsv, mkConfig } from 'export-to-csv';
 import { faExclamationTriangle, faInfo, faPlus, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { PresentationType, PresentationsConfig } from 'app/grading-system/grading-system-presentations/grading-system-presentations.component';
 
@@ -208,7 +208,7 @@ export abstract class BaseGradingSystemComponent implements OnInit {
         }
         // check if any of the fields have invalid percentages
         for (const gradeStep of this.gradingScale.gradeSteps) {
-            if (gradeStep.lowerBoundPercentage < 0 || gradeStep.lowerBoundPercentage > gradeStep.upperBoundPercentage) {
+            if (gradeStep.lowerBoundPercentage! < 0 || gradeStep.lowerBoundPercentage! >= gradeStep.upperBoundPercentage!) {
                 this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.invalidMinMaxPercentages');
                 return false;
             }
@@ -216,7 +216,7 @@ export abstract class BaseGradingSystemComponent implements OnInit {
         // check if any of the fields have invalid points
         if (this.maxPointsValid()) {
             for (const gradeStep of this.gradingScale.gradeSteps) {
-                if (gradeStep.lowerBoundPoints! < 0 || gradeStep.lowerBoundPoints! > gradeStep.upperBoundPoints!) {
+                if (gradeStep.lowerBoundPoints! < 0 || gradeStep.lowerBoundPoints! >= gradeStep.upperBoundPoints!) {
                     this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.invalidMinMaxPoints');
                     return false;
                 }
@@ -417,7 +417,7 @@ export abstract class BaseGradingSystemComponent implements OnInit {
      */
     onChangeMaxPoints(maxPoints?: number): void {
         // if max points aren't defined, the grade step point bounds should also be undefined
-        if (maxPoints == undefined || maxPoints <= 0) {
+        if (maxPoints == undefined || maxPoints < 0) {
             for (const gradeStep of this.gradingScale.gradeSteps) {
                 gradeStep.lowerBoundPoints = undefined;
                 gradeStep.upperBoundPoints = undefined;
@@ -710,7 +710,7 @@ export abstract class BaseGradingSystemComponent implements OnInit {
      */
     async onCSVFileSelect(event: any) {
         if (event.target.files.length > 0) {
-            await this.readGradingStepsFromCSVFile(event, event.target.files[0]);
+            await this.readGradingStepsFromCSVFile(event.target.files[0]);
             this.lowerBoundInclusivity = true;
             this.setInclusivity();
             this.maxPoints = 100;
@@ -722,10 +722,9 @@ export abstract class BaseGradingSystemComponent implements OnInit {
 
     /**
      * Import grade steps from csv file
-     * @param event the read event
      * @param csvFile the csv file
      */
-    private async readGradingStepsFromCSVFile(event: any, csvFile: File) {
+    private async readGradingStepsFromCSVFile(csvFile: File) {
         let csvGradeSteps: CsvGradeStep[] = [];
         try {
             csvGradeSteps = await this.parseCSVFile(csvFile);
@@ -809,17 +808,18 @@ export abstract class BaseGradingSystemComponent implements OnInit {
     exportAsCSV(rows: any[], headers: string[]): void {
         const options = {
             fieldSeparator: ',',
-            quoteStrings: '',
+            quoteStrings: false,
             decimalSeparator: 'locale',
             showLabels: true,
             filename: 'grading_key' + (this.gradingScale.course?.shortName ? '_' + this.gradingScale.course?.shortName : ''),
             useTextFile: false,
             useBom: true,
-            headers,
+            columnHeaders: headers,
         };
 
-        const csvExporter = new ExportToCsv(options);
-        csvExporter.generateCsv(rows);
+        const csvExportConfig = mkConfig(options);
+        const csvData = generateCsv(csvExportConfig)(rows);
+        download(csvExportConfig)(csvData);
     }
 
     /**

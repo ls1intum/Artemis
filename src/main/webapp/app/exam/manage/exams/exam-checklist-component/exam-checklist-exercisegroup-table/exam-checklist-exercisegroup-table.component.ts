@@ -10,7 +10,7 @@ import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
     styleUrls: ['./exam-checklist-exercisegroup-table.component.scss'],
 })
 export class ExamChecklistExerciseGroupTableComponent implements OnChanges {
-    @Input() quizPoolMaxPoints: number;
+    @Input() quizExamMaxPoints: number;
     @Input() exerciseGroups: ExerciseGroup[];
     exerciseGroupVariantColumns: ExerciseGroupVariantColumn[] = [];
     readonly getIcon = getIcon;

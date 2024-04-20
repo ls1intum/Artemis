@@ -10,47 +10,67 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import com.google.gson.Gson;
+
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.exception.BambooException;
 import de.tum.in.www1.artemis.exception.LocalCIException;
-import de.tum.in.www1.artemis.repository.BuildLogStatisticsEntryRepository;
-import de.tum.in.www1.artemis.repository.FeedbackRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
-import de.tum.in.www1.artemis.service.BuildLogEntryService;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.service.connectors.BuildScriptProviderService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
+import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
+import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
 import de.tum.in.www1.artemis.service.connectors.ci.AbstractContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.ci.CIPermission;
-import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 
 /**
  * Implementation of ContinuousIntegrationService for local CI. Contains methods for communication with the local CI system.
- * Note: Because the ContinuousIntegrationSystem and the AbstractContinuousIntegrationService were designed with Bamboo and Jenkins integration in mind, some methods here are not
+ * Note: Because the ContinuousIntegrationSystem and the AbstractContinuousIntegrationService were designed with Jenkins integration in mind, some methods here are not
  * needed and thus contain an empty implementation.
  */
 @Service
 @Profile("localci")
 public class LocalCIService extends AbstractContinuousIntegrationService {
 
-    private final Logger log = LoggerFactory.getLogger(LocalCIService.class);
+    private static final Logger log = LoggerFactory.getLogger(LocalCIService.class);
 
-    public LocalCIService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository, BuildLogEntryService buildLogService,
-            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService) {
-        super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, testwiseCoverageService);
+    private final BuildScriptProviderService buildScriptProviderService;
+
+    private final AeolusTemplateService aeolusTemplateService;
+
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    public LocalCIService(BuildScriptProviderService buildScriptProviderService, AeolusTemplateService aeolusTemplateService,
+            ProgrammingExerciseRepository programmingExerciseRepository) {
+        this.buildScriptProviderService = buildScriptProviderService;
+        this.aeolusTemplateService = aeolusTemplateService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
     }
 
     @Override
-    public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, VcsRepositoryUrl sourceCodeRepositoryURL, VcsRepositoryUrl testRepositoryURL,
-            VcsRepositoryUrl solutionRepositoryURL) {
+    public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, VcsRepositoryUri repositoryUri, VcsRepositoryUri testRepositoryUri,
+            VcsRepositoryUri solutionRepositoryUri) {
         // Not implemented for local CI. no build plans must be created, because all the information for building
         // a submission and running tests is contained in the participation.
     }
 
+    /**
+     * Fetches the default build plan configuration for the given exercise and the windfile for its metadata (docker image etc.).
+     *
+     * @param exercise for which the build plans should be recreated
+     */
     @Override
     public void recreateBuildPlansForExercise(ProgrammingExercise exercise) {
-        // Not implemented for local CI. no build plans must be (re)created, because all the information for building a submission and running tests is contained in the
-        // participation.
+        if (exercise == null) {
+            return;
+        }
+        String script = buildScriptProviderService.getScriptFor(exercise);
+        Windfile windfile = aeolusTemplateService.getDefaultWindfileFor(exercise);
+        exercise.setBuildScript(script);
+        exercise.setBuildPlanConfiguration(new Gson().toJson(windfile));
+        // recreating the build plans for the exercise means we need to store the updated exercise in the database
+        programmingExerciseRepository.save(exercise);
     }
 
     @Override
@@ -119,18 +139,18 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUrl, String existingRepoUrl,
+    public void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUri, String existingRepoUri,
             String newBranch) throws LocalCIException {
         // Not implemented for local CI. No build plans exist.
         // When a student pushes to a repository, a build is triggered using the information contained in the participation which includes the relevant repository.
     }
 
     /**
-     * Extract the plan key from the Bamboo requestBody.
+     * Extract the plan key from the requestBody.
      *
      * @param requestBody The request Body received from the CI-Server.
      * @return the plan key or null if it can't be found.
-     * @throws BambooException is thrown on casting errors.
+     * @throws LocalCIException is thrown on casting errors.
      */
     @Override
     public String getPlanKey(Object requestBody) throws LocalCIException {
@@ -146,7 +166,7 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
 
     @Override
     public Optional<String> getWebHookUrl(String projectKey, String buildPlanId) {
-        // No webhooks needed between local CI and local VC, so we return an empty Optional.
+        // No webhooks needed within Integrated Code Lifecycle, so we return an empty Optional.
         return Optional.empty();
     }
 
@@ -176,6 +196,7 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
      */
     @Override
     public boolean checkIfBuildPlanExists(String projectKey, String buildPlanId) {
+        // TODO: we should check that the build script in the programming exercises exists, otherwise builds will fail
         // For local CI, no build plans exist. This method is always used in a context where build plans should exist and an error is thrown if they don't.
         // It is safe here to always return true.
         return true;

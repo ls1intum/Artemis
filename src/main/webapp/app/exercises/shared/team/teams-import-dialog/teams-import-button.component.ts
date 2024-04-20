@@ -15,7 +15,7 @@ import { faPlus } from '@fortawesome/free-solid-svg-icons';
             [icon]="faPlus"
             [title]="'artemisApp.team.importTeams.buttonLabel'"
             (onClick)="openTeamsImportDialog($event)"
-        ></jhi-button>
+        />
     `,
 })
 export class TeamsImportButtonComponent {

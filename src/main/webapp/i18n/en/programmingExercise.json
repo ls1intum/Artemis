@@ -68,14 +68,14 @@
                     "infrastructureStepTitle": "Infrastructure"
                 },
                 "detailedSteps": {
-                    "generalInfoStepTitle": "General Information",
+                    "generalInfoStepTitle": "General",
                     "generalInfoStepMessage": "Input essential information that forms the foundation of your programming exercise",
                     "difficultyStepTitle": "Mode",
                     "buildPlansTitle": "Build Plans",
                     "difficultyStepMessage": "Configure the settings related to the execution and collaboration aspects of the programming exercise",
-                    "languageStepTitle": "Programming Language",
+                    "languageStepTitle": "Language",
                     "languageStepMessage": "Set the specific details related to the programming language used in the exercise as well as features directly related to it",
-                    "problemStepTitle": "Problem Statement",
+                    "problemStepTitle": "Problem",
                     "problemStepMessage": "Create a comprehensive problem statement for the new exercise, including detailed tasks that clearly outline the required actions and expectations for students.",
                     "gradingStepTitle": "Grading",
                     "gradingStepMessage": "Specify how this exercise is graded and how its outcome contributes to the overall course score."
@@ -100,32 +100,39 @@
             "noReleaseAndStartDateWarning": "You have not defined a release and start date for this exercise, this means that it will be immediately published and students cam participate in the exercise.",
             "unsavedChangesLanguageChange": "The problem statement still contains unsaved changes. Do you really want to change the programming language?",
             "unsavedChangesProjectTypeChange": "The problem statement still contains unsaved changes. Do you really want to change the project type?",
-            "templateRepositoryUrl": "Template Repository Url",
-            "testRepositoryUrl": "Test Repository Url",
-            "solutionRepositoryUrl": "Solution Repository Url",
+            "templateRepositoryUri": "Template Repository Uri",
+            "testRepositoryUri": "Test Repository Uri",
+            "solutionRepositoryUri": "Solution Repository Uri",
             "auxiliaryRepositories": "Auxiliary Repositories",
             "noCheckoutDirectorySet": "No checkout directory was set.",
             "noCheckoutDirectorySetTooltip": "Since no checkout directory was specified, the repository was not automatically added to a build plan.",
             "templateBuildPlanId": "Template Build Plan Id",
             "solutionBuildPlanId": "Solution Build Plan Id",
             "repositories": "Repositories",
+            "openRepository": "Open Repository",
             "buildplans": "Build Plans",
             "buildplan": "Build Plan",
+            "buildConfiguration": "Build Configuration",
             "buildPlanEditor": "Build Plan Editor",
             "buildPlanFetchError": "Could not find a build plan for this exercise. This is expected for older exercises. Edit the build plan in the CI system or reset the build plan in Artemis to create a new one that is editable here.",
-            "publishBuildPlanUrl": "Publish Build Plan",
+            "customizeBuildPlan": "Customize Build Plan",
             "customizeBuildPlanWithAeolus": "Customize Build Plan with Aeolus",
+            "revertToTemplateBuildPlan": "If you are not happy with your build plan, you can reset it to its template by using the Reset button.",
             "runActionAlways": "Always run, even if other actions fail",
+            "workdir": "Working Directory",
+            "parameters": "Parameters",
+            "dockerImage": "Docker Image",
+            "script": "Script",
             "allowOnlineEditor": {
                 "title": "Allow Online Editor",
                 "alert": "At least one option (Offline IDE or Online Editor) must be selected"
             },
-            "onlineEditor": "Online Editor",
+            "onlineEditor": "Online",
             "allowOfflineIde": {
                 "title": "Allow Offline IDE",
                 "alert": "At least one option (Offline IDE or Online Editor) must be selected"
             },
-            "offlineIde": "Offline IDE",
+            "offlineIde": "IDE",
             "showTestNamesToStudents": "Show Test Names to Students",
             "showTestNamesToStudentsTooltip": "Activate this option to show the names of the automated test cases to the students. Leave the option disabled to make no visual distinction between manual and automated feedback for the students.",
             "participationMode": "Participation Mode",
@@ -166,7 +173,7 @@
             "structureTestOracle": "Update Structure Test Oracle",
             "structureTestOracleWarning": "This action extracts all structural tests from the test repository and saves them in the test.json file. ATTENTION: All uncommitted changes from the online editor will be lost!",
             "combineTemplateCommits": "Combine Template Commits",
-            "checkPlagiarism": "Check Plagiarism",
+            "checkPlagiarism": "Plagiarism",
             "checkPlagiarismSuccess": "Plagiarism check finished. Results are included in the zip file.",
             "combineTemplateCommitsWarning": "This action combines all commits in the template repository into one commit. ATTENTION: All uncommitted changes from the online editor will be lost!",
             "combineTemplateCommitsError": "Template repository commits could not be combined.",
@@ -209,7 +216,9 @@
                 "missingTestCases": "There are {{number}} valid test cases in your test repository that were not found in the markdown of the problem statement:",
                 "issues": "Test case issues.",
                 "ok": "Test cases ok.",
-                "invalidTestCase": "The test case '{{id}}' could not be found in the test repository."
+                "invalidTestCase": "The test case '{{id}}' could not be found in the test repository.",
+                "repeatedTestCase": "The test case '{{id}}' is repeated.",
+                "repeatedTestCases": "There are {{number}} repeated test cases in the problem statement. This might cause unexpected behaviour:"
             },
             "tasksAnalysis": {
                 "issues": "Task issues.",
@@ -316,7 +325,7 @@
                 "notReleasedTooltip": "The programming exercise is not yet released or is released but does not yet have any student results. You may change the grading configuration without having to trigger existing student submissions with the updated settings."
             },
             "export": {
-                "downloadRepo": "Download Repo",
+                "downloadRepo": "Download Repository",
                 "downloadExampleSolution": "Download Example Solution",
                 "downloadTests": "Download tests",
                 "downloadTestsWithExampleSolution": "Download tests with example solution",
@@ -428,7 +437,7 @@
                 "templateBuildPlanTooltip": "The build plan of the template. Runs all tests on the exercise template. Used as a reference in which all tests must fail",
                 "solutionBuildPlanTooltip": "The build plan of the solution. Runs all tests on the exercise solution. Used as a reference in which all tests must succeed"
             },
-            "intellij": {
+            "orion": {
                 "openEditor": "Open Editor"
             },
             "reEvaluate": "Re-evaluate all",
@@ -489,6 +498,7 @@
                 },
                 "submissionPenalty": {
                     "optionLabel": "Submission Penalty",
+                    "detailLabel": "Submission Penalty Points",
                     "penaltyInputFieldTitle": "Exceeding Submission Limit Penalty",
                     "exceedingLimitDescription": "The number of points that is deducted from the result score for each submission exceeding the submission limit. Enter any number of points greater than 0.",
                     "penaltyInputFieldValidationWarning": {
@@ -501,7 +511,7 @@
                 "submissionPolicyType": {
                     "title": "Submission Policy Type",
                     "none": {
-                        "title": "None"
+                        "title": "-"
                     },
                     "lock_repository": {
                         "title": "Lock Repository",
@@ -529,8 +539,11 @@
                 "titleForSubmissions": "Submission-Diff",
                 "template": "Template",
                 "solution": "Solution",
+                "emptyRepository": "Empty Repository",
                 "previousSubmission": "Previous Submission",
+                "previousCommit": "Previous Commit",
                 "currentSubmission": "Current Submission",
+                "currentCommit": "Current Commit",
                 "errorWhileFetchingRepos": "An error occurred while fetching the repositories. Please check your internet connection and reopen the modal.",
                 "404": "Template-Solution-Diff has not been generated yet. Please do a push to the template or solution repository to generate it.",
                 "lineStatLabel": "Lines added/removed between template and solution",
@@ -557,7 +570,8 @@
             "withDependenciesTooltip": "Adds an external Apache commons-lang dependency to the generated project as an example how Maven dependencies should be used with Artemis exercises.",
             "recordTestwiseCoverage": "Record Testwise Coverage",
             "recordTestwiseCoverageTooltip": "Activate this option to record the testwise coverage for the solution repository. This option is only available for Java/Kotlin-exercises with non-sequential test runs.",
-            "customizeBuildPlansWithAeolusTooltip": "Activate this option to customize the build plans with Aeolus. This option is only available during exercise creation.",
+            "customizeBuildPlansWithAeolusTooltip": "Activate this option to customize the build plans with Aeolus.",
+            "customizeBuildPlansTooltip": "Activate this option to customize the build plan for this exercise.",
             "coveredLineRatio": "Ratio Test-Covered Lines",
             "testwiseCoverageReport": {
                 "button": "Show testwise coverage",
@@ -587,7 +601,9 @@
                 "message": "Message",
                 "previousSubmission": "Previous Submission",
                 "currentSubmission": "Current Submission",
-                "template": "Template"
+                "template": "Template",
+                "history": "Commit History",
+                "result": "Result"
             }
         },
         "error": {

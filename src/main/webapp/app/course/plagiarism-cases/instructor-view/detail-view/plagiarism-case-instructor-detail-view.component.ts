@@ -198,7 +198,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
             70,
         );
 
-        this.createdPost = this.metisService.createEmptyPostForContext(undefined, undefined, undefined, this.plagiarismCase);
+        this.createdPost = this.metisService.createEmptyPostForContext(undefined, this.plagiarismCase);
         // Note the limit of 1.000 characters for the post's content
         this.createdPost.title = this.translateService.instant('artemisApp.plagiarism.plagiarismCases.notification.title', {
             exercise: exerciseTitle,

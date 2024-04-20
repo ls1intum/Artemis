@@ -1,12 +1,22 @@
 package de.tum.in.www1.artemis.service.hestia;
 
-import java.util.*;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
@@ -22,17 +32,18 @@ import de.tum.in.www1.artemis.repository.hestia.CoverageReportRepository;
 import de.tum.in.www1.artemis.repository.hestia.TestwiseCoverageReportEntryRepository;
 import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.service.connectors.bamboo.dto.TestwiseCoverageReportDTO;
+import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.TestwiseCoverageReportDTO;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 /**
  * Service for managing testwise coverage data and interacts with both CoverageReport, CoverageFileReport
  * and TestwiseCoverageReportEntry
  */
+@Profile(PROFILE_CORE)
 @Service
 public class TestwiseCoverageService {
 
-    private final Logger log = LoggerFactory.getLogger(TestwiseCoverageService.class);
+    private static final Logger log = LoggerFactory.getLogger(TestwiseCoverageService.class);
 
     private final CoverageReportRepository coverageReportRepository;
 
@@ -211,7 +222,7 @@ public class TestwiseCoverageService {
     private Map<String, Integer> getLineCountByFilePath(ProgrammingSubmission submission) {
         try {
             var solutionParticipation = (SolutionProgrammingExerciseParticipation) submission.getParticipation();
-            var solutionRepo = gitService.getOrCheckoutRepository(solutionParticipation.getVcsRepositoryUrl(), true);
+            var solutionRepo = gitService.getOrCheckoutRepository(solutionParticipation.getVcsRepositoryUri(), true);
             gitService.resetToOriginHead(solutionRepo);
             gitService.pullIgnoreConflicts(solutionRepo);
             var solutionFiles = repositoryService.getFilesWithContent(solutionRepo);
@@ -255,8 +266,8 @@ public class TestwiseCoverageService {
      * the same lines, but referencing a different test case. This mapping is still required, but simple summing may
      * count the same covered lines multiple times.
      *
-     * @param report the report for which the line counts of its file reports should be caluclated and saved
-     * @return the number of covered lines by file path
+     * @param report the report for which the line counts of its file reports should be calculated and saved
+     * @return a map with the number of covered lines (value) by file path (key)
      */
     private Map<String, Integer> calculateAndSaveUniqueLineCountsByFilePath(CoverageReport report) {
         var coveredLinesByFilePath = new HashMap<String, Integer>();
@@ -272,33 +283,32 @@ public class TestwiseCoverageService {
     }
 
     /**
-     * Return the testwise coverage report for the latest solution submission for a programming exercise without the file reports.
+     * Return the test-wise coverage report for the latest solution submission for a programming exercise without the file reports.
      *
-     * @param programmingExercise the exercise for which the latest coverage report should be retrieved
-     * @return an Optional of the testwise coverage report for the latest solution submission without the file reports
+     * @param exerciseId the exercise id for which the latest coverage report should be retrieved
+     * @return an Optional of the test-wise coverage report for the latest solution submission without the file reports
      *         if a report exists for the latest submission, otherwise an empty Optional
      */
-    public Optional<CoverageReport> getCoverageReportForLatestSolutionSubmissionFromProgrammingExercise(ProgrammingExercise programmingExercise) {
-        var reports = coverageReportRepository.getLatestCoverageReportsForLegalSubmissionsForProgrammingExercise(programmingExercise.getId(), Pageable.ofSize(1));
+    public Optional<CoverageReport> getCoverageReportForLatestSolutionSubmissionFromProgrammingExercise(long exerciseId) {
+        var reports = coverageReportRepository.getLatestCoverageReportsForLegalSubmissionsForProgrammingExercise(exerciseId, Pageable.ofSize(1));
         if (reports.isEmpty()) {
             return Optional.empty();
         }
-        return Optional.of(reports.get(0));
+        return Optional.of(reports.getFirst());
     }
 
     /**
-     * Return the full testwise coverage report for the latest solution submission for a programming exercise containing all file reports
+     * Return the full test-wise coverage report for the latest solution submission for a programming exercise containing all file reports
      *
-     * @param programmingExercise the exercise for which the latest coverage report should be retrieved
-     * @return an Optional of the full testwise coverage report for the latest solution submission with all file reports
+     * @param exerciseId the exercise id for which the latest coverage report should be retrieved
+     * @return an Optional of the full test-wise coverage report for the latest solution submission with all file reports
      *         if a report exists for the latest submission, otherwise an empty Optional
      */
-    public Optional<CoverageReport> getFullCoverageReportForLatestSolutionSubmissionFromProgrammingExercise(ProgrammingExercise programmingExercise) {
-        var reports = coverageReportRepository.getLatestCoverageReportsForLegalSubmissionsForProgrammingExerciseWithEagerFileReportsAndEntries(programmingExercise.getId(),
-                Pageable.ofSize(1));
+    public Optional<CoverageReport> getFullCoverageReportForLatestSolutionSubmissionFromProgrammingExercise(long exerciseId) {
+        var reports = coverageReportRepository.getLatestCoverageReportsForLegalSubmissionsForProgrammingExerciseWithEagerFileReportsAndEntries(exerciseId, Pageable.ofSize(1));
         if (reports.isEmpty()) {
             return Optional.empty();
         }
-        return Optional.of(reports.get(0));
+        return Optional.of(reports.getFirst());
     }
 }

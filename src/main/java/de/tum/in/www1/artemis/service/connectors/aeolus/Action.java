@@ -3,9 +3,14 @@ package de.tum.in.www1.artemis.service.connectors.aeolus;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 /**
  * Base class for the actions that can be defined in a {@link Windfile}
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class Action {
 
     private String name;
@@ -19,6 +24,8 @@ public abstract class Action {
     private String workdir;
 
     private boolean runAlways;
+
+    private String platform;
 
     public Map<String, Object> getParameters() {
         return parameters;
@@ -66,5 +73,13 @@ public abstract class Action {
 
     public void setWorkdir(String workdir) {
         this.workdir = workdir;
+    }
+
+    public String getPlatform() {
+        return platform;
+    }
+
+    public void setPlatform(String platform) {
+        this.platform = platform;
     }
 }

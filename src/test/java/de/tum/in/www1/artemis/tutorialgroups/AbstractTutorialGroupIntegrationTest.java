@@ -4,9 +4,16 @@ import static de.tum.in.www1.artemis.tutorialgroups.AbstractTutorialGroupIntegra
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+import java.util.Random;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -100,15 +107,43 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
 
     Integer defaultSessionEndHour = 12;
 
-    LocalDate firstAugustMonday = LocalDate.of(2022, 8, 1);
+    final static LocalDate FIRST_AUGUST_MONDAY = LocalDate.of(2022, 8, 1);
 
-    LocalDate secondAugustMonday = LocalDate.of(2022, 8, 8);
+    final static LocalDate SECOND_AUGUST_MONDAY = LocalDate.of(2022, 8, 8);
 
-    LocalDate thirdAugustMonday = LocalDate.of(2022, 8, 15);
+    final static LocalDate THIRD_AUGUST_MONDAY = LocalDate.of(2022, 8, 15);
 
-    LocalDate fourthAugustMonday = LocalDate.of(2022, 8, 22);
+    final static LocalDate FOURTH_AUGUST_MONDAY = LocalDate.of(2022, 8, 22);
 
-    LocalDate firstSeptemberMonday = LocalDate.of(2022, 9, 5);
+    final static LocalDate FIRST_SEPTEMBER_MONDAY = LocalDate.of(2022, 9, 5);
+
+    final static LocalDateTime FIRST_AUGUST_MONDAY_00_00 = LocalDateTime.of(2022, 8, 1, 0, 0);
+
+    final static LocalDateTime FIRST_AUGUST_MONDAY_08_00 = LocalDateTime.of(2022, 8, 1, 8, 0);
+
+    final static LocalDateTime FIRST_AUGUST_MONDAY_10_00 = LocalDateTime.of(2022, 8, 1, 10, 0);
+
+    final static LocalDateTime FIRST_AUGUST_MONDAY_11_00 = LocalDateTime.of(2022, 8, 1, 11, 0);
+
+    final static LocalDateTime FIRST_AUGUST_MONDAY_12_00 = LocalDateTime.of(2022, 8, 1, 12, 0);
+
+    final static LocalDateTime FIRST_AUGUST_MONDAY_13_00 = LocalDateTime.of(2022, 8, 1, 13, 0);
+
+    final static LocalDateTime FIRST_AUGUST_MONDAY_18_00 = LocalDateTime.of(2022, 8, 1, 18, 0);
+
+    final static LocalDateTime FIRST_AUGUST_MONDAY_23_59 = LocalDateTime.of(2022, 8, 1, 23, 59);
+
+    final static LocalDateTime SECOND_AUGUST_MONDAY_00_00 = LocalDateTime.of(2022, 8, 8, 0, 0);
+
+    final static LocalDateTime SECOND_AUGUST_MONDAY_23_59 = LocalDateTime.of(2022, 8, 8, 23, 59);
+
+    final static LocalDateTime THIRD_AUGUST_MONDAY_00_00 = LocalDateTime.of(2022, 8, 15, 0, 0);
+
+    final static LocalDateTime THIRD_AUGUST_MONDAY_23_59 = LocalDateTime.of(2022, 8, 15, 23, 59);
+
+    final static LocalDateTime FOURTH_AUGUST_MONDAY_00_00 = LocalDateTime.of(2022, 8, 22, 0, 0);
+
+    final static LocalDateTime FIRST_SEPTEMBER_MONDAY_00_00 = LocalDateTime.of(2022, 9, 5, 0, 0);
 
     @BeforeEach
     void setupTestScenario() {
@@ -125,28 +160,41 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
 
     // === Paths ===
     String getTutorialGroupsPath(Long courseId) {
-        return "/api/courses/" + courseId + "/tutorial-groups/";
+        return "/api/courses/" + courseId + "/tutorial-groups";
+    }
+
+    String getTutorialGroupsPath(Long courseId, Long tutorialGroupId) {
+        return this.getTutorialGroupsPath(courseId) + "/" + tutorialGroupId;
     }
 
     String getTutorialGroupsConfigurationPath(Long courseId) {
-        return "/api/courses/" + courseId + "/tutorial-groups-configuration/";
+        return "/api/courses/" + courseId + "/tutorial-groups-configuration";
+    }
+
+    String getTutorialGroupsConfigurationPath(Long courseId, Long configurationId) {
+        return this.getTutorialGroupsConfigurationPath(courseId) + "/" + configurationId;
     }
 
     String getTutorialGroupFreePeriodsPath() {
-        return this.getTutorialGroupsConfigurationPath(exampleCourseId) + exampleConfigurationId + "/tutorial-free-periods/";
+        return this.getTutorialGroupsConfigurationPath(exampleCourseId, exampleConfigurationId) + "/tutorial-free-periods";
     }
 
-    String getSessionsPathOfDefaultTutorialGroup(Long tutorialGroupId) {
-        return this.getTutorialGroupsPath(this.exampleCourseId) + tutorialGroupId + "/sessions/";
+    String getTutorialGroupFreePeriodsPath(Long freePeriodId) {
+        return this.getTutorialGroupFreePeriodsPath() + "/" + freePeriodId;
     }
 
     String getSessionsPathOfTutorialGroup(Long tutorialGroupId) {
-        return this.getTutorialGroupsPath(this.exampleCourseId) + tutorialGroupId + "/sessions/";
+        return this.getTutorialGroupsPath(this.exampleCourseId, tutorialGroupId) + "/sessions";
+    }
+
+    String getSessionsPathOfTutorialGroup(Long tutorialGroupId, Long sessionId) {
+        return this.getSessionsPathOfTutorialGroup(tutorialGroupId) + "/" + sessionId;
     }
 
     // === UTILS ===
-    TutorialGroupSession buildAndSaveExampleIndividualTutorialGroupSession(Long tutorialGroupId, LocalDate localDate) {
-        return tutorialGroupUtilService.createIndividualTutorialGroupSession(tutorialGroupId, getExampleSessionStartOnDate(localDate), getExampleSessionEndOnDate(localDate), null);
+    TutorialGroupSession buildAndSaveExampleIndividualTutorialGroupSession(Long tutorialGroupId, LocalDateTime localDate) {
+        return tutorialGroupUtilService.createIndividualTutorialGroupSession(tutorialGroupId, getExampleSessionStartOnDate(localDate.toLocalDate()),
+                getExampleSessionEndOnDate(localDate.toLocalDate()), null);
     }
 
     TutorialGroupSession buildAndSaveExampleIndividualTutorialGroupSession(Long tutorialGroupId, LocalDate localDate, Integer attendanceCount) {
@@ -157,8 +205,8 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
     TutorialGroupsConfiguration buildExampleConfiguration(Long courseId) {
         TutorialGroupsConfiguration tutorialGroupsConfiguration = new TutorialGroupsConfiguration();
         tutorialGroupsConfiguration.setCourse(courseRepository.findById(courseId).orElseThrow());
-        tutorialGroupsConfiguration.setTutorialPeriodStartInclusive(firstAugustMonday.toString());
-        tutorialGroupsConfiguration.setTutorialPeriodEndInclusive(firstSeptemberMonday.toString());
+        tutorialGroupsConfiguration.setTutorialPeriodStartInclusive(FIRST_AUGUST_MONDAY_00_00.toLocalDate().toString());
+        tutorialGroupsConfiguration.setTutorialPeriodEndInclusive(FIRST_SEPTEMBER_MONDAY_00_00.toLocalDate().toString());
         tutorialGroupsConfiguration.setUseTutorialGroupChannels(true);
         tutorialGroupsConfiguration.setUsePublicTutorialGroupChannels(true);
         return tutorialGroupsConfiguration;
@@ -207,7 +255,7 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
     }
 
     TutorialGroup setUpTutorialGroupWithSchedule(Long courseId, String tutorLogin) throws Exception {
-        var newTutorialGroup = this.buildTutorialGroupWithExampleSchedule(firstAugustMonday, secondAugustMonday, tutorLogin);
+        var newTutorialGroup = this.buildTutorialGroupWithExampleSchedule(FIRST_AUGUST_MONDAY_00_00.toLocalDate(), SECOND_AUGUST_MONDAY_00_00.toLocalDate(), tutorLogin);
         var scheduleToCreate = newTutorialGroup.getTutorialGroupSchedule();
         var persistedTutorialGroupId = request.postWithResponseBody(getTutorialGroupsPath(courseId), newTutorialGroup, TutorialGroup.class, HttpStatus.CREATED).getId();
 
@@ -240,14 +288,14 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
 
     // === ASSERTIONS ===
 
-    void assertIndividualSessionIsActiveOnDate(TutorialGroupSession sessionToCheck, LocalDate date, Long tutorialGroupId) {
-        this.assertTutorialGroupSessionProperties(sessionToCheck, Optional.empty(), tutorialGroupId, getExampleSessionStartOnDate(date), getExampleSessionEndOnDate(date),
-                "LoremIpsum", TutorialGroupSessionStatus.ACTIVE, null);
+    void assertIndividualSessionIsActiveOnDate(TutorialGroupSession sessionToCheck, LocalDateTime date, Long tutorialGroupId) {
+        this.assertTutorialGroupSessionProperties(sessionToCheck, Optional.empty(), tutorialGroupId, getExampleSessionStartOnDate(date.toLocalDate()),
+                getExampleSessionEndOnDate(date.toLocalDate()), "LoremIpsum", TutorialGroupSessionStatus.ACTIVE, null);
     }
 
-    void assertIndividualSessionIsCancelledOnDate(TutorialGroupSession sessionToCheck, LocalDate date, Long tutorialGroupId, String statusExplanation) {
-        this.assertTutorialGroupSessionProperties(sessionToCheck, Optional.empty(), tutorialGroupId, getExampleSessionStartOnDate(date), getExampleSessionEndOnDate(date),
-                "LoremIpsum", TutorialGroupSessionStatus.CANCELLED, statusExplanation);
+    void assertIndividualSessionIsCancelledOnDate(TutorialGroupSession sessionToCheck, LocalDateTime date, Long tutorialGroupId, String statusExplanation) {
+        this.assertTutorialGroupSessionProperties(sessionToCheck, Optional.empty(), tutorialGroupId, getExampleSessionStartOnDate(date.toLocalDate()),
+                getExampleSessionEndOnDate(date.toLocalDate()), "LoremIpsum", TutorialGroupSessionStatus.CANCELLED, statusExplanation);
     }
 
     void assertScheduledSessionIsActiveOnDate(TutorialGroupSession sessionToCheck, LocalDate date, Long tutorialGroupId, TutorialGroupSchedule schedule) {
@@ -305,7 +353,7 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
         assertThat(channel.getCreator()).isNull();
         assertThat(channel.getIsAnnouncementChannel()).isFalse();
 
-        var members = conversationParticipantRepository.findConversationParticipantByConversationId(channel.getId());
+        var members = conversationParticipantRepository.findConversationParticipantsByConversationId(channel.getId());
         var moderators = members.stream().filter(ConversationParticipant::getIsModerator).collect(Collectors.toSet());
         var nonModerators = members.stream().filter(participant -> !participant.getIsModerator()).collect(Collectors.toSet());
 

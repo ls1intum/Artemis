@@ -3,7 +3,13 @@ package de.tum.in.www1.artemis.domain.quiz;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -32,11 +38,11 @@ public class ShortAnswerSolution extends TempIdObject implements QuizQuestionCom
     @JsonView(QuizView.Before.class)
     private Boolean invalid = false;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JsonIgnore
     private ShortAnswerQuestion question;
 
-    // added additionally, could possibly be created within artemis.jh?
+    // NOTE: without cascade and orphanRemoval, deletion of quizzes might not work properly, so we reference mappings here, even if we do not use them
     @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "solution")
     @JsonIgnore
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -69,22 +75,6 @@ public class ShortAnswerSolution extends TempIdObject implements QuizQuestionCom
 
     public void setQuestion(ShortAnswerQuestion shortAnswerQuestion) {
         this.question = shortAnswerQuestion;
-    }
-
-    public Set<ShortAnswerMapping> getMappings() {
-        return mappings;
-    }
-
-    public ShortAnswerSolution addMappings(ShortAnswerMapping mapping) {
-        this.mappings.add(mapping);
-        mapping.setSolution(this);
-        return this;
-    }
-
-    public ShortAnswerSolution removeMappings(ShortAnswerMapping mapping) {
-        this.mappings.remove(mapping);
-        mapping.setSolution(null);
-        return this;
     }
 
     @Override

@@ -18,7 +18,9 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.eclipse.jgit.lib.Repository;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -28,11 +30,19 @@ import org.springframework.core.io.Resource;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.web.client.RestTemplate;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.connector.apollon.ApollonRequestMockProvider;
 import de.tum.in.www1.artemis.course.CourseUtilService;
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.DataExport;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.DataExportState;
+import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
@@ -44,16 +54,19 @@ import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUt
 import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.post.ConversationUtilService;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.DataExportRepository;
+import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.service.connectors.apollon.ApollonConversionService;
 import de.tum.in.www1.artemis.service.export.DataExportCreationService;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.FileUtils;
+import de.tum.in.www1.artemis.util.TestResourceUtils;
 import de.tum.in.www1.artemis.util.ZipFileTestUtilService;
 
-class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     private static final String TEST_PREFIX = "dataexportcreation";
 
@@ -196,7 +209,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
 
     private Course prepareCourseDataForDataExportCreation(boolean assessmentDueDateInTheFuture, String courseShortName) throws Exception {
         var userLogin = TEST_PREFIX + "student1";
-        String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
+        String validModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         if (!Files.exists(repoDownloadClonePath)) {
             Files.createDirectories(repoDownloadClonePath);
         }
@@ -250,7 +263,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
         createPlagiarismData(userLogin, programmingExercise, modelingExercises);
         // Mock student repo
         Repository studentRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(programmingExerciseTestService.studentRepo.localRepoFile.toPath(), null);
-        doReturn(studentRepository).when(gitService).getOrCheckoutRepository(eq(participation.getVcsRepositoryUrl()), anyString(), anyBoolean());
+        doReturn(studentRepository).when(gitService).getOrCheckoutRepository(eq(participation.getVcsRepositoryUri()), anyString(), anyBoolean());
         return course1;
     }
 
@@ -267,7 +280,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
     }
 
     private Exam prepareExamDataForDataExportCreation(String courseShortName) throws Exception {
-        String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
+        String validModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         if (!Files.exists(repoDownloadClonePath)) {
             Files.createDirectories(repoDownloadClonePath);
         }
@@ -279,7 +292,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
         exam = examRepository.findWithExerciseGroupsExercisesParticipationsAndSubmissionsById(exam.getId()).orElseThrow();
         var studentExam = examUtilService.addStudentExamWithUser(exam, userForExport);
         examUtilService.addExercisesWithParticipationsAndSubmissionsToStudentExam(exam, studentExam, validModel, programmingExerciseTestService.studentRepo.localRepoFile.toURI());
-        Set<StudentExam> studentExams = studentExamRepository.findAllWithExercisesParticipationsSubmissionsResultsAndFeedbacksByUserId(userForExport.getId());
+        Set<StudentExam> studentExams = studentExamRepository.findAllWithExercisesSubmissionPolicyParticipationsSubmissionsResultsAndFeedbacksByUserId(userForExport.getId());
         var submission = studentExams.iterator().next().getExercises().get(0).getStudentParticipations().iterator().next().getSubmissions().iterator().next();
         participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null, 3.0, true, ZonedDateTime.now().minusMinutes(2));
         var feedback = new Feedback();
@@ -584,7 +597,6 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
         dataExport.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         dataExport.setDataExportState(DataExportState.REQUESTED);
         dataExport.setFilePath("path");
-        dataExport = dataExportRepository.save(dataExport);
-        return dataExport;
+        return dataExportRepository.save(dataExport);
     }
 }

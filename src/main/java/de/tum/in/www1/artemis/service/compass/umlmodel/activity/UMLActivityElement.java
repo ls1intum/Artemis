@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.service.compass.umlmodel.activity;
 import java.io.Serializable;
 import java.util.Objects;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
@@ -56,6 +56,11 @@ public abstract class UMLActivityElement extends UMLElement implements Serializa
      */
     public void setParentActivity(@Nullable UMLActivity parentActivity) {
         this.parentActivity = parentActivity;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), name);
     }
 
     @Override

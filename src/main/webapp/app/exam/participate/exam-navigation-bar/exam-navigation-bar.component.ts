@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
@@ -23,7 +23,7 @@ import { FileUploadSubmission } from 'app/entities/file-upload-submission.model'
     templateUrl: './exam-navigation-bar.component.html',
     styleUrls: ['./exam-navigation-bar.component.scss'],
 })
-export class ExamNavigationBarComponent implements OnInit {
+export class ExamNavigationBarComponent implements OnInit, AfterViewInit {
     @Input() exercises: Exercise[] = [];
     @Input() exerciseIndex = 0;
     @Input() endDate: dayjs.Dayjs;
@@ -104,6 +104,14 @@ export class ExamNavigationBarComponent implements OnInit {
                         }
                     });
             });
+    }
+
+    ngAfterViewInit() {
+        // Use setTimeout to ensure the DOM is fully loaded before calculating headerHeight
+        setTimeout(() => {
+            const headerHeight = (document.querySelector('jhi-navbar') as HTMLElement)?.offsetHeight;
+            document.documentElement.style.setProperty('--header-height', `${headerHeight}px`);
+        });
     }
 
     getExerciseButtonTooltip(exercise: Exercise): ButtonTooltipType {
@@ -199,7 +207,7 @@ export class ExamNavigationBarComponent implements OnInit {
         }
 
         // start with a yellow status (edit icon)
-        // TODO: it's a bit weired, that it works that multiple icons (one per exercise) are hold in the same instance variable of the component
+        // TODO: it's a bit weird, that it works that multiple icons (one per exercise) are hold in the same instance variable of the component
         //  we should definitely refactor this and e.g. use the same ExamExerciseOverviewItem as in exam-exercise-overview-page.component.ts !
         this.icon = faEdit;
         const exercise = this.exercises[exerciseIndex];

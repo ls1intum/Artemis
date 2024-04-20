@@ -61,13 +61,13 @@ describe('CompetencySelection', () => {
 
         fixture.detectChanges();
 
-        const select = fixture.debugElement.query(By.css('select'));
+        const selector = fixture.debugElement.nativeElement.querySelector('#competency-selector');
         expect(component.value).toBeUndefined();
         expect(getCourseSpy).toHaveBeenCalledOnce();
         expect(getAllForCourseSpy).not.toHaveBeenCalled();
         expect(component.isLoading).toBeFalse();
         expect(component.competencies).toBeArrayOfSize(2);
-        expect(select).not.toBeNull();
+        expect(selector).not.toBeNull();
     });
 
     it('should get competencies from service', () => {
@@ -82,8 +82,8 @@ describe('CompetencySelection', () => {
         expect(getAllForCourseSpy).toHaveBeenCalledOnce();
         expect(component.isLoading).toBeFalse();
         expect(component.competencies).toBeArrayOfSize(2);
-        expect(component.competencies.first()?.course).toBeUndefined();
-        expect(component.competencies.first()?.userProgress).toBeUndefined();
+        expect(component.competencies?.first()?.course).toBeUndefined();
+        expect(component.competencies?.first()?.userProgress).toBeUndefined();
     });
 
     it('should set disabled when error during loading', () => {
@@ -100,11 +100,13 @@ describe('CompetencySelection', () => {
 
     it('should be hidden when no competencies', () => {
         const getCourseSpy = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [] });
+        const getAllForCourseSpy = jest.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [] })));
 
         fixture.detectChanges();
 
         const select = fixture.debugElement.query(By.css('select'));
         expect(getCourseSpy).toHaveBeenCalledOnce();
+        expect(getAllForCourseSpy).toHaveBeenCalledOnce();
         expect(component.isLoading).toBeFalse();
         expect(component.competencies).toBeEmpty();
         expect(select).toBeNull();
@@ -117,7 +119,7 @@ describe('CompetencySelection', () => {
 
         component.writeValue([{ id: 1, title: 'other' } as Competency]);
         expect(component.value).toBeArrayOfSize(1);
-        expect(component.value.first()?.title).toBe('test');
+        expect(component.value?.first()?.title).toBe('test');
     });
 
     it('should trigger change detection after loading competencies', () => {
@@ -128,5 +130,46 @@ describe('CompetencySelection', () => {
         fixture.detectChanges();
 
         expect(detectChangesStub).toHaveBeenCalledOnce();
+    });
+
+    it('should select / unselect competencies', () => {
+        const competency1 = { id: 1, optional: false } as Competency;
+        const competency2 = { id: 2, optional: true } as Competency;
+        const competency3 = { id: 3, optional: false } as Competency;
+        jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [competency1, competency2, competency3] });
+
+        fixture.detectChanges();
+        expect(component.value).toBeUndefined();
+
+        component.toggleCompetency(competency1);
+        component.toggleCompetency(competency2);
+        component.toggleCompetency(competency3);
+
+        expect(component.value).toHaveLength(3);
+        expect(component.value).toContain(competency3);
+
+        component.toggleCompetency(competency2);
+
+        expect(component.value).toHaveLength(2);
+        expect(component.value).not.toContain(competency2);
+
+        component.toggleCompetency(competency1);
+        component.toggleCompetency(competency3);
+
+        expect(component.value).toBeUndefined();
+    });
+
+    it('should register onchange', () => {
+        component.checkboxStates = {};
+        const registerSpy = jest.fn();
+        component.registerOnChange(registerSpy);
+        component.toggleCompetency({ id: 1 });
+        expect(registerSpy).toHaveBeenCalled();
+    });
+
+    it('should set disabled state', () => {
+        component.disabled = true;
+        component.setDisabledState?.(false);
+        expect(component.disabled).toBeFalse();
     });
 });

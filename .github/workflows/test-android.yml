@@ -1,0 +1,122 @@
+name: Android E2E Tests
+
+on:
+  pull_request:
+    paths-ignore:
+      - 'README.md'
+      - 'CODE_OF_CONDUCT.md'
+      - 'CONTRIBUTING.md'
+      - 'LICENSE'
+      - 'SECURITY.md'
+      - 'docs/**'
+      - '.github/**'
+      - '!.github/workflows/test-android.yml'
+  push:
+    branches:
+      - develop
+      - main
+      - release/*
+    tags: '[0-9]+.[0-9]+.[0-9]+'
+    paths-ignore:
+      - 'README.md'
+      - 'CODE_OF_CONDUCT.md'
+      - 'CONTRIBUTING.md'
+      - 'LICENSE'
+      - 'SECURITY.md'
+      - 'docs/**'
+      - '.github/**'
+      - '!.github/workflows/test-android.yml'
+  release:
+    types:
+      - created
+
+jobs:
+  e2e-tests:
+    name: Android E2E Tests
+    runs-on: [self-hosted, ase-large-android-sdk-34]
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout Main Artemis Repo (this repo)
+        uses: actions/checkout@v4
+        with:
+          path: main-repo
+
+      - name: Checkout Artemis Android Repo
+        uses: actions/checkout@v4
+        with:
+          repository: ls1intum/artemis-android
+          path: android-repo
+
+      - name: Gradle Wrapper Verification
+        uses: gradle/actions/wrapper-validation@v3
+
+        # sanity cleanup
+      - name: Stop mysql server
+        run: docker stop artemis-mysql || exit 0
+        continue-on-error: true
+
+      - name: Remove mysql server
+        run: docker rm artemis-mysql  || exit 0
+        continue-on-error: true
+
+      - name: Remove mysql volume
+        run: docker volume rm artemis-mysql-data || exit 0
+
+      - name: Launch mysql docker container
+        run: docker compose -f main-repo/docker/mysql.yml up -d mysql
+
+        # Run artemis server in a detached mode, and store the pid in variable steps.run-artemis.outputs.pid
+      - name: Run Artemis Server
+        id: run-artemis
+        run: ./main-repo/gradlew bootRun --args='--spring.profiles.active=dev,artemis,scheduling --artemis.user-management.use-external=false --artemis.user-management.internal-admin.username=artemis_admin --artemis.user-management.internal-admin.password=artemis_admin --artemis.user-management.registration.enabled=true --artemis.user-management.registration.allowed-email-pattern=.*' & echo "pid=$!" >> "$GITHUB_OUTPUT"
+
+        # For debug purposes or if anything goes wrong, and we have to manually kill the process on the VM
+      - name: Print Pid
+        run: echo ${{ steps.run-artemis.outputs.pid }}
+
+        # Use check to wait for the artemis server to come online. Periodically ping the server for sign of life.
+      - name: Wait for Artemis Server to be healthy
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 10
+          retry_wait_seconds: 10
+          max_attempts: 60
+          warning_on_retry: false
+          command: wget -nv -t1 --spider http://localhost:8080/actuator/health || exit 1
+
+        # The android tests depend on certain user accounts to be available. Create them here.
+      - name: Create test users
+        run: ./main-repo/supporting_scripts/create_test_users.sh localhost:8080
+
+        # Necessary to build the android app
+      - name: Set local.properties
+        run: echo "sdk.dir=/usr/lib/android-sdk" > android-repo/local.properties
+
+        # Run the tests. We use 4 workers -> 4 parallel tasks. --rerun-tasks forces to rerun the tests even if gradle thinks they are still up-to-date.
+      - name: run tests
+        working-directory: ./android-repo
+        run: ./gradlew test --max-workers=4 -Dskip.unit-tests=true -Dskip.e2e=false -Dskip.debugVariants=true -Dskip.flavor.unrestricted=true -Dskip.flavor.beta=true --rerun-tasks
+        continue-on-error: true
+
+      - name: Test Report
+        uses: dorny/test-reporter@v1
+        if: success() || failure()    # run this step even if previous step failed
+        with:
+          name: Android E2E Test Results
+          path: android-repo/test-outputs/**/*.xml
+          reporter: java-junit
+
+      - name: Cleanup -> Stop artemis server
+        if: always()
+        run: pkill --parent ${{ steps.run-artemis.outputs.pid }}
+
+      - name: Cleanup -> Stop all running docker containers
+        if: always()
+        run: docker stop artemis-mysql || exit 0
+        continue-on-error: true
+
+      - name: Cleanup -> Remove all docker containers
+        if: always()
+        run: docker rm artemis-mysql || exit 0
+        continue-on-error: true

@@ -88,6 +88,7 @@ export class Course implements BaseEntity {
     public maxRequestMoreFeedbackTimeDays?: number;
     public maxPoints?: number;
     public accuracyOfScores?: number;
+    public restrictedAthenaModulesAccess?: boolean;
     public tutorialGroupsConfiguration?: TutorialGroupsConfiguration;
     // Note: Currently just used in the scope of the tutorial groups feature
     public timeZone?: string;
@@ -97,6 +98,13 @@ export class Course implements BaseEntity {
     public numberOfTeachingAssistants?: number;
     public numberOfEditors?: number;
     public numberOfInstructors?: number;
+
+    // helper attributes to determine if certain tabs in the client are shown
+    public numberOfLectures?: number;
+    public numberOfExams?: number;
+    public numberOfTutorialGroups?: number;
+    public numberOfCompetencies?: number;
+    public numberOfPrerequisites?: number;
 
     public exercises?: Exercise[];
     public lectures?: Lecture[];
@@ -138,13 +146,14 @@ export class Course implements BaseEntity {
         this.requestMoreFeedbackEnabled = true; // default value
         this.maxRequestMoreFeedbackTimeDays = 7; // default value
         this.accuracyOfScores = 1; // default value
+        this.restrictedAthenaModulesAccess = false; // default value
         this.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING; // default value
     }
 
     /**
      * Correctly initializes a class instance from a typecasted object.
      * Returns a 'real' class instance that supports all class methods.
-     * @param object: The typecasted object
+     * @param object The typecasted object
      * @returns The class instance
      */
     static from(object: Course): Course {
@@ -157,6 +166,15 @@ export class Course implements BaseEntity {
         }
         return course;
     }
+}
+
+export class CourseForImportDTO {
+    id?: number;
+    title?: string;
+    shortName?: string;
+    semester?: string;
+
+    constructor() {}
 }
 
 export const enum CourseGroup {

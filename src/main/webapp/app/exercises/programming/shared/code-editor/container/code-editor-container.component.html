@@ -1,26 +1,27 @@
 <jhi-code-editor-grid #grid [isTutorAssessment]="isTutorAssessment" (onResize)="onGridResize($event)">
     <div editorNavbar class="d-flex flex-wrap align-items-center gap-2">
         <span>
-            <h4 class="editor-title"><ng-content select="[editorTitle]"></ng-content></h4>
-            <p class="editor-title"><ng-content select="[submissionPolicy]"></ng-content></p>
+            <h4 class="editor-title"><ng-content select="[editorTitle]" /></h4>
+            <p class="editor-title"><ng-content select="[submissionPolicy]" /></p>
         </span>
-        <ng-content select="[editorTitleActions]"></ng-content>
+        <ng-content select="[editorTitleActions]" />
         <div class="d-flex flex-wrap align-items-center ms-auto gap-2">
-            <ng-content select="[editorToolbar]"></ng-content>
-            <ng-content select="[chatbot-button]"></ng-content>
-            <jhi-code-editor-actions
-                *ngIf="!isTutorAssessment || commitState === CommitState.CONFLICT"
-                [buildable]="buildable"
-                [disableActions]="!editable && (!isTutorAssessment || commitState !== CommitState.CONFLICT)"
-                [unsavedFiles]="unsavedFiles"
-                [(editorState)]="editorState"
-                [(commitState)]="commitState"
-                [disableAutoSave]="disableAutoSave"
-                (onSavedFiles)="onSavedFiles($event)"
-                (onRefreshFiles)="onRefreshFiles()"
-                (commitStateChange)="onCommitStateChange.emit($event)"
-                (onError)="onError($event)"
-            ></jhi-code-editor-actions>
+            <ng-content select="[editorToolbar]" />
+            <ng-content select="[chatbot-button]" />
+            @if (!isTutorAssessment || commitState === CommitState.CONFLICT) {
+                <jhi-code-editor-actions
+                    [buildable]="buildable"
+                    [disableActions]="!editable && (!isTutorAssessment || commitState !== CommitState.CONFLICT)"
+                    [unsavedFiles]="unsavedFiles"
+                    [(editorState)]="editorState"
+                    [(commitState)]="commitState"
+                    [disableAutoSave]="disableAutoSave"
+                    (onSavedFiles)="onSavedFiles($event)"
+                    (onRefreshFiles)="onRefreshFiles()"
+                    (commitStateChange)="onCommitStateChange.emit($event)"
+                    (onError)="onError($event)"
+                />
+            }
         </div>
     </div>
     <jhi-code-editor-file-browser
@@ -37,47 +38,72 @@
         (onFileChange)="onFileChange($event)"
         (onError)="onError($event)"
         (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.FileBrowser)"
-    ></jhi-code-editor-file-browser>
-    <jhi-code-editor-ace
-        editorCenter
-        [selectedFile]="selectedFile!"
-        [sessionId]="participation?.id ?? 'test'"
-        [annotations]="annotations"
-        [commitState]="commitState"
-        [editorState]="editorState"
-        [feedbacks]="participation?.results?.[0]?.feedbacks ?? []"
-        [feedbackSuggestions]="feedbackSuggestions"
-        [readOnlyManualFeedback]="readOnlyManualFeedback"
-        [isTutorAssessment]="isTutorAssessment"
-        [highlightDifferences]="highlightDifferences"
-        [course]="course"
-        [disableActions]="!editable"
-        (onFileContentChange)="onFileContentChange($event)"
-        (onUpdateFeedback)="onUpdateFeedback.emit($event)"
-        (onAcceptSuggestion)="onAcceptSuggestion.emit($event)"
-        (onDiscardSuggestion)="onDiscardSuggestion.emit($event)"
-        (onError)="onError($event)"
-        (onFileLoad)="fileLoad($event)"
-    >
-    </jhi-code-editor-ace>
-    <jhi-code-editor-instructions
-        *ngIf="showEditorInstructions"
-        editorSidebarRight
-        (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.Instructions)"
-        (onError)="onError($event)"
-        [isAssessmentMode]="isTutorAssessment"
-    >
-        <ng-content select="[editorSidebar]"></ng-content>
-    </jhi-code-editor-instructions>
-    <jhi-code-editor-build-output
-        editorBottomArea
-        *ngIf="buildable"
-        [participation]="participation"
-        (onAnnotations)="onAnnotations($event)"
-        (onError)="onError($event)"
-        (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.BuildOutput)"
-    ></jhi-code-editor-build-output>
-    <div *ngIf="isTutorAssessment" editorBottom>
-        <ng-content select="[editorBottom]"></ng-content>
-    </div>
+    />
+    <ng-container editorCenter>
+        @if (!useMonacoEditor) {
+            <jhi-code-editor-ace
+                [selectedFile]="selectedFile!"
+                [sessionId]="participation?.id ?? 'test'"
+                [annotations]="annotations"
+                [commitState]="commitState"
+                [editorState]="editorState"
+                [feedbacks]="participation?.results?.[0]?.feedbacks ?? []"
+                [feedbackSuggestions]="feedbackSuggestions"
+                [readOnlyManualFeedback]="readOnlyManualFeedback"
+                [isTutorAssessment]="isTutorAssessment"
+                [highlightDifferences]="highlightDifferences"
+                [course]="course"
+                [disableActions]="!editable"
+                (onFileContentChange)="onFileContentChange($event)"
+                (onUpdateFeedback)="onUpdateFeedback.emit($event)"
+                (onAcceptSuggestion)="onAcceptSuggestion.emit($event)"
+                (onDiscardSuggestion)="onDiscardSuggestion.emit($event)"
+                (onError)="onError($event)"
+                (onFileLoad)="fileLoad($event)"
+            />
+        } @else {
+            <jhi-code-editor-monaco
+                #codeEditorMonaco
+                [commitState]="commitState"
+                [editorState]="editorState"
+                [course]="course"
+                [feedbacks]="participation?.results?.[0]?.feedbacks ?? []"
+                [disableActions]="!editable"
+                [isTutorAssessment]="isTutorAssessment"
+                [selectedFile]="selectedFile"
+                [buildAnnotations]="annotations"
+                [sessionId]="participation?.id ?? 'test'"
+                (onFileContentChange)="onFileContentChange($event)"
+                (onError)="onError($event)"
+            />
+        }
+    </ng-container>
+    <ng-container editorSidebarRight>
+        @if (showEditorInstructions) {
+            <jhi-code-editor-instructions
+                (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.Instructions)"
+                (onError)="onError($event)"
+                [isAssessmentMode]="isTutorAssessment"
+            >
+                <ng-content select="[editorSidebar]" />
+            </jhi-code-editor-instructions>
+        }
+    </ng-container>
+    <ng-container editorBottomArea>
+        @if (buildable) {
+            <jhi-code-editor-build-output
+                [participation]="participation"
+                (onAnnotations)="onAnnotations($event)"
+                (onError)="onError($event)"
+                (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.BuildOutput)"
+            />
+        }
+    </ng-container>
+    <ng-container editorBottom>
+        @if (isTutorAssessment) {
+            <div>
+                <ng-content select="[editorBottom]" />
+            </div>
+        }
+    </ng-container>
 </jhi-code-editor-grid>

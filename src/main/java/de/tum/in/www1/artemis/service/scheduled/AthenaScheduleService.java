@@ -4,8 +4,8 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 
-import javax.annotation.PostConstruct;
-import javax.validation.constraints.NotNull;
+import jakarta.annotation.PostConstruct;
+import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.service.connectors.athena.AthenaSubmissionSendingS
 @Profile("athena & scheduling")
 public class AthenaScheduleService {
 
-    private final Logger log = LoggerFactory.getLogger(AthenaScheduleService.class);
+    private static final Logger log = LoggerFactory.getLogger(AthenaScheduleService.class);
 
     private final ExerciseLifecycleService exerciseLifecycleService;
 
@@ -49,7 +49,7 @@ public class AthenaScheduleService {
      */
     @PostConstruct
     public void scheduleRunningExercisesOnStartup() {
-        if (profileService.isDev()) {
+        if (profileService.isDevActive()) {
             // only execute this on production server, i.e. when the prod profile is active
             // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
             return;
@@ -65,7 +65,7 @@ public class AthenaScheduleService {
      * @param exercise exercise to schedule Athena for
      */
     public void scheduleExerciseForAthenaIfRequired(Exercise exercise) {
-        if (!exercise.getFeedbackSuggestionsEnabled()) {
+        if (!exercise.areFeedbackSuggestionsEnabled()) {
             cancelScheduledAthena(exercise.getId());
             return;
         }

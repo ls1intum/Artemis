@@ -23,7 +23,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.domain.DataExport;
 import de.tum.in.www1.artemis.domain.enumeration.DataExportState;
 import de.tum.in.www1.artemis.repository.DataExportRepository;
@@ -33,7 +33,7 @@ import de.tum.in.www1.artemis.web.rest.dto.DataExportDTO;
 import de.tum.in.www1.artemis.web.rest.dto.RequestDataExportDTO;
 
 @ExtendWith(MockitoExtension.class)
-class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class DataExportResourceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "dataexport";
 
@@ -258,7 +258,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         dataExport.setDataExportState(DataExportState.DOWNLOADED);
         dataExport.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         // created date is automatically set on save
-        dataExport = dataExportRepository.save(dataExport);
+        dataExportRepository.save(dataExport);
         boolean canRequest = request.get("/api/data-exports/can-request", HttpStatus.OK, Boolean.class);
         assertThat(canRequest).isFalse();
     }

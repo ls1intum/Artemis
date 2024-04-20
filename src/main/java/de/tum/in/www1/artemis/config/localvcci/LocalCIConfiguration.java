@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.config.localvcci;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
+
 import java.util.List;
 import java.util.concurrent.*;
 
@@ -29,38 +31,24 @@ import de.tum.in.www1.artemis.exception.LocalCIException;
  * This includes a Docker client and an executor service that manages the queue of build jobs.
  */
 @Configuration
-@Profile("localci")
+@Profile({ "localci", PROFILE_BUILDAGENT })
 public class LocalCIConfiguration {
 
     private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
 
-    private final Logger log = LoggerFactory.getLogger(LocalCIConfiguration.class);
-
-    @Value("${artemis.continuous-integration.queue-size-limit:30}")
-    int queueSizeLimit;
+    private static final Logger log = LoggerFactory.getLogger(LocalCIConfiguration.class);
 
     @Value("${artemis.continuous-integration.docker-connection-uri}")
     String dockerConnectionUri;
 
-    @Value("${artemis.continuous-integration.thread-pool-size:1}")
-    int fixedThreadPoolSize;
+    @Value("${artemis.continuous-integration.concurrent-build-size:1}")
+    int concurrentBuildSize;
 
-    @Value("${artemis.continuous-integration.specify-thread-pool-size:false}")
-    boolean specifyThreadPoolSize;
+    @Value("${artemis.continuous-integration.specify-concurrent-builds:false}")
+    boolean specifyConcurrentBuilds;
 
     public LocalCIConfiguration(ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
-    }
-
-    /**
-     * Defines the thread pool size for the local CI ExecutorService based on system resources.
-     *
-     * @return The thread pool size bean.
-     */
-    @Bean
-    public int calculatedThreadPoolSize() {
-        int availableProcessors = Runtime.getRuntime().availableProcessors();
-        return Math.max(1, (availableProcessors - 2) / 2);
     }
 
     /**
@@ -101,22 +89,19 @@ public class LocalCIConfiguration {
     /**
      * Creates an executor service that manages the queue of build jobs.
      *
-     * @param calculatedThreadPoolSize The calculatedThreadPoolSize bean.
      * @return The executor service bean.
      */
     @Bean
-    public ExecutorService localCIBuildExecutorService(int calculatedThreadPoolSize) {
-
+    public ExecutorService localCIBuildExecutorService() {
         int threadPoolSize;
 
-        if (specifyThreadPoolSize) {
-            threadPoolSize = fixedThreadPoolSize;
+        if (specifyConcurrentBuilds) {
+            threadPoolSize = concurrentBuildSize;
         }
         else {
-            threadPoolSize = calculatedThreadPoolSize;
+            int availableProcessors = Runtime.getRuntime().availableProcessors();
+            threadPoolSize = Math.max(1, (availableProcessors - 2) / 2);
         }
-
-        log.info("Using ExecutorService with thread pool size {} and a queue size limit of {}.", threadPoolSize, queueSizeLimit);
 
         ThreadFactory customThreadFactory = new ThreadFactoryBuilder().setNameFormat("local-ci-build-%d")
                 .setUncaughtExceptionHandler((thread, exception) -> log.error("Uncaught exception in thread {}", thread.getName(), exception)).build();
@@ -125,26 +110,8 @@ public class LocalCIConfiguration {
             throw new RejectedExecutionException("Task " + runnable.toString() + " rejected from " + executor.toString());
         };
 
-        return new ThreadPoolExecutor(threadPoolSize, threadPoolSize, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(queueSizeLimit), customThreadFactory,
-                customRejectedExecutionHandler);
-    }
-
-    /**
-     * Creates a scheduled executor service that logs the current state of the local CI ExecutorService queue.
-     *
-     * @param localCIBuildExecutorService The local CI ExecutorService bean.
-     * @return The scheduled executor service bean.
-     */
-    @Bean
-    public ScheduledExecutorService buildQueueLogger(ExecutorService localCIBuildExecutorService) {
-        ScheduledExecutorService buildQueueLogger = Executors.newSingleThreadScheduledExecutor();
-        buildQueueLogger.scheduleAtFixedRate(() -> {
-            ThreadPoolExecutor threadPoolExecutor = (ThreadPoolExecutor) localCIBuildExecutorService;
-            // Report on the current state of the local CI ExecutorService queue every 30 seconds.
-            log.info("Current queue size of local CI ExecutorService: {}", threadPoolExecutor.getQueue().size());
-            log.info("Number of jobs currently building on this node: {}", threadPoolExecutor.getActiveCount());
-        }, 0, 30, TimeUnit.SECONDS);
-        return buildQueueLogger;
+        log.info("Using ExecutorService with thread pool size {}.", threadPoolSize);
+        return new ThreadPoolExecutor(threadPoolSize, threadPoolSize, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(1), customThreadFactory, customRejectedExecutionHandler);
     }
 
     /**
@@ -165,6 +132,7 @@ public class LocalCIConfiguration {
      */
     @Bean
     public DockerClient dockerClient() {
+        log.debug("Create bean dockerClient");
         DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder().withDockerHost(dockerConnectionUri).build();
         DockerHttpClient httpClient = new ApacheDockerHttpClient.Builder().dockerHost(config.getDockerHost()).sslConfig(config.getSSLConfig()).build();
         DockerClient dockerClient = DockerClientImpl.getInstance(config, httpClient);

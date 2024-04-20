@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
  */
 public class OgMetaElementHtmlParser {
 
-    private final Logger log = LoggerFactory.getLogger(OgMetaElementHtmlParser.class);
+    private static final Logger log = LoggerFactory.getLogger(OgMetaElementHtmlParser.class);
 
     /**
      * Parses html meta elements from a given url.

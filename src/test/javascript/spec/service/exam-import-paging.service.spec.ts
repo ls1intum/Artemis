@@ -37,7 +37,7 @@ describe('Exam Import Paging Service', () => {
         const searchResult = { resultsOnPage: [exam], numberOfPages: 5 };
         const pageable = { pageSize: 2, page: 4, sortingOrder: SortingOrder.DESCENDING, searchTerm: 'ExamSearch', sortedColumn: 'testSortedColumn' };
         service
-            .searchForExams(pageable, false)
+            .search(pageable, { withExercises: false })
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toEqual(searchResult));
         const req = httpMock.expectOne({ method: 'GET' });

@@ -7,14 +7,14 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { CourseUsersSelectorComponent } from 'app/shared/course-users-selector/course-users-selector.component';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO } from '../../../helpers/conversationExampleModels';
 import { Course } from 'app/entities/course.model';
-import { isChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { isChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { By } from '@angular/platform-browser';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 
-const examples: ConversationDto[] = [generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
+const examples: ConversationDTO[] = [generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
 examples.forEach((activeConversation) => {
     describe('ConversationAddUsersFormComponent with ' + activeConversation.type, () => {
         let component: ConversationAddUsersFormComponent;
@@ -47,7 +47,7 @@ examples.forEach((activeConversation) => {
         });
 
         it('should allow to switch to group mode only for channels', () => {
-            if (isChannelDto(activeConversation)) {
+            if (isChannelDTO(activeConversation)) {
                 expect(fixture.debugElement.query(By.css('.mode-switch')).nativeElement.hidden).toBeFalse();
             } else {
                 expect(fixture.debugElement.query(By.css('.mode-switch')).nativeElement.hidden).toBeTrue();
@@ -55,7 +55,7 @@ examples.forEach((activeConversation) => {
         });
 
         it('should hide parts of the form depending on which mode is selected', () => {
-            if (isChannelDto(activeConversation)) {
+            if (isChannelDTO(activeConversation)) {
                 expect(fixture.debugElement.query(By.css('.mode-switch')).nativeElement.hidden).toBeFalse();
                 expect(component.mode).toBe('individual');
                 expect(fixture.debugElement.query(By.css('.individual-select')).nativeElement.hidden).toBeFalse();
@@ -90,7 +90,7 @@ examples.forEach((activeConversation) => {
         }));
 
         it('should block when in group mode and no mode is selected', fakeAsync(() => {
-            if (isChannelDto(activeConversation)) {
+            if (isChannelDTO(activeConversation)) {
                 setFormValid();
                 fixture.debugElement.query(By.css('#group')).nativeElement.click();
                 fixture.detectChanges();
@@ -117,7 +117,7 @@ examples.forEach((activeConversation) => {
         }));
 
         it('should submit valid form in group mode', fakeAsync(() => {
-            if (isChannelDto(activeConversation)) {
+            if (isChannelDTO(activeConversation)) {
                 fixture.debugElement.query(By.css('#group')).nativeElement.click();
                 fixture.detectChanges();
                 setValidGroupModeFormValues();

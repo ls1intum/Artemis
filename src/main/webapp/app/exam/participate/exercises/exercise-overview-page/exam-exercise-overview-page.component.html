@@ -28,7 +28,7 @@
                         {{ 'artemisApp.examParticipation.exercisePoints' | artemisTranslate }}
                     </span>
                 </th>
-                <th style="max-width: 50px">
+                <th style="max-width: 100px">
                     <span>
                         {{ 'artemisApp.examParticipation.examStatus' | artemisTranslate }}
                     </span>
@@ -36,33 +36,54 @@
             </tr>
         </thead>
         <tbody>
-            <tr *ngFor="let item of examExerciseOverviewItems; let i = index">
-                <td style="max-width: 30px">
-                    {{ i + 1 }}
-                </td>
-                <td style="max-width: 30px">
-                    <div [ngbTooltip]="getIconTooltip(item.exercise.type) | artemisTranslate">
-                        <fa-icon [icon]="getIcon(item.exercise.type)" placement="right auto"></fa-icon>
-                    </div>
-                </td>
-                <td style="max-width: 100px; font-weight: bold">
-                    <a class="w-100" (click)="openExercise(item.exercise)">
-                        {{ item.exercise.exerciseGroup?.title }}
-                    </a>
-                </td>
-                <td style="max-width: 30px">
-                    {{ item.exercise.maxPoints }}
-                </td>
-                <td style="max-width: 50px; font-weight: bold">
-                    <div
-                        style="max-width: 10px"
-                        [ngClass]="setExerciseIconStatus(item)"
-                        [ngbTooltip]="'artemisApp.examParticipation.' + getExerciseButtonTooltip(item.exercise) | artemisTranslate"
-                    >
-                        <fa-icon [icon]="item.icon!"></fa-icon>
-                    </div>
-                </td>
-            </tr>
+            @for (item of examExerciseOverviewItems; track item; let i = $index) {
+                <tr>
+                    <td style="max-width: 30px">
+                        {{ i + 1 }}
+                    </td>
+                    <td style="max-width: 30px">
+                        <div [ngbTooltip]="getIconTooltip(item.exercise.type) | artemisTranslate">
+                            <fa-icon [icon]="getIcon(item.exercise.type)" placement="right auto" />
+                        </div>
+                    </td>
+                    <td style="max-width: 100px; font-weight: bold">
+                        <a class="w-100" (click)="openExercise(item.exercise)">
+                            {{ item.exercise.exerciseGroup?.title }}
+                        </a>
+                    </td>
+                    <td style="max-width: 30px">
+                        {{ item.exercise.maxPoints }}
+                    </td>
+                    <td style="max-width: 50px; font-weight: bold">
+                        <div style="display: flex; align-items: center">
+                            <div
+                                style="max-width: 10px; margin-right: 10px"
+                                [ngClass]="setExerciseIconStatus(item)"
+                                [ngbTooltip]="'artemisApp.examParticipation.' + getExerciseButtonTooltip(item.exercise) | artemisTranslate"
+                            >
+                                <fa-icon [icon]="item.icon!" />
+                            </div>
+                            <div>
+                                @if (
+                                    item.exercise.studentParticipations !== undefined &&
+                                    item.exercise.type === ExerciseType.PROGRAMMING &&
+                                    item.exercise.studentParticipations.length > 0
+                                ) {
+                                    <jhi-updating-result
+                                        id="jhi-updating-result-{{ i }}"
+                                        [exercise]="item.exercise"
+                                        [showUngradedResults]="true"
+                                        [showBadge]="true"
+                                        [participation]="item.exercise.studentParticipations[0]"
+                                        [personalParticipation]="true"
+                                        class="me-2"
+                                    />
+                                }
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            }
         </tbody>
     </table>
 </div>

@@ -5,9 +5,10 @@ import { NotificationSettingsComponent } from 'app/shared/user-settings/notifica
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { RouterModule } from '@angular/router';
 import { userSettingsState } from 'app/shared/user-settings/user-settings.route';
+import { ScienceSettingsComponent } from 'app/shared/user-settings/science-settings/science-settings.component';
 
 @NgModule({
     imports: [RouterModule.forChild(userSettingsState), ArtemisSharedModule],
-    declarations: [UserSettingsContainerComponent, AccountInformationComponent, NotificationSettingsComponent],
+    declarations: [UserSettingsContainerComponent, AccountInformationComponent, NotificationSettingsComponent, ScienceSettingsComponent],
 })
 export class UserSettingsModule {}

@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +25,7 @@ import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
 @Table(name = "plagiarism_submission")
 public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> extends DomainObject {
 
-    private static final Logger logger = LoggerFactory.getLogger(PlagiarismSubmission.class);
+    private static final Logger log = LoggerFactory.getLogger(PlagiarismSubmission.class);
 
     /**
      * ID of the wrapped submission object.
@@ -102,7 +102,7 @@ public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> extends
                 submissionId = Long.parseLong(submissionIdAndStudentLogin[0]);
             }
             catch (NumberFormatException e) {
-                logger.error("Invalid submissionId: {}", e.getMessage());
+                log.error("Invalid submissionId: {}", e.getMessage());
             }
 
             studentLogin = submissionIdAndStudentLogin[1];
@@ -196,26 +196,5 @@ public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> extends
     @Override
     public String toString() {
         return "PlagiarismSubmission{" + "submissionId=" + submissionId + ", studentLogin='" + studentLogin + '\'' + ", size=" + size + ", score=" + score + '}';
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null || getClass() != obj.getClass()) {
-            return false;
-        }
-        if (!super.equals(obj)) {
-            return false;
-        }
-        PlagiarismSubmission<?> that = (PlagiarismSubmission<?>) obj;
-        return getSubmissionId() == that.getSubmissionId() && getSize() == that.getSize() && Objects.equals(getStudentLogin(), that.getStudentLogin())
-                && Objects.equals(getScore(), that.getScore());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(super.hashCode(), getSubmissionId(), getStudentLogin(), getSize(), getScore());
     }
 }

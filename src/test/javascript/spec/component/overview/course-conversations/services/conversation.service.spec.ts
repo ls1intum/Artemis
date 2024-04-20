@@ -8,6 +8,8 @@ import { AccountService } from 'app/core/auth/account.service';
 import { ConversationMemberSearchFilter, ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../helpers/conversationExampleModels';
+import { NotificationService } from 'app/shared/notification/notification.service';
+import { MockNotificationService } from '../../../../helpers/mocks/service/mock-notification.service';
 
 describe('ConversationService', () => {
     let service: ConversationService;
@@ -19,6 +21,7 @@ describe('ConversationService', () => {
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: NotificationService, useClass: MockNotificationService },
             ],
         });
         service = TestBed.inject(ConversationService);
@@ -63,9 +66,9 @@ describe('ConversationService', () => {
         tick();
     }));
 
-    it('changeFavoriteStatus', fakeAsync(() => {
+    it('updateIsFavorite', fakeAsync(() => {
         service
-            .changeFavoriteStatus(1, 1, true)
+            .updateIsFavorite(1, 1, true)
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual({}));
 
@@ -74,9 +77,20 @@ describe('ConversationService', () => {
         tick();
     }));
 
-    it('changeHiddenStatus', fakeAsync(() => {
+    it('updateIsHidden', fakeAsync(() => {
         service
-            .changeHiddenStatus(1, 1, false)
+            .updateIsHidden(1, 1, false)
+            .pipe(take(1))
+            .subscribe((res) => expect(res.body).toEqual({}));
+
+        const req = httpMock.expectOne({ method: 'POST' });
+        req.flush({});
+        tick();
+    }));
+
+    it('updateIsMuted', fakeAsync(() => {
+        service
+            .updateIsMuted(1, 1, false)
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual({}));
 

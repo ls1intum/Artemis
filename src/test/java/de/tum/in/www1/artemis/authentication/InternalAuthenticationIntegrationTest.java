@@ -3,8 +3,6 @@ package de.tum.in.www1.artemis.authentication;
 import static de.tum.in.www1.artemis.domain.Authority.*;
 import static de.tum.in.www1.artemis.user.UserFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doReturn;
 
 import java.time.ZonedDateTime;
 import java.util.HashSet;
@@ -12,7 +10,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,13 +34,11 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.security.ArtemisInternalAuthenticationProvider;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.tutorialgroups.TutorialGroupUtilService;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
 import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 
@@ -54,9 +50,6 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
     private PasswordService passwordService;
 
     @Autowired
-    private ArtemisInternalAuthenticationProvider artemisInternalAuthenticationProvider;
-
-    @Autowired
     private CourseRepository courseRepository;
 
     @Autowired
@@ -64,9 +57,6 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
 
     @Autowired
     private UserRepository userRepository;
-
-    @Autowired
-    private LtiOutcomeUrlRepository ltiOutcomeUrlRepository;
 
     @Autowired
     private AuthorityRepository authorityRepository;
@@ -107,8 +97,6 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
 
     private ProgrammingExercise programmingExercise;
 
-    private LtiLaunchRequestDTO ltiLaunchRequest;
-
     @BeforeEach
     void setUp() {
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
@@ -118,9 +106,6 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         courseUtilService.addOnlineCourseConfigurationToCourse(course);
         programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
-
-        ltiLaunchRequest = AuthenticationIntegrationTestHelper.setupDefaultLtiLaunchRequest();
-        doReturn(null).when(lti10Service).verifyRequest(any(), any());
 
         final var userAuthority = new Authority(Role.STUDENT.getAuthority());
         final var instructorAuthority = new Authority(Role.INSTRUCTOR.getAuthority());
@@ -133,7 +118,6 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         student.setPassword(encodedPassword);
         student.setInternal(true);
         userRepository.save(student);
-        ltiLaunchRequest.setLis_person_contact_email_primary(student.getEmail());
     }
 
     @AfterEach

@@ -13,6 +13,7 @@
         "cypress-cloud": "2.0.0-beta.1",
         "cypress-file-upload": "5.0.8",
         "cypress-wait-until": "2.0.1",
+        "cypress-pipe": "2.0.0",
         "typescript": "5.2.2",
         "uuid": "9.0.1",
         "wait-on": "7.2.0"

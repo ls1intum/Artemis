@@ -3,21 +3,16 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
-import { QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ParticipationService } from '../participation/participation.service';
 import { map, tap } from 'rxjs/operators';
 import { AccountService } from 'app/core/auth/account.service';
 import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
 import { TranslateService } from '@ngx-translate/core';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
-import { User } from 'app/core/user/user.model';
-import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
@@ -52,11 +47,9 @@ export class ExerciseService {
 
     constructor(
         private http: HttpClient,
-        private participationService: ParticipationService,
         private accountService: AccountService,
         private translateService: TranslateService,
         private entityTitleService: EntityTitleService,
-        private profileService: ProfileService,
     ) {}
 
     /**
@@ -203,7 +196,7 @@ export class ExerciseService {
      * @param { Exercise[] } exercises - The exercises to filter and sort
      * @param { number } delayInDays - The amount of days an exercise can be due into the future, defaults to seven
      */
-    getNextExercisesForDays(exercises: Exercise[], delayInDays = 7): Exercise[] {
+    getNextExercisesForDays(exercises: Exercise[], delayInDays: number = 7): Exercise[] {
         return exercises
             .filter((exercise) => {
                 if (!exercise.dueDate) {
@@ -227,30 +220,6 @@ export class ExerciseService {
             });
     }
 
-    /**
-     * Returns an active quiz, a visible quiz or an exercise due in delayInHours or 12 hours if not specified
-     * @param exercises - Considered exercises
-     * @param delayInHours - If set, amount of hours that are considered
-     * @param student - Needed when individual due dates for course exercises should be considered
-     */
-    getNextExerciseForHours(exercises?: Exercise[], delayInHours = 12, student?: User) {
-        // check for quiz exercise in order to prioritize before other exercise types
-        // but only if the quiz is synchronized as quizzes in other modes are generally longer running and would just clog up the display all the time
-        const nextQuizExercises = exercises?.filter((exercise: QuizExercise) => exercise.quizMode === QuizMode.SYNCHRONIZED && !exercise.quizEnded);
-        return (
-            // 1st priority is an active quiz
-            nextQuizExercises?.find((exercise: QuizExercise) => this.isActiveQuiz(exercise as QuizExercise)) ||
-            // 2nd priority is a visible quiz
-            nextQuizExercises?.find((exercise: QuizExercise) => exercise.visibleToStudents) ||
-            // 3rd priority is the next due exercise
-            exercises?.find((exercise) => {
-                const studentParticipation = student ? exercise.studentParticipations?.find((participation) => participation.student?.id === student?.id) : undefined;
-                const dueDate = getExerciseDueDate(exercise, studentParticipation);
-                return dueDate && dayjs().isBefore(dueDate) && dayjs().add(delayInHours, 'hours').isSameOrAfter(dueDate);
-            })
-        );
-    }
-
     isActiveQuiz(exercise: QuizExercise) {
         return (
             exercise?.quizBatches?.some((batch) => batch.started) ||
@@ -264,7 +233,7 @@ export class ExerciseService {
      * @param { Exercise } exercise - Exercise from server whose date is adjusted
      * @returns { Exercise } - Exercise with adjusted times
      */
-    static convertExerciseDatesFromServer(exercise?: Exercise) {
+    static convertExerciseDatesFromServer(exercise?: Exercise): Exercise | undefined {
         if (exercise) {
             exercise.releaseDate = convertDateFromServer(exercise.releaseDate);
             exercise.startDate = convertDateFromServer(exercise.startDate);
@@ -429,7 +398,7 @@ export class ExerciseService {
         return exercise;
     }
 
-    isIncludedInScore(exercise: Exercise | undefined) {
+    isIncludedInScore(exercise?: Exercise) {
         if (!exercise?.includedInOverallScore) {
             return '';
         }
@@ -455,8 +424,7 @@ export class ExerciseService {
         ExerciseService.convertExerciseResponseDatesFromServer(exerciseRes);
         ExerciseService.convertExerciseCategoriesFromServer(exerciseRes);
         this.setAccessRightsExerciseEntityResponseType(exerciseRes);
-        this.sendExerciseTitleToTitleService(exerciseRes?.body);
-        this.setBuildPlanUrlToParticipations(exerciseRes?.body);
+        this.sendExerciseTitleToTitleService(exerciseRes?.body ?? undefined);
         return exerciseRes;
     }
 
@@ -470,7 +438,6 @@ export class ExerciseService {
         this.setAccessRightsExerciseEntityArrayResponseType(exerciseResArray);
         exerciseResArray?.body?.forEach((exercise) => {
             this.sendExerciseTitleToTitleService(exercise);
-            this.setBuildPlanUrlToParticipations(exercise);
         });
         return exerciseResArray;
     }
@@ -491,7 +458,7 @@ export class ExerciseService {
         return res;
     }
 
-    public sendExerciseTitleToTitleService(exercise: Exercise | undefined | null) {
+    public sendExerciseTitleToTitleService(exercise?: Exercise) {
         // we only want to show the exercise group name as exercise name to the student for exam exercises.
         // for tutors and more privileged users, we want to show the exercise title
         if (exercise?.exerciseGroup && !exercise?.isAtLeastTutor) {
@@ -501,15 +468,6 @@ export class ExerciseService {
         }
         if (exercise?.course) {
             this.entityTitleService.setTitle(EntityType.COURSE, [exercise.course.id], exercise.course.title);
-        }
-    }
-
-    private setBuildPlanUrlToParticipations(exercise: Exercise | undefined | null) {
-        if (exercise?.type === ExerciseType.PROGRAMMING && (exercise as ProgrammingExercise).publishBuildPlanUrl) {
-            this.profileService.getProfileInfo().subscribe((profileInfo) => {
-                const programmingParticipations = exercise?.studentParticipations as ProgrammingExerciseStudentParticipation[];
-                setBuildPlanUrlForProgrammingParticipations(profileInfo, programmingParticipations, (exercise as ProgrammingExercise).projectKey);
-            });
         }
     }
 

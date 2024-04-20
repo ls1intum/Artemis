@@ -1,10 +1,13 @@
 package de.tum.in.www1.artemis.service.notifications.push_notifications;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -18,6 +21,7 @@ import de.tum.in.www1.artemis.repository.PushNotificationDeviceConfigurationRepo
 /**
  * Handles the sending of Android Notifications to the Relay Service
  */
+@Profile(PROFILE_CORE)
 @Service
 @EnableAsync(proxyTargetClass = true)
 public class FirebasePushNotificationService extends PushNotificationService {
@@ -38,7 +42,7 @@ public class FirebasePushNotificationService extends PushNotificationService {
         // The relay server accepts at most 500 messages per batch
         List<List<RelayNotificationRequest>> batches = Lists.partition(requests, 500);
         var futures = batches.stream().map(batch -> CompletableFuture.runAsync(() -> sendSpecificNotificationRequestsToEndpoint(batch, relayBaseUrl))).toList()
-                .toArray(new CompletableFuture[0]);
+                .toArray(CompletableFuture[]::new);
 
         CompletableFuture.allOf(futures);
     }

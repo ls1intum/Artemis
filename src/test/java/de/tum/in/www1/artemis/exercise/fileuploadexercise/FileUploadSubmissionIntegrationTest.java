@@ -66,9 +66,6 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationIndep
     @Autowired
     private ModelingExerciseUtilService modelingExerciseUtilService;
 
-    @Autowired
-    private FilePathService filePathService;
-
     private FileUploadExercise releasedFileUploadExercise;
 
     private FileUploadExercise finishedFileUploadExercise;
@@ -172,14 +169,14 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationIndep
             }
         }
 
-        URI publicFilePath = filePathService.publicPathForActualPathOrThrow(actualFilePath, returnedSubmission.getId());
+        URI publicFilePath = FilePathService.publicPathForActualPathOrThrow(actualFilePath, returnedSubmission.getId());
         assertThat(returnedSubmission).as("submission correctly posted").isNotNull();
         assertThat(returnedSubmission.getFilePath()).isEqualTo(publicFilePath.toString());
         var fileBytes = Files.readAllBytes(actualFilePath);
         assertThat(fileBytes.length > 0).as("Stored file has content").isTrue();
         checkDetailsHidden(returnedSubmission, true);
 
-        MvcResult file = request.getMvc().perform(get(returnedSubmission.getFilePath())).andExpect(status().isOk()).andExpect(content().contentType(MediaType.IMAGE_PNG))
+        MvcResult file = request.performMvcRequest(get(returnedSubmission.getFilePath())).andExpect(status().isOk()).andExpect(content().contentType(MediaType.IMAGE_PNG))
                 .andReturn();
         assertThat(file.getResponse().getContentAsByteArray()).isEqualTo(validFile.getBytes());
     }

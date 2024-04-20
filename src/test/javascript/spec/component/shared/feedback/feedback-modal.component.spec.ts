@@ -1,5 +1,5 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { DebugElement } from '@angular/core';
+import { DebugElement, SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { BarChartModule } from '@swimlane/ngx-charts';
@@ -26,7 +26,6 @@ import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { TranslatePipeMock } from '../../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../../test.module';
-import { SimpleChange } from '@angular/core';
 import { FeedbackGroup } from 'app/exercises/shared/feedback/group/feedback-group';
 
 describe('FeedbackComponent', () => {
@@ -43,8 +42,8 @@ describe('FeedbackComponent', () => {
     let buildlogsStub: jest.SpyInstance;
     let getFeedbackDetailsForResultStub: jest.SpyInstance;
 
-    // Template for Bitbucket commit hash url
-    const commitHashURLTemplate = 'https://bitbucket.ase.in.tum.de/projects/{projectKey}/repos/{repoSlug}/commits/{commitHash}';
+    // Template for commit hash url
+    const commitHashURLTemplate = 'https://gitlab.ase.in.tum.de/projects/{projectKey}/repos/{repoSlug}/commits/{commitHash}';
 
     const feedbackReference = {
         id: 1,
@@ -208,7 +207,7 @@ describe('FeedbackComponent', () => {
                         id: 55,
                         type: ParticipationType.PROGRAMMING,
                         participantIdentifier: 'student42',
-                        repositoryUrl: 'https://bitbucket.ase.in.tum.de/projects/somekey/repos/somekey-student42',
+                        repositoryUri: 'https://gitlab.ase.in.tum.de/projects/somekey/repos/somekey-student42',
                     },
                 } as Result;
 
@@ -275,7 +274,7 @@ describe('FeedbackComponent', () => {
         comp.ngOnInit();
 
         expect(comp.getCommitHash()).toBe('123456789ab');
-        expect(comp.commitUrl).toBe('https://bitbucket.ase.in.tum.de/projects/somekey/repos/somekey-student42/commits/123456789ab');
+        expect(comp.commitUrl).toBe('https://gitlab.ase.in.tum.de/projects/somekey/repos/somekey-student42/commits/123456789ab');
     });
 
     it('should not try to retrieve the feedbacks from the server if provided result has feedbacks', () => {
@@ -418,7 +417,11 @@ describe('FeedbackComponent', () => {
         const feedbackItem = generateManualFeedbackPair(true, 'Positive', 'This is good', 4).item;
         const feedbackItem1 = generateManualFeedbackPair(true, 'Positive', 'This is good', 4).item;
 
-        const feedbackGroup: FeedbackGroup = { ...feedbackItem, members: [feedbackItem1], open: false } as unknown as FeedbackGroup;
+        const feedbackGroup: FeedbackGroup = {
+            ...feedbackItem,
+            members: [feedbackItem1],
+            open: false,
+        } as unknown as FeedbackGroup;
         comp.feedbackItemNodes = [feedbackGroup];
 
         // start printing => expand feedback

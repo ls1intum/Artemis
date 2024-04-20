@@ -1,17 +1,20 @@
 package de.tum.in.www1.artemis.service.programming;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
@@ -31,10 +34,11 @@ import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.dto.CommitInfoDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
+@Profile(PROFILE_CORE)
 @Service
 public class ProgrammingExerciseParticipationService {
 
-    private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseParticipationService.class);
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseParticipationService.class);
 
     private final ProgrammingExerciseStudentParticipationRepository studentParticipationRepository;
 
@@ -208,7 +212,7 @@ public class ProgrammingExerciseParticipationService {
 
     /**
      * Setup the initial solution participation for an exercise. Creates the new participation entity and sets
-     * the correct build plan ID and repository URL. Saves the participation after all values have been set.
+     * the correct build plan ID and repository URI. Saves the participation after all values have been set.
      *
      * @param newExercise The new exercise for which a participation should be generated
      */
@@ -217,14 +221,14 @@ public class ProgrammingExerciseParticipationService {
         SolutionProgrammingExerciseParticipation solutionParticipation = new SolutionProgrammingExerciseParticipation();
         newExercise.setSolutionParticipation(solutionParticipation);
         solutionParticipation.setBuildPlanId(newExercise.generateBuildPlanId(BuildPlanType.SOLUTION));
-        solutionParticipation.setRepositoryUrl(versionControlService.orElseThrow().getCloneRepositoryUrl(newExercise.getProjectKey(), solutionRepoName).toString());
+        solutionParticipation.setRepositoryUri(versionControlService.orElseThrow().getCloneRepositoryUri(newExercise.getProjectKey(), solutionRepoName).toString());
         solutionParticipation.setProgrammingExercise(newExercise);
         solutionParticipationRepository.save(solutionParticipation);
     }
 
     /**
      * Setup the initial template participation for an exercise. Creates the new participation entity and sets
-     * the correct build plan ID and repository URL. Saves the participation after all values have been set.
+     * the correct build plan ID and repository URI. Saves the participation after all values have been set.
      *
      * @param newExercise The new exercise for which a participation should be generated
      */
@@ -232,7 +236,7 @@ public class ProgrammingExerciseParticipationService {
         final String exerciseRepoName = newExercise.generateRepositoryName(RepositoryType.TEMPLATE);
         TemplateProgrammingExerciseParticipation templateParticipation = new TemplateProgrammingExerciseParticipation();
         templateParticipation.setBuildPlanId(newExercise.generateBuildPlanId(BuildPlanType.TEMPLATE));
-        templateParticipation.setRepositoryUrl(versionControlService.orElseThrow().getCloneRepositoryUrl(newExercise.getProjectKey(), exerciseRepoName).toString());
+        templateParticipation.setRepositoryUri(versionControlService.orElseThrow().getCloneRepositoryUri(newExercise.getProjectKey(), exerciseRepoName).toString());
         templateParticipation.setProgrammingExercise(newExercise);
         newExercise.setTemplateParticipation(templateParticipation);
         templateParticipationRepository.save(templateParticipation);
@@ -247,7 +251,7 @@ public class ProgrammingExerciseParticipationService {
      */
     public void lockStudentRepository(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation) {
         if (participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
-            versionControlService.orElseThrow().setRepositoryPermissionsToReadOnly(participation.getVcsRepositoryUrl(), programmingExercise.getProjectKey(),
+            versionControlService.orElseThrow().setRepositoryPermissionsToReadOnly(participation.getVcsRepositoryUri(), programmingExercise.getProjectKey(),
                     participation.getStudents());
         }
         else {
@@ -316,7 +320,7 @@ public class ProgrammingExerciseParticipationService {
     public void unlockStudentRepository(ProgrammingExerciseStudentParticipation participation) {
         if (participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
             for (User user : participation.getStudents()) {
-                versionControlService.orElseThrow().addMemberToRepository(participation.getVcsRepositoryUrl(), user, VersionControlRepositoryPermission.REPO_WRITE);
+                versionControlService.orElseThrow().addMemberToRepository(participation.getVcsRepositoryUri(), user, VersionControlRepositoryPermission.REPO_WRITE);
             }
         }
         else {
@@ -377,7 +381,7 @@ public class ProgrammingExerciseParticipationService {
      * @param targetURL the repository where all files should be replaced
      * @param sourceURL the repository that should be used as source for all files
      */
-    public void resetRepository(VcsRepositoryUrl targetURL, VcsRepositoryUrl sourceURL) throws GitAPIException, IOException {
+    public void resetRepository(VcsRepositoryUri targetURL, VcsRepositoryUri sourceURL) throws GitAPIException, IOException {
         Repository targetRepo = gitService.getOrCheckoutRepository(targetURL, true);
         Repository sourceRepo = gitService.getOrCheckoutRepository(sourceURL, true);
 
@@ -404,8 +408,8 @@ public class ProgrammingExerciseParticipationService {
      * participation.
      *
      * @param exercise                 the exercise for which to get the participation.
-     * @param repositoryTypeOrUserName the repository type ("exercise", "solution", or "tests") or username (e.g. "artemis_test_user_1") as extracted from the repository URL.
-     * @param isPracticeRepository     whether the repository is a practice repository, i.e. the repository URL contains "-practice-".
+     * @param repositoryTypeOrUserName the repository type ("exercise", "solution", or "tests") or username (e.g. "artemis_test_user_1") as extracted from the repository URI.
+     * @param isPracticeRepository     whether the repository is a practice repository, i.e. the repository URI contains "-practice-".
      * @param withSubmissions          whether submissions should be loaded with the participation. This is needed for the local CI system.
      * @return the participation.
      * @throws EntityNotFoundException if the participation could not be found.
@@ -443,7 +447,7 @@ public class ProgrammingExerciseParticipationService {
 
         // If the exercise is an exam exercise and the repository's owner is at least an editor, the repository could be a test run repository, or it could be the instructor's
         // assignment repository.
-        // There is no way to tell from the repository URL, and only one participation will be created, even if both are used.
+        // There is no way to tell from the repository URI, and only one participation will be created, even if both are used.
         // This participation has "testRun = true" set if the test run was created first, and "testRun = false" set if the instructor's assignment repository was created first.
         // If the exercise is an exam exercise, and the repository's owner is at least an editor, get the participation without regard for the testRun flag.
         boolean isExamEditorRepository = exercise.isExamExercise()
@@ -465,12 +469,29 @@ public class ProgrammingExerciseParticipationService {
      * @param participation the participation for which to get the commits.
      * @return a list of CommitInfo DTOs containing author, timestamp, commit-hash and commit message.
      */
-    public List<CommitInfoDTO> getCommitInfos(ProgrammingExerciseStudentParticipation participation) {
+    public List<CommitInfoDTO> getCommitInfos(ProgrammingExerciseParticipation participation) {
         try {
-            return gitService.getCommitInfos(participation.getVcsRepositoryUrl());
+            return gitService.getCommitInfos(participation.getVcsRepositoryUri());
         }
         catch (GitAPIException e) {
-            log.error("Could not get commit infos for participation " + participation.getId() + " with repository url " + participation.getVcsRepositoryUrl());
+            log.error("Could not get commit infos for participation {} with repository uri {}", participation.getId(), participation.getVcsRepositoryUri());
+            return List.of();
+        }
+    }
+
+    /**
+     * Get the commits information for the test repository of the given participation's exercise.
+     *
+     * @param participation the participation for which to get the commits.
+     * @return a list of CommitInfo DTOs containing author, timestamp, commit-hash and commit message.
+     */
+    public List<CommitInfoDTO> getCommitInfosTestRepo(ProgrammingExerciseParticipation participation) {
+        ProgrammingExercise exercise = (ProgrammingExercise) participation.getExercise();
+        try {
+            return gitService.getCommitInfos(exercise.getVcsTestRepositoryUri());
+        }
+        catch (GitAPIException e) {
+            log.error("Could not get commit infos for test repository with participation id {}", participation.getId());
             return List.of();
         }
     }

@@ -6,7 +6,7 @@ import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTestModule } from '../../test.module';
 import { ModelingExerciseComponent } from 'app/exercises/modeling/manage/modeling-exercise.component';
-import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { Course } from 'app/entities/course.model';
@@ -15,6 +15,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { UMLDiagramType } from '@ls1intum/apollon';
 
 describe('ModelingExercise Management Component', () => {
     let comp: ModelingExerciseComponent;

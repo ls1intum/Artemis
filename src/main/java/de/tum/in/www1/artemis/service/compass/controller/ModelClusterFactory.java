@@ -31,7 +31,7 @@ import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
 public class ModelClusterFactory {
 
-    private final Logger log = LoggerFactory.getLogger(ModelClusterFactory.class);
+    private static final Logger log = LoggerFactory.getLogger(ModelClusterFactory.class);
 
     /**
      * Finds the similar elements among submissions and puts them in a cluster

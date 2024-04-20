@@ -19,6 +19,7 @@ import { ProgrammingSubmission } from 'app/entities/programming-submission.model
 import { captureException } from '@sentry/angular-ivy';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
+import { isStudentParticipation } from 'app/exercises/shared/result/result.utils';
 
 export type EntityResponseType = HttpResponse<Result>;
 export type EntityArrayResponseType = HttpResponse<Result[]>;
@@ -34,7 +35,8 @@ export interface IResultService {
     find: (resultId: number) => Observable<EntityResponseType>;
     getResultsForExerciseWithPointsPerGradingCriterion: (exerciseId: number, req?: any) => Observable<ResultsWithPointsArrayResponseType>;
     getFeedbackDetailsForResult: (participationId: number, result: Result) => Observable<HttpResponse<Feedback[]>>;
-    delete: (participationId: number, resultId: number) => Observable<HttpResponse<void>>;
+    getResultsWithPointsPerGradingCriterion: (exercise: Exercise) => Observable<ResultsWithPointsArrayResponseType>;
+    triggerDownloadCSV: (rows: string[], csvFileName: string) => void;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -133,7 +135,7 @@ export class ResultService implements IResultService {
 
         let resultString = this.getBaseResultStringProgrammingExercise(result, relativeScore, points, buildAndTestMessage, short);
 
-        if (isResultPreliminary(result, exercise)) {
+        if (isStudentParticipation(result) && isResultPreliminary(result, exercise)) {
             resultString += ' (' + this.translateService.instant('artemisApp.result.preliminary') + ')';
         }
 
@@ -194,10 +196,6 @@ export class ResultService implements IResultService {
                 return res;
             }),
         );
-    }
-
-    delete(participationId: number, resultId: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resultResourceUrl}/${resultId}`, { observe: 'response' });
     }
 
     public convertResultDatesFromClient(result: Result): Result {

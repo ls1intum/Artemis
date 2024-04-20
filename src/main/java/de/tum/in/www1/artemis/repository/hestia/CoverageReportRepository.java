@@ -1,7 +1,10 @@
 package de.tum.in.www1.artemis.repository.hestia;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.*;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -16,15 +19,11 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data JPA repository for the CoverageReport entity.
  */
+@Profile(PROFILE_CORE)
 @Repository
 public interface CoverageReportRepository extends JpaRepository<CoverageReport, Long> {
 
-    default CoverageReport findByIdElseThrow(Long coverageReportId) {
-        var optionalReport = findById(coverageReportId);
-        return optionalReport.orElseThrow(() -> new EntityNotFoundException("Coverage Report", coverageReportId));
-    }
-
-    Boolean existsBySubmissionId(@Param("submissionId") Long submissionId);
+    Boolean existsBySubmissionId(Long submissionId);
 
     @Transactional // ok because of delete
     @Modifying
@@ -36,7 +35,7 @@ public interface CoverageReportRepository extends JpaRepository<CoverageReport, 
                 LEFT JOIN FETCH r.submission s
                 JOIN ProgrammingExercise pe ON s.participation = pe.solutionParticipation
             WHERE pe.id = :programmingExerciseId
-                AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
+                AND (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
             ORDER BY s.submissionDate DESC
             """)
     List<CoverageReport> getLatestCoverageReportsForLegalSubmissionsForProgrammingExercise(@Param("programmingExerciseId") Long programmingExerciseId, Pageable pageable);
@@ -49,7 +48,7 @@ public interface CoverageReportRepository extends JpaRepository<CoverageReport, 
                 LEFT JOIN FETCH f.testwiseCoverageEntries
                 JOIN ProgrammingExercise pe ON s.participation = pe.solutionParticipation
             WHERE pe.id = :programmingExerciseId
-                AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
+                AND (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
             ORDER BY s.submissionDate DESC
             """)
     List<CoverageReport> getLatestCoverageReportsForLegalSubmissionsForProgrammingExerciseWithEagerFileReportsAndEntries(@Param("programmingExerciseId") Long programmingExerciseId,

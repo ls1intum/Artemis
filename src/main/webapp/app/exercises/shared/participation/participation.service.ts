@@ -107,6 +107,10 @@ export class ParticipationService {
         return !!exercise?.dueDate && dayjs().isAfter(exercise.dueDate);
     }
 
+    getLogsAvailabilityForResultsOfParticipation(participationId: number): Observable<{ [key: string]: boolean }> {
+        return this.http.get<{ [key: string]: boolean }>(`${this.resourceUrl}/${participationId}/results/logs-available`);
+    }
+
     protected convertParticipationDatesFromClient(participation: StudentParticipation): StudentParticipation {
         // return a copy of the object
         return Object.assign({}, participation, {
@@ -196,7 +200,7 @@ export class ParticipationService {
     private mergeProgrammingParticipations(participations: ProgrammingExerciseStudentParticipation[]): ProgrammingExerciseStudentParticipation {
         const combinedParticipation = new ProgrammingExerciseStudentParticipation();
         if (participations?.length) {
-            combinedParticipation.repositoryUrl = participations[0].repositoryUrl;
+            combinedParticipation.repositoryUri = participations[0].repositoryUri;
             combinedParticipation.buildPlanId = participations[0].buildPlanId;
             combinedParticipation.buildPlanUrl = participations[0].buildPlanUrl;
             this.mergeResultsAndSubmissions(combinedParticipation, participations);

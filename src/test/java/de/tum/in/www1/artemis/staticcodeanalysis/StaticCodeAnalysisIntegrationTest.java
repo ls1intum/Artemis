@@ -50,7 +50,7 @@ class StaticCodeAnalysisIntegrationTest {
 
     private void testParserWithNullValue() throws ParserException {
         ReportParser parser = new ReportParser();
-        String actual = parser.transformToJSONReport(null);
+        parser.transformToJSONReport(null);
     }
 
     /**

@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -16,6 +18,7 @@ import org.apache.pdfbox.rendering.ImageType;
 import org.apache.pdfbox.rendering.PDFRenderer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -28,20 +31,18 @@ import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 /**
  * Service Implementation for managing the split of AttachmentUnit into single slides and save them as PNG.
  */
+@Profile(PROFILE_CORE)
 @Service
 public class SlideSplitterService {
 
-    private final Logger log = LoggerFactory.getLogger(SlideSplitterService.class);
+    private static final Logger log = LoggerFactory.getLogger(SlideSplitterService.class);
 
     private final FileService fileService;
 
-    private final FilePathService filePathService;
-
     private final SlideRepository slideRepository;
 
-    public SlideSplitterService(FileService fileService, FilePathService filePathService, SlideRepository slideRepository) {
+    public SlideSplitterService(FileService fileService, SlideRepository slideRepository) {
         this.fileService = fileService;
-        this.filePathService = filePathService;
         this.slideRepository = slideRepository;
     }
 
@@ -52,7 +53,7 @@ public class SlideSplitterService {
      */
     @Async
     public void splitAttachmentUnitIntoSingleSlides(AttachmentUnit attachmentUnit) {
-        Path attachmentPath = filePathService.actualPathForPublicPath(URI.create(attachmentUnit.getAttachment().getLink()));
+        Path attachmentPath = FilePathService.actualPathForPublicPath(URI.create(attachmentUnit.getAttachment().getLink()));
         File file = attachmentPath.toFile();
         try (PDDocument document = Loader.loadPDF(file)) {
             String pdfFilename = file.getName();
@@ -81,11 +82,14 @@ public class SlideSplitterService {
             for (int page = 0; page < numPages; page++) {
                 BufferedImage bufferedImage = pdfRenderer.renderImageWithDPI(page, 72, ImageType.RGB);
                 byte[] imageInByte = bufferedImageToByteArray(bufferedImage, "png");
-                MultipartFile slideFile = fileService.convertByteArrayToMultipart(fileNameWithOutExt + "_" + attachmentUnit.getId() + "_Slide_" + (page + 1), ".png", imageInByte);
-                String filePath = fileService.handleSaveFile(slideFile, true, false).toString();
+                int slideNumber = page + 1;
+                String filename = fileNameWithOutExt + "_" + attachmentUnit.getId() + "_Slide_" + slideNumber + ".png";
+                MultipartFile slideFile = fileService.convertByteArrayToMultipart(filename, ".png", imageInByte);
+                Path savePath = fileService.saveFile(slideFile, FilePathService.getAttachmentUnitFilePath().resolve(attachmentUnit.getId().toString()).resolve("slide")
+                        .resolve(String.valueOf(slideNumber)).resolve(filename));
                 Slide slideEntity = new Slide();
-                slideEntity.setSlideImagePath(filePath);
-                slideEntity.setSlideNumber(page + 1);
+                slideEntity.setSlideImagePath(FilePathService.publicPathForActualPath(savePath, (long) slideNumber).toString());
+                slideEntity.setSlideNumber(slideNumber);
                 slideEntity.setAttachmentUnit(attachmentUnit);
                 slideRepository.save(slideEntity);
             }

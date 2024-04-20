@@ -73,12 +73,6 @@ export class ComplaintResponseService {
             .pipe(map((res: EntityResponseType) => this.convertComplaintResponseEntityResponseDatesFromServer(res)));
     }
 
-    findByComplaintId(complaintId: number): Observable<EntityResponseType> {
-        return this.http
-            .get<ComplaintResponse>(`${this.resourceUrl}/complaint/${complaintId}`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertComplaintResponseEntityResponseDatesFromServer(res)));
-    }
-
     public convertComplaintResponseDatesFromClient(complaintResponse: ComplaintResponse): ComplaintResponse {
         return Object.assign({}, complaintResponse, {
             submittedTime: convertDateFromClient(complaintResponse.submittedTime),

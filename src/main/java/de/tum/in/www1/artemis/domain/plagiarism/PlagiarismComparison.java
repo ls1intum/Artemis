@@ -1,15 +1,11 @@
 package de.tum.in.www1.artemis.domain.plagiarism;
 
 import java.io.File;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
-
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
@@ -60,8 +56,6 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
      */
     @CollectionTable(name = "plagiarism_comparison_matches", joinColumns = @JoinColumn(name = "plagiarism_comparison_id"))
     @ElementCollection(fetch = FetchType.EAGER)
-    @JoinColumn(name = "plagiarism_comparison_id")
-    @OnDelete(action = OnDeleteAction.CASCADE)
     protected Set<PlagiarismMatch> matches;
 
     /**
@@ -171,26 +165,5 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
     @Override
     public String toString() {
         return "PlagiarismComparison{" + "similarity=" + similarity + ", status=" + status + '}';
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null || getClass() != obj.getClass()) {
-            return false;
-        }
-        if (!super.equals(obj)) {
-            return false;
-        }
-
-        PlagiarismComparison<?> that = (PlagiarismComparison<?>) obj;
-        return Double.compare(that.similarity, similarity) == 0 && status == that.status;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(super.hashCode(), getSimilarity(), getStatus());
     }
 }

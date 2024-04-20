@@ -75,7 +75,7 @@ export class MultipleChoiceVisualQuestionComponent {
             return;
         }
 
-        answerOption.isCorrect = !answerOption.isCorrect ?? true;
+        answerOption.isCorrect = !answerOption.isCorrect;
 
         this.questionChanged.emit();
     }

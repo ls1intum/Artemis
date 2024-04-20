@@ -2,8 +2,8 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
 import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
-import { UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { HttpResponse } from '@angular/common/http';
+import { UMLDiagramType } from '@ls1intum/apollon';
 
 const resourceUrl = 'api';
 

@@ -13,4 +13,5 @@ import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
  * @param mentionedUsers           users mentioned in the message
  */
 public record CreatedConversationMessage(Post messageWithHiddenDetails, Conversation completeConversation, Set<User> mentionedUsers) {
+
 }

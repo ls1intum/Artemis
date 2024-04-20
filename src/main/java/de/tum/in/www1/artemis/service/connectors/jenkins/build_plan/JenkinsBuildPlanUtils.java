@@ -8,7 +8,7 @@ public class JenkinsBuildPlanUtils {
     private static final String PIPELINE_SCRIPT_DETECTION_COMMENT = "// ARTEMIS: JenkinsPipeline";
 
     /**
-     * Replaces either one of the previous repository urls or the build plan url written within the Jenkins pipeline
+     * Replaces either one of the previous repository uris or the build plan url written within the Jenkins pipeline
      * script with the value specified by newUrl.
      *
      * @param jobXmlDocument the Jenkins pipeline

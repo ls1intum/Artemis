@@ -49,6 +49,7 @@ export interface ValidationReason {
 export interface PlagiarismDetectionConfig {
     continuousPlagiarismControlEnabled?: boolean;
     continuousPlagiarismControlPostDueDateChecksEnabled?: boolean;
+    continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod?: number;
     similarityThreshold?: number;
     minimumScore?: number;
     minimumSize?: number;
@@ -57,6 +58,7 @@ export interface PlagiarismDetectionConfig {
 export const DEFAULT_PLAGIARISM_DETECTION_CONFIG: PlagiarismDetectionConfig = {
     continuousPlagiarismControlEnabled: false,
     continuousPlagiarismControlPostDueDateChecksEnabled: false,
+    continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod: 7,
     similarityThreshold: 90,
     minimumSize: 50,
     minimumScore: 0,
@@ -125,7 +127,7 @@ export abstract class Exercise implements BaseEntity {
 
     // helper attributes
     public secondCorrectionEnabled = false;
-    public feedbackSuggestionsEnabled? = false;
+    public feedbackSuggestionModule?: string;
     public isAtLeastTutor?: boolean;
     public isAtLeastEditor?: boolean;
     public isAtLeastInstructor?: boolean;

@@ -2,13 +2,12 @@ package de.tum.in.www1.artemis.domain;
 
 import static de.tum.in.www1.artemis.config.Constants.*;
 
-import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Matcher;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
@@ -19,7 +18,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
 
-import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.LearningPath;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
@@ -30,9 +28,6 @@ import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
 import de.tum.in.www1.artemis.domain.view.QuizView;
-import de.tum.in.www1.artemis.service.EntityFileService;
-import de.tum.in.www1.artemis.service.FilePathService;
-import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
@@ -47,18 +42,6 @@ public class Course extends DomainObject {
     public static final String ENTITY_NAME = "course";
 
     private static final int DEFAULT_COMPLAINT_TEXT_LIMIT = 2000;
-
-    @Transient
-    private final transient FilePathService filePathService = new FilePathService();
-
-    @Transient
-    private final transient FileService fileService = new FileService();
-
-    @Transient
-    private final transient EntityFileService entityFileService = new EntityFileService(fileService, filePathService);
-
-    @Transient
-    private String prevCourseIcon;
 
     @Column(name = "title")
     @JsonView(QuizView.Before.class)
@@ -199,6 +182,9 @@ public class Course extends DomainObject {
     @JsonView(QuizView.Before.class)
     private Integer accuracyOfScores = 1; // default value
 
+    @Column(name = "restricted_athena_modules_access", nullable = false)
+    private boolean restrictedAthenaModulesAccess = false; // default is false
+
     /**
      * Note: Currently just used in the scope of the tutorial groups feature
      */
@@ -244,7 +230,7 @@ public class Course extends DomainObject {
     private Set<Organization> organizations = new HashSet<>();
 
     @ManyToMany
-    @JoinTable(name = "learning_goal_course", joinColumns = @JoinColumn(name = "course_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "learning_goal_id", referencedColumnName = "id"))
+    @JoinTable(name = "competency_course", joinColumns = @JoinColumn(name = "course_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "competency_id", referencedColumnName = "id"))
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("consecutiveCourses")
     private Set<Competency> prerequisites = new HashSet<>();
@@ -266,6 +252,61 @@ public class Course extends DomainObject {
 
     @Transient
     private Long numberOfStudentsTransient;
+
+    @Transient
+    private Long numberOfLecturesTransient;
+
+    @Transient
+    private Long numberOfExamsTransient;
+
+    @Transient
+    private Long numberOfTutorialGroupsTransient;
+
+    @Transient
+    private Long numberOfCompetenciesTransient;
+
+    @Transient
+    private Long numberOfPrerequisitesTransient;
+
+    public Long getNumberOfLectures() {
+        return numberOfLecturesTransient;
+    }
+
+    public Long getNumberOfExams() {
+        return numberOfExamsTransient;
+    }
+
+    public Long getNumberOfTutorialGroups() {
+        return numberOfTutorialGroupsTransient;
+    }
+
+    public Long getNumberOfCompetencies() {
+        return numberOfCompetenciesTransient;
+    }
+
+    public Long getNumberOfPrerequisites() {
+        return numberOfPrerequisitesTransient;
+    }
+
+    public void setNumberOfLectures(Long numberOfLectures) {
+        this.numberOfLecturesTransient = numberOfLectures;
+    }
+
+    public void setNumberOfExams(Long numberOfExams) {
+        this.numberOfExamsTransient = numberOfExams;
+    }
+
+    public void setNumberOfTutorialGroups(Long numberOfTutorialGroups) {
+        this.numberOfTutorialGroupsTransient = numberOfTutorialGroups;
+    }
+
+    public void setNumberOfCompetencies(Long numberOfCompetencies) {
+        this.numberOfCompetenciesTransient = numberOfCompetencies;
+    }
+
+    public void setNumberOfPrerequisites(Long numberOfPrerequisites) {
+        this.numberOfPrerequisitesTransient = numberOfPrerequisites;
+    }
 
     public String getTitle() {
         return title;
@@ -658,56 +699,6 @@ public class Course extends DomainObject {
         competency.getConsecutiveCourses().remove(this);
     }
 
-    /*
-     * NOTE: The file management is necessary to differentiate between temporary and used files and to delete used files when the corresponding course is deleted, or it is replaced
-     * by another file. The workflow is as follows 1. user uploads a file -> this is a temporary file, because at this point the corresponding course might not exist yet. 2. user
-     * saves the course -> now we move the temporary file which is addressed in courseIcon to a permanent location and update the value in courseIcon accordingly. => This happens
-     * in @PrePersist and @PostPersist 3. user might upload another file to replace the existing file -> this new file is a temporary file at first 4. user saves changes (with the
-     * new courseIcon pointing to the new temporary file) -> now we delete the old file in the permanent location and move the new file to a permanent location and update the value
-     * in courseIcon accordingly. => This happens in @PreUpdate and uses @PostLoad to know the old path 5. When course is deleted, the file in the permanent location is deleted =>
-     * This happens in @PostRemove
-     */
-
-    /**
-     * Initialisation of the Course on Server start
-     */
-    @PostLoad
-    public void onLoad() {
-        // replace placeholder with actual id if necessary (this is needed because changes made in afterCreate() are not persisted)
-        if (courseIcon != null && courseIcon.contains(Constants.FILEPATH_ID_PLACEHOLDER)) {
-            courseIcon = courseIcon.replace(Constants.FILEPATH_ID_PLACEHOLDER, getId().toString());
-        }
-        prevCourseIcon = courseIcon; // save current path as old path (needed to know old path in onUpdate() and onDelete())
-    }
-
-    @PrePersist
-    public void beforeCreate() {
-        if (courseIcon != null) {
-            courseIcon = entityFileService.moveTempFileBeforeEntityPersistence(courseIcon, FilePathService.getCourseIconFilePath(), false);
-        }
-    }
-
-    @PostPersist
-    public void afterCreate() {
-        // replace placeholder with actual id if necessary (id is no longer null at this point)
-        if (courseIcon != null && courseIcon.contains(Constants.FILEPATH_ID_PLACEHOLDER)) {
-            courseIcon = courseIcon.replace(Constants.FILEPATH_ID_PLACEHOLDER, getId().toString());
-        }
-    }
-
-    @PreUpdate
-    public void onUpdate() {
-        // move file and delete old file if necessary
-        courseIcon = entityFileService.handlePotentialFileUpdateBeforeEntityPersistence(getId(), prevCourseIcon, courseIcon, FilePathService.getCourseIconFilePath(), false);
-    }
-
-    @PostRemove
-    public void onDelete() {
-        if (prevCourseIcon != null) {
-            fileService.schedulePathForDeletion(Path.of(prevCourseIcon), 0);
-        }
-    }
-
     @Override
     public String toString() {
         return "Course{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", description='" + getDescription() + "'" + ", shortName='" + getShortName() + "'"
@@ -801,6 +792,14 @@ public class Course extends DomainObject {
 
     public void setAccuracyOfScores(Integer accuracyOfScores) {
         this.accuracyOfScores = accuracyOfScores;
+    }
+
+    public boolean getRestrictedAthenaModulesAccess() {
+        return restrictedAthenaModulesAccess;
+    }
+
+    public void setRestrictedAthenaModulesAccess(boolean restrictedAthenaModulesAccess) {
+        this.restrictedAthenaModulesAccess = restrictedAthenaModulesAccess;
     }
 
     public Set<TutorialGroup> getTutorialGroups() {
@@ -925,7 +924,7 @@ public class Course extends DomainObject {
      * <li>and the start and end date of the enrollment is before the end date of the course.</li>
      * </ul>
      *
-     * @throws BadRequestAlertException
+     * @throws BadRequestAlertException if the enrollment period is invalid
      */
     public void validateEnrollmentStartAndEndDate() {
         if (getEnrollmentStartDate() == null || getEnrollmentEndDate() == null) {
@@ -961,7 +960,7 @@ public class Course extends DomainObject {
      * <li>and the end date for unenrollment is not after the end date of the course.</li>
      * </ul>
      *
-     * @throws BadRequestAlertException
+     * @throws BadRequestAlertException if the unenrollment end date is invalid
      */
     public void validateUnenrollmentEndDate() {
         if (getUnenrollmentEndDate() == null) {
@@ -1024,5 +1023,20 @@ public class Course extends DomainObject {
 
     public void setCourseInformationSharingMessagingCodeOfConduct(String courseInformationSharingMessagingCodeOfConduct) {
         this.courseInformationSharingMessagingCodeOfConduct = courseInformationSharingMessagingCodeOfConduct;
+    }
+
+    public enum CourseSearchColumn {
+
+        ID("id"), TITLE("title"), SHORT_NAME("shortName"), SEMESTER("semester");
+
+        private final String mappedColumnName;
+
+        CourseSearchColumn(String mappedColumnName) {
+            this.mappedColumnName = mappedColumnName;
+        }
+
+        public String getMappedColumnName() {
+            return mappedColumnName;
+        }
     }
 }

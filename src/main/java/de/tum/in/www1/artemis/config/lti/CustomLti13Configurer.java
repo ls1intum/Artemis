@@ -1,20 +1,23 @@
 package de.tum.in.www1.artemis.config.lti;
 
+import java.time.Duration;
+
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
-import org.springframework.security.oauth2.client.web.AuthorizationRequestRepository;
-import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
+import org.springframework.security.oauth2.client.web.HttpSessionOAuth2AuthorizationRequestRepository;
 import org.springframework.security.web.authentication.logout.LogoutFilter;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
 
-import de.tum.in.www1.artemis.security.lti.Lti13LaunchFilter;
 import de.tum.in.www1.artemis.service.OnlineCourseConfigurationService;
 import de.tum.in.www1.artemis.service.connectors.lti.Lti13Service;
+import de.tum.in.www1.artemis.web.filter.Lti13LaunchFilter;
 import uk.ac.ox.ctl.lti13.Lti13Configurer;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.authentication.OidcLaunchFlowAuthenticationProvider;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OAuth2LoginAuthenticationFilter;
+import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OptimisticAuthorizationRequestRepository;
+import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.StateAuthorizationRequestRepository;
 
 /**
  * Configures and registers Security Filters to handle LTI 1.3 Resource Link Launches
@@ -41,18 +44,23 @@ public class CustomLti13Configurer extends Lti13Configurer {
     public static final String LTI13_LOGIN_REDIRECT_PROXY_PATH = LTI13_BASE_PATH + "/auth-callback";
 
     /** Path for LTI 1.3 deep linking. */
-    public static final String LTI13_DEEPLINKING_PATH = "/lti/deep-linking/";
+    public static final String LTI13_DEEPLINK_REDIRECT_PATH = LTI13_BASE_PATH + "/deep-link";
+
+    /** Path for LTI 1.3 deep linking redirect. */
+    public static final String LTI13_DEEPLINK_SELECT_COURSE_PATH = "/lti/select-course";
+
+    /** Value for LTI 1.3 deep linking request message. */
+    public static final String LTI13_DEEPLINK_MESSAGE_REQUEST = "LtiDeepLinkingRequest";
 
     public CustomLti13Configurer() {
         super.ltiPath(LTI13_BASE_PATH);
         super.loginInitiationPath(LOGIN_INITIATION_PATH);
         super.loginPath(LOGIN_PATH);
-        super.useState(true);
     }
 
     @Override
     public void configure(HttpSecurity http) {
-        AuthorizationRequestRepository<OAuth2AuthorizationRequest> authorizationRequestRepository = configureRequestRepository();
+        OptimisticAuthorizationRequestRepository authorizationRequestRepository = configureRequestRepository();
         OidcLaunchFlowAuthenticationProvider oidcLaunchFlowAuthenticationProvider = configureAuthenticationProvider(http);
 
         // Step 1 of the IMS SEC
@@ -73,5 +81,13 @@ public class CustomLti13Configurer extends Lti13Configurer {
 
     protected ClientRegistrationRepository clientRegistrationRepository(HttpSecurity http) {
         return http.getSharedObject(ApplicationContext.class).getBean(OnlineCourseConfigurationService.class);
+    }
+
+    @Override
+    protected OptimisticAuthorizationRequestRepository configureRequestRepository() {
+        HttpSessionOAuth2AuthorizationRequestRepository sessionRepository = new HttpSessionOAuth2AuthorizationRequestRepository();
+        StateAuthorizationRequestRepository stateRepository = new StateAuthorizationRequestRepository(Duration.ofMinutes(1));
+        stateRepository.setLimitIpAddress(limitIpAddresses);
+        return new StateBasedOptimisticAuthorizationRequestRepository(sessionRepository, stateRepository);
     }
 }

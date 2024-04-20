@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -7,12 +9,28 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.SubmissionVersion;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.BuildLogStatisticsEntryRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.repository.SubmissionVersionRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
@@ -21,18 +39,22 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.SubmissionService;
-import de.tum.in.www1.artemis.web.rest.dto.*;
+import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
+import de.tum.in.www1.artemis.web.rest.dto.SubmissionVersionDTO;
+import de.tum.in.www1.artemis.web.rest.dto.SubmissionWithComplaintDTO;
+import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
  * REST controller for managing Submission.
  */
+@Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class SubmissionResource {
 
-    private final Logger log = LoggerFactory.getLogger(SubmissionResource.class);
+    private static final Logger log = LoggerFactory.getLogger(SubmissionResource.class);
 
     private static final String ENTITY_NAME = "submission";
 
@@ -80,7 +102,7 @@ public class SubmissionResource {
      * @param submissionId the id of the submission to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("/submissions/{submissionId}")
+    @DeleteMapping("submissions/{submissionId}")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteSubmission(@PathVariable Long submissionId) {
         log.debug("REST request to delete Submission : {}", submissionId);
@@ -116,7 +138,7 @@ public class SubmissionResource {
      * @param exerciseId exerciseID for which all submissions should be returned
      * @return the ResponseEntity with status 200 (OK) and the list of the latest test run submission in body
      */
-    @GetMapping("/exercises/{exerciseId}/test-run-submissions")
+    @GetMapping("exercises/{exerciseId}/test-run-submissions")
     @EnforceAtLeastEditor
     public ResponseEntity<List<Submission>> getTestRunSubmissionsForAssessment(@PathVariable Long exerciseId) {
         log.debug("REST request to get all test run submissions for exercise {}", exerciseId);
@@ -131,8 +153,8 @@ public class SubmissionResource {
 
         var testRunParticipations = studentParticipationRepository.findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(user.getId(),
                 List.of(exercise));
-        if (!testRunParticipations.isEmpty() && testRunParticipations.get(0).findLatestSubmission().isPresent()) {
-            var latestSubmission = testRunParticipations.get(0).findLatestSubmission().get();
+        if (!testRunParticipations.isEmpty() && testRunParticipations.getFirst().findLatestSubmission().isPresent()) {
+            var latestSubmission = testRunParticipations.getFirst().findLatestSubmission().get();
             if (latestSubmission.getManualResults().isEmpty()) {
                 latestSubmission.addResult(submissionService.prepareTestRunSubmissionForAssessment(latestSubmission));
             }
@@ -154,7 +176,7 @@ public class SubmissionResource {
      * @param exerciseId of the exercise we are interested in
      * @return the ResponseEntity with status 200 (OK) and a list of SubmissionWithComplaintDTOs. The list can be empty.
      */
-    @GetMapping("/exercises/{exerciseId}/submissions-with-complaints")
+    @GetMapping("exercises/{exerciseId}/submissions-with-complaints")
     @EnforceAtLeastTutor
     public ResponseEntity<List<SubmissionWithComplaintDTO>> getSubmissionsWithComplaintsForAssessmentDashboard(@PathVariable Long exerciseId) {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
@@ -175,7 +197,7 @@ public class SubmissionResource {
      * @param exerciseId of the exercise we are interested in
      * @return the ResponseEntity with status 200 (OK) and a list of SubmissionWithComplaintDTOs. The list can be empty.
      */
-    @GetMapping("/exercises/{exerciseId}/more-feedback-requests-with-complaints")
+    @GetMapping("exercises/{exerciseId}/more-feedback-requests-with-complaints")
     @EnforceAtLeastTutor
     public ResponseEntity<List<SubmissionWithComplaintDTO>> getSubmissionsWithMoreFeedbackRequestForAssessmentDashboard(@PathVariable Long exerciseId) {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
@@ -196,7 +218,7 @@ public class SubmissionResource {
      */
     @GetMapping("exercises/{exerciseId}/submissions-for-import")
     @EnforceAtLeastInstructor
-    public ResponseEntity<SearchResultPageDTO<Submission>> getSubmissionsOnPageWithSize(@PathVariable Long exerciseId, PageableSearchDTO<String> search) {
+    public ResponseEntity<SearchResultPageDTO<Submission>> getSubmissionsOnPageWithSize(@PathVariable Long exerciseId, SearchTermPageableSearchDTO<String> search) {
         log.debug("REST request to get all Submissions for import : {}", exerciseId);
 
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
@@ -230,15 +252,16 @@ public class SubmissionResource {
      * A submission version is created every time a student clicks save or every 30s when the current state is saved
      *
      * @param submissionId the id of the submission for which all versions should be returned
-     * @return a list of {@link SubmissionVersionDTO} for the given submission
+     * @return the ResponseEntity with status 200 (OK) and with body a list of {@link SubmissionVersionDTO} for the given submission
      */
 
-    @GetMapping("/submissions/{submissionId}/versions")
+    @GetMapping("submissions/{submissionId}/versions")
     @EnforceAtLeastInstructor
-    public List<SubmissionVersionDTO> getSubmissionVersions(@PathVariable long submissionId) {
+    public ResponseEntity<List<SubmissionVersionDTO>> getSubmissionVersions(@PathVariable long submissionId) {
         var submission = submissionRepository.findByIdElseThrow(submissionId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, submission.getParticipation().getExercise(), userRepository.getUser());
         var submissionVersions = submissionVersionRepository.findSubmissionVersionBySubmissionIdOrderByCreatedDateAsc(submission.getId());
-        return submissionVersions.stream().map(SubmissionVersionDTO::of).toList();
+        final var dtos = submissionVersions.stream().map(SubmissionVersionDTO::of).toList();
+        return ResponseEntity.ok(dtos);
     }
 }

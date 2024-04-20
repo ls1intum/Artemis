@@ -26,7 +26,7 @@ export class ProgrammingExerciseGroupCellComponent implements OnInit {
     @Input()
     displayShortName = false;
     @Input()
-    displayRepositoryUrl = false;
+    displayRepositoryUri = false;
     @Input()
     displayTemplateUrls = false;
     @Input()

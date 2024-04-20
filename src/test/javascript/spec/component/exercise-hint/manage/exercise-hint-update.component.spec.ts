@@ -18,11 +18,13 @@ import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-t
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { CodeHint } from 'app/entities/hestia/code-hint-model';
 import { CodeHintService } from 'app/exercises/shared/exercise-hint/services/code-hint.service';
-import { ProfileService } from '../../../../../../main/webapp/app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
-import { IrisSettingsService } from '../../../../../../main/webapp/app/iris/settings/shared/iris-settings.service';
-import { IrisSettings } from '../../../../../../main/webapp/app/entities/iris/settings/iris-settings.model';
-import { ProfileInfo } from '../../../../../../main/webapp/app/shared/layouts/profiles/profile-info.model';
+import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
+import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
+import { PROFILE_IRIS } from 'app/app.constants';
 
 describe('ExerciseHint Management Update Component', () => {
     let comp: ExerciseHintUpdateComponent;
@@ -123,6 +125,7 @@ describe('ExerciseHint Management Update Component', () => {
         const codeHint1 = new CodeHint();
         codeHint1.id = 123;
         codeHint1.programmingExerciseTask = task2;
+        codeHint1.solutionEntries = [new ProgrammingExerciseSolutionEntry()];
         const codeHint2 = new CodeHint();
         codeHint2.id = 123;
         codeHint2.programmingExerciseTask = task2;
@@ -145,7 +148,7 @@ describe('ExerciseHint Management Update Component', () => {
         expect(comp.exerciseHint.description).toBe('Hello Description');
     }));
 
-    it.each<[string[]]>([[[]], [['iris']]])(
+    it.each<[string[]]>([[[]], [[PROFILE_IRIS]]])(
         'should load iris settings only if profile iris is active',
         fakeAsync((activeProfiles: string[]) => {
             // Mock getProfileInfo to return activeProfiles
@@ -165,7 +168,7 @@ describe('ExerciseHint Management Update Component', () => {
             comp.ngOnInit();
             tick();
 
-            if (activeProfiles.includes('iris')) {
+            if (activeProfiles.includes(PROFILE_IRIS)) {
                 // Should have called getCombinedProgrammingExerciseSettings if 'iris' is active
                 expect(getCombinedProgrammingExerciseSettingsSpy).toHaveBeenCalledOnce();
                 expect(comp.irisSettings).toBe(fakeSettings);
@@ -181,6 +184,7 @@ describe('ExerciseHint Management Update Component', () => {
         const codeHint = new CodeHint();
         codeHint.id = 123;
         codeHint.programmingExerciseTask = task2;
+        codeHint.solutionEntries = [new ProgrammingExerciseSolutionEntry()];
 
         comp.exerciseHint = codeHint;
         comp.courseId = 1;

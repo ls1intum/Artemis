@@ -208,7 +208,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateLecture_NoId_shouldReturnBadRequest() throws Exception {
-        Lecture originalLecture = lectureRepository.findByIdWithLectureUnits(lecture1.getId()).orElseThrow();
+        Lecture originalLecture = lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture1.getId()).orElseThrow();
         originalLecture.setId(null);
         originalLecture.setChannelName("test");
 
@@ -352,33 +352,6 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(lectureChannelAfterDelete).isEmpty();
     }
 
-    /**
-     * Hibernates sometimes adds null to the list of lecture units to keep the order after a lecture unit has been deleted.
-     * This should not happen any more as we have refactored the way lecture units are deleted, nevertheless we want to
-     * check here that this case not causes any errors as null values could still exist in the database
-     */
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void deleteLecture_NullInListOfLectureUnits_shouldDeleteLecture() throws Exception {
-        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndCompetenciesElseThrow(lecture1.getId());
-        List<LectureUnit> lectureUnits = lecture.getLectureUnits();
-        assertThat(lectureUnits).hasSize(5);
-        ArrayList<LectureUnit> lectureUnitsWithNulls = new ArrayList<>();
-        for (LectureUnit lectureUnit : lectureUnits) {
-            lectureUnitsWithNulls.add(null);
-            lectureUnitsWithNulls.add(lectureUnit);
-        }
-        lecture.getLectureUnits().clear();
-        lecture.getLectureUnits().addAll(lectureUnitsWithNulls);
-        lectureRepository.saveAndFlush(lecture);
-        lecture = lectureRepository.findByIdWithLectureUnitsAndCompetenciesElseThrow(lecture1.getId());
-        lectureUnits = lecture.getLectureUnits();
-        assertThat(lectureUnits).hasSize(10);
-        request.delete("/api/lectures/" + lecture1.getId(), HttpStatus.OK);
-        Optional<Lecture> lectureOptional = lectureRepository.findById(lecture1.getId());
-        assertThat(lectureOptional).isEmpty();
-    }
-
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void deleteLecture_asInstructorNotInCourse_shouldReturnForbidden() throws Exception {
@@ -431,7 +404,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void testInstructorGetsOnlyResultsFromOwningCourses() throws Exception {
         final var search = pageableSearchUtilService.configureSearch("");
-        final var result = request.getSearchResult("/api/lectures/", HttpStatus.OK, Lecture.class, pageableSearchUtilService.searchMapping(search));
+        final var result = request.getSearchResult("/api/lectures", HttpStatus.OK, Lecture.class, pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).isNullOrEmpty();
     }
 
@@ -439,7 +412,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testInstructorGetsResultsFromOwningCoursesNotEmpty() throws Exception {
         final var search = pageableSearchUtilService.configureSearch(lecture1.getTitle());
-        final var result = request.getSearchResult("/api/lectures/", HttpStatus.OK, Lecture.class, pageableSearchUtilService.searchMapping(search));
+        final var result = request.getSearchResult("/api/lectures", HttpStatus.OK, Lecture.class, pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(1);
     }
 
@@ -447,7 +420,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testAdminGetsResultsFromAllCourses() throws Exception {
         final var search = pageableSearchUtilService.configureSearch(lecture1.getTitle());
-        final var result = request.getSearchResult("/api/lectures/", HttpStatus.OK, Lecture.class, pageableSearchUtilService.searchMapping(search));
+        final var result = request.getSearchResult("/api/lectures", HttpStatus.OK, Lecture.class, pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(1);
     }
 

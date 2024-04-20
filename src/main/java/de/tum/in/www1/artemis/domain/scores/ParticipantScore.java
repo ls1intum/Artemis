@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.domain.scores;
 
 import java.time.Instant;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -40,7 +40,12 @@ import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 @DiscriminatorValue("PS")
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 // Annotation necessary to distinguish between concrete implementations of ParticipantScore when deserializing from JSON
-@JsonSubTypes({ @JsonSubTypes.Type(value = StudentScore.class, name = "studentScore"), @JsonSubTypes.Type(value = TeamScore.class, name = "teamScore") })
+// @formatter:off
+@JsonSubTypes({
+    @JsonSubTypes.Type(value = StudentScore.class, name = "studentScore"),
+    @JsonSubTypes.Type(value = TeamScore.class, name = "teamScore")
+})
+// @formatter:on
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class ParticipantScore extends DomainObject {
 

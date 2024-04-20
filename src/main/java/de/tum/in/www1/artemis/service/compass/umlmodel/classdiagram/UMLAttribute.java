@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram;
 import java.io.Serializable;
 import java.util.Objects;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
@@ -23,9 +23,8 @@ public class UMLAttribute extends UMLElement implements Serializable {
     /**
      * empty constructor used to make mockito happy
      */
-
     public UMLAttribute() {
-        super();
+        // default empty constructor
     }
 
     public UMLAttribute(String name, String attributeType, String jsonElementID) {
@@ -110,6 +109,11 @@ public class UMLAttribute extends UMLElement implements Serializable {
     @Override
     public String getType() {
         return UML_ATTRIBUTE_TYPE;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), name, attributeType);
     }
 
     @Override

@@ -76,7 +76,6 @@ When setting up the Artemis server, the following values need to be added/update
             username: <YOUR_DB_USER>
             password: <YOUR_DB_PASSWORD>
         jpa:
-            database-platform: org.hibernate.dialect.PostgreSQL10Dialect
             database: POSTGRESQL
 
 .. note::

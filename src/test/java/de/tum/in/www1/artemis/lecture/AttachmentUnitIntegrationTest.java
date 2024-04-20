@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
@@ -90,8 +90,8 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     private void testAllPreAuthorize() throws Exception {
-        request.getMvc().perform(buildUpdateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isForbidden());
-        request.getMvc().perform(buildCreateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isForbidden());
+        request.performMvcRequest(buildUpdateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isForbidden());
+        request.performMvcRequest(buildCreateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isForbidden());
         request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/42", HttpStatus.FORBIDDEN, AttachmentUnit.class);
     }
 
@@ -197,14 +197,14 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
         MockMultipartFile file = new MockMultipartFile("file", fileName, "application/json", "test".getBytes());
         attachmentUnitBuilder.file(file).contentType(MediaType.MULTIPART_FORM_DATA_VALUE).param("keepFilename", "true");
         AttachmentUnit updatedAttachmentUnit = request.getObjectMapper()
-                .readValue(request.getMvc().perform(attachmentUnitBuilder).andExpect(status().isOk()).andReturn().getResponse().getContentAsString(), AttachmentUnit.class);
+                .readValue(request.performMvcRequest(attachmentUnitBuilder).andExpect(status().isOk()).andReturn().getResponse().getContentAsString(), AttachmentUnit.class);
         request.getFile(updatedAttachmentUnit.getAttachment().getLink(), HttpStatus.OK);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createAttachmentUnit_asInstructor_shouldCreateAttachmentUnit() throws Exception {
-        var result = request.getMvc().perform(buildCreateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isCreated()).andReturn();
+        var result = request.performMvcRequest(buildCreateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isCreated()).andReturn();
         var persistedAttachmentUnit = mapper.readValue(result.getResponse().getContentAsString(), AttachmentUnit.class);
         assertThat(persistedAttachmentUnit.getId()).isNotNull();
         var persistedAttachment = persistedAttachmentUnit.getAttachment();
@@ -219,34 +219,34 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void createAttachmentUnit_InstructorNotInCourse_shouldReturnForbidden() throws Exception {
-        request.getMvc().perform(buildCreateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isForbidden());
+        request.performMvcRequest(buildCreateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isForbidden());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createAttachmentUnit_withUnitId_shouldReturnBadRequest() throws Exception {
         attachmentUnit.setId(99L);
-        request.getMvc().perform(buildCreateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isBadRequest());
+        request.performMvcRequest(buildCreateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isBadRequest());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createAttachmentUnit_withAttachmentId_shouldReturnBadRequest() throws Exception {
         attachment.setId(99L);
-        request.getMvc().perform(buildCreateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isBadRequest());
+        request.performMvcRequest(buildCreateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isBadRequest());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateAttachmentUnit_asInstructor_shouldUpdateAttachmentUnit() throws Exception {
-        var createResult = request.getMvc().perform(buildCreateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isCreated()).andReturn();
+        var createResult = request.performMvcRequest(buildCreateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isCreated()).andReturn();
         var attachmentUnit = mapper.readValue(createResult.getResponse().getContentAsString(), AttachmentUnit.class);
         var attachment = attachmentUnit.getAttachment();
         attachmentUnit.setDescription("Changed");
         // Wait for async operation to complete (after attachment unit is saved, the file gets split into slides)
         await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentUnitId(attachmentUnit.getId())).hasSize(SLIDE_COUNT));
         List<Slide> oldSlides = slideRepository.findAllByAttachmentUnitId(attachmentUnit.getId());
-        var updateResult = request.getMvc().perform(buildUpdateAttachmentUnit(attachmentUnit, attachment, "new File", true)).andExpect(status().isOk()).andReturn();
+        var updateResult = request.performMvcRequest(buildUpdateAttachmentUnit(attachmentUnit, attachment, "new File", true)).andExpect(status().isOk()).andReturn();
         AttachmentUnit attachmentUnit1 = mapper.readValue(updateResult.getResponse().getContentAsString(), AttachmentUnit.class);
         assertThat(attachmentUnit1.getDescription()).isEqualTo("Changed");
         // Wait for async operation to complete (after attachment unit is updated, the new file gets split into slides)
@@ -273,34 +273,35 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
         List<LectureUnit> orderedUnits = lecture1.getLectureUnits();
 
         // Updating the lecture unit should not influence order
-        request.getMvc().perform(buildUpdateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isOk());
+        request.performMvcRequest(buildUpdateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isOk());
 
         SecurityUtils.setAuthorizationObject();
-        List<LectureUnit> updatedOrderedUnits = lectureRepository.findByIdWithLectureUnits(lecture1.getId()).orElseThrow().getLectureUnits();
+        List<LectureUnit> updatedOrderedUnits = lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture1.getId()).orElseThrow().getLectureUnits();
         assertThat(updatedOrderedUnits).containsExactlyElementsOf(orderedUnits);
     }
 
     private void persistAttachmentUnitWithLecture() {
         this.attachmentUnit = attachmentUnitRepository.saveAndFlush(this.attachmentUnit);
-        lecture1 = lectureRepository.findByIdWithLectureUnits(lecture1.getId()).orElseThrow();
+        lecture1 = lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture1.getId()).orElseThrow();
         lecture1.addLectureUnit(this.attachmentUnit);
         lecture1 = lectureRepository.saveAndFlush(lecture1);
-        this.attachmentUnit = (AttachmentUnit) lectureRepository.findByIdWithLectureUnits(lecture1.getId()).orElseThrow().getLectureUnits().stream().findFirst().orElseThrow();
+        this.attachmentUnit = (AttachmentUnit) lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture1.getId()).orElseThrow().getLectureUnits().stream().findFirst()
+                .orElseThrow();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void updateAttachmentUnit_notInstructorInCourse_shouldReturnForbidden() throws Exception {
         persistAttachmentUnitWithLecture();
-        request.getMvc().perform(buildUpdateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isForbidden());
+        request.performMvcRequest(buildUpdateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isForbidden());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void updateAttachmentUnit_withoutLecture_shouldReturnConflict() throws Exception {
+    void updateAttachmentUnit_withoutLecture_shouldReturnBadRequest() throws Exception {
         persistAttachmentUnitWithLecture();
         attachmentUnit.setLecture(null);
-        request.getMvc().perform(buildUpdateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isConflict());
+        request.performMvcRequest(buildUpdateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isBadRequest());
     }
 
     @Test
@@ -325,11 +326,11 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteAttachmentUnit_withAttachment_shouldDeleteAttachment() throws Exception {
-        var result = request.getMvc().perform(buildCreateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isCreated()).andReturn();
+        var result = request.performMvcRequest(buildCreateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isCreated()).andReturn();
         var persistedAttachmentUnit = mapper.readValue(result.getResponse().getContentAsString(), AttachmentUnit.class);
         assertThat(persistedAttachmentUnit.getId()).isNotNull();
         assertThat(slideRepository.findAllByAttachmentUnitId(persistedAttachmentUnit.getId())).hasSize(0);
         request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + persistedAttachmentUnit.getId(), HttpStatus.OK);
-        request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/" + persistedAttachmentUnit.getId(), HttpStatus.NOT_FOUND, Attachment.class);
+        request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/" + persistedAttachmentUnit.getId(), HttpStatus.NOT_FOUND, AttachmentUnit.class);
     }
 }

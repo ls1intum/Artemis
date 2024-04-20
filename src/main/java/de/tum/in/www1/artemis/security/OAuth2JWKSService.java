@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.keygen.Base64StringKeyGenerator;
 import org.springframework.security.crypto.keygen.StringKeyGenerator;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.jwk.JWK;
@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.service.OnlineCourseConfigurationService;
  * This Service is responsible to manage JWKs for all OAuth2 ClientRegistrations.
  * On initialisation, each ClientRegistration gets assigned a fresh generated RSAKey.
  */
-@Component
+@Service
 @Profile("lti")
 public class OAuth2JWKSService {
 
@@ -35,7 +35,7 @@ public class OAuth2JWKSService {
 
     private final StringKeyGenerator kidGenerator = new Base64StringKeyGenerator(32);
 
-    private final Logger log = LoggerFactory.getLogger(OAuth2JWKSService.class);
+    private static final Logger log = LoggerFactory.getLogger(OAuth2JWKSService.class);
 
     private final Map<String, String> clientRegistrationIdToKeyId = new HashMap<>();
 

@@ -1,9 +1,12 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,11 +21,12 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 /**
  * REST controller for managing the Organization entities
  */
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 public class OrganizationResource {
 
-    private final Logger log = LoggerFactory.getLogger(OrganizationResource.class);
+    private static final Logger log = LoggerFactory.getLogger(OrganizationResource.class);
 
     private final OrganizationRepository organizationRepository;
 

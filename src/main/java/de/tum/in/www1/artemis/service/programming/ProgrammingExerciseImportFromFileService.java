@@ -1,32 +1,52 @@
 package de.tum.in.www1.artemis.service.programming;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.in.www1.artemis.service.export.ProgrammingExerciseExportService.BUILD_PLAN_FILE_NAME;
+
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import org.apache.commons.compress.utils.FileNameUtils;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.NameFileFilter;
 import org.apache.commons.io.filefilter.NotFileFilter;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.Repository;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.repository.BuildPlanRepository;
+import de.tum.in.www1.artemis.service.FilePathService;
+import de.tum.in.www1.artemis.service.FileService;
+import de.tum.in.www1.artemis.service.ProfileService;
+import de.tum.in.www1.artemis.service.RepositoryService;
+import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
+import de.tum.in.www1.artemis.service.ZipFileService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
+@Profile(PROFILE_CORE)
 @Service
 public class ProgrammingExerciseImportFromFileService {
+
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseImportFromFileService.class);
 
     private final ProgrammingExerciseService programmingExerciseService;
 
@@ -40,16 +60,23 @@ public class ProgrammingExerciseImportFromFileService {
 
     private final FileService fileService;
 
+    private final ProfileService profileService;
+
+    private final BuildPlanRepository buildPlanRepository;
+
     private static final List<String> SHORT_NAME_REPLACEMENT_EXCLUSIONS = List.of("gradle-wrapper.jar");
 
     public ProgrammingExerciseImportFromFileService(ProgrammingExerciseService programmingExerciseService, ZipFileService zipFileService,
-            StaticCodeAnalysisService staticCodeAnalysisService, RepositoryService repositoryService, GitService gitService, FileService fileService) {
+            StaticCodeAnalysisService staticCodeAnalysisService, RepositoryService repositoryService, GitService gitService, FileService fileService, ProfileService profileService,
+            BuildPlanRepository buildPlanRepository) {
         this.programmingExerciseService = programmingExerciseService;
         this.zipFileService = zipFileService;
         this.staticCodeAnalysisService = staticCodeAnalysisService;
         this.repositoryService = repositoryService;
         this.gitService = gitService;
         this.fileService = fileService;
+        this.profileService = profileService;
+        this.buildPlanRepository = buildPlanRepository;
     }
 
     /**
@@ -57,19 +84,19 @@ public class ProgrammingExerciseImportFromFileService {
      * It first extracts the contents of the zip file, then creates a programming exercise (same process as creating a new one),
      * then deletes the template content initially pushed to the repositories and copies over the extracted content
      *
-     * @param programmingExerciseForImport the programming exercise that should be imported
-     * @param zipFile                      the zip file that contains the exercise
-     * @param course                       the course to which the exercise should be added
-     * @param user                         the user initiating the import
+     * @param originalProgrammingExercise the programming exercise that should be imported
+     * @param zipFile                     the zip file that contains the exercise
+     * @param course                      the course to which the exercise should be added
+     * @param user                        the user initiating the import
      * @return the imported programming exercise
      **/
-    public ProgrammingExercise importProgrammingExerciseFromFile(ProgrammingExercise programmingExerciseForImport, MultipartFile zipFile, Course course, User user)
+    public ProgrammingExercise importProgrammingExerciseFromFile(ProgrammingExercise originalProgrammingExercise, MultipartFile zipFile, Course course, User user)
             throws IOException, GitAPIException, URISyntaxException {
-        if (!"zip".equals(FileNameUtils.getExtension(zipFile.getOriginalFilename()))) {
+        if (!"zip".equals(FilenameUtils.getExtension(zipFile.getOriginalFilename()))) {
             throw new BadRequestAlertException("The file is not a zip file", "programmingExercise", "fileNotZip");
         }
         Path importExerciseDir = null;
-        ProgrammingExercise importedProgrammingExercise;
+        ProgrammingExercise newProgrammingExercise;
         try {
             importExerciseDir = Files.createTempDirectory("imported-exercise-dir");
             Path exerciseFilePath = Files.createTempFile(importExerciseDir, "exercise-for-import", ".zip");
@@ -78,21 +105,46 @@ public class ProgrammingExerciseImportFromFileService {
             zipFileService.extractZipFileRecursively(exerciseFilePath);
             checkRepositoriesExist(importExerciseDir);
             var oldShortName = getProgrammingExerciseFromDetailsFile(importExerciseDir).getShortName();
-            programmingExerciseService.validateNewProgrammingExerciseSettings(programmingExerciseForImport, course);
+            programmingExerciseService.validateNewProgrammingExerciseSettings(originalProgrammingExercise, course);
             // TODO: creating the whole exercise (from template) is a bad solution in this case, we do not want the template content, instead we want the file content of the zip
-            importedProgrammingExercise = programmingExerciseService.createProgrammingExercise(programmingExerciseForImport, true);
-            if (Boolean.TRUE.equals(programmingExerciseForImport.isStaticCodeAnalysisEnabled())) {
-                staticCodeAnalysisService.createDefaultCategories(importedProgrammingExercise);
+            newProgrammingExercise = programmingExerciseService.createProgrammingExercise(originalProgrammingExercise, true);
+            if (Boolean.TRUE.equals(originalProgrammingExercise.isStaticCodeAnalysisEnabled())) {
+                staticCodeAnalysisService.createDefaultCategories(newProgrammingExercise);
             }
-            copyEmbeddedFiles(exerciseFilePath.toAbsolutePath().getParent().resolve(FileNameUtils.getBaseName(exerciseFilePath.toString())));
-            importRepositoriesFromFile(importedProgrammingExercise, importExerciseDir, oldShortName, user);
-            importedProgrammingExercise.setCourse(course);
+            Path pathToDirectoryWithImportedContent = exerciseFilePath.toAbsolutePath().getParent().resolve(FilenameUtils.getBaseName(exerciseFilePath.toString()));
+            copyEmbeddedFiles(pathToDirectoryWithImportedContent);
+            importRepositoriesFromFile(newProgrammingExercise, importExerciseDir, oldShortName, user);
+            newProgrammingExercise.setCourse(course);
+            // It doesn't make sense to import a build plan on a local CI setup.
+            if (profileService.isGitlabCiOrJenkinsActive()) {
+                importBuildPlanIfExisting(newProgrammingExercise, pathToDirectoryWithImportedContent);
+            }
+            // TODO: we need to create the build configuration
         }
         finally {
             // want to make sure the directories are deleted, even if an exception is thrown
             fileService.scheduleDirectoryPathForRecursiveDeletion(importExerciseDir, 5);
         }
-        return importedProgrammingExercise;
+        return newProgrammingExercise;
+    }
+
+    /**
+     * Imports a build plan if it exists in the extracted zip file
+     * If the file cannot be read, the build plan is skipped
+     *
+     * @param programmingExercise the programming exercise for which the build plan should be imported
+     * @param importExerciseDir   the directory where the extracted zip file is located
+     */
+    private void importBuildPlanIfExisting(ProgrammingExercise programmingExercise, Path importExerciseDir) {
+        Path buildPlanPath = importExerciseDir.resolve(BUILD_PLAN_FILE_NAME);
+        if (Files.exists(buildPlanPath)) {
+            try {
+                buildPlanRepository.setBuildPlanForExercise(FileUtils.readFileToString(buildPlanPath.toFile(), StandardCharsets.UTF_8), programmingExercise);
+            }
+            catch (IOException e) {
+                log.warn("Could not read build plan file. Continue importing the exercise but skipping the build plan.", e);
+            }
+        }
     }
 
     /**
@@ -118,9 +170,9 @@ public class ProgrammingExerciseImportFromFileService {
 
     private void importRepositoriesFromFile(ProgrammingExercise newExercise, Path basePath, String oldExerciseShortName, User user)
             throws IOException, GitAPIException, URISyntaxException {
-        Repository templateRepo = gitService.getOrCheckoutRepository(new VcsRepositoryUrl(newExercise.getTemplateRepositoryUrl()), false);
-        Repository solutionRepo = gitService.getOrCheckoutRepository(new VcsRepositoryUrl(newExercise.getSolutionRepositoryUrl()), false);
-        Repository testRepo = gitService.getOrCheckoutRepository(new VcsRepositoryUrl(newExercise.getTestRepositoryUrl()), false);
+        Repository templateRepo = gitService.getOrCheckoutRepository(new VcsRepositoryUri(newExercise.getTemplateRepositoryUri()), false);
+        Repository solutionRepo = gitService.getOrCheckoutRepository(new VcsRepositoryUri(newExercise.getSolutionRepositoryUri()), false);
+        Repository testRepo = gitService.getOrCheckoutRepository(new VcsRepositoryUri(newExercise.getTestRepositoryUri()), false);
 
         copyImportedExerciseContentToRepositories(templateRepo, solutionRepo, testRepo, basePath);
         replaceImportedExerciseShortName(Map.of(oldExerciseShortName, newExercise.getShortName()), templateRepo, solutionRepo, testRepo);
@@ -207,7 +259,7 @@ public class ProgrammingExerciseImportFromFileService {
                     "There are either no or more than one sub-directories containing " + repoType + " in their name. Please make sure that there is exactly one.");
         }
 
-        return result.get(0);
+        return result.getFirst();
     }
 
     private Path retrieveExerciseJsonPath(Path dirPath) throws IOException {
@@ -223,6 +275,6 @@ public class ProgrammingExerciseImportFromFileService {
         if (result.size() != 1) {
             throw new BadRequestAlertException("There are either no JSON files or more than one JSON file in the directory!", "programmingExercise", "exerciseJsonNotValidOrFound");
         }
-        return result.get(0);
+        return result.getFirst();
     }
 }

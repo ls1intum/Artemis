@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subject, Subscription } from 'rxjs';
 import { ParticipationService } from './participation.service';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { StudentParticipation, isPracticeMode } from 'app/entities/participation/student-participation.model';
 import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/exercises/programming/participate/programming-submission.service';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
@@ -18,8 +18,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
-import { faCircleNotch, faEraser, faFilePowerpoint, faTable, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch, faCodeBranch, faEraser, faFilePowerpoint, faTable, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeStepsDTO } from 'app/entities/grade-step.model';
 import { PROFILE_LOCALVC } from 'app/app.constants';
@@ -56,7 +55,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     gradeStepsDTO?: GradeStepsDTO;
     gradeStepsDTOSub: Subscription;
 
-    // Used to show the "Clone Repository URL" button instead of a link to Bitbucket/GitLab when the "localvc" profile is active.
+    // Used to show the "Clone Repository URI" button instead of a link to GitLab when the "localvc" profile is active.
     localVCEnabled = false;
 
     private dialogErrorSource = new Subject<string>();
@@ -76,6 +75,8 @@ export class ParticipationComponent implements OnInit, OnDestroy {
 
     afterDueDate = false;
 
+    routerLink: string;
+
     // Icons
     faTable = faTable;
     faTimes = faTimes;
@@ -83,6 +84,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     faCircleNotch = faCircleNotch;
     faEraser = faEraser;
     faFilePowerpoint = faFilePowerpoint;
+    faCodeBranch = faCodeBranch;
 
     constructor(
         private route: ActivatedRoute,
@@ -94,6 +96,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         private accountService: AccountService,
         private profileService: ProfileService,
         private gradingSystemService: GradingSystemService,
+        private router: Router,
     ) {
         this.participationCriteria = {
             filterProp: FilterProp.ALL,
@@ -104,6 +107,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
      * Initialize component by calling loadAll and registerChangeInParticipation
      */
     ngOnInit() {
+        this.routerLink = this.router.url;
         this.paramSub = this.route.params.subscribe((params) => this.loadExercise(+params['exerciseId']));
         this.registerChangeInParticipations();
         this.isAdmin = this.accountService.isAdmin();
@@ -157,7 +161,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
                 const programmingExercise = this.exercise as ProgrammingExercise;
                 if (programmingExercise.projectKey) {
                     this.profileService.getProfileInfo().subscribe((profileInfo) => {
-                        setBuildPlanUrlForProgrammingParticipations(profileInfo, this.participations, (this.exercise as ProgrammingExercise).projectKey);
                         this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
                     });
                 }
@@ -402,16 +405,16 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     };
 
     /**
-     * Removes the login from the repositoryURL
+     * Removes the login from the repositoryUri
      *
      * @param participation Student participation
-     * @param repoUrl original repository url
+     * @param repoUri original repository uri
      */
-    getRepositoryLink = (participation: StudentParticipation, repoUrl: string) => {
-        if ((participation as ProgrammingExerciseStudentParticipation).repositoryUrl === repoUrl) {
-            return (participation as ProgrammingExerciseStudentParticipation).userIndependentRepositoryUrl;
+    getRepositoryLink = (participation: StudentParticipation, repoUri: string) => {
+        if ((participation as ProgrammingExerciseStudentParticipation).repositoryUri === repoUri) {
+            return (participation as ProgrammingExerciseStudentParticipation).userIndependentRepositoryUri;
         }
-        return repoUrl;
+        return repoUri;
     };
 
     /**

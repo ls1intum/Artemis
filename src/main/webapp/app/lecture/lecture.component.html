@@ -2,9 +2,9 @@
     <div class="row">
         <div class="col-4 d-flex align-items-center">
             <h2 id="page-heading">
-                <span jhiTranslate="artemisApp.lecture.home.title">Lectures</span>
+                <span jhiTranslate="artemisApp.lecture.home.title"></span>
             </h2>
-            <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
+            <jhi-documentation-button [type]="documentationType" />
         </div>
         <div class="d-flex flex-row-reverse bd-highlight mb-3">
             <div aria-label="Button group with nested dropdown" class="btn-group" role="group">
@@ -15,7 +15,7 @@
                         ngbDropdownToggle
                         id="filter-dropdown-button"
                     >
-                        <fa-icon [icon]="faFilter"></fa-icon>
+                        <fa-icon [icon]="faFilter" />
                         <span class="d-s-none d-md-inline">{{ 'artemisApp.courseOverview.exerciseList.filter' | artemisTranslate: { num: activeFilters.size } }}</span>
                     </button>
                     <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
@@ -28,7 +28,7 @@
                                     [checked]="activeFilters.has(filterType.PAST)"
                                     type="checkbox"
                                 />
-                                <span class="ms-2" jhiTranslate="artemisApp.lecture.home.filterOptions.filterPast">Past</span>
+                                <span class="ms-2" jhiTranslate="artemisApp.lecture.home.filterOptions.filterPast"></span>
                             </label>
                         </li>
                         <li>
@@ -40,7 +40,7 @@
                                     [checked]="activeFilters.has(filterType.CURRENT)"
                                     type="checkbox"
                                 />
-                                <span class="ms-2" jhiTranslate="artemisApp.lecture.home.filterOptions.filterCurrent">Current</span>
+                                <span class="ms-2" jhiTranslate="artemisApp.lecture.home.filterOptions.filterCurrent"></span>
                             </label>
                         </li>
                         <li>
@@ -52,7 +52,7 @@
                                     [checked]="activeFilters.has(filterType.FUTURE)"
                                     type="checkbox"
                                 />
-                                <span class="ms-2" jhiTranslate="artemisApp.lecture.home.filterOptions.filterFuture">Future</span>
+                                <span class="ms-2" jhiTranslate="artemisApp.lecture.home.filterOptions.filterFuture"></span>
                             </label>
                         </li>
                         <li>
@@ -64,104 +64,114 @@
                                     [checked]="activeFilters.has(filterType.UNSPECIFIED)"
                                     type="checkbox"
                                 />
-                                <span class="ms-2" jhiTranslate="artemisApp.lecture.home.filterOptions.filterUnspecifiedDates">Unspecified Date(s)</span>
+                                <span class="ms-2" jhiTranslate="artemisApp.lecture.home.filterOptions.filterUnspecifiedDates"></span>
                             </label>
                         </li>
                     </ul>
                 </div>
                 <div class="d-flex-end text-end">
                     <button (click)="openImportModal()" class="btn btn-primary jh-create-entity import-lecture text-truncate mb-1" id="lecture-import-button">
-                        <fa-icon [icon]="faPlus"></fa-icon>
-                        <span jhiTranslate="artemisApp.lecture.home.importLabel">Import Lecture</span>
+                        <fa-icon [icon]="faFileImport" />
+                        <span jhiTranslate="artemisApp.lecture.import.label"></span>
                     </button>
                     <a id="jh-create-entity" class="btn btn-primary jh-create-entity create-lecture mb-1" [routerLink]="['new']">
-                        <fa-icon [icon]="faPlus"></fa-icon>
-                        <span jhiTranslate="artemisApp.lecture.home.createLabel">Create Lecture</span>
+                        <fa-icon [icon]="faPlus" />
+                        <span jhiTranslate="artemisApp.lecture.home.createLabel"></span>
                     </a>
                 </div>
             </div>
         </div>
     </div>
     <br />
-    <div class="table-responsive" *ngIf="filteredLectures">
-        <table class="table table-striped">
-            <thead>
-                <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="sortRows()">
-                    <th class="d-md-table-cell" jhiSortBy="id">
-                        <span jhiTranslate="global.field.id">ID</span>
-                        <fa-icon [icon]="faSort"></fa-icon>
-                    </th>
-                    <th jhiSortBy="title">
-                        <span jhiTranslate="artemisApp.lecture.title">Title</span>
-                        <fa-icon [icon]="faSort"></fa-icon>
-                    </th>
-                    <th jhiSortBy="description">
-                        <span jhiTranslate="artemisApp.lecture.description">Description</span>
-                        <fa-icon [icon]="faSort"></fa-icon>
-                    </th>
-                    <th jhiSortBy="visibleDate">
-                        <span jhiTranslate="artemisApp.lecture.visibleDate">Visible from</span>
-                        <fa-icon [icon]="faSort"></fa-icon>
-                    </th>
-                    <th jhiSortBy="startDate">
-                        <span jhiTranslate="artemisApp.lecture.startDate">Start Date</span>
-                        <fa-icon [icon]="faSort"></fa-icon>
-                    </th>
-                    <th jhiSortBy="endDate">
-                        <span jhiTranslate="artemisApp.lecture.endDate">End Date</span>
-                        <fa-icon [icon]="faSort"></fa-icon>
-                    </th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody class="markdown-preview" id="lecture-preview">
-                <tr *ngFor="let lecture of filteredLectures; trackBy: trackId; let i = index" id="lecture-{{ lecture.id }}">
-                    <td>
-                        <a [routerLink]="[lecture.id]">{{ lecture.id }}</a>
-                    </td>
-                    <td>
-                        <a [routerLink]="[lecture.id]">{{ lecture.title }}</a>
-                    </td>
-                    <td [innerHTML]="lecture.description | htmlForMarkdown"></td>
-                    <td>{{ lecture.visibleDate | artemisDate }}</td>
-                    <td>{{ lecture.startDate | artemisDate }}</td>
-                    <td>{{ lecture.endDate | artemisDate }}</td>
-                    <td class="text-end">
-                        <div class="btn-group flex-btn-group-container">
-                            <div class="btn-group-vertical me-1 mb-1">
-                                <a *ngIf="lecture.isAtLeastEditor" [routerLink]="[lecture.id, 'attachments']" class="btn btn-primary mb-1 btn-sm">
-                                    <fa-icon [icon]="faFile"></fa-icon>
-                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.attachments">Attachment</span>
-                                </a>
-                                <a *ngIf="lecture.isAtLeastEditor" [routerLink]="[lecture.id, 'unit-management']" class="btn btn-primary btn-sm" id="units">
-                                    <fa-icon [icon]="faPuzzlePiece"></fa-icon>
-                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.units">Units</span>
-                                </a>
-                            </div>
-
-                            <div class="btn-group-vertical me-1 mb-1">
-                                <a *ngIf="lecture.isAtLeastEditor" [routerLink]="[lecture.id, 'edit']" class="btn btn-primary btn-sm">
-                                    <fa-icon [icon]="faPencilAlt"></fa-icon>
-                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
-                                </a>
-                                <button
-                                    class="mt-1"
-                                    jhiDeleteButton
-                                    id="delete-lecture"
-                                    *ngIf="lecture.isAtLeastInstructor"
-                                    [entityTitle]="lecture.title || ''"
-                                    deleteQuestion="artemisApp.lecture.delete.question"
-                                    deleteConfirmationText="artemisApp.lecture.delete.typeNameToConfirm"
-                                    (delete)="deleteLecture(lecture.id!)"
-                                    [dialogError]="dialogError$"
-                                >
-                                    <fa-icon [icon]="faTrash"></fa-icon>
-                                </button>
-                            </div>
-                        </div>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
+    @if (filteredLectures) {
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="sortRows()">
+                        <th class="d-md-table-cell" jhiSortBy="id">
+                            <span jhiTranslate="global.field.id"></span>
+                            <fa-icon [icon]="faSort" />
+                        </th>
+                        <th jhiSortBy="title">
+                            <span jhiTranslate="artemisApp.lecture.title"></span>
+                            <fa-icon [icon]="faSort" />
+                        </th>
+                        <th jhiSortBy="description">
+                            <span jhiTranslate="artemisApp.lecture.description"></span>
+                            <fa-icon [icon]="faSort" />
+                        </th>
+                        <th jhiSortBy="visibleDate">
+                            <span jhiTranslate="artemisApp.lecture.visibleDate"></span>
+                            <fa-icon [icon]="faSort" />
+                        </th>
+                        <th jhiSortBy="startDate">
+                            <span jhiTranslate="artemisApp.lecture.startDate"></span>
+                            <fa-icon [icon]="faSort" />
+                        </th>
+                        <th jhiSortBy="endDate">
+                            <span jhiTranslate="artemisApp.lecture.endDate"></span>
+                            <fa-icon [icon]="faSort" />
+                        </th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody class="markdown-preview" id="lecture-preview">
+                    @for (lecture of filteredLectures; track trackId(i, lecture); let i = $index) {
+                        <tr id="lecture-{{ lecture.id }}">
+                            <td>
+                                <a [routerLink]="[lecture.id]">{{ lecture.id }}</a>
+                            </td>
+                            <td>
+                                <a [routerLink]="[lecture.id]">{{ lecture.title }}</a>
+                            </td>
+                            <td [innerHTML]="lecture.description | htmlForMarkdown"></td>
+                            <td>{{ lecture.visibleDate | artemisDate }}</td>
+                            <td>{{ lecture.startDate | artemisDate }}</td>
+                            <td>{{ lecture.endDate | artemisDate }}</td>
+                            <td class="text-end">
+                                <div class="btn-group flex-btn-group-container">
+                                    <div class="btn-group-vertical me-1 mb-1">
+                                        @if (lecture.isAtLeastEditor) {
+                                            <a [routerLink]="[lecture.id, 'attachments']" class="btn btn-primary mb-1 btn-sm">
+                                                <fa-icon [icon]="faFile" />
+                                                <span class="d-none d-md-inline" jhiTranslate="entity.action.attachments"></span>
+                                            </a>
+                                        }
+                                        @if (lecture.isAtLeastEditor) {
+                                            <a [routerLink]="[lecture.id, 'unit-management']" class="btn btn-primary btn-sm" id="units">
+                                                <fa-icon [icon]="faPuzzlePiece" />
+                                                <span class="d-none d-md-inline" jhiTranslate="entity.action.units"></span>
+                                            </a>
+                                        }
+                                    </div>
+                                    <div class="btn-group-vertical me-1 mb-1">
+                                        @if (lecture.isAtLeastEditor) {
+                                            <a [routerLink]="[lecture.id, 'edit']" class="btn btn-primary btn-sm">
+                                                <fa-icon [icon]="faPencilAlt" />
+                                                <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
+                                            </a>
+                                        }
+                                        @if (lecture.isAtLeastInstructor) {
+                                            <button
+                                                class="mt-1"
+                                                jhiDeleteButton
+                                                id="delete-lecture"
+                                                [entityTitle]="lecture.title || ''"
+                                                deleteQuestion="artemisApp.lecture.delete.question"
+                                                deleteConfirmationText="artemisApp.lecture.delete.typeNameToConfirm"
+                                                (delete)="deleteLecture(lecture.id!)"
+                                                [dialogError]="dialogError$"
+                                            >
+                                                <fa-icon [icon]="faTrash" />
+                                            </button>
+                                        }
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
 </div>

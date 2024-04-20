@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Channel, ChannelDTO, ChannelIdAndNameDTO } from 'app/entities/metis/conversation/channel.model';
+import { ChannelDTO, ChannelIdAndNameDTO } from 'app/entities/metis/conversation/channel.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { map } from 'rxjs/operators';
 import { AccountService } from 'app/core/auth/account.service';
@@ -28,14 +28,14 @@ export class ChannelService {
         });
     }
 
-    getChannelOfExercise(courseId: number, exerciseId: number): Observable<HttpResponse<Channel>> {
-        return this.http.get<Channel>(`${this.resourceUrl}${courseId}/exercises/${exerciseId}/channel`, {
+    getChannelOfExercise(courseId: number, exerciseId: number): Observable<HttpResponse<ChannelDTO>> {
+        return this.http.get<ChannelDTO>(`${this.resourceUrl}${courseId}/exercises/${exerciseId}/channel`, {
             observe: 'response',
         });
     }
 
-    getChannelOfLecture(courseId: number, lectureId: number): Observable<HttpResponse<Channel>> {
-        return this.http.get<Channel>(`${this.resourceUrl}${courseId}/lectures/${lectureId}/channel`, {
+    getChannelOfLecture(courseId: number, lectureId: number): Observable<HttpResponse<ChannelDTO>> {
+        return this.http.get<ChannelDTO>(`${this.resourceUrl}${courseId}/lectures/${lectureId}/channel`, {
             observe: 'response',
         });
     }

@@ -28,7 +28,7 @@ import { CodeEditorRepositoryFileService } from 'app/exercises/programming/share
 import { DiffMatchPatch } from 'diff-match-patch-typescript';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
-import { getPositiveAndCappedTotalScore } from 'app/exercises/shared/exercise/exercise.utils';
+import { getPositiveAndCappedTotalScore, getTotalMaxPoints } from 'app/exercises/shared/exercise/exercise.utils';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { SubmissionType, getLatestSubmissionResult } from 'app/entities/submission.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
@@ -127,7 +127,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         private programmingSubmissionService: ProgrammingSubmissionService,
         private domainService: DomainService,
         private complaintService: ComplaintService,
-        translateService: TranslateService,
         private route: ActivatedRoute,
         private alertService: AlertService,
         private structuredGradingCriterionService: StructuredGradingCriterionService,
@@ -136,6 +135,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         private profileService: ProfileService,
         private modalService: NgbModal,
         private athenaService: AthenaService,
+        translateService: TranslateService,
     ) {
         translateService.get('artemisApp.assessment.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
         translateService.get('artemisApp.assessment.messages.acceptComplaintWithoutMoreScore').subscribe((text) => (this.acceptComplaintWithoutMoreScoreText = text));
@@ -193,8 +193,12 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                         complete: () => (this.loadingParticipation = false),
                     }),
                     // The following is needed for highlighting changed code lines
-                    switchMap(() => this.programmingExerciseService.findWithTemplateAndSolutionParticipation(this.exercise.id!)),
-                    tap((programmingExercise) => (this.templateParticipation = programmingExercise.body!.templateParticipation!)),
+                    switchMap(() => this.programmingExerciseService.findWithTemplateAndSolutionParticipation(this.exercise.id!, false, true)),
+                    tap((response) => {
+                        const programmingExercise = response.body!;
+                        this.templateParticipation = programmingExercise.templateParticipation!;
+                        this.exercise.gradingCriteria = programmingExercise.gradingCriteria;
+                    }),
                     switchMap(() => {
                         // Get all files with content from template repository
                         this.domainService.setDomain([DomainType.PARTICIPATION, this.templateParticipation]);
@@ -297,7 +301,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * @param selectedFile name of the file which is currently displayed
      */
     onFileLoad(selectedFile: string): void {
-        if (selectedFile && this.codeEditorContainer?.selectedFile) {
+        if (selectedFile && this.codeEditorContainer?.selectedFile && this.codeEditorContainer.aceEditor) {
             // When the selectedFile is not part of the template, then this is a new file and all lines in code editor are highlighted
             if (!this.templateFileSession[selectedFile]) {
                 const lastLine = this.codeEditorContainer.aceEditor.editorSession.getLength() - 1;
@@ -333,7 +337,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private highlightLines(firstLine: number, lastLine: number) {
-        this.codeEditorContainer.aceEditor.highlightLines(firstLine, lastLine, 'diff-newLine', 'gutter-diff-newLine');
+        if (this.codeEditorContainer?.aceEditor) {
+            this.codeEditorContainer.aceEditor.highlightLines(firstLine, lastLine, 'diff-newLine', 'gutter-diff-newLine');
+        }
     }
 
     /**
@@ -580,6 +586,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.alertService.closeAll();
         this.alertService.success(translationKey);
         this.saveBusy = this.submitBusy = false;
+        this.checkPermissions();
     }
 
     /**
@@ -666,7 +673,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private calculateTotalScoreOfFeedbacks(feedbacks: Feedback[]): number {
-        const maxPoints = this.exercise.maxPoints! + (this.exercise.bonusPoints ?? 0.0);
+        const maxPoints = getTotalMaxPoints(this.exercise);
         let totalScore = 0.0;
         let scoreAutomaticTests = 0.0;
         const gradingInstructions = {}; // { instructionId: noOfEncounters }

@@ -10,7 +10,7 @@ import { GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { Subject, forkJoin, of } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
-import { PageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
+import { SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
 import { GradeEditMode } from 'app/grading-system/base-grading-system/base-grading-system.component';
 import { AlertService } from 'app/core/util/alert.service';
 
@@ -90,7 +90,7 @@ export class BonusComponent implements OnInit {
     bonus = new Bonus();
     hasBonusStrategyWeightMismatch = false;
 
-    private state: PageableSearch = {
+    private state: SearchTermPageableSearch = {
         page: 1,
         pageSize: 100,
         searchTerm: '',

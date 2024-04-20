@@ -28,7 +28,7 @@ describe('Quiz Exercise Participation', () => {
 
         it('Student cannot see hidden quiz', () => {
             cy.login(studentOne, '/courses/' + course.id);
-            cy.contains('No exercises available for the course.').should('be.visible');
+            courseOverview.getExercises().should('have.length', 0);
         });
 
         it('Student can see a visible quiz', () => {

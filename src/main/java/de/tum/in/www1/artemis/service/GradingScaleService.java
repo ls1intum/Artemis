@@ -1,11 +1,14 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.IntStream;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
@@ -13,11 +16,12 @@ import de.tum.in.www1.artemis.domain.GradeStep;
 import de.tum.in.www1.artemis.domain.GradingScale;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
-import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
+import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 
+@Profile(PROFILE_CORE)
 @Service
 public class GradingScaleService {
 
@@ -52,19 +56,19 @@ public class GradingScaleService {
     }
 
     /**
-     * Search for all grading scales fitting a {@link PageableSearchDTO search query} among the grading scales having grade type BONUS.
+     * Search for all grading scales fitting a {@link SearchTermPageableSearchDTO search query} among the grading scales having grade type BONUS.
      * If the user does not have ADMIN role, they can only access the grading scales if they are an instructor in the course related to it.
      * The result is paged, meaning that there is only a predefined portion of the result returned to the user, so that the server doesn't
      * have to send too many results.
-     *
+     * <p>
      * The search term is the title of the course or exam that is directly associated with that grading scale.
      *
      * @param search The search query defining the search term and the size of the returned page
      * @param user   The user for whom to fetch all available grading scales
      * @return A wrapper object containing a list of all found exercises and the total number of pages
      */
-    public SearchResultPageDTO<GradingScale> getAllOnPageWithSize(final PageableSearchDTO<String> search, final User user) {
-        final var pageable = PageUtil.createGradingScaleRequest(search);
+    public SearchResultPageDTO<GradingScale> getAllOnPageWithSize(final SearchTermPageableSearchDTO<String> search, final User user) {
+        final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.GRADING_SCALE);
         final var searchTerm = search.getSearchTerm();
         final Page<GradingScale> gradingScalePage;
         if (authCheckService.isAdmin(user)) {
@@ -116,9 +120,9 @@ public class GradingScaleService {
         // check if all pairs of the sorted grade steps have valid adjacency
         boolean validAdjacency = IntStream.range(0, sortedGradeSteps.size() - 1).allMatch(i -> GradeStep.checkValidAdjacency(sortedGradeSteps.get(i), sortedGradeSteps.get(i + 1)));
         // first step should start from and include 0
-        boolean validFirstElement = sortedGradeSteps.get(0).isLowerBoundInclusive() && sortedGradeSteps.get(0).getLowerBoundPercentage() == 0;
+        boolean validFirstElement = sortedGradeSteps.getFirst().isLowerBoundInclusive() && sortedGradeSteps.getFirst().getLowerBoundPercentage() == 0;
         // last step should end with an inclusive value
-        boolean validLastElement = sortedGradeSteps.get(sortedGradeSteps.size() - 1).isUpperBoundInclusive();
+        boolean validLastElement = sortedGradeSteps.getLast().isUpperBoundInclusive();
         return validAdjacency && validFirstElement && validLastElement;
     }
 

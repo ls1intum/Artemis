@@ -2,6 +2,8 @@
     "artemisApp": {
         "studentDashboard": {
             "title": "Your current courses",
+            "recentlyAccessed": "Recently accessed courses",
+            "otherCourses": "Other courses",
             "exerciseTitle": "Current active exercise in \"{{ course }}\"",
             "exerciseTitleWithoutDueDate": "Current exercise in \"{{ course }}\":",
             "examTitle": "Current exam in \"{{ course }}\":",
@@ -29,6 +31,9 @@
             "showLess": "Show less",
             "manage": "Manage",
             "studentView": "Student view",
+            "general": {
+                "noDataFound": "No data found."
+            },
             "menu": {
                 "exercises": "Exercises",
                 "statistics": "Statistics",
@@ -61,6 +66,7 @@
                 "current": "Current",
                 "future": "Future",
                 "noDueDate": "No due date",
+                "noDate": "No date",
                 "view": "View",
                 "timeframeView": "Timeframe view",
                 "weeklyView": "Weekly view",
@@ -82,14 +88,14 @@
                 "userNotParticipated": "You did not participate in this live quiz.",
                 "userParticipating": "You are currently participating in this quiz.",
                 "userSubmitted": "You have already submitted.",
-                "userNotStartedExerciseShort": "Not yet started.",
-                "userNotAssignedToTeamShort": "No team yet.",
+                "userNotStartedExerciseShort": "Not yet started",
+                "userNotAssignedToTeamShort": "No team yet",
                 "exerciseNotSubmittedShort": "No Submission",
-                "exerciseMissedDueDateShort": "Due date missed.",
-                "quizNotStartedShort": "Not yet started.",
-                "userNotParticipatedShort": "Not participated.",
-                "userParticipatingShort": "Currently participating.",
-                "userSubmittedShort": "Already submitted.",
+                "exerciseMissedDueDateShort": "Missed due date",
+                "quizNotStartedShort": "Not yet started",
+                "userNotParticipatedShort": "Not participated",
+                "userParticipatingShort": "Currently participating",
+                "userSubmittedShort": "Already submitted",
                 "noDateAssociated": "No date associated",
                 "details": {
                     "courseInformation": "Course Information:",

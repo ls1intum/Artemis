@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;
@@ -7,8 +8,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -25,6 +27,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data JPA repository for the Participation entity.
  */
+@Profile(PROFILE_CORE)
 @Repository
 public interface ProgrammingExerciseStudentParticipationRepository extends JpaRepository<ProgrammingExerciseStudentParticipation, Long> {
 
@@ -37,57 +40,71 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
                 LEFT JOIN FETCH pr.submission
             WHERE p.id = :participationId
                 AND (pr.id = (
-                    SELECT max(prr.id)
+                    SELECT MAX(prr.id)
                     FROM p.results prr
-                    WHERE (prr.assessmentType = 'AUTOMATIC'
+                    WHERE (prr.assessmentType = de.tum.in.www1.artemis.domain.enumeration.AssessmentType.AUTOMATIC
                         OR (prr.completionDate IS NOT NULL
-                            AND (p.exercise.assessmentDueDate IS NULL
-                                OR p.exercise.assessmentDueDate < :#{#dateTime}))))
-                    OR pr.id IS NULL)
+                            AND (p.exercise.assessmentDueDate IS NULL OR p.exercise.assessmentDueDate < :dateTime)
+                        )
+                    )
+                ) OR pr.id IS NULL)
             """)
-    Optional<ProgrammingExerciseStudentParticipation> findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(@Param("participationId") Long participationId,
+    Optional<ProgrammingExerciseStudentParticipation> findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(@Param("participationId") long participationId,
             @Param("dateTime") ZonedDateTime dateTime);
 
-    @EntityGraph(type = LOAD, attributePaths = { "results", "exercise" })
-    List<ProgrammingExerciseStudentParticipation> findByBuildPlanId(String buildPlanId);
+    @Query("""
+            SELECT DISTINCT p
+            FROM ProgrammingExerciseStudentParticipation p
+                LEFT JOIN FETCH p.results pr
+                LEFT JOIN FETCH p.submissions
+            WHERE p.id = :participationId AND ((pr.assessmentType = 'AUTOMATIC'
+                        OR (pr.completionDate IS NOT NULL
+                            AND (p.exercise.assessmentDueDate IS NULL
+                                OR p.exercise.assessmentDueDate < :#{#dateTime}))) OR pr.id IS NULL)
+             """)
+    Optional<ProgrammingExerciseStudentParticipation> findByIdWithAllResultsAndRelatedSubmissions(@Param("participationId") long participationId,
+            @Param("dateTime") ZonedDateTime dateTime);
+
+    @EntityGraph(type = LOAD, attributePaths = { "results", "exercise", "team.students" })
+    List<ProgrammingExerciseStudentParticipation> findWithResultsAndExerciseAndTeamStudentsByBuildPlanId(String buildPlanId);
 
     @Query("""
-                SELECT DISTINCT p
-                FROM ProgrammingExerciseStudentParticipation p
-                    LEFT JOIN FETCH p.results
-                    WHERE p.buildPlanId IS NOT NULL
-                        AND (p.student IS NOT NULL
-                            OR p.team IS NOT NULL)
+            SELECT DISTINCT p
+            FROM ProgrammingExerciseStudentParticipation p
+                LEFT JOIN FETCH p.results
+            WHERE p.buildPlanId IS NOT NULL
+                AND (p.student IS NOT NULL OR p.team IS NOT NULL)
             """)
     List<ProgrammingExerciseStudentParticipation> findAllWithBuildPlanIdWithResults();
 
-    Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndStudentLogin(Long exerciseId, String username);
+    Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndStudentLogin(long exerciseId, String username);
 
-    default ProgrammingExerciseStudentParticipation findByExerciseIdAndStudentLoginOrThrow(Long exerciseId, String username) {
+    default ProgrammingExerciseStudentParticipation findByExerciseIdAndStudentLoginOrThrow(long exerciseId, String username) {
         return findByExerciseIdAndStudentLogin(exerciseId, username).orElseThrow(() -> new EntityNotFoundException("Programming Exercise Student Participation", exerciseId));
     }
 
     @EntityGraph(type = LOAD, attributePaths = { "submissions" })
-    Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseIdAndStudentLogin(Long exerciseId, String username);
+    Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseIdAndStudentLogin(long exerciseId, String username);
 
-    default ProgrammingExerciseStudentParticipation findWithSubmissionsByExerciseIdAndStudentLoginOrThrow(Long exerciseId, String username) {
+    default ProgrammingExerciseStudentParticipation findWithSubmissionsByExerciseIdAndStudentLoginOrThrow(long exerciseId, String username) {
         return findWithSubmissionsByExerciseIdAndStudentLogin(exerciseId, username)
                 .orElseThrow(() -> new EntityNotFoundException("Programming Exercise Student Participation", exerciseId));
     }
 
-    Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndStudentLoginAndTestRun(Long exerciseId, String username, boolean testRun);
+    Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndStudentLoginAndTestRun(long exerciseId, String username, boolean testRun);
 
-    Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndTeamId(Long exerciseId, Long teamId);
+    @EntityGraph(type = LOAD, attributePaths = { "team.students" })
+    Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndTeamId(long exerciseId, long teamId);
 
     @Query("""
             SELECT DISTINCT participation
             FROM ProgrammingExerciseStudentParticipation participation
                 LEFT JOIN FETCH participation.team team
                 LEFT JOIN FETCH team.students
-            WHERE participation.exercise.id = :#{#exerciseId}
-                AND participation.team.shortName = :#{#teamShortName}
+            WHERE participation.exercise.id = :exerciseId
+                AND participation.team.shortName = :teamShortName
             """)
-    Optional<ProgrammingExerciseStudentParticipation> findWithEagerStudentsByExerciseIdAndTeamShortName(@Param("exerciseId") Long exerciseId,
+    Optional<ProgrammingExerciseStudentParticipation> findWithEagerStudentsByExerciseIdAndTeamShortName(@Param("exerciseId") long exerciseId,
             @Param("teamShortName") String teamShortName);
 
     @Query("""
@@ -96,19 +113,22 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
                 LEFT JOIN FETCH participation.submissions
                 LEFT JOIN FETCH participation.team team
                 LEFT JOIN FETCH team.students
-            WHERE participation.exercise.id = :#{#exerciseId}
-                AND participation.team.shortName = :#{#teamShortName}
+            WHERE participation.exercise.id = :exerciseId
+                AND participation.team.shortName = :teamShortName
             """)
-    Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsAndEagerStudentsByExerciseIdAndTeamShortName(@Param("exerciseId") Long exerciseId,
+    Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsAndEagerStudentsByExerciseIdAndTeamShortName(@Param("exerciseId") long exerciseId,
             @Param("teamShortName") String teamShortName);
 
-    List<ProgrammingExerciseStudentParticipation> findByExerciseId(Long exerciseId);
+    List<ProgrammingExerciseStudentParticipation> findByExerciseId(long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "submissions" })
+    @EntityGraph(type = LOAD, attributePaths = { "submissions", "team.students" })
     List<ProgrammingExerciseStudentParticipation> findWithSubmissionsById(long participationId);
 
     @EntityGraph(type = LOAD, attributePaths = { "submissions" })
-    List<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseId(Long exerciseId);
+    List<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseId(long exerciseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "submissions", "team.students" })
+    List<ProgrammingExerciseStudentParticipation> findWithSubmissionsAndTeamStudentsByExerciseId(long exerciseId);
 
     /**
      * Will return the participations matching the provided participation ids, but only if they belong to the given exercise.
@@ -121,65 +141,95 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
             SELECT participation
             FROM ProgrammingExerciseStudentParticipation participation
                 LEFT JOIN FETCH participation.submissions
-            WHERE participation.exercise.id = :#{#exerciseId}
-                AND participation.id IN :#{#participationIds}
+            WHERE participation.exercise.id = :exerciseId
+                AND participation.id IN :participationIds
             """)
-    List<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseIdAndParticipationIds(@Param("exerciseId") Long exerciseId,
+    List<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseIdAndParticipationIds(@Param("exerciseId") long exerciseId,
             @Param("participationIds") Collection<Long> participationIds);
 
     @Query("""
             SELECT participation
             FROM ProgrammingExerciseStudentParticipation participation
                 LEFT JOIN FETCH participation.submissions
-            WHERE participation.exercise.id = :#{#exerciseId}
-                AND participation.student.login = :#{#username}
-                AND participation.testRun = :#{#testRun}
+            WHERE participation.exercise.id = :exerciseId
+                AND participation.student.login = :username
+                AND participation.testRun = :testRun
             """)
-    Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseIdAndStudentLoginAndTestRun(@Param("exerciseId") Long exerciseId,
+    Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseIdAndStudentLoginAndTestRun(@Param("exerciseId") long exerciseId,
             @Param("username") String username, @Param("testRun") boolean testRun);
 
     @Query("""
             SELECT participation
             FROM ProgrammingExerciseStudentParticipation participation
                 LEFT JOIN FETCH participation.submissions
-            WHERE participation.exercise.id = :#{#exerciseId}
-                AND participation.student.login = :#{#username}
+            WHERE participation.exercise.id = :exerciseId
+                AND participation.student.login = :username
             ORDER BY participation.testRun ASC
             """)
-    List<ProgrammingExerciseStudentParticipation> findAllWithSubmissionsByExerciseIdAndStudentLogin(@Param("exerciseId") Long exerciseId, @Param("username") String username);
+    List<ProgrammingExerciseStudentParticipation> findAllWithSubmissionsByExerciseIdAndStudentLogin(@Param("exerciseId") long exerciseId, @Param("username") String username);
 
     @EntityGraph(type = LOAD, attributePaths = "student")
-    Optional<ProgrammingExerciseStudentParticipation> findWithStudentById(Long participationId);
+    Optional<ProgrammingExerciseStudentParticipation> findWithStudentById(long participationId);
+
+    @EntityGraph(type = LOAD, attributePaths = "team.students")
+    Optional<ProgrammingExerciseStudentParticipation> findWithTeamStudentsById(long participationId);
 
     @NotNull
-    default ProgrammingExerciseStudentParticipation findByIdElseThrow(Long participationId) {
+    default ProgrammingExerciseStudentParticipation findByIdElseThrow(long participationId) {
         return findById(participationId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise Student Participation", participationId));
     }
 
-    default Optional<ProgrammingExerciseStudentParticipation> findStudentParticipationWithLatestResultAndFeedbacksAndRelatedSubmissions(Long participationId) {
+    default Optional<ProgrammingExerciseStudentParticipation> findStudentParticipationWithLatestResultAndFeedbacksAndRelatedSubmissions(long participationId) {
         return findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(participationId, ZonedDateTime.now());
+    }
+
+    default Optional<ProgrammingExerciseStudentParticipation> findByIdWithAllResultsAndRelatedSubmissions(long participationId) {
+        return findByIdWithAllResultsAndRelatedSubmissions(participationId, ZonedDateTime.now());
+    }
+
+    default ProgrammingExerciseStudentParticipation findWithTeamStudentsByIdElseThrow(long participationId) {
+        return findWithTeamStudentsById(participationId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise Student Participation", participationId));
     }
 
     @Transactional // ok because of modifying query
     @Modifying
     @Query("""
             UPDATE ProgrammingExerciseStudentParticipation p
-            SET p.locked = :#{#locked}
-            WHERE p.id = :#{#participationId}
+            SET p.locked = :locked
+            WHERE p.id = :participationId
             """)
-    void updateLockedById(@Param("participationId") Long participationId, @Param("locked") boolean locked);
+    void updateLockedById(@Param("participationId") long participationId, @Param("locked") boolean locked);
 
     @Query("""
             SELECT DISTINCT p
             FROM ProgrammingExerciseStudentParticipation p
-                WHERE p.buildPlanId IS NOT NULL
+            WHERE p.buildPlanId IS NOT NULL
             """)
     Page<ProgrammingExerciseStudentParticipation> findAllWithBuildPlanId(Pageable pageable);
 
     @Query("""
             SELECT DISTINCT p
             FROM ProgrammingExerciseStudentParticipation p
-                WHERE p.buildPlanId IS NOT NULL or p.repositoryUrl IS NOT NULL
+            WHERE p.buildPlanId IS NOT NULL
+                OR p.repositoryUri IS NOT NULL
             """)
-    Page<ProgrammingExerciseStudentParticipation> findAllWithRepositoryUrlOrBuildPlanId(Pageable pageable);
+    Page<ProgrammingExerciseStudentParticipation> findAllWithRepositoryUriOrBuildPlanId(Pageable pageable);
+
+    /**
+     * Remove the build plan id from all participations of the given exercise.
+     * This is used when the build plan is changed for an exercise, and we want to remove the old build plan id from all participations.
+     * By deleting the build plan in the CI platform and unsetting the build plan id in the participations, the build plan is effectively removed
+     * and will be regenerated/recreated on the next submission.
+     *
+     * @param exerciseId the id of the exercise for which the build plan id should be removed
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE ProgrammingExerciseStudentParticipation p
+            SET p.buildPlanId = NULL, p.initializationState = de.tum.in.www1.artemis.domain.enumeration.InitializationState.INACTIVE
+            WHERE p.exercise.id = :#{#exerciseId}
+                AND p.initializationState = de.tum.in.www1.artemis.domain.enumeration.InitializationState.INITIALIZED
+            """)
+    void unsetBuildPlanIdForExercise(@Param("exerciseId") Long exerciseId);
 }

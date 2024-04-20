@@ -1,11 +1,14 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Result;
@@ -27,10 +30,11 @@ import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
+@Profile(PROFILE_CORE)
 @Service
 public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSubmission> {
 
-    private final Logger log = LoggerFactory.getLogger(QuizSubmissionService.class);
+    private static final Logger log = LoggerFactory.getLogger(QuizSubmissionService.class);
 
     private final QuizSubmissionRepository quizSubmissionRepository;
 
@@ -199,7 +203,7 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
      * @return boolean the submission status of student for the given quiz batch
      */
     public boolean hasUserSubmitted(QuizBatch quizBatch, String login) {
-        Set<QuizSubmission> submissions = quizSubmissionRepository.findAllByQuizBatchAndStudentLogin(quizBatch, login);
+        Set<QuizSubmission> submissions = quizSubmissionRepository.findAllByQuizBatchAndStudentLogin(quizBatch.getId(), login);
         Optional<QuizSubmission> submission = submissions.stream().findFirst();
         return submission.map(QuizSubmission::isSubmitted).orElse(false);
     }

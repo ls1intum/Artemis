@@ -138,3 +138,5 @@ export const NEW_MESSAGE_GROUP_CHAT_TEXT = 'artemisApp.conversationNotification.
 export const NEW_MESSAGE_DIRECT_TEXT = 'artemisApp.conversationNotification.text.newMessageDirect';
 
 export const MESSAGE_REPLY_IN_CONVERSATION_TEXT = 'artemisApp.singleUserNotification.text.messageReply';
+
+export const MESSAGE_REPLY_IN_CHANNEL_TEXT = 'artemisApp.singleUserNotification.text.channelMessageReply';

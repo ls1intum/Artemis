@@ -26,13 +26,12 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseFeedbackCre
 @Service
 public class JenkinsResultService extends AbstractContinuousIntegrationResultService {
 
-    private final Logger log = LoggerFactory.getLogger(JenkinsResultService.class);
+    private static final Logger log = LoggerFactory.getLogger(JenkinsResultService.class);
 
     public JenkinsResultService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository, BuildLogEntryService buildLogService,
             BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService,
             ProgrammingExerciseFeedbackCreationService feedbackCreationService, ProgrammingExerciseTestCaseRepository testCaseRepository) {
-        super(programmingSubmissionRepository, feedbackRepository, testCaseRepository, buildLogService, buildLogStatisticsEntryRepository, testwiseCoverageService,
-                feedbackCreationService);
+        super(testCaseRepository, buildLogStatisticsEntryRepository, testwiseCoverageService, feedbackCreationService);
     }
 
     @Override
@@ -59,7 +58,7 @@ public class JenkinsResultService extends AbstractContinuousIntegrationResultSer
         ZonedDateTime testsFinished;
         ZonedDateTime scaStarted;
         ZonedDateTime scaFinished;
-        ZonedDateTime jobFinished = buildLogEntries.get(buildLogEntries.size() - 1).getTime(); // Last entry
+        ZonedDateTime jobFinished = buildLogEntries.getLast().getTime(); // Last entry
         Integer dependenciesDownloadedCount = null;
 
         if (ProjectType.isMavenProject(projectType)) {

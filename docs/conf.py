@@ -18,7 +18,7 @@
 # -- Project information -----------------------------------------------------
 
 project = 'Artemis'
-copyright = '2023, Technical University of Munich, Applied Software Engineering'
+copyright = '2024, Technical University of Munich, Applied Software Engineering'
 author = 'Technical University of Munich, Applied Software Engineering'
 
 
@@ -39,7 +39,27 @@ extensions = [
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', 'venv']
+
+linkcheck_ignore = [
+    r'http(s)?://.*localhost(:\d+)?/?',
+    r'https://artemis.cs.hm.edu/',  # DNS entry no longer exists
+    r'https://bamboo.ase.in.tum.de/build/admin/edit/.*',
+    r'https://hermes.artemis.cit.tum.de/',  # expired certificate
+    # IEEE server returns code 418 when checking links
+    r'https://doi.org/10.1109/CSEET58097.2023.00020',
+    r'https://doi.org/10.1109/CSEET58097.2023.00021',
+    r'https://doi.org/10.1109/CSEET58097.2023.00031',
+    r'https://doi.org/10.1109/CSEET58097.2023.00037',
+    r'https://doi.org/10.1109/ITHET50392.2021.9759809',
+]
+# do not check anchors on websites that need JavaScript to load the content
+# the anchor points to
+linkcheck_anchors_ignore_for_url = [
+    r"https://angular.io/guide/.*",
+    r"https://github.com/.*",
+    r"https://k3d.io/.*"
+]
 
 # -- Publications ------------------------------------------------------------
 bibtex_bibfiles = ['research/publications.bib']

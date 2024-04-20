@@ -22,7 +22,7 @@ class MockExtraColumnComponent {
     template: `
         <jhi-tutorial-group-sessions-table [sessions]="sessions" [timeZone]="timeZone" [showIdColumn]="true" [tutorialGroup]="tutorialGroup">
             <ng-template let-session>
-                <jhi-mock-extra-column [tutorialGroupSession]="session"></jhi-mock-extra-column>
+                <jhi-mock-extra-column [tutorialGroupSession]="session" />
             </ng-template>
         </jhi-tutorial-group-sessions-table>
     `,

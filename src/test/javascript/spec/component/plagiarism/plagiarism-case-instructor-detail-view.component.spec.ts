@@ -21,6 +21,8 @@ import { MockMetisService } from '../../helpers/mocks/service/mock-metis-service
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { User } from 'app/core/user/user.model';
+import { NotificationService } from 'app/shared/notification/notification.service';
+import { MockNotificationService } from '../../helpers/mocks/service/mock-notification.service';
 
 describe('Plagiarism Cases Instructor View Component', () => {
     let component: PlagiarismCaseInstructorDetailViewComponent;
@@ -55,6 +57,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
                 { provide: MetisService, useClass: MockMetisService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: NotificationService, useClass: MockNotificationService },
                 MockProvider(AlertService),
             ],
         }).compileComponents();

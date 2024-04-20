@@ -13,14 +13,10 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.service.connectors.lti.Lti10Service;
 import de.tum.in.www1.artemis.service.connectors.lti.Lti13Service;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiNewResultService;
 
 class LtiNewResultServiceTest {
-
-    @Mock
-    private Lti10Service lti10Service;
 
     @Mock
     private Lti13Service lti13Service;
@@ -37,7 +33,7 @@ class LtiNewResultServiceTest {
     void init() {
         closeable = MockitoAnnotations.openMocks(this);
         SecurityContextHolder.clearContext();
-        ltiNewResultService = new LtiNewResultService(lti10Service, lti13Service);
+        ltiNewResultService = new LtiNewResultService(lti13Service);
 
         participation = new StudentParticipation();
         Exercise exercise = new TextExercise();
@@ -51,7 +47,7 @@ class LtiNewResultServiceTest {
         if (closeable != null) {
             closeable.close();
         }
-        reset(lti10Service, lti13Service);
+        reset(lti13Service);
     }
 
     @Test
@@ -59,8 +55,6 @@ class LtiNewResultServiceTest {
         course.setOnlineCourse(false);
 
         ltiNewResultService.onNewResult(participation);
-
-        verifyNoInteractions(lti10Service);
         verifyNoInteractions(lti13Service);
     }
 
@@ -69,8 +63,6 @@ class LtiNewResultServiceTest {
         course.setOnlineCourse(true);
 
         ltiNewResultService.onNewResult(participation);
-
-        verify(lti10Service).onNewResult(participation);
         verify(lti13Service).onNewResult(participation);
     }
 }

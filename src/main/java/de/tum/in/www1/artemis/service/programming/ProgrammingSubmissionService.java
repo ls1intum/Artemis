@@ -1,31 +1,66 @@
 package de.tum.in.www1.artemis.service.programming;
 
-import static de.tum.in.www1.artemis.config.Constants.*;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.in.www1.artemis.config.Constants.PROGRAMMING_GRACE_PERIOD_SECONDS;
+import static de.tum.in.www1.artemis.config.Constants.SETUP_COMMIT_MESSAGE;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Commit;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
-import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.domain.participation.AbstractBaseProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ComplaintRepository;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.FeedbackRepository;
+import de.tum.in.www1.artemis.repository.ParticipationRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.SubmissionPolicyRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ExerciseDateService;
+import de.tum.in.www1.artemis.service.FeedbackService;
+import de.tum.in.www1.artemis.service.ParticipationAuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.SubmissionService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.athena.AthenaSubmissionSelectionService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
@@ -36,10 +71,11 @@ import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseGitDiffReportSer
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 // TODO: this class has too many dependencies to other services. We should reduce this
+@Profile(PROFILE_CORE)
 @Service
 public class ProgrammingSubmissionService extends SubmissionService {
 
-    private final Logger log = LoggerFactory.getLogger(ProgrammingSubmissionService.class);
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingSubmissionService.class);
 
     @Value("${artemis.git.name}")
     private String artemisGitName;
@@ -119,11 +155,10 @@ public class ProgrammingSubmissionService extends SubmissionService {
         // and we should not create a new submission here
         Commit commit;
         try {
-            // we can find this out by looking into the requestBody, e.g. changes=[{ref={id=refs/heads/BitbucketStationSupplies, displayId=BitbucketStationSupplies, type=BRANCH}
-            // if the branch is different from main, throw an IllegalArgumentException, but make sure the REST call still returns 200 to Bitbucket
+            // we can find this out by looking into the requestBody
+            // if the branch is different from main, throw an IllegalArgumentException, but make sure the REST call still returns 200
             commit = versionControl.getLastCommitDetails(requestBody);
-            log.info("NotifyPush invoked due to the commit {} by {} with {} in branch {}", commit.getCommitHash(), commit.getAuthorName(), commit.getAuthorEmail(),
-                    commit.getBranch());
+            log.info("NotifyPush invoked due to the commit {} by {} with {} in branch {}", commit.commitHash(), commit.authorName(), commit.authorEmail(), commit.branch());
         }
         catch (Exception ex) {
             log.error("Commit could not be parsed for submission from participation {}", participation, ex);
@@ -131,13 +166,12 @@ public class ProgrammingSubmissionService extends SubmissionService {
         }
 
         String branch = versionControl.getOrRetrieveBranchOfParticipation(participation);
-        if (commit.getBranch() != null && !commit.getBranch().equalsIgnoreCase(branch)) {
+        if (commit.branch() != null && !commit.branch().equalsIgnoreCase(branch)) {
             // if the commit was made in a branch different from the default, ignore this
             throw new VersionControlException(
-                    "Submission for participation id " + participation.getId() + " in branch " + commit.getBranch() + " will be ignored! Only the default branch is considered");
+                    "Submission for participation id " + participation.getId() + " in branch " + commit.branch() + " will be ignored! Only the default branch is considered");
         }
-        if (artemisGitName.equalsIgnoreCase(commit.getAuthorName()) && artemisGitEmail.equalsIgnoreCase(commit.getAuthorEmail())
-                && SETUP_COMMIT_MESSAGE.equals(commit.getMessage())) {
+        if (artemisGitName.equalsIgnoreCase(commit.authorName()) && artemisGitEmail.equalsIgnoreCase(commit.authorEmail()) && SETUP_COMMIT_MESSAGE.equals(commit.message())) {
             // if the commit was made by Artemis and the message is "Setup" (this means it is an empty setup commit), we ignore this as well and do not create a submission!
             throw new IllegalStateException("Submission for participation id " + participation.getId() + " based on an empty setup commit by Artemis will be ignored!");
         }
@@ -155,22 +189,22 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
         // TODO: there might be cases in which Artemis should NOT trigger the build
         try {
-            continuousIntegrationTriggerService.orElseThrow().triggerBuild(participation, commit.getCommitHash(), false);
+            continuousIntegrationTriggerService.orElseThrow().triggerBuild(participation, commit.commitHash(), null);
         }
         catch (ContinuousIntegrationException ex) {
             // TODO: This case is currently not handled. The correct handling would be creating the submission and informing the user that the build trigger failed.
         }
 
         // There can't be two submissions for the same participation and commitHash!
-        ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDesc(participation.getId(),
-                commit.getCommitHash());
+        ProgrammingSubmission programmingSubmission = programmingSubmissionRepository
+                .findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(participation.getId(), commit.commitHash());
         if (programmingSubmission != null) {
-            throw new IllegalStateException("Submission for participation id " + participation.getId() + " and commitHash " + commit.getCommitHash() + " already exists!");
+            throw new IllegalStateException("Submission for participation id " + participation.getId() + " and commitHash " + commit.commitHash() + " already exists!");
         }
 
         programmingSubmission = new ProgrammingSubmission();
-        programmingSubmission.setCommitHash(commit.getCommitHash());
-        log.info("Create new programmingSubmission with commitHash: {} for participation {}", commit.getCommitHash(), participation.getId());
+        programmingSubmission.setCommitHash(commit.commitHash());
+        log.info("Create new programmingSubmission with commitHash: {} for participation {}", commit.commitHash(), participation.getId());
 
         programmingSubmission.setSubmitted(true);
         programmingSubmission.setSubmissionDate(submissionDate);
@@ -337,7 +371,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * See <a href="https://github.com/ls1intum/Artemis/pull/712#discussion_r314944129">discussion</a>
      * <p>
      * Worst case scenario when using this method:
-     * 1) Student executes a submission, the build is created on Bamboo
+     * 1) Student executes a submission, the build is created on CI system
      * 2) The build takes longer than 2 minutes, this enables the student to trigger the submission again
      * 3) A new submission with the same commitHash is created on the server, there are now 2 submissions for the same commitHash and 2 running builds
      * 4) The first build returns a result to Artemis, this result is now attached to the second submission (that was just created)
@@ -352,14 +386,15 @@ public class ProgrammingSubmissionService extends SubmissionService {
             throws IllegalStateException {
         String lastCommitHash = getLastCommitHashForParticipation(participation);
         // we first try to get an existing programming submission with the last commit hash
-        var programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDesc(participation.getId(), lastCommitHash);
+        var programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(participation.getId(),
+                lastCommitHash);
         // in case no programming submission is available, we create one
         return Objects.requireNonNullElseGet(programmingSubmission, () -> createSubmissionWithCommitHashAndSubmissionType(participation, lastCommitHash, submissionType));
     }
 
     private String getLastCommitHashForParticipation(ProgrammingExerciseParticipation participation) throws IllegalStateException {
         try {
-            return gitService.getLastCommitHash(participation.getVcsRepositoryUrl()).getName();
+            return gitService.getLastCommitHash(participation.getVcsRepositoryUri()).getName();
         }
         catch (EntityNotFoundException ex) {
             var message = "Last commit hash for participation " + participation.getId() + " could not be retrieved due to exception: " + ex.getMessage();
@@ -384,7 +419,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         if (commitHash == null) {
             ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExerciseId);
             try {
-                commitHash = gitService.getLastCommitHash(programmingExercise.getVcsTestRepositoryUrl()).getName();
+                commitHash = gitService.getLastCommitHash(programmingExercise.getVcsTestRepositoryUri()).getName();
             }
             catch (EntityNotFoundException ex) {
                 throw new IllegalStateException("Last commit hash for test repository of programming exercise with id " + programmingExercise.getId() + " could not be retrieved");
@@ -625,7 +660,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      */
     private void createInitialSubmission(ProgrammingExercise programmingExercise, AbstractBaseProgrammingExerciseParticipation participation) {
         ProgrammingSubmission submission = (ProgrammingSubmission) submissionRepository.initializeSubmission(participation, programmingExercise, SubmissionType.INSTRUCTOR);
-        var latestHash = gitService.getLastCommitHash(participation.getVcsRepositoryUrl());
+        var latestHash = gitService.getLastCommitHash(participation.getVcsRepositoryUri());
         submission.setCommitHash(latestHash.getName());
         submission.setSubmissionDate(ZonedDateTime.now());
         submissionRepository.save(submission);

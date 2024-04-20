@@ -1,0 +1,9 @@
+.section-headline {
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+    scroll-margin-top: 70px;
+}
+
+.section-detail-list:not(:last-child) {
+    border-bottom: 1px solid var(--bs-border-color);
+}

@@ -57,15 +57,15 @@
                     "infrastructureStepTitle": "Infrastruktur"
                 },
                 "detailedSteps": {
-                    "generalInfoStepTitle": "Allgemeine Informationen",
+                    "generalInfoStepTitle": "Allgemein",
                     "generalInfoStepMessage": "Eingabe von Informationen, die die Grundlage für die Programmieraufgabe bilden",
                     "difficultyStepTitle": "Modus",
                     "difficultyStepMessage": "Konfiguration der Einstellungen bezüglich der Bearbeitung und Kollaboration der Aufgabe",
-                    "languageStepTitle": "Programmiersprache",
+                    "languageStepTitle": "Sprache",
                     "languageStepMessage": "Wähle die gewünschte Programmiersprache aus und konfiguriere zusätzliche Funktionen bezüglich der Programmiersprache",
-                    "problemStepTitle": "Aufgabenstellung",
+                    "problemStepTitle": "Aufgabe",
                     "problemStepMessage": "Erstelle eine detaillierte Aufgabenstellung für die Übung mit klaren Schritten und Erwartungen an die Studierenden",
-                    "gradingStepTitle": "Benotung",
+                    "gradingStepTitle": "Bewertung",
                     "gradingStepMessage": "Definiere die Bewertungskriterien für diese Aufgabe und wie sich das Ergebnis auf die Gesamtnote des Kurses auswirkt"
                 },
                 "gradingLabels": {
@@ -88,32 +88,39 @@
             "noReleaseAndStartDateWarning": "Du hast kein Veröffentlichungs- und Startdatum definiert, daher wird die Aufgabe sofort veröffentlicht und Studierende können direkt an der Aufgabe teilnehmen.",
             "unsavedChangesLanguageChange": "Die Aufgabenstellung enthält noch nicht gespeicherte Änderungen. Soll die Programmiersprache wirklich geändert werden?",
             "unsavedChangesProjectTypeChange": "Die Aufgabenstellung enthält noch nicht gespeicherte Änderungen. Soll der Projekt Typ wirklich geändert werden?",
-            "templateRepositoryUrl": "Vorlagen-Repository-Url",
-            "testRepositoryUrl": "Test-Repository-Url",
-            "solutionRepositoryUrl": "Lösungs-Repository-Url",
+            "templateRepositoryUri": "Vorlagen-Repository-Url",
+            "testRepositoryUri": "Test-Repository-Url",
+            "solutionRepositoryUri": "Lösungs-Repository-Url",
             "auxiliaryRepositories": "Hilfs-Repositories",
             "noCheckoutDirectorySet": "Es wurde kein Checkout-Verzeichnis gesetzt.",
             "noCheckoutDirectorySetTooltip": "Da kein Checkout-Verzeichnis angegeben wurde, wurde das Repository nicht automatisch zu einem Build-Plan hinzugefügt.",
             "templateBuildPlanId": "Vorlagen-Build-Plan-Id",
             "solutionBuildPlanId": "Lösungs-Build-Plan-Id",
             "repositories": "Repositories",
+            "openRepository": "Repository Öffnen",
             "buildplans": "Build-Pläne",
             "buildplan": "Build-Plan",
+            "buildConfiguration": "Build Konfiguration",
             "buildPlanEditor": "Build-Plan-Editor",
             "buildPlanFetchError": "Konnte keinen Build-Plan für diese Aufgabe finden. Das ist normal für ältere Aufgaben. Du kannst den Build-Plan im CI-System bearbeiten oder den Build-Plan in Artemis zurücksetzen, um einen neuen Build-Plan zu erstellen der hier bearbeitet werden kann.",
-            "publishBuildPlanUrl": "Build-Plan veröffentlichen",
+            "customizeBuildPlan": "Build-Plan anpassen",
             "customizeBuildPlanWithAeolus": "Build-Plan mit Aeolus anpassen",
+            "revertToTemplateBuildPlan": "Falls Sie mit Ihrem Build-Plan nicht zufrieden sind, können Sie ihn mit dem Zurücksetzen Knopf auf seine Vorlage zurücksetzen.",
             "runActionAlways": "Immer ausführen, auch wenn andere Aktionen fehlschlagen",
+            "script": "Script",
+            "parameters": "Parameter",
+            "dockerImage": "Docker Image",
+            "workdir": "Verzeichnis",
             "allowOnlineEditor": {
                 "title": "Online-Editor erlauben",
                 "alert": "Es muss mindestens eine Option (Offline-IDE oder Online-Editor) ausgewählt sein"
             },
-            "onlineEditor": "Online-Editor",
+            "onlineEditor": "Online",
             "allowOfflineIde": {
                 "title": "Offline-IDE erlauben",
                 "alert": "Es muss mindestens eine Option (Offline-IDE oder Online-Editor) ausgewählt sein"
             },
-            "offlineIde": "Offline-IDE",
+            "offlineIde": "IDE",
             "showTestNamesToStudents": "Zeige die Test Namen den Studierenden",
             "showTestNamesToStudentsTooltip": "Durch Aktivierung dieser Option werden die Namen der automatischen Tests den Studierenden angezeigt. Lasse die Option deaktiviert, um keine visuelle Unterscheidung zwischen manuellem und automatischem Feedback für die Studierenden vorzunehmen.",
             "participationMode": "Teilnahmemodus",
@@ -164,7 +171,7 @@
             "structureTestOracle": "Oracle Strukturtest aktualisieren",
             "structureTestOracleWarning": "Diese Aktion extrahiert die Struktur-Tests des Test-Repositories and speichert sie in der Datei test.json. ACHTUNG: Hierdurch gehen alle nicht committeten Änderungen aus dem Online-Editor verloren!",
             "combineTemplateCommits": "Template-Commits zusammenführen",
-            "checkPlagiarism": "Auf Plagiate prüfen",
+            "checkPlagiarism": "Plagiatsprüfung",
             "checkPlagiarismSuccess": "Plagiatsprüfung abgeschlossen. Ergebnisse sind in der zip-Datei enthalten.",
             "combineTemplateCommitsWarning": "Diese Aktion führt alle Commits im Template-Repository in einen Commit zusammen. ACHTUNG: Hierdurch gehen alle nicht committeten Änderungen aus dem Online-Editor verloren!",
             "combineTemplateCommitsError": "Template-Repository-Commits konnten nicht zusammengeführt werden.",
@@ -207,7 +214,9 @@
                 "missingTestCases": "{{number}} Testfälle wurde im Test-Repository gefunden, die nicht Teil der Aufgabenstellung sind:",
                 "issues": "Testfallprobleme.",
                 "ok": "Testfälle ok.",
-                "invalidTestCase": "Der Testfall '{{id}}' konnte nicht im Test-Repository gefunden werden."
+                "invalidTestCase": "Der Testfall '{{id}}' konnte nicht im Test-Repository gefunden werden.",
+                "repeatedTestCase": "Der Testfall '{{id}}' wiederholt sich.",
+                "repeatedTestCases": "{{number}} Testfälle wiederholen sich. Das kann unerwartetes Verhalten verursachen:"
             },
             "tasksAnalysis": {
                 "issues": "Aufgabenprobleme.",
@@ -314,7 +323,7 @@
                 "notReleasedTooltip": "Die Programmierübung ist nicht veröffentlicht oder ist veröffentlicht und besitzt noch keine Ergebnisse von Studierenden. Daher kann die Bewertung geändert werden, ohne dass die Abgaben von Studierenden erneut ausgeführt werden müssen."
             },
             "export": {
-                "downloadRepo": "Repo Herunterladen",
+                "downloadRepo": "Repository Herunterladen",
                 "downloadExampleSolution": "Beispiellösung herunterladen",
                 "downloadTests": "Tests herunterladen",
                 "downloadTestsWithExampleSolution": "Tests mit Beispiellösung herunterladen",
@@ -428,7 +437,7 @@
                 "templateBuildPlanTooltip": "Der Build-Plan der Vorlage. Lässt alle Tests über die Vorlage der Aufgabe laufen. Dient als Kontrollreferenz, für welche alle Tests fehlschlagen müssen",
                 "solutionBuildPlanTooltip": "Der Build-Plan der Lösung der Aufgabe. Lässt alle Tests über die Lösung der Aufgabe laufen. Dient als Kontrollreferenz, für welche alle Tests erfolgreich sein müssen"
             },
-            "intellij": {
+            "orion": {
                 "openEditor": "Editor Öffnen"
             },
             "reEvaluate": "Alle erneut bewerten",
@@ -488,6 +497,7 @@
                 },
                 "submissionPenalty": {
                     "optionLabel": "Punktabzug je Überschreitung",
+                    "detailLabel": "Punktabzug je Überschreitung",
                     "penaltyInputFieldTitle": "Punktabzug je Überschreitung des Abgabelimits",
                     "exceedingLimitDescription": "Der Punktabzug von dem Gesamtergebnis für jede Abgabe, die das Abgabelimit überschreitet. Jede Punktzahl größer 0 kann eingetragen werden.",
                     "penaltyInputFieldValidationWarning": {
@@ -500,7 +510,7 @@
                 "submissionPolicyType": {
                     "title": "Typ der Abgaberichtlinie",
                     "none": {
-                        "title": "Keine"
+                        "title": "-"
                     },
                     "lock_repository": {
                         "title": "Repository Sperre",
@@ -526,10 +536,13 @@
                 "tooltipBetweenSubmissions": "Zeigt den detaillierten Git-Diff zwischen der aktuellen und der vorherigen Abgabe.",
                 "title": "Template-Lösungs-Diff",
                 "titleForSubmissions": "Abgaben-Diff",
+                "emptyRepository": "Leeres Repository",
                 "template": "Vorlage",
                 "solution": "Lösung",
                 "previousSubmission": "Vorherige Abgabe",
+                "previousCommit": "Vorheriger Commit",
                 "currentSubmission": "Aktuelle Abgabe",
+                "currentCommit": "Aktueller Commit",
                 "errorWhileFetchingRepos": "Fehler beim Abrufen der Repositories. Bitte überprüfe deine Internetverbindung und öffne das Popup erneut.",
                 "404": "Template-Lösungs-Diff wurde noch nicht generiert. Bitte pusche etwas in die Template- oder Lösungs-Repositories, um ihn zu erstellen.",
                 "lineStatLabel": "Zeilen, die zwischen Vorlage und Lösung hinzugefügt/entfernt wurden",
@@ -557,7 +570,8 @@
             "withDependenciesTooltip": "Fügt dem generierten Projekt eine externe Apache commons-lang-Abhängigkeit als Beispiel dafür hinzu, wie Maven-Abhängigkeiten mit Artemis-Aufgaben verwendet werden sollten.",
             "recordTestwiseCoverage": "Testbasierte Code-Abdeckung aufzeichnen",
             "recordTestwiseCoverageTooltip": "Durch Aktivierung dieser Option wird die testbasierte Code-Abdeckung für das Lösungs-Repository aufgezeichnet. Diese Option ist nur für Java/Kotlin-Aufgaben mit nicht-sequentiellen Testläufen verfügbar.",
-            "customizeBuildPlansWithAeolusTooltip": "Aktivieren Sie diese Option, um die Build-Pläne mit Aeolus anzupassen. Diese Option ist nur während der Übungserstellung verfügbar.",
+            "customizeBuildPlansWithAeolusTooltip": "Aktivieren Sie diese Option, um die Build-Pläne mit Aeolus anzupassen.",
+            "customizeBuildPlansTooltip": "Aktivieren Sie diese Option, um die Build-Pläne für diese Aufgabe anzupassen.",
             "coveredLineRatio": "Anteil Test-Abgedeckter Zeilen",
             "testwiseCoverageReport": {
                 "button": "Testbasierte Code-Abdeckung anzeigen",
@@ -587,7 +601,9 @@
                 "message": "Nachricht",
                 "previousSubmission": "Vorherige Abgabe",
                 "currentSubmission": "Aktuelle Abgabe",
-                "template": "Vorlage"
+                "template": "Vorlage",
+                "history": "Commit-Historie",
+                "result": "Ergebnis"
             }
         },
         "error": {

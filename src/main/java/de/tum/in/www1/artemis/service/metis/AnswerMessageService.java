@@ -1,10 +1,13 @@
 package de.tum.in.www1.artemis.service.metis;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.time.ZonedDateTime;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -13,14 +16,9 @@ import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.LectureRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
-import de.tum.in.www1.artemis.repository.metis.ConversationMessageRepository;
-import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
-import de.tum.in.www1.artemis.repository.metis.PostRepository;
+import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
+import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.metis.*;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -33,6 +31,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
 
+@Profile(PROFILE_CORE)
 @Service
 public class AnswerMessageService extends PostingService {
 
@@ -106,8 +105,9 @@ public class AnswerMessageService extends PostingService {
         AnswerPost savedAnswerMessage = answerPostRepository.save(answerMessage);
         savedAnswerMessage.getPost().setConversation(conversation);
         setAuthorRoleForPosting(savedAnswerMessage, course);
-        this.preparePostAndBroadcast(savedAnswerMessage, course);
-        this.singleUserNotificationService.notifyInvolvedUsersAboutNewMessageReply(post, mentionedUsers, savedAnswerMessage, author);
+        SingleUserNotification notification = singleUserNotificationService.createNotificationAboutNewMessageReply(savedAnswerMessage, author, conversation);
+        this.preparePostAndBroadcast(savedAnswerMessage, course, notification);
+        this.singleUserNotificationService.notifyInvolvedUsersAboutNewMessageReply(post, notification, mentionedUsers, savedAnswerMessage, author);
         return savedAnswerMessage;
     }
 
@@ -157,7 +157,7 @@ public class AnswerMessageService extends PostingService {
         updatedAnswerMessage = answerPostRepository.save(existingAnswerMessage);
         updatedAnswerMessage.getPost().setConversation(conversation);
 
-        this.preparePostAndBroadcast(updatedAnswerMessage, course);
+        this.preparePostAndBroadcast(updatedAnswerMessage, course, null);
         return updatedAnswerMessage;
     }
 
@@ -201,7 +201,7 @@ public class AnswerMessageService extends PostingService {
         // delete
         answerPostRepository.deleteById(answerMessageId);
 
-        broadcastForPost(new PostDTO(updatedMessage, MetisCrudAction.UPDATE), course, null);
+        broadcastForPost(new PostDTO(updatedMessage, MetisCrudAction.UPDATE), course.getId(), null, null);
     }
 
     /**

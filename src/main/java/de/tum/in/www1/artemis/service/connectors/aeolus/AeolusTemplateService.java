@@ -3,27 +3,26 @@ package de.tum.in.www1.artemis.service.connectors.aeolus;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 
 import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
+import de.tum.in.www1.artemis.service.connectors.BuildScriptProviderService;
 
 /**
  * Handles the request to {@link de.tum.in.www1.artemis.web.rest.AeolusTemplateResource} and Artemis internal
@@ -33,45 +32,75 @@ import de.tum.in.www1.artemis.service.ResourceLoaderService;
 @Profile("aeolus | localci")
 public class AeolusTemplateService {
 
-    private final Logger LOGGER = LoggerFactory.getLogger(AeolusTemplateService.class);
+    private static final Logger log = LoggerFactory.getLogger(AeolusTemplateService.class);
 
     private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
 
-    private final ResourceLoaderService resourceLoaderService;
-
     private final Map<String, Windfile> templateCache = new ConcurrentHashMap<>();
 
-    public AeolusTemplateService(ProgrammingLanguageConfiguration programmingLanguageConfiguration, ResourceLoaderService resourceLoaderService) {
+    private final ResourceLoaderService resourceLoaderService;
+
+    private final BuildScriptProviderService buildScriptProviderService;
+
+    private static final ObjectMapper yamlMapper = new ObjectMapper(new YAMLFactory());
+
+    public AeolusTemplateService(ProgrammingLanguageConfiguration programmingLanguageConfiguration, ResourceLoaderService resourceLoaderService,
+            BuildScriptProviderService buildScriptProviderService) {
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
         this.resourceLoaderService = resourceLoaderService;
+        this.buildScriptProviderService = buildScriptProviderService;
+        // load all scripts into the cache
+        cacheOnBoot();
+    }
+
+    private void cacheOnBoot() {
+        var resources = this.resourceLoaderService.getResources(Path.of("templates", "aeolus"));
+        for (var resource : resources) {
+            try {
+                String filename = resource.getFilename();
+                if (filename == null || !filename.endsWith(".yaml")) {
+                    continue;
+                }
+                String directory = resource.getURL().getPath().split("templates/aeolus/")[1].split("/")[0];
+                Optional<ProjectType> optionalProjectType = extractProjectType(filename);
+                String uniqueKey = directory + "_" + filename;
+                byte[] fileContent = IOUtils.toByteArray(resource.getInputStream());
+                String script = new String(fileContent, StandardCharsets.UTF_8);
+                Windfile windfile = readWindfile(script);
+                this.addInstanceVariablesToWindfile(windfile, ProgrammingLanguage.valueOf(directory.toUpperCase()), optionalProjectType);
+                templateCache.put(uniqueKey, windfile);
+            }
+            catch (IOException | IllegalArgumentException e) {
+                log.error("Failed to load windfile {}", resource.getFilename(), e);
+            }
+        }
     }
 
     /**
-     * Converts a YAML string to a JSON string for easier communication with the client and usage with Gson
+     * Reads a YAML representation of a Windfile from a string and deserializes it into a {@link Windfile} object.
+     * This method leverages the Jackson {@code ObjectMapper} configured with {@code YAMLFactory} to parse
+     * the YAML content directly. It registers a custom deserializer for handling instances of {@link Action}
+     * to accommodate polymorphic deserialization based on the specific fields present in the YAML content.
      *
-     * @param yaml YAML string
-     * @return JSON string
-     */
-    private static String convertYamlToJson(String yaml) throws JsonProcessingException {
-        ObjectMapper yamlReader = new ObjectMapper(new YAMLFactory());
-        Object obj = yamlReader.readValue(yaml, Object.class);
-
-        ObjectMapper jsonWriter = new ObjectMapper();
-        return jsonWriter.writeValueAsString(obj);
-    }
-
-    /**
-     * Reads the yaml file and returns a Windfile object
+     * <p>
+     * The method supports the dynamic instantiation of {@code Action} subclasses based on the content
+     * of the YAML, enabling the flexible representation of different types of actions within the serialized
+     * data. For instance, it can differentiate between {@code ScriptAction} and {@code PlatformAction}
+     * based on specific identifying fields in the YAML structure.
+     * </p>
      *
-     * @param yaml the yaml file
-     * @return the Windfile object
-     * @throws IOException if the yaml file is not valid
+     * @param yaml The YAML string that represents the content of a Windfile.
+     * @return A {@link Windfile} object deserialized from the provided YAML string.
+     * @throws IOException If there is an error reading the YAML content or if the YAML is not
+     *                         valid according to the Windfile structure or the custom action types expected.
+     *                         This includes scenarios where the YAML content cannot be parsed or
+     *                         does not match the expected schema.
      */
     private static Windfile readWindfile(String yaml) throws IOException {
-        GsonBuilder builder = new GsonBuilder();
-        builder.registerTypeAdapter(Action.class, new ActionDeserializer());
-        Gson gson = builder.create();
-        return gson.fromJson(convertYamlToJson(yaml), Windfile.class);
+        SimpleModule module = new SimpleModule();
+        module.addDeserializer(Action.class, new ActionDeserializer());
+        yamlMapper.registerModule(module);
+        return yamlMapper.readValue(yaml, Windfile.class);
     }
 
     /**
@@ -87,21 +116,42 @@ public class AeolusTemplateService {
      */
     public Windfile getWindfileFor(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType, Boolean staticAnalysis, Boolean sequentialRuns, Boolean testCoverage)
             throws IOException {
-        String templateFileName = buildAeolusTemplateName(projectType, staticAnalysis, sequentialRuns, testCoverage);
+        if (programmingLanguage.equals(ProgrammingLanguage.JAVA) && projectType.isEmpty()) {
+            // to be backwards compatible, we assume that java exercises without project type are plain maven projects
+            projectType = Optional.of(ProjectType.PLAIN_MAVEN);
+        }
+        String templateFileName = buildScriptProviderService.buildTemplateName(projectType, staticAnalysis, sequentialRuns, testCoverage, "yaml");
         String uniqueKey = programmingLanguage.name().toLowerCase() + "_" + templateFileName;
         if (templateCache.containsKey(uniqueKey)) {
             return templateCache.get(uniqueKey);
         }
-        Resource fileResource = resourceLoaderService.getResource(Path.of("templates", "aeolus", programmingLanguage.name().toLowerCase(), templateFileName));
-        if (!fileResource.exists()) {
-            throw new IOException("File " + templateFileName + " not found");
+        String scriptCache = buildScriptProviderService.getCachedScript(uniqueKey);
+        if (scriptCache == null) {
+            log.error("No windfile found for key {}", uniqueKey);
+            return null;
         }
-        byte[] fileContent = IOUtils.toByteArray(fileResource.getInputStream());
-        String yaml = new String(fileContent, StandardCharsets.UTF_8);
-        Windfile windfile = readWindfile(yaml);
+        Windfile windfile = readWindfile(scriptCache);
         this.addInstanceVariablesToWindfile(windfile, programmingLanguage, projectType);
         templateCache.put(uniqueKey, windfile);
         return windfile;
+    }
+
+    /**
+     * Extracts the project type from the filename, maven_blackbox is a special case
+     *
+     * @param filename the filename
+     * @return the project type
+     */
+    private static Optional<ProjectType> extractProjectType(String filename) {
+        String[] split = filename.replace(".yaml", "").split("_");
+        String projectType = split[0];
+        if (!projectType.equals("default")) {
+            if (split.length > 2 && split[1].equals("maven") && split[2].equals("blackbox")) {
+                return Optional.of(ProjectType.MAVEN_BLACKBOX);
+            }
+            return Optional.of(ProjectType.valueOf(projectType.toUpperCase()));
+        }
+        return Optional.empty();
     }
 
     /**
@@ -116,7 +166,7 @@ public class AeolusTemplateService {
                     exercise.hasSequentialTestRuns(), exercise.isTestwiseCoverageEnabled());
         }
         catch (IOException e) {
-            LOGGER.info("No windfile for the settings of exercise {}", exercise.getId(), e);
+            log.info("No windfile for the settings of exercise {}", exercise.getId(), e);
         }
         return null;
     }
@@ -149,31 +199,5 @@ public class AeolusTemplateService {
         dockerConfig.setParameters(programmingLanguageConfiguration.getDefaultDockerFlags());
         metadata.setDocker(dockerConfig);
         windfile.setMetadata(metadata);
-    }
-
-    /**
-     * Returns the file content of the template file for the given language and project type with the different options
-     *
-     * @param projectType    The project type for which the template file should be returned. If omitted, a default depending on the language will be used.
-     * @param staticAnalysis whether the static analysis template should be used
-     * @param sequentialRuns whether the sequential runs template should be used
-     * @param testCoverage   whether the test coverage template should be used
-     * @return The filename of the requested configuration
-     */
-    private String buildAeolusTemplateName(Optional<ProjectType> projectType, Boolean staticAnalysis, Boolean sequentialRuns, Boolean testCoverage) {
-        List<String> fileNameComponents = new ArrayList<>();
-
-        fileNameComponents.add(projectType.map(Enum::name).orElse("default").toLowerCase());
-
-        if (staticAnalysis) {
-            fileNameComponents.add("static");
-        }
-        if (sequentialRuns) {
-            fileNameComponents.add("sequential");
-        }
-        if (testCoverage) {
-            fileNameComponents.add("coverage");
-        }
-        return String.join("_", fileNameComponents) + ".yaml";
     }
 }

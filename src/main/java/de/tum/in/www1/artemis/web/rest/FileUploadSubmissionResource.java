@@ -1,15 +1,16 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
-import javax.validation.constraints.NotNull;
+import java.io.IOException;
+import java.util.*;
+
+import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -37,13 +38,14 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 /**
  * REST controller for managing FileUploadSubmission.
  */
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 public class FileUploadSubmissionResource extends AbstractSubmissionResource {
 
     private static final String ENTITY_NAME = "fileUploadSubmission";
 
-    private final Logger log = LoggerFactory.getLogger(FileUploadSubmissionResource.class);
+    private static final Logger log = LoggerFactory.getLogger(FileUploadSubmissionResource.class);
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -65,7 +67,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
             ExerciseRepository exerciseRepository, GradingCriterionRepository gradingCriterionRepository, ExamSubmissionService examSubmissionService,
             StudentParticipationRepository studentParticipationRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository,
             SingleUserNotificationService singleUserNotificationService) {
-        super(submissionRepository, resultService, authCheckService, userRepository, exerciseRepository, fileUploadSubmissionService, studentParticipationRepository);
+        super(submissionRepository, authCheckService, userRepository, exerciseRepository, fileUploadSubmissionService, studentParticipationRepository);
         this.fileUploadSubmissionService = fileUploadSubmissionService;
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.gradingCriterionRepository = gradingCriterionRepository;
@@ -232,7 +234,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         if (!(fileUploadExercise instanceof FileUploadExercise)) {
             throw new BadRequestAlertException("The requested exercise was not found.", "exerciseId", "400");
         }
-        List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+        Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         fileUploadExercise.setGradingCriteria(gradingCriteria);
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 

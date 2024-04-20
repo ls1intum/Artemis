@@ -1,19 +1,23 @@
 package de.tum.in.www1.artemis.web.websocket;
 
-import static de.tum.in.www1.artemis.config.Constants.EXERCISE_TOPIC_ROOT;
-import static de.tum.in.www1.artemis.config.Constants.NEW_RESULT_TOPIC;
+import static de.tum.in.www1.artemis.config.Constants.*;
 
 import java.time.ZonedDateTime;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.hibernate.Hibernate;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
@@ -24,6 +28,7 @@ import de.tum.in.www1.artemis.web.rest.dto.ResultDTO;
  * This service is responsible for sending websocket notifications when a new result got created.
  */
 @Service
+@Profile(PROFILE_CORE)
 public class ResultWebsocketService {
 
     private final WebsocketMessagingService websocketMessagingService;
@@ -34,12 +39,15 @@ public class ResultWebsocketService {
 
     private final AuthorizationCheckService authCheckService;
 
+    private final TeamRepository teamRepository;
+
     public ResultWebsocketService(WebsocketMessagingService websocketMessagingService, ExamDateService examDateService, ExerciseDateService exerciseDateService,
-            AuthorizationCheckService authCheckService) {
+            AuthorizationCheckService authCheckService, TeamRepository teamRepository) {
         this.websocketMessagingService = websocketMessagingService;
         this.examDateService = examDateService;
         this.exerciseDateService = exerciseDateService;
         this.authCheckService = authCheckService;
+        this.teamRepository = teamRepository;
     }
 
     /**
@@ -52,6 +60,9 @@ public class ResultWebsocketService {
      */
     public void broadcastNewResult(Participation participation, Result result) {
         if (participation instanceof StudentParticipation studentParticipation) {
+            if (studentParticipation.getParticipant() instanceof Team team && !Hibernate.isInitialized(team.getStudents())) {
+                studentParticipation.setParticipant(teamRepository.findWithStudentsByIdElseThrow(team.getId()));
+            }
             broadcastNewResultToParticipants(studentParticipation, result);
         }
 
@@ -97,19 +108,19 @@ public class ResultWebsocketService {
      * @return flag whether the destination is a 'non-personal' exercise result subscription
      */
     public static boolean isNonPersonalExerciseResultDestination(String destination) {
-        return getExerciseIdFromNonPersonalExerciseResultDestination(destination) != null;
+        return getExerciseIdFromNonPersonalExerciseResultDestination(destination).isPresent();
     }
 
     /**
      * Returns the exercise id from the destination route
      *
      * @param destination Websocket destination topic from which to extract the exercise id
-     * @return exercise id
+     * @return optional containing the exercise id was found, empty otherwise
      */
-    public static Long getExerciseIdFromNonPersonalExerciseResultDestination(String destination) {
+    public static Optional<Long> getExerciseIdFromNonPersonalExerciseResultDestination(String destination) {
         Pattern pattern = Pattern.compile("^" + getNonPersonalExerciseResultDestination("(\\d*)"));
         Matcher matcher = pattern.matcher(destination);
-        return matcher.find() ? Long.parseLong(matcher.group(1)) : null;
+        return matcher.find() ? Optional.of(Long.parseLong(matcher.group(1))) : Optional.empty();
     }
 
     private static String getNonPersonalExerciseResultDestination(long exerciseId) {

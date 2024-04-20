@@ -16,7 +16,7 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingAssessmentComponent } from 'app/exercises/modeling/assess/modeling-assessment.component';
 import { catchError, concatMap, map, tap } from 'rxjs/operators';
 import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
-import { getPositiveAndCappedTotalScore } from 'app/exercises/shared/exercise/exercise.utils';
+import { getPositiveAndCappedTotalScore, getTotalMaxPoints } from 'app/exercises/shared/exercise/exercise.utils';
 import { onError } from 'app/shared/util/global.utils';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExampleSubmissionAssessCommand, FeedbackMarker } from 'app/exercises/shared/example-submission/example-submission-assess-command';
@@ -151,7 +151,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
             }
 
             const updatedHighlights = new Map<string, string>();
-            this.highlightedElements.forEach((value, key) => {
+            this.highlightedElements.forEach((_, key) => {
                 updatedHighlights.set(key, this.highlightColor);
             });
             this.highlightedElements = updatedHighlights;
@@ -414,7 +414,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
             return;
         }
 
-        const maxPoints = this.exercise.maxPoints! + this.exercise.bonusPoints!;
+        const maxPoints = getTotalMaxPoints(this.exercise);
         const creditsTotalScore = credits.reduce((a, b) => a! + b!, 0)!;
         this.totalScore = getPositiveAndCappedTotalScore(creditsTotalScore, maxPoints);
         this.assessmentsAreValid = true;

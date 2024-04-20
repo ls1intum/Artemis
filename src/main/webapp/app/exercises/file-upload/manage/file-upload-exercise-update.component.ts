@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
@@ -16,18 +16,35 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
 import { onError } from 'app/shared/util/global.utils';
 import { EditType, SaveExerciseCommand } from 'app/exercises/shared/exercise/exercise.utils';
-import { faBan, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { switchMap, tap } from 'rxjs/operators';
 import { scrollToTopOfPage } from 'app/shared/util/utils';
+import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { ExerciseTitleChannelNameComponent } from 'app/exercises/shared/exercise-title-channel-name/exercise-title-channel-name.component';
+import { TeamConfigFormGroupComponent } from 'app/exercises/shared/team-config-form-group/team-config-form-group.component';
+import { NgModel } from '@angular/forms';
+import { Subscription } from 'rxjs';
+import { FormSectionStatus } from 'app/forms/form-status-bar/form-status-bar.component';
 
 @Component({
     selector: 'jhi-file-upload-exercise-update',
     templateUrl: './file-upload-exercise-update.component.html',
 })
-export class FileUploadExerciseUpdateComponent implements OnInit {
+export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {
     readonly IncludedInOverallScore = IncludedInOverallScore;
+    readonly documentationType: DocumentationType = 'FileUpload';
+
+    @ViewChild('bonusPoints') bonusPoints: NgModel;
+    @ViewChild('points') points: NgModel;
+    @ViewChild('solutionPublicationDate') solutionPublicationDateField?: FormDateTimePickerComponent;
+    @ViewChild('releaseDate') releaseDateField?: FormDateTimePickerComponent;
+    @ViewChild('startDate') startDateField?: FormDateTimePickerComponent;
+    @ViewChild('dueDate') dueDateField?: FormDateTimePickerComponent;
+    @ViewChild('assessmentDueDate') assessmentDateField?: FormDateTimePickerComponent;
+    @ViewChild(ExerciseTitleChannelNameComponent) exerciseTitleChannelNameComponent: ExerciseTitleChannelNameComponent;
+    @ViewChild(TeamConfigFormGroupComponent) teamConfigFormGroupComponent: TeamConfigFormGroupComponent;
 
     isExamMode: boolean;
     fileUploadExercise: FileUploadExercise;
@@ -45,12 +62,16 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
 
     saveCommand: SaveExerciseCommand<FileUploadExercise>;
 
-    readonly documentationType: DocumentationType = 'FileUpload';
+    formStatusSections: FormSectionStatus[];
+
+    // Subcriptions
+    titleChannelNameComponentSubscription?: Subscription;
+    pointsSubscription?: Subscription;
+    bonusPointsSubscription?: Subscription;
+    teamSubscription?: Subscription;
 
     // Icons
     faQuestionCircle = faQuestionCircle;
-    faBan = faBan;
-    faSave = faSave;
 
     constructor(
         private fileUploadExerciseService: FileUploadExerciseService,
@@ -102,6 +123,60 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
                 }),
             )
             .subscribe();
+    }
+
+    ngAfterViewInit() {
+        this.titleChannelNameComponentSubscription = this.exerciseTitleChannelNameComponent.titleChannelNameComponent.formValidChanges.subscribe(() =>
+            this.calculateFormSectionStatus(),
+        );
+        this.pointsSubscription = this.points?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
+        this.bonusPointsSubscription = this.bonusPoints?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
+        this.teamSubscription = this.teamConfigFormGroupComponent.formValidChanges.subscribe(() => this.calculateFormSectionStatus());
+    }
+
+    ngOnDestroy() {
+        this.titleChannelNameComponentSubscription?.unsubscribe();
+        this.pointsSubscription?.unsubscribe();
+        this.bonusPointsSubscription?.unsubscribe();
+        this.teamSubscription?.unsubscribe();
+    }
+
+    calculateFormSectionStatus() {
+        this.formStatusSections = [
+            {
+                title: 'artemisApp.exercise.sections.general',
+                valid: this.exerciseTitleChannelNameComponent.titleChannelNameComponent.formValid,
+            },
+            { title: 'artemisApp.exercise.sections.mode', valid: this.teamConfigFormGroupComponent.formValid },
+            { title: 'artemisApp.exercise.sections.problem', valid: true, empty: !this.fileUploadExercise.problemStatement },
+            {
+                title: 'artemisApp.exercise.sections.solution',
+                valid: Boolean(this.isExamMode || (!this.fileUploadExercise.exampleSolutionPublicationDateError && this.solutionPublicationDateField?.dateInput.valid)),
+                empty: !this.fileUploadExercise.exampleSolution || (!this.isExamMode && !this.fileUploadExercise.exampleSolutionPublicationDate),
+            },
+            {
+                title: 'artemisApp.exercise.sections.grading',
+                valid: Boolean(
+                    this.points.valid &&
+                        this.bonusPoints.valid &&
+                        (this.isExamMode ||
+                            (!this.fileUploadExercise.startDateError &&
+                                !this.fileUploadExercise.dueDateError &&
+                                !this.fileUploadExercise.assessmentDueDateError &&
+                                this.releaseDateField?.dateInput.valid &&
+                                this.startDateField?.dateInput.valid &&
+                                this.dueDateField?.dateInput.valid &&
+                                this.assessmentDateField?.dateInput.valid)),
+                ),
+                empty:
+                    !this.isExamMode &&
+                    // if a dayjs object contains an empty date, it is considered "invalid"
+                    (!this.fileUploadExercise.startDate?.isValid() ||
+                        !this.fileUploadExercise.dueDate?.isValid() ||
+                        !this.fileUploadExercise.assessmentDueDate?.isValid() ||
+                        !this.fileUploadExercise.releaseDate?.isValid()),
+            },
+        ];
     }
 
     /**
@@ -175,6 +250,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
      */
     validateDate() {
         this.exerciseService.validateDate(this.fileUploadExercise);
+        this.calculateFormSectionStatus();
     }
 
     /**

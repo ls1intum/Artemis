@@ -23,7 +23,7 @@ public class UserScheduleService {
     @Value("${artemis.user-management.registration.cleanup-time-minutes:60}")
     private Long removeNonActivatedUserDelayTime;
 
-    private final Logger log = LoggerFactory.getLogger(UserScheduleService.class);
+    private static final Logger log = LoggerFactory.getLogger(UserScheduleService.class);
 
     private final UserRepository userRepository;
 

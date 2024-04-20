@@ -52,7 +52,7 @@ const programmingParticipation = {
     submissions: [programmingSubmission],
     type: ParticipationType.PROGRAMMING,
     participantIdentifier: 'student1',
-    repositoryUrl: 'https://bitbucket.ase.in.tum.de/projects/TEST/repos/test-exercise',
+    repositoryUri: 'https://username@artemistest2gitlab.ase.in.tum.de/FTCSCAGRADING1/ftcscagrading1-username',
 } as ProgrammingExerciseStudentParticipation;
 
 const programmingExercise = {
@@ -85,7 +85,7 @@ const result = {
         id: 55,
         type: ParticipationType.PROGRAMMING,
         participantIdentifier: 'student42',
-        repositoryUrl: 'https://bitbucket.ase.in.tum.de/projects/somekey/repos/somekey-student42',
+        repositoryUri: 'https://gitlab.ase.in.tum.de/projects/somekey/repos/somekey-student42',
     },
     feedbacks: [feedback],
     assessmentType: AssessmentType.MANUAL,
@@ -107,7 +107,14 @@ describe('ProgrammingExamSummaryComponent', () => {
                 MockComponent(ComplaintsStudentViewComponent),
                 MockPipe(ArtemisTranslatePipe),
             ],
-            providers: [MockProvider(ExerciseService), MockProvider(ExerciseCacheService), { provide: ProfileService, useValue: new MockProfileService() }],
+            providers: [
+                MockProvider(ExerciseService),
+                MockProvider(ExerciseCacheService),
+                {
+                    provide: ProfileService,
+                    useValue: new MockProfileService(),
+                },
+            ],
         })
             .compileComponents()
             .then(() => {
@@ -122,7 +129,7 @@ describe('ProgrammingExamSummaryComponent', () => {
 
                 profileService = TestBed.inject(ProfileService);
 
-                const commitHashURLTemplate = 'https://bitbucket.ase.in.tum.de/projects/{projectKey}/repos/{repoSlug}/commits/{commitHash}';
+                const commitHashURLTemplate = 'https://gitlab.ase.in.tum.de/projects/{projectKey}/repos/{repoSlug}/commits/{commitHash}';
                 const profileInfo = new ProfileInfo();
                 profileInfo.commitHashURLTemplate = commitHashURLTemplate;
                 jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(new BehaviorSubject(profileInfo));
@@ -146,7 +153,7 @@ describe('ProgrammingExamSummaryComponent', () => {
 
         expect(spyOnGetProfileInfo).toHaveBeenCalledOnce();
         expect(component.commitHash).toBe('123456789ab');
-        expect(component.commitUrl).toBe('https://bitbucket.ase.in.tum.de/projects/test/repos/test-student1/commits/123456789ab');
+        expect(component.commitUrl).toBe('https://gitlab.ase.in.tum.de/projects/test/repos/test-student1/commits/123456789ab');
     });
 
     it('should show result if present and results are published', () => {

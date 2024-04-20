@@ -14,11 +14,11 @@ export class ExerciseResultPage {
 
     shouldShowScore(percentage: number) {
         cy.reloadUntilFound('#submission-result-graded');
-        cy.contains(`${percentage}%`).should('be.visible');
+        cy.contains('.tab-bar-exercise-details', `${percentage}%`).should('be.visible');
     }
 
     clickOpenExercise(exerciseId: number) {
-        cy.intercept(GET, BASE_API + 'results/*/rating').as('getResults');
+        cy.intercept(GET, `${BASE_API}/results/*/rating`).as('getResults');
         cy.get('#open-exercise-' + exerciseId).click();
         return cy.wait('@getResults');
     }

@@ -1,10 +1,13 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -18,12 +21,13 @@ import de.tum.in.www1.artemis.web.rest.errors.ComplaintResponseLockedException;
 /**
  * Service for managing complaint responses.
  */
+@Profile(PROFILE_CORE)
 @Service
 public class ComplaintResponseService {
 
     private static final String ENTITY_NAME = "complaintResponse";
 
-    private final Logger log = LoggerFactory.getLogger(ComplaintResponseService.class);
+    private static final Logger log = LoggerFactory.getLogger(ComplaintResponseService.class);
 
     private final ComplaintRepository complaintRepository;
 
@@ -43,7 +47,7 @@ public class ComplaintResponseService {
 
     /**
      * Removes the empty complaint response and thus the lock for a given complaint
-     *
+     * <p>
      * The empty complaint response acts as a lock. Only the reviewer of the empty complaint response and instructors can resolve the complaint as long as the lock
      * is running. For lock duration calculation see: {@link ComplaintResponse#isCurrentlyLocked()}. These methods remove the current empty complaint response thus removing the
      * lock
@@ -83,13 +87,13 @@ public class ComplaintResponseService {
 
     /**
      * Refreshes the empty complaint response for a given complaint that acts a lock
-     *
+     * <p>
      * The empty complaint response acts as a lock. Only the reviewer of the empty complaint response and instructors can resolve the complaint as long as the lock
      * is running. For lock duration calculation see: {@link ComplaintResponse#isCurrentlyLocked()}. These methods exchange the current empty complaint response to a new one
      * thus updating the lock.
-     *
+     * <p>
      * This is possible in two cases:
-     *
+     * <p>
      * Case A: Lock is currently active -> Only the initial reviewer or an instructor can refresh the empty complaint response
      * Case B: Lock has run out --> Others teaching assistants can refresh the empty complaint response thus acquiring the lock
      *
@@ -125,7 +129,7 @@ public class ComplaintResponseService {
 
     /**
      * Creates an empty complaint response for a given complaint that acts a lock
-     *
+     * <p>
      * The empty complaint response acts as a lock. Only the creator of the empty complaint response and instructors can resolve the complaint as long as the lock
      * is running. For lock duration calculation see: {@link ComplaintResponse#isCurrentlyLocked()}
      *
@@ -157,7 +161,7 @@ public class ComplaintResponseService {
 
     /**
      * Resolves a complaint by filling in the empty complaint response attached to it
-     *
+     * <p>
      * The empty complaint response acts as a lock. Only the creator of the empty complaint response and instructors can resolve empty complaint response as long as the lock
      * is running. For lock duration calculation see: {@link ComplaintResponse#isCurrentlyLocked()}. These methods fill in the initial complaint response and either accepts
      * or denies the associated complaint, thus resolving the complaint
@@ -244,10 +248,10 @@ public class ComplaintResponseService {
     /**
      * Checks whether the reviewer is authorized to respond to this complaint, note: instructors are always allowed
      * to respond to complaints
-     *
+     * <p>
      * 1. Team Exercises
      * => The team tutor assesses the submissions and responds to complaints and more feedback requests
-     *
+     * <p>
      * 2. Individual Exercises
      * => Complaints can only be handled by a tutor who is not the original assessor
      * => Complaints of exam test runs can be assessed by instructors. They are identified by the same user being the assessor and student

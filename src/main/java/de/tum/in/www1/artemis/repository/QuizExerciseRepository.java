@@ -1,14 +1,16 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -22,30 +24,32 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data JPA repository for the QuizExercise entity.
  */
+@Profile(PROFILE_CORE)
 @Repository
 public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long>, JpaSpecificationExecutor<QuizExercise> {
 
     @Query("""
-            SELECT DISTINCT e FROM QuizExercise e
-            LEFT JOIN FETCH e.categories
-            WHERE e.course.id = :#{#courseId}
+            SELECT DISTINCT e
+            FROM QuizExercise e
+                LEFT JOIN FETCH e.categories
+            WHERE e.course.id = :courseId
             """)
     List<QuizExercise> findByCourseIdWithCategories(@Param("courseId") Long courseId);
 
     @Query("""
             SELECT qe
             FROM QuizExercise qe
-            WHERE qe.exerciseGroup.exam.id = :#{#examId}
+            WHERE qe.exerciseGroup.exam.id = :examId
             """)
-    List<QuizExercise> findByExamId(Long examId);
+    List<QuizExercise> findByExamId(@Param("examId") Long examId);
 
     @Query("""
             SELECT DISTINCT qe
             FROM QuizExercise qe
-            LEFT JOIN qe.quizBatches b
-            WHERE b.startTime > :#{#earliestReleaseDate}
+                LEFT JOIN qe.quizBatches b
+            WHERE b.startTime > :earliestReleaseDate
             """)
-    List<QuizExercise> findAllPlannedToStartAfter(ZonedDateTime earliestReleaseDate);
+    List<QuizExercise> findAllPlannedToStartAfter(@Param("earliestReleaseDate") ZonedDateTime earliestReleaseDate);
 
     @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "quizPointStatistic", "quizQuestions.quizQuestionStatistic", "categories", "quizBatches" })
     Optional<QuizExercise> findWithEagerQuestionsAndStatisticsById(Long quizExerciseId);
@@ -67,7 +71,7 @@ public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long
     @NotNull
     default QuizExercise findWithEagerQuestionsByIdOrElseThrow(Long quizExerciseId) {
         return findWithEagerQuestionsById(quizExerciseId).orElseThrow(() -> new EntityNotFoundException("QuizExercise", quizExerciseId));
-    };
+    }
 
     /**
      * Get one quiz exercise

@@ -1,5 +1,4 @@
-import { BASE_API, CourseWideContext, POST, PUT } from '../../constants';
-import { titleCaseWord } from '../../utils';
+import { COURSE_BASE, POST, PUT } from '../../constants';
 
 /**
  * A class which encapsulates UI selectors and actions for the course communication page.
@@ -7,10 +6,6 @@ import { titleCaseWord } from '../../utils';
 export class CourseCommunicationPage {
     newPost() {
         cy.get('#new-post').click();
-    }
-
-    selectContextInModal(context: CourseWideContext) {
-        cy.get('.modal-content #context').select(titleCaseWord(context));
     }
 
     getContextSelectorInModal() {
@@ -29,19 +24,19 @@ export class CourseCommunicationPage {
     }
 
     save() {
-        cy.intercept(POST, BASE_API + 'courses/*/posts').as('createPost');
+        cy.intercept(POST, `${COURSE_BASE}/*/posts`).as('createPost');
         cy.get('#save').click();
         return cy.wait('@createPost');
     }
 
     saveMessage() {
-        cy.intercept(POST, BASE_API + 'courses/*/messages').as('createMessage');
+        cy.intercept(POST, `${COURSE_BASE}/*/messages`).as('createMessage');
         cy.get('#save').click();
         return cy.wait('@createMessage');
     }
 
     searchForMessage(search: string) {
-        cy.get('#search').type(search);
+        cy.get('input[name="searchText"]').type(search);
         cy.get('#search-submit').click();
     }
 
@@ -73,14 +68,14 @@ export class CourseCommunicationPage {
 
     reply(postID: number, content: string) {
         this.getSinglePost(postID).find('.new-reply-inline-input').find('.markdown-editor').find('.ace_content').click().type(content, { delay: 8 });
-        cy.intercept(POST, BASE_API + 'courses/*/answer-posts').as('createReply');
+        cy.intercept(POST, `${COURSE_BASE}/*/answer-posts`).as('createReply');
         this.getSinglePost(postID).find('.new-reply-inline-input').find('#save').click();
         return cy.wait('@createReply');
     }
 
     replyWithMessage(postID: number, content: string) {
         this.getSinglePost(postID).find('.new-reply-inline-input').find('.markdown-editor').find('.ace_content').click().type(content, { delay: 8 });
-        cy.intercept(POST, BASE_API + 'courses/*/answer-messages').as('createReply');
+        cy.intercept(POST, `${COURSE_BASE}/*/answer-messages`).as('createReply');
         this.getSinglePost(postID).find('.new-reply-inline-input').find('#save').click();
         return cy.wait('@createReply');
     }
@@ -88,17 +83,13 @@ export class CourseCommunicationPage {
     react(postID: number, emoji: string) {
         this.getSinglePost(postID).find('.react').click();
         cy.get('.emoji-mart').find('.emoji-mart-search input').type(emoji);
-        cy.intercept(POST, BASE_API + 'courses/*/postings/reactions').as('createReaction');
+        cy.intercept(POST, `${COURSE_BASE}/*/postings/reactions`).as('createReaction');
         cy.get('.emoji-mart').find('.emoji-mart-scroll').find('ngx-emoji:first()').click();
         return cy.wait('@createReaction');
     }
 
     pinPost(postID: number) {
         this.getSinglePost(postID).find('.pin').click();
-    }
-
-    archivePost(postID: number) {
-        this.getSinglePost(postID).find('.archive').click();
     }
 
     deletePost(postID: number) {
@@ -109,7 +100,7 @@ export class CourseCommunicationPage {
         const post = this.getSinglePost(postID);
         post.find('.editIcon').click();
         this.setContentInline(content);
-        cy.intercept(PUT, BASE_API + 'courses/*/messages/*').as('updatePost');
+        cy.intercept(PUT, `${COURSE_BASE}/*/messages/*`).as('updatePost');
         cy.get('#save').click();
         cy.wait('@updatePost');
     }
@@ -139,10 +130,7 @@ export class CourseCommunicationPage {
         this.getSinglePost(postID).find('fa-icon.resolved').should('exist');
     }
 
-    checkSinglePostByPosition(position: number, title: string | undefined, content: string, context?: CourseWideContext) {
-        if (context) {
-            cy.get('.items-container .item').eq(position).find('.context-information').contains(titleCaseWord(context));
-        }
+    checkSinglePostByPosition(position: number, title: string | undefined, content: string) {
         if (title !== undefined) {
             cy.get('.items-container .item').eq(position).find('.post-title').contains(title);
         }

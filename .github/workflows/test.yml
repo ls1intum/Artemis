@@ -40,8 +40,8 @@ concurrency:
 # Keep in sync with codeql-analysis.yml and build.yml
 env:
   CI: true
-  node: 18
-  java: 17
+  node: 20
+  java: 21
 
 jobs:
 
@@ -54,13 +54,16 @@ jobs:
       uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
-        java-version: '${{ env.java }}'
+        # Install Java 17 to run programming templates
+        java-version: |
+          17
+          ${{ env.java }}
         cache: 'gradle'
     - name: Java Tests
       run: set -o pipefail && ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
     - name: Print failed tests
       if: failure()
-      run: cat tests.log | grep "Test >.* FAILED" || [[ $? == 1 ]]
+      run: grep "Test >.* FAILED" tests.log || echo "No failed tests."
     - name: "Codacy: Report coverage"
       uses: codacy/codacy-coverage-reporter-action@master
       with:
@@ -98,18 +101,21 @@ jobs:
             uses: actions/setup-java@v4
             with:
                 distribution: 'temurin'
-                java-version: '${{ env.java }}'
+                # Install Java 17 to run programming templates
+                java-version: |
+                  17
+                  ${{ env.java }}
                 cache: 'gradle'
           - name: Java Tests
             id: tests
             run: set -o pipefail && SPRING_PROFILES_INCLUDE=mysql ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
           - name: Print failed tests
             if: failure()
-            run: cat tests.log | grep "Test >.* FAILED" || [[ $? == 1 ]]
+            run: grep "Test >.* FAILED" tests.log || echo "No failed tests."
           - name: Count failed tests
             id: failedTestCounter
             if: failure()
-            run: echo "FAILED_TESTS_COUNT=$(cat tests.log | grep "Test >.* FAILED" | wc -l)" >> $GITHUB_OUTPUT
+            run: echo "FAILED_TESTS_COUNT=$(grep -c "Test >.* FAILED" tests.log)" >> $GITHUB_OUTPUT
           - name: Report action failure
             if: failure()
             uses: Sibz/github-status-action@v1
@@ -152,18 +158,21 @@ jobs:
             uses: actions/setup-java@v4
             with:
                 distribution: 'temurin'
-                java-version: '${{ env.java }}'
+                # Install Java 17 to run programming templates
+                java-version: |
+                    17
+                    ${{ env.java }}
                 cache: 'gradle'
           - name: Java Tests
             id: tests
             run: set -o pipefail && SPRING_PROFILES_INCLUDE=postgres ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
           - name: Print failed tests
             if: failure()
-            run: cat tests.log | grep "Test >.* FAILED" || [[ $? == 1 ]]
+            run: grep "Test >.* FAILED" tests.log || echo "No failed tests."
           - name: Count failed tests
             id: failedTestCounter
             if: failure()
-            run: echo "FAILED_TESTS_COUNT=$(cat tests.log | grep "Test >.* FAILED" | wc -l)" >> $GITHUB_OUTPUT
+            run: echo "FAILED_TESTS_COUNT=$(grep -c "Test >.* FAILED" tests.log)" >> $GITHUB_OUTPUT
           - name: Report action failure
             if: failure()
             uses: Sibz/github-status-action@v1

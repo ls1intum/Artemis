@@ -13,13 +13,14 @@ import com.hazelcast.map.IMap;
 
 public abstract class CacheHandler<K, C extends Cache> {
 
-    private final Logger logger = LoggerFactory.getLogger(CacheHandler.class);
+    private static final Logger log = LoggerFactory.getLogger(CacheHandler.class);
 
     protected final HazelcastInstance hazelcastInstance;
 
     protected final IMap<K, C> cache;
 
     protected CacheHandler(HazelcastInstance hazelcastInstance, String name) {
+        // NOTE: CacheHandler is not a Spring bean and is manually created after all services are initialized, ensuring safe access to hazelcastInstance in the constructor.
         this.hazelcastInstance = hazelcastInstance;
         this.cache = hazelcastInstance.getMap(name);
     }
@@ -122,7 +123,7 @@ public abstract class CacheHandler<K, C extends Cache> {
     public void performCacheWrite(K key, UnaryOperator<C> writeOperation) {
         cache.lock(key);
         try {
-            logger.info("Write cache {}", key);
+            log.info("Write cache {}", key);
             cache.set(key, writeOperation.apply(getTransientWriteCacheFor(key)));
             // We do this get here to deserialize and load the newly written instance into the near cache directly after the writing operation
             cache.get(key);
@@ -146,7 +147,7 @@ public abstract class CacheHandler<K, C extends Cache> {
         try {
             C cached = cache.get(key);
             if (cached != null) {
-                logger.info("Write cache {}", key);
+                log.info("Write cache {}", key);
                 cache.set(key, writeOperation.apply(cached));
                 // We do this get here to deserialize and load the newly written instance into the near cache directly after the write
                 cache.get(key);

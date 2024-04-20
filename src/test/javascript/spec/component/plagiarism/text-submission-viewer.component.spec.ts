@@ -1,12 +1,12 @@
 import { SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { TextSubmissionViewerComponent } from 'app/exercises/shared/plagiarism/plagiarism-split-view/text-submission-viewer/text-submission-viewer.component';
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -65,14 +65,38 @@ describe('Text Submission Viewer Component', () => {
 
     it('fetches a programming submission', () => {
         comp.exercise = { type: ExerciseType.PROGRAMMING } as ProgrammingExercise;
-        jest.spyOn(repositoryService, 'getRepositoryContent').mockReturnValue(of({}));
+        jest.spyOn(repositoryService, 'getRepositoryContentForPlagiarismView').mockReturnValue(of({}));
 
         comp.ngOnChanges({
             plagiarismSubmission: { currentValue: { submissionId: 2 } } as SimpleChange,
         });
 
-        expect(repositoryService.getRepositoryContent).toHaveBeenCalledOnce();
+        expect(repositoryService.getRepositoryContentForPlagiarismView).toHaveBeenCalledOnce();
         expect(comp.isProgrammingExercise).toBeTrue();
+        expect(comp.cannotLoadFiles).toBeFalse();
+    });
+
+    it('does not fetch a programming submission', () => {
+        jest.spyOn(repositoryService, 'getRepositoryContentForPlagiarismView').mockReturnValue(of({}));
+        comp.hideContent = true;
+
+        comp.ngOnChanges({
+            plagiarismSubmission: { currentValue: { submissionId: 2 } } as SimpleChange,
+        });
+
+        expect(repositoryService.getRepositoryContentForPlagiarismView).not.toHaveBeenCalled();
+    });
+
+    it('handles a programming submission fetch error', () => {
+        comp.exercise = { type: ExerciseType.PROGRAMMING } as ProgrammingExercise;
+        jest.spyOn(repositoryService, 'getRepositoryContentForPlagiarismView').mockReturnValue(throwError({}));
+
+        comp.ngOnChanges({
+            plagiarismSubmission: { currentValue: { submissionId: 2 } } as SimpleChange,
+        });
+
+        expect(repositoryService.getRepositoryContentForPlagiarismView).toHaveBeenCalledOnce();
+        expect(comp.cannotLoadFiles).toBeTrue();
     });
 
     it('sorts and filters the files when fetching a programming submission', () => {
@@ -91,13 +115,13 @@ describe('Text Submission Viewer Component', () => {
         comp.matches.set('e', [{ from: new TextSubmissionElement(), to: new TextSubmissionElement() }]);
         comp.matches.set('kContinuedName', [{ from: new TextSubmissionElement(), to: new TextSubmissionElement() }]);
 
-        jest.spyOn(repositoryService, 'getRepositoryContent').mockReturnValue(of(filesUnordered));
+        jest.spyOn(repositoryService, 'getRepositoryContentForPlagiarismView').mockReturnValue(of(filesUnordered));
 
         comp.ngOnChanges({
             plagiarismSubmission: { currentValue: { submissionId: 2 } } as SimpleChange,
         });
 
-        expect(repositoryService.getRepositoryContent).toHaveBeenCalledOnce();
+        expect(repositoryService.getRepositoryContentForPlagiarismView).toHaveBeenCalledOnce();
         expect(comp.isProgrammingExercise).toBeTrue();
 
         // files with matches first, then the ones without match; each section ordered lexicographically
@@ -125,12 +149,12 @@ describe('Text Submission Viewer Component', () => {
         comp.matches = new Map();
         const expectedHeaders = new HttpHeaders().append('content-type', 'text/plain');
         jest.spyOn(repositoryService, 'getFileHeaders').mockReturnValue(of(new HttpResponse<Blob>({ headers: expectedHeaders })));
-        jest.spyOn(repositoryService, 'getFile').mockReturnValue(of({ fileContent: 'if(current>max)' }));
+        jest.spyOn(repositoryService, 'getFileForPlagiarismView').mockReturnValue(of({ fileContent: 'if(current>max)' }));
 
         comp.handleFileSelect(fileName);
 
         const expectedDomain: DomainChange = [DomainType.PARTICIPATION, { id: submissionId }];
-        expect(repositoryService.getFile).toHaveBeenCalledWith(fileName, expectedDomain);
+        expect(repositoryService.getFileForPlagiarismView).toHaveBeenCalledWith(fileName, expectedDomain);
         expect(comp.currentFile).toEqual(fileName);
         expect(comp.fileContent).toBe('if(current&gt;max)');
     });
@@ -141,15 +165,15 @@ describe('Text Submission Viewer Component', () => {
         const fileName = Object.keys(files)[1];
         const expectedHeaders = new HttpHeaders().append('content-type', 'audio/mpeg');
         jest.spyOn(repositoryService, 'getFileHeaders').mockReturnValue(of(new HttpResponse<Blob>({ headers: expectedHeaders })));
-        jest.spyOn(repositoryService, 'getFile').mockReturnValue(of({ fileContent: 'Test' }));
+        jest.spyOn(repositoryService, 'getFileForPlagiarismView').mockReturnValue(of({ fileContent: 'Test' }));
 
         comp.handleFileSelect(fileName);
 
-        expect(repositoryService.getFile).not.toHaveBeenCalled();
+        expect(repositoryService.getFileForPlagiarismView).not.toHaveBeenCalled();
         expect(comp.currentFile).toEqual(fileName);
     });
 
-    it('should insert match tokens', () => {
+    it('should insert exact match tokens', () => {
         const mockMatches = [
             {
                 from: {
@@ -179,7 +203,46 @@ describe('Text Submission Viewer Component', () => {
         jest.spyOn(comp, 'getMatchesForCurrentFile').mockReturnValue(mockMatches);
 
         const fileContent = `Lorem ipsum dolor sit amet.\nConsetetur sadipscing elitr.`;
-        const expectedFileContent = `<span class="plagiarism-match">Lorem ipsum dolor</span> sit amet.\n<span class="plagiarism-match">Consetetur sadipscing elitr</span>.`;
+        const expectedFileContent = `<span class="plagiarism-match">Lorem ipsum dolor </span>sit amet.\n<span class="plagiarism-match">Consetetur sadipscing elitr.</span>`;
+        comp.exercise = { type: ExerciseType.TEXT } as unknown as Exercise;
+
+        const updatedFileContent = comp.insertMatchTokens(fileContent);
+
+        expect(updatedFileContent).toEqual(expectedFileContent);
+    });
+
+    it('should insert full line match tokens', () => {
+        const mockMatches = [
+            {
+                from: {
+                    column: 1,
+                    line: 1,
+                    length: 5,
+                } as TextSubmissionElement,
+                to: {
+                    column: 13,
+                    line: 1,
+                    length: 5,
+                } as TextSubmissionElement,
+            },
+            {
+                from: {
+                    column: 1,
+                    line: 2,
+                    length: 10,
+                } as TextSubmissionElement,
+                to: {
+                    column: 23,
+                    line: 2,
+                    length: 5,
+                } as TextSubmissionElement,
+            },
+        ];
+        jest.spyOn(comp, 'getMatchesForCurrentFile').mockReturnValue(mockMatches);
+
+        const fileContent = `Lorem ipsum dolor sit amet.\nConsetetur sadipscing elitr.\nAt vero eos et accusam et justo duo.`;
+        const expectedFileContent = `<span class="plagiarism-match">Lorem ipsum dolor sit amet.</span>\n<span class="plagiarism-match">Consetetur sadipscing elitr.</span>\nAt vero eos et accusam et justo duo.`;
+        comp.exercise = { type: ExerciseType.PROGRAMMING } as unknown as Exercise;
 
         const updatedFileContent = comp.insertMatchTokens(fileContent);
 
@@ -196,7 +259,7 @@ describe('Text Submission Viewer Component', () => {
         expect(updatedFileContent).toEqual(expectedFileContent);
     });
 
-    it('should escape and insert tokens', () => {
+    it('should escape and insert exact tokens', () => {
         const mockMatches = [
             {
                 from: {
@@ -226,15 +289,55 @@ describe('Text Submission Viewer Component', () => {
         jest.spyOn(comp, 'getMatchesForCurrentFile').mockReturnValue(mockMatches);
         const fileContent = 'Lorem ipsum <fake-token>dolor sit amet.\n<test> test text for inserting tokens';
         const expectedFileContent =
-            'Lorem<span class="plagiarism-match"> ipsum &lt;fake</span>-token&gt;dolor sit amet.\n' +
-            '<span class="plagiarism-match">&lt;test&gt; test text for insert</span>ing tokens';
+            'Lorem<span class="plagiarism-match"> ipsum &lt;fake-</span>token&gt;dolor sit amet.\n' +
+            '<span class="plagiarism-match">&lt;test&gt; test text for inserti</span>ng tokens';
+        comp.exercise = { type: ExerciseType.TEXT } as unknown as Exercise;
 
         const updatedFileContent = comp.insertMatchTokens(fileContent);
 
         expect(updatedFileContent).toEqual(expectedFileContent);
     });
 
-    it('should insert tokens for multiple matches in one line', () => {
+    it('should escape and insert full line tokens', () => {
+        const mockMatches = [
+            {
+                from: {
+                    column: 6,
+                    line: 1,
+                    length: 5,
+                } as TextSubmissionElement,
+                to: {
+                    column: 13,
+                    line: 1,
+                    length: 5,
+                } as TextSubmissionElement,
+            },
+            {
+                from: {
+                    column: 1,
+                    line: 2,
+                    length: 10,
+                } as TextSubmissionElement,
+                to: {
+                    column: 23,
+                    line: 2,
+                    length: 5,
+                } as TextSubmissionElement,
+            },
+        ];
+        jest.spyOn(comp, 'getMatchesForCurrentFile').mockReturnValue(mockMatches);
+        const fileContent = 'Lorem ipsum <fake-token>dolor sit amet.\n<test> test text for inserting tokens';
+        const expectedFileContent =
+            '<span class="plagiarism-match">Lorem ipsum &lt;fake-token&gt;dolor sit amet.</span>\n' +
+            '<span class="plagiarism-match">&lt;test&gt; test text for inserting tokens</span>';
+        comp.exercise = { type: ExerciseType.PROGRAMMING } as unknown as Exercise;
+
+        const updatedFileContent = comp.insertMatchTokens(fileContent);
+
+        expect(updatedFileContent).toEqual(expectedFileContent);
+    });
+
+    it('should insert exact tokens for multiple matches in one line', () => {
         const mockMatches = [
             {
                 from: {
@@ -263,15 +366,77 @@ describe('Text Submission Viewer Component', () => {
         ];
         jest.spyOn(comp, 'getMatchesForCurrentFile').mockReturnValue(mockMatches);
         const fileContent = 'Lorem ipsum <fake-token>dolor sit amet.';
-        // TODO double check that, this result seems wrong
-        const expectedFileContent = '<span class="plagiarism-match">Lorem ips</span>um &lt;fake-t<span class="plagiarism-match">oken&gt;dolor sit </span>amet.';
+        const expectedFileContent = '<span class="plagiarism-match">Lorem ipsu</span>m &lt;fake-t<span class="plagiarism-match">oken&gt;dolor sit a</span>met.';
+        comp.exercise = { type: ExerciseType.TEXT } as unknown as Exercise;
 
         const updatedFileContent = comp.insertMatchTokens(fileContent);
 
         expect(updatedFileContent).toEqual(expectedFileContent);
     });
 
-    it('should return a non-empty string even if matches have undefined "from" and "to" values', () => {
+    it('should insert full line tokens for multiple matches in one line', () => {
+        const mockMatches = [
+            {
+                from: {
+                    column: 20,
+                    line: 1,
+                    length: 10,
+                } as TextSubmissionElement,
+                to: {
+                    column: 30,
+                    line: 1,
+                    length: 5,
+                } as TextSubmissionElement,
+            },
+            {
+                from: {
+                    column: 1,
+                    line: 1,
+                    length: 5,
+                } as TextSubmissionElement,
+                to: {
+                    column: 5,
+                    line: 1,
+                    length: 5,
+                } as TextSubmissionElement,
+            },
+        ];
+        jest.spyOn(comp, 'getMatchesForCurrentFile').mockReturnValue(mockMatches);
+        const fileContent = 'Lorem ipsum <fake-token>dolor sit amet.';
+        const expectedFileContent = '<span class="plagiarism-match">Lorem ipsum &lt;fake-token&gt;dolor sit amet.</span>';
+        comp.exercise = { type: ExerciseType.PROGRAMMING } as unknown as Exercise;
+
+        const updatedFileContent = comp.insertMatchTokens(fileContent);
+
+        expect(updatedFileContent).toEqual(expectedFileContent);
+    });
+
+    it('should insert exact tokens for multiple line matches', () => {
+        const mockMatches = [
+            {
+                from: {
+                    column: 20,
+                    line: 1,
+                    length: 10,
+                } as TextSubmissionElement,
+                to: {
+                    column: 30,
+                    line: 2,
+                    length: 5,
+                } as TextSubmissionElement,
+            },
+        ];
+        jest.spyOn(comp, 'getMatchesForCurrentFile').mockReturnValue(mockMatches);
+        const fileContent = 'Lorem ipsum <fake-token>dolor sit amet.\nLorem ipsum <fake-token>dolor sit amet';
+        comp.exercise = { type: ExerciseType.TEXT } as unknown as Exercise;
+        const expectedFileContent = 'Lorem ipsum &lt;fake-t<span class="plagiarism-match">oken&gt;dolor sit amet.\nLorem ipsum &lt;fake-token&gt;dolor sit a</span>met';
+
+        const updatedFileContent = comp.insertMatchTokens(fileContent);
+
+        expect(updatedFileContent).toEqual(expectedFileContent);
+    });
+
+    it('should return a non-empty string even if matches have undefined "from" and "to" values for exact matches', () => {
         const mockMatches = [
             {
                 from: undefined as unknown as TextSubmissionElement,
@@ -291,6 +456,37 @@ describe('Text Submission Viewer Component', () => {
             },
         ];
         jest.spyOn(comp, 'getMatchesForCurrentFile').mockReturnValue(mockMatches);
+        comp.exercise = { type: ExerciseType.TEXT } as unknown as Exercise;
+
+        const fileContent = `Lorem ipsum dolor sit amet.\nConsetetur sadipscing elitr.`;
+        const expectedFileContent = `Lorem ipsum dolor sit amet.\nConsetetur sadipscing elitr.`;
+
+        const updatedFileContent = comp.insertMatchTokens(fileContent);
+
+        expect(updatedFileContent).toEqual(expectedFileContent);
+    });
+
+    it('should return a non-empty string even if matches have undefined "from" and "to" values for full line matches', () => {
+        const mockMatches = [
+            {
+                from: undefined as unknown as TextSubmissionElement,
+                to: {
+                    column: 13,
+                    line: 1,
+                    length: 5,
+                } as TextSubmissionElement,
+            },
+            {
+                from: {
+                    column: 1,
+                    line: 2,
+                    length: 10,
+                } as TextSubmissionElement,
+                to: undefined as unknown as TextSubmissionElement,
+            },
+        ];
+        jest.spyOn(comp, 'getMatchesForCurrentFile').mockReturnValue(mockMatches);
+        comp.exercise = { type: ExerciseType.PROGRAMMING } as unknown as Exercise;
 
         const fileContent = `Lorem ipsum dolor sit amet.\nConsetetur sadipscing elitr.`;
         const expectedFileContent = `Lorem ipsum dolor sit amet.\nConsetetur sadipscing elitr.`;

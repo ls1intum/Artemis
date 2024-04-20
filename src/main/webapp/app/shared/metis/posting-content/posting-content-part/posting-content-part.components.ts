@@ -17,7 +17,7 @@ import {
     faProjectDiagram,
 } from '@fortawesome/free-solid-svg-icons';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { EnlargeSlideImageComponent } from 'app/shared/metis/posting-content/enlarge-slide-image/enlarge-slide-image-component';
+import { EnlargeSlideImageComponent } from 'app/shared/metis/posting-content/enlarge-slide-image/enlarge-slide-image.component';
 import { MatDialog } from '@angular/material/dialog';
 import { AccountService } from 'app/core/auth/account.service';
 

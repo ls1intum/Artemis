@@ -2,18 +2,18 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Conversation, ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { Conversation, ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
-import { isChannelDto } from 'app/entities/metis/conversation/channel.model';
-import { isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
+import { isChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
-import { isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
+import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { getUserLabel } from 'app/overview/course-conversations/other/conversation.util';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 
-type EntityArrayResponseType = HttpResponse<ConversationDto[]>;
+type EntityArrayResponseType = HttpResponse<ConversationDTO[]>;
 
 export type UserSortDirection = 'asc' | 'desc';
 export type UserSortProperty = keyof User;
@@ -40,20 +40,20 @@ export class ConversationService {
         protected accountService: AccountService,
     ) {}
 
-    getConversationName(conversation: ConversationDto | undefined, showLogin = false): string {
+    getConversationName(conversation: ConversationDTO | undefined, showLogin = false): string {
         if (!conversation) {
             return '';
         }
-        if (isChannelDto(conversation)) {
+        if (isChannelDTO(conversation)) {
             let channelName = conversation.name ?? '';
             if (conversation.isArchived) {
                 channelName += ' (' + this.translationService.instant('artemisApp.conversationsLayout.archived') + ')';
             }
             return channelName;
-        } else if (isOneToOneChatDto(conversation)) {
+        } else if (isOneToOneChatDTO(conversation)) {
             const otherUser = conversation.members?.find((user) => user.isRequestingUser === false);
             return otherUser ? getUserLabel(otherUser, showLogin) : '';
-        } else if (isGroupChatDto(conversation)) {
+        } else if (isGroupChatDTO(conversation)) {
             if (conversation.name && conversation.name.length > 0) {
                 return conversation.name;
             }
@@ -70,7 +70,7 @@ export class ConversationService {
             } else {
                 return (
                     `${getUserLabel(membersWithoutUser[0], false)}, ${getUserLabel(membersWithoutUser[1], false)}, ` +
-                    this.translationService.instant('artemisApp.conversationsLayout.others', { count: members.length - 2 })
+                    this.translationService.instant('artemisApp.conversationsLayout.others', { count: membersWithoutUser.length - 2 })
                 );
             }
         } else {
@@ -99,23 +99,28 @@ export class ConversationService {
 
     getConversationsOfUser(courseId: number): Observable<EntityArrayResponseType> {
         return this.http
-            .get<ConversationDto[]>(`${this.resourceUrl}${courseId}/conversations`, {
+            .get<ConversationDTO[]>(`${this.resourceUrl}${courseId}/conversations`, {
                 observe: 'response',
             })
             .pipe(map(this.convertDateArrayFromServer));
     }
 
-    changeFavoriteStatus(courseId: number, conversationId: number, isFavorite: boolean): Observable<HttpResponse<void>> {
+    updateIsFavorite(courseId: number, conversationId: number, isFavorite: boolean): Observable<HttpResponse<void>> {
         let params = new HttpParams();
         params = params.append('isFavorite', isFavorite.toString());
-
         return this.http.post<void>(`${this.resourceUrl}${courseId}/conversations/${conversationId}/favorite`, null, { observe: 'response', params });
     }
 
-    changeHiddenStatus(courseId: number, conversationId: number, isHidden: boolean): Observable<HttpResponse<void>> {
+    updateIsHidden(courseId: number, conversationId: number, isHidden: boolean): Observable<HttpResponse<void>> {
         let params = new HttpParams();
         params = params.append('isHidden', isHidden.toString());
         return this.http.post<void>(`${this.resourceUrl}${courseId}/conversations/${conversationId}/hidden`, null, { observe: 'response', params });
+    }
+
+    updateIsMuted(courseId: number, conversationId: number, isMuted: boolean): Observable<HttpResponse<void>> {
+        let params = new HttpParams();
+        params = params.append('isMuted', isMuted.toString());
+        return this.http.post<void>(`${this.resourceUrl}${courseId}/conversations/${conversationId}/muted`, null, { observe: 'response', params });
     }
 
     markAsRead(courseId: number, conversationId: number): Observable<HttpResponse<void>> {
@@ -144,21 +149,21 @@ export class ConversationService {
         lastMessageDate: convertDateFromClient(conversation.lastMessageDate),
     });
 
-    public convertDateFromServer = (res: HttpResponse<ConversationDto>): HttpResponse<ConversationDto> => {
+    public convertDateFromServer = (res: HttpResponse<ConversationDTO>): HttpResponse<ConversationDTO> => {
         if (res.body) {
             this.convertServerDates(res.body);
         }
         return res;
     };
 
-    public convertServerDates(conversation: ConversationDto) {
+    public convertServerDates(conversation: ConversationDTO) {
         conversation.creationDate = convertDateFromServer(conversation.creationDate);
         conversation.lastMessageDate = convertDateFromServer(conversation.lastMessageDate);
         conversation.lastReadDate = convertDateFromServer(conversation.lastReadDate);
         return conversation;
     }
 
-    public convertDateArrayFromServer = (res: HttpResponse<ConversationDto[]>): HttpResponse<ConversationDto[]> => {
+    public convertDateArrayFromServer = (res: HttpResponse<ConversationDTO[]>): HttpResponse<ConversationDTO[]> => {
         if (res.body) {
             res.body.forEach((conversation) => {
                 this.convertServerDates(conversation);

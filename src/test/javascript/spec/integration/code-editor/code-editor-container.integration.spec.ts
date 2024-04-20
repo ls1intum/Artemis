@@ -179,7 +179,9 @@ describe('CodeEditorContainerIntegration', () => {
                 getStudentParticipationWithLatestResultStub = jest.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult');
                 getLatestPendingSubmissionStub = jest.spyOn(submissionService, 'getLatestPendingSubmissionByParticipationId').mockReturnValue(getLatestPendingSubmissionSubject);
                 // Mock the ResizeObserver, which is not available in the test environment
-                global.ResizeObserver = jest.fn().mockImplementation((...args) => new MockResizeObserver(args));
+                global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+                    return new MockResizeObserver(callback);
+                });
             });
     });
 
@@ -232,8 +234,8 @@ describe('CodeEditorContainerIntegration', () => {
         expect(container.fileBrowser.unsavedFiles).toHaveLength(0);
 
         // ace editor
-        expect(container.aceEditor.isLoading).toBeFalse();
-        expect(container.aceEditor.commitState).toBe(CommitState.CLEAN);
+        expect(container.aceEditor?.isLoading).toBeFalse();
+        expect(container.aceEditor?.commitState).toBe(CommitState.CLEAN);
 
         // actions
         expect(container.actions.commitState).toBe(CommitState.CLEAN);
@@ -306,9 +308,9 @@ describe('CodeEditorContainerIntegration', () => {
         expect(container.fileBrowser.unsavedFiles).toHaveLength(0);
 
         // ace editor
-        expect(container.aceEditor.isLoading).toBeFalse();
-        expect(container.aceEditor.annotationsArray.map((a) => omit(a, 'hash'))).toEqual(extractedBuildLogErrors);
-        expect(container.aceEditor.commitState).toBe(CommitState.COULD_NOT_BE_RETRIEVED);
+        expect(container.aceEditor?.isLoading).toBeFalse();
+        expect(container.aceEditor?.annotationsArray?.map((a) => omit(a, 'hash'))).toEqual(extractedBuildLogErrors);
+        expect(container.aceEditor?.commitState).toBe(CommitState.COULD_NOT_BE_RETRIEVED);
 
         // actions
         expect(container.actions.commitState).toBe(CommitState.COULD_NOT_BE_RETRIEVED);
@@ -345,14 +347,14 @@ describe('CodeEditorContainerIntegration', () => {
         containerFixture.detectChanges();
         await containerFixture.whenStable();
         expect(container.selectedFile).toBe(selectedFile);
-        expect(container.aceEditor.selectedFile).toBe(selectedFile);
-        expect(container.aceEditor.isLoading).toBeFalse();
-        expect(container.aceEditor.fileSession).toContainKey(selectedFile);
+        expect(container.aceEditor?.selectedFile).toBe(selectedFile);
+        expect(container.aceEditor?.isLoading).toBeFalse();
+        expect(container.aceEditor?.fileSession).toContainKey(selectedFile);
         expect(getFileStub).toHaveBeenCalledOnce();
         expect(getFileStub).toHaveBeenCalledWith(selectedFile);
 
         containerFixture.detectChanges();
-        expect(container.aceEditor.editor.getEditor().getSession().getValue()).toBe(fileContent);
+        expect(container.aceEditor?.editor?.getEditor()?.getSession()?.getValue()).toBe(fileContent);
     }));
 
     it('should mark file to have unsaved changes in file tree if the file was changed in editor', waitForAsync(async () => {
@@ -363,7 +365,7 @@ describe('CodeEditorContainerIntegration', () => {
         loadFile(selectedFile, fileContent);
 
         containerFixture.detectChanges();
-        container.aceEditor.onFileTextChanged(newFileContent);
+        container.aceEditor?.onFileTextChanged(newFileContent);
         containerFixture.detectChanges();
         await containerFixture.whenStable();
 

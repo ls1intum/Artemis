@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -7,6 +9,7 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -28,13 +31,14 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
  * REST controller for managing Rating.
  */
 @Validated
+@Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class RatingResource {
 
     private static final String ENTITY_NAME = "rating";
 
-    private final Logger log = LoggerFactory.getLogger(RatingResource.class);
+    private static final Logger log = LoggerFactory.getLogger(RatingResource.class);
 
     private final RatingService ratingService;
 
@@ -61,7 +65,7 @@ public class RatingResource {
      * @param resultId - Id of result that is referenced with the rating
      * @return saved star rating value or empty optional
      */
-    @GetMapping("/results/{resultId}/rating")
+    @GetMapping("results/{resultId}/rating")
     @EnforceAtLeastStudent
     public ResponseEntity<Optional<Integer>> getRatingForResult(@PathVariable Long resultId) {
         // TODO allow for Instructors
@@ -80,7 +84,7 @@ public class RatingResource {
      * @return inserted star rating value
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("/results/{resultId}/rating/{ratingValue}")
+    @PostMapping("results/{resultId}/rating/{ratingValue}")
     @EnforceAtLeastStudent
     public ResponseEntity<Integer> createRatingForResult(@PathVariable long resultId, @PathVariable int ratingValue) throws URISyntaxException {
         checkRating(ratingValue);
@@ -102,7 +106,7 @@ public class RatingResource {
      * @param ratingValue - Value of the updated rating
      * @return updated star rating value
      */
-    @PutMapping("/results/{resultId}/rating/{ratingValue}")
+    @PutMapping("results/{resultId}/rating/{ratingValue}")
     @EnforceAtLeastStudent
     public ResponseEntity<Integer> updateRatingForResult(@PathVariable long resultId, @PathVariable int ratingValue) {
         checkRating(ratingValue);
@@ -117,7 +121,7 @@ public class RatingResource {
      * @param courseId - Id of the course that the ratings are fetched for
      * @return List of Ratings for the course
      */
-    @GetMapping("/course/{courseId}/rating")
+    @GetMapping("course/{courseId}/rating")
     @EnforceAtLeastInstructor
     public ResponseEntity<List<Rating>> getRatingForInstructorDashboard(@PathVariable Long courseId) {
         Course course = courseRepository.findByIdElseThrow(courseId);

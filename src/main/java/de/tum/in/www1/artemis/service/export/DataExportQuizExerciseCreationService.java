@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.export;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -7,9 +9,10 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -27,6 +30,7 @@ import de.tum.in.www1.artemis.service.archival.ArchivalReportEntry;
  * Additionally, the results can be included in the export if the due date is over.
  * This service is also used to export the student submissions for archival.
  */
+@Profile(PROFILE_CORE)
 @Service
 public class DataExportQuizExerciseCreationService {
 
@@ -73,7 +77,7 @@ public class DataExportQuizExerciseCreationService {
      */
     private boolean createQuizAnswersExport(QuizExercise quizExercise, StudentParticipation participation, Path outputDir, boolean includeResults,
             Optional<List<String>> exportErrors) {
-        Set<QuizQuestion> quizQuestions = quizQuestionRepository.getQuizQuestionsByExerciseId(quizExercise.getId());
+        Set<QuizQuestion> quizQuestions = quizQuestionRepository.findByExercise_Id(quizExercise.getId());
         boolean errorOccurred = false;
         for (var submission : participation.getSubmissions()) {
             QuizSubmission quizSubmission = quizSubmissionRepository.findWithEagerSubmittedAnswersById(submission.getId());

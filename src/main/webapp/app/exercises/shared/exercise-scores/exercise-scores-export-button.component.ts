@@ -10,7 +10,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { ResultWithPointsPerGradingCriterion } from 'app/entities/result-with-points-per-grading-criterion.model';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
-import { ExportToCsv } from 'export-to-csv';
+import { download, generateCsv, mkConfig } from 'export-to-csv';
 import { TestCaseResult } from 'app/entities/test-case-result.model';
 
 @Component({
@@ -102,18 +102,20 @@ export class ExerciseScoresExportButtonComponent implements OnInit {
     private static exportAsCsv(filename: string, keys: string[], rows: ExerciseScoresRow[], fieldSeparator = ';') {
         const options = {
             fieldSeparator,
-            quoteStrings: '"',
+            quoteStrings: true,
+            quoteCharacter: '"',
             decimalSeparator: 'locale',
             showLabels: true,
             showTitle: false,
             filename,
             useTextFile: false,
             useBom: true,
-            headers: keys,
+            columnHeaders: keys,
         };
 
-        const csvExporter = new ExportToCsv(options);
-        csvExporter.generateCsv(rows); // includes download
+        const csvExportConfig = mkConfig(options);
+        const csvData = generateCsv(csvExportConfig)(rows);
+        download(csvExportConfig)(csvData);
     }
 
     /**
@@ -229,7 +231,7 @@ class ExerciseScoresRowBuilder {
      */
     private setProgrammingExerciseInformation() {
         if (this.exercise.type === ExerciseType.PROGRAMMING) {
-            const repoLink = (this.participation as ProgrammingExerciseStudentParticipation).repositoryUrl;
+            const repoLink = (this.participation as ProgrammingExerciseStudentParticipation).repositoryUri;
             this.set('Repo Link', repoLink);
         }
     }

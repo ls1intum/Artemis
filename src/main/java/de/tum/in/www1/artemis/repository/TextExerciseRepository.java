@@ -1,12 +1,14 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.util.List;
 import java.util.Optional;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -20,48 +22,57 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data JPA repository for the TextExercise entity.
  */
+@Profile(PROFILE_CORE)
 @Repository
 public interface TextExerciseRepository extends JpaRepository<TextExercise, Long>, JpaSpecificationExecutor<TextExercise> {
 
     @Query("""
-                SELECT DISTINCT e FROM TextExercise e
+            SELECT DISTINCT e
+            FROM TextExercise e
                 LEFT JOIN FETCH e.categories
-            WHERE e.course.id = :#{#courseId}
+            WHERE e.course.id = :courseId
             """)
-    List<TextExercise> findByCourseIdWithCategories(@Param("courseId") Long courseId);
+    List<TextExercise> findByCourseIdWithCategories(@Param("courseId") long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "teamAssignmentConfig", "categories", "competencies" })
-    Optional<TextExercise> findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesById(Long exerciseId);
+    Optional<TextExercise> findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesById(long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "teamAssignmentConfig", "categories", "competencies", "plagiarismDetectionConfig" })
-    Optional<TextExercise> findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesAndPlagiarismDetectionConfigById(Long exerciseId);
+    Optional<TextExercise> findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesAndPlagiarismDetectionConfigById(long exerciseId);
 
-    @Query("select textExercise from TextExercise textExercise left join fetch textExercise.exampleSubmissions exampleSubmissions left join fetch exampleSubmissions.submission submission left join fetch submission.results result left join fetch result.feedbacks left join fetch submission.blocks left join fetch result.assessor left join fetch textExercise.teamAssignmentConfig where textExercise.id = :#{#exerciseId}")
-    Optional<TextExercise> findByIdWithExampleSubmissionsAndResults(@Param("exerciseId") Long exerciseId);
+    @Query("""
+            SELECT textExercise
+            FROM TextExercise textExercise
+                LEFT JOIN FETCH textExercise.exampleSubmissions exampleSubmissions
+                LEFT JOIN FETCH exampleSubmissions.submission submission
+                LEFT JOIN FETCH submission.results result
+                LEFT JOIN FETCH result.feedbacks
+                LEFT JOIN FETCH submission.blocks
+                LEFT JOIN FETCH result.assessor
+                LEFT JOIN FETCH textExercise.teamAssignmentConfig
+            WHERE textExercise.id = :exerciseId
+            """)
+    Optional<TextExercise> findWithExampleSubmissionsAndResultsById(@Param("exerciseId") long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.submissions", "studentParticipations.submissions.results" })
-    Optional<TextExercise> findWithStudentParticipationsAndSubmissionsById(Long exerciseId);
+    Optional<TextExercise> findWithStudentParticipationsAndSubmissionsById(long exerciseId);
 
     @NotNull
     default TextExercise findByIdElseThrow(long exerciseId) {
         return findById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Text Exercise", exerciseId));
     }
 
-    @Query("""
-            SELECT DISTINCT e FROM TextExercise e
-            LEFT JOIN FETCH e.gradingCriteria
-            WHERE e.id = :exerciseId
-            """)
-    Optional<TextExercise> findByIdWithGradingCriteria(long exerciseId);
+    @EntityGraph(type = LOAD, attributePaths = { "gradingCriteria" })
+    Optional<TextExercise> findWithGradingCriteriaById(long exerciseId);
 
     @NotNull
-    default TextExercise findByIdWithGradingCriteriaElseThrow(long exerciseId) {
-        return findByIdWithGradingCriteria(exerciseId).orElseThrow(() -> new EntityNotFoundException("Text Exercise", exerciseId));
+    default TextExercise findWithGradingCriteriaByIdElseThrow(long exerciseId) {
+        return findWithGradingCriteriaById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Text Exercise", exerciseId));
     }
 
     @NotNull
     default TextExercise findByIdWithExampleSubmissionsAndResultsElseThrow(long exerciseId) {
-        return findByIdWithExampleSubmissionsAndResults(exerciseId).orElseThrow(() -> new EntityNotFoundException("Text Exercise", exerciseId));
+        return findWithExampleSubmissionsAndResultsById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Text Exercise", exerciseId));
     }
 
     @NotNull

@@ -1,6 +1,8 @@
 <div>
     <h2>
-        <span *ngIf="course" jhiTranslate="artemisApp.quizExercise.export.title" [translateValues]="{ param: course.title }"></span>
+        @if (course) {
+            <span jhiTranslate="artemisApp.quizExercise.export.title" [translateValues]="{ param: course.title }"></span>
+        }
     </h2>
     <div class="row"></div>
     <br />
@@ -9,28 +11,30 @@
             <thead>
                 <tr>
                     <th width="50%">
-                        <span jhiTranslate="artemisApp.quizExercise.export.questionTitle">Question Title</span>
+                        <span jhiTranslate="artemisApp.quizExercise.export.questionTitle"></span>
                     </th>
                     <th width="25%">
-                        <span jhiTranslate="artemisApp.quizExercise.export.quizExerciseTitle">Quiz Exercise Title</span>
+                        <span jhiTranslate="artemisApp.quizExercise.export.quizExerciseTitle"></span>
                     </th>
                     <th width="20%">
-                        <span jhiTranslate="artemisApp.exercise.type">Type</span>
+                        <span jhiTranslate="artemisApp.exercise.type"></span>
                     </th>
                     <th width="5%">
-                        <span jhiTranslate="entity.action.export">Export</span>
+                        <span jhiTranslate="entity.action.export"></span>
                     </th>
                 </tr>
             </thead>
             <tbody>
-                <tr *ngFor="let question of questions">
-                    <td width="50%">{{ question.title }}</td>
-                    <td width="25%">{{ question.exercise?.title || '' }}</td>
-                    <td width="20%">{{ question.type }}</td>
-                    <td width="5%" class="checkbox">
-                        <input class="form-check-input" type="checkbox" [(ngModel)]="question.exportQuiz" />
-                    </td>
-                </tr>
+                @for (question of questions; track question) {
+                    <tr>
+                        <td width="50%">{{ question.title }}</td>
+                        <td width="25%">{{ question.exercise?.title || '' }}</td>
+                        <td width="20%">{{ question.type }}</td>
+                        <td width="5%" class="checkbox">
+                            <input class="form-check-input" type="checkbox" [(ngModel)]="question.exportQuiz" />
+                        </td>
+                    </tr>
+                }
             </tbody>
         </table>
     </div>
@@ -39,7 +43,7 @@
             <div class="edit-quiz-footer-content">
                 <div class="form-group"></div>
                 <div class="form-group">
-                    <button class="btn btn-success" (click)="exportQuiz()" jhiTranslate="artemisApp.quizExercise.export.export">Export</button>
+                    <button class="btn btn-success" (click)="exportQuiz()" jhiTranslate="artemisApp.quizExercise.export.export"></button>
                 </div>
             </div>
         </div>

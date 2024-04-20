@@ -13,6 +13,11 @@ import { StatisticsComponent } from 'app/admin/statistics/statistics.component';
 import { DocsComponent } from 'app/admin/docs/docs.component';
 import { organizationMgmtRoute } from 'app/admin/organization-management/organization-management.route';
 import { MetricsComponent } from 'app/admin/metrics/metrics.component';
+import { BuildQueueComponent } from 'app/localci/build-queue/build-queue.component';
+import { LocalCIGuard } from 'app/localci/localci-guard.service';
+import { ltiConfigurationRoute } from 'app/admin/lti-configuration/lti-configuration.route';
+import { BuildAgentsComponent } from 'app/localci/build-agents/build-agents.component';
+import { StandardizedCompetencyManagementComponent } from 'app/admin/standardized-competencies/standardized-competency-management.component';
 
 export const adminState: Routes = [
     {
@@ -80,6 +85,29 @@ export const adminState: Routes = [
                 },
             },
             {
+                path: 'build-queue',
+                component: BuildQueueComponent,
+                data: {
+                    pageTitle: 'artemisApp.buildQueue.title',
+                },
+                canActivate: [LocalCIGuard],
+            },
+            {
+                path: 'build-agents',
+                component: BuildAgentsComponent,
+                data: {
+                    pageTitle: 'artemisApp.buildAgents.title',
+                },
+                canActivate: [LocalCIGuard],
+            },
+            {
+                path: 'standardized-competencies',
+                component: StandardizedCompetencyManagementComponent,
+                data: {
+                    pageTitle: 'artemisApp.standardizedCompetency.title',
+                },
+            },
+            {
                 path: 'privacy-statement',
                 loadChildren: () => import('./legal/legal-update.module').then((module) => module.LegalUpdateModule),
             },
@@ -98,6 +126,7 @@ export const adminState: Routes = [
             ...userManagementRoute,
             ...systemNotificationManagementRoute,
             upcomingExamsAndExercisesRoute,
+            ...ltiConfigurationRoute,
         ],
     },
 ];

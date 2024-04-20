@@ -13,9 +13,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.NotificationSetting;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
+import de.tum.in.www1.artemis.post.ConversationUtilService;
+import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
 class NotificationSettingsResourceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -28,9 +32,17 @@ class NotificationSettingsResourceIntegrationTest extends AbstractSpringIntegrat
     @Autowired
     private UserUtilService userUtilService;
 
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private ConversationUtilService conversationUtilService;
+
     private NotificationSetting settingA;
 
     private NotificationSetting settingsB;
+
+    private User student1;
 
     /**
      * Prepares the common variables and data for testing
@@ -38,7 +50,7 @@ class NotificationSettingsResourceIntegrationTest extends AbstractSpringIntegrat
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
-        User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
         settingA = new NotificationSetting(student1, true, false, true, "notification.lecture-notification.attachment-changes");
         settingsB = new NotificationSetting(student1, false, false, true, "notification.exercise-notification.exercise-open-for-practice");
@@ -63,9 +75,15 @@ class NotificationSettingsResourceIntegrationTest extends AbstractSpringIntegrat
 
         List<NotificationSetting> notificationSettings = request.getList("/api/notification-settings", HttpStatus.OK, NotificationSetting.class);
 
-        assertThat(notificationSettings).as("notificationSettings A with recipient equal to current user is returned").contains(settingA);
-        assertThat(notificationSettings).as("notificationSettings B with recipient equal to current user is returned").contains(settingsB);
         assertThat(notificationSettings).hasSameSizeAs(DEFAULT_NOTIFICATION_SETTINGS);
+        assertThat(notificationSettings).as("notificationSettings A with recipient equal to current user is returned")
+                .usingRecursiveFieldByFieldElementComparatorIgnoringFields("id", "user").contains(settingA);
+        assertThat(notificationSettings).as("notificationSettings B with recipient equal to current user is returned")
+                .usingRecursiveFieldByFieldElementComparatorIgnoringFields("id", "user").contains(settingsB);
+
+        for (NotificationSetting setting : notificationSettings) {
+            assertThat(setting.getUser()).as("User of the returned notification settings is the current user").isEqualTo(student1);
+        }
     }
 
     /**
@@ -111,5 +129,19 @@ class NotificationSettingsResourceIntegrationTest extends AbstractSpringIntegrat
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSaveNotificationSettingsForCurrentUser_BAD_REQUEST() throws Exception {
         request.putWithResponseBody("/api/notification-settings", null, NotificationSetting[].class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testLoadMutedConversations() throws Exception {
+        Course course = courseUtilService.createCourse();
+        Channel mutedChannel = conversationUtilService.createCourseWideChannel(course, "muted");
+        Channel channel = conversationUtilService.createCourseWideChannel(course, "test");
+        conversationUtilService.addParticipantToConversation(mutedChannel, TEST_PREFIX + "student1", true);
+        conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student1");
+
+        List<Long> mutedConversations = request.getList("/api/muted-conversations", HttpStatus.OK, Long.class);
+        assertThat(mutedConversations).hasSize(1);
+        assertThat(mutedConversations).contains(mutedChannel.getId());
     }
 }

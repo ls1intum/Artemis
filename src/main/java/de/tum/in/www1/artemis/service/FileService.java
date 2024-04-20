@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import java.io.*;
@@ -15,8 +17,8 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.disk.DiskFileItem;
@@ -32,22 +34,24 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.multipart.commons.CommonsMultipartFile;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ibm.icu.text.CharsetDetector;
 
 import de.tum.in.www1.artemis.exception.FilePathParsingException;
+import de.tum.in.www1.artemis.service.util.CommonsMultipartFile;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
+@Profile({ PROFILE_CORE, PROFILE_BUILDAGENT })
 @Service
 public class FileService implements DisposableBean {
 
-    private final Logger log = LoggerFactory.getLogger(FileService.class);
+    private static final Logger log = LoggerFactory.getLogger(FileService.class);
 
     private final Map<Path, ScheduledFuture<?>> futures = new ConcurrentHashMap<>();
 
@@ -162,36 +166,69 @@ public class FileService implements DisposableBean {
         // check for file type
         String filename = checkAndSanitizeFilename(file.getOriginalFilename());
 
-        // Check the allowed file extensions
-        final String fileExtension = FilenameUtils.getExtension(filename);
-        final Set<String> allowedExtensions = markdown ? allowedMarkdownFileExtensions : allowedFileExtensions;
-
-        if (allowedExtensions.stream().noneMatch(fileExtension::equalsIgnoreCase)) {
-            throw new BadRequestAlertException("Unsupported file type! Allowed file types: " + String.join(", ", allowedExtensions), "file", null, true);
-        }
+        validateExtension(filename, markdown);
 
         final String filenamePrefix = markdown ? "Markdown_" : "Temp_";
         final Path path = markdown ? FilePathService.getMarkdownFilePath() : FilePathService.getTempFilePath();
 
-        Path filePath;
-        if (keepFilename) {
-            filePath = path.resolve(filename);
-        }
-        else {
-            filePath = generateFilePath(filenamePrefix, fileExtension, path);
-        }
+        String generatedFilename = generateFilename(filenamePrefix, filename, keepFilename);
+        Path filePath = path.resolve(generatedFilename);
+
+        copyFile(file, filePath);
+
+        String currentFilename = filePath.getFileName().toString();
+        return URI.create(markdown ? MARKDOWN_FILE_SUBPATH : DEFAULT_FILE_SUBPATH).resolve(currentFilename);
+    }
+
+    /**
+     * Saves a file to the given path using a generated filename.
+     *
+     * @param file         the file to save
+     * @param basePath     the base path to save the file to
+     * @param keepFilename whether to keep the original filename or not
+     * @return the path where the file was saved
+     */
+    @NotNull
+    public Path saveFile(MultipartFile file, Path basePath, boolean keepFilename) {
+        String sanitizedFilename = checkAndSanitizeFilename(file.getOriginalFilename());
+        validateExtension(sanitizedFilename, false);
+        String generatedFilename = generateFilename(generateTargetFilenameBase(basePath), sanitizedFilename, keepFilename);
+        Path savePath = basePath.resolve(generatedFilename);
+        return saveFile(file, savePath);
+    }
+
+    /**
+     * Saves a file to the given path. If the file already exists, it will be <b>overwritten</b>. Make sure the path is <b>sanitized</b> and does not override files unexpectedly!
+     *
+     * @param file              the file to save
+     * @param fullSanitizedPath the full path to save the file to
+     * @return the path where the file was saved
+     */
+    @NotNull
+    public Path saveFile(MultipartFile file, Path fullSanitizedPath) {
+        copyFile(file, fullSanitizedPath);
+        return fullSanitizedPath;
+    }
+
+    private void copyFile(MultipartFile file, Path filePath) {
         try {
             FileUtils.copyInputStreamToFile(file.getInputStream(), filePath.toFile());
-
-            return generateResponsePath(filePath, markdown);
         }
         catch (IOException e) {
-            log.error("Could not save file {}", filename, e);
+            log.error("Could not save file {}", filePath.getFileName(), e);
             throw new InternalServerErrorException("Could not create file");
         }
     }
 
-    private String checkAndSanitizeFilename(String filename) {
+    /**
+     * Nullsafe sanitation method for filenames.
+     *
+     * @param filename the filename to sanitize
+     * @return the sanitized filename
+     * @throws IllegalArgumentException if the filename is null
+     */
+    @NotNull
+    public String checkAndSanitizeFilename(@Nullable String filename) {
         if (filename == null) {
             throw new IllegalArgumentException("Filename cannot be null");
         }
@@ -200,33 +237,35 @@ public class FileService implements DisposableBean {
     }
 
     /**
-     * Generates the API path getting returned to the client
+     * Validates the file extension of the given filename. If the markdown flag is set to true, only markdown file extensions are allowed.
      *
-     * @param filePath the file system path of the file
-     * @param markdown boolean which is set to true, when we are uploading a file in the Markdown format
-     * @return the API path of the file
+     * @param filename the filename to validate
+     * @param markdown whether the file is a markdown file
+     * @throws BadRequestAlertException if the file extension is not allowed
      */
-    private URI generateResponsePath(Path filePath, boolean markdown) {
-        String filename = filePath.getFileName().toString();
-        if (markdown) {
-            return URI.create(MARKDOWN_FILE_SUBPATH).resolve(filename);
+    public void validateExtension(String filename, boolean markdown) {
+        final String fileExtension = FilenameUtils.getExtension(filename);
+        final Set<String> allowedExtensions = markdown ? allowedMarkdownFileExtensions : allowedFileExtensions;
+
+        if (allowedExtensions.stream().noneMatch(fileExtension::equalsIgnoreCase)) {
+            throw new BadRequestAlertException("Unsupported file type! Allowed file types: " + String.join(", ", allowedExtensions), "file", null, true);
         }
-        return URI.create(DEFAULT_FILE_SUBPATH).resolve(filename);
     }
 
     /**
-     * Generates the path for the file to be saved to with a random file name based on the parameters.
+     * Generates a new filename based on the current time and either the supplied filename or a random UUID.
      *
-     * @param filenamePrefix the prefix of the filename
-     * @param fileExtension  the extension of the file
-     * @param folder         the folder to save the file to
-     * @return the path to save the file to
+     * @param filenamePrefix    the prefix of the filename
+     * @param sanitizedFilename the sanitized filename including the extension
+     * @param keepFilename      whether to keep the original filename or not
+     * @return the generated filename
      */
-    public Path generateFilePath(String filenamePrefix, String fileExtension, Path folder) {
-        // append a timestamp and some randomness to the filename to avoid conflicts
-        String generatedFilename = filenamePrefix + ZonedDateTime.now().toString().substring(0, 23).replaceAll("[:.]", "-") + "_" + UUID.randomUUID().toString().substring(0, 8)
-                + "." + fileExtension;
-        return folder.resolve(generatedFilename);
+    public String generateFilename(String filenamePrefix, String sanitizedFilename, boolean keepFilename) {
+        if (keepFilename) {
+            return filenamePrefix + ZonedDateTime.now().toString().substring(0, 23).replaceAll("[:.]", "-") + "_" + sanitizedFilename;
+        }
+        String fileExtension = FilenameUtils.getExtension(sanitizedFilename);
+        return filenamePrefix + ZonedDateTime.now().toString().substring(0, 23).replaceAll("[:.]", "-") + "_" + UUID.randomUUID().toString().substring(0, 8) + "." + fileExtension;
     }
 
     /**
@@ -240,7 +279,7 @@ public class FileService implements DisposableBean {
         if (oldFilePath != null && !pathContains(oldFilePath, Path.of(("files/temp")))) {
             String filename = oldFilePath.getFileName().toString();
             try {
-                Path target = generateFilePath(generateTargetFilenameBase(targetFolder), FilenameUtils.getExtension(filename), targetFolder);
+                Path target = targetFolder.resolve(generateFilename(generateTargetFilenameBase(targetFolder), filename, false));
                 FileUtils.copyFile(oldFilePath.toFile(), target.toFile());
                 log.debug("Moved File from {} to {}", oldFilePath, target);
                 return target;
@@ -915,7 +954,7 @@ public class FileService implements DisposableBean {
      * @param mergedPdfFilename title of merged pdf file
      * @return byte array of the merged file
      */
-    public Optional<byte[]> mergePdfFiles(List<String> paths, String mergedPdfFilename) {
+    public Optional<byte[]> mergePdfFiles(List<Path> paths, String mergedPdfFilename) {
         if (paths == null || paths.isEmpty()) {
             return Optional.empty();
         }
@@ -923,10 +962,9 @@ public class FileService implements DisposableBean {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
         try {
-            for (String path : paths) {
-                File file = new File(path);
-                if (file.exists()) {
-                    pdfMerger.addSource(file);
+            for (Path path : paths) {
+                if (Files.exists(path)) {
+                    pdfMerger.addSource(path.toFile());
                 }
             }
 

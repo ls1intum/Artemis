@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -17,10 +19,20 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.in.www1.artemis.config.Constants;
@@ -34,19 +46,37 @@ import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.exception.FilePathParsingException;
 import de.tum.in.www1.artemis.exception.QuizJoinException;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.QuizBatchRepository;
+import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.security.annotations.*;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.CourseService;
+import de.tum.in.www1.artemis.service.ExerciseDeletionService;
+import de.tum.in.www1.artemis.service.ExerciseService;
+import de.tum.in.www1.artemis.service.FilePathService;
+import de.tum.in.www1.artemis.service.FileService;
+import de.tum.in.www1.artemis.service.QuizBatchService;
+import de.tum.in.www1.artemis.service.QuizExerciseImportService;
+import de.tum.in.www1.artemis.service.QuizExerciseService;
+import de.tum.in.www1.artemis.service.QuizMessagingService;
+import de.tum.in.www1.artemis.service.QuizStatisticService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
-import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.QuizBatchJoinDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
+import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -54,11 +84,12 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 /**
  * REST controller for managing QuizExercise.
  */
+@Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class QuizExerciseResource {
 
-    private final Logger log = LoggerFactory.getLogger(QuizExerciseResource.class);
+    private static final Logger log = LoggerFactory.getLogger(QuizExerciseResource.class);
 
     private static final String ENTITY_NAME = "quizExercise";
 
@@ -109,15 +140,13 @@ public class QuizExerciseResource {
 
     private final ChannelRepository channelRepository;
 
-    private final FilePathService filePathService;
-
     public QuizExerciseResource(QuizExerciseService quizExerciseService, QuizMessagingService quizMessagingService, QuizExerciseRepository quizExerciseRepository,
             UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
             ExerciseDeletionService exerciseDeletionService, ExamDateService examDateService, QuizScheduleService quizScheduleService, QuizStatisticService quizStatisticService,
             QuizExerciseImportService quizExerciseImportService, AuthorizationCheckService authCheckService, GroupNotificationService groupNotificationService,
             GroupNotificationScheduleService groupNotificationScheduleService, StudentParticipationRepository studentParticipationRepository, QuizBatchService quizBatchService,
             QuizBatchRepository quizBatchRepository, SubmissionRepository submissionRepository, FileService fileService, ChannelService channelService,
-            ChannelRepository channelRepository, FilePathService filePathService) {
+            ChannelRepository channelRepository) {
         this.quizExerciseService = quizExerciseService;
         this.quizMessagingService = quizMessagingService;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -140,7 +169,6 @@ public class QuizExerciseResource {
         this.fileService = fileService;
         this.channelService = channelService;
         this.channelRepository = channelRepository;
-        this.filePathService = filePathService;
     }
 
     /**
@@ -257,7 +285,7 @@ public class QuizExerciseResource {
      */
     @GetMapping(value = "/courses/{courseId}/quiz-exercises")
     @EnforceAtLeastTutor
-    public List<QuizExercise> getQuizExercisesForCourse(@PathVariable Long courseId) {
+    public ResponseEntity<List<QuizExercise>> getQuizExercisesForCourse(@PathVariable Long courseId) {
         log.info("REST request to get all quiz exercises for the course with id : {}", courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -272,7 +300,7 @@ public class QuizExerciseResource {
             setQuizBatches(user, quizExercise);
         }
 
-        return quizExercises;
+        return ResponseEntity.ok(quizExercises);
     }
 
     /**
@@ -283,10 +311,10 @@ public class QuizExerciseResource {
      */
     @GetMapping("exams/{examId}/quiz-exercises")
     @EnforceAtLeastEditor
-    public List<QuizExercise> getQuizExercisesForExam(@PathVariable Long examId) {
+    public ResponseEntity<List<QuizExercise>> getQuizExercisesForExam(@PathVariable Long examId) {
         log.info("REST request to get all quiz exercises for the exam with id : {}", examId);
         List<QuizExercise> quizExercises = quizExerciseRepository.findByExamId(examId);
-        Course course = quizExercises.get(0).getCourseViaExerciseGroupOrCourseMember();
+        Course course = quizExercises.getFirst().getCourseViaExerciseGroupOrCourseMember();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
         for (QuizExercise quizExercise : quizExercises) {
@@ -296,7 +324,7 @@ public class QuizExerciseResource {
             quizExercise.setCourse(null);
             quizExercise.setExerciseGroup(null);
         }
-        return quizExercises;
+        return ResponseEntity.ok(quizExercises);
     }
 
     /**
@@ -305,7 +333,7 @@ public class QuizExerciseResource {
      * @param quizExerciseId the id of the quizExercise to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the quizExercise, or with status 404 (Not Found)
      */
-    @GetMapping("/quiz-exercises/{quizExerciseId}")
+    @GetMapping("quiz-exercises/{quizExerciseId}")
     @EnforceAtLeastTutor
     public ResponseEntity<QuizExercise> getQuizExercise(@PathVariable Long quizExerciseId) {
         // TODO: Split this route in two: One for normal and one for exam exercises
@@ -335,7 +363,7 @@ public class QuizExerciseResource {
      * @param quizExerciseId the id of the quizExercise for which the statistics should be recalculated
      * @return the ResponseEntity with status 200 (OK) and with body the quizExercise, or with status 404 (Not Found)
      */
-    @GetMapping("/quiz-exercises/{quizExerciseId}/recalculate-statistics")
+    @GetMapping("quiz-exercises/{quizExerciseId}/recalculate-statistics")
     @EnforceAtLeastTutor
     public ResponseEntity<QuizExercise> recalculateStatistics(@PathVariable Long quizExerciseId) {
         log.info("REST request to recalculate quiz statistics : {}", quizExerciseId);
@@ -354,7 +382,7 @@ public class QuizExerciseResource {
      * @param quizExerciseId the id of the quizExercise to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the quizExercise, or with status 404 (Not Found)
      */
-    @GetMapping("/quiz-exercises/{quizExerciseId}/for-student")
+    @GetMapping("quiz-exercises/{quizExerciseId}/for-student")
     @EnforceAtLeastStudent
     public ResponseEntity<QuizExercise> getQuizExerciseForStudent(@PathVariable Long quizExerciseId) {
         log.info("REST request to get quiz exercise : {}", quizExerciseId);
@@ -380,7 +408,7 @@ public class QuizExerciseResource {
      * @param joinRequest    DTO with the password for the batch to join; unused for quizzes in INDIVIDUAL mode
      * @return the ResponseEntity with status 200 (OK) and with body the quizBatch that was joined
      */
-    @PostMapping("/quiz-exercises/{quizExerciseId}/join")
+    @PostMapping("quiz-exercises/{quizExerciseId}/join")
     @EnforceAtLeastStudent
     public ResponseEntity<QuizBatch> joinBatch(@PathVariable Long quizExerciseId, @RequestBody QuizBatchJoinDTO joinRequest) {
         log.info("REST request to join quiz batch : {}, {}", quizExerciseId, joinRequest);
@@ -413,7 +441,7 @@ public class QuizExerciseResource {
      * @param quizExerciseId the id of the quizExercise to add the batch to
      * @return the ResponseEntity with status 200 (OK) and with body the new batch
      */
-    @PutMapping("/quiz-exercises/{quizExerciseId}/add-batch")
+    @PutMapping("quiz-exercises/{quizExerciseId}/add-batch")
     @EnforceAtLeastTutor
     public ResponseEntity<QuizBatch> addBatch(@PathVariable Long quizExerciseId) {
         log.info("REST request to add quiz batch : {}", quizExerciseId);
@@ -435,7 +463,7 @@ public class QuizExerciseResource {
      * @param quizBatchId the id of the quizBatch to start
      * @return the ResponseEntity with status 200 (OK)
      */
-    @PutMapping("/quiz-exercises/{quizBatchId}/start-batch")
+    @PutMapping("quiz-exercises/{quizBatchId}/start-batch")
     @EnforceAtLeastTutor
     public ResponseEntity<QuizBatch> startBatch(@PathVariable Long quizBatchId) {
         log.info("REST request to start quiz batch : {}", quizBatchId);
@@ -467,7 +495,7 @@ public class QuizExerciseResource {
      * @param action         the action to perform on the quiz (allowed actions: "start-now", "set-visible", "open-for-practice")
      * @return the response entity with status 200 if quiz was started, appropriate error code otherwise
      */
-    @PutMapping("/quiz-exercises/{quizExerciseId}/{action}")
+    @PutMapping("quiz-exercises/{quizExerciseId}/{action}")
     @EnforceAtLeastEditor
     public ResponseEntity<QuizExercise> performActionForQuizExercise(@PathVariable Long quizExerciseId, @PathVariable String action) {
         log.debug("REST request to perform action {} on quiz exercise {}", action, quizExerciseId);
@@ -563,7 +591,7 @@ public class QuizExerciseResource {
      * @param quizExerciseId the id of the quizExercise to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("/quiz-exercises/{quizExerciseId}")
+    @DeleteMapping("quiz-exercises/{quizExerciseId}")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteQuizExercise(@PathVariable Long quizExerciseId) {
         log.info("REST request to delete quiz exercise : {}", quizExerciseId);
@@ -580,11 +608,11 @@ public class QuizExerciseResource {
                 return null;
             }
             try {
-                return filePathService.actualPathForPublicPathOrThrow(URI.create(path));
+                return FilePathService.actualPathForPublicPathOrThrow(URI.create(path));
             }
             catch (FilePathParsingException e) {
                 // if the path is invalid, we can't delete it, but we don't want to fail the whole deletion
-                log.warn("Could not find file " + path + " for deletion");
+                log.warn("Could not find file {} for deletion", path);
                 return null;
             }
         }).filter(Objects::nonNull).toList();
@@ -652,10 +680,10 @@ public class QuizExerciseResource {
      * @param isExamFilter   Whether to search in the groups for exercises
      * @return The desired page, sorted and matching the given query
      */
-    @GetMapping("/quiz-exercises")
+    @GetMapping("quiz-exercises")
     @EnforceAtLeastEditor
-    public ResponseEntity<SearchResultPageDTO<QuizExercise>> getAllExercisesOnPage(PageableSearchDTO<String> search, @RequestParam(defaultValue = "true") boolean isCourseFilter,
-            @RequestParam(defaultValue = "true") boolean isExamFilter) {
+    public ResponseEntity<SearchResultPageDTO<QuizExercise>> getAllExercisesOnPage(SearchTermPageableSearchDTO<String> search,
+            @RequestParam(defaultValue = "true") boolean isCourseFilter, @RequestParam(defaultValue = "true") boolean isExamFilter) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         return ResponseEntity.ok(quizExerciseService.getAllOnPageWithSize(search, isCourseFilter, isExamFilter, user));
     }
@@ -676,7 +704,7 @@ public class QuizExerciseResource {
     @PostMapping(value = "quiz-exercises/import/{sourceExerciseId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastEditor
     public ResponseEntity<QuizExercise> importExercise(@PathVariable long sourceExerciseId, @RequestPart("exercise") QuizExercise importedExercise,
-            @RequestPart(value = "files", required = false) List<MultipartFile> files) throws URISyntaxException, IOException {
+            @RequestPart(value = "files", required = false) List<MultipartFile> files) throws URISyntaxException {
         log.info("REST request to import from quiz exercise : {}", sourceExerciseId);
         if (sourceExerciseId <= 0 || (importedExercise.getCourseViaExerciseGroupOrCourseMember() == null && importedExercise.getExerciseGroup() == null)) {
             log.debug("Either the courseId or exerciseGroupId must be set for an import");
@@ -702,7 +730,7 @@ public class QuizExerciseResource {
         quizExerciseService.validateQuizExerciseFiles(importedExercise, nullsafeFiles, false);
 
         final var originalQuizExercise = quizExerciseRepository.findByIdElseThrow(sourceExerciseId);
-        final var newQuizExercise = quizExerciseImportService.importQuizExercise(originalQuizExercise, importedExercise, nullsafeFiles);
+        final var newQuizExercise = quizExerciseImportService.importQuizExercise(originalQuizExercise, importedExercise);
         return ResponseEntity.created(new URI("/api/quiz-exercises/" + newQuizExercise.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newQuizExercise.getId().toString())).body(newQuizExercise);
     }

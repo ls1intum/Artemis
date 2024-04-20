@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,8 +19,9 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.config.lti.CustomLti13Configurer;
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.LtiPlatformConfiguration;
 import de.tum.in.www1.artemis.domain.OnlineCourseConfiguration;
-import de.tum.in.www1.artemis.repository.OnlineCourseConfigurationRepository;
+import de.tum.in.www1.artemis.repository.LtiPlatformConfigurationRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
@@ -31,92 +31,103 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 @Profile("lti")
 public class OnlineCourseConfigurationService implements ClientRegistrationRepository {
 
-    private final Logger log = LoggerFactory.getLogger(OnlineCourseConfigurationService.class);
+    private static final Logger log = LoggerFactory.getLogger(OnlineCourseConfigurationService.class);
 
-    private final OnlineCourseConfigurationRepository onlineCourseConfigurationRepository;
+    private final LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository;
 
     @Value("${server.url}")
     private String artemisServerUrl;
 
-    public OnlineCourseConfigurationService(OnlineCourseConfigurationRepository onlineCourseConfigurationRepository) {
-        this.onlineCourseConfigurationRepository = onlineCourseConfigurationRepository;
+    public OnlineCourseConfigurationService(LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository) {
+        this.ltiPlatformConfigurationRepository = ltiPlatformConfigurationRepository;
     }
 
     public List<ClientRegistration> getAllClientRegistrations() {
         // TODO: we should avoid findAll() and instead try to retrieve the correct object directly from the database, potentially in a batch
-        return onlineCourseConfigurationRepository.findAll().stream().map(this::getClientRegistration).filter(Objects::nonNull).toList();
+        return ltiPlatformConfigurationRepository.findAll().stream().map(this::getClientRegistration).filter(Objects::nonNull).toList();
     }
 
     @Override
     public ClientRegistration findByRegistrationId(String registrationId) {
-        Optional<OnlineCourseConfiguration> onlineCourseConfiguration = onlineCourseConfigurationRepository.findByRegistrationId(registrationId);
-        return onlineCourseConfiguration.map(this::getClientRegistration).orElse(null);
+        Optional<LtiPlatformConfiguration> ltiPlatformConfiguration = ltiPlatformConfigurationRepository.findByRegistrationId(registrationId);
+        return ltiPlatformConfiguration.map(this::getClientRegistration).orElse(null);
     }
 
     /**
      * Creates an initial configuration for online courses with default and random values
      *
      * @param course the online course we create a configuration for
-     * @return the created online course configuration
      */
-    public OnlineCourseConfiguration createOnlineCourseConfiguration(Course course) {
+    public void createOnlineCourseConfiguration(Course course) {
         OnlineCourseConfiguration ocConfiguration = new OnlineCourseConfiguration();
         ocConfiguration.setCourse(course);
-        ocConfiguration.setLtiKey(RandomStringUtils.random(12, true, true));
-        ocConfiguration.setLtiSecret(RandomStringUtils.random(12, true, true));
         ocConfiguration.setUserPrefix(course.getShortName());
-        ocConfiguration.setRegistrationId(RandomStringUtils.random(24, true, true));
         course.setOnlineCourseConfiguration(ocConfiguration);
-        return ocConfiguration;
     }
 
     /**
      * Validates the online course configuration
      *
      * @param ocConfiguration the online course configuration being validated
-     * @throws BadRequestAlertException 400 (Bad Request) if the online course configuration is invalid
      */
     public void validateOnlineCourseConfiguration(OnlineCourseConfiguration ocConfiguration) {
-        if (StringUtils.isBlank(ocConfiguration.getLtiKey()) || StringUtils.isBlank(ocConfiguration.getLtiSecret())) {
-            throw new BadRequestAlertException("Invalid online course configuration", ENTITY_NAME, "invalidOnlineCourseConfiguration");
-        }
         if (StringUtils.isBlank(ocConfiguration.getUserPrefix()) || !ocConfiguration.getUserPrefix().matches(LOGIN_REGEX)) {
             throw new BadRequestAlertException("Invalid user prefix, must match login regex defined in Constants.java", ENTITY_NAME, "invalidUserPrefix");
         }
 
-        Optional<OnlineCourseConfiguration> existingOnlineCourseConfiguration = onlineCourseConfigurationRepository.findByRegistrationId(ocConfiguration.getRegistrationId());
-        if (existingOnlineCourseConfiguration.isPresent() && !Objects.equals(existingOnlineCourseConfiguration.get().getId(), ocConfiguration.getId())) {
-            throw new BadRequestAlertException("Registration ID must be unique", ENTITY_NAME, "invalidRegistrationId");
+        if (ocConfiguration.getLtiPlatformConfiguration() != null) {
+            Optional<LtiPlatformConfiguration> existingLtiPlatformConfiguration = ltiPlatformConfigurationRepository
+                    .findByRegistrationId(ocConfiguration.getLtiPlatformConfiguration().getRegistrationId());
+            if (existingLtiPlatformConfiguration.isEmpty()
+                    || !Objects.equals(existingLtiPlatformConfiguration.get().getId(), ocConfiguration.getLtiPlatformConfiguration().getId())) {
+                throw new BadRequestAlertException("No platform registration found", ENTITY_NAME, "invalidRegistrationId");
+            }
         }
     }
 
     /**
-     * Converts the onlineCourseConfiguration to a ClientRegistration if the necessary fields are filled
+     * Converts the ltiPlatformConfiguration to a ClientRegistration if the necessary fields are filled
      *
-     * @param onlineCourseConfiguration the online course configuration
-     * @return the clientRegistration from the converted online course configuration
+     * @param ltiPlatformConfiguration the lti platform configuration
+     * @return the clientRegistration from the converted lti platform configuration
      */
-    public ClientRegistration getClientRegistration(OnlineCourseConfiguration onlineCourseConfiguration) {
-        if (onlineCourseConfiguration == null) {
+    public ClientRegistration getClientRegistration(LtiPlatformConfiguration ltiPlatformConfiguration) {
+        if (ltiPlatformConfiguration == null) {
             return null;
         }
         try {
-            return ClientRegistration.withRegistrationId(onlineCourseConfiguration.getRegistrationId()) // formatting
-                    .clientId(onlineCourseConfiguration.getClientId()) //
-                    .authorizationUri(onlineCourseConfiguration.getAuthorizationUri()) //
-                    .jwkSetUri(onlineCourseConfiguration.getJwkSetUri()) //
-                    .tokenUri(onlineCourseConfiguration.getTokenUri()) //
+            return ClientRegistration.withRegistrationId(ltiPlatformConfiguration.getRegistrationId()) // formatting
+                    .clientId(ltiPlatformConfiguration.getClientId()) //
+                    .authorizationUri(ltiPlatformConfiguration.getAuthorizationUri()) //
+                    .jwkSetUri(ltiPlatformConfiguration.getJwkSetUri()) //
+                    .tokenUri(ltiPlatformConfiguration.getTokenUri()) //
                     .redirectUri(artemisServerUrl + CustomLti13Configurer.LTI13_LOGIN_REDIRECT_PROXY_PATH) //
                     .scope("openid") //
-                    .authorizationGrantType(AuthorizationGrantType.IMPLICIT) //
+                    .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE) //
                     .build();
         }
         catch (IllegalArgumentException e) {
             // Log a warning for rare scenarios i.e. ClientId is empty. This can occur when online courses lack an external LMS connection or use LTI v1.0.
-            log.warn("Could not build Client Registration from onlineCourseConfiguration for course with ID: {} and title: {}. Reason: {}",
-                    Optional.of(onlineCourseConfiguration).map(OnlineCourseConfiguration::getCourse).map(Course::getId).orElse(null),
-                    Optional.of(onlineCourseConfiguration).map(OnlineCourseConfiguration::getCourse).map(Course::getTitle).orElse(""), e.getMessage());
+            log.warn("Could not build Client Registration from ltiPlatformConfiguration. Reason: {}", e.getMessage());
             return null;
+        }
+    }
+
+    /**
+     * Associates an online course configuration with an LTI platform configuration.
+     * If the provided online course configuration has a linked LTI platform configuration,
+     * it is added to the platform's list of online course configurations.
+     *
+     * @param onlineCourseConfiguration The online course configuration to be associated.
+     */
+    public void addOnlineCourseConfigurationToLtiConfigurations(OnlineCourseConfiguration onlineCourseConfiguration) {
+        if (onlineCourseConfiguration.getLtiPlatformConfiguration() != null) {
+            Long platformId = onlineCourseConfiguration.getLtiPlatformConfiguration().getId();
+            LtiPlatformConfiguration platformConfiguration = ltiPlatformConfigurationRepository.findLtiPlatformConfigurationWithEagerLoadedCoursesByIdElseThrow(platformId);
+
+            var setOfOnlineCourses = platformConfiguration.getOnlineCourseConfigurations();
+            setOfOnlineCourses.add(onlineCourseConfiguration);
+            onlineCourseConfiguration.setLtiPlatformConfiguration(platformConfiguration);
         }
     }
 }

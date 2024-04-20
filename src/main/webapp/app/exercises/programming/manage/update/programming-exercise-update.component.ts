@@ -1,8 +1,8 @@
 import { ActivatedRoute, Params } from '@angular/router';
-import { Component, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
-import { Observable, Subject } from 'rxjs';
+import { Observable, Subject, Subscription } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType, resetProgrammingDates } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from '../services/programming-exercise.service';
@@ -25,19 +25,37 @@ import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-upda
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
-import { faBan, faExclamationCircle, faHandshakeAngle, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationCircle, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ModePickerOption } from 'app/exercises/shared/mode-picker/mode-picker.component';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 import { loadCourseExerciseCategories } from 'app/exercises/shared/course-exercises/course-utils';
 import { PROFILE_AEOLUS, PROFILE_LOCALCI } from 'app/app.constants';
+import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';
+import { FormSectionStatus } from 'app/forms/form-status-bar/form-status-bar.component';
+import { ProgrammingExerciseInformationComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-information.component';
+import { ProgrammingExerciseDifficultyComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-difficulty.component';
+import { ProgrammingExerciseLanguageComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-language.component';
+import { ProgrammingExerciseGradingComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-grading.component';
+import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.component';
+
+export interface ImportOptions {
+    recreateBuildPlans: boolean;
+    updateTemplate: boolean;
+}
 
 @Component({
     selector: 'jhi-programming-exercise-update',
     templateUrl: './programming-exercise-update.component.html',
     styleUrls: ['../programming-exercise-form.scss'],
 })
-export class ProgrammingExerciseUpdateComponent implements OnInit {
+export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {
+    @ViewChild(ProgrammingExerciseInformationComponent) exerciseInfoComponent?: ProgrammingExerciseInformationComponent;
+    @ViewChild(ProgrammingExerciseDifficultyComponent) exerciseDifficultyComponent?: ProgrammingExerciseDifficultyComponent;
+    @ViewChild(ProgrammingExerciseLanguageComponent) exerciseLanguageComponent?: ProgrammingExerciseLanguageComponent;
+    @ViewChild(ProgrammingExerciseGradingComponent) exerciseGradingComponent?: ProgrammingExerciseGradingComponent;
+    @ViewChild(ExerciseUpdatePlagiarismComponent) exercisePlagiarismComponent?: ExerciseUpdatePlagiarismComponent;
+
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly FeatureToggle = FeatureToggle;
     readonly ProgrammingLanguage = ProgrammingLanguage;
@@ -46,24 +64,20 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     private translationBasePath = 'artemisApp.programmingExercise.';
 
-    toggleMode = () => this.toggleWizardMode();
-    getInvalidReasonsForWizard = () => this.getInvalidReasons(this.currentWizardModeStep);
     programmingLanguageChanged = (language: ProgrammingLanguage) => this.onProgrammingLanguageChange(language);
     withDependenciesChanged = (withDependencies: boolean) => this.onWithDependenciesChanged(withDependencies);
     categoriesChanged = (categories: ExerciseCategory[]) => this.updateCategories(categories);
     projectTypeChanged = (projectType: ProjectType) => this.onProjectTypeChange(projectType);
     staticCodeAnalysisChanged = () => this.onStaticCodeAnalysisChanged();
-    currentWizardModeStep = 1;
 
     auxiliaryRepositoryDuplicateNames: boolean;
     auxiliaryRepositoryDuplicateDirectories: boolean;
     auxiliaryRepositoryNamedCorrectly: boolean;
-    submitButtonTitle: string;
     isImportFromExistingExercise: boolean;
     isImportFromFile: boolean;
     isEdit: boolean;
     isExamMode: boolean;
-    isShowingWizardMode = false;
+    isLocal: boolean;
     hasUnsavedChanges = false;
     programmingExercise: ProgrammingExercise;
     backupExercise: ProgrammingExercise;
@@ -81,7 +95,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     // This is used to revert the select if the user cancels to override the new selected programming language.
     private selectedProgrammingLanguageValue: ProgrammingLanguage;
     // This is used to revert the select if the user cancels to override the new selected project type.
-    private selectedProjectTypeValue: ProjectType;
+    private selectedProjectTypeValue?: ProjectType;
     maxPenaltyPattern = '^([0-9]|([1-9][0-9])|100)$';
     // Java package name Regex according to Java 14 JLS (https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1),
     // with the restriction to a-z,A-Z,_ as "Java letter" and 0-9 as digits due to JavaScript/Browser Unicode character class limitations
@@ -110,6 +124,10 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
 
+    formStatusSections: FormSectionStatus[];
+
+    inputFieldSubscriptions: (Subscription | undefined)[] = [];
+
     public inProductionEnvironment: boolean;
 
     public supportedLanguages = ['java'];
@@ -119,27 +137,26 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     public checkoutSolutionRepositoryAllowed = false;
     public customizeBuildPlanWithAeolus = false;
     public sequentialTestRunsAllowed = false;
-    public publishBuildPlanUrlAllowed = false;
     public testwiseCoverageAnalysisSupported = false;
     public auxiliaryRepositoriesSupported = false;
     public auxiliaryRepositoriesValid = true;
-    public customBuildPlansSupported = false;
+    public customBuildPlansSupported: string = '';
 
     // Additional options for import
-    public recreateBuildPlans = false;
-    public updateTemplate = false;
+    // This is a wrapper to allow modifications from the other subcomponents
+    public readonly importOptions: ImportOptions = {
+        recreateBuildPlans: false,
+        updateTemplate: false,
+    };
     public originalStaticCodeAnalysisEnabled: boolean | undefined;
 
-    public projectTypes: ProjectType[] = [];
+    public projectTypes?: ProjectType[] = [];
     // flag describing if the template and solution projects should include a dependency
     public withDependenciesValue = false;
 
-    public modePickerOptions: ModePickerOption<ProjectType>[] = [];
+    public modePickerOptions?: ModePickerOption<ProjectType>[] = [];
 
     // Icons
-    faSave = faSave;
-    faBan = faBan;
-    faHandShakeAngle = faHandshakeAngle;
     faQuestionCircle = faQuestionCircle;
     faExclamationCircle = faExclamationCircle;
 
@@ -157,26 +174,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         private exerciseGroupService: ExerciseGroupService,
         private programmingLanguageFeatureService: ProgrammingLanguageFeatureService,
         private navigationUtilService: ArtemisNavigationUtilService,
+        private aeolusService: AeolusService,
     ) {}
-
-    /**
-     * Activate or deactivate the wizard mode for easier exercise creation.
-     * This function is called by pressing "Switch to guided mode" when creating a new exercise
-     */
-    toggleWizardMode() {
-        this.isShowingWizardMode = !this.isShowingWizardMode;
-    }
-
-    /**
-     * Progress to the next step of the wizard mode
-     */
-    nextWizardStep() {
-        this.currentWizardModeStep++;
-
-        if (this.currentWizardModeStep > 5) {
-            this.save();
-        }
-    }
 
     /**
      * Updates the name of the editedAuxiliaryRepository.
@@ -249,12 +248,11 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.staticCodeAnalysisAllowed = programmingLanguageFeature.staticCodeAnalysis;
         this.checkoutSolutionRepositoryAllowed = programmingLanguageFeature.checkoutSolutionRepositoryAllowed;
         this.sequentialTestRunsAllowed = programmingLanguageFeature.sequentialTestRuns;
-        this.publishBuildPlanUrlAllowed = programmingLanguageFeature.publishBuildPlanUrlAllowed;
         this.testwiseCoverageAnalysisSupported = programmingLanguageFeature.testwiseCoverageAnalysisSupported;
         this.auxiliaryRepositoriesSupported = programmingLanguageFeature.auxiliaryRepositoriesSupported;
         // filter out MAVEN_MAVEN and GRADLE_GRADLE because they are not directly selectable but only via a checkbox
-        this.projectTypes = programmingLanguageFeature.projectTypes.filter((projectType) => projectType !== ProjectType.MAVEN_MAVEN && projectType !== ProjectType.GRADLE_GRADLE);
-        this.modePickerOptions = this.projectTypes.map((projectType) => ({
+        this.projectTypes = programmingLanguageFeature.projectTypes?.filter((projectType) => projectType !== ProjectType.MAVEN_MAVEN && projectType !== ProjectType.GRADLE_GRADLE);
+        this.modePickerOptions = this.projectTypes?.map((projectType) => ({
             value: projectType,
             labelKey: 'artemisApp.programmingExercise.projectTypes.' + projectType.toString(),
             btnClass: 'btn-secondary',
@@ -262,8 +260,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
         if (languageChanged) {
             // Reset project type when changing programming language as not all programming languages support (the same) project types
-            this.programmingExercise.projectType = this.projectTypes[0];
-            this.selectedProjectTypeValue = this.projectTypes[0]!;
+            this.programmingExercise.projectType = this.projectTypes?.[0];
+            this.selectedProjectTypeValue = this.projectTypes?.[0];
             this.withDependenciesValue = false;
             this.buildPlanLoaded = false;
             this.programmingExercise.windFile = undefined;
@@ -276,8 +274,14 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             this.programmingExercise.maxStaticCodeAnalysisPenalty = undefined;
         }
 
-        // Automatically enable the checkout of the solution repository for Haskell exercises
-        this.programmingExercise.checkoutSolutionRepository = this.checkoutSolutionRepositoryAllowed && language === ProgrammingLanguage.HASKELL;
+        if (language == ProgrammingLanguage.HASKELL || language == ProgrammingLanguage.OCAML) {
+            // Instructors typically test against the example solution for Haskell and OCAML exercises.
+            // If supported by the current CI configuration, this line activates the option per default.
+            this.programmingExercise.checkoutSolutionRepository = this.checkoutSolutionRepositoryAllowed;
+        }
+        if (!this.checkoutSolutionRepositoryAllowed) {
+            this.programmingExercise.checkoutSolutionRepository = false;
+        }
 
         // Only load problem statement template when creating a new exercise and not when importing an existing exercise
         if (this.programmingExercise.id === undefined && !this.isImportFromFile) {
@@ -308,7 +312,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         }
     }
 
-    get selectedProjectType() {
+    get selectedProjectType(): ProjectType | undefined {
         return this.selectedProjectTypeValue;
     }
 
@@ -381,6 +385,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.notificationText = undefined;
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
             this.programmingExercise = programmingExercise;
+            if (this.programmingExercise.buildPlanConfiguration) {
+                this.programmingExercise.windFile = this.aeolusService.parseWindFile(this.programmingExercise.buildPlanConfiguration);
+            }
             this.backupExercise = cloneDeep(this.programmingExercise);
             this.selectedProgrammingLanguageValue = this.programmingExercise.programmingLanguage!;
             if (this.programmingExercise.projectType === ProjectType.MAVEN_MAVEN) {
@@ -411,7 +418,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                             this.isExamMode = true;
                             this.exerciseGroupService.find(params['courseId'], params['examId'], params['exerciseGroupId']).subscribe((res) => {
                                 this.programmingExercise.exerciseGroup = res.body!;
-                                if (this.programmingExercise.exerciseGroup.exam?.course?.defaultProgrammingLanguage && !this.isImportFromFile) {
+                                if (!params['exerciseId'] && this.programmingExercise.exerciseGroup.exam?.course?.defaultProgrammingLanguage && !this.isImportFromFile) {
                                     this.selectedProgrammingLanguage = this.programmingExercise.exerciseGroup.exam.course.defaultProgrammingLanguage;
                                 }
                             });
@@ -425,7 +432,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                             this.isExamMode = false;
                             this.courseService.find(this.courseId).subscribe((res) => {
                                 this.programmingExercise.course = res.body!;
-                                if (this.programmingExercise.course?.defaultProgrammingLanguage && !this.isImportFromFile) {
+                                if (!params['exerciseId'] && this.programmingExercise.course?.defaultProgrammingLanguage && !this.isImportFromFile) {
                                     this.selectedProgrammingLanguage = this.programmingExercise.course.defaultProgrammingLanguage!;
                                 }
                                 this.exerciseCategories = this.programmingExercise.categories || [];
@@ -434,25 +441,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                             });
                         }
                     }
-
-                    // Set submit button text depending on component state
-                    if (this.isImportFromExistingExercise || this.isImportFromFile) {
-                        this.submitButtonTitle = 'entity.action.import';
-                    } else if (this.programmingExercise.id) {
-                        this.isEdit = true;
-                        this.submitButtonTitle = 'entity.action.save';
-                    } else {
-                        this.submitButtonTitle = 'entity.action.generate';
-                    }
                 }),
             )
             .subscribe();
-
-        this.activatedRoute.queryParams.subscribe((params) => {
-            if (params.shouldHaveBackButtonToWizard) {
-                this.goBackAfterSaving = true;
-            }
-        });
 
         // If an exercise is created, load our readme template so the problemStatement is not empty
         this.selectedProgrammingLanguage = this.programmingExercise.programmingLanguage!;
@@ -470,9 +461,46 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         });
 
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.customBuildPlansSupported = profileInfo?.activeProfiles.includes(PROFILE_LOCALCI) || profileInfo?.activeProfiles.includes(PROFILE_AEOLUS);
+            if (profileInfo?.activeProfiles.includes(PROFILE_LOCALCI)) {
+                this.customBuildPlansSupported = PROFILE_LOCALCI;
+                this.isLocal = true;
+            }
+            if (profileInfo?.activeProfiles.includes(PROFILE_AEOLUS)) {
+                this.customBuildPlansSupported = PROFILE_AEOLUS;
+            }
         });
         this.defineSupportedProgrammingLanguages();
+    }
+
+    ngAfterViewInit() {
+        this.inputFieldSubscriptions.push(this.exerciseInfoComponent?.formValidChanges?.subscribe(() => this.calculateFormStatusSections()));
+        this.inputFieldSubscriptions.push(this.exerciseDifficultyComponent?.teamConfigComponent?.formValidChanges?.subscribe(() => this.calculateFormStatusSections()));
+        this.inputFieldSubscriptions.push(this.exerciseLanguageComponent?.formValidChanges?.subscribe(() => this.calculateFormStatusSections()));
+        this.inputFieldSubscriptions.push(this.exerciseGradingComponent?.formValidChanges?.subscribe(() => this.calculateFormStatusSections()));
+        this.inputFieldSubscriptions.push(this.exercisePlagiarismComponent?.formValidChanges?.subscribe(() => this.calculateFormStatusSections()));
+    }
+
+    ngOnDestroy() {
+        for (const subscription of this.inputFieldSubscriptions) {
+            subscription?.unsubscribe();
+        }
+    }
+
+    calculateFormStatusSections() {
+        this.formStatusSections = [
+            { title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.generalInfoStepTitle', valid: this.exerciseInfoComponent?.formValid ?? false },
+            {
+                title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.difficultyStepTitle',
+                valid: (this.exerciseDifficultyComponent?.teamConfigComponent.formValid && this.validIdeSelection()) ?? false,
+            },
+            { title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepTitle', valid: this.exerciseLanguageComponent?.formValid ?? false },
+            { title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle', valid: true, empty: !this.programmingExercise.problemStatement },
+            {
+                title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.gradingStepTitle',
+                valid: Boolean(this.exerciseGradingComponent?.formValid && (this.isExamMode || this.exercisePlagiarismComponent?.formValid)),
+                empty: this.exerciseGradingComponent?.formEmpty,
+            },
+        ];
     }
 
     private defineSupportedProgrammingLanguages() {
@@ -573,7 +601,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      */
     saveExercise() {
         if (this.programmingExercise.customizeBuildPlanWithAeolus) {
-            this.programmingExercise.buildPlanConfiguration = JSON.stringify(this.programmingExercise.windFile);
+            this.programmingExercise.buildPlanConfiguration = this.aeolusService.serializeWindFile(this.programmingExercise.windFile!);
         } else {
             this.programmingExercise.buildPlanConfiguration = undefined;
             this.programmingExercise.windFile = undefined;
@@ -610,7 +638,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         if (this.isImportFromFile) {
             this.subscribeToSaveResponse(this.programmingExerciseService.importFromFile(this.programmingExercise, this.courseId));
         } else if (this.isImportFromExistingExercise) {
-            this.subscribeToSaveResponse(this.programmingExerciseService.importExercise(this.programmingExercise, this.recreateBuildPlans, this.updateTemplate));
+            this.subscribeToSaveResponse(
+                this.programmingExerciseService.importExercise(this.programmingExercise, this.importOptions.recreateBuildPlans, this.importOptions.updateTemplate),
+            );
         } else if (this.programmingExercise.id !== undefined) {
             const requestOptions = {} as any;
             if (this.notificationText) {
@@ -726,8 +756,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     onStaticCodeAnalysisChanged() {
         // On import: If SCA mode changed, activate recreation of build plans and update of the template
         if (this.isImportFromExistingExercise && this.programmingExercise.staticCodeAnalysisEnabled !== this.originalStaticCodeAnalysisEnabled) {
-            this.recreateBuildPlans = true;
-            this.updateTemplate = true;
+            this.importOptions.recreateBuildPlans = true;
+            this.importOptions.updateTemplate = true;
         }
 
         if (!this.programmingExercise.staticCodeAnalysisEnabled) {
@@ -736,7 +766,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     }
 
     onRecreateBuildPlanOrUpdateTemplateChange() {
-        if (!this.recreateBuildPlans || !this.updateTemplate) {
+        if (!this.importOptions.recreateBuildPlans || !this.importOptions.updateTemplate) {
             this.programmingExercise.staticCodeAnalysisEnabled = this.originalStaticCodeAnalysisEnabled;
         }
 
@@ -784,33 +814,20 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     /**
      * Get a list of all reasons that describe why the current input to update is invalid
-     *
-     * @param forStep Limit the respected invalid reasons to the current wizard mode step. By default, e.g. when not using the wizard, all reasons are respected.
      */
-    getInvalidReasons(forStep = Number.MAX_VALUE): ValidationReason[] {
+    getInvalidReasons(): ValidationReason[] {
         const validationErrorReasons: ValidationReason[] = [];
 
-        if (forStep >= 1) {
-            this.validateExerciseTitle(validationErrorReasons);
-            this.validateExerciseChannelName(validationErrorReasons);
-            this.validateExerciseShortName(validationErrorReasons);
-            this.validateExerciseAuxiliryRepositories(validationErrorReasons);
-        }
-
-        if (forStep >= 3) {
-            this.validateExercisePackageName(validationErrorReasons);
-        }
-
-        if (forStep >= 4) {
-            this.validateExerciseIdeSelection(validationErrorReasons);
-        }
-
-        if (forStep >= 5) {
-            this.validateExercisePoints(validationErrorReasons);
-            this.validateExerciseBonusPoints(validationErrorReasons);
-            this.validateExerciseSCAMaxPenalty(validationErrorReasons);
-            this.validateExerciseSubmissionLimit(validationErrorReasons);
-        }
+        this.validateExerciseTitle(validationErrorReasons);
+        this.validateExerciseChannelName(validationErrorReasons);
+        this.validateExerciseShortName(validationErrorReasons);
+        this.validateExerciseAuxiliaryRepositories(validationErrorReasons);
+        this.validateExercisePackageName(validationErrorReasons);
+        this.validateExerciseIdeSelection(validationErrorReasons);
+        this.validateExercisePoints(validationErrorReasons);
+        this.validateExerciseBonusPoints(validationErrorReasons);
+        this.validateExerciseSCAMaxPenalty(validationErrorReasons);
+        this.validateExerciseSubmissionLimit(validationErrorReasons);
 
         return validationErrorReasons;
     }
@@ -994,7 +1011,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         }
     }
 
-    private validateExerciseAuxiliryRepositories(validationErrorReasons: ValidationReason[]): void {
+    private validateExerciseAuxiliaryRepositories(validationErrorReasons: ValidationReason[]): void {
         if (!this.auxiliaryRepositoriesValid) {
             validationErrorReasons.push({
                 translateKey: 'artemisApp.programmingExercise.auxiliaryRepository.error',
@@ -1072,10 +1089,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             rerenderSubject: this.rerenderSubject.asObservable(),
             validIdeSelection: this.validIdeSelection,
             inProductionEnvironment: this.inProductionEnvironment,
-            recreateBuildPlans: this.recreateBuildPlans,
+            recreateBuildPlans: this.importOptions.recreateBuildPlans,
             onRecreateBuildPlanOrUpdateTemplateChange: this.onRecreateBuildPlanOrUpdateTemplateChange,
-            updateTemplate: this.updateTemplate,
-            publishBuildPlanUrlAllowed: this.publishBuildPlanUrlAllowed,
+            updateTemplate: this.importOptions.updateTemplate,
             recreateBuildPlanOrUpdateTemplateChange: this.onRecreateBuildPlanOrUpdateTemplateChange,
             buildPlanLoaded: this.buildPlanLoaded,
         };

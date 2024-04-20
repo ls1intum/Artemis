@@ -1,14 +1,17 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,11 +29,12 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 /**
  * REST controller for managing NotificationSettings (NotificationSettings).
  */
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 public class NotificationSettingsResource {
 
-    private final Logger log = LoggerFactory.getLogger(NotificationSettingsResource.class);
+    private static final Logger log = LoggerFactory.getLogger(NotificationSettingsResource.class);
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -50,7 +54,7 @@ public class NotificationSettingsResource {
 
     /**
      * GET notification-settings : Get all NotificationSettings for current user
-     *
+     * <p>
      * Fetches the NotificationSettings for the current user from the server.
      * If the user has not yet modified the settings there will be none in the database, then
      *
@@ -70,7 +74,7 @@ public class NotificationSettingsResource {
 
     /**
      * PUT notification-settings : Save NotificationSettings for current user
-     *
+     * <p>
      * Saves the provided NotificationSettings to the server.
      *
      * @param notificationSettings which should be saved to the notificationSetting database.
@@ -90,7 +94,20 @@ public class NotificationSettingsResource {
         if (resultAsList.isEmpty()) {
             throw new BadRequestAlertException("Error occurred during saving of Notification Settings", "NotificationSettings", "notificationSettingsEmptyAfterSave");
         }
-        NotificationSetting[] resultAsArray = resultAsList.toArray(new NotificationSetting[0]);
+        NotificationSetting[] resultAsArray = resultAsList.toArray(NotificationSetting[]::new);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, "notificationSetting", "test")).body(resultAsArray);
+    }
+
+    /**
+     * GET muted-conversations : Loads the list of all muted conversations of a user
+     *
+     * @return ResponseEntity with status 200 and the list of muted conversations
+     */
+    @GetMapping("muted-conversations")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Set<Long>> getMutedConversations() {
+        User user = userRepository.getUser();
+        Set<Long> mutedConversations = notificationSettingRepository.findMutedConversations(user.getId());
+        return ResponseEntity.ok(mutedConversations);
     }
 }

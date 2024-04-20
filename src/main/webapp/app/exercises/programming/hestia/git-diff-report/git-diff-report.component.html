@@ -1,23 +1,45 @@
 <div class="row border-bottom">
     <div class="col-6">
         <h4 class="ps-2">
-            {{
-                (diffForTemplateAndSolution || !report.participationIdForLeftCommit
-                    ? 'artemisApp.programmingExercise.diffReport.template'
-                    : 'artemisApp.programmingExercise.diffReport.previousSubmission'
-                ) | artemisTranslate
-            }}
+            @if (isRepositoryView && leftCommit) {
+                @if (diffForTemplateAndEmptyRepository) {
+                    {{ 'artemisApp.programmingExercise.diffReport.emptyRepository' | artemisTranslate }}
+                } @else {
+                    {{ 'artemisApp.programmingExercise.diffReport.previousCommit' | artemisTranslate }}
+                    <span class="text-primary">
+                        {{ leftCommit }}
+                    </span>
+                }
+            } @else {
+                {{
+                    (diffForTemplateAndSolution || !report.participationIdForLeftCommit
+                        ? 'artemisApp.programmingExercise.diffReport.template'
+                        : 'artemisApp.programmingExercise.diffReport.previousSubmission'
+                    ) | artemisTranslate
+                }}
+            }
         </h4>
     </div>
-    <div class="col-2">
+    <div class="col-4">
         <h4 class="ps-2">
-            {{
-                (diffForTemplateAndSolution ? 'artemisApp.programmingExercise.diffReport.solution' : 'artemisApp.programmingExercise.diffReport.currentSubmission')
-                    | artemisTranslate
-            }}
+            @if (isRepositoryView && rightCommit) {
+                @if (diffForTemplateAndEmptyRepository) {
+                    {{ 'artemisApp.programmingExercise.diffReport.template' | artemisTranslate }}
+                } @else {
+                    {{ 'artemisApp.programmingExercise.diffReport.currentCommit' | artemisTranslate }}
+                    <span class="text-primary">
+                        {{ rightCommit }}
+                    </span>
+                }
+            } @else {
+                {{
+                    (diffForTemplateAndSolution ? 'artemisApp.programmingExercise.diffReport.solution' : 'artemisApp.programmingExercise.diffReport.currentSubmission')
+                        | artemisTranslate
+                }}
+            }
         </h4>
     </div>
-    <div class="col-4 text-end fw-bold">
+    <div class="col-2 text-end fw-bold">
         <jhi-git-diff-line-stat
             [addedLineCount]="addedLineCount"
             [removedLineCount]="removedLineCount"
@@ -27,16 +49,19 @@
                     : 'artemisApp.programmingExercise.diffReport.lineStatTooltipFullReportExamTimeline'
                 ) | artemisTranslate
             }}"
-        ></jhi-git-diff-line-stat>
+        />
     </div>
 </div>
-<div *ngFor="let filePath of filePaths" class="mt-2">
-    <jhi-git-diff-file-panel
-        *ngIf="entriesByPath.get(filePath)?.length"
-        [diffForTemplateAndSolution]="diffForTemplateAndSolution"
-        [diffEntries]="entriesByPath.get(filePath) ?? []"
-        [templateFileContent]="templateFileContentByPath.get(filePath)"
-        [solutionFileContent]="solutionFileContentByPath.get(filePath)"
-        [numberOfContextLines]="numberOfContextLines"
-    ></jhi-git-diff-file-panel>
-</div>
+@for (filePath of filePaths; track filePath) {
+    <div class="mt-2">
+        @if (entriesByPath.get(filePath)?.length) {
+            <jhi-git-diff-file-panel
+                [diffForTemplateAndSolution]="diffForTemplateAndSolution"
+                [diffEntries]="entriesByPath.get(filePath) ?? []"
+                [templateFileContent]="templateFileContentByPath.get(filePath)"
+                [solutionFileContent]="solutionFileContentByPath.get(filePath)"
+                [numberOfContextLines]="numberOfContextLines"
+            />
+        }
+    </div>
+}

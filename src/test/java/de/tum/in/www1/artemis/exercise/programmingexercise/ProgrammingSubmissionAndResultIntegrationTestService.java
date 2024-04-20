@@ -22,19 +22,18 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingSubmissionTestRepository;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
 /**
- * Note: this class should be independent of the actual VCS and CIS and contains common test logic for both scenarios:
- * 1) Bamboo + Bitbucket
- * 2) Jenkins + Gitlab
+ * Note: this class should be independent of the actual VCS and CIS and contains common test logic for scenarios:
+ * 1) Jenkins + Gitlab
  */
 @Service
 public class ProgrammingSubmissionAndResultIntegrationTestService {
 
     @Autowired
-    private ProgrammingSubmissionRepository programmingSubmissionRepository;
+    private ProgrammingSubmissionTestRepository programmingSubmissionRepository;
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;

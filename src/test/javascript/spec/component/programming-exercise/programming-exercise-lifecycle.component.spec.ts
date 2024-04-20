@@ -1,5 +1,5 @@
 import dayjs from 'dayjs/esm';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { ProgrammingExerciseLifecycleComponent } from 'app/exercises/programming/shared/lifecycle/programming-exercise-lifecycle.component';
@@ -9,10 +9,12 @@ import { ProgrammingExerciseTestScheduleDatePickerComponent } from 'app/exercise
 import { NgModel } from '@angular/forms';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { SimpleChange } from '@angular/core';
+import { QueryList, SimpleChange } from '@angular/core';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
 import { expectElementToBeDisabled, expectElementToBeEnabled } from '../../helpers/utils/general.utils';
 import { Course } from 'app/entities/course.model';
+import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercises/shared/feedback-suggestion/exercise-feedback-suggestion-options.component';
+import { Subject } from 'rxjs';
 
 describe('ProgrammingExerciseLifecycleComponent', () => {
     let comp: ProgrammingExerciseLifecycleComponent;
@@ -31,6 +33,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
                 ProgrammingExerciseLifecycleComponent,
                 MockComponent(ProgrammingExerciseTestScheduleDatePickerComponent),
                 MockComponent(HelpIconComponent),
+                MockComponent(ExerciseFeedbackSuggestionOptionsComponent),
                 MockDirective(NgModel),
                 TranslatePipeMock,
             ],
@@ -154,11 +157,16 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
 
     it('should disable feedback suggestions when changing the assessment type to automatic', () => {
         comp.exercise = exercise;
+        comp.exercise.id = undefined;
+        comp.ngOnInit();
+
+        expect(comp.exercise.assessmentType).toBe(AssessmentType.AUTOMATIC);
+
         comp.exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
-        comp.exercise.feedbackSuggestionsEnabled = true;
+        comp.exercise.feedbackSuggestionModule = 'programming_module';
         comp.toggleAssessmentType(); // toggle to AUTOMATIC
 
-        expect(comp.exercise.feedbackSuggestionsEnabled).toBeFalse();
+        expect(comp.exercise.feedbackSuggestionModule).toBeUndefined();
     });
 
     it('should change publication of tests for programming exercise with published solution', () => {
@@ -312,4 +320,15 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         const checkbox: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#releaseTestsWithExampleSolution');
         expectElementToBeDisabled(checkbox);
     });
+
+    it('should calculate form validation status', fakeAsync(() => {
+        const datePicker = { dateInput: { valueChanges: new Subject(), valid: true, value: new Date() } } as any as ProgrammingExerciseTestScheduleDatePickerComponent;
+        comp.datePickerComponents = { changes: new Subject(), toArray: () => [datePicker] } as any as QueryList<ProgrammingExerciseTestScheduleDatePickerComponent>;
+        comp.ngAfterViewInit();
+        (comp.datePickerComponents.changes as Subject<any>).next({ toArray: () => [datePicker] });
+        (datePicker.dateInput.valueChanges as Subject<boolean>).next(true);
+        tick();
+        expect(comp.formValid).toBeTrue();
+        expect(comp.formEmpty).toBeTrue();
+    }));
 });

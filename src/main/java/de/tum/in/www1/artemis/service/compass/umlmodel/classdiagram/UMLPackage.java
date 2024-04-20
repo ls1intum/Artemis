@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Objects;
 
 import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
@@ -43,6 +44,11 @@ public class UMLPackage extends UMLContainerElement implements Serializable {
     @Override
     public String getType() {
         return UML_PACKAGE_TYPE;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), name);
     }
 
     @Override

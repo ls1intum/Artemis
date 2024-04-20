@@ -5,6 +5,13 @@
                 "title": "Exercises",
                 "createLabel": "Create a new Exercise"
             },
+            "sections": {
+                "general": "General",
+                "mode": "Mode",
+                "grading": "Grading",
+                "problem": "Problem",
+                "solution": "Solution"
+            },
             "details": "Exercise details",
             "addCriterion": "Add a Grading Criterion",
             "resultsPerPage": "{{number}} results per page",
@@ -189,7 +196,7 @@
             "isQuiz": "This is a quiz exercise",
             "isText": "This is a text exercise",
             "isFileUpload": "This is a file upload exercise",
-            "notificationText": "Optional: Notification about changes",
+            "notificationText": "What did you change?",
             "submissionSuccessful": "The submission was successful",
             "submissionUnsuccessful": "The submission was unsuccessful",
             "lateSubmissionResultReceived": "Artemis received an ungraded result for a late submission, please scroll down to see the score in the result history.",
@@ -233,6 +240,14 @@
                     "undefined": "There has to be a value for the bonus points set!",
                     "customMin": "The number of bonus points must be at least 0!",
                     "customMax": "The number of bonus points may not exceed 9999!"
+                },
+                "minTeamSize": {
+                    "min": "The minimal team size must not be less than 1 person.",
+                    "max": "The minimal team size must not exceed 99 people."
+                },
+                "maxTeamSize": {
+                    "min": "The maximal team size must not be less than 1 person.",
+                    "max": "The maximal team size must not exceed 99 people."
                 },
                 "maxPenalty": {
                     "pattern": "The maximum penalty must be between 0 and 100 percent!"

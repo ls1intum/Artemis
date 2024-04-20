@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.scheduled.cache.quiz;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
 
 import java.time.Duration;
@@ -9,13 +10,16 @@ import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
+import jakarta.annotation.Nullable;
+import jakarta.annotation.PostConstruct;
+import jakarta.validation.constraints.NotNull;
 
+import org.hibernate.Hibernate;
 import org.hibernate.exception.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -27,6 +31,7 @@ import com.hazelcast.scheduledexecutor.*;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
@@ -44,18 +49,14 @@ import de.tum.in.www1.artemis.service.QuizMessagingService;
 import de.tum.in.www1.artemis.service.QuizStatisticService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiNewResultService;
-import de.tum.in.www1.artemis.service.scheduled.cache.Cache;
 
+@Profile(PROFILE_CORE)
 @Service
 public class QuizScheduleService {
 
     private static final Logger log = LoggerFactory.getLogger(QuizScheduleService.class);
 
     private static final String HAZELCAST_PROCESS_CACHE_HANDLER = QuizProcessCacheTask.HAZELCAST_PROCESS_CACHE_TASK + "-handler";
-
-    private final IScheduledExecutorService threadPoolTaskScheduler;
-
-    private final IAtomicReference<ScheduledTaskHandler> scheduledProcessQuizSubmissions;
 
     private final StudentParticipationRepository studentParticipationRepository;
 
@@ -69,15 +70,24 @@ public class QuizScheduleService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
-    private final QuizCache quizCache;
+    private final HazelcastInstance hazelcastInstance;
 
     private final QuizExerciseRepository quizExerciseRepository;
 
     private final Optional<LtiNewResultService> ltiNewResultService;
 
+    private QuizCache quizCache;
+
+    private IScheduledExecutorService threadPoolTaskScheduler;
+
+    private IAtomicReference<ScheduledTaskHandler> scheduledProcessQuizSubmissions;
+
+    private final TeamRepository teamRepository;
+
     public QuizScheduleService(WebsocketMessagingService websocketMessagingService, StudentParticipationRepository studentParticipationRepository, UserRepository userRepository,
             QuizSubmissionRepository quizSubmissionRepository, HazelcastInstance hazelcastInstance, QuizExerciseRepository quizExerciseRepository,
-            QuizMessagingService quizMessagingService, QuizStatisticService quizStatisticService, Optional<LtiNewResultService> ltiNewResultService) {
+            QuizMessagingService quizMessagingService, QuizStatisticService quizStatisticService, Optional<LtiNewResultService> ltiNewResultService,
+            TeamRepository teamRepository) {
         this.websocketMessagingService = websocketMessagingService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.userRepository = userRepository;
@@ -85,10 +95,16 @@ public class QuizScheduleService {
         this.quizExerciseRepository = quizExerciseRepository;
         this.quizMessagingService = quizMessagingService;
         this.quizStatisticService = quizStatisticService;
+        this.ltiNewResultService = ltiNewResultService;
+        this.hazelcastInstance = hazelcastInstance;
+        this.teamRepository = teamRepository;
+    }
+
+    @PostConstruct
+    public void init() {
         this.scheduledProcessQuizSubmissions = hazelcastInstance.getCPSubsystem().getAtomicReference(HAZELCAST_PROCESS_CACHE_HANDLER);
         this.threadPoolTaskScheduler = hazelcastInstance.getScheduledExecutorService(Constants.HAZELCAST_QUIZ_SCHEDULER);
         this.quizCache = new QuizCache(hazelcastInstance);
-        this.ltiNewResultService = ltiNewResultService;
     }
 
     /**
@@ -262,9 +278,10 @@ public class QuizScheduleService {
      * stop scheduler
      */
     public void stopSchedule() {
-        if (!scheduledProcessQuizSubmissions.isNull()) {
+        var savedHandler = scheduledProcessQuizSubmissions.get();
+        if (savedHandler != null) {
             log.info("Try to stop quiz schedule service");
-            var scheduledFuture = threadPoolTaskScheduler.getScheduledFuture(scheduledProcessQuizSubmissions.get());
+            var scheduledFuture = threadPoolTaskScheduler.getScheduledFuture(savedHandler);
             try {
                 // if the task has been disposed, this will throw a StaleTaskException
                 boolean cancelSuccess = scheduledFuture.cancel(false);
@@ -419,10 +436,9 @@ public class QuizScheduleService {
         log.debug("Process cached quiz submissions");
         // global try-catch for error logging
         try {
-            for (Cache cache : quizCache.getAllCaches()) {
-                QuizExerciseCache cachedQuiz = (QuizExerciseCache) cache;
+            for (QuizExerciseCache cache : quizCache.getAllCaches()) {
                 // this way near cache is used (values will deserialize new objects)
-                Long quizExerciseId = cachedQuiz.getExerciseId();
+                Long quizExerciseId = cache.getExerciseId();
                 // Get fresh QuizExercise from DB
                 QuizExercise quizExercise = quizExerciseRepository.findOne(quizExerciseId);
                 // check if quiz has been deleted
@@ -438,9 +454,9 @@ public class QuizScheduleService {
 
                 // ensure that attempts that were never submitted get committed to the database and saved
                 // this is required to ensure that students cannot gain extra attempts this way
-                for (var batch : cachedQuiz.getBatches().entrySet()) {
+                for (var batch : cache.getBatches().entrySet()) {
                     if (batchCache.get(batch.getValue()).isEnded()) {
-                        cachedQuiz.getSubmissions().putIfAbsent(batch.getKey(), new QuizSubmission());
+                        cache.getSubmissions().putIfAbsent(batch.getKey(), new QuizSubmission());
                     }
                 }
 
@@ -448,15 +464,15 @@ public class QuizScheduleService {
                 boolean hasEnded = quizExercise.isQuizEnded();
                 // Note that those might not be true later on due to concurrency and a distributed system,
                 // do not rely on that for actions upon the whole set, such as clear()
-                boolean hasNewSubmissions = !cachedQuiz.getSubmissions().isEmpty();
-                boolean hasNewParticipations = !cachedQuiz.getParticipations().isEmpty();
-                boolean hasNewResults = !cachedQuiz.getResults().isEmpty();
+                boolean hasNewSubmissions = !cache.getSubmissions().isEmpty();
+                boolean hasNewParticipations = !cache.getParticipations().isEmpty();
+                boolean hasNewResults = !cache.getResults().isEmpty();
 
                 // Skip quizzes with no cached changes
                 if (!hasNewSubmissions && !hasNewParticipations && !hasNewResults) {
                     // Remove quiz if it has ended
                     if (hasEnded) {
-                        removeCachedQuiz(cachedQuiz);
+                        removeCachedQuiz(cache);
                     }
                     continue;
                 }
@@ -468,8 +484,8 @@ public class QuizScheduleService {
 
                 if (hasNewSubmissions) {
                     // Create Participations and Results if the submission was submitted or if the quiz has ended and save them to Database (DB Write)
-                    Map<String, QuizSubmission> submissions = cachedQuiz.getSubmissions();
-                    Map<String, Long> batches = cachedQuiz.getBatches();
+                    Map<String, QuizSubmission> submissions = cache.getSubmissions();
+                    Map<String, Long> batches = cache.getBatches();
                     // This call will remove the processed Submission map entries itself
                     int numberOfSubmittedSubmissions = saveQuizSubmissionWithParticipationAndResultToDatabase(quizExercise, submissions, batches, batchCache);
                     // .. and likely generate new participations and results
@@ -487,7 +503,7 @@ public class QuizScheduleService {
 
                 if (hasNewParticipations && hasEnded) {
                     // Send the participation with containing result and quiz back to the users via websocket and remove the participation from the ParticipationHashMap
-                    Collection<Entry<String, StudentParticipation>> finishedParticipations = cachedQuiz.getParticipations().entrySet();
+                    Collection<Entry<String, StudentParticipation>> finishedParticipations = cache.getParticipations().entrySet();
                     // TODO maybe find a better way to optimize the performance (use an executor service with e.g. X parallel threads)
                     finishedParticipations.parallelStream().forEach(entry -> {
                         StudentParticipation participation = entry.getValue();
@@ -495,11 +511,12 @@ public class QuizScheduleService {
                             log.error("Participation is missing student (or student is missing username): {}", participation);
                         }
                         else {
-                            if(ltiNewResultService.isPresent()) {
-                                ltiNewResultService.get().onNewResult(participation);
+                            if (participation.getParticipant() instanceof Team team && !Hibernate.isInitialized(team.getStudents())) {
+                                participation.setParticipant(teamRepository.findWithStudentsByIdElseThrow(team.getId()));
                             }
+                            ltiNewResultService.ifPresent(newResultService->newResultService.onNewResult(participation));
                            sendQuizResultToUser(quizExerciseId, participation);
-                           cachedQuiz.getParticipations().remove(entry.getKey());
+                           cache.getParticipations().remove(entry.getKey());
                         }
                     });
                     if (!finishedParticipations.isEmpty()) {
@@ -514,13 +531,13 @@ public class QuizScheduleService {
                     // Fetch a new quiz exercise here including deeper attribute paths (this is relatively expensive, so we only do that if necessary)
                     try {
                         // Get a Set because QuizStatisticService needs one (currently)
-                        Set<Result> newResultsForQuiz = Set.copyOf(cachedQuiz.getResults().values());
+                        Set<Result> newResultsForQuiz = Set.copyOf(cache.getResults().values());
                         // Update the statistics
                         quizStatisticService.updateStatistics(newResultsForQuiz, quizExercise);
                         log.info("Updated statistics with {} new results in {} for quiz {}", newResultsForQuiz.size(), formatDurationFrom(start), quizExercise.getTitle());
                         // Remove only processed results
                         for (Result result : newResultsForQuiz) {
-                            cachedQuiz.getResults().remove(result.getId());
+                            cache.getResults().remove(result.getId());
                         }
                     }
                     catch (Exception e) {

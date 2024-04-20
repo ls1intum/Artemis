@@ -32,7 +32,6 @@
                 "quizExercise": "Quiz Exercise",
                 "lecture": "Vorlesung",
                 "competency": "Kompetenz",
-                "ltiOutcomeUrl": "Lti Outcome Url",
                 "submittedAnswer": "Submitted Answer",
                 "quizQuestion": "Question",
                 "multipleChoiceQuestion": "Multiple-Choice Question",
@@ -49,11 +48,11 @@
                 "quizSubmission": "Quiz Submission",
                 "dragAndDropSubmittedAnswer": "Drag-And-Drop Submitted Answer",
                 "dragAndDropAssignment": "Drag-And-Drop Assignment",
-                "quizStatistic": "Statistic",
-                "quizPointStatistic": "Quiz Point Statistic",
-                "quizQuestionStatistic": "Question Statistic",
-                "multipleChoiceQuestionStatistic": "Multiple-Choice Question Statistic",
-                "dragAndDropQuestionStatistic": "Drag-And-Drop Question Statistic",
+                "quizStatistic": "Statistics",
+                "quizPointStatistic": "Quiz Point Statistics",
+                "quizQuestionStatistic": "Question Statistics",
+                "multipleChoiceQuestionStatistic": "Multiple-Choice Question Statistics",
+                "dragAndDropQuestionStatistic": "Drag-And-Drop Question Statistics",
                 "quizStatisticCounter": "Statistic Counter",
                 "pointCounter": "Point Counter",
                 "answerCounter": "Answer Counter",
@@ -111,7 +110,9 @@
                 "apidocs": "API",
                 "database": "Datenbank",
                 "iris": "Iris Einstellungen",
-                "jhipster-needle-menu-add-admin-element": "JHipster will add additional menu entries here (do not translate!)"
+                "jhipster-needle-menu-add-admin-element": "JHipster will add additional menu entries here (do not translate!)",
+                "lti": "LTI Konfiguration",
+                "standardizedCompetencies": "Standardisierte Kompetenzen"
             },
             "language": "Sprache",
             "settings": "Einstellungen",
@@ -138,7 +139,8 @@
             "email.pattern": "Bitte nutze eine E-Mail nach folgendem Muster:",
             "cancel": "Abbruch",
             "confirm": "Bestätigen",
-            "refresh": "Aktualisieren"
+            "refresh": "Aktualisieren",
+            "invalidInput": "Ungültige Eingabe"
         },
         "messages": {
             "info": {
@@ -207,7 +209,7 @@
             "editSelected": "Ausgewählte bearbeiten",
             "editInEditor": "In Editor bearbeiten",
             "editBuildPlan": "Build-Plan bearbeiten",
-            "editInIntelliJ": "In IntelliJ bearbeiten",
+            "editInOrion": "In deiner IDE bearbeiten",
             "editEntity": "{{entity}} bearbeiten",
             "exampleSubmissions": "Beispielabgaben",
             "generate": "Generieren",
@@ -260,7 +262,9 @@
             "ldap": "von LDAP synchronisieren",
             "notUndoable": "Diese Aktion kann nicht rückgängig gemacht werden.",
             "discardChanges": "Änderungen verwerfen",
-            "goBack": "Zurück"
+            "goBack": "Zurück",
+            "search": "Suchen",
+            "select": "Auswählen"
         },
         "detail": {
             "field": "Feld",
@@ -310,14 +314,18 @@
             "patternLogin": "Dieses Feld darf nur Buchstaben, Ziffern und E-Mail-Adressen enthalten.",
             "invalidPattern": "Dieses Feld beinhaltet ein ungültiges E-Mail Muster."
         },
-        "timeZoneWarning": "Du befindest dich aktuell in der {{ timeZone }} Zeitzone."
+        "timeZoneWarning": "Du befindest dich aktuell in der {{ timeZone }} Zeitzone.",
+        "dateMissingOrNotValid": "'{{labelName}}' fehlt/ungültig",
+        "startDateError": "'Bearbeitungszeit ab' sollte zwischen 'Sichtbar ab' und 'Bearbeitungszeit bis' liegen",
+        "endDateError": "'Bearbeitungszeit bis' sollte nach 'Bearbeitungszeit ab' liegen"
     },
     "aboutUs": "Über",
     "contact": "Kontaktiere uns",
     "bug": "Melde einen Fehler",
     "feature": "Beantrage ein Feature",
+    "releases": "Versionen",
     "releaseNotes": "Versionshinweise",
-    "requestChange": "Änderung beantragen",
+    "feedback": "Feedback",
     "justNow": "gerade eben",
     "pendingChanges": "WARNUNG: Du hast nicht gespeicherte Änderungen. Klicke Abbrechen, um zurück zu gehen und deine Änderungen zu speichern oder klicke OK, um die Änderungen zu verwerfen.",
     "overview": {
@@ -325,6 +333,7 @@
         "aboutUs": "Über",
         "course": "Kursdetails",
         "exercise": "Aufgabendetails",
+        "exercises": "Aufgaben",
         "lectures": "Vorlesungen",
         "competencies": "Kompetenzen",
         "learningPath": "Lernpfad",

@@ -71,6 +71,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockAthenaService } from '../../helpers/mocks/service/mock-athena.service';
 import { AthenaService } from 'app/assessment/athena.service';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
+import { EntityResponseType } from 'app/exercises/shared/result/result.service';
 
 function addFeedbackAndValidateScore(comp: CodeEditorTutorAssessmentContainerComponent, pointsAwarded: number, scoreExpected: number) {
     comp.unreferencedFeedback.push({
@@ -122,7 +123,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         id: 1,
         templateParticipation: {
             id: 3,
-            repositoryUrl: 'test2',
+            repositoryUri: 'test2',
             results: [{ id: 9, submission: { id: 1, buildFailed: false } }],
         },
         maxPoints: 100,
@@ -135,7 +136,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     participation.exercise = exercise;
     participation.id = 1;
     participation.student = { login: 'student1' } as User;
-    participation.repositoryUrl = 'http://student1@bitbucket.ase.in.tum.de/scm/TEST/test-repo-student1.git';
+    participation.repositoryUri = 'http://student1@gitlab.ase.in.tum.de/scm/TEST/test-repo-student1.git';
     result.submission!.participation = participation;
 
     const submission: ProgrammingSubmission = new ProgrammingSubmission();
@@ -150,7 +151,24 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     const afterComplaintResult = new Result();
     afterComplaintResult.score = 100;
 
-    const route = (): ActivatedRoute => ({ params: of({ submissionId: 123 }), queryParamMap: of(convertToParamMap({ testRun: false })) }) as any as ActivatedRoute;
+    const afterOverrideResult: Result = new Result();
+    afterOverrideResult.feedbacks = [
+        {
+            type: FeedbackType.AUTOMATIC,
+            testCase: { testName: 'testCase1' },
+            detailText: 'testCase1 failed',
+            credits: 0,
+        },
+    ];
+    afterOverrideResult.assessor = user;
+
+    const overrideEntityResponse: EntityResponseType = new HttpResponse({ body: afterOverrideResult });
+
+    const route = (): ActivatedRoute =>
+        ({
+            params: of({ submissionId: 123 }),
+            queryParamMap: of(convertToParamMap({ testRun: false })),
+        }) as any as ActivatedRoute;
     const fileContent = 'This is the content of a file';
     const templateFileSessionReturn: { [fileName: string]: string } = { 'folder/file1': fileContent };
 
@@ -231,18 +249,52 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 findWithParticipationsStub.mockReturnValue(of({ body: exercise }));
 
                 // Mock the ResizeObserver, which is not available in the test environment
-                global.ResizeObserver = jest.fn().mockImplementation((...args) => new MockResizeObserver(args));
+                global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+                    return new MockResizeObserver(callback);
+                });
             });
     });
 
     afterEach(() => {
         jest.restoreAllMocks();
+        result.assessor = user;
+        result.hasComplaint = true;
     });
 
     it('should use jhi-assessment-layout', () => {
         const assessmentLayout = fixture.debugElement.query(By.directive(AssessmentLayoutComponent));
         expect(assessmentLayout).toBeDefined();
     });
+
+    it('should load the grading criteria on initialisation', fakeAsync(() => {
+        comp.ngOnInit();
+        tick(100);
+
+        expect(findWithParticipationsStub).toHaveBeenCalledWith(exercise.id, false, true);
+    }));
+
+    it('should update assessor correctly if the manual assessment is overridden', fakeAsync(() => {
+        const user2 = <User>{ id: 100, groups: ['instructorGroup'] };
+        const discardPendingSubmissionsWithConfirmationStub = jest.spyOn(comp, 'discardPendingSubmissionsWithConfirmation').mockReturnValue(Promise.resolve(true));
+        const updateAfterNewAssessment = jest.spyOn(programmingAssessmentManualResultService, 'saveAssessment').mockReturnValue(of(overrideEntityResponse));
+        result.assessor = user2;
+        result.hasComplaint = false;
+        comp.ngOnInit();
+        tick(100);
+        expect(comp.isAssessor).toBeFalse();
+        addFeedbackAndValidateScore(comp, 0, 0);
+        comp.submit().then(() => {
+            fixture.detectChanges();
+            const alertElementSubmit = debugElement.queryAll(By.css('jhi-alert'));
+            expect(alertElementSubmit).not.toBeNull();
+
+            expect(getIdentityStub).toHaveBeenCalled();
+            expect(discardPendingSubmissionsWithConfirmationStub).toHaveBeenCalled();
+            expect(updateAfterNewAssessment).toHaveBeenCalledOnce();
+            expect(comp.isAssessor).toBeTrue();
+        });
+        flush();
+    }));
 
     it('should show unreferenced feedback suggestions', () => {
         comp.feedbackSuggestions = [{ reference: 'file:src/Test.java_line:1' }, { reference: 'file:src/Test.java_line:2' }, { reference: undefined }];
@@ -251,18 +303,38 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
     it('should not show feedback suggestions where there are already existing manual feedbacks', async () => {
         comp.unreferencedFeedback = [{ text: 'unreferenced test', detailText: 'some detail', reference: undefined }];
-        comp.referencedFeedback = [{ text: 'referenced test', detailText: 'some detail', reference: 'file:src/Test.java_line:1' }];
+        comp.referencedFeedback = [
+            {
+                text: 'referenced test',
+                detailText: 'some detail',
+                reference: 'file:src/Test.java_line:1',
+            },
+        ];
         const feedbackSuggestionsStub = jest.spyOn(comp['athenaService'], 'getProgrammingFeedbackSuggestions');
         feedbackSuggestionsStub.mockReturnValue(
             of([
                 { text: 'FeedbackSuggestion:unreferenced test', detailText: 'some detail' },
-                { text: 'FeedbackSuggestion:referenced test', detailText: 'some detail', reference: 'file:src/Test.java_line:1' },
-                { text: 'FeedbackSuggestion:suggestion to pass', detailText: 'some detail', reference: 'file:src/Test.java_line:2' },
+                {
+                    text: 'FeedbackSuggestion:referenced test',
+                    detailText: 'some detail',
+                    reference: 'file:src/Test.java_line:1',
+                },
+                {
+                    text: 'FeedbackSuggestion:suggestion to pass',
+                    detailText: 'some detail',
+                    reference: 'file:src/Test.java_line:2',
+                },
             ] as Feedback[]),
         );
         comp['submission'] = { id: undefined }; // Needed for loadFeedbackSuggestions
         await comp['loadFeedbackSuggestions']();
-        expect(comp.feedbackSuggestions).toStrictEqual([{ text: 'FeedbackSuggestion:suggestion to pass', detailText: 'some detail', reference: 'file:src/Test.java_line:2' }]);
+        expect(comp.feedbackSuggestions).toStrictEqual([
+            {
+                text: 'FeedbackSuggestion:suggestion to pass',
+                detailText: 'some detail',
+                reference: 'file:src/Test.java_line:2',
+            },
+        ]);
     });
 
     it('should show complaint for result with complaint and check assessor', fakeAsync(() => {
@@ -404,9 +476,30 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     it('should save and submit manual result', fakeAsync(() => {
         comp.ngOnInit();
         tick(100);
-        comp.automaticFeedback = [{ type: FeedbackType.AUTOMATIC, testCase: { testName: 'testCase1' }, detailText: 'testCase1 failed', credits: 0 }];
-        comp.referencedFeedback = [{ type: FeedbackType.MANUAL, text: 'manual feedback', detailText: 'manual feedback for a file:1', credits: 2, reference: 'file:1_line:1' }];
-        comp.unreferencedFeedback = [{ type: FeedbackType.MANUAL_UNREFERENCED, detailText: 'unreferenced feedback', credits: 1 }];
+        comp.automaticFeedback = [
+            {
+                type: FeedbackType.AUTOMATIC,
+                testCase: { testName: 'testCase1' },
+                detailText: 'testCase1 failed',
+                credits: 0,
+            },
+        ];
+        comp.referencedFeedback = [
+            {
+                type: FeedbackType.MANUAL,
+                text: 'manual feedback',
+                detailText: 'manual feedback for a file:1',
+                credits: 2,
+                reference: 'file:1_line:1',
+            },
+        ];
+        comp.unreferencedFeedback = [
+            {
+                type: FeedbackType.MANUAL_UNREFERENCED,
+                detailText: 'unreferenced feedback',
+                credits: 1,
+            },
+        ];
         comp.validateFeedback();
         comp.save();
         const alertElement = debugElement.queryAll(By.css('jhi-alert'));
@@ -614,14 +707,86 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     });
 
     it.each([
-        [0, { complaintResponse: { complaint: { accepted: false } }, onSuccess: () => {}, onError: () => {} }, [], false],
-        [0, { complaintResponse: { complaint: { accepted: false } }, onSuccess: () => {}, onError: () => {} }, [{ credits: 1 }], false],
-        [1, { complaintResponse: { complaint: { accepted: false } }, onSuccess: () => {}, onError: () => {} }, [], false],
-        [1, { complaintResponse: { complaint: { accepted: false } }, onSuccess: () => {}, onError: () => {} }, [{ credits: 1 }], false],
-        [0, { complaintResponse: { complaint: { accepted: true } }, onSuccess: () => {}, onError: () => {} }, [], true],
-        [0, { complaintResponse: { complaint: { accepted: true } }, onSuccess: () => {}, onError: () => {} }, [{ credits: 1 }], false],
-        [1, { complaintResponse: { complaint: { accepted: true } }, onSuccess: () => {}, onError: () => {} }, [], true],
-        [1, { complaintResponse: { complaint: { accepted: true } }, onSuccess: () => {}, onError: () => {} }, [{ credits: 1 }], true],
+        [
+            0,
+            {
+                complaintResponse: { complaint: { accepted: false } },
+                onSuccess: () => {},
+                onError: () => {},
+            },
+            [],
+            false,
+        ],
+        [
+            0,
+            {
+                complaintResponse: { complaint: { accepted: false } },
+                onSuccess: () => {},
+                onError: () => {},
+            },
+            [{ credits: 1 }],
+            false,
+        ],
+        [
+            1,
+            {
+                complaintResponse: { complaint: { accepted: false } },
+                onSuccess: () => {},
+                onError: () => {},
+            },
+            [],
+            false,
+        ],
+        [
+            1,
+            {
+                complaintResponse: { complaint: { accepted: false } },
+                onSuccess: () => {},
+                onError: () => {},
+            },
+            [{ credits: 1 }],
+            false,
+        ],
+        [
+            0,
+            {
+                complaintResponse: { complaint: { accepted: true } },
+                onSuccess: () => {},
+                onError: () => {},
+            },
+            [],
+            true,
+        ],
+        [
+            0,
+            {
+                complaintResponse: { complaint: { accepted: true } },
+                onSuccess: () => {},
+                onError: () => {},
+            },
+            [{ credits: 1 }],
+            false,
+        ],
+        [
+            1,
+            {
+                complaintResponse: { complaint: { accepted: true } },
+                onSuccess: () => {},
+                onError: () => {},
+            },
+            [],
+            true,
+        ],
+        [
+            1,
+            {
+                complaintResponse: { complaint: { accepted: true } },
+                onSuccess: () => {},
+                onError: () => {},
+            },
+            [{ credits: 1 }],
+            true,
+        ],
     ])(
         'should get confirmation if complaint is accepted without higher score',
         (totalScoreBeforeAssessment: number, assessmentAfterComplaint: AssessmentAfterComplaint, newFeedback: Feedback[], needsConfirmation: boolean) => {

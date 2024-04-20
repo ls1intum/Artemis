@@ -3,11 +3,18 @@ package de.tum.in.www1.artemis;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.when;
 
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.crypto.SecretKey;
 
@@ -19,7 +26,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import com.nimbusds.jose.jwk.JWK;
+import com.nimbusds.jose.jwk.RSAKey;
 
+import de.tum.in.www1.artemis.config.lti.CustomLti13Configurer;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.lti.Claims;
@@ -28,10 +37,8 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
 
-class LtiDeepLinkingIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class LtiDeepLinkingIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "ltideeplinkingintegrationtest";
 
@@ -47,10 +54,10 @@ class LtiDeepLinkingIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Autowired
     private CourseUtilService courseUtilService;
 
-    private Course course;
-
     @Autowired
     private CourseRepository courseRepository;
+
+    private Course course;
 
     @BeforeEach
     void init() {
@@ -93,27 +100,56 @@ class LtiDeepLinkingIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deepLinkingAsInstructor() throws Exception {
-        String jwkJsonString = "{\"kty\":\"RSA\",\"d\":\"base64-encoded-value\",\"e\":\"AQAB\",\"use\":\"sig\",\"kid\":\"123456\",\"alg\":\"RS256\",\"n\":\"base64-encoded-value\"}";
+        String jwkJsonString = """
+                {
+                  "kty": "RSA",
+                  "d": "base64-encoded-value",
+                  "e": "AQAB",
+                  "use": "sig",
+                  "kid": "123456",
+                  "alg": "RS256",
+                  "n": "base64-encoded-value"
+                }
+                """;
         when(this.oAuth2JWKSService.getJWK(any())).thenReturn(JWK.parse(jwkJsonString));
         var params = getDeepLinkingRequestParams();
 
         request.postWithoutResponseBody("/api/lti13/deep-linking/" + course.getId(), HttpStatus.BAD_REQUEST, params);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void deepLinkingSuccessAsInstructor() throws Exception {
+        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+        keyPairGenerator.initialize(2048);
+        KeyPair keyPair = keyPairGenerator.generateKeyPair();
+
+        RSAKey mockRsaKey = new RSAKey.Builder((RSAPublicKey) keyPair.getPublic()).privateKey((RSAPrivateKey) keyPair.getPrivate()).build();
+
+        when(this.oAuth2JWKSService.getJWK(any())).thenReturn(mockRsaKey);
+        var params = getDeepLinkingRequestParams();
+
+        request.postWithoutResponseBody("/api/lti13/deep-linking/" + course.getId(), HttpStatus.OK, params);
+    }
+
     private LinkedMultiValueMap<String, String> getDeepLinkingRequestParams() {
         var params = new LinkedMultiValueMap<String, String>();
-        params.add("exerciseId", "1");
+        Set<Long> exerciseIds = new HashSet<>();
+        var exercise = course.getExercises().stream().findFirst().orElseThrow();
+        exerciseIds.add(exercise.getId());
+
+        String exerciseIdsParam = exerciseIds.stream().map(String::valueOf).collect(Collectors.joining(","));
+
+        params.add("exerciseIds", exerciseIdsParam);
         params.add("ltiIdToken", createJwtForTest());
         params.add("clientRegistrationId", "registration-id");
         return params;
     }
 
     private String createJwtForTest() {
-        SecretKey key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
-
+        SecretKey key = Jwts.SIG.HS256.key().build();
         Map<String, Object> claims = prepareTokenClaims();
-
-        return Jwts.builder().setClaims(claims).signWith(key, SignatureAlgorithm.HS256).compact();
+        return Jwts.builder().claims(claims).signWith(key, Jwts.SIG.HS256).compact();
     }
 
     private Map<String, Object> prepareTokenClaims() {
@@ -149,7 +185,7 @@ class LtiDeepLinkingIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
     private void addLTISpecificClaims(Map<String, Object> claims) {
         claims.put(Claims.LTI_DEPLOYMENT_ID, "07940580-b309-415e-a37c-914d387c1150");
-        claims.put(Claims.MESSAGE_TYPE, "LtiDeepLinkingRequest");
+        claims.put(Claims.MESSAGE_TYPE, CustomLti13Configurer.LTI13_DEEPLINK_MESSAGE_REQUEST);
         claims.put(Claims.LTI_VERSION, "1.3.0");
         claims.put(Claims.ROLES,
                 Arrays.asList("http://purl.imsglobal.org/vocab/lis/v2/membership#Instructor", "http://purl.imsglobal.org/vocab/lis/v2/institution/person#Faculty"));

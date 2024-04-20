@@ -1,10 +1,13 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -20,6 +23,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 /**
  * Service for managing complaints.
  */
+@Profile(PROFILE_CORE)
 @Service
 public class ComplaintService {
 
@@ -35,13 +39,16 @@ public class ComplaintService {
 
     private final ExamRepository examRepository;
 
+    private final TeamRepository teamRepository;
+
     public ComplaintService(ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, ResultRepository resultRepository,
-            ExamRepository examRepository, UserRepository userRepository) {
+            ExamRepository examRepository, UserRepository userRepository, TeamRepository teamRepository) {
         this.complaintRepository = complaintRepository;
         this.complaintResponseRepository = complaintResponseRepository;
         this.resultRepository = resultRepository;
         this.examRepository = examRepository;
         this.userRepository = userRepository;
+        this.teamRepository = teamRepository;
     }
 
     /**
@@ -97,6 +104,10 @@ public class ComplaintService {
             validateTimeOfComplaintOrRequestMoreFeedback(originalResult, studentParticipation.getExercise(), studentParticipation, course, complaint.getComplaintType());
         }
 
+        if (studentParticipation.getParticipant() instanceof Team team) {
+            studentParticipation.setParticipant(teamRepository.findWithStudentsByIdElseThrow(team.getId()));
+        }
+
         if (!studentParticipation.isOwnedBy(principal.getName())) {
             throw new BadRequestAlertException("You can create a complaint only for a result you submitted", ENTITY_NAME, "differentuser");
         }
@@ -125,7 +136,7 @@ public class ComplaintService {
      */
     public long countUnacceptedComplaintsByParticipantAndCourseId(Participant participant, long courseId) {
         if (participant instanceof User) {
-            return complaintRepository.countUnacceptedComplaintsByComplaintTypeStudentIdAndCourseId(participant.getId(), courseId);
+            return complaintRepository.countUnacceptedComplaintsByStudentIdAndCourseId(participant.getId(), courseId);
         }
         else if (participant instanceof Team) {
             return complaintRepository.countUnacceptedComplaintsByComplaintTypeTeamShortNameAndCourseId(participant.getParticipantIdentifier(), courseId);

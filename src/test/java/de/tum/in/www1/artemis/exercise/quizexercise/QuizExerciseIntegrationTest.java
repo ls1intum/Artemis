@@ -49,7 +49,7 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.QuizExerciseService;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.ExerciseIntegrationTestUtils;
+import de.tum.in.www1.artemis.util.ExerciseIntegrationTestService;
 import de.tum.in.www1.artemis.util.PageableSearchUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.QuizBatchJoinDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
@@ -58,7 +58,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     private static final String TEST_PREFIX = "quizexerciseintegration";
 
-    private final Logger log = LoggerFactory.getLogger(getClass());
+    private static final Logger log = LoggerFactory.getLogger(QuizExerciseIntegrationTest.class);
 
     @Autowired
     private QuizExerciseService quizExerciseService;
@@ -82,7 +82,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     private TeamRepository teamRepository;
 
     @Autowired
-    private ExerciseIntegrationTestUtils exerciseIntegrationTestUtils;
+    private ExerciseIntegrationTestService exerciseIntegrationTestService;
 
     @Autowired
     private ExerciseService exerciseService;
@@ -179,7 +179,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         for (MockMultipartFile file : files) {
             builder.file(file);
         }
-        MvcResult result = request.getMvc().perform(builder).andExpect(status().is(expectedStatus.value())).andReturn();
+        MvcResult result = request.performMvcRequest(builder).andExpect(status().is(expectedStatus.value())).andReturn();
         request.restoreSecurityContext();
         if (expectedStatus == HttpStatus.CREATED) {
             return objectMapper.readValue(result.getResponse().getContentAsString(), QuizExercise.class);
@@ -194,7 +194,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         for (MockMultipartFile file : files) {
             builder.file(file);
         }
-        MvcResult result = request.getMvc().perform(builder).andExpect(status().is(expectedStatus.value())).andReturn();
+        MvcResult result = request.performMvcRequest(builder).andExpect(status().is(expectedStatus.value())).andReturn();
         request.restoreSecurityContext();
         if (expectedStatus == HttpStatus.OK) {
             return objectMapper.readValue(result.getResponse().getContentAsString(), QuizExercise.class);
@@ -215,7 +215,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         addFilesToBuilderAndModifyExercise(builder, quizExercise, addBackgroundImage);
         builder.file(new MockMultipartFile("exercise", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsBytes(quizExercise)))
                 .contentType(MediaType.MULTIPART_FORM_DATA);
-        MvcResult result = request.getMvc().perform(builder).andExpect(status().is(expectedStatus.value())).andReturn();
+        MvcResult result = request.performMvcRequest(builder).andExpect(status().is(expectedStatus.value())).andReturn();
         request.restoreSecurityContext();
         if (HttpStatus.valueOf(result.getResponse().getStatus()).is2xxSuccessful()) {
             assertThat(result.getResponse().getContentAsString()).isNotBlank();
@@ -249,7 +249,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         }
         builder.file(new MockMultipartFile("exercise", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsBytes(quizExercise)))
                 .contentType(MediaType.MULTIPART_FORM_DATA);
-        MvcResult result = request.getMvc().perform(builder).andExpect(status().is(expectedStatus.value())).andReturn();
+        MvcResult result = request.performMvcRequest(builder).andExpect(status().is(expectedStatus.value())).andReturn();
         request.restoreSecurityContext();
         if (HttpStatus.valueOf(result.getResponse().getStatus()).is2xxSuccessful()) {
             return objectMapper.readValue(result.getResponse().getContentAsString(), QuizExercise.class);
@@ -274,7 +274,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     }
 
     private void checkCreatedFile(String path) throws Exception {
-        MvcResult result = request.getMvc().perform(get(path)).andExpect(status().isOk()).andExpect(content().contentType(MediaType.APPLICATION_OCTET_STREAM)).andReturn();
+        MvcResult result = request.performMvcRequest(get(path)).andExpect(status().isOk()).andExpect(content().contentType(MediaType.APPLICATION_OCTET_STREAM)).andReturn();
         byte[] image = result.getResponse().getContentAsByteArray();
         assertThat(image).isNotEmpty();
     }
@@ -607,7 +607,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         checkQuizExercises(quizExercise, quizExerciseGet);
 
         assertThat(quizExerciseGet).as("Quiz exercise was retrieved").isEqualTo(quizExercise).isNotNull();
-        assertThat(quizExerciseGet.getId()).as("Quiz exercise with the right id was retrieved").isEqualTo(quizExerciseGet.getId());
+        assertThat(quizExerciseGet.getId()).as("Quiz exercise with the right id was retrieved").isEqualTo(quizExercise.getId());
         assertThat(quizExerciseGet.getQuizBatches()).isEmpty();
     }
 
@@ -625,9 +625,10 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         long exerciseId = quizExercise.getId();
 
         var searchTerm = pageableSearchUtilService.configureSearch(String.valueOf(exerciseId));
-        SearchResultPageDTO<?> searchResult = request.get("/api/quiz-exercises", HttpStatus.OK, SearchResultPageDTO.class, pageableSearchUtilService.searchMapping(searchTerm));
+        SearchResultPageDTO<QuizExercise> searchResult = request.getSearchResult("/api/quiz-exercises", HttpStatus.OK, QuizExercise.class,
+                pageableSearchUtilService.searchMapping(searchTerm));
 
-        assertThat(searchResult.getResultsOnPage()).filteredOn(result -> ((int) ((LinkedHashMap<String, ?>) result).get("id")) == exerciseId).hasSize(1);
+        assertThat(searchResult.getResultsOnPage()).filteredOn(quiz -> quiz.getId() == exerciseId).hasSize(1);
     }
 
     @Test
@@ -640,7 +641,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         quizExerciseUtilService.renameAndSaveQuiz(quizExercise, searchTerm);
         quizExerciseUtilService.renameAndSaveQuiz(examQuizExercise, searchTerm + "-Morpork");
 
-        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/quiz-exercises/", searchTerm);
+        exerciseIntegrationTestService.testCourseAndExamFilters("/api/quiz-exercises", searchTerm);
     }
 
     @Test
@@ -724,7 +725,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         participationUtilService.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
 
         assertThat(studentParticipationRepository.findByExerciseId(quizExercise.getId())).hasSize(numberOfParticipants);
-        assertThat(resultRepository.findAllByExerciseId(quizExercise.getId())).hasSize(numberOfParticipants);
+        assertThat(resultRepository.findAllByParticipationExerciseId(quizExercise.getId())).hasSize(numberOfParticipants);
         assertThat(quizSubmissionRepository.findByParticipation_Exercise_Id(quizExercise.getId())).hasSize(numberOfParticipants);
         assertThat(submittedAnswerRepository.findBySubmission(quizSubmission)).hasSize(3);
 
@@ -834,7 +835,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         participationUtilService.addResultToSubmission(quizSubmissionPractice, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmissionPractice), false);
 
         assertThat(studentParticipationRepository.countParticipationsByExerciseIdAndTestRun(quizExercise.getId(), false)).isEqualTo(10);
-        assertThat(resultRepository.findAllByExerciseId(quizExercise.getId())).hasSize(10);
+        assertThat(resultRepository.findAllByParticipationExerciseId(quizExercise.getId())).hasSize(10);
 
         // calculate statistics
         quizExercise = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/recalculate-statistics", HttpStatus.OK, QuizExercise.class);
@@ -1583,7 +1584,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         quizScheduleService.updateSubmission(quizExercise.getId(), TEST_PREFIX + "student1", quizSubmission);
 
-        exerciseService.filterForCourseDashboard(quizExercise, List.of(), TEST_PREFIX + "student1", true);
+        exerciseService.filterForCourseDashboard(quizExercise, Set.of(), TEST_PREFIX + "student1", true);
 
         assertThat(quizExercise.getStudentParticipations()).hasSize(1);
         assertThat(quizExercise.getStudentParticipations().stream().findFirst().get().getInitializationState()).isEqualTo(InitializationState.INITIALIZED);

@@ -38,7 +38,7 @@ describe('Example Submission Import Paging Service', () => {
         const searchResult = { resultsOnPage: [new TextSubmission()], numberOfPages: 4 };
         const pageable = { pageSize: 2, page: 3, sortingOrder: SortingOrder.DESCENDING, searchTerm: 'testSearchTerm', sortedColumn: 'testSortedColumn' };
         service
-            .searchForSubmissions(pageable, exercise.id!)
+            .search(pageable, { exerciseId: exercise.id! })
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toEqual(searchResult));
         const req = httpMock.expectOne({ method: 'GET' });

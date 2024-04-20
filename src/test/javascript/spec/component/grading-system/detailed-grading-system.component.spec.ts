@@ -21,13 +21,14 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { PresentationType } from 'app/grading-system/grading-system-presentations/grading-system-presentations.component';
+import { download, generateCsv, mkConfig } from 'export-to-csv';
 
-const generateCsv = jest.fn();
 jest.mock('export-to-csv', () => {
-    class MockExportToCsv {
-        generateCsv = generateCsv;
-    }
-    return { ExportToCsv: MockExportToCsv };
+    return {
+        mkConfig: jest.fn(),
+        download: jest.fn(() => jest.fn()),
+        generateCsv: jest.fn(() => jest.fn()),
+    };
 });
 
 describe('Detailed Grading System Component', () => {
@@ -672,7 +673,7 @@ describe('Detailed Grading System Component', () => {
         expect(comp.gradingScale.gradeSteps).toHaveLength(0);
     });
 
-    it('should have validation error for csv without header', async () => {
+    it('should have validation error for csv with duplicated header keys', async () => {
         // Csv without header
         const invalidCsv = `4.0,10,10,TRUE`;
 
@@ -800,7 +801,9 @@ describe('Detailed Grading System Component', () => {
 
     it('should export as csv', () => {
         comp.exportGradingStepsToCsv();
+        expect(mkConfig).toHaveBeenCalled();
         expect(generateCsv).toHaveBeenCalled();
+        expect(download).toHaveBeenCalled();
     });
 
     it('should not show grading steps above max points warning', () => {

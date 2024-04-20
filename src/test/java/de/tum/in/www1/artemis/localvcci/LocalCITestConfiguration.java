@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.localvcci;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
@@ -16,19 +17,12 @@ import org.springframework.context.annotation.Import;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.async.ResultCallback;
-import com.github.dockerjava.api.command.CopyArchiveToContainerCmd;
-import com.github.dockerjava.api.command.CreateContainerCmd;
-import com.github.dockerjava.api.command.CreateContainerResponse;
-import com.github.dockerjava.api.command.ExecCreateCmd;
-import com.github.dockerjava.api.command.ExecCreateCmdResponse;
-import com.github.dockerjava.api.command.ExecStartCmd;
-import com.github.dockerjava.api.command.InspectImageCmd;
-import com.github.dockerjava.api.command.InspectImageResponse;
-import com.github.dockerjava.api.command.ListContainersCmd;
-import com.github.dockerjava.api.command.StartContainerCmd;
+import com.github.dockerjava.api.command.*;
 import com.github.dockerjava.api.model.Container;
+import com.github.dockerjava.api.model.Image;
 
 import de.tum.in.www1.artemis.config.localvcci.LocalCIConfiguration;
+import de.tum.in.www1.artemis.util.FixMissingServletPathProcessor;
 
 /**
  * This class is used to overwrite the configuration of the local CI system ({@link LocalCIConfiguration}).
@@ -44,7 +38,7 @@ public class LocalCITestConfiguration {
      * @return a mocked DockerClient Bean
      */
     @Bean
-    public DockerClient dockerClient() {
+    public DockerClient dockerClient() throws InterruptedException {
         DockerClient dockerClient = mock(DockerClient.class);
 
         // Mock dockerClient.inspectImageCmd(String dockerImage).exec()
@@ -52,6 +46,13 @@ public class LocalCITestConfiguration {
         InspectImageResponse inspectImageResponse = new InspectImageResponse();
         doReturn(inspectImageCmd).when(dockerClient).inspectImageCmd(anyString());
         doReturn(inspectImageResponse).when(inspectImageCmd).exec();
+
+        // Mock PullImageCmd
+        PullImageCmd pullImageCmd = mock(PullImageCmd.class);
+        doReturn(pullImageCmd).when(dockerClient).pullImageCmd(anyString());
+        PullImageResultCallback callback1 = mock(PullImageResultCallback.class);
+        doReturn(callback1).when(pullImageCmd).exec(any(PullImageResultCallback.class));
+        doReturn(null).when(callback1).awaitCompletion();
 
         String dummyContainerId = "1234567890";
 
@@ -62,7 +63,7 @@ public class LocalCITestConfiguration {
         doReturn(createContainerCmd).when(dockerClient).createContainerCmd(anyString());
         doReturn(createContainerCmd).when(createContainerCmd).withName(anyString());
         doReturn(createContainerCmd).when(createContainerCmd).withHostConfig(any());
-        doReturn(createContainerCmd).when(createContainerCmd).withEnv(anyString(), anyString(), anyString());
+        doReturn(createContainerCmd).when(createContainerCmd).withEnv(anyList());
         doReturn(createContainerCmd).when(createContainerCmd).withUser(anyString());
         doReturn(createContainerCmd).when(createContainerCmd).withCmd(anyString(), anyString(), anyString());
         doReturn(createContainerResponse).when(createContainerCmd).exec();
@@ -102,14 +103,40 @@ public class LocalCITestConfiguration {
             return null;
         }).when(execStartCmd).exec(any());
 
-        // Mock stopContainer() method.
+        // Mock listContainerCmd() method.
         ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
         doReturn(listContainersCmd).when(dockerClient).listContainersCmd();
         doReturn(listContainersCmd).when(listContainersCmd).withShowAll(anyBoolean());
+
+        // Mock container class
         Container container = mock(Container.class);
         doReturn(new String[] { "dummy-container-name" }).when(container).getNames();
+        doReturn("dummy-image-id").when(container).getImageId();
         doReturn(List.of(container)).when(listContainersCmd).exec();
 
+        // Mock listImagesCmd() method.
+        ListImagesCmd listImagesCmd = mock(ListImagesCmd.class);
+        doReturn(listImagesCmd).when(dockerClient).listImagesCmd();
+        Image image = mock(Image.class);
+        doReturn("test-image-id").when(image).getId();
+        doReturn(new String[] { "test-image-name" }).when(image).getRepoTags();
+        doReturn(List.of(image)).when(listImagesCmd).exec();
+
+        // Mock removeContainer() method.
+        RemoveImageCmd removeImageCmd = mock(RemoveImageCmd.class);
+        doReturn(removeImageCmd).when(dockerClient).removeImageCmd(anyString());
+        doNothing().when(removeImageCmd).exec();
+
+        // Mock removeContainerCmd
+        RemoveContainerCmd removeContainerCmd = mock(RemoveContainerCmd.class);
+        doReturn(removeContainerCmd).when(dockerClient).removeContainerCmd(anyString());
+        doReturn(removeContainerCmd).when(removeContainerCmd).withForce(true);
+
         return dockerClient;
+    }
+
+    @Bean
+    public FixMissingServletPathProcessor fixMissingServletPathProcessor() {
+        return new FixMissingServletPathProcessor();
     }
 }

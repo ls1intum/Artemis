@@ -1,6 +1,7 @@
 import { DEFAULT_PLAGIARISM_DETECTION_CONFIG, Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { Subject } from 'rxjs';
 
 describe('Exercise Update Plagiarism Component', () => {
     let comp: ExerciseUpdatePlagiarismComponent;
@@ -77,5 +78,41 @@ describe('Exercise Update Plagiarism Component', () => {
     it('should get correct minimumSizeTooltip for modeling exercises', () => {
         comp.exercise = { type: ExerciseType.MODELING } as Exercise;
         expect(comp.getMinimumSizeTooltip()).toBe('artemisApp.plagiarism.minimumSizeTooltipModelingExercise');
+    });
+
+    it('should aggregate aggregate input changes', () => {
+        const inputFieldNames = ['fieldCPCEnabled', 'fieldThreshhold', 'fieldResponsePeriod', 'fieldMinScore', 'fieldMinSize'];
+        const calculateValidSpy = jest.spyOn(comp, 'calculateFormValid');
+        const formValidChangesSpy = jest.spyOn(comp.formValidChanges, 'next');
+        comp.exercise = comp.exercise = {
+            plagiarismDetectionConfig: { continuousPlagiarismControlEnabled: false, continuousPlagiarismControlPostDueDateChecksEnabled: true },
+        } as Exercise;
+
+        // initialize
+        for (const fieldName of inputFieldNames) {
+            comp[fieldName] = { valueChanges: new Subject(), valid: false };
+        }
+        comp.ngAfterViewInit();
+        for (const fieldName of inputFieldNames) {
+            expect((comp[fieldName].valueChanges! as Subject<boolean>).observed).toBeTrue();
+        }
+
+        (comp.fieldCPCEnabled!.valueChanges! as Subject<boolean>).next(false);
+        expect(calculateValidSpy).toHaveBeenCalledOnce();
+        expect(comp.formValid).toBeTrue();
+
+        // @ts-ignore
+        comp.fieldCPCEnabled!.valid = true;
+        comp.exercise.plagiarismDetectionConfig!.continuousPlagiarismControlEnabled = true;
+        (comp.fieldCPCEnabled!.valueChanges! as Subject<boolean>).next(true);
+
+        expect(calculateValidSpy).toHaveBeenCalledTimes(2);
+        expect(comp.formValid).toBeFalse();
+        expect(formValidChangesSpy).toHaveBeenCalledWith(false);
+
+        comp.ngOnDestroy();
+        for (const fieldName of inputFieldNames) {
+            expect((comp[fieldName].valueChanges! as Subject<boolean>).observed).toBeFalse();
+        }
     });
 });

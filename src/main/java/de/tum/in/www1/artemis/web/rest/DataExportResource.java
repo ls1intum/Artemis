@@ -1,17 +1,27 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.io.*;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
+import java.io.File;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
-import org.springframework.http.*;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.DataExport;
 import de.tum.in.www1.artemis.domain.enumeration.DataExportState;
@@ -28,6 +38,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  * REST controller for data exports.
  * It contains the REST endpoints for requesting, downloading data exports and checking if a data export can be requested or downloaded.
  */
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 public class DataExportResource {
@@ -51,15 +62,15 @@ public class DataExportResource {
     /**
      * POST /data-exports: Request a data export for the currently logged-in user.
      *
-     * @return a DTO containing the id of the data export that was created, its state and when it was requested
+     * @return the ResponseEntity with status 200 (OK) and with body the DTO containing the id of the data export that was created, its state and when it was requested
      */
     @PostMapping("data-exports")
     @EnforceAtLeastStudent
-    public RequestDataExportDTO requestDataExport() {
+    public ResponseEntity<RequestDataExportDTO> requestDataExport() {
         if (!canRequestDataExport()) {
             throw new AccessForbiddenException("You can only request a data export every " + DAYS_BETWEEN_DATA_EXPORTS + " days");
         }
-        return dataExportService.requestDataExport();
+        return ResponseEntity.ok(dataExportService.requestDataExport());
     }
 
     /**
@@ -76,7 +87,7 @@ public class DataExportResource {
             return true;
         }
         // because we order by request date desc, the first data export is the latest one
-        var latestDataExport = dataExports.get(0);
+        var latestDataExport = dataExports.getFirst();
         var olderThanDaysBetweenDataExports = Duration.between(latestDataExport.getCreatedDate().atZone(ZoneId.systemDefault()), ZonedDateTime.now())
                 .toDays() >= DAYS_BETWEEN_DATA_EXPORTS;
 
@@ -92,7 +103,7 @@ public class DataExportResource {
      * The content disposition header is set to attachment so that the browser will download the file instead of displaying it.
      *
      * @param dataExportId the id of the data export to download
-     * @return A resource containing the data export zip file
+     * @return the ResponseEntity with status 200 (OK) and with body the resource containing the data export zip file
      */
     @GetMapping("data-exports/{dataExportId}")
     @EnforceAtLeastStudent
@@ -139,35 +150,36 @@ public class DataExportResource {
     /**
      * GET /data-exports/can-request: Check if the logged-in user can request a data export.
      *
-     * @return true if the user can request a data export, false otherwise
+     * @return the ResponseEntity with status 200 (OK) and with body true if the user can request a data export, false otherwise
      */
     @GetMapping("data-exports/can-request")
     @EnforceAtLeastStudent
-    public boolean canRequestExport() {
-        return canRequestDataExport();
+    public ResponseEntity<Boolean> canRequestExport() {
+        return ResponseEntity.ok(canRequestDataExport());
     }
 
     /**
      * GET /data-exports/can-download: Check if the logged-in user can download any data export.
      *
-     * @return a data export DTO with the id of the export that can be downloaded or a DTO with an id of null if no export can be downloaded
+     * @return the ResponseEntity with status 200 (OK) and with body the data export DTO with the id of the export that can be downloaded or a DTO with an id of null if no export
+     *         can be downloaded
      */
     @GetMapping("data-exports/can-download")
     @EnforceAtLeastStudent
-    public DataExportDTO canDownloadAnyExport() {
-        return dataExportService.canDownloadAnyDataExport();
+    public ResponseEntity<DataExportDTO> canDownloadAnyExport() {
+        return ResponseEntity.ok(dataExportService.canDownloadAnyDataExport());
     }
 
     /**
      * GET /data-exports/{dataExportId}/can-download: Check if the logged-in user can download the data export with the given id.
      *
      * @param dataExportId the id of the data export that should be checked
-     * @return true if the user can download the data export, false otherwise
+     * @return the ResponseEntity with status 200 (OK) and with body true if the user can download the data export, false otherwise
      */
     @GetMapping("data-exports/{dataExportId}/can-download")
     @EnforceAtLeastStudent
-    public boolean canDownloadSpecificExport(@PathVariable long dataExportId) {
-        return canDownloadSpecificDataExport(dataExportId);
+    public ResponseEntity<Boolean> canDownloadSpecificExport(@PathVariable long dataExportId) {
+        return ResponseEntity.ok(canDownloadSpecificDataExport(dataExportId));
     }
 
     /**

@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
 
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
@@ -29,7 +28,7 @@ import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.BuildLogEntryRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingSubmissionTestRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
@@ -53,7 +52,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
     private BuildLogEntryRepository buildLogEntryRepository;
 
     @Autowired
-    private ProgrammingSubmissionRepository programmingSubmissionRepository;
+    private ProgrammingSubmissionTestRepository programmingSubmissionRepository;
 
     @Autowired
     private UserUtilService userUtilService;
@@ -102,7 +101,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateParticipationForExternalSubmission() throws Exception {
         Optional<User> student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student1");
-        participationUtilService.mockCreationOfExerciseParticipation(false, null, programmingExercise, urlService, versionControlService, continuousIntegrationService);
+        participationUtilService.mockCreationOfExerciseParticipation(false, null, programmingExercise, uriService, versionControlService, continuousIntegrationService);
 
         StudentParticipation participation = participationService.createParticipationWithEmptySubmissionIfNotExisting(programmingExercise, student.orElseThrow(),
                 SubmissionType.EXTERNAL);
@@ -135,7 +134,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void canStartExerciseWithPracticeParticipationAfterDueDateChange() throws URISyntaxException {
         Participant participant = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        participationUtilService.mockCreationOfExerciseParticipation(false, null, programmingExercise, urlService, versionControlService, continuousIntegrationService);
+        participationUtilService.mockCreationOfExerciseParticipation(false, null, programmingExercise, uriService, versionControlService, continuousIntegrationService);
 
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
         exerciseUtilService.updateExerciseDueDate(programmingExercise.getId(), ZonedDateTime.now().minusHours(1));
@@ -177,7 +176,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
         Participant participant = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         Result gradedResult = participationUtilService.addProgrammingParticipationWithResultForExercise(programmingExercise, TEST_PREFIX + "student1");
 
-        participationUtilService.mockCreationOfExerciseParticipation(useGradedParticipation, gradedResult, programmingExercise, urlService, versionControlService,
+        participationUtilService.mockCreationOfExerciseParticipation(useGradedParticipation, gradedResult, programmingExercise, uriService, versionControlService,
                 continuousIntegrationService);
 
         StudentParticipation studentParticipationReceived = participationService.startPracticeMode(programmingExercise, participant,

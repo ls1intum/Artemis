@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.notifications;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
 import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.*;
 import static de.tum.in.www1.artemis.domain.notification.SingleUserNotificationFactory.createNotification;
@@ -8,7 +9,9 @@ import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsC
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -33,6 +36,7 @@ import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 
+@Profile(PROFILE_CORE)
 @Service
 public class SingleUserNotificationService {
 
@@ -77,12 +81,17 @@ public class SingleUserNotificationService {
      * @param typeSpecificInformation is based on the current use case (e.g. POST -> course, Exercise -> user)
      */
     private void notifyRecipientWithNotificationType(Object notificationSubject, NotificationType notificationType, Object typeSpecificInformation, User author) {
-        var singleUserNotification = switch (notificationType) {
+        var singleUserNotification = createSingleUserNotification(notificationSubject, notificationType, (User) typeSpecificInformation, author);
+        saveAndSend(singleUserNotification, notificationSubject, author, false);
+    }
+
+    private SingleUserNotification createSingleUserNotification(Object notificationSubject, NotificationType notificationType, User typeSpecificInformation, User author) {
+        return switch (notificationType) {
             // Exercise related
-            case EXERCISE_SUBMISSION_ASSESSED, FILE_SUBMISSION_SUCCESSFUL -> createNotification((Exercise) notificationSubject, notificationType, (User) typeSpecificInformation);
+            case EXERCISE_SUBMISSION_ASSESSED, FILE_SUBMISSION_SUCCESSFUL -> createNotification((Exercise) notificationSubject, notificationType, typeSpecificInformation);
             // Plagiarism related
             case NEW_PLAGIARISM_CASE_STUDENT, NEW_CPC_PLAGIARISM_CASE_STUDENT, PLAGIARISM_CASE_VERDICT_STUDENT ->
-                createNotification((PlagiarismCase) notificationSubject, notificationType, (User) typeSpecificInformation, author);
+                createNotification((PlagiarismCase) notificationSubject, notificationType, typeSpecificInformation, author);
             // Tutorial Group related
             case TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_DEREGISTRATION_STUDENT, TUTORIAL_GROUP_REGISTRATION_TUTOR, TUTORIAL_GROUP_DEREGISTRATION_TUTOR,
                     TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR, TUTORIAL_GROUP_ASSIGNED, TUTORIAL_GROUP_UNASSIGNED ->
@@ -98,10 +107,9 @@ public class SingleUserNotificationService {
                     CONVERSATION_USER_MENTIONED ->
                 createNotification(((NewReplyNotificationSubject) notificationSubject).answerPost, notificationType, ((NewReplyNotificationSubject) notificationSubject).user,
                         ((NewReplyNotificationSubject) notificationSubject).responsibleUser);
-            case DATA_EXPORT_CREATED, DATA_EXPORT_FAILED -> createNotification((DataExport) notificationSubject, notificationType, (User) typeSpecificInformation);
+            case DATA_EXPORT_CREATED, DATA_EXPORT_FAILED -> createNotification((DataExport) notificationSubject, notificationType, typeSpecificInformation);
             default -> throw new UnsupportedOperationException("Can not create notification for type : " + notificationType);
         };
-        saveAndSend(singleUserNotification, notificationSubject, author);
     }
 
     /**
@@ -110,6 +118,7 @@ public class SingleUserNotificationService {
      *
      * @param exercise which assessmentDueDate is the trigger for the notification process
      */
+    // TODO: Should by a general method and not be in the single user service
     public void notifyUsersAboutAssessedExerciseSubmission(Exercise exercise) {
         // This process can not be replaces via a GroupNotification (can only notify ALL students of the course)
         // because we want to notify only the students that have a valid assessed submission.
@@ -122,7 +131,13 @@ public class SingleUserNotificationService {
         exercise.setStudentParticipations(filteredStudentParticipations);
 
         // Extract all users that should be notified from the previously loaded student participations
-        Set<User> relevantStudents = filteredStudentParticipations.stream().map(participation -> participation.getStudent().orElseThrow()).collect(Collectors.toSet());
+        Set<User> relevantStudents = filteredStudentParticipations.stream().flatMap(participation -> {
+            if (participation.getParticipant() instanceof Team team) {
+                return team.getStudents().stream();
+            }
+
+            return Stream.of(participation.getStudent().orElseThrow());
+        }).collect(Collectors.toSet());
 
         // notify all relevant users
         relevantStudents.forEach(student -> notifyUserAboutAssessedExerciseSubmission(exercise, student));
@@ -347,24 +362,43 @@ public class SingleUserNotificationService {
      * Notify a user about new message reply in a conversation.
      *
      * @param answerPost       the answerPost of the user involved
+     * @param notification     the notification template to be used
      * @param user             the user that is involved in the message reply
      * @param responsibleUser  the responsibleUser sending the message reply
      * @param notificationType the type for the conversation
      */
-    public void notifyUserAboutNewMessageReply(AnswerPost answerPost, User user, User responsibleUser, NotificationType notificationType) {
-        notifyRecipientWithNotificationType(new NewReplyNotificationSubject(answerPost, user, responsibleUser), notificationType, null, responsibleUser);
+    public void notifyUserAboutNewMessageReply(AnswerPost answerPost, SingleUserNotification notification, User user, User responsibleUser, NotificationType notificationType) {
+        notification.setRecipient(user);
+        notification.setTitle(findCorrespondingNotificationTitleOrThrow(notificationType));
+        notification.setAuthor(responsibleUser);
+        saveAndSend(notification, new NewReplyNotificationSubject(answerPost, user, responsibleUser), responsibleUser, true);
+    }
+
+    /**
+     * Create a notification for a message reply
+     *
+     * @param answerMessage the answerMessage of the user involved
+     * @param author        the author of the message reply
+     * @param conversation  conversation the message of the reply belongs to
+     * @return notification
+     */
+    public SingleUserNotification createNotificationAboutNewMessageReply(AnswerPost answerMessage, User author, Conversation conversation) {
+        User authorWithHiddenData = new User(author.getId(), null, author.getFirstName(), author.getLastName(), null, null);
+        return createSingleUserNotification(new NewReplyNotificationSubject(answerMessage, authorWithHiddenData, authorWithHiddenData),
+                getAnswerMessageNotificationType(conversation), null, author);
     }
 
     /**
      * Notifies involved users about the new answer message, i.e. the author of the original message, users that have also replied, and mentioned users
      *
      * @param post               the message the answer belongs to
+     * @param notification       the notification template to be used
      * @param mentionedUsers     users mentioned in the answer message
      * @param savedAnswerMessage the answer message
      * @param author             the author of the answer message
      */
     @Async
-    public void notifyInvolvedUsersAboutNewMessageReply(Post post, Set<User> mentionedUsers, AnswerPost savedAnswerMessage, User author) {
+    public void notifyInvolvedUsersAboutNewMessageReply(Post post, SingleUserNotification notification, Set<User> mentionedUsers, AnswerPost savedAnswerMessage, User author) {
         SecurityUtils.setAuthorizationObject(); // required for async
         Set<User> usersInvolved = conversationMessageRepository.findUsersWhoRepliedInMessage(post.getId());
         // do not notify the author of the post if they are not part of the conversation (e.g. if they left or have been removed from the conversation)
@@ -375,17 +409,18 @@ public class SingleUserNotificationService {
         mentionedUsers.stream().filter(user -> {
             boolean isChannelAndCourseWide = post.getConversation() instanceof Channel channel && channel.getIsCourseWide();
             boolean isChannelVisibleToStudents = !(post.getConversation() instanceof Channel channel) || conversationService.isChannelVisibleToStudents(channel);
-            boolean isChannelVisibleToMentionedUser = isChannelVisibleToStudents || authorizationCheckService.isAtLeastTeachingAssistantInCourse(post.getCourse(), user);
+            boolean isChannelVisibleToMentionedUser = isChannelVisibleToStudents
+                    || authorizationCheckService.isAtLeastTeachingAssistantInCourse(post.getConversation().getCourse(), user);
 
             // Only send a notification to the mentioned user if...
             // (for course-wide channels) ...the course-wide channel is visible
             // (for all other cases) ...the user is a member of the conversation
             return (isChannelAndCourseWide && isChannelVisibleToMentionedUser) || conversationService.isMember(post.getConversation().getId(), user.getId());
-        }).forEach(mentionedUser -> notifyUserAboutNewMessageReply(savedAnswerMessage, mentionedUser, author, CONVERSATION_USER_MENTIONED));
+        }).forEach(mentionedUser -> notifyUserAboutNewMessageReply(savedAnswerMessage, notification, mentionedUser, author, CONVERSATION_USER_MENTIONED));
 
         Conversation conv = conversationService.getConversationById(post.getConversation().getId());
         usersInvolved.stream().filter(userInvolved -> !mentionedUsers.contains(userInvolved))
-                .forEach(userInvolved -> notifyUserAboutNewMessageReply(savedAnswerMessage, userInvolved, author, getAnswerMessageNotificationType(conv)));
+                .forEach(userInvolved -> notifyUserAboutNewMessageReply(savedAnswerMessage, notification, userInvolved, author, getAnswerMessageNotificationType(conv)));
     }
 
     /**
@@ -394,15 +429,16 @@ public class SingleUserNotificationService {
      *
      * @param notification        that should be saved and sent
      * @param notificationSubject which information will be extracted to create the email
+     * @param skipWebSocket       whether to skipWebSocket notifications
      */
-    private void saveAndSend(SingleUserNotification notification, Object notificationSubject, User author) {
+    private void saveAndSend(SingleUserNotification notification, Object notificationSubject, User author, boolean skipWebSocket) {
         // do not save notifications that are not relevant for the user
         if (shouldNotificationBeSaved(notification)) {
             singleUserNotificationRepository.save(notification);
         }
         // we only want to notify one individual user therefore we can check the settings and filter preemptively
-        boolean isWebappNotificationAllowed = notificationSettingsService.checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(notification,
-                notification.getRecipient(), WEBAPP);
+        boolean isWebappNotificationAllowed = !skipWebSocket
+                && notificationSettingsService.checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(notification, notification.getRecipient(), WEBAPP);
         if (isWebappNotificationAllowed) {
             websocketMessagingService.sendMessage(notification.getTopic(), notification);
         }

@@ -1,11 +1,14 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpHeaders;
@@ -15,19 +18,16 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
-import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiService;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.dto.UserInitializationDTO;
 import de.tum.in.www1.artemis.service.user.UserCreationService;
 import de.tum.in.www1.artemis.service.user.UserService;
 import tech.jhipster.web.util.PaginationUtil;
-import tech.jhipster.web.util.ResponseUtil;
 
 /**
  * REST controller for managing users.
@@ -49,11 +49,12 @@ import tech.jhipster.web.util.ResponseUtil;
  * <p>
  * Another option would be to have a specific JPA entity graph to handle this case.
  */
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 public class UserResource {
 
-    private final Logger log = LoggerFactory.getLogger(UserResource.class);
+    private static final Logger log = LoggerFactory.getLogger(UserResource.class);
 
     private final UserService userService;
 
@@ -97,22 +98,6 @@ public class UserResource {
         });
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
-    }
-
-    /**
-     * GET users/:login : get the "login" user.
-     *
-     * @param login the login of the user to find
-     * @return the ResponseEntity with status 200 (OK) and with body the "login" user, or with status 404 (Not Found)
-     */
-    @GetMapping("users/{login:" + Constants.LOGIN_REGEX + "}")
-    @EnforceAtLeastTutor
-    public ResponseEntity<UserDTO> getUser(@PathVariable String login) {
-        log.debug("REST request to get User : {}", login);
-        return ResponseUtil.wrapOrNotFound(userRepository.findOneWithGroupsAndAuthoritiesByLogin(login).map(user -> {
-            user.setVisibleRegistrationNumber();
-            return new UserDTO(user);
-        }));
     }
 
     @PutMapping("users/notification-date")

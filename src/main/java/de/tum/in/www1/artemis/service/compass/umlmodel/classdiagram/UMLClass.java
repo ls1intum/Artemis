@@ -2,8 +2,9 @@ package de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Objects;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 
 import com.google.common.base.CaseFormat;
 
@@ -33,7 +34,7 @@ public class UMLClass extends UMLElement implements Serializable {
      * empty constructor used to make mockito happy
      */
     public UMLClass() {
-        super();
+        // default empty constructor
     }
 
     public UMLClass(String name, List<UMLAttribute> attributes, List<UMLMethod> methods, String jsonElementID, UMLClassType classType) {
@@ -234,6 +235,11 @@ public class UMLClass extends UMLElement implements Serializable {
      */
     public int getElementCount() {
         return getAttributes().size() + getMethods().size() + 1;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), name, classType, umlPackage, attributes, methods);
     }
 
     @Override

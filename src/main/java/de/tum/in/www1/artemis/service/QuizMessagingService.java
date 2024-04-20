@@ -1,9 +1,12 @@
 package de.tum.in.www1.artemis.service;
 
-import javax.annotation.Nullable;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
+import jakarta.annotation.Nullable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Service;
@@ -15,10 +18,11 @@ import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 
+@Profile(PROFILE_CORE)
 @Service
 public class QuizMessagingService {
 
-    private final Logger log = LoggerFactory.getLogger(QuizMessagingService.class);
+    private static final Logger log = LoggerFactory.getLogger(QuizMessagingService.class);
 
     private final ObjectMapper objectMapper;
 

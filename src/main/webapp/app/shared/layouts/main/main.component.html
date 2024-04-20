@@ -1,19 +1,25 @@
-<jhi-alert-overlay></jhi-alert-overlay>
-<div class="page-wrapper">
-    <jhi-page-ribbon></jhi-page-ribbon>
-    <div *ngIf="showSkeleton">
-        <router-outlet name="navbar"></router-outlet>
-    </div>
-    <div *ngIf="showSkeleton" class="card" style="border-style: none">
-        <div class="card-body">
-            <router-outlet></router-outlet>
+<jhi-alert-overlay />
+<div id="page-wrapper" class="page-wrapper" [ngClass]="{ 'footer-height-dev': !isProduction || isTestServer }" cdkScrollable>
+    <jhi-page-ribbon />
+    @if (showSkeleton) {
+        <div class="sticky-top">
+            <router-outlet name="navbar" />
         </div>
-    </div>
-
-    <router-outlet *ngIf="!showSkeleton"></router-outlet>
-
-    <jhi-notification-popup></jhi-notification-popup>
-    <div *ngIf="showSkeleton">
-        <jhi-footer></jhi-footer>
-    </div>
+    }
+    @if (showSkeleton) {
+        <div class="card" style="border-style: none">
+            <div class="card-body">
+                <router-outlet />
+            </div>
+        </div>
+    }
+    @if (!showSkeleton) {
+        <router-outlet />
+    }
+    <jhi-notification-popup />
+    @if (showSkeleton) {
+        <div>
+            <jhi-footer [ngClass]="{ 'footer-height-dev': !isProduction || isTestServer }" />
+        </div>
+    }
 </div>

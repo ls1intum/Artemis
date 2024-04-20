@@ -1,15 +1,15 @@
 package de.tum.in.www1.artemis.web.rest.lecture;
 
-import java.net.MalformedURLException;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 
-import javax.ws.rs.BadRequestException;
+import jakarta.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,17 +20,16 @@ import de.tum.in.www1.artemis.repository.VideoUnitRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.CompetencyProgressService;
-import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
+import de.tum.in.www1.artemis.service.LectureUnitService;
+import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
+@Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class VideoUnitResource {
 
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
-
-    private final Logger log = LoggerFactory.getLogger(VideoUnitResource.class);
+    private static final Logger log = LoggerFactory.getLogger(VideoUnitResource.class);
 
     private static final String ENTITY_NAME = "videoUnit";
 
@@ -42,12 +41,15 @@ public class VideoUnitResource {
 
     private final CompetencyProgressService competencyProgressService;
 
+    private final LectureUnitService lectureUnitService;
+
     public VideoUnitResource(LectureRepository lectureRepository, AuthorizationCheckService authorizationCheckService, VideoUnitRepository videoUnitRepository,
-            CompetencyProgressService competencyProgressService) {
+            CompetencyProgressService competencyProgressService, LectureUnitService lectureUnitService) {
         this.lectureRepository = lectureRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.videoUnitRepository = videoUnitRepository;
         this.competencyProgressService = competencyProgressService;
+        this.lectureUnitService = lectureUnitService;
     }
 
     /**
@@ -74,7 +76,7 @@ public class VideoUnitResource {
      * @param videoUnit the video unit to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated videoUnit
      */
-    @PutMapping("/lectures/{lectureId}/video-units")
+    @PutMapping("lectures/{lectureId}/video-units")
     @EnforceAtLeastEditor
     public ResponseEntity<VideoUnit> updateVideoUnit(@PathVariable Long lectureId, @RequestBody VideoUnit videoUnit) {
         log.debug("REST request to update an video unit : {}", videoUnit);
@@ -84,7 +86,7 @@ public class VideoUnitResource {
 
         checkVideoUnitCourseAndLecture(videoUnit, lectureId);
         normalizeVideoUrl(videoUnit);
-        validateVideoUrl(videoUnit);
+        lectureUnitService.validateUrlStringAndReturnUrl(videoUnit.getSource());
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, videoUnit.getLecture().getCourse(), null);
 
         VideoUnit result = videoUnitRepository.save(videoUnit);
@@ -102,7 +104,7 @@ public class VideoUnitResource {
      * @return the ResponseEntity with status 201 (Created) and with body the new video unit
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("/lectures/{lectureId}/video-units")
+    @PostMapping("lectures/{lectureId}/video-units")
     @EnforceAtLeastEditor
     public ResponseEntity<VideoUnit> createVideoUnit(@PathVariable Long lectureId, @RequestBody VideoUnit videoUnit) throws URISyntaxException {
         log.debug("REST request to create VideoUnit : {}", videoUnit);
@@ -111,11 +113,11 @@ public class VideoUnitResource {
         }
 
         normalizeVideoUrl(videoUnit);
-        validateVideoUrl(videoUnit);
+        lectureUnitService.validateUrlStringAndReturnUrl(videoUnit.getSource());
 
-        Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId);
         if (lecture.getCourse() == null) {
-            throw new ConflictException("Specified lecture is not part of a course", "VideoUnit", "courseMissing");
+            throw new BadRequestAlertException("Specified lecture is not part of a course", ENTITY_NAME, "courseMissing");
         }
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
 
@@ -125,7 +127,7 @@ public class VideoUnitResource {
         videoUnit.setLecture(lecture);
         lecture.addLectureUnit(videoUnit);
         Lecture updatedLecture = lectureRepository.save(lecture);
-        VideoUnit persistedVideoUnit = (VideoUnit) updatedLecture.getLectureUnits().get(updatedLecture.getLectureUnits().size() - 1);
+        VideoUnit persistedVideoUnit = (VideoUnit) updatedLecture.getLectureUnits().getLast();
 
         competencyProgressService.updateProgressByLearningObjectAsync(persistedVideoUnit);
 
@@ -140,10 +142,10 @@ public class VideoUnitResource {
      */
     private void checkVideoUnitCourseAndLecture(VideoUnit videoUnit, Long lectureId) {
         if (videoUnit.getLecture() == null || videoUnit.getLecture().getCourse() == null) {
-            throw new ConflictException("Lecture unit must be associated to a lecture of a course", "VideoUnit", "lectureOrCourseMissing");
+            throw new BadRequestAlertException("Lecture unit must be associated to a lecture of a course", ENTITY_NAME, "lectureOrCourseMissing");
         }
         if (!videoUnit.getLecture().getId().equals(lectureId)) {
-            throw new ConflictException("Requested lecture unit is not part of the specified lecture", "VideoUnit", "lectureIdMismatch");
+            throw new BadRequestAlertException("Requested lecture unit is not part of the specified lecture", ENTITY_NAME, "lectureIdMismatch");
         }
     }
 
@@ -158,19 +160,4 @@ public class VideoUnitResource {
             videoUnit.setSource(videoUnit.getSource().strip());
         }
     }
-
-    /**
-     * Validates the provided video Url.
-     *
-     * @param videoUnit provided video unit
-     */
-    private void validateVideoUrl(VideoUnit videoUnit) {
-        try {
-            new URL(videoUnit.getSource());
-        }
-        catch (MalformedURLException exception) {
-            throw new BadRequestException();
-        }
-    }
-
 }

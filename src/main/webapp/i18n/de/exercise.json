@@ -5,6 +5,13 @@
                 "title": "Übungen",
                 "createLabel": "Übung erstellen"
             },
+            "sections": {
+                "general": "Allgemein",
+                "mode": "Modus",
+                "grading": "Bewertung",
+                "problem": "Aufgabe",
+                "solution": "Lösung"
+            },
             "details": "Aufgabendetails",
             "addCriterion": "Bewertungskriterium hinzufügen",
             "resultsPerPage": "{{number}} Ergebnisse pro Seite",
@@ -189,7 +196,7 @@
             "isQuiz": "Das ist eine Quizaufgabe",
             "isText": "Das ist eine Textaufgabe",
             "isFileUpload": "Das ist eine Datei-Upload-Aufgabe",
-            "notificationText": "Optional: Mitteilung über die Änderung",
+            "notificationText": "Was wurde geändert?",
             "submissionSuccessful": "Die Einreichung war erfolgreich",
             "submissionUnsuccessful": "Die Einreichung war nicht erfolgreich",
             "lateSubmissionResultReceived": "Artemis hat ein unbewertetes Ergebnis für eine verspätete Einreichung erhalten. Bitte scrolle nach unten zur Ergebnishistorie, um deine Punktzahl zu sehen.",
@@ -233,6 +240,14 @@
                     "undefined": "Die Bonuspunkte wurden nicht ausgefüllt!",
                     "customMin": "Die Bonuspunkte müssen mindestens 0 betragen!",
                     "customMax": "Die Bonuspunkte dürfen höchstens 9999 betragen!"
+                },
+                "minTeamSize": {
+                    "min": "Die minimale Teamgröße darf nicht weniger als eine Person betragen.",
+                    "max": "Die minimale Teamgröße darf nicht mehr als 99 Personen betragen."
+                },
+                "maxTeamSize": {
+                    "min": "Die maximale Teamgröße darf nicht weniger als eine Person betragen.",
+                    "max": "Die maximale Teamgröße darf nicht mehr als 99 Personen betragen."
                 },
                 "maxPenalty": {
                     "pattern": "Der maximale prozentuale Punktabzug muss zwischen 0 und 100 liegen!"

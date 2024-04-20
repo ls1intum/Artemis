@@ -29,7 +29,7 @@ import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.FileUtils;
+import de.tum.in.www1.artemis.util.TestResourceUtils;
 
 /**
  * Service responsible for initializing the database with specific testdata related to modeling exercises for use in integration tests.
@@ -328,7 +328,7 @@ public class ModelingExerciseUtilService {
      * @throws Exception If the file can't be read
      */
     public ModelingSubmission addModelingSubmissionFromResources(ModelingExercise exercise, String path, String login) throws IOException {
-        String model = FileUtils.loadFileFromResources(path);
+        String model = TestResourceUtils.loadFileFromResources(path);
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(model, true);
         submission = addModelingSubmission(exercise, submission, login);
         checkModelingSubmissionCorrectlyStored(submission.getId(), model);
@@ -372,14 +372,11 @@ public class ModelingExerciseUtilService {
      */
     public Result addModelingAssessmentForSubmission(ModelingExercise exercise, ModelingSubmission submission, String path, String login, boolean submit) throws Exception {
         List<Feedback> feedbackList = participationUtilService.loadAssessmentFomResources(path);
-        Result result = assessmentService.saveManualAssessment(submission, feedbackList, null);
+        Result result = assessmentService.saveAndSubmitManualAssessment(exercise, submission, feedbackList, null, submit);
         result.setParticipation(submission.getParticipation().results(null));
         result.setAssessor(userUtilService.getUserByLogin(login));
         resultRepo.save(result);
-        if (submit) {
-            assessmentService.submitManualAssessment(result.getId(), exercise);
-        }
-        return resultRepo.findWithEagerSubmissionAndFeedbackAndAssessorByIdElseThrow(result.getId());
+        return resultRepo.findWithBidirectionalSubmissionAndFeedbackAndAssessorAndTeamStudentsByIdElseThrow(result.getId());
     }
 
     /**
@@ -398,14 +395,11 @@ public class ModelingExerciseUtilService {
         feedbacks.add(feedback1);
         feedbacks.add(feedback2);
 
-        Result result = assessmentService.saveManualAssessment(submission, feedbacks, null);
+        Result result = assessmentService.saveAndSubmitManualAssessment(exercise, submission, feedbacks, null, submit);
         result.setParticipation(submission.getParticipation().results(null));
         result.setAssessor(userUtilService.getUserByLogin(login));
         resultRepo.save(result);
-        if (submit) {
-            assessmentService.submitManualAssessment(result.getId(), exercise);
-        }
-        return resultRepo.findWithEagerSubmissionAndFeedbackAndAssessorByIdElseThrow(result.getId());
+        return resultRepo.findWithBidirectionalSubmissionAndFeedbackAndAssessorAndTeamStudentsByIdElseThrow(result.getId());
     }
 
     /**

@@ -5,7 +5,7 @@ import java.io.Serializable;
 import java.time.Instant;
 import java.util.Objects;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.domain.User;
  */
 @Entity
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-@Table(name = "learning_goal_user")
+@Table(name = "competency_user")
 @EntityListeners(AuditingEntityListener.class)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class CompetencyProgress implements Serializable {
@@ -40,9 +40,9 @@ public class CompetencyProgress implements Serializable {
     private User user;
 
     @ManyToOne
-    @MapsId("learningGoalId")
+    @MapsId("competencyId")
     @JsonIgnore
-    private Competency learningGoal;
+    private Competency competency;
 
     @Column(name = "progress")
     private Double progress;
@@ -68,11 +68,11 @@ public class CompetencyProgress implements Serializable {
     }
 
     public Competency getCompetency() {
-        return learningGoal;
+        return competency;
     }
 
     public void setCompetency(Competency competency) {
-        this.learningGoal = competency;
+        this.competency = competency;
     }
 
     public Double getProgress() {
@@ -114,15 +114,14 @@ public class CompetencyProgress implements Serializable {
 
     @Override
     public String toString() {
-        return "CompetencyProgress{" + "id=" + id + ", user=" + user + ", competency=" + learningGoal + ", progress=" + progress + ", confidence=" + confidence + '}';
+        return "CompetencyProgress{" + "id=" + id + ", user=" + user + ", competency=" + competency + ", progress=" + progress + ", confidence=" + confidence + '}';
     }
 
     /**
-     * This class is used to create a composite primary key (user_id, learning_goal_id).
-     * See also https://www.baeldung.com/spring-jpa-embedded-method-parameters
+     * This class is used to create a composite primary key (user_id, competency_id).
+     * See also <a href="https://www.baeldung.com/spring-jpa-embedded-method-parameters">...</a>
      */
     @Embeddable
-    @SuppressWarnings("unused")
     public static class CompetencyUserId implements Serializable {
 
         @Serial
@@ -130,15 +129,15 @@ public class CompetencyProgress implements Serializable {
 
         private Long userId;
 
-        private Long learningGoalId;
+        private Long competencyId;
 
         public CompetencyUserId() {
             // Empty constructor for Spring
         }
 
-        public CompetencyUserId(Long userId, Long learningGoalId) {
+        public CompetencyUserId(Long userId, Long competencyId) {
             this.userId = userId;
-            this.learningGoalId = learningGoalId;
+            this.competencyId = competencyId;
         }
 
         @Override
@@ -153,12 +152,12 @@ public class CompetencyProgress implements Serializable {
             if (userId == null || that.userId == null) {
                 return false;
             }
-            return userId.equals(that.userId) && learningGoalId.equals(that.learningGoalId);
+            return userId.equals(that.userId) && competencyId.equals(that.competencyId);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(userId, learningGoalId);
+            return Objects.hash(userId, competencyId);
         }
     }
 }

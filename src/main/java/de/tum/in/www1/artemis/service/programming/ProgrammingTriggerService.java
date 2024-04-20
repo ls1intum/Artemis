@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.programming;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.config.Constants.TRIGGER_INSTRUCTOR_BUILD;
 
 import java.time.ZonedDateTime;
@@ -12,11 +13,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
+import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
@@ -27,10 +30,11 @@ import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTrigger
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWebsocketError;
 
+@Profile(PROFILE_CORE)
 @Service
 public class ProgrammingTriggerService {
 
-    private final Logger log = LoggerFactory.getLogger(ProgrammingTriggerService.class);
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingTriggerService.class);
 
     @Value("${artemis.external-system-request.batch-size}")
     private int externalSystemRequestBatchSize;
@@ -156,7 +160,7 @@ public class ProgrammingTriggerService {
         // Let the instructor know that a build run was triggered.
         programmingMessagingService.notifyInstructorAboutStartedExerciseBuildRun(programmingExercise);
         List<ProgrammingExerciseStudentParticipation> participations = new ArrayList<>(
-                programmingExerciseStudentParticipationRepository.findWithSubmissionsByExerciseId(exerciseId));
+                programmingExerciseStudentParticipationRepository.findWithSubmissionsAndTeamStudentsByExerciseId(exerciseId));
 
         triggerBuildForParticipations(participations);
 
@@ -213,10 +217,13 @@ public class ProgrammingTriggerService {
      * @param participation the participation for which we create a new submission and new result
      */
     public void triggerBuild(ProgrammingExerciseStudentParticipation participation) {
-        Optional<ProgrammingSubmission> submission = participation.findLatestSubmission();
+        Optional<ProgrammingSubmission> optionalSubmission = participation.findLatestSubmission();
         // we only need to trigger the build if the student actually already made a submission, otherwise this is not needed
-        if (submission.isPresent()) {
+        if (optionalSubmission.isPresent()) {
+            var submission = optionalSubmission.get();
             try {
+                // Make sure the relation is set correctly to avoid issues with lazy-loading until participation is used for notifying students
+                submission.setParticipation(participation);
                 if (participation.getBuildPlanId() == null || !participation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED)) {
                     // in this case, we first have to resume the exercise: this includes that we again set up the build plan properly before we trigger it
                     participationService.resumeProgrammingExercise(participation);
@@ -224,7 +231,7 @@ public class ProgrammingTriggerService {
                 }
                 continuousIntegrationTriggerService.orElseThrow().triggerBuild(participation);
                 // TODO: this is a workaround, in the future we should use the participation to notify the client and avoid using the submission
-                programmingMessagingService.notifyUserAboutSubmission(submission.get(), participation.getProgrammingExercise().getId());
+                programmingMessagingService.notifyUserAboutSubmission(submission, participation.getProgrammingExercise().getId());
             }
             catch (Exception e) {
                 log.error("Trigger build failed for {} with the exception {}", participation.getBuildPlanId(), e.getMessage());
@@ -268,28 +275,35 @@ public class ProgrammingTriggerService {
      * @param programmingExerciseId is used to retrieve the template participation.
      * @param commitHash            the unique hash code of the git repository identifying the submission, will be used for the created submission.
      * @param submissionType        will be used for the created submission.
+     * @param triggeredByPushTo     specifies the type of repository the push was made to.
      * @throws EntityNotFoundException if the programming exercise has no template participation (edge case).
      */
-    public void triggerTemplateBuildAndNotifyUser(long programmingExerciseId, String commitHash, SubmissionType submissionType) throws EntityNotFoundException {
+    public void triggerTemplateBuildAndNotifyUser(long programmingExerciseId, String commitHash, SubmissionType submissionType, RepositoryType triggeredByPushTo)
+            throws EntityNotFoundException {
         TemplateProgrammingExerciseParticipation templateParticipation = programmingExerciseParticipationService
                 .findTemplateParticipationByProgrammingExerciseId(programmingExerciseId);
         // If for some reason the programming exercise does not have a template participation, we can only log and abort.
-        createSubmissionTriggerBuildAndNotifyUser(templateParticipation, commitHash, submissionType);
+        createSubmissionTriggerBuildAndNotifyUser(templateParticipation, commitHash, submissionType, triggeredByPushTo);
+    }
+
+    public void triggerTemplateBuildAndNotifyUser(long programmingExerciseId, String commitHash, SubmissionType submissionType) throws EntityNotFoundException {
+        triggerTemplateBuildAndNotifyUser(programmingExerciseId, commitHash, submissionType, RepositoryType.TESTS);
     }
 
     /**
      * Creates a submission with the given type and commitHash for the provided participation.
      * Will notify the user about occurring errors when trying to trigger the build.
      *
-     * @param participation  for which to create the submission.
-     * @param commitHash     the unique hash code of the git repository identifying the submission,to assign to the submission.
-     * @param submissionType to assign to the submission.
+     * @param participation     for which to create the submission.
+     * @param commitHash        the unique hash code of the git repository identifying the submission,to assign to the submission.
+     * @param submissionType    to assign to the submission.
+     * @param triggeredByPushTo specifies the type of repository the push was made to.
      */
-    private void createSubmissionTriggerBuildAndNotifyUser(ProgrammingExerciseParticipation participation, String commitHash, SubmissionType submissionType) {
+    private void createSubmissionTriggerBuildAndNotifyUser(ProgrammingExerciseParticipation participation, String commitHash, SubmissionType submissionType,
+            RepositoryType triggeredByPushTo) {
         ProgrammingSubmission submission = createSubmissionWithCommitHashAndSubmissionType(participation, commitHash, submissionType);
         try {
-            continuousIntegrationTriggerService.orElseThrow().triggerBuild((ProgrammingExerciseParticipation) submission.getParticipation(), commitHash,
-                    submissionType.equals(SubmissionType.TEST));
+            continuousIntegrationTriggerService.orElseThrow().triggerBuild((ProgrammingExerciseParticipation) submission.getParticipation(), commitHash, triggeredByPushTo);
             programmingMessagingService.notifyUserAboutSubmission(submission, participation.getProgrammingExercise().getId());
         }
         catch (Exception e) {

@@ -1,54 +1,57 @@
 package de.tum.in.www1.artemis;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.parallel.Execution;
-import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.api.parallel.ResourceLock;
+import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.Team;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.participation.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.util.AbstractArtemisIntegrationTest;
-import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
+import de.tum.in.www1.artemis.repository.LtiPlatformConfigurationRepository;
+import de.tum.in.www1.artemis.security.OAuth2JWKSService;
 
 /**
  * This SpringBootTest is used for tests that only require a minimal set of Active Spring Profiles.
  */
-@SpringBootTest
-@AutoConfigureMockMvc
-@ExtendWith(SpringExtension.class)
-@Execution(ExecutionMode.CONCURRENT)
 @ResourceLock("AbstractSpringIntegrationIndependentTest")
-@AutoConfigureEmbeddedDatabase
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
-@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "scheduling", "lti" })
+@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "scheduling", "athena", "apollon", "lti", "aeolus", PROFILE_CORE })
 @TestPropertySource(properties = { "artemis.user-management.use-external=false" })
 public abstract class AbstractSpringIntegrationIndependentTest extends AbstractArtemisIntegrationTest {
 
-    private final Logger log = LoggerFactory.getLogger(this.getClass());
+    private static final Logger log = LoggerFactory.getLogger(AbstractSpringIntegrationIndependentTest.class);
+
+    @SpyBean
+    protected OAuth2JWKSService oAuth2JWKSService;
+
+    @SpyBean
+    protected LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository;
 
     @AfterEach
     protected void resetSpyBeans() {
+        Mockito.reset(oAuth2JWKSService, ltiPlatformConfigurationRepository);
         super.resetSpyBeans();
     }
 
     @Override
-    public void mockConnectorRequestsForSetup(ProgrammingExercise exercise, boolean failToCreateCiProject) {
-        log.debug("Called mockConnectorRequestsForSetup with args {}, {}", exercise, failToCreateCiProject);
+    public void mockConnectorRequestsForSetup(ProgrammingExercise exercise, boolean failToCreateCiProject, boolean useCustomBuildPlanDefinition, boolean useCustomBuildPlanWorked) {
+        log.debug("Called mockConnectorRequestsForSetup with args {}, {}, {}, {}", exercise, failToCreateCiProject, useCustomBuildPlanDefinition, useCustomBuildPlanWorked);
     }
 
     @Override
@@ -265,8 +268,8 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     }
 
     @Override
-    public void mockRepositoryUrlIsValid(VcsRepositoryUrl vcsTemplateRepositoryUrl, String projectKey, boolean b) {
-        log.debug("Called mockRepositoryUrlIsValid with args {}, {}, {}", vcsTemplateRepositoryUrl, projectKey, b);
+    public void mockRepositoryUriIsValid(VcsRepositoryUri vcsTemplateRepositoryUri, String projectKey, boolean b) {
+        log.debug("Called mockRepositoryUriIsValid with args {}, {}, {}", vcsTemplateRepositoryUri, projectKey, b);
     }
 
     @Override
@@ -280,8 +283,8 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     }
 
     @Override
-    public void mockSetRepositoryPermissionsToReadOnly(VcsRepositoryUrl repositoryUrl, String projectKey, Set<User> users) {
-        log.debug("Called mockSetRepositoryPermissionsToReadOnly with args {}, {}, {}", repositoryUrl, projectKey, users);
+    public void mockSetRepositoryPermissionsToReadOnly(VcsRepositoryUri repositoryUri, String projectKey, Set<User> users) {
+        log.debug("Called mockSetRepositoryPermissionsToReadOnly with args {}, {}, {}", repositoryUri, projectKey, users);
     }
 
     @Override

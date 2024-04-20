@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.hestia;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -7,22 +9,25 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.hestia.CodeHint;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
+import de.tum.in.www1.artemis.domain.iris.session.IrisHestiaSession;
 import de.tum.in.www1.artemis.repository.hestia.CodeHintRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.in.www1.artemis.service.iris.session.IrisHestiaSessionService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
+@Profile(PROFILE_CORE)
 @Service
 public class CodeHintService {
 
-    private final Logger log = LoggerFactory.getLogger(CodeHintService.class);
+    private static final Logger log = LoggerFactory.getLogger(CodeHintService.class);
 
     private final Optional<IrisHestiaSessionService> irisHestiaSessionService;
 
@@ -187,12 +192,14 @@ public class CodeHintService {
 
     /**
      * Generates a description and content for a code hint using the Iris subsystem.
-     * See {@link IrisHestiaSessionService#generateDescription(CodeHint)} for more information.
+     * See {@link IrisHestiaSessionService#executeRequest(IrisHestiaSession)} for more information.
      *
      * @param codeHint The code hint to be generated
      * @return The code hint with description and content
      */
     public CodeHint generateDescriptionWithIris(CodeHint codeHint) {
-        return irisHestiaSessionService.orElseThrow().generateDescription(codeHint);
+        var irisService = irisHestiaSessionService.orElseThrow();
+        var session = irisService.getOrCreateSession(codeHint);
+        return irisService.executeRequest(session);
     }
 }

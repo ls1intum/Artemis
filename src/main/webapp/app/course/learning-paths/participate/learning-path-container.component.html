@@ -7,7 +7,7 @@
                 (click)="viewProgress()"
                 ngbTooltip="{{ 'artemisApp.learningPath.participate.viewProgress' | artemisTranslate }}"
             >
-                <fa-icon [icon]="faEye"></fa-icon>
+                <fa-icon [icon]="faEye" />
             </button>
             <button
                 type="button"
@@ -16,16 +16,12 @@
                 [disabled]="!learningPathStorageService.hasPrevRecommendation(this.learningPathId, currentStateToEntry())"
                 ngbTooltip="{{ 'artemisApp.learningPath.participate.prevHint' | artemisTranslate }}"
             >
-                <fa-icon [icon]="faChevronUp"></fa-icon>
+                <fa-icon [icon]="faChevronUp" />
             </button>
             <div class="path my-2">
-                <jhi-learning-path
-                    #learningPathComponent
-                    *ngIf="learningPathId"
-                    [courseId]="courseId"
-                    [learningPathId]="learningPathId"
-                    (nodeClicked)="onNodeClicked($event)"
-                ></jhi-learning-path>
+                @if (learningPathId) {
+                    <jhi-learning-path #learningPathComponent [courseId]="courseId" [learningPathId]="learningPathId" (nodeClicked)="onNodeClicked($event)" />
+                }
             </div>
             <button
                 type="button"
@@ -34,16 +30,20 @@
                 [disabled]="!learningPathStorageService.hasNextRecommendation(this.learningPathId, currentStateToEntry())"
                 ngbTooltip="{{ 'artemisApp.learningPath.participate.nextHint' | artemisTranslate }}"
             >
-                <fa-icon [icon]="faChevronDown"></fa-icon>
+                <fa-icon [icon]="faChevronDown" />
             </button>
         </div>
     </div>
     <div class="col pe-0 flex-grow-1">
         <div class="card learning-object-wrapper" [class.exercise-wrapper]="exercise">
-            <div *ngIf="!lectureUnit && !exercise">
-                <span jhiTranslate="artemisApp.learningPath.participate.noTaskSelected">No task selected</span>
-            </div>
-            <router-outlet *ngIf="lectureUnit || exercise" (activate)="onChildActivate($event)"></router-outlet>
+            @if (!lectureUnit && !exercise) {
+                <div>
+                    <span jhiTranslate="artemisApp.learningPath.participate.noTaskSelected"></span>
+                </div>
+            }
+            @if (lectureUnit || exercise) {
+                <router-outlet (activate)="onChildActivate($event)" />
+            }
         </div>
     </div>
 </div>

@@ -1,9 +1,9 @@
-<ng-container *ngIf="programmingExercise && programmingExercise.shortName">
+@if (programmingExercise && programmingExercise.shortName) {
     <div id="preview" class="row ms-2 mt-1 mb-1 pt-1 pb-1">
         <div class="col-auto rounded pt-1 pb-1 preview-box">
             <div>
                 <div>
-                    <span class="font-weight-bold" jhiTranslate="artemisApp.programmingExercise.preview.repositories">Repositories: </span>
+                    <span class="font-weight-bold" jhiTranslate="artemisApp.programmingExercise.preview.repositories"></span>
                 </div>
                 <hr class="pt-0 pb-0 mt-1 mb-1" />
                 <ul>
@@ -11,50 +11,58 @@
                         <code class="text-white badge bg-primary label-preview">
                             {{ getCourseShortName()?.toLowerCase() }}{{ programmingExercise.shortName.toLowerCase() }}-exercise
                         </code>
-                        <jhi-help-icon text="artemisApp.programmingExercise.preview.templateRepoTooltip"></jhi-help-icon>
+                        <jhi-help-icon text="artemisApp.programmingExercise.preview.templateRepoTooltip" />
                     </li>
                     <li>
                         <code class="text-white badge bg-primary label-preview">
                             {{ getCourseShortName()?.toLowerCase() }}{{ programmingExercise.shortName.toLowerCase() }}-solution
                         </code>
-                        <jhi-help-icon text="artemisApp.programmingExercise.preview.solutionRepoTooltip"></jhi-help-icon>
+                        <jhi-help-icon text="artemisApp.programmingExercise.preview.solutionRepoTooltip" />
                     </li>
                     <li>
                         <code class="text-white badge bg-primary label-preview">
                             {{ getCourseShortName()?.toLowerCase() }}{{ programmingExercise.shortName.toLowerCase() }}-tests
                         </code>
-                        <jhi-help-icon text="artemisApp.programmingExercise.preview.testRepoTooltip"></jhi-help-icon>
+                        <jhi-help-icon text="artemisApp.programmingExercise.preview.testRepoTooltip" />
                     </li>
-                    <div *ngIf="programmingExercise.auxiliaryRepositories?.length">
-                        <div *ngFor="let auxiliaryRepository of programmingExercise.auxiliaryRepositories">
-                            <li>
-                                <code class="text-white badge bg-success label-preview">
-                                    {{ getCourseShortName()?.toLowerCase() }}{{ programmingExercise.shortName.toLowerCase() }}-{{ auxiliaryRepository.name?.toLowerCase() }}
-                                </code>
-                                <jhi-help-icon-without-translation text="{{ auxiliaryRepository.description || 'Auxiliary Repository' }}"></jhi-help-icon-without-translation>
-                            </li>
+                    @if (programmingExercise.auxiliaryRepositories?.length) {
+                        <div>
+                            @for (auxiliaryRepository of programmingExercise.auxiliaryRepositories; track auxiliaryRepository) {
+                                <div>
+                                    <li>
+                                        <code class="text-white badge bg-success label-preview">
+                                            {{ getCourseShortName()?.toLowerCase() }}{{ programmingExercise.shortName.toLowerCase() }}-{{ auxiliaryRepository.name?.toLowerCase() }}
+                                        </code>
+                                        <jhi-help-icon-without-translation text="{{ auxiliaryRepository.description || 'Auxiliary Repository' }}" />
+                                    </li>
+                                </div>
+                            }
                         </div>
-                    </div>
+                    }
                 </ul>
             </div>
         </div>
-        <div class="col-auto rounded pt-1 pb-1 preview-box">
-            <div>
-                <span class="font-weight-bold" jhiTranslate="artemisApp.programmingExercise.preview.buildPlans">Build Plans: </span>
+        @if (!isLocal) {
+            <div class="col-auto rounded pt-1 pb-1 preview-box">
+                <div>
+                    <span class="font-weight-bold" jhiTranslate="artemisApp.programmingExercise.preview.buildPlans"></span>
+                </div>
+                <hr class="pt-0 pb-0 mt-1 mb-1" />
+                <ul>
+                    <li>
+                        <code class="text-white badge bg-primary label-preview"
+                            >{{ getCourseShortName()?.toUpperCase() }}{{ programmingExercise.shortName.toUpperCase() }}-BASE</code
+                        >
+                        <jhi-help-icon text="artemisApp.programmingExercise.preview.templateBuildPlanTooltip" />
+                    </li>
+                    <li>
+                        <code class="text-white badge bg-primary label-preview"
+                            >{{ getCourseShortName()?.toUpperCase() }}{{ programmingExercise.shortName.toUpperCase() }}-SOLUTION</code
+                        >
+                        <jhi-help-icon text="artemisApp.programmingExercise.preview.solutionBuildPlanTooltip" />
+                    </li>
+                </ul>
             </div>
-            <hr class="pt-0 pb-0 mt-1 mb-1" />
-            <ul>
-                <li>
-                    <code class="text-white badge bg-primary label-preview">{{ getCourseShortName()?.toUpperCase() }}{{ programmingExercise.shortName.toUpperCase() }}-BASE</code>
-                    <jhi-help-icon text="artemisApp.programmingExercise.preview.templateBuildPlanTooltip"></jhi-help-icon>
-                </li>
-                <li>
-                    <code class="text-white badge bg-primary label-preview"
-                        >{{ getCourseShortName()?.toUpperCase() }}{{ programmingExercise.shortName.toUpperCase() }}-SOLUTION</code
-                    >
-                    <jhi-help-icon text="artemisApp.programmingExercise.preview.solutionBuildPlanTooltip"></jhi-help-icon>
-                </li>
-            </ul>
-        </div>
+        }
     </div>
-</ng-container>
+}

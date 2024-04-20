@@ -1,70 +1,82 @@
 package de.tum.in.www1.artemis.repository.metis.conversation;
 
-import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
-import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
+@Profile(PROFILE_CORE)
 @Repository
 public interface OneToOneChatRepository extends JpaRepository<OneToOneChat, Long> {
 
-    Set<OneToOneChat> findAllByConversationParticipantsContaining(ConversationParticipant conversationParticipant);
-
-    @EntityGraph(type = LOAD, attributePaths = { "conversationParticipants.user.groups" })
+    /**
+     * Find all active one-to-one chats of a given user in a given course.
+     * <p>
+     * We join the conversionParticipants twice, because the first time we use it for filtering the chats and binding it to the user ID. The second time, we fetch all participants;
+     * as it's a one-to-one chat, two.
+     *
+     * @param courseId the ID of the course to search in
+     * @param userId   the ID of the user to search for
+     * @return a list of one-to-one chats
+     */
     @Query("""
-                 SELECT DISTINCT oneToOneChat
-                 FROM OneToOneChat oneToOneChat
-                 LEFT JOIN oneToOneChat.conversationParticipants conversationParticipant
-                 LEFT JOIN FETCH oneToOneChat.conversationParticipants
-                 WHERE oneToOneChat.course.id = :#{#courseId}
-                 AND (oneToOneChat.lastMessageDate IS NOT NULL OR oneToOneChat.creator.id = :#{#userId})
-                 AND conversationParticipant.user.id = :#{#userId}
-                 ORDER BY oneToOneChat.lastMessageDate DESC
+            SELECT DISTINCT oneToOneChat
+            FROM OneToOneChat oneToOneChat
+                LEFT JOIN oneToOneChat.conversationParticipants matchingParticipant
+                LEFT JOIN FETCH oneToOneChat.conversationParticipants allParticipants
+                LEFT JOIN FETCH allParticipants.user user
+                LEFT JOIN FETCH user.groups
+            WHERE oneToOneChat.course.id = :courseId
+                AND (oneToOneChat.lastMessageDate IS NOT NULL OR oneToOneChat.creator.id = :userId)
+                AND matchingParticipant.user.id = :userId
+            ORDER BY oneToOneChat.lastMessageDate DESC
             """)
-    List<OneToOneChat> findActiveOneToOneChatsOfUserWithParticipantsAndUserGroups(@Param("courseId") Long courseId, @Param("userId") Long userId);
+    List<OneToOneChat> findAllWithParticipantsAndUserGroupsByCourseIdAndUserId(@Param("courseId") Long courseId, @Param("userId") Long userId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "conversationParticipants.user.groups" })
+    /**
+     * Find a one-to-one chat between two users in a given course.
+     * <p>
+     * We join the conversationParticipants twice because we need two different participants to match the two users. If we would only join it once, we had only one participant and
+     * multiple results.
+     *
+     * @param courseId the ID of the course to search in
+     * @param userIdA  the ID of the first user
+     * @param userIdB  the ID of the second user
+     * @return an optional one-to-one chat
+     */
     @Query("""
-                 SELECT o FROM OneToOneChat o
-                 LEFT JOIN FETCH o.conversationParticipants p1
-                 LEFT JOIN FETCH o.conversationParticipants p2
-                 WHERE o.course.id = :courseId
-                 AND p1.user.id = :userIdA
-                 AND p2.user.id = :userIdB
-                 AND p1.conversation = o
-                 AND p2.conversation = o
+            SELECT DISTINCT o
+            FROM OneToOneChat o
+                LEFT JOIN FETCH o.conversationParticipants p1
+                LEFT JOIN FETCH o.conversationParticipants p2
+                LEFT JOIN FETCH p1.user u1
+                LEFT JOIN FETCH p2.user u2
+                LEFT JOIN FETCH u1.groups
+                LEFT JOIN FETCH u2.groups
+            WHERE o.course.id = :courseId
+                AND u1.id = :userIdA
+                AND u2.id = :userIdB
             """)
-    Optional<OneToOneChat> findBetweenUsersWithParticipantsAndUserGroups(@Param("courseId") Long courseId, @Param("userIdA") Long userIdA, @Param("userIdB") Long userIdB);
+    Optional<OneToOneChat> findWithParticipantsAndUserGroupsInCourseBetweenUsers(@Param("courseId") Long courseId, @Param("userIdA") Long userIdA, @Param("userIdB") Long userIdB);
 
-    @EntityGraph(type = LOAD, attributePaths = { "conversationParticipants.user.groups" })
     @Query("""
-             SELECT DISTINCT oneToOneChat
-             FROM OneToOneChat oneToOneChat
-             LEFT JOIN FETCH oneToOneChat.conversationParticipants p
-             WHERE oneToOneChat.id = :#{#oneToOneChatId}
+            SELECT DISTINCT oneToOneChat
+            FROM OneToOneChat oneToOneChat
+                LEFT JOIN FETCH oneToOneChat.conversationParticipants p
+                LEFT JOIN FETCH p.user u
+                LEFT JOIN FETCH u.groups
+            WHERE oneToOneChat.id = :oneToOneChatId
             """)
     Optional<OneToOneChat> findByIdWithConversationParticipantsAndUserGroups(@Param("oneToOneChatId") Long oneToOneChatId) throws EntityNotFoundException;
-
-    @Query("""
-            SELECT chat
-            FROM OneToOneChat chat
-                LEFT JOIN chat.conversationParticipants participants
-                LEFT JOIN participants.user user
-            WHERE user = :user
-            """)
-    Set<OneToOneChat> findAllByParticipatingUser(User user);
 
     Integer countByCreatorIdAndCourseId(Long creatorId, Long courseId);
 }

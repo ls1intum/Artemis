@@ -1,33 +1,54 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.AssessmentUpdate;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.FileUploadExercise;
+import de.tum.in.www1.artemis.domain.FileUploadSubmission;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.FileUploadExerciseRepository;
+import de.tum.in.www1.artemis.repository.FileUploadSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.exam.ExamService;
-import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
-import de.tum.in.www1.artemis.web.websocket.ResultWebsocketService;
 
 /**
  * REST controller for managing FileUploadAssessment.
  */
+@Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class FileUploadAssessmentResource extends AssessmentResource {
 
-    private final Logger log = LoggerFactory.getLogger(FileUploadAssessmentResource.class);
+    private static final Logger log = LoggerFactory.getLogger(FileUploadAssessmentResource.class);
 
     private static final String ENTITY_NAME = "fileUploadAssessment";
 
@@ -36,11 +57,9 @@ public class FileUploadAssessmentResource extends AssessmentResource {
     private final FileUploadSubmissionRepository fileUploadSubmissionRepository;
 
     public FileUploadAssessmentResource(AuthorizationCheckService authCheckService, AssessmentService assessmentService, UserRepository userRepository,
-            FileUploadExerciseRepository fileUploadExerciseRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository, ResultWebsocketService resultWebsocketService,
-            ExerciseRepository exerciseRepository, ResultRepository resultRepository, ExamService examService, ExampleSubmissionRepository exampleSubmissionRepository,
-            SubmissionRepository submissionRepository, SingleUserNotificationService singleUserNotificationService) {
-        super(authCheckService, userRepository, exerciseRepository, assessmentService, resultRepository, examService, resultWebsocketService, exampleSubmissionRepository,
-                submissionRepository, singleUserNotificationService);
+            FileUploadExerciseRepository fileUploadExerciseRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository, ExerciseRepository exerciseRepository,
+            ResultRepository resultRepository, ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository) {
+        super(authCheckService, userRepository, exerciseRepository, assessmentService, resultRepository, exampleSubmissionRepository, submissionRepository);
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
     }
@@ -51,7 +70,7 @@ public class FileUploadAssessmentResource extends AssessmentResource {
      * @param submissionId the id of the submission that should be sent to the client
      * @return the assessment of the given submission
      */
-    @GetMapping("/file-upload-submissions/{submissionId}/result")
+    @GetMapping("file-upload-submissions/{submissionId}/result")
     @EnforceAtLeastStudent
     public ResponseEntity<Result> getAssessmentBySubmissionId(@PathVariable Long submissionId) {
         return super.getAssessmentBySubmissionId(submissionId);
@@ -66,7 +85,7 @@ public class FileUploadAssessmentResource extends AssessmentResource {
      * @return the result saved to the database
      */
     @ResponseStatus(HttpStatus.OK)
-    @PutMapping("/file-upload-submissions/{submissionId}/feedback")
+    @PutMapping("file-upload-submissions/{submissionId}/feedback")
     @EnforceAtLeastTutor
     public ResponseEntity<Result> saveFileUploadAssessment(@PathVariable Long submissionId, @RequestParam(value = "submit", defaultValue = "false") boolean submit,
             @RequestBody List<Feedback> feedbacks) {
@@ -84,7 +103,7 @@ public class FileUploadAssessmentResource extends AssessmentResource {
      * @return the updated result
      */
     @ResponseStatus(HttpStatus.OK)
-    @PutMapping("/file-upload-submissions/{submissionId}/assessment-after-complaint")
+    @PutMapping("file-upload-submissions/{submissionId}/assessment-after-complaint")
     @EnforceAtLeastTutor
     public ResponseEntity<Result> updateFileUploadAssessmentAfterComplaint(@PathVariable Long submissionId, @RequestBody AssessmentUpdate assessmentUpdate) {
         log.debug("REST request to update the assessment of submission {} after complaint.", submissionId);
@@ -112,7 +131,7 @@ public class FileUploadAssessmentResource extends AssessmentResource {
      * @param submissionId the id of the submission for which the current assessment should be canceled
      * @return 200 Ok response if canceling was successful, 403 Forbidden if current user is not the assessor of the submission
      */
-    @PutMapping("/file-upload-submissions/{submissionId}/cancel-assessment")
+    @PutMapping("file-upload-submissions/{submissionId}/cancel-assessment")
     @EnforceAtLeastTutor
     public ResponseEntity<Void> cancelAssessment(@PathVariable Long submissionId) {
         return super.cancelAssessment(submissionId);
@@ -126,14 +145,14 @@ public class FileUploadAssessmentResource extends AssessmentResource {
      * @param resultId        - the id of the result which should get deleted
      * @return 200 Ok response if canceling was successful, 403 Forbidden if current user is not an instructor of the course or an admin
      */
-    @DeleteMapping("/participations/{participationId}/file-upload-submissions/{submissionId}/results/{resultId}")
+    @DeleteMapping("participations/{participationId}/file-upload-submissions/{submissionId}/results/{resultId}")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteAssessment(@PathVariable Long participationId, @PathVariable Long submissionId, @PathVariable Long resultId) {
         return super.deleteAssessment(participationId, submissionId, resultId);
     }
 
     @Override
-    String getEntityName() {
+    protected String getEntityName() {
         return ENTITY_NAME;
     }
 }

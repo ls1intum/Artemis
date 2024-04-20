@@ -44,12 +44,12 @@ public class CreateSolutionEntries extends BehavioralKnowledgeSource {
         var solutionEntry = new ProgrammingExerciseSolutionEntry();
         // Set temporary id, as equals checks won't work otherwise
         solutionEntry.setId(0L);
-        solutionEntry.setLine(changeBlock.getLines().first());
+        solutionEntry.setLine(changeBlock.lines().first());
         solutionEntry.setFilePath(groupedFile.getFilePath());
         solutionEntry.setTestCase(groupedFile.getTestCase());
         var fileContent = groupedFile.getFileContent();
         if (fileContent != null) {
-            var code = Arrays.stream(fileContent.split("\n")).skip(changeBlock.getLines().first() - 1).limit(changeBlock.getLines().size()).collect(Collectors.joining("\n"));
+            var code = Arrays.stream(fileContent.split("\n")).skip(changeBlock.lines().first() - 1).limit(changeBlock.lines().size()).collect(Collectors.joining("\n"));
             solutionEntry.setCode(code);
         }
         return solutionEntry;

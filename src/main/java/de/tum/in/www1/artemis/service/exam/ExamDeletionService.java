@@ -1,19 +1,21 @@
 package de.tum.in.www1.artemis.service.exam;
 
 import static de.tum.in.www1.artemis.config.Constants.EXAM_EXERCISE_START_STATUS;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.cache.CacheManager;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.config.Constants;
@@ -31,10 +33,11 @@ import de.tum.in.www1.artemis.service.ExerciseDeletionService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 
+@Profile(PROFILE_CORE)
 @Service
 public class ExamDeletionService {
 
-    private final Logger log = LoggerFactory.getLogger(ExamDeletionService.class);
+    private static final Logger log = LoggerFactory.getLogger(ExamDeletionService.class);
 
     private final ExerciseDeletionService exerciseDeletionService;
 

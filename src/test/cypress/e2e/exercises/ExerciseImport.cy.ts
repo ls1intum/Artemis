@@ -26,7 +26,7 @@ import {
 import { admin, instructor, studentOne } from '../../support/users';
 import { checkField, convertModelAfterMultiPart, generateUUID } from '../../support/utils';
 
-describe('Import exercises', () => {
+describe('Import exercises', { scrollBehavior: 'center' }, () => {
     let course: Course;
     let secondCourse: Course;
     let textExercise: TextExercise;
@@ -79,6 +79,7 @@ describe('Import exercises', () => {
         textExerciseCreation.import().then((request: Interception) => {
             const exercise = request.response!.body;
             cy.login(studentOne, `/courses/${secondCourse.id}`);
+            courseOverview.openExerciseOverview(exercise.title!);
             courseOverview.startExercise(exercise.id!);
             courseOverview.openRunningExercise(exercise.id!);
             cy.fixture('loremIpsum-short.txt').then((submission) => {
@@ -112,6 +113,7 @@ describe('Import exercises', () => {
             const exercise = request.response!.body;
             courseManagementExercises.startQuiz(exercise.id!);
             cy.login(studentOne, `/courses/${secondCourse.id}`);
+            courseOverview.openExerciseOverview(exercise.title!);
             courseOverview.startExercise(exercise.id!);
             quizExerciseMultipleChoice.tickAnswerOption(exercise.id!, 0);
             quizExerciseMultipleChoice.tickAnswerOption(exercise.id!, 2);
@@ -137,6 +139,7 @@ describe('Import exercises', () => {
         modelingExerciseCreation.import().then((request: Interception) => {
             const exercise = request.response!.body;
             cy.login(studentOne, `/courses/${secondCourse.id}`);
+            courseOverview.openExerciseOverview(exercise.title!);
             courseOverview.startExercise(exercise.id!);
             courseOverview.openRunningExercise(exercise.id!);
             modelingExerciseEditor.addComponentToModel(exercise.id!, 1);
@@ -158,11 +161,12 @@ describe('Import exercises', () => {
 
         programmingExerciseCreation.setTitle('Import Test');
         programmingExerciseCreation.setShortName('importtest' + generateUUID());
-        programmingExerciseCreation.setDueDate(dayjs().add(3, 'days')); // FIXME does not work yet
+        programmingExerciseCreation.setDueDate(dayjs().add(3, 'days'));
 
         programmingExerciseCreation.import().then((request: Interception) => {
             const exercise = request.response!.body;
             cy.login(studentOne, `/courses/${secondCourse.id}`);
+            courseOverview.openExerciseOverview(exercise.title!);
             courseOverview.startExercise(exercise.id!);
             courseOverview.openRunningExercise(exercise.id!);
             programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, javaPartiallySuccessfulSubmission, () => {

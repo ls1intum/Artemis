@@ -24,6 +24,8 @@ import { ReactingUsersOnPostingPipe } from 'app/shared/pipes/reacting-users-on-p
 import { By } from '@angular/platform-browser';
 import { metisCourse, metisUser1, post } from '../../../../../helpers/sample/metis-sample-data';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { NotificationService } from 'app/shared/notification/notification.service';
+import { MockNotificationService } from '../../../../../helpers/mocks/service/mock-notification.service';
 
 describe('AnswerPostReactionsBarComponent', () => {
     let component: AnswerPostReactionsBarComponent;
@@ -39,6 +41,7 @@ describe('AnswerPostReactionsBarComponent', () => {
             declarations: [AnswerPostReactionsBarComponent, TranslatePipeMock, MockPipe(ReactingUsersOnPostingPipe), MockComponent(FaIconComponent), MockComponent(EmojiComponent)],
             providers: [
                 MockProvider(SessionStorageService),
+                { provide: NotificationService, useClass: MockNotificationService },
                 { provide: MetisService, useClass: MetisService },
                 { provide: ReactionService, useClass: MockReactionService },
                 { provide: AccountService, useClass: MockAccountService },

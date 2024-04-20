@@ -8,6 +8,9 @@
             "accountInformation": "Account Information",
             "notificationSettings": "Notifications",
             "notificationSettingsFilterInfo": "These settings also filter the notification sidebar",
+            "scienceSettings": "Science",
+            "scienceSettingsFeatureDisabled": "The science feature is currently disabled. You can still edit your settings in case the feature gets enabled again.",
+            "scienceSettingsInfo": "Help Artemis to get better!",
             "accountInformationPage": {
                 "registrationNumber": "Registration Number",
                 "fullName": "Full Name",
@@ -16,7 +19,8 @@
                 "joinedArtemis": "Joined Artemis on"
             },
             "categories": {
-                "NOTIFICATION_SETTINGS": "Notification Settings"
+                "NOTIFICATION_SETTINGS": "Notification Settings",
+                "SCIENCE_SETTINGS": "Science Settings"
             },
             "settingGroupNames": {
                 "weeklySummary": "Weekly Summary",
@@ -29,7 +33,8 @@
                 "userMentionNotifications": "User Mention Notifications",
                 "tutorNotifications": "Tutor Notifications",
                 "editorNotifications": "Editor Notifications",
-                "instructorNotifications": "Instructor Notifications"
+                "instructorNotifications": "Instructor Notifications",
+                "general": "General"
             },
             "settingNames": {
                 "basicWeeklySummary": "Basic Weekly Summary",
@@ -54,7 +59,8 @@
                 "newConversationMessages": "New messages in conversations",
                 "newReplyMessage": "New replies in conversations",
                 "tutorialGroupUpdateDelete": "Update and Delete of Tutorial Groups",
-                "assignUnassignTutorialGroup": "Assign and Unassign of Tutorial Groups"
+                "assignUnassignTutorialGroup": "Assign and Unassign of Tutorial Groups",
+                "activity": "Activity tracking"
             },
             "settingDescriptions": {
                 "basicWeeklySummaryDescription": "Receive a basic weekly summary every Friday at 5pm (e.g. what new exercises have been released this week and are still open)",
@@ -80,7 +86,8 @@
                 "newConversationMessageDescription": "Get notified when you receive a new message in a conversation",
                 "conversationNewReplyMessageDescription": "Get notified when you receive a new reply in a conversation",
                 "tutorialGroupUpdateDeleteDescription": "Get notified when a tutorial group for which you are registered or a tutor was updated or deleted",
-                "assignUnassignTutorialGroupDescription": "Get notified when you were assigned or unassigned to lead a tutorial group"
+                "assignUnassignTutorialGroupDescription": "Get notified when you were assigned or unassigned to lead a tutorial group",
+                "activityDescription": "Share which features of Artemis you utilize and how you interact with them. The information is only accessible for administrators."
             }
         }
     }

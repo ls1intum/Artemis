@@ -6,9 +6,11 @@ import { ProfileInfo } from './profile-info.model';
     selector: 'jhi-page-ribbon',
     template: `
         <div class="box">
-            <div class="ribbon ribbon-top-left" *ngIf="ribbonEnv">
-                <span jhiTranslate="global.ribbon.{{ ribbonEnv }}">{{ ribbonEnv }}</span>
-            </div>
+            @if (ribbonEnv) {
+                <div class="ribbon ribbon-top-left">
+                    <span jhiTranslate="global.ribbon.{{ ribbonEnv }}">{{ ribbonEnv }}</span>
+                </div>
+            }
         </div>
     `,
     styleUrls: ['page-ribbon.scss'],

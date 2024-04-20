@@ -1,16 +1,15 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.JoinColumn;
-import javax.persistence.OneToMany;
-import javax.persistence.OneToOne;
-import javax.persistence.Table;
-import javax.persistence.Transient;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -23,7 +22,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 
 @Entity
 @Table(name = "quiz_pool")
-@JsonInclude
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class QuizPool extends DomainObject implements QuizConfiguration {
 
     @OneToOne
@@ -75,10 +74,11 @@ public class QuizPool extends DomainObject implements QuizConfiguration {
 
     @Override
     public void setQuestionParent(QuizQuestion quizQuestion) {
-        // Do nothing since the relationship between QuizPool and QuizQuestion is defined in QuizPool.
+        // Do nothing since the relationship between QuizPool and QuizQuestion is already defined above.
     }
 
     @Override
+    // NOTE: there is no guarantee for a specific order because the underlying data is stored in a set without order column
     public List<QuizQuestion> getQuizQuestions() {
         return this.quizQuestions;
     }
@@ -88,6 +88,7 @@ public class QuizPool extends DomainObject implements QuizConfiguration {
     }
 
     @JsonProperty(value = "quizGroups", access = JsonProperty.Access.READ_ONLY)
+    // NOTE: there is no guarantee for a specific order because the underlying data is stored in a set without order column
     public List<QuizGroup> getQuizGroups() {
         return quizGroups;
     }

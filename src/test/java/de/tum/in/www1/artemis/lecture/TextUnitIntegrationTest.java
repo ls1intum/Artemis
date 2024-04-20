@@ -85,7 +85,7 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         request.postWithResponseBody("/api/lectures/" + this.lecture.getId() + "/text-units", textUnit, TextUnit.class, HttpStatus.FORBIDDEN);
         request.postWithResponseBody("/api/lectures/" + "2379812738912" + "/text-units", textUnit, TextUnit.class, HttpStatus.NOT_FOUND);
         textUnit.setLecture(new Lecture());
-        request.postWithResponseBody("/api/lectures/" + this.lecture.getId() + "/text-units", textUnit, TextUnit.class, HttpStatus.CONFLICT);
+        request.postWithResponseBody("/api/lectures/" + this.lecture.getId() + "/text-units", textUnit, TextUnit.class, HttpStatus.BAD_REQUEST);
         textUnit.setId(21312321L);
         request.postWithResponseBody("/api/lectures/" + this.lecture.getId() + "/text-units", textUnit, TextUnit.class, HttpStatus.BAD_REQUEST);
     }
@@ -115,7 +115,7 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // Updating the lecture unit should not change order attribute
         request.putWithResponseBody("/api/lectures/" + lecture.getId() + "/text-units", textUnit, TextUnit.class, HttpStatus.OK);
 
-        List<LectureUnit> updatedOrderedUnits = lectureRepository.findByIdWithLectureUnits(lecture.getId()).orElseThrow().getLectureUnits();
+        List<LectureUnit> updatedOrderedUnits = lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture.getId()).orElseThrow().getLectureUnits();
         assertThat(updatedOrderedUnits).containsExactlyElementsOf(orderedUnits);
     }
 
@@ -127,7 +127,7 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         textUnitFromRequest.setId(null);
         request.putWithResponseBody("/api/lectures/" + lecture.getId() + "/text-units", textUnitFromRequest, TextUnit.class, HttpStatus.BAD_REQUEST);
 
-        request.get("/api/lectures/" + "2379812738912" + "/text-units/" + this.textUnit.getId(), HttpStatus.CONFLICT, TextUnit.class);
+        request.get("/api/lectures/" + "2379812738912" + "/text-units/" + this.textUnit.getId(), HttpStatus.BAD_REQUEST, TextUnit.class);
     }
 
     @Test
@@ -149,9 +149,9 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private void persistTextUnitWithLecture() {
         this.textUnit = textUnitRepository.save(this.textUnit);
-        lecture = lectureRepository.findByIdWithLectureUnits(lecture.getId()).orElseThrow();
+        lecture = lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture.getId()).orElseThrow();
         lecture.addLectureUnit(this.textUnit);
         lecture = lectureRepository.save(lecture);
-        this.textUnit = (TextUnit) lectureRepository.findByIdWithLectureUnits(lecture.getId()).orElseThrow().getLectureUnits().stream().findFirst().orElseThrow();
+        this.textUnit = (TextUnit) lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture.getId()).orElseThrow().getLectureUnits().stream().findFirst().orElseThrow();
     }
 }

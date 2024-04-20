@@ -1,8 +1,11 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,22 +16,23 @@ import de.tum.in.www1.artemis.security.annotations.ManualConfig;
 /**
  * REST controller for the apple-app-site-association json
  */
+@Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("/.well-known")
+@RequestMapping(".well-known/")
 public class AppleAppSiteAssociationResource {
 
     @Value("${artemis.iosAppId: #{null}}")
     private String appId;
 
-    private final Logger log = LoggerFactory.getLogger(AppleAppSiteAssociationResource.class);
+    private static final Logger log = LoggerFactory.getLogger(AppleAppSiteAssociationResource.class);
 
     /**
      * Provides the apple-app-site-association json content for the iOS client universal link feature.
-     * More information on the json content can be found <a href="URL#https://developer.apple.com/documentation/xcode/supporting-associated-domains">here</a>
+     * More information on the json content can be found <a href="https://developer.apple.com/documentation/xcode/supporting-associated-domains">here</a>
      *
      * @return apple-app-site-association as json
      */
-    @GetMapping("/apple-app-site-association")
+    @GetMapping("apple-app-site-association")
     @ManualConfig
     public ResponseEntity<AppleAppSiteAssociation> getAppleAppSiteAssociation() {
         if (appId == null || appId.length() < 10) {
@@ -50,7 +54,7 @@ public class AppleAppSiteAssociationResource {
         return ResponseEntity.ok(appleAppSiteAssociation);
     }
 
-    record AppleAppSiteAssociation(Applinks applinks, Webcredentials webcredentials) {
+    public record AppleAppSiteAssociation(Applinks applinks, Webcredentials webcredentials) {
 
         record Webcredentials(String[] apps) {
         }

@@ -1,8 +1,12 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -13,6 +17,7 @@ import de.tum.in.www1.artemis.domain.*;
 /**
  * Spring Data JPA repository for the Feedback entity.
  */
+@Profile(PROFILE_CORE)
 @Repository
 public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
 
@@ -20,7 +25,11 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
 
     List<Feedback> findByReferenceInAndResult_Submission_Participation_Exercise(List<String> references, Exercise exercise);
 
-    @Query("select feedback from Feedback feedback where feedback.gradingInstruction.id in :gradingInstructionsIds")
+    @Query("""
+            SELECT feedback
+            FROM Feedback feedback
+            WHERE feedback.gradingInstruction.id IN :gradingInstructionsIds
+            """)
     List<Feedback> findFeedbackByGradingInstructionIds(@Param("gradingInstructionsIds") List<Long> gradingInstructionsIds);
 
     /**
@@ -50,7 +59,7 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
      * @param gradingCriteria The grading criteria belongs to exercise in a specific course
      * @return list including feedback entries which are associated with the grading instructions
      */
-    default List<Feedback> findFeedbackByExerciseGradingCriteria(List<GradingCriterion> gradingCriteria) {
+    default List<Feedback> findFeedbackByExerciseGradingCriteria(Set<GradingCriterion> gradingCriteria) {
         List<Long> gradingInstructionsIds = gradingCriteria.stream().flatMap(gradingCriterion -> gradingCriterion.getStructuredGradingInstructions().stream())
                 .map(GradingInstruction::getId).toList();
         return findFeedbackByGradingInstructionIds(gradingInstructionsIds);

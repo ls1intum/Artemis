@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.util.Comparator;
@@ -7,8 +8,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -26,6 +28,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data JPA for the GradingScale entity
  */
+@Profile(PROFILE_CORE)
 @Repository
 public interface GradingScaleRepository extends JpaRepository<GradingScale, Long> {
 
@@ -36,11 +39,11 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
      * @return an Optional with the grading scale if such scale exists and an empty Optional otherwise
      */
     @Query("""
-                SELECT gradingScale
-                FROM GradingScale gradingScale
-                WHERE gradingScale.course.id = :#{#courseId}
+            SELECT gradingScale
+            FROM GradingScale gradingScale
+            WHERE gradingScale.course.id = :courseId
             """)
-    Optional<GradingScale> findByCourseId(@Param("courseId") Long courseId);
+    Optional<GradingScale> findByCourseId(@Param("courseId") long courseId);
 
     /**
      * Find a grading scale for exam by id
@@ -49,11 +52,11 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
      * @return an Optional with the grading scale if such scale exists and an empty Optional otherwise
      */
     @Query("""
-                SELECT gradingScale
-                FROM GradingScale gradingScale
-                WHERE gradingScale.exam.id = :#{#examId}
+            SELECT gradingScale
+            FROM GradingScale gradingScale
+            WHERE gradingScale.exam.id = :examId
             """)
-    Optional<GradingScale> findByExamId(@Param("examId") Long examId);
+    Optional<GradingScale> findByExamId(@Param("examId") long examId);
 
     /**
      * Find a grading scale for exam by id with applied bonus
@@ -62,12 +65,12 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
      * @return an Optional with the grading scale if such scale exists and an empty Optional otherwise
      */
     @Query("""
-                SELECT gradingScale
-                FROM GradingScale gradingScale
+            SELECT gradingScale
+            FROM GradingScale gradingScale
                 LEFT JOIN FETCH gradingScale.bonusFrom
-                WHERE gradingScale.exam.id = :#{#examId}
+            WHERE gradingScale.exam.id = :examId
             """)
-    Optional<GradingScale> findByExamIdWithBonusFrom(@Param("examId") Long examId);
+    Optional<GradingScale> findByExamIdWithBonusFrom(@Param("examId") long examId);
 
     /**
      * Finds a grading scale for course by id or throws an exception if no such grading scale exists.
@@ -79,7 +82,7 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
      * @return the found grading scale
      */
     @NotNull
-    default GradingScale findByCourseIdOrElseThrow(Long courseId) {
+    default GradingScale findByCourseIdOrElseThrow(long courseId) {
         try {
             return findByCourseId(courseId).orElseThrow(() -> new EntityNotFoundException("Grading scale with course ID " + courseId + " doesn't exist"));
         }
@@ -94,7 +97,7 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
      * @param courseId the id of the course
      * @return a list of grading scales for the course
      */
-    List<GradingScale> findAllByCourseId(@Param("courseId") Long courseId);
+    List<GradingScale> findAllByCourseId(long courseId);
 
     /**
      * Finds a grading scale for exam by id or throws an exception if no such grading scale exists.
@@ -106,7 +109,7 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
      * @return the found grading scale
      */
     @NotNull
-    default GradingScale findByExamIdOrElseThrow(Long examId) {
+    default GradingScale findByExamIdOrElseThrow(long examId) {
         try {
             return findByExamId(examId).orElseThrow(() -> new EntityNotFoundException("Grading scale with exam ID " + examId + " doesn't exist"));
         }
@@ -121,7 +124,7 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
      * @param examId the id of the exam
      * @return a list of grading scales for the exam
      */
-    List<GradingScale> findAllByExamId(@Param("examId") Long examId);
+    List<GradingScale> findAllByExamId(long examId);
 
     /**
      * Query which fetches all the grading scales with BONUS grade type for which the user is instructor in the course and matching the search criteria.
@@ -132,13 +135,16 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
      * @return Page with search results
      */
     @Query("""
-                SELECT gs
-                FROM GradingScale gs
+            SELECT gs
+            FROM GradingScale gs
                 LEFT JOIN gs.course
                 LEFT JOIN gs.exam
                 LEFT JOIN gs.exam.course
-                WHERE gs.gradeType = 'BONUS' AND ((gs.course.instructorGroupName IN :groups AND gs.course.title LIKE %:partialTitle%)
-                    OR (gs.exam.course.instructorGroupName IN :groups AND gs.exam.title LIKE %:partialTitle%))
+            WHERE gs.gradeType = de.tum.in.www1.artemis.domain.GradeType.BONUS
+                AND (
+                    (gs.course.instructorGroupName IN :groups AND gs.course.title LIKE %:partialTitle%)
+                    OR (gs.exam.course.instructorGroupName IN :groups AND gs.exam.title LIKE %:partialTitle%)
+                )
             """)
     // Note: Removing "LEFT JOIN gs.exam.course" part from the query above would cause the query to exclude GradingScales for Courses and just return the
     // GradingScales for Exams. (It will do so by generating a CROSS JOIN and a WHERE clause which checks for exam.course_id = course.id)
@@ -157,10 +163,10 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
     @Query("""
             SELECT gs
             FROM GradingScale gs
-            LEFT JOIN gs.course
-            LEFT JOIN gs.exam
-            WHERE gs.gradeType = 'BONUS' AND (gs.course.title LIKE %:partialTitle%
-                OR gs.exam.title LIKE %:partialTitle%)
+                LEFT JOIN gs.course
+                LEFT JOIN gs.exam
+            WHERE gs.gradeType = de.tum.in.www1.artemis.domain.GradeType.BONUS
+                AND (gs.course.title LIKE %:partialTitle% OR gs.exam.title LIKE %:partialTitle%)
             """)
     Page<GradingScale> findWithBonusGradeTypeByTitleInCourseOrExamForAdmin(@Param("partialTitle") String partialTitle, Pageable pageable);
 
@@ -171,17 +177,17 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
      * @return a set of grading scales for the courses
      */
     @Query("""
-                SELECT gs
-                FROM GradingScale gs
-                WHERE gs.course.id IN :courseIds
+            SELECT gs
+            FROM GradingScale gs
+            WHERE gs.course.id IN :courseIds
             """)
     Set<GradingScale> findAllByCourseIds(@Param("courseIds") Set<Long> courseIds);
 
     @EntityGraph(type = LOAD, attributePaths = "bonusFrom")
-    Optional<GradingScale> findWithEagerBonusFromByBonusFromId(@Param("bonusId") Long bonusId);
+    Optional<GradingScale> findWithEagerBonusFromByBonusFromId(long bonusId);
 
     @EntityGraph(type = LOAD, attributePaths = "bonusFrom")
-    Optional<GradingScale> findWithEagerBonusFromByExamId(@Param("examId") Long examId);
+    Optional<GradingScale> findWithEagerBonusFromByExamId(long examId);
 
     /**
      * Maps a grade percentage to a valid grade step within the grading scale or throws an exception if no match was found
@@ -190,7 +196,7 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
      * @param gradingScaleId the identifier for the grading scale
      * @return grade step corresponding to the given percentage
      */
-    default GradeStep matchPercentageToGradeStep(double percentage, Long gradingScaleId) {
+    default GradeStep matchPercentageToGradeStep(double percentage, long gradingScaleId) {
         Set<GradeStep> gradeSteps = findById(gradingScaleId).orElseThrow().getGradeSteps();
         return this.matchPercentageToGradeStep(percentage, gradeSteps);
     }
@@ -199,7 +205,7 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
      * @param percentage the grade percentage to be mapped
      * @param gradeSteps the grade steps of a grading scale
      * @return grade step corresponding to the given percentage
-     * @see #matchPercentageToGradeStep(double, Long)
+     * @see #matchPercentageToGradeStep(double, long)
      */
     private GradeStep matchPercentageToGradeStep(double percentage, Set<GradeStep> gradeSteps) {
         if (percentage < 0) {
@@ -224,7 +230,7 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
      * @param isExam   determines if the method is handling a grading scale for course or exam
      * @return the only remaining grading scale for the course/exam
      */
-    default GradingScale deleteExcessiveGradingScales(Long entityId, boolean isExam) {
+    default GradingScale deleteExcessiveGradingScales(long entityId, boolean isExam) {
         List<GradingScale> gradingScales;
         if (isExam) {
             gradingScales = findAllByExamId(entityId);
@@ -235,6 +241,6 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
         for (int i = 1; i < gradingScales.size(); i++) {
             deleteById(gradingScales.get(i).getId());
         }
-        return gradingScales.get(0);
+        return gradingScales.getFirst();
     }
 }

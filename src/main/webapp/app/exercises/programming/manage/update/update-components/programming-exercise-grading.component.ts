@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { AfterViewInit, Component, Input, OnDestroy, ViewChild } from '@angular/core';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
@@ -6,13 +6,17 @@ import { TranslateService } from '@ngx-translate/core';
 import { IncludedInOverallScore, getCourseFromExercise } from 'app/entities/exercise.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
+import { Subject, Subscription } from 'rxjs';
+import { NgModel } from '@angular/forms';
+import { SubmissionPolicyUpdateComponent } from 'app/exercises/shared/submission-policy/submission-policy-update.component';
+import { ProgrammingExerciseLifecycleComponent } from 'app/exercises/programming/shared/lifecycle/programming-exercise-lifecycle.component';
 
 @Component({
     selector: 'jhi-programming-exercise-grading',
     templateUrl: './programming-exercise-grading.component.html',
     styleUrls: ['../../programming-exercise-form.scss'],
 })
-export class ProgrammingExerciseGradingComponent implements OnInit {
+export class ProgrammingExerciseGradingComponent implements AfterViewInit, OnDestroy {
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly AssessmentType = AssessmentType;
     readonly faQuestionCircle = faQuestionCircle;
@@ -22,12 +26,47 @@ export class ProgrammingExerciseGradingComponent implements OnInit {
     @Input() programmingExercise: ProgrammingExercise;
     @Input() programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
 
+    @ViewChild(SubmissionPolicyUpdateComponent) submissionPolicyUpdateComponent?: SubmissionPolicyUpdateComponent;
+    @ViewChild(ProgrammingExerciseLifecycleComponent) lifecycleComponent?: ProgrammingExerciseLifecycleComponent;
+    @ViewChild('maxScore') maxScoreField?: NgModel;
+    @ViewChild('bonusPoints') bonusPointsField?: NgModel;
+    @ViewChild('maxPenalty') maxPenaltyField?: NgModel;
+
+    formValid: boolean;
+    formEmpty: boolean;
+    formValidChanges = new Subject<boolean>();
+
+    inputFieldSubscriptions: (Subscription | undefined)[] = [];
+
     editPolicyUrl: string;
 
     constructor(private translateService: TranslateService) {}
 
-    ngOnInit(): void {
+    ngAfterViewInit(): void {
+        this.inputFieldSubscriptions.push(this.maxScoreField?.valueChanges?.subscribe(() => this.calculateFormStatus()));
+        this.inputFieldSubscriptions.push(this.bonusPointsField?.valueChanges?.subscribe(() => this.calculateFormStatus()));
+        this.inputFieldSubscriptions.push(this.maxPenaltyField?.valueChanges?.subscribe(() => this.calculateFormStatus()));
+        this.inputFieldSubscriptions.push(this.submissionPolicyUpdateComponent?.form?.valueChanges?.subscribe(() => this.calculateFormStatus()));
+        this.inputFieldSubscriptions.push(this.lifecycleComponent?.formValidChanges?.subscribe(() => this.calculateFormStatus()));
         this.setEditPolicyPageLink();
+    }
+
+    ngOnDestroy() {
+        for (const subscription of this.inputFieldSubscriptions) {
+            subscription?.unsubscribe();
+        }
+    }
+
+    calculateFormStatus() {
+        this.formValid = Boolean(
+            this.maxScoreField?.valid &&
+                this.bonusPointsField?.valid &&
+                (this.maxPenaltyField?.valid || !this.programmingExercise.staticCodeAnalysisEnabled) &&
+                !this.submissionPolicyUpdateComponent?.invalid &&
+                this.lifecycleComponent?.formValid,
+        );
+        this.formEmpty = this.lifecycleComponent?.formEmpty ?? false;
+        this.formValidChanges.next(this.formValid);
     }
 
     getGradingSummary() {

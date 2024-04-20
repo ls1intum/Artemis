@@ -1,23 +1,22 @@
 package de.tum.in.www1.artemis.service.export;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 
 import org.apache.commons.lang3.mutable.MutableInt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -33,6 +32,7 @@ import de.tum.in.www1.artemis.service.archival.ArchivalReportEntry;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
+@Profile(PROFILE_CORE)
 @Service
 public abstract class SubmissionExportService {
 
@@ -41,7 +41,7 @@ public abstract class SubmissionExportService {
 
     private static final int EXPORTED_SUBMISSIONS_DELETION_DELAY_IN_MINUTES = 30;
 
-    private final Logger log = LoggerFactory.getLogger(SubmissionExportService.class);
+    private static final Logger log = LoggerFactory.getLogger(SubmissionExportService.class);
 
     private final ExerciseRepository exerciseRepository;
 
@@ -69,7 +69,7 @@ public abstract class SubmissionExportService {
         if (zippedSubmissionsPaths.isEmpty()) {
             throw new BadRequestAlertException("Failed to export student submissions.", "SubmissionExport", "noSubmissions");
         }
-        return zippedSubmissionsPaths.get(0).toFile();
+        return zippedSubmissionsPaths.getFirst().toFile();
 
     }
 
@@ -118,7 +118,7 @@ public abstract class SubmissionExportService {
             exportedStudentParticipations = new ArrayList<>(exercise.getStudentParticipations());
         }
         else {
-            List<String> participantIds = Arrays.stream(submissionExportOptions.getParticipantIdentifierList().split(",")).map(String::trim).toList();
+            Set<String> participantIds = Arrays.stream(submissionExportOptions.getParticipantIdentifierList().split(",")).map(String::trim).collect(Collectors.toSet());
 
             exportedStudentParticipations = exercise.getStudentParticipations().stream().filter(participation -> participantIds.contains(participation.getParticipantIdentifier()))
                     .collect(Collectors.toCollection(ArrayList::new));

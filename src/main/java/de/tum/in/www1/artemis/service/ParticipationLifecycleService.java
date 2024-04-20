@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.concurrent.ScheduledFuture;
@@ -7,6 +9,7 @@ import java.util.concurrent.ScheduledFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
@@ -14,10 +17,11 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ParticipationLifecycle;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 
+@Profile(PROFILE_CORE)
 @Service
 public class ParticipationLifecycleService {
 
-    private final Logger log = LoggerFactory.getLogger(ParticipationLifecycleService.class);
+    private static final Logger log = LoggerFactory.getLogger(ParticipationLifecycleService.class);
 
     private final TaskScheduler scheduler;
 
@@ -27,7 +31,7 @@ public class ParticipationLifecycleService {
 
     /**
      * Sets up a scheduled {@link Runnable} task in the lifecycle of a {@link Participation}.
-     *
+     * <p>
      * Tasks are performed in a background thread managed by a {@code TaskScheduler}.
      * See {@code TaskSchedulingConfiguration}.
      * <p>
@@ -67,7 +71,7 @@ public class ParticipationLifecycleService {
 
     /**
      * Finds the time when the build and test after due date task should be run.
-     *
+     * <p>
      * If the participation has an individual due date, this date may be after the regular build and test date for the exercise.
      * Therefore, always the latest possible of the two options has to be chosen.
      *

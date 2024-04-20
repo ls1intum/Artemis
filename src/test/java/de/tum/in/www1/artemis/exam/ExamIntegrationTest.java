@@ -15,11 +15,21 @@ import java.nio.file.Path;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -30,23 +40,47 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.FileUploadSubmission;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
-import de.tum.in.www1.artemis.domain.exam.*;
+import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.ExamUser;
+import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
+import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.exam.SuspiciousSessionReason;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.domain.quiz.QuizGroup;
 import de.tum.in.www1.artemis.domain.quiz.QuizPool;
+import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseFactory;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExamLiveEventRepository;
+import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.ExamUserRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
+import de.tum.in.www1.artemis.repository.QuizPoolRepository;
+import de.tum.in.www1.artemis.repository.StudentExamRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
+import de.tum.in.www1.artemis.service.QuizPoolService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
@@ -57,11 +91,20 @@ import de.tum.in.www1.artemis.user.UserFactory;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.PageableSearchUtilService;
 import de.tum.in.www1.artemis.util.ZipFileTestUtilService;
-import de.tum.in.www1.artemis.web.rest.dto.*;
+import de.tum.in.www1.artemis.web.rest.dto.CourseWithIdDTO;
+import de.tum.in.www1.artemis.web.rest.dto.ExamChecklistDTO;
+import de.tum.in.www1.artemis.web.rest.dto.ExamInformationDTO;
+import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
+import de.tum.in.www1.artemis.web.rest.dto.ExamSessionDTO;
+import de.tum.in.www1.artemis.web.rest.dto.ExamWithIdAndCourseDTO;
+import de.tum.in.www1.artemis.web.rest.dto.ExerciseForPlagiarismCasesOverviewDTO;
+import de.tum.in.www1.artemis.web.rest.dto.ExerciseGroupWithIdAndExamDTO;
+import de.tum.in.www1.artemis.web.rest.dto.SuspiciousExamSessionsDTO;
+import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     private static final String TEST_PREFIX = "examint";
 
@@ -135,6 +178,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     private ExamUserRepository examUserRepository;
 
     @Autowired
+    private QuizPoolService quizPoolService;
+
+    @Autowired
     private QuizPoolRepository quizPoolRepository;
 
     private Course course1;
@@ -146,6 +192,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     private Exam exam1;
 
     private Exam exam2;
+
+    private Exam exam3;
 
     private static final int NUMBER_OF_STUDENTS = 4;
 
@@ -193,7 +241,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         exam2 = examUtilService.addExamWithExerciseGroup(course1, true);
         examUtilService.addExamChannel(exam2, "exam2 channel");
 
-        bitbucketRequestMockProvider.enableMockingOfRequests();
+        exam3 = examUtilService.addExamWithQuizPool(course1);
+
+        gitlabRequestMockProvider.enableMockingOfRequests();
     }
 
     @Test
@@ -215,18 +265,152 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     void testGenerateStudentExams() throws Exception {
         Exam exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 2);
 
-        // invoke generate student exams
+        generateStudentExams(exam);
+
+        verifyStudentsExamAndExercisesAndQuizQuestions(exam, 0);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGenerateStudentExamsWithQuizPool() throws Exception {
+        Exam exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 2);
+        setupQuizPoolWithQuestionsForExam(exam);
+
+        generateStudentExams(exam);
+
+        verifyStudentsExamAndExercisesAndQuizQuestions(exam, 4);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGenerateStudentExamsWithEmptyQuizPool() throws Exception {
+        Exam exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 2);
+        setupEmptyQuizPoolForExam(exam);
+
+        generateStudentExams(exam);
+
+        verifyStudentsExamAndExercisesAndQuizQuestions(exam, 0);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGenerateMissingStudentExams() throws Exception {
+        Exam exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 1);
+
+        generateStudentExams(exam);
+
+        registerNewStudentsToExam(exam, 1);
+        generateMissingStudentExams(exam, 1);
+        verifyStudentsExamAndExercisesAndQuizQuestions(exam, 0);
+
+        generateMissingStudentExams(exam, 0);
+        verifyStudentsExamAndExercisesAndQuizQuestions(exam, 0);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGenerateMissingStudentExamsWithQuizPool() throws Exception {
+        Exam exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 1);
+        setupQuizPoolWithQuestionsForExam(exam);
+
+        generateStudentExams(exam);
+
+        registerNewStudentsToExam(exam, 1);
+        generateMissingStudentExams(exam, 1);
+        verifyStudentsExamAndExercisesAndQuizQuestions(exam, 4);
+
+        generateMissingStudentExams(exam, 0);
+        verifyStudentsExamAndExercisesAndQuizQuestions(exam, 4);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGenerateMissingStudentExamsWithEmptyQuizPool() throws Exception {
+        Exam exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 1);
+        setupEmptyQuizPoolForExam(exam);
+
+        generateStudentExams(exam);
+
+        registerNewStudentsToExam(exam, 1);
+        generateMissingStudentExams(exam, 1);
+        verifyStudentsExamAndExercisesAndQuizQuestions(exam, 0);
+
+        generateMissingStudentExams(exam, 0);
+        verifyStudentsExamAndExercisesAndQuizQuestions(exam, 0);
+    }
+
+    private void setupEmptyQuizPoolForExam(Exam exam) {
+        QuizPool quizPool = new QuizPool();
+        quizPoolService.update(exam.getId(), quizPool);
+    }
+
+    private void setupQuizPoolWithQuestionsForExam(Exam exam) {
+        QuizPool quizPool = new QuizPool();
+        setupGroupsAndQuestionsForQuizPool(quizPool);
+        quizPoolService.update(exam.getId(), quizPool);
+    }
+
+    private void setupGroupsAndQuestionsForQuizPool(QuizPool quizPool) {
+        QuizGroup quizGroup0 = QuizExerciseFactory.createQuizGroup("Encapsulation");
+        QuizGroup quizGroup1 = QuizExerciseFactory.createQuizGroup("Inheritance");
+        QuizGroup quizGroup2 = QuizExerciseFactory.createQuizGroup("Polymorphism");
+        QuizQuestion mcQuizQuestion0 = QuizExerciseFactory.createMultipleChoiceQuestionWithTitleAndGroup("MC 0", quizGroup0);
+        QuizQuestion mcQuizQuestion1 = QuizExerciseFactory.createMultipleChoiceQuestionWithTitleAndGroup("MC 1", quizGroup0);
+        QuizQuestion dndQuizQuestion0 = QuizExerciseFactory.createDragAndDropQuestionWithTitleAndGroup("DND 0", quizGroup1);
+        QuizQuestion dndQuizQuestion1 = QuizExerciseFactory.createDragAndDropQuestionWithTitleAndGroup("DND 1", quizGroup2);
+        QuizQuestion saQuizQuestion0 = QuizExerciseFactory.createShortAnswerQuestionWithTitleAndGroup("SA 0", null);
+        quizPool.setQuizGroups(List.of(quizGroup0, quizGroup1, quizGroup2));
+        quizPool.setQuizQuestions(List.of(mcQuizQuestion0, mcQuizQuestion1, dndQuizQuestion0, dndQuizQuestion1, saQuizQuestion0));
+    }
+
+    private void registerNewStudentsToExam(Exam exam, int numberOfStudents) {
+        examUtilService.registerUsersForExamAndSaveExam(exam, TEST_PREFIX, 2, 2 + numberOfStudents - 1);
+    }
+
+    private void generateStudentExams(Exam exam) throws Exception {
         List<StudentExam> studentExams = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams",
                 Optional.empty(), StudentExam.class, HttpStatus.OK);
-        assertThat(studentExams).hasSize(exam.getExamUsers().size());
+        for (var studentExam : studentExams) {
+            assertThat(studentExam.getExam()).isEqualTo(exam);
+        }
+        verifyStudentExams(studentExams, exam.getExamUsers().size());
+    }
+
+    private void generateMissingStudentExams(Exam exam, int expectedMissingStudent) throws Exception {
+        List<StudentExam> missingStudentExams = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-missing-student-exams",
+                Optional.empty(), StudentExam.class, HttpStatus.OK);
+        assertThat(missingStudentExams).hasSize(expectedMissingStudent);
+    }
+
+    private void verifyStudentsExamAndExercisesAndQuizQuestions(Exam exam, int numberOfQuizQuestions) throws Exception {
+        List<StudentExam> studentExams = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
+        verifyStudentExams(studentExams, exam.getExamUsers().size());
+
+        verifyStudentExamsExercises(studentExams, exam.getNumberOfExercisesInExam());
+        verifyStudentExamsQuizQuestions(studentExams, numberOfQuizQuestions);
+    }
+
+    private void verifyStudentExams(List<StudentExam> studentExams, int expectedNumberOfStudentExams) {
+        assertThat(studentExams).hasSize(expectedNumberOfStudentExams);
         for (StudentExam studentExam : studentExams) {
             assertThat(studentExam.getWorkingTime()).as("Working time is set correctly").isEqualTo(120 * 60);
         }
+    }
 
-        for (var studentExam : studentExams) {
-            assertThat(studentExam.getExercises()).hasSize(exam.getNumberOfExercisesInExam());
-            assertThat(studentExam.getExam()).isEqualTo(exam);
-            // TODO: check exercise configuration, each mandatory exercise group has to appear, one optional exercise should appear
+    private void verifyStudentExamsExercises(List<StudentExam> studentExams, int expected) {
+        List<Long> ids = studentExams.stream().map(StudentExam::getId).toList();
+        List<StudentExam> studentExamsWithExercises = studentExamRepository.findAllWithEagerExercisesById(ids);
+        for (var studentExam : studentExamsWithExercises) {
+            assertThat(studentExam.getExercises()).hasSize(expected);
+        }
+        // TODO: check exercise configuration, each mandatory exercise group has to appear, one optional exercise should appear
+    }
+
+    private void verifyStudentExamsQuizQuestions(List<StudentExam> studentExams, int expected) {
+        List<Long> ids = studentExams.stream().map(StudentExam::getId).toList();
+        List<StudentExam> studentExamsWithQuizQuestions = studentExamRepository.findAllWithEagerQuizQuestionsById(ids);
+        for (var studentExam : studentExamsWithQuizQuestions) {
+            assertThat(studentExam.getQuizQuestions()).hasSize(expected);
         }
     }
 
@@ -277,37 +461,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGenerateMissingStudentExams() throws Exception {
-        Exam exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 1);
-        // Generate student exams
-        List<StudentExam> studentExams = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams",
-                Optional.empty(), StudentExam.class, HttpStatus.OK);
-        assertThat(studentExams).hasSize(exam.getExamUsers().size());
-
-        // Register one new students
-        examUtilService.registerUsersForExamAndSaveExam(exam, TEST_PREFIX, 2, 2);
-
-        // Generate individual exams for the two missing students
-        List<StudentExam> missingStudentExams = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-missing-student-exams",
-                Optional.empty(), StudentExam.class, HttpStatus.OK);
-        assertThat(missingStudentExams).hasSize(1);
-
-        // Fetch student exams
-        List<StudentExam> studentExamsDB = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
-        assertThat(studentExamsDB).hasSize(exam.getExamUsers().size());
-
-        // Another request should not create any exams
-        missingStudentExams = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-missing-student-exams", Optional.empty(),
-                StudentExam.class, HttpStatus.OK);
-        assertThat(missingStudentExams).isEmpty();
-
-        studentExamsDB = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
-        assertThat(studentExamsDB).hasSize(exam.getExamUsers().size());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void testSaveExamWithExerciseGroupWithExerciseToDatabase() {
         textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise();
     }
@@ -647,6 +801,17 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetExam_asInstructor_WithQuizPool() throws Exception {
+        Exam returnedExam = request.get("/api/courses/" + course1.getId() + "/exams/" + exam3.getId() + "?withExerciseGroups=true", HttpStatus.OK, Exam.class);
+        assertThat(returnedExam.getQuizExamMaxPoints()).isEqualTo(0);
+        returnedExam = request.get("/api/courses/" + course1.getId() + "/exams/" + exam3.getId() + "?withStudents=true", HttpStatus.OK, Exam.class);
+        assertThat(returnedExam.getQuizExamMaxPoints()).isEqualTo(0);
+        returnedExam = request.get("/api/courses/" + course1.getId() + "/exams/" + exam3.getId(), HttpStatus.OK, Exam.class);
+        assertThat(returnedExam.getQuizExamMaxPoints()).isEqualTo(0);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetExamsForCourse_asInstructor() throws Exception {
         var exams = request.getList("/api/courses/" + course1.getId() + "/exams", HttpStatus.OK, Exam.class);
         verify(examAccessService).checkCourseAccessForTeachingAssistantElseThrow(course1.getId());
@@ -671,7 +836,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void testGetCurrentAndUpcomingExams() throws Exception {
         var exams = request.getList("/api/admin/courses/upcoming-exams", HttpStatus.OK, Exam.class);
         ZonedDateTime currentDay = now().truncatedTo(ChronoUnit.DAYS);
@@ -739,7 +904,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void testDeleteExamThatDoesNotExist() throws Exception {
         request.delete("/api/courses/" + course2.getId() + "/exams/654555", HttpStatus.NOT_FOUND);
     }
@@ -761,7 +926,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void testResetExamThatDoesNotExist() throws Exception {
         request.delete("/api/courses/" + course2.getId() + "/exams/654555/reset", HttpStatus.NOT_FOUND);
     }
@@ -852,8 +1017,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteExamWithMultipleTestRuns() throws Exception {
-        bitbucketRequestMockProvider.enableMockingOfRequests(true);
-        bambooRequestMockProvider.enableMockingOfRequests(true);
+        gitlabRequestMockProvider.enableMockingOfRequests();
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
 
         var exam = examUtilService.addExam(course1);
         exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, true, true);
@@ -867,7 +1032,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void testDeleteCourseWithMultipleTestRuns() throws Exception {
         Course course = courseUtilService.addEmptyCourse();
         Exam exam = examUtilService.addExam(course);
@@ -879,7 +1044,10 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         assertThat(studentExamRepository.findAllTestRunsByExamId(exam.getId())).hasSize(3);
 
-        request.delete("/api/courses/" + course.getId(), HttpStatus.OK);
+        request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
+
+        assertThat(courseRepository.findById(course.getId())).isEmpty();
+        assertThat(examRepository.findById(exam.getId())).isEmpty();
     }
 
     @Test
@@ -1041,10 +1209,10 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         // Start exercises
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/start-exercises", null, HttpStatus.FORBIDDEN, null);
         // Unlock all repositories
-        request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/unlock-all-repositories", Optional.empty(), Integer.class,
+        request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/unlock-all-repositories", Optional.empty(), Integer.class,
                 HttpStatus.FORBIDDEN);
         // Lock all repositories
-        request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/lock-all-repositories", Optional.empty(), Integer.class,
+        request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/lock-all-repositories", Optional.empty(), Integer.class,
                 HttpStatus.FORBIDDEN);
         // Add students to exam
         request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students", Collections.singletonList(new StudentDTO(null, null, null, null, null)),
@@ -1330,8 +1498,19 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetExamForImportWithExercises_successful() throws Exception {
+        ExerciseGroup quizGroup = exam2.getExerciseGroups().get(0);
+        QuizExercise quiz = QuizExerciseFactory.generateQuizExerciseForExam(quizGroup);
+        QuizExerciseFactory.addAllQuestionTypesToQuizExercise(quiz);
+        exerciseRepository.save(quiz);
+
         Exam received = request.get("/api/exams/" + exam2.getId(), HttpStatus.OK, Exam.class);
         assertThat(received).isEqualTo(exam2);
+        assertThat(received.getExerciseGroups()).hasSize(1);
+        var group = received.getExerciseGroups().get(0);
+        assertThat(group.getExercises()).hasSize(1);
+        QuizExercise receivedExercise = (QuizExercise) group.getExercises().iterator().next();
+        // Details like the quiz questions are needed for importing and should be included
+        assertThat(receivedExercise.getQuizQuestions()).hasSize(4);
     }
 
     @Test
@@ -1360,7 +1539,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         var exam = ExamFactory.generateExam(course1);
         exam.setTitle(title);
         examRepository.save(exam);
-        final PageableSearchDTO<String> search = pageableSearchUtilService.configureSearch(title);
+        final SearchTermPageableSearchDTO<String> search = pageableSearchUtilService.configureSearch(title);
         final var result = request.getSearchResult("/api/exams", HttpStatus.OK, Exam.class, pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(1).containsExactly(exam);
     }
@@ -1372,7 +1551,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         var searchTerm = "A very distinct title that should only ever exist once in the database";
         newExam.setTitle(searchTerm);
         examRepository.save(newExam);
-        final PageableSearchDTO<String> search = pageableSearchUtilService.configureSearch(searchTerm);
+        final SearchTermPageableSearchDTO<String> search = pageableSearchUtilService.configureSearch(searchTerm);
         final var result = request.getSearchResult("/api/exams?withExercises=true", HttpStatus.OK, Exam.class, pageableSearchUtilService.searchMapping(search));
         List<Exam> foundExams = result.getResultsOnPage();
         assertThat(foundExams).hasSize(1).containsExactly(newExam);
@@ -1388,7 +1567,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         var exam = examUtilService.addExamWithExerciseGroup(course, true);
         exam.setTitle(title);
         examRepository.save(exam);
-        final PageableSearchDTO<String> search = pageableSearchUtilService.configureSearch(title);
+        final SearchTermPageableSearchDTO<String> search = pageableSearchUtilService.configureSearch(title);
         final var result = request.getSearchResult("/api/exams", HttpStatus.OK, Exam.class, pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(0);
     }
@@ -1403,7 +1582,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         var exam = examUtilService.addExamWithExerciseGroup(course, true);
         exam.setTitle(title);
         examRepository.save(exam);
-        final PageableSearchDTO<String> search = pageableSearchUtilService.configureSearch(title);
+        final SearchTermPageableSearchDTO<String> search = pageableSearchUtilService.configureSearch(title);
         final var result = request.getSearchResult("/api/exams", HttpStatus.OK, Exam.class, pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(1).contains(exam);
     }
@@ -1411,14 +1590,14 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TUTOR")
     void testGetAllExamsOnPage_asTutor_failsWithForbidden() throws Exception {
-        final PageableSearchDTO<String> search = pageableSearchUtilService.configureSearch("");
+        final SearchTermPageableSearchDTO<String> search = pageableSearchUtilService.configureSearch("");
         request.getSearchResult("/api/exams", HttpStatus.FORBIDDEN, Exam.class, pageableSearchUtilService.searchMapping(search));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetAllExamsOnPage_asStudent_failsWithForbidden() throws Exception {
-        final PageableSearchDTO<String> search = pageableSearchUtilService.configureSearch("");
+        final SearchTermPageableSearchDTO<String> search = pageableSearchUtilService.configureSearch("");
         request.getSearchResult("/api/exams", HttpStatus.FORBIDDEN, Exam.class, pageableSearchUtilService.searchMapping(search));
     }
     // </editor-fold>
@@ -1570,6 +1749,41 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         assertThat(received.getCourse()).isEqualTo(course1);
         assertThat(received.getCourse()).isEqualTo(exam.getCourse());
         assertThat(received.getExerciseGroups()).hasSize(4);
+
+        List<ExerciseGroup> exerciseGroups = received.getExerciseGroups();
+        for (int i = 0; i < exerciseGroups.size(); i++) {
+            var exerciseGroup = exerciseGroups.get(i);
+            assertThat(exerciseGroup.getTitle()).isEqualTo("Group " + i);
+            assertThat(exerciseGroup.getIsMandatory()).isTrue();
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testImportExamWithQuizExercise_successfulWithQuestions() throws Exception {
+        Exam exam = examUtilService.addExamWithExerciseGroup(course1, false);
+        ExerciseGroup quizGroup = exam.getExerciseGroups().get(0);
+        QuizExercise quiz = QuizExerciseFactory.generateQuizExerciseForExam(quizGroup);
+        quiz.addQuestions(QuizExerciseFactory.createMultipleChoiceQuestionWithAllTypesOfAnswerOptions());
+        quiz.addQuestions(QuizExerciseFactory.createShortAnswerQuestionWithRealisticText());
+        quiz.addQuestions(QuizExerciseFactory.createSingleChoiceQuestion());
+        quizGroup.addExercise(quiz);
+        exerciseRepository.save(quiz);
+
+        exam.setId(null);
+        final Exam received = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exam-import", exam, Exam.class, CREATED);
+        assertThat(received.getExerciseGroups()).hasSize(1);
+
+        ExerciseGroup receivedGroup = received.getExerciseGroups().get(0);
+        assertThat(receivedGroup.getExercises()).hasSize(1);
+        QuizExercise exercise = (QuizExercise) receivedGroup.getExercises().iterator().next();
+
+        // The directly returned exam should not contain details like the quiz questions
+        assertThat(exercise.getQuizQuestions()).isEmpty();
+
+        exercise = quizExerciseRepository.findWithEagerQuestionsByIdOrElseThrow(exercise.getId());
+        // Quiz questions should get imported into the exam
+        assertThat(exercise.getQuizQuestions()).hasSize(3);
     }
 
     @Test

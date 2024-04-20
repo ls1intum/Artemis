@@ -1,14 +1,16 @@
 package de.tum.in.www1.artemis.web.rest.lecture;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 
-import javax.ws.rs.BadRequestException;
+import jakarta.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,13 +21,14 @@ import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
+@Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class ExerciseUnitResource {
 
-    private final Logger log = LoggerFactory.getLogger(ExerciseUnitResource.class);
+    private static final Logger log = LoggerFactory.getLogger(ExerciseUnitResource.class);
 
     private static final String ENTITY_NAME = "exerciseUnit";
 
@@ -34,9 +37,6 @@ public class ExerciseUnitResource {
     private final ExerciseUnitRepository exerciseUnitRepository;
 
     private final LectureRepository lectureRepository;
-
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
 
     public ExerciseUnitResource(LectureRepository lectureRepository, ExerciseUnitRepository exerciseUnitRepository, AuthorizationCheckService authorizationCheckService) {
         this.exerciseUnitRepository = exerciseUnitRepository;
@@ -52,16 +52,16 @@ public class ExerciseUnitResource {
      * @return the ResponseEntity with status 201 (Created) and with body the new exercise unit
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("/lectures/{lectureId}/exercise-units")
+    @PostMapping("lectures/{lectureId}/exercise-units")
     @EnforceAtLeastEditor
     public ResponseEntity<ExerciseUnit> createExerciseUnit(@PathVariable Long lectureId, @RequestBody ExerciseUnit exerciseUnit) throws URISyntaxException {
         log.debug("REST request to create ExerciseUnit : {}", exerciseUnit);
         if (exerciseUnit.getId() != null) {
             throw new BadRequestException();
         }
-        Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId);
         if (lecture.getCourse() == null) {
-            throw new ConflictException("Specified lecture is not part of a course", "ExerciseUnit", "courseMissing");
+            throw new BadRequestAlertException("Specified lecture is not part of a course", ENTITY_NAME, "courseMissing");
         }
         authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.EDITOR, lecture, null);
 
@@ -71,7 +71,7 @@ public class ExerciseUnitResource {
         exerciseUnit.setLecture(lecture);
         lecture.addLectureUnit(exerciseUnit);
         Lecture updatedLecture = lectureRepository.save(lecture);
-        ExerciseUnit persistedExerciseUnit = (ExerciseUnit) updatedLecture.getLectureUnits().get(updatedLecture.getLectureUnits().size() - 1);
+        ExerciseUnit persistedExerciseUnit = (ExerciseUnit) updatedLecture.getLectureUnits().getLast();
 
         return ResponseEntity.created(new URI("/api/exercise-units/" + persistedExerciseUnit.getId())).body(persistedExerciseUnit);
     }
@@ -82,13 +82,13 @@ public class ExerciseUnitResource {
      * @param lectureId the id of the lecture to get the exercise-units for
      * @return the ResponseEntity with status 200 (OK) and with body the found exercise units
      */
-    @GetMapping("/lectures/{lectureId}/exercise-units")
+    @GetMapping("lectures/{lectureId}/exercise-units")
     @EnforceAtLeastEditor
     public ResponseEntity<List<ExerciseUnit>> getAllExerciseUnitsOfLecture(@PathVariable Long lectureId) {
         log.debug("REST request to get all exercise units for lecture : {}", lectureId);
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndCompetenciesElseThrow(lectureId);
         if (lecture.getCourse() == null) {
-            throw new ConflictException("Specified lecture is not part of a course", "ExerciseUnit", "courseMissing");
+            throw new BadRequestAlertException("Specified lecture is not part of a course", ENTITY_NAME, "courseMissing");
         }
         authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.EDITOR, lecture, null);
         List<ExerciseUnit> exerciseUnitsOfLecture = exerciseUnitRepository.findByLectureId(lectureId);

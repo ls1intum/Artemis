@@ -3,9 +3,9 @@ package de.tum.in.www1.artemis.domain.hestia;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.persistence.*;
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -25,7 +25,12 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 @DiscriminatorValue("T")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
-@JsonSubTypes({ @JsonSubTypes.Type(value = ExerciseHint.class, name = "text"), @JsonSubTypes.Type(value = CodeHint.class, name = "code") })
+// @formatter:off
+@JsonSubTypes({
+    @JsonSubTypes.Type(value = ExerciseHint.class, name = "text"),
+    @JsonSubTypes.Type(value = CodeHint.class, name = "code")
+})
+// @formatter:on
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ExerciseHint extends DomainObject {
 

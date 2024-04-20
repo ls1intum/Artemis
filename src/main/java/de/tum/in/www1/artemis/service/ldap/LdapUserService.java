@@ -7,8 +7,8 @@ import static org.springframework.ldap.query.LdapQueryBuilder.query;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,12 +18,13 @@ import org.springframework.ldap.query.SearchScope;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.repository.LdapUserRepository;
 
 @Service
 @Profile("ldap | ldap-only")
 public class LdapUserService {
 
-    private final Logger log = LoggerFactory.getLogger(LdapUserService.class);
+    private static final Logger log = LoggerFactory.getLogger(LdapUserService.class);
 
     @Value("${artemis.user-management.ldap.base}")
     private String ldapBase;

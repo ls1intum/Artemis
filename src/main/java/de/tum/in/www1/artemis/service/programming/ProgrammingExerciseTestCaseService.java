@@ -1,11 +1,14 @@
 package de.tum.in.www1.artemis.service.programming;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.config.Constants;
@@ -19,10 +22,11 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.errors.ErrorConstants;
 
+@Profile(PROFILE_CORE)
 @Service
 public class ProgrammingExerciseTestCaseService {
 
-    private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseTestCaseService.class);
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseTestCaseService.class);
 
     private final ProgrammingExerciseTestCaseRepository testCaseRepository;
 

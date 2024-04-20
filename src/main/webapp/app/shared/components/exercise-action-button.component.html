@@ -1,6 +1,8 @@
 <div [hidden]="buttonLoading">
-    <fa-icon *ngIf="buttonIcon" [icon]="buttonIcon"></fa-icon>
+    @if (buttonIcon) {
+        <fa-icon [icon]="buttonIcon" />
+    }
     &nbsp;
     <span [ngClass]="{ 'd-none': hideLabelMobile, 'd-md-inline': hideLabelMobile }">{{ buttonLabel }}</span>
 </div>
-<fa-icon [hidden]="!buttonLoading" [spin]="true" [icon]="faCircleNotch"></fa-icon>
+<fa-icon [hidden]="!buttonLoading" [spin]="true" [icon]="faCircleNotch" />

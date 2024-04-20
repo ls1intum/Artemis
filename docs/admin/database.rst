@@ -42,7 +42,7 @@ Migrating MySQL Data to PostgreSQL
         ---
         services:
             mysql:
-                image: docker.io/library/mysql:8
+                image: docker.io/library/mysql:8.2.0
                 environment:
                     - MYSQL_DATABASE=Artemis
                     - MYSQL_ALLOW_EMPTY_PASSWORD=yes
@@ -226,5 +226,4 @@ In your Artemis config the following values might need to be added/updated to co
             username: <YOUR_DB_USER>
             password: <YOUR_DB_PASSWORD>
         jpa:
-            database-platform: org.hibernate.dialect.PostgreSQL10Dialect
             database: POSTGRESQL

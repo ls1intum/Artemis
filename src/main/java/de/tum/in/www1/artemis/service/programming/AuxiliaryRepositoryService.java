@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.programming;
 
 import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_CHECKOUT_PATH;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,21 +10,23 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
-import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceErrorKeys;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceErrorKeys;
 
+@Profile(PROFILE_CORE)
 @Service
 public class AuxiliaryRepositoryService {
 
     private static final String AUX_REPO_ENTITY_NAME = "programmingExercise";
 
-    private static final Pattern ALLOWED_BAMBOO_CHECKOUT_DIRECTORY = Pattern.compile("[\\w-]+(/[\\w-]+)*$");
+    private static final Pattern ALLOWED_CHECKOUT_DIRECTORY = Pattern.compile("[\\w-]+(/[\\w-]+)*$");
 
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
@@ -132,7 +135,7 @@ public class AuxiliaryRepositoryService {
     }
 
     private void validateAuxiliaryRepositoryCheckoutDirectoryValid(AuxiliaryRepository auxiliaryRepository) {
-        Matcher ciCheckoutDirectoryMatcher = ALLOWED_BAMBOO_CHECKOUT_DIRECTORY.matcher(auxiliaryRepository.getCheckoutDirectory());
+        Matcher ciCheckoutDirectoryMatcher = ALLOWED_CHECKOUT_DIRECTORY.matcher(auxiliaryRepository.getCheckoutDirectory());
         if (!ciCheckoutDirectoryMatcher.matches() || auxiliaryRepository.getCheckoutDirectory().equals(ASSIGNMENT_CHECKOUT_PATH)) {
             throw new BadRequestAlertException("The checkout directory '" + auxiliaryRepository.getCheckoutDirectory() + "' is invalid!", AUX_REPO_ENTITY_NAME,
                     ProgrammingExerciseResourceErrorKeys.INVALID_AUXILIARY_REPOSITORY_CHECKOUT_DIRECTORY);
@@ -198,8 +201,7 @@ public class AuxiliaryRepositoryService {
                 // limited to 100 characters.
                 validateAuxiliaryRepositoryCheckoutDirectoryLength(auxiliaryRepository);
 
-                // Multiple auxiliary repositories might not share one checkout directory, since
-                // Bamboo does not allow this.
+                // Multiple auxiliary repositories should not share one checkout directory
                 validateAuxiliaryRepositoryCheckoutDirectoryDuplication(auxiliaryRepository, otherRepositories);
             }
         }

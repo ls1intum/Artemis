@@ -1,13 +1,16 @@
 package de.tum.in.www1.artemis.service.metis.conversation.auth;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -21,6 +24,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
+@Profile(PROFILE_CORE)
 @Service
 public class ChannelAuthorizationService extends ConversationAuthorizationService {
 
@@ -204,7 +208,7 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
     public void isAllowedToRegisterUsersToChannel(@NotNull Channel channel, @Nullable List<String> userLogins, @NotNull User user) {
         var userLoginsToCheck = Objects.requireNonNullElse(userLogins, new ArrayList<>());
         var userToCheck = getUserIfNecessary(user);
-        var isJoinRequest = userLoginsToCheck.size() == 1 && userLoginsToCheck.get(0).equals(userToCheck.getLogin());
+        var isJoinRequest = userLoginsToCheck.size() == 1 && userLoginsToCheck.getFirst().equals(userToCheck.getLogin());
         var channelFromDb = channelRepository.findById(channel.getId());
         var isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(channelFromDb.orElseThrow().getCourse(), userToCheck);
         var isChannelModerator = isChannelModerator(channel.getId(), userToCheck.getId());
@@ -265,7 +269,7 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
         if (!isChannelMember) {
             throw new AccessForbiddenException("User is not a member of the channel");
         }
-        var isSelfDeRegistration = userLoginsToCheck.size() == 1 && userLoginsToCheck.get(0).equals(userToCheck.getLogin());
+        var isSelfDeRegistration = userLoginsToCheck.size() == 1 && userLoginsToCheck.getFirst().equals(userToCheck.getLogin());
         if (!isSelfDeRegistration) {
             throw new AccessForbiddenException("You are not allowed to deregister other users from this channel");
         }

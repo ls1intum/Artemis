@@ -30,8 +30,8 @@ on:
 # Keep in sync with build.yml and test.yml
 env:
   CI: true
-  node: 18
-  java: 17
+  node: 20
+  java: 21
 
 
 jobs:
@@ -43,7 +43,7 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    # Install Java 17
+    # Install Java 21
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
@@ -58,16 +58,16 @@ jobs:
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@v2
+      uses: github/codeql-action/init@v3
       # Override language selection by uncommenting this and choosing your languages
       with:
          languages: javascript, java
 
     # Autobuild attempts to build any compiled languages  (C/C++, C#, or Java).
     - name: Autobuild
-      uses: github/codeql-action/autobuild@v2
+      uses: github/codeql-action/autobuild@v3
 
     - run: rm -rf build/resources/main/static
 
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v2
+      uses: github/codeql-action/analyze@v3

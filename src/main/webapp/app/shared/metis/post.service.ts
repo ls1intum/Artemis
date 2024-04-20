@@ -48,15 +48,6 @@ export class PostService extends PostingService<Post> {
         if (postContextFilter.sortingOrder) {
             params = params.set('sortingOrder', postContextFilter.sortingOrder.toString());
         }
-        if (postContextFilter.courseWideContexts?.length) {
-            params = params.set('courseWideContexts', postContextFilter.courseWideContexts.toString());
-        }
-        if (postContextFilter.lectureIds?.length) {
-            params = params.set('lectureIds', postContextFilter.lectureIds.toString());
-        }
-        if (postContextFilter.exerciseIds?.length) {
-            params = params.set('exerciseIds', postContextFilter.exerciseIds.toString());
-        }
         if (postContextFilter.courseWideChannelIds) {
             params = params.set('courseWideChannelIds', postContextFilter.courseWideChannelIds.toString());
         }
@@ -97,7 +88,7 @@ export class PostService extends PostingService<Post> {
      * @return {Observable<string[]>}
      */
     getAllPostTagsByCourseId(courseId: number): Observable<HttpResponse<string[]>> {
-        return this.http.get<string[]>(`${this.resourceUrl}${courseId}/posts/tags`, { observe: 'response' });
+        return this.http.get<string[]>(`${this.resourceUrl}${courseId}/messages/tags`, { observe: 'response' });
     }
 
     /**

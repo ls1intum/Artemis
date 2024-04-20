@@ -1,9 +1,12 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -16,6 +19,7 @@ import de.tum.in.www1.artemis.service.dto.ConsistencyErrorDTO;
  * Service Implementation for consistency checks
  * of programming exercises
  */
+@Profile(PROFILE_CORE)
 @Service
 public class ConsistencyCheckService {
 
@@ -47,9 +51,9 @@ public class ConsistencyCheckService {
     /**
      * Performs multiple checks for a given programming exercise and returns a list
      * of the resulting errors, if any.
-     *
+     * <p>
      * Make sure to load Template and Solution participations along with the programming exercise.
-     *
+     * <p>
      * Checks:
      * - Existence of VCS repositories and project
      * - Existence of CI build plans
@@ -79,17 +83,17 @@ public class ConsistencyCheckService {
             result.add(new ConsistencyErrorDTO(programmingExercise, ConsistencyErrorDTO.ErrorType.VCS_PROJECT_MISSING));
         }
         else {
-            if (!versionControl.repositoryUrlIsValid(programmingExercise.getVcsTemplateRepositoryUrl())) {
+            if (!versionControl.repositoryUriIsValid(programmingExercise.getVcsTemplateRepositoryUri())) {
                 result.add(new ConsistencyErrorDTO(programmingExercise, ConsistencyErrorDTO.ErrorType.TEMPLATE_REPO_MISSING));
             }
-            if (!versionControl.repositoryUrlIsValid(programmingExercise.getVcsTestRepositoryUrl())) {
+            if (!versionControl.repositoryUriIsValid(programmingExercise.getVcsTestRepositoryUri())) {
                 result.add(new ConsistencyErrorDTO(programmingExercise, ConsistencyErrorDTO.ErrorType.TEST_REPO_MISSING));
             }
-            if (!versionControl.repositoryUrlIsValid(programmingExercise.getVcsSolutionRepositoryUrl())) {
+            if (!versionControl.repositoryUriIsValid(programmingExercise.getVcsSolutionRepositoryUri())) {
                 result.add(new ConsistencyErrorDTO(programmingExercise, ConsistencyErrorDTO.ErrorType.SOLUTION_REPO_MISSING));
             }
             for (var auxiliaryRepository : programmingExercise.getAuxiliaryRepositories()) {
-                if (!versionControl.repositoryUrlIsValid(auxiliaryRepository.getVcsRepositoryUrl())) {
+                if (!versionControl.repositoryUriIsValid(auxiliaryRepository.getVcsRepositoryUri())) {
                     result.add(new ConsistencyErrorDTO(programmingExercise, ConsistencyErrorDTO.ErrorType.AUXILIARY_REPO_MISSING));
                 }
             }

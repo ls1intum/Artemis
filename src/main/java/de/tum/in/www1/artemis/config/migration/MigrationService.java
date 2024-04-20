@@ -29,7 +29,7 @@ import de.tum.in.www1.artemis.repository.MigrationChangeRepository;
 @Profile("scheduling")
 public class MigrationService {
 
-    private final Logger log = LoggerFactory.getLogger(MigrationService.class);
+    private static final Logger log = LoggerFactory.getLogger(MigrationService.class);
 
     @Value("${artemis.version}")
     private String artemisVersion;
@@ -69,7 +69,7 @@ public class MigrationService {
             log.info("Integrity check passed.");
         }
 
-        List<String> executedChanges = migrationChangeRepository.findAll().stream().map(MigrationChangelog::getDateString).toList();
+        Set<String> executedChanges = migrationChangeRepository.findAll().stream().map(MigrationChangelog::getDateString).collect(Collectors.toCollection(HashSet::new));
 
         Map<Integer, MigrationEntry> migrationEntryMap = entryMap.entrySet().stream().filter(entry -> !executedChanges.contains(entry.getValue().date()))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
@@ -129,7 +129,7 @@ public class MigrationService {
         List<MigrationEntry> entryList = entryMap.values().stream().toList();
         if (!entryList.isEmpty()) {
             int startIndex = 1;
-            MigrationEntry baseEntry = entryList.get(0);
+            MigrationEntry baseEntry = entryList.getFirst();
             // Make sure the base date is not null. If it is, it was already caught and logged above.
             while (!StringUtils.hasLength(baseEntry.date()) && startIndex < entryList.size()) {
                 baseEntry = entryList.get(startIndex);

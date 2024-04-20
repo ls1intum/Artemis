@@ -77,6 +77,10 @@ spring:
         password:
         hikari:
             auto-commit: false
+            pool-name: Hikari
+    h2:
+        console:
+            enabled: false
     data:
         jpa:
             repositories:
@@ -87,16 +91,18 @@ spring:
     jmx:
         enabled: false
     jpa:
-        database-platform: org.hibernate.dialect.H2Dialect # Alternatives org.hibernate.dialect.H2Dialect / org.hibernate.dialect.PostgreSQL10Dialect / org.hibernate.dialect.MySQL8Dialect
+        database-platform: org.hibernate.dialect.H2Dialect # Alternatives org.hibernate.dialect.H2Dialect / org.hibernate.dialect.PostgreSQLDialect / org.hibernate.dialect.MySQLDialect
         database: h2        # Alternatives h2 / POSTGRESQL / MYSQL
         open-in-view: false
         show-sql: false
         hibernate:
             ddl-auto: none
             naming:
-                physical-strategy: org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy
+                physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
                 implicit-strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy
         properties:
+            hibernate.format_sql: false
+            hibernate.use_sql_comments: false
             hibernate.id.new_generator_mappings: true
             hibernate.connection.provider_disables_autocommit: false
             hibernate.connection.autocommit: false
@@ -115,6 +121,8 @@ spring:
             hibernate.jdbc.batch_size: 25
             hibernate.jdbc.time_zone: UTC
             hibernate.jdbc.lob.non_contextual_creation: true
+            # limit fetch depth to prevent queries from getting too large because of eager fetching
+            hibernate.max_fetch_depth: 2
     liquibase:
         contexts: tests
         enabled: true
@@ -123,9 +131,6 @@ spring:
     main:
         allow-bean-definition-overriding: true
         allow-circular-references: true # TODO: we should deactivate this in the future, however currently securityConfiguration has a circular dependency to itself
-    mvc:
-        pathmatch:
-            matching-strategy: ant_path_matcher # TODO: we should update all paths to support PathPatternParser, in particular ClientForwardResource
     messages:
         basename: i18n/messages
         cache-duration: PT1S # 1 second, see the ISO 8601 standard
@@ -170,30 +175,30 @@ zonky:
             type: H2  # Alternatives: H2 / MYSQL / POSTGRES
             postgres:
                 docker:
-                    image: "postgres:16.1-alpine"
+                    image: "postgres:16.2-alpine"
                     tmpfs:
                         enabled: true
                 server:
                     properties:
-                        max_connections: 10
-                        shared_buffers: 1GB
-                        effective_cache_size: 3GB
+                        max_connections: 100
+                        shared_buffers: 2GB
+                        effective_cache_size: 4GB
                         maintenance_work_mem: 256MB
                         checkpoint_completion_target: 0.9
                         wal_buffers: 16MB
                         default_statistics_target: 100
                         random_page_cost: 1.1
                         effective_io_concurrency: 200
-                        work_mem: 26214kB
+                        work_mem: 16MB
                         min_wal_size: 1GB
                         max_wal_size: 4GB
-                        max_worker_processes: 4
-                        max_parallel_workers_per_gather: 2
-                        max_parallel_workers: 4
-                        max_parallel_maintenance_workers: 2
+                        max_worker_processes: 8
+                        max_parallel_workers_per_gather: 4
+                        max_parallel_workers: 8
+                        max_parallel_maintenance_workers: 4
             mysql:
                 docker:
-                    image: "mysql:8.2.0"
+                    image: "mysql:8.3.0"
                     tmpfs:
                         enabled: true
 

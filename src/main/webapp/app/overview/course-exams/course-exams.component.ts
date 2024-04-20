@@ -7,7 +7,7 @@ import dayjs from 'dayjs/esm';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
-import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
+import { faAngleDown, faAngleUp, faListAlt } from '@fortawesome/free-solid-svg-icons';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 
 @Component({
@@ -29,6 +29,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     // Icons
     faAngleUp = faAngleUp;
     faAngleDown = faAngleDown;
+    faListAlt = faListAlt;
 
     constructor(
         private route: ActivatedRoute,

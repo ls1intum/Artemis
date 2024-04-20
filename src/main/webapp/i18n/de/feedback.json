@@ -9,7 +9,7 @@
             "updated": "Feedback aktualisiert mit ID {{ param }}",
             "deleted": "Feedback gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll das Feedback \"{{ text }}\" wirklich gelöscht werden?"
+                "question": "Soll das Feedback{{ text }} wirklich gelöscht werden?"
             },
             "detail": {
                 "title": "Feedback"

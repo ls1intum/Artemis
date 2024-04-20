@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.time.*;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.IsoFields;
@@ -7,8 +9,9 @@ import java.time.temporal.TemporalField;
 import java.time.temporal.WeekFields;
 import java.util.*;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -25,71 +28,81 @@ import de.tum.in.www1.artemis.domain.statistics.StatisticsEntry;
 /**
  * Spring Data JPA repository for the statistics pages
  */
+@Profile(PROFILE_CORE)
 @Repository
 public interface StatisticsRepository extends JpaRepository<User, Long> {
 
     @Query("""
-            select
-            new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
+            SELECT new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
                 s.submissionDate,
                 count(s.id)
+            )
+            FROM Submission s
+            WHERE s.submissionDate >= :startDate
+                AND s.submissionDate <= :endDate
+                AND (
+                    s.participation.exercise.exerciseGroup IS NOT NULL
+                    OR EXISTS (SELECT c FROM Course c WHERE s.participation.exercise.course.testCourse = FALSE)
                 )
-            from Submission s
-            where s.submissionDate >= :#{#startDate} and s.submissionDate <= :#{#endDate} and (s.participation.exercise.exerciseGroup IS NOT NULL or exists (select c from Course c where s.participation.exercise.course.testCourse = false))
-            group by s.submissionDate
-            order by s.submissionDate asc
+            GROUP BY s.submissionDate
+            ORDER BY s.submissionDate ASC
             """)
     List<StatisticsEntry> getTotalSubmissions(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
     @Query("""
-            select
-            new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
+            SELECT new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
                 s.submissionDate,
                 count(s.id)
-                )
-            from Submission s
-            where s.submissionDate >= :#{#startDate} and s.submissionDate <= :#{#endDate} and s.participation.exercise.id in :exerciseIds
-            group by s.submissionDate
-            order by s.submissionDate asc
+            )
+            FROM Submission s
+            WHERE s.submissionDate >= :startDate
+                AND s.submissionDate <= :endDate
+                AND s.participation.exercise.id IN :exerciseIds
+            GROUP BY s.submissionDate
+            ORDER BY s.submissionDate ASC
             """)
     List<StatisticsEntry> getTotalSubmissionsForCourse(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate,
             @Param("exerciseIds") List<Long> exerciseIds);
 
     @Query("""
-            select
-            new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
+            SELECT new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
                 s.submissionDate,
                 count(s.id)
-                )
-            from Submission s
-            where s.submissionDate >= :#{#startDate} and s.submissionDate <= :#{#endDate} and s.participation.exercise.id = :exerciseId
-            group by s.submissionDate
-            order by s.submissionDate asc
+            )
+            FROM Submission s
+            WHERE s.submissionDate >= :startDate
+                AND s.submissionDate <= :endDate
+                AND s.participation.exercise.id = :exerciseId
+            GROUP BY s.submissionDate
+            ORDER BY s.submissionDate ASC
             """)
     List<StatisticsEntry> getTotalSubmissionsForExercise(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate,
-            @Param("exerciseId") Long exerciseId);
+            @Param("exerciseId") long exerciseId);
 
     @Query("""
-            select
-            new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
-                s.submissionDate, u.login
+            SELECT new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
+                submission.submissionDate,
+                p.student.login
+            )
+            FROM StudentParticipation p
+                LEFT JOIN p.submissions submission
+            WHERE submission.submissionDate >= :startDate
+                AND submission.submissionDate <= :endDate
+                AND p.student.login NOT LIKE '%test%'
+                AND (submission.participation.exercise.exerciseGroup IS NOT NULL
+                    OR EXISTS (SELECT c FROM Course c WHERE submission.participation.exercise.course.testCourse = FALSE)
                 )
-            from User u, Submission s, StudentParticipation p
-            where s.participation.id = p.id and p.student.id = u.id and s.submissionDate >= :#{#startDate} and s.submissionDate <= :#{#endDate} and u.login not like '%test%'
-            and (s.participation.exercise.exerciseGroup IS NOT NULL or exists (select c from Course c where s.participation.exercise.course.testCourse = false))
-            order by s.submissionDate asc
+            ORDER BY submission.submissionDate ASC
             """)
     List<StatisticsEntry> getActiveUsers(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
     @Query("""
-            SELECT DISTINCT u.login
-            FROM User u, Submission s, StudentParticipation p
-            WHERE
-                s.participation.id = p.id AND
-                p.student.id = u.id AND
-                s.submissionDate >= :startDate AND
-                s.submissionDate <= :endDate AND
-                u.login NOT LIKE '%test%'
+            SELECT DISTINCT p.student.login
+            FROM StudentParticipation p
+                LEFT JOIN p.submissions submission
+            WHERE submission.submissionDate >= :startDate
+                AND submission.submissionDate <= :endDate
+                AND p.student.login NOT LIKE '%test%'
             """)
     List<String> getActiveUserNames(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
@@ -102,374 +115,435 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
      * @return a list of active users
      */
     @Query("""
-            SELECT COUNT (DISTINCT u.id)
-            FROM User u, Submission s, StudentParticipation p
-            WHERE s.participation.id = p.id
-                AND p.student.id = u.id
-                AND s.submissionDate >= :#{#startDate}
-                AND s.submissionDate <= :#{#endDate}
-                AND u.login not like '%test%'
+            SELECT COUNT(DISTINCT p.student.id)
+            FROM StudentParticipation p
+                LEFT JOIN p.submissions submission
+            WHERE submission.submissionDate >= :startDate
+                AND submission.submissionDate <= :endDate
+                AND p.student.login NOT LIKE '%test%'
                 AND (
                     p.exercise.exerciseGroup IS NOT NULL
-                    OR p.exercise.course.testCourse = false
+                    OR p.exercise.course.testCourse = FALSE
                 )
             """)
     Long countActiveUsers(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
     @Query("""
-            select
-            new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
-                s.submissionDate, u.login
-                )
-            from User u, Submission s, StudentParticipation p
-            where s.participation.id = p.id and p.student.id = u.id and s.submissionDate >= :#{#startDate} and s.submissionDate <= :#{#endDate} and u.login not like '%test%'
-            and p.exercise.id in :exerciseIds
-            order by s.submissionDate asc
+            SELECT new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
+                submission.submissionDate,
+                p.student.login
+            )
+            FROM StudentParticipation p
+                LEFT JOIN p.submissions submission
+            WHERE submission.submissionDate >= :startDate
+                AND submission.submissionDate <= :endDate
+                AND p.student.login NOT LIKE '%test%'
+                AND p.exercise.id IN :exerciseIds
+            ORDER BY submission.submissionDate ASC
             """)
     List<StatisticsEntry> getActiveUsersForCourse(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate,
             @Param("exerciseIds") List<Long> exerciseIds);
 
     @Query("""
-            select
-            new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
-                s.submissionDate, u.login
-                )
-            from User u, Submission s, StudentParticipation p
-            where s.participation.id = p.id and p.student.id = u.id and s.submissionDate >= :#{#startDate} and s.submissionDate <= :#{#endDate} and u.login not like '%test%'
-            and p.exercise.id = :exerciseId
-            order by s.submissionDate asc
+            SELECT new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
+                submission.submissionDate,
+                p.student.login
+            )
+            FROM StudentParticipation p
+                LEFT JOIN p.submissions submission
+            WHERE submission.submissionDate >= :startDate
+                AND submission.submissionDate <= :endDate
+                AND p.student.login NOT LIKE '%test%'
+            AND p.exercise.id = :exerciseId
+            ORDER BY submission.submissionDate ASC
             """)
-    List<StatisticsEntry> getActiveUsersForExercise(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("exerciseId") Long exerciseId);
+    List<StatisticsEntry> getActiveUsersForExercise(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("exerciseId") long exerciseId);
 
     @Query("""
-            select
-            new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
-                e.releaseDate, count(e.id)
-                )
-            from Exercise e
-            where e.releaseDate >= :#{#startDate} and e.releaseDate <= :#{#endDate} and e.course.testCourse = false
-            group by e.releaseDate
-            order by e.releaseDate asc
+            SELECT new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
+                e.releaseDate, COUNT(e.id)
+            )
+            FROM Exercise e
+            WHERE e.releaseDate >= :startDate
+                AND e.releaseDate <= :endDate
+                AND e.course.testCourse = FALSE
+            GROUP BY e.releaseDate
+            ORDER BY e.releaseDate ASC
             """)
     List<StatisticsEntry> getReleasedExercises(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
     @Query("""
-            select
-            new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
-                e.releaseDate, count(e.id)
-                )
-            from Exercise e
-            where e.releaseDate >= :#{#startDate} and e.releaseDate <= :#{#endDate} and e.id in :exerciseIds
-            group by e.releaseDate
-            order by e.releaseDate asc
+            SELECT new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
+                e.releaseDate, COUNT(e.id)
+            )
+            FROM Exercise e
+            WHERE e.releaseDate >= :startDate
+                AND e.releaseDate <= :endDate
+                AND e.id IN :exerciseIds
+            GROUP BY e.releaseDate
+            ORDER BY e.releaseDate ASC
             """)
     List<StatisticsEntry> getReleasedExercisesForCourse(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate,
             @Param("exerciseIds") List<Long> exerciseIds);
 
     @Query("""
-            select
-            new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
-                e.dueDate, count(e.id)
-                )
-            from Exercise e
-            where e.dueDate >= :#{#startDate} and e.dueDate <= :#{#endDate} and e.course.testCourse = false
-            group by e.dueDate
-            order by e.dueDate asc
+            SELECT new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
+                e.dueDate, COUNT(e.id)
+            )
+            FROM Exercise e
+            WHERE e.dueDate >= :startDate
+                AND e.dueDate <= :endDate
+                AND e.course.testCourse = FALSE
+            GROUP BY e.dueDate
+            ORDER BY e.dueDate ASC
             """)
     List<StatisticsEntry> getExercisesDue(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
     @Query("""
-            select
-            new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
+            SELECT new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
                 e.dueDate, count(e.id)
-                )
-            from Exercise e
-            where e.dueDate >= :#{#startDate} and e.dueDate <= :#{#endDate} and e.id in :exerciseIds
-            group by e.dueDate
-            order by e.dueDate asc
+            )
+            FROM Exercise e
+            WHERE e.dueDate >= :startDate
+                AND e.dueDate <= :endDate
+                AND e.id IN :exerciseIds
+            GROUP BY e.dueDate
+            ORDER BY e.dueDate ASC
             """)
     List<StatisticsEntry> getExercisesDueForCourse(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate,
             @Param("exerciseIds") List<Long> exerciseIds);
 
     @Query("""
-            select
-            new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
+            SELECT new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
                 p.auditEventDate, u.login
-                )
-            from User u, PersistentAuditEvent p
-            where u.login = p.principal and p.auditEventType = 'AUTHENTICATION_SUCCESS' and u.login not like '%test%' and p.auditEventDate >= :#{#startDate} and p.auditEventDate <= :#{#endDate}
-            order by p.auditEventDate asc
+            )
+            FROM User u
+                LEFT JOIN PersistentAuditEvent p ON u.login = p.principal
+            WHERE p.auditEventType = 'AUTHENTICATION_SUCCESS'
+                AND u.login NOT LIKE '%test%'
+                AND p.auditEventDate >= :startDate AND p.auditEventDate <= :endDate
+            ORDER BY p.auditEventDate ASC
             """)
     List<StatisticsEntry> getLoggedInUsers(@Param("startDate") Instant startDate, @Param("endDate") Instant endDate);
 
     @Query("""
-            select
-            new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
-                e.endDate, count(e.id)
-                )
-            from Exam e
-            where e.endDate >= :#{#startDate} and e.endDate <= :#{#endDate} and e.course.testCourse = false
-            group by e.endDate
-            order by e.endDate asc
+            SELECT new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
+                e.endDate, COUNT(e.id)
+            )
+            FROM Exam e
+            WHERE e.endDate >= :startDate
+                AND e.endDate <= :endDate
+                AND e.course.testCourse = FALSE
+            GROUP BY e.endDate
+            ORDER BY e.endDate ASC
             """)
     List<StatisticsEntry> getConductedExams(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
     @Query("""
-            select
-            new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
-                e.endDate, count(e.id)
-                )
-            from Exam e
-            where e.endDate >= :#{#startDate} and e.endDate <= :#{#endDate} and e.course.id = :#{#courseId}
-            group by e.endDate
-            order by e.endDate asc
+            SELECT new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
+                e.endDate, COUNT(e.id)
+            )
+            FROM Exam e
+            WHERE e.endDate >= :startDate
+                AND e.endDate <= :endDate
+                AND e.course.id = :courseId
+            GROUP BY e.endDate
+            ORDER BY e.endDate ASC
             """)
-    List<StatisticsEntry> getConductedExamsForCourse(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("courseId") Long courseId);
+    List<StatisticsEntry> getConductedExamsForCourse(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("courseId") long courseId);
 
     @Query("""
-            select
-            new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
-                e.endDate, count(se.id)
-                )
-            from StudentExam se, Exam e
-            where se.submitted = true and se.exam = e and e.endDate >= :#{#startDate} and e.endDate <= :#{#endDate} and e.course.testCourse = false
-            group by e.endDate
-            order by e.endDate asc
+            SELECT new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
+                e.endDate, COUNT(e.id)
+            )
+            FROM Exam e
+                LEFT JOIN e.studentExams se
+            WHERE e.endDate >= :startDate
+                AND e.endDate <= :endDate
+                AND se.submitted = TRUE
+                AND e.course.testCourse = FALSE
+            GROUP BY e.endDate
+            ORDER BY e.endDate ASC
             """)
     List<StatisticsEntry> getExamParticipations(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
     @Query("""
-            select
-            new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
-                e.endDate, count(se.id)
-                )
-            from StudentExam se, Exam e
-            where se.submitted = true and se.exam = e and e.endDate >= :#{#startDate} and e.endDate <= :#{#endDate} and e.course.id = :#{#courseId}
-            group by e.endDate
-            order by e.endDate asc
+            SELECT new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
+                e.endDate, COUNT(e.id)
+            )
+            FROM Exam e
+                LEFT JOIN e.studentExams se
+            WHERE e.endDate >= :startDate
+                AND e.endDate <= :endDate
+                AND se.submitted = TRUE
+                AND e.course.id = :courseId
+            GROUP BY e.endDate
+            ORDER BY e.endDate ASC
             """)
-    List<StatisticsEntry> getExamParticipationsForCourse(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("courseId") Long courseId);
+    List<StatisticsEntry> getExamParticipationsForCourse(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("courseId") long courseId);
 
     @Query("""
-            select
-            new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
-                e.endDate, sum(size(e.examUsers))
-                )
-            from Exam e
-            where e.endDate >= :#{#startDate} and e.endDate <= :#{#endDate} and e.course.testCourse = false
-            group by e.endDate
-            order by e.endDate asc
+            SELECT new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
+                e.endDate, SUM(SIZE(e.examUsers))
+            )
+            FROM Exam e
+            WHERE e.endDate >= :startDate
+                AND e.endDate <= :endDate
+                AND e.course.testCourse = FALSE
+            GROUP BY e.endDate
+            ORDER BY e.endDate ASC
             """)
     List<StatisticsEntry> getExamRegistrations(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
     @Query("""
-            select
-            new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
-                e.endDate, sum(size(e.examUsers))
-                )
-            from Exam e
-            where e.endDate >= :#{#startDate} and e.endDate <= :#{#endDate} and e.course.id = :#{#courseId}
-            group by e.endDate
-            order by e.endDate asc
+            SELECT new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
+                e.endDate, SUM(SIZE(e.examUsers))
+            )
+            FROM Exam e
+            WHERE e.endDate >= :startDate
+                AND e.endDate <= :endDate
+                AND e.course.id = :courseId
+            GROUP BY e.endDate
+            ORDER BY e.endDate ASC
             """)
-    List<StatisticsEntry> getExamRegistrationsForCourse(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("courseId") Long courseId);
+    List<StatisticsEntry> getExamRegistrationsForCourse(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("courseId") long courseId);
 
     @Query("""
-            select new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
-                r.completionDate, r.assessor.login
+            SELECT new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
+                r.completionDate,
+                r.assessor.login
+            )
+            FROM Result r
+            WHERE r.completionDate >= :startDate
+                AND r.completionDate <= :endDate
+                AND (
+                    r.assessmentType = de.tum.in.www1.artemis.domain.enumeration.AssessmentType.MANUAL
+                    OR r.assessmentType = de.tum.in.www1.artemis.domain.enumeration.AssessmentType.SEMI_AUTOMATIC
+                ) AND r.assessor.login NOT LIKE '%test%'
+                AND (
+                    r.participation.exercise.exerciseGroup IS NOT NULL
+                    OR EXISTS (SELECT c FROM Course c WHERE r.participation.exercise.course.testCourse = FALSE)
                 )
-            from Result r
-            where (r.assessmentType = 'MANUAL' or r.assessmentType = 'SEMI_AUTOMATIC') and r.completionDate >= :#{#startDate} and r.completionDate <= :#{#endDate} and r.assessor.login not like '%test%'
-            and (r.participation.exercise.exerciseGroup IS NOT NULL or exists (select c from Course c where r.participation.exercise.course.testCourse = false))
             """)
     List<StatisticsEntry> getActiveTutors(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
     @Query("""
-            select
-            new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
-                r.completionDate, r.assessor.login
-                )
-            from Result r
-            where (r.assessmentType = 'MANUAL' or r.assessmentType = 'SEMI_AUTOMATIC') and r.completionDate >= :#{#startDate} and r.completionDate <= :#{#endDate} and r.assessor.login not like '%test%'
-            and r.participation.exercise.id in :exerciseIds
+            SELECT new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
+                r.completionDate,
+                r.assessor.login
+            )
+            FROM Result r
+            WHERE r.completionDate >= :startDate
+                AND r.completionDate <= :endDate
+                AND (
+                    r.assessmentType = de.tum.in.www1.artemis.domain.enumeration.AssessmentType.MANUAL
+                    OR r.assessmentType = de.tum.in.www1.artemis.domain.enumeration.AssessmentType.SEMI_AUTOMATIC
+                ) AND r.assessor.login NOT LIKE '%test%'
+                AND r.participation.exercise.id IN :exerciseIds
             """)
     List<StatisticsEntry> getActiveTutorsForCourse(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate,
             @Param("exerciseIds") List<Long> exerciseIds);
 
     @Query("""
-            select
-            new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
-                r.completionDate, r.assessor.login
-                )
-            from Result r
-            where (r.assessmentType = 'MANUAL' or r.assessmentType = 'SEMI_AUTOMATIC') and r.completionDate >= :#{#startDate} and r.completionDate <= :#{#endDate} and r.assessor.login not like '%test%'
-            and r.participation.exercise.id = :exerciseId
+            SELECT new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
+                r.completionDate,
+                r.assessor.login
+            )
+            FROM Result r
+            WHERE r.completionDate >= :startDate
+                AND r.completionDate <= :endDate
+                AND (
+                    r.assessmentType = de.tum.in.www1.artemis.domain.enumeration.AssessmentType.MANUAL
+                    OR r.assessmentType = de.tum.in.www1.artemis.domain.enumeration.AssessmentType.SEMI_AUTOMATIC
+                ) AND r.assessor.login NOT LIKE '%test%'
+                AND r.participation.exercise.id = :exerciseId
             """)
-    List<StatisticsEntry> getActiveTutorsForExercise(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("exerciseId") Long exerciseId);
+    List<StatisticsEntry> getActiveTutorsForExercise(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("exerciseId") long exerciseId);
 
     @Query("""
-            select
-            new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
-                r.completionDate, count(r.id)
+            SELECT new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
+                r.completionDate, COUNT(r.id)
+            )
+            FROM Result r
+            WHERE r.completionDate >= :startDate
+                AND r.completionDate <= :endDate
+                AND (
+                    r.participation.exercise.exerciseGroup IS NOT NULL
+                    OR EXISTS (SELECT c FROM Course c WHERE r.participation.exercise.course.testCourse = FALSE)
                 )
-            from Result r
-            where r.completionDate >= :#{#startDate} and r.completionDate <= :#{#endDate} and (r.participation.exercise.exerciseGroup IS NOT NULL or exists (select c from Course c where r.participation.exercise.course.testCourse = false))
-            group by r.completionDate
-            order by r.completionDate
+            GROUP BY r.completionDate
+            ORDER BY r.completionDate
             """)
     List<StatisticsEntry> getCreatedResults(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
     @Query("""
-            select
-            new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
-                r.completionDate, count(r.id)
-                )
-            from Result r
-            where r.completionDate >= :#{#startDate} and r.completionDate <= :#{#endDate} and r.participation.exercise.id in :exerciseIds
-            group by r.completionDate
-            order by r.completionDate
+            SELECT new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
+                r.completionDate, COUNT(r.id)
+            )
+            FROM Result r
+            WHERE r.completionDate >= :startDate
+                AND r.completionDate <= :endDate
+                AND r.participation.exercise.id IN :exerciseIds
+            GROUP BY r.completionDate
+            ORDER BY r.completionDate
             """)
     List<StatisticsEntry> getCreatedResultsForCourse(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate,
             @Param("exerciseIds") List<Long> exerciseIds);
 
     @Query("""
-            select
-            new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
-                r.completionDate, count(r.id)
-                )
-            from Result r
-            where r.completionDate >= :#{#startDate} and r.completionDate <= :#{#endDate} and r.participation.exercise.id = :exerciseId
-            group by r.completionDate
-            order by r.completionDate
+            SELECT new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
+                r.completionDate, COUNT(r.id)
+            )
+            FROM Result r
+            WHERE r.completionDate >= :startDate
+                AND r.completionDate <= :endDate
+                AND r.participation.exercise.id = :exerciseId
+            GROUP BY r.completionDate
+            ORDER BY r.completionDate
             """)
-    List<StatisticsEntry> getCreatedResultsForExercise(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("exerciseId") Long exerciseId);
+    List<StatisticsEntry> getCreatedResultsForExercise(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("exerciseId") long exerciseId);
 
     @Query("""
-            select
-            new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
-                r.completionDate, sum(size(r.feedbacks))
-                )
-            from Result r
-            where r.completionDate >= :#{#startDate} and r.completionDate <= :#{#endDate} and (r.participation.exercise.exerciseGroup IS NOT NULL or exists (select c from Course c where r.participation.exercise.course.testCourse = false))
-            group by r.completionDate
-            order by r.completionDate
+            SELECT new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
+                r.completionDate, SUM(SIZE(r.feedbacks))
+            )
+            FROM Result r
+            WHERE r.completionDate >= :startDate
+                AND r.completionDate <= :endDate
+                AND (
+                    r.participation.exercise.exerciseGroup IS NOT NULL
+                    OR EXISTS(SELECT c FROM Course c WHERE r.participation.exercise.course.testCourse = FALSE ))
+            GROUP BY r.completionDate
+            ORDER BY r.completionDate
             """)
     List<StatisticsEntry> getResultFeedbacks(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
     @Query("""
-            select
-            new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
-                r.completionDate, sum(size(r.feedbacks))
-                )
-            from Result r
-            where r.completionDate >= :#{#startDate} and r.completionDate <= :#{#endDate} and r.participation.exercise.id in :exerciseIds
-            group by r.completionDate
-            order by r.completionDate
+            SELECT new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
+                r.completionDate, SUM(SIZE(r.feedbacks))
+            )
+            FROM Result r
+            WHERE r.completionDate >= :startDate
+                AND r.completionDate <= :endDate
+                AND r.participation.exercise.id IN :exerciseIds
+            GROUP BY r.completionDate
+            ORDER BY r.completionDate
             """)
     List<StatisticsEntry> getResultFeedbacksForCourse(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate,
             @Param("exerciseIds") List<Long> exerciseIds);
 
     @Query("""
-            select
-            new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
-                r.completionDate, sum(size(r.feedbacks))
-                )
-            from Result r
-            where r.completionDate >= :#{#startDate} and r.completionDate <= :#{#endDate} and r.participation.exercise.id = :exerciseId
-            group by r.completionDate
-            order by r.completionDate
+            SELECT new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
+                r.completionDate, SUM(SIZE(r.feedbacks))
+            )
+            FROM Result r
+            WHERE r.completionDate >= :startDate
+                AND r.completionDate <= :endDate
+                AND r.participation.exercise.id = :exerciseId
+            GROUP BY r.completionDate
+            ORDER BY r.completionDate
             """)
-    List<StatisticsEntry> getResultFeedbacksForExercise(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("exerciseId") Long exerciseId);
+    List<StatisticsEntry> getResultFeedbacksForExercise(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("exerciseId") long exerciseId);
 
     @Query("""
-            select
-            new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
-                post.creationDate, count(post.id)
-                )
-            from Post post left join post.lecture lectures left join post.exercise exercises
-            where post.creationDate >= :#{#startDate} and post.creationDate <= :#{#endDate} and (lectures.course.id = :#{#courseId} or exercises.course.id = :#{#courseId} or post.course.id = :#{#courseId})
-            group by post.creationDate
-            order by post.creationDate asc
+            SELECT new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
+                post.creationDate, COUNT(post.id)
+            )
+            FROM Post post
+                LEFT JOIN TREAT (post.conversation AS Channel) channel
+            WHERE post.creationDate >= :startDate
+                AND post.creationDate <= :endDate
+                AND channel.course.id = :courseId
+                AND channel.isCourseWide = TRUE
+            GROUP BY post.creationDate
+            ORDER BY post.creationDate ASC
             """)
-    List<StatisticsEntry> getPostsForCourseInDateRange(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("courseId") Long courseId);
+    List<StatisticsEntry> getPostsForCourseInDateRange(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("courseId") long courseId);
 
     @Query("""
-            select
-            new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
-                post.creationDate, count(post.id)
-                )
-            from Post post left join post.exercise exercise
-            where post.creationDate >= :#{#startDate} and post.creationDate <= :#{#endDate} and exercise.id = :#{#exerciseId}
-            group by post.creationDate
-            order by post.creationDate asc
+            SELECT new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
+                post.creationDate, COUNT(post.id)
+            )
+            FROM Post post
+                LEFT JOIN TREAT (post.conversation AS Channel) channel
+            WHERE post.creationDate >= :startDate
+                AND post.creationDate <= :endDate
+                AND channel.exercise.id = :exerciseId
+            GROUP BY post.creationDate
+            ORDER BY post.creationDate ASC
             """)
     List<StatisticsEntry> getPostsForExerciseInDateRange(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate,
-            @Param("exerciseId") Long exerciseId);
+            @Param("exerciseId") long exerciseId);
 
     @Query("""
-            select count(post)
-            from Post post left join post.exercise exercise
-            where exercise.id = :#{#exerciseId}
+            SELECT COUNT(post)
+            FROM Post post
+                LEFT JOIN TREAT (post.conversation AS Channel) channel
+            WHERE channel.exercise.id = :exerciseId
             """)
-    long getNumberOfExercisePosts(@Param("exerciseId") Long exerciseId);
+    long getNumberOfExercisePosts(@Param("exerciseId") long exerciseId);
 
     @Query("""
-            select count(distinct post.id)
-            from AnswerPost answer left join answer.post post left join post.exercise exercise
-            where exercise.id = :#{#exerciseId} and answer.resolvesPost = true
+            SELECT COUNT(DISTINCT post.id)
+            FROM AnswerPost answer
+                LEFT JOIN answer.post post
+                LEFT JOIN TREAT (post.conversation AS Channel) channel
+            WHERE channel.exercise.id = :exerciseId
+                AND answer.resolvesPost = TRUE
             """)
-    long getNumberOfResolvedExercisePosts(@Param("exerciseId") Long exerciseId);
+    long getNumberOfResolvedExercisePosts(@Param("exerciseId") long exerciseId);
 
     @Query("""
-            select
-            new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
-                answer.creationDate, count(answer.id)
-                )
-            from AnswerPost answer left join answer.post post left join post.lecture lectures left join post.exercise exercises
-            where answer.creationDate >= :#{#startDate} and answer.creationDate <= :#{#endDate} and answer.resolvesPost = true and (lectures.course.id = :#{#courseId} or exercises.course.id = :#{#courseId} or post.course.id = :#{#courseId})
-            group by answer.creationDate
-            order by answer.creationDate asc
+            SELECT new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
+                answer.creationDate, COUNT(answer.id)
+            )
+            FROM AnswerPost answer
+                LEFT JOIN answer.post post
+                LEFT JOIN TREAT (post.conversation AS Channel) channel
+            WHERE answer.creationDate >= :startDate
+                AND answer.creationDate <= :endDate
+                AND answer.resolvesPost = TRUE
+                AND channel.course.id = :courseId
+                AND channel.isCourseWide = TRUE
+            GROUP BY answer.creationDate
+            ORDER BY answer.creationDate ASC
             """)
-    List<StatisticsEntry> getResolvedCoursePostsInDateRange(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("courseId") Long courseId);
+    List<StatisticsEntry> getResolvedCoursePostsInDateRange(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("courseId") long courseId);
 
     @Query("""
-            select
-            new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
-                answer.creationDate, count(answer.id)
-                )
-            from AnswerPost answer left join answer.post post left join post.exercise exercise
-            where answer.creationDate >= :#{#startDate} and answer.creationDate <= :#{#endDate} and answer.resolvesPost = true and exercise.course.id = :#{#exerciseId}
-            group by answer.creationDate
-            order by answer.creationDate asc
+            SELECT new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
+                answer.creationDate, COUNT(answer.id)
+            )
+            FROM AnswerPost answer
+                LEFT JOIN answer.post post
+                LEFT JOIN TREAT (post.conversation AS Channel) channel
+            WHERE answer.creationDate >= :startDate
+                AND answer.creationDate <= :endDate
+                AND answer.resolvesPost = TRUE
+                AND channel.exercise.id = :exerciseId
+            GROUP BY answer.creationDate
+            ORDER BY answer.creationDate ASC
             """)
     List<StatisticsEntry> getResolvedExercisePostsInDateRange(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate,
-            @Param("exerciseId") Long exerciseId);
+            @Param("exerciseId") long exerciseId);
 
     @Query("""
-            select e.id
-            from Exercise e
-            where e.course.id = :courseId
+            SELECT e.id
+            FROM Exercise e
+            WHERE e.course.id = :courseId
             """)
-    List<Long> findExerciseIdsByCourseId(@Param("courseId") Long courseId);
+    List<Long> findExerciseIdsByCourseId(@Param("courseId") long courseId);
 
     @Query("""
-            select e
-            from Exercise e
-            where e.course.id = :courseId
-            """)
-    Set<Exercise> findExercisesByCourseId(@Param("courseId") Long courseId);
-
-    @Query("""
-            select
-            new de.tum.in.www1.artemis.domain.statistics.CourseStatisticsAverageScore(
+            SELECT new de.tum.in.www1.artemis.domain.statistics.CourseStatisticsAverageScore(
                 p.exercise.id,
                 p.exercise.title,
                 p.exercise.releaseDate,
-                avg(p.lastScore)
-                )
-            from ParticipantScore p
-            where p.exercise IN :exercises
-            group by p.exercise.id, p.exercise.title, p.exercise.releaseDate
+                AVG(p.lastScore)
+            )
+            FROM ParticipantScore p
+            WHERE p.exercise IN :exercises
+            GROUP BY p.exercise.id, p.exercise.title, p.exercise.releaseDate
             """)
     List<CourseStatisticsAverageScore> findAvgPointsForExercises(@Param("exercises") Set<Exercise> exercises);
 
@@ -597,7 +671,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
      * @return A List<StatisticsData> with only distinct users per timeslot
      */
     private List<StatisticsEntry> filterDuplicatedUsers(SpanType span, List<StatisticsEntry> result, ZonedDateTime startDate, GraphType graphType) {
-        Map<Integer, List<String>> users = new HashMap<>();
+        Map<Integer, Set<String>> users = new HashMap<>();
         for (StatisticsEntry listElement : result) {
             ZonedDateTime date;
             if (graphType == GraphType.LOGGED_IN_USERS) {
@@ -619,24 +693,17 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
     }
 
     /**
-     * This method is normally invoked in a for each loop and adds a user based on the list element in case it does not yet exist in the users map
+     * This method is normally invoked in a for each loop and adds a user based on the set element in case it does not yet exist in the users map
      *
      * @param users              the map of existing users
      * @param userStatisticEntry the statistic entry which contains a username and a potentially new user
      * @param index              the index of the map which should be considered, can be a date or an integer
      */
-    default void addUserToTimeslot(Map<Integer, List<String>> users, StatisticsEntry userStatisticEntry, Integer index) {
+    default void addUserToTimeslot(Map<Integer, Set<String>> users, StatisticsEntry userStatisticEntry, Integer index) {
         String username = userStatisticEntry.getUsername();
-        List<String> usersInSameSlot = users.get(index);
         // if this index is not yet existing in users
-        if (usersInSameSlot == null) {
-            usersInSameSlot = new ArrayList<>();
-            usersInSameSlot.add(username);
-            users.put(index, usersInSameSlot);
-        }   // if the value of the map for this index does not contain this username
-        else if (!usersInSameSlot.contains(username)) {
-            usersInSameSlot.add(username);
-        }
+        // if the value of the map for this index does not contain this username
+        users.computeIfAbsent(index, k -> new HashSet<>(Collections.singletonList(username))).add(username);
     }
 
     /**
@@ -648,9 +715,9 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
      * @param startDate the startDate which we need for mapping into timeslots
      * @return A List<StatisticsData> with no duplicated user per timeslot
      */
-    private List<StatisticsEntry> mergeUsersPerTimeslotIntoList(Map<Integer, List<String>> users, SpanType span, ZonedDateTime startDate) {
+    private List<StatisticsEntry> mergeUsersPerTimeslotIntoList(Map<Integer, Set<String>> users, SpanType span, ZonedDateTime startDate) {
         List<StatisticsEntry> returnList = new ArrayList<>();
-        users.forEach((timeIndex, userList) -> {
+        users.forEach((timeIndex, userSet) -> {
             ZonedDateTime start = switch (span) {
                 case DAY -> startDate.withHour(timeIndex);
                 case WEEK, MONTH -> startDate.plusDays(timeIndex);
@@ -661,7 +728,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
                 }
                 case YEAR -> startDate.withMonth(timeIndex);
             };
-            StatisticsEntry listElement = new StatisticsEntry(start, userList.size());
+            StatisticsEntry listElement = new StatisticsEntry(start, userSet.size());
             returnList.add(listElement);
         });
         return returnList;

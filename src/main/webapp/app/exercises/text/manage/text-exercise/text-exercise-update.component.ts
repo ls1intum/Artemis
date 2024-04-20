@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TextExercise } from 'app/entities/text-exercise.model';
@@ -11,7 +11,7 @@ import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { switchMap, tap } from 'rxjs/operators';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
-import { NgForm } from '@angular/forms';
+import { NgForm, NgModel } from '@angular/forms';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { cloneDeep } from 'lodash-es';
@@ -21,22 +21,36 @@ import { onError } from 'app/shared/util/global.utils';
 import { EditType, SaveExerciseCommand } from 'app/exercises/shared/exercise/exercise.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { AthenaService } from 'app/assessment/athena.service';
-import { Observable } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { scrollToTopOfPage } from 'app/shared/util/utils';
 import { loadCourseExerciseCategories } from 'app/exercises/shared/course-exercises/course-utils';
+import { ExerciseTitleChannelNameComponent } from 'app/exercises/shared/exercise-title-channel-name/exercise-title-channel-name.component';
+import { FormSectionStatus } from 'app/forms/form-status-bar/form-status-bar.component';
+import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.component';
+import { TeamConfigFormGroupComponent } from 'app/exercises/shared/team-config-form-group/team-config-form-group.component';
+import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 
 @Component({
     selector: 'jhi-text-exercise-update',
     templateUrl: './text-exercise-update.component.html',
 })
-export class TextExerciseUpdateComponent implements OnInit {
+export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly documentationType: DocumentationType = 'Text';
 
     @ViewChild('editForm') editForm: NgForm;
+    @ViewChild('bonusPoints') bonusPoints: NgModel;
+    @ViewChild('points') points: NgModel;
+    @ViewChild('solutionPublicationDate') solutionPublicationDateField?: FormDateTimePickerComponent;
+    @ViewChild('releaseDate') releaseDateField?: FormDateTimePickerComponent;
+    @ViewChild('startDate') startDateField?: FormDateTimePickerComponent;
+    @ViewChild('dueDate') dueDateField?: FormDateTimePickerComponent;
+    @ViewChild('assessmentDueDate') assessmentDateField?: FormDateTimePickerComponent;
+    @ViewChild(ExerciseTitleChannelNameComponent) exerciseTitleChannelNameComponent: ExerciseTitleChannelNameComponent;
+    @ViewChild(ExerciseUpdatePlagiarismComponent) exerciseUpdatePlagiarismComponent?: ExerciseUpdatePlagiarismComponent;
+    @ViewChild(TeamConfigFormGroupComponent) teamConfigFormGroupComponent: TeamConfigFormGroupComponent;
 
     examCourseId?: number;
     isExamMode: boolean;
@@ -56,9 +70,14 @@ export class TextExerciseUpdateComponent implements OnInit {
     domainCommandsProblemStatement = [new KatexCommand()];
     domainCommandsSampleSolution = [new KatexCommand()];
 
-    // Icons
-    faSave = faSave;
-    faBan = faBan;
+    formSectionStatus: FormSectionStatus[];
+
+    // subcriptions
+    titleChannelNameComponentSubscription?: Subscription;
+    pointsSubscription?: Subscription;
+    bonusPointsSubscription?: Subscription;
+    plagiarismSubscription?: Subscription;
+    teamSubscription?: Subscription;
 
     constructor(
         private alertService: AlertService,
@@ -80,6 +99,16 @@ export class TextExerciseUpdateComponent implements OnInit {
         }
 
         return this.textExercise.id == undefined ? EditType.CREATE : EditType.UPDATE;
+    }
+
+    ngAfterViewInit() {
+        this.titleChannelNameComponentSubscription = this.exerciseTitleChannelNameComponent.titleChannelNameComponent.formValidChanges.subscribe(() =>
+            this.calculateFormSectionStatus(),
+        );
+        this.pointsSubscription = this.points?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
+        this.bonusPointsSubscription = this.bonusPoints?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
+        this.plagiarismSubscription = this.exerciseUpdatePlagiarismComponent?.formValidChanges.subscribe(() => this.calculateFormSectionStatus());
+        this.teamSubscription = this.teamConfigFormGroupComponent.formValidChanges.subscribe(() => this.calculateFormSectionStatus());
     }
 
     /**
@@ -156,6 +185,54 @@ export class TextExerciseUpdateComponent implements OnInit {
         this.notificationText = undefined;
     }
 
+    ngOnDestroy() {
+        this.titleChannelNameComponentSubscription?.unsubscribe();
+        this.pointsSubscription?.unsubscribe();
+        this.bonusPointsSubscription?.unsubscribe();
+        this.plagiarismSubscription?.unsubscribe();
+    }
+
+    calculateFormSectionStatus() {
+        if (this.textExercise) {
+            this.formSectionStatus = [
+                {
+                    title: 'artemisApp.exercise.sections.general',
+                    valid: this.exerciseTitleChannelNameComponent.titleChannelNameComponent.formValid,
+                },
+                { title: 'artemisApp.exercise.sections.mode', valid: this.teamConfigFormGroupComponent.formValid },
+                { title: 'artemisApp.exercise.sections.problem', valid: true, empty: !this.textExercise.problemStatement },
+                {
+                    title: 'artemisApp.exercise.sections.solution',
+                    valid: Boolean(this.isExamMode || (!this.textExercise.exampleSolutionPublicationDateError && this.solutionPublicationDateField?.dateInput.valid)),
+                    empty: !this.textExercise.exampleSolution || (!this.isExamMode && !this.textExercise.exampleSolutionPublicationDate),
+                },
+                {
+                    title: 'artemisApp.exercise.sections.grading',
+                    valid: Boolean(
+                        this.points.valid &&
+                            this.bonusPoints.valid &&
+                            (this.isExamMode ||
+                                (this.exerciseUpdatePlagiarismComponent?.formValid &&
+                                    !this.textExercise.startDateError &&
+                                    !this.textExercise.dueDateError &&
+                                    !this.textExercise.assessmentDueDateError &&
+                                    this.releaseDateField?.dateInput.valid &&
+                                    this.startDateField?.dateInput.valid &&
+                                    this.dueDateField?.dateInput.valid &&
+                                    this.assessmentDateField?.dateInput.valid)),
+                    ),
+                    empty:
+                        !this.isExamMode &&
+                        // if a dayjs object contains an empty date, it is considered "invalid"
+                        (!this.textExercise.startDate?.isValid() ||
+                            !this.textExercise.dueDate?.isValid() ||
+                            !this.textExercise.assessmentDueDate?.isValid() ||
+                            !this.textExercise.releaseDate?.isValid()),
+                },
+            ];
+        }
+    }
+
     /**
      * Return to the exercise overview page
      */
@@ -168,6 +245,7 @@ export class TextExerciseUpdateComponent implements OnInit {
      */
     validateDate() {
         this.exerciseService.validateDate(this.textExercise);
+        this.calculateFormSectionStatus();
     }
 
     /**

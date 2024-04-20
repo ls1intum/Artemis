@@ -1,0 +1,39 @@
+<div class="update-footer gap-4">
+    @if (!isCreation() && !isImport()) {
+        <jhi-exercise-update-notification class="flex-grow-1" [notificationText]="notificationText" (notificationTextChange)="notificationTextChange.next($event)" />
+    }
+    <div class="update-footer-content d-flex gap-2">
+        @if (isSaving) {
+            <span jhiTranslate="entity.action.saving" class="badge bg-secondary align-content-center"></span>
+        }
+        <ng-template #tooltipTranslate>
+            @for (reason of invalidReasons; track reason) {
+                <div>
+                    <p jhiTranslate="{{ reason.translateKey }}"></p>
+                </div>
+            }
+        </ng-template>
+        @if (invalidReasons.length) {
+            <div class="badge bg-danger align-content-center toggle-width" [ngbTooltip]="tooltipTranslate" tooltip-placement="top-right auto">
+                <fa-icon [fixedWidth]="true" [icon]="faExclamationCircle" />
+
+                <span class="d-none d-md-inline" jhiTranslate="global.form.invalidInput"></span>
+                <span class="d-none d-md-inline">({{ invalidReasons.length }})</span>
+            </div>
+        }
+        <button type="button" id="cancel-save" class="btn btn-sm btn-secondary" (click)="cancel.next()">
+            <fa-icon [fixedWidth]="true" [icon]="faBan" class="sm" />
+            <span class="d-none d-sm-inline" jhiTranslate="entity.action.cancel"></span>
+        </button>
+        <jhi-button
+            id="save-entity"
+            [shouldToggle]="true"
+            [disabled]="!!invalidReasons.length || isDisabled"
+            [isLoading]="isSaving"
+            [icon]="faSave"
+            [title]="saveTitle()"
+            (onClick)="save.next()"
+            [btnSize]="ButtonSize.SMALL"
+        />
+    </div>
+</div>

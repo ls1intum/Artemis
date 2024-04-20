@@ -1,0 +1,29 @@
+<div class="container">
+    <h2 id="page-heading" jhiTranslate="artemisApp.competency.generate.title"></h2>
+    <jhi-course-description-form (formSubmitted)="getCompetencyRecommendations($event)" [isLoading]="isLoading" />
+    <h3 jhiTranslate="artemisApp.competency.generate.listTitle" class="mt-2"></h3>
+    @if (isLoading) {
+        <div class="d-flex flex-column align-items-center mb-1">
+            <div class="spinner-border" role="status">
+                <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
+            </div>
+            <span class="">{{ 'artemisApp.competency.generate.loading' | artemisTranslate }}</span>
+        </div>
+    }
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+        @if (!competencies.length && !isLoading) {
+            <div class="mb-1">
+                {{ 'global.generic.emptyList' | artemisTranslate }}
+            </div>
+        }
+        <div class="border-0" formArrayName="competencies">
+            @for (competencies of competencies.controls; track competencies; let i = $index) {
+                <jhi-competency-recommendation [form]="competencies" [index]="i" (onDelete)="onDelete(i)" />
+            }
+        </div>
+        <div class="mt-4">
+            <jhi-button id="cancelButton" [btnType]="ButtonType.SECONDARY" [title]="'entity.action.cancel'" [icon]="faBan" (onClick)="onCancel()" [shouldSubmit]="false" />
+            <jhi-button id="saveButton" [title]="'entity.action.save'" [icon]="faSave" [disabled]="!isSubmitPossible" [isLoading]="isLoading" />
+        </div>
+    </form>
+</div>

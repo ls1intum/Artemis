@@ -6,8 +6,8 @@ import static java.time.Instant.now;
 import java.time.ZonedDateTime;
 import java.util.*;
 
-import javax.annotation.PostConstruct;
-import javax.validation.constraints.NotNull;
+import jakarta.annotation.PostConstruct;
+import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +31,7 @@ import tech.jhipster.config.JHipsterConstants;
 @Profile("scheduling")
 public class ModelingExerciseScheduleService implements IExerciseScheduleService<ModelingExercise> {
 
-    private final Logger log = LoggerFactory.getLogger(ModelingExerciseScheduleService.class);
+    private static final Logger log = LoggerFactory.getLogger(ModelingExerciseScheduleService.class);
 
     private final ScheduleService scheduleService;
 

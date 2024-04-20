@@ -1,9 +1,20 @@
 <ul class="list-group list-group-horizontal student-group">
-    <li class="list-group-item student-group-item" *ngFor="let student of students" [class.has-error]="hasError(student)">
-        <a *ngIf="renderLinks" [routerLink]="['/admin', 'user-management', student.login]">{{ student.name }} </a>
-        <span *ngIf="!renderLinks"
-            >{{ student.name }} <span *ngIf="student.login">({{ student.login }})</span>
-            <span *ngIf="withRegistrationNumber && student.visibleRegistrationNumber">({{ student.visibleRegistrationNumber }})</span></span
-        >
-    </li>
+    @for (student of students; track student) {
+        <li class="list-group-item student-group-item" [class.has-error]="hasError(student)">
+            @if (renderLinks) {
+                <a [routerLink]="['/admin', 'user-management', student.login]">{{ student.name }} </a>
+            }
+            @if (!renderLinks) {
+                <span
+                    >{{ student.name }}
+                    @if (student.login) {
+                        <span>({{ student.login }})</span>
+                    }
+                    @if (withRegistrationNumber && student.visibleRegistrationNumber) {
+                        <span>({{ student.visibleRegistrationNumber }})</span>
+                    }
+                </span>
+            }
+        </li>
+    }
 </ul>

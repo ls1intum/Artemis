@@ -143,15 +143,15 @@ class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
 
-        var exerciseRepoUrl = programmingExercise.getVcsTemplateRepositoryUrl();
-        var testsRepoUrl = programmingExercise.getVcsTestRepositoryUrl();
-        var solutionRepoUrl = programmingExercise.getVcsSolutionRepositoryUrl();
+        var exerciseRepoUri = programmingExercise.getVcsTemplateRepositoryUri();
+        var testsRepoUri = programmingExercise.getVcsTestRepositoryUri();
+        var solutionRepoUri = programmingExercise.getVcsSolutionRepositoryUri();
 
         MockedStatic<StreamUtils> mockedStreamUtils = mockStatic(StreamUtils.class);
         mockedStreamUtils.when(() -> StreamUtils.copyToString(any(InputStream.class), any())).thenThrow(IOException.class);
 
         assertThatIllegalStateException()
-                .isThrownBy(() -> continuousIntegrationService.createBuildPlanForExercise(programmingExercise, TEMPLATE.getName(), exerciseRepoUrl, testsRepoUrl, solutionRepoUrl))
+                .isThrownBy(() -> continuousIntegrationService.createBuildPlanForExercise(programmingExercise, TEMPLATE.getName(), exerciseRepoUri, testsRepoUri, solutionRepoUri))
                 .withMessageStartingWith("Error loading template Jenkins build XML: ");
 
         mockedStreamUtils.close();
@@ -169,14 +169,14 @@ class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
 
-        var exerciseRepoUrl = programmingExercise.getVcsTemplateRepositoryUrl();
-        var testsRepoUrl = programmingExercise.getVcsTestRepositoryUrl();
-        var solutionRepoUrl = programmingExercise.getVcsSolutionRepositoryUrl();
+        var exerciseRepoUri = programmingExercise.getVcsTemplateRepositoryUri();
+        var testsRepoUri = programmingExercise.getVcsTestRepositoryUri();
+        var solutionRepoUri = programmingExercise.getVcsSolutionRepositoryUri();
 
         var finalProgrammingExercise = programmingExercise;
         assertThatExceptionOfType(UnsupportedOperationException.class)
                 .isThrownBy(
-                        () -> continuousIntegrationService.createBuildPlanForExercise(finalProgrammingExercise, TEMPLATE.getName(), exerciseRepoUrl, testsRepoUrl, solutionRepoUrl))
+                        () -> continuousIntegrationService.createBuildPlanForExercise(finalProgrammingExercise, TEMPLATE.getName(), exerciseRepoUri, testsRepoUri, solutionRepoUri))
                 .withMessageEndingWith("templates are not available for Jenkins.");
     }
 
@@ -263,14 +263,14 @@ class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         jenkinsRequestMockProvider.mockUpdatePlanRepository(projectKey, planName, expectedStatus);
 
         assertThatExceptionOfType(JenkinsException.class).isThrownBy(() -> {
-            String templateRepoUrl = programmingExercise.getTemplateRepositoryUrl();
-            continuousIntegrationService.updatePlanRepository(projectKey, planName, ASSIGNMENT_REPO_NAME, null, participation.getRepositoryUrl(), templateRepoUrl, "main");
+            String templateRepoUri = programmingExercise.getTemplateRepositoryUri();
+            continuousIntegrationService.updatePlanRepository(projectKey, planName, ASSIGNMENT_REPO_NAME, null, participation.getRepositoryUri(), templateRepoUri, "main");
         }).withMessageStartingWith("Error trying to configure build plan in Jenkins");
     }
 
     @Test
     @WithMockUser(roles = "INSTRUCTOR", username = TEST_PREFIX + "instructor1")
-    void testUpdateBuildPlanRepoUrlsForStudent() throws Exception {
+    void testUpdateBuildPlanRepoUrisForStudent() throws Exception {
         MockedStatic<JenkinsBuildPlanUtils> mockedUtils = mockStatic(JenkinsBuildPlanUtils.class);
         ArgumentCaptor<String> toBeReplacedCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<String> replacementCaptor = ArgumentCaptor.forClass(String.class);
@@ -285,10 +285,10 @@ class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         String projectKey = programmingExercise.getProjectKey();
         String planName = programmingExercise.getProjectKey();
 
-        String templateRepoUrl = programmingExercise.getTemplateRepositoryUrl();
+        String templateRepoUri = programmingExercise.getTemplateRepositoryUri();
         jenkinsRequestMockProvider.mockUpdatePlanRepository(projectKey, planName, HttpStatus.OK);
 
-        continuousIntegrationService.updatePlanRepository(projectKey, planName, ASSIGNMENT_REPO_NAME, null, participation.getRepositoryUrl(), templateRepoUrl, "main");
+        continuousIntegrationService.updatePlanRepository(projectKey, planName, ASSIGNMENT_REPO_NAME, null, participation.getRepositoryUri(), templateRepoUri, "main");
 
         assertThat(toBeReplacedCaptor.getValue()).contains("-exercise.git");
         assertThat(replacementCaptor.getValue()).contains(TEST_PREFIX + "student1.git");

@@ -1,22 +1,30 @@
 package de.tum.in.www1.artemis.config.websocket;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.web.websocket.ResultWebsocketService.getExerciseIdFromNonPersonalExerciseResultDestination;
 import static de.tum.in.www1.artemis.web.websocket.ResultWebsocketService.isNonPersonalExerciseResultDestination;
-import static de.tum.in.www1.artemis.web.websocket.team.ParticipationTeamWebsocketService.*;
+import static de.tum.in.www1.artemis.web.websocket.localci.LocalCIWebsocketMessagingService.*;
+import static de.tum.in.www1.artemis.web.websocket.team.ParticipationTeamWebsocketService.getParticipationIdFromDestination;
+import static de.tum.in.www1.artemis.web.websocket.team.ParticipationTeamWebsocketService.isParticipationTeamDestination;
 
 import java.net.InetSocketAddress;
 import java.security.Principal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
-import javax.servlet.http.Cookie;
-import javax.validation.constraints.NotNull;
+import jakarta.servlet.http.Cookie;
+import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
@@ -60,11 +68,12 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.validation.InetSocketAddressValidator;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
+@Profile(PROFILE_CORE)
 @Configuration
 // See https://stackoverflow.com/a/34337731/3802758
 public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConfiguration {
 
-    private final Logger log = LoggerFactory.getLogger(WebsocketConfiguration.class);
+    private static final Logger log = LoggerFactory.getLogger(WebsocketConfiguration.class);
 
     private static final Pattern EXAM_TOPIC_PATTERN = Pattern.compile("^/topic/exams/(\\d+)/.+$");
 
@@ -140,8 +149,8 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
      * Create a TCP client that will connect to the broker defined in the config.
      * If multiple brokers are configured, the client will connect to the first one and fail over to the next one in case a broker goes down.
      * If the last broker goes down, the first one is retried.
-     * Also see https://github.com/spring-projects/spring-framework/issues/17057 and
-     * https://docs.spring.io/spring/docs/current/spring-framework-reference/web.html#websocket-stomp-handle-broker-relay-configure
+     * Also see <a href="https://github.com/spring-projects/spring-framework/issues/17057">...</a> and
+     * <a href="https://docs.spring.io/spring/docs/current/spring-framework-reference/web.html#websocket-stomp-handle-broker-relay-configure">...</a>
      *
      * @return a TCP client with a round-robin use
      */
@@ -262,34 +271,54 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
         /**
          * Returns whether the subscription of the given principal to the given destination is permitted
+         * Database calls should be avoided as much as possible in this method.
+         * Only for very specific topics, database calls are allowed.
          *
          * @param principal   User principal of the user who wants to subscribe
          * @param destination Destination topic to which the user wants to subscribe
          * @return flag whether subscription is allowed
          */
         private boolean allowSubscription(Principal principal, String destination) {
+            /*
+             * IMPORTANT: Avoid database calls in this method as much as possible (e.g. checking if the user
+             * is an instructor in a course)
+             * This method is called for every subscription request, so it should be as fast as possible.
+             * If you need to do a database call, make sure to first check if the destination is valid for your specific
+             * use case.
+             */
+
+            final var login = principal.getName();
+
+            if (isBuildQueueAdminDestination(destination) || isBuildAgentDestination(destination)) {
+                return authorizationCheckService.isAdmin(login);
+            }
+
+            Optional<Long> courseId = isBuildQueueCourseDestination(destination);
+            if (courseId.isPresent()) {
+                return authorizationCheckService.isAtLeastInstructorInCourse(login, courseId.get());
+            }
+
             if (isParticipationTeamDestination(destination)) {
                 Long participationId = getParticipationIdFromDestination(destination);
                 return isParticipationOwnedByUser(principal, participationId);
             }
             if (isNonPersonalExerciseResultDestination(destination)) {
-                Long exerciseId = getExerciseIdFromNonPersonalExerciseResultDestination(destination);
+                final var exerciseId = getExerciseIdFromNonPersonalExerciseResultDestination(destination).orElseThrow();
 
                 // TODO: Is it right that TAs are not allowed to subscribe to exam exercises?
-                Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-                if (exercise.isExamExercise()) {
-                    return isUserInstructorOrHigherForExercise(principal, exercise);
+                if (exerciseRepository.isExamExercise(exerciseId)) {
+                    Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+                    return authorizationCheckService.isAtLeastInstructorInCourse(login, exercise.getCourseViaExerciseGroupOrCourseMember().getId());
                 }
                 else {
-                    return isUserTAOrHigherForExercise(principal, exercise);
+                    return authorizationCheckService.isAtLeastTeachingAssistantInExercise(login, exerciseId);
                 }
             }
 
             var examId = getExamIdFromExamRootDestination(destination);
             if (examId.isPresent()) {
                 var exam = examRepository.findByIdElseThrow(examId.get());
-                User user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
-                return authorizationCheckService.isAtLeastInstructorInCourse(exam.getCourse(), user);
+                return authorizationCheckService.isAtLeastInstructorInCourse(login, exam.getCourse().getId());
             }
             return true;
         }
@@ -305,7 +334,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     }
 
     private boolean isParticipationOwnedByUser(Principal principal, Long participationId) {
-        StudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
+        StudentParticipation participation = studentParticipationRepository.findByIdWithEagerTeamStudentsElseThrow(participationId);
         return participation.isOwnedBy(principal.getName());
     }
 

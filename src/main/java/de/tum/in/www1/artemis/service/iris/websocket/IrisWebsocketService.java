@@ -11,7 +11,7 @@ import de.tum.in.www1.artemis.service.WebsocketMessagingService;
  */
 public abstract class IrisWebsocketService {
 
-    private final Logger log = LoggerFactory.getLogger(IrisWebsocketService.class);
+    private static final Logger log = LoggerFactory.getLogger(IrisWebsocketService.class);
 
     private static final String IRIS_WEBSOCKET_TOPIC_PREFIX = "/topic/iris";
 

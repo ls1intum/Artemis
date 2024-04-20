@@ -1,11 +1,13 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static java.lang.Math.toIntExact;
 import static java.util.stream.Collectors.groupingBy;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.analytics.TextAssessmentEvent;
@@ -15,6 +17,7 @@ import de.tum.in.www1.artemis.repository.TextAssessmentEventRepository;
 /**
  * Contains business logic needed to calculate tutor efforts.
  */
+@Profile(PROFILE_CORE)
 @Service
 public class TutorEffortService {
 
@@ -62,8 +65,8 @@ public class TutorEffortService {
     private TutorEffort createTutorEffortWithInformation(Long userId, List<TextAssessmentEvent> events, int submissions) {
         TutorEffort effort = new TutorEffort();
         effort.setUserId(userId);
-        effort.setCourseId(events.get(0).getCourseId());
-        effort.setExerciseId(events.get(0).getTextExerciseId());
+        effort.setCourseId(events.getFirst().getCourseId());
+        effort.setExerciseId(events.getFirst().getTextExerciseId());
         effort.setTotalTimeSpentMinutes(calculateTutorOverallTimeSpent(events));
         effort.setNumberOfSubmissionsAssessed(submissions);
         return effort;

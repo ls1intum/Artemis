@@ -15,7 +15,8 @@ export class BuildAction {
     runAlways: boolean;
     workdir: string;
     results?: AeolusResult[];
-    parameters: Map<string, string | boolean | number>;
+    platform?: string;
+    parameters: Map<string, string | boolean | number> = new Map<string, string | boolean | number>();
 }
 
 export class AeolusResult {
@@ -85,8 +86,7 @@ export class ProgrammingExercise extends Exercise {
     public projectKey?: string;
     public templateParticipation?: TemplateProgrammingExerciseParticipation;
     public solutionParticipation?: SolutionProgrammingExerciseParticipation;
-    public testRepositoryUrl?: string;
-    public publishBuildPlanUrl?: boolean;
+    public testRepositoryUri?: string;
     public customizeBuildPlanWithAeolus?: boolean;
     public allowOnlineEditor?: boolean;
     public staticCodeAnalysisEnabled?: boolean;
@@ -112,6 +112,7 @@ export class ProgrammingExercise extends Exercise {
 
     public projectType?: ProjectType;
     public windFile?: WindFile;
+    public buildScript?: string;
     public buildPlanConfiguration?: string;
 
     public testwiseCoverageEnabled?: boolean;
@@ -133,7 +134,6 @@ export class ProgrammingExercise extends Exercise {
         this.exerciseGroup = exerciseGroup;
         this.templateParticipation = new TemplateProgrammingExerciseParticipation();
         this.solutionParticipation = new SolutionProgrammingExerciseParticipation();
-        this.publishBuildPlanUrl = false; // default value
         this.allowOnlineEditor = false; // default value
         this.staticCodeAnalysisEnabled = false; // default value
         this.allowOfflineIde = true; // default value

@@ -1,19 +1,26 @@
-<label for="date-input-field" class="form-control-label col" *ngIf="labelName">
-    {{ labelName }}
-</label>
-<fa-stack *ngIf="labelTooltip" class="text-secondary icon-full-size" [ngbTooltip]="labelTooltip">
-    <fa-icon [icon]="faQuestionCircle" stackItemSize="1x"></fa-icon>
-</fa-stack>
-<fa-stack *ngIf="shouldDisplayTimeZoneWarning" ngbTooltip="{{ 'entity.timeZoneWarning' | artemisTranslate: { timeZone: currentTimeZone } }}" class="icon-full-size">
-    <fa-icon [icon]="faGlobe" stackItemSize="1x" class="text-lightgrey"></fa-icon>
-    <fa-icon [icon]="faClock" stackItemSize="1x" transform="shrink-6 down-5 right-5" class="text-secondary"></fa-icon>
-</fa-stack>
+@if (labelName) {
+    <label for="date-input-field" class="form-control-label col">
+        {{ labelName }}
+    </label>
+}
+@if (labelTooltip) {
+    <fa-stack class="text-secondary icon-full-size" [ngbTooltip]="labelTooltip">
+        <fa-icon [icon]="faQuestionCircle" stackItemSize="1x" />
+    </fa-stack>
+}
+@if (shouldDisplayTimeZoneWarning) {
+    <fa-stack ngbTooltip="{{ 'entity.timeZoneWarning' | artemisTranslate: { timeZone: currentTimeZone } }}" class="icon-full-size">
+        <fa-icon [icon]="faGlobe" stackItemSize="1x" class="text-lightgrey" />
+        <fa-icon [icon]="faClock" stackItemSize="1x" transform="shrink-6 down-5 right-5" class="text-secondary" />
+    </fa-stack>
+}
 <div class="d-flex">
     <input
         #dateInput="ngModel"
         class="form-control position-relative ps-5"
         id="date-input-field"
-        [ngClass]="{ 'is-invalid': error }"
+        [ngClass]="{ 'is-invalid': error || dateInput.invalid || (requiredField && !dateInput.value) }"
+        [class.ng-invalid]="error || dateInput.invalid || (requiredField && !dateInput.value)"
         [ngModel]="value"
         [disabled]="disabled"
         [min]="minDate"
@@ -23,7 +30,16 @@
         name="datePicker"
     />
     <button [owlDateTimeTrigger]="dt" class="btn position-absolute" type="button">
-        <fa-icon [icon]="faCalendarAlt"></fa-icon>
+        <fa-icon [icon]="faCalendarAlt" />
     </button>
-    <owl-date-time [startAt]="startDate" #dt></owl-date-time>
+    <div class="position-relative">
+        <button class="btn position-absolute" type="button" style="right: 0" (click)="clearDate()">
+            <fa-icon [icon]="faCircleXmark" />
+        </button>
+    </div>
+
+    <owl-date-time [startAt]="startDate" #dt />
 </div>
+@if (dateInput.invalid || (requiredField && !dateInput.value)) {
+    <div class="invalid-feedback">{{ 'entity.dateMissingOrNotValid' | artemisTranslate: { labelName: labelName } }}</div>
+}

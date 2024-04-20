@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -7,19 +9,20 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiNewResultService;
 
+@Profile(PROFILE_CORE)
 @Service
 public class QuizStatisticService {
 
-    private final Logger log = LoggerFactory.getLogger(QuizStatisticService.class);
+    private static final Logger log = LoggerFactory.getLogger(QuizStatisticService.class);
 
     private final StudentParticipationRepository studentParticipationRepository;
 
@@ -72,7 +75,7 @@ public class QuizStatisticService {
         }
 
         // add the Results in every participation of the given quizExercise to the statistics
-        for (Participation participation : studentParticipationRepository.findByExerciseId(quizExercise.getId())) {
+        for (StudentParticipation participation : studentParticipationRepository.findByExerciseId(quizExercise.getId())) {
 
             Result latestRatedResult = null;
             Result latestUnratedResult = null;
@@ -100,9 +103,7 @@ public class QuizStatisticService {
                 quizExercise.addResultToAllStatistics(latestUnratedResult, latestUnratedSubmission);
             }
 
-            if (ltiNewResultService.isPresent()) {
-                ltiNewResultService.get().onNewResult((StudentParticipation) participation);
-            }
+            ltiNewResultService.ifPresent(newResultService -> newResultService.onNewResult(participation));
         }
 
         // save changed Statistics

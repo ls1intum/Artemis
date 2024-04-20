@@ -6,9 +6,7 @@ import { Exercise } from 'app/entities/exercise.model';
     selector: 'jhi-orion-assessment-instructions',
     template: `
         <jhi-assessment-instructions [exercise]="exercise" [programmingParticipation]="programmingParticipation" [readOnly]="readOnly">
-            <ng-template #overrideTitle>
-                <!-- Nothing, title is suppressed -->
-            </ng-template>
+            <ng-template #overrideTitle />
         </jhi-assessment-instructions>
     `,
 })

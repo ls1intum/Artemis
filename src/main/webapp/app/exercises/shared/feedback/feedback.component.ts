@@ -25,7 +25,7 @@ import dayjs from 'dayjs/esm';
 import { FeedbackItemService, FeedbackItemServiceImpl } from 'app/exercises/shared/feedback/item/feedback-item-service';
 import { ProgrammingFeedbackItemService } from 'app/exercises/shared/feedback/item/programming-feedback-item.service';
 import { FeedbackService } from 'app/exercises/shared/feedback/feedback.service';
-import { evaluateTemplateStatus, isOnlyCompilationTested, resultIsPreliminary } from '../result/result.utils';
+import { evaluateTemplateStatus, isOnlyCompilationTested, isStudentParticipation, resultIsPreliminary } from '../result/result.utils';
 import { FeedbackNode } from 'app/exercises/shared/feedback/node/feedback-node';
 import { ChartData } from 'app/exercises/shared/feedback/chart/feedback-chart-data';
 import { FeedbackChartService } from 'app/exercises/shared/feedback/chart/feedback-chart.service';
@@ -147,7 +147,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
 
         this.isOnlyCompilationTested = isOnlyCompilationTested(this.result, evaluateTemplateStatus(this.exercise, this.result.participation, this.result, false));
 
-        // Get active profiles, to distinguish between Bitbucket and GitLab for the commit link of the result
+        // Get active profiles, to distinguish between VC systems for the commit link of the result
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             this.commitHashURLTemplate = profileInfo?.commitHashURLTemplate;
             this.commitUrl = this.getCommitUrl(this.result, this.exercise as ProgrammingExercise, this.commitHashURLTemplate);
@@ -234,7 +234,9 @@ export class FeedbackComponent implements OnInit, OnChanges {
                         this.updateChart(this.feedbackItemNodes);
                     }
 
-                    this.badge = ResultService.evaluateBadge(this.result.participation!, this.result);
+                    if (isStudentParticipation(this.result)) {
+                        this.badge = ResultService.evaluateBadge(this.result.participation!, this.result);
+                    }
 
                     return of(null);
                 }),

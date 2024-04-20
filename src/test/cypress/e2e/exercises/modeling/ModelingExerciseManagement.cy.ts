@@ -8,6 +8,7 @@ import {
     courseManagement,
     courseManagementAPIRequest,
     courseManagementExercises,
+    courseOverview,
     exerciseAPIRequest,
     modelingExerciseAssessment,
     modelingExerciseCreation,
@@ -31,7 +32,7 @@ describe('Modeling Exercise Management', () => {
     });
 
     describe('Create Modeling Exercise', () => {
-        it('Create a new modeling exercise', () => {
+        it('Create a new modeling exercise', { scrollBehavior: 'center' }, () => {
             cy.login(instructor);
             cy.visit(`/course-management/${course.id}/exercises`);
             courseManagementExercises.createModelingExercise();
@@ -86,7 +87,7 @@ describe('Modeling Exercise Management', () => {
             });
         });
 
-        it('Edit Existing Modeling Exercise', () => {
+        it('Edit Existing Modeling Exercise', { scrollBehavior: 'center' }, () => {
             cy.visit(`/course-management/${course.id}/modeling-exercises/${modelingExercise.id}/edit`);
             const newTitle = 'New Modeling Exercise Title';
             const points = 100;
@@ -103,7 +104,7 @@ describe('Modeling Exercise Management', () => {
             courseManagementExercises.getModelingExerciseMaxPoints(modelingExercise.id!).contains(points.toString());
         });
 
-        after('Delete exericse', () => {
+        after('Delete exercise', () => {
             exerciseAPIRequest.deleteModelingExercise(modelingExercise.id!);
         });
     });
@@ -135,7 +136,7 @@ describe('Modeling Exercise Management', () => {
             });
             cy.login(studentOne, '/courses');
             cy.contains(course.title!).click({ force: true });
-            cy.contains('No exercises available for the course.').should('be.visible');
+            courseOverview.getExercises().should('have.length', 0);
         });
 
         it('Student can see released Modeling Exercise', () => {

@@ -14,11 +14,11 @@ import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { NonProgrammingExerciseDetailCommonActionsComponent } from 'app/exercises/shared/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.component';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
-import { ExerciseDetailsComponent } from 'app/exercises/shared/exercise/exercise-details/exercise-details.component';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ExerciseDetailStatisticsComponent } from 'app/exercises/shared/statistics/exercise-detail-statistics.component';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { DetailOverviewListComponent } from 'app/detail-overview-list/detail-overview-list.component';
 
 describe('TextExercise Management Detail Component', () => {
     let comp: TextExerciseDetailComponent;
@@ -47,7 +47,7 @@ describe('TextExercise Management Detail Component', () => {
                 TextExerciseDetailComponent,
                 MockComponent(NonProgrammingExerciseDetailCommonActionsComponent),
                 MockComponent(ExerciseDetailStatisticsComponent),
-                MockComponent(ExerciseDetailsComponent),
+                MockComponent(DetailOverviewListComponent),
                 MockComponent(DocumentationButtonComponent),
                 MockRouterLinkDirective,
                 MockPipe(ArtemisTranslatePipe),

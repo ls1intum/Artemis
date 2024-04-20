@@ -1,0 +1,42 @@
+<form [formGroup]="form" (ngSubmit)="submitForm()">
+    <div class="d-flex align-items-center">
+        <label class="me-1 form-control-label" jhiTranslate="artemisApp.competency.generate.courseDescription.title" for="courseDescription"></label>
+        <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.competency.generate.courseDescription.infoTooltip' | artemisTranslate }}" />
+    </div>
+    <div class="form-group mb-2">
+        <textarea
+            class="form-control"
+            id="courseDescription"
+            rows="10"
+            formControlName="courseDescription"
+            [placeholder]="'artemisApp.competency.generate.courseDescription.placeholder' | artemisTranslate"
+        ></textarea>
+        @if (courseDescriptionControl.invalid && (courseDescriptionControl.dirty || courseDescriptionControl.touched)) {
+            <div class="alert alert-danger mb-0">
+                @if (courseDescriptionControl.errors?.required) {
+                    <div>
+                        {{ 'artemisApp.competency.generate.courseDescription.requiredValidationError' | artemisTranslate }}
+                    </div>
+                }
+                @if (courseDescriptionControl.errors?.minlength) {
+                    <div>
+                        {{ 'artemisApp.competency.generate.courseDescription.minlengthValidationError' | artemisTranslate: { min: DESCRIPTION_MIN } }}
+                    </div>
+                }
+                @if (courseDescriptionControl.errors?.maxlength) {
+                    <div>
+                        {{ 'artemisApp.competency.generate.courseDescription.maxlengthValidationError' | artemisTranslate: { max: DESCRIPTION_MAX } }}
+                    </div>
+                }
+            </div>
+        }
+    </div>
+    <jhi-iris-logo-button
+        id="generateButton"
+        [btnType]="ButtonType.PRIMARY_OUTLINE"
+        [title]="!hasBeenSubmitted ? 'entity.action.generate' : 'artemisApp.competency.generate.courseDescription.regenerate'"
+        [tooltip]="!hasBeenSubmitted ? '' : 'artemisApp.competency.generate.courseDescription.regenerateTooltip'"
+        [disabled]="!isSubmitPossible"
+        [isLoading]="isLoading"
+    />
+</form>

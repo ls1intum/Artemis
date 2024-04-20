@@ -1,39 +1,42 @@
 <ng-container>
-    <button
-        jhi-exercise-action-button
-        [id]="'open-exercise-' + exercise.id!"
-        [buttonIcon]="faFolderOpen"
-        class="open-code-editor"
-        [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-        [buttonLabel]="'artemisApp.exerciseActions.openCodeEditor' | artemisTranslate"
-        [buttonLoading]="loading"
-        [smallButton]="smallButtons"
-        [hideLabelMobile]="false"
-        *ngIf="participations?.length && participations?.length === 1"
-        [routerLink]="[courseAndExerciseNavigationUrl, participations[0].id]"
-    ></button>
-
-    <button
-        jhi-exercise-action-button
-        [buttonIcon]="faFolderOpen"
-        class="open-code-editor"
-        [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-        [buttonLabel]="'artemisApp.exerciseActions.openCodeEditor' | artemisTranslate"
-        [buttonLoading]="loading"
-        [smallButton]="smallButtons"
-        [hideLabelMobile]="false"
-        [ngbPopover]="popContent"
-        [autoClose]="'outside'"
-        placement="right auto"
-        *ngIf="participations?.length && participations.length! > 1"
-    ></button>
+    @if (participations?.length && participations?.length === 1) {
+        <button
+            jhi-exercise-action-button
+            [id]="'open-exercise-' + exercise.id!"
+            [buttonIcon]="faFolderOpen"
+            class="open-code-editor"
+            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+            [buttonLabel]="'artemisApp.exerciseActions.openCodeEditor' | artemisTranslate"
+            [buttonLoading]="loading"
+            [smallButton]="smallButtons"
+            [hideLabelMobile]="false"
+            [routerLink]="[courseAndExerciseNavigationUrl, participations[0].id]"
+        ></button>
+    }
+    @if (participations?.length && participations.length! > 1) {
+        <button
+            jhi-exercise-action-button
+            [buttonIcon]="faFolderOpen"
+            class="open-code-editor"
+            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+            [buttonLabel]="'artemisApp.exerciseActions.openCodeEditor' | artemisTranslate"
+            [buttonLoading]="loading"
+            [smallButton]="smallButtons"
+            [hideLabelMobile]="false"
+            [ngbPopover]="popContent"
+            [autoClose]="'outside'"
+            placement="right auto"
+        ></button>
+    }
     <ng-template #popContent style="max-width: 660px">
-        <div class="form-check form-switch" *ngIf="participations && participations.length > 1">
-            <input id="switchPracticeMode" mdbCheckbox class="form-check-input" type="checkbox" [checked]="isPracticeMode" (click)="switchPracticeMode()" />
-            <label for="switchPracticeMode" class="form-check-label">
-                {{ 'artemisApp.exerciseActions.practiceMode.title' | artemisTranslate }}
-            </label>
-        </div>
+        @if (participations && participations.length > 1) {
+            <div class="form-check form-switch">
+                <input id="switchPracticeMode" mdbCheckbox class="form-check-input" type="checkbox" [checked]="isPracticeMode" (click)="switchPracticeMode()" />
+                <label for="switchPracticeMode" class="form-check-label">
+                    {{ 'artemisApp.exerciseActions.practiceMode.title' | artemisTranslate }}
+                </label>
+            </div>
+        }
         <button
             jhi-exercise-action-button
             [id]="'open-exercise-popover-' + exercise.id!"

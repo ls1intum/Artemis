@@ -1,13 +1,11 @@
 package de.tum.in.www1.artemis.repository;
 
-import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.util.Optional;
 import java.util.Set;
 
-import javax.validation.constraints.NotNull;
-
-import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -19,6 +17,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data JPA repository for the Lecture Unit entity.
  */
+@Profile(PROFILE_CORE)
 @Repository
 public interface LectureUnitRepository extends JpaRepository<LectureUnit, Long> {
 
@@ -30,7 +29,18 @@ public interface LectureUnitRepository extends JpaRepository<LectureUnit, Long> 
                 LEFT JOIN FETCH exercise.competencies
             WHERE lu.id = :lectureUnitId
             """)
-    Optional<LectureUnit> findByIdWithCompetencies(@Param("lectureUnitId") Long lectureUnitId);
+    Optional<LectureUnit> findWithCompetenciesById(@Param("lectureUnitId") Long lectureUnitId);
+
+    @Query("""
+            SELECT lu
+            FROM LectureUnit lu
+                LEFT JOIN FETCH lu.competencies
+                LEFT JOIN FETCH lu.exercise exercise
+                LEFT JOIN FETCH exercise.competencies
+                LEFT JOIN FETCH lu.slides
+            WHERE lu.id = :lectureUnitId
+            """)
+    Optional<LectureUnit> findWithCompetenciesAndSlidesById(@Param("lectureUnitId") long lectureUnitId);
 
     @Query("""
             SELECT lu
@@ -58,15 +68,8 @@ public interface LectureUnitRepository extends JpaRepository<LectureUnit, Long> 
         return findByIdWithCompetenciesBidirectional(lectureUnitId).orElseThrow(() -> new EntityNotFoundException("LectureUnit", lectureUnitId));
     }
 
-    default LectureUnit findByIdWithCompetenciesElseThrow(long lectureUnitId) {
-        return findByIdWithCompetencies(lectureUnitId).orElseThrow(() -> new EntityNotFoundException("LectureUnit", lectureUnitId));
+    default LectureUnit findByIdWithCompetenciesAndSlidesElseThrow(long lectureUnitId) {
+        return findWithCompetenciesAndSlidesById(lectureUnitId).orElseThrow(() -> new EntityNotFoundException("LectureUnit", lectureUnitId));
     }
 
-    @EntityGraph(type = LOAD, attributePaths = { "completedUsers" })
-    Optional<LectureUnit> findWithEagerCompletedUsersById(long lectureUnitId);
-
-    @NotNull
-    default LectureUnit findWithEagerCompletedUsersByIdElseThrow(long lectureUnitId) {
-        return findWithEagerCompletedUsersById(lectureUnitId).orElseThrow(() -> new EntityNotFoundException("LectureUnit", lectureUnitId));
-    }
 }

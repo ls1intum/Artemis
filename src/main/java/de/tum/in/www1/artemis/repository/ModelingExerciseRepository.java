@@ -1,13 +1,15 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -21,34 +23,36 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data JPA repository for the ModelingExercise entity.
  */
+@Profile(PROFILE_CORE)
 @Repository
 public interface ModelingExerciseRepository extends JpaRepository<ModelingExercise, Long>, JpaSpecificationExecutor<ModelingExercise> {
 
     @Query("""
-            SELECT DISTINCT e FROM ModelingExercise e
-            LEFT JOIN FETCH e.categories
-            WHERE e.course.id = :#{#courseId}
+            SELECT DISTINCT e
+            FROM ModelingExercise e
+                LEFT JOIN FETCH e.categories
+            WHERE e.course.id = :courseId
             """)
     List<ModelingExercise> findByCourseIdWithCategories(@Param("courseId") Long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "exampleSubmissions", "teamAssignmentConfig", "categories", "competencies", "exampleSubmissions.submission.results" })
-    Optional<ModelingExercise> findWithEagerExampleSubmissionsAndCompetenciesById(@Param("exerciseId") Long exerciseId);
+    Optional<ModelingExercise> findWithEagerExampleSubmissionsAndCompetenciesById(Long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "exampleSubmissions", "teamAssignmentConfig", "categories", "competencies", "exampleSubmissions.submission.results",
             "plagiarismDetectionConfig" })
-    Optional<ModelingExercise> findWithEagerExampleSubmissionsAndCompetenciesAndPlagiarismDetectionConfigById(@Param("exerciseId") Long exerciseId);
+    Optional<ModelingExercise> findWithEagerExampleSubmissionsAndCompetenciesAndPlagiarismDetectionConfigById(Long exerciseId);
 
     @Query("""
-               SELECT modelingExercise
-               FROM ModelingExercise modelingExercise
-                   LEFT JOIN FETCH modelingExercise.exampleSubmissions exampleSubmissions
-                   LEFT JOIN FETCH exampleSubmissions.submission submission
-                   LEFT JOIN FETCH submission.results results
-                   LEFT JOIN FETCH results.feedbacks
-                   LEFT JOIN FETCH results.assessor
-                   LEFT JOIN FETCH modelingExercise.teamAssignmentConfig
-                   LEFT JOIN FETCH modelingExercise.plagiarismDetectionConfig
-               WHERE modelingExercise.id = :#{#exerciseId}
+            SELECT modelingExercise
+            FROM ModelingExercise modelingExercise
+                LEFT JOIN FETCH modelingExercise.exampleSubmissions exampleSubmissions
+                LEFT JOIN FETCH exampleSubmissions.submission submission
+                LEFT JOIN FETCH submission.results results
+                LEFT JOIN FETCH results.feedbacks
+                LEFT JOIN FETCH results.assessor
+                LEFT JOIN FETCH modelingExercise.teamAssignmentConfig
+                LEFT JOIN FETCH modelingExercise.plagiarismDetectionConfig
+            WHERE modelingExercise.id = :exerciseId
             """)
     Optional<ModelingExercise> findByIdWithExampleSubmissionsAndResultsAndPlagiarismDetectionConfig(@Param("exerciseId") Long exerciseId);
 
@@ -62,8 +66,10 @@ public interface ModelingExerciseRepository extends JpaRepository<ModelingExerci
      * @return List of the exercises that should be scheduled
      */
     @Query("""
-            select distinct exercise from ModelingExercise exercise
-            where (exercise.assessmentType = 'SEMI_AUTOMATIC' and exercise.dueDate > :now)
+            SELECT DISTINCT exercise
+            FROM ModelingExercise exercise
+            WHERE exercise.assessmentType = de.tum.in.www1.artemis.domain.enumeration.AssessmentType.SEMI_AUTOMATIC
+                AND exercise.dueDate > :now
             """)
     List<ModelingExercise> findAllToBeScheduled(@Param("now") ZonedDateTime now);
 
@@ -74,7 +80,13 @@ public interface ModelingExerciseRepository extends JpaRepository<ModelingExerci
      * @param dateTime ZonedDatetime object.
      * @return List<ModelingExercise> (can be empty)
      */
-    @Query("SELECT me FROM ModelingExercise me LEFT JOIN FETCH me.exerciseGroup eg LEFT JOIN FETCH eg.exam e WHERE e.endDate > :#{#dateTime}")
+    @Query("""
+            SELECT me
+            FROM ModelingExercise me
+                LEFT JOIN FETCH me.exerciseGroup eg
+                LEFT JOIN FETCH eg.exam e
+            WHERE e.endDate > :dateTime
+            """)
     List<ModelingExercise> findAllWithEagerExamByExamEndDateAfterDate(@Param("dateTime") ZonedDateTime dateTime);
 
     @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.submissions", "studentParticipations.submissions.results" })

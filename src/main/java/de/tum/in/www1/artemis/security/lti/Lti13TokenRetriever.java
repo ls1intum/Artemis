@@ -39,7 +39,7 @@ public class Lti13TokenRetriever {
 
     private final RestTemplate restTemplate;
 
-    private final Logger log = LoggerFactory.getLogger(Lti13TokenRetriever.class);
+    private static final Logger log = LoggerFactory.getLogger(Lti13TokenRetriever.class);
 
     private static final int JWT_LIFETIME = 60;
 
@@ -96,7 +96,6 @@ public class Lti13TokenRetriever {
      *                                 that the consuming service may require.
      * @return A serialized signed JWT as a String.
      * @throws IllegalArgumentException If no JWK could be retrieved for the provided client registration ID.
-     * @throws JOSEException            If there is an error creating the RSA key pair or signing the JWT.
      */
     public String createDeepLinkingJWT(String clientRegistrationId, Map<String, Object> customClaims) {
         JWK jwk = oAuth2JWKSService.getJWK(clientRegistrationId);

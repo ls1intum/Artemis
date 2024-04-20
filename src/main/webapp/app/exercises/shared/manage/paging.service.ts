@@ -1,8 +1,9 @@
 import { HttpParams } from '@angular/common/http';
-import { PageableSearch } from 'app/shared/table/pageable-table';
+import { SearchResult, SearchTermPageableSearch } from 'app/shared/table/pageable-table';
+import { Observable } from 'rxjs';
 
-export abstract class PagingService {
-    protected createHttpParams(pageable: PageableSearch): HttpParams {
+export abstract class PagingService<T> {
+    protected createHttpParams(pageable: SearchTermPageableSearch): HttpParams {
         return new HttpParams()
             .set('pageSize', String(pageable.pageSize))
             .set('page', String(pageable.page))
@@ -10,4 +11,6 @@ export abstract class PagingService {
             .set('searchTerm', pageable.searchTerm)
             .set('sortedColumn', pageable.sortedColumn);
     }
+
+    public abstract search(pageable: SearchTermPageableSearch, options?: object): Observable<SearchResult<T>>;
 }

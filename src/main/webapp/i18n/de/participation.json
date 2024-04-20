@@ -33,7 +33,7 @@
             "detail": {
                 "title": "Teilnahme"
             },
-            "repositoryUrl": "Repository-Link",
+            "repositoryUri": "Repository-Link",
             "buildPlanId": "Build-Plan-Link",
             "initializationState": "Status",
             "initializationDate": "Teilnahme Start",
@@ -46,8 +46,8 @@
             "team": "Team",
             "students": "Studierende",
             "practice": "Übungsmodus",
-            "templateParticipation": "Template-Teilname",
-            "solutionParticipation": "Lösungsteilname",
+            "templateParticipation": "Template-Teilnahme",
+            "solutionParticipation": "Lösungsteilnahme",
             "noParticipation": "Die Teilnahme konnte nicht gefunden werden!",
             "exercise": "Übung",
             "deleteRepository": "Repository löschen",

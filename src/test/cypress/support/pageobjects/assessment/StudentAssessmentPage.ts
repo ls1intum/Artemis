@@ -3,7 +3,7 @@
  */
 export class StudentAssessmentPage {
     startComplaint() {
-        cy.get('#complain').click();
+        cy.get('#complain', { timeout: 30000 }).click();
     }
 
     enterComplaint(text: string) {

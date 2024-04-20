@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.ci;
 
-import static de.tum.in.www1.artemis.config.Constants.*;
+import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_DIRECTORY;
+import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
 
 import java.util.List;
 import java.util.Optional;
@@ -9,7 +10,8 @@ import java.util.regex.Pattern;
 import org.springframework.http.ResponseEntity;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
@@ -36,12 +38,12 @@ public interface ContinuousIntegrationService {
      *
      * @param exercise              a programming exercise with the required information to create the base build plan
      * @param planKey               the key of the plan
-     * @param repositoryURL         the URL of the assignment repository (used to separate between exercise and solution)
-     * @param testRepositoryURL     the URL of the test repository
-     * @param solutionRepositoryURL the URL of the solution repository. Only used for HASKELL exercises with checkoutSolutionRepository=true. Otherwise ignored.
+     * @param repositoryUri         the URI of the assignment repository (used to separate between exercise and solution)
+     * @param testRepositoryUri     the URI of the test repository
+     * @param solutionRepositoryUri the URI of the solution repository. Only used for HASKELL exercises with checkoutSolutionRepository=true. Otherwise ignored.
      */
-    void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUrl repositoryURL, VcsRepositoryUrl testRepositoryURL,
-            VcsRepositoryUrl solutionRepositoryURL);
+    void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUri repositoryUri, VcsRepositoryUri testRepositoryUri,
+            VcsRepositoryUri solutionRepositoryUri);
 
     /**
      * Recreates BASE and SOLUTION Build Plan for the given programming exercise
@@ -67,7 +69,7 @@ public interface ContinuousIntegrationService {
     /**
      * Configure the build plan with the given participation on the CI system. Common configurations: - update the repository in the build plan - set appropriate user permissions -
      * initialize/enable the build plan so that it works
-     *
+     * <p>
      * **Important**: make sure that participation.programmingExercise.templateParticipation is initialized, otherwise an org.hibernate.LazyInitializationException can occur
      *
      * @param participation contains the unique identifier for build plan on CI system and the url of user's personal repository copy
@@ -92,8 +94,7 @@ public interface ContinuousIntegrationService {
 
     /**
      * Get the plan key of the finished build, the information of the build gets passed via the requestBody. The requestBody must match the information passed from the
-     * (bamboo|jenkins)-server-notification-plugin, the body is described here: <a href="https://github.com/ls1intum/bamboo-server-notification-plugin">...</a> or here:
-     * <a href="https://github.com/ls1intum/jenkins-server-notification-plugin">...</a>
+     * jenkins-server-notification-plugin, the body is described here: <a href="https://github.com/ls1intum/jenkins-server-notification-plugin">...</a>
      *
      * @param requestBody The request Body received from the CI-Server.
      * @return the plan key of the build
@@ -150,11 +151,11 @@ public interface ContinuousIntegrationService {
      * @param buildPlanKey    The key of the build plan, which is usually the name combined with the project, e.g. 'EIST16W1-GA56HUR'.
      * @param ciRepoName      The name of the configured repository in the CI plan, normally 'assignment' (or 'test').
      * @param repoProjectKey  The key of the project that contains the repository, e.g. 'EIST16W1', which is normally the programming exercise project key.
-     * @param newRepoUrl      The url of the newly to be referenced repository.
-     * @param existingRepoUrl The url of the existing repository (which should be replaced).
+     * @param newRepoUri      The url of the newly to be referenced repository.
+     * @param existingRepoUri The url of the existing repository (which should be replaced).
      * @param newBranch       The default branch for the new repository
      */
-    void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUrl, String existingRepoUrl, String newBranch);
+    void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUri, String existingRepoUri, String newBranch);
 
     /**
      * Gives overall roles permissions for the defined project. A role can e.g. be all logged-in users
@@ -174,8 +175,8 @@ public interface ContinuousIntegrationService {
     void givePlanPermissions(ProgrammingExercise programmingExercise, String planName);
 
     /**
-     * Some CI systems give projects default permissions (e.g. read in Bamboo for logged in and anonymous users)
-     * This method removes all of these unnecessary and potentially insecure permissions
+     * Some CI systems give projects default permissions.
+     * This method removes all of these unnecessary and potentially insecure permissions.
      *
      * @param projectKey The key of the build project which should get "cleaned"
      */

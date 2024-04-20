@@ -160,7 +160,7 @@ public class LectureUtilService {
      * @return The updated Lecture
      */
     public Lecture addLectureUnitsToLecture(Lecture lecture, List<LectureUnit> lectureUnits) {
-        Lecture l = lectureRepo.findByIdWithLectureUnits(lecture.getId()).orElseThrow();
+        Lecture l = lectureRepo.findByIdWithLectureUnitsAndAttachments(lecture.getId()).orElseThrow();
         for (LectureUnit lectureUnit : lectureUnits) {
             l.addLectureUnit(lectureUnit);
         }
@@ -199,10 +199,11 @@ public class LectureUtilService {
      */
     public AttachmentUnit createAttachmentUnit(Boolean withFile) {
         ZonedDateTime started = ZonedDateTime.now().minusDays(5);
-        Attachment attachmentOfAttachmentUnit = withFile ? LectureFactory.generateAttachmentWithFile(started) : LectureFactory.generateAttachment(started);
         AttachmentUnit attachmentUnit = new AttachmentUnit();
         attachmentUnit.setDescription("Lorem Ipsum");
         attachmentUnit = attachmentUnitRepository.save(attachmentUnit);
+        Attachment attachmentOfAttachmentUnit = withFile ? LectureFactory.generateAttachmentWithFile(started, attachmentUnit.getId(), true)
+                : LectureFactory.generateAttachment(started);
         attachmentOfAttachmentUnit.setAttachmentUnit(attachmentUnit);
         attachmentOfAttachmentUnit = attachmentRepository.save(attachmentOfAttachmentUnit);
         attachmentUnit.setAttachment(attachmentOfAttachmentUnit);

@@ -1,59 +1,90 @@
 package de.tum.in.www1.artemis.web.rest.util;
 
-import javax.validation.constraints.NotNull;
+import java.util.Map;
+
+import jakarta.validation.constraints.NotNull;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.GradingScale;
-import de.tum.in.www1.artemis.domain.Lecture;
-import de.tum.in.www1.artemis.domain.competency.Competency;
-import de.tum.in.www1.artemis.domain.competency.LearningPath;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
-import de.tum.in.www1.artemis.domain.exam.Exam;
-import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.PageableSearchDTO;
 
 public class PageUtil {
 
-    @NotNull
-    public static PageRequest createExercisePageRequest(PageableSearchDTO<String> search) {
-        var sortOptions = Sort.by(Exercise.ExerciseSearchColumn.valueOf(search.getSortedColumn()).getMappedColumnName());
-        sortOptions = search.getSortingOrder() == SortingOrder.ASCENDING ? sortOptions.ascending() : sortOptions.descending();
-        return PageRequest.of(search.getPage() - 1, search.getPageSize(), sortOptions);
+    /**
+     * Enum of column name maps for different entities. Maps column (client) to attribute (persistence entity) <br/>
+     * Each map contains only the columns for which we want to allow a pageable search.
+     */
+    public enum ColumnMapping {
+
+        // @formatter:off
+        COMPETENCY(Map.of(
+            "ID", "id",
+            "TITLE", "title",
+            "COURSE_TITLE", "course.title",
+            "SEMESTER", "course.semester"
+        )),
+        COURSE(Map.of(
+            "ID", "id",
+            "TITLE", "title",
+            "SHORT_NAME", "shortName",
+            "SEMESTER", "semester"
+        )),
+        EXAM(Map.of(
+            "ID", "id",
+            "TITLE", "title",
+            "COURSE_TITLE", "course.title",
+            "EXAM_MODE", "testExam"
+        )),
+        EXERCISE(Map.of(
+            "ID", "id",
+            "TITLE", "title",
+            "PROGRAMMING_LANGUAGE", "programmingLanguage",
+            "COURSE_TITLE", "course.title",
+            "EXAM_TITLE", "exerciseGroup.exam.title"
+        )),
+        GRADING_SCALE(Map.of(
+            "ID", "id",
+            "COURSE_TITLE", "course.title",
+            "EXAM_TITLE", "exam.title"
+        )),
+        LEARNING_PATH(Map.of(
+            "ID", "id",
+            "USER_LOGIN", "user.login",
+            "USER_NAME", "user.lastName",
+            "PROGRESS", "progress"
+        )),
+        LECTURE(Map.of(
+            "ID", "id",
+            "TITLE", "title",
+            "COURSE_TITLE", "course.title",
+            "SEMESTER", "course.semester"
+        )),
+        STUDENT_PARTICIPATION(Map.of(
+            "ID", "id",
+            "STUDENT_NAME", "student.firstName"
+        ));
+        // @formatter:on
+
+        private final Map<String, String> columnNameMap;
+
+        ColumnMapping(Map<String, String> columnNameMap) {
+            this.columnNameMap = columnNameMap;
+        }
+
+        public Map<String, String> getColumnNameMap() {
+            return columnNameMap;
+        }
+
+        public String getMappedColumnName(String columnName) {
+            return columnNameMap.get(columnName);
+        }
     }
 
     @NotNull
-    public static PageRequest createLecturePageRequest(PageableSearchDTO<String> search) {
-        var sortOptions = Sort.by(Lecture.LectureSearchColumn.valueOf(search.getSortedColumn()).getMappedColumnName());
-        sortOptions = search.getSortingOrder() == SortingOrder.ASCENDING ? sortOptions.ascending() : sortOptions.descending();
-        return PageRequest.of(search.getPage() - 1, search.getPageSize(), sortOptions);
-    }
-
-    @NotNull
-    public static PageRequest createCompetencyPageRequest(PageableSearchDTO<String> search) {
-        var sortOptions = Sort.by(Competency.CompetencySearchColumn.valueOf(search.getSortedColumn()).getMappedColumnName());
-        sortOptions = search.getSortingOrder() == SortingOrder.ASCENDING ? sortOptions.ascending() : sortOptions.descending();
-        return PageRequest.of(search.getPage() - 1, search.getPageSize(), sortOptions);
-    }
-
-    @NotNull
-    public static PageRequest createLearningPathPageRequest(PageableSearchDTO<String> search) {
-        var sortOptions = Sort.by(LearningPath.LearningPathSearchColumn.valueOf(search.getSortedColumn()).getMappedColumnName());
-        sortOptions = search.getSortingOrder() == SortingOrder.ASCENDING ? sortOptions.ascending() : sortOptions.descending();
-        return PageRequest.of(search.getPage() - 1, search.getPageSize(), sortOptions);
-    }
-
-    @NotNull
-    public static PageRequest createExamPageRequest(PageableSearchDTO<String> search) {
-        var sortOptions = Sort.by(Exam.ExamSearchColumn.valueOf(search.getSortedColumn()).getMappedColumnName());
-        sortOptions = search.getSortingOrder() == SortingOrder.ASCENDING ? sortOptions.ascending() : sortOptions.descending();
-        return PageRequest.of(search.getPage() - 1, search.getPageSize(), sortOptions);
-    }
-
-    @NotNull
-    public static PageRequest createGradingScaleRequest(PageableSearchDTO<String> search) {
-        var sortOptions = Sort.by(GradingScale.GradingScaleSearchColumn.valueOf(search.getSortedColumn()).getMappedColumnName());
+    public static PageRequest createDefaultPageRequest(PageableSearchDTO<String> search, ColumnMapping columnMapping) {
+        var sortOptions = Sort.by(columnMapping.getMappedColumnName(search.getSortedColumn()));
         sortOptions = search.getSortingOrder() == SortingOrder.ASCENDING ? sortOptions.ascending() : sortOptions.descending();
         return PageRequest.of(search.getPage() - 1, search.getPageSize(), sortOptions);
     }

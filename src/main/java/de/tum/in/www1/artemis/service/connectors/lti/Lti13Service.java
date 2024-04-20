@@ -1,15 +1,16 @@
 package de.tum.in.www1.artemis.service.connectors.lti;
 
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import javax.servlet.http.HttpServletResponse;
-import javax.validation.constraints.NotNull;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.constraints.NotNull;
 
+import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +23,6 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.stereotype.Service;
 import org.springframework.util.AntPathMatcher;
-import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -44,9 +44,7 @@ public class Lti13Service {
 
     private static final String EXERCISE_PATH_PATTERN = "/courses/{courseId}/exercises/{exerciseId}";
 
-    private static final String COURSE_PATH_PATTERN = "/lti/deep-linking/{courseId}";
-
-    private final Logger log = LoggerFactory.getLogger(Lti13Service.class);
+    private static final Logger log = LoggerFactory.getLogger(Lti13Service.class);
 
     private final UserRepository userRepository;
 
@@ -64,13 +62,15 @@ public class Lti13Service {
 
     private final OnlineCourseConfigurationService onlineCourseConfigurationService;
 
+    private final LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository;
+
     private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
     private final RestTemplate restTemplate;
 
     public Lti13Service(UserRepository userRepository, ExerciseRepository exerciseRepository, CourseRepository courseRepository, Lti13ResourceLaunchRepository launchRepository,
             LtiService ltiService, ResultRepository resultRepository, Lti13TokenRetriever tokenRetriever, OnlineCourseConfigurationService onlineCourseConfigurationService,
-            RestTemplate restTemplate, ArtemisAuthenticationProvider artemisAuthenticationProvider) {
+            RestTemplate restTemplate, ArtemisAuthenticationProvider artemisAuthenticationProvider, LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository) {
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
         this.courseRepository = courseRepository;
@@ -81,6 +81,7 @@ public class Lti13Service {
         this.onlineCourseConfigurationService = onlineCourseConfigurationService;
         this.restTemplate = restTemplate;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
+        this.ltiPlatformConfigurationRepository = ltiPlatformConfigurationRepository;
     }
 
     /**
@@ -139,10 +140,10 @@ public class Lti13Service {
     public String createUsernameFromLaunchRequest(OidcIdToken ltiIdToken, OnlineCourseConfiguration onlineCourseConfiguration) {
         String username;
 
-        if (StringUtils.hasLength(ltiIdToken.getPreferredUsername())) {
+        if (!StringUtils.isEmpty(ltiIdToken.getPreferredUsername())) {
             username = ltiIdToken.getPreferredUsername();
         }
-        else if (StringUtils.hasLength(ltiIdToken.getGivenName()) && StringUtils.hasLength(ltiIdToken.getFamilyName())) {
+        else if (!StringUtils.isEmpty(ltiIdToken.getGivenName()) && !StringUtils.isEmpty(ltiIdToken.getFamilyName())) {
             username = ltiIdToken.getGivenName() + ltiIdToken.getFamilyName();
         }
         else {
@@ -170,9 +171,9 @@ public class Lti13Service {
      */
     public void onNewResult(StudentParticipation participation) {
         Course course = courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(participation.getExercise().getCourseViaExerciseGroupOrCourseMember().getId());
-        ClientRegistration clientRegistration = onlineCourseConfigurationService.getClientRegistration(course.getOnlineCourseConfiguration());
-        if (clientRegistration == null) {
-            log.error("Could not transmit score to external LMS for course {}: client registration not found", course.getTitle());
+
+        if (!course.isOnlineCourse()) {
+            log.error("Could not transmit score to external LMS for course {}:", course.getTitle());
             return;
         }
 
@@ -194,7 +195,12 @@ public class Lti13Service {
 
             String concatenatedFeedbacks = result.get().getFeedbacks().stream().map(Feedback::getDetailText).collect(Collectors.joining(". "));
 
-            launches.forEach(launch -> submitScore(launch, clientRegistration, concatenatedFeedbacks, result.get().getScore()));
+            launches.forEach(launch -> {
+                LtiPlatformConfiguration returnPlatform = launch.getLtiPlatformConfiguration();
+                ClientRegistration returnClient = onlineCourseConfigurationService.getClientRegistration(returnPlatform);
+                submitScore(launch, returnClient, concatenatedFeedbacks, result.get().getScore());
+
+            });
         });
     }
 
@@ -227,7 +233,7 @@ public class Lti13Service {
     }
 
     private String getScoresUrl(String lineItemUrl) {
-        if (!StringUtils.hasLength(lineItemUrl)) {
+        if (StringUtils.isEmpty(lineItemUrl)) {
             return null;
         }
         StringBuilder builder = new StringBuilder(lineItemUrl);
@@ -261,9 +267,9 @@ public class Lti13Service {
 
         String targetLinkPath;
         try {
-            targetLinkPath = (new URL(targetLinkUrl)).getPath();
+            targetLinkPath = new URI(targetLinkUrl).getPath();
         }
-        catch (MalformedURLException ex) {
+        catch (URISyntaxException ex) {
             log.info("Malformed target link url: {}", targetLinkUrl);
             return Optional.empty();
         }
@@ -286,29 +292,6 @@ public class Lti13Service {
         return exerciseOpt;
     }
 
-    private Course getCourseFromTargetLink(String targetLinkUrl) {
-        AntPathMatcher matcher = new AntPathMatcher();
-
-        String targetLinkPath;
-        try {
-            targetLinkPath = (new URL(targetLinkUrl)).getPath();
-        }
-        catch (MalformedURLException ex) {
-            log.info("Malformed target link url: {}", targetLinkUrl);
-            return null;
-        }
-
-        if (!matcher.match(COURSE_PATH_PATTERN, targetLinkPath)) {
-            log.info("Could not extract courseId from target link: {}", targetLinkUrl);
-            return null;
-        }
-        Map<String, String> pathVariables = matcher.extractUriTemplateVariables(COURSE_PATH_PATTERN, targetLinkPath);
-
-        String courseId = pathVariables.get("courseId");
-
-        return courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(Long.parseLong(courseId));
-    }
-
     private void createOrUpdateResourceLaunch(Lti13LaunchRequest launchRequest, User user, Exercise exercise) {
         Optional<LtiResourceLaunch> launchOpt = launchRepository.findByIssAndSubAndDeploymentIdAndResourceLinkId(launchRequest.getIss(), launchRequest.getSub(),
                 launchRequest.getDeploymentId(), launchRequest.getResourceLinkId());
@@ -323,6 +306,10 @@ public class Lti13Service {
 
         launch.setExercise(exercise);
         launch.setUser(user);
+
+        Optional<LtiPlatformConfiguration> ltiPlatformConfiguration = ltiPlatformConfigurationRepository.findByRegistrationId(launchRequest.getClientRegistrationId());
+        ltiPlatformConfiguration.ifPresent(launch::setLtiPlatformConfiguration);
+
         launchRepository.save(launch);
     }
 
@@ -349,6 +336,7 @@ public class Lti13Service {
             String sanitizedUsername = getSanitizedUsername(optionalUsername.get());
             response.addHeader("ltiSuccessLoginRequired", sanitizedUsername);
         }
+        ltiService.prepareLogoutCookie(response);
     }
 
     private String getSanitizedUsername(String username) {
@@ -359,24 +347,17 @@ public class Lti13Service {
     /**
      * Initiates the deep linking process for a course based on the provided LTI ID token and client registration ID.
      *
-     * @param ltiIdToken The ID token containing the deep linking information.
-     * @throws BadRequestAlertException if the course is not found or LTI is not configured for the course.
+     * @param ltiIdToken           The ID token containing the deep linking information.
+     * @param clientRegistrationId The client registration ID associated with the LTI platform.
+     * @throws BadRequestAlertException if LTI is not configured.
      */
-    public void startDeepLinking(OidcIdToken ltiIdToken) {
+    public void startDeepLinking(OidcIdToken ltiIdToken, String clientRegistrationId) {
 
-        String targetLinkUrl = ltiIdToken.getClaim(Claims.TARGET_LINK_URI);
-        Course targetCourse = getCourseFromTargetLink(targetLinkUrl);
-        if (targetCourse == null) {
-            log.error("No course to start deep-linking at {}", targetLinkUrl);
-            throw new BadRequestAlertException("Course not found", "LTI", "ltiCourseNotFound");
+        Optional<LtiPlatformConfiguration> ltiPlatformConfiguration = ltiPlatformConfigurationRepository.findByRegistrationId(clientRegistrationId);
+        if (ltiPlatformConfiguration.isEmpty()) {
+            throw new BadRequestAlertException("Configuration not found for this client registration ID:" + clientRegistrationId, "LTI", "ltiNotConfigured");
         }
 
-        OnlineCourseConfiguration onlineCourseConfiguration = targetCourse.getOnlineCourseConfiguration();
-        if (onlineCourseConfiguration == null) {
-            throw new BadRequestAlertException("LTI is not configured for this course", "LTI", "ltiNotConfigured");
-        }
-
-        ltiService.authenticateLtiUser(ltiIdToken.getEmail(), createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration), ltiIdToken.getGivenName(),
-                ltiIdToken.getFamilyName(), onlineCourseConfiguration.isRequireExistingUser());
+        ltiService.authenticateLtiUser(ltiIdToken.getEmail(), ltiIdToken.getPreferredUsername(), ltiIdToken.getGivenName(), ltiIdToken.getFamilyName(), true);
     }
 }

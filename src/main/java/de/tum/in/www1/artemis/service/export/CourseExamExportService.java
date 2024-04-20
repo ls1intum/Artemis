@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.export;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -13,6 +15,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -31,13 +34,14 @@ import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
 /**
  * Service Implementation for exporting courses and exams.
  */
+@Profile(PROFILE_CORE)
 @Service
 public class CourseExamExportService {
 
     @Value("${artemis.course-archives-path}")
     private String courseArchivesDirPath;
 
-    private final Logger log = LoggerFactory.getLogger(CourseExamExportService.class);
+    private static final Logger log = LoggerFactory.getLogger(CourseExamExportService.class);
 
     private final ProgrammingExerciseExportService programmingExerciseExportService;
 
@@ -415,7 +419,6 @@ public class CourseExamExportService {
                 }
                 else {
                     // Exercise is not supported so skip
-                    continue;
                 }
             }
             catch (Exception e) {
@@ -488,7 +491,7 @@ public class CourseExamExportService {
      */
     private Path writeReport(List<ArchivalReportEntry> data, Path outputDir) throws IOException {
         List<String> lines = data.stream().map(ArchivalReportEntry::toString).collect(Collectors.toCollection(ArrayList::new));
-        lines.add(0, ArchivalReportEntry.getHeadline());
+        lines.addFirst(ArchivalReportEntry.getHeadline());
         return writeFile(lines, outputDir, "report.csv");
     }
 

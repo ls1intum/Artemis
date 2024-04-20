@@ -4,6 +4,6 @@ export class AuxiliaryRepository implements BaseEntity {
     public id?: number;
     public name?: string;
     public checkoutDirectory?: string;
-    public repositoryUrl?: string;
+    public repositoryUri?: string;
     public description?: string;
 }

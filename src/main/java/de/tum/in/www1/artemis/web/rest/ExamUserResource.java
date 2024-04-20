@@ -1,9 +1,14 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
+import java.net.URI;
+import java.nio.file.Path;
 import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -12,6 +17,7 @@ import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.repository.ExamUserRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
+import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
 import de.tum.in.www1.artemis.service.exam.ExamUserService;
@@ -23,11 +29,12 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * REST controller for managing ExamUser.
  */
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 public class ExamUserResource {
 
-    private final Logger log = LoggerFactory.getLogger(ExamUserResource.class);
+    private static final Logger log = LoggerFactory.getLogger(ExamUserResource.class);
 
     private final UserRepository userRepository;
 
@@ -71,9 +78,19 @@ public class ExamUserResource {
                 .orElseThrow(() -> new EntityNotFoundException("Exam user with login: \"" + examUserDTO.login() + "\" does not exist"));
 
         if (signatureFile != null) {
-            String responsePath = fileService.handleSaveFile(signatureFile, true, false).toString();
-            examUser.setSigningImagePath(responsePath);
+            String oldPathString = examUser.getSigningImagePath();
+            Path basePath = FilePathService.getExamUserSignatureFilePath();
+            Path savePath = fileService.saveFile(signatureFile, basePath, false);
+            examUser.setSigningImagePath(FilePathService.publicPathForActualPathOrThrow(savePath, examUser.getId()).toString());
+
+            if (oldPathString != null) {
+                // Only delete old file if saving the new one succeeded
+                Path oldPath = FilePathService.actualPathForPublicPath(URI.create(oldPathString));
+                // Don't throw an exception if the file does not exist as then it's already deleted for some reason
+                fileService.schedulePathForDeletion(oldPath, 0);
+            }
         }
+
         examUser.setDidCheckImage(examUserDTO.didCheckImage());
         examUser.setDidCheckLogin(examUserDTO.didCheckLogin());
         examUser.setDidCheckName(examUserDTO.didCheckName());

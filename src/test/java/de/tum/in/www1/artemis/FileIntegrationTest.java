@@ -1,9 +1,11 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 
 import java.io.ByteArrayOutputStream;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -45,6 +47,9 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private AttachmentUnitRepository attachmentUnitRepo;
+
+    @Autowired
+    private LectureUnitCompletionRepository lectureUnitCompletionRepository;
 
     @Autowired
     private LectureRepository lectureRepo;
@@ -162,8 +167,22 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetLecturePdfAttachmentsMerged() throws Exception {
         Lecture lecture = createLectureWithLectureUnits();
+        var units = lecture.getLectureUnits();
         userUtilService.changeUser(TEST_PREFIX + "student1");
+        ZonedDateTime now = ZonedDateTime.now();
         callAndCheckMergeResult(lecture, 5);
+
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        List<LectureUnit> expectedCompletedUnits = List.of(units.get(0), units.get(2));
+        for (var unit : expectedCompletedUnits) {
+            var completion = lectureUnitCompletionRepository.findByLectureUnitIdAndUserId(unit.getId(), student.getId());
+            assertThat(completion).isPresent();
+            assertThat(completion.get().getCompletedAt()).isCloseTo(now, within(2, ChronoUnit.SECONDS));
+        }
+
+        // Unit 2 (index 1) is an image and not included in the merged pdf
+        var nonCompletedUnit = lectureUnitCompletionRepository.findByLectureUnitIdAndUserId(units.get(1).getId(), student.getId());
+        assertThat(nonCompletedUnit).isEmpty();
     }
 
     @Test
@@ -281,7 +300,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     private AttachmentUnit uploadAttachmentUnit(Lecture lecture, MockMultipartFile file, HttpStatus expectedStatus) throws Exception {
-        AttachmentUnit attachmentUnit = LectureFactory.generateAttachmentUnit(false);
+        AttachmentUnit attachmentUnit = LectureFactory.generateAttachmentUnit();
         Attachment attachment = attachmentUnit.getAttachment();
         attachmentUnit.setAttachment(null);
         attachment.setAttachmentUnit(null);

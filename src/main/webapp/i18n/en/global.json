@@ -111,7 +111,9 @@
                 "imprint": "Imprint",
                 "database": "Database",
                 "iris": "Iris Settings",
-                "jhipster-needle-menu-add-admin-element": "JHipster will add additional menu entries here (do not translate!)"
+                "jhipster-needle-menu-add-admin-element": "JHipster will add additional menu entries here (do not translate!)",
+                "lti": "LTI Configuration",
+                "standardizedCompetencies": "Standardized Competencies"
             },
             "language": "Language",
             "settings": "Settings",
@@ -138,7 +140,8 @@
             "email.pattern": "Please use an email with the following pattern:",
             "cancel": "Cancel",
             "confirm": "Confirm",
-            "refresh": "Refresh"
+            "refresh": "Refresh",
+            "invalidInput": "Invalid Input"
         },
         "messages": {
             "info": {
@@ -208,7 +211,7 @@
             "editSelected": "Edit selected",
             "editInEditor": "Edit in editor",
             "editBuildPlan": "Edit build plan",
-            "editInIntelliJ": "Edit in IntelliJ",
+            "editInOrion": "Edit in your IDE",
             "editEntity": "Edit {{entity}}",
             "exampleSubmissions": "Example submissions",
             "generate": "Generate",
@@ -261,7 +264,9 @@
             "ldap": "Sync from LDAP",
             "notUndoable": "This action cannot be undone!",
             "discardChanges": "Discard changes",
-            "goBack": "Go back"
+            "goBack": "Go back",
+            "search": "Search",
+            "select": "Select"
         },
         "detail": {
             "field": "Field",
@@ -311,14 +316,18 @@
             "patternLogin": "This field may only contain letters, digits and e-mail addresses.",
             "invalidPattern": "This field contains an invalid e-mail pattern."
         },
-        "timeZoneWarning": "You are currently in the {{ timeZone }} time zone."
+        "timeZoneWarning": "You are currently in the {{ timeZone }} time zone.",
+        "dateMissingOrNotValid": "'{{labelName}}' is missing/invalid",
+        "startDateError": "'Start of working time' should be between 'Visible from' and 'End of working time'",
+        "endDateError": "'End of working time' should be later than 'Start of working time'"
     },
     "aboutUs": "About",
     "contact": "Contact us",
     "bug": "Report a bug",
     "feature": "Request a feature",
+    "releases": "Releases",
     "releaseNotes": "Release notes",
-    "requestChange": "Request change",
+    "feedback": "Feedback",
     "justNow": "just now",
     "pendingChanges": "WARNING: You have unsaved changes. Press Cancel to go back and save these changes, or OK to lose these changes.",
     "overview": {
@@ -330,6 +339,7 @@
         "learningPath": "Learning Path",
         "tutorialGroups": "Tutorial Groups",
         "exercise": "Exercise details",
+        "exercises": "Exercises",
         "statistics": "Course statistics",
         "exams": "Exams",
         "communication": "Communication"

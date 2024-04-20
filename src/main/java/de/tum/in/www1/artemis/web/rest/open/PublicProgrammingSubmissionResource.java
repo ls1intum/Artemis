@@ -1,9 +1,12 @@
 package de.tum.in.www1.artemis.web.rest.open;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -33,11 +36,12 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * REST controller for receiving updates for a ProgrammingSubmission.
  */
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/public/")
 public class PublicProgrammingSubmissionResource {
 
-    private final Logger log = LoggerFactory.getLogger(PublicProgrammingSubmissionResource.class);
+    private static final Logger log = LoggerFactory.getLogger(PublicProgrammingSubmissionResource.class);
 
     private final ProgrammingSubmissionService programmingSubmissionService;
 
@@ -80,7 +84,7 @@ public class PublicProgrammingSubmissionResource {
             // Therefore, a mock auth object has to be created.
             SecurityUtils.setAuthorizationObject();
 
-            Participation participation = participationRepository.findByIdWithSubmissionsElseThrow(participationId);
+            Participation participation = participationRepository.findWithEagerSubmissionsByIdWithTeamStudentsElseThrow(participationId);
             if (!(participation instanceof ProgrammingExerciseParticipation programmingExerciseParticipation)) {
                 throw new BadRequestAlertException("The referenced participation " + participationId + " is not of type ProgrammingExerciseParticipation", "ProgrammingSubmission",
                         "participationWrongType");
@@ -119,7 +123,7 @@ public class PublicProgrammingSubmissionResource {
             return ResponseEntity.status(HttpStatus.OK).build();
         }
 
-        // Note: we should not really return status code other than 200, because Bitbucket might kill the webhook, if there are too many errors
+        // Note: we should not really return status code other than 200, because Gitlab might kill the webhook, if there are too many errors
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
@@ -147,7 +151,7 @@ public class PublicProgrammingSubmissionResource {
         String lastCommitHash = null;
         try {
             Commit commit = versionControlService.orElseThrow().getLastCommitDetails(requestBody);
-            lastCommitHash = commit.getCommitHash();
+            lastCommitHash = commit.commitHash();
             log.info("create new programmingSubmission with commitHash: {} for exercise {}", lastCommitHash, exerciseId);
         }
         catch (Exception ex) {

@@ -1,13 +1,17 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,13 +33,14 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * REST controller for managing TextSubmission.
  */
+@Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class TextSubmissionResource extends AbstractSubmissionResource {
 
     private static final String ENTITY_NAME = "textSubmission";
 
-    private final Logger log = LoggerFactory.getLogger(TextSubmissionResource.class);
+    private static final Logger log = LoggerFactory.getLogger(TextSubmissionResource.class);
 
     private final TextSubmissionRepository textSubmissionRepository;
 
@@ -62,7 +67,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
             TextSubmissionService textSubmissionService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository,
             GradingCriterionRepository gradingCriterionRepository, TextAssessmentService textAssessmentService, ExamSubmissionService examSubmissionService,
             PlagiarismService plagiarismService) {
-        super(submissionRepository, resultService, authCheckService, userRepository, exerciseRepository, textSubmissionService, studentParticipationRepository);
+        super(submissionRepository, authCheckService, userRepository, exerciseRepository, textSubmissionService, studentParticipationRepository);
         this.textSubmissionRepository = textSubmissionRepository;
         this.exerciseRepository = exerciseRepository;
         this.textExerciseRepository = textExerciseRepository;
@@ -82,7 +87,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
      * @param textSubmission the textSubmission to create
      * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
      */
-    @PostMapping("/exercises/{exerciseId}/text-submissions")
+    @PostMapping("exercises/{exerciseId}/text-submissions")
     @EnforceAtLeastStudent
     public ResponseEntity<TextSubmission> createTextSubmission(@PathVariable Long exerciseId, @Valid @RequestBody TextSubmission textSubmission) {
         log.debug("REST request to save text submission : {}", textSubmission);
@@ -102,7 +107,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and with body the updated textSubmission, or with status 400 (Bad Request) if the textSubmission is not valid, or with status
      *         500 (Internal Server Error) if the textSubmission couldn't be updated
      */
-    @PutMapping("/exercises/{exerciseId}/text-submissions")
+    @PutMapping("exercises/{exerciseId}/text-submissions")
     @EnforceAtLeastStudent
     public ResponseEntity<TextSubmission> updateTextSubmission(@PathVariable long exerciseId, @Valid @RequestBody TextSubmission textSubmission) {
         log.debug("REST request to update text submission: {}", textSubmission);
@@ -139,7 +144,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
      * @param submissionId the id of the textSubmission to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the textSubmission, or with status 404 (Not Found)
      */
-    @GetMapping("/text-submissions/{submissionId}")
+    @GetMapping("text-submissions/{submissionId}")
     @EnforceAtLeastStudent
     public ResponseEntity<TextSubmission> getTextSubmissionWithResults(@PathVariable long submissionId) {
         log.debug("REST request to get text submission: {}", submissionId);
@@ -147,7 +152,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
 
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(textSubmission.getParticipation().getExercise())) {
             // anonymize and throw exception if not authorized to view submission
-            plagiarismService.checkAccessAndAnonymizeSubmissionForStudent(textSubmission, userRepository.getUser().getLogin());
+            plagiarismService.checkAccessAndAnonymizeSubmissionForStudent(textSubmission, userRepository.getUser().getLogin(), textSubmission.getParticipation());
             return ResponseEntity.ok(textSubmission);
         }
 
@@ -216,7 +221,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
             textAssessmentService.prepareSubmissionForAssessment(textSubmission, textSubmission.getResultForCorrectionRound(correctionRound));
         }
 
-        List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+        Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         exercise.setGradingCriteria(gradingCriteria);
 
         // Make sure the exercise is connected to the participation in the json response

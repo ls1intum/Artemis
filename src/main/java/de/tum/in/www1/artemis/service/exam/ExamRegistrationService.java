@@ -1,11 +1,14 @@
 package de.tum.in.www1.artemis.service.exam;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -29,10 +32,11 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Service Implementation for registering students in the exam.
  */
+@Profile(PROFILE_CORE)
 @Service
 public class ExamRegistrationService {
 
-    private final Logger log = LoggerFactory.getLogger(ExamRegistrationService.class);
+    private static final Logger log = LoggerFactory.getLogger(ExamRegistrationService.class);
 
     private final UserRepository userRepository;
 
@@ -54,11 +58,13 @@ public class ExamRegistrationService {
 
     private final AuthorizationCheckService authorizationCheckService;
 
+    private final ExamUserService examUserService;
+
     private static final boolean IS_TEST_RUN = false;
 
     public ExamRegistrationService(ExamUserRepository examUserRepository, ExamRepository examRepository, UserService userService, ParticipationService participationService,
             UserRepository userRepository, AuditEventRepository auditEventRepository, CourseRepository courseRepository, StudentExamRepository studentExamRepository,
-            StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService) {
+            StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService, ExamUserService examUserService) {
         this.examRepository = examRepository;
         this.userService = userService;
         this.userRepository = userRepository;
@@ -69,6 +75,7 @@ public class ExamRegistrationService {
         this.studentParticipationRepository = studentParticipationRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.examUserRepository = examUserRepository;
+        this.examUserService = examUserService;
     }
 
     /**
@@ -95,7 +102,7 @@ public class ExamRegistrationService {
         List<String> usersAddedToExam = new ArrayList<>();
         for (var examUserDto : examUserDTOs) {
             Optional<User> optionalStudent = userService.findUserAndAddToCourse(examUserDto.registrationNumber(), examUserDto.login(), examUserDto.email(),
-                    course.getStudentGroupName(), Role.STUDENT);
+                    course.getStudentGroupName());
             if (optionalStudent.isEmpty()) {
                 notFoundStudentsDTOs.add(examUserDto);
             }
@@ -142,7 +149,7 @@ public class ExamRegistrationService {
             }
             AuditEvent auditEvent = new AuditEvent(currentUser.getLogin(), Constants.ADD_USER_TO_EXAM, userData);
             auditEventRepository.add(auditEvent);
-            log.info("User {} has added multiple users {} to the exam {} with id {}", currentUser.getLogin(), examUserDTOs, exam.getTitle(), exam.getId());
+            log.info("User {} has added multiple users {} to the exam {} with id {}", currentUser.getLogin(), usersAddedToExam, exam.getTitle(), exam.getId());
         }
         catch (Exception ex) {
             log.warn("Could not add audit event to audit log", ex);
@@ -187,7 +194,7 @@ public class ExamRegistrationService {
         }
 
         if (!student.getGroups().contains(course.getStudentGroupName())) {
-            userService.addUserToGroup(student, course.getStudentGroupName(), Role.STUDENT);
+            userService.addUserToGroup(student, course.getStudentGroupName());
         }
 
         Optional<ExamUser> registeredExamUserOptional = examUserRepository.findByExamIdAndUserId(exam.getId(), student.getId());
@@ -259,6 +266,8 @@ public class ExamRegistrationService {
         examRepository.save(exam);
         examUserRepository.delete(registeredExamUser);
 
+        examUserService.deleteAvailableExamUserImages(registeredExamUser);
+
         // The student exam might already be generated, then we need to delete it
         Optional<StudentExam> optionalStudentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(student.getId(), exam.getId(), IS_TEST_RUN);
         optionalStudentExam.ifPresent(studentExam -> removeStudentExam(studentExam, deleteParticipationsAndSubmission));
@@ -291,12 +300,13 @@ public class ExamRegistrationService {
      * @param deleteParticipationsAndSubmission whether the participations and submissions of the student should be deleted
      */
     public void unregisterAllStudentFromExam(Exam exam, boolean deleteParticipationsAndSubmission) {
-
         // remove all registered students
         List<ExamUser> registeredExamUsers = examUserRepository.findAllByExamId(exam.getId());
         registeredExamUsers.forEach(exam::removeExamUser);
         examRepository.save(exam);
         examUserRepository.deleteAllById(registeredExamUsers.stream().map(ExamUser::getId).toList());
+
+        registeredExamUsers.forEach(examUserService::deleteAvailableExamUserImages);
 
         // remove all students exams
         Set<StudentExam> studentExams = studentExamRepository.findAllWithoutTestRunsWithExercisesByExamId(exam.getId());

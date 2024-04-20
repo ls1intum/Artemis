@@ -5,7 +5,7 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -24,9 +24,15 @@ import de.tum.in.www1.artemis.domain.competency.Competency;
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 // Annotation necessary to distinguish between concrete implementations of lecture-content when deserializing from JSON
-@JsonSubTypes({ @JsonSubTypes.Type(value = AttachmentUnit.class, name = "attachment"), @JsonSubTypes.Type(value = ExerciseUnit.class, name = "exercise"),
-        @JsonSubTypes.Type(value = TextUnit.class, name = "text"), @JsonSubTypes.Type(value = VideoUnit.class, name = "video"),
-        @JsonSubTypes.Type(value = OnlineUnit.class, name = "online") })
+// @formatter:off
+@JsonSubTypes({
+    @JsonSubTypes.Type(value = AttachmentUnit.class, name = "attachment"),
+    @JsonSubTypes.Type(value = ExerciseUnit.class, name = "exercise"),
+    @JsonSubTypes.Type(value = TextUnit.class, name = "text"),
+    @JsonSubTypes.Type(value = VideoUnit.class, name = "video"),
+    @JsonSubTypes.Type(value = OnlineUnit.class, name = "online")
+})
+// @formatter:on
 public abstract class LectureUnit extends DomainObject implements LearningObject {
 
     @Transient
@@ -44,7 +50,7 @@ public abstract class LectureUnit extends DomainObject implements LearningObject
     private Lecture lecture;
 
     @ManyToMany
-    @JoinTable(name = "learning_goal_lecture_unit", joinColumns = @JoinColumn(name = "lecture_unit_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "learning_goal_id", referencedColumnName = "id"))
+    @JoinTable(name = "competency_lecture_unit", joinColumns = @JoinColumn(name = "lecture_unit_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "competency_id", referencedColumnName = "id"))
     @OrderBy("title")
     @JsonIgnoreProperties({ "lectureUnits", "course" })
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)

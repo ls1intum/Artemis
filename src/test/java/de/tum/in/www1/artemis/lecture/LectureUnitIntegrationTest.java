@@ -83,7 +83,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
 
         lectureUtilService.addLectureUnitsToLecture(course1.getLectures().stream().skip(1).findFirst().orElseThrow(), List.of(textUnit2));
         this.lecture1 = lectureUtilService.addLectureUnitsToLecture(this.lecture1, List.of(this.textUnit, onlineUnit, attachmentUnit));
-        this.lecture1 = lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId());
+        this.lecture1 = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture1.getId());
         this.textUnit = textUnitRepository.findById(this.textUnit.getId()).orElseThrow();
         this.textUnit2 = textUnitRepository.findById(textUnit2.getId()).orElseThrow();
     }
@@ -110,7 +110,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
     void deleteLectureUnit() throws Exception {
         var lectureUnitId = lecture1.getLectureUnits().get(0).getId();
         request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + lectureUnitId, HttpStatus.OK);
-        this.lecture1 = lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId());
+        this.lecture1 = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture1.getId());
         assertThat(this.lecture1.getLectureUnits().stream().map(DomainObject::getId)).doesNotContain(lectureUnitId);
     }
 
@@ -126,7 +126,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
         assertThat(lecture.getLectureUnits().get(0).getCompetencies()).isNotEmpty();
 
         request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + lectureUnit.getId(), HttpStatus.OK);
-        this.lecture1 = lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId());
+        this.lecture1 = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture1.getId());
         assertThat(this.lecture1.getLectureUnits().stream().map(DomainObject::getId)).doesNotContain(lectureUnit.getId());
     }
 
@@ -146,7 +146,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
 
         request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + lectureUnit.getId(), HttpStatus.OK);
 
-        this.lecture1 = lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId());
+        this.lecture1 = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture1.getId());
         assertThat(this.lecture1.getLectureUnits().stream().map(DomainObject::getId)).doesNotContain(lectureUnit.getId());
         assertThat(lectureUnitCompletionRepository.findByLectureUnitIdAndUserId(lectureUnit.getId(), user.getId())).isEmpty();
     }
@@ -160,9 +160,9 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void deleteLectureUnit_notPartOfLecture_shouldReturnNotFound() throws Exception {
+    void deleteLectureUnit_notPartOfLecture_shouldReturnBadRequest() throws Exception {
         var lectureUnitId = lecture1.getLectureUnits().get(0).getId();
-        request.delete("/api/lectures/" + Integer.MAX_VALUE + "/lecture-units/" + lectureUnitId, HttpStatus.CONFLICT);
+        request.delete("/api/lectures/" + Integer.MAX_VALUE + "/lecture-units/" + lectureUnitId, HttpStatus.BAD_REQUEST);
     }
 
     /**
@@ -193,18 +193,18 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void updateLectureUnitOrder_wrongSizeOfIds_shouldReturnConflict() throws Exception {
+    void updateLectureUnitOrder_wrongSizeOfIds_shouldReturnBadRequest() throws Exception {
         List<Long> newlyOrderedList = lecture1.getLectureUnits().stream().map(DomainObject::getId).skip(1).toList();
-        request.put("/api/lectures/" + lecture1.getId() + "/lecture-units-order", newlyOrderedList, HttpStatus.CONFLICT);
+        request.put("/api/lectures/" + lecture1.getId() + "/lecture-units-order", newlyOrderedList, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void updateLectureUnitOrder_newTextUnitInOrderedList_shouldReturnConflict() throws Exception {
+    void updateLectureUnitOrder_newTextUnitInOrderedList_shouldReturnBadRequest() throws Exception {
         List<Long> newlyOrderedList = lecture1.getLectureUnits().stream().map(DomainObject::getId).collect(Collectors.toCollection(ArrayList::new));
         // textUnit3 is not in specified lecture
         newlyOrderedList.set(1, this.textUnit3.getId());
-        request.put("/api/lectures/" + lecture1.getId() + "/lecture-units-order", newlyOrderedList, HttpStatus.CONFLICT);
+        request.put("/api/lectures/" + lecture1.getId() + "/lecture-units-order", newlyOrderedList, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -226,7 +226,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
         request.postWithoutLocation("/api/lectures/" + lecture1.getId() + "/lecture-units/" + lecture1.getLectureUnits().get(0).getId() + "/completion?completed=true", null,
                 HttpStatus.OK, null);
 
-        this.lecture1 = lectureRepository.findByIdWithPostsAndLectureUnitsAndCompetenciesAndCompletionsElseThrow(lecture1.getId());
+        this.lecture1 = lectureRepository.findByIdWithAttachmentsAndPostsAndLectureUnitsAndCompetenciesAndCompletionsElseThrow(lecture1.getId());
         LectureUnit lectureUnit = this.lecture1.getLectureUnits().get(0);
 
         assertThat(lectureUnit.getCompletedUsers()).isNotEmpty();
@@ -237,7 +237,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
         request.postWithoutLocation("/api/lectures/" + lecture1.getId() + "/lecture-units/" + lecture1.getLectureUnits().get(0).getId() + "/completion?completed=false", null,
                 HttpStatus.OK, null);
 
-        this.lecture1 = lectureRepository.findByIdWithPostsAndLectureUnitsAndCompetenciesAndCompletionsElseThrow(lecture1.getId());
+        this.lecture1 = lectureRepository.findByIdWithAttachmentsAndPostsAndLectureUnitsAndCompetenciesAndCompletionsElseThrow(lecture1.getId());
         lectureUnit = this.lecture1.getLectureUnits().get(0);
 
         assertThat(lectureUnit.getCompletedUsers()).isEmpty();
@@ -247,24 +247,24 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void setLectureUnitCompletion_lectureUnitNotPartOfLecture_shouldReturnConflict() throws Exception {
-        request.postWithoutLocation("/api/lectures/" + lecture1.getId() + "/lecture-units/" + this.textUnit2.getId() + "/completion?completed=true", null, HttpStatus.CONFLICT,
+    void setLectureUnitCompletion_lectureUnitNotPartOfLecture_shouldReturnBadRequest() throws Exception {
+        request.postWithoutLocation("/api/lectures/" + lecture1.getId() + "/lecture-units/" + this.textUnit2.getId() + "/completion?completed=true", null, HttpStatus.BAD_REQUEST,
                 null);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void setLectureUnitCompletion_withoutLecture_shouldReturnConflict() throws Exception {
-        request.postWithoutLocation("/api/lectures/" + lecture1.getId() + "/lecture-units/" + this.textUnit3.getId() + "/completion?completed=true", null, HttpStatus.CONFLICT,
+    void setLectureUnitCompletion_withoutLecture_shouldReturnBadRequest() throws Exception {
+        request.postWithoutLocation("/api/lectures/" + lecture1.getId() + "/lecture-units/" + this.textUnit3.getId() + "/completion?completed=true", null, HttpStatus.BAD_REQUEST,
                 null);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void setLectureUnitCompletion_lectureUnitNotVisible_shouldReturnConflict() throws Exception {
+    void setLectureUnitCompletion_lectureUnitNotVisible_shouldReturnBadRequest() throws Exception {
         this.textUnit.setReleaseDate(ZonedDateTime.now().plusDays(1));
         textUnitRepository.save(this.textUnit);
-        request.postWithoutLocation("/api/lectures/" + lecture1.getId() + "/lecture-units/" + this.textUnit.getId() + "/completion?completed=true", null, HttpStatus.CONFLICT,
+        request.postWithoutLocation("/api/lectures/" + lecture1.getId() + "/lecture-units/" + this.textUnit.getId() + "/completion?completed=true", null, HttpStatus.BAD_REQUEST,
                 null);
     }
 

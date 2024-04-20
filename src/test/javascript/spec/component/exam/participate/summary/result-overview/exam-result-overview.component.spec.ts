@@ -21,6 +21,7 @@ import { Course } from 'app/entities/course.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExerciseResult, StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { GradingKeyTableComponent } from 'app/grading-system/grading-key-overview/grading-key/grading-key-table.component';
+import { CollapsibleCardComponent } from 'app/exam/participate/summary/collapsible-card.component';
 
 let fixture: ComponentFixture<ExamResultOverviewComponent>;
 let component: ExamResultOverviewComponent;
@@ -117,13 +118,24 @@ const programmingExerciseTwo = {
 } as ProgrammingExercise;
 const exercises = [textExercise, quizExercise, modelingExercise, programmingExercise, programmingExerciseTwo, notIncludedTextExercise, bonusTextExercise];
 
-const textExerciseResult = { exerciseId: textExercise.id, achievedScore: 60, achievedPoints: 6, maxScore: textExercise.maxPoints } as ExerciseResult;
+const textExerciseResult = {
+    exerciseId: textExercise.id,
+    achievedScore: 60,
+    achievedPoints: 6,
+    maxScore: textExercise.maxPoints,
+} as ExerciseResult;
 
 describe('ExamResultOverviewComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [RouterTestingModule.withRoutes([]), MockModule(NgbModule), HttpClientTestingModule],
-            declarations: [ExamResultOverviewComponent, MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe), MockComponent(GradingKeyTableComponent)],
+            declarations: [
+                ExamResultOverviewComponent,
+                MockComponent(FaIconComponent),
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(GradingKeyTableComponent),
+                MockComponent(CollapsibleCardComponent),
+            ],
             providers: [MockProvider(ExerciseService)],
         })
             .compileComponents()
@@ -282,6 +294,48 @@ describe('ExamResultOverviewComponent', () => {
             component.scrollToExercise(undefined);
 
             expect(consoleErrorSpy).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('summedAchievedExerciseScorePercentage', () => {
+        it('should be called when overallScoreAchieved is not defined in DTO from server', () => {
+            //@ts-ignore spying on private method
+            const summedAchievedExerciseScorePercentageSpy = jest.spyOn(component, 'summedAchievedExerciseScorePercentage');
+            component.studentExamWithGrade.studentResult.overallScoreAchieved = undefined;
+            component.exerciseInfos = {};
+
+            component.ngOnInit();
+
+            expect(summedAchievedExerciseScorePercentageSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should be called when overallScoreAchieved is 0 (default value, might be set as initial value because not defined from server DTO)', () => {
+            //@ts-ignore spying on private method
+            const summedAchievedExerciseScorePercentageSpy = jest.spyOn(component, 'summedAchievedExerciseScorePercentage');
+            component.studentExamWithGrade.studentResult.overallScoreAchieved = 0;
+            component.exerciseInfos = {};
+
+            component.ngOnInit();
+
+            expect(summedAchievedExerciseScorePercentageSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should calculate achieved percentage from exercise info properly', () => {
+            //@ts-ignore spying on private method
+            const summedAchievedExerciseScorePercentageSpy = jest.spyOn(component, 'summedAchievedExerciseScorePercentage');
+            const exerciseInfosWithAchievedPercentage = {
+                1: { achievedPercentage: 80 },
+                2: { achievedPercentage: 60 },
+                3: { achievedPercentage: 90 },
+            };
+            //@ts-ignore missing attributes
+            component.exerciseInfos = exerciseInfosWithAchievedPercentage;
+            component.studentExamWithGrade.studentResult.overallScoreAchieved = undefined;
+
+            component.ngOnInit();
+
+            expect(summedAchievedExerciseScorePercentageSpy).toHaveBeenCalledOnce();
+            expect(component.overallAchievedPercentageRoundedByCourseSettings).toBe(76.67);
         });
     });
 });

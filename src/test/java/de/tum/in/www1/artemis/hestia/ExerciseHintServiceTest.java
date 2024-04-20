@@ -55,7 +55,7 @@ class ExerciseHintServiceTest extends AbstractSpringIntegrationIndependentTest {
     private ProgrammingExerciseTaskService programmingExerciseTaskService;
 
     @Autowired
-    private ProgrammingSubmissionRepository programmingSubmissionRepository;
+    private ProgrammingSubmissionTestRepository programmingSubmissionRepository;
 
     @Autowired
     private ExerciseHintActivationRepository exerciseHintActivationRepository;
@@ -245,8 +245,8 @@ class ExerciseHintServiceTest extends AbstractSpringIntegrationIndependentTest {
     void testGetAvailableExerciseHints_skippedTestsConsideredAsNegative() {
         // create result with feedbacks with "null" for attribute "positive"
         addResultWithSuccessfulTestCases(exercise.getTestCases());
-        var results = resultRepository.findAllByExerciseId(exercise.getId());
-        var optionalResult = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorById(results.get(0).getId());
+        var results = resultRepository.findAllByParticipationExerciseId(exercise.getId());
+        var optionalResult = resultRepository.findWithBidirectionalSubmissionAndFeedbackAndAssessorAndTeamStudentsById(results.iterator().next().getId());
         assertThat(optionalResult).isPresent();
 
         var result = optionalResult.get();

@@ -7,7 +7,7 @@ import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -26,7 +26,12 @@ import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 @Table(name = "plagiarism_result")
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 // Annotation necessary to distinguish between concrete implementations of PlagiarismResults when deserializing from JSON
-@JsonSubTypes({ @JsonSubTypes.Type(value = ModelingPlagiarismResult.class, name = "modeling"), @JsonSubTypes.Type(value = TextPlagiarismResult.class, name = "text") })
+// @formatter:off
+@JsonSubTypes({
+    @JsonSubTypes.Type(value = ModelingPlagiarismResult.class, name = "modeling"),
+    @JsonSubTypes.Type(value = TextPlagiarismResult.class, name = "text")
+})
+// @formatter:on
 public abstract class PlagiarismResult<E extends PlagiarismSubmissionElement> extends AbstractAuditingEntity {
 
     /**
@@ -57,7 +62,7 @@ public abstract class PlagiarismResult<E extends PlagiarismSubmissionElement> ex
      */
     @CollectionTable(name = "plagiarism_result_similarity_distribution", joinColumns = @JoinColumn(name = "plagiarism_result_id"))
     @MapKeyColumn(name = "idx")
-    @Column(name = "`value`")
+    @Column(name = "frequency")
     @ElementCollection(fetch = FetchType.EAGER)
     protected Map<Integer, Integer> similarityDistribution;
 

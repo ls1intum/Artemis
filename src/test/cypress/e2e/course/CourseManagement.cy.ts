@@ -5,7 +5,7 @@ import { Course } from 'app/entities/course.model';
 
 import { courseCreation, courseManagement, courseManagementAPIRequest, navigationBar } from '../../support/artemis';
 import { admin, studentOne } from '../../support/users';
-import { convertBooleanToYesNo, convertModelAfterMultiPart, dayjsToString, generateUUID, trimDate } from '../../support/utils';
+import { convertBooleanToCheckIconClass, convertModelAfterMultiPart, dayjsToString, generateUUID, trimDate } from '../../support/utils';
 
 // Common primitives
 const courseData = {
@@ -96,19 +96,19 @@ describe('Course management', () => {
             courseCreation.setTitle(courseData.title);
             courseCreation.setShortName(courseData.shortName);
             courseCreation.setDescription(courseData.description);
-            courseCreation.setTestCourse(courseData.testCourse);
             courseCreation.setStartDate(courseData.startDate);
             courseCreation.setEndDate(courseData.endDate);
+            courseCreation.setTestCourse(courseData.testCourse);
             courseCreation.setSemester(courseData.semester);
             courseCreation.setCourseMaxPoints(courseData.maxPoints);
             courseCreation.setProgrammingLanguage(courseData.programmingLanguage);
+            courseCreation.setCustomizeGroupNames(courseData.customizeGroupNames);
             courseCreation.setEnableComplaints(courseData.enableComplaints);
             courseCreation.setMaxComplaints(courseData.maxComplaints);
             courseCreation.setMaxTeamComplaints(courseData.maxTeamComplaints);
             courseCreation.setMaxComplaintsTimeDays(courseData.maxComplaintTimeDays);
             courseCreation.setEnableMoreFeedback(courseData.enableMoreFeedback);
             courseCreation.setMaxRequestMoreFeedbackTimeDays(courseData.maxRequestMoreFeedbackTimeDays);
-            courseCreation.setCustomizeGroupNames(courseData.customizeGroupNames);
             courseCreation.submit().then((request: Interception) => {
                 const courseBody = request.response!.body;
                 course = courseBody;
@@ -131,6 +131,7 @@ describe('Course management', () => {
                 expect(courseBody.instructorGroupName).to.eq(`artemis-${courseData.shortName}-instructors`);
                 expect(courseBody.teachingAssistantGroupName).to.eq(`artemis-${courseData.shortName}-tutors`);
             });
+            courseManagement.getCourseHeaderTitle().scrollIntoView();
             courseManagement.getCourseHeaderTitle().contains(courseData.title).should('be.visible');
             courseManagement.getCourseHeaderDescription().contains(courseData.description);
             courseManagement.getCourseTitle().contains(courseData.title);
@@ -143,7 +144,7 @@ describe('Course management', () => {
             courseManagement.getCourseEndDate().contains(courseData.endDate.format(dateFormat));
             courseManagement.getCourseSemester().contains(courseData.semester);
             courseManagement.getCourseProgrammingLanguage().contains(courseData.programmingLanguage);
-            courseManagement.getCourseTestCourse().contains(convertBooleanToYesNo(courseData.testCourse));
+            courseManagement.getCourseTestCourse().find(convertBooleanToCheckIconClass(courseData.testCourse)).should('exist');
             courseManagement.getCourseMaxComplaints().contains(courseData.maxComplaints);
             courseManagement.getCourseMaxTeamComplaints().contains(courseData.maxTeamComplaints);
             courseManagement.getMaxComplaintTimeDays().contains(courseData.maxComplaintTimeDays);
@@ -173,10 +174,11 @@ describe('Course management', () => {
                     expect(courseBody.editorGroupName).to.eq(courseData.editorGroupName);
                     expect(courseBody.instructorGroupName).to.eq(courseData.instructorGroupName);
                 });
+                courseManagement.getCourseHeaderTitle().scrollIntoView();
                 courseManagement.getCourseHeaderTitle().contains(courseData.title).should('be.visible');
                 courseManagement.getCourseTitle().contains(courseData.title);
                 courseManagement.getCourseShortName().contains(courseData.shortName);
-                courseManagement.getCourseTestCourse().contains(convertBooleanToYesNo(courseData.testCourse));
+                courseManagement.getCourseTestCourse().find(convertBooleanToCheckIconClass(courseData.testCourse)).should('exist');
                 courseManagement.getCourseStudentGroupName().contains(courseData.studentGroupName);
                 courseManagement.getCourseTutorGroupName().contains(courseData.tutorGroupName);
                 courseManagement.getCourseEditorGroupName().contains(courseData.editorGroupName);
@@ -220,10 +222,11 @@ describe('Course management', () => {
                 expect(course.shortName).to.eq(courseData.shortName);
                 expect(course.testCourse).to.eq(editedCourseData.testCourse);
             });
+            courseManagement.getCourseHeaderTitle().scrollIntoView();
             courseManagement.getCourseHeaderTitle().contains(editedCourseData.title).should('be.visible');
             courseManagement.getCourseTitle().contains(editedCourseData.title);
             courseManagement.getCourseShortName().contains(courseData.shortName);
-            courseManagement.getCourseTestCourse().contains(convertBooleanToYesNo(editedCourseData.testCourse));
+            courseManagement.getCourseTestCourse().find(convertBooleanToCheckIconClass(editedCourseData.testCourse)).should('exist');
         });
 
         after('Delete course', () => {

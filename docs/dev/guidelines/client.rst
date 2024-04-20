@@ -9,9 +9,16 @@ The Artemis client is an Angular project. Keep https://angular.io/guide/stylegui
 
 Some general aspects:
 
-* Never invoke methods from the html template. The automatic change tracking in Angular will kill the application performance
 * The Artemis client uses lazy loading to keep the initial bundle size below 2 MB.
 * Code quality and test coverage are important. Try to reuse code and avoid code duplication. Write meaningful tests!
+
+
+.. WARNING::
+    **Never invoke methods from the html template. The automatic change tracking in Angular will kill the application performance!**
+
+    This also includes getter functions. The only exception is the use of `signals <https://angular.io/guide/signals>`_.
+
+    If you need more information/examples or methods to avoid function calls, have a look at this `article <https://dev.to/sandrocagara/angular-avoid-function-calls-in-templates-1mfa>`_.
 
 1. Names
 ========
@@ -35,8 +42,45 @@ Some general aspects:
 
 1. Do not export types/functions unless you need to share it across multiple components.
 2. Do not introduce new types/values to the global namespace.
-3. Shared types should be defined in 'types.ts'.
+3. Shared types/interfaces should be defined in 'types.ts'.
 4. Within a file, type definitions should come first.
+5. Interfaces and types offer almost the same functionality. To ensure consistency, choose ``interface`` over ``type`` whenever possible.
+
+    .. code-block:: ts
+
+        // Dont do
+        type AngularLink = {
+            text: string;
+            routerLink: (string | number) [];
+        }
+
+        // Do
+        interface AngularLink {
+            text: string;
+            routerLink: (string | number) [];
+        }
+
+        // And this is also allowed (because interface is not possible here)
+        type RouterLinkPart = string | number;
+
+
+
+6. Use strict typing to avoid type errors: Do not use ``any``.
+
+7. Do not use anonymous data structures.
+
+    .. code-block:: ts
+
+        interface AngularLink {
+            text: string;
+            routerLink: (string | number) [];
+        }
+
+        // Do not do this because the type error will not be recognized during compile time.
+        const link = { text: 'I am a Link', routerLink: 4 } as AngularLink;
+
+        // Instead do this (it will throw a type error during compilation because '4' is not an array of strings)
+        const link: AngularLink = { text: 'I am a Link', routerLink: '4' };
 
 4. ``null`` and ``undefined``
 =============================
@@ -58,16 +102,45 @@ Use JSDoc style comments for functions, interfaces, enums, and classes.
 ============
 
 1. Use single quotes for strings.
-2. All strings visible to the user need to be localized (make an entry in the corresponding ``*.json`` file).
+2. All strings visible to the user need to be localized (see next chapter)
 
-8. Buttons and Links
+8. Localization
+===============
+
+1. Make an entry in the corresponding ``i18n/{language}/{area}.json`` files for all languages Artemis supports (currently English and German).
+2. To display the string in HTML files, use the ``jhiTranslate`` directive or the ``artemisTranslate`` pipe.
+3. To ensure consistency, always choose the directive over the pipe whenever possible.
+
+Do:
+
+.. code-block:: html+ng2
+
+    <span jhiTranslate="global.title"></span>
+
+    <!-- ok, because there is other content in the span as well -->
+    <span>
+        {{ 'global.title' | artemisTranslate }}
+        <fa-icon [icon]="faDelete" />
+    </span>
+
+Don't do:
+
+.. code-block:: html+ng2
+
+    <!-- use the directive instead -->
+    <span>{{ 'global.title' | artemisTranslate }}</span>
+
+    <!-- Do not add the translated text between the HTML tags -->
+    <span jhiTranslate="global.title">Artemis</span>
+
+9. Buttons and Links
 ====================
 
 1. Be aware that Buttons navigate only in the same tab while Links provide the option to use the context menu or a middle-click to open the page in a new tab. Therefore:
 2. Buttons are best used to trigger certain functionalities (e.g. ``<button (click)='deleteExercise(exercise)'>...</button``)
 3. Links are best for navigating on Artemis (e.g. ``<a [routerLink]='getLinkForExerciseEditor(exercise)' [queryParams]='getQueryParamsForEditor(exercise)'>...</a>``)
 
-9. Icons with Text
+10. Icons with Text
 ====================
 
 If you use icons next to text (for example for a button or link), make sure that they are separated by a newline. HTML renders one or multiple newlines as a space.
@@ -93,7 +166,7 @@ Don't do one of these or any other combination of whitespaces:
 
 Ignoring this will lead to inconsistent spacing between icons and text.
 
-10. Labels
+11. Labels
 ==========
 
 Use labels to caption inputs like text fields and checkboxes.
@@ -105,17 +178,19 @@ Do one of these:
 
 .. code-block:: html+ng2
 
+    <!-- always prefer this solution -->
+    <input id="inputId" class="form-check-input" type="checkbox" (click)="foo()" />
+    <label class="form-check-label" for="inputId" jhiTranslate="artemisApp.labelText">
+    </label>
+
+    <!-- only do this if the first solution does not work -->
     <label class="form-check-label">
         <input class="form-check-input" type="checkbox" (click)="foo()" />
         {{ 'artemisApp.labelText' | artemisTranslate }}
     </label>
 
-    <input id="inputId" class="form-check-input" type="checkbox" (click)="foo()" />
-    <label class="form-check-label" for="inputId">
-        {{ 'artemisApp.labelText' | artemisTranslate }}
-    </label>
 
-11. Code Style
+12. Code Style
 ==============
 
 1. Use arrow functions over anonymous function expressions.
@@ -142,7 +217,7 @@ Do one of these:
 We use ``prettier`` to style code automatically and ``eslint`` to find additional issues.
 You can find the corresponding commands to invoke those tools in ``package.json``.
 
-12. Preventing Memory Leaks
+13. Preventing Memory Leaks
 ===========================
 
 It is crucial that you try to prevent memory leaks in both your components and your tests.
@@ -218,7 +293,7 @@ or
    jest --detectLeaks
 
 
-13. Defining Routes and Breadcrumbs
+14. Defining Routes and Breadcrumbs
 ===================================
 
 The ideal schema for routes is that every variable in a path is preceded by a unique path segment: ``\entityA\:entityIDA\entityB\:entityIDB``
@@ -253,7 +328,7 @@ When creating a completely new route you will have to register the new paths in 
         }
     }
 
-14. Strict Template Check
+15. Strict Template Check
 =========================
 
 To prevent errors for strict template rule in TypeScript, Artemis uses following approaches.
@@ -270,7 +345,7 @@ Do not use ``<span [ngbTooltip]="submittedDate | artemisDate">{{ submittedDate |
 
 Use ``<span [ngbTooltip]="submittedDate | artemisDate">{{ submittedDate | artemisTimeAgo }}</span>``
 
-15. Chart Instantiation
+16. Chart Instantiation
 =======================
 
 We are using the framework `ngx-charts <https://github.com/swimlane/ngx-charts>`_ in order to instantiate charts and diagrams in Artemis.
@@ -369,7 +444,7 @@ Here are a few tips when using this framework:
 
 Some parts of these guidelines are adapted from https://github.com/microsoft/TypeScript-wiki/blob/main/Coding-guidelines.md
 
-16. Responsive Layout
+17. Responsive Layout
 =====================
 
 Ensure that the layout of your page or component shrinks accordingly and adapts to all display sizes (responsive design).
@@ -385,7 +460,7 @@ Do not use the following for this purpose if it can be avoided:
         </div>
     </div>
 
-17. WebSocket Subscriptions
+18. WebSocket Subscriptions
 ===========================
 
 The client must not subscribe to more than 20 WebSocket topics simultaneously, regardless of the amount of exercises, lectures, courses, etc. there are for one particular user.

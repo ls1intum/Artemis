@@ -2,9 +2,12 @@ package de.tum.in.www1.artemis.service.dto.iris;
 
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.in.www1.artemis.domain.iris.IrisTemplate;
 
-public class IrisCombinedHestiaSubSettingsDTO {
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public class IrisCombinedHestiaSubSettingsDTO implements IrisCombinedSubSettingsInterface {
 
     private boolean enabled;
 

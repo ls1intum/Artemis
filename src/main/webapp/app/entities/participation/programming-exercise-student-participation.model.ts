@@ -2,14 +2,14 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { ParticipationType } from 'app/entities/participation/participation.model';
 
 export class ProgrammingExerciseStudentParticipation extends StudentParticipation {
-    public repositoryUrl?: string;
+    public repositoryUri?: string;
     public buildPlanId?: string;
     public branch?: string;
     public locked?: boolean;
 
     // helper attribute
     public buildPlanUrl?: string;
-    public userIndependentRepositoryUrl?: string;
+    public userIndependentRepositoryUri?: string;
 
     constructor() {
         super(ParticipationType.PROGRAMMING);

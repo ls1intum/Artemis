@@ -7,7 +7,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
@@ -16,6 +16,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
+import de.tum.in.www1.artemis.exercise.GradingCriterionUtil;
 import de.tum.in.www1.artemis.util.GitUtilService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
@@ -25,13 +26,13 @@ import de.tum.in.www1.artemis.util.LocalRepository;
 public class ParticipationFactory {
 
     /**
-     * Generates a MockFileRepositoryUrl for the given repository.
+     * Generates a MockFileRepositoryUri for the given repository.
      *
-     * @param repository The repository to generate the MockFileRepositoryUrl for
-     * @return The generated MockFileRepositoryUrl
+     * @param repository The repository to generate the MockFileRepositoryUri for
+     * @return The generated MockFileRepositoryUri
      */
-    public static GitUtilService.MockFileRepositoryUrl getMockFileRepositoryUrl(LocalRepository repository) {
-        return new GitUtilService.MockFileRepositoryUrl(repository.originRepoFile);
+    public static GitUtilService.MockFileRepositoryUri getMockFileRepositoryUri(LocalRepository repository) {
+        return new GitUtilService.MockFileRepositoryUri(repository.originRepoFile);
     }
 
     /**
@@ -325,8 +326,8 @@ public class ParticipationFactory {
     public static List<Feedback> applySGIonFeedback(Exercise receivedExercise) {
         List<Feedback> feedbacks = generateFeedback();
 
-        var gradingInstructionWithNoLimit = receivedExercise.getGradingCriteria().get(0).getStructuredGradingInstructions().get(0);
-        var gradingInstructionWithLimit = receivedExercise.getGradingCriteria().get(1).getStructuredGradingInstructions().get(0);
+        final GradingInstruction gradingInstructionWithNoLimit = GradingCriterionUtil.findInstructionByMaxUsageCount(receivedExercise.getGradingCriteria(), 0);
+        final GradingInstruction gradingInstructionWithLimit = GradingCriterionUtil.findInstructionByMaxUsageCount(receivedExercise.getGradingCriteria(), 1);
 
         feedbacks.get(0).setGradingInstruction(gradingInstructionWithLimit);
         feedbacks.get(0).setCredits(gradingInstructionWithLimit.getCredits()); // score +1P

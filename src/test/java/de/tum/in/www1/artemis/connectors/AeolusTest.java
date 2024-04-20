@@ -8,7 +8,13 @@ import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import de.tum.in.www1.artemis.service.connectors.aeolus.*;
+import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusRepository;
+import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusResult;
+import de.tum.in.www1.artemis.service.connectors.aeolus.DockerConfig;
+import de.tum.in.www1.artemis.service.connectors.aeolus.PlatformAction;
+import de.tum.in.www1.artemis.service.connectors.aeolus.ScriptAction;
+import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
+import de.tum.in.www1.artemis.service.connectors.aeolus.WindfileMetadata;
 
 class AeolusTest {
 
@@ -50,7 +56,9 @@ class AeolusTest {
         platformAction.setName("platformAction");
         platformAction.setWorkdir("workdir");
         platformAction.setRunAlways(true);
-        platformAction.setPlatform("bamboo");
+        platformAction.setPlatform("jenkins");
+        platformAction.setPlatform("jenkins");
+        platformAction.setKind("junit");
         AeolusResult result = new AeolusResult();
         result.setName("name");
         result.setPath("path");
@@ -109,19 +117,21 @@ class AeolusTest {
         assertThat(platformAction.getWorkdir()).isEqualTo("workdir");
         assertThat(platformAction.getName()).isEqualTo("platformAction");
         assertThat(platformAction.isRunAlways()).isEqualTo(true);
-        assertThat(platformAction.getPlatform()).isEqualTo("bamboo");
+        assertThat(platformAction.getPlatform()).isEqualTo("jenkins");
     }
 
     @Test
     void testSettersWithoutMetadata() {
         windfile.setMetadata(null);
         AeolusRepository aeolusRepository = new AeolusRepository("url", "branch", "path");
-        windfile.setPreProcessingMetadata("id", "name", "gitCredentials", "resultHook", "description", Map.of("key", aeolusRepository));
+        windfile.setPreProcessingMetadata("id", "name", "gitCredentials", "resultHook", "description", Map.of("key", aeolusRepository), "resultHookCredentials");
         assertThat(windfile.getMetadata().getId()).isEqualTo("id");
         assertThat(windfile.getMetadata().getDescription()).isEqualTo("description");
         assertThat(windfile.getMetadata().getName()).isEqualTo("name");
         assertThat(windfile.getRepositories().get("key")).isEqualTo(aeolusRepository);
         assertThat(windfile.getMetadata().getGitCredentials()).isEqualTo("gitCredentials");
+        assertThat(windfile.getMetadata().getResultHook()).isEqualTo("resultHook");
+        assertThat(windfile.getMetadata().getResultHookCredentials()).isEqualTo("resultHookCredentials");
     }
 
     @Test
@@ -154,5 +164,23 @@ class AeolusTest {
         assertThat(aeolusRepository.getUrl()).isEqualTo("url");
         aeolusRepository.setPath("path");
         assertThat(aeolusRepository.getPath()).isEqualTo("path");
+    }
+
+    @Test
+    void testImageTagCombinations() {
+        DockerConfig dockerConfig = new DockerConfig();
+        dockerConfig.setImage("image");
+        dockerConfig.setTag("tag");
+        assertThat(dockerConfig.getFullImageName()).isEqualTo("image:tag");
+
+        dockerConfig.setTag(null);
+        assertThat(dockerConfig.getFullImageName()).isEqualTo("image:latest");
+
+        dockerConfig.setImage("image:tag");
+        dockerConfig.setTag("notshown");
+        assertThat(dockerConfig.getFullImageName()).isEqualTo("image:tag");
+
+        dockerConfig.setImage(null);
+        assertThat(dockerConfig.getFullImageName()).isNull();
     }
 }

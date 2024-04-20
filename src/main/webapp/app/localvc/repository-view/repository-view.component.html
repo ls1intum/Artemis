@@ -1,0 +1,37 @@
+<ng-container>
+    @if (!loadingParticipation && !participationCouldNotBeFetched) {
+        <div style="display: flex; justify-content: space-between; align-items: center">
+            <h1>Source</h1>
+            <div style="text-align: right">
+                @if (result) {
+                    <jhi-result [result]="result" [showUngradedResults]="true" [showBadge]="true" [exercise]="exercise" style="padding-right: 20px" />
+                }
+                @if (routeCommitHistory) {
+                    <a [routerLink]="routeCommitHistory" class="btn btn-primary">
+                        <fa-icon [icon]="faClockRotateLeft" />
+                        <span jhiTranslate="artemisApp.repository.commitHistory.openCommitHistory"></span>
+                    </a>
+                }
+                @if (exercise?.allowOfflineIde) {
+                    <jhi-clone-repo-button [loading]="!!exercise.loading" [smallButtons]="false" [repositoryUri]="repositoryUri" [exercise]="exercise" style="padding-left: 15px" />
+                }
+            </div>
+        </div>
+        <jhi-code-editor-container
+            [editable]="false"
+            [buildable]="false"
+            [participation]="participation"
+            [showEditorInstructions]="showEditorInstructions"
+            [isTutorAssessment]="true"
+            [course]="getCourseFromExercise(exercise)"
+        >
+            <jhi-programming-exercise-instructions
+                editorSidebar
+                [exercise]="exercise"
+                [participation]="participation"
+                [personalParticipation]="true"
+                class="instructions-wrapper__content card-body p-0"
+            />
+        </jhi-code-editor-container>
+    }
+</ng-container>

@@ -1,15 +1,18 @@
 package de.tum.in.www1.artemis.web.rest.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.security.Principal;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.eclipse.jgit.api.errors.CheckoutConflictException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -25,7 +28,7 @@ import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.RepositoryAccessService;
 import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.service.connectors.localci.LocalCIConnectorService;
+import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCServletService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
@@ -36,15 +39,16 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 /**
  * Executes requested actions on the test repository of a programming exercise. Only available to TAs, Instructors and Admins.
  */
+@Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class TestRepositoryResource extends RepositoryResource {
 
     public TestRepositoryResource(ProfileService profileService, UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService,
             RepositoryService repositoryService, Optional<VersionControlService> versionControlService, ProgrammingExerciseRepository programmingExerciseRepository,
-            RepositoryAccessService repositoryAccessService, Optional<LocalCIConnectorService> localCIConnectorService) {
+            RepositoryAccessService repositoryAccessService, Optional<LocalVCServletService> localVCServletService) {
         super(profileService, userRepository, authCheckService, gitService, repositoryService, versionControlService, programmingExerciseRepository, repositoryAccessService,
-                localCIConnectorService);
+                localVCServletService);
     }
 
     @Override
@@ -52,20 +56,20 @@ public class TestRepositoryResource extends RepositoryResource {
         final var exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(false, exercise, user, "test");
-        final var repoUrl = exercise.getVcsTestRepositoryUrl();
-        return gitService.getOrCheckoutRepository(repoUrl, pullOnGet);
+        final var repoUri = exercise.getVcsTestRepositoryUri();
+        return gitService.getOrCheckoutRepository(repoUri, pullOnGet);
     }
 
     @Override
-    VcsRepositoryUrl getRepositoryUrl(Long exerciseId) {
+    VcsRepositoryUri getRepositoryUri(Long exerciseId) {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
-        return exercise.getVcsTestRepositoryUrl();
+        return exercise.getVcsTestRepositoryUri();
     }
 
     @Override
     boolean canAccessRepository(Long exerciseId) {
         try {
-            repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(true, programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId),
+            repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(false, programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId),
                     userRepository.getUserWithGroupsAndAuthorities(), "test");
         }
         catch (AccessForbiddenException e) {
@@ -165,7 +169,7 @@ public class TestRepositoryResource extends RepositoryResource {
      * @param principal   used to check if the user can update the files
      * @return {Map<String, String>} file submissions or the appropriate http error
      */
-    @PutMapping("/test-repository/{exerciseId}/files")
+    @PutMapping("test-repository/{exerciseId}/files")
     @EnforceAtLeastTutor
     public ResponseEntity<Map<String, String>> updateTestFiles(@PathVariable("exerciseId") Long exerciseId, @RequestBody List<FileSubmission> submissions,
             @RequestParam Boolean commit, Principal principal) {
@@ -179,7 +183,7 @@ public class TestRepositoryResource extends RepositoryResource {
         Repository repository;
         try {
             repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(true, exercise, userRepository.getUserWithGroupsAndAuthorities(principal.getName()), "test");
-            repository = gitService.getOrCheckoutRepository(exercise.getVcsTestRepositoryUrl(), true);
+            repository = gitService.getOrCheckoutRepository(exercise.getVcsTestRepositoryUri(), true);
         }
         catch (AccessForbiddenException e) {
             FileSubmissionError error = new FileSubmissionError(exerciseId, "noPermissions");

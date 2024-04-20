@@ -1,13 +1,15 @@
 package de.tum.in.www1.artemis.web.rest.iris;
 
-import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
@@ -18,47 +20,27 @@ import de.tum.in.www1.artemis.repository.iris.IrisChatSessionRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.connectors.iris.IrisHealthIndicator;
-import de.tum.in.www1.artemis.service.connectors.iris.dto.IrisStatusDTO;
+import de.tum.in.www1.artemis.service.dto.iris.IrisCombinedSettingsDTO;
 import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;
 import de.tum.in.www1.artemis.service.iris.IrisSessionService;
 import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
+import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
 /**
  * REST controller for managing {@link IrisChatSession}.
  */
-@RestController
 @Profile("iris")
+@RestController
 @RequestMapping("api/iris/")
-public class IrisChatSessionResource {
-
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
-
-    private final AuthorizationCheckService authCheckService;
+public class IrisChatSessionResource extends IrisExerciseChatBasedSessionResource<ProgrammingExercise, IrisChatSession> {
 
     private final IrisChatSessionRepository irisChatSessionRepository;
 
-    private final UserRepository userRepository;
-
-    private final IrisSessionService irisSessionService;
-
-    private final IrisSettingsService irisSettingsService;
-
-    private final IrisHealthIndicator irisHealthIndicator;
-
-    private final IrisRateLimitService irisRateLimitService;
-
-    public IrisChatSessionResource(ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
-            IrisChatSessionRepository irisChatSessionRepository, UserRepository userRepository, IrisSessionService irisSessionService, IrisSettingsService irisSettingsService,
-            IrisHealthIndicator irisHealthIndicator, IrisRateLimitService irisRateLimitService) {
-        this.programmingExerciseRepository = programmingExerciseRepository;
-        this.authCheckService = authCheckService;
+    protected IrisChatSessionResource(AuthorizationCheckService authCheckService, IrisChatSessionRepository irisChatSessionRepository, UserRepository userRepository,
+            ProgrammingExerciseRepository programmingExerciseRepository, IrisSessionService irisSessionService, IrisSettingsService irisSettingsService,
+            IrisRateLimitService irisRateLimitService) {
+        super(authCheckService, userRepository, irisSessionService, irisSettingsService, irisRateLimitService, programmingExerciseRepository::findByIdElseThrow);
         this.irisChatSessionRepository = irisChatSessionRepository;
-        this.userRepository = userRepository;
-        this.irisSessionService = irisSessionService;
-        this.irisSettingsService = irisSettingsService;
-        this.irisHealthIndicator = irisHealthIndicator;
-        this.irisRateLimitService = irisRateLimitService;
     }
 
     /**
@@ -70,14 +52,8 @@ public class IrisChatSessionResource {
     @GetMapping("programming-exercises/{exerciseId}/sessions/current")
     @EnforceAtLeastStudent
     public ResponseEntity<IrisChatSession> getCurrentSession(@PathVariable Long exerciseId) {
-        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.CHAT, exercise);
-        var user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
-
-        var session = irisChatSessionRepository.findNewestByExerciseIdAndUserIdElseThrow(exercise.getId(), user.getId());
-        irisSessionService.checkHasAccessToIrisSession(session, user);
-        return ResponseEntity.ok(session);
+        return super.getCurrentSession(exerciseId, IrisSubSettingsType.CHAT, Role.STUDENT,
+                (exercise, user) -> irisChatSessionRepository.findNewestByExerciseIdAndUserIdElseThrow(exercise.getId(), user.getId()));
     }
 
     /**
@@ -89,14 +65,8 @@ public class IrisChatSessionResource {
     @GetMapping("programming-exercises/{exerciseId}/sessions")
     @EnforceAtLeastStudent
     public ResponseEntity<List<IrisChatSession>> getAllSessions(@PathVariable Long exerciseId) {
-        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.CHAT, exercise);
-        var user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
-
-        var sessions = irisChatSessionRepository.findByExerciseIdAndUserIdElseThrow(exercise.getId(), user.getId());
-        sessions.forEach(s -> irisSessionService.checkHasAccessToIrisSession(s, user));
-        return ResponseEntity.ok(sessions);
+        return super.getAllSessions(exerciseId, IrisSubSettingsType.CHAT, Role.STUDENT,
+                (exercise, user) -> irisChatSessionRepository.findByExerciseIdAndUserIdElseThrow(exercise.getId(), user.getId()));
     }
 
     /**
@@ -110,15 +80,14 @@ public class IrisChatSessionResource {
     @PostMapping("programming-exercises/{exerciseId}/sessions")
     @EnforceAtLeastStudent
     public ResponseEntity<IrisChatSession> createSessionForProgrammingExercise(@PathVariable Long exerciseId) throws URISyntaxException {
-        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.CHAT, exercise);
-        var user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
-
-        var session = irisSessionService.createChatSessionForProgrammingExercise(exercise, user);
-
-        var uriString = "/api/iris/sessions/" + session.getId();
-        return ResponseEntity.created(new URI(uriString)).body(session);
+        return super.createSessionForExercise(exerciseId, IrisSubSettingsType.CHAT, Role.STUDENT, (exercise, user) -> {
+            if (exercise instanceof ProgrammingExercise programmingExercise) {
+                return irisChatSessionRepository.save(new IrisChatSession(programmingExercise, user));
+            }
+            else {
+                throw new ConflictException("Iris is only supported for programming exercises", "Iris", "irisProgrammingExercise");
+            }
+        });
     }
 
     /**
@@ -128,27 +97,10 @@ public class IrisChatSessionResource {
      * @param sessionId id of the session
      * @return a status {@code 200 (Ok)} and with body true if Iris is active, false otherwise
      */
-    @GetMapping("/sessions/{sessionId}/active")
+    @GetMapping("sessions/{sessionId}/active")
     @EnforceAtLeastStudent
     public ResponseEntity<IrisHealthDTO> isIrisActive(@PathVariable Long sessionId) {
         var session = irisChatSessionRepository.findByIdElseThrow(sessionId);
-        var user = userRepository.getUser();
-        irisSessionService.checkHasAccessToIrisSession(session, user);
-        irisSessionService.checkIsIrisActivated(session);
-        var settings = irisSettingsService.getCombinedIrisSettingsFor(session.getExercise(), false);
-        var health = irisHealthIndicator.health();
-        IrisStatusDTO[] modelStatuses = (IrisStatusDTO[]) health.getDetails().get("modelStatuses");
-        var specificModelStatus = false;
-        if (modelStatuses != null) {
-            specificModelStatus = Arrays.stream(modelStatuses).filter(x -> x.model().equals(settings.irisChatSettings().getPreferredModel()))
-                    .anyMatch(x -> x.status() == IrisStatusDTO.ModelStatus.UP);
-        }
-
-        var rateLimitInfo = irisRateLimitService.getRateLimitInformation(user);
-
-        return ResponseEntity.ok(new IrisHealthDTO(specificModelStatus, rateLimitInfo));
-    }
-
-    public record IrisHealthDTO(boolean active, IrisRateLimitService.IrisRateLimitInformation rateLimitInfo) {
+        return ResponseEntity.ok(super.isIrisActiveInternal(session.getExercise(), session, IrisCombinedSettingsDTO::irisChatSettings));
     }
 }

@@ -48,7 +48,18 @@ $link-color: $primary;
 $border-color: #dee2e6;
 
 // Footer
-$footer-bg: #fff;
+$footer-bg: $white;
+$footer-height-dev: 3rem;
+$footer-height-prod: 2rem;
+$sidebar-footer-height-dev: 148px;
+$sidebar-footer-height-prod: 132px;
+
+//Module and Navigationbar
+$module-bg: $white;
+$course-image-bg: $body-bg;
+$link-item-color: $primary;
+$link-item-bg: $gray-100;
+$sidebar-card-selected-bg: #ebf3f9;
 
 // Cards
 $card-bg: $white;
@@ -182,6 +193,7 @@ $md-resize-icon-color: rgba(0, 0, 0, 0.125);
 // Metis
 $metis-conversation-sidebar: $gray-600;
 $metis-conversation-sidebar-active: $gray-900;
+$metis-conversation-sidebar-muted: $gray-500;
 $metis-conversation-sidebar-button-background-hover: $gray-400;
 
 $metis-light-gray: #979797;
@@ -226,16 +238,16 @@ $stat-av-sc-legend-critical: rgba(204, 0, 0, 1);
 $stat-av-sc-legend-median: rgba(127, 127, 127, 255);
 $stat-av-sc-legend-best: rgba(40, 164, 40, 1);
 
-// Programming Exercise Form
-$update-programming-exercise-footer-background: white;
-$update-programming-exercise-footer-box-shadow: rgba(0, 0, 0, 0.7);
+// Programming Exercise Update
 $update-programming-exercise-plan-preview-box-background: transparentize(black, 0.95);
+
+// Form Footer
+$update-footer-background: white;
 
 // Edit Quiz
 $quiz-mapping-letter-number-mixin-color: white;
 
 $edit-quiz-footer-background: white;
-$edit-quiz-footer-box-shadow: rgba(0, 0, 0, 0.7);
 $quiz-exercise-detail-max-score-background: whitesmoke;
 $quiz-exercise-detail-max-score-color: black;
 $quiz-edit-question-border: lightgrey;
@@ -340,6 +352,14 @@ $code-editor-file-browser-selected-file-background: #428bca;
 $code-editor-file-browser-badge-background: $code-editor-file-browser-tree-hover;
 $code-editor-diff-newline-background: rgba(63, 185, 80, 0.4);
 $code-editor-gutter-newline-background: rgba(63, 185, 80, 0.8);
+
+// Monaco editor
+$monaco-editor-build-annotation-error-background: scale-color($danger, $alpha: -80%);
+$monaco-editor-build-annotation-error-glyph: $danger;
+$monaco-editor-build-annotation-warning-background: scale-color($warning, $alpha: -80%);
+$monaco-editor-build-annotation-warning-glyph: $warning;
+$monaco-editor-build-annotation-outdated-background: scale-color($gray-500, $alpha: -80%);
+$monaco-editor-build-annotation-outdated-glyph: $gray-500;
 
 // Git-Diff Viewer
 $git-diff-viewer-added-line-background: rgba(63, 185, 80, 0.5);

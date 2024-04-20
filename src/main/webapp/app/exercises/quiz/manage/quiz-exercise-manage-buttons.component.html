@@ -1,0 +1,87 @@
+<div class="btn-group {{ isDetailPage ? 'flex-wrap' : 'flex-btn-group-container' }}">
+    @if (quizExercise.isAtLeastTutor) {
+        <div class="{{ isDetailPage ? 'd-flex' : 'btn-group-vertical me-1 mb-1' }} ">
+            <a id="preview-quiz" [routerLink]="[baseUrl, 'quiz-exercises', quizExercise.id, 'preview']" class="btn btn-success btn-sm me-1 mb-1">
+                <fa-icon [icon]="faEye" />
+                <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.preview"></span>
+            </a>
+            <a [routerLink]="[baseUrl, 'quiz-exercises', quizExercise.id, 'solution']" class="btn btn-success btn-sm me-1 mb-1">
+                <fa-icon [icon]="faEye" />
+                <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.solution"></span>
+            </a>
+        </div>
+        <div class="{{ isDetailPage ? 'd-flex' : 'btn-group-vertical me-1 mb-1' }} ">
+            <a [routerLink]="[baseUrl, 'quiz-exercises', quizExercise.id, 'quiz-point-statistic']" class="btn btn-info btn-sm me-1 mb-1">
+                <span>
+                    <fa-icon [icon]="faSignal" />
+                    <span class="d-none d-md-inline" jhiTranslate="global.menu.entities.quizStatistic"></span>
+                </span>
+            </a>
+            <a [routerLink]="[baseUrl, 'quiz-exercises', quizExercise.id, 'scores']" class="btn btn-info btn-sm me-1 mb-1">
+                <fa-icon [icon]="faTable" />
+                <span class="d-none d-md-inline" jhiTranslate="entity.action.scores"></span>
+            </a>
+            @if (isDetailPage) {
+                <a [routerLink]="[baseUrl, 'quiz-exercises', quizExercise.id, 'participations']" class="btn btn-primary btn-sm me-1 mb-1">
+                    <fa-icon [icon]="faListAlt" />
+                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations"></span>
+                </a>
+            }
+        </div>
+    }
+    <div class="{{ isDetailPage ? 'd-flex' : 'btn-group-vertical me-1 mb-1' }} ">
+        @if (quizExercise.isAtLeastInstructor) {
+            <button type="submit" (click)="exportQuizExercise(true)" class="btn btn-warning btn-sm me-1 mb-1">
+                <fa-icon [icon]="faFileExport" />
+                <span class="d-none d-md-inline" jhiTranslate="entity.action.export"></span>
+            </button>
+        }
+        @if (quizExercise.isAtLeastEditor) {
+            <a
+                [hidden]="quizExercise.quizEnded"
+                [class.disabled]="!quizExercise.isEditable"
+                [routerLink]="[baseUrl, 'quiz-exercises', quizExercise.id, 'edit']"
+                class="btn btn-warning btn-sm me-1 mb-1"
+            >
+                <div>
+                    <fa-icon [icon]="faWrench" />
+                    <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
+                </div>
+            </a>
+        }
+        @if (quizExercise.isAtLeastInstructor) {
+            <a [hidden]="!quizExercise.quizEnded" [routerLink]="[baseUrl, 'quiz-exercises', quizExercise.id, 're-evaluate']" class="btn btn-warning btn-sm me-1 mb-1">
+                <fa-icon [icon]="faWrench" />
+                <span class="d-none d-md-inline" jhiTranslate="entity.action.re-evaluate"></span>
+            </a>
+        }
+    </div>
+    @if (quizExercise.isAtLeastInstructor) {
+        <div class="{{ isDetailPage ? 'd-flex' : 'btn-group-vertical me-1 mb-1' }} ">
+            <button
+                jhiDeleteButton
+                [entityTitle]="quizExercise.title || ''"
+                [actionType]="ActionType.Reset"
+                deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
+                (delete)="resetQuizExercise()"
+                [dialogError]="dialogError$"
+                deleteQuestion="artemisApp.quizExercise.reset.question"
+                class="mb-1"
+            >
+                <fa-icon [icon]="faUndo" />
+            </button>
+            <button
+                jhiDeleteButton
+                [entityTitle]="quizExercise.title || ''"
+                deleteQuestion="artemisApp.quizExercise.delete.question"
+                deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
+                (delete)="deleteQuizExercise()"
+                [dialogError]="dialogError$"
+                id="delete-quiz-{{ quizExercise.id }}"
+                class="mb-1"
+            >
+                <fa-icon [icon]="faTrash" />
+            </button>
+        </div>
+    }
+</div>

@@ -12,6 +12,9 @@ import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cac
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Result } from 'app/entities/result.model';
 import { createCommitUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
+import { faCodeBranch } from '@fortawesome/free-solid-svg-icons';
+import { Router } from '@angular/router';
+import { PROFILE_LOCALVC } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-programming-exam-summary',
@@ -48,14 +51,20 @@ export class ProgrammingExamSummaryComponent implements OnInit {
 
     commitUrl: string | undefined;
     commitHash: string | undefined;
+    faCodeBranch = faCodeBranch;
+
+    routerLink: string;
+    localVCEnabled = false;
 
     constructor(
         private exerciseService: ExerciseService,
         @Optional() private exerciseCacheService: ExerciseCacheService,
         private profileService: ProfileService,
+        private router: Router,
     ) {}
 
     ngOnInit() {
+        this.routerLink = this.router.url;
         this.result = this.participation.results?.[0];
         this.commitHash = this.submission?.commitHash?.slice(0, 11);
 
@@ -79,10 +88,11 @@ export class ProgrammingExamSummaryComponent implements OnInit {
     }
 
     private updateCommitUrl() {
-        // Get active profiles, to distinguish between Bitbucket and GitLab for the commit link of the result
+        // Get active profiles, to distinguish between VC systems for the commit link of the result
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             const commitHashURLTemplate = profileInfo?.commitHashURLTemplate;
             this.commitUrl = createCommitUrl(commitHashURLTemplate, this.exercise.projectKey, this.participation, this.submission);
+            this.localVCEnabled = profileInfo.activeProfiles?.includes(PROFILE_LOCALVC);
         });
     }
 }

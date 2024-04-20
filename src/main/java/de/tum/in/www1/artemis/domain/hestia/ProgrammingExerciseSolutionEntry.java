@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.domain.hestia;
 
-import java.util.Objects;
-
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -22,7 +20,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
  * If it encompasses the addition of an entire file, previousLine will be null.
  * If it deletes an entire file, line will be null.
  * previousLine and line will be different when there are other changes higher up in the file.
- *
+ * <p>
  * Example:
  * A print statement gets changed:
  * <code>
@@ -123,22 +121,6 @@ public class ProgrammingExerciseSolutionEntry extends DomainObject {
 
     public void setTestCase(ProgrammingExerciseTestCase testCase) {
         this.testCase = testCase;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null || getClass() != obj.getClass()) {
-            return false;
-        }
-        if (!super.equals(obj)) {
-            return false;
-        }
-        ProgrammingExerciseSolutionEntry that = (ProgrammingExerciseSolutionEntry) obj;
-        return Objects.equals(filePath, that.filePath) && Objects.equals(previousLine, that.previousLine) && Objects.equals(line, that.line)
-                && Objects.equals(previousCode, that.previousCode) && Objects.equals(code, that.code);
     }
 
     @Override

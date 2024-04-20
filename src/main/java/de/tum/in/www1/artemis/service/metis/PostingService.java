@@ -7,17 +7,16 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.domain.metis.*;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.LectureRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.domain.notification.ConversationNotification;
+import de.tum.in.www1.artemis.domain.notification.Notification;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -63,60 +62,65 @@ public abstract class PostingService {
      *
      * @param updatedAnswerPost answer post that was updated
      * @param course            course the answer post belongs to
+     * @param notification      notification for the update (can be null)
      */
-    protected void preparePostAndBroadcast(AnswerPost updatedAnswerPost, Course course) {
+    protected void preparePostAndBroadcast(AnswerPost updatedAnswerPost, Course course, Notification notification) {
         // we need to explicitly (and newly) add the updated answer post to the answers of the broadcast post to share up-to-date information
         Post updatedPost = updatedAnswerPost.getPost();
         // remove and add operations on sets identify an AnswerPost by its id; to update a certain property of an existing answer post,
         // we need to remove the existing AnswerPost (based on unchanged id in updatedAnswerPost) and add the updatedAnswerPost afterwards
         updatedPost.removeAnswerPost(updatedAnswerPost);
         updatedPost.addAnswerPost(updatedAnswerPost);
-        broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course, null);
+        broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE, notification), course.getId(), null, null);
     }
 
     /**
      * Broadcasts a posting related event in a course under a specific topic via websockets
      *
-     * @param postDTO    object including the affected post as well as the action
-     * @param course     course the posting belongs to
-     * @param recipients the recipients for this broadcast, can be null
+     * @param postDTO        object including the affected post as well as the action
+     * @param courseId       the id of the course the posting belongs to
+     * @param recipients     the recipients for this broadcast, can be null
+     * @param mentionedUsers the users mentioned in the message, can be null
      */
-    protected void broadcastForPost(PostDTO postDTO, Course course, Set<User> recipients) {
-
+    protected void broadcastForPost(PostDTO postDTO, Long courseId, Set<ConversationNotificationRecipientSummary> recipients, Set<User> mentionedUsers) {
         // reduce the payload of the websocket message: this is important to avoid overloading the involved subsystems
         Conversation postConversation = postDTO.post().getConversation();
         if (postConversation != null) {
             postConversation.hideDetails();
-        }
+            if (postDTO.post().getAnswers() != null) {
+                postDTO.post().getAnswers().forEach(answerPost -> answerPost.setPost(new Post(answerPost.getPost().getId())));
+            }
 
-        String specificTopicName = METIS_WEBSOCKET_CHANNEL_PREFIX;
-        String genericTopicName = METIS_WEBSOCKET_CHANNEL_PREFIX + "courses/" + course.getId();
-
-        if (postDTO.post().getExercise() != null) {
-            specificTopicName += "exercises/" + postDTO.post().getExercise().getId();
-            websocketMessagingService.sendMessage(specificTopicName, postDTO);
-        }
-        else if (postDTO.post().getLecture() != null) {
-            specificTopicName += "lectures/" + postDTO.post().getLecture().getId();
-            websocketMessagingService.sendMessage(specificTopicName, postDTO);
-        }
-        else if (postConversation != null) {
+            String courseConversationTopic = METIS_WEBSOCKET_CHANNEL_PREFIX + "courses/" + courseId;
             if (postConversation instanceof Channel channel && channel.getIsCourseWide()) {
-                websocketMessagingService.sendMessage(genericTopicName, postDTO);
+                websocketMessagingService.sendMessage(courseConversationTopic, postDTO);
             }
             else {
                 if (recipients == null) {
                     // send to all participants of the conversation
-                    recipients = conversationParticipantRepository.findConversationParticipantByConversationId(postConversation.getId()).stream()
-                            .map(ConversationParticipant::getUser).collect(Collectors.toSet());
+                    recipients = getConversationParticipantsAsSummaries(postConversation);
                 }
-                recipients.forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), genericTopicName + "/conversations/" + postConversation.getId(), postDTO));
+                recipients.forEach(recipient -> websocketMessagingService.sendMessage("/topic/user/" + recipient.userId() + "/notifications/conversations",
+                        new PostDTO(postDTO.post(), postDTO.action(), getNotificationForRecipient(recipient, postDTO.notification(), mentionedUsers))));
             }
-
-            return;
         }
+        else if (postDTO.post().getPlagiarismCase() != null) {
+            String plagiarismCaseTopic = METIS_WEBSOCKET_CHANNEL_PREFIX + "plagiarismCase/" + postDTO.post().getPlagiarismCase().getId();
+            websocketMessagingService.sendMessage(plagiarismCaseTopic, postDTO);
+        }
+    }
 
-        websocketMessagingService.sendMessage(genericTopicName, postDTO);
+    /**
+     * Gets the participants of a conversation and maps them to ConversationNotificationRecipientSummary records
+     *
+     * @param postConversation the conversation
+     * @return Set of ConversationNotificationRecipientSummary
+     */
+    private Set<ConversationNotificationRecipientSummary> getConversationParticipantsAsSummaries(Conversation postConversation) {
+        return conversationParticipantRepository.findConversationParticipantsByConversationId(postConversation.getId()).stream()
+                .map(participant -> new ConversationNotificationRecipientSummary(participant.getUser(), participant.getIsMuted(),
+                        participant.getIsHidden() != null && participant.getIsHidden(), false))
+                .collect(Collectors.toSet());
     }
 
     /**
@@ -128,55 +132,14 @@ public abstract class PostingService {
     protected Stream<ConversationNotificationRecipientSummary> getNotificationRecipients(Conversation conversation) {
         if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
             Course course = conversation.getCourse();
-            return userRepository.findAllWebSocketRecipientsInCourseForConversation(conversation.getId(), course.getStudentGroupName(), course.getTeachingAssistantGroupName(),
+            return userRepository.findAllNotificationRecipientsInCourseForConversation(conversation.getId(), course.getStudentGroupName(), course.getTeachingAssistantGroupName(),
                     course.getEditorGroupName(), course.getInstructorGroupName()).stream();
         }
 
-        return conversationParticipantRepository.findConversationParticipantWithUserGroupsByConversationId(conversation.getId()).stream()
-                .map(participant -> new ConversationNotificationRecipientSummary(participant.getUser(), participant.getIsHidden() != null && participant.getIsHidden(),
+        return conversationParticipantRepository.findConversationParticipantsWithUserGroupsByConversationId(conversation.getId()).stream()
+                .map(participant -> new ConversationNotificationRecipientSummary(participant.getUser(), participant.getIsMuted(),
+                        participant.getIsHidden() != null && participant.getIsHidden(),
                         authorizationCheckService.isAtLeastTeachingAssistantInCourse(conversation.getCourse(), participant.getUser())));
-    }
-
-    /**
-     * Checks if the requesting user is authorized in the course context,
-     * i.e. a user has to be the author of posting or at least teaching assistant
-     *
-     * @param posting posting that is requested
-     * @param user    requesting user
-     * @param course  course the posting belongs to
-     */
-    protected void mayUpdateOrDeletePostingElseThrow(Posting posting, User user, Course course) {
-        if (!user.getId().equals(posting.getAuthor().getId())) {
-            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
-        }
-    }
-
-    /**
-     * Method to check if the possibly associated exercise is not an exam exercise
-     *
-     * @param post post that is checked
-     */
-    protected void preCheckPostValidity(Post post) {
-        // do not allow postings for exam exercises
-        if (post.getExercise() != null) {
-            Long exerciseId = post.getExercise().getId();
-            Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-            if (exercise.isExamExercise()) {
-                throw new BadRequestAlertException("Postings are not allowed for exam exercises", getEntityName(), "400", true);
-            }
-        }
-    }
-
-    protected Course preCheckUserAndCourseForCommunication(User user, Long courseId) {
-        final Course course = courseRepository.findByIdElseThrow(courseId);
-        // user has to be at least student in the course
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
-
-        // check if the course has posts enabled
-        if (!courseRepository.isCommunicationEnabled(courseId)) {
-            throw new BadRequestAlertException("Communication feature is not enabled for this course", getEntityName(), "400", true);
-        }
-        return course;
     }
 
     protected Course preCheckUserAndCourseForMessaging(User user, Long courseId) {
@@ -189,18 +152,12 @@ public abstract class PostingService {
         return course;
     }
 
-    protected Course preCheckUserAndCourseForCommunicationOrMessaging(User user, Long courseId) {
-        final Course course = courseRepository.findByIdElseThrow(courseId);
-        return preCheckUserAndCourseForCommunicationOrMessaging(user, course);
-    }
-
-    protected Course preCheckUserAndCourseForCommunicationOrMessaging(User user, Course course) {
+    protected void preCheckUserAndCourseForCommunicationOrMessaging(User user, Course course) {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
         if (course.getCourseInformationSharingConfiguration() == CourseInformationSharingConfiguration.DISABLED) {
             throw new BadRequestAlertException("Communication and messaging is disabled for this course", getEntityName(), "400", true);
         }
-        return course;
     }
 
     /**
@@ -290,7 +247,7 @@ public abstract class PostingService {
             matches.put(userLogin, fullName);
         }
 
-        Set<User> mentionedUsers = userRepository.findAllByLogins(matches.keySet());
+        Set<User> mentionedUsers = userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndLoginIn(matches.keySet());
 
         if (mentionedUsers.size() != matches.size()) {
             throw new BadRequestAlertException("At least one of the mentioned users does not exist", METIS_POST_ENTITY_NAME, "invalidUserMention");
@@ -308,5 +265,21 @@ public abstract class PostingService {
         });
 
         return mentionedUsers;
+    }
+
+    /**
+     * Returns null of the recipient should not receive a notification
+     *
+     * @param recipient      the recipient
+     * @param notification   the potential notification for the recipient
+     * @param mentionedUsers set of mentioned users in the message
+     * @return null or the provided notification
+     */
+    private Notification getNotificationForRecipient(ConversationNotificationRecipientSummary recipient, Notification notification, Set<User> mentionedUsers) {
+        if (notification instanceof ConversationNotification && !recipient.shouldNotifyRecipient() && !mentionedUsers.contains(new User(recipient.userId()))) {
+            return null;
+        }
+
+        return notification;
     }
 }

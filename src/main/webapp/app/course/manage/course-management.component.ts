@@ -11,6 +11,7 @@ import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overvie
 import { EventManager } from 'app/core/util/event-manager.service';
 import { faAngleDown, faAngleUp, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
 
 @Component({
     selector: 'jhi-course',
@@ -46,6 +47,7 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
         private alertService: AlertService,
         private eventManager: EventManager,
         private guidedTourService: GuidedTourService,
+        private courseAccessStorageService: CourseAccessStorageService,
     ) {}
 
     /**
@@ -136,26 +138,40 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
     /**
      * Sorts the courses into the coursesBySemester map.
      * Fills the semesterCollapsed map depending on if the semester should be expanded by default.
-     * The first semester is always expanded. The test course group is also expanded.
+     * The first semester group, the test courses and the recently accessed courses are expanded by default.
      */
     private sortCoursesIntoSemesters(): void {
         this.semesterCollapsed = {};
         this.coursesBySemester = {};
 
+        // Get last accessed courses
+        const lastAccessedCourseIds = this.courseAccessStorageService.getLastAccessedCourses();
+        const recentlyAccessedCourses = this.courses.filter((course) => lastAccessedCourseIds.includes(course.id!));
+
         let firstExpanded = false;
         for (const semester of this.courseSemesters) {
             this.semesterCollapsed[semester] = firstExpanded;
             firstExpanded = true;
-            this.coursesBySemester[semester] = this.courses.filter((course) => !course.testCourse && (course.semester ?? '') === semester);
+            this.coursesBySemester[semester] = this.courses.filter(
+                (course) => !course.testCourse && !lastAccessedCourseIds.includes(course.id!) && (course.semester ?? '') === semester,
+            );
         }
 
+        // Add a new category "recent"
+        this.courseSemesters.unshift('recent');
+        this.semesterCollapsed['recent'] = false;
+        this.coursesBySemester['recent'] = recentlyAccessedCourses;
+
         // Add an extra category for test courses
-        const testCourses = this.courses.filter((course) => course.testCourse);
+        const testCourses = this.courses.filter((course) => course.testCourse && !lastAccessedCourseIds.includes(course.id!));
         if (testCourses.length > 0) {
             this.courseSemesters[this.courseSemesters.length] = 'test';
             this.semesterCollapsed['test'] = false;
             this.coursesBySemester['test'] = testCourses;
         }
+
+        // Remove all semesters that have no courses
+        this.courseSemesters = this.courseSemesters.filter((semester) => this.coursesBySemester[semester].length > 0);
     }
 
     /**

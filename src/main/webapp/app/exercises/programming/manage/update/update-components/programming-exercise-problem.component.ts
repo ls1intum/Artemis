@@ -18,6 +18,7 @@ export class ProgrammingExerciseProblemComponent {
 
     @Input() programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
     @Output() exerciseChange = new EventEmitter<ProgrammingExercise>();
+    @Output() problemStatementChange = new EventEmitter<string>();
 
     @Input()
     get exercise() {

@@ -4,9 +4,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { Subject, of } from 'rxjs';
 import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
-import { UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { UMLModel } from '@ls1intum/apollon';
+import { Patch, UMLDiagramType, UMLModel } from '@ls1intum/apollon';
 import { Text } from '@ls1intum/apollon/lib/es5/utils/svg/text';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import * as testClassDiagram from '../../util/modeling/test-models/class-diagram.json';
@@ -195,8 +194,8 @@ describe('ModelingEditorComponent', () => {
         const icon = statusHint.query(By.css('fa-icon'));
         expect(icon).not.toBeNull();
 
-        const spanText = statusHint.query(By.css('span'))?.nativeElement?.textContent;
-        expect(spanText).toBe('All changes saved');
+        const spanElement = statusHint.query(By.css('span')).nativeElement;
+        expect(spanElement.getAttribute('jhiTranslate')).toBe('artemisApp.modelingEditor.allSaved');
     });
 
     it('should show yellow times save indicator if something is unsaved', () => {
@@ -210,8 +209,8 @@ describe('ModelingEditorComponent', () => {
         const icon = statusHint.query(By.css('fa-icon'));
         expect(icon).not.toBeNull();
 
-        const spanText = statusHint.query(By.css('span'))?.nativeElement?.textContent;
-        expect(spanText).toBe('Unsaved changes');
+        const spanElement = statusHint.query(By.css('span')).nativeElement;
+        expect(spanElement.getAttribute('jhiTranslate')).toBe('artemisApp.modelingEditor.unsavedChanges');
     });
 
     it('should show saving indicator if it is currently saving', () => {
@@ -225,8 +224,8 @@ describe('ModelingEditorComponent', () => {
         const icon = statusHint.query(By.css('fa-icon'));
         expect(icon).not.toBeNull();
 
-        const spanText = statusHint.query(By.css('span'))?.nativeElement?.textContent;
-        expect(spanText).toBe('Saving...');
+        const spanElement = statusHint.query(By.css('span')).nativeElement;
+        expect(spanElement.getAttribute('jhiTranslate')).toBe('artemisApp.modelingEditor.saving');
     });
 
     it('should handle explanation input change', () => {
@@ -270,5 +269,28 @@ describe('ModelingEditorComponent', () => {
 
         updateSpyCallCount++;
         expect(updateSpy).toHaveBeenCalledTimes(updateSpyCallCount);
+    });
+
+    it('should subscribe to model change patches and emit them.', () => {
+        fixture.detectChanges();
+
+        const receiver = jest.fn();
+
+        component.onModelPatch.subscribe(receiver);
+        const mockEmitter = new Subject<Patch>();
+
+        jest.spyOn(ApollonEditor.prototype, 'subscribeToModelChangePatches').mockImplementation((cb) => {
+            mockEmitter.subscribe(cb);
+            return 42;
+        });
+        const cleanupSpy = jest.spyOn(ApollonEditor.prototype, 'unsubscribeFromModelChangePatches').mockImplementation(() => {});
+
+        component.ngAfterViewInit();
+
+        mockEmitter.next([{ op: 'add', path: '/elements', value: { id: '1', type: 'class' } }]);
+        expect(receiver).toHaveBeenCalledWith([{ op: 'add', path: '/elements', value: { id: '1', type: 'class' } }]);
+
+        component.ngOnDestroy();
+        expect(cleanupSpy).toHaveBeenCalledWith(42);
     });
 });

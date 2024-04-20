@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.domain.competency;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -75,6 +75,10 @@ public class LearningPath extends DomainObject {
         this.competencies.add(competency);
     }
 
+    public void addCompetencies(Set<Competency> competencies) {
+        this.competencies.addAll(competencies);
+    }
+
     public void removeCompetency(Competency competency) {
         this.competencies.remove(competency);
     }
@@ -82,20 +86,5 @@ public class LearningPath extends DomainObject {
     @Override
     public String toString() {
         return "LearningPath{" + "id=" + getId() + ", user=" + user + ", course=" + course + ", competencies=" + competencies + '}';
-    }
-
-    public enum LearningPathSearchColumn {
-
-        ID("id"), USER_LOGIN("user.login"), USER_NAME("user.lastName"), PROGRESS("progress");
-
-        private final String mappedColumnName;
-
-        LearningPathSearchColumn(String mappedColumnName) {
-            this.mappedColumnName = mappedColumnName;
-        }
-
-        public String getMappedColumnName() {
-            return mappedColumnName;
-        }
     }
 }

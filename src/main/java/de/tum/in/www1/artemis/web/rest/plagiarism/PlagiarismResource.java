@@ -1,11 +1,21 @@
 package de.tum.in.www1.artemis.web.rest.plagiarism;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.Objects;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -30,6 +40,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 /**
  * REST controller for managing Plagiarism Cases.
  */
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 public class PlagiarismResource {
@@ -40,7 +51,7 @@ public class PlagiarismResource {
 
     private final UserRepository userRepository;
 
-    private final Logger log = LoggerFactory.getLogger(PlagiarismResource.class);
+    private static final Logger log = LoggerFactory.getLogger(PlagiarismResource.class);
 
     private final PlagiarismComparisonRepository plagiarismComparisonRepository;
 
@@ -85,8 +96,13 @@ public class PlagiarismResource {
 
         // TODO: this check can take up to a few seconds in the worst case, we should do it directly in the database
         var comparison = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsElseThrow(comparisonId);
-        if (!Objects.equals(comparison.getPlagiarismResult().getExercise().getCourseViaExerciseGroupOrCourseMember().getId(), courseId)) {
+        var exercise = comparison.getPlagiarismResult().getExercise();
+        if (!Objects.equals(exercise.getCourseViaExerciseGroupOrCourseMember().getId(), courseId)) {
             throw new BadRequestAlertException("The courseId does not belong to the given comparisonId", "PlagiarismComparison", "idMismatch");
+        }
+
+        if (exercise.isTeamMode()) {
+            throw new BadRequestAlertException("Updating the plagiarism status is not allowed for team exercises.", "PlagiarismComparison", "noTeamExercise");
         }
 
         plagiarismService.updatePlagiarismComparisonStatus(comparisonId, statusDTO.status());
@@ -192,13 +208,13 @@ public class PlagiarismResource {
      * This endpoint returns the number of plagiarism submissions for the given exercise excluding submissions of deleted users.
      *
      * @param exerciseId the id of the exercise
-     * @return the number of plagiarism results
+     * @return the ResponseEntity with status 200 (OK) and with body the number of plagiarism results
      */
     @GetMapping("exercises/{exerciseId}/potential-plagiarism-count")
     @EnforceAtLeastInstructor
-    public long getNumberOfPotentialPlagiarismCasesForExercise(@PathVariable("exerciseId") long exerciseId) {
+    public ResponseEntity<Long> getNumberOfPotentialPlagiarismCasesForExercise(@PathVariable("exerciseId") long exerciseId) {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
-        return plagiarismService.getNumberOfPotentialPlagiarismCasesForExercise(exerciseId);
+        return ResponseEntity.ok(plagiarismService.getNumberOfPotentialPlagiarismCasesForExercise(exerciseId));
     }
 }

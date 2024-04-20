@@ -24,6 +24,13 @@ export const cartesianProduct = (a: any[], b: any[], ...c: any[][]): any[] => {
     return cartesianProduct(fab, b2, ...c2);
 };
 
+export function cleanString(str?: string): string {
+    if (!str) {
+        return '';
+    }
+    return str.toLowerCase().replaceAll(' ', '').replaceAll('_', '').replaceAll('-', '').trim();
+}
+
 /**
  * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Cyclic_object_value
  * Stringify a circular JSON structure by omitting keys that would close a circle
@@ -154,7 +161,11 @@ export function getAsMutableObject(object: any) {
  * - to make sure that a message from the {@link AlertService} is recognized by the user
  */
 export function scrollToTopOfPage() {
-    window.scroll(0, 0);
+    // The window itself cannot be scrolled; overflowing content is handled by the page wrapper.
+    const pageWrapper = document.getElementById('page-wrapper');
+    if (pageWrapper) {
+        pageWrapper.scroll(0, 0);
+    }
 }
 
 /**

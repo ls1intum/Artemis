@@ -7,9 +7,9 @@ import static de.tum.in.www1.artemis.config.Constants.LONG_FEEDBACK_MAX_LENGTH;
 
 import java.util.*;
 
-import javax.annotation.Nullable;
-import javax.persistence.*;
-import javax.validation.constraints.Size;
+import jakarta.annotation.Nullable;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.Size;
 
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.annotations.Cache;
@@ -189,6 +189,10 @@ public class Feedback extends DomainObject {
         this.longFeedbackText.clear();
         longFeedbackText.setFeedback(this);
         this.longFeedbackText.add(longFeedbackText);
+    }
+
+    public void clearLongFeedback() {
+        this.longFeedbackText.clear();
     }
 
     /**
