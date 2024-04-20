@@ -13,14 +13,12 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.cache.CacheManager;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.service.linkpreview.ogparser.Content;
-import de.tum.in.www1.artemis.service.linkpreview.ogparser.OgParser;
 import de.tum.in.www1.artemis.service.linkpreview.ogparser.OpenGraph;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.LinkPreviewDTO;
@@ -40,9 +38,6 @@ class LinkPreviewIntegrationTest extends AbstractSpringIntegrationIndependentTes
 
     @Autowired
     private CacheManager cacheManager;
-
-    @MockBean
-    private OgParser mockOgParser;
 
     @Mock
     private OpenGraph mockOpenGraph;
@@ -92,7 +87,7 @@ class LinkPreviewIntegrationTest extends AbstractSpringIntegrationIndependentTes
      * @param url the url
      */
     private void mockOpenGraph(String url) {
-        Mockito.when(mockOgParser.getOpenGraphOf(url)).thenReturn(mockOpenGraph);
+        Mockito.when(ogParser.getOpenGraphOf(url)).thenReturn(mockOpenGraph);
         Mockito.when(mockOpenGraph.getContentOf("title")).thenReturn(mockContent);
         Mockito.when(mockOpenGraph.getContentOf("description")).thenReturn(mockContent);
         Mockito.when(mockOpenGraph.getContentOf("image")).thenReturn(mockContent);
