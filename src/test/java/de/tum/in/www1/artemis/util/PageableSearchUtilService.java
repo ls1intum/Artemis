@@ -99,6 +99,11 @@ public class PageableSearchUtilService {
         return search;
     }
 
+    /**
+     * Generates a PageableSearchDTO for FinishedJobs.
+     *
+     * @return The generated PageableSearchDTO
+     */
     public PageableSearchDTO<String> configureFinishedJobsSearchDTO() {
         final var search = new PageableSearchDTO<String>();
         search.setPage(1);
