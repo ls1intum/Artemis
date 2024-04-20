@@ -99,6 +99,15 @@ public class PageableSearchUtilService {
         return search;
     }
 
+    public PageableSearchDTO<String> configureFinishedJobsSearchDTO() {
+        final var search = new PageableSearchDTO<String>();
+        search.setPage(1);
+        search.setPageSize(10);
+        search.setSortedColumn("build_completion_date");
+        search.setSortingOrder(SortingOrder.DESCENDING);
+        return search;
+    }
+
     /**
      * Generates a LinkedMultiValueMap from the given PageableSearchDTO. The map is used for REST calls and maps the parameters to the values.
      *

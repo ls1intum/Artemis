@@ -17,12 +17,16 @@ import com.hazelcast.collection.IQueue;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
+import de.tum.in.www1.artemis.domain.BuildJob;
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
 import de.tum.in.www1.artemis.domain.enumeration.BuildStatus;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.repository.BuildJobRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.connectors.localci.buildagent.SharedQueueProcessingService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.*;
+import de.tum.in.www1.artemis.util.PageableSearchUtilService;
+import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.PageableSearchDTO;
 
 class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
@@ -31,6 +35,10 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
     protected LocalCIBuildJobQueueItem job2;
 
     protected LocalCIBuildAgentInformation agent1;
+
+    protected BuildJob finishedJob1;
+
+    protected BuildJob finishedJob2;
 
     @Autowired
     private HazelcastInstance hazelcastInstance;
@@ -47,6 +55,12 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
 
     protected IMap<String, LocalCIBuildAgentInformation> buildAgentInformation;
 
+    @Autowired
+    protected BuildJobRepository buildJobRepository;
+
+    @Autowired
+    private PageableSearchUtilService pageableSearchUtilService;
+
     @BeforeEach
     void createJobs() {
         // temporarily remove listener to avoid triggering build job processing
@@ -60,6 +74,12 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
         job2 = new LocalCIBuildJobQueueItem("2", "job2", "address1", 2, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo, buildConfig, null);
         String memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
         agent1 = new LocalCIBuildAgentInformation(memberAddress, 1, 0, null, false, new ArrayList<>(List.of()));
+        LocalCIBuildJobQueueItem finishedJobQueueItem1 = new LocalCIBuildJobQueueItem("3", "job3", "address1", 3, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo,
+                jobTimingInfo, buildConfig, null);
+        LocalCIBuildJobQueueItem finishedJobQueueItem2 = new LocalCIBuildJobQueueItem("4", "job4", "address1", 4, course.getId() + 1, 1, 1, 1, BuildStatus.FAILED, repositoryInfo,
+                jobTimingInfo, buildConfig, null);
+        finishedJob1 = new BuildJob(finishedJobQueueItem1, BuildStatus.SUCCESSFUL);
+        finishedJob2 = new BuildJob(finishedJobQueueItem2, BuildStatus.FAILED);
 
         queuedJobs = hazelcastInstance.getQueue("buildJobQueue");
         processingJobs = hazelcastInstance.getMap("processingJobs");
@@ -138,6 +158,75 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
     void testGetBuildAgents_returnsAgents() throws Exception {
         var retrievedAgents = request.get("/api/admin/build-agents", HttpStatus.OK, List.class);
         assertThat(retrievedAgents).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testCancelBuildJob() throws Exception {
+        LocalCIBuildJobQueueItem buildJob = processingJobs.get(1L);
+        request.delete("/api/admin/cancel-job/" + buildJob.id(), HttpStatus.NO_CONTENT);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testCancelAllQueuedBuildJobs() throws Exception {
+        request.delete("/api/admin/cancel-all-queued-jobs", HttpStatus.NO_CONTENT);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testCancelAllRunningBuildJobs() throws Exception {
+        request.delete("/api/admin/cancel-all-running-jobs", HttpStatus.NO_CONTENT);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCancelBuildJobForCourse() throws Exception {
+        LocalCIBuildJobQueueItem buildJob = processingJobs.get(1L);
+        request.delete("/api/courses/" + course.getId() + "/cancel-job/" + buildJob.id(), HttpStatus.NO_CONTENT);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCancelAllQueuedBuildJobsForCourse() throws Exception {
+        request.delete("/api/courses/" + course.getId() + "/cancel-all-queued-jobs", HttpStatus.NO_CONTENT);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCancelAllRunningBuildJobsForCourse() throws Exception {
+        request.delete("/api/courses/" + course.getId() + "/cancel-all-running-jobs", HttpStatus.NO_CONTENT);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testCancelAllRunningBuildJobsForAgent() throws Exception {
+        request.delete("/api/admin/cancel-all-running-jobs-for-agent?agentName=" + agent1.name(), HttpStatus.NO_CONTENT);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testGetFinishedBuildJobs_returnsJobs() throws Exception {
+        buildJobRepository.deleteAll();
+        buildJobRepository.save(finishedJob1);
+        buildJobRepository.save(finishedJob2);
+        PageableSearchDTO<String> pageableSearchDTO = pageableSearchUtilService.configureFinishedJobsSearchDTO();
+        var result = request.getList("/api/admin/finished-jobs", HttpStatus.OK, BuildJob.class, pageableSearchUtilService.searchMapping(pageableSearchDTO));
+        assertThat(result).hasSize(2);
+        assertThat(result).contains(finishedJob1, finishedJob2);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetFinishedBuildJobsForCourse_returnsJobs() throws Exception {
+        buildJobRepository.deleteAll();
+        buildJobRepository.save(finishedJob1);
+        buildJobRepository.save(finishedJob2);
+        PageableSearchDTO<String> pageableSearchDTO = pageableSearchUtilService.configureFinishedJobsSearchDTO();
+        var result = request.getList("/api/courses/" + course.getId() + "/finished-jobs", HttpStatus.OK, BuildJob.class,
+                pageableSearchUtilService.searchMapping(pageableSearchDTO));
+        assertThat(result).hasSize(1);
+        assertThat(result).isEqualTo(List.of(finishedJob1));
     }
 
     @Test
