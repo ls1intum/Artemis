@@ -2,12 +2,21 @@ name: Analysis-of-Endpoint-Connections
 
 on:
   pull_request:
+    types:
+      - opened
+      - synchronize
+    branches-ignore:
+      - 'documentation/**'
+      - 'docs/**'
+      - 'tests/**'
+      - 'ci/**'
     paths:
       - 'src/main/java/**'
       - 'src/main/webapp/**'
 
 jobs:
   show-modified-files:
+    timeout-minutes: 10
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
