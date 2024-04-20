@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.dto.athena;
 
+import static de.tum.in.www1.artemis.config.Constants.ATHENA_PROGRAMMING_EXERCISE_REPOSITORY_API_PATH;
+
 import java.util.List;
 
 import jakarta.validation.constraints.NotNull;
@@ -19,9 +21,9 @@ public record ProgrammingExerciseDTO(long id, String title, double maxPoints, do
     public static ProgrammingExerciseDTO of(@NotNull ProgrammingExercise exercise, String artemisServerUrl) {
         return new ProgrammingExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getGradingInstructions(),
                 exercise.getGradingCriteria().stream().map(GradingCriterionDTO::of).toList(), exercise.getProblemStatement(), exercise.getProgrammingLanguage().name(),
-                artemisServerUrl + "/api/public/athena/programming-exercises/" + exercise.getId() + "/repository/solution",
-                artemisServerUrl + "/api/public/athena/programming-exercises/" + exercise.getId() + "/repository/template",
-                artemisServerUrl + "/api/public/athena/programming-exercises/" + exercise.getId() + "/repository/tests");
+                artemisServerUrl + ATHENA_PROGRAMMING_EXERCISE_REPOSITORY_API_PATH + exercise.getId() + "/repository/solution",
+                artemisServerUrl + ATHENA_PROGRAMMING_EXERCISE_REPOSITORY_API_PATH + exercise.getId() + "/repository/template",
+                artemisServerUrl + ATHENA_PROGRAMMING_EXERCISE_REPOSITORY_API_PATH + exercise.getId() + "/repository/tests");
     }
 
     /**
