@@ -18,7 +18,10 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
-import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
+import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
+import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTestCaseType;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
@@ -234,7 +237,8 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractSpringInteg
     }
 
     private AbstractBuildResultNotificationDTO generateResult(List<String> successfulTests, List<String> failedTests) {
-        return ProgrammingExerciseFactory.generateBambooBuildResult("SOLUTION", null, null, null, successfulTests, failedTests, null);
+        return ProgrammingExerciseFactory.generateTestResultDTO(null, "SOLUTION", null, programmingExercise.getProgrammingLanguage(), false, successfulTests, failedTests, null,
+                null, null);
     }
 
     @Test
