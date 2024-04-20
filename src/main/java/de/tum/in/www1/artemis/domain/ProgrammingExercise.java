@@ -47,6 +47,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -943,8 +944,8 @@ public class ProgrammingExercise extends Exercise {
     }
 
     /**
-     * In course exercises students shall receive immediate feedback. {@link Visibility.ALWAYS}
-     * In Exams misconfiguration and leaking test results to students during an exam shall be prevented by the default setting. {@link Visibility.AFTER_DUE_DATE}
+     * In course exercises students shall receive immediate feedback. {@link Visibility#ALWAYS}
+     * In Exams misconfiguration and leaking test results to students during an exam shall be prevented by the default setting. {@link Visibility#AFTER_DUE_DATE}
      *
      * @return default visibility {@link Visibility} set after the first execution of a test case
      *         or when resetting the test case settings
