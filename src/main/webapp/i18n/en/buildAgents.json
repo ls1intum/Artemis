@@ -11,7 +11,10 @@
             "status": "Status",
             "recentBuildJobs": "Recent build jobs",
             "running": "Running",
-            "idle": "Idle"
+            "idle": "Idle",
+            "onlineAgents": "online agent(s)",
+            "of": "of",
+            "buildJobsRunning": "build jobs running"
         }
     }
 }
