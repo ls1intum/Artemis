@@ -54,7 +54,7 @@
                     >
                         @for (testCaseVisibility of testCaseVisibilityList; track testCaseVisibility) {
                             <option [value]="testCaseVisibility.value">
-                                {{ 'artemisApp.programmingExerciseTestCase.visibility.' + s.name | artemisTranslate }}
+                                {{ 'artemisApp.programmingExerciseTestCase.visibility.' + testCaseVisibility.name | artemisTranslate }}
                             </option>
                         }
                     </select>
