@@ -199,7 +199,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
     }
 
     /**
-     * Adds a new feedback widget to the specified line and renders it.
+     * Adds a new feedback widget to the specified line and renders it. The text field will be focused automatically.
      * @param lineNumber The line (as shown in the editor) to render the widget in.
      */
     addNewFeedback(lineNumber: number): void {
@@ -207,7 +207,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
         const lineNumberZeroBased = lineNumber - 1;
         if (!this.getInlineFeedbackNode(lineNumberZeroBased)) {
             this.newFeedbackLines.push(lineNumberZeroBased);
-            this.renderFeedbackWidgets();
+            this.renderFeedbackWidgets(lineNumberZeroBased);
         }
     }
 
@@ -273,7 +273,12 @@ export class CodeEditorMonacoComponent implements OnChanges {
         this.onDiscardSuggestion.emit(feedback);
     }
 
-    protected renderFeedbackWidgets() {
+    /**
+     * Renders the current state of feedback in the editor.
+     * @param lineOfWidgetToFocus The line number of the widget whose text area should be focused.
+     * @protected
+     */
+    protected renderFeedbackWidgets(lineOfWidgetToFocus?: number) {
         // Since the feedback widgets rely on the DOM nodes of each feedback item, Angular needs to re-render each node, hence the timeout.
         this.changeDetectorRef.detectChanges();
         setTimeout(() => {
@@ -284,13 +289,34 @@ export class CodeEditorMonacoComponent implements OnChanges {
 
             // New, unsaved feedback has no associated object yet.
             for (const line of this.newFeedbackLines) {
-                const feedbackNode = this.getInlineFeedbackNode(line);
+                const feedbackNode = this.getInlineFeedbackNodeOrElseThrow(line);
                 this.editor.addLineWidget(line + 1, 'feedback-new-' + line, feedbackNode);
+            }
+
+            // Focus the text area of the widget on the specified line if available.
+            if (lineOfWidgetToFocus !== undefined) {
+                this.getInlineFeedbackNode(lineOfWidgetToFocus)?.querySelector<HTMLTextAreaElement>('#feedback-textarea')?.focus();
             }
         }, 0);
     }
 
-    getInlineFeedbackNode(line: number) {
+    /**
+     * Retrieves the feedback node currently rendered at the specified line and throws an error if it is not available.
+     * @param line The line (0-based) for which to retrieve the feedback node.
+     */
+    getInlineFeedbackNodeOrElseThrow(line: number): HTMLElement {
+        const element = this.getInlineFeedbackNode(line);
+        if (!element) {
+            throw new Error('No feedback node found at line ' + line);
+        }
+        return element;
+    }
+
+    /**
+     * Retrieves the feedback node currently rendered at the specified line, or undefined if it is not available.
+     * @param line The line (0-based) for which to retrieve the feedback node.
+     */
+    getInlineFeedbackNode(line: number): HTMLElement | undefined {
         return [...this.inlineFeedbackComponents, ...this.inlineFeedbackSuggestionComponents].find((c) => c.codeLine === line)?.elementRef?.nativeElement;
     }
 
@@ -300,7 +326,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
             throw new Error('No line found for feedback ' + feedback.id);
         }
         // In the future, there may be more than one feedback node per line.
-        const feedbackNode = this.getInlineFeedbackNode(line);
+        const feedbackNode = this.getInlineFeedbackNodeOrElseThrow(line);
         // The lines are 0-based for Ace, but 1-based for Monaco -> increase by 1 to ensure it works in both editors.
         this.editor.addLineWidget(line + 1, 'feedback-' + feedback.id, feedbackNode);
     }
