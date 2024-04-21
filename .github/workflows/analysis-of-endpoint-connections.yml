@@ -50,4 +50,4 @@ jobs:
           python -m pip install --upgrade pip
 
       - name: Run script
-        run: python identify_server_endpoints.py $(cat modified_files.txt)
+        run: python supporting_scripts/analysis-of-endpoint-connections/identify_server_endpoints.py $(cat modified_files.txt)
