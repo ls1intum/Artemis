@@ -13,21 +13,23 @@ export class ImageCropperModalComponent {
     constructor(private activeModal: NgbActiveModal) {}
 
     /**
-     * @param event
+     * Called when an image is cropped.
+     * @param event The event containing the cropped image data.
      */
     imageCropped(event: ImageCroppedEvent) {
         this.croppedImage = event.base64;
     }
 
     /**
-     * Method is called when the process is canceled.
+     * Method is called when the modal is closed by clicking 'Cancel' button.
      */
     onCancel(): void {
         this.activeModal.close();
     }
 
     /**
-     * Method is called when the process is saved.
+     * Called when the modal is closed by clicking the 'Save' button.
+     * The changes are saved and the croppedImage information is transferred.
      */
     onSave(): void {
         this.activeModal.close(this.croppedImage);
