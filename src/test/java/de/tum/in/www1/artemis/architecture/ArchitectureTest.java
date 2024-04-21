@@ -107,7 +107,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
     @Test
     void testCorrectStringUtils() {
         ArchRule stringUtils = noClasses().should()
-                .dependOnClassesThat(have(simpleName("StringUtils")).and(not(resideInAnyPackage("org.apache.commons" + ".lang3", "org.springframework.util"))));
+                .dependOnClassesThat(have(simpleName("StringUtils")).and(not(resideInAnyPackage("org.apache.commons.lang3", "org.springframework.util"))));
         ArchRule randomStringUtils = noClasses().should().dependOnClassesThat(have(simpleName("RandomStringUtils")).and(not(resideInAPackage("org.apache.commons.lang3"))));
 
         stringUtils.check(allClasses);
@@ -116,7 +116,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
     @Test
     void testNoJunitJupiterAssertions() {
-        ArchRule noJunitJupiterAssertions = noClasses().should().dependOnClassesThat().haveNameMatching("org.junit" + ".jupiter.api.Assertions");
+        ArchRule noJunitJupiterAssertions = noClasses().should().dependOnClassesThat().haveNameMatching("org.junit.jupiter.api.Assertions");
 
         noJunitJupiterAssertions.check(testClasses);
     }
@@ -150,7 +150,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
     void testValidSimpMessageSendingOperationsUsage() {
         ArchRule usage = fields().that().haveRawType(SimpMessageSendingOperations.class.getTypeName()).should().bePrivate().andShould()
                 .beDeclaredIn(WebsocketMessagingService.class)
-                .because("Classes should only use WebsocketMessagingService as a Facade and not " + "SimpMessageSendingOperations directly");
+                .because("Classes should only use WebsocketMessagingService as a Facade and not SimpMessageSendingOperations directly");
         usage.check(productionClasses);
     }
 
@@ -167,8 +167,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
         GeneralCodingRules.NO_CLASSES_SHOULD_USE_JAVA_UTIL_LOGGING.check(allClasses);
 
         // We currently need to access standard streams in readTestReports() to use the SurefireReportParser
-        // The ParallelConsoleAppender is used to print test logs to the console (necessary due to parallel test
-        // execution)
+        // The ParallelConsoleAppender is used to print test logs to the console (necessary due to parallel test execution)
         var classes = allClasses.that(not(simpleName("ProgrammingExerciseTemplateIntegrationTest").or(simpleName("ParallelConsoleAppender"))));
         GeneralCodingRules.NO_CLASSES_SHOULD_ACCESS_STANDARD_STREAMS.check(classes);
     }
@@ -213,7 +212,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
      */
     @Test
     void testNoDirectGitCommitCalls() {
-        ArchRule usage = noClasses().should().callMethod(Git.class, "commit").because("You should use GitService" + ".commit() instead");
+        ArchRule usage = noClasses().should().callMethod(Git.class, "commit").because("You should use GitService.commit() instead");
         var classesWithoutGitService = allClasses.that(not(assignableTo(GitService.class)));
         usage.check(classesWithoutGitService);
     }
@@ -223,7 +222,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
         // CacheHandler and QuizCache are exceptions because these classes are not created during startup
         var exceptions = or(declaredClassSimpleName("QuizCache"), declaredClassSimpleName("CacheHandler"));
         var notUseHazelcastInConstructor = methods().that().areDeclaredIn(HazelcastInstance.class).should().onlyBeCalled().byCodeUnitsThat(is(not(constructor()).or(exceptions)))
-                .because("Calling Hazelcast during Application startup might be slow since the Network gets used. Use" + " " + "@PostConstruct-methods instead.");
+                .because("Calling Hazelcast during Application startup might be slow since the Network gets used. Use @PostConstruct-methods instead.");
         notUseHazelcastInConstructor.check(allClassesWithHazelcast);
     }
 
@@ -256,7 +255,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 }
                 JavaEnumConstant value = (JavaEnumConstant) valueProperty.get();
                 if (!value.name().equals("NON_EMPTY")) {
-                    events.add(violated(item, item + " should be annotated with @JsonInclude(JsonInclude.Include" + ".NON_EMPTY)"));
+                    events.add(violated(item, item + " should be annotated with @JsonInclude(JsonInclude.Include.NON_EMPTY)"));
                 }
             }
         };
@@ -284,7 +283,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
         classes().should(IMPORT_RESTCONTROLLER).check(classes);
     }
 
-    private static final ArchCondition<JavaClass> IMPORT_RESTCONTROLLER = new ArchCondition<>("not import " + "RestController") {
+    private static final ArchCondition<JavaClass> IMPORT_RESTCONTROLLER = new ArchCondition<>("not import RestController") {
 
         @Override
         public void check(JavaClass item, ConditionEvents events) {
@@ -297,7 +296,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
     @Test
     void shouldNotUserAutowiredAnnotation() {
-        ArchRule rule = noFields().should().beAnnotatedWith(Autowired.class).because("fields should not rely on " + "field" + " injection via @Autowired");
+        ArchRule rule = noFields().should().beAnnotatedWith(Autowired.class).because("fields should not rely on field injection via @Autowired");
         final var exceptions = new String[] { "PublicResourcesConfiguration", "QuizProcessCacheTask", "QuizStartTask" };
         JavaClasses classes = classesExcept(productionClasses, exceptions);
         rule.check(classes);
