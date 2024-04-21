@@ -303,7 +303,7 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     }
 
     @Override
-    boolean hasMatchingVersioningTestClass() {
+    public boolean hasMatchingVersioningTestClass() {
         return true;
     }
 }

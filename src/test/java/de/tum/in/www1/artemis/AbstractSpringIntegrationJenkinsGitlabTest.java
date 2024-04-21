@@ -538,7 +538,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     }
 
     @Override
-    boolean hasMatchingVersioningTestClass() {
+    public boolean hasMatchingVersioningTestClass() {
         return true;
     }
 }

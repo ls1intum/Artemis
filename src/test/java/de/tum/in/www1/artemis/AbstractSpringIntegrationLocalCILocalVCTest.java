@@ -401,7 +401,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     }
 
     @Override
-    boolean hasMatchingVersioningTestClass() {
+    public boolean hasMatchingVersioningTestClass() {
         return true;
     }
 }
