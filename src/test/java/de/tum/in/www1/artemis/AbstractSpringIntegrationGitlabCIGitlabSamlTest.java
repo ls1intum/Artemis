@@ -392,7 +392,7 @@ public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends Ab
     }
 
     @Override
-    boolean hasMatchingAuthorizationTestClass() {
+    public boolean hasMatchingAuthorizationTestClass() {
         return true;
     }
 }

@@ -242,5 +242,5 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
      *
      * @return the class of the authorization test for the current environment
      */
-    abstract boolean hasMatchingAuthorizationTestClass();
+    public abstract boolean hasMatchingAuthorizationTestClass();
 }

@@ -538,7 +538,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     }
 
     @Override
-    boolean hasMatchingAuthorizationTestClass() {
+    public boolean hasMatchingAuthorizationTestClass() {
         return true;
     }
 }
