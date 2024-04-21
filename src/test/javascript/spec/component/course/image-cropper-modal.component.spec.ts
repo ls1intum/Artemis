@@ -28,10 +28,6 @@ describe('ImageCropperModalComponent', () => {
             });
     });
 
-    it('should create', () => {
-        expect(component).toBeTruthy();
-    });
-
     it('should call onCancel when cancel button is clicked', () => {
         jest.spyOn(component, 'onCancel');
         const cancelButton = fixture.debugElement.nativeElement.querySelector('#cancel-cropping-button');
