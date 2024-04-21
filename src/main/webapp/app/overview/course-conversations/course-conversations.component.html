@@ -7,7 +7,7 @@
             [(ngModel)]="searchInput"
             class="form-control"
             (keyup.enter)="onSearch()"
-            placeholder="{{ 'artemisApp.metis.discussionSection.searchBarDefault' | artemisTranslate }}"
+            placeholder="{{ 'artemisApp.metis.overview.searchBarDefault' | artemisTranslate }}"
         />
         <jhi-button [btnType]="ButtonType.SECONDARY" [icon]="faTimes" (onClick)="searchInput = ''" />
         <jhi-button id="search-submit" class="ms-1" [icon]="faSearch" (onClick)="onSearch()" />
