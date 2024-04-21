@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.exercise;
 
-import static de.tum.in.www1.artemis.config.Constants.ATHENA_PROGRAMMING_EXERCISE_REPOSITORY_API_PATH;
 import static de.tum.in.www1.artemis.connector.AthenaRequestMockProvider.ATHENA_MODULE_PROGRAMMING_TEST;
 import static de.tum.in.www1.artemis.connector.AthenaRequestMockProvider.ATHENA_MODULE_TEXT_TEST;
 import static de.tum.in.www1.artemis.connector.AthenaRequestMockProvider.ATHENA_RESTRICTED_MODULE_PROGRAMMING_TEST;
@@ -304,7 +303,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         // Get exports from endpoint
         var authHeaders = new HttpHeaders();
         authHeaders.add("Authorization", athenaSecret);
-        var repoZip = request.getFile(ATHENA_PROGRAMMING_EXERCISE_REPOSITORY_API_PATH + programmingExercise.getId() + "/" + urlSuffix, HttpStatus.OK, new LinkedMultiValueMap<>(),
+        var repoZip = request.getFile("/api/public/athena/programming-exercises/" + programmingExercise.getId() + "/" + urlSuffix, HttpStatus.OK, new LinkedMultiValueMap<>(),
                 authHeaders, null);
 
         // Check that ZIP contains file
@@ -320,7 +319,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         authHeaders.add("Authorization", athenaSecret);
 
         // Expect status 503 because Athena is not enabled for the exercise
-        request.get(ATHENA_PROGRAMMING_EXERCISE_REPOSITORY_API_PATH + programmingExercise.getId() + "/" + urlSuffix, HttpStatus.SERVICE_UNAVAILABLE, Result.class, authHeaders);
+        request.get("/api/public/athena/programming-exercises/" + programmingExercise.getId() + "/" + urlSuffix, HttpStatus.SERVICE_UNAVAILABLE, Result.class, authHeaders);
     }
 
     @ParameterizedTest
@@ -334,6 +333,6 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         programmingExerciseRepository.save(programmingExercise);
 
         // Expect status 403 because the Authorization header is wrong
-        request.get(ATHENA_PROGRAMMING_EXERCISE_REPOSITORY_API_PATH + programmingExercise.getId() + "/" + urlSuffix, HttpStatus.FORBIDDEN, Result.class, authHeaders);
+        request.get("/api/public/athena/programming-exercises/" + programmingExercise.getId() + "/" + urlSuffix, HttpStatus.FORBIDDEN, Result.class, authHeaders);
     }
 }
