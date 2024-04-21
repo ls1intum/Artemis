@@ -17,6 +17,10 @@ public @interface VersionRange {
 
     int UNDEFINED = -1;
 
+    /**
+     * @see #start()
+     * @return the starting version number.
+     */
     @AliasFor("start")
     int value();
 
