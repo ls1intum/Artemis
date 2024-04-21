@@ -5,7 +5,7 @@
             "pageTitle": "Build Job Informationen",
             "queuedBuildJobs": "Wartende Build Jobs",
             "runningBuildJobs": "Laufende Build Jobs",
-            "finishedBuildJobs": "Fertige Build Jobs",
+            "finishedBuildJobs": "Abgeschlossene Build Jobs",
             "buildJob": {
                 "id": "ID",
                 "buildAgent": "Build Agent",
