@@ -48,7 +48,6 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt  # assuming your script has some dependencies listed in this file
 
       - name: Run script
-        run: python identify_server_endpoints.py $(cat modified_files.txt)  # replace with your script's name
+        run: python identify_server_endpoints.py $(cat modified_files.txt)
