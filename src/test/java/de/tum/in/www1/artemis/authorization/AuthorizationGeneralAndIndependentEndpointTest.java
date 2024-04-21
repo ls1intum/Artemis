@@ -31,6 +31,6 @@ class AuthorizationGeneralAndIndependentEndpointTest extends AbstractSpringInteg
         endpointMap = endpointMap.entrySet().stream().filter(entry -> authorizationTestService.validEndpointToTest(entry.getValue(), false))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
-        authorizationTestService.testEndpoints(endpointMap);
+        authorizationTestService.testAllEndpoints(endpointMap);
     }
 }

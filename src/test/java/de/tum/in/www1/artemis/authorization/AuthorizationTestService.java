@@ -6,6 +6,7 @@ import static org.assertj.core.api.Fail.fail;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -35,7 +36,31 @@ public class AuthorizationTestService {
      *
      * @param endpointMap The map of all endpoints
      */
-    public void testEndpoints(Map<RequestMappingInfo, HandlerMethod> endpointMap) {
+    public void testAllEndpoints(Map<RequestMappingInfo, HandlerMethod> endpointMap) {
+        var endpointsToBeTested = endpointMap.entrySet().stream().filter(entry -> validEndpointToTest(entry.getValue(), false))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+        testEndpoints(endpointsToBeTested);
+    }
+
+    /**
+     * Tests only endpoints that depend on a specific non-core profile and that most likely is only relevant for the currently running test environment.
+     *
+     * @param endpointMap The map of all endpoints
+     */
+    public void testConditionalEndpoints(Map<RequestMappingInfo, HandlerMethod> endpointMap) {
+        var endpointsToBeTested = endpointMap.entrySet().stream().filter(entry -> validEndpointToTest(entry.getValue(), true))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+        testEndpoints(endpointsToBeTested);
+    }
+
+    /**
+     * Tests the given endpoints and prints the reports
+     *
+     * @param endpointMap The map of all endpoints to test
+     */
+    private void testEndpoints(Map<RequestMappingInfo, HandlerMethod> endpointMap) {
         Map<Class<?>, Set<String>> classReports = new HashMap<>();
         Map<Method, Set<String>> methodReports = new HashMap<>();
 

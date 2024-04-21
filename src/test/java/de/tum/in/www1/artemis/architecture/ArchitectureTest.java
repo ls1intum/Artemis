@@ -307,10 +307,13 @@ class ArchitectureTest extends AbstractArchitectureTest {
     @Test
     void hasMatchingAuthorizationTestClassBeCorrectlyImplemented() throws NoSuchMethodException {
         // Prepare the method that the authorization test should call to be identified as such
-        Method authCheckMethod = AuthorizationTestService.class.getMethod("testEndpoints", Map.class);
+        Method allCheckMethod = AuthorizationTestService.class.getMethod("testAllEndpoints", Map.class);
+        Method condCheckMethod = AuthorizationTestService.class.getMethod("testConditionalEndpoints", Map.class);
+        String identifyingPackage = "authorization";
 
-        ArchRule rule = classes().that(beDirectSubclassOf(AbstractArtemisIntegrationTest.class)).should(haveMatchingTestClassCallingMethod(authCheckMethod)).because(
-                "every test environment should have a corresponding authorization test covering the endpoints of this environment. Examples are \"AuthorizationJenkinsGitlabTest\" or \"AuthorizationGitlabCISamlTest\".");
+        ArchRule rule = classes().that(beDirectSubclassOf(AbstractArtemisIntegrationTest.class))
+                .should(haveMatchingTestClassCallingAMethod(identifyingPackage, Set.of(allCheckMethod, condCheckMethod))).because(
+                        "every test environment should have a corresponding authorization test covering the endpoints of this environment. Examples are \"AuthorizationJenkinsGitlabTest\" or \"AuthorizationGitlabCISamlTest\".");
         rule.check(testClasses);
     }
 
@@ -329,37 +332,38 @@ class ArchitectureTest extends AbstractArchitectureTest {
         };
     }
 
-    private ArchCondition<JavaClass> haveMatchingTestClassCallingMethod(Method method) {
+    private ArchCondition<JavaClass> haveMatchingTestClassCallingAMethod(String identifyingPackage, Set<Method> signatureMethods) {
         return new ArchCondition<>("have matching authorization test class") {
 
             @Override
             public void check(JavaClass item, ConditionEvents events) {
-                if (!hasMatchingTestClassCallingMethod(item, method)) {
-                    events.add(violated(item, item.getFullName() + " does not have a matching authorization test class in an \"authorization\" package "
-                            + "containing a test method that calls AuthorizationTestService.testEndpoints(Map)"));
+                if (!hasMatchingTestClassCallingMethod(item, identifyingPackage, signatureMethods)) {
+                    events.add(violated(item, item.getFullName() + " does not have a matching test class in an \"" + identifyingPackage + "\" package "
+                            + "containing a test method that calls any given signature methods"));
                 }
             }
         };
     }
 
-    private boolean hasMatchingTestClassCallingMethod(JavaClass javaClass, Method authCheckMethod) {
+    private boolean hasMatchingTestClassCallingMethod(JavaClass javaClass, String identifyingPackage, Set<Method> signatureMethods) {
         var subclasses = javaClass.getSubclasses();
         // Check all subclasses of the given abstract test class to search for an authorization test class
         for (JavaClass subclass : subclasses) {
-            // The test class es expected to reside in a package containing "authorization". We could match the full path, but this is more flexible.
-            if (!subclass.getPackageName().contains("authorization")) {
+            // The test class es expected to reside inside an identifying package. We could match the full path, but this is more flexible.
+            if (!subclass.getPackageName().contains(identifyingPackage)) {
                 continue;
             }
             var methods = subclass.getMethods();
-            // Search for a test method that calls the given method
+            // Search for a test method that calls a signature method
             for (JavaMethod method : methods) {
                 if (!method.isAnnotatedWith(Test.class) && !method.getRawReturnType().reflect().equals(Void.class)) {
                     // Is not a test method
                     continue;
                 }
-                if (method.getMethodCallsFromSelf().stream().anyMatch(call -> call.getTargetOwner().getFullName().equals(authCheckMethod.getDeclaringClass().getName())
-                        && call.getTarget().getName().equals(authCheckMethod.getName()))) {
-                    // Calls the prepared method
+                if (method.getMethodCallsFromSelf().stream()
+                        .anyMatch(call -> signatureMethods.stream().anyMatch(checkMethod -> call.getTargetOwner().getFullName().equals(checkMethod.getDeclaringClass().getName())
+                                && call.getTarget().getName().equals(checkMethod.getName())))) {
+                    // Calls one of the signature methods
                     return true;
                 }
             }
