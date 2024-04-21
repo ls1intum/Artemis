@@ -77,7 +77,6 @@ describe('Profile Service', () => {
                 projectTypes: [],
                 testwiseCoverageAnalysisSupported: true,
                 auxiliaryRepositoriesSupported: true,
-                publishBuildPlanUrlAllowed: true,
             },
             {
                 programmingLanguage: 'PYTHON',
@@ -89,7 +88,6 @@ describe('Profile Service', () => {
                 projectTypes: [],
                 testwiseCoverageAnalysisSupported: false,
                 auxiliaryRepositoriesSupported: true,
-                publishBuildPlanUrlAllowed: true,
             },
             {
                 programmingLanguage: 'SWIFT',
@@ -101,7 +99,6 @@ describe('Profile Service', () => {
                 projectTypes: ['PLAIN', 'XCODE'],
                 testwiseCoverageAnalysisSupported: false,
                 auxiliaryRepositoriesSupported: true,
-                publishBuildPlanUrlAllowed: true,
             },
             {
                 programmingLanguage: 'C',
@@ -113,7 +110,6 @@ describe('Profile Service', () => {
                 projectTypes: [],
                 testwiseCoverageAnalysisSupported: false,
                 auxiliaryRepositoriesSupported: true,
-                publishBuildPlanUrlAllowed: true,
             },
             {
                 programmingLanguage: 'JAVA',
@@ -125,7 +121,6 @@ describe('Profile Service', () => {
                 projectTypes: ['PLAIN_MAVEN', 'MAVEN_MAVEN'],
                 testwiseCoverageAnalysisSupported: true,
                 auxiliaryRepositoriesSupported: true,
-                publishBuildPlanUrlAllowed: true,
             },
         ],
         versionControlUrl: 'https://artemistest2gitlab.ase.in.tum.de',
@@ -206,7 +201,6 @@ describe('Profile Service', () => {
                 staticCodeAnalysis: false,
                 testwiseCoverageAnalysisSupported: true,
                 auxiliaryRepositoriesSupported: true,
-                publishBuildPlanUrlAllowed: true,
             },
             {
                 checkoutSolutionRepositoryAllowed: false,
@@ -218,7 +212,6 @@ describe('Profile Service', () => {
                 staticCodeAnalysis: false,
                 testwiseCoverageAnalysisSupported: false,
                 auxiliaryRepositoriesSupported: true,
-                publishBuildPlanUrlAllowed: true,
             },
             {
                 checkoutSolutionRepositoryAllowed: false,
@@ -230,7 +223,6 @@ describe('Profile Service', () => {
                 staticCodeAnalysis: true,
                 testwiseCoverageAnalysisSupported: false,
                 auxiliaryRepositoriesSupported: true,
-                publishBuildPlanUrlAllowed: true,
             },
             {
                 checkoutSolutionRepositoryAllowed: false,
@@ -242,7 +234,6 @@ describe('Profile Service', () => {
                 staticCodeAnalysis: false,
                 testwiseCoverageAnalysisSupported: false,
                 auxiliaryRepositoriesSupported: true,
-                publishBuildPlanUrlAllowed: true,
             },
             {
                 checkoutSolutionRepositoryAllowed: false,
@@ -254,7 +245,6 @@ describe('Profile Service', () => {
                 staticCodeAnalysis: true,
                 testwiseCoverageAnalysisSupported: true,
                 auxiliaryRepositoriesSupported: true,
-                publishBuildPlanUrlAllowed: true,
             },
         ],
         git: {

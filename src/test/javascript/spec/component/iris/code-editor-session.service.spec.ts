@@ -56,7 +56,7 @@ describe('IrisCodeEditorSessionService', () => {
         it('should dispatch error if fail', async () => {
             // given
             const exerciseId = 123;
-            const createSessionMock = jest.spyOn(mockHttpSessionService, 'createSession').mockReturnValueOnce(throwError(new HttpErrorResponse({ status: 500 })));
+            const createSessionMock = jest.spyOn(mockHttpSessionService, 'createSession').mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })));
             const dispatchSpy = jest.spyOn(stateStore, 'dispatch');
 
             // when
@@ -72,7 +72,7 @@ describe('IrisCodeEditorSessionService', () => {
         // given
         const exerciseId = 123;
         const sessionId = 456;
-        const getCurrentSessionMock = jest.spyOn(mockHttpSessionService, 'getCurrentSession').mockReturnValueOnce(throwError(new HttpErrorResponse({ status: 404 })));
+        const getCurrentSessionMock = jest.spyOn(mockHttpSessionService, 'getCurrentSession').mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 404 })));
         const createSessionMock = jest.spyOn(mockHttpSessionService, 'createSession').mockReturnValueOnce(of({ id: sessionId }));
         const dispatchSpy = jest.spyOn(stateStore, 'dispatch');
 
@@ -114,7 +114,7 @@ describe('IrisCodeEditorSessionService', () => {
     it('should dispatch an error if getCurrentSession returns an error', async () => {
         // given
         const exerciseId = 123;
-        jest.spyOn(mockHttpSessionService, 'getCurrentSession').mockReturnValueOnce(throwError(new HttpErrorResponse({ status: 500 })));
+        jest.spyOn(mockHttpSessionService, 'getCurrentSession').mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })));
         const dispatchSpy = jest.spyOn(stateStore, 'dispatch');
 
         // when
@@ -161,8 +161,8 @@ describe('IrisCodeEditorSessionService', () => {
     it('should dispatch an error if getCurrentSession is 404 and createSession returned an error', async () => {
         // given
         const exerciseId = 123;
-        const getCurrentSessionMock = jest.spyOn(mockHttpSessionService, 'getCurrentSession').mockReturnValueOnce(throwError(new HttpErrorResponse({ status: 404 })));
-        const createSessionMock = jest.spyOn(mockHttpSessionService, 'createSession').mockReturnValueOnce(throwError(new HttpErrorResponse({ status: 404 })));
+        const getCurrentSessionMock = jest.spyOn(mockHttpSessionService, 'getCurrentSession').mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 404 })));
+        const createSessionMock = jest.spyOn(mockHttpSessionService, 'createSession').mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 404 })));
         const dispatchSpy = jest.spyOn(stateStore, 'dispatch');
 
         // when

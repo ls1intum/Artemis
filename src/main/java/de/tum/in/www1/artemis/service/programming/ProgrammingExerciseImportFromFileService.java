@@ -12,8 +12,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import org.apache.commons.compress.utils.FileNameUtils;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.NameFileFilter;
 import org.apache.commons.io.filefilter.NotFileFilter;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -84,19 +84,19 @@ public class ProgrammingExerciseImportFromFileService {
      * It first extracts the contents of the zip file, then creates a programming exercise (same process as creating a new one),
      * then deletes the template content initially pushed to the repositories and copies over the extracted content
      *
-     * @param programmingExerciseForImport the programming exercise that should be imported
-     * @param zipFile                      the zip file that contains the exercise
-     * @param course                       the course to which the exercise should be added
-     * @param user                         the user initiating the import
+     * @param originalProgrammingExercise the programming exercise that should be imported
+     * @param zipFile                     the zip file that contains the exercise
+     * @param course                      the course to which the exercise should be added
+     * @param user                        the user initiating the import
      * @return the imported programming exercise
      **/
-    public ProgrammingExercise importProgrammingExerciseFromFile(ProgrammingExercise programmingExerciseForImport, MultipartFile zipFile, Course course, User user)
+    public ProgrammingExercise importProgrammingExerciseFromFile(ProgrammingExercise originalProgrammingExercise, MultipartFile zipFile, Course course, User user)
             throws IOException, GitAPIException, URISyntaxException {
-        if (!"zip".equals(FileNameUtils.getExtension(zipFile.getOriginalFilename()))) {
+        if (!"zip".equals(FilenameUtils.getExtension(zipFile.getOriginalFilename()))) {
             throw new BadRequestAlertException("The file is not a zip file", "programmingExercise", "fileNotZip");
         }
         Path importExerciseDir = null;
-        ProgrammingExercise importedProgrammingExercise;
+        ProgrammingExercise newProgrammingExercise;
         try {
             importExerciseDir = Files.createTempDirectory("imported-exercise-dir");
             Path exerciseFilePath = Files.createTempFile(importExerciseDir, "exercise-for-import", ".zip");
@@ -105,26 +105,27 @@ public class ProgrammingExerciseImportFromFileService {
             zipFileService.extractZipFileRecursively(exerciseFilePath);
             checkRepositoriesExist(importExerciseDir);
             var oldShortName = getProgrammingExerciseFromDetailsFile(importExerciseDir).getShortName();
-            programmingExerciseService.validateNewProgrammingExerciseSettings(programmingExerciseForImport, course);
+            programmingExerciseService.validateNewProgrammingExerciseSettings(originalProgrammingExercise, course);
             // TODO: creating the whole exercise (from template) is a bad solution in this case, we do not want the template content, instead we want the file content of the zip
-            importedProgrammingExercise = programmingExerciseService.createProgrammingExercise(programmingExerciseForImport, true);
-            if (Boolean.TRUE.equals(programmingExerciseForImport.isStaticCodeAnalysisEnabled())) {
-                staticCodeAnalysisService.createDefaultCategories(importedProgrammingExercise);
+            newProgrammingExercise = programmingExerciseService.createProgrammingExercise(originalProgrammingExercise, true);
+            if (Boolean.TRUE.equals(originalProgrammingExercise.isStaticCodeAnalysisEnabled())) {
+                staticCodeAnalysisService.createDefaultCategories(newProgrammingExercise);
             }
-            Path pathToDirectoryWithImportedContent = exerciseFilePath.toAbsolutePath().getParent().resolve(FileNameUtils.getBaseName(exerciseFilePath.toString()));
+            Path pathToDirectoryWithImportedContent = exerciseFilePath.toAbsolutePath().getParent().resolve(FilenameUtils.getBaseName(exerciseFilePath.toString()));
             copyEmbeddedFiles(pathToDirectoryWithImportedContent);
-            importRepositoriesFromFile(importedProgrammingExercise, importExerciseDir, oldShortName, user);
-            importedProgrammingExercise.setCourse(course);
+            importRepositoriesFromFile(newProgrammingExercise, importExerciseDir, oldShortName, user);
+            newProgrammingExercise.setCourse(course);
             // It doesn't make sense to import a build plan on a local CI setup.
             if (profileService.isGitlabCiOrJenkinsActive()) {
-                importBuildPlanIfExisting(importedProgrammingExercise, pathToDirectoryWithImportedContent);
+                importBuildPlanIfExisting(newProgrammingExercise, pathToDirectoryWithImportedContent);
             }
+            // TODO: we need to create the build configuration
         }
         finally {
             // want to make sure the directories are deleted, even if an exception is thrown
             fileService.scheduleDirectoryPathForRecursiveDeletion(importExerciseDir, 5);
         }
-        return importedProgrammingExercise;
+        return newProgrammingExercise;
     }
 
     /**
@@ -258,7 +259,7 @@ public class ProgrammingExerciseImportFromFileService {
                     "There are either no or more than one sub-directories containing " + repoType + " in their name. Please make sure that there is exactly one.");
         }
 
-        return result.get(0);
+        return result.getFirst();
     }
 
     private Path retrieveExerciseJsonPath(Path dirPath) throws IOException {
@@ -274,6 +275,6 @@ public class ProgrammingExerciseImportFromFileService {
         if (result.size() != 1) {
             throw new BadRequestAlertException("There are either no JSON files or more than one JSON file in the directory!", "programmingExercise", "exerciseJsonNotValidOrFound");
         }
-        return result.get(0);
+        return result.getFirst();
     }
 }

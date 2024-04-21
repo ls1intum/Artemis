@@ -7,7 +7,14 @@ import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -26,7 +33,13 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.FileUploadExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
@@ -34,12 +47,30 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.domain.quiz.*;
+import de.tum.in.www1.artemis.domain.quiz.DragAndDropSubmittedAnswer;
+import de.tum.in.www1.artemis.domain.quiz.MultipleChoiceSubmittedAnswer;
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
+import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
+import de.tum.in.www1.artemis.domain.quiz.ShortAnswerSubmittedAnswer;
+import de.tum.in.www1.artemis.domain.quiz.SubmittedAnswer;
 import de.tum.in.www1.artemis.domain.quiz.compare.DnDMapping;
 import de.tum.in.www1.artemis.domain.quiz.compare.SAMapping;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
+import de.tum.in.www1.artemis.repository.StudentExamRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.SubmittedAnswerRepository;
+import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.QuizPoolService;
+import de.tum.in.www1.artemis.service.SubmissionService;
+import de.tum.in.www1.artemis.service.SubmissionVersionService;
+import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingTriggerService;
 import de.tum.in.www1.artemis.service.util.ExamExerciseStartPreparationStatus;
@@ -796,7 +827,7 @@ public class StudentExamService {
         // StudentExams are saved in the called method
         HashSet<User> userHashSet = new HashSet<>();
         userHashSet.add(student);
-        return studentExamRepository.createRandomStudentExams(exam, userHashSet, examQuizQuestionsGenerator).get(0);
+        return studentExamRepository.createRandomStudentExams(exam, userHashSet, examQuizQuestionsGenerator).getFirst();
     }
 
     /**
@@ -809,7 +840,7 @@ public class StudentExamService {
     @Transactional // TODO: NOT OK --> remove @Transactional
     public List<StudentExam> generateStudentExams(final Exam exam) {
         final var existingStudentExams = studentExamRepository.findByExamId(exam.getId());
-        // https://jira.spring.io/browse/DATAJPA-1367 deleteInBatch does not work, because it does not cascade the deletion of existing exam sessions, therefore use deleteAll
+        // deleteInBatch does not work, because it does not cascade the deletion of existing exam sessions, therefore use deleteAll
         studentExamRepository.deleteAll(existingStudentExams);
 
         Set<User> users = exam.getRegisteredUsers();

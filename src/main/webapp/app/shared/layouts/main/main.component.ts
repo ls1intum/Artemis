@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit, Renderer2 } from '@angular/core';
+import { Component, Inject, OnDestroy, OnInit, Renderer2 } from '@angular/core';
 import { ActivatedRouteSnapshot, NavigationEnd, NavigationError, NavigationStart, Router } from '@angular/router';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -6,18 +6,22 @@ import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
 import { ThemeService } from 'app/core/theme/theme.service';
 import { DOCUMENT } from '@angular/common';
 import { AnalyticsService } from 'app/core/posthog/analytics.service';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-main',
     templateUrl: './main.component.html',
 })
-export class JhiMainComponent implements OnInit {
+export class JhiMainComponent implements OnInit, OnDestroy {
     /**
      * If the footer and header should be shown.
      * Only set to false on specific pages designed for the native Android and iOS applications where the footer and header are not wanted.
      * The decision on whether to show the skeleton or not for a specific route is defined in shouldShowSkeleton.
      */
     public showSkeleton = true;
+    profileSubscription: Subscription;
+    isProduction: boolean = true;
+    isTestServer: boolean = false;
 
     constructor(
         private jhiLanguageHelper: JhiLanguageHelper,
@@ -88,6 +92,11 @@ export class JhiMainComponent implements OnInit {
             }
         });
 
+        this.profileSubscription = this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            this.isTestServer = profileInfo.testServer ?? false;
+            this.isProduction = profileInfo.inProduction;
+        });
+
         this.themeService.initialize();
     }
 
@@ -99,5 +108,9 @@ export class JhiMainComponent implements OnInit {
         const isStandaloneProblemStatement = url.match('\\/courses\\/\\d+\\/exercises\\/\\d+\\/problem-statement(\\/\\d*)?(\\/)?');
         const isStandaloneFeedback = url.match('\\/courses\\/\\d+\\/exercises\\/\\d+\\/participations\\/\\d+\\/results\\/\\d+\\/feedback(\\/)?');
         return !isStandaloneProblemStatement && !isStandaloneFeedback;
+    }
+
+    ngOnDestroy(): void {
+        this.profileSubscription?.unsubscribe();
     }
 }

@@ -160,6 +160,16 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     Optional<StudentParticipation> findByIdWithEagerTeamStudents(@Param("participationId") long participationId);
 
     @Query("""
+            SELECT COUNT(p) > 0
+            FROM StudentParticipation p
+                LEFT JOIN p.team.students u
+                LEFT JOIN p.student s
+            WHERE p.id = :participationId AND
+                (s.login = :login OR u.login = :login)
+            """)
+    boolean existsByIdAndParticipatingStudentLogin(@Param("participationId") long participationId, @Param("login") String login);
+
+    @Query("""
             SELECT DISTINCT p
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.submissions s
@@ -929,7 +939,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                     if (!relevantResults.isEmpty()) {
                         // make sure to take the latest result
                         relevantResults.sort((r1, r2) -> r2.getCompletionDate().compareTo(r1.getCompletionDate()));
-                        Result correctResult = relevantResults.get(0);
+                        Result correctResult = relevantResults.getFirst();
                         relevantResults.clear();
                         relevantResults.add(correctResult);
                     }

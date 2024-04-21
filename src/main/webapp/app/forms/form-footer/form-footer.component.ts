@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, Output, computed, input } from '@angular/core';
 import { ValidationReason } from 'app/entities/exercise.model';
 import { faBan, faExclamationCircle, faSave } from '@fortawesome/free-solid-svg-icons';
+import { ButtonSize } from 'app/shared/components/button.component';
 
 @Component({
     selector: 'jhi-form-footer',
@@ -18,6 +19,8 @@ export class FormFooterComponent {
 
     @Input() notificationText?: string;
     @Output() notificationTextChange = new EventEmitter<string>();
+
+    ButtonSize = ButtonSize;
 
     isImport = input<boolean>();
     isCreation = input<boolean>();

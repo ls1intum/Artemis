@@ -5,7 +5,7 @@ import de.tum.in.www1.artemis.service.hestia.behavioral.BehavioralSolutionEntryG
 
 public abstract class BehavioralKnowledgeSource {
 
-    protected BehavioralBlackboard blackboard;
+    protected final BehavioralBlackboard blackboard;
 
     public BehavioralKnowledgeSource(BehavioralBlackboard blackboard) {
         this.blackboard = blackboard;

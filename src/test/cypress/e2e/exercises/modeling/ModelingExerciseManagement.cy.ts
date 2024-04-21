@@ -8,6 +8,7 @@ import {
     courseManagement,
     courseManagementAPIRequest,
     courseManagementExercises,
+    courseOverview,
     exerciseAPIRequest,
     modelingExerciseAssessment,
     modelingExerciseCreation,
@@ -135,7 +136,7 @@ describe('Modeling Exercise Management', () => {
             });
             cy.login(studentOne, '/courses');
             cy.contains(course.title!).click({ force: true });
-            cy.contains('No exercises available for the course.').should('be.visible');
+            courseOverview.getExercises().should('have.length', 0);
         });
 
         it('Student can see released Modeling Exercise', () => {

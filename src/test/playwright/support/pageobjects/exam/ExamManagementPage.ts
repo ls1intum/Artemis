@@ -81,8 +81,23 @@ export class ExamManagementPage {
         await this.page.locator(`#testrun-button`).click();
     }
 
+    /**
+     * Opens the exam grading system page.
+     */
+    async openGradingKey() {
+        await this.page.locator('a', { hasText: 'Grading Key' }).click();
+    }
+
+    /**
+     * Opens the exam scores page.
+     */
+    async openScoresPage() {
+        await this.page.locator('#scores-button').click();
+    }
+
     async verifySubmitted(courseID: number, examID: number, username: string) {
         await this.page.goto(`/course-management/${courseID}/exams/${examID}/student-exams`);
+        await this.page.locator('#student-exam').waitFor({ state: 'visible' });
         await expect(this.page.locator('#student-exam .datatable-body-row', { hasText: username }).locator('.submitted')).toHaveText('Yes');
     }
 
