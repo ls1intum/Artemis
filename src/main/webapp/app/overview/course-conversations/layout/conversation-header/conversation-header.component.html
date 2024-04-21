@@ -17,7 +17,11 @@
                         {{ conversationService.getConversationName(activeConversation, true) }}
                     </h3>
                 } @else {
-                    <h3 class="conversation-name d-inline-block rounded p-2 info">Search Results for "{{ searchTerm }}" :</h3>
+                    @if (!searchTerm) {
+                        <h3 class="conversation-name d-inline-block rounded p-2 info">All Messages</h3>
+                    } @else {
+                        <h3 class="conversation-name d-inline-block rounded p-2 info">Search Results for "{{ searchTerm }}"</h3>
+                    }
                 }
             </div>
             @if (activeConversationAsChannel) {
