@@ -188,13 +188,15 @@ class ArchitectureTest extends AbstractArchitectureTest {
     @Test
     void testJSONImplementations() {
         // Note: we should only use Jackson. There are rare cases where gson is still used
-        noClasses().should().dependOnClassesThat(have(simpleName("JsonObject").or(simpleName("JSONObject"))).and(not(resideInAPackage("com.google" + ".gson")))
-                .and(not(resideInAPackage("com.fasterxml.jackson.core")))).check(allClasses);
+        noClasses().should().dependOnClassesThat(
+                have(simpleName("JsonObject").or(simpleName("JSONObject"))).and(not(resideInAPackage("com.google.gson"))).and(not(resideInAPackage("com.fasterxml.jackson.core"))))
+                .check(allClasses);
         noClasses().should().dependOnClassesThat(
                 have(simpleName("JsonArray").or(simpleName("JSONArray"))).and(not(resideInAPackage("com.google.gson"))).and(not(resideInAPackage("com.fasterxml.jackson.core"))))
                 .check(allClasses);
-        noClasses().should().dependOnClassesThat(have(simpleName("JsonParser").or(simpleName("JSONParser"))).and(not(resideInAPackage("com.google" + ".gson")))
-                .and(not(resideInAPackage("com.fasterxml.jackson.core")))).check(allClasses);
+        noClasses().should().dependOnClassesThat(
+                have(simpleName("JsonParser").or(simpleName("JSONParser"))).and(not(resideInAPackage("com.google.gson"))).and(not(resideInAPackage("com.fasterxml.jackson.core"))))
+                .check(allClasses);
     }
 
     @Test
