@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import org.springframework.boot.actuate.health.Status;
 import org.springframework.http.ResponseEntity;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -116,7 +117,7 @@ public abstract class IrisExerciseChatBasedSessionResource<E extends Exercise, S
             rateLimitInfo = irisRateLimitService.getRateLimitInformation(user);
         }
 
-        return new IrisHealthDTO(specificModelStatus, rateLimitInfo);
+        return new IrisHealthDTO(health.getStatus() == Status.UP, rateLimitInfo);
     }
 
     public record IrisHealthDTO(boolean active, IrisRateLimitService.IrisRateLimitInformation rateLimitInfo) {
