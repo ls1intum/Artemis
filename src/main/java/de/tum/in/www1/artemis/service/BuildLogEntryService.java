@@ -201,7 +201,7 @@ public class BuildLogEntryService {
         if (!skipLanguage && !buildLogs.isEmpty()) {
             // E.g. Swift produces a lot of duplicate build logs when a build fails
             var existingLog = buildLogs.stream().filter(log -> log.getLog().equals(shortenedLogString)).findFirst();
-            String lastLog = buildLogs.get(buildLogs.size() - 1).getLog();
+            String lastLog = buildLogs.getLast().getLog();
             // If the log does not exist already or if the log is a single blank log add it to the build logs (avoid more than one empty log in a row)
             boolean isSingleBlankLog = shortenedLogString.isBlank() && !lastLog.isBlank();
             return existingLog.isEmpty() || isSingleBlankLog;

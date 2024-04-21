@@ -69,7 +69,7 @@ public abstract class SubmissionExportService {
         if (zippedSubmissionsPaths.isEmpty()) {
             throw new BadRequestAlertException("Failed to export student submissions.", "SubmissionExport", "noSubmissions");
         }
-        return zippedSubmissionsPaths.get(0).toFile();
+        return zippedSubmissionsPaths.getFirst().toFile();
 
     }
 
