@@ -18,6 +18,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import dayjs from 'dayjs/esm';
+import { TutorialGroupSessionStatus } from 'app/entities/tutorial-group/tutorial-group-session.model';
+import { ChangeDetectorRef } from '@angular/core';
 
 @Component({ selector: 'jhi-mock-header', template: '<div id="mockHeader"></div>' })
 class MockHeaderComponent {
@@ -112,7 +115,7 @@ describe('TutorialGroupDetailComponent', () => {
                 MockComponent(TutorialGroupUtilizationIndicatorComponent),
                 MockPipe(RemoveSecondsPipe),
             ],
-            providers: [MockProvider(ArtemisMarkdownService), MockProvider(SortService)],
+            providers: [MockProvider(ArtemisMarkdownService), { provide: TranslateService, useClass: MockTranslateService }, MockProvider(ChangeDetectorRef)],
         })
             .compileComponents()
             .then(() => {
@@ -129,5 +132,46 @@ describe('TutorialGroupDetailComponent', () => {
 
     it('should initialize', () => {
         expect(component).not.toBeNull();
+    });
+
+    it.each([
+        [
+            {
+                tutorialGroupSessions: [
+                    { start: dayjs().subtract(1, 'minute'), end: dayjs().subtract(1, 'minute'), attendanceCount: 0, status: TutorialGroupSessionStatus.ACTIVE },
+                ],
+            } as TutorialGroup,
+            0,
+        ],
+        [
+            { tutorialGroupSessions: [{ start: dayjs(), end: dayjs().add(1, 'minute'), attendanceCount: 42, status: TutorialGroupSessionStatus.ACTIVE }] } as TutorialGroup,
+            undefined,
+        ],
+        [
+            {
+                tutorialGroupSessions: [
+                    { start: dayjs().subtract(3, 'hours'), end: dayjs().subtract(1, 'hour'), attendanceCount: 42, status: TutorialGroupSessionStatus.CANCELLED },
+                ],
+            } as TutorialGroup,
+            undefined,
+        ],
+        [
+            {
+                tutorialGroupSessions: [
+                    { start: dayjs().subtract(4, 'weeks'), end: dayjs().subtract(4, 'weeks'), attendanceCount: 48, status: TutorialGroupSessionStatus.ACTIVE },
+                    { start: dayjs().subtract(3, 'weeks'), end: dayjs().subtract(3, 'weeks'), attendanceCount: undefined, status: TutorialGroupSessionStatus.ACTIVE },
+                    { start: dayjs().subtract(2, 'weeks'), end: dayjs().subtract(2, 'weeks'), attendanceCount: 35, status: TutorialGroupSessionStatus.ACTIVE },
+                    { start: dayjs().subtract(1, 'weeks'), end: dayjs().subtract(1, 'weeks'), attendanceCount: 22, status: TutorialGroupSessionStatus.CANCELLED },
+                    { start: dayjs().subtract(1, 'day'), end: dayjs().subtract(1, 'day'), attendanceCount: 13, status: TutorialGroupSessionStatus.ACTIVE },
+                    { start: dayjs().add(1, 'weeks'), end: dayjs().add(1, 'weeks'), attendanceCount: 10, status: TutorialGroupSessionStatus.ACTIVE },
+                    { start: dayjs().add(2, 'weeks'), end: dayjs().add(2, 'weeks'), attendanceCount: undefined, status: TutorialGroupSessionStatus.ACTIVE },
+                ],
+            } as TutorialGroup,
+            24,
+        ],
+    ])('should calculate average attendance correctly', (tutorialGroup: TutorialGroup, expectedAttendance: number) => {
+        component.tutorialGroup = tutorialGroup;
+        component.recalculateAttendanceDetails();
+        expect(component.tutorialGroup.averageAttendance).toBe(expectedAttendance);
     });
 });
