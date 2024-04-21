@@ -294,7 +294,7 @@ public class TestwiseCoverageService {
         if (reports.isEmpty()) {
             return Optional.empty();
         }
-        return Optional.of(reports.get(0));
+        return Optional.of(reports.getFirst());
     }
 
     /**
@@ -309,6 +309,6 @@ public class TestwiseCoverageService {
         if (reports.isEmpty()) {
             return Optional.empty();
         }
-        return Optional.of(reports.get(0));
+        return Optional.of(reports.getFirst());
     }
 }

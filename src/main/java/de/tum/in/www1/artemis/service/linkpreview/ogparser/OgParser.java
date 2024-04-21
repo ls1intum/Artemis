@@ -64,7 +64,7 @@ public class OgParser {
     }
 
     private void setExtraDataOnLastContent(OgMetaElement ogMetaElement, List<Content> contents, String contentValue) {
-        final Content lastContent = contents.get(contents.size() - 1);
+        final Content lastContent = contents.getLast();
         lastContent.setExtraData(ogMetaElement.getExtraData(), contentValue);
     }
 
