@@ -27,14 +27,14 @@ jobs:
       - name: Get list of modified files
         id: files
         run: |
-          git diff --name-only origin/main HEAD > modified_files.txt
+          git diff --name-only origin/${{ github.event.pull_request.base.ref }} HEAD > modified_files.txt
 
       - name: Display modified files
         run: |
           echo "Modified files in this pull request:"
           cat modified_files.txt
 
-  run-python-script:
+  identify-server-endpoints:
     needs: show-modified-files
     runs-on: ubuntu-latest
     steps:
