@@ -154,13 +154,9 @@ public class BuildJobQueueResource {
      * @return the page of finished build jobs
      */
     @GetMapping("/courses/{courseId}/finished-jobs")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInCourse
     public ResponseEntity<List<BuildJob>> getFinishedBuildJobsForCourse(@PathVariable long courseId, PageableSearchDTO<String> search) {
         log.debug("REST request to get the finished build jobs for course {}", courseId);
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null)) {
-            throw new AccessForbiddenException("You are not allowed to access finished build jobs of this course!");
-        }
         final Page<BuildJob> page = buildJobRepository.findAllByCourseId(courseId, PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.BUILD_JOB));
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
