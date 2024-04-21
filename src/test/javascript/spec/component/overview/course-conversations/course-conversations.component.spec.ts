@@ -26,6 +26,7 @@ import { DocumentationButtonComponent } from 'app/shared/components/documentatio
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { getElement } from '../../../helpers/utils/general.utils';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
 
 const examples: (ConversationDTO | undefined)[] = [undefined, generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
 
@@ -180,6 +181,8 @@ examples.forEach((activeConversation) => {
             tick();
             fixture.detectChanges();
             expect(component.courseWideSearchConfig.filterToUnresolved).toBeTrue();
+            expect(component.courseWideSearchConfig.filterToOwn).toBeFalse();
+            expect(component.courseWideSearchConfig.filterToAnsweredOrReacted).toBeFalse();
         }));
 
         it('Should update filter setting when filterToOwn checkbox is checked', fakeAsync(() => {
@@ -193,7 +196,9 @@ examples.forEach((activeConversation) => {
             filterOwnCheckbox.dispatchEvent(new Event('change'));
             tick();
             fixture.detectChanges();
+            expect(component.courseWideSearchConfig.filterToUnresolved).toBeFalse();
             expect(component.courseWideSearchConfig.filterToOwn).toBeTrue();
+            expect(component.courseWideSearchConfig.filterToAnsweredOrReacted).toBeFalse();
         }));
 
         it('Should update filter setting when filterToAnsweredOrReacted checkbox is checked', fakeAsync(() => {
@@ -207,6 +212,8 @@ examples.forEach((activeConversation) => {
             filterAnsweredOrReactedCheckbox.dispatchEvent(new Event('change'));
             tick();
             fixture.detectChanges();
+            expect(component.courseWideSearchConfig.filterToUnresolved).toBeFalse();
+            expect(component.courseWideSearchConfig.filterToOwn).toBeFalse();
             expect(component.courseWideSearchConfig.filterToAnsweredOrReacted).toBeTrue();
         }));
 
@@ -228,6 +235,29 @@ examples.forEach((activeConversation) => {
             expect(component.courseWideSearchConfig.filterToUnresolved).toBeTrue();
             expect(component.courseWideSearchConfig.filterToOwn).toBeTrue();
             expect(component.courseWideSearchConfig.filterToAnsweredOrReacted).toBeTrue();
+        }));
+
+        it('should initialize sorting direction correctly', fakeAsync(() => {
+            component.ngOnInit();
+            tick();
+            fixture.detectChanges();
+            expect(component.courseWideSearchConfig.sortingOrder).toBe(SortDirection.ASCENDING);
+        }));
+
+        it('should change sorting direction after clicking the order direction button', fakeAsync(() => {
+            component.ngOnInit();
+            tick();
+            fixture.detectChanges();
+            const selectedDirectionOption = getElement(fixture.debugElement, '.clickable');
+            selectedDirectionOption.dispatchEvent(new Event('click'));
+            expect(component.courseWideSearchConfig.sortingOrder).toBe(SortDirection.DESCENDING);
+        }));
+
+        it('should initialize sorting criterion correctly', fakeAsync(() => {
+            component.ngOnInit();
+            tick();
+            fixture.detectChanges();
+            expect(component.courseWideSearchConfig.postSortCriterion).toBe(PostSortCriterion.CREATION_DATE);
         }));
     });
 });
