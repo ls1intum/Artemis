@@ -307,7 +307,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
     void hasMatchingAuthorizationTestClassBeCorrectlyImplemented() {
         ArchRule rule = methods().that().areNotDeclaredIn(AbstractArtemisIntegrationTest.class).and().haveRawReturnType(boolean.class).and()
                 .haveName("hasMatchingAuthorizationTestClass").should(beImplementedInDirectSubclassOf(AbstractArtemisIntegrationTest.class)).andShould(returnTrue()).because(
-                        "this method should only be implemented in subclasses of AbstractArtemisIntegrationTest to confirm that the versioning test class for the corresponding environment exists. Check out the JavaDoc for more information.");
+                        "this method should only be implemented in subclasses of AbstractArtemisIntegrationTest to confirm that the authorization test class for the corresponding environment exists. Check out the JavaDoc for more information.");
         rule.check(testClasses);
     }
 
@@ -349,7 +349,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
                     constructor.setAccessible(true); // Required as the test class is and should be protected
                     var classInstance = constructor.newInstance();
                     if (item.reflect().invoke(classInstance).equals(false)) {
-                        events.add(violated(item, item.getFullName() + " does not return true to confirm the corresponding versioning environment test exists"));
+                        events.add(violated(item, item.getFullName() + " does not return true to confirm the corresponding authorization environment test exists"));
                     }
                 }
                 catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
