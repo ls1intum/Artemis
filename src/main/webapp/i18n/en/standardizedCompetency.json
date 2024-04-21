@@ -5,23 +5,22 @@
             "manage": {
                 "title": "Standardized Competency Management",
                 "filter": "Filter competencies",
-                "createButtonTooltip": "Create standardized competency",
                 "expandButtonTooltip": "Expand all knowledge areas",
                 "collapseButtonTooltip": "Collapse all knowledge areas",
+                "updateTreeError": "Something went wrong while updating the knowledge area tree. Please reload the page.",
                 "deleteModal": {
                     "question": "Do you really want to delete the standardized competency <strong>{{title}}</strong>? You can not undo this action!",
                     "typeNameToConfirm": "Please enter the name of the standardized competency for confirmation."
                 },
                 "cancelModal": {
                     "title": "Warning: Unsaved Changes",
-                    "text": "Are you sure you want to cancel editing <strong>{{title}}</strong>? Press Cancel to go back, or Confirm to proceed."
+                    "text": "Are you sure you want to cancel editing the standardized competency <strong>{{title}}</strong>? Press Cancel to go back, or Confirm to proceed."
                 },
                 "successAlerts": {
-                    "create": "Successfully created standardized competency \"{{competencyTitle}}\"",
-                    "update": "Successfully updated standardized competency \"{{competencyTitle}}\"",
-                    "delete": "Successfully deleted standardized competency \"{{competencyTitle}}\""
-                },
-                "updateTreeError": "Something went wrong while updating the knowledge area tree. Please reload the page."
+                    "create": "Successfully created standardized competency <strong>{{title}}</strong>",
+                    "update": "Successfully updated standardized competency <strong>{{title}}</strong>",
+                    "delete": "Successfully deleted standardized competency <strong>{{title}}</strong>"
+                }
             },
             "model": {
                 "title": "Title",
@@ -34,18 +33,54 @@
                 "title": "Standardized Competency Details",
                 "titleCreate": "Create Standardized Competency",
                 "titleEdit": "Edit Standardized Competency",
-                "titleRequiredError": "A standardized competency needs to have a title",
-                "titleMaxLengthError": "The title of a standardized competency is limited to {{max}} characters",
-                "descriptionMaxLengthError": "The description of a standardized competency is limited to {{max}} characters",
-                "knowledgeAreaRequiredError": "A standardized competency needs to have a knowledge area"
+                "error": {
+                    "titleRequired": "A standardized competency needs to have a title",
+                    "titleMaxLength": "The title of a standardized competency is limited to {{max}} characters",
+                    "descriptionMaxLength": "The description of a standardized competency is limited to {{max}} characters",
+                    "knowledgeAreaRequired": "A standardized competency needs to have a knowledge area"
+                }
             }
         },
         "knowledgeArea": {
+            "empty": "This knowledge area has no content yet",
             "model": {
                 "title": "Title",
-                "description": "Description"
+                "shortTitle": "Short title",
+                "description": "Description",
+                "parent": "Parent Knowledge Area"
             },
-            "empty": "This knowledge area has no content yet"
+            "manage": {
+                "createButtonTooltip": "Create knowledge area",
+                "detailsTooltip": "Open knowledge area details",
+                "deleteModal": {
+                    "question": "Do you really want to delete the knowledge area <strong>{{title}}</strong>? You can not undo this action! <strong>This will also delete all knowledge areas and standardized competencies contained!</strong>",
+                    "typeNameToConfirm": "Please enter the name of the knowledge area for confirmation."
+                },
+                "cancelModal": {
+                    "title": "Warning: Unsaved Changes",
+                    "text": "Are you sure you want to cancel editing the knowledge area <strong>{{title}}</strong>? Press Cancel to go back, or Confirm to proceed."
+                },
+                "successAlerts": {
+                    "create": "Successfully created knowledge area <strong>{{title}}</strong>",
+                    "update": "Successfully updated knowledge area <strong>{{title}}</strong>",
+                    "delete": "Successfully deleted knowledge area <strong>{{title}}</strong>"
+                }
+            },
+            "details": {
+                "title": "Knowledge Area Details",
+                "titleCreate": "Create Knowledge Area",
+                "titleEdit": "Edit Knowledge Area",
+                "createKnowledgeAreaButton": "Add knowledge area",
+                "createCompetencyButton": "Add Competency",
+                "error": {
+                    "titleRequired": "A knowledge area needs to have a title",
+                    "titleMaxLength": "The title of a knowledge area is limited to {{max}} characters",
+                    "shortTitleRequired": "A knowledge area needs to have a short title",
+                    "shortTitleMaxLength": "The short title of a knowledge area is limited to {{max}} characters",
+                    "descriptionMaxLength": "The description of a knowledge area is limited to {{max}} characters",
+                    "parentIdCircle": "A knowledge area cannot have itself or one of its descendants as parent"
+                }
+            }
         }
     }
 }
