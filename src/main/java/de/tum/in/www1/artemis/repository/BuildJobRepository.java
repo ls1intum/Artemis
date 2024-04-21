@@ -32,6 +32,6 @@ public interface BuildJobRepository extends JpaRepository<BuildJob, Long>, JpaSp
             """)
     Set<DockerImageBuild> findAllLastBuildDatesForDockerImages();
 
-    Page<BuildJob> findAllByCourseId(Long courseId, Pageable pageable);
+    Page<BuildJob> findAllByCourseId(long courseId, Pageable pageable);
 
 }
