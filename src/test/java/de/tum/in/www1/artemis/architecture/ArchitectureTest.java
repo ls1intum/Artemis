@@ -29,9 +29,9 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noFields;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noMethods;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Modifier;
+import java.lang.reflect.Method;
 import java.nio.file.Files;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -71,6 +71,7 @@ import com.tngtech.archunit.lang.SimpleConditionEvent;
 import com.tngtech.archunit.library.GeneralCodingRules;
 
 import de.tum.in.www1.artemis.AbstractArtemisIntegrationTest;
+import de.tum.in.www1.artemis.authorization.AuthorizationTestService;
 import de.tum.in.www1.artemis.config.ApplicationConfiguration;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -106,7 +107,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
     @Test
     void testCorrectStringUtils() {
         ArchRule stringUtils = noClasses().should()
-                .dependOnClassesThat(have(simpleName("StringUtils")).and(not(resideInAnyPackage("org.apache.commons.lang3", "org.springframework.util"))));
+                .dependOnClassesThat(have(simpleName("StringUtils")).and(not(resideInAnyPackage("org.apache.commons" + ".lang3", "org.springframework.util"))));
         ArchRule randomStringUtils = noClasses().should().dependOnClassesThat(have(simpleName("RandomStringUtils")).and(not(resideInAPackage("org.apache.commons.lang3"))));
 
         stringUtils.check(allClasses);
@@ -115,7 +116,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
     @Test
     void testNoJunitJupiterAssertions() {
-        ArchRule noJunitJupiterAssertions = noClasses().should().dependOnClassesThat().haveNameMatching("org.junit.jupiter.api.Assertions");
+        ArchRule noJunitJupiterAssertions = noClasses().should().dependOnClassesThat().haveNameMatching("org.junit" + ".jupiter.api.Assertions");
 
         noJunitJupiterAssertions.check(testClasses);
     }
@@ -149,7 +150,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
     void testValidSimpMessageSendingOperationsUsage() {
         ArchRule usage = fields().that().haveRawType(SimpMessageSendingOperations.class.getTypeName()).should().bePrivate().andShould()
                 .beDeclaredIn(WebsocketMessagingService.class)
-                .because("Classes should only use WebsocketMessagingService as a Facade and not SimpMessageSendingOperations directly");
+                .because("Classes should only use WebsocketMessagingService as a Facade and not " + "SimpMessageSendingOperations directly");
         usage.check(productionClasses);
     }
 
@@ -166,7 +167,8 @@ class ArchitectureTest extends AbstractArchitectureTest {
         GeneralCodingRules.NO_CLASSES_SHOULD_USE_JAVA_UTIL_LOGGING.check(allClasses);
 
         // We currently need to access standard streams in readTestReports() to use the SurefireReportParser
-        // The ParallelConsoleAppender is used to print test logs to the console (necessary due to parallel test execution)
+        // The ParallelConsoleAppender is used to print test logs to the console (necessary due to parallel test
+        // execution)
         var classes = allClasses.that(not(simpleName("ProgrammingExerciseTemplateIntegrationTest").or(simpleName("ParallelConsoleAppender"))));
         GeneralCodingRules.NO_CLASSES_SHOULD_ACCESS_STANDARD_STREAMS.check(classes);
     }
@@ -187,15 +189,13 @@ class ArchitectureTest extends AbstractArchitectureTest {
     @Test
     void testJSONImplementations() {
         // Note: we should only use Jackson. There are rare cases where gson is still used
-        noClasses().should().dependOnClassesThat(
-                have(simpleName("JsonObject").or(simpleName("JSONObject"))).and(not(resideInAPackage("com.google.gson"))).and(not(resideInAPackage("com.fasterxml.jackson.core"))))
-                .check(allClasses);
+        noClasses().should().dependOnClassesThat(have(simpleName("JsonObject").or(simpleName("JSONObject"))).and(not(resideInAPackage("com.google" + ".gson")))
+                .and(not(resideInAPackage("com.fasterxml.jackson.core")))).check(allClasses);
         noClasses().should().dependOnClassesThat(
                 have(simpleName("JsonArray").or(simpleName("JSONArray"))).and(not(resideInAPackage("com.google.gson"))).and(not(resideInAPackage("com.fasterxml.jackson.core"))))
                 .check(allClasses);
-        noClasses().should().dependOnClassesThat(
-                have(simpleName("JsonParser").or(simpleName("JSONParser"))).and(not(resideInAPackage("com.google.gson"))).and(not(resideInAPackage("com.fasterxml.jackson.core"))))
-                .check(allClasses);
+        noClasses().should().dependOnClassesThat(have(simpleName("JsonParser").or(simpleName("JSONParser"))).and(not(resideInAPackage("com.google" + ".gson")))
+                .and(not(resideInAPackage("com.fasterxml.jackson.core")))).check(allClasses);
     }
 
     @Test
@@ -213,7 +213,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
      */
     @Test
     void testNoDirectGitCommitCalls() {
-        ArchRule usage = noClasses().should().callMethod(Git.class, "commit").because("You should use GitService.commit() instead");
+        ArchRule usage = noClasses().should().callMethod(Git.class, "commit").because("You should use GitService" + ".commit() instead");
         var classesWithoutGitService = allClasses.that(not(assignableTo(GitService.class)));
         usage.check(classesWithoutGitService);
     }
@@ -223,7 +223,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
         // CacheHandler and QuizCache are exceptions because these classes are not created during startup
         var exceptions = or(declaredClassSimpleName("QuizCache"), declaredClassSimpleName("CacheHandler"));
         var notUseHazelcastInConstructor = methods().that().areDeclaredIn(HazelcastInstance.class).should().onlyBeCalled().byCodeUnitsThat(is(not(constructor()).or(exceptions)))
-                .because("Calling Hazelcast during Application startup might be slow since the Network gets used. Use @PostConstruct-methods instead.");
+                .because("Calling Hazelcast during Application startup might be slow since the Network gets used. Use" + " " + "@PostConstruct-methods instead.");
         notUseHazelcastInConstructor.check(allClassesWithHazelcast);
     }
 
@@ -256,7 +256,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 }
                 JavaEnumConstant value = (JavaEnumConstant) valueProperty.get();
                 if (!value.name().equals("NON_EMPTY")) {
-                    events.add(violated(item, item + " should be annotated with @JsonInclude(JsonInclude.Include.NON_EMPTY)"));
+                    events.add(violated(item, item + " should be annotated with @JsonInclude(JsonInclude.Include" + ".NON_EMPTY)"));
                 }
             }
         };
@@ -284,7 +284,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
         classes().should(IMPORT_RESTCONTROLLER).check(classes);
     }
 
-    private static final ArchCondition<JavaClass> IMPORT_RESTCONTROLLER = new ArchCondition<>("not import RestController") {
+    private static final ArchCondition<JavaClass> IMPORT_RESTCONTROLLER = new ArchCondition<>("not import " + "RestController") {
 
         @Override
         public void check(JavaClass item, ConditionEvents events) {
@@ -297,65 +297,72 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
     @Test
     void shouldNotUserAutowiredAnnotation() {
-        ArchRule rule = noFields().should().beAnnotatedWith(Autowired.class).because("fields should not rely on field injection via @Autowired");
+        ArchRule rule = noFields().should().beAnnotatedWith(Autowired.class).because("fields should not rely on " + "field" + " injection via @Autowired");
         final var exceptions = new String[] { "PublicResourcesConfiguration", "QuizProcessCacheTask", "QuizStartTask" };
         JavaClasses classes = classesExcept(productionClasses, exceptions);
         rule.check(classes);
     }
 
     @Test
-    void hasMatchingAuthorizationTestClassBeCorrectlyImplemented() {
-        ArchRule rule = methods().that().areNotDeclaredIn(AbstractArtemisIntegrationTest.class).and().haveRawReturnType(boolean.class).and()
-                .haveName("hasMatchingAuthorizationTestClass").should(beImplementedInDirectSubclassOf(AbstractArtemisIntegrationTest.class)).andShould(returnTrue()).because(
-                        "this method should only be implemented in subclasses of AbstractArtemisIntegrationTest to confirm that the authorization test class for the corresponding environment exists. Check out the JavaDoc for more information.");
+    void hasMatchingAuthorizationTestClassBeCorrectlyImplemented() throws NoSuchMethodException {
+        // Prepare the method that the authorization test should call to be identified as such
+        Method authCheckMethod = AuthorizationTestService.class.getMethod("testEndpoints", Map.class);
+
+        ArchRule rule = classes().that(beDirectSubclassOf(AbstractArtemisIntegrationTest.class)).should(haveMatchingTestClassCallingMethod(authCheckMethod)).because(
+                "every test environment should have a corresponding authorization test covering the endpoints of this environment. Examples are \"AuthorizationJenkinsGitlabTest\" or \"AuthorizationGitlabCISamlTest\".");
         rule.check(testClasses);
     }
 
-    private ArchCondition<JavaMethod> beImplementedInDirectSubclassOf(Class<?> clazz) {
-        return new ArchCondition<>("be implemented in direct subclass of " + clazz.getSimpleName()) {
+    private DescribedPredicate<JavaClass> beDirectSubclassOf(Class<?> clazz) {
+        return new DescribedPredicate<>("be implemented in direct subclass of " + clazz.getSimpleName()) {
 
             @Override
-            public void check(JavaMethod item, ConditionEvents events) {
-                var superClasses = item.getOwner().getAllRawSuperclasses();
+            public boolean test(JavaClass javaClass) {
+                var superClasses = javaClass.getAllRawSuperclasses();
                 if (superClasses.isEmpty()) {
-                    events.add(violated(item, item.getFullName() + " is not implemented in a direct subclass of " + clazz.getSimpleName()));
-                    return;
+                    // Tested class has no superclass
+                    return false;
                 }
-                if (!superClasses.getFirst().getFullName().equals(clazz.getName())) {
-                    events.add(violated(item, item.getFullName() + " is not implemented in a direct subclass of " + clazz.getSimpleName()));
+                return superClasses.getFirst().getFullName().equals(clazz.getName());
+            }
+        };
+    }
+
+    private ArchCondition<JavaClass> haveMatchingTestClassCallingMethod(Method method) {
+        return new ArchCondition<>("have matching authorization test class") {
+
+            @Override
+            public void check(JavaClass item, ConditionEvents events) {
+                if (!hasMatchingTestClassCallingMethod(item, method)) {
+                    events.add(violated(item, item.getFullName() + " does not have a matching authorization test class in an \"authorization\" package "
+                            + "containing a test method that calls AuthorizationTestService.testEndpoints(Map)"));
                 }
             }
         };
     }
 
-    private ArchCondition<JavaMethod> returnTrue() {
-        return new ArchCondition<>("return true") {
-
-            @Override
-            public void check(JavaMethod item, ConditionEvents events) {
-                var classToInstantiate = item.getOwner();
-                if (Modifier.isAbstract(classToInstantiate.reflect().getModifiers())) {
-                    var subClasses = classToInstantiate.getAllSubclasses();
-                    for (var subClass : subClasses) {
-                        if (!Modifier.isAbstract(subClass.reflect().getModifiers())) {
-                            classToInstantiate = subClass;
-                            break;
-                        }
-                    }
+    private boolean hasMatchingTestClassCallingMethod(JavaClass javaClass, Method authCheckMethod) {
+        var subclasses = javaClass.getSubclasses();
+        // Check all subclasses of the given abstract test class to search for an authorization test class
+        for (JavaClass subclass : subclasses) {
+            // The test class es expected to reside in a package containing "authorization". We could match the full path, but this is more flexible.
+            if (!subclass.getPackageName().contains("authorization")) {
+                continue;
+            }
+            var methods = subclass.getMethods();
+            // Search for a test method that calls the given method
+            for (JavaMethod method : methods) {
+                if (!method.isAnnotatedWith(Test.class) && !method.getRawReturnType().reflect().equals(Void.class)) {
+                    // Is not a test method
+                    continue;
                 }
-
-                try {
-                    var constructor = classToInstantiate.reflect().getDeclaredConstructor();
-                    constructor.setAccessible(true); // Required as the test class is and should be protected
-                    var classInstance = constructor.newInstance();
-                    if (item.reflect().invoke(classInstance).equals(false)) {
-                        events.add(violated(item, item.getFullName() + " does not return true to confirm the corresponding authorization environment test exists"));
-                    }
-                }
-                catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | ExceptionInInitializerError e) {
-                    throw new RuntimeException(e);
+                if (method.getMethodCallsFromSelf().stream().anyMatch(call -> call.getTargetOwner().getFullName().equals(authCheckMethod.getDeclaringClass().getName())
+                        && call.getTarget().getName().equals(authCheckMethod.getName()))) {
+                    // Calls the prepared method
+                    return true;
                 }
             }
-        };
+        }
+        return false;
     }
 }

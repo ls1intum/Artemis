@@ -536,9 +536,4 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
         }
         gitlabRequestMockProvider.mockDeleteProject(projectKey, false);
     }
-
-    @Override
-    public boolean hasMatchingAuthorizationTestClass() {
-        return true;
-    }
 }
