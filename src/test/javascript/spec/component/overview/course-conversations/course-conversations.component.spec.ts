@@ -21,9 +21,11 @@ import { CourseConversationsCodeOfConductComponent } from 'app/overview/course-c
 import { MockMetisConversationService } from '../../../helpers/mocks/service/mock-metis-conversation.service';
 import { MockMetisService } from '../../../helpers/mocks/service/mock-metis-service.service';
 import { ButtonComponent } from 'app/shared/components/button.component';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { getElement } from '../../../helpers/utils/general.utils';
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 
 const examples: (ConversationDTO | undefined)[] = [undefined, generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
 
@@ -72,7 +74,7 @@ examples.forEach((activeConversation) => {
                         },
                     },
                 ],
-                imports: [FormsModule], // Needs to be explicitly included, otherwise an error occurs because of the input tag
+                imports: [FormsModule, ReactiveFormsModule, FontAwesomeModule, NgbModule], // Needs to be explicitly included, otherwise an error occurs because of the input tag
             }).compileComponents();
 
             const metisConversationService = new MockMetisConversationService();
@@ -156,15 +158,14 @@ examples.forEach((activeConversation) => {
             const searchInput = getElement(fixture.debugElement, 'input[name=searchText]');
             searchInput.value = 'test input';
             searchInput.dispatchEvent(new Event('input'));
-            fixture.detectChanges();
-            expect(component.searchInput).toBe('test input');
+            expect(component.courseWideSearchConfig.courseWideSearchTerm).toBe('test input');
         });
 
         it('should set search text in the conversation header correctly', () => {
-            component.searchInput = 'test';
-            component.onSearch();
             fixture.detectChanges();
-            expect(component.headerSearchTerm).toBe(component.searchInput);
+            component.courseWideSearchConfig.courseWideSearchTerm = 'test';
+            component.onSearch();
+            expect(component.headerSearchTerm).toBe(component.courseWideSearchConfig.courseWideSearchTerm);
         });
     });
 });
