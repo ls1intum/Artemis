@@ -352,7 +352,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
                         events.add(violated(item, item.getFullName() + " does not return true to confirm the corresponding authorization environment test exists"));
                     }
                 }
-                catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+                catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | ExceptionInInitializerError e) {
                     throw new RuntimeException(e);
                 }
             }
