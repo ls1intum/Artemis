@@ -6,6 +6,7 @@ import { AdditionalData, COURSE_BASE, ExerciseType, POST, PUT } from '../../cons
 import { convertModelAfterMultiPart, generateUUID } from '../../utils';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { Visibility } from 'app/entities/programming-exercise-test-case.model';
+import { Exercise } from 'app/entities/exercise.model';
 
 /**
  * A class which encapsulates UI selectors and actions for the exam exercise group creation page.
@@ -31,20 +32,23 @@ export class ExamExerciseGroupCreationPage {
         cy.wait('@updateExerciseGroup');
     }
 
-    addGroupWithExercise(exam: Exam, exerciseType: ExerciseType, additionalData: AdditionalData = {}): void {
-        this.handleAddGroupWithExercise(exam, 'Exercise ' + generateUUID(), exerciseType, additionalData, (response) => {
-            let exercise = { ...response.body, additionalData };
+    addGroupWithExercise(exam: Exam, exerciseType: ExerciseType, additionalData: AdditionalData = {}): Promise<Exercise> {
+        return new Promise((resolve) => {
+            this.handleAddGroupWithExercise(exam, 'Exercise ' + generateUUID(), exerciseType, additionalData, (response) => {
+                let exercise = { ...response.body, additionalData };
+                if (exerciseType == ExerciseType.QUIZ) {
+                    const quiz = convertModelAfterMultiPart(response) as QuizExercise;
+                    additionalData!.quizExerciseID = quiz.quizQuestions![0].id;
+                    exercise = { ...quiz, additionalData };
+                }
 
-            if (exerciseType == ExerciseType.QUIZ) {
-                const quiz = convertModelAfterMultiPart(response) as QuizExercise;
-                additionalData!.quizExerciseID = quiz.quizQuestions![0].id;
-                exercise = { ...quiz, additionalData };
-            }
+                if (exerciseType === ExerciseType.PROGRAMMING) {
+                    const RETRY_NUMBER = 0;
+                    exerciseAPIRequest.changeProgrammingExerciseTestVisibility(exercise, Visibility.Always, RETRY_NUMBER);
+                }
 
-            if (exerciseType === ExerciseType.PROGRAMMING) {
-                const RETRY_NUMBER = 0;
-                exerciseAPIRequest.changeProgrammingExerciseTestVisibility(exercise, Visibility.Always, RETRY_NUMBER);
-            }
+                resolve(exercise);
+            });
         });
     }
 
