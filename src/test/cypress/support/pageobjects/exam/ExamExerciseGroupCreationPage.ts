@@ -5,8 +5,8 @@ import { examAPIRequests, exerciseAPIRequest } from '../../artemis';
 import { AdditionalData, COURSE_BASE, ExerciseType, POST, PUT } from '../../constants';
 import { convertModelAfterMultiPart, generateUUID } from '../../utils';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { Visibility } from 'app/entities/programming-exercise-test-case.model';
 import { Exercise } from 'app/entities/exercise.model';
+import { Visibility } from 'app/entities/programming-exercise-test-case.model';
 
 /**
  * A class which encapsulates UI selectors and actions for the exam exercise group creation page.
