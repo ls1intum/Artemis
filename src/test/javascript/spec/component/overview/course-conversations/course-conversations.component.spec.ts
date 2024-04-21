@@ -167,5 +167,67 @@ examples.forEach((activeConversation) => {
             component.onSearch();
             expect(component.headerSearchTerm).toBe(component.courseWideSearchConfig.courseWideSearchTerm);
         });
+
+        it('Should update filter setting when filterToUnresolved checkbox is checked', fakeAsync(() => {
+            fixture.detectChanges();
+            component.formGroup.patchValue({
+                filterToUnresolved: true,
+                filterToOwn: false,
+                filterToAnsweredOrReacted: false,
+            });
+            const filterResolvedCheckbox = getElement(fixture.debugElement, 'input[name=filterToUnresolved]');
+            filterResolvedCheckbox.dispatchEvent(new Event('change'));
+            tick();
+            fixture.detectChanges();
+            expect(component.courseWideSearchConfig.filterToUnresolved).toBeTrue();
+        }));
+
+        it('Should update filter setting when filterToOwn checkbox is checked', fakeAsync(() => {
+            fixture.detectChanges();
+            component.formGroup.patchValue({
+                filterToUnresolved: false,
+                filterToOwn: true,
+                filterToAnsweredOrReacted: false,
+            });
+            const filterOwnCheckbox = getElement(fixture.debugElement, 'input[name=filterToOwn]');
+            filterOwnCheckbox.dispatchEvent(new Event('change'));
+            tick();
+            fixture.detectChanges();
+            expect(component.courseWideSearchConfig.filterToOwn).toBeTrue();
+        }));
+
+        it('Should update filter setting when filterToAnsweredOrReacted checkbox is checked', fakeAsync(() => {
+            fixture.detectChanges();
+            component.formGroup.patchValue({
+                filterToUnresolved: false,
+                filterToOwn: false,
+                filterToAnsweredOrReacted: true,
+            });
+            const filterAnsweredOrReactedCheckbox = getElement(fixture.debugElement, 'input[name=filterToAnsweredOrReacted]');
+            filterAnsweredOrReactedCheckbox.dispatchEvent(new Event('change'));
+            tick();
+            fixture.detectChanges();
+            expect(component.courseWideSearchConfig.filterToAnsweredOrReacted).toBeTrue();
+        }));
+
+        it('Should update filter setting when all filter checkboxes are checked', fakeAsync(() => {
+            fixture.detectChanges();
+            component.formGroup.patchValue({
+                filterToUnresolved: true,
+                filterToOwn: true,
+                filterToAnsweredOrReacted: true,
+            });
+            const filterResolvedCheckbox = getElement(fixture.debugElement, 'input[name=filterToUnresolved]');
+            const filterOwnCheckbox = getElement(fixture.debugElement, 'input[name=filterToOwn]');
+            const filterAnsweredOrReactedCheckbox = getElement(fixture.debugElement, 'input[name=filterToAnsweredOrReacted]');
+            filterResolvedCheckbox.dispatchEvent(new Event('change'));
+            filterOwnCheckbox.dispatchEvent(new Event('change'));
+            filterAnsweredOrReactedCheckbox.dispatchEvent(new Event('change'));
+            tick();
+            fixture.detectChanges();
+            expect(component.courseWideSearchConfig.filterToUnresolved).toBeTrue();
+            expect(component.courseWideSearchConfig.filterToOwn).toBeTrue();
+            expect(component.courseWideSearchConfig.filterToAnsweredOrReacted).toBeTrue();
+        }));
     });
 });
