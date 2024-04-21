@@ -419,7 +419,6 @@ public class CourseExamExportService {
                 }
                 else {
                     // Exercise is not supported so skip
-                    continue;
                 }
             }
             catch (Exception e) {
@@ -492,7 +491,7 @@ public class CourseExamExportService {
      */
     private Path writeReport(List<ArchivalReportEntry> data, Path outputDir) throws IOException {
         List<String> lines = data.stream().map(ArchivalReportEntry::toString).collect(Collectors.toCollection(ArrayList::new));
-        lines.add(0, ArchivalReportEntry.getHeadline());
+        lines.addFirst(ArchivalReportEntry.getHeadline());
         return writeFile(lines, outputDir, "report.csv");
     }
 
