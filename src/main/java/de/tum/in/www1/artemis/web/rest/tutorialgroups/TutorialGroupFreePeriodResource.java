@@ -152,6 +152,9 @@ public class TutorialGroupFreePeriodResource {
         }
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupsConfiguration.getCourse(), null);
 
+        // This is a temporary comment to test a GitHub action. It is followed by a test statement.
+        int i = 0;
+
         TutorialGroupFreePeriod newTutorialGroupFreePeriod = new TutorialGroupFreePeriod();
         newTutorialGroupFreePeriod.setTutorialGroupsConfiguration(tutorialGroupsConfiguration);
         newTutorialGroupFreePeriod.setReason(tutorialGroupFreePeriod.reason());

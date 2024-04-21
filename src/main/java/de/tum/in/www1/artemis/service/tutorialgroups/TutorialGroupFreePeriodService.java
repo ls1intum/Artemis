@@ -24,6 +24,8 @@ public class TutorialGroupFreePeriodService {
 
     private final TutorialGroupFreePeriodRepository tutorialGroupFreePeriodRepository;
 
+    private final int testInt = 0;
+
     public TutorialGroupFreePeriodService(TutorialGroupSessionRepository tutorialGroupSessionRepository, TutorialGroupFreePeriodRepository tutorialGroupFreePeriodRepository) {
         this.tutorialGroupSessionRepository = tutorialGroupSessionRepository;
         this.tutorialGroupFreePeriodRepository = tutorialGroupFreePeriodRepository;
