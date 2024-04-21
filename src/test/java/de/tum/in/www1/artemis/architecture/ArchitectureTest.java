@@ -333,22 +333,18 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
             @Override
             public void check(JavaMethod item, ConditionEvents events) {
-                var classToInstantiate = item.getOwner();
-                if (Modifier.isAbstract(classToInstantiate.reflect().getModifiers())) {
-                    var subClasses = classToInstantiate.getAllSubclasses();
-                    for (var subClass : subClasses) {
-                        if (!Modifier.isAbstract(subClass.reflect().getModifiers())) {
-                            classToInstantiate = subClass;
-                            break;
-                        }
-                    }
+                var classToInstantiate = getAnyInstantiableSubclass(item.getOwner());
+                if (classToInstantiate == null) {
+                    events.add(violated(item, item.getFullName() + " has no instantiable subclass."));
+                    return;
                 }
 
                 try {
                     var constructor = classToInstantiate.reflect().getDeclaredConstructor();
                     constructor.setAccessible(true); // Required as the test class is and should be protected
                     var classInstance = constructor.newInstance();
-                    if (item.reflect().invoke(classInstance).equals(false)) {
+                    assert classInstance instanceof AbstractArtemisIntegrationTest;
+                    if (!((AbstractArtemisIntegrationTest) classInstance).hasMatchingVersioningTestClass()) {
                         events.add(violated(item, item.getFullName() + " does not return true to confirm the corresponding versioning environment test exists"));
                     }
                 }
@@ -357,5 +353,24 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 }
             }
         };
+    }
+
+    /**
+     * Returns any instantiable subclass of the given class. If the class itself is instantiable, it is returned.
+     *
+     * @param clazz The class to get an instantiable subclass of
+     * @return An instantiable subclass of the given class or null if no such class exists
+     */
+    private JavaClass getAnyInstantiableSubclass(JavaClass clazz) {
+        if (!Modifier.isAbstract(clazz.reflect().getModifiers())) {
+            return clazz;
+        }
+        var subClasses = clazz.getAllSubclasses();
+        for (var subClass : subClasses) {
+            if (!Modifier.isAbstract(subClass.reflect().getModifiers())) {
+                return subClass;
+            }
+        }
+        return null;
     }
 }
