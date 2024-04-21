@@ -29,6 +29,8 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noFields;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noMethods;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Modifier;
 import java.nio.file.Files;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -60,6 +62,7 @@ import com.tngtech.archunit.core.domain.JavaAnnotation;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.domain.JavaEnumConstant;
+import com.tngtech.archunit.core.domain.JavaMethod;
 import com.tngtech.archunit.core.domain.properties.HasAnnotations;
 import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
@@ -67,6 +70,7 @@ import com.tngtech.archunit.lang.ConditionEvents;
 import com.tngtech.archunit.lang.SimpleConditionEvent;
 import com.tngtech.archunit.library.GeneralCodingRules;
 
+import de.tum.in.www1.artemis.AbstractArtemisIntegrationTest;
 import de.tum.in.www1.artemis.config.ApplicationConfiguration;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -297,5 +301,61 @@ class ArchitectureTest extends AbstractArchitectureTest {
         final var exceptions = new String[] { "PublicResourcesConfiguration", "QuizProcessCacheTask", "QuizStartTask" };
         JavaClasses classes = classesExcept(productionClasses, exceptions);
         rule.check(classes);
+    }
+
+    @Test
+    void hasMatchingVersionTestClassBeCorrectlyImplemented() {
+        ArchRule rule = methods().that().areNotDeclaredIn(AbstractArtemisIntegrationTest.class).and().haveRawReturnType(boolean.class).and()
+                .haveName("hasMatchingVersioningTestClass").should(beImplementedInDirectSubclassOf(AbstractArtemisIntegrationTest.class)).andShould(returnTrue()).because(
+                        "this method should only be implemented in subclasses of AbstractArtemisIntegrationTest to confirm that the versioning test class for the corresponding environment exists. Check out the JavaDoc for more information.");
+        rule.check(testClasses);
+    }
+
+    private ArchCondition<JavaMethod> beImplementedInDirectSubclassOf(Class<?> clazz) {
+        return new ArchCondition<>("be implemented in direct subclass of " + clazz.getSimpleName()) {
+
+            @Override
+            public void check(JavaMethod item, ConditionEvents events) {
+                var superClasses = item.getOwner().getAllRawSuperclasses();
+                if (superClasses.isEmpty()) {
+                    events.add(violated(item, item.getFullName() + " is not implemented in a direct subclass of " + clazz.getSimpleName()));
+                    return;
+                }
+                if (!superClasses.getFirst().getFullName().equals(clazz.getName())) {
+                    events.add(violated(item, item.getFullName() + " is not implemented in a direct subclass of " + clazz.getSimpleName()));
+                }
+            }
+        };
+    }
+
+    private ArchCondition<JavaMethod> returnTrue() {
+        return new ArchCondition<>("return true") {
+
+            @Override
+            public void check(JavaMethod item, ConditionEvents events) {
+                var classToInstantiate = item.getOwner();
+                if (Modifier.isAbstract(classToInstantiate.reflect().getModifiers())) {
+                    var subClasses = classToInstantiate.getAllSubclasses();
+                    for (var subClass : subClasses) {
+                        if (!Modifier.isAbstract(subClass.reflect().getModifiers())) {
+                            classToInstantiate = subClass;
+                            break;
+                        }
+                    }
+                }
+
+                try {
+                    var constructor = classToInstantiate.reflect().getDeclaredConstructor();
+                    constructor.setAccessible(true); // Required as the test class is and should be protected
+                    var classInstance = constructor.newInstance();
+                    if (item.reflect().invoke(classInstance).equals(false)) {
+                        events.add(violated(item, item.getFullName() + " does not return true to confirm the corresponding versioning environment test exists"));
+                    }
+                }
+                catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        };
     }
 }
