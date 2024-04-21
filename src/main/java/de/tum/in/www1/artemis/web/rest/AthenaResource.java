@@ -159,7 +159,6 @@ public class AthenaResource {
     @GetMapping("athena/programming-exercises/{exerciseId}/submissions/{submissionId}/feedback-suggestions")
     @EnforceAtLeastTutor
     public ResponseEntity<List<ProgrammingFeedbackDTO>> getProgrammingFeedbackSuggestions(@PathVariable long exerciseId, @PathVariable long submissionId) {
-        Exercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         return getFeedbackSuggestions(exerciseId, submissionId, programmingExerciseRepository::findByIdElseThrow, programmingSubmissionRepository::findByIdElseThrow,
                 athenaFeedbackSuggestionsService::getProgrammingFeedbackSuggestions);
     }

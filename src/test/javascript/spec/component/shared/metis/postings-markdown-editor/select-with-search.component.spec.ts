@@ -67,7 +67,7 @@ describe('SelectWithSearchComponent', () => {
     it('should handle errors when performing search', fakeAsync(() => {
         const command: InteractiveSearchCommand = {
             setSelectWithSearchComponent: () => {},
-            performSearch: () => throwError(new HttpErrorResponse({ status: 400 })),
+            performSearch: () => throwError(() => new HttpErrorResponse({ status: 400 })),
             buttonIcon: faAt,
             insertSelection: () => {},
         } as any;

@@ -206,9 +206,9 @@ public class PublicAccountResource {
             else if (internalUsers.size() >= 2) {
                 throw new BadRequestAlertException("Email or username is not unique. Found multiple potential users", "Account", "usernameNotUnique");
             }
-            var internalUser = internalUsers.get(0);
+            var internalUser = internalUsers.getFirst();
             if (userService.prepareUserForPasswordReset(internalUser)) {
-                mailService.sendPasswordResetMail(internalUsers.get(0));
+                mailService.sendPasswordResetMail(internalUsers.getFirst());
             }
         }
         else {
