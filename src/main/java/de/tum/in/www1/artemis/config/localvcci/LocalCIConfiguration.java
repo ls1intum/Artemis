@@ -5,8 +5,6 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
 import java.util.List;
 import java.util.concurrent.*;
 
-import javax.xml.stream.XMLInputFactory;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -112,16 +110,6 @@ public class LocalCIConfiguration {
 
         log.info("Using ExecutorService with thread pool size {}.", threadPoolSize);
         return new ThreadPoolExecutor(threadPoolSize, threadPoolSize, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(1), customThreadFactory, customRejectedExecutionHandler);
-    }
-
-    /**
-     * Creates an XMLInputFactory that is used to parse the test results during execution of the local CI build jobs.
-     *
-     * @return The XMLInputFactory bean.
-     */
-    @Bean
-    public XMLInputFactory localCIXMLInputFactory() {
-        return XMLInputFactory.newInstance();
     }
 
     // TODO: the Artemis server should start even if docker is not running. Also, pulling the image should be done after the start has finished or only on demand
