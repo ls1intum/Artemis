@@ -53,7 +53,11 @@ export class CourseTutorialGroupsComponent implements AfterViewInit, OnInit, OnD
     }
 
     get registeredTutorialGroups() {
-        return this.tutorialGroups.filter((tutorialGroup) => tutorialGroup.isUserRegistered);
+        if (this.course?.isAtLeastTutor) {
+            return this.tutorialGroups.filter((tutorialGroup) => tutorialGroup.isUserTutor);
+        } else {
+            return this.tutorialGroups.filter((tutorialGroup) => tutorialGroup.isUserRegistered);
+        }
     }
 
     ngOnInit(): void {
