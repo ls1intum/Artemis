@@ -27,17 +27,6 @@ jobs:
         run: |
           echo "Modified files in this pull request:"
           cat modified_files.txt
-#
-#  identify-server-endpoints:
-#    needs: show-modified-files
-#    runs-on: ubuntu-latest
-#    steps:
-#      - uses: actions/checkout@v4
-#
-#      - name: Download modified files
-#        uses: actions/download-artifact@v2
-#        with:
-#          name: modified-files.txt
 
       - name: Set up Python
         uses: actions/setup-python@v3
