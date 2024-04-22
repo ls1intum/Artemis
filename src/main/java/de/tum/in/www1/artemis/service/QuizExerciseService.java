@@ -477,7 +477,37 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             return objectMapper.writeValueAsString(question);
         }
         catch (JsonProcessingException e) {
-            throw new RuntimeException("Error processing JSON", e);
+            throw new RuntimeException("Error serializing to JSON", e);
         }
+    }
+
+    /**
+     * Deserializes a list of QuizQuestion objects from their JSON representation.
+     * Each QuizQuestion in the input list is assumed to have its content in a JSON format.
+     * This method attempts to deserialize that JSON content back into QuizQuestion objects,
+     * preserving the original IDs. If any JSON parsing errors occur, a RuntimeException
+     * is thrown encapsulating the original exception.
+     *
+     * @param quizQuestions the list of QuizQuestions with JSON content to be deserialized.
+     * @return a list of QuizQuestion objects deserialized from the JSON content.
+     * @throws RuntimeException if any JSON parsing errors occur during the deserialization process,
+     *                              encapsulating the underlying JsonProcessingException.
+     */
+    public List<QuizQuestion> deserializeFromJSON(List<QuizQuestion> quizQuestions) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        List<QuizQuestion> quizQuestionsCopy = new ArrayList<>();
+
+        for (QuizQuestion quizQuestion : quizQuestions) {
+            try {
+                QuizQuestion parsedQuestion = objectMapper.readValue(quizQuestion.getContent(), QuizQuestion.class);
+                parsedQuestion.setId(quizQuestion.getId());
+                parsedQuestion.setExercise(quizQuestion.getExercise());
+                quizQuestionsCopy.add(parsedQuestion);
+            }
+            catch (JsonProcessingException e) {
+                throw new RuntimeException("Error deserializing from JSON", e);
+            }
+        }
+        return quizQuestionsCopy;
     }
 }

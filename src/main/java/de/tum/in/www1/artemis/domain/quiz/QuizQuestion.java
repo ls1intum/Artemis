@@ -191,6 +191,10 @@ public abstract class QuizQuestion extends DomainObject {
         this.content = content;
     }
 
+    public String getContent() {
+        return this.content;
+    }
+
     @JsonProperty(value = "quizGroup", access = JsonProperty.Access.READ_ONLY)
     public QuizGroup getQuizGroup() {
         return quizGroup;
