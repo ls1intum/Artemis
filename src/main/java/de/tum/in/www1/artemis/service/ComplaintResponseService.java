@@ -160,17 +160,41 @@ public class ComplaintResponseService {
     }
 
     /**
-     * Resolves a complaint by filling in the empty complaint response attached to it
-     * <p>
-     * The empty complaint response acts as a lock. Only the creator of the empty complaint response and instructors can resolve empty complaint response as long as the lock
-     * is running. For lock duration calculation see: {@link ComplaintResponse#isCurrentlyLocked()}. These methods fill in the initial complaint response and either accepts
-     * or denies the associated complaint, thus resolving the complaint
+     * Resolves a complaint based on the updated complaint response details and a specific complaint ID.
+     * This method handles updating the state of a complaint based on user-provided acceptance and response text.
      *
-     * @param updatedComplaintResponse complaint response containing the information necessary for resolving the complaint
-     * @param complaintResponseId      complaint response id
-     * @return complaintResponse of resolved complaint
+     * @param updatedComplaintResponse The DTO containing updated response details such as acceptance state and response text.
+     * @param complaintResponseId      The ID of the complaint response to be updated.
+     * @return ComplaintResponse The updated and persisted complaint response reflecting the new state and information.
      */
     public ComplaintResponse resolveComplaint(ComplaintResponseUpdateDTO updatedComplaintResponse, Long complaintResponseId) {
+        return processComplaint(complaintResponseId, updatedComplaintResponse, updatedComplaintResponse.complaintIsAccepted(), updatedComplaintResponse.responseText());
+    }
+
+    /**
+     * Resolves a complaint using an updated ComplaintResponse object. This method processes the complaint
+     * based on the inherent acceptance status and response text within the updated ComplaintResponse.
+     *
+     * @param updatedComplaintResponse The updated ComplaintResponse object containing the new state, such as acceptance and response text.
+     * @return ComplaintResponse The updated and persisted complaint response reflecting the changes made.
+     */
+    public ComplaintResponse resolveComplaint(ComplaintResponse updatedComplaintResponse) {
+        return processComplaint(updatedComplaintResponse.getId(), null, updatedComplaintResponse.getComplaint().isAccepted(), updatedComplaintResponse.getResponseText());
+    }
+
+    /**
+     * Processes the updating of a complaint response. This method consolidates the common logic for updating complaint responses,
+     * including validating user permissions, checking lock status, validating complaint details, and updating the complaint
+     * in the database.
+     *
+     * @param complaintResponseId      The ID of the complaint response to be updated.
+     * @param updatedComplaintResponse Optional DTO containing additional complaint response updates, null if not applicable.
+     * @param isAccepted               Boolean indicating whether the complaint has been accepted or rejected.
+     * @param responseText             String containing the response text associated with the complaint response.
+     * @return ComplaintResponse The updated and persisted complaint response.
+     * @throws IllegalArgumentException if the acceptance status is not clearly defined (null).
+     */
+    private ComplaintResponse processComplaint(Long complaintResponseId, ComplaintResponseUpdateDTO updatedComplaintResponse, Boolean isAccepted, String responseText) {
         validateComplaintResponseId(complaintResponseId);
         // TODO: make this retrieval redundant by proper fetching
         ComplaintResponse complaintResponseFromDatabase = complaintResponseRepository.findByIdElseThrow(complaintResponseId);
@@ -181,54 +205,17 @@ public class ComplaintResponseService {
         validateComplaintResponseEmpty(complaintResponseFromDatabase);
         validateOriginalComplaintNotAnswered(originalComplaint);
 
-        if (updatedComplaintResponse.complaintIsAccepted() == null) {
+        if (isAccepted == null) {
             throw new IllegalArgumentException("You need to either accept or reject a complaint");
         }
 
-        validateResponseTextLimit(updatedComplaintResponse.responseText(), originalComplaint);
+        validateResponseTextLimit(responseText, originalComplaint);
 
-        originalComplaint.setAccepted(updatedComplaintResponse.complaintIsAccepted()); // accepted or denied
+        originalComplaint.setAccepted(isAccepted);
         originalComplaint = complaintRepository.save(originalComplaint);
 
         complaintResponseFromDatabase.setSubmittedTime(ZonedDateTime.now());
-        complaintResponseFromDatabase.setResponseText(updatedComplaintResponse.responseText());
-        complaintResponseFromDatabase.setComplaint(originalComplaint);
-        complaintResponseFromDatabase.setReviewer(user);
-        return complaintResponseRepository.save(complaintResponseFromDatabase);
-    }
-
-    /**
-     * Resolves a complaint by filling in the empty complaint response attached to it
-     *
-     * The empty complaint response acts as a lock. Only the creator of the empty complaint response and instructors can resolve empty complaint response as long as the lock
-     * is running. For lock duration calculation see: {@link ComplaintResponse#isCurrentlyLocked()}. These methods fill in the initial complaint response and either accepts
-     * or denies the associated complaint, thus resolving the complaint
-     *
-     * @param updatedComplaintResponse complaint response containing the information necessary for resolving the complaint
-     * @return complaintResponse of resolved complaint
-     */
-    public ComplaintResponse resolveComplaint(ComplaintResponse updatedComplaintResponse) {
-        validateComplaintResponseId(updatedComplaintResponse.getId());
-        // TODO: make this retrieval redundant by proper fetching
-        ComplaintResponse complaintResponseFromDatabase = complaintResponseRepository.findByIdElseThrow(updatedComplaintResponse.getId());
-        // TODO: make this retrieval redundant by proper fetching
-        Complaint originalComplaint = complaintRepository.findByIdElseThrow(complaintResponseFromDatabase.getComplaint().getId());
-        User user = this.userRepository.getUserWithGroupsAndAuthorities();
-        validateUserPermissionAndLockStatus(originalComplaint, complaintResponseFromDatabase, user);
-        validateComplaintResponseEmpty(complaintResponseFromDatabase);
-        validateOriginalComplaintNotAnswered(originalComplaint);
-
-        if (updatedComplaintResponse.getComplaint().isAccepted() == null) {
-            throw new IllegalArgumentException("You need to either accept or reject a complaint");
-        }
-
-        validateResponseTextLimit(updatedComplaintResponse.getResponseText(), originalComplaint);
-
-        originalComplaint.setAccepted(updatedComplaintResponse.getComplaint().isAccepted()); // accepted or denied
-        originalComplaint = complaintRepository.save(originalComplaint);
-
-        complaintResponseFromDatabase.setSubmittedTime(ZonedDateTime.now());
-        complaintResponseFromDatabase.setResponseText(updatedComplaintResponse.getResponseText());
+        complaintResponseFromDatabase.setResponseText(responseText);
         complaintResponseFromDatabase.setComplaint(originalComplaint);
         complaintResponseFromDatabase.setReviewer(user);
         return complaintResponseRepository.save(complaintResponseFromDatabase);
