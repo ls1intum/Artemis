@@ -16,7 +16,7 @@
 
 .chat-widget {
     position: fixed;
-    top: 0;
+    top: -20px;
     left: 0;
     width: 330px;
     height: 430px;
@@ -134,9 +134,18 @@ pre {
 .chat-input {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     justify-content: space-between;
     padding: 7px;
     background-color: var(--iris-client-chat-input);
+}
+
+.disclaimer-message {
+    font-size: 60%;
+    color: var(--gray-600);
+    text-align: center;
+    width: 100%;
+    padding-top: 5px;
 }
 
 .chat-input textarea {

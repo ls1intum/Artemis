@@ -23,7 +23,16 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.in.www1.artemis.config.Constants;
@@ -37,11 +46,29 @@ import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.exception.FilePathParsingException;
 import de.tum.in.www1.artemis.exception.QuizJoinException;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.QuizBatchRepository;
+import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.security.annotations.*;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.CourseService;
+import de.tum.in.www1.artemis.service.ExerciseDeletionService;
+import de.tum.in.www1.artemis.service.ExerciseService;
+import de.tum.in.www1.artemis.service.FilePathService;
+import de.tum.in.www1.artemis.service.FileService;
+import de.tum.in.www1.artemis.service.QuizBatchService;
+import de.tum.in.www1.artemis.service.QuizExerciseImportService;
+import de.tum.in.www1.artemis.service.QuizExerciseService;
+import de.tum.in.www1.artemis.service.QuizMessagingService;
+import de.tum.in.www1.artemis.service.QuizStatisticService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleService;
@@ -258,7 +285,7 @@ public class QuizExerciseResource {
      */
     @GetMapping(value = "/courses/{courseId}/quiz-exercises")
     @EnforceAtLeastTutor
-    public List<QuizExercise> getQuizExercisesForCourse(@PathVariable Long courseId) {
+    public ResponseEntity<List<QuizExercise>> getQuizExercisesForCourse(@PathVariable Long courseId) {
         log.info("REST request to get all quiz exercises for the course with id : {}", courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -273,7 +300,7 @@ public class QuizExerciseResource {
             setQuizBatches(user, quizExercise);
         }
 
-        return quizExercises;
+        return ResponseEntity.ok(quizExercises);
     }
 
     /**
@@ -284,10 +311,10 @@ public class QuizExerciseResource {
      */
     @GetMapping("exams/{examId}/quiz-exercises")
     @EnforceAtLeastEditor
-    public List<QuizExercise> getQuizExercisesForExam(@PathVariable Long examId) {
+    public ResponseEntity<List<QuizExercise>> getQuizExercisesForExam(@PathVariable Long examId) {
         log.info("REST request to get all quiz exercises for the exam with id : {}", examId);
         List<QuizExercise> quizExercises = quizExerciseRepository.findByExamId(examId);
-        Course course = quizExercises.get(0).getCourseViaExerciseGroupOrCourseMember();
+        Course course = quizExercises.getFirst().getCourseViaExerciseGroupOrCourseMember();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
         for (QuizExercise quizExercise : quizExercises) {
@@ -297,7 +324,7 @@ public class QuizExerciseResource {
             quizExercise.setCourse(null);
             quizExercise.setExerciseGroup(null);
         }
-        return quizExercises;
+        return ResponseEntity.ok(quizExercises);
     }
 
     /**

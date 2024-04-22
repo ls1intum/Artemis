@@ -58,9 +58,9 @@ public class IrisHestiaSessionService implements IrisButtonBasedFeatureInterface
     public IrisHestiaSession getOrCreateSession(CodeHint codeHint) {
         var existingSessions = irisHestiaSessionRepository.findByCodeHintIdOrderByCreationDateDesc(codeHint.getId());
         // Return the newest session if there is one and it is not older than 1 hour
-        if (!existingSessions.isEmpty() && existingSessions.get(0).getCreationDate().plusHours(1).isAfter(ZonedDateTime.now())) {
-            checkHasAccessTo(null, existingSessions.get(0));
-            return existingSessions.get(0);
+        if (!existingSessions.isEmpty() && existingSessions.getFirst().getCreationDate().plusHours(1).isAfter(ZonedDateTime.now())) {
+            checkHasAccessTo(null, existingSessions.getFirst());
+            return existingSessions.getFirst();
         }
 
         // Otherwise create a new session

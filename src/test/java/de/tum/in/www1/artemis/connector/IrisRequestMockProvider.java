@@ -47,7 +47,7 @@ public class IrisRequestMockProvider {
     @Value("${artemis.iris.url}/api/v1/models")
     private URL modelsApiURL;
 
-    @Value("${artemis.iris.url}/api/v1/health")
+    @Value("${artemis.iris.url}/api/v1/health/")
     private URL healthApiURL;
 
     @Autowired

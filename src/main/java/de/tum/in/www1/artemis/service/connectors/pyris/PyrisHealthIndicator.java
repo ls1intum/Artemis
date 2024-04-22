@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.pyris;
 
 import java.net.URI;
-import java.util.Arrays;
-import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,15 +33,13 @@ public class PyrisHealthIndicator implements HealthIndicator {
     public Health health() {
         ConnectorHealth health;
         try {
-            PyrisHealthStatusDTO[] status = restTemplate.getForObject(irisUrl + "/api/v1/health", PyrisHealthStatusDTO[].class);
-            var isUp = status != null && Arrays.stream(status).anyMatch(s -> s.status() == PyrisHealthStatusDTO.ModelStatus.UP);
-            Map<String, Object> additionalInfo = Map.of("url", irisUrl, "modelStatuses", status);
-            health = new ConnectorHealth(isUp, additionalInfo);
+            PyrisHealthStatusDTO[] status = restTemplate.getForObject(irisUrl + "/api/v1/health/", PyrisHealthStatusDTO[].class);
+            var isUp = status != null;
+            health = new ConnectorHealth(isUp);
         }
         catch (Exception emAll) {
             health = new ConnectorHealth(emAll);
             health.setUp(false);
-            health.setAdditionalInfo(Map.of("url", irisUrl, "exception", emAll.getLocalizedMessage()));
         }
 
         return health.asActuatorHealth();
