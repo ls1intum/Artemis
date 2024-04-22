@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.ReentrantLock;
@@ -188,7 +187,7 @@ public class LocalCIDockerService {
         // Delete images that have not been used for more than imageExpiryDays days
         for (String dockerImage : dockerImageCleanupInfo.keySet()) {
             if (imageNames.contains(dockerImage)) {
-                if (dockerImageCleanupInfo.get(dockerImage).isBefore(ZonedDateTime.now().minus(imageExpiryDays, ChronoUnit.DAYS))) {
+                if (dockerImageCleanupInfo.get(dockerImage).isBefore(ZonedDateTime.now().minusDays(imageExpiryDays))) {
                     log.info("Deleting docker image {}", dockerImage);
                     try {
                         dockerClient.removeImageCmd(dockerImage).exec();
