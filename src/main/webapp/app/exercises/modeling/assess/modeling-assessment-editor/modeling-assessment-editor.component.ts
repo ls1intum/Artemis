@@ -95,6 +95,9 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         translateService.get('artemisApp.modelingAssessmentEditor.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
     }
 
+    /**
+     * Retrieve all feedback for the current exercise regardless of whether it is referenced or unreferenced
+     */
     private get feedback(): Feedback[] {
         return [...this.referencedFeedback, ...this.unreferencedFeedback];
     }
@@ -152,13 +155,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
      */
     private async loadFeedbackSuggestions(exercise: ModelingExercise, submission: Submission): Promise<Feedback[]> {
         try {
-            const feedbackSuggestions = (await firstValueFrom(this.athenaService.getModelingFeedbackSuggestions(exercise, submission))) ?? [];
-
-            const allFeedback = [...this.referencedFeedback, ...this.unreferencedFeedback]; // pre-compute to not have to do this in the loop
-            // Don't show feedback suggestions that have the same description and reference - probably it is coming from an earlier suggestion anyway
-            return feedbackSuggestions.filter((suggestion) =>
-                allFeedback.every((feedback) => feedback.detailText !== suggestion.detailText || feedback.reference !== suggestion.reference),
-            );
+            return (await firstValueFrom(this.athenaService.getModelingFeedbackSuggestions(exercise, submission))) ?? [];
         } catch (error) {
             this.alertService.closeAll();
             this.alertService.error('artemisApp.modelingAssessmentEditor.messages.loadFeedbackSuggestionsFailed');
@@ -183,14 +180,14 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
     private loadRandomSubmission(exerciseId: number): void {
         this.modelingSubmissionService.getSubmissionWithoutAssessment(exerciseId, true, this.correctionRound).subscribe({
-            next: (submission?: ModelingSubmission) => {
+            next: async (submission?: ModelingSubmission) => {
                 if (!submission) {
                     // there are no unassessed submissions
                     this.submission = undefined;
                     return;
                 }
 
-                this.handleReceivedSubmission(submission);
+                await this.handleReceivedSubmission(submission);
 
                 // Update the url with the new id, without reloading the page, to make the history consistent
                 const newUrl = window.location.hash.replace('#', '').replace('new', `${this.submission!.id}`);

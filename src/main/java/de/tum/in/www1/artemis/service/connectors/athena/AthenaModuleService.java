@@ -116,7 +116,7 @@ public class AthenaModuleService {
                 return athenaUrl + "/modules/programming/" + exercise.getFeedbackSuggestionModule();
             }
             case MODELING -> {
-                return athenaUrl + "/modules/modelling/" + exercise.getFeedbackSuggestionModule();
+                return athenaUrl + "/modules/modeling/" + exercise.getFeedbackSuggestionModule();
             }
             default -> throw new IllegalArgumentException("Exercise type not supported: " + exercise.getExerciseType());
         }

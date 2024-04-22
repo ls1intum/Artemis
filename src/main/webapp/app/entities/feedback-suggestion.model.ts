@@ -28,6 +28,19 @@ export class ProgrammingFeedbackSuggestion {
 }
 
 export class ModelingFeedbackSuggestion {
+    /**
+     * Create a modeling feedback suggestions
+     *
+     * @param id The ID of the suggestions
+     * @param exerciseId The ID of the exercise the submission was made for
+     * @param submissionId The ID of the submissions this feedback has been created for
+     * @param title The title of the suggestions
+     * @param description A detailed description of the suggestion
+     * @param credits The number of credits awarded as part of this suggestion
+     * @param structuredGradingInstructionId The ID of the structured grading instruction this suggestion is related to
+     * if a corresponding grading instruction exists
+     * @param elementIds The IDs of elements referenced by the suggestion
+     */
     constructor(
         public id: number | undefined,
         public exerciseId: number,

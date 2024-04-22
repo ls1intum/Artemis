@@ -25,14 +25,11 @@ public record ModelingExerciseDTO(long id, String title, double maxPoints, doubl
     }
 
     /**
-     * The type of the exercise. This is used by Athena to determine whether the correct exercise type was sent.
+     * Retrieve the type of the exercise. This is used by Athena to determine whether the correct exercise type was sent.
      *
-     * @return "modelling"
+     * @return "modeling"
      */
     public String getType() {
-        // This function returns "modelling" rather than "modeling" as the feedback module in Athena is currently
-        // spelled like this. The naming will be corrected in Athena and in all corresponding occurrences in Artemis in
-        // a follow pull request.
-        return "modelling";
+        return "modeling";
     }
 }
