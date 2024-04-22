@@ -35,7 +35,7 @@ jhi-category-selector {
 }
 
 /* Otherwise each custom tag will have an additional border */
-.mat-mdc-standard-chip .mdc-evolution-chip__action--primary:before {
+.mat-mdc-standard-chip .mdc-evolution-chip__action--primary::before {
     border-style: none !important;
 }
 
