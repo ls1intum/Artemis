@@ -10,7 +10,7 @@ assignees: ''
 <!-- Feature Proposal Marker -->
 
 # Feature Proposal
-> Spec Version 0.1.0
+> Spec Version 0.2.0
 
 ## Context
 
