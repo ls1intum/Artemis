@@ -29,8 +29,8 @@ If the feature request is deemed feasible, the development team will create a fe
     :figclass: align-center
 
 
-Step 1: Amend Feature Proposal Template to Feature Request on GitHub
---------------------------------------------------------------------
+Step 1: Append Feature Proposal Template to Feature Request on GitHub
+---------------------------------------------------------------------
 The Feature Proposal Template outlines the structure of the feature proposal and provides a guideline for the development team to follow.
 
 We have written a Github Action that automatically attaches the feature proposal template to the issue description of an issue when someone is assigned.
@@ -119,12 +119,12 @@ The subsequent sections provide guidance on the naming conventions and outline t
 Naming Conventions for GitHub Pull Requests
 -------------------------------------------
 
-1. The first term is a main feature of Artemis and should use code highlighting, e.g.  “``Programming exercises``:”.
+1. The first term is a main feature of Artemis and should use code highlighting, e.g.  ``Programming exercises``:
 
-    1. Possible feature tags are: ``Programming exercises``, ``Quiz exercises``, ``Modeling exercises``, ``Text exercises``, ``File upload exercises``, ``Exam mode``,
-       ``Grading``, ``Assessment``, ``Communication``, ``Notifications``, ``Team exercises``, ``Lectures``, ``Plagiarism checks``, ``Learning analytics``,
-       ``Adaptive learning``, ``Learning path``, ``Tutorial groups``, ``Iris``.
-    2. If the change is not visible to end users, or it is a pure development or test improvement, we use the term “``Development``:”.
+    1. Possible feature tags are: ``Programming exercises``, ``Integrated code lifecycle``, ``Quiz exercises``, ``Modeling exercises``, ``Text exercises``, ``File upload exercises``, ``Exam mode``,
+       ``Grading``, ``Assessment``, ``Communication``, ``Notifications``, ``Team exercises``, ``Lectures``, ``Integrated Markdown Editor``, ``Plagiarism checks``, ``Learning analytics``,
+       ``Adaptive learning``, ``Learning path``, ``Tutorial groups``, ``Iris``, ``Scalability``, ``Usability``, ``Performance``, ``Intrastructure``, ``Mobile Apps``.
+    2. If the change is not visible to end users, or it is a pure development or test improvement, we use the term ``Development``:.
     3. Everything else belongs to the ``General`` category.
 
 2. The colon is not highlighted.
