@@ -39,15 +39,12 @@ describe('MarkdownEditorComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should create the component', () => {
-        expect(component).toBeTruthy();
-    });
-
     it('should embed files when at least one file is uploaded', () => {
         // Arrange
+        const files = [new File([], 'file1.png')];
         const event = {
             target: {
-                files: [new File([], 'file1.png')],
+                files: files,
             },
         };
 
@@ -57,7 +54,7 @@ describe('MarkdownEditorComponent', () => {
         component.onFileUpload(event as any);
 
         // Assert
-        expect(embedFilesSpy).toHaveBeenCalledWith([event.target.files[0]]);
+        expect(embedFilesSpy).toHaveBeenCalledWith(files);
     });
 
     it('should not embed files when no file is uploaded', () => {
