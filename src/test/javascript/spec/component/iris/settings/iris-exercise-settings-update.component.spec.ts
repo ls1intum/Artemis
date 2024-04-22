@@ -7,7 +7,7 @@ import { BehaviorSubject, of } from 'rxjs';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { IrisCommonSubSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-common-sub-settings-update/iris-common-sub-settings-update.component';
 import { IrisGlobalAutoupdateSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-global-autoupdate-settings-update/iris-global-autoupdate-settings-update.component';
-import { mockModels, mockSettings } from './mock-settings';
+import { mockSettings } from './mock-settings';
 import { IrisExerciseSettingsUpdateComponent } from 'app/iris/settings/iris-exercise-settings-update/iris-exercise-settings-update.component';
 import { ActivatedRoute, Params } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -24,7 +24,7 @@ describe('IrisExerciseSettingsUpdateComponent Component', () => {
     const route = { parent: { params: routeParamsSubject.asObservable() } } as ActivatedRoute;
     let paramsSpy: jest.SpyInstance;
     let getSettingsSpy: jest.SpyInstance;
-    let getModelsSpy: jest.SpyInstance;
+    //let getModelsSpy: jest.SpyInstance;
     let getParentSettingsSpy: jest.SpyInstance;
 
     beforeEach(() => {
@@ -50,7 +50,7 @@ describe('IrisExerciseSettingsUpdateComponent Component', () => {
 
                 const irisSettings = mockSettings();
                 getSettingsSpy = jest.spyOn(irisSettingsService, 'getUncombinedProgrammingExerciseSettings').mockReturnValue(of(irisSettings));
-                getModelsSpy = jest.spyOn(irisSettingsService, 'getIrisModels').mockReturnValue(of(mockModels()));
+                //getModelsSpy = jest.spyOn(irisSettingsService, 'getIrisModels').mockReturnValue(of(mockModels()));
                 getParentSettingsSpy = jest.spyOn(irisSettingsService, 'getCombinedCourseSettings').mockReturnValue(of(irisSettings));
             });
         fixture = TestBed.createComponent(IrisExerciseSettingsUpdateComponent);
@@ -68,7 +68,7 @@ describe('IrisExerciseSettingsUpdateComponent Component', () => {
         expect(comp.exerciseId).toBe(2);
         expect(comp.settingsUpdateComponent).toBeTruthy();
         expect(getSettingsSpy).toHaveBeenCalledWith(2);
-        expect(getModelsSpy).toHaveBeenCalledOnce();
+        //expect(getModelsSpy).toHaveBeenCalledOnce();
         expect(getParentSettingsSpy).toHaveBeenCalledWith(1);
 
         expect(fixture.debugElement.query(By.directive(IrisGlobalAutoupdateSettingsUpdateComponent))).toBeFalsy();

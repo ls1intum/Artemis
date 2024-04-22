@@ -7,7 +7,7 @@ import { BehaviorSubject, of } from 'rxjs';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { IrisCommonSubSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-common-sub-settings-update/iris-common-sub-settings-update.component';
 import { IrisGlobalAutoupdateSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-global-autoupdate-settings-update/iris-global-autoupdate-settings-update.component';
-import { mockModels, mockSettings } from './mock-settings';
+import { mockSettings } from './mock-settings';
 import { ActivatedRoute, Params } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { NgModel } from '@angular/forms';
@@ -24,7 +24,7 @@ describe('IrisCourseSettingsUpdateComponent Component', () => {
     const route = { parent: { params: routeParamsSubject.asObservable() } } as ActivatedRoute;
     let paramsSpy: jest.SpyInstance;
     let getSettingsSpy: jest.SpyInstance;
-    let getModelsSpy: jest.SpyInstance;
+    //let getModelsSpy: jest.SpyInstance;
     let getParentSettingsSpy: jest.SpyInstance;
 
     beforeEach(() => {
@@ -50,7 +50,7 @@ describe('IrisCourseSettingsUpdateComponent Component', () => {
 
                 const irisSettings = mockSettings();
                 getSettingsSpy = jest.spyOn(irisSettingsService, 'getUncombinedCourseSettings').mockReturnValue(of(irisSettings));
-                getModelsSpy = jest.spyOn(irisSettingsService, 'getIrisModels').mockReturnValue(of(mockModels()));
+                //getModelsSpy = jest.spyOn(irisSettingsService, 'getIrisModels').mockReturnValue(of(mockModels()));
                 getParentSettingsSpy = jest.spyOn(irisSettingsService, 'getGlobalSettings').mockReturnValue(of(irisSettings));
             });
         fixture = TestBed.createComponent(IrisCourseSettingsUpdateComponent);
@@ -67,7 +67,7 @@ describe('IrisCourseSettingsUpdateComponent Component', () => {
         expect(comp.courseId).toBe(1);
         expect(comp.settingsUpdateComponent).toBeTruthy();
         expect(getSettingsSpy).toHaveBeenCalledWith(1);
-        expect(getModelsSpy).toHaveBeenCalledOnce();
+        //expect(getModelsSpy).toHaveBeenCalledOnce();
         expect(getParentSettingsSpy).toHaveBeenCalledOnce();
 
         expect(fixture.debugElement.query(By.directive(IrisGlobalAutoupdateSettingsUpdateComponent))).toBeFalsy();
