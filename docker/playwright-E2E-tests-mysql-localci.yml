@@ -51,6 +51,8 @@ services:
             PLAYWRIGHT_DB_TYPE: 'MySQL'
         command: >
             sh -c '
+            echo "Checking connectivity to artemis-app..." &&
+            curl https://artemis-app:443 &&
             cd /app/artemis/src/test/playwright &&
             chmod 777 /root &&
             npm ci &&
