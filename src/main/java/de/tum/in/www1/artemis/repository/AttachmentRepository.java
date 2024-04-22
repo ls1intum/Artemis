@@ -39,7 +39,7 @@ public interface AttachmentRepository extends JpaRepository<Attachment, Long> {
     @Query("""
             SELECT a.attachmentUnit
             FROM Attachment a
-            WHERE a.uploadDate = CURRENT_DATE
+            WHERE DATE(a.uploadDate) = CURRENT_DATE
             """)
     List<AttachmentUnit> findAllWithUploadDateTodayAndSlides(AttachmentType attachmentType);
 

@@ -1,10 +1,13 @@
 package de.tum.in.www1.artemis.service.connectors.pyris;
 
+import java.io.IOException;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -14,9 +17,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.Attachment;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.repository.AttachmentRepository;
+import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisPipelineExecutionSettingsDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.lectureIngestionWebhook.PyrisLectureUnitWebhookDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.lectureIngestionWebhook.PyrisWebhookLectureIngestionExecutionDTO;
@@ -35,7 +38,7 @@ public class PyrisWebhookService {
     @Value("${server.url}")
     private String artemisBaseUrl;
 
-    private AttachmentRepository attachmentRepository;
+    private final AttachmentRepository attachmentRepository;
 
     public PyrisWebhookService(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, AttachmentRepository attachmentRepository) {
         this.pyrisConnectorService = pyrisConnectorService;
@@ -44,8 +47,18 @@ public class PyrisWebhookService {
 
     }
 
-    private List<AttachmentUnit> updatedLectureUnits;
-    /* helper method for the to put the data needed for the Lecture ingestion in the dto */
+    private String attachmentToBase64(AttachmentUnit attachmentUnit) {
+        Path path = FilePathService.actualPathForPublicPathOrThrow(URI.create(attachmentUnit.getAttachment().getLink()));
+        // Path path = Path.of(Optional.ofNullable(attachment).map(Attachment::getLink).orElse(""));
+        try {
+            byte[] fileBytes = Files.readAllBytes(path);
+
+            return Base64.getEncoder().encodeToString(fileBytes);
+        }
+        catch (IOException e) {
+            return e.getMessage();
+        }
+    }
 
     private List<PyrisLectureUnitWebhookDTO> processAttachments(List<AttachmentUnit> attachmentUnits) {
         return attachmentUnits.stream().map(attachmentUnit -> {
@@ -57,10 +70,7 @@ public class PyrisWebhookService {
                 int courseId = attachmentUnit.getLecture().getCourse().hashCode();
                 String courseTitle = attachmentUnit.getLecture().getCourse().getTitle();
                 String courseDescription = attachmentUnit.getLecture().getCourse().getDescription();
-                Attachment attachment = attachmentUnit.getAttachment();
-                String link = Optional.ofNullable(attachment).map(Attachment::getLink).orElse("");
-                byte[] pdfContent = link.getBytes();
-                String base64EncodedPdf = Base64.getEncoder().encodeToString(pdfContent);
+                String base64EncodedPdf = attachmentToBase64(attachmentUnit);
                 return new PyrisLectureUnitWebhookDTO(base64EncodedPdf, lectureUnitId, lectureUnitName, lectureId, lectureTitle, courseId, courseTitle, courseDescription);
             }
             catch (Exception e) {
@@ -70,12 +80,12 @@ public class PyrisWebhookService {
         }).filter(Objects::nonNull).collect(Collectors.toList());
     }
 
-    @Scheduled(cron = "30 30 03 * * ?")
+    @Scheduled(cron = "00 15 00 * * ?")
     public void executeIngestionPipelineAtScheduledTime() {
         PyrisWebhookLectureIngestionExecutionDTO executionDTO;
         var jobToken = pyrisJobService.addJob(new IngestionWebhookJob());
         var settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, List.of(), artemisBaseUrl);
-        updatedLectureUnits = attachmentRepository.findAllUpdatedAttachmentUnits();
+        List<AttachmentUnit> updatedLectureUnits = attachmentRepository.findAllUpdatedAttachmentUnits();
         if (updatedLectureUnits.isEmpty()) {
             // Log that no updates were found
             log.info("No updated lecture units found. Using default values.");
