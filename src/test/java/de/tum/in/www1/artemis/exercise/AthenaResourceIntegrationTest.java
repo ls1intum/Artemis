@@ -274,7 +274,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         modelingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_MODELING_TEST);
         modelingExerciseRepository.save(modelingExercise);
 
-        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("modelling");
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("modeling");
         List<Feedback> response = request.getList(
                 "/api/athena/modeling-exercises/" + modelingExercise.getId() + "/submissions/" + modelingSubmission.getId() + "/feedback-suggestions", HttpStatus.OK,
                 Feedback.class);
