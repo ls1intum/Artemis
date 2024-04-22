@@ -304,7 +304,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
 
     getEnrollmentDetailSection(): DetailOverviewSection {
         const enrollmentDetails: Detail[] = [
-            { type: DetailType.Boolean, title: 'artemisApp.course.registrationEnabled.title', data: { boolean: this.course.enrollmentEnabled } },
+            { type: DetailType.Boolean, title: 'artemisApp.course.enrollmentEnabled.title', data: { boolean: this.course.enrollmentEnabled } },
             { type: DetailType.Boolean, title: 'artemisApp.course.unenrollmentEnabled.title', data: { boolean: this.course.unenrollmentEnabled } },
         ];
 
