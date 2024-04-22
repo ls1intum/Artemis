@@ -1,5 +1,6 @@
 MAIN_CLASS = "notFound" // default value, will be replaced in Build stage
 OUT_DIR = "target/surefire-reports"
+javaFlags = "-Djdk.console=java.base"
 mavenFlags = "-B"
 
 testfiles_base_path = "./testsuite/testfiles"
@@ -166,7 +167,7 @@ private void setMainClass() {
  */
 private void applyExpectScriptReplacements() {
     sh """
-    sed -i "s#CLASSPATH#../target/classes#" testsuite/config/default.exp
+    sed -i "s#JAVA_FLAGS#${javaFlags}#;s#CLASSPATH#../target/classes#" testsuite/config/default.exp
     sed -i "s#MAIN_CLASS#${MAIN_CLASS}#" testsuite/config/default.exp
 
     sed -i "s#TESTFILES_DIRECTORY#../${testfiles_base_path}#" testsuite/${tool}.tests/*.exp
