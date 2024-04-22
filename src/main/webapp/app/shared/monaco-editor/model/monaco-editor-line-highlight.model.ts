@@ -42,6 +42,7 @@ export class MonacoEditorLineHighlight extends MonacoCodeEditorElement {
     addToEditor(): void {
         this.decorationsCollection.append([this.getAssociatedDeltaDecoration()]);
     }
+
     removeFromEditor(): void {
         this.decorationsCollection.clear();
     }
