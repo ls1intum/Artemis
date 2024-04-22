@@ -3,6 +3,11 @@
     padding: unset;
 }
 
+/* Applied e.g. to hover messages of build annotations. Makes them visible even when there are line widgets. */
+.monaco-hover {
+    z-index: 1;
+}
+
 .monaco-add-feedback-button {
     cursor: pointer;
 
