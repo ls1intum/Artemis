@@ -77,8 +77,9 @@ export class CodeEditorMonacoComponent implements OnChanges {
 
     async ngOnChanges(changes: SimpleChanges): Promise<void> {
         const editorWasRefreshed = changes.editorState && changes.editorState.previousValue === EditorState.REFRESHING && this.editorState === EditorState.CLEAN;
+        const editorWasReset = changes.commitState && changes.commitState.previousValue !== CommitState.UNDEFINED && this.commitState === CommitState.UNDEFINED;
         // Refreshing the editor resets any local files.
-        if (editorWasRefreshed) {
+        if (editorWasRefreshed || editorWasReset) {
             this.fileSession = {};
             this.editor.reset();
         }

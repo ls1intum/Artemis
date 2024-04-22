@@ -316,7 +316,7 @@ $stat-av-sc-legend-best: rgba(40, 164, 40, 1);
 $update-programming-exercise-plan-preview-box-background: transparentize(#fff, 0.95);
 
 // Form Footer
-$update-footer-background: $brighter-body-bg;
+$update-footer-background: $neutral-dark;
 
 // Edit Quiz
 $quiz-mapping-letter-number-mixin-color: white;
@@ -636,3 +636,6 @@ $iris-client-chat-input: var(--gray-700);
 $iris-my-chat-background: #008462;
 $iris-btn-circle: var(--teal);
 $iris-btn-circle-hover: var(--success);
+
+// Image Cropper
+$cropper-overlay-color: transparent;
