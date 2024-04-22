@@ -40,15 +40,18 @@ void testRunner() {
  * E.g. container creation, setting docker flags.
  */
 private void setup() {
-    // special jobs to run only for the solution repository
+    /* special jobs to run only for the solution repository
+     * This may for example be useful when caching dependencies either in container volumes
+     * or an external cache to enforce the appropriate access restrictions. You can find
+     * more information on that in the documentation at
+     * https://docs.artemis.cit.tum.de/admin/setup/programming-exercises.html#caching-with-docker-volumes
+     * and
+     * https://docs.artemis.cit.tum.de/admin/setup/programming-exercises.html#caching-maven-dependencies-with-sonatype-nexus
+     */
     if ("${env.JOB_NAME}" ==~ /.+-SOLUTION$/) {
-        dockerFlags += ' -v artemis_blackbox_maven-cache:/maven_cache'
+        // processing sample solution in this run
     } else {
-        dockerFlags += ' -v artemis_blackbox_maven-cache:/maven_cache:ro'
-
-        // if not solution repo, disallow network access from containers
-        dockerFlags += ' --network none'
-        mavenFlags += ' --offline'
+        // processing student submission in this run
     }
 }
 
