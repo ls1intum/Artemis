@@ -55,7 +55,7 @@
             },
             "customizeGroupNames": {
                 "title": "Passe Gruppennamen an",
-                "description": "Stelle sicher, dass die Gruppen in der externen Verwaltung von Nutzer:innen existieren, wenn du diese Option aktivierst. Die Gruppen werden dann nicht automatisch erzeugt."
+                "description": "Das Anpassen der Gruppennamen sollte nicht nötig sein und kann dazu führen, dass Nutzer:innen den Zugang zum Kurs verlieren. Stelle sicher, dass du einen guten Grund für die Verwendung dieser Funktion hast."
             },
             "studentGroupName": "Gruppe der Studierenden",
             "teachingAssistantGroupName": "Gruppe der Tutor:innen",
