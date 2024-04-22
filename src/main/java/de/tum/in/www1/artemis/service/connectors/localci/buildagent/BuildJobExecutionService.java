@@ -6,7 +6,6 @@ import static de.tum.in.www1.artemis.config.Constants.LOCALCI_WORKING_DIRECTORY;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
 
 import java.io.IOException;
-import java.io.StringReader;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -15,10 +14,6 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamReader;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
@@ -32,10 +27,12 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
 
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
 
-import de.tum.in.www1.artemis.config.localvcci.LocalCIConfiguration;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
@@ -64,11 +61,6 @@ public class BuildJobExecutionService {
 
     private final BuildJobContainerService buildJobContainerService;
 
-    /**
-     * Instead of creating a new XMLInputFactory for every build job, it is created once and provided as a Bean (see {@link LocalCIConfiguration#localCIXMLInputFactory()}).
-     */
-    private final XMLInputFactory localCIXMLInputFactory;
-
     private final GitService gitService;
 
     private final LocalCIDockerService localCIDockerService;
@@ -79,10 +71,8 @@ public class BuildJobExecutionService {
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
 
-    public BuildJobExecutionService(BuildJobContainerService buildJobContainerService, XMLInputFactory localCIXMLInputFactory, GitService gitService,
-            LocalCIDockerService localCIDockerService) {
+    public BuildJobExecutionService(BuildJobContainerService buildJobContainerService, GitService gitService, LocalCIDockerService localCIDockerService) {
         this.buildJobContainerService = buildJobContainerService;
-        this.localCIXMLInputFactory = localCIXMLInputFactory;
         this.gitService = gitService;
         this.localCIDockerService = localCIDockerService;
     }
@@ -249,7 +239,7 @@ public class BuildJobExecutionService {
             buildResult = parseTestResults(testResultsTarInputStream, buildJob.buildConfig().branch(), assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate);
             buildResult.setBuildLogEntries(buildLogEntries);
         }
-        catch (IOException | XMLStreamException | IllegalStateException e) {
+        catch (IOException | IllegalStateException e) {
             throw new LocalCIException("Error while parsing test results", e);
         }
 
@@ -262,7 +252,7 @@ public class BuildJobExecutionService {
     // --- Helper methods ----
 
     private LocalCIBuildResult parseTestResults(TarArchiveInputStream testResultsTarInputStream, String assignmentRepoBranchName, String assignmentRepoCommitHash,
-            String testsRepoCommitHash, ZonedDateTime buildCompletedDate) throws IOException, XMLStreamException {
+            String testsRepoCommitHash, ZonedDateTime buildCompletedDate) throws IOException {
 
         List<LocalCIBuildResult.LocalCITestJobDTO> failedTests = new ArrayList<>();
         List<LocalCIBuildResult.LocalCITestJobDTO> successfulTests = new ArrayList<>();
@@ -352,104 +342,40 @@ public class BuildJobExecutionService {
         return IOUtils.toString(tarArchiveInputStream, StandardCharsets.UTF_8);
     }
 
-    /**
-     * Processes a test result file and adds the failed and successful tests to the corresponding lists.
-     *
-     * @param testResultFileString The string that represents the test results XML file.
-     * @param failedTests          The list of failed tests.
-     * @param successfulTests      The list of successful tests.
-     * @throws XMLStreamException    if the XML stream reader cannot be created or there is an error while parsing the XML file
-     * @throws IllegalStateException if the first start element of the XML file is not a "testsuite" node
-     */
-    private void processTestResultFile(String testResultFileString, List<LocalCIBuildResult.LocalCITestJobDTO> failedTests,
-            List<LocalCIBuildResult.LocalCITestJobDTO> successfulTests) throws XMLStreamException {
-        // Create an XML stream reader for the string that represents the test results XML file.
-        XMLStreamReader xmlStreamReader = localCIXMLInputFactory.createXMLStreamReader(new StringReader(testResultFileString));
+    public void processTestResultFile(String testResultFileString, List<LocalCIBuildResult.LocalCITestJobDTO> failedTests,
+            List<LocalCIBuildResult.LocalCITestJobDTO> successfulTests) throws IOException {
+        TestSuite testSuite = new XmlProcessor().parseTestSuite(testResultFileString);
 
-        // Move to the first start element.
-        forwardToNextStartElement(xmlStreamReader);
-
-        if ("testsuites".equals(xmlStreamReader.getLocalName())) {
-            xmlStreamReader.next();
-            forwardToNextStartElement(xmlStreamReader);
-        }
-
-        // Check if the start element is the "testsuite" node.
-        if (!("testsuite".equals(xmlStreamReader.getLocalName()))) {
-            throw new IllegalStateException("Expected testsuite element, but got " + xmlStreamReader.getLocalName());
-        }
-
-        // Go through all testcase nodes.
-        while (xmlStreamReader.hasNext()) {
-            xmlStreamReader.next();
-
-            if (!xmlStreamReader.isStartElement() || !("testcase".equals(xmlStreamReader.getLocalName()))) {
-                continue;
+        for (TestCase testCase : testSuite.testCases()) {
+            if (testCase.failure() != null) {
+                failedTests.add(new LocalCIBuildResult.LocalCITestJobDTO(testCase.name(), List.of(testCase.failure().message())));
             }
-
-            // Now we are at the start of a "testcase" node.
-            processTestCaseNode(xmlStreamReader, failedTests, successfulTests);
-        }
-
-        // Close the XML stream reader.
-        xmlStreamReader.close();
-    }
-
-    private void processTestCaseNode(XMLStreamReader xmlStreamReader, List<LocalCIBuildResult.LocalCITestJobDTO> failedTests,
-            List<LocalCIBuildResult.LocalCITestJobDTO> successfulTests) throws XMLStreamException {
-        // Extract the name attribute from the "testcase" node. This is the name of the test case.
-        String name = xmlStreamReader.getAttributeValue(null, "name");
-
-        // Check if there is a failure node inside the testcase node.
-        // Call next() until there is an end element (no failure node exists inside the testcase node) or a start element (failure node exists inside the
-        // testcase node).
-        do {
-            xmlStreamReader.next();
-        }
-        while (!(xmlStreamReader.isEndElement() || xmlStreamReader.isStartElement()));
-        if (xmlStreamReader.isStartElement() && ("failure".equals(xmlStreamReader.getLocalName()) || "error".equals(xmlStreamReader.getLocalName()))) {
-            // Extract the message attribute from the "failure" node.
-            String error = xmlStreamReader.getAttributeValue(null, "message");
-
-            if (error == null && xmlStreamReader.hasNext()) {
-                error = readTestMessageFromJUnitReport(xmlStreamReader);
+            else {
+                successfulTests.add(new LocalCIBuildResult.LocalCITestJobDTO(testCase.name(), List.of()));
             }
-
-            // Add the failed test to the list of failed tests.
-            List<String> errors = error != null ? List.of(error) : List.of();
-            failedTests.add(new LocalCIBuildResult.LocalCITestJobDTO(name, errors));
-        }
-        else if (!"skipped".equals(xmlStreamReader.getLocalName())) {
-            // Add the successful test to the list of successful tests.
-            successfulTests.add(new LocalCIBuildResult.LocalCITestJobDTO(name, List.of()));
         }
     }
 
-    private String readTestMessageFromJUnitReport(XMLStreamReader xmlStreamReader) throws XMLStreamException {
-        // Read the error message from the child element if there is no message attribute,
-        xmlStreamReader.next();
-        if (xmlStreamReader.isCharacters()) {
-            StringBuilder stringBuilder = new StringBuilder(xmlStreamReader.getText());
-            // The report can contain multiple character elements,
-            // all of them must be combined to one feedback message
-            while (xmlStreamReader.hasNext() && xmlStreamReader.isCharacters()) {
-                xmlStreamReader.next();
-                if (xmlStreamReader.isCharacters()) {
-                    stringBuilder.append(xmlStreamReader.getText());
-                }
-            }
-            return stringBuilder.toString();
+    static class XmlProcessor {
+
+        private final XmlMapper xmlMapper;
+
+        public XmlProcessor() {
+            this.xmlMapper = new XmlMapper();
         }
-        else if (!xmlStreamReader.isEndElement()) {
-            return xmlStreamReader.getText();
+
+        public TestSuite parseTestSuite(String xmlContent) throws IOException {
+            return xmlMapper.readValue(xmlContent, TestSuite.class);
         }
-        return null;
     }
 
-    private void forwardToNextStartElement(XMLStreamReader xmlStreamReader) throws XMLStreamException {
-        while (xmlStreamReader.hasNext() && !xmlStreamReader.isStartElement()) {
-            xmlStreamReader.next();
-        }
+    record TestSuite(@JacksonXmlElementWrapper(useWrapping = false) @JacksonXmlProperty(localName = "testcase") List<TestCase> testCases) {
+    }
+
+    record TestCase(@JacksonXmlProperty(isAttribute = true) String name, @JacksonXmlProperty(localName = "failure") Failure failure) {
+    }
+
+    record Failure(@JacksonXmlProperty(isAttribute = true) String message) {
     }
 
     /**
