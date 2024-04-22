@@ -3,7 +3,7 @@ actions:
   - name: build
     script: mvn -B clean compile
   - name: checkers
-    script: |
+    script: |-
       # all java files in the assignment folder should have maximal line length 80
       pipeline-helper line-length -l 80 -s assignment/ -e java
       # checks that the file exists and is not empty for non gui programs
@@ -24,7 +24,7 @@ actions:
       export tool=$(find testsuite -name "*.tests" -type d -printf "%f" | sed 's#.tests$##')
       sed -i "s#TESTFILES_DIRECTORY#../${testfiles_base_path}#" testsuite/${tool}.tests/*.exp
   - name: secret-tests
-    script: |
+    script: |-
       export tool=$(find testsuite -name "*.tests" -type d -printf "%f" | sed 's#.tests$##')
       export step="secret"
       cd testsuite || exit
@@ -43,7 +43,7 @@ actions:
         rm "${testfiles_base_path}/secret"
       fi
   - name: public-tests
-    script: |
+    script: |-
       export tool=$(find testsuite -name "*.tests" -type d -printf "%f" | sed 's#.tests$##')
       sed -i "s#TESTFILES_DIRECTORY#../${testfiles_base_path}#" testsuite/${tool}.tests/*.exp
 
@@ -55,7 +55,7 @@ actions:
       cd ..
       pipeline-helper -o customFeedbacks dejagnu -n "dejagnu[${step}]" -l testsuite/${tool}.log
   - name: advanced-tests
-    script: |
+    script: |-
       export testfiles_base_path="./testsuite/testfiles"
       export tool=$(find testsuite -name "*.tests" -type d -printf "%f" | sed 's#.tests$##')
       sed -i "s#TESTFILES_DIRECTORY#../${testfiles_base_path}#" testsuite/${tool}.tests/*.exp
