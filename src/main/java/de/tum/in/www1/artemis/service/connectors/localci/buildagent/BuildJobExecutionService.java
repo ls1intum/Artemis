@@ -344,7 +344,7 @@ public class BuildJobExecutionService {
 
     public void processTestResultFile(String testResultFileString, List<LocalCIBuildResult.LocalCITestJobDTO> failedTests,
             List<LocalCIBuildResult.LocalCITestJobDTO> successfulTests) throws IOException {
-        TestSuite testSuite = new XmlProcessor().parseTestSuite(testResultFileString);
+        TestSuite testSuite = new XmlMapper().readValue(testResultFileString, TestSuite.class);
 
         for (TestCase testCase : testSuite.testCases()) {
             if (testCase.failure() != null) {
@@ -353,19 +353,6 @@ public class BuildJobExecutionService {
             else {
                 successfulTests.add(new LocalCIBuildResult.LocalCITestJobDTO(testCase.name(), List.of()));
             }
-        }
-    }
-
-    static class XmlProcessor {
-
-        private final XmlMapper xmlMapper;
-
-        public XmlProcessor() {
-            this.xmlMapper = new XmlMapper();
-        }
-
-        public TestSuite parseTestSuite(String xmlContent) throws IOException {
-            return xmlMapper.readValue(xmlContent, TestSuite.class);
         }
     }
 
