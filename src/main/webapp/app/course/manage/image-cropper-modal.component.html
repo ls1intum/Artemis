@@ -1,6 +1,6 @@
 <div class="modal-header justify-between">
     <h4 class="modal-title">
-        <span>{{ 'artemisApp.course.imageCropper.title' | artemisTranslate }}</span>
+        <span jhiTranslate="artemisApp.course.imageCropper.title"></span>
     </h4>
 </div>
 <div class="modal-body">
@@ -19,7 +19,7 @@
 </div>
 <div class="modal-footer">
     <button id="cancel-cropping-button" type="button" class="btn btn-outline-secondary" (click)="onCancel()"><span jhiTranslate="entity.action.cancel"></span></button>
-    <button id="save-cropping-button" type="button" class="btn btn-primary" style="margin-left: 10px" (click)="onSave()">
-        &nbsp;<span jhiTranslate="entity.action.save"></span>
+    <button id="save-cropping-button" type="button" class="btn btn-primary" (click)="onSave()">
+        <span jhiTranslate="entity.action.save"></span>
     </button>
 </div>

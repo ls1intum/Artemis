@@ -4,32 +4,30 @@
             <div class="container headline">
                 <input type="file" #fileInput style="display: none" (change)="setCourseImage($event)" />
                 @if (croppedImage) {
-                    <div style="position: relative">
+                    <div class="position-relative">
                         <jhi-secured-image class="secured-image" [src]="croppedImage" [cachingStrategy]="CachingStrategy.LOCAL_STORAGE" />
 
-                        <button id="delete-course-icon" type="button" class="btn icon-button-wrapper delete-button" (click)="deleteCourseIcon()">
+                        <button id="delete-course-icon" type="button" class="btn icon-button-wrapper btn-danger position-absolute bottom-0 start-0" (click)="deleteCourseIcon()">
                             <fa-icon [icon]="faTrash" />
                         </button>
 
-                        <button id="edit-course-icon" type="button" class="btn icon-button-wrapper edit-button" (click)="triggerFileInput()">
+                        <button id="edit-course-icon" type="button" class="btn icon-button-wrapper btn-warning position-absolute bottom-0 end-0" (click)="triggerFileInput()">
                             <fa-icon [icon]="faPen" />
                         </button>
                     </div>
                 }
                 @if (!croppedImage) {
-                    <div id="no-image-placeholder" class="no-image" (click)="triggerFileInput()">
-                        <div class="plus-sign">+</div>
-                        <div class="text">{{ 'artemisApp.course.imageCropper.uploadTitle' | artemisTranslate }}</div>
+                    <div id="no-image-placeholder" class="no-image clickable me-2 lh-sm" (click)="triggerFileInput()">
+                        <div class="h3 my-0 font-weight-bold">+</div>
+                        <div class="small" jhiTranslate="artemisApp.course.imageCropper.uploadTitle"></div>
                     </div>
                 }
-                <div class="row">
-                    <div class="col">
-                        @if (!course.id) {
-                            <h4 id="jhi-course-heading-create" jhiTranslate="artemisApp.course.home.createLabel"></h4>
-                        } @else {
-                            <h4 id="jhi-course-heading-edit" jhiTranslate="artemisApp.course.home.editLabel"></h4>
-                        }
-                    </div>
+                <div class="col ps-3">
+                    @if (!course.id) {
+                        <h4 id="jhi-course-heading-create" jhiTranslate="artemisApp.course.home.createLabel"></h4>
+                    } @else {
+                        <h4 id="jhi-course-heading-edit" jhiTranslate="artemisApp.course.home.editLabel"></h4>
+                    }
                 </div>
             </div>
             <hr />

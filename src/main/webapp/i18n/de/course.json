@@ -231,7 +231,7 @@
             "organizationAddingHint": "Administratoren können Organisationen zu Kursen hinzufügen.",
             "imageCropper": {
                 "title": "Bild zuschneiden",
-                "uploadTitle": "Ein Bild hinzufügen"
+                "uploadTitle": "Bild\nhinzufügen"
             }
         },
         "courseStatistics": {

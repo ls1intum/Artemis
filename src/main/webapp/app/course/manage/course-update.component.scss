@@ -12,29 +12,15 @@
         display: flex;
         flex-direction: column;
         justify-content: center;
-        background-color: #ccc;
+        background-color: var(--gray-400);
         border-radius: 50%;
         height: 100px;
         width: 100px;
-        margin-right: 20px;
         text-align: center;
         color: var(--black);
-
-        .plus-sign {
-            font-size: 24px;
-            font-weight: bold;
-        }
-
-        .text {
-            font-size: 12px;
-            margin-bottom: 10px;
-            line-height: initial;
-        }
     }
 
     jhi-secured-image {
-        padding-right: 20px;
-
         ::ng-deep img {
             border-radius: 50%;
             height: 100px;
@@ -45,7 +31,6 @@
 
 .icon-button-wrapper {
     position: absolute;
-    background-color: var(--bs-body-bg);
     border-radius: 50%;
     display: inline-flex;
     justify-content: center;
@@ -53,18 +38,4 @@
     width: 30px;
     height: 30px;
     box-shadow: 2px 2px 4px 0 rgba(0, 0, 0, 0.1);
-}
-
-.delete-button {
-    top: 70px;
-    right: 85px;
-    color: var(--danger);
-    border: 1px solid var(--danger);
-}
-
-.edit-button {
-    top: 70px;
-    right: 25px;
-    color: var(--secondary);
-    border: 1px solid var(--secondary);
 }

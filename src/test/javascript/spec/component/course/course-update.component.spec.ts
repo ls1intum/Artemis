@@ -682,8 +682,8 @@ describe('Course Management Update Component', () => {
         it('should create the delete button when croppedImage is present', () => {
             comp.croppedImage = 'some-image-url';
             fixture.detectChanges();
-            const editButton = getDeleteIconButton();
-            expect(editButton).toBeTruthy();
+            const deleteButton = getDeleteIconButton();
+            expect(deleteButton).toBeTruthy();
         });
 
         it('should remove icon image and delete icon button from component', () => {
@@ -727,9 +727,9 @@ describe('Course Management Update Component', () => {
 
         it('should not be able to edit icon if icon does not exist', () => {
             const iconImage = fixture.debugElement.nativeElement.querySelector('jhi-secured-image');
-            const deleteIconButton = getEditIconButton();
+            const editIconButton = getEditIconButton();
             expect(iconImage).toBeNull();
-            expect(deleteIconButton).toBeNull();
+            expect(editIconButton).toBeNull();
         });
 
         it('should trigger triggerFileInput when edit button is clicked', () => {
