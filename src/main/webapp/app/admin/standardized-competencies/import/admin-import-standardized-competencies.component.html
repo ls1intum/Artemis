@@ -16,11 +16,11 @@
     </div>
     <input class="mt-3" type="file" accept="application/json" (change)="onFileChange($event)" />
     <h4 class="mt-3" jhiTranslate="artemisApp.standardizedCompetency.manage.import.preview.title"></h4>
-    @if (count && count?.knowledgeAreas) {
+    @if (importCount && importCount?.knowledgeAreas) {
         <div
             class="mb-1"
             jhiTranslate="artemisApp.standardizedCompetency.manage.import.count"
-            [translateValues]="{ competencies: count.competencies, knowledgeAreas: count.knowledgeAreas }"
+            [translateValues]="{ competencies: importCount.competencies, knowledgeAreas: importCount.knowledgeAreas }"
         ></div>
         <jhi-knowledge-area-tree [dataSource]="dataSource" [treeControl]="treeControl">
             <ng-template let-competency="competency" #competencyTemplate>

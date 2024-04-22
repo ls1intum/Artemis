@@ -26,7 +26,7 @@ export class AdminImportStandardizedCompetenciesComponent {
     protected isLoading = false;
     protected isCollapsed = false;
     protected importData?: KnowledgeAreasForImportDTO;
-    protected count?: ImportCount;
+    protected importCount?: ImportCount;
     protected dataSource = new MatTreeNestedDataSource<KnowledgeAreaForTree>();
     protected treeControl = new NestedTreeControl<KnowledgeAreaForTree>((node) => node.children);
     private fileReader: FileReader = new FileReader();
@@ -130,7 +130,7 @@ export class AdminImportStandardizedCompetenciesComponent {
      */
     private setImportDataAndCount() {
         this.importData = undefined;
-        this.count = { knowledgeAreas: 0, competencies: 0 };
+        this.importCount = { knowledgeAreas: 0, competencies: 0 };
 
         try {
             this.importData = JSON.parse(this.fileReader.result as string);
@@ -139,8 +139,8 @@ export class AdminImportStandardizedCompetenciesComponent {
         }
         try {
             if (this.importData) {
-                this.count = this.countKnowledgeAreasAndCompetencies({ children: this.importData.knowledgeAreas });
-                this.count.knowledgeAreas -= 1;
+                this.importCount = this.countKnowledgeAreasAndCompetencies({ children: this.importData.knowledgeAreas });
+                this.importCount.knowledgeAreas -= 1;
                 this.dataSource.data = this.importData.knowledgeAreas.map((knowledgeArea) => convertToKnowledgeAreaForTree(knowledgeArea));
             }
         } catch (e) {

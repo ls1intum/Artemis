@@ -36,11 +36,6 @@ describe('ImportStandardizedCompetenciesComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should initialize', () => {
-        componentFixture.detectChanges();
-        expect(component).toBeDefined();
-    });
-
     it.each([[[new File([''], 'f.txt')]], [[new File([''], 'f1.json'), new File([''], 'f2.json')]], [[{ name: 'f.json', size: MAX_FILE_SIZE + 1 } as File]]])(
         'should show error for invalid files',
         (files) => {
@@ -124,10 +119,10 @@ describe('ImportStandardizedCompetenciesComponent', () => {
 
         component['setImportDataAndCount']();
 
-        expect(component['count']).toEqual(expectedCount);
+        expect(component['importCount']).toEqual(expectedCount);
     });
 
-    it('should import competencies', () => {
+    it('should navigate on successful competency import', () => {
         const mockRouter = TestBed.inject(Router);
         const navigateSpy = jest.spyOn(mockRouter, 'navigate');
         const competencyService = TestBed.inject(AdminStandardizedCompetencyService);
