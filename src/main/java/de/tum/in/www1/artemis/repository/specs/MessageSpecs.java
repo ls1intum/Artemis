@@ -202,7 +202,7 @@ public class MessageSpecs {
      *
      * @return specification that adds the keyword GROUP BY to the query since DISTINCT and ORDER BY keywords are
      *         incompatible with each other at server tests
-     *         https://github.com/h2database/h2database/issues/408
+     *         <a href="https://github.com/h2database/h2database/issues/408">...</a>
      */
     public static Specification<Post> distinct() {
         return (root, query, criteriaBuilder) -> {

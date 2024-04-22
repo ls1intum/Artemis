@@ -241,6 +241,6 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
         for (int i = 1; i < gradingScales.size(); i++) {
             deleteById(gradingScales.get(i).getId());
         }
-        return gradingScales.get(0);
+        return gradingScales.getFirst();
     }
 }
