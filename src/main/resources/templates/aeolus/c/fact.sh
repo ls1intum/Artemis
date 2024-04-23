@@ -12,7 +12,6 @@ setup_the_build_environment () {
   sudo chown artemis_user:artemis_user assignment/ -R || true
   sudo mkdir test-reports
   sudo chown artemis_user:artemis_user test-reports/ -R || true
-
 }
 
 build_and_run_all_tests () {
@@ -30,7 +29,6 @@ build_and_run_all_tests () {
   python3 Tests.py
   rm Tests.py
   rm -rf ./tests || true
-
 }
 
 main () {

@@ -67,6 +67,7 @@ import { ProgrammingExerciseInstructionTaskStatusComponent } from 'app/exercises
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { IrisStateStore } from 'app/iris/state-store.service';
+import { CodeEditorMonacoComponent } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
 
 describe('CodeEditorInstructorIntegration', () => {
     // needed to make sure ace is defined
@@ -103,6 +104,7 @@ describe('CodeEditorInstructorIntegration', () => {
                 MockComponent(CodeEditorActionsComponent),
                 MockComponent(CodeEditorFileBrowserComponent),
                 MockComponent(CodeEditorAceComponent),
+                MockComponent(CodeEditorMonacoComponent),
                 CodeEditorBuildOutputComponent,
                 MockPipe(ArtemisDatePipe),
                 MockComponent(IncludedInScoreBadgeComponent),
