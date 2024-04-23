@@ -88,12 +88,10 @@ public class AthenaModuleService {
      */
     public List<String> getAthenaModulesForCourse(Course course, ExerciseType exerciseType) throws NetworkingException {
 
-        // This check and corresponding assigment is only necessary as long as the modeling exercise module in Athena is
-        // spelled "modelling" rather than "modeling". The name of the module will be changed and this check removed in
-        // a follow-up PR.
-        final String exerciseTypeName = exerciseType == ExerciseType.MODELING ? "modelling" : exerciseType.getExerciseTypeAsReadableString();
+        final String exerciseTypeName = exerciseType.getExerciseTypeAsReadableString();
 
         List<String> availableModules = getAthenaModules().stream().filter(module -> exerciseTypeName.equals(module.type)).map(module -> module.name).toList();
+
         if (!course.getRestrictedAthenaModulesAccess()) {
             // filter out restricted modules
             availableModules = availableModules.stream().filter(moduleName -> !restrictedModules.contains(moduleName)).toList();

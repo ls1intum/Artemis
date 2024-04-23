@@ -23,13 +23,16 @@
     (useAsExampleSubmission)="useStudentSubmissionAsExampleSubmission()"
 >
     @if (submission) {
-        @if (hasAutomaticFeedback && isAssessor && !result?.completionDate) {
+        @if (hasAutomaticFeedback && isAssessor && !result?.completionDate && !isFeedbackSuggestionsEnabled) {
             <div class="alert alert-info" jhiTranslate="artemisApp.modelingAssessmentEditor.automaticAssessmentAvailable"></div>
         }
+        @if (hasAutomaticFeedback && isAssessor && !result?.completionDate && isFeedbackSuggestionsEnabled) {
+            <div class="alert alert-info" jhiTranslate="artemisApp.modelingAssessmentEditor.generativeAIAssessmentAvailable"></div>
+        }
         @if (isLoading && isFeedbackSuggestionsEnabled) {
-            <div class="feedback-suggestions-loading-indicator">
+            <div class="alert">
                 <fa-icon [icon]="faCircleNotch" size="lg" [spin]="true" class="me-2" />
-                <span id="test-building" jhiTranslate="artemisApp.modelingAssessmentEditor.automaticAssessmentLoading"></span>
+                <span jhiTranslate="artemisApp.modelingAssessmentEditor.automaticAssessmentLoading"></span>
             </div>
         }
         <div class="editor-container flex-grow-1">
@@ -95,13 +98,16 @@
     }
 </jhi-assessment-layout>
 <ng-template #assessment>
-    @if (hasAutomaticFeedback && isAssessor && !result?.completionDate) {
+    @if (hasAutomaticFeedback && isAssessor && !result?.completionDate && !isFeedbackSuggestionsEnabled) {
         <div class="alert alert-info" jhiTranslate="artemisApp.modelingAssessmentEditor.automaticAssessmentAvailable"></div>
     }
+    @if (hasAutomaticFeedback && isAssessor && !result?.completionDate && isFeedbackSuggestionsEnabled) {
+        <div class="alert alert-info" jhiTranslate="artemisApp.modelingAssessmentEditor.generativeAIAssessmentAvailable"></div>
+    }
     @if (isLoading && isFeedbackSuggestionsEnabled) {
-        <div class="feedback-suggestions-loading-indicator">
+        <div class="alert">
             <fa-icon [icon]="faCircleNotch" size="lg" [spin]="true" class="me-2" />
-            <span id="test-building" jhiTranslate="artemisApp.modelingAssessmentEditor.automaticAssessmentLoading"></span>
+            <span jhiTranslate="artemisApp.modelingAssessmentEditor.automaticAssessmentLoading"></span>
         </div>
     }
     <div class="editor-container flex-grow-1">

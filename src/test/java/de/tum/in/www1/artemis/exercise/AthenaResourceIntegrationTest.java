@@ -318,7 +318,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void testGetModelingFeedbackSuggestionsAccessForbidden() throws Exception {
-        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("modelling");
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("modeling");
         request.get("/api/athena/modeling-exercises/" + textExercise.getId() + "/submissions/" + modelingSubmission.getId() + "/feedback-suggestions", HttpStatus.FORBIDDEN,
                 List.class);
     }

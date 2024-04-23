@@ -30,6 +30,7 @@
             },
             "automaticAssessmentAvailable": "Herzlichen Glückwunsch! Um dir etwas Zeit zu sparen, wurden Teile dieses Modells bereits automatisch bewertet. Bitte überprüfe die automatische Bewertung und bewerte anschließend den Rest des Modells. Mit der Abgabe der Bewertung bestätigst du auch die automatische Bewertung. Bitte beachte, dass du für die gesamte Bewertung verantwortlich bist.",
             "automaticAssessmentLoading": "Automatisch generierte Feedback-Vorschläge werden geladen...",
+            "generativeAIAssessmentAvailable": "Artemis hat erstes Feedback mit Hilfe von von generativer KI erstellt, kann dabei aber Fehler machen. Bitte überprüfe wichtige Informationen.",
             "highlightingColors": {
                 "title": "Hervorhebungsfarbe(n)",
                 "automaticAssessment": "automatische Bewertung",
