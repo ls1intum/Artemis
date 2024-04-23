@@ -5,18 +5,22 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import com.fasterxml.jackson.dataformat.xml.annotation.*;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisIssue;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 record Duplication(@JacksonXmlProperty(isAttribute = true, localName = "lines") int lines,
 
         @JacksonXmlElementWrapper(useWrapping = false) @JacksonXmlProperty(localName = "file") List<DuplicationFile> files) {
 }
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 record DuplicationFile(@JacksonXmlProperty(isAttribute = true, localName = "path") String path,
 
         @JacksonXmlProperty(isAttribute = true, localName = "line") int startLine,

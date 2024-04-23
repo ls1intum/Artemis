@@ -26,6 +26,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
@@ -33,7 +34,9 @@ import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
 
 import de.tum.in.www1.artemis.config.localvcci.LocalCIConfiguration;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.BuildLogEntry;
+import de.tum.in.www1.artemis.domain.Repository;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.exception.LocalCIException;
@@ -334,7 +337,7 @@ public class BuildJobExecutionService {
     private void processStaticCodeAnalysisReportFile(String fileName, String xmlString, List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports) {
         try {
             ParserPolicy parserPolicy = new ParserPolicy();
-            ParserStrategy parserStrategy = parserPolicy.configure(xmlString);
+            ParserStrategy parserStrategy = parserPolicy.configure(fileName);
             staticCodeAnalysisReports.add(parserStrategy.parse(xmlString));
         }
         catch (UnsupportedToolException e) {
@@ -346,7 +349,7 @@ public class BuildJobExecutionService {
         return IOUtils.toString(tarArchiveInputStream, StandardCharsets.UTF_8);
     }
 
-    public void processTestResultFile(String testResultFileString, List<LocalCIBuildResult.LocalCITestJobDTO> failedTests,
+    private void processTestResultFile(String testResultFileString, List<LocalCIBuildResult.LocalCITestJobDTO> failedTests,
             List<LocalCIBuildResult.LocalCITestJobDTO> successfulTests) throws IOException {
         TestSuite testSuite = localCiXmlMapper.readValue(testResultFileString, TestSuite.class);
 
@@ -354,19 +357,30 @@ public class BuildJobExecutionService {
             if (testCase.failure() != null) {
                 failedTests.add(new LocalCIBuildResult.LocalCITestJobDTO(testCase.name(), List.of(testCase.failure().message())));
             }
+            else if (testCase.error() != null) {
+                failedTests.add(new LocalCIBuildResult.LocalCITestJobDTO(testCase.name(), List.of(testCase.error().message())));
+            }
             else {
                 successfulTests.add(new LocalCIBuildResult.LocalCITestJobDTO(testCase.name(), List.of()));
             }
         }
     }
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
     record TestSuite(@JacksonXmlElementWrapper(useWrapping = false) @JacksonXmlProperty(localName = "testcase") List<TestCase> testCases) {
     }
 
-    record TestCase(@JacksonXmlProperty(isAttribute = true) String name, @JacksonXmlProperty(localName = "failure") Failure failure) {
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    record TestCase(@JacksonXmlProperty(isAttribute = true, localName = "name") String name, @JacksonXmlProperty(localName = "failure") Failure failure,
+            @JacksonXmlProperty(localName = "error") Failure error) {
     }
 
-    record Failure(@JacksonXmlProperty(isAttribute = true) String message) {
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    record Failure(@JacksonXmlProperty(isAttribute = true, localName = "type") String type,
+
+            @JacksonXmlProperty(isAttribute = true, localName = "message") String message,
+
+            @JacksonXmlProperty(localName = "failure") String detailedMessage) {
     }
 
     /**

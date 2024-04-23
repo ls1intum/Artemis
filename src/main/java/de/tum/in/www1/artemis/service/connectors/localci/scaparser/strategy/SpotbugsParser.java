@@ -5,13 +5,16 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import com.fasterxml.jackson.dataformat.xml.annotation.*;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisIssue;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 record BugInstance(@JacksonXmlProperty(isAttribute = true, localName = "type") String type,
 
         @JacksonXmlProperty(isAttribute = true, localName = "category") String category,
@@ -23,6 +26,7 @@ record BugInstance(@JacksonXmlProperty(isAttribute = true, localName = "type") S
         @JacksonXmlProperty(localName = "LongMessage") String longMessage) {
 }
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 record SourceLine(@JacksonXmlProperty(isAttribute = true, localName = "sourcepath") String sourcePath,
 
         @JacksonXmlProperty(isAttribute = true, localName = "start") int start,
@@ -30,9 +34,11 @@ record SourceLine(@JacksonXmlProperty(isAttribute = true, localName = "sourcepat
         @JacksonXmlProperty(isAttribute = true, localName = "end") int end) {
 }
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 record Project(@JacksonXmlElementWrapper(useWrapping = false) @JacksonXmlProperty(localName = "SrcDir") List<String> srcDirs) {
 }
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 record BugCollection(@JacksonXmlProperty(localName = "Project") Project project,
 
         @JacksonXmlElementWrapper(useWrapping = false) @JacksonXmlProperty(localName = "BugInstance") List<BugInstance> bugInstances) {

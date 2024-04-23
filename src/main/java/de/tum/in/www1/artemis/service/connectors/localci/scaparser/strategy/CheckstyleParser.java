@@ -4,18 +4,22 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import com.fasterxml.jackson.dataformat.xml.annotation.*;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisIssue;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 record CheckstyleFile(@JacksonXmlProperty(isAttribute = true, localName = "name") String name,
 
         @JacksonXmlElementWrapper(useWrapping = false) @JacksonXmlProperty(localName = "error") List<CheckstyleError> errors) {
 }
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 record CheckstyleError(@JacksonXmlProperty(isAttribute = true, localName = "line") Integer line,
 
         @JacksonXmlProperty(isAttribute = true, localName = "column") Integer column,
@@ -52,6 +56,9 @@ public class CheckstyleParser implements ParserStrategy {
         StaticCodeAnalysisReportDTO report = new StaticCodeAnalysisReportDTO(StaticCodeAnalysisTool.CHECKSTYLE, issues);
 
         for (CheckstyleFile file : files) {
+            if (file.errors() == null) {
+                continue;
+            }
             for (CheckstyleError error : file.errors()) {
                 StaticCodeAnalysisIssue issue = new StaticCodeAnalysisIssue(file.name(), error.line(), error.line(),  // As Checkstyle does not support an end line
                         error.column(), error.column(),  // As Checkstyle does not support an end column

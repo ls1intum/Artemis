@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
@@ -12,14 +13,17 @@ import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisIssue;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 record PMDReport(@JacksonXmlElementWrapper(useWrapping = false) @JacksonXmlProperty(localName = "file") List<FileViolation> files) {
 }
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 record FileViolation(@JacksonXmlProperty(isAttribute = true, localName = "name") String fileName,
 
         @JacksonXmlElementWrapper(useWrapping = false) @JacksonXmlProperty(localName = "violation") List<Violation> violations) {
 }
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 record Violation(@JacksonXmlProperty(isAttribute = true, localName = "rule") String rule,
 
         @JacksonXmlProperty(isAttribute = true, localName = "ruleset") String ruleset,
