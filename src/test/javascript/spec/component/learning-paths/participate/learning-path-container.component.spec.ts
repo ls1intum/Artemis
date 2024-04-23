@@ -103,13 +103,23 @@ describe('LearningPathContainerComponent', () => {
 
     it('should generate learning path if not found', () => {
         const generateLearningPathStub = jest.spyOn(learningPathService, 'generateLearningPath').mockReturnValue(of(new HttpResponse({ body: learningPathId })));
-        getLearningPathIdStub.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
+        getLearningPathIdStub.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
         fixture.detectChanges();
         expect(comp.courseId).toBe(1);
         expect(getLearningPathIdStub).toHaveBeenCalled();
         expect(getLearningPathIdStub).toHaveBeenCalledWith(1);
         expect(generateLearningPathStub).toHaveBeenCalled();
         expect(generateLearningPathStub).toHaveBeenCalledWith(1);
+    });
+
+    it('should not generate learning path for other error', () => {
+        const generateLearningPathStub = jest.spyOn(learningPathService, 'generateLearningPath').mockReturnValue(of(new HttpResponse({ body: learningPathId })));
+        getLearningPathIdStub.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
+        fixture.detectChanges();
+        expect(comp.courseId).toBe(1);
+        expect(getLearningPathIdStub).toHaveBeenCalled();
+        expect(getLearningPathIdStub).toHaveBeenCalledWith(1);
+        expect(generateLearningPathStub).not.toHaveBeenCalled();
     });
 
     it('should not load previous task if no task selected', () => {

@@ -61,11 +61,15 @@ export class LearningPathContainerComponent implements OnInit {
             next: (learningPathIdResponse) => {
                 this.learningPathId = learningPathIdResponse.body!;
             },
-            error: () => {
-                // if the learning path does not exist, we do need to create it
-                this.learningPathService.generateLearningPath(this.courseId).subscribe((learningPathIdResponse) => {
-                    this.learningPathId = learningPathIdResponse.body!;
-                });
+            error: (res: HttpErrorResponse) => {
+                if (res.status === 404) {
+                    // if the learning path does not exist, we do need to create it
+                    this.learningPathService.generateLearningPath(this.courseId).subscribe((learningPathIdResponse) => {
+                        this.learningPathId = learningPathIdResponse.body!;
+                    });
+                } else {
+                    onError(this.alertService, res);
+                }
             },
         });
     }
