@@ -16,6 +16,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.domain.AbstractAuditingEntity;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
 
 @Entity
@@ -59,6 +60,12 @@ public class StudentExam extends AbstractAuditingEntity {
     @OrderColumn(name = "exercise_order")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private List<Exercise> exercises = new ArrayList<>();
+
+    @ManyToMany
+    @JoinTable(name = "student_exam_participation", joinColumns = @JoinColumn(name = "student_exam_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "participation_id", referencedColumnName = "id"))
+    @OrderColumn(name = "participation_order")
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    private List<StudentParticipation> studentParticipations = new ArrayList<>();
 
     @OneToMany(mappedBy = "studentExam", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)

@@ -23,7 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.config.StaticCodeAnalysisConfigurer;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.CategoryState;
-import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
+import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisIssue;
 
 /**
  * Spring Data repository for the StaticCodeAnalysisCategory entity.
@@ -31,6 +31,8 @@ import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 @Profile(PROFILE_CORE)
 @Repository
 public interface StaticCodeAnalysisCategoryRepository extends JpaRepository<StaticCodeAnalysisCategory, Long> {
+
+    ObjectMapper mapper = new ObjectMapper();
 
     Logger log = LoggerFactory.getLogger(StaticCodeAnalysisCategoryRepository.class);
 
@@ -83,49 +85,41 @@ public interface StaticCodeAnalysisCategoryRepository extends JpaRepository<Stat
         var categoryPairs = getCategoriesWithMappingForExercise(programmingExercise);
 
         return staticCodeAnalysisFeedback.stream().filter(feedback -> {
-            // ObjectMapper to extract the static code analysis issue from the feedback
-            ObjectMapper mapper = new ObjectMapper();
-            // the category for this feedback
-            Optional<StaticCodeAnalysisCategory> category = Optional.empty();
             try {
-                // extract the sca issue
-                var issue = mapper.readValue(feedback.getDetailText(), StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue.class);
+                // Extract the sca issue
+                StaticCodeAnalysisIssue issue = mapper.readValue(feedback.getDetailText(), StaticCodeAnalysisIssue.class);
+                // Determine the category for this issue
+                Optional<StaticCodeAnalysisCategory> category = categoryPairs.stream().filter(
+                        pair -> pair.right.stream().anyMatch(mapping -> mapping.tool().name().equals(feedback.getReference()) && mapping.category().equals(issue.category())))
+                        .map(pair -> pair.left).findFirst();
 
-                // find the category for this issue
-                for (var categoryPair : categoryPairs) {
-                    var categoryMappings = categoryPair.right;
-                    if (categoryMappings.stream().anyMatch(mapping -> mapping.tool().name().equals(feedback.getReference()) && mapping.category().equals(issue.getCategory()))) {
-                        category = Optional.of(categoryPair.left);
-                        break;
-                    }
+                if (category.isPresent() && category.get().getState() == CategoryState.GRADED) {
+                    // Create a new issue with updated penalty
+                    StaticCodeAnalysisIssue updatedIssue = new StaticCodeAnalysisIssue(issue.filePath(), issue.startLine(), issue.endLine(), issue.startColumn(), issue.endColumn(),
+                            issue.rule(), issue.category(), issue.message(), issue.priority(), category.get().getPenalty());
+                    // Update detail text with new issue data
+                    feedback.setDetailTextTruncated(mapper.writeValueAsString(updatedIssue));
+                }
+                else if (category.isPresent()) {
+                    // Create a new issue with null penalty
+                    StaticCodeAnalysisIssue updatedIssue = new StaticCodeAnalysisIssue(issue.filePath(), issue.startLine(), issue.endLine(), issue.startColumn(), issue.endColumn(),
+                            issue.rule(), issue.category(), issue.message(), issue.priority(), null);
+                    feedback.setDetailTextTruncated(mapper.writeValueAsString(updatedIssue));
                 }
 
-                if (category.isPresent()) {
-                    if (category.get().getState() == CategoryState.GRADED) {
-                        // update the penalty of the issue
-                        issue.setPenalty(category.get().getPenalty());
-                    }
-                    else if (issue.getPenalty() != null) {
-                        // remove the penalty of the issue
-                        issue.setPenalty(null);
-                    }
-                    // the feedback is already pre-truncated to fit, it should not be shortened further
-                    feedback.setDetailTextTruncated(mapper.writeValueAsString(issue));
+                // Determine feedback visibility based on category state
+                if (category.isEmpty() || category.get().getState() == CategoryState.INACTIVE) {
+                    result.removeFeedback(feedback);
+                    return false; // Remove feedback
+                }
+                else {
+                    feedback.setText(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER + category.get().getName());
+                    return true; // Keep feedback
                 }
             }
             catch (JsonProcessingException exception) {
                 log.debug("Error occurred parsing feedback {} to static code analysis issue: {}", feedback, exception.getMessage());
-            }
-
-            if (category.isEmpty() || category.get().getState().equals(CategoryState.INACTIVE)) {
-                // remove feedback in no category or an inactive one
-                result.removeFeedback(feedback);
-                return false; // filter this feedback
-            }
-            else {
-                // add the category name to the feedback text
-                feedback.setText(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER + category.get().getName());
-                return true; // keep this feedback
+                return false; // Filter out on exception
             }
         }).collect(Collectors.toCollection(ArrayList::new));
     }

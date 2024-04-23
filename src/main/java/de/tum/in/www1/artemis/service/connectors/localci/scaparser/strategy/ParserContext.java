@@ -2,15 +2,9 @@ package de.tum.in.www1.artemis.service.connectors.localci.scaparser.strategy;
 
 import java.io.File;
 import java.io.IOException;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.ParserConfigurationException;
-
-import org.w3c.dom.Document;
-import org.xml.sax.SAXException;
+import java.nio.file.Files;
 
 import de.tum.in.www1.artemis.service.connectors.localci.scaparser.exception.UnsupportedToolException;
-import de.tum.in.www1.artemis.service.connectors.localci.scaparser.utils.XmlUtils;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 
 /**
@@ -19,24 +13,21 @@ import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 public class ParserContext {
 
     /**
-     * Builds the document using the provided file and parses it to a Report object.
+     * Builds the document using the provided file and parses it to a Report object using ObjectMapper.
      *
      * @param file File referencing the static code analysis report
      * @return Report containing the static code analysis issues
-     * @throws UnsupportedToolException     if the static code analysis tool which created the report is not supported
-     * @throws IOException                  if the file could not be read
-     * @throws ParserConfigurationException if no parser could be created
-     * @throws SAXException                 if a parsing error occurs
+     * @throws UnsupportedToolException if the static code analysis tool which created the report is not supported
+     * @throws IOException              if the file could not be read
      */
-    public StaticCodeAnalysisReportDTO getReport(File file) throws IOException, ParserConfigurationException, SAXException {
-        final DocumentBuilder builder = XmlUtils.createDocumentBuilder();
-        final Document document = builder.parse(file);
-        return parseDocument(document);
+    public StaticCodeAnalysisReportDTO getReport(File file) throws IOException {
+        String xmlContent = Files.readString(file.toPath());
+        return parseXmlContent(xmlContent);
     }
 
-    private StaticCodeAnalysisReportDTO parseDocument(Document doc) {
+    private StaticCodeAnalysisReportDTO parseXmlContent(String xmlContent) {
         ParserPolicy parserPolicy = new ParserPolicy();
-        ParserStrategy parserStrategy = parserPolicy.configure(doc);
-        return parserStrategy.parse(doc);
+        ParserStrategy parserStrategy = parserPolicy.configure(xmlContent);  // Updated to handle String XML content
+        return parserStrategy.parse(xmlContent);  // Pass the whole XML content directly
     }
 }

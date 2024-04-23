@@ -25,7 +25,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.w3c.dom.Document;
 
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
@@ -33,6 +32,7 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
 
+import de.tum.in.www1.artemis.config.localvcci.LocalCIConfiguration;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
@@ -46,7 +46,6 @@ import de.tum.in.www1.artemis.service.connectors.localci.scaparser.strategy.Pars
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUri;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
-import de.tum.in.www1.artemis.service.util.XmlFileUtils;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -65,16 +64,23 @@ public class BuildJobExecutionService {
 
     private final LocalCIDockerService localCIDockerService;
 
+    /**
+     * Instead of creating a new XmlMapper for every build job, it is created once and provided as a Bean (see {@link LocalCIConfiguration#localCiXmlMapper()}).
+     */
+    private final XmlMapper localCiXmlMapper;
+
     @Value("${artemis.version-control.url}")
     private URL localVCBaseUrl;
 
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
 
-    public BuildJobExecutionService(BuildJobContainerService buildJobContainerService, GitService gitService, LocalCIDockerService localCIDockerService) {
+    public BuildJobExecutionService(BuildJobContainerService buildJobContainerService, GitService gitService, LocalCIDockerService localCIDockerService,
+            XmlMapper localCiXmlMapper) {
         this.buildJobContainerService = buildJobContainerService;
         this.gitService = gitService;
         this.localCIDockerService = localCIDockerService;
+        this.localCiXmlMapper = localCiXmlMapper;
     }
 
     /**
@@ -326,12 +332,10 @@ public class BuildJobExecutionService {
      * @param staticCodeAnalysisReports the list of static code analysis reports
      */
     private void processStaticCodeAnalysisReportFile(String fileName, String xmlString, List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports) {
-        Document document = XmlFileUtils.readFromString(xmlString);
-        document.setDocumentURI(fileName);
         try {
             ParserPolicy parserPolicy = new ParserPolicy();
-            ParserStrategy parserStrategy = parserPolicy.configure(document);
-            staticCodeAnalysisReports.add(parserStrategy.parse(document));
+            ParserStrategy parserStrategy = parserPolicy.configure(xmlString);
+            staticCodeAnalysisReports.add(parserStrategy.parse(xmlString));
         }
         catch (UnsupportedToolException e) {
             throw new IllegalStateException("Failed to parse static code analysis report for " + fileName, e);
@@ -344,7 +348,7 @@ public class BuildJobExecutionService {
 
     public void processTestResultFile(String testResultFileString, List<LocalCIBuildResult.LocalCITestJobDTO> failedTests,
             List<LocalCIBuildResult.LocalCITestJobDTO> successfulTests) throws IOException {
-        TestSuite testSuite = new XmlMapper().readValue(testResultFileString, TestSuite.class);
+        TestSuite testSuite = localCiXmlMapper.readValue(testResultFileString, TestSuite.class);
 
         for (TestCase testCase : testSuite.testCases()) {
             if (testCase.failure() != null) {

@@ -34,6 +34,7 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
+import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisIssue;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
 
@@ -172,19 +173,16 @@ public class ProgrammingExerciseFeedbackCreationService {
     public List<Feedback> createFeedbackFromStaticCodeAnalysisReports(List<StaticCodeAnalysisReportDTO> reports) {
         ObjectMapper mapper = new ObjectMapper();
         List<Feedback> feedbackList = new ArrayList<>();
-        for (final var report : reports) {
-            StaticCodeAnalysisTool tool = report.getTool();
+        for (final StaticCodeAnalysisReportDTO report : reports) {
+            StaticCodeAnalysisTool tool = report.tool();
 
-            for (final var issue : report.getIssues()) {
-                // Remove CI specific path segments
-                issue.setFilePath(removeCIDirectoriesFromPath(issue.getFilePath()));
+            for (final StaticCodeAnalysisIssue issue : report.issues()) {
+                String truncatedMessage = truncateMessage(issue.message());
+                String cleanedPath = removeCIDirectoriesFromPath(issue.filePath());
 
-                if (issue.getMessage() != null) {
-                    // Note: the feedback detail text is limited to 5.000 characters, so we limit the issue message to 4.500 characters to avoid issues
-                    // the remaining 500 characters are used for the json structure of the issue
-                    int maxLength = Math.min(issue.getMessage().length(), FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH - 500);
-                    issue.setMessage(issue.getMessage().substring(0, maxLength));
-                }
+                // Create a new issue record with the modified message and file path
+                StaticCodeAnalysisIssue updatedIssue = new StaticCodeAnalysisIssue(cleanedPath, issue.startLine(), issue.endLine(), issue.startColumn(), issue.endColumn(),
+                        issue.rule(), issue.category(), truncatedMessage, issue.priority(), issue.penalty());
 
                 Feedback feedback = new Feedback();
                 feedback.setText(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER);
@@ -194,16 +192,23 @@ public class ProgrammingExerciseFeedbackCreationService {
 
                 // Store static code analysis in JSON format
                 try {
-                    // the feedback is already pre-truncated to fit, it should not be shortened further
-                    feedback.setDetailTextTruncated(mapper.writeValueAsString(issue));
+                    feedback.setDetailTextTruncated(mapper.writeValueAsString(updatedIssue));
                 }
                 catch (JsonProcessingException e) {
-                    continue;
+                    continue;  // Skip this feedback if JSON processing fails
                 }
                 feedbackList.add(feedback);
             }
         }
         return feedbackList;
+    }
+
+    private String truncateMessage(String message) {
+        if (message != null) {
+            int maxLength = Math.min(message.length(), FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH - 500);
+            return message.substring(0, maxLength);
+        }
+        return null;
     }
 
     /**

@@ -31,23 +31,6 @@ public enum StaticCodeAnalysisTool {
         return this.filePattern;
     }
 
-    public String getArtifactLabel() {
-        return this.name().toLowerCase();
-    }
-
-    /**
-     * Returns the artifact labels of all static code analysis tools.
-     *
-     * @return Set of static code analysis tool artifact labels
-     */
-    public static Set<String> getAllArtifactLabels() {
-        Set<String> artifactLabels = new HashSet<>();
-        for (var tool : StaticCodeAnalysisTool.values()) {
-            artifactLabels.add(tool.getArtifactLabel());
-        }
-        return artifactLabels;
-    }
-
     /**
      * Returns all static code analysis tools supporting the given programming language.
      *
@@ -79,19 +62,4 @@ public enum StaticCodeAnalysisTool {
         return Optional.empty();
     }
 
-    /**
-     * Creates the build plan task command for static code analysis tools of a specific language.
-     *
-     * @param language Programming language for which the static code analysis command should be created
-     * @return the command used to run static code analysis for a specific language
-     */
-    public static String createBuildPlanCommandForProgrammingLanguage(ProgrammingLanguage language) {
-        StringJoiner commandBuilder = new StringJoiner(" ");
-        for (var tool : StaticCodeAnalysisTool.values()) {
-            if (tool.language == language) {
-                commandBuilder.add(tool.command);
-            }
-        }
-        return commandBuilder.toString();
-    }
 }

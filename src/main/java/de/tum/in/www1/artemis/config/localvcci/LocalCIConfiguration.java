@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
@@ -110,6 +111,16 @@ public class LocalCIConfiguration {
 
         log.info("Using ExecutorService with thread pool size {}.", threadPoolSize);
         return new ThreadPoolExecutor(threadPoolSize, threadPoolSize, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(1), customThreadFactory, customRejectedExecutionHandler);
+    }
+
+    /**
+     * Creates an XmlMapper that is used to parse the test results during execution of the local CI build jobs.
+     *
+     * @return The XmlMapper bean.
+     */
+    @Bean
+    public XmlMapper localCiXmlMapper() {
+        return new XmlMapper();
     }
 
     // TODO: the Artemis server should start even if docker is not running. Also, pulling the image should be done after the start has finished or only on demand

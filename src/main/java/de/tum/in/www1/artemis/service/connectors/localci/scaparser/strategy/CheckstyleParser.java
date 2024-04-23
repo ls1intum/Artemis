@@ -1,62 +1,80 @@
 package de.tum.in.www1.artemis.service.connectors.localci.scaparser.strategy;
 
-import org.w3c.dom.Document;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import com.fasterxml.jackson.dataformat.xml.annotation.*;
 
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
+import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisIssue;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
-import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue;
 
-/**
- * Parser for the Checkstyle static code analysis tool.
- */
-class CheckstyleParser extends CheckstyleFormatParser {
+record CheckstyleFile(@JacksonXmlProperty(isAttribute = true, localName = "name") String name,
 
-    // The packages rooted at checks denote the category and rule
+        @JacksonXmlElementWrapper(useWrapping = false) @JacksonXmlProperty(localName = "error") List<CheckstyleError> errors) {
+}
+
+record CheckstyleError(@JacksonXmlProperty(isAttribute = true, localName = "line") Integer line,
+
+        @JacksonXmlProperty(isAttribute = true, localName = "column") Integer column,
+
+        @JacksonXmlProperty(isAttribute = true, localName = "severity") String severity,
+
+        @JacksonXmlProperty(isAttribute = true, localName = "message") String message,
+
+        @JacksonXmlProperty(isAttribute = true, localName = "source") String source) {
+}
+
+public class CheckstyleParser implements ParserStrategy {
+
     private static final String CATEGORY_DELIMITER = "checks";
 
-    // Some rules don't belong to a category. We group them under this identifier.
     private static final String CATEGORY_MISCELLANEOUS = "miscellaneous";
 
-    /**
-     * Parses the given checkstyle report and returns a {@link StaticCodeAnalysisReportDTO} containing the issues.
-     *
-     * @param doc checkstyle report
-     * @return StaticCodeAnalysisReportDTO containing the issues
-     */
-    public StaticCodeAnalysisReportDTO parse(Document doc) {
-        StaticCodeAnalysisReportDTO report = new StaticCodeAnalysisReportDTO();
-        report.setTool(StaticCodeAnalysisTool.CHECKSTYLE);
-        extractIssues(doc, report);
+    private final XmlMapper xmlMapper = new XmlMapper();
+
+    @Override
+    public StaticCodeAnalysisReportDTO parse(String xmlContent) {
+        try {
+            List<CheckstyleFile> files = xmlMapper.readValue(xmlContent, new com.fasterxml.jackson.core.type.TypeReference<List<CheckstyleFile>>() {
+            });
+            return createReportFromFiles(files);
+        }
+        catch (IOException e) {
+            throw new RuntimeException("Failed to parse XML", e);
+        }
+    }
+
+    private StaticCodeAnalysisReportDTO createReportFromFiles(List<CheckstyleFile> files) {
+        List<StaticCodeAnalysisIssue> issues = new ArrayList<>();
+        StaticCodeAnalysisReportDTO report = new StaticCodeAnalysisReportDTO(StaticCodeAnalysisTool.CHECKSTYLE, issues);
+
+        for (CheckstyleFile file : files) {
+            for (CheckstyleError error : file.errors()) {
+                StaticCodeAnalysisIssue issue = new StaticCodeAnalysisIssue(file.name(), error.line(), error.line(),  // As Checkstyle does not support an end line
+                        error.column(), error.column(),  // As Checkstyle does not support an end column
+                        extractRule(error.source()),  // Method to extract the rule from source
+                        extractCategory(error.source()),  // Method to extract the category from source
+                        error.message(), error.severity(), null  // Assuming no penalty
+                );
+                issues.add(issue);
+            }
+        }
         return report;
     }
 
-    /**
-     * Extracts and sets the rule and the category given the check's package name.
-     *
-     * @param issue       issue under construction
-     * @param errorSource package like com.puppycrawl.tools.checkstyle.checks.javadoc.JavadocPackageCheck. The first
-     *                        segment after '.checks.' denotes the category and the segment after the rule. Some rules do
-     *                        not belong to a category e.g. com.puppycrawl.tools.checkstyle.checks.NewlineAtEndOfFileCheck.
-     *                        Such rule will be grouped under {@link #CATEGORY_MISCELLANEOUS}.
-     */
-    @Override
-    protected void extractRuleAndCategory(StaticCodeAnalysisIssue issue, String errorSource) {
-        String[] errorSourceSegments = errorSource.split("\\.");
-        int noOfSegments = errorSourceSegments.length;
+    private String extractRule(String errorSource) {
+        String[] parts = errorSource.split("\\.");
+        return parts.length > 0 ? parts[parts.length - 1] : "Unknown";
+    }
 
-        // Should never happen but check for robustness
-        if (noOfSegments < 2) {
-            issue.setCategory(errorSource);
-            return;
+    private String extractCategory(String errorSource) {
+        String[] parts = errorSource.split("\\.");
+        if (parts.length > 1 && parts[parts.length - 2].equals(CATEGORY_DELIMITER)) {
+            return CATEGORY_MISCELLANEOUS;
         }
-        String rule = errorSourceSegments[noOfSegments - 1];
-        String category = errorSourceSegments[noOfSegments - 2];
-
-        // Check if the rule has a category
-        if (category.equals(CATEGORY_DELIMITER)) {
-            category = CATEGORY_MISCELLANEOUS;
-        }
-        issue.setRule(rule);
-        issue.setCategory(category);
+        return parts.length > 1 ? parts[parts.length - 2] : "Unknown";
     }
 }
