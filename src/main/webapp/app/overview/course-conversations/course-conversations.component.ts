@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { Post } from 'app/entities/metis/post.model';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -11,6 +11,7 @@ import { PageType } from 'app/shared/metis/metis.util';
 import { faFilter, faPlus, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared/components/button.component';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { CourseWideSearchComponent } from 'app/overview/course-conversations/course-wide-search/course-wide-search.component';
 
 @Component({
     selector: 'jhi-course-conversations',
@@ -31,6 +32,9 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     // set undefined so nothing gets displayed until isCodeOfConductAccepted is loaded
     isCodeOfConductAccepted?: boolean;
     isCodeOfConductPresented: boolean = false;
+
+    @ViewChild(CourseWideSearchComponent)
+    courseWideSearch: CourseWideSearchComponent;
 
     readonly documentationType: DocumentationType = 'Communications';
     readonly ButtonType = ButtonType;
@@ -152,8 +156,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     onSearch() {
+        this.activeConversation = undefined;
         this.headerSearchTerm = this.searchInput;
-        const index = this.conversationsOfUser.findIndex((channel) => getAsChannelDTO(channel)?.name == 'all-messages');
-        this.metisConversationService.setActiveConversation(this.conversationsOfUser[index]);
+        this.courseWideSearch.onSearch(this.searchInput ?? '');
     }
 }

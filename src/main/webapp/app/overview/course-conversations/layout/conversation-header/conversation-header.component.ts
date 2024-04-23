@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { faUserGroup, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
@@ -25,9 +25,6 @@ import { MetisService } from 'app/shared/metis/metis.service';
 })
 export class ConversationHeaderComponent implements OnInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();
-
-    @Input()
-    searchTerm?: string;
 
     INFO = ConversationDetailTabs.INFO;
     MEMBERS = ConversationDetailTabs.MEMBERS;
@@ -108,9 +105,5 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
                     complete: () => {},
                 });
             });
-    }
-
-    isAllMessagesPage() {
-        return this.activeConversationAsChannel?.name == 'all-messages';
     }
 }

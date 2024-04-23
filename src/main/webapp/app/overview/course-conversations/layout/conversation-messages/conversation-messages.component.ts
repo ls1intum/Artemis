@@ -71,7 +71,6 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     totalNumberOfPosts = 0;
     page = 1;
     public isFetchingPosts = true;
-    isAllMessagesPage = false;
     // Icons
     faTimes = faTimes;
     faSearch = faSearch;
@@ -88,7 +87,6 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         this.subscribeToSearch();
         this.subscribeToMetis();
         this.subscribeToActiveConversation();
-        this.updateIsAllMessagesPage();
         this.cdr.detectChanges();
     }
 
@@ -128,10 +126,10 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     }
 
     private onActiveConversationChange() {
-        this.updateIsAllMessagesPage();
         if (this.course && this._activeConversation) {
             if (this.searchInput) {
-                this.searchInput.nativeElement.value = this.searchText = this.isAllMessagesPage ? this.courseWideSearchTerm : '';
+                this.searchInput.nativeElement.value = '';
+                this.searchText = '';
             }
             this.onSearch();
             this.createEmptyPost();
@@ -150,6 +148,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     private refreshMetisConversationPostContextFilter(): void {
         this.currentPostContextFilter = {
             courseId: this.course?.id,
+            conversationId: this._activeConversation?.id,
             searchText: this.searchText ? this.searchText.trim() : undefined,
             postSortCriterion: PostSortCriterion.CREATION_DATE,
             sortingOrder: SortDirection.DESCENDING,
@@ -157,13 +156,6 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             page: this.page - 1,
             pageSize: 50,
         };
-        if (this.isAllMessagesPage) {
-            this.metisConversationService.conversationsOfUser$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversations: ConversationDTO[]) => {
-                this.currentPostContextFilter!.courseWideChannelIds = conversations.map((conversation) => conversation!.id!);
-            });
-        } else {
-            this.currentPostContextFilter.conversationId = this._activeConversation?.id;
-        }
     }
 
     setPosts(posts: Post[]): void {
@@ -171,6 +163,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             this.previousScrollDistanceFromTop = this.content.nativeElement.scrollHeight - this.content.nativeElement.scrollTop;
         }
         this.posts = posts.slice().reverse();
+        console.log('serposts in messages called');
     }
 
     fetchNextPage() {
@@ -245,9 +238,5 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             this.searchInput.nativeElement.value = '';
             this.searchInput.nativeElement.dispatchEvent(new Event('input'));
         }
-    }
-
-    updateIsAllMessagesPage() {
-        this.isAllMessagesPage = this.getAsChannel(this._activeConversation)?.name == 'all-messages';
     }
 }

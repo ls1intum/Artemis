@@ -2,27 +2,19 @@
     <div class="conversation-header">
         <div class="d-flex justify-content-between">
             <div>
-                @if (!isAllMessagesPage()) {
-                    <h3 class="conversation-name d-inline-block rounded p-2 info" (click)="openConversationDetailDialog($event, INFO)">
-                        @if (activeConversationAsChannel) {
-                            <jhi-channel-icon
-                                [isPublic]="activeConversationAsChannel.isPublic!"
-                                [isArchived]="activeConversationAsChannel.isArchived!"
-                                [isAnnouncementChannel]="activeConversationAsChannel.isAnnouncementChannel!"
-                            />
-                        }
-                        @if (getAsGroupChat(activeConversation); as groupChat) {
-                            <jhi-group-chat-icon />
-                        }
-                        {{ conversationService.getConversationName(activeConversation, true) }}
-                    </h3>
-                } @else {
-                    @if (!searchTerm) {
-                        <h3 class="conversation-name d-inline-block rounded p-2 info">All Messages</h3>
-                    } @else {
-                        <h3 class="conversation-name d-inline-block rounded p-2 info">Search Results for "{{ searchTerm }}"</h3>
+                <h3 class="conversation-name d-inline-block rounded p-2 info" (click)="openConversationDetailDialog($event, INFO)">
+                    @if (activeConversationAsChannel) {
+                        <jhi-channel-icon
+                            [isPublic]="activeConversationAsChannel.isPublic!"
+                            [isArchived]="activeConversationAsChannel.isArchived!"
+                            [isAnnouncementChannel]="activeConversationAsChannel.isAnnouncementChannel!"
+                        />
                     }
-                }
+                    @if (getAsGroupChat(activeConversation); as groupChat) {
+                        <jhi-group-chat-icon />
+                    }
+                    {{ conversationService.getConversationName(activeConversation, true) }}
+                </h3>
             </div>
             @if (activeConversationAsChannel) {
                 @if (activeConversationAsChannel.tutorialGroupId && activeConversationAsChannel.tutorialGroupTitle) {
@@ -34,7 +26,7 @@
                 }
             }
             <div>
-                <div class="btn-toolbar p-2" role="toolbar" [hidden]="isAllMessagesPage()">
+                <div class="btn-toolbar p-2" role="toolbar">
                     <div class="btn-group me-2" role="group">
                         @if (activeConversationAsChannel?.subTypeReferenceId) {
                             <a class="btn btn-outline-secondary sub-type-reference" [routerLink]="channelSubTypeReferenceRouterLink">
