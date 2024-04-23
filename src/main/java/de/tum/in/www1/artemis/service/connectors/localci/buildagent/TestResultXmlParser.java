@@ -13,6 +13,14 @@ import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
 
 class TestResultXmlParser {
 
+    /**
+     * Parses the test result file and extracts failed and successful tests.
+     *
+     * @param testResultFileString The content of the test result file as a String.
+     * @param failedTests          A list of failed tests. This list will be populated by the method.
+     * @param successfulTests      A list of successful tests. This list will be populated by the method.
+     * @throws IOException If an I/O error occurs while reading the test result file.
+     */
     static void processTestResultFile(String testResultFileString, List<LocalCIBuildResult.LocalCITestJobDTO> failedTests,
             List<LocalCIBuildResult.LocalCITestJobDTO> successfulTests) throws IOException {
         TestSuite testSuite = new XmlMapper().readValue(testResultFileString, TestSuite.class);
@@ -41,7 +49,8 @@ class TestResultXmlParser {
         }
     }
 
-    // Due to issues with Jackson this currently cannot be a record
+    // Due to issues with Jackson this currently cannot be a record.
+    // See https://github.com/FasterXML/jackson-module-kotlin/issues/138#issuecomment-1062725140
     @JsonIgnoreProperties(ignoreUnknown = true)
     static final class Failure {
 
