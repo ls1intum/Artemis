@@ -355,11 +355,9 @@ public class BuildJobExecutionService {
         TestSuite testSuite = localCiXmlMapper.readValue(testResultFileString, TestSuite.class);
 
         for (TestCase testCase : testSuite.testCases()) {
-            if (testCase.failure() != null) {
-                failedTests.add(new LocalCIBuildResult.LocalCITestJobDTO(testCase.name(), List.of(testCase.failure().extractMessage())));
-            }
-            else if (testCase.error() != null) {
-                failedTests.add(new LocalCIBuildResult.LocalCITestJobDTO(testCase.name(), List.of(testCase.error().extractMessage())));
+            Failure failure = testCase.extractFailure();
+            if (failure != null) {
+                failedTests.add(new LocalCIBuildResult.LocalCITestJobDTO(testCase.name(), List.of(failure.extractMessage())));
             }
             else {
                 successfulTests.add(new LocalCIBuildResult.LocalCITestJobDTO(testCase.name(), List.of()));
@@ -374,6 +372,10 @@ public class BuildJobExecutionService {
     @JsonIgnoreProperties(ignoreUnknown = true)
     record TestCase(@JacksonXmlProperty(isAttribute = true, localName = "name") String name, @JacksonXmlProperty(localName = "failure") Failure failure,
             @JacksonXmlProperty(localName = "error") Failure error) {
+
+        private Failure extractFailure() {
+            return failure != null ? failure : error;
+        }
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
