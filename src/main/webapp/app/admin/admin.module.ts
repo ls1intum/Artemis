@@ -29,7 +29,6 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatTreeModule } from '@angular/material/tree';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ReactiveFormsModule } from '@angular/forms';
 import { LtiConfigurationComponent } from 'app/admin/lti-configuration/lti-configuration.component';
@@ -44,7 +43,7 @@ import { UserImportModule } from 'app/shared/user-import/user-import.module';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
 import { KnowledgeAreaDetailComponent } from 'app/admin/standardized-competencies/knowledge-area-detail.component';
 import { AdminImportStandardizedCompetenciesComponent } from 'app/admin/standardized-competencies/import/admin-import-standardized-competencies.component';
-import { KnowledgeAreaTreeComponent } from 'app/admin/standardized-competencies/knowledge-area-tree/knowledge-area-tree.component';
+import { ArtemisStandardizedCompetencyModule } from 'app/shared/standardized-competencies/standardized-competency.module';
 
 const ENTITY_STATES = [...adminState];
 
@@ -63,12 +62,12 @@ const ENTITY_STATES = [...adminState];
         MatFormFieldModule,
         ArtemisSharedComponentModule,
         ReactiveFormsModule,
-        MatTreeModule,
         ArtemisMarkdownEditorModule,
         ArtemisMarkdownModule,
         ArtemisCompetenciesModule,
         UserImportModule,
         SubmissionResultStatusModule,
+        ArtemisStandardizedCompetencyModule,
     ],
     declarations: [
         AuditsComponent,
@@ -96,7 +95,6 @@ const ENTITY_STATES = [...adminState];
         KnowledgeAreaDetailComponent,
         StandardizedCompetencyManagementComponent,
         AdminImportStandardizedCompetenciesComponent,
-        KnowledgeAreaTreeComponent,
     ],
 })
 export class ArtemisAdminModule {}
