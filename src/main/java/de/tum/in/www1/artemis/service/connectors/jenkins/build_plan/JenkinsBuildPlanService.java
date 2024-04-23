@@ -57,9 +57,9 @@ import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.TestResults
 import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsEndpoints;
 import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsInternalUrlService;
 import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsXmlConfigBuilder;
+import de.tum.in.www1.artemis.service.connectors.jenkins.XmlFileUtils;
 import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobPermissionsService;
 import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobService;
-import de.tum.in.www1.artemis.service.util.XmlFileUtils;
 
 @Service
 @Profile("jenkins")

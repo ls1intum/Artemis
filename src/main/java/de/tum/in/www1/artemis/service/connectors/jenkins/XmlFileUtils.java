@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.util;
+package de.tum.in.www1.artemis.service.connectors.jenkins;
 
 import java.io.IOException;
 import java.io.StringReader;

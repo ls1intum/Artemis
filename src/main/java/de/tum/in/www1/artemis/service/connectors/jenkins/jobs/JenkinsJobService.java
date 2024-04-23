@@ -17,7 +17,7 @@ import com.offbytwo.jenkins.model.FolderJob;
 import com.offbytwo.jenkins.model.JobWithDetails;
 
 import de.tum.in.www1.artemis.exception.JenkinsException;
-import de.tum.in.www1.artemis.service.util.XmlFileUtils;
+import de.tum.in.www1.artemis.service.connectors.jenkins.XmlFileUtils;
 
 @Service
 @Profile("jenkins")
