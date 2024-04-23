@@ -6,4 +6,10 @@
     .title {
         max-width: 300px;
     }
+
+    &.is-user-tutor {
+        --bs-table-bg: var(--bs-body-bg);
+        --bs-table-border-color: var(--bs-body-color);
+        --bs-table-hover-bg: var(--neutral-dark-l-15);
+    }
 }
