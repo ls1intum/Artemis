@@ -21,12 +21,12 @@ class TestResultXmlParserTest {
 
         String exampleXml = """
                  <testsuite>
-                     <testcase name='testBubbleSort()' classname="testpackage.SortingExampleBehaviorTest" time='0.000306'>
+                     <testcase name="testBubbleSort()" classname="testpackage.SortingExampleBehaviorTest" time="0.000306">
                          <failure>test `add` failed on ≥ 1 cases:
                              (0, 0)
                              Your submission raised an error Failure(&quot;TODO add&quot;)
                          </failure>
-                     </testcase>
+                     </testsuite>
                  </testsuite>
                 """;
 
@@ -47,7 +47,7 @@ class TestResultXmlParserTest {
 
         String exampleXml = """
                  <testsuite>
-                     <testcase name='testBubbleSort()' classname="testpackage.SortingExampleBehaviorTest" time='0.000306'>
+                     <testcase name="testBubbleSort()" classname="testpackage.SortingExampleBehaviorTest" time="0.000306">
                          <failure message = "test `add` failed"/>
                      </testcase>
                  </testsuite>
