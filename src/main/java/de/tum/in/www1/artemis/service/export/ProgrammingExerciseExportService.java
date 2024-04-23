@@ -541,15 +541,15 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
     }
 
     /**
-     * Zip the participations of programming exercises of a requested list of students separately.
+     * Creates directories of the participations of programming exercises of a requested list of students.
      *
      * @param programmingExercise     the programming exercise
      * @param participations          participations that should be exported
      * @param repositoryExportOptions the options that should be used for the export
      * @param workingDir              The directory used to clone the repositories
-     * @param outputDir               The directory used for store the zip file
+     * @param outputDir               The directory used for store the directories
      * @param exportErrors            A list of errors that occurred during export (populated by this function)
-     * @return List of zip file paths
+     * @return List of directory paths
      */
     public List<Path> exportStudentRepositories(ProgrammingExercise programmingExercise, @NotNull List<ProgrammingExerciseStudentParticipation> participations,
             RepositoryExportOptionsDTO repositoryExportOptions, Path workingDir, Path outputDir, List<String> exportErrors) {
@@ -572,9 +572,9 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         var futures = participations.stream().map(participation -> CompletableFuture.runAsync(() -> {
             try {
                 log.debug("invoke createZipForRepositoryWithParticipation for participation {}", participation.getId());
-                Path zipFile = createZipForRepositoryWithParticipation(programmingExercise, participation, repositoryExportOptions, workingDir, outputDir);
-                if (zipFile != null) {
-                    exportedStudentRepositories.add(zipFile);
+                Path dir = getRepositoryWithParticipation(programmingExercise, participation, repositoryExportOptions, workingDir, outputDir, false);
+                if (dir != null) {
+                    exportedStudentRepositories.add(dir);
                 }
             }
             catch (Exception exception) {
@@ -638,18 +638,19 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
     }
 
     /**
-     * Checks out the repository for the given participation, zips it and return the path of it.
+     * Checks out the repository for the given participation and return the path to a copy of it.
      *
      * @param programmingExercise     The programming exercise for the participation
      * @param participation           The participation, for which the repository should get zipped
      * @param repositoryExportOptions The options, that should get applied to the zipped repo
      * @param workingDir              The directory used to clone the repository
-     * @param outputDir               The directory where the zip file is stored
-     * @return The checked out and zipped repository
+     * @param outputDir               The directory where the zip file or directory is stored
+     * @param zipOutput               If true the method returns a zip file otherwise a directory.
+     * @return The checked out repository as a zip file or directory
      * @throws IOException if zip file creation failed
      */
-    public Path createZipForRepositoryWithParticipation(final ProgrammingExercise programmingExercise, final ProgrammingExerciseStudentParticipation participation,
-            final RepositoryExportOptionsDTO repositoryExportOptions, Path workingDir, Path outputDir) throws IOException, UncheckedIOException {
+    public Path getRepositoryWithParticipation(final ProgrammingExercise programmingExercise, final ProgrammingExerciseStudentParticipation participation,
+            final RepositoryExportOptionsDTO repositoryExportOptions, Path workingDir, Path outputDir, boolean zipOutput) throws IOException, UncheckedIOException {
         if (participation.getVcsRepositoryUri() == null) {
             log.warn("Ignore participation {} for export, because its repository URI is null", participation.getId());
             return null;
@@ -702,8 +703,8 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
                 }
             }
 
-            log.debug("Create temporary zip file for repository {}", repository.getLocalPath().toString());
-            return gitService.zipRepositoryWithParticipation(repository, outputDir.toString(), repositoryExportOptions.isAnonymizeRepository());
+            log.debug("Create temporary directory for repository {}", repository.getLocalPath().toString());
+            return gitService.getRepositoryWithParticipation(repository, outputDir.toString(), repositoryExportOptions.isAnonymizeRepository(), zipOutput);
         }
         catch (GitAPIException | GitException ex) {
             log.error("Failed to create zip for participation id {} with exercise id {} because of the following exception ", participation.getId(),

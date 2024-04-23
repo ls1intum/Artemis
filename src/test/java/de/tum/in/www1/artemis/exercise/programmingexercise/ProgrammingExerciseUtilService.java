@@ -881,6 +881,6 @@ public class ProgrammingExerciseUtilService {
         // Mock Git service operations
         doReturn(mockRepository).when(gitService).getOrCheckoutRepository(any(), any(), any(), anyBoolean(), anyString());
         doNothing().when(gitService).resetToOriginHead(any());
-        doReturn(Paths.get("repo.zip")).when(gitService).zipRepositoryWithParticipation(any(), anyString(), anyBoolean());
+        doReturn(Paths.get("repo.zip")).when(gitService).getRepositoryWithParticipation(any(), anyString(), anyBoolean(), true);
     }
 }

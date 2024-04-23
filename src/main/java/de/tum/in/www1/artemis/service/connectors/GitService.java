@@ -1350,15 +1350,16 @@ public class GitService {
     }
 
     /**
-     * Zip the content of a git repository that contains a participation.
+     * Get the content of a git repository that contains a participation, as zip or directory.
      *
      * @param repo            Local Repository Object.
      * @param repositoryDir   path where the repo is located on disk
-     * @param hideStudentName option to hide the student name for the zip file
-     * @return path to zip file.
-     * @throws IOException if the zipping process failed.
+     * @param hideStudentName option to hide the student name for the zip file or directory
+     * @param zipOutput       If true the method returns a zip file otherwise a directory.
+     * @return path to zip file or directory.
+     * @throws IOException if the zipping or copying process failed.
      */
-    public Path zipRepositoryWithParticipation(Repository repo, String repositoryDir, boolean hideStudentName) throws IOException, UncheckedIOException {
+    public Path getRepositoryWithParticipation(Repository repo, String repositoryDir, boolean hideStudentName, boolean zipOutput) throws IOException, UncheckedIOException {
         var exercise = repo.getParticipation().getProgrammingExercise();
         var courseShortName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
         var participation = (ProgrammingExerciseStudentParticipation) repo.getParticipation();
@@ -1366,15 +1367,25 @@ public class GitService {
         // The zip filename is either the student login, team short name or some default string.
         var studentTeamOrDefault = Objects.requireNonNullElse(participation.getParticipantIdentifier(), "student-submission" + repo.getParticipation().getId());
 
-        String zipRepoName = FileService.sanitizeFilename(courseShortName + "-" + exercise.getTitle() + "-" + participation.getId());
+        String repoName = FileService.sanitizeFilename(courseShortName + "-" + exercise.getTitle() + "-" + participation.getId());
         if (hideStudentName) {
-            zipRepoName += "-student-submission.git.zip";
+            repoName += "-student-submission.git";
         }
         else {
-            zipRepoName += "-" + studentTeamOrDefault + ".zip";
+            repoName += "-" + studentTeamOrDefault;
         }
-        zipRepoName = participation.addPracticePrefixIfTestRun(zipRepoName);
-        return zipFiles(repo.getLocalPath(), zipRepoName, repositoryDir, null);
+        repoName = participation.addPracticePrefixIfTestRun(repoName);
+
+        if (zipOutput) {
+            return zipFiles(repo.getLocalPath(), repoName, repositoryDir, null);
+        }
+        else {
+            Path targetDir = Path.of(repositoryDir, repoName);
+
+            FileUtils.copyDirectory(repo.getLocalPath().toFile(), targetDir.toFile());
+            return targetDir;
+        }
+
     }
 
     /**
