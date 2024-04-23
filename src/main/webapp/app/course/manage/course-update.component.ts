@@ -1,5 +1,5 @@
 import { ActivatedRoute, Router } from '@angular/router';
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
@@ -18,7 +18,7 @@ import { Organization } from 'app/entities/organization.model';
 import { NgbModal, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { OrganizationSelectorComponent } from 'app/shared/organization-selector/organization-selector.component';
-import { faBan, faExclamationTriangle, faQuestionCircle, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faExclamationTriangle, faPen, faQuestionCircle, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { base64StringToBlob } from 'app/utils/blob-util';
 import { ImageCroppedEvent } from 'app/shared/image-cropper/interfaces/image-cropped-event.interface';
 import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
@@ -29,6 +29,7 @@ import { EventManager } from 'app/core/util/event-manager.service';
 import { FileService } from 'app/shared/http/file.service';
 import { onError } from 'app/shared/util/global.utils';
 import { getSemesters } from 'app/utils/semester-utils';
+import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal.component';
 
 export const courseTitleRegex = new RegExp('^[a-zA-Z0-9- ]+$');
 
@@ -47,6 +48,7 @@ export class CourseUpdateComponent implements OnInit {
     timeZones: string[] = [];
     originalTimeZone?: string;
 
+    @ViewChild('fileInput', { static: false }) fileInput: ElementRef<HTMLInputElement>;
     @ViewChild(ColorSelectorComponent, { static: false }) colorSelector: ColorSelectorComponent;
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
     courseForm: FormGroup;
@@ -54,7 +56,6 @@ export class CourseUpdateComponent implements OnInit {
     isSaving: boolean;
     courseImageUploadFile?: File;
     croppedImage?: string;
-    showCropper = false;
     complaintsEnabled = true; // default value
     requestMoreFeedbackEnabled = true; // default value
     customizeGroupNames = false; // default value
@@ -67,6 +68,7 @@ export class CourseUpdateComponent implements OnInit {
     faTrash = faTrash;
     faQuestionCircle = faQuestionCircle;
     faExclamationTriangle = faExclamationTriangle;
+    faPen = faPen;
 
     communicationEnabled = true;
     messagingEnabled = true;
@@ -358,9 +360,11 @@ export class CourseUpdateComponent implements OnInit {
      */
     setCourseImage(event: Event): void {
         const element = event.currentTarget as HTMLInputElement;
-        if (element.files?.[0]) {
+        if (element.files && element.files.length > 0) {
             this.courseImageUploadFile = element.files[0];
+            this.openCropper();
         }
+        element.value = '';
     }
 
     /**
@@ -368,10 +372,6 @@ export class CourseUpdateComponent implements OnInit {
      */
     imageCropped(event: ImageCroppedEvent) {
         this.croppedImage = event.base64;
-    }
-
-    imageLoaded() {
-        this.showCropper = true;
     }
 
     /**
@@ -620,6 +620,21 @@ export class CourseUpdateComponent implements OnInit {
     }
 
     protected readonly FeatureToggle = FeatureToggle;
+
+    triggerFileInput() {
+        this.fileInput.nativeElement.click();
+    }
+
+    openCropper(): void {
+        const modalRef = this.modalService.open(ImageCropperModalComponent, { size: 'm' });
+        modalRef.componentInstance.courseImageUploadFile = this.courseImageUploadFile;
+        modalRef.componentInstance.croppedImage = this.croppedImage;
+        modalRef.result.then((result) => {
+            if (result) {
+                this.croppedImage = result;
+            }
+        });
+    }
 }
 
 const CourseValidator: ValidatorFn = (formGroup: FormGroup) => {

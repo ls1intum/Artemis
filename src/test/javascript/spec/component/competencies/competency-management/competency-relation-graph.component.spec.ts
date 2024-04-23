@@ -164,6 +164,15 @@ describe('CompetencyRelationGraphComponent', () => {
         expect(component.relationError).toBe(CompetencyRelationError.SELF);
     });
 
+    it('should zoom to fit and center on centerView', () => {
+        const zoomToFitStub = jest.spyOn(component.zoomToFit$, 'next');
+        const centerStub = jest.spyOn(component.center$, 'next');
+        componentFixture.detectChanges();
+        component.centerView();
+        expect(zoomToFitStub).toHaveBeenCalledExactlyOnceWith({ autoCenter: true });
+        expect(centerStub).toHaveBeenCalledExactlyOnceWith(true);
+    });
+
     function createCompetency(id: number, title: string) {
         const competency: Competency = {
             id: id,

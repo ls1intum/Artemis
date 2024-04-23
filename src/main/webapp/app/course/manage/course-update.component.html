@@ -1,19 +1,34 @@
 <div class="row justify-content-center">
     <div class="col-md-8">
         <form [formGroup]="courseForm" (ngSubmit)="save()" #formDir="ngForm">
-            <div class="headline">
+            <div class="container headline">
+                <input type="file" #fileInput style="display: none" (change)="setCourseImage($event)" />
                 @if (croppedImage) {
-                    <jhi-secured-image [src]="croppedImage" [cachingStrategy]="CachingStrategy.LOCAL_STORAGE" />
+                    <div class="position-relative">
+                        <jhi-secured-image class="secured-image" [src]="croppedImage" [cachingStrategy]="CachingStrategy.LOCAL_STORAGE" />
+
+                        <button id="delete-course-icon" type="button" class="btn icon-button-wrapper btn-danger position-absolute bottom-0 start-0" (click)="deleteCourseIcon()">
+                            <fa-icon [icon]="faTrash" />
+                        </button>
+
+                        <button id="edit-course-icon" type="button" class="btn icon-button-wrapper btn-warning position-absolute bottom-0 end-0" (click)="triggerFileInput()">
+                            <fa-icon [icon]="faPen" />
+                        </button>
+                    </div>
                 }
                 @if (!croppedImage) {
-                    <div class="no-image"></div>
+                    <div id="no-image-placeholder" class="no-image clickable me-2 lh-sm" (click)="triggerFileInput()">
+                        <div class="h3 my-0 font-weight-bold">+</div>
+                        <div class="small" jhiTranslate="artemisApp.course.imageCropper.uploadTitle"></div>
+                    </div>
                 }
-                @if (!course.id) {
-                    <h4 id="jhi-course-heading-create" jhiTranslate="artemisApp.course.home.createLabel"></h4>
-                }
-                @if (course.id) {
-                    <h4 id="jhi-course-heading-edit" jhiTranslate="artemisApp.course.home.editLabel"></h4>
-                }
+                <div class="col ps-3">
+                    @if (!course.id) {
+                        <h4 id="jhi-course-heading-create" jhiTranslate="artemisApp.course.home.createLabel"></h4>
+                    } @else {
+                        <h4 id="jhi-course-heading-edit" jhiTranslate="artemisApp.course.home.editLabel"></h4>
+                    }
+                </div>
             </div>
             <hr />
             <div>
@@ -65,46 +80,6 @@
                             </div>
                         }
                     }
-                </div>
-                <div class="row">
-                    <div class="col-sm-9 col-xl-10">
-                        <div class="form-group">
-                            <label class="form-control-label" jhiTranslate="artemisApp.course.courseIcon" for="field_shortName"></label>
-                            <div class="input-group background-file">
-                                <div class="custom-file">
-                                    <input id="courseImageInput{{ course.id }}" type="file" accept="image/*" class="custom-file-input" (change)="setCourseImage($event)" />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="delete-course-icon col-sm-3 col-xl-2 mt-sm-3 mb-3">
-                        <div>
-                            @if (croppedImage && course.courseIcon) {
-                                <button id="delete-course-icon" class="btn btn-danger btn-sm" (click)="deleteCourseIcon()">
-                                    <fa-icon [icon]="faTrash" />
-                                    <span jhiTranslate="artemisApp.course.delete.icon"></span>
-                                </button>
-                            }
-                        </div>
-                    </div>
-                </div>
-                <div class="container no-padding">
-                    <div class="row">
-                        <div class="col-6">
-                            <image-cropper
-                                [imageFile]="courseImageUploadFile"
-                                [maintainAspectRatio]="true"
-                                [aspectRatio]="1"
-                                [resizeToWidth]="200"
-                                [cropperMinWidth]="100"
-                                [onlyScaleDown]="true"
-                                [roundCropper]="true"
-                                (imageCropped)="imageCropped($event)"
-                                (imageLoaded)="imageLoaded()"
-                                [style.display]="showCropper ? null : 'none'"
-                            />
-                        </div>
-                    </div>
                 </div>
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="artemisApp.course.description" for="field_description"></label>

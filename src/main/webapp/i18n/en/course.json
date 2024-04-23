@@ -232,7 +232,11 @@
             "activeStudents": "Active students: {{ students }}",
             "notStartedYet": "The course has not officially started yet. Official course start:",
             "noOrganizations": "No Organizations",
-            "organizationAddingHint": "Administrators can add organizations to courses."
+            "organizationAddingHint": "Administrators can add organizations to courses.",
+            "imageCropper": {
+                "title": "Crop your image",
+                "uploadTitle": "Add an icon"
+            }
         },
         "courseStatistics": {
             "statistics": "Statistics",
