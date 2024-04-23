@@ -28,16 +28,16 @@ import com.vdurmont.semver4j.Semver;
 class MigrationPath {
 
     /** The version from which migration can start, typically the last version before a major update. */
-    Semver requiredVersion; // e.g. 5.12.9
+    final Semver requiredVersion; // e.g. 5.12.9
 
     /** The upgrade version to which the database can be migrated. */
-    Semver upgradeVersion; // e.g. 6.0.0 --> this is also the target version
+    final Semver upgradeVersion; // e.g. 6.0.0 --> this is also the target version
 
     /** The next upgrade version before another major update is needed. */
-    Semver nextUpgradeVersion; // e.g. 7.0.0
+    final Semver nextUpgradeVersion; // e.g. 7.0.0
 
     /** The error message to be displayed if the migration cannot proceed due to version incompatibility. */
-    String errorMessage;
+    final String errorMessage;
 
     /**
      * Constructs a MigrationPath instance by defining the required version for the migration,
