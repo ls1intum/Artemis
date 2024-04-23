@@ -70,6 +70,11 @@ export interface KnowledgeAreaForTree extends KnowledgeAreaDTO {
     competencies?: StandardizedCompetencyForTree[];
 }
 
+export interface KnowledgeAreasForImportDTO {
+    knowledgeAreas: KnowledgeAreaDTO[];
+    sources: Source[];
+}
+
 /**
  * StandardizedCompetencyDTO with additional information for the tree view
  * isVisible: if it should be shown or not (used for filters)

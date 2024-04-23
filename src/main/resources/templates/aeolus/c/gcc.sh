@@ -24,7 +24,6 @@ setup_the_build_environment () {
       echo "$REQ_FILE does not exist"
   fi
   cd ..
-
 }
 
 setup_makefile () {
@@ -65,7 +64,6 @@ build_and_run_all_tests () {
       cd tests || exit 0
       python3 Tests.py || true
   fi
-
 }
 
 main () {
