@@ -638,8 +638,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
     }
 
     /**
-     * Checks out the repository for the given participation, zips it and adds the path to the given list of already
-     * zipped repos.
+     * Checks out the repository for the given participation, zips it and return the path of it.
      *
      * @param programmingExercise     The programming exercise for the participation
      * @param participation           The participation, for which the repository should get zipped
