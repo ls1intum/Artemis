@@ -25,6 +25,9 @@ class TestResultXmlParser {
             List<LocalCIBuildResult.LocalCITestJobDTO> successfulTests) throws IOException {
         TestSuite testSuite = new XmlMapper().readValue(testResultFileString, TestSuite.class);
 
+        if (testSuite.testCases() == null) {
+            return;
+        }
         for (TestCase testCase : testSuite.testCases()) {
             Failure failure = testCase.extractFailure();
             if (failure != null) {
