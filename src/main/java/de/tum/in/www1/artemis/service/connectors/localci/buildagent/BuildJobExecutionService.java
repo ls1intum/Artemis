@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.CHECKED_OUT_REPOS_TEMP_DIR
 import static de.tum.in.www1.artemis.config.Constants.LOCALCI_RESULTS_DIRECTORY;
 import static de.tum.in.www1.artemis.config.Constants.LOCALCI_WORKING_DIRECTORY;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
+import static de.tum.in.www1.artemis.service.connectors.localci.buildagent.TestResultXmlParser.processTestResultFile;
 
 import java.io.IOException;
 import java.net.URL;
@@ -26,11 +27,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlText;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
 
@@ -348,43 +345,6 @@ public class BuildJobExecutionService {
 
     private String readTarEntryContent(TarArchiveInputStream tarArchiveInputStream) throws IOException {
         return IOUtils.toString(tarArchiveInputStream, StandardCharsets.UTF_8);
-    }
-
-    private void processTestResultFile(String testResultFileString, List<LocalCIBuildResult.LocalCITestJobDTO> failedTests,
-            List<LocalCIBuildResult.LocalCITestJobDTO> successfulTests) throws IOException {
-        TestSuite testSuite = localCiXmlMapper.readValue(testResultFileString, TestSuite.class);
-
-        for (TestCase testCase : testSuite.testCases()) {
-            Failure failure = testCase.extractFailure();
-            if (failure != null) {
-                failedTests.add(new LocalCIBuildResult.LocalCITestJobDTO(testCase.name(), List.of(failure.extractMessage())));
-            }
-            else {
-                successfulTests.add(new LocalCIBuildResult.LocalCITestJobDTO(testCase.name(), List.of()));
-            }
-        }
-    }
-
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    record TestSuite(@JacksonXmlElementWrapper(useWrapping = false) @JacksonXmlProperty(localName = "testcase") List<TestCase> testCases) {
-    }
-
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    record TestCase(@JacksonXmlProperty(isAttribute = true, localName = "name") String name, @JacksonXmlProperty(localName = "failure") Failure failure,
-            @JacksonXmlProperty(localName = "error") Failure error) {
-
-        private Failure extractFailure() {
-            return failure != null ? failure : error;
-        }
-    }
-
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    record Failure(@JacksonXmlProperty(isAttribute = true, localName = "type") String type, @JacksonXmlProperty(isAttribute = true, localName = "message") String message,
-            @JacksonXmlText String detailedMessage) {
-
-        private String extractMessage() {
-            return message != null ? message : detailedMessage;
-        }
     }
 
     /**
