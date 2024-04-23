@@ -1,1 +1,0 @@
-{"issues":[{"filePath":"cpd_invalid.txt","startLine":1,"rule":"ExceptionDuringParsing","category":"miscellaneous","message":"An exception occurred during parsing the report for file cpd_invalid.txt. Exception: java.lang.IllegalArgumentException: File must be xml format"}]}

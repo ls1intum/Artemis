@@ -1,1 +1,0 @@
-{"issues":[{"filePath":"invalid_name.xml","startLine":1,"rule":"ExceptionDuringParsing","category":"miscellaneous","message":"An exception occurred during parsing the report for file invalid_name.xml. Exception: de.tum.in.www1.artemis.service.connectors.localci.scaparser.exception.UnsupportedToolException: Tool for identifying filePattern invalid_name.xml not found"}]}
