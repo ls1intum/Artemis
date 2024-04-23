@@ -27,11 +27,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
 
-import de.tum.in.www1.artemis.config.localvcci.LocalCIConfiguration;
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
 import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
@@ -65,23 +63,16 @@ public class BuildJobExecutionService {
 
     private final LocalCIDockerService localCIDockerService;
 
-    /**
-     * Instead of creating a new XmlMapper for every build job, it is created once and provided as a Bean (see {@link LocalCIConfiguration#localCiXmlMapper()}).
-     */
-    private final XmlMapper localCiXmlMapper;
-
     @Value("${artemis.version-control.url}")
     private URL localVCBaseUrl;
 
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
 
-    public BuildJobExecutionService(BuildJobContainerService buildJobContainerService, GitService gitService, LocalCIDockerService localCIDockerService,
-            XmlMapper localCiXmlMapper) {
+    public BuildJobExecutionService(BuildJobContainerService buildJobContainerService, GitService gitService, LocalCIDockerService localCIDockerService) {
         this.buildJobContainerService = buildJobContainerService;
         this.gitService = gitService;
         this.localCIDockerService = localCIDockerService;
-        this.localCiXmlMapper = localCiXmlMapper;
     }
 
     /**
@@ -284,7 +275,8 @@ public class BuildJobExecutionService {
                 }
                 else {
                     // ugly workaround because in swift result files \n\t breaks the parsing
-                    processTestResultFile(xmlString.replace("\n\t", ""), failedTests, successfulTests);
+                    var testResultFileString = xmlString.replace("\n\t", "");
+                    processTestResultFile(testResultFileString, failedTests, successfulTests);
                 }
             }
             catch (IllegalStateException e) {
