@@ -233,7 +233,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     updateVisibility(height: number) {
         const thresholds: number[] = [];
         const itemHeight: number = 35;
-        let threshold = this.calculateThreshHold();
+        let threshold = this.calculateThreshold();
         this.anyItemHidden = false;
         this.hiddenItems = [];
 
@@ -266,7 +266,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     }
 
     /** Calculating threshold levels based on the number of entries in the sidebar */
-    calculateThreshHold() {
+    calculateThreshold() {
         const maxThreshold: number = 650;
         const numberOfSidebarItems: number = this.sidebarItems.length;
         if (numberOfSidebarItems === 9) {
