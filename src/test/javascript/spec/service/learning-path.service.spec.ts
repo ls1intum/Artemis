@@ -1,5 +1,5 @@
 import { MockHttpService } from '../helpers/mocks/service/mock-http.service';
-import { LearningPathService } from 'app/course/learning-paths/learning-path.service';
+import { LearningPathService } from 'app/course/learning-paths/services/learning-path.service';
 import { ArtemisTestModule } from '../test.module';
 import { HttpClient } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';

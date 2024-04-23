@@ -36,6 +36,7 @@ import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyProgressForLearningPathDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathHealthDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathInformationDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathUnitNavigationDto;
 import de.tum.in.www1.artemis.web.rest.dto.competency.NgxLearningPathDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -187,6 +188,11 @@ public class LearningPathResource {
     public ResponseEntity<NgxLearningPathDTO> getLearningPathNgxPath(@PathVariable long learningPathId) {
         log.debug("REST request to get ngx path representation of learning path with id: {}", learningPathId);
         return getLearningPathNgx(learningPathId, NgxRequestType.PATH);
+    }
+
+    @GetMapping("learning-path/test/{learningPathId}")
+    public ResponseEntity<LearningPathUnitNavigationDto> getTest(@PathVariable long learningPathId) {
+        return ResponseEntity.ok(learningPathService.test(learningPathId));
     }
 
     private ResponseEntity<NgxLearningPathDTO> getLearningPathNgx(@PathVariable long learningPathId, NgxRequestType type) {

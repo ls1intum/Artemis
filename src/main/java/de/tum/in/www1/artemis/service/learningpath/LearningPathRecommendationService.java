@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.CompetencyRelationRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathUnitNavigationDto;
 
 /**
  * Service Implementation for the recommendation of competencies and learning objects in learning paths.
@@ -97,6 +98,51 @@ public class LearningPathRecommendationService {
         var pendingCompetencies = getPendingCompetencies(learningPath.getCompetencies(), state);
         simulateProgression(pendingCompetencies, state);
         return state;
+    }
+
+    public LearningPathUnitNavigationDto getLearningPathUnitNavigation(LearningPath learningPath) {
+        var competencies = learningPath.getCompetencies();
+        var recommendationState = getRecommendedOrderOfCompetencies(learningPath);
+        var recommendedOrderOfCompetencies = recommendationState.recommendedOrderOfCompetencies;
+
+        var pendingCompetencies = getPendingCompetencies(competencies, recommendationState);
+
+        Competency previousCompetency;
+        Competency currentCompetency;
+        Competency nextCompetency;
+
+        for (int i = 0; i < recommendedOrderOfCompetencies.size(); i++) {
+            var competencyId = recommendedOrderOfCompetencies.get(i);
+            for (var competency : competencies) {
+                if (competency.getId().equals(competencyId) && !CompetencyProgressService.isMastered(competency.getUserProgress().stream().findFirst().get())) {
+                    currentCompetency = competency;
+                    if (i == 0 && i == recommendedOrderOfCompetencies.size() - 1) {
+                        previousCompetency = null;
+                        nextCompetency = null;
+                        break;
+                    }
+                    else if (i == 0) {
+                        previousCompetency = null;
+                        var nextIndex = i + 1;
+                        nextCompetency = competencies.stream().filter(c -> c.getId().equals(recommendedOrderOfCompetencies.get(nextIndex))).findFirst().get();
+                        break;
+                    }
+                    else if (i == recommendedOrderOfCompetencies.size() - 1) {
+                        nextCompetency = null;
+                        var previousIndex = i - 1;
+                        previousCompetency = competencies.stream().filter(c -> c.getId().equals(recommendedOrderOfCompetencies.get(previousIndex))).findFirst().get();
+                        break;
+                    }
+                    var previousIndex = i - 1;
+                    previousCompetency = competencies.stream().filter(c -> c.getId().equals(recommendedOrderOfCompetencies.get(previousIndex))).findFirst().get();
+                    var nextIndex = i + 1;
+                    nextCompetency = competencies.stream().filter(c -> c.getId().equals(recommendedOrderOfCompetencies.get(nextIndex))).findFirst().get();
+                    break;
+                }
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -226,10 +272,12 @@ public class LearningPathRecommendationService {
      * @return set of pending competencies
      */
     private Set<Competency> getPendingCompetencies(Set<Competency> competencies, RecommendationState state) {
-        Set<Competency> pendingCompetencies = new HashSet<>(competencies);
-        pendingCompetencies.removeIf(competency -> state.masteredCompetencies.contains(competency.getId())
-                || state.matchingClusters.get(competency.getId()).stream().anyMatch(state.masteredCompetencies::contains));
-        return pendingCompetencies;
+        return competencies.stream().filter(competency -> !state.masteredCompetencies.contains(competency.getId())
+                || state.matchingClusters.get(competency.getId()).stream().noneMatch(state.masteredCompetencies::contains)).collect(Collectors.toSet());
+        // Set<Competency> pendingCompetencies = new HashSet<>(competencies);
+        // pendingCompetencies.removeIf(competency -> state.masteredCompetencies.contains(competency.getId())
+        // || state.matchingClusters.get(competency.getId()).stream().anyMatch(state.masteredCompetencies::contains));
+        // return pendingCompetencies;
     }
 
     /**

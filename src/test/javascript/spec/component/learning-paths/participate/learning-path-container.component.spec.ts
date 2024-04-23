@@ -5,7 +5,7 @@ import { of } from 'rxjs';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { LearningPathContainerComponent } from 'app/course/learning-paths/participate/learning-path-container.component';
-import { LearningPathService } from 'app/course/learning-paths/learning-path.service';
+import { LearningPathService } from 'app/course/learning-paths/services/learning-path.service';
 import { NgxLearningPathNode, NodeType } from 'app/entities/competency/learning-path.model';
 import { LectureService } from 'app/lecture/lecture.service';
 import { Lecture } from 'app/entities/lecture.model';

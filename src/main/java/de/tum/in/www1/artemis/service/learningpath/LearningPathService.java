@@ -38,6 +38,7 @@ import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathHealthDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathInformationDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathUnitNavigationDto;
 import de.tum.in.www1.artemis.web.rest.dto.competency.NgxLearningPathDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
@@ -302,6 +303,11 @@ public class LearningPathService {
      */
     public NgxLearningPathDTO generateNgxPathRepresentation(@NotNull LearningPath learningPath) {
         return this.learningPathNgxService.generateNgxPathRepresentation(learningPath);
+    }
+
+    public LearningPathUnitNavigationDto test(Long learningPathId) {
+        var learningPath = findWithCompetenciesAndLearningObjectsAndCompletedUsersById(learningPathId);
+        return learningPathNgxService.test(learningPath);
     }
 
     /**

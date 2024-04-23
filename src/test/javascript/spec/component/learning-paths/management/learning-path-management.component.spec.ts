@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { LearningPathManagementComponent, TableColumn } from 'app/course/learning-paths/learning-path-management/learning-path-management.component';
-import { LearningPathPagingService } from 'app/course/learning-paths/learning-path-paging.service';
+import { LearningPathPagingService } from 'app/course/learning-paths/services/learning-path-paging.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
 import { LearningPath } from 'app/entities/competency/learning-path.model';
@@ -13,7 +13,7 @@ import { SortDirective } from 'app/shared/sort/sort.directive';
 import { of, throwError } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { LearningPathService } from 'app/course/learning-paths/learning-path.service';
+import { LearningPathService } from 'app/course/learning-paths/services/learning-path.service';
 import { HealthStatus, LearningPathHealthDTO } from 'app/entities/competency/learning-path-health.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';

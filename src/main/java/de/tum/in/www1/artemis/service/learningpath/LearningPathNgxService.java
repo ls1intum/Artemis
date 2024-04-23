@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.domain.competency.LearningPath;
 import de.tum.in.www1.artemis.domain.competency.RelationType;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.CompetencyRelationRepository;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathUnitNavigationDto;
 import de.tum.in.www1.artemis.web.rest.dto.competency.NgxLearningPathDTO;
 
 /**
@@ -38,6 +39,10 @@ public class LearningPathNgxService {
     protected LearningPathNgxService(CompetencyRelationRepository competencyRelationRepository, LearningPathRecommendationService learningPathRecommendationService) {
         this.competencyRelationRepository = competencyRelationRepository;
         this.learningPathRecommendationService = learningPathRecommendationService;
+    }
+
+    public LearningPathUnitNavigationDto test(LearningPath learningPath) {
+        return learningPathRecommendationService.getLearningPathUnitNavigation(learningPath);
     }
 
     /**

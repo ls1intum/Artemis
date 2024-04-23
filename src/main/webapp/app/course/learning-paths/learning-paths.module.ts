@@ -10,6 +10,7 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 import { RouterModule, Routes } from '@angular/router';
 import { ArtemisLearningPathProgressModule } from 'app/course/learning-paths/progress-modal/learning-path-progress.module';
 import { ArtemisLearningPathGraphModule } from 'app/course/learning-paths/learning-path-graph/learning-path-graph.module';
+import { LearningPathStudentPageComponent } from 'app/course/learning-paths/pages/learning-path-student-page/learning-path-student-page.component';
 
 const routes: Routes = [
     {
@@ -62,7 +63,7 @@ const routes: Routes = [
         ArtemisLearningPathGraphModule,
         ArtemisLearningPathProgressModule,
     ],
-    declarations: [LearningPathContainerComponent],
+    declarations: [LearningPathContainerComponent, LearningPathStudentPageComponent],
     exports: [LearningPathContainerComponent],
 })
 export class ArtemisLearningPathsModule {}
