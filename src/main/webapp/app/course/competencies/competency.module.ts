@@ -26,6 +26,7 @@ import { ImportCompetenciesTableComponent } from 'app/course/competencies/import
 import { TaxonomySelectComponent } from 'app/course/competencies/taxonomy-select/taxonomy-select.component';
 import { CompetencyRelationGraphComponent } from 'app/course/competencies/competency-management/competency-relation-graph.component';
 import { CourseImportStandardizedCompetenciesComponent } from 'app/course/competencies/import-standardized-competencies/course-import-standardized-competencies.component';
+import { ArtemisStandardizedCompetencyModule } from 'app/shared/standardized-competencies/standardized-competency.module';
 
 @NgModule({
     imports: [
@@ -39,6 +40,7 @@ import { CourseImportStandardizedCompetenciesComponent } from 'app/course/compet
         NgbAccordionModule,
         ArtemisMarkdownModule,
         IrisModule,
+        ArtemisStandardizedCompetencyModule,
     ],
     declarations: [
         CompetencyFormComponent,
