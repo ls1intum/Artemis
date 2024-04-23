@@ -23,12 +23,12 @@ const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     styleUrls: ['../course-overview.scss'],
 })
 export class CourseExercisesComponent implements OnInit, OnDestroy {
-    private courseId: number;
     private paramSubscription: Subscription;
     private parentParamSubscription: Subscription;
     private courseUpdatesSubscription: Subscription;
 
     course?: Course;
+    courseId: number;
     sortedExercises?: Exercise[];
     exerciseForGuidedTour?: Exercise;
 
@@ -85,7 +85,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     }
 
     getLastSelectedExercise(): string | null {
-        return sessionStorage.getItem('sidebar.lastSelectedItem.' + 'exercise');
+        return sessionStorage.getItem('sidebar.lastSelectedItem.exercise.byCourse.' + this.courseId);
     }
 
     prepareSidebarData() {
