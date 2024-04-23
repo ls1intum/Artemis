@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import de.tum.in.www1.artemis.service.connectors.localci.buildagent.TestResultXmlParser;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
 
-public class TestResultXmlParserTest {
+class TestResultXmlParserTest {
 
     @Test
     void testParseResultXml1() throws IOException {
@@ -32,7 +32,12 @@ public class TestResultXmlParserTest {
 
         TestResultXmlParser.processTestResultFile(exampleXml, failedTests, successfulTests);
         assertThat(failedTests).hasSize(1);
-        // TODO: add more assertions
+        assertThat(failedTests.getFirst().getTestMessages()).containsExactly("""
+                test `add` failed on ≥ 1 cases:
+                (0, 0)
+                Your submission raised an error Failure("TODO add")
+                """);
+
     }
 
     @Test
@@ -50,6 +55,6 @@ public class TestResultXmlParserTest {
 
         TestResultXmlParser.processTestResultFile(exampleXml, failedTests, successfulTests);
         assertThat(failedTests).hasSize(1);
-        // TODO: add more assertions
+        assertThat(failedTests.getFirst().getTestMessages()).containsExactly("test `add` failed");
     }
 }

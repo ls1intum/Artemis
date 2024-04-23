@@ -41,12 +41,29 @@ public class TestResultXmlParser {
         }
     }
 
+    // Due to issues with Jackson this currently cannot be a record
     @JsonIgnoreProperties(ignoreUnknown = true)
-    record Failure(@JacksonXmlProperty(isAttribute = true, localName = "type") String type, @JacksonXmlProperty(isAttribute = true, localName = "message") String message,
-            @JacksonXmlText String detailedMessage) {
+    static final class Failure {
+
+        private String message;
+
+        private String detailedMessage;
+
+        public Failure() {
+        }
 
         private String extractMessage() {
             return message != null ? message : detailedMessage;
+        }
+
+        @JacksonXmlText
+        public void setDetailedMessage(String detailedMessage) {
+            this.detailedMessage = detailedMessage;
+        }
+
+        @JacksonXmlProperty(isAttribute = true, localName = "message")
+        public void setMessage(String message) {
+            this.message = message;
         }
     }
 }
