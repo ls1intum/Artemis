@@ -29,7 +29,9 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noFields;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noMethods;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.lang.reflect.Method;
 import java.nio.file.Files;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -60,6 +62,7 @@ import com.tngtech.archunit.core.domain.JavaAnnotation;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.domain.JavaEnumConstant;
+import com.tngtech.archunit.core.domain.JavaMethod;
 import com.tngtech.archunit.core.domain.properties.HasAnnotations;
 import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
@@ -67,6 +70,8 @@ import com.tngtech.archunit.lang.ConditionEvents;
 import com.tngtech.archunit.lang.SimpleConditionEvent;
 import com.tngtech.archunit.library.GeneralCodingRules;
 
+import de.tum.in.www1.artemis.AbstractArtemisIntegrationTest;
+import de.tum.in.www1.artemis.authorization.AuthorizationTestService;
 import de.tum.in.www1.artemis.config.ApplicationConfiguration;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -297,5 +302,72 @@ class ArchitectureTest extends AbstractArchitectureTest {
         final var exceptions = new String[] { "PublicResourcesConfiguration", "QuizProcessCacheTask", "QuizStartTask" };
         JavaClasses classes = classesExcept(productionClasses, exceptions);
         rule.check(classes);
+    }
+
+    @Test
+    void hasMatchingAuthorizationTestClassBeCorrectlyImplemented() throws NoSuchMethodException {
+        // Prepare the method that the authorization test should call to be identified as such
+        Method allCheckMethod = AuthorizationTestService.class.getMethod("testAllEndpoints", Map.class);
+        Method condCheckMethod = AuthorizationTestService.class.getMethod("testConditionalEndpoints", Map.class);
+        String identifyingPackage = "authorization";
+
+        ArchRule rule = classes().that(beDirectSubclassOf(AbstractArtemisIntegrationTest.class))
+                .should(haveMatchingTestClassCallingAMethod(identifyingPackage, Set.of(allCheckMethod, condCheckMethod))).because(
+                        "every test environment should have a corresponding authorization test covering the endpoints of this environment. Examples are \"AuthorizationJenkinsGitlabTest\" or \"AuthorizationGitlabCISamlTest\".");
+        rule.check(testClasses);
+    }
+
+    private DescribedPredicate<JavaClass> beDirectSubclassOf(Class<?> clazz) {
+        return new DescribedPredicate<>("be implemented in direct subclass of " + clazz.getSimpleName()) {
+
+            @Override
+            public boolean test(JavaClass javaClass) {
+                var superClasses = javaClass.getAllRawSuperclasses();
+                if (superClasses.isEmpty()) {
+                    // Tested class has no superclass
+                    return false;
+                }
+                return superClasses.getFirst().getFullName().equals(clazz.getName());
+            }
+        };
+    }
+
+    private ArchCondition<JavaClass> haveMatchingTestClassCallingAMethod(String identifyingPackage, Set<Method> signatureMethods) {
+        return new ArchCondition<>("have matching authorization test class") {
+
+            @Override
+            public void check(JavaClass item, ConditionEvents events) {
+                if (!hasMatchingTestClassCallingMethod(item, identifyingPackage, signatureMethods)) {
+                    events.add(violated(item, item.getFullName() + " does not have a matching test class in an \"" + identifyingPackage + "\" package "
+                            + "containing a test method that calls any given signature methods"));
+                }
+            }
+        };
+    }
+
+    private boolean hasMatchingTestClassCallingMethod(JavaClass javaClass, String identifyingPackage, Set<Method> signatureMethods) {
+        var subclasses = javaClass.getSubclasses();
+        // Check all subclasses of the given abstract test class to search for an authorization test class
+        for (JavaClass subclass : subclasses) {
+            // The test class es expected to reside inside an identifying package. We could match the full path, but this is more flexible.
+            if (!subclass.getPackageName().contains(identifyingPackage)) {
+                continue;
+            }
+            var methods = subclass.getMethods();
+            // Search for a test method that calls a signature method
+            for (JavaMethod method : methods) {
+                if (!method.isAnnotatedWith(Test.class) && !method.getRawReturnType().reflect().equals(Void.class)) {
+                    // Is not a test method
+                    continue;
+                }
+                if (method.getMethodCallsFromSelf().stream()
+                        .anyMatch(call -> signatureMethods.stream().anyMatch(checkMethod -> call.getTargetOwner().getFullName().equals(checkMethod.getDeclaringClass().getName())
+                                && call.getTarget().getName().equals(checkMethod.getName())))) {
+                    // Calls one of the signature methods
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }
