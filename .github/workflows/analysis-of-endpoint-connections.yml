@@ -1,0 +1,41 @@
+name: Analysis-of-Endpoint-Connections
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+    paths:
+      - 'src/main/java/**'
+      - 'src/main/webapp/**'
+
+jobs:
+  show-modified-files:
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get list of modified files
+        run: |
+          git diff --name-only origin/${{ github.event.pull_request.base.ref }} HEAD > modified_files.txt
+
+      - name: Display modified files
+        run: |
+          echo "Modified files in this pull request:"
+          cat modified_files.txt
+
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+
+      - name: identify server endpoints
+        run: python supporting_scripts/analysis-of-endpoint-connections/identify_server_endpoints.py $(cat modified_files.txt)
