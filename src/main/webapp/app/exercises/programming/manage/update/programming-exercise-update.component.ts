@@ -686,7 +686,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             disableTranslation = true;
         }
 
-        const errorMessageToBeTranslatedNotFound = errorMessage == null;
+        const errorMessageToBeTranslatedNotFound = !errorMessage;
         if (errorMessageToBeTranslatedNotFound) {
             errorMessage = `error.unexpectedError`;
             translationParams = { error: error.statusText };
