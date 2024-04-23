@@ -168,7 +168,7 @@ public class ComplaintResponseService {
      * @return ComplaintResponse The updated and persisted complaint response reflecting the new state and information.
      */
     public ComplaintResponse resolveComplaint(ComplaintResponseUpdateDTO updatedComplaintResponse, Long complaintResponseId) {
-        return processComplaint(complaintResponseId, updatedComplaintResponse, updatedComplaintResponse.complaintIsAccepted(), updatedComplaintResponse.responseText());
+        return processComplaint(complaintResponseId, updatedComplaintResponse.complaintIsAccepted(), updatedComplaintResponse.responseText());
     }
 
     /**
@@ -179,7 +179,7 @@ public class ComplaintResponseService {
      * @return ComplaintResponse The updated and persisted complaint response reflecting the changes made.
      */
     public ComplaintResponse resolveComplaint(ComplaintResponse updatedComplaintResponse) {
-        return processComplaint(updatedComplaintResponse.getId(), null, updatedComplaintResponse.getComplaint().isAccepted(), updatedComplaintResponse.getResponseText());
+        return processComplaint(updatedComplaintResponse.getId(), updatedComplaintResponse.getComplaint().isAccepted(), updatedComplaintResponse.getResponseText());
     }
 
     /**
@@ -187,14 +187,13 @@ public class ComplaintResponseService {
      * including validating user permissions, checking lock status, validating complaint details, and updating the complaint
      * in the database.
      *
-     * @param complaintResponseId      The ID of the complaint response to be updated.
-     * @param updatedComplaintResponse Optional DTO containing additional complaint response updates, null if not applicable.
-     * @param isAccepted               Boolean indicating whether the complaint has been accepted or rejected.
-     * @param responseText             String containing the response text associated with the complaint response.
+     * @param complaintResponseId The ID of the complaint response to be updated.
+     * @param isAccepted          Boolean indicating whether the complaint has been accepted or rejected.
+     * @param responseText        String containing the response text associated with the complaint response.
      * @return ComplaintResponse The updated and persisted complaint response.
      * @throws IllegalArgumentException if the acceptance status is not clearly defined (null).
      */
-    private ComplaintResponse processComplaint(Long complaintResponseId, ComplaintResponseUpdateDTO updatedComplaintResponse, Boolean isAccepted, String responseText) {
+    private ComplaintResponse processComplaint(Long complaintResponseId, Boolean isAccepted, String responseText) {
         validateComplaintResponseId(complaintResponseId);
         // TODO: make this retrieval redundant by proper fetching
         ComplaintResponse complaintResponseFromDatabase = complaintResponseRepository.findByIdElseThrow(complaintResponseId);
