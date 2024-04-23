@@ -219,7 +219,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
 
     /** Listen click event whether on outside of the menu or one of the items in the menu to close the dropdown menu */
     @HostListener('document: click', ['$event'])
-    onClickOutsideDropdownMenu() {
+    onClickCloseDropdownMenu() {
         if (this.dropdownOpen) {
             this.dropdownClickNumber += 1;
             if (this.dropdownClickNumber === 2) {
