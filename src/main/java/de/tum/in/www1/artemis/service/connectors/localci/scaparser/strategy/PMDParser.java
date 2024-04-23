@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlText;
 
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisIssue;
@@ -38,7 +39,7 @@ record Violation(@JacksonXmlProperty(isAttribute = true, localName = "rule") Str
 
         @JacksonXmlProperty(isAttribute = true, localName = "endcolumn") int endColumn,
 
-        String message // Assuming direct content is mapped automatically
+        @JacksonXmlProperty(localName = "") @JacksonXmlText String message // inner text
 ) {
 }
 
@@ -66,7 +67,7 @@ class PMDParser implements ParserStrategy {
 
             for (Violation violation : fileViolation.violations()) {
                 StaticCodeAnalysisIssue issue = new StaticCodeAnalysisIssue(unixPath, violation.beginLine(), violation.endLine(), violation.beginColumn(), violation.endColumn(),
-                        violation.rule(), violation.ruleset(), violation.message(), violation.priority(), null  // Assuming there is no penalty info in PMD XML
+                        violation.rule(), violation.ruleset(), violation.message().strip(), violation.priority(), null  // Assuming there is no penalty info in PMD XML
                 );
                 issues.add(issue);
             }

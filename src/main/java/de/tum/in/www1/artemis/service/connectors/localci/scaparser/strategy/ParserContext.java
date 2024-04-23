@@ -22,12 +22,12 @@ public class ParserContext {
      */
     public StaticCodeAnalysisReportDTO getReport(File file) throws IOException {
         String xmlContent = Files.readString(file.toPath());
-        return parseXmlContent(xmlContent);
+        return parseXmlContent(xmlContent, file);
     }
 
-    private StaticCodeAnalysisReportDTO parseXmlContent(String xmlContent) {
+    private StaticCodeAnalysisReportDTO parseXmlContent(String xmlContent, File file) {
         ParserPolicy parserPolicy = new ParserPolicy();
-        ParserStrategy parserStrategy = parserPolicy.configure(xmlContent);  // Updated to handle String XML content
+        ParserStrategy parserStrategy = parserPolicy.configure(file.getName());
         return parserStrategy.parse(xmlContent);  // Pass the whole XML content directly
     }
 }
