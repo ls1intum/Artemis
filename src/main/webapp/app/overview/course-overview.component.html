@@ -68,7 +68,7 @@
                                 </li>
                             }
                             <!-- More icon and label in case of window minimization -->
-                            <div [hidden]="!anyItemHidden" class="three-dots nav-link nav-link-sidebar px-3" (click)="toggleDropdown()">
+                            <div [hidden]="!anyItemHidden" class="three-dots nav-link px-3" (click)="toggleDropdown()">
                                 <fa-icon [fixedWidth]="true" [icon]="faEllipsis" class="ms-2 me-3" />
                                 <span class="more" [hidden]="isNavbarCollapsed" [jhiTranslate]="'artemisApp.courseOverview.menu.more'"></span>
                             </div>
@@ -76,7 +76,7 @@
                     </div>
                     <!-- Course Action Items  -->
                     <div>
-                        @if (courseActionItems?.length) {
+                        @if (courseActionItems?.length && !anyItemHidden) {
                             <div ngbDropdown placement="top" class="navbar-nav mb-2">
                                 <li class="nav-item">
                                     @for (courseActionItem of courseActionItems; track courseActionItem) {
@@ -149,6 +149,20 @@
                                     </a>
                                 }
                             </li>
+                        }
+                        @if (courseActionItems?.length) {
+                            @for (courseActionItem of courseActionItems; track courseActionItem) {
+                                <li class="dropdown-li">
+                                    <a
+                                        class="nav-link nav-link-sidebar px-3"
+                                        [ngClass]="{ collapsed: isNavbarCollapsed }"
+                                        (click)="courseActionItemClick(courseActionItem)"
+                                        [title]="courseActionItem.title"
+                                    >
+                                        <ng-template *ngTemplateOutlet="navIconAndTextHidden; context: { $implicit: courseActionItem }" />
+                                    </a>
+                                </li>
+                            }
                         }
                     </div>
                 </div>
