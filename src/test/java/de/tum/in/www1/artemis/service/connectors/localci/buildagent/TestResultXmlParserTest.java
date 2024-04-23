@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.localvcci;
+package de.tum.in.www1.artemis.service.connectors.localci.buildagent;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -8,7 +8,6 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import de.tum.in.www1.artemis.service.connectors.localci.buildagent.TestResultXmlParser;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
 
 class TestResultXmlParserTest {

@@ -11,9 +11,9 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlText;
 
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
 
-public class TestResultXmlParser {
+class TestResultXmlParser {
 
-    public static void processTestResultFile(String testResultFileString, List<LocalCIBuildResult.LocalCITestJobDTO> failedTests,
+    static void processTestResultFile(String testResultFileString, List<LocalCIBuildResult.LocalCITestJobDTO> failedTests,
             List<LocalCIBuildResult.LocalCITestJobDTO> successfulTests) throws IOException {
         TestSuite testSuite = new XmlMapper().readValue(testResultFileString, TestSuite.class);
 
