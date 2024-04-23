@@ -9,6 +9,6 @@
         </div>
     </div> -->
 
-    <jhi-monaco-diff-editor [hidden]="!mEditorReady" #mEditor />
+    <jhi-monaco-diff-editor [hidden]="!mEditorReady" (onReadyForDisplayChange)="mEditorReady = $event" #mEditor />
     <div [hidden]="mEditorReady">Loading diff...</div>
 </div>
