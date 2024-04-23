@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.localvcci;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
 
@@ -102,7 +103,7 @@ class LocalCIDockerServiceTest extends AbstractSpringIntegrationLocalCILocalVCTe
         doReturn(List.of(mockContainer)).when(listContainersCmd).exec();
         doReturn(new String[] { "/local-ci-dummycontainer" }).when(mockContainer).getNames();
         // Mock container creation time to be older than 5 minutes
-        doReturn(System.currentTimeMillis() - (6 * 60 * 1000)).when(mockContainer).getCreated();
+        doReturn(Instant.now().getEpochSecond() - (6 * 60)).when(mockContainer).getCreated();
         doReturn("dummy-container-id").when(mockContainer).getId();
 
         localCIDockerService.cleanUpContainers();
@@ -111,7 +112,7 @@ class LocalCIDockerServiceTest extends AbstractSpringIntegrationLocalCILocalVCTe
         verify(dockerClient, times(1)).removeContainerCmd(anyString());
 
         // Mock container creation time to be younger than 5 minutes
-        doReturn(System.currentTimeMillis()).when(mockContainer).getCreated();
+        doReturn(Instant.now().getEpochSecond()).when(mockContainer).getCreated();
 
         localCIDockerService.cleanUpContainers();
 
