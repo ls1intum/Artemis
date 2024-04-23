@@ -151,7 +151,7 @@ public class ExerciseHintService {
             return new HashSet<>();
         }
 
-        var latestResult = submissions.get(0).getLatestResult();
+        var latestResult = submissions.getFirst().getLatestResult();
 
         // latest submissions has no result or latest result has no feedback (most commonly due to a build error)
         if (latestResult == null || latestResult.getFeedbacks().isEmpty()) {

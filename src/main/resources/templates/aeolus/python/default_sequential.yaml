@@ -1,7 +1,7 @@
 api: v0.0.1
 actions:
   - name: compile_the_code
-    script: |
+    script: |-
       python3 -m compileall . -q
     runAlways: false
   - name: run_structural_tests

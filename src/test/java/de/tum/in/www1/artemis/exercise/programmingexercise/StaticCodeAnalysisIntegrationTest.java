@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -214,12 +215,13 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationLocalCI
         final var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.RESET, exercise);
         final var categoriesResponse = request.patchWithResponseBody(endpoint, "{}", new TypeReference<Set<StaticCodeAnalysisCategory>>() {
         }, HttpStatus.OK);
-        final var categoriesInDB = staticCodeAnalysisCategoryRepository.findByExerciseId(exercise.getId());
+        final Set<StaticCodeAnalysisCategory> categoriesInDB = staticCodeAnalysisCategoryRepository.findByExerciseId(exercise.getId());
+        final Set<StaticCodeAnalysisCategory> expectedCategories = StaticCodeAnalysisConfigurer.staticCodeAnalysisConfiguration().get(exercise.getProgrammingLanguage()).stream()
+                .map(c -> c.toStaticCodeAnalysisCategory(exercise)).collect(Collectors.toSet());
 
         assertThat(categoriesResponse).usingRecursiveFieldByFieldElementComparatorIgnoringFields("exercise").containsExactlyInAnyOrderElementsOf(categoriesInDB);
         assertThat(categoriesInDB).usingRecursiveFieldByFieldElementComparatorIgnoringFields("exercise").containsExactlyInAnyOrderElementsOf(originalCategories);
-        assertThat(categoriesInDB).usingRecursiveFieldByFieldElementComparatorIgnoringFields("id", "exercise")
-                .isEqualTo(StaticCodeAnalysisConfigurer.staticCodeAnalysisConfiguration().get(exercise.getProgrammingLanguage()));
+        assertThat(categoriesInDB).usingRecursiveFieldByFieldElementComparatorIgnoringFields("id", "exercise").containsExactlyInAnyOrderElementsOf(expectedCategories);
     }
 
     @Test
@@ -314,8 +316,8 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationLocalCI
         var filteredFeedback = staticCodeAnalysisCategoryRepository.categorizeScaFeedback(result, List.of(feedback), programmingExerciseSCAEnabled);
         assertThat(filteredFeedback).hasSize(1);
         assertThat(result.getFeedbacks()).containsExactlyInAnyOrderElementsOf(filteredFeedback);
-        assertThat(result.getFeedbacks().iterator().next().getStaticCodeAnalysisCategory()).isEqualTo("Bad Practice");
-        assertThat(new ObjectMapper().readValue(result.getFeedbacks().iterator().next().getDetailText(), StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue.class).getPenalty())
+        assertThat(result.getFeedbacks().getFirst().getStaticCodeAnalysisCategory()).isEqualTo("Bad Practice");
+        assertThat(new ObjectMapper().readValue(result.getFeedbacks().getFirst().getDetailText(), StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue.class).getPenalty())
                 .isEqualTo(3.0);
     }
 

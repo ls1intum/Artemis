@@ -198,7 +198,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
 
     getCourseActionItems(): CourseActionItem[] {
         const courseActionItems = [];
-        this.canUnenroll = this.canStudentUnenroll();
+        this.canUnenroll = this.canStudentUnenroll() && !this.course?.isAtLeastTutor;
         if (this.canUnenroll) {
             const unenrollItem: CourseActionItem = this.getUnenrollItem();
             courseActionItems.push(unenrollItem);

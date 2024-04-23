@@ -146,16 +146,7 @@ public class IrisUtilTestService {
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(eq(testRepoUri), eq(false),
                 any());
 
-        var savedExercise = exerciseRepository.save(exercise);
-        // programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(savedExercise);
-        // var solutionParticipation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(savedExercise.getId()).orElseThrow();
-        // solutionParticipation.setRepositoryUri(solutionRepoUri.toString());
-        // solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
-        // var solutionSubmission = new ProgrammingSubmission();
-        // solutionSubmission.setParticipation(solutionParticipation);
-        // programmingSubmissionRepository.save(solutionSubmission);
-
-        return savedExercise;
+        return exerciseRepository.save(exercise);
     }
 
 }
