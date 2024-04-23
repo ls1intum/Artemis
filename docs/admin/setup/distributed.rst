@@ -473,6 +473,7 @@ Artemis uses to approaches for this:
 You must add the ``Scheduling`` profile to **exactly one** instance of your cluster.
 This instance will then perform scheduled tasks whereas the other instances will not.
 
+.. _nginx_configuration:
 
 nginx configuration
 ^^^^^^^^^^^^^^^^^^^
@@ -506,7 +507,7 @@ It relays message between instances:
 
 Integrated Code Lifecycle
 ^^^^^^^^^^^^^^^^^^^^^^^^^
-The integrated code lifecycle (ICL) can integrate build agents into a multi instance server setup. In ICL, we differentiate between two types of server node types: **core nodes** and **build agent nodes**.
+The integrated code lifecycle (ICL) can integrate build agents into a multi instance server setup. In ICL, we differentiate between two types of server node: **core nodes** and **build agent nodes**.
 Core nodes provide the full Artemis functionality, while build agents simply execute build jobs for the testing of programming exercises.
 Both node types run the Artemis application, albeit with different profile sets and different application configuration files.
 Compared to core nodes, build agents nodes are much more light-weight, as they have less service dependencies and provide less functionality. Thus, they require less system resources and start much quicker than core nodes.
@@ -533,6 +534,10 @@ Build Agents
 Build agents can be added to and removed from the server cluster depending on the build capacity needed to conduct the automatic
 assessment of programming exercises. If desired, build agents can execute multiple build jobs concurrently. In this case, you need to make sure that the server node your build agents is running on has enough resources.
 We recommend at least 2 CPUs and 2 GB of RAM for each concurrently running build job.
+
+Build agents do **not** require access to the Shared File System as the repositories used in the build jobs are cloned using HTTPS. Furthermore, as Build Agents do not handle client requests,
+they should be left out from the :ref:`nginx configuration <nginx_configuration>`.
+
 
 The run configuration contains just two profiles:
 
