@@ -30,6 +30,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlText;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
 
@@ -355,10 +356,10 @@ public class BuildJobExecutionService {
 
         for (TestCase testCase : testSuite.testCases()) {
             if (testCase.failure() != null) {
-                failedTests.add(new LocalCIBuildResult.LocalCITestJobDTO(testCase.name(), List.of(testCase.failure().message())));
+                failedTests.add(new LocalCIBuildResult.LocalCITestJobDTO(testCase.name(), List.of(testCase.failure().extractMessage())));
             }
             else if (testCase.error() != null) {
-                failedTests.add(new LocalCIBuildResult.LocalCITestJobDTO(testCase.name(), List.of(testCase.error().message())));
+                failedTests.add(new LocalCIBuildResult.LocalCITestJobDTO(testCase.name(), List.of(testCase.error().extractMessage())));
             }
             else {
                 successfulTests.add(new LocalCIBuildResult.LocalCITestJobDTO(testCase.name(), List.of()));
@@ -376,11 +377,12 @@ public class BuildJobExecutionService {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    record Failure(@JacksonXmlProperty(isAttribute = true, localName = "type") String type,
+    record Failure(@JacksonXmlProperty(isAttribute = true, localName = "type") String type, @JacksonXmlProperty(isAttribute = true, localName = "message") String message,
+            @JacksonXmlText String detailedMessage) {
 
-            @JacksonXmlProperty(isAttribute = true, localName = "message") String message,
-
-            @JacksonXmlProperty(localName = "failure") String detailedMessage) {
+        private String extractMessage() {
+            return message != null ? message : detailedMessage;
+        }
     }
 
     /**
