@@ -7,9 +7,10 @@ import { GitDiffFileComponent } from 'app/exercises/programming/hestia/git-diff-
 import { GitDiffReportModalComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report-modal.component';
 import { GitDiffFilePanelComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-file-panel.component';
 import { NgbAccordionModule } from '@ng-bootstrap/ng-bootstrap';
+import { MonacoEditorModule } from 'app/shared/monaco-editor/monaco-editor.module';
 
 @NgModule({
-    imports: [ArtemisSharedModule, AceEditorModule, NgbAccordionModule],
+    imports: [ArtemisSharedModule, AceEditorModule, NgbAccordionModule, MonacoEditorModule],
     declarations: [GitDiffFilePanelComponent, GitDiffReportComponent, GitDiffFileComponent, GitDiffReportModalComponent, GitDiffLineStatComponent],
     exports: [GitDiffReportComponent, GitDiffReportModalComponent, GitDiffLineStatComponent],
 })

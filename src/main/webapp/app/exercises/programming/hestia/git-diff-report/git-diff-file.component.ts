@@ -2,6 +2,7 @@ import { Component, Input, OnInit, ViewChild, ViewEncapsulation } from '@angular
 import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
 import { ProgrammingExerciseGitDiffEntry } from 'app/entities/hestia/programming-exercise-git-diff-entry.model';
 import ace, { acequire } from 'brace';
+import { MonacoDiffEditorComponent } from 'app/shared/monaco-editor/monaco-diff-editor.component';
 
 @Component({
     selector: 'jhi-git-diff-file',
@@ -15,6 +16,11 @@ export class GitDiffFileComponent implements OnInit {
 
     @ViewChild('editorNow', { static: true })
     editorNow: AceEditorComponent;
+
+    @ViewChild('mEditor', { static: true })
+    mEditor: MonacoDiffEditorComponent;
+
+    mEditorReady = false;
 
     @Input()
     diffEntries: ProgrammingExerciseGitDiffEntry[];
@@ -43,6 +49,13 @@ export class GitDiffFileComponent implements OnInit {
 
     ngOnInit(): void {
         ace.Range = ace.acequire('ace/range').Range;
+
+        const test = 1;
+
+        if (test === 1) {
+            this.mEditor.setFileContents(this.templateFileContent, this.solutionFileContent);
+            return;
+        }
 
         // Create a clone of the diff entries to prevent modifications to the original diff entries
         this.diffEntries = this.diffEntries.map((entry) => ({ ...entry }));
