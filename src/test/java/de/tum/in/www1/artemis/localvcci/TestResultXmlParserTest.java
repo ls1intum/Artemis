@@ -20,14 +20,14 @@ class TestResultXmlParserTest {
         List<LocalCIBuildResult.LocalCITestJobDTO> successfulTests = new ArrayList<>();
 
         String exampleXml = """
-                 <testsuite>
-                     <testcase name="testBubbleSort()" classname="testpackage.SortingExampleBehaviorTest" time="0.000306">
-                         <failure>test `add` failed on ≥ 1 cases:
-                             (0, 0)
-                             Your submission raised an error Failure(&quot;TODO add&quot;)
-                         </failure>
-                     </testsuite>
-                 </testsuite>
+                <testsuite>
+                    <testcase name="testBubbleSort()" classname="testpackage.SortingExampleBehaviorTest" time="0.000306">
+                        <failure>test `add` failed on ≥ 1 cases:
+                (0, 0)
+                Your submission raised an error Failure(&quot;TODO add&quot;)
+                </failure>
+                    </testcase>
+                </testsuite>
                 """;
 
         TestResultXmlParser.processTestResultFile(exampleXml, failedTests, successfulTests);
@@ -46,11 +46,11 @@ class TestResultXmlParserTest {
         List<LocalCIBuildResult.LocalCITestJobDTO> successfulTests = new ArrayList<>();
 
         String exampleXml = """
-                 <testsuite>
-                     <testcase name="testBubbleSort()" classname="testpackage.SortingExampleBehaviorTest" time="0.000306">
-                         <failure message = "test `add` failed"/>
-                     </testcase>
-                 </testsuite>
+                <testsuite>
+                    <testcase name="testBubbleSort()" classname="testpackage.SortingExampleBehaviorTest" time="0.000306">
+                        <failure message = "test `add` failed"/>
+                    </testcase>
+                </testsuite>
                 """;
 
         TestResultXmlParser.processTestResultFile(exampleXml, failedTests, successfulTests);
