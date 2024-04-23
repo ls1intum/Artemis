@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationBuildPlanException;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsXmlConfigBuilder;
-import de.tum.in.www1.artemis.service.util.XmlFileUtils;
+import de.tum.in.www1.artemis.service.connectors.jenkins.XmlFileUtils;
 
 @Profile("jenkins")
 @Component

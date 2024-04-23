@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 
-import de.tum.in.www1.artemis.service.util.XmlFileUtils;
+import de.tum.in.www1.artemis.service.connectors.jenkins.XmlFileUtils;
 
 class JenkinsJobPermissionsUtilsTest {
 
