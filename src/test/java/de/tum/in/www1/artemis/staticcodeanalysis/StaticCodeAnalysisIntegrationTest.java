@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.staticcodeanalysis;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.fail;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
 
@@ -107,18 +108,13 @@ class StaticCodeAnalysisIntegrationTest {
     }
 
     @Test
-    void testParseInvalidFilename() throws IOException {
-        try {
-            testParserWithFile("cpd_invalid.txt", "invalid_filename.txt");
-            fail("Expected ParserException");
-        }
-        catch (ParserException ignored) {
-        }
+    void testParseInvalidFilename() {
+        assertThatCode(() -> testParserWithFile("cpd_invalid.txt", "invalid_filename.txt")).isInstanceOf(ParserException.class);
     }
 
     @Test
-    void testParseInvalidXML() throws IOException {
-        // TODO reimplement
+    void testParseInvalidXML() throws Exception {
+        testParserWithFile("invalid_xml.xml", "invalid_xml.txt");
     }
 
     @Test
