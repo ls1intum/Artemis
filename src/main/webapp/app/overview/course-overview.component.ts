@@ -232,13 +232,14 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     /** Update sidebar item's hidden property based on the window height to display three-dots */
     updateVisibility(height: number) {
         const thresholds: number[] = [];
+        const itemHeight: number = 35;
         let threshold = this.calculateThreshHold();
         this.anyItemHidden = false;
         this.hiddenItems = [];
 
         for (let i = 0; i < this.sidebarItems.length - 1; i++) {
             thresholds.unshift(threshold);
-            threshold -= 35;
+            threshold -= itemHeight;
         }
         thresholds.unshift(0);
 
