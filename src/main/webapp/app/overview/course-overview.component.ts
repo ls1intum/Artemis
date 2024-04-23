@@ -2,7 +2,6 @@ import {
     AfterViewInit,
     ChangeDetectorRef,
     Component,
-    ElementRef,
     EmbeddedViewRef,
     HostListener,
     OnDestroy,
@@ -117,8 +116,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     anyItemHidden: boolean = false;
     hiddenItems: SidebarItem[];
     dropdownOffset: number;
-    // To track click event outside of the dropdown menu
-    @ViewChild('dropdownContent') dropdownContent: ElementRef;
     dropdownClickNumber: number = 0;
 
     private conversationServiceInstantiated = false;
@@ -220,7 +217,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.updateMenuOffset();
     }
 
-    /** Listen click event on anywhere outside of the dropdown menu */
+    /** Listen click event whether on outside of the menu or one of the items in the menu to close the dropdown menu */
     @HostListener('document: click', ['$event'])
     onClickOutsideDropdownMenu() {
         if (this.dropdownOpen) {
