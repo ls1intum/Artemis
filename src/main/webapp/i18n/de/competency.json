@@ -45,7 +45,9 @@
             "manageCompetencies": {
                 "title": "Kompetenzmanagement",
                 "import": "Kompetenzen importieren",
+                "importFromCourses": "Kompetenzen aus anderen Kursen importieren",
                 "importAll": "Alle Kompetenzen eines Kurses importieren",
+                "importStandardized": "Standardisierte Kompetenzen importieren",
                 "create": "Kompetenz erstellen",
                 "generate": "Kompetenzen generieren",
                 "empty": "Es existieren keine Kompetenzen für diesen Kurs",

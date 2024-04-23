@@ -45,7 +45,9 @@
             "manageCompetencies": {
                 "title": "Competency Management",
                 "import": "Import competencies",
+                "importFromCourses": "Import competencies from other courses",
                 "importAll": "Import all competencies of a course",
+                "importStandardized": "Import standardized competencies",
                 "create": "Create competency",
                 "generate": "Generate Competencies",
                 "empty": "No competencies exist for this course",
