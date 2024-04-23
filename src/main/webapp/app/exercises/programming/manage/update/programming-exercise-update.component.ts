@@ -38,6 +38,7 @@ import { ProgrammingExerciseDifficultyComponent } from 'app/exercises/programmin
 import { ProgrammingExerciseLanguageComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-language.component';
 import { ProgrammingExerciseGradingComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-grading.component';
 import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.component';
+import { scrollToTopOfPage } from 'app/shared/util/utils';
 
 export interface ImportOptions {
     recreateBuildPlans: boolean;
@@ -636,6 +637,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             });
         }
         if (this.isImportFromFile) {
+            console.log('I WAS HERE');
             this.subscribeToSaveResponse(this.programmingExerciseService.importFromFile(this.programmingExercise, this.courseId));
         } else if (this.isImportFromExistingExercise) {
             this.subscribeToSaveResponse(
@@ -674,6 +676,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private onSaveError(error: HttpErrorResponse) {
         let errorMessage;
         let disableTranslation;
+        let translationParams;
+
         // Workaround for conflict error, since conflict errors do not have the 'X-artemisApp-alert' header
         if (error.status === 409 && error.error && error.error['X-artemisApp-error'] === 'error.sourceExerciseInconsistent') {
             errorMessage = 'artemisApp.consistencyCheck.error.programmingExerciseImportFailed';
@@ -682,13 +686,22 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             errorMessage = error.headers.get('X-artemisApp-alert')!;
             disableTranslation = true;
         }
+
+        const errorMessageToBeTranslatedNotFound = errorMessage == null;
+        if (errorMessageToBeTranslatedNotFound) {
+            errorMessage = `error.unexpectedError`;
+            translationParams = { error: error.statusText };
+            disableTranslation = false;
+        }
+
         this.alertService.addAlert({
             type: AlertType.DANGER,
             message: errorMessage,
+            translationParams: translationParams,
             disableTranslation: disableTranslation,
         });
         this.isSaving = false;
-        window.scrollTo(0, 0);
+        scrollToTopOfPage();
     }
 
     /**
