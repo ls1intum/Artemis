@@ -156,16 +156,16 @@ public class ResultResource {
     }
 
     /**
-     * GET /participations/:participationId/results/logs-available : get the logs availability for the results of a participation.
+     * GET /participations/:participationId/results/build-job-ids : Get the build job ids for the results of a participation if the respective build logs are available (else null)
      *
      * @param participationId the id of the participation to the results
-     * @return the ResponseEntity with status 200 (OK) and with body the map of resultId and log availability, status 404 (Not Found) if the participation does not exist or 403
+     * @return the ResponseEntity with status 200 (OK) and with body the map of resultId and build job id, status 404 (Not Found) if the participation does not exist or 403
      *         (forbidden) if the user does not have permissions to access the participation.
      */
-    @GetMapping("participations/{participationId}/results/logs-available")
+    @GetMapping("participations/{participationId}/results/build-job-ids")
     @EnforceAtLeastTutor
-    public ResponseEntity<Map<Long, String>> getLogsAvailabilityForResultsOfParticipation(@PathVariable long participationId) {
-        log.debug("REST request to get logs availability for results of participation : {}", participationId);
+    public ResponseEntity<Map<Long, String>> getBuildJobIdsForResultsOfParticipation(@PathVariable long participationId) {
+        log.debug("REST request to get build job ids for results of participation : {}", participationId);
         Participation participation = participationRepository.findByIdElseThrow(participationId);
         List<Result> results = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(participationId);
 

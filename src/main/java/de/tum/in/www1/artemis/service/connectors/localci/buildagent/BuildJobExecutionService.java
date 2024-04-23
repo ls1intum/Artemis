@@ -106,7 +106,7 @@ public class BuildJobExecutionService {
 
         String msg = "~~~~~~~~~~~~~~~~~~~~ Start Build Job " + buildJob.id() + " ~~~~~~~~~~~~~~~~~~~~";
         log.debug(msg);
-        buildLogsMap.addSingleBuildLog(buildJob.id(), new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
+        buildLogsMap.appendBuildLogEntry(buildJob.id(), new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
 
         // Check if the Docker image is available. If not, pull it.
         try {
@@ -114,7 +114,7 @@ public class BuildJobExecutionService {
         }
         catch (LocalCIException e) {
             msg = "Could not pull Docker image " + buildJob.buildConfig().dockerImage();
-            buildLogsMap.addSingleBuildLog(buildJob.id(), new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
+            buildLogsMap.appendBuildLogEntry(buildJob.id(), new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
             throw new LocalCIException(msg, e);
         }
 
@@ -133,7 +133,7 @@ public class BuildJobExecutionService {
             }
             catch (EntityNotFoundException e) {
                 msg = "Could not find last commit hash for assignment repository " + assignmentRepoUri.repositorySlug();
-                buildLogsMap.addSingleBuildLog(buildJob.id(), new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
+                buildLogsMap.appendBuildLogEntry(buildJob.id(), new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
                 throw new LocalCIException(msg, e);
             }
         }
@@ -143,7 +143,7 @@ public class BuildJobExecutionService {
         }
         catch (EntityNotFoundException e) {
             msg = "Could not find last commit hash for test repository " + testsRepoUri.repositorySlug();
-            buildLogsMap.addSingleBuildLog(buildJob.id(), new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
+            buildLogsMap.appendBuildLogEntry(buildJob.id(), new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
             throw new LocalCIException(msg, e);
         }
 
@@ -212,24 +212,24 @@ public class BuildJobExecutionService {
         buildJobContainerService.startContainer(containerId);
 
         String msg = "Started container " + containerName + " for build job " + buildJob.id();
-        buildLogsMap.addSingleBuildLog(buildJob.id(), new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
+        buildLogsMap.appendBuildLogEntry(buildJob.id(), new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
 
         log.info(msg, containerName);
 
         msg = "Populating build job container with repositories and build script";
-        buildLogsMap.addSingleBuildLog(buildJob.id(), new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
+        buildLogsMap.appendBuildLogEntry(buildJob.id(), new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
         log.debug(msg);
         buildJobContainerService.populateBuildJobContainer(containerId, assignmentRepositoryPath, testsRepositoryPath, solutionRepositoryPath, auxiliaryRepositoriesPaths,
                 buildJob.repositoryInfo().auxiliaryRepositoryCheckoutDirectories(), buildJob.buildConfig().programmingLanguage());
 
         msg = "~~~~~~~~~~~~~~~~~~~~ Executing Build Script for Build job " + buildJob.id() + " ~~~~~~~~~~~~~~~~~~~~";
-        buildLogsMap.addSingleBuildLog(buildJob.id(), new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
+        buildLogsMap.appendBuildLogEntry(buildJob.id(), new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
         log.debug(msg);
 
         buildJobContainerService.runScriptInContainer(containerId, buildJob.id());
 
         msg = "~~~~~~~~~~~~~~~~~~~~ Finished Executing Build Script for Build job " + buildJob.id() + " ~~~~~~~~~~~~~~~~~~~~";
-        buildLogsMap.addSingleBuildLog(buildJob.id(), new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
+        buildLogsMap.appendBuildLogEntry(buildJob.id(), new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
         log.info(msg);
 
         ZonedDateTime buildCompletedDate = ZonedDateTime.now();
@@ -245,7 +245,7 @@ public class BuildJobExecutionService {
         }
         catch (NotFoundException e) {
             msg = "Could not find test results in container " + containerName;
-            buildLogsMap.addSingleBuildLog(buildJob.id(), new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
+            buildLogsMap.appendBuildLogEntry(buildJob.id(), new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
             log.error(msg, e);
             // If the test results are not found, this means that something went wrong during the build and testing of the submission.
             return constructFailedBuildResult(buildJob.buildConfig().branch(), assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate);
@@ -269,7 +269,7 @@ public class BuildJobExecutionService {
             }
             catch (IOException e) {
                 msg = "Could not delete " + CHECKED_OUT_REPOS_TEMP_DIR + " directory";
-                buildLogsMap.addSingleBuildLog(buildJob.id(), new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
+                buildLogsMap.appendBuildLogEntry(buildJob.id(), new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
                 log.error(msg, e);
             }
         }
@@ -282,13 +282,13 @@ public class BuildJobExecutionService {
         }
         catch (IOException | XMLStreamException | IllegalStateException e) {
             msg = "Error while parsing test results";
-            buildLogsMap.addSingleBuildLog(buildJob.id(), new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
+            buildLogsMap.appendBuildLogEntry(buildJob.id(), new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
             throw new LocalCIException(msg, e);
         }
 
         msg = "Building and testing submission for repository " + assignmentRepositoryUri.repositorySlug() + " and commit hash " + assignmentRepoCommitHash + " took "
                 + TimeLogUtil.formatDurationFrom(timeNanoStart);
-        buildLogsMap.addSingleBuildLog(buildJob.id(), new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
+        buildLogsMap.appendBuildLogEntry(buildJob.id(), new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
         log.info(msg);
 
         return buildResult;
@@ -328,7 +328,7 @@ public class BuildJobExecutionService {
             catch (IllegalStateException e) {
                 // Exceptions due to one invalid sca file should not lead to the whole build to fail.
                 String msg = "Invalid report format in file " + fileName + ", ignoring.";
-                buildLogsMap.addSingleBuildLog(buildJobId, new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
+                buildLogsMap.appendBuildLogEntry(buildJobId, new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
                 log.warn(msg, e);
             }
         }
@@ -382,7 +382,7 @@ public class BuildJobExecutionService {
         }
         catch (UnsupportedToolException e) {
             String msg = "Failed to parse static code analysis report for " + fileName;
-            buildLogsMap.addSingleBuildLog(buildJobId, new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
+            buildLogsMap.appendBuildLogEntry(buildJobId, new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
             throw new IllegalStateException("Failed to parse static code analysis report for " + fileName, e);
         }
     }
@@ -541,7 +541,7 @@ public class BuildJobExecutionService {
         }
         catch (GitAPIException e) {
             String msg = "Error while cloning repository " + repositoryUri.repositorySlug();
-            buildLogsMap.addSingleBuildLog(buildJobId, new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
+            buildLogsMap.appendBuildLogEntry(buildJobId, new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
             throw new LocalCIException(msg, e);
         }
     }
@@ -553,19 +553,19 @@ public class BuildJobExecutionService {
                     Paths.get(CHECKED_OUT_REPOS_TEMP_DIR, commitHash, repositoryUri.folderNameForRepositoryUri()), repositoryUri, defaultBranch);
             if (repository == null) {
                 msg = "Repository with commit hash " + commitHash + " not found";
-                buildLogsMap.addSingleBuildLog(buildJobId, new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
+                buildLogsMap.appendBuildLogEntry(buildJobId, new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
                 throw new EntityNotFoundException(msg);
             }
             gitService.deleteLocalRepository(repository);
         }
         catch (EntityNotFoundException e) {
             msg = "Error while checking out repository";
-            buildLogsMap.addSingleBuildLog(buildJobId, new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
+            buildLogsMap.appendBuildLogEntry(buildJobId, new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
             throw new LocalCIException(msg, e);
         }
         catch (IOException e) {
             msg = "Error while deleting repository";
-            buildLogsMap.addSingleBuildLog(buildJobId, new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
+            buildLogsMap.appendBuildLogEntry(buildJobId, new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
             throw new LocalCIException(msg, e);
         }
     }

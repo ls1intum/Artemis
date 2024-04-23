@@ -129,7 +129,7 @@ public class BuildJobManagementService {
             if (cancelledBuildJobs.contains(buildJobItem.id())) {
                 finishCancelledBuildJob(buildJobItem.repositoryInfo().assignmentRepositoryUri(), buildJobItem.id(), containerName);
                 String msg = "Build job with id " + buildJobItem.id() + " was cancelled before it was submitted to the executor service.";
-                buildLogsMap.addSingleBuildLog(buildJobItem.id(), new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
+                buildLogsMap.appendBuildLogEntry(buildJobItem.id(), new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
                 throw new CompletionException(msg, null);
             }
             future = localCIBuildExecutorService.submit(buildJob);
@@ -151,7 +151,7 @@ public class BuildJobManagementService {
                     finishCancelledBuildJob(buildJobItem.repositoryInfo().assignmentRepositoryUri(), buildJobItem.id(), containerName);
                     String msg = "Build job with id " + buildJobItem.id() + " was cancelled.";
                     String stackTrace = stackTraceToString(e);
-                    buildLogsMap.addSingleBuildLog(buildJobItem.id(), new BuildLogEntry(ZonedDateTime.now(), msg + "\n" + stackTrace));
+                    buildLogsMap.appendBuildLogEntry(buildJobItem.id(), new BuildLogEntry(ZonedDateTime.now(), msg + "\n" + stackTrace));
                     throw new CompletionException(msg, e);
                 }
                 else {
@@ -201,7 +201,7 @@ public class BuildJobManagementService {
     private void finishBuildJobExceptionally(String buildJobId, String containerName, Exception exception) {
         String msg = "Error while executing build job " + buildJobId + ": " + exception.getMessage();
         String stackTrace = stackTraceToString(exception);
-        buildLogsMap.addSingleBuildLog(buildJobId, new BuildLogEntry(ZonedDateTime.now(), msg + "\n" + stackTrace));
+        buildLogsMap.appendBuildLogEntry(buildJobId, new BuildLogEntry(ZonedDateTime.now(), msg + "\n" + stackTrace));
         log.error(msg);
 
         buildJobContainerService.stopContainer(containerName);

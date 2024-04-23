@@ -319,7 +319,7 @@ public class BuildJobContainerService {
                 String text = new String(item.getPayload());
                 BuildLogEntry buildLogEntry = new BuildLogEntry(ZonedDateTime.now(), text);
                 if (buildJobId != null) {
-                    buildLogsMap.addSingleBuildLog(buildJobId, buildLogEntry);
+                    buildLogsMap.appendBuildLogEntry(buildJobId, buildLogEntry);
                 }
             }
 

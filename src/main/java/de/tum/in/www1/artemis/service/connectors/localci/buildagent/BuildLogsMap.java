@@ -22,7 +22,7 @@ public class BuildLogsMap {
         return buildLogsMap.get(buildLogId);
     }
 
-    public void addSingleBuildLog(String buildLogId, BuildLogEntry buildLog) {
+    public void appendBuildLogEntry(String buildLogId, BuildLogEntry buildLog) {
         buildLogsMap.computeIfAbsent(buildLogId, k -> new ArrayList<>()).add(buildLog);
     }
 
