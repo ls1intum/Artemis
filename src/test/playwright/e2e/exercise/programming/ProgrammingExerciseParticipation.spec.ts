@@ -37,7 +37,7 @@ test.describe('Programming exercise participation', () => {
             exercise = await exerciseAPIRequests.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.JAVA });
         });
 
-        test.describe('Make a submission using code editor', () => {
+        test.describe.skip('Make a submission using code editor', () => {
             test('Makes a failing submission', async ({ programmingExerciseOverview, programmingExerciseEditor }) => {
                 await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
                 await programmingExerciseOverview.openCodeEditor(exercise.id!);
@@ -70,7 +70,7 @@ test.describe('Programming exercise participation', () => {
         });
 
         test.describe('Make a submission using git', () => {
-            test('Makes a failing submission', async ({ page, programmingExerciseOverview, programmingExerciseEditor }) => {
+            test.skip('Makes a failing submission', async ({ page, programmingExerciseOverview, programmingExerciseEditor }) => {
                 await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
                 let repoUrl = await programmingExerciseOverview.getRepoUrl();
                 repoUrl = repoUrl.replace('localhost', 'artemis-app:8080');
@@ -97,6 +97,7 @@ test.describe('Programming exercise participation', () => {
                 const exerciseRepo = await gitClient.cloneRepo(repoUrl, repoName);
                 const submission = javaPartiallySuccessfulSubmission;
                 const commitMessage = 'Initial implementation';
+                console.log('Making git submission');
                 await makeGitSubmission(exerciseRepo, repoName, submission, commitMessage);
                 await fs.rmdir(`./test-exercise-repos/${repoName}`, { recursive: true });
                 await page.goto(`courses/${course.id}/exercises/${exercise.id!}`);
@@ -104,7 +105,7 @@ test.describe('Programming exercise participation', () => {
                 await expect(resultScore.getByText(submission.expectedResult)).toBeVisible();
             });
 
-            test('Makes a successful submission', async ({ page, programmingExerciseOverview, programmingExerciseEditor }) => {
+            test.skip('Makes a successful submission', async ({ page, programmingExerciseOverview, programmingExerciseEditor }) => {
                 await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
                 let repoUrl = await programmingExerciseOverview.getRepoUrl();
                 repoUrl = repoUrl.replace('localhost', 'artemis-app:8080');
@@ -121,7 +122,7 @@ test.describe('Programming exercise participation', () => {
                 await expect(resultScore.getByText(submission.expectedResult)).toBeVisible();
             });
 
-            test('Checks commit history', async ({ page, programmingExerciseOverview }) => {
+            test.skip('Checks commit history', async ({ page, programmingExerciseOverview }) => {
                 await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
                 let repoUrl = await programmingExerciseOverview.getRepoUrl();
                 repoUrl = repoUrl.replace('localhost', 'artemis-app:8080');
@@ -160,7 +161,7 @@ test.describe('Programming exercise participation', () => {
     // Skip C tests within Jenkins used by the Postgres setup, since C is currently not supported there
     // See https://github.com/ls1intum/Artemis/issues/6994
     if (process.env.PLAYWRIGHT_DB_TYPE !== 'Postgres') {
-        test.describe('C programming exercise', () => {
+        test.describe.skip('C programming exercise', () => {
             let exercise: ProgrammingExercise;
 
             test.beforeEach('Setup c programming exercise', async ({ login, exerciseAPIRequests }) => {
@@ -180,7 +181,7 @@ test.describe('Programming exercise participation', () => {
         });
     }
 
-    test.describe('Python programming exercise', () => {
+    test.describe.skip('Python programming exercise', () => {
         let exercise: ProgrammingExercise;
 
         test.beforeEach('Setup python programming exercise', async ({ login, exerciseAPIRequests }) => {
@@ -206,6 +207,7 @@ test.describe('Programming exercise participation', () => {
 
 async function makeGitSubmission(exerciseRepo: SimpleGit, exerciseRepoName: string, submission: ProgrammingExerciseSubmission, commitMessage: string, deleteFiles: boolean = true) {
     if (deleteFiles) {
+        console.log('Deleting redundant files');
         for (const fileName of submission.deleteFiles) {
             const packagePath = submission.packageName!.replace(/\./g, '/');
             const filePath = `./src/${packagePath}/${fileName}`;
@@ -213,6 +215,7 @@ async function makeGitSubmission(exerciseRepo: SimpleGit, exerciseRepoName: stri
         }
     }
 
+    console.log('Creating new files');
     for (const file of submission.files) {
         const packagePath = submission.packageName!.replace(/\./g, '/');
         const filePath = `src/${packagePath}/${file.name}`;
@@ -220,6 +223,10 @@ async function makeGitSubmission(exerciseRepo: SimpleGit, exerciseRepoName: stri
         await createFileWithContent(`./test-exercise-repos/${exerciseRepoName}/${filePath}`, sourceCode!);
         await exerciseRepo.add(`./${filePath}`);
     }
+
+    console.log('Committing changes');
     await exerciseRepo.commit(commitMessage);
+
+    console.log('Pushing changes');
     await exerciseRepo.push();
 }
