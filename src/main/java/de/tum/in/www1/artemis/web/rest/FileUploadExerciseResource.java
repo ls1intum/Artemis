@@ -371,7 +371,7 @@ public class FileUploadExerciseResource {
      *         if given exerciseId is not same as in the object of the request body, or with status 500 (Internal
      *         Server Error) if the fileUploadExercise couldn't be updated
      */
-    @PutMapping(Endpoints.REEVALUATE_EXERCISE)
+    @PutMapping("file-upload-exercises/{exerciseId}/re-evaluate")
     @EnforceAtLeastEditor
     public ResponseEntity<FileUploadExercise> reEvaluateAndUpdateFileUploadExercise(@PathVariable long exerciseId, @RequestBody FileUploadExercise fileUploadExercise,
             @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) {
@@ -387,19 +387,5 @@ public class FileUploadExerciseResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
         exerciseService.reEvaluateExercise(fileUploadExercise, deleteFeedbackAfterGradingInstructionUpdate);
         return updateFileUploadExercise(fileUploadExercise, null, fileUploadExercise.getId());
-    }
-
-    public static final class Endpoints {
-
-        public static final String ROOT = "/api";
-
-        public static final String FILE_UPLOAD_EXERCISES = "/file-upload-exercises";
-
-        public static final String FILE_UPLOAD_EXERCISE = FILE_UPLOAD_EXERCISES + "/{exerciseId}";
-
-        public static final String REEVALUATE_EXERCISE = FILE_UPLOAD_EXERCISE + "/re-evaluate";
-
-        private Endpoints() {
-        }
     }
 }
