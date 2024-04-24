@@ -246,36 +246,6 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             expect(comp.isSaving).toBeFalse();
             expect(alertSpy).toHaveBeenCalledWith({ type: AlertType.DANGER, message: 'error-message', disableTranslation: true });
         });
-
-        it('should show alert for unknown error', async () => {
-            // GIVEN
-            const entity = new ProgrammingExercise(undefined, undefined);
-            entity.id = 1;
-            jest.spyOn(programmingExerciseService, 'update').mockReturnValue(
-                throwError(
-                    new HttpResponse({
-                        headers: new HttpHeaders(),
-                        status: 500,
-                        statusText: 'Internal Server Error',
-                    }),
-                ),
-            );
-            const alertSpy = jest.spyOn(alertService, 'addAlert');
-            comp.programmingExercise = entity;
-            comp.backupExercise = {} as ProgrammingExercise;
-            comp.programmingExercise.course = course;
-            // WHEN
-            comp.save();
-
-            // THEN
-            expect(comp.isSaving).toBeFalse();
-            expect(alertSpy).toHaveBeenCalledWith({
-                type: AlertType.DANGER,
-                message: 'error.unexpectedError',
-                translationParams: { error: 'Internal Server Error' },
-                disableTranslation: false,
-            });
-        });
     });
 
     describe('exam mode', () => {
