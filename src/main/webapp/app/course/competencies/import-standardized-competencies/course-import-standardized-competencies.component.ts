@@ -5,14 +5,14 @@ import { faBan, faDownLeftAndUpRightToCenter, faFileImport, faSort, faTrash, faU
 import { ActivatedRoute, Router } from '@angular/router';
 import { Component, HostListener, OnInit } from '@angular/core';
 import { onError } from 'app/shared/util/global.utils';
-import { StandardizedCompetencyService } from 'app/admin/standardized-competencies/standardized-competency.service';
 import { map } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
-import { FilterableKnowledgeAreaTreeComponent } from 'app/shared/standardized-competencies/filterable-knowledge-area-tree.component';
+import { StandardizedCompetencyFilterPageComponent } from 'app/shared/standardized-competencies/standardized-competency-filter-page.component';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { TranslateService } from '@ngx-translate/core';
 import { SortService } from 'app/shared/service/sort.service';
+import { StandardizedCompetencyService } from 'app/shared/standardized-competencies/standardized-competency.service';
 
 interface StandardizedCompetencyForImport extends StandardizedCompetencyForTree {
     selected?: boolean;
@@ -28,7 +28,7 @@ interface KnowledgeAreaForImport extends KnowledgeAreaForTree {
     selector: 'jhi-course-import-standardized-competencies',
     templateUrl: './course-import-standardized-competencies.component.html',
 })
-export class CourseImportStandardizedCompetenciesComponent extends FilterableKnowledgeAreaTreeComponent implements OnInit, ComponentCanDeactivate {
+export class CourseImportStandardizedCompetenciesComponent extends StandardizedCompetencyFilterPageComponent implements OnInit, ComponentCanDeactivate {
     //TODO: rename and move kaForTree -> Filterable KA tree?
     protected selectedCompetencies: StandardizedCompetencyForImport[] = [];
     protected isLoading = false;

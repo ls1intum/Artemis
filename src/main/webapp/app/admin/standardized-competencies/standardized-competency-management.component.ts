@@ -9,7 +9,6 @@ import {
 } from 'app/entities/competency/standardized-competency.model';
 import { onError } from 'app/shared/util/global.utils';
 import { AdminStandardizedCompetencyService } from 'app/admin/standardized-competencies/admin-standardized-competency.service';
-import { StandardizedCompetencyService } from 'app/admin/standardized-competencies/standardized-competency.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { Subject, map } from 'rxjs';
@@ -18,15 +17,16 @@ import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-au
 import { getIcon } from 'app/entities/competency.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { TranslateService } from '@ngx-translate/core';
-import { FilterableKnowledgeAreaTreeComponent } from 'app/shared/standardized-competencies/filterable-knowledge-area-tree.component';
+import { StandardizedCompetencyFilterPageComponent } from 'app/shared/standardized-competencies/standardized-competency-filter-page.component';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
+import { StandardizedCompetencyService } from 'app/shared/standardized-competencies/standardized-competency.service';
 
 @Component({
     selector: 'jhi-standardized-competency-management',
     templateUrl: './standardized-competency-management.component.html',
     styleUrls: ['standardized-competency-management.component.scss'],
 })
-export class StandardizedCompetencyManagementComponent extends FilterableKnowledgeAreaTreeComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
+export class StandardizedCompetencyManagementComponent extends StandardizedCompetencyFilterPageComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     protected isLoading = false;
     // true if a competency is getting edited in the detail component
     protected isEditing = false;

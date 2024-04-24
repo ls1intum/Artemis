@@ -9,7 +9,7 @@ import { KnowledgeAreaDTO, KnowledgeAreaForTree, StandardizedCompetencyDTO } fro
  *
  */
 @Component({ template: '' })
-export abstract class FilterableKnowledgeAreaTreeComponent {
+export abstract class StandardizedCompetencyFilterPageComponent {
     protected knowledgeAreaFilter?: KnowledgeAreaDTO;
     protected competencyTitleFilter = '';
 
