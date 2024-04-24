@@ -9,15 +9,15 @@ class GitClient {
             stderr.pipe(process.stderr);
         });
 
-        const reposPath = `./test-exercise-repos`;
+        const repoPath = `./test-exercise-repos/${repoName}`;
 
-        if (!fs.existsSync(reposPath)) {
-            fs.mkdirSync(reposPath, { recursive: true });
+        if (!fs.existsSync(repoPath)) {
+            fs.mkdirSync(repoPath, { recursive: true });
         }
 
         try {
             console.log('Cloning the repo');
-            await git.clone(url, `${reposPath}/${repoName}`);
+            await git.clone(url, repoPath);
             console.log('Repository cloned successfully');
         } catch (error) {
             console.error('Error cloning repository:', error);
