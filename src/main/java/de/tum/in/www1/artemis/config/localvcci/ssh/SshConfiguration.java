@@ -2,8 +2,8 @@ package de.tum.in.www1.artemis.config.localvcci.ssh;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALVC;
 
-import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
@@ -17,9 +17,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.io.Resource;
-
-import de.tum.in.www1.artemis.service.ResourceLoaderService;
 
 @Profile(PROFILE_LOCALVC)
 @Configuration
@@ -38,33 +35,25 @@ public class SshConfiguration {
 
     private final GitPublickeyAuthenticator gitPublickeyAuthenticator;
 
-    private final ResourceLoaderService resourceLoaderService;
-
     private final SshGitCommandFactory sshGitCommandFactory;
 
     private final SshGitLocationResolver sshGitLocationResolver;
 
-    public SshConfiguration(GitPublickeyAuthenticator gitPublickeyAuthenticator, ResourceLoaderService resourceLoaderService, SshGitCommandFactory sshGitCommandFactory,
-            SshGitLocationResolver sshGitLocationResolver) {
+    public SshConfiguration(GitPublickeyAuthenticator gitPublickeyAuthenticator, SshGitCommandFactory sshGitCommandFactory, SshGitLocationResolver sshGitLocationResolver) {
         this.gitPublickeyAuthenticator = gitPublickeyAuthenticator;
-        this.resourceLoaderService = resourceLoaderService;
         this.sshGitCommandFactory = sshGitCommandFactory;
         this.sshGitLocationResolver = sshGitLocationResolver;
     }
 
     @Bean(initMethod = "start", destroyMethod = "stop")
-    public SshServer sshServer() throws IOException {
+    public SshServer sshServer() {
         SshServer sshd = SshServer.setUpDefaultServer();
         sshd.setPort(sshPort);
 
         if (sshHostKeyPath.isPresent() && sshHostKeyPath.get().toFile().exists()) {
             // this allows to customize the host key file for production environments
             log.info("Use SSH host key {}", sshHostKeyPath.get());
-            Resource hostKeyResource = resourceLoaderService.getResource(sshHostKeyPath.get());
-            if (!hostKeyResource.getFile().exists()) {
-                log.error("host key {} does not exist", hostKeyResource.getFile().getAbsolutePath());
-            }
-            sshd.setKeyPairProvider(new SimpleGeneratorHostKeyProvider(hostKeyResource.getFile().toPath()));
+            sshd.setKeyPairProvider(new MultipleHostKeyProvider(sshHostKeyPath.get()));
         }
         else {
             // this is a simple solution for development, the host key will be generated during the first ssh operation in case it does not exist
@@ -76,9 +65,13 @@ public class SshConfiguration {
         sshd.setPublickeyAuthenticator(gitPublickeyAuthenticator);
         // Add command factory or shell here to handle Git commands or any other commands
 
-        // TODO: This is deprecated
-        URL serverUrl = new URL(artemisServerUrl);
-        log.info("Started git ssh server on ssh://{}:{}", serverUrl.getHost(), sshPort);
+        try {
+            var serverUri = new URI(artemisServerUrl);
+            log.info("Started git ssh server on ssh://{}:{}", serverUri.getHost(), sshPort);
+        }
+        catch (URISyntaxException e) {
+            log.error("Failed to parse server URL", e);
+        }
 
         return sshd;
     }
