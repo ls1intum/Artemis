@@ -212,8 +212,6 @@ Create new Quiz Exercise
 
                     - Cancel button: Returns to the list of existing Apollon diagrams.
 
-                - Click the save button to open the Apollon editor
-
                     .. figure:: quiz/apollon-editor.png
                         :align: center
 
