@@ -45,6 +45,11 @@ public class SshConfiguration {
         this.sshGitLocationResolver = sshGitLocationResolver;
     }
 
+    /**
+     * Configure and start the SSH server for LocalVC
+     *
+     * @return the configured SSH server
+     */
     @Bean(initMethod = "start", destroyMethod = "stop")
     public SshServer sshServer() {
         SshServer sshd = SshServer.setUpDefaultServer();

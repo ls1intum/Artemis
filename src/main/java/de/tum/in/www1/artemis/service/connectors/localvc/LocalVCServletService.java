@@ -291,6 +291,16 @@ public class LocalVCServletService {
         return new String(Base64.getDecoder().decode(basicAuthCredentialsEncoded[1]));
     }
 
+    /**
+     * Authorize a user to access a certain repository.
+     *
+     * @param repositoryTypeOrUserName The type of the repository or the username of the user.
+     * @param user                     The user that wants to access the repository.
+     * @param exercise                 The exercise the repository belongs to.
+     * @param repositoryActionType     The type of the action the user wants to perform.
+     * @param isPracticeRepository     Whether the repository is a practice repository.
+     * @throws LocalVCForbiddenException If the user is not allowed to access the repository.
+     */
     public void authorizeUser(String repositoryTypeOrUserName, User user, ProgrammingExercise exercise, RepositoryActionType repositoryActionType, boolean isPracticeRepository)
             throws LocalVCForbiddenException {
 

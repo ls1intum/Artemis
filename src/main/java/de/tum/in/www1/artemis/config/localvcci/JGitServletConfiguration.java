@@ -33,4 +33,5 @@ public class JGitServletConfiguration {
         log.info("Registering ArtemisGitServlet for handling fetch and push requests to [Artemis URL]/git/[Project Key]/[Repository Slug].git");
         return new ServletRegistrationBean<>(artemisGitServlet, "/git/*");
     }
+
 }

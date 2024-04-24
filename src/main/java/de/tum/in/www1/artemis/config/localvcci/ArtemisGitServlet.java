@@ -33,6 +33,9 @@ public class ArtemisGitServlet extends GitServlet {
         this.localVCServletService = localVCServletService;
     }
 
+    /**
+     * Initialize the ArtemisGitServlet by setting the repository resolver and adding filters for fetch and push requests.
+     */
     @PostConstruct
     public void init() {
         this.setRepositoryResolver((request, name) -> {
