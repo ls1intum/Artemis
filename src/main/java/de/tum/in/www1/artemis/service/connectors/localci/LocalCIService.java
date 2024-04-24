@@ -41,11 +41,14 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final SharedQueueManagementService sharedQueueManagementService;
+
     public LocalCIService(BuildScriptProviderService buildScriptProviderService, AeolusTemplateService aeolusTemplateService,
-            ProgrammingExerciseRepository programmingExerciseRepository) {
+            ProgrammingExerciseRepository programmingExerciseRepository, SharedQueueManagementService sharedQueueManagementService) {
         this.buildScriptProviderService = buildScriptProviderService;
         this.aeolusTemplateService = aeolusTemplateService;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.sharedQueueManagementService = sharedQueueManagementService;
     }
 
     @Override
@@ -106,8 +109,15 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
      */
     @Override
     public BuildStatus getBuildStatus(ProgrammingExerciseParticipation participation) {
-        // TODO: Retrieve the correct status from the database once the table is implemented.
-        return BuildStatus.INACTIVE;
+        if (!sharedQueueManagementService.getQueuedJobsForParticipation(participation.getId()).isEmpty()) {
+            return BuildStatus.QUEUED;
+        }
+        else if (!sharedQueueManagementService.getProcessingJobsForParticipation(participation.getId()).isEmpty()) {
+            return BuildStatus.BUILDING;
+        }
+        else {
+            return BuildStatus.INACTIVE;
+        }
     }
 
     @Override
