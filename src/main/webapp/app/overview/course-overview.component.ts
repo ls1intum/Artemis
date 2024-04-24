@@ -255,8 +255,8 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     /** Calculate dropdown-menu position based on the number of entries in the sidebar */
     updateMenuOffset() {
         const leftSidebarItems: number = this.sidebarItems.length - this.hiddenItems.length;
-        const minHeightForSidebar: number = 350; // Minimum height for the sidebar to dynamically position dropdown menu
-        const offsetForEachElement: number = 50; // Offset to be added to the dropdown menu for each element left in the sidebar
+        const minHeightForSidebar: number = 330; // Minimum height for the sidebar to dynamically position dropdown menu
+        const offsetForEachElement: number = 40; // Offset to be added to the dropdown menu for each element left in the sidebar
         const maxSidebarElements: number = 9;
 
         if (leftSidebarItems === 1) {
