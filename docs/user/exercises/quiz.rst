@@ -173,7 +173,7 @@ Create new Quiz Exercise
                     .. figure:: quiz/apollon-diagrams.png
                         :align: center
 
-                - On the Apollon Diagrams page, it is possible to see the list of Apollon Diagrams and the possible actions to perform with them.
+                - On the Apollon diagram page, it is possible to see the list of Apollon diagrams and the possible actions to perform with them.
 
                     - Open
                     - Delete
@@ -184,9 +184,9 @@ Create new Quiz Exercise
                         :align: center
                         :scale: 50
 
-                    - Title (required): provide the title of the Drag-and-Drop Model Quiz
+                    - Title (required): provide the title of the Apollon diagram, which will be used as title for the generated quiz question.
 
-                    - Diagram Type: It is a list picker to select between several diagrams:
+                    - Diagram Type: A drop-down menu to select one of the following diagram types:
 
                         - Class Diagram
 
@@ -208,30 +208,28 @@ Create new Quiz Exercise
 
                         - Flowchart
 
-                    - Create button: Creates the apollon diagram and opens the edit view.
+                    - Create button: Creates the Apollon diagram and opens the edit view.
 
-                    - Cancel button: Returns to the apollon list view.
+                    - Cancel button: Returns to the list of existing Apollon diagrams.
 
                 - Click the save button to open the Apollon editor
 
                     .. figure:: quiz/apollon-editor.png
                         :align: center
 
-                    - Back to overview link: Returns to the existing apollon diagram lists.
+                    - Back to overview link: Returns to the existing Apollon diagram lists.
 
-                    - Crop image to selection: Allows to download the current selection.
-
-                    - Download button: To download the selection.
+                    - Download button: Download the diagram as image. The "Crop Image to Selection" checkbox allows to include only the currently selected elements in the image.
 
                     - Title (required): Allows to edit the tile of the diagram.
 
                     - Modeling field: The items for modeling the diagram will be displayed here.
 
-                    - Elements to Drag and Drop in the Modeling field.
+                    - Elements to Drag and Drop into the modeling field.
 
                     - Close: Returns to the quiz view without saving and creating a question.
 
-                    - Save Diagram button: Saves the apollon diagram and stays in the edit view.
+                    - Save Diagram button: Saves the Apollon diagram and stays in the edit view.
 
                     - Generate a quiz exercise button: Generates a quiz drag-and-drop question and returns to the quiz edit view.
 

@@ -24,7 +24,7 @@ Generate programming exercise
     .. figure:: programming/course-management-exercise-dashboard.png
               :align: center
 
-    - The guided mode has been removed. We now introduced a validation bar to navigate through sections and help the user validation the form.
+    - The guided mode has been removed. We now introduced a validation bar to navigate through sections and help the user validate the form.
       For more information, watch the video below.
 
     |
