@@ -68,14 +68,14 @@ class TestResultXmlParser {
             return message != null ? message : detailedMessage;
         }
 
-        @JacksonXmlText
-        public void setDetailedMessage(String detailedMessage) {
-            this.detailedMessage = detailedMessage;
-        }
-
         @JacksonXmlProperty(isAttribute = true, localName = "message")
         public void setMessage(String message) {
             this.message = message;
+        }
+        
+        @JacksonXmlText
+        public void setDetailedMessage(String detailedMessage) {
+            this.detailedMessage = detailedMessage;
         }
     }
 }
