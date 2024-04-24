@@ -129,6 +129,17 @@ export class AlertService {
                             break;
                         }
                         this.addErrorAlert(httpErrorResponse.error.title, httpErrorResponse.error.message, httpErrorResponse.error.params);
+                    } else if (this.isErrorFromStatusCode(httpErrorResponse.status)) {
+                        const message = httpErrorResponse.headers.get('x-artemisapp-error');
+                        let translationKey = httpErrorResponse.headers.get('x-artemisapp-message') ?? undefined;
+                        let translationParams;
+
+                        if (!(message || translationKey)) {
+                            translationKey = 'error.unexpectedError';
+                            translationParams = { error: httpErrorResponse.statusText };
+                        }
+
+                        this.addErrorAlert(message, translationKey, translationParams);
                     }
             }
         });
@@ -277,5 +288,9 @@ export class AlertService {
             message = '' + message;
         }
         this.addAlert({ type: AlertType.DANGER, message, translationKey, translationParams });
+    }
+
+    private isErrorFromStatusCode(statusCode: number): boolean {
+        return statusCode >= 400;
     }
 }

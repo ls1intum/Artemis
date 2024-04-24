@@ -675,7 +675,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private onSaveError(error: HttpErrorResponse) {
         let errorMessage;
         let disableTranslation;
-        let translationParams;
 
         // Workaround for conflict error, since conflict errors do not have the 'X-artemisApp-alert' header
         if (error.status === 409 && error.error && error.error['X-artemisApp-error'] === 'error.sourceExerciseInconsistent') {
@@ -686,17 +685,9 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             disableTranslation = true;
         }
 
-        const errorMessageToBeTranslatedNotFound = !errorMessage;
-        if (errorMessageToBeTranslatedNotFound) {
-            errorMessage = `error.unexpectedError`;
-            translationParams = { error: error.statusText };
-            disableTranslation = false;
-        }
-
         this.alertService.addAlert({
             type: AlertType.DANGER,
             message: errorMessage,
-            translationParams: translationParams,
             disableTranslation: disableTranslation,
         });
         this.isSaving = false;
