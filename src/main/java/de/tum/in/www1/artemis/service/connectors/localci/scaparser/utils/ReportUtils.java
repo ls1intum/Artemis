@@ -39,10 +39,9 @@ public final class ReportUtils {
         StaticCodeAnalysisTool tool = StaticCodeAnalysisTool.getToolByFilePattern(filename).orElse(null);
         List<StaticCodeAnalysisIssue> issues = List.of(new StaticCodeAnalysisIssue(filename, 1, 1, 0, 0, // Assuming there are no column details
                 "ExceptionDuringParsing", "miscellaneous",
-                String.format("An exception occurred during parsing the report for %s. Exception: %s", tool != null ? tool : "file " + filename, exception), null, // No priority
-                                                                                                                                                                   // for this issue
-                null  // No penalty for this issue
-        ));
+                String.format("An exception occurred during parsing the report for %s. Exception: %s", tool != null ? tool : "file " + filename, exception),
+                // No priority and no penalty for this issue
+                null, null));
 
         return new StaticCodeAnalysisReportDTO(tool, issues);
     }

@@ -57,7 +57,7 @@ import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.TestResults
 import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsEndpoints;
 import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsInternalUrlService;
 import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsXmlConfigBuilder;
-import de.tum.in.www1.artemis.service.connectors.jenkins.XmlFileUtils;
+import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsXmlFileUtils;
 import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobPermissionsService;
 import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobService;
 
@@ -263,7 +263,7 @@ public class JenkinsBuildPlanService {
             final var headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_XML);
 
-            String jobXmlString = XmlFileUtils.writeToString(jobConfig);
+            String jobXmlString = JenkinsXmlFileUtils.writeToString(jobConfig);
             final var entity = new HttpEntity<>(jobXmlString, headers);
 
             restTemplate.exchange(uri, HttpMethod.POST, entity, String.class);

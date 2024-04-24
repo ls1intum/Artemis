@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.localci.scaparser.strategy;
 
+import java.nio.file.Path;
+
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.service.connectors.localci.scaparser.exception.UnsupportedToolException;
 
@@ -31,9 +33,6 @@ public class ParserPolicy {
     }
 
     private String extractFilePattern(String fileName) {
-        // Find the index of the last '/'
-        int lastIndex = fileName.lastIndexOf('/');
-        // If '/' is found, extract the substring after it; otherwise, keep the original string
-        return (lastIndex != -1) ? fileName.substring(lastIndex + 1) : fileName;
+        return Path.of(fileName).getFileName().toString();
     }
 }

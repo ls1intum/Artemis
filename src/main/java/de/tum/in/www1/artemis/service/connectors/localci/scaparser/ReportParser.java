@@ -61,8 +61,7 @@ public class ReportParser {
                 return createFileTooLargeReport(file.getName());
             }
 
-            ParserContext context = new ParserContext();
-            return context.getReport(file);
+            return ParserContext.getReport(file);
         }
         catch (Exception e) {
             return createErrorReport(file.getName(), e);

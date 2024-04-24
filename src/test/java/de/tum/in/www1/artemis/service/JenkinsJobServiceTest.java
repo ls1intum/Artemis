@@ -1,9 +1,14 @@
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.service.connectors.jenkins.XmlFileUtils.getDocumentBuilderFactory;
+import static de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsXmlFileUtils.getDocumentBuilderFactory;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIOException;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.same;
+import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
 
@@ -24,7 +29,7 @@ import com.offbytwo.jenkins.model.FolderJob;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.exception.JenkinsException;
-import de.tum.in.www1.artemis.service.connectors.jenkins.XmlFileUtils;
+import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsXmlFileUtils;
 import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
@@ -38,7 +43,7 @@ class JenkinsJobServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
     @Autowired
     private UserUtilService userUtilService;
 
-    private static MockedStatic<XmlFileUtils> mockedXmlFileUtils;
+    private static MockedStatic<JenkinsXmlFileUtils> mockedXmlFileUtils;
 
     private Document invalidDocument;
 
@@ -54,9 +59,9 @@ class JenkinsJobServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         validDocument = createEmptyDOMDocument();
 
         // mock the file utils
-        mockedXmlFileUtils = mockStatic(XmlFileUtils.class);
-        mockedXmlFileUtils.when(() -> XmlFileUtils.writeToString(same(invalidDocument))).thenThrow(TransformerException.class);
-        mockedXmlFileUtils.when(() -> XmlFileUtils.writeToString(same(validDocument))).thenReturn("JenkinsConfigStringMock");
+        mockedXmlFileUtils = mockStatic(JenkinsXmlFileUtils.class);
+        mockedXmlFileUtils.when(() -> JenkinsXmlFileUtils.writeToString(same(invalidDocument))).thenThrow(TransformerException.class);
+        mockedXmlFileUtils.when(() -> JenkinsXmlFileUtils.writeToString(same(validDocument))).thenReturn("JenkinsConfigStringMock");
     }
 
     @AfterEach

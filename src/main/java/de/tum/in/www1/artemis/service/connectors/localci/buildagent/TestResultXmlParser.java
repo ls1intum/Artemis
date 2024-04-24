@@ -72,7 +72,7 @@ class TestResultXmlParser {
         public void setMessage(String message) {
             this.message = message;
         }
-        
+
         @JacksonXmlText
         public void setDetailedMessage(String detailedMessage) {
             this.detailedMessage = detailedMessage;
