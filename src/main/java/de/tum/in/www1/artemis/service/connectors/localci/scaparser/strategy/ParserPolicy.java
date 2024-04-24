@@ -16,10 +16,7 @@ public class ParserPolicy {
      * @throws UnsupportedToolException - If the specified tool is not supported
      */
     public ParserStrategy configure(String fileName) {
-        // Find the index of the last '/'
-        int lastIndex = fileName.lastIndexOf('/');
-        // If '/' is found, extract the substring after it; otherwise, keep the original string
-        String filePattern = (lastIndex != -1) ? fileName.substring(lastIndex + 1) : fileName;
+        String filePattern = extractFilePattern(fileName);
         StaticCodeAnalysisTool tool = StaticCodeAnalysisTool.getToolByFilePattern(filePattern)
                 .orElseThrow(() -> new UnsupportedToolException("Tool for identifying filePattern " + filePattern + " not found"));
 
@@ -31,5 +28,12 @@ public class ParserPolicy {
             // so far, we do not support swiftlint and gcc only SCA for Java
             default -> throw new UnsupportedToolException("Tool " + tool + " is not supported");
         };
+    }
+
+    private String extractFilePattern(String fileName) {
+        // Find the index of the last '/'
+        int lastIndex = fileName.lastIndexOf('/');
+        // If '/' is found, extract the substring after it; otherwise, keep the original string
+        return (lastIndex != -1) ? fileName.substring(lastIndex + 1) : fileName;
     }
 }
