@@ -75,6 +75,7 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         ProgrammingExercise exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
 
+        // remove listener to avoid triggering build job processing
         sharedQueueProcessingService.removeListener();
 
         JobTimingInfo jobTimingInfo = new JobTimingInfo(ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(1), ZonedDateTime.now().plusMinutes(2));
@@ -103,6 +104,7 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         assertThat(continuousIntegrationService.getBuildStatus(participation)).isEqualTo(BuildStatus.BUILDING);
         processingJobs.clear();
 
+        // init to activate queue listener again
         sharedQueueProcessingService.init();
     }
 
