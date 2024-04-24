@@ -84,7 +84,7 @@ describe('IrisChatbotWidgetComponent', () => {
             declarations: [IrisChatbotWidgetComponent, MockPipe(ArtemisTranslatePipe), MockPipe(HtmlForMarkdownPipe)],
             providers: [
                 { provide: MAT_DIALOG_DATA, useValue: { stateStore: stateStore, courseId: 1, exerciseId: 1, sessionService: mockSessionService } },
-                { provide: IrisHttpMessageService, useValue: mockSessionService },
+                { provide: IrisHttpMessageService, useValue: mockHttpMessageService },
                 { provide: NgbModal, useValue: mockModalService },
                 { provide: MatDialog, useValue: mockDialog },
                 { provide: ActivatedRoute, useValue: {} },
