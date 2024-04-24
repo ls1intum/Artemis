@@ -6,8 +6,7 @@ import { MockComponent, MockProvider } from 'ng-mocks';
 import { StandardizedCompetencyManagementComponent } from 'app/admin/standardized-competencies/standardized-competency-management.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
-import { StandardizedCompetencyDetailStubComponent } from './standardized-competency-detail-stub';
-import { StandardizedCompetencyService } from 'app/admin/standardized-competencies/standardized-competency.service';
+import { StandardizedCompetencyEditStubComponent } from './standardized-competency-edit-stub';
 import { AdminStandardizedCompetencyService } from 'app/admin/standardized-competencies/admin-standardized-competency.service';
 import {
     KnowledgeAreaDTO,
@@ -24,8 +23,9 @@ import { By } from '@angular/platform-browser';
 import { CompetencyTaxonomy } from 'app/entities/competency.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
-import { KnowledgeAreaDetailStubComponent } from './knowledge-area-detail-stub.component';
+import { KnowledgeAreaEditStubComponent } from './knowledge-area-edit-stub.component';
 import { KnowledgeAreaTreeStubComponent } from './knowledge-area-tree-stub.component';
+import { StandardizedCompetencyService } from 'app/shared/standardized-competencies/standardized-competency.service';
 
 describe('StandardizedCompetencyManagementComponent', () => {
     let componentFixture: ComponentFixture<StandardizedCompetencyManagementComponent>;
@@ -38,8 +38,8 @@ describe('StandardizedCompetencyManagementComponent', () => {
             imports: [TranslateTestingModule, ArtemisTestModule, FormsModule, NgbTooltipMocksModule, NgbCollapseMocksModule],
             declarations: [
                 StandardizedCompetencyManagementComponent,
-                StandardizedCompetencyDetailStubComponent,
-                KnowledgeAreaDetailStubComponent,
+                StandardizedCompetencyEditStubComponent,
+                KnowledgeAreaEditStubComponent,
                 MockComponent(ButtonComponent),
                 KnowledgeAreaTreeStubComponent,
                 MockRouterLinkDirective,
@@ -114,7 +114,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
             },
         ];
         getForTreeViewSpy.mockReturnValue(of(new HttpResponse({ body: filterTree })));
-        const filterSpy = jest.spyOn(component, 'filterByKnowledgeArea');
+        const filterSpy = jest.spyOn(component as any, 'filterByKnowledgeArea');
         componentFixture.detectChanges();
 
         const select: HTMLSelectElement = componentFixture.debugElement.query(By.css('#knowledge-area-filter')).nativeElement;
@@ -166,7 +166,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
             },
         ];
         getForTreeViewSpy.mockReturnValue(of(new HttpResponse({ body: filterTree })));
-        const filterSpy = jest.spyOn(component, 'filterByCompetencyTitle');
+        const filterSpy = jest.spyOn(component as any, 'filterByCompetencyTitle');
         componentFixture.detectChanges();
 
         const input: HTMLSelectElement = componentFixture.debugElement.query(By.css('#title-filter')).nativeElement;
@@ -288,7 +288,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
         component['selectedCompetency'] = competencyToDelete;
         componentFixture.detectChanges();
 
-        const detailComponent = componentFixture.debugElement.query(By.directive(StandardizedCompetencyDetailStubComponent)).componentInstance;
+        const detailComponent = componentFixture.debugElement.query(By.directive(StandardizedCompetencyEditStubComponent)).componentInstance;
         detailComponent.onDelete.emit(competencyToDelete.id);
 
         expect(deleteSpy).toHaveBeenCalledOnce();
@@ -316,7 +316,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
         createSpy.mockReturnValue(of(new HttpResponse({ body: createdCompetency })));
         componentFixture.detectChanges();
 
-        const detailComponent = componentFixture.debugElement.query(By.directive(StandardizedCompetencyDetailStubComponent)).componentInstance;
+        const detailComponent = componentFixture.debugElement.query(By.directive(StandardizedCompetencyEditStubComponent)).componentInstance;
         detailComponent.onSave.emit(competencyToCreate);
 
         expect(createSpy).toHaveBeenCalled();
@@ -436,7 +436,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
         component['selectedKnowledgeArea'] = knowledgeAreaToDelete;
         componentFixture.detectChanges();
 
-        const detailComponent = componentFixture.debugElement.query(By.directive(KnowledgeAreaDetailStubComponent)).componentInstance;
+        const detailComponent = componentFixture.debugElement.query(By.directive(KnowledgeAreaEditStubComponent)).componentInstance;
         detailComponent.onDelete.emit(knowledgeAreaToDelete.id);
 
         expect(deleteSpy).toHaveBeenCalledOnce();
@@ -470,7 +470,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
         component['selectedKnowledgeArea'] = knowledgeAreaToDelete;
         componentFixture.detectChanges();
 
-        const detailComponent = componentFixture.debugElement.query(By.directive(KnowledgeAreaDetailStubComponent)).componentInstance;
+        const detailComponent = componentFixture.debugElement.query(By.directive(KnowledgeAreaEditStubComponent)).componentInstance;
         detailComponent.onDelete.emit(knowledgeAreaToDelete.id);
 
         expect(deleteSpy).toHaveBeenCalledOnce();
@@ -501,7 +501,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
         createSpy.mockReturnValue(of(new HttpResponse({ body: createdKnowledgeArea })));
         componentFixture.detectChanges();
 
-        const detailComponent = componentFixture.debugElement.query(By.directive(KnowledgeAreaDetailStubComponent)).componentInstance;
+        const detailComponent = componentFixture.debugElement.query(By.directive(KnowledgeAreaEditStubComponent)).componentInstance;
         detailComponent.onSave.emit(knowledgeAreaToCreate);
 
         expect(createSpy).toHaveBeenCalled();
@@ -581,7 +581,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
         updateSpy.mockReturnValue(of(new HttpResponse({ body: updatedCompetency })));
         componentFixture.detectChanges();
 
-        const detailComponent = componentFixture.debugElement.query(By.directive(StandardizedCompetencyDetailStubComponent)).componentInstance;
+        const detailComponent = componentFixture.debugElement.query(By.directive(StandardizedCompetencyEditStubComponent)).componentInstance;
         detailComponent.onSave.emit(competencyToUpdate);
 
         expect(updateSpy).toHaveBeenCalled();
@@ -595,7 +595,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
         updateSpy.mockReturnValue(of(new HttpResponse({ body: updatedKnowledgeArea })));
         componentFixture.detectChanges();
 
-        const detailComponent = componentFixture.debugElement.query(By.directive(KnowledgeAreaDetailStubComponent)).componentInstance;
+        const detailComponent = componentFixture.debugElement.query(By.directive(KnowledgeAreaEditStubComponent)).componentInstance;
         detailComponent.onSave.emit(knowledgeAreaToUpdate);
 
         expect(updateSpy).toHaveBeenCalled();

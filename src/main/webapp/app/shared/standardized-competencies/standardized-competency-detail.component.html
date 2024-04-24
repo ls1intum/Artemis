@@ -1,0 +1,29 @@
+<div class="d-flex flex-column">
+    <div class="mb-2">
+        <div class="d-flex justify-content-between">
+            <h4 jhiTranslate="artemisApp.standardizedCompetency.details.title"></h4>
+            <button type="button" class="btn-close" (click)="close()"></button>
+        </div>
+        <!-- TODO: template for buttons -->
+    </div>
+    <div class="d-flex flex-column border-0">
+        <div class="form-group">
+            <label for="competency-detail-title" jhiTranslate="artemisApp.standardizedCompetency.model.title"></label>
+            <span id="competency-detail-title">{{ competency.title }}</span>
+        </div>
+        <div class="form-group">
+            <label for="competency-detail-description" jhiTranslate="artemisApp.standardizedCompetency.model.description"></label>
+            <div id="competency-detail-description" class="markdown-preview border rounded p-1" [innerHTML]="competency.description ?? '&nbsp;' | htmlForMarkdown"></div>
+        </div>
+        <div class="form-group">
+            <label for="competency-detail-taxonomy" jhiTranslate="artemisApp.standardizedCompetency.model.taxonomy"></label>
+            <span id="competency-detail-taxonomy">{{ competency.taxonomy }}</span>
+        </div>
+        <div class="form-group">
+            <label for="competency-detail-knowledge-area" jhiTranslate="artemisApp.standardizedCompetency.model.knowledgeArea"></label>
+            <span id="competency-detail-knowledge-area">{{ competency.knowledgeAreaId }}</span>
+            <!-- TODO: set knowledge area text here -->
+        </div>
+        <!-- TODO: add source handling in follow-up PR -->
+    </div>
+</div>

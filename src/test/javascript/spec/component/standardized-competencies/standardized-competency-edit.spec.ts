@@ -1,7 +1,7 @@
 import { ArtemisTestModule } from '../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
-import { StandardizedCompetencyDetailComponent } from 'app/admin/standardized-competencies/standardized-competency-detail.component';
+import { StandardizedCompetencyEditComponent } from 'app/admin/standardized-competencies/standardized-competency-edit.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { CompetencyTaxonomy } from 'app/entities/competency.model';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
@@ -14,9 +14,9 @@ import { NgbTooltipMocksModule } from '../../helpers/mocks/directive/ngbTooltipM
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { KnowledgeAreaDTO, StandardizedCompetencyDTO } from 'app/entities/competency/standardized-competency.model';
 
-describe('StandardizedCompetencyDetailComponent', () => {
-    let componentFixture: ComponentFixture<StandardizedCompetencyDetailComponent>;
-    let component: StandardizedCompetencyDetailComponent;
+describe('StandardizedCompetencyEditComponent', () => {
+    let componentFixture: ComponentFixture<StandardizedCompetencyEditComponent>;
+    let component: StandardizedCompetencyEditComponent;
     const defaultCompetency: StandardizedCompetencyDTO = {
         id: 1,
         title: 'title',
@@ -42,7 +42,7 @@ describe('StandardizedCompetencyDetailComponent', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, ReactiveFormsModule, NgbTooltipMocksModule],
             declarations: [
-                StandardizedCompetencyDetailComponent,
+                StandardizedCompetencyEditComponent,
                 MockComponent(ButtonComponent),
                 TranslatePipeMock,
                 MockPipe(HtmlForMarkdownPipe),
@@ -55,7 +55,7 @@ describe('StandardizedCompetencyDetailComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                componentFixture = TestBed.createComponent(StandardizedCompetencyDetailComponent);
+                componentFixture = TestBed.createComponent(StandardizedCompetencyEditComponent);
                 component = componentFixture.componentInstance;
                 component.competency = defaultCompetency;
                 component.knowledgeAreas = defaultKnowledgeAreas;

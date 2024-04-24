@@ -1,7 +1,7 @@
 import { ArtemisTestModule } from '../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
-import { KnowledgeAreaDetailComponent } from 'app/admin/standardized-competencies/knowledge-area-detail.component';
+import { KnowledgeAreaEditComponent } from 'app/admin/standardized-competencies/knowledge-area-edit.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
@@ -14,9 +14,9 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.di
 import { KnowledgeAreaDTO } from 'app/entities/competency/standardized-competency.model';
 import { By } from '@angular/platform-browser';
 
-describe('KnowledgeAreaDetailComponent', () => {
-    let componentFixture: ComponentFixture<KnowledgeAreaDetailComponent>;
-    let component: KnowledgeAreaDetailComponent;
+describe('KnowledgeAreaEditComponent', () => {
+    let componentFixture: ComponentFixture<KnowledgeAreaEditComponent>;
+    let component: KnowledgeAreaEditComponent;
     const defaultKnowledgeArea: KnowledgeAreaDTO = {
         id: 1,
         title: 'title',
@@ -40,7 +40,7 @@ describe('KnowledgeAreaDetailComponent', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, ReactiveFormsModule, NgbTooltipMocksModule],
             declarations: [
-                KnowledgeAreaDetailComponent,
+                KnowledgeAreaEditComponent,
                 MockComponent(ButtonComponent),
                 TranslatePipeMock,
                 MockPipe(HtmlForMarkdownPipe),
@@ -53,7 +53,7 @@ describe('KnowledgeAreaDetailComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                componentFixture = TestBed.createComponent(KnowledgeAreaDetailComponent);
+                componentFixture = TestBed.createComponent(KnowledgeAreaEditComponent);
                 component = componentFixture.componentInstance;
                 component.knowledgeArea = defaultKnowledgeArea;
                 component.knowledgeAreas = defaultKnowledgeAreas;
