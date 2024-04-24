@@ -255,24 +255,35 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     /** Calculate dropdown-menu position based on the number of entries in the sidebar */
     updateMenuOffset() {
         const leftSidebarItems: number = this.sidebarItems.length - this.hiddenItems.length;
+        const minHeightForSidebar: number = 350; // Minimum height for the sidebar to dynamically position dropdown menu
+        const offsetForEachElement: number = 50; // Offset to be added to the dropdown menu for each element left in the sidebar
+        const maxSidebarElements: number = 9;
+
         if (leftSidebarItems === 1) {
+            // In order to fit all content of the dropdown menu, we put the menu at the top of the page
             this.dropdownOffset = 0;
-            if (window.innerHeight > 370) {
-                this.dropdownOffset += (9 - this.hiddenItems.length) * 10;
+            if (window.innerHeight > minHeightForSidebar) {
+                // To move the dropdown menu a little to the bottom even if there is one element left in the sidebar but the minimum height of the sidebar is not exceeded yet
+                this.dropdownOffset += (maxSidebarElements - this.hiddenItems.length) * 10;
             }
         } else {
-            this.dropdownOffset = leftSidebarItems * 50;
+            // To adjust dropdown menu position based on the amount of entries/elements left in the sidebar
+            this.dropdownOffset = leftSidebarItems * offsetForEachElement;
         }
     }
 
     /** Calculating threshold levels based on the number of entries in the sidebar */
-    calculateThreshold() {
-        const maxThreshold: number = 650;
+    calculateThreshold(): number {
+        const maxThreshold: number = 650; // The threshold level at which the 'More' element will appear
+        const offsetForEachElement: number = 35; // Offset to be subtracted from the max threshold level for each element in the sidebar
+        const maxSidebarElements: number = 9;
         const numberOfSidebarItems: number = this.sidebarItems.length;
-        if (numberOfSidebarItems === 9) {
+
+        if (numberOfSidebarItems === maxSidebarElements) {
             return maxThreshold;
         }
-        return maxThreshold - (9 - numberOfSidebarItems) * 35;
+        // Dynamically calculate the threshold level based the amount of entries/elements left in the sidebar
+        return maxThreshold - (maxSidebarElements - numberOfSidebarItems) * offsetForEachElement;
     }
 
     toggleDropdown() {
@@ -283,21 +294,13 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         }
     }
 
-    dropdownOffsetToString() {
-        return `${this.dropdownOffset}px`;
-    }
-
     getCourseActionItems(): CourseActionItem[] {
         const courseActionItems = [];
-        /*
         this.canUnenroll = this.canStudentUnenroll() && !this.course?.isAtLeastTutor;
         if (this.canUnenroll) {
             const unenrollItem: CourseActionItem = this.getUnenrollItem();
             courseActionItems.push(unenrollItem);
         }
-        */
-        const unenrollItem: CourseActionItem = this.getUnenrollItem();
-        courseActionItems.push(unenrollItem);
         return courseActionItems;
     }
     getSidebarItems(): SidebarItem[] {
