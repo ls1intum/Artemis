@@ -1,0 +1,38 @@
+<div class="d-flex sidebar rounded-3 px-3 sidebar-width" [ngClass]="{ 'sidebar-height-dev': !isProduction || isTestServer, collapsed: isCollapsed }">
+    <div class="w-100 bg-module">
+        <div class="sidebar-content" [ngClass]="{ collapsed: isCollapsed }">
+            @if (searchFieldEnabled) {
+                <div class="mt-3 mb-2">
+                    <jhi-search-filter (newSearchEvent)="setSearchValue($event)" class="mb-2" />
+                </div>
+            }
+            @if (!sidebarData?.ungroupedData || !(sidebarData?.ungroupedData | searchFilter: ['title', 'type'] : searchValue)?.length) {
+                <div
+                    [ngClass]="{ 'content-height-dev': !isProduction || isTestServer }"
+                    jhiTranslate="artemisApp.courseOverview.general.noDataFound"
+                    class="mt-2 text-center scrollable-content"
+                ></div>
+            } @else {
+                <div class="scrollable-content my-2" [ngClass]="{ 'content-height-dev': !isProduction || isTestServer }">
+                    @if (sidebarData?.groupByCategory && sidebarData.groupedData) {
+                        <jhi-sidebar-accordion
+                            [searchValue]="searchValue"
+                            [groupedData]="sidebarData.groupedData"
+                            [sidebarType]="sidebarData.sidebarType"
+                            [storageId]="sidebarData.storageId"
+                            [routeParams]="routeParams"
+                            [courseId]="courseId"
+                            [itemSelected]="itemSelected"
+                        />
+                    } @else {
+                        @for (sidebarItem of sidebarData?.ungroupedData | searchFilter: ['title', 'type'] : searchValue; track sidebarItem; let last = $last) {
+                            <div [ngClass]="{ 'mb-2': !last }">
+                                <jhi-sidebar-card [sidebarItem]="sidebarItem" [itemSelected]="itemSelected" />
+                            </div>
+                        }
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>

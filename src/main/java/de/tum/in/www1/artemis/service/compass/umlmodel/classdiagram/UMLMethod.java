@@ -5,7 +5,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
@@ -30,7 +30,7 @@ public class UMLMethod extends UMLElement implements Serializable {
      * empty constructor used to make mockito happy
      */
     public UMLMethod() {
-        super();
+        // default empty constructor
     }
 
     public UMLMethod(String completeName, String name, String returnType, List<String> parameters, String jsonElementID) {

@@ -7,9 +7,10 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.*;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.multipdf.Splitter;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -85,11 +86,11 @@ public class LectureUnitProcessingService {
 
                 List<PDDocument> documentUnits = pdfSplitter.split(document);
                 pdDocumentInformation.setTitle(lectureUnit.unitName());
-                if (!lectureUnitInformationDTO.removeSlidesCommaSeparatedKeyPhrases().isEmpty()) {
-                    removeSlidesContainingAnyKeyPhrases(documentUnits.get(0), lectureUnitInformationDTO.removeSlidesCommaSeparatedKeyPhrases());
+                if (!StringUtils.isEmpty(lectureUnitInformationDTO.removeSlidesCommaSeparatedKeyPhrases())) {
+                    removeSlidesContainingAnyKeyPhrases(documentUnits.getFirst(), lectureUnitInformationDTO.removeSlidesCommaSeparatedKeyPhrases());
                 }
-                documentUnits.get(0).setDocumentInformation(pdDocumentInformation);
-                documentUnits.get(0).save(outputStream);
+                documentUnits.getFirst().setDocumentInformation(pdDocumentInformation);
+                documentUnits.getFirst().save(outputStream);
 
                 // setup attachmentUnit and attachment
                 attachmentUnit.setDescription("");
@@ -100,8 +101,8 @@ public class LectureUnitProcessingService {
 
                 MultipartFile multipartFile = fileService.convertByteArrayToMultipart(lectureUnit.unitName(), ".pdf", outputStream.toByteArray());
                 AttachmentUnit savedAttachmentUnit = attachmentUnitService.createAttachmentUnit(attachmentUnit, attachment, lecture, multipartFile, true);
-                slideSplitterService.splitAttachmentUnitIntoSingleSlides(documentUnits.get(0), savedAttachmentUnit, multipartFile.getOriginalFilename());
-                documentUnits.get(0).close(); // make sure to close the document
+                slideSplitterService.splitAttachmentUnitIntoSingleSlides(documentUnits.getFirst(), savedAttachmentUnit, multipartFile.getOriginalFilename());
+                documentUnits.getFirst().close(); // make sure to close the document
                 units.add(savedAttachmentUnit);
             }
             lectureRepository.save(lecture);

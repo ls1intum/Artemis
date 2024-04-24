@@ -9,7 +9,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -158,6 +158,16 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             WHERE p.id = :participationId
             """)
     Optional<StudentParticipation> findByIdWithEagerTeamStudents(@Param("participationId") long participationId);
+
+    @Query("""
+            SELECT COUNT(p) > 0
+            FROM StudentParticipation p
+                LEFT JOIN p.team.students u
+                LEFT JOIN p.student s
+            WHERE p.id = :participationId AND
+                (s.login = :login OR u.login = :login)
+            """)
+    boolean existsByIdAndParticipatingStudentLogin(@Param("participationId") long participationId, @Param("login") String login);
 
     @Query("""
             SELECT DISTINCT p
@@ -403,17 +413,6 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             SELECT DISTINCT p
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.results
-                LEFT JOIN FETCH p.submissions s
-            WHERE p.exercise.id = :exerciseId
-                AND p.student.id = :studentId
-                AND (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
-             """)
-    List<StudentParticipation> findByExerciseIdAndStudentIdWithEagerResultsAndLegalSubmissions(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
-
-    @Query("""
-            SELECT DISTINCT p
-            FROM StudentParticipation p
-                LEFT JOIN FETCH p.results
                 LEFT JOIN FETCH p.submissions
             WHERE p.exercise.id = :exerciseId
                 AND p.student.id = :studentId
@@ -433,10 +432,12 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @Query("""
             SELECT DISTINCT p
             FROM StudentParticipation p
+                LEFT JOIN FETCH p.team t
+                LEFT JOIN FETCH t.students s
             WHERE p.exercise.id = :exerciseId
-                AND p.team.id = :teamId
+                AND s.id = :studentId
             """)
-    List<StudentParticipation> findAllByExerciseIdAndTeamId(@Param("exerciseId") long exerciseId, @Param("teamId") long teamId);
+    List<StudentParticipation> findAllWithTeamStudentsByExerciseIdAndTeamStudentId(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
 
     @Query("""
             SELECT DISTINCT p
@@ -938,7 +939,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                     if (!relevantResults.isEmpty()) {
                         // make sure to take the latest result
                         relevantResults.sort((r1, r2) -> r2.getCompletionDate().compareTo(r1.getCompletionDate()));
-                        Result correctResult = relevantResults.get(0);
+                        Result correctResult = relevantResults.getFirst();
                         relevantResults.clear();
                         relevantResults.add(correctResult);
                     }

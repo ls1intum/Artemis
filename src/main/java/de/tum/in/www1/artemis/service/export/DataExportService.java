@@ -8,7 +8,7 @@ import java.nio.file.Path;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -125,7 +125,7 @@ public class DataExportService {
                 return new DataExportDTO(dataExport.getId(), dataExport.getDataExportState(), dataExport.getCreatedDate().atZone(ZoneId.systemDefault()), nextRequestDate);
             }
         }
-        var latestDataExport = dataExportsFromUser.get(0);
+        var latestDataExport = dataExportsFromUser.getFirst();
         return new DataExportDTO(null, latestDataExport.getDataExportState(), latestDataExport.getCreatedDate().atZone(ZoneId.systemDefault()),
                 retrieveNextRequestDate(latestDataExport));
     }

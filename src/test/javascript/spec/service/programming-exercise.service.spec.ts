@@ -178,7 +178,6 @@ describe('ProgrammingExercise Service', () => {
                 templateRepositoryUri: 'BBBBBB',
                 solutionRepositoryUri: 'BBBBBB',
                 templateBuildPlanId: 'BBBBBB',
-                publishBuildPlanUrl: true,
                 allowOnlineEditor: true,
                 releaseDate: undefined,
                 dueDate: undefined,
@@ -222,7 +221,6 @@ describe('ProgrammingExercise Service', () => {
                 templateRepositoryUri: 'BBBBBB',
                 solutionRepositoryUri: 'BBBBBB',
                 templateBuildPlanId: 'BBBBBB',
-                publishBuildPlanUrl: true,
                 allowOnlineEditor: true,
                 releaseDate: undefined,
                 dueDate: undefined,
@@ -320,9 +318,10 @@ describe('ProgrammingExercise Service', () => {
         const participationId = 2;
         const commitId = '2';
         const commitId2 = '3';
+        const repositoryType = 'TEMPLATE';
         const expected = { id: 1, entries: [new ProgrammingExerciseGitDiffEntry()] } as unknown as ProgrammingExerciseGitDiffReport;
-        service.getDiffReportForCommits(exerciseId, participationId, commitId, commitId2).subscribe((resp) => expect(resp).toEqual(expected));
-        const url = `${resourceUrl}/${exerciseId}/participation/${participationId}/commits/${commitId}/diff-report/${commitId2}`;
+        service.getDiffReportForCommits(exerciseId, participationId, commitId, commitId2, repositoryType).subscribe((resp) => expect(resp).toEqual(expected));
+        const url = `${resourceUrl}/${exerciseId}/participation/${participationId}/commits/${commitId}/diff-report/${commitId2}?repositoryType=${repositoryType}`;
         const req = httpMock.expectOne({ method: 'GET', url });
         req.flush(expected);
         tick();
@@ -370,7 +369,7 @@ describe('ProgrammingExercise Service', () => {
             service.lockAllRepositories(exerciseId).subscribe();
         }
         const url = `${resourceUrl}/${exerciseId}/${lockUnlock}-all-repositories`;
-        const req = httpMock.expectOne({ method: 'PUT', url });
+        const req = httpMock.expectOne({ method: 'POST', url });
         req.flush({ body: 'something' });
     });
 

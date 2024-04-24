@@ -11,7 +11,10 @@ import static org.mockito.Mockito.*;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.ZonedDateTime;
 import java.util.*;
 
 import org.junit.jupiter.api.AfterEach;
@@ -20,21 +23,29 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.CopyArchiveFromContainerCmd;
+import com.github.dockerjava.api.command.ExecStartCmd;
 import com.github.dockerjava.api.exception.NotFoundException;
+import com.github.dockerjava.api.model.Frame;
 
 import de.tum.in.www1.artemis.domain.BuildJob;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.Team;
-import de.tum.in.www1.artemis.domain.enumeration.BuildJobResult;
+import de.tum.in.www1.artemis.domain.enumeration.BuildStatus;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.BuildJobRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingSubmissionTestRepository;
+import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCServletService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWebsocketError;
@@ -46,6 +57,12 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
     @Autowired
     private BuildJobRepository buildJobRepository;
+
+    @Autowired
+    private ProgrammingSubmissionTestRepository programmingSubmissionRepository;
+
+    @Autowired
+    private BuildLogEntryService buildLogEntryService;
 
     private LocalRepository studentAssignmentRepository;
 
@@ -102,7 +119,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
         BuildJob buildJob = buildJobOptional.orElseThrow();
 
-        assertThat(buildJob.getBuildJobResult()).isEqualTo(BuildJobResult.SUCCESSFUL);
+        assertThat(buildJob.getBuildStatus()).isEqualTo(BuildStatus.SUCCESSFUL);
         assertThat(buildJob.getRepositoryType()).isEqualTo(RepositoryType.USER);
         assertThat(buildJob.getCommitHash()).isEqualTo(commitHash);
         assertThat(buildJob.getTriggeredByPushTo()).isEqualTo(RepositoryType.USER);
@@ -272,11 +289,36 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
         localVCLocalCITestService.mockTestResults(dockerClient, FAULTY_FILES_TEST_RESULTS_PATH, LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY);
         localVCServletService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
-        await().untilAsserted(() -> verify(programmingMessagingService).notifyUserAboutSubmissionError(Mockito.eq(studentParticipation), any()));
+        localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), commitHash, 0, true);
+    }
 
-        // Should notify the user.
-        verifyUserNotification(studentParticipation,
-                "java.util.concurrent.ExecutionException: de.tum.in.www1.artemis.exception.LocalCIException: Error while parsing test results");
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testLegacyResultFormat() throws IOException {
+        ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+        localVCLocalCITestService.mockTestResults(dockerClient, OLD_REPORT_FORMAT_TEST_RESULTS_PATH, LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY);
+        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
+        localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), commitHash, 0, false);
+
+        studentParticipation = programmingExerciseStudentParticipationRepository
+                .findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(studentParticipation.getId(), ZonedDateTime.now()).orElseThrow();
+        var result = studentParticipation.getResults().iterator().next();
+
+        var noPrintTest = result.getFeedbacks().stream().filter(feedback -> feedback.getTestCase().getTestName().equals("testMergeSort()")).findFirst().orElseThrow();
+        assertThat(noPrintTest.getDetailText()).isEqualTo("Deine Einreichung enthält keine Ausgabe. (67cac2)");
+
+        var todoTest = result.getFeedbacks().stream().filter(feedback -> feedback.getTestCase().getTestName().equals("testBubbleSort()")).findFirst().orElseThrow();
+        assertThat(todoTest.getDetailText()).isEqualTo("""
+                test `add` failed on ≥ 1 cases:
+                (0, 0)
+                Your submission raised an error Failure("TODO add")""");
+
+        var filterTest = result.getFeedbacks().stream().filter(feedback -> feedback.getTestCase().getTestName().equals("testUseMergeSortForBigList()")).findFirst().orElseThrow();
+        assertThat(filterTest.getDetailText()).isEqualTo("""
+                test `filter` failed on ≥ 1 cases:
+                (even, [1; 2; 3; 4])
+                Your submission raised an error Failure("TODO filter")""");
     }
 
     @Test
@@ -298,6 +340,62 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         localVCServletService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
 
         localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), commitHash, 1, false, true, 15);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testBuildLogs() throws IOException {
+
+        // Adapt Docker Client mock to return build logs
+        ExecStartCmd execStartCmd = mock(ExecStartCmd.class);
+        doReturn(execStartCmd).when(dockerClient).execStartCmd(anyString());
+        doReturn(execStartCmd).when(execStartCmd).withDetach(anyBoolean());
+        doAnswer(invocation -> {
+            // Use a raw type for the callback to avoid generic type issues
+            ResultCallback callback = invocation.getArgument(0);
+
+            // Simulate receiving log entries.
+            Frame logEntryFrame1 = mock(Frame.class);
+            when(logEntryFrame1.getPayload()).thenReturn("Dummy log entry".getBytes());
+            callback.onNext(logEntryFrame1);
+
+            // Simulate the command completing
+            callback.onComplete();
+
+            return null;
+        }).when(execStartCmd).exec(any());
+
+        FileSystemResource buildLogs = null;
+
+        ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+        try {
+            localVCServletService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
+            localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), commitHash, 1, false);
+
+            var submissionOptional = programmingSubmissionRepository.findFirstByParticipationIdWithResultsOrderByLegalSubmissionDateDesc(studentParticipation.getId());
+
+            long resultId = submissionOptional.map(ProgrammingSubmission::getLatestResult).map(Result::getId).orElseThrow(() -> new AssertionError("Submission has no results"));
+
+            // Assert that the build logs for the result are stored in the file system
+            assertThat(buildLogEntryService.resultHasLogFile(String.valueOf(resultId))).isTrue();
+
+            // Retrieve the build logs from the file system
+            buildLogs = buildLogEntryService.retrieveBuildLogsFromFileForResult(String.valueOf(resultId));
+            assertThat(buildLogs).isNotNull();
+            assertThat(buildLogs.getFile().exists()).isTrue();
+
+            String content = new String(Files.readAllBytes(Paths.get(buildLogs.getFile().getAbsolutePath())));
+
+            // Assert that the content contains the expected log entry
+            assertThat(content).contains("Dummy log entry");
+        }
+        finally {
+            // Delete log file
+            if (buildLogs != null && buildLogs.getFile().exists()) {
+                Files.deleteIfExists(Paths.get(buildLogs.getFile().getAbsolutePath()));
+            }
+        }
     }
 
     private void verifyUserNotification(Participation participation, String errorMessage) {

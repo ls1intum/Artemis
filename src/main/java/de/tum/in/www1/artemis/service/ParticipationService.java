@@ -507,6 +507,29 @@ public class ParticipationService {
     }
 
     /**
+     * Ensures that all team students of a list of team participations are loaded from the database. If not, one database call for all participations is made to load the students.
+     *
+     * @param participations the team participations to load the students for
+     */
+    public void initializeTeamParticipations(List<StudentParticipation> participations) {
+        List<Long> teamIds = new ArrayList<>();
+        participations.forEach(participation -> {
+            if (participation.getParticipant() instanceof Team team && !Hibernate.isInitialized(team.getStudents())) {
+                teamIds.add(team.getId());
+            }
+        });
+        if (teamIds.isEmpty()) {
+            return;
+        }
+        Map<Long, Team> teamMap = teamRepository.findAllWithStudentsByIdIn(teamIds).stream().collect(Collectors.toMap(Team::getId, team -> team));
+        participations.forEach(participation -> {
+            if (participation.getParticipant() instanceof Team team) {
+                team.setStudents(teamMap.get(team.getId()).getStudents());
+            }
+        });
+    }
+
+    /**
      * Get one participation (in any state) by its student and exercise.
      *
      * @param exercise the exercise for which to find a participation
@@ -604,8 +627,7 @@ public class ParticipationService {
      */
     public List<StudentParticipation> findByExerciseAndStudentId(Exercise exercise, Long studentId) {
         if (exercise.isTeamMode()) {
-            Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), studentId);
-            return optionalTeam.map(team -> studentParticipationRepository.findAllByExerciseIdAndTeamId(exercise.getId(), team.getId())).orElse(List.of());
+            return studentParticipationRepository.findAllWithTeamStudentsByExerciseIdAndTeamStudentId(exercise.getId(), studentId);
         }
         return studentParticipationRepository.findByExerciseIdAndStudentId(exercise.getId(), studentId);
     }
@@ -686,7 +708,7 @@ public class ParticipationService {
 
     /**
      * Updates the individual due date for each given participation.
-     *
+     * <p>
      * Only sets individual due dates if the exercise has a due date and the
      * individual due date is after this regular due date.
      *

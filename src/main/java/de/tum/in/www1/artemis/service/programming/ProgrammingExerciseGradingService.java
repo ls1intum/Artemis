@@ -5,12 +5,20 @@ import static de.tum.in.www1.artemis.config.Constants.TEST_CASES_DUPLICATE_NOTIF
 import static de.tum.in.www1.artemis.domain.ProgrammingSubmission.createFallbackSubmission;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.math3.util.Precision;
 import org.slf4j.Logger;
@@ -19,22 +27,48 @@ import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
 
 import com.google.common.base.Strings;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.BuildLogEntry;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.StaticCodeAnalysisCategory;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.CategoryState;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
-import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPenaltyPolicy;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
-import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.repository.StaticCodeAnalysisCategoryRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.service.BuildLogEntryService;
+import de.tum.in.www1.artemis.service.ExerciseDateService;
+import de.tum.in.www1.artemis.service.FeedbackService;
+import de.tum.in.www1.artemis.service.ResultService;
+import de.tum.in.www1.artemis.service.SubmissionPolicyService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationResultService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
@@ -143,7 +177,10 @@ public class ProgrammingExerciseGradingService {
 
             // Fetch submission or create a fallback
             var latestSubmission = getSubmissionForBuildResult(participation.getId(), buildResult).orElseGet(() -> createAndSaveFallbackSubmission(participation, buildResult));
-            latestSubmission.setBuildFailed(newResult.getFeedbacks().stream().allMatch(Feedback::isStaticCodeAnalysisFeedback));
+
+            // Artemis considers a build as failed if no tests have been executed (e.g. due to a compile failure in the student code)
+            final var buildFailed = newResult.getFeedbacks().stream().allMatch(Feedback::isStaticCodeAnalysisFeedback);
+            latestSubmission.setBuildFailed(buildFailed);
             // Add artifacts to submission
             latestSubmission.setBuildArtifact(buildResult.hasArtifact());
 
@@ -167,7 +204,7 @@ public class ProgrammingExerciseGradingService {
             newResult.setSubmission(latestSubmission);
             newResult.setRatedIfNotAfterDueDate();
             // NOTE: the result is not saved yet, but is connected to the submission, the submission is not completely saved yet
-            return processNewProgrammingExerciseResult(participation, newResult);
+            return processNewProgrammingExerciseResult(participation, newResult, buildResult.extractBuildLogs());
         }
         catch (ContinuousIntegrationException ex) {
             log.error("Result for participation {} could not be created", participation.getId(), ex);
@@ -185,8 +222,9 @@ public class ProgrammingExerciseGradingService {
      */
     private void checkCorrectBranchElseThrow(final ProgrammingExerciseParticipation participation, final AbstractBuildResultNotificationDTO buildResult)
             throws IllegalArgumentException {
+        var branchName = buildResult.getBranchNameFromAssignmentRepo();
         // If the branch is not present, it might be because the assignment repo did not change because only the test repo was changed
-        buildResult.getBranchNameFromAssignmentRepo().ifPresent(branchName -> {
+        if (!ObjectUtils.isEmpty(branchName)) {
             String participationDefaultBranch = null;
             if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
                 participationDefaultBranch = versionControlService.orElseThrow().getOrRetrieveBranchOfStudentParticipation(studentParticipation);
@@ -198,7 +236,7 @@ public class ProgrammingExerciseGradingService {
             if (!Objects.equals(branchName, participationDefaultBranch)) {
                 throw new IllegalArgumentException("Result was produced for a different branch than the default branch");
             }
-        });
+        }
     }
 
     /**
@@ -216,33 +254,33 @@ public class ProgrammingExerciseGradingService {
 
         return submissions.stream().filter(theSubmission -> {
             var commitHash = buildResult.getCommitHash(theSubmission.getType());
-            return commitHash.isPresent() && commitHash.get().equals(theSubmission.getCommitHash());
+            return !ObjectUtils.isEmpty(commitHash) && commitHash.equals(theSubmission.getCommitHash());
         }).max(Comparator.naturalOrder());
     }
 
     @NotNull
     protected ProgrammingSubmission createAndSaveFallbackSubmission(ProgrammingExerciseParticipation participation, AbstractBuildResultNotificationDTO buildResult) {
         final var commitHash = buildResult.getCommitHash(SubmissionType.MANUAL);
-        if (commitHash.isEmpty()) {
+        if (ObjectUtils.isEmpty(commitHash)) {
             log.error("Could not find commit hash for participation {}, build plan {}", participation.getId(), participation.getBuildPlanId());
         }
         log.warn("Could not find pending ProgrammingSubmission for Commit Hash {} (Participation {}, Build Plan {}). Will create a new one subsequently...", commitHash,
                 participation.getId(), participation.getBuildPlanId());
         // We always take the build run date as the fallback solution
         ZonedDateTime submissionDate = buildResult.getBuildRunDate();
-        if (commitHash.isPresent()) {
+        if (!ObjectUtils.isEmpty(commitHash)) {
             try {
                 // Try to get the actual date, the push might be 10s - 3min earlier, depending on how long the build takes.
                 // Note: the whole method is a fallback in case creating the submission initially (when the user pushed the code) was not successful for whatever reason
                 // This is also the case when a new programming exercise is created and the local CI system builds and tests the template and solution repositories for the first
                 // time.
-                submissionDate = versionControlService.orElseThrow().getPushDate(participation, commitHash.get(), null);
+                submissionDate = versionControlService.orElseThrow().getPushDate(participation, commitHash, null);
             }
             catch (VersionControlException e) {
                 log.error("Could not retrieve push date for participation {} and build plan {}", participation.getId(), participation.getBuildPlanId(), e);
             }
         }
-        var submission = createFallbackSubmission(participation, submissionDate, commitHash.orElse(null));
+        var submission = createFallbackSubmission(participation, submissionDate, commitHash);
         // Save to avoid TransientPropertyValueException.
         return programmingSubmissionRepository.save(submission);
     }
@@ -255,7 +293,7 @@ public class ProgrammingExerciseGradingService {
      * @param newResult     that contains the build result with its feedbacks.
      * @return the result after processing and persisting.
      */
-    private Result processNewProgrammingExerciseResult(final ProgrammingExerciseParticipation participation, final Result newResult) {
+    private Result processNewProgrammingExerciseResult(final ProgrammingExerciseParticipation participation, final Result newResult, final List<BuildLogEntry> buildLogs) {
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
         boolean isSolutionParticipation = participation instanceof SolutionProgrammingExerciseParticipation;
         boolean isTemplateParticipation = participation instanceof TemplateProgrammingExerciseParticipation;
@@ -284,7 +322,12 @@ public class ProgrammingExerciseGradingService {
                 // Adding back dropped submission
                 updatedLatestSemiAutomaticResult.setSubmission(programmingSubmission);
                 programmingSubmissionRepository.save(programmingSubmission);
-                resultRepository.save(updatedLatestSemiAutomaticResult);
+                Result result = resultRepository.save(updatedLatestSemiAutomaticResult);
+
+                // Save the build logs to the file system
+                if (buildLogs != null && !buildLogs.isEmpty()) {
+                    buildLogService.saveBuildLogsToFile(buildLogs, result.getId().toString());
+                }
 
                 return updatedLatestSemiAutomaticResult;
             }
@@ -302,6 +345,10 @@ public class ProgrammingExerciseGradingService {
         processedResult.setParticipation((Participation) participation);
         programmingSubmission.addResult(processedResult);
         programmingSubmissionRepository.save(programmingSubmission);
+
+        if (buildLogs != null && !buildLogs.isEmpty()) {
+            buildLogService.saveBuildLogsToFile(buildLogs, processedResult.getId().toString());
+        }
 
         return processedResult;
     }
@@ -342,7 +389,7 @@ public class ProgrammingExerciseGradingService {
 
     /**
      * Updates an incoming result with the information of the exercises test cases. This update includes:
-     * - Checking which test cases were not executed as this is not part of the bamboo build (not all test cases are executed in an exercise with sequential test runs)
+     * - Checking which test cases were not executed (not all test cases are executed in an exercise with sequential test runs)
      * - Checking the due date and the visibility.
      * - Recalculating the score based on the successful test cases weight vs the total weight of all test cases.
      * <p>
@@ -371,11 +418,11 @@ public class ProgrammingExerciseGradingService {
      * <p>
      * This update includes:
      * <ul>
-     * <li>Checking which test cases were not executed as this is not part of the bamboo build (not all test cases are executed in an exercise with sequential test runs).</li>
+     * <li>Checking which test cases were not executed (not all test cases are executed in an exercise with sequential test runs).</li>
      * <li>Checking the due date and the visibility.</li>
      * <li>Recalculating the score based on the successful test cases weight vs the total weight of all test cases.</li>
      * </ul>
-     *
+     * <p>
      * If there are no test cases stored in the database for the given exercise (i.e. we have a legacy exercise) or the weight has not been changed, then the result will not
      * change.
      *

@@ -4,8 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.persistence.*;
-import javax.persistence.Entity;
+import jakarta.persistence.*;
 
 import org.hibernate.Hibernate;
 import org.hibernate.annotations.*;

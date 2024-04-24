@@ -34,7 +34,6 @@
 #### Changes affecting Programming Exercises
 - [ ] **High priority**: I tested **all** changes and their related features with **all** corresponding user types on a test server configured with the **integrated lifecycle setup** (LocalVC and LocalCI).
 - [ ] I tested **all** changes and their related features with **all** corresponding user types on a test server configured with **Gitlab** and **Jenkins**.
-- [ ] I tested **all** changes and their related features with **all** corresponding user types on a test server configured with **Bitbucket** and **Bamboo**.
 
 
 ### Motivation and Context
@@ -82,7 +81,6 @@ Prerequisites:
 ![](https://byob.yarr.is/ls1intum/Artemis/artemis-test4)
 ![](https://byob.yarr.is/ls1intum/Artemis/artemis-test5)
 ![](https://byob.yarr.is/ls1intum/Artemis/artemis-test6)
-![](https://byob.yarr.is/ls1intum/Artemis/artemis-test9)
 
 ### Review Progress
 <!-- Each PR should be reviewed by at least two other developers. The code, the functionality (= manual test) and the exam mode need to be reviewed. -->

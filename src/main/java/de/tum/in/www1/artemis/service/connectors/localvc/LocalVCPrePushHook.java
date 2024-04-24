@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Ref;
@@ -19,6 +21,15 @@ import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
  * successful).
  */
 public class LocalVCPrePushHook implements PreReceiveHook {
+
+    private final LocalVCServletService localVCServletService;
+
+    private final HttpServletRequest request;
+
+    public LocalVCPrePushHook(LocalVCServletService localVCServletService, HttpServletRequest request) {
+        this.localVCServletService = localVCServletService;
+        this.request = request;
+    }
 
     /**
      * Called by JGit before a push is received (i.e. before the pushed files are written to disk but after the authorization check was successful).
@@ -48,7 +59,7 @@ public class LocalVCPrePushHook implements PreReceiveHook {
 
         String defaultBranchName;
         try {
-            defaultBranchName = LocalVCServletService.getDefaultBranchOfRepository(repository);
+            defaultBranchName = localVCServletService.getDefaultBranchOfRepository(repository);
         }
         catch (LocalVCInternalException e) {
             command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "An error occurred while checking the branch.");
@@ -73,8 +84,16 @@ public class LocalVCPrePushHook implements PreReceiveHook {
 
             // Prevent force push.
             if (command.getType() == ReceiveCommand.Type.UPDATE_NONFASTFORWARD) {
-                command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "You cannot force push.");
-                return;
+                try {
+                    if (!localVCServletService.isUserAllowedToForcePush(request)) {
+                        command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "You cannot force push.");
+                        return;
+                    }
+                }
+                catch (Exception e) {
+                    command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "An error occurred while checking the user's permissions.");
+                    return;
+                }
             }
 
             git.close();

@@ -78,6 +78,7 @@ import {
 } from '../../helpers/sample/iris-sample-data';
 import { ExerciseComponent } from 'app/entities/iris/iris-content-type.model';
 import { SessionReceivedAction } from 'app/iris/state-store.model';
+import { CodeEditorMonacoComponent } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
 
 describe('CodeEditorInstructorIntegration', () => {
     // needed to make sure ace is defined
@@ -118,6 +119,7 @@ describe('CodeEditorInstructorIntegration', () => {
                 MockComponent(CodeEditorActionsComponent),
                 MockComponent(CodeEditorFileBrowserComponent),
                 MockComponent(CodeEditorAceComponent),
+                MockComponent(CodeEditorMonacoComponent),
                 CodeEditorBuildOutputComponent,
                 MockPipe(ArtemisDatePipe),
                 MockComponent(IncludedInScoreBadgeComponent),
@@ -476,7 +478,7 @@ describe('CodeEditorInstructorIntegration', () => {
 
         containerFixture.detectChanges();
         expect(container.codeEditorContainer).toBeDefined();
-        expect(container.codeEditorContainer.aceEditor).toBeDefined();
+        expect(container.codeEditorContainer.monacoEditor).toBeDefined();
         expect(container.selectedRepository).toBe(container.REPOSITORY.SOLUTION);
 
         irisStateStore.dispatch(new SessionReceivedAction(0, []));

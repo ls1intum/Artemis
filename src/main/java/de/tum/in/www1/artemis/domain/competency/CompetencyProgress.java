@@ -5,7 +5,7 @@ import java.io.Serializable;
 import java.time.Instant;
 import java.util.Objects;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -119,7 +119,7 @@ public class CompetencyProgress implements Serializable {
 
     /**
      * This class is used to create a composite primary key (user_id, competency_id).
-     * See also https://www.baeldung.com/spring-jpa-embedded-method-parameters
+     * See also <a href="https://www.baeldung.com/spring-jpa-embedded-method-parameters">...</a>
      */
     @Embeddable
     public static class CompetencyUserId implements Serializable {

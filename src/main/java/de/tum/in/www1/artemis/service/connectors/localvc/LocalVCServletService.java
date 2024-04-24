@@ -7,7 +7,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -21,8 +21,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Service;
 
@@ -44,7 +44,6 @@ import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTrigger
 import de.tum.in.www1.artemis.service.programming.*;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
-import de.tum.in.www1.artemis.web.rest.errors.AccessUnauthorizedException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.repository.RepositoryActionType;
 
@@ -59,7 +58,7 @@ public class LocalVCServletService {
 
     private static final Logger log = LoggerFactory.getLogger(LocalVCServletService.class);
 
-    private final AuthenticationManagerBuilder authenticationManagerBuilder;
+    private final AuthenticationManager authenticationManager;
 
     private final UserRepository userRepository;
 
@@ -100,12 +99,12 @@ public class LocalVCServletService {
     // The resolveRepository method is called multiple times per request.
     private final Map<String, Repository> repositories = new HashMap<>();
 
-    public LocalVCServletService(AuthenticationManagerBuilder authenticationManagerBuilder, UserRepository userRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService, AuthorizationCheckService authorizationCheckService,
+    public LocalVCServletService(AuthenticationManager authenticationManager, UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            RepositoryAccessService repositoryAccessService, AuthorizationCheckService authorizationCheckService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, AuxiliaryRepositoryService auxiliaryRepositoryService,
             ContinuousIntegrationTriggerService ciTriggerService, ProgrammingSubmissionService programmingSubmissionService,
-            ProgrammingMessagingService programmingMessagingService, ProgrammingTriggerService programmingTriggerService, LocalVCService localVCService) {
-        this.authenticationManagerBuilder = authenticationManagerBuilder;
+            ProgrammingMessagingService programmingMessagingService, ProgrammingTriggerService programmingTriggerService) {
+        this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.repositoryAccessService = repositoryAccessService;
@@ -132,28 +131,28 @@ public class LocalVCServletService {
         // Find the local repository depending on the name.
         Path repositoryDir = Paths.get(localVCBasePath, repositoryPath);
 
-        log.info("Path to resolve repository from: {}", repositoryDir);
+        log.debug("Path to resolve repository from: {}", repositoryDir);
         if (!Files.exists(repositoryDir)) {
-            log.info("Could not find local repository with name {}", repositoryPath);
+            log.error("Could not find local repository with name {}", repositoryPath);
             throw new RepositoryNotFoundException(repositoryPath);
         }
 
         if (repositories.containsKey(repositoryPath)) {
-            log.info("Retrieving cached local repository {}", repositoryPath);
+            log.debug("Retrieving cached local repository {}", repositoryPath);
             Repository repository = repositories.get(repositoryPath);
             repository.incrementOpen();
-            log.info("Resolving repository for repository {} took {}", repositoryPath, TimeLogUtil.formatDurationFrom(timeNanoStart));
+            log.debug("Resolving repository for repository {} took {}", repositoryPath, TimeLogUtil.formatDurationFrom(timeNanoStart));
             return repository;
         }
         else {
-            log.info("Opening local repository {}", repositoryPath);
+            log.debug("Opening local repository {}", repositoryPath);
             try (Repository repository = FileRepositoryBuilder.create(repositoryDir.toFile())) {
                 // Enable pushing without credentials, authentication is handled by the LocalVCPushFilter.
                 repository.getConfig().setBoolean("http", null, "receivepack", true);
 
                 this.repositories.put(repositoryPath, repository);
                 repository.incrementOpen();
-                log.info("Resolving repository for repository {} took {}", repositoryPath, TimeLogUtil.formatDurationFrom(timeNanoStart));
+                log.debug("Resolving repository for repository {} took {}", repositoryPath, TimeLogUtil.formatDurationFrom(timeNanoStart));
                 return repository;
             }
             catch (IOException e) {
@@ -188,19 +187,11 @@ public class LocalVCServletService {
             return;
         }
 
-        LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(request.getRequestURL().toString().replace("/info/refs", ""), localVCBaseUrl);
-
+        LocalVCRepositoryUri localVCRepositoryUri = parseRepositoryUri(request);
         String projectKey = localVCRepositoryUri.getProjectKey();
         String repositoryTypeOrUserName = localVCRepositoryUri.getRepositoryTypeOrUserName();
 
-        ProgrammingExercise exercise;
-
-        try {
-            exercise = programmingExerciseRepository.findOneByProjectKeyOrThrow(projectKey, true);
-        }
-        catch (EntityNotFoundException e) {
-            throw new LocalVCInternalException("Could not find single programming exercise with project key " + projectKey, e);
-        }
+        ProgrammingExercise exercise = getProgrammingExerciseOrThrow(projectKey);
 
         // Check that offline IDE usage is allowed.
         if (Boolean.FALSE.equals(exercise.isAllowOfflineIde()) && authorizationCheckService.isOnlyStudentInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user)) {
@@ -209,7 +200,7 @@ public class LocalVCServletService {
 
         authorizeUser(repositoryTypeOrUserName, user, exercise, repositoryAction, localVCRepositoryUri.isPracticeRepository());
 
-        log.info("Authorizing user {} for repository {} took {}", user.getLogin(), localVCRepositoryUri, TimeLogUtil.formatDurationFrom(timeNanoStart));
+        log.debug("Authorizing user {} for repository {} took {}", user.getLogin(), localVCRepositoryUri, TimeLogUtil.formatDurationFrom(timeNanoStart));
     }
 
     private User authenticateUser(String authorizationHeader) throws LocalVCAuthException {
@@ -240,7 +231,7 @@ public class LocalVCServletService {
 
             // Try to authenticate the user based on the configured options, this can include sending the data to an external system (e.g. LDAP) or using internal authentication.
             UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
-            authenticationManagerBuilder.getObject().authenticate(authenticationToken);
+            authenticationManager.authenticate(authenticationToken);
         }
         catch (AccessForbiddenException | AuthenticationException e) {
             throw new LocalVCAuthException(e);
@@ -248,6 +239,41 @@ public class LocalVCServletService {
 
         // Check that the user exists.
         return user.orElseThrow(LocalVCAuthException::new);
+    }
+
+    /**
+     * Determines whether a user is allowed to force-push to a certain repository.
+     *
+     * @param request The request object containing all information about the incoming request.
+     * @return true if the user is allowed to force-push to the repository, false otherwise.
+     * @throws LocalVCAuthException If an internal error occurs, e.g. because the LocalVCRepositoryUri could not be created.
+     */
+    public boolean isUserAllowedToForcePush(HttpServletRequest request) throws LocalVCAuthException {
+        User user = authenticateUser(request.getHeader(LocalVCServletService.AUTHORIZATION_HEADER));
+
+        LocalVCRepositoryUri localVCRepositoryUri = parseRepositoryUri(request);
+        String projectKey = localVCRepositoryUri.getProjectKey();
+        String repositoryTypeOrUserName = localVCRepositoryUri.getRepositoryTypeOrUserName();
+
+        ProgrammingExercise exercise = getProgrammingExerciseOrThrow(projectKey);
+
+        boolean isAllowedRepository = repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString()) || repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString())
+                || repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString());
+
+        return isAllowedRepository && authorizationCheckService.isAtLeastEditorInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user);
+    }
+
+    private LocalVCRepositoryUri parseRepositoryUri(HttpServletRequest request) {
+        return new LocalVCRepositoryUri(request.getRequestURL().toString().replace("/info/refs", ""), localVCBaseUrl);
+    }
+
+    private ProgrammingExercise getProgrammingExerciseOrThrow(String projectKey) {
+        try {
+            return programmingExerciseRepository.findOneByProjectKeyOrThrow(projectKey, true);
+        }
+        catch (EntityNotFoundException e) {
+            throw new LocalVCInternalException("Could not find single programming exercise with project key " + projectKey, e);
+        }
     }
 
     private String checkAuthorizationHeader(String authorizationHeader) throws LocalVCAuthException {
@@ -266,7 +292,7 @@ public class LocalVCServletService {
     }
 
     public void authorizeUser(String repositoryTypeOrUserName, User user, ProgrammingExercise exercise, RepositoryActionType repositoryActionType, boolean isPracticeRepository)
-            throws LocalVCAuthException, LocalVCForbiddenException {
+            throws LocalVCForbiddenException {
 
         if (repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString()) || auxiliaryRepositoryService.isAuxiliaryRepositoryOfExercise(repositoryTypeOrUserName, exercise)) {
             // Test and auxiliary repositories are only accessible by instructors and higher.
@@ -290,9 +316,6 @@ public class LocalVCServletService {
 
         try {
             repositoryAccessService.checkAccessRepositoryElseThrow(participation, user, exercise, repositoryActionType);
-        }
-        catch (AccessUnauthorizedException e) {
-            throw new LocalVCAuthException(e);
         }
         catch (AccessForbiddenException e) {
             throw new LocalVCForbiddenException(e);
@@ -365,7 +388,7 @@ public class LocalVCServletService {
                     "Could not process new push to repository " + localVCRepositoryUri.getURI() + " and commit " + commitHash + ". No build job was queued.", e);
         }
 
-        log.info("New push processed to repository {} for commit {} in {}. A build job was queued.", localVCRepositoryUri.getURI(), commitHash,
+        log.debug("New push processed to repository {} for commit {} in {}. A build job was queued.", localVCRepositoryUri.getURI(), commitHash,
                 TimeLogUtil.formatDurationFrom(timeNanoStart));
     }
 

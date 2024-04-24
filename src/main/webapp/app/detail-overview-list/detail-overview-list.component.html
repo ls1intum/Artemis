@@ -3,7 +3,7 @@
 }
 @for (section of sections; track section) {
     <h3 class="section-headline" [id]="headlinesRecord[section.headline]">{{ section.headline | artemisTranslate }}</h3>
-    <dl>
+    <dl class="section-detail-list">
         @for (detail of section.details; track detail) {
             @if (!!detail) {
                 @if (detail.title) {
@@ -265,7 +265,7 @@
                         </dd>
                     }
                     @case (DetailType.ModelingEditor) {
-                        <dd id="detail-value-{{ detail.title }}">
+                        <dd class="p-3 border" id="detail-value-{{ detail.title }}">
                             @if (!!detail.data.umlModel?.elements?.length && detail.data.isApollonProfileActive) {
                                 <button
                                     (click)="downloadApollonDiagramAsPDf(detail.data.umlModel, detail.data.title)"

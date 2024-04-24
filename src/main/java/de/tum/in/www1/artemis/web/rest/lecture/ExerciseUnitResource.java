@@ -6,7 +6,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 
-import javax.ws.rs.BadRequestException;
+import jakarta.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,7 +71,7 @@ public class ExerciseUnitResource {
         exerciseUnit.setLecture(lecture);
         lecture.addLectureUnit(exerciseUnit);
         Lecture updatedLecture = lectureRepository.save(lecture);
-        ExerciseUnit persistedExerciseUnit = (ExerciseUnit) updatedLecture.getLectureUnits().get(updatedLecture.getLectureUnits().size() - 1);
+        ExerciseUnit persistedExerciseUnit = (ExerciseUnit) updatedLecture.getLectureUnits().getLast();
 
         return ResponseEntity.created(new URI("/api/exercise-units/" + persistedExerciseUnit.getId())).body(persistedExerciseUnit);
     }

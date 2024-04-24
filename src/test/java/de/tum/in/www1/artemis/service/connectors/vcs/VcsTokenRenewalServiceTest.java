@@ -1,193 +1,137 @@
 package de.tum.in.www1.artemis.service.connectors.vcs;
 
-import static de.tum.in.www1.artemis.service.connectors.vcs.VcsTokenManagementService.MAX_LIFETIME;
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Optional;
-import java.util.function.Predicate;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import org.gitlab4j.api.GitLabApiException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.util.ReflectionTestUtils;
+import org.mockito.Mockito;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPersonalAccessTokenListResponseDTO;
-import de.tum.in.www1.artemis.user.UserUtilService;
 
-class VcsTokenRenewalServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
+class VcsTokenRenewalServiceTest {
 
-    private static final String TEST_PREFIX = "vcstokenrenewalservice";
+    private VcsTokenManagementService vcsTokenManagementService;
 
-    @Autowired
-    private VcsTokenRenewalService vcsTokenRenewalService;
-
-    @Autowired
     private UserRepository userRepository;
-
-    @Autowired
-    private UserUtilService userUtilService;
 
     @BeforeEach
     void setUp() {
-        gitlabRequestMockProvider.enableMockingOfRequests();
-        userUtilService.addUsers(TEST_PREFIX, 3, 2, 1, 2);
-        ReflectionTestUtils.setField(vcsTokenRenewalService, "versionControlAccessToken", true);
-        ReflectionTestUtils.setField(getCurrentTokenManagementService(), "versionControlAccessToken", true);
+        vcsTokenManagementService = Mockito.mock(VcsTokenManagementService.class);
+        userRepository = Mockito.mock(UserRepository.class);
     }
 
     @AfterEach
-    void teardown() throws Exception {
-        ReflectionTestUtils.setField(getCurrentTokenManagementService(), "versionControlAccessToken", false);
-        ReflectionTestUtils.setField(vcsTokenRenewalService, "versionControlAccessToken", false);
-        gitlabRequestMockProvider.reset();
+    void tearDown() {
+        Mockito.reset(vcsTokenManagementService, userRepository);
     }
 
-    private VcsTokenManagementService getCurrentTokenManagementService() {
-        Object attribute = ReflectionTestUtils.getField(vcsTokenRenewalService, "vcsTokenManagementService");
-        if (attribute instanceof Optional<?> attributeOptional && attributeOptional.isPresent() && attributeOptional.get() instanceof VcsTokenManagementService service) {
-            return service;
-        }
-        else {
-            throw new Error("Attribute vcsTokenManagementService of VcsTokenRenewalService has wrong type");
-        }
+    @Test
+    void testDoNothingIfNoTokenRequiredInServerConfig() {
+        final VcsTokenRenewalService vcsTokenRenewalService = new VcsTokenRenewalService(false, Optional.of(vcsTokenManagementService), userRepository);
+
+        vcsTokenRenewalService.renewAllVcsAccessTokens();
+
+        verifyUserRepositoryNotCalled();
+        verifyVcsTokenManagementServiceNotCalled();
     }
 
-    private record UserData(String initialToken, Long initialLifetimeDays, String updatedToken) {
+    @Test
+    void testDoNothingIfNoTokenManagementService() {
+        final VcsTokenRenewalService vcsTokenRenewalService = new VcsTokenRenewalService(false, Optional.empty(), userRepository);
 
-        public UserData(String initialToken, Long initialLifetimeDays) {
-            this(initialToken, initialLifetimeDays, null);
-        }
+        vcsTokenRenewalService.renewAllVcsAccessTokens();
 
-        public boolean tokenRenewalNecessary() {
-            return initialToken != null && updatedToken != null;
-        }
-
-        public boolean tokenCreationNecessary() {
-            return initialToken == null;
-        }
-    }
-
-    static Stream<? extends Arguments> userDataSource() {
-        return Stream.of(Arguments
-                .of(List.of(new UserData("uishfi", 234L), new UserData("sdfhsehfe", 2L, "oshdf"), new UserData(null, null, "sdhfihs"), new UserData("ofg4958", 27L, "e9h4th"),
-                        new UserData("fduvhid", 29L), new UserData("e9tertr", 364L), new UserData("fduvhid", -64L, "sdhfisf"), new UserData(null, null, "rhehofhs"))));
+        verifyUserRepositoryNotCalled();
+        verifyVcsTokenManagementServiceNotCalled();
     }
 
     @ParameterizedTest
-    @MethodSource("userDataSource")
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testRenewAllPersonalAccessTokens(List<UserData> userData) throws GitLabApiException {
-        final Predicate<User> isUserOfTest = user -> user.getLogin().startsWith(TEST_PREFIX);
+    @MethodSource("getRenewCounts")
+    void testRenewAllPersonalAccessTokens(int expectedRenewalCount, int expectedCreationCount) {
+        final VcsTokenRenewalService vcsTokenRenewalService = new VcsTokenRenewalService(true, Optional.of(vcsTokenManagementService), userRepository);
+        final Users users = setUpMocking(expectedRenewalCount, expectedCreationCount);
 
-        final List<User> users = userRepository.findAll().stream().filter(isUserOfTest).toList();
-        assertThat(userData.size()).isEqualTo(users.size());
-        final ArrayList<org.gitlab4j.api.models.User> gitlabUsers = new ArrayList<>();
-
-        setUpTestUsers(userData, users, gitlabUsers);
-
-        final long expectedRenewalCount = userData.stream().filter(UserData::tokenRenewalNecessary).count();
-        final long expectedCreationCount = userData.stream().filter(UserData::tokenCreationNecessary).count();
-
-        UserRepository userRepositoryAdapter = setUpMocking(userData, gitlabUsers, expectedRenewalCount, expectedCreationCount, users, isUserOfTest);
-
-        ReflectionTestUtils.setField(vcsTokenRenewalService, "userRepository", userRepositoryAdapter);
         vcsTokenRenewalService.renewAllVcsAccessTokens();
-        ReflectionTestUtils.setField(vcsTokenRenewalService, "userRepository", userRepository);
 
-        gitlabRequestMockProvider.verifyMocks();
-        verify(userRepositoryAdapter, times(1)).getUsersWithAccessTokenExpirationDateBefore(any());
-        verify(userRepositoryAdapter, times(1)).getUsersWithAccessTokenNull();
-
-        assertUsers(userData, users);
+        verifyUserRepositoryMocks();
+        verifyVcsTokenManagementServiceMocks(users);
     }
 
-    private void setUpTestUsers(List<UserData> userData, List<User> users, ArrayList<org.gitlab4j.api.models.User> gitlabUsers) {
-        for (int i = 0; i < users.size(); ++i) {
-            User user = users.get(i);
-            UserData data = userData.get(i);
+    private static Stream<Arguments> getRenewCounts() {
+        return Stream.of(Arguments.of(2, 3), Arguments.of(0, 4), Arguments.of(3, 0));
+    }
 
-            user.setVcsAccessToken(data.initialToken());
-            if (data.initialLifetimeDays() != null) {
-                user.setVcsAccessTokenExpiryDate(ZonedDateTime.now().plusDays(data.initialLifetimeDays()));
-            }
-            else {
-                user.setVcsAccessTokenExpiryDate(null);
-            }
-            userRepository.save(user);
+    private Users setUpMocking(int expectedRenewalCount, int expectedCreationCount) {
+        final Users users = generateUsers(expectedRenewalCount, expectedCreationCount);
 
-            gitlabUsers.add(new org.gitlab4j.api.models.User().withId(user.getId()).withUsername(user.getLogin()));
+        doReturn(users.withTokenRenewal()).when(userRepository).getUsersWithAccessTokenExpirationDateBefore(any());
+        doReturn(users.withTokenCreation()).when(userRepository).getUsersWithAccessTokenNull();
+
+        return users;
+    }
+
+    private void verifyUserRepositoryMocks() {
+        verify(userRepository, times(1)).getUsersWithAccessTokenExpirationDateBefore(any());
+        verify(userRepository, times(1)).getUsersWithAccessTokenNull();
+    }
+
+    private void verifyUserRepositoryNotCalled() {
+        verify(userRepository, never()).getUsersWithAccessTokenExpirationDateBefore(any());
+        verify(userRepository, never()).getUsersWithAccessTokenNull();
+    }
+
+    private void verifyVcsTokenManagementServiceMocks(final Users users) {
+        for (final User user : users.withTokenCreation()) {
+            verify(vcsTokenManagementService, times(1)).createAccessToken(user);
+        }
+        for (final User user : users.withTokenRenewal()) {
+            verify(vcsTokenManagementService, times(1)).renewAccessToken(user);
         }
     }
 
-    private UserRepository setUpMocking(List<UserData> userData, ArrayList<org.gitlab4j.api.models.User> gitlabUsers, long expectedRenewalCount, long expectedCreationCount,
-            List<User> users, Predicate<User> isUserOfTest) throws GitLabApiException {
-        gitlabRequestMockProvider.mockGetUserApi();
-        gitlabRequestMockProvider.mockGetUserID(gitlabUsers);
-        gitlabRequestMockProvider.mockCreatePersonalAccessToken(expectedRenewalCount + expectedCreationCount, new HashMap<>() {
-
-            {
-                for (int i = 0; i < users.size(); ++i) {
-                    put(gitlabUsers.get(i).getUsername(), userData.get(i).updatedToken());
-                    put(gitlabUsers.get(i).getId(), userData.get(i).updatedToken());
-                }
-            }
-        });
-        gitlabRequestMockProvider.mockListAndRevokePersonalAccessTokens(expectedRenewalCount, new HashMap<>() {
-
-            {
-                for (int i = 0; i < users.size(); ++i) {
-                    put(gitlabUsers.get(i).getId(), new GitLabPersonalAccessTokenListResponseDTO(null));
-                }
-            }
-        });
-
-        // We need to inject an adapter for UserRepository as a mock into VcsTokenRenewalService to filter out users without the TEST_PREFIX.
-        UserRepository userRepositoryAdapter = mock(UserRepository.class);
-        doAnswer(invocation -> userRepository.getUsersWithAccessTokenExpirationDateBefore(invocation.getArgument(0)).stream().filter(isUserOfTest).toList())
-                .when(userRepositoryAdapter).getUsersWithAccessTokenExpirationDateBefore(any());
-        doAnswer(invocation -> userRepository.getUsersWithAccessTokenNull().stream().filter(isUserOfTest).toList()).when(userRepositoryAdapter).getUsersWithAccessTokenNull();
-        return userRepositoryAdapter;
+    private void verifyVcsTokenManagementServiceNotCalled() {
+        verify(vcsTokenManagementService, never()).createAccessToken(any());
+        verify(vcsTokenManagementService, never()).renewAccessToken(any());
     }
 
-    private void assertUsers(List<UserData> userData, List<User> users) {
-        for (int i = 0; i < users.size(); ++i) {
-            final User updatedUser = userRepository.getUserByLoginElseThrow(users.get(i).getLogin());
-            final UserData data = userData.get(i);
+    private Users generateUsers(int forTokenRenewal, int forTokenCreation) {
+        final Set<User> forRenewal = generateUsers(forTokenRenewal).peek(user -> {
+            user.setVcsAccessTokenExpiryDate(ZonedDateTime.now());
+            user.setVcsAccessToken("existing-token");
+        }).collect(Collectors.toUnmodifiableSet());
+        final Set<User> forCreation = generateUsers(forTokenCreation).peek(user -> {
+            user.setVcsAccessTokenExpiryDate(null);
+            user.setVcsAccessToken(null);
+        }).collect(Collectors.toUnmodifiableSet());
 
-            if (userData.get(i).tokenRenewalNecessary() || userData.get(i).tokenCreationNecessary()) {
-                assertThat(updatedUser.getVcsAccessToken()).isEqualTo(data.updatedToken());
-                assertThat(updatedUser.getVcsAccessTokenExpiryDate()).isNotNull();
-                assertThat(updatedUser.getVcsAccessTokenExpiryDate()).isAfter(ZonedDateTime.now().plus(MAX_LIFETIME).minusDays(1));
-            }
-            else {
-                final ZonedDateTime initialVcsAccessTokenExpiryDate = users.get(i).getVcsAccessTokenExpiryDate();
+        return new Users(forRenewal, forCreation);
+    }
 
-                assertThat(updatedUser.getVcsAccessToken()).isEqualTo(data.initialToken());
+    private Stream<User> generateUsers(int count) {
+        return IntStream.range(0, count).mapToObj(idx -> {
+            final User user = new User();
+            user.setLogin(UUID.randomUUID().toString());
+            return user;
+        });
+    }
 
-                // Comparison with epsilon is necessary because storing the datetime value into the database leads to rounding or truncation.
-                final int epsilonSeconds = 1;
-                assertThat(initialVcsAccessTokenExpiryDate).isNotNull();
-                assertThat(updatedUser.getVcsAccessTokenExpiryDate()).isAfter(initialVcsAccessTokenExpiryDate.minusSeconds(epsilonSeconds));
-                assertThat(updatedUser.getVcsAccessTokenExpiryDate()).isBefore(initialVcsAccessTokenExpiryDate.plusSeconds(epsilonSeconds));
-            }
-        }
+    private record Users(Set<User> withTokenRenewal, Set<User> withTokenCreation) {
     }
 }

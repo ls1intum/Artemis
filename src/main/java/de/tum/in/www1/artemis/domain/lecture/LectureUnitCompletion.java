@@ -5,7 +5,7 @@ import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.Objects;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -86,7 +86,7 @@ public class LectureUnitCompletion {
 
     /**
      * This class is used to create a composite primary key (user_id, lecture_unit_id).
-     * See also https://www.baeldung.com/spring-jpa-embedded-method-parameters
+     * See also <a href="https://www.baeldung.com/spring-jpa-embedded-method-parameters">...</a>
      */
     @Embeddable
     @SuppressWarnings("unused")

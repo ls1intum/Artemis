@@ -109,8 +109,7 @@ public class IrisCompetencyGenerationSessionService implements IrisButtonBasedFe
 
     @Override
     public List<Competency> executeRequest(IrisCompetencyGenerationSession session) {
-
-        var userMessageContent = irisMessageRepository.findFirstWithContentBySessionIdAndSenderOrderBySentAtDesc(session.getId(), IrisMessageSender.USER).getContent().get(0);
+        var userMessageContent = irisMessageRepository.findFirstWithContentBySessionIdAndSenderOrderBySentAtDesc(session.getId(), IrisMessageSender.USER).getContent().getFirst();
         if (!(userMessageContent instanceof IrisTextMessageContent) || userMessageContent.getContentAsString() == null) {
             throw new InternalServerErrorException("Unable to get last user message!");
         }
@@ -121,11 +120,11 @@ public class IrisCompetencyGenerationSessionService implements IrisButtonBasedFe
         try {
             var response = irisConnectorService.sendRequestV2(irisSettings.irisCompetencyGenerationSettings().getTemplate().getContent(),
                     irisSettings.irisCompetencyGenerationSettings().getPreferredModel(), parameters).get();
-
-            var llmMessage = new IrisMessage();
+            var llmMessage = session.newMessage();
             llmMessage.setSender(IrisMessageSender.LLM);
             llmMessage.addContent(new IrisJsonMessageContent(response.content()));
-            irisMessageService.saveMessage(llmMessage, session, IrisMessageSender.LLM);
+
+            irisSessionRepository.save(session);
 
             return toCompetencies(response.content());
         }

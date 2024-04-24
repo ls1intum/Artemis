@@ -8,10 +8,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import javax.validation.constraints.NotNull;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+import jakarta.validation.constraints.NotNull;
 
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -229,7 +230,7 @@ public class ParticipantScoreScheduleService {
      */
     private void executeTask(Long exerciseId, Long participantId, Instant resultLastModified, Long resultIdToBeDeleted) {
         long start = System.currentTimeMillis();
-        log.info("Processing exercise {} and participant {} to update participant scores.", exerciseId, participantId);
+        log.debug("Processing exercise {} and participant {} to update participant scores.", exerciseId, participantId);
         try {
             SecurityUtils.setAuthorizationObject();
 
@@ -293,14 +294,12 @@ public class ParticipantScoreScheduleService {
                     teamScore.setExercise(exercise);
                     return teamScore;
                 }
-                else if (participant instanceof User user) {
+                else {
+                    User user = (User) participant;
                     var studentScore = new StudentScore();
                     studentScore.setUser(user);
                     studentScore.setExercise(exercise);
                     return studentScore;
-                }
-                else {
-                    return null;
                 }
             });
 
@@ -314,7 +313,11 @@ public class ParticipantScoreScheduleService {
             }
 
             // Update the progress for competencies linked to this exercise
-            competencyProgressService.updateProgressByLearningObject(score.getExercise(), score.getParticipant().getParticipants());
+            Participant scoreParticipant = score.getParticipant();
+            if (scoreParticipant instanceof Team team && !Hibernate.isInitialized(team.getStudents())) {
+                scoreParticipant = teamRepository.findWithStudentsByIdElseThrow(team.getId());
+            }
+            competencyProgressService.updateProgressByLearningObject(score.getExercise(), scoreParticipant.getParticipants());
         }
         catch (Exception e) {
             log.error("Exception while processing participant score for exercise {} and participant {} for participant scores:", exerciseId, participantId, e);
@@ -323,7 +326,7 @@ public class ParticipantScoreScheduleService {
             scheduledTasks.remove(new ParticipantScoreId(exerciseId, participantId).hashCode());
         }
         long end = System.currentTimeMillis();
-        log.info("Updating the participant score for exercise {} and participant {} took {} ms.", exerciseId, participantId, end - start);
+        log.debug("Updating the participant score for exercise {} and participant {} took {} ms.", exerciseId, participantId, end - start);
     }
 
     /**

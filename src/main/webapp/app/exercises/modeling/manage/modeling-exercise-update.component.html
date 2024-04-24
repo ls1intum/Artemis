@@ -20,6 +20,7 @@
                 <jhi-category-selector [categories]="exerciseCategories" [existingCategories]="existingCategories" (selectedCategories)="updateCategories($event)" />
             </div>
         }
+        <hr class="mb-5" />
         <h3 jhiTranslate="artemisApp.exercise.sections.mode" id="artemisApp.exercise.sections.mode"></h3>
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.difficulty"></label>
@@ -28,6 +29,7 @@
             </div>
         </div>
         <jhi-team-config-form-group class="form-element" [exercise]="modelingExercise" [isImport]="isImport" />
+        <hr class="mb-5" />
         <h3 jhiTranslate="artemisApp.exercise.sections.problem" id="artemisApp.exercise.sections.problem"></h3>
         <div class="form-group" name="problemStatement" id="field_problemStatement">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.problemStatement" for="field_problemStatement"></label>
@@ -50,6 +52,7 @@
                 />
             </div>
         }
+        <hr class="mb-5" />
         <h3 jhiTranslate="artemisApp.exercise.sections.solution" id="artemisApp.exercise.sections.solution"></h3>
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="artemisApp.modelingExercise.exampleSolution"></label>
@@ -90,6 +93,7 @@
                 }
             </div>
         }
+        <hr class="mb-5" />
         <h3 jhiTranslate="artemisApp.exercise.sections.grading" id="artemisApp.exercise.sections.grading"></h3>
         @if (!isExamMode) {
             <div class="d-flex">
@@ -111,6 +115,8 @@
                         class="form-element"
                         id="pick-startDate"
                         name="startDate"
+                        [startAt]="modelingExercise.releaseDate"
+                        [min]="modelingExercise.releaseDate"
                         [error]="!!modelingExercise.startDateError"
                         labelName="{{ 'artemisApp.exercise.startDate' | artemisTranslate }}"
                         (valueChange)="validateDate()"
@@ -130,6 +136,8 @@
                         class="form-element"
                         id="pick-dueDate"
                         name="dueDate"
+                        [startAt]="modelingExercise.startDate"
+                        [min]="modelingExercise.startDate"
                         [error]="!!modelingExercise.dueDateError"
                         labelName="{{ 'artemisApp.exercise.dueDate' | artemisTranslate }}"
                         (valueChange)="validateDate()"
@@ -145,6 +153,8 @@
                         class="form-element"
                         id="pick-assessmentDueDate"
                         name="assessmentDueDate"
+                        [startAt]="modelingExercise.dueDate"
+                        [min]="modelingExercise.dueDate"
                         [error]="!!modelingExercise.assessmentDueDateError"
                         labelName="{{ 'artemisApp.exercise.assessmentDueDate' | artemisTranslate }}"
                         (valueChange)="validateDate()"

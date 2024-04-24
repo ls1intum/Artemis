@@ -16,22 +16,17 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
-import de.tum.in.www1.artemis.repository.BuildLogStatisticsEntryRepository;
-import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
-import de.tum.in.www1.artemis.service.BuildLogEntryService;
-import de.tum.in.www1.artemis.service.connectors.BuildScriptProvider;
+import de.tum.in.www1.artemis.service.connectors.BuildScriptProviderService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
 import de.tum.in.www1.artemis.service.connectors.ci.AbstractContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.ci.CIPermission;
-import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 
 /**
  * Implementation of ContinuousIntegrationService for local CI. Contains methods for communication with the local CI system.
- * Note: Because the ContinuousIntegrationSystem and the AbstractContinuousIntegrationService were designed with Bamboo and Jenkins integration in mind, some methods here are not
+ * Note: Because the ContinuousIntegrationSystem and the AbstractContinuousIntegrationService were designed with Jenkins integration in mind, some methods here are not
  * needed and thus contain an empty implementation.
  */
 @Service
@@ -40,17 +35,15 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
 
     private static final Logger log = LoggerFactory.getLogger(LocalCIService.class);
 
-    private final BuildScriptProvider buildScriptProvider;
+    private final BuildScriptProviderService buildScriptProviderService;
 
     private final AeolusTemplateService aeolusTemplateService;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    public LocalCIService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository, BuildLogEntryService buildLogService,
-            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService, BuildScriptProvider buildScriptProvider,
-            AeolusTemplateService aeolusTemplateService, ProgrammingExerciseRepository programmingExerciseRepository) {
-        super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, testwiseCoverageService);
-        this.buildScriptProvider = buildScriptProvider;
+    public LocalCIService(BuildScriptProviderService buildScriptProviderService, AeolusTemplateService aeolusTemplateService,
+            ProgrammingExerciseRepository programmingExerciseRepository) {
+        this.buildScriptProviderService = buildScriptProviderService;
         this.aeolusTemplateService = aeolusTemplateService;
         this.programmingExerciseRepository = programmingExerciseRepository;
     }
@@ -72,7 +65,7 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
         if (exercise == null) {
             return;
         }
-        String script = buildScriptProvider.getScriptFor(exercise);
+        String script = buildScriptProviderService.getScriptFor(exercise);
         Windfile windfile = aeolusTemplateService.getDefaultWindfileFor(exercise);
         exercise.setBuildScript(script);
         exercise.setBuildPlanConfiguration(new Gson().toJson(windfile));
@@ -153,7 +146,7 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
     }
 
     /**
-     * Extract the plan key from the Bamboo requestBody.
+     * Extract the plan key from the requestBody.
      *
      * @param requestBody The request Body received from the CI-Server.
      * @return the plan key or null if it can't be found.
@@ -203,6 +196,7 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
      */
     @Override
     public boolean checkIfBuildPlanExists(String projectKey, String buildPlanId) {
+        // TODO: we should check that the build script in the programming exercises exists, otherwise builds will fail
         // For local CI, no build plans exist. This method is always used in a context where build plans should exist and an error is thrown if they don't.
         // It is safe here to always return true.
         return true;

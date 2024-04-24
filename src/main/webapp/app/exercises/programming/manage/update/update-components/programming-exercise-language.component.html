@@ -1,4 +1,4 @@
-<section class="mb-5">
+<section>
     <h3
         jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepTitle"
         id="artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepTitle"
@@ -23,7 +23,7 @@
             }
         </select>
     </div>
-    @if (programmingExercise.programmingLanguage && programmingExerciseCreationConfig.projectTypes && programmingExerciseCreationConfig.projectTypes.length > 0) {
+    @if (programmingExercise.programmingLanguage && programmingExerciseCreationConfig.projectTypes?.length && programmingExerciseCreationConfig.modePickerOptions) {
         <div class="form-group mt-2">
             <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.projectType" for="field_projectType"></label>
             <jhi-mode-picker
@@ -170,6 +170,22 @@
             />
             <label class="form-check-label custom-control-label" for="field_testwiseCoverageEnabled" jhiTranslate="artemisApp.programmingExercise.recordTestwiseCoverage"></label>
             <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.recordTestwiseCoverageTooltip" />
+        </div>
+    }
+    @if (!programmingExercise.id && programmingExercise.programmingLanguage && programmingExerciseCreationConfig.checkoutSolutionRepositoryAllowed) {
+        <div class="form-check">
+            <label class="form-check-label" for="field_checkoutSolutionRepository">
+                <input
+                    #checkoutSolutionRepository="ngModel"
+                    class="form-check-input"
+                    type="checkbox"
+                    name="checkoutSolutionRepository"
+                    id="field_checkoutSolutionRepository"
+                    [(ngModel)]="programmingExercise.checkoutSolutionRepository"
+                />
+                <span jhiTranslate="artemisApp.programmingExercise.checkoutSolutionRepository.title"></span>
+                <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.checkoutSolutionRepository.description" />
+            </label>
         </div>
     }
     @if (programmingExerciseCreationConfig.customBuildPlansSupported === PROFILE_LOCALCI) {

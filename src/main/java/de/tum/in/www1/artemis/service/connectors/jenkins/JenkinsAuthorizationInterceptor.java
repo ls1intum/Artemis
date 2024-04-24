@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.service.connectors.jenkins;
 import java.io.IOException;
 import java.net.URL;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,7 +60,7 @@ public class JenkinsAuthorizationInterceptor implements ClientHttpRequestInterce
 
         try {
             final var response = restTemplate.exchange(jenkinsURL.toString() + "/crumbIssuer/api/json", HttpMethod.GET, entity, JsonNode.class);
-            final var sessionId = response.getHeaders().get("Set-Cookie").get(0);
+            final var sessionId = response.getHeaders().get("Set-Cookie").getFirst();
             headersToAuthenticate.add("Jenkins-Crumb", response.getBody().get("crumb").asText());
             headersToAuthenticate.add("Cookie", sessionId);
         }

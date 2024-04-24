@@ -1,6 +1,5 @@
 import { Page } from 'playwright';
 import { expect } from '@playwright/test';
-import { hasAttributeWithValue } from '../../utils';
 
 /**
  * A class which encapsulates UI selectors and actions for the student assessment page.
@@ -38,7 +37,6 @@ export class StudentAssessmentPage {
     }
 
     async checkComplaintResponseText(text: string) {
-        await this.page.locator(this.complaintResponseSelector).waitFor({ state: 'attached' });
-        expect(await hasAttributeWithValue(this.page, this.complaintResponseSelector, text)).toBe(true);
+        await expect(this.getComplaintResponse()).toHaveValue(text);
     }
 }

@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.domain.quiz;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -119,7 +119,7 @@ public class QuizPointStatistic extends QuizStatistic {
      */
     private void changeStatisticBasedOnResult(double score, Boolean rated, int countChange) {
         /**
-         * {@link de.tum.in.www1.artemis.service.util.RoundingUtil#roundScoreSpecifiedByCourseSettings}
+         * {@link RoundingUtil#roundScoreSpecifiedByCourseSettings}
          * is not applicable here, as we need to sort the points into existing integer buckets
          */
         double points = Math.round(quiz.getOverallQuizPoints() * (score / 100));
