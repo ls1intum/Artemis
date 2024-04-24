@@ -76,6 +76,7 @@ public class SshConfiguration {
         sshd.setPublickeyAuthenticator(gitPublickeyAuthenticator);
         // Add command factory or shell here to handle Git commands or any other commands
 
+        // TODO: This is deprecated
         URL serverUrl = new URL(artemisServerUrl);
         log.info("Started git ssh server on ssh://{}:{}", serverUrl.getHost(), sshPort);
 

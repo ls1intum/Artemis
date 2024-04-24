@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.config.localvcci;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALVC;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 
 import org.eclipse.jgit.http.server.GitServlet;
 import org.eclipse.jgit.transport.ReceivePack;

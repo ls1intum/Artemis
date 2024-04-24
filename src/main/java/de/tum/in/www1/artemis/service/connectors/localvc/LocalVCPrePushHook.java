@@ -85,6 +85,7 @@ public class LocalVCPrePushHook implements PreReceiveHook {
             // Prevent force push.
             if (command.getType() == ReceiveCommand.Type.UPDATE_NONFASTFORWARD) {
                 try {
+                    // TODO: This is not well done and won't work for SSH. We need to improve this.
                     if (!localVCServletService.isUserAllowedToForcePush(request)) {
                         command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "You cannot force push.");
                         return;

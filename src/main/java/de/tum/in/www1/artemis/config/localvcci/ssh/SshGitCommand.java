@@ -85,7 +85,7 @@ public class SshGitCommand extends GitPackCommand {
             }
             else if (RemoteConfig.DEFAULT_RECEIVE_PACK.equals(subCommand)) {
                 var receivePack = new ReceivePack(db);
-                receivePack.setPreReceiveHook(new LocalVCPrePushHook());
+                receivePack.setPreReceiveHook(new LocalVCPrePushHook(localVCServletService, null)); // TODO: Look into improving this
                 receivePack.setPostReceiveHook(new LocalVCPostPushHook(localVCServletService));
                 receivePack.receive(getInputStream(), getOutputStream(), getErrorStream());
             }
