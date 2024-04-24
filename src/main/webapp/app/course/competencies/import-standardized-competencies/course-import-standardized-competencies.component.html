@@ -1,6 +1,23 @@
 <div class="container">
     <h2 jhiTranslate="artemisApp.standardizedCompetency.courseImport.title"></h2>
-    <!-- TODO: add filter ... extract it to own component aswell i guess? -->
+    <jhi-standardized-competency-filter
+        [knowledgeAreasForSelect]="knowledgeAreasForSelect"
+        [knowledgeAreaFilter]="knowledgeAreaFilter"
+        [competencyTitleFilter]="competencyTitleFilter"
+        (knowledgeAreaFilterChange)="filterByKnowledgeArea($event)"
+        (competencyTitleFilterChange)="filterByCompetencyTitle($event)"
+    />
+    <div class="d-flex flex-wrap align-items-center mt-3 mb-2">
+        <h3 class="me-3 mb-0" jhiTranslate="artemisApp.standardizedCompetency.title"></h3>
+        <jhi-button
+            class="me-1"
+            [btnSize]="ButtonSize.SMALL"
+            [icon]="faMinimize"
+            (onClick)="treeControl.collapseAll()"
+            tooltip="artemisApp.standardizedCompetency.manage.collapseButtonTooltip"
+        />
+        <jhi-button [btnSize]="ButtonSize.SMALL" [icon]="faMaximize" (onClick)="treeControl.expandAll()" tooltip="artemisApp.standardizedCompetency.manage.expandButtonTooltip" />
+    </div>
     @if (dataSource.data.length) {
         <jhi-knowledge-area-tree [dataSource]="dataSource" [treeControl]="treeControl">
             <ng-template let-competency="competency" #competencyTemplate>
@@ -54,7 +71,8 @@
                         <td class="col-0.5">{{ competency.id }}</td>
                         <td class="col-2">{{ competency.title }}</td>
                         <td class="markdown-preview col" [innerHTML]="competency.description | htmlForMarkdown"></td>
-                        <td class="col-2">{{ competency.knowledgeArea?.title }}</td>
+                        <!-- TODO: replace this with real comps i guess -->
+                        <td class="col-2">{{ competency.knowledgeAreaId }}</td>
                         <td class="col-1">
                             <!-- TODO: delete button -->
                         </td>

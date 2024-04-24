@@ -10,29 +10,14 @@
             </a>
         </div>
     </div>
-    <div class="card mb-3">
-        <div class="card-header">
-            <h5 class="mb-0" jhiTranslate="artemisApp.standardizedCompetency.manage.filter"></h5>
-        </div>
-        <div class="card-body row pb-0">
-            <div class="form-group col">
-                <label for="title-filter" jhiTranslate="artemisApp.standardizedCompetency.model.title"> </label>
-                <input id="title-filter" class="form-control" [(ngModel)]="competencyTitleFilter" (input)="titleFilterSubject.next()" />
-            </div>
-            <div class="form-group col">
-                <label for="knowledge-area-filter" jhiTranslate="artemisApp.standardizedCompetency.model.knowledgeArea"></label>
-                <select [(ngModel)]="knowledgeAreaFilter" (ngModelChange)="filterByKnowledgeArea()" class="form-select" id="knowledge-area-filter">
-                    <option [ngValue]="undefined"></option>
-                    @for (knowledgeArea of knowledgeAreasForSelect; track knowledgeArea.id) {
-                        <option [ngValue]="knowledgeArea">
-                            {{ knowledgeArea.title }}
-                        </option>
-                    }
-                </select>
-            </div>
-        </div>
-    </div>
-    <div class="d-flex flex-wrap align-items-center mb-2">
+    <jhi-standardized-competency-filter
+        [knowledgeAreasForSelect]="knowledgeAreasForSelect"
+        [knowledgeAreaFilter]="knowledgeAreaFilter"
+        [competencyTitleFilter]="competencyTitleFilter"
+        (knowledgeAreaFilterChange)="filterByKnowledgeArea($event)"
+        (competencyTitleFilterChange)="filterByCompetencyTitle($event)"
+    />
+    <div class="d-flex flex-wrap align-items-center mt-3 mb-2">
         <h3 class="me-3 mb-0" jhiTranslate="artemisApp.standardizedCompetency.title"></h3>
         <jhi-button
             class="me-3"
