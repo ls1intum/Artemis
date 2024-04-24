@@ -168,7 +168,7 @@ Create new Quiz Exercise
 
         - **Create Apollon Drag-And-Drop Question**
 
-            - In the quiz exercises section click on the Create Quiz button |CreateDragAndDropQuizButton|.
+            - In the quiz exercises section click on the Add Quiz button |CreateDragAndDropQuizButton|.
 
                     .. figure:: quiz/apollon-diagrams.png
                         :align: center
@@ -184,7 +184,7 @@ Create new Quiz Exercise
                         :align: center
                         :scale: 50
 
-                    - Title: provide the title of the Drag-and-Drop Model Quiz
+                    - Title (required): provide the title of the Drag-and-Drop Model Quiz
 
                     - Diagram Type: It is a list picker to select between several diagrams:
 
@@ -208,28 +208,32 @@ Create new Quiz Exercise
 
                         - Flowchart
 
-                    - Save button
+                    - Create button: Creates the apollon diagram and opens the edit view.
 
-                    - Cancel button
+                    - Cancel button: Returns to the apollon list view.
 
                 - Click the save button to open the Apollon editor
 
                     .. figure:: quiz/apollon-editor.png
                         :align: center
 
-                    - Title: Allows to edit the tile of the diagram.
+                    - Back to overview link: Returns to the existing apollon diagram lists.
 
                     - Crop image to selection: Allows to download the current selection.
 
                     - Download button: To download the selection.
 
-                    - Generate a quiz exercise button.
-
-                    - Save button.
+                    - Title (required): Allows to edit the tile of the diagram.
 
                     - Modeling field: The items for modeling the diagram will be displayed here.
 
                     - Elements to Drag and Drop in the Modeling field.
+
+                    - Close: Returns to the quiz view without saving and creating a question.
+
+                    - Save Diagram button: Saves the apollon diagram and stays in the edit view.
+
+                    - Generate a quiz exercise button: Generates a quiz drag-and-drop question and returns to the quiz edit view.
 
         - **Add Short-Answer Question**
 
