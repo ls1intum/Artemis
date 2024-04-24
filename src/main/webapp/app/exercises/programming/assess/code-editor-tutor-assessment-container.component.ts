@@ -302,7 +302,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     highlightChangedLines(selectedFile: string) {
         if (selectedFile && this.codeEditorContainer?.selectedFile) {
             if (!this.templateFileSession[selectedFile]) {
-                const lastLine = this.codeEditorContainer.getNumberOfLines();
+                const lastLine = this.codeEditorContainer.getNumberOfLines() - 1;
                 this.highlightLines(0, lastLine);
             } else {
                 // Calculation of the diff, see: https://github.com/google/diff-match-patch/wiki/Line-or-Word-Diffs
