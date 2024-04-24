@@ -21,8 +21,7 @@
     @if (dataSource.data.length) {
         <jhi-knowledge-area-tree [dataSource]="dataSource" [treeControl]="treeControl">
             <ng-template let-competency="competency" #competencyTemplate>
-                <!-- TODO: add selection to template -->
-                <div class="d-flex align-items-center">
+                <div class="d-flex align-items-center clickable" (click)="openCompetencyDetails(competency)">
                     <fa-icon
                         class="me-2"
                         [icon]="getIcon(competency.taxonomy)"
@@ -30,6 +29,8 @@
                         [fixedWidth]="true"
                     />
                     <h6 class="mb-0">{{ competency.title }}</h6>
+                    <jhi-button class="me-1" [btnSize]="ButtonSize.SMALL" [icon]="faMinimize" (onClick)="selectCompetency(competency)" />
+                    <jhi-button class="me-1" [btnSize]="ButtonSize.SMALL" [icon]="faMinimize" (onClick)="deselectCompetency(competency)" />
                 </div>
             </ng-template>
         </jhi-knowledge-area-tree>
@@ -44,37 +45,38 @@
         <span jhiTranslate="artemisApp.standardizedCompetency.courseImport.empty"></span>
     }
     <h3 class="mt-3" jhiTranslate="artemisApp.standardizedCompetency.courseImport.selectedTitle"></h3>
-    @if (competenciesToImport.length) {
+    @if (selectedCompetencies.length) {
         <table class="table table-striped align-middle flex">
-            <thead class="thead-dark">
+            <thead (sortChange)="sortSelected($event)" class="thead-dark" jhiSort>
                 <tr class="flex-row">
-                    <th jhiSortBy="ID" class="col-0.5">
+                    <th jhiSortBy="id" class="col-0.5">
                         <span>#</span>
+                        <fa-icon [icon]="faSort" />
                     </th>
-                    <th jhiSortBy="TITLE" class="col-2">
+                    <th jhiSortBy="title" class="col-2">
                         <span [jhiTranslate]="'artemisApp.standardizedCompetency.model.title'"></span>
+                        <fa-icon [icon]="faSort" />
                     </th>
-                    <!-- do not allow sorting by description -->
                     <th class="col">
                         <span [jhiTranslate]="'artemisApp.standardizedCompetency.model.description'"></span>
                     </th>
-                    <th class="col-2">
+                    <th jhiSortBy="knowledgeAreaTitle" class="col-2">
                         <span [jhiTranslate]="'artemisApp.standardizedCompetency.model.knowledgeArea'"></span>
+                        <fa-icon [icon]="faSort" />
                     </th>
                     <!-- column for buttons -->
                     <th class="col-1"></th>
                 </tr>
             </thead>
             <tbody>
-                @for (competency of competenciesToImport; track competency.id) {
+                @for (competency of selectedCompetencies; track competency.id) {
                     <tr>
                         <td class="col-0.5">{{ competency.id }}</td>
                         <td class="col-2">{{ competency.title }}</td>
                         <td class="markdown-preview col" [innerHTML]="competency.description | htmlForMarkdown"></td>
-                        <!-- TODO: replace this with real comps i guess -->
-                        <td class="col-2">{{ competency.knowledgeAreaId }}</td>
+                        <td class="col-2">{{ competency.knowledgeAreaTitle }}</td>
                         <td class="col-1">
-                            <!-- TODO: delete button -->
+                            <jhi-button [btnType]="ButtonType.ERROR" [icon]="faTrash" (onClick)="deselectCompetency(competency)" />
                         </td>
                     </tr>
                 }
@@ -84,12 +86,12 @@
         <span jhiTranslate="artemisApp.standardizedCompetency.courseImport.selectedEmpty"></span>
     }
     <div class="mt-3">
-        @if (competenciesToImport.length) {
-            <div class="mb-1" jhiTranslate="artemisApp.standardizedCompetency.courseImport.selectedCompetencies" [translateValues]="{ count: competenciesToImport.length }"></div>
+        @if (selectedCompetencies.length) {
+            <div class="mb-1" jhiTranslate="artemisApp.standardizedCompetency.courseImport.selectedCompetencies" [translateValues]="{ count: selectedCompetencies.length }"></div>
         }
         <jhi-button [btnType]="ButtonType.SECONDARY" [title]="'entity.action.cancel'" [icon]="faBan" (onClick)="cancel()" />
         <jhi-button
-            [disabled]="!this.competenciesToImport.length"
+            [disabled]="!this.selectedCompetencies.length"
             [isLoading]="isLoading"
             [icon]="faFileImport"
             [title]="'entity.action.to-import'"
