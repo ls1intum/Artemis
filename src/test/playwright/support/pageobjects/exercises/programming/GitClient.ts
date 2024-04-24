@@ -1,4 +1,5 @@
 import { simpleGit } from 'simple-git';
+import * as fs from 'fs';
 
 class GitClient {
     async cloneRepo(url: string, repoName: string) {
@@ -8,9 +9,15 @@ class GitClient {
             stderr.pipe(process.stderr);
         });
 
+        const reposPath = `./test-exercise-repos`;
+
+        if (!fs.existsSync(reposPath)) {
+            fs.mkdirSync(reposPath, { recursive: true });
+        }
+
         try {
             console.log('Cloning the repo');
-            await git.clone(url, `./test-exercise-repos/${repoName}`);
+            await git.clone(url, `${reposPath}/${repoName}`);
             console.log('Repository cloned successfully');
         } catch (error) {
             console.error('Error cloning repository:', error);
