@@ -1,4 +1,18 @@
-import { ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild, ViewEncapsulation } from '@angular/core';
+import {
+    AfterViewInit,
+    ChangeDetectorRef,
+    Component,
+    ElementRef,
+    EventEmitter,
+    Input,
+    OnDestroy,
+    OnInit,
+    Output,
+    QueryList,
+    ViewChild,
+    ViewChildren,
+    ViewEncapsulation,
+} from '@angular/core';
 import { faCircleNotch, faEnvelope, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Subject, takeUntil } from 'rxjs';
 import { Course } from 'app/entities/course.model';
@@ -15,9 +29,12 @@ import { ConversationDTO } from 'app/entities/metis/conversation/conversation.mo
     styleUrls: ['./course-wide-search.component.scss'],
     encapsulation: ViewEncapsulation.None,
 })
-export class CourseWideSearchComponent implements OnInit, OnDestroy {
+export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestroy {
     @Input()
-    searchTerm?: string;
+    courseWideSearchConfig: CourseWideSearchConfig;
+
+    @ViewChildren('postingThread')
+    messages: QueryList<any>;
 
     @ViewChild('container')
     content: ElementRef;
@@ -25,14 +42,14 @@ export class CourseWideSearchComponent implements OnInit, OnDestroy {
     @Output() openThread = new EventEmitter<Post>();
 
     course: Course;
-
     currentPostContextFilter?: PostContextFilter;
+    // as set for the css class '.posting-infinite-scroll-container'
+    messagesContainerHeight = 700;
 
     faTimes = faTimes;
     faEnvelope = faEnvelope;
     faCircleNotch = faCircleNotch;
 
-    private readonly search$ = new Subject<string>();
     private ngUnsubscribe = new Subject<void>();
     public isFetchingPosts = true;
     totalNumberOfPosts = 0;
@@ -40,19 +57,25 @@ export class CourseWideSearchComponent implements OnInit, OnDestroy {
     previousScrollDistanceFromTop: number;
     page = 1;
 
+    getAsChannel = getAsChannelDTO;
+
     constructor(
         public metisService: MetisService, // instance from course-conversations.component
         public metisConversationService: MetisConversationService, // instance from course-conversations.component
         public cdr: ChangeDetectorRef,
     ) {}
 
-    ngOnInit(): void {
+    ngOnInit() {
         this.subscribeToMetis();
         this.cdr.detectChanges();
-        this.onSearch(this.searchTerm ?? '');
+        this.onSearch();
     }
 
-    ngOnDestroy(): void {
+    ngAfterViewInit() {
+        this.messages.changes.pipe(takeUntil(this.ngUnsubscribe)).subscribe(this.handleScrollOnNewMessage);
+    }
+
+    ngOnDestroy() {
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
     }
@@ -72,8 +95,13 @@ export class CourseWideSearchComponent implements OnInit, OnDestroy {
             this.previousScrollDistanceFromTop = this.content.nativeElement.scrollHeight - this.content.nativeElement.scrollTop;
         }
         this.posts = posts.slice().reverse();
-        console.log(posts);
     }
+
+    handleScrollOnNewMessage = () => {
+        if ((this.posts.length > 0 && this.content.nativeElement.scrollTop === 0 && this.page === 1) || this.previousScrollDistanceFromTop === this.messagesContainerHeight) {
+            this.scrollToBottomOfMessages();
+        }
+    };
 
     scrollToBottomOfMessages() {
         this.content.nativeElement.scrollTop = this.content.nativeElement.scrollHeight;
@@ -99,9 +127,12 @@ export class CourseWideSearchComponent implements OnInit, OnDestroy {
     private refreshMetisConversationPostContextFilter(): void {
         this.currentPostContextFilter = {
             courseId: this.course?.id,
-            searchText: this.searchTerm ? this.searchTerm.trim() : undefined,
+            searchText: this.courseWideSearchConfig.searchTerm ? this.courseWideSearchConfig.searchTerm.trim() : undefined,
             postSortCriterion: PostSortCriterion.CREATION_DATE,
-            sortingOrder: SortDirection.DESCENDING,
+            filterToUnresolved: this.courseWideSearchConfig.filterToUnresolved,
+            filterToOwn: this.courseWideSearchConfig.filterToOwn,
+            filterToAnsweredOrReacted: this.courseWideSearchConfig.filterToAnsweredOrReacted,
+            sortingOrder: this.courseWideSearchConfig.sortingOrder,
             pagingEnabled: true,
             page: this.page - 1,
             pageSize: 50,
@@ -117,11 +148,15 @@ export class CourseWideSearchComponent implements OnInit, OnDestroy {
         this.openThread.emit(post);
     }
 
-    onSearch(searchInput: string) {
-        this.searchTerm = searchInput;
+    onSearch() {
         this.commandMetisToFetchPosts(true);
-        console.log('search term: ' + this.searchTerm);
     }
+}
 
-    protected readonly getAsChannel = getAsChannelDTO;
+export class CourseWideSearchConfig {
+    searchTerm: string;
+    filterToUnresolved: boolean;
+    filterToOwn: boolean;
+    filterToAnsweredOrReacted: boolean;
+    sortingOrder: SortDirection;
 }

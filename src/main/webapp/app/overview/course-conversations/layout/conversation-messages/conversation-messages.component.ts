@@ -41,9 +41,6 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
     @Output() openThread = new EventEmitter<Post>();
 
-    @Input()
-    courseWideSearchTerm: string;
-
     @ViewChild('searchInput')
     searchInput: ElementRef;
 
@@ -163,7 +160,6 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             this.previousScrollDistanceFromTop = this.content.nativeElement.scrollHeight - this.content.nativeElement.scrollTop;
         }
         this.posts = posts.slice().reverse();
-        console.log('serposts in messages called');
     }
 
     fetchNextPage() {
