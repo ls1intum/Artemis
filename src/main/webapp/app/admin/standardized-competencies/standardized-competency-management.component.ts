@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { faChevronRight, faDownLeftAndUpRightToCenter, faEye, faFileImport, faPlus, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
 import {
     KnowledgeAreaDTO,
@@ -19,13 +19,14 @@ import { getIcon } from 'app/entities/competency.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { TranslateService } from '@ngx-translate/core';
 import { FilterableKnowledgeAreaTreeComponent } from 'app/shared/standardized-competencies/filterable-knowledge-area-tree.component';
+import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 
 @Component({
     selector: 'jhi-standardized-competency-management',
     templateUrl: './standardized-competency-management.component.html',
     styleUrls: ['standardized-competency-management.component.scss'],
 })
-export class StandardizedCompetencyManagementComponent extends FilterableKnowledgeAreaTreeComponent implements OnInit, OnDestroy {
+export class StandardizedCompetencyManagementComponent extends FilterableKnowledgeAreaTreeComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     protected isLoading = false;
     // true if a competency is getting edited in the detail component
     protected isEditing = false;
@@ -537,6 +538,29 @@ export class StandardizedCompetencyManagementComponent extends FilterableKnowled
             this.isEditing = isEditing;
             this.selectedCompetency = competency;
             this.selectedKnowledgeArea = knowledgeArea;
+        }
+    }
+
+    // Functions that handle unsaved changes
+
+    /**
+     * Only allow to leave page after submitting or if no pending changes exist
+     */
+    canDeactivate() {
+        return !this.isEditing;
+    }
+
+    get canDeactivateWarning(): string {
+        return this.translateService.instant('pendingChanges');
+    }
+
+    /**
+     * Displays the alert for confirming refreshing or closing the page if there are unsaved changes
+     */
+    @HostListener('window:beforeunload', ['$event'])
+    unloadNotification(event: any) {
+        if (!this.canDeactivate()) {
+            event.returnValue = this.canDeactivateWarning;
         }
     }
 }
