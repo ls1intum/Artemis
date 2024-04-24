@@ -1,0 +1,25 @@
+<div class="modal-header justify-between">
+    <h4 class="modal-title">
+        <span jhiTranslate="artemisApp.course.imageCropper.title"></span>
+    </h4>
+</div>
+<div class="modal-body">
+    <div class="row">
+        <image-cropper
+            [imageFile]="courseImageUploadFile"
+            [maintainAspectRatio]="true"
+            [aspectRatio]="1"
+            [resizeToWidth]="200"
+            [cropperMinWidth]="100"
+            [onlyScaleDown]="true"
+            [roundCropper]="true"
+            (imageCropped)="imageCropped($event)"
+        />
+    </div>
+</div>
+<div class="modal-footer">
+    <button id="cancel-cropping-button" type="button" class="btn btn-outline-secondary" (click)="onCancel()"><span jhiTranslate="entity.action.cancel"></span></button>
+    <button id="save-cropping-button" type="button" class="btn btn-primary" (click)="onSave()">
+        <span jhiTranslate="entity.action.save"></span>
+    </button>
+</div>

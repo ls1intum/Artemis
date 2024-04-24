@@ -1,8 +1,8 @@
 import { Component, Input } from '@angular/core';
-import { ActivatedRoute, Params, Router } from '@angular/router';
 import { DifficultyLevel } from 'app/entities/exercise.model';
 import { SidebarCardElement, SidebarTypes } from 'app/types/sidebar';
 import { Subscription } from 'rxjs';
+import { SidebarEventService } from '../sidebar-event.service';
 @Component({
     selector: 'jhi-sidebar-card',
     templateUrl: './sidebar-card.component.html',
@@ -11,21 +11,17 @@ import { Subscription } from 'rxjs';
 export class SidebarCardComponent {
     DifficultyLevel = DifficultyLevel;
     @Input() sidebarItem: SidebarCardElement;
-    @Input() routeParams: Params = [];
     @Input() sidebarType?: SidebarTypes;
-    @Input() storageId?: string = '';
+    @Input() itemSelected?: boolean;
 
     isSelected: boolean = false;
 
     paramSubscription?: Subscription;
     noItemSelected: boolean = false;
 
-    constructor(
-        private router: Router,
-        private route: ActivatedRoute,
-    ) {}
+    constructor(private sidebarEventService: SidebarEventService) {}
 
-    storeLastSelectedItem(itemId: number | string) {
-        sessionStorage.setItem('sidebar.lastSelectedItem.' + this.storageId, JSON.stringify(itemId));
+    emitStoreLastSelectedItem(itemId: number | string) {
+        this.sidebarEventService.emitSidebarCardEvent(itemId);
     }
 }
