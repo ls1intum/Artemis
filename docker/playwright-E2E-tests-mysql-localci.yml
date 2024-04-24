@@ -52,7 +52,7 @@ services:
         command: >
             sh -c '
             echo "Checking connectivity to artemis-app..." &&
-            curl https://artemis-app:443 &&
+            curl http://artemis-app:8080 &&
             cd /app/artemis/src/test/playwright &&
             chmod 777 /root &&
             npm ci &&
