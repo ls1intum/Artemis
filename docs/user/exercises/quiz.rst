@@ -166,14 +166,14 @@ Create new Quiz Exercise
 
             - Preview View: Enables the student view.
 
-        - **Create Apollon Drag-And-Drop Question**
+        - **Add Apollon Drag-And-Drop Question**
 
-            - In the quiz exercises section click on the Add Quiz button |CreateDragAndDropQuizButton|.
+            - In the quiz edit view click the Add Quiz button |CreateDragAndDropQuizButton|.
 
                     .. figure:: quiz/apollon-diagrams.png
                         :align: center
 
-                - On the Apollon diagram page, it is possible to see the list of Apollon diagrams and the possible actions to perform with them.
+                - In the Apollon diagram view, it is possible to see the list of existing Apollon diagrams and the possible actions to perform with them.
 
                     - Open
                     - Delete
@@ -211,6 +211,8 @@ Create new Quiz Exercise
                     - Create button: Creates the Apollon diagram and opens the edit view.
 
                     - Cancel button: Returns to the list of existing Apollon diagrams.
+
+                - After creating or opening an Apollon diagram, it can be edited in the editing view.
 
                     .. figure:: quiz/apollon-editor.png
                         :align: center
