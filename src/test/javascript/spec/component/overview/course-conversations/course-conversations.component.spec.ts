@@ -7,6 +7,7 @@ import { MetisConversationService } from 'app/shared/metis/metis-conversation.se
 import { LoadingIndicatorContainerStubComponent } from '../../../helpers/stubs/loading-indicator-container-stub.component';
 import { ConversationSelectionSidebarComponent } from 'app/overview/course-conversations/layout/conversation-selection-sidebar/conversation-selection-sidebar.component';
 import { ConversationHeaderComponent } from 'app/overview/course-conversations/layout/conversation-header/conversation-header.component';
+import { CourseWideSearchComponent } from 'app/overview/course-conversations/course-wide-search/course-wide-search.component';
 import { ConversationMessagesComponent } from 'app/overview/course-conversations/layout/conversation-messages/conversation-messages.component';
 import { ConversationThreadSidebarComponent } from 'app/overview/course-conversations/layout/conversation-thread-sidebar/conversation-thread-sidebar.component';
 import { Course } from 'app/entities/course.model';
@@ -21,7 +22,10 @@ import { CourseConversationsCodeOfConductComponent } from 'app/overview/course-c
 import { MockMetisConversationService } from '../../../helpers/mocks/service/mock-metis-conversation.service';
 import { MockMetisService } from '../../../helpers/mocks/service/mock-metis-service.service';
 import { ButtonComponent } from 'app/shared/components/button.component';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { SortDirection } from 'app/shared/metis/metis.util';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { getElement } from '../../../helpers/utils/general.utils';
 
@@ -51,6 +55,7 @@ examples.forEach((activeConversation) => {
                     MockComponent(ConversationThreadSidebarComponent),
                     MockComponent(CourseConversationsCodeOfConductComponent),
                     MockComponent(ButtonComponent),
+                    MockComponent(CourseWideSearchComponent),
                     MockPipe(ArtemisTranslatePipe),
                     MockPipe(HtmlForMarkdownPipe),
                 ],
@@ -72,7 +77,7 @@ examples.forEach((activeConversation) => {
                         },
                     },
                 ],
-                imports: [FormsModule], // Needs to be explicitly included, otherwise an error occurs because of the input tag
+                imports: [FormsModule, ReactiveFormsModule, FontAwesomeModule, NgbModule],
             }).compileComponents();
 
             const metisConversationService = new MockMetisConversationService();
@@ -157,14 +162,100 @@ examples.forEach((activeConversation) => {
             searchInput.value = 'test input';
             searchInput.dispatchEvent(new Event('input'));
             fixture.detectChanges();
-            expect(component.searchInput).toBe('test input');
+            expect(component.courseWideSearchTerm).toBe('test input');
         });
 
         it('should set search text in the conversation header correctly', () => {
-            component.searchInput = 'test';
+            fixture.detectChanges();
+            component.initializeCourseWideSearchConfig();
+            component.courseWideSearchTerm = 'test';
             component.onSearch();
             fixture.detectChanges();
-            expect(component.headerSearchTerm).toBe(component.searchInput);
+            expect(component.courseWideSearchConfig.searchTerm).toBe(component.courseWideSearchTerm);
         });
+
+        it('Should update filter setting when filterToUnresolved checkbox is checked', fakeAsync(() => {
+            fixture.detectChanges();
+            component.formGroup.patchValue({
+                filterToUnresolved: true,
+                filterToOwn: false,
+                filterToAnsweredOrReacted: false,
+            });
+            const filterResolvedCheckbox = getElement(fixture.debugElement, 'input[name=filterToUnresolved]');
+            filterResolvedCheckbox.dispatchEvent(new Event('change'));
+            tick();
+            fixture.detectChanges();
+            expect(component.courseWideSearchConfig.filterToUnresolved).toBeTrue();
+            expect(component.courseWideSearchConfig.filterToOwn).toBeFalse();
+            expect(component.courseWideSearchConfig.filterToAnsweredOrReacted).toBeFalse();
+        }));
+
+        it('Should update filter setting when filterToOwn checkbox is checked', fakeAsync(() => {
+            fixture.detectChanges();
+            component.formGroup.patchValue({
+                filterToUnresolved: false,
+                filterToOwn: true,
+                filterToAnsweredOrReacted: false,
+            });
+            const filterOwnCheckbox = getElement(fixture.debugElement, 'input[name=filterToOwn]');
+            filterOwnCheckbox.dispatchEvent(new Event('change'));
+            tick();
+            fixture.detectChanges();
+            expect(component.courseWideSearchConfig.filterToUnresolved).toBeFalse();
+            expect(component.courseWideSearchConfig.filterToOwn).toBeTrue();
+            expect(component.courseWideSearchConfig.filterToAnsweredOrReacted).toBeFalse();
+        }));
+
+        it('Should update filter setting when filterToAnsweredOrReacted checkbox is checked', fakeAsync(() => {
+            fixture.detectChanges();
+            component.formGroup.patchValue({
+                filterToUnresolved: false,
+                filterToOwn: false,
+                filterToAnsweredOrReacted: true,
+            });
+            const filterAnsweredOrReactedCheckbox = getElement(fixture.debugElement, 'input[name=filterToAnsweredOrReacted]');
+            filterAnsweredOrReactedCheckbox.dispatchEvent(new Event('change'));
+            tick();
+            fixture.detectChanges();
+            expect(component.courseWideSearchConfig.filterToUnresolved).toBeFalse();
+            expect(component.courseWideSearchConfig.filterToOwn).toBeFalse();
+            expect(component.courseWideSearchConfig.filterToAnsweredOrReacted).toBeTrue();
+        }));
+
+        it('Should update filter setting when all filter checkboxes are checked', fakeAsync(() => {
+            fixture.detectChanges();
+            component.formGroup.patchValue({
+                filterToUnresolved: true,
+                filterToOwn: true,
+                filterToAnsweredOrReacted: true,
+            });
+            const filterResolvedCheckbox = getElement(fixture.debugElement, 'input[name=filterToUnresolved]');
+            const filterOwnCheckbox = getElement(fixture.debugElement, 'input[name=filterToOwn]');
+            const filterAnsweredOrReactedCheckbox = getElement(fixture.debugElement, 'input[name=filterToAnsweredOrReacted]');
+            filterResolvedCheckbox.dispatchEvent(new Event('change'));
+            filterOwnCheckbox.dispatchEvent(new Event('change'));
+            filterAnsweredOrReactedCheckbox.dispatchEvent(new Event('change'));
+            tick();
+            fixture.detectChanges();
+            expect(component.courseWideSearchConfig.filterToUnresolved).toBeTrue();
+            expect(component.courseWideSearchConfig.filterToOwn).toBeTrue();
+            expect(component.courseWideSearchConfig.filterToAnsweredOrReacted).toBeTrue();
+        }));
+
+        it('should initialize sorting direction correctly', fakeAsync(() => {
+            component.ngOnInit();
+            tick();
+            fixture.detectChanges();
+            expect(component.courseWideSearchConfig.sortingOrder).toBe(SortDirection.ASCENDING);
+        }));
+
+        it('should change sorting direction after clicking the order direction button', fakeAsync(() => {
+            component.ngOnInit();
+            tick();
+            fixture.detectChanges();
+            const selectedDirectionOption = getElement(fixture.debugElement, '.clickable');
+            selectedDirectionOption.dispatchEvent(new Event('click'));
+            expect(component.courseWideSearchConfig.sortingOrder).toBe(SortDirection.DESCENDING);
+        }));
     });
 });
