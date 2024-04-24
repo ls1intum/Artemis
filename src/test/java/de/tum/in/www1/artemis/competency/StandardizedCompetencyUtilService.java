@@ -65,24 +65,23 @@ public class StandardizedCompetencyUtilService {
     }
 
     /**
-     * Creates a StandardizedCompetencyDTO from the given StandardizedCompetency
+     * Creates a StandardizedCompetencyRequestDTO from the given StandardizedCompetency
      *
      * @param competency the StandardizedCompetency
-     * @return the created StandardizedCompetencyDTO
+     * @return the created StandardizedCompetencyRequestDTO
      */
     public static StandardizedCompetencyRequestDTO toDTO(StandardizedCompetency competency) {
         Long sourceId = competency.getSource() == null ? null : competency.getSource().getId();
         Long knowledgeAreaId = competency.getKnowledgeArea() == null ? null : competency.getKnowledgeArea().getId();
 
-        return new StandardizedCompetencyRequestDTO(competency.getTitle(), competency.getDescription(), competency.getTaxonomy(), competency.getVersion(), knowledgeAreaId,
-                sourceId);
+        return new StandardizedCompetencyRequestDTO(competency.getTitle(), competency.getDescription(), competency.getTaxonomy(), knowledgeAreaId, sourceId);
     }
 
     /**
-     * Creates a KnowledgeAreaDTO from the given KnowledgeArea
+     * Creates a KnowledgeAreaRequestDTO from the given KnowledgeArea
      *
      * @param knowledgeArea the KnowledgeArea
-     * @return the created KnowledgeAreaDTO
+     * @return the created KnowledgeAreaRequestDTO
      */
     public static KnowledgeAreaRequestDTO toDTO(KnowledgeArea knowledgeArea) {
         Long parentId = knowledgeArea.getParent() == null ? null : knowledgeArea.getParent().getId();
@@ -96,13 +95,13 @@ public class StandardizedCompetencyUtilService {
         public Stream<Arguments> provideArguments(ExtensionContext extensionContext) {
             var competencies = new ArrayList<StandardizedCompetencyRequestDTO>();
             // invalid title
-            competencies.add(new StandardizedCompetencyRequestDTO("", "valid description", null, null, ID_NOT_EXISTS, null));
-            competencies.add(new StandardizedCompetencyRequestDTO(null, "valid description", null, null, ID_NOT_EXISTS, null));
-            competencies.add(new StandardizedCompetencyRequestDTO("0".repeat(StandardizedCompetency.MAX_TITLE_LENGTH + 1), "valid description", null, null, ID_NOT_EXISTS, null));
+            competencies.add(new StandardizedCompetencyRequestDTO("", "valid description", null, ID_NOT_EXISTS, null));
+            competencies.add(new StandardizedCompetencyRequestDTO(null, "valid description", null, ID_NOT_EXISTS, null));
+            competencies.add(new StandardizedCompetencyRequestDTO("0".repeat(StandardizedCompetency.MAX_TITLE_LENGTH + 1), "valid description", null, ID_NOT_EXISTS, null));
             // invalid description
-            competencies.add(new StandardizedCompetencyRequestDTO("valid title", "0".repeat(StandardizedCompetency.MAX_DESCRIPTION_LENGTH + 1), null, null, ID_NOT_EXISTS, null));
+            competencies.add(new StandardizedCompetencyRequestDTO("valid title", "0".repeat(StandardizedCompetency.MAX_DESCRIPTION_LENGTH + 1), null, ID_NOT_EXISTS, null));
             // invalid knowledge area
-            competencies.add(new StandardizedCompetencyRequestDTO("valid title", "valid description", null, null, null, null));
+            competencies.add(new StandardizedCompetencyRequestDTO("valid title", "valid description", null, null, null));
 
             return competencies.stream().map(Arguments::of);
         }
