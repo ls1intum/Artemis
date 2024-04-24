@@ -91,6 +91,7 @@ test.describe('Programming exercise participation', () => {
                 await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
                 let repoUrl = await programmingExerciseOverview.getRepoUrl();
                 repoUrl = repoUrl.replace('localhost', 'artemis-app:8080');
+                repoUrl = repoUrl.replace(studentOne.username!, `${studentOne.username!}:${studentOne.password!}`);
                 console.log('Repo URL in UI: ' + repoUrl);
                 const urlParts = repoUrl.split('/');
                 const repoName = urlParts[urlParts.length - 1];
