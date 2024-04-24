@@ -103,6 +103,7 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         assertThat(continuousIntegrationService.getBuildStatus(participation)).isEqualTo(BuildStatus.BUILDING);
         processingJobs.clear();
 
+        sharedQueueProcessingService.init();
     }
 
     @Test
