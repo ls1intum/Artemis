@@ -29,9 +29,9 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noFields;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noMethods;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Modifier;
+import java.lang.reflect.Method;
 import java.nio.file.Files;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -71,9 +71,11 @@ import com.tngtech.archunit.lang.SimpleConditionEvent;
 import com.tngtech.archunit.library.GeneralCodingRules;
 
 import de.tum.in.www1.artemis.AbstractArtemisIntegrationTest;
+import de.tum.in.www1.artemis.authorization.AuthorizationTestService;
 import de.tum.in.www1.artemis.config.ApplicationConfiguration;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.versioning.VersioningTestService;
 import de.tum.in.www1.artemis.web.rest.repository.RepositoryResource;
 
 /**
@@ -304,73 +306,81 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     @Test
-    void hasMatchingVersionTestClassBeCorrectlyImplemented() {
-        ArchRule rule = methods().that().areNotDeclaredIn(AbstractArtemisIntegrationTest.class).and().haveRawReturnType(boolean.class).and()
-                .haveName("hasMatchingVersioningTestClass").should(beImplementedInDirectSubclassOf(AbstractArtemisIntegrationTest.class)).andShould(returnTrue()).because(
-                        "this method should only be implemented in subclasses of AbstractArtemisIntegrationTest to confirm that the versioning test class for the corresponding environment exists. Check out the JavaDoc for more information.");
+    void hasMatchingVersionTestClassBeCorrectlyImplemented() throws NoSuchMethodException {
+        // Prepare the method that the versioning test should call to be identified as such
+        Method checkMethod = VersioningTestService.class.getMethod("testDuplicateRoutes");
+        String identifyingPackage = "versioning";
+
+        ArchRule rule = classes().that(beDirectSubclassOf(AbstractArtemisIntegrationTest.class))
+                .should(haveMatchingTestClassCallingAMethod(identifyingPackage, Set.of(checkMethod))).because(
+                        "every test environment should have a corresponding versioning test covering the endpoints of this environment. Examples are \"VersioningJenkinsGitlabTest\" or \"VersioningGitlabCISamlTest\".");
         rule.check(testClasses);
     }
 
-    private ArchCondition<JavaMethod> beImplementedInDirectSubclassOf(Class<?> clazz) {
-        return new ArchCondition<>("be implemented in direct subclass of " + clazz.getSimpleName()) {
+    @Test
+    void hasMatchingAuthorizationTestClassBeCorrectlyImplemented() throws NoSuchMethodException {
+        // Prepare the method that the authorization test should call to be identified as such
+        Method allCheckMethod = AuthorizationTestService.class.getMethod("testAllEndpoints", Map.class);
+        Method condCheckMethod = AuthorizationTestService.class.getMethod("testConditionalEndpoints", Map.class);
+        String identifyingPackage = "authorization";
+
+        ArchRule rule = classes().that(beDirectSubclassOf(AbstractArtemisIntegrationTest.class))
+                .should(haveMatchingTestClassCallingAMethod(identifyingPackage, Set.of(allCheckMethod, condCheckMethod))).because(
+                        "every test environment should have a corresponding authorization test covering the endpoints of this environment. Examples are \"AuthorizationJenkinsGitlabTest\" or \"AuthorizationGitlabCISamlTest\".");
+        rule.check(testClasses);
+    }
+
+    private DescribedPredicate<JavaClass> beDirectSubclassOf(Class<?> clazz) {
+        return new DescribedPredicate<>("be implemented in direct subclass of " + clazz.getSimpleName()) {
 
             @Override
-            public void check(JavaMethod item, ConditionEvents events) {
-                var superClasses = item.getOwner().getAllRawSuperclasses();
+            public boolean test(JavaClass javaClass) {
+                var superClasses = javaClass.getAllRawSuperclasses();
                 if (superClasses.isEmpty()) {
-                    events.add(violated(item, item.getFullName() + " is not implemented in a direct subclass of " + clazz.getSimpleName()));
-                    return;
+                    // Tested class has no superclass
+                    return false;
                 }
-                if (!superClasses.getFirst().getFullName().equals(clazz.getName())) {
-                    events.add(violated(item, item.getFullName() + " is not implemented in a direct subclass of " + clazz.getSimpleName()));
-                }
+                return superClasses.getFirst().getFullName().equals(clazz.getName());
             }
         };
     }
 
-    private ArchCondition<JavaMethod> returnTrue() {
-        return new ArchCondition<>("return true") {
+    private ArchCondition<JavaClass> haveMatchingTestClassCallingAMethod(String identifyingPackage, Set<Method> signatureMethods) {
+        return new ArchCondition<>("have matching authorization test class") {
 
             @Override
-            public void check(JavaMethod item, ConditionEvents events) {
-                var classToInstantiate = getAnyInstantiableSubclass(item.getOwner());
-                if (classToInstantiate == null) {
-                    events.add(violated(item, item.getFullName() + " has no instantiable subclass."));
-                    return;
-                }
-
-                try {
-                    var constructor = classToInstantiate.reflect().getDeclaredConstructor();
-                    constructor.setAccessible(true); // Required as the test class is and should be protected
-                    var classInstance = constructor.newInstance();
-                    assert classInstance instanceof AbstractArtemisIntegrationTest;
-                    if (!((AbstractArtemisIntegrationTest) classInstance).hasMatchingVersioningTestClass()) {
-                        events.add(violated(item, item.getFullName() + " does not return true to confirm the corresponding versioning environment test exists"));
-                    }
-                }
-                catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-                    throw new RuntimeException(e);
+            public void check(JavaClass item, ConditionEvents events) {
+                if (!hasMatchingTestClassCallingMethod(item, identifyingPackage, signatureMethods)) {
+                    events.add(violated(item, item.getFullName() + " does not have a matching test class in an \"" + identifyingPackage + "\" package "
+                            + "containing a test method that calls any given signature methods"));
                 }
             }
         };
     }
 
-    /**
-     * Returns any instantiable subclass of the given class. If the class itself is instantiable, it is returned.
-     *
-     * @param clazz The class to get an instantiable subclass of
-     * @return An instantiable subclass of the given class or null if no such class exists
-     */
-    private JavaClass getAnyInstantiableSubclass(JavaClass clazz) {
-        if (!Modifier.isAbstract(clazz.reflect().getModifiers())) {
-            return clazz;
-        }
-        var subClasses = clazz.getAllSubclasses();
-        for (var subClass : subClasses) {
-            if (!Modifier.isAbstract(subClass.reflect().getModifiers())) {
-                return subClass;
+    private boolean hasMatchingTestClassCallingMethod(JavaClass javaClass, String identifyingPackage, Set<Method> signatureMethods) {
+        var subclasses = javaClass.getSubclasses();
+        // Check all subclasses of the given abstract test class to search for an authorization test class
+        for (JavaClass subclass : subclasses) {
+            // The test class es expected to reside inside an identifying package. We could match the full path, but this is more flexible.
+            if (!subclass.getPackageName().contains(identifyingPackage)) {
+                continue;
+            }
+            var methods = subclass.getMethods();
+            // Search for a test method that calls a signature method
+            for (JavaMethod method : methods) {
+                if (!method.isAnnotatedWith(Test.class) && !method.getRawReturnType().reflect().equals(Void.class)) {
+                    // Is not a test method
+                    continue;
+                }
+                if (method.getMethodCallsFromSelf().stream()
+                        .anyMatch(call -> signatureMethods.stream().anyMatch(checkMethod -> call.getTargetOwner().getFullName().equals(checkMethod.getDeclaringClass().getName())
+                                && call.getTarget().getName().equals(checkMethod.getName())))) {
+                    // Calls one of the signature methods
+                    return true;
+                }
             }
         }
-        return null;
+        return false;
     }
 }

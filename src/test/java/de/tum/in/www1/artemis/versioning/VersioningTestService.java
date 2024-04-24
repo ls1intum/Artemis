@@ -19,7 +19,7 @@ import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 @Service
-class VersioningTestService {
+public class VersioningTestService {
 
     @Autowired
     private List<Integer> apiVersions;
@@ -31,7 +31,7 @@ class VersioningTestService {
      * Tests for each controller if there exist two methods representing the same API route while the annotated
      * version ranges collide
      */
-    void testDuplicateRoutes() {
+    public void testDuplicateRoutes() {
         var requestMappingHandlerMapping = applicationContext.getBean("requestMappingHandlerMapping", RequestMappingHandlerMapping.class);
         Map<RequestMappingInfo, HandlerMethod> map = requestMappingHandlerMapping.getHandlerMethods();
         // Only search Artemis endpoints
