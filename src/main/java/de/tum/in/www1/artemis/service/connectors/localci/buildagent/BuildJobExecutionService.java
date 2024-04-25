@@ -39,9 +39,8 @@ import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
+import de.tum.in.www1.artemis.service.connectors.localci.scaparser.ReportParser;
 import de.tum.in.www1.artemis.service.connectors.localci.scaparser.exception.UnsupportedToolException;
-import de.tum.in.www1.artemis.service.connectors.localci.scaparser.strategy.ParserPolicy;
-import de.tum.in.www1.artemis.service.connectors.localci.scaparser.strategy.ParserStrategy;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUri;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
@@ -326,9 +325,7 @@ public class BuildJobExecutionService {
      */
     private void processStaticCodeAnalysisReportFile(String fileName, String xmlString, List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports) {
         try {
-            ParserPolicy parserPolicy = new ParserPolicy();
-            ParserStrategy parserStrategy = parserPolicy.configure(fileName);
-            staticCodeAnalysisReports.add(parserStrategy.parse(xmlString));
+            staticCodeAnalysisReports.add(ReportParser.getReport(xmlString, fileName));
         }
         catch (UnsupportedToolException e) {
             throw new IllegalStateException("Failed to parse static code analysis report for " + fileName, e);
