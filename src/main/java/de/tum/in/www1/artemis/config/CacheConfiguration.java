@@ -9,7 +9,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import jakarta.annotation.Nullable;
 import jakarta.annotation.PreDestroy;
@@ -37,6 +36,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import com.hazelcast.config.*;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.spi.properties.ClusterProperty;
 import com.hazelcast.spring.cache.HazelcastCacheManager;
 
 import de.tum.in.www1.artemis.service.HazelcastPathSerializer;
@@ -111,7 +111,7 @@ public class CacheConfiguration {
      * This scheduled task regularly checks if all members of the Hazelcast cluster are connected to each other.
      * This is one countermeasure to a split cluster.
      */
-    @Scheduled(fixedRate = 1, timeUnit = TimeUnit.MINUTES)
+    @Scheduled(fixedRate = 2, initialDelay = 1, timeUnit = TimeUnit.MINUTES)
     public void connectToAllMembers() {
         if (registration == null) {
             return;
@@ -122,32 +122,25 @@ public class CacheConfiguration {
             log.warn("Hazelcast instance not found, cannot connect to cluster members");
             return;
         }
-        // TODO: Remove debug statements after testing on staging
+        // TODO: Turn into debug statements after testing on staging
         log.info("Current Registry members: {}", discoveryClient.getInstances(serviceId).stream().map(ServiceInstance::getHost).toList());
-        log.info("Current Hazelcast members: {}", hazelcastInstance.getCluster().getMembers().stream().map(member -> {
+        var hazelcastMemberAddresses = hazelcastInstance.getCluster().getMembers().stream().map(member -> {
             try {
                 return member.getAddress().getInetAddress().getHostAddress();
             }
             catch (UnknownHostException e) {
                 return "unknown";
             }
-        }).collect(Collectors.joining(", ")));
+        }).toList();
+        log.info("Current Hazelcast members: {}", hazelcastMemberAddresses);
         // TODO end
         for (ServiceInstance instance : discoveryClient.getInstances(serviceId)) {
             var instanceHost = instance.getHost();
-            var members = hazelcastInstance.getCluster().getMembers();
-            if (members.stream().noneMatch(member -> {
-                try {
-                    return member.getAddress().getInetAddress().getHostAddress().equals(instanceHost);
-                }
-                catch (UnknownHostException e) {
-                    return false;
-                }
-            })) {
+            if (hazelcastMemberAddresses.stream().noneMatch(member -> member.equals(instanceHost))) {
                 var clusterMemberPort = instance.getMetadata().getOrDefault("hazelcast.port", String.valueOf(hazelcastPort));
                 var clusterMemberAddress = instanceHost + ":" + clusterMemberPort;
                 log.info("Adding Hazelcast cluster member {}", clusterMemberAddress);
-                Hazelcast.getHazelcastInstanceByName("Artemis").getConfig().getNetworkConfig().getJoin().getTcpIpConfig().addMember(clusterMemberAddress);
+                hazelcastInstance.getConfig().getNetworkConfig().getJoin().getTcpIpConfig().addMember(clusterMemberAddress);
             }
         }
     }
@@ -243,6 +236,8 @@ public class CacheConfiguration {
         splitBrainProtectionConfig.setMinimumClusterSize(2);
         config.setSplitBrainProtectionConfigs(new ConcurrentHashMap<>());
         config.addSplitBrainProtectionConfig(splitBrainProtectionConfig);
+        // Specify when the first run of the split brain protection should be executed (in seconds)
+        ClusterProperty.MERGE_FIRST_RUN_DELAY_SECONDS.setSystemProperty("120");
 
         // only add the queue config if the profile "localci" is active
         Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
