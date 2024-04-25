@@ -1,12 +1,11 @@
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { StandardizedCompetencyManagementComponent } from 'app/admin/standardized-competencies/standardized-competency-management.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
-import { StandardizedCompetencyEditStubComponent } from './standardized-competency-edit-stub';
 import { AdminStandardizedCompetencyService } from 'app/admin/standardized-competencies/admin-standardized-competency.service';
 import {
     KnowledgeAreaDTO,
@@ -23,9 +22,11 @@ import { By } from '@angular/platform-browser';
 import { CompetencyTaxonomy } from 'app/entities/competency.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
-import { KnowledgeAreaEditStubComponent } from './knowledge-area-edit-stub.component';
+import { KnowledgeAreaEditStubComponent } from './detail/knowledge-area-edit-stub.component';
 import { KnowledgeAreaTreeStubComponent } from './knowledge-area-tree-stub.component';
 import { StandardizedCompetencyService } from 'app/shared/standardized-competencies/standardized-competency.service';
+import { StandardizedCompetencyEditStubComponent } from './detail/standardized-competency-edit-stub';
+import { StandardizedCompetencyFilterStubComponent } from './filter/standardized-competency-filter-stub.component';
 
 describe('StandardizedCompetencyManagementComponent', () => {
     let componentFixture: ComponentFixture<StandardizedCompetencyManagementComponent>;
@@ -39,6 +40,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
             declarations: [
                 StandardizedCompetencyManagementComponent,
                 StandardizedCompetencyEditStubComponent,
+                StandardizedCompetencyFilterStubComponent,
                 KnowledgeAreaEditStubComponent,
                 MockComponent(ButtonComponent),
                 KnowledgeAreaTreeStubComponent,
@@ -93,111 +95,6 @@ describe('StandardizedCompetencyManagementComponent', () => {
         expect(component['knowledgeAreasForSelect']).toHaveLength(7);
         expect(component['dataSource'].data).toHaveLength(3);
     });
-
-    it('should filter by knowledge area', () => {
-        const filterTree: KnowledgeAreaDTO[] = [
-            {
-                id: 1,
-                children: [
-                    {
-                        id: 11,
-                        title: 'knowledge area to filter by',
-                        parentId: 1,
-                        children: [{ id: 111, parentId: 11 }],
-                    },
-                    { id: 12, parentId: 1 },
-                ],
-            },
-            {
-                id: 2,
-                children: [{ id: 21, parentId: 2 }],
-            },
-        ];
-        getForTreeViewSpy.mockReturnValue(of(new HttpResponse({ body: filterTree })));
-        const filterSpy = jest.spyOn(component as any, 'filterByKnowledgeArea');
-        componentFixture.detectChanges();
-
-        const select: HTMLSelectElement = componentFixture.debugElement.query(By.css('#knowledge-area-filter')).nativeElement;
-        //knowledge area 11 should be the third element (undefined -> 1 -> 11 -> ...)
-        select.value = select.options[2].value;
-        select.dispatchEvent(new Event('change'));
-        componentFixture.detectChanges();
-
-        expect(component['knowledgeAreaMap'].size).toBe(6);
-        expect(filterSpy).toHaveBeenCalledOnce();
-        const validIds = [1, 11, 111];
-        for (const knowledgeArea of component['knowledgeAreaMap'].values()) {
-            if (validIds.includes(knowledgeArea.id!)) {
-                expect(knowledgeArea.isVisible).toBeTrue();
-            } else {
-                expect(knowledgeArea.isVisible).toBeFalse();
-            }
-        }
-
-        //test that the filter resets again
-        select.value = 'undefined';
-        select.dispatchEvent(new Event('change'));
-        componentFixture.detectChanges();
-
-        for (const knowledgeArea of component['knowledgeAreaMap'].values()) {
-            expect(knowledgeArea.isVisible).toBeTrue();
-        }
-    });
-
-    it('should filter by title', fakeAsync(() => {
-        const filter = '   FiLter  ';
-        const validIds = [1, 2, 3, 4];
-        //filter matches
-        const c1 = createCompetencyDTO(1, 'Filter Match1');
-        const c2 = createCompetencyDTO(2, 'fIlTeR match2');
-        const c3 = createCompetencyDTO(3, 'a long text filter match');
-        const c4 = createCompetencyDTO(4, 'filter');
-        //no filter matches
-        const c11 = createCompetencyDTO(11, 'filte no match');
-        const c12 = createCompetencyDTO(12, 'filteXr no match');
-        const c13 = createCompetencyDTO(13, 'filte');
-        const c14 = createCompetencyDTO(14, '');
-        const c15 = createCompetencyDTO(15, undefined);
-        const filterTree: KnowledgeAreaDTO[] = [
-            {
-                id: 1,
-                competencies: [c1, c2, c3, c4, c11, c12, c13, c14, c15],
-                children: [{ id: 2 }],
-            },
-        ];
-        getForTreeViewSpy.mockReturnValue(of(new HttpResponse({ body: filterTree })));
-        const filterSpy = jest.spyOn(component as any, 'filterByCompetencyTitle');
-        componentFixture.detectChanges();
-
-        const input: HTMLSelectElement = componentFixture.debugElement.query(By.css('#title-filter')).nativeElement;
-        input.value = filter;
-        input.dispatchEvent(new Event('input'));
-        componentFixture.detectChanges();
-        //wait until the debounce is done
-        tick(600);
-
-        expect(component['knowledgeAreaMap'].size).toBe(2);
-        expect(filterSpy).toHaveBeenCalledOnce();
-        const knowledgeArea = component['knowledgeAreaMap'].get(1)!;
-        for (const competency of knowledgeArea.competencies!) {
-            if (validIds.includes(competency.id!)) {
-                expect(competency.isVisible).toBeTrue();
-            } else {
-                expect(competency.isVisible).toBeFalse();
-            }
-        }
-
-        //test that the filter resets again
-        input.value = '   ';
-        input.dispatchEvent(new Event('input'));
-        componentFixture.detectChanges();
-        //wait until the debounce is done
-        tick(600);
-
-        for (const competency of knowledgeArea.competencies!) {
-            expect(competency.isVisible).toBeTrue();
-        }
-    }));
 
     it('should open cancel modal', () => {
         const modalRef = {
