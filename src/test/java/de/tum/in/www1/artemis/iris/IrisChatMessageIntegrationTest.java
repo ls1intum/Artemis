@@ -369,7 +369,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
                 if (websocketDTO.getStages().size() != stageStates.length) {
                     return false;
                 }
-                return websocketDTO.getStages().stream().map(PyrisStageDTO::getState).toList().equals(List.of(stageStates));
+                return websocketDTO.getStages().stream().map(PyrisStageDTO::state).toList().equals(List.of(stageStates));
             }
 
             @Override
