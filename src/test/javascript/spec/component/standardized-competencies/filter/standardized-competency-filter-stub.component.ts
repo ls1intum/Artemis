@@ -1,11 +1,11 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { KnowledgeAreaDTO } from 'app/entities/competency/standardized-competency.model';
 
 @Component({
     selector: 'jhi-standardized-competency-filter',
     template: '',
 })
-export class StandardizedCompetencyFilterStubComponent implements OnInit, OnDestroy {
+export class StandardizedCompetencyFilterStubComponent {
     @Input() competencyTitleFilter: string;
     @Input() knowledgeAreaFilter: KnowledgeAreaDTO | undefined = undefined;
     @Input() knowledgeAreasForSelect: KnowledgeAreaDTO[] = [];
