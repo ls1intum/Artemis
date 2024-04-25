@@ -2,12 +2,14 @@ package de.tum.in.www1.artemis.config;
 
 import static de.tum.in.www1.artemis.config.Constants.*;
 
+import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import jakarta.annotation.Nullable;
 import jakarta.annotation.PreDestroy;
@@ -120,12 +122,33 @@ public class CacheConfiguration {
             log.warn("Hazelcast instance not found, cannot connect to cluster members");
             return;
         }
+        // TODO: Remove debug statements after testing on staging
+        log.info("Current Registry members: {}", discoveryClient.getInstances(serviceId).stream().map(ServiceInstance::getHost).collect(Collectors.toList()));
+        log.info("Current Hazelcast members: {}", hazelcastInstance.getCluster().getMembers().stream().map(member -> {
+            try {
+                return member.getAddress().getInetAddress().getHostAddress();
+            }
+            catch (UnknownHostException e) {
+                return "unknown";
+            }
+        }).collect(Collectors.joining(", ")));
+        // TODO end
         for (ServiceInstance instance : discoveryClient.getInstances(serviceId)) {
-            String clusterMember = instance.getHost() + ":" + hazelcastPort;
+            var instanceHost = instance.getHost();
             var members = hazelcastInstance.getCluster().getMembers();
-            if (members.stream().noneMatch(member -> member.getAddress().toString().equals(clusterMember))) {
-                log.info("Adding Hazelcast cluster member {}", clusterMember);
-                Hazelcast.getHazelcastInstanceByName("Artemis").getConfig().getNetworkConfig().getJoin().getTcpIpConfig().addMember(clusterMember);
+            if (members.stream().noneMatch(member -> {
+                try {
+                    return member.getAddress().getInetAddress().getHostAddress().equals(instanceHost);
+                }
+                catch (UnknownHostException e) {
+                    return false;
+                }
+            })) {
+                var clusterMemberPort = instance.getMetadata().getOrDefault("hazelcast.port", String.valueOf(hazelcastPort));
+                var clusterMemberAddress = instanceHost + ":" + clusterMemberPort;
+                log.info("Adding Hazelcast cluster member {}", clusterMemberAddress);
+                log.info(instance.getMetadata().toString());
+                Hazelcast.getHazelcastInstanceByName("Artemis").getConfig().getNetworkConfig().getJoin().getTcpIpConfig().addMember(instance + ":" + hazelcastPort);
             }
         }
     }
@@ -187,8 +210,11 @@ public class CacheConfiguration {
 
                 // In the local configuration, the hazelcast port is the http-port + the hazelcastPort as offset
                 config.getNetworkConfig().setPort(serverProperties.getPort() + hazelcastPort); // Own port
+                registration.getMetadata().put("hazelcast.port", String.valueOf(serverProperties.getPort() + hazelcastPort));
+
                 for (ServiceInstance instance : discoveryClient.getInstances(serviceId)) {
-                    String clusterMember = instance.getHost() + ":" + (instance.getPort() + hazelcastPort); // Address where the other instance is expected
+                    var clusterMemberPort = instance.getMetadata().getOrDefault("hazelcast.port", String.valueOf(serverProperties.getPort() + hazelcastPort));
+                    String clusterMember = instance.getHost() + ":" + clusterMemberPort; // Address where the other instance is expected
                     log.info("Adding Hazelcast (dev) cluster member {}", clusterMember);
                     config.getNetworkConfig().getJoin().getTcpIpConfig().addMember(clusterMember);
                 }
@@ -197,10 +223,13 @@ public class CacheConfiguration {
                 config.setClusterName("prod");
                 config.setInstanceName(instanceName);
                 config.getNetworkConfig().setPort(hazelcastPort); // Own port
+                registration.getMetadata().put("hazelcast.port", String.valueOf(hazelcastPort));
+
                 for (ServiceInstance instance : discoveryClient.getInstances(serviceId)) {
-                    String clusterMember = instance.getHost() + ":" + hazelcastPort; // Address where the other instance is expected
-                    log.info("Adding Hazelcast (prod) cluster member {}", clusterMember);
-                    config.getNetworkConfig().getJoin().getTcpIpConfig().addMember(clusterMember);
+                    var clusterMemberPort = instance.getMetadata().getOrDefault("hazelcast.port", String.valueOf(hazelcastPort));
+                    String clusterMemberAddress = instance.getHost() + ":" + clusterMemberPort; // Address where the other instance is expected
+                    log.info("Adding Hazelcast (prod) cluster member {}", clusterMemberAddress);
+                    config.getNetworkConfig().getJoin().getTcpIpConfig().addMember(clusterMemberAddress);
                 }
             }
         }
