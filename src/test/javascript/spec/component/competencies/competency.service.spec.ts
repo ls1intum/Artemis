@@ -30,6 +30,7 @@ describe('CompetencyService', () => {
     let resultImportBulk: HttpResponse<CompetencyWithTailRelationDTO[]>;
     let resultGetRelations: HttpResponse<CompetencyRelation[]>;
     let resultGetForImport: SearchResult<Competency>;
+    let resultImportStandardized: HttpResponse<Competency[]>;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -280,6 +281,25 @@ describe('CompetencyService', () => {
         tick();
 
         expect(resultImportBulk.body).toEqual(expected);
+    }));
+
+    it('should import standardized competencies', fakeAsync(() => {
+        const returnedFromService: Competency[] = [
+            { id: 1, title: 'standardizedCompetency1' },
+            { id: 2, title: 'standardizedCompetency2' },
+        ];
+        const expected = [...returnedFromService];
+
+        competencyService
+            .importStandardizedCompetencies([11, 12], 2)
+            .pipe(take(1))
+            .subscribe((resp) => (resultImportStandardized = resp));
+
+        const req = httpTestingController.expectOne({ method: 'POST' });
+        req.flush(returnedFromService);
+        tick();
+
+        expect(resultImportStandardized.body).toEqual(expected);
     }));
 
     it('should get competency relations', fakeAsync(() => {
