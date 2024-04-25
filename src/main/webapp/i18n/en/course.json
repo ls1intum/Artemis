@@ -55,7 +55,7 @@
             },
             "customizeGroupNames": {
                 "title": "Customize group names",
-                "description": "Customizing the group names should not be necessary and may cause users to lose access to this course. Make sure you have a good reason for using this feature."
+                "description": "Customizing the group names should not be necessary and may cause users to lose access to this course. Make sure you have a good reason for customizing the group names."
             },
             "studentGroupName": "Students",
             "teachingAssistantGroupName": "Tutors",
