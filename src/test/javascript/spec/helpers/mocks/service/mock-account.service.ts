@@ -39,4 +39,5 @@ export class MockAccountService implements IAccountService {
     isOwnerOfParticipation = () => true;
     isAdmin = () => true;
     save = (account: any) => ({}) as any;
+    addSshPublicKey = (sshPublicKey: string) => of();
 }
