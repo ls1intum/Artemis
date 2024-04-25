@@ -6,7 +6,6 @@ import { MockComponent, MockProvider } from 'ng-mocks';
 import { StandardizedCompetencyManagementComponent } from 'app/admin/standardized-competencies/standardized-competency-management.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
-import { MatTreeModule } from '@angular/material/tree';
 import { StandardizedCompetencyDetailStubComponent } from './standardized-competency-detail-stub';
 import { StandardizedCompetencyService } from 'app/admin/standardized-competencies/standardized-competency.service';
 import { AdminStandardizedCompetencyService } from 'app/admin/standardized-competencies/admin-standardized-competency.service';
@@ -26,6 +25,7 @@ import { CompetencyTaxonomy } from 'app/entities/competency.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
 import { KnowledgeAreaDetailStubComponent } from './knowledge-area-detail-stub.component';
+import { KnowledgeAreaTreeStubComponent } from './knowledge-area-tree-stub.component';
 
 describe('StandardizedCompetencyManagementComponent', () => {
     let componentFixture: ComponentFixture<StandardizedCompetencyManagementComponent>;
@@ -35,12 +35,13 @@ describe('StandardizedCompetencyManagementComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [TranslateTestingModule, ArtemisTestModule, MatTreeModule, FormsModule, NgbTooltipMocksModule, NgbCollapseMocksModule],
+            imports: [TranslateTestingModule, ArtemisTestModule, FormsModule, NgbTooltipMocksModule, NgbCollapseMocksModule],
             declarations: [
                 StandardizedCompetencyManagementComponent,
                 StandardizedCompetencyDetailStubComponent,
                 KnowledgeAreaDetailStubComponent,
                 MockComponent(ButtonComponent),
+                KnowledgeAreaTreeStubComponent,
                 MockRouterLinkDirective,
             ],
             providers: [ArtemisTranslatePipe, MockProvider(StandardizedCompetencyService), MockProvider(AdminStandardizedCompetencyService), MockProvider(NgbModal)],

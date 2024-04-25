@@ -473,6 +473,7 @@ Artemis uses to approaches for this:
 You must add the ``Scheduling`` profile to **exactly one** instance of your cluster.
 This instance will then perform scheduled tasks whereas the other instances will not.
 
+.. _nginx_configuration:
 
 nginx configuration
 ^^^^^^^^^^^^^^^^^^^
@@ -502,6 +503,124 @@ It relays message between instances:
 
    .. figure:: distributed/registry.png
       :align: center
+
+
+Integrated Code Lifecycle
+^^^^^^^^^^^^^^^^^^^^^^^^^
+The integrated code lifecycle (ICL) can integrate build agents into a multi instance server setup. In ICL, we differentiate between two types of server node: **core nodes** and **build agent nodes**.
+Core nodes provide the full Artemis functionality, while build agents simply execute build jobs for the testing of programming exercises.
+Both node types run the Artemis application, albeit with different profile sets and different application configuration files.
+Compared to core nodes, build agents nodes are much more light-weight, as they have less service dependencies and provide less functionality. Thus, they require less system resources and start much quicker than core nodes.
+
+The previously mentioned steps concerning the multiple Artemis instance setup remain unchanged, as we only need to adapt the run and application configurations for each node.
+
+Core nodes
+""""""""""
+
+Core nodes serve the main functionality of Artemis. In ICL, this additionally includes the :ref:`CI Management <ci_management>`,
+responsible for managing and interacting with the build job queue (adding, cancelling and viewing build jobs), and the :ref:`Local VC system <local_vc>`.
+
+For ICL, the run configuration for core nodes need to include the additional profiles ``core``, ``localvc`` and ``localci``, e.g.:
+
+::
+
+        --spring.profiles.active=prod,core,ldap-only,localvc,localci,athena,scheduling,iris,lti
+
+Core nodes do not require further adjustments to the ``application-prod.yml``, as long as you have added the necessary variables as described in the :ref:`Integrated Code Lifecycle Setup <Integrated Code Lifecycle Setup>`.
+
+Build Agents
+""""""""""""
+
+Build agents can be added to and removed from the server cluster depending on the build capacity needed to conduct the automatic
+assessment of programming exercises. If desired, build agents can execute multiple build jobs concurrently. In this case, you need to make sure that the server node your build agents is running on has enough resources.
+We recommend at least 2 CPUs and 2 GB of RAM for each concurrently running build job.
+
+Build agents do **not** require access to the Shared File System as the repositories used in the build jobs are cloned using HTTPS. Furthermore, as Build Agents do not handle client requests,
+they should be left out from the :ref:`nginx configuration <nginx_configuration>`.
+
+
+The run configuration contains just two profiles:
+
+::
+
+    --spring.profiles.active=prod,buildagent
+
+Build agents depend on much fewer services than the core nodes, thus we can adapt the ``application-prod.yml`` to exclude some of these dependencies.
+This heavily reduces the application start up time and resource demand.
+
+You can make following adaptations to the ``application-prod.yml``:
+
+1. Disable Liquibase and loadbalancer cache:
+
+    .. code-block:: yaml
+
+        spring:
+            liquibase:
+                enabled: false
+            cloud:
+                loadbalancer:
+                    cache:
+                        enabled: false
+
+2. Autoconfigure exclusions
+
+    .. code-block:: yaml
+
+        spring:
+            autoconfigure:
+                exclude:
+                    # Hibernate and DataSource are not needed in the build agent
+                    - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
+                    - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+                    # Those metrics are repeated here, because overriding the `exclude` array is not possible
+                    - org.springframework.boot.actuate.autoconfigure.metrics.data.RepositoryMetricsAutoConfiguration
+                    - org.springframework.boot.actuate.autoconfigure.metrics.jdbc.DataSourcePoolMetricsAutoConfiguration
+                    - org.springframework.boot.actuate.autoconfigure.metrics.startup.StartupTimeMetricsListenerAutoConfiguration
+                    - org.springframework.boot.actuate.autoconfigure.metrics.task.TaskExecutorMetricsAutoConfiguration
+                    - org.springframework.boot.actuate.autoconfigure.metrics.web.tomcat.TomcatMetricsAutoConfiguration
+
+Furthermore, you will need some configuration related to version control and continuous integration.
+
+3. Build agents require access to the VC server. Therefore, you need to add Artemis admin credentials so the build agent can access the repositories:
+
+    .. code-block:: yaml
+
+        artemis:
+            version-control:
+                url: <url-to-your-vc-server>
+                default-branch: main # The branch that should be used as default branch for all newly created repositories. This does NOT have to be equal to the default branch of the VCS
+                # Artemis admin credentials
+                user: <artemis-admin>
+                password: <artemis-admin-password>
+
+4. Configuration related to the execution of build jobs:
+
+    .. code-block:: yaml
+
+        artemis:
+            continuous-integration:
+                docker-connection-uri: unix:///var/run/docker.sock
+                specify-concurrent-builds: true                     # Set to false, if the number of concurrent build jobs should be chosen automatically based on system resources
+                concurrent-build-size: 1                            # If previous value is true: Set to desired value but keep available system resources in mind
+                asynchronous: true
+                timeout-seconds: 240                                # Time limit of a build before it will be cancelled
+                build-container-prefix: local-ci-
+                image-cleanup:
+                    enabled: true                                   # If set to true (recommended), old Docker images will be deleted on a schedule.
+                    expiry-days: 2                                  # The number of days since the last use after which a Docker image is considered outdated and can be removed.
+                    cleanup-schedule-time: 0 0 3 * * *              # CRON expression for cleanup schedule
+                container-cleanup:
+                    expiry-minutes: 5                               # Time after a hanging container will automatically be removed
+                    cleanup-schedule-minutes: 60                    # Schedule for container cleanup
+
+
+Build agents run as `Hazelcast Lite Members <https://docs.hazelcast.com/hazelcast/5.3/maintain-cluster/lite-members>`__ and require a full member, in our case a core node, to be running.
+Thus, before starting a build agent make sure that at least the primary node is running. You can then add and remove build agents to the cluster as desired.
+
+You can verify that a build agent has been successfully added to the cluster by checking the Build Agent View in the Server Administration. It may take a few seconds for the build agent to show up:
+
+    .. figure:: distributed/build_agent_view.png
+        :align: center
 
 
 Running multiple instances locally
