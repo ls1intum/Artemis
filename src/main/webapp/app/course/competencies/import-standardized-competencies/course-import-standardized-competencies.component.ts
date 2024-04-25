@@ -29,8 +29,8 @@ interface KnowledgeAreaForImport extends KnowledgeAreaForTree {
     templateUrl: './course-import-standardized-competencies.component.html',
 })
 export class CourseImportStandardizedCompetenciesComponent extends StandardizedCompetencyFilterPageComponent implements OnInit, ComponentCanDeactivate {
-    //TODO: rename and move kaForTree -> Filterable KA tree?
     protected selectedCompetencies: StandardizedCompetencyForImport[] = [];
+    protected selectedCompetency?: StandardizedCompetencyForImport;
     protected isLoading = false;
     protected isSubmitted = false;
 
@@ -78,22 +78,27 @@ export class CourseImportStandardizedCompetenciesComponent extends StandardizedC
     }
 
     protected openCompetencyDetails(competency: StandardizedCompetencyForImport) {
-        console.log(competency);
-        //TODO: open detail component
+        this.selectedCompetency = competency;
+    }
+
+    protected closeCompetencyDetails() {
+        this.selectedCompetency = undefined;
+    }
+
+    protected toggleSelect(selectedCompetency: StandardizedCompetencyForImport) {
+        if (selectedCompetency.selected) {
+            this.selectCompetency(selectedCompetency);
+        } else {
+            this.deselectCompetency(selectedCompetency);
+        }
     }
 
     protected selectCompetency(selectedCompetency: StandardizedCompetencyForImport) {
-        if (selectedCompetency.selected) {
-            return;
-        }
         selectedCompetency.selected = true;
         this.selectedCompetencies.push(selectedCompetency);
     }
 
     protected deselectCompetency(selectedCompetency: StandardizedCompetencyForImport) {
-        if (!selectedCompetency.selected) {
-            return;
-        }
         selectedCompetency.selected = false;
         if (!selectedCompetency.id) {
             return;

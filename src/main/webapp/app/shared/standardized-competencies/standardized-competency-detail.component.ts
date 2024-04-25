@@ -9,8 +9,7 @@ import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 export class StandardizedCompetencyDetailComponent {
     // values for the knowledge area select
     @Input({ required: true }) competency: StandardizedCompetencyDTO;
-    //TODO: input for buttons
-    //TODO: another type so I can see the knowledgeAreaTitle??? or have it as input ^^
+    @Input() knowledgeAreaTitle = '';
 
     @Output() onClose = new EventEmitter<void>();
 

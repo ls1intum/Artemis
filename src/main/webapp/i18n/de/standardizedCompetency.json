@@ -10,7 +10,7 @@
                 "version": "Version"
             },
             "details": {
-                "title": "Standardisierte Kompetenz",
+                "title": "Standardisierte Kompetenz (Details)",
                 "titleCreate": "Standardisierte Kompetenz Erstellen",
                 "titleEdit": "Standardisierte Kompetenz Bearbeiten",
                 "error": {
@@ -98,7 +98,7 @@
                 }
             },
             "details": {
-                "title": "Wissensgebiet",
+                "title": "Wissensgebiet (Details)",
                 "titleCreate": "Wissensgebiet Erstellen",
                 "titleEdit": "Wissensgebiet Bearbeiten",
                 "createKnowledgeAreaButton": "Wissensgebiet hinzufügen",
