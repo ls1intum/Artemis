@@ -20,6 +20,7 @@ import org.eclipse.jgit.transport.RemoteConfig;
 import org.eclipse.jgit.transport.UploadPack;
 import org.eclipse.jgit.util.FS;
 
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCPostPushHook;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCPrePushHook;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCServletService;
@@ -72,6 +73,8 @@ public class SshGitCommand extends GitPackCommand {
             Path rootDir = resolveRootDirectory(command, args);
             RepositoryCache.FileKey key = RepositoryCache.FileKey.lenient(rootDir.toFile(), FS.DETECTED);
             Repository repository = key.open(true /* must exist */);
+            User user = getServerSession().getAttribute(SshConstants.USER_KEY);
+
             String subCommand = args[0];
             if (RemoteConfig.DEFAULT_UPLOAD_PACK.equals(subCommand)) {
                 UploadPack uploadPack = new UploadPack(repository);
@@ -85,7 +88,7 @@ public class SshGitCommand extends GitPackCommand {
             }
             else if (RemoteConfig.DEFAULT_RECEIVE_PACK.equals(subCommand)) {
                 var receivePack = new ReceivePack(repository);
-                receivePack.setPreReceiveHook(new LocalVCPrePushHook(localVCServletService, null)); // TODO: Look into improving this
+                receivePack.setPreReceiveHook(new LocalVCPrePushHook(localVCServletService, user));
                 receivePack.setPostReceiveHook(new LocalVCPostPushHook(localVCServletService));
                 receivePack.receive(getInputStream(), getOutputStream(), getErrorStream());
             }

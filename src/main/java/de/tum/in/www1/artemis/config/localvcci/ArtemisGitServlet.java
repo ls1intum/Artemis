@@ -9,6 +9,7 @@ import org.eclipse.jgit.transport.ReceivePack;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCFetchFilter;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCPostPushHook;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCPrePushHook;
@@ -53,7 +54,7 @@ public class ArtemisGitServlet extends GitServlet {
         this.setReceivePackFactory((request, repository) -> {
             ReceivePack receivePack = new ReceivePack(repository);
             // Add a hook that prevents illegal actions on push (delete branch, rename branch, force push).
-            receivePack.setPreReceiveHook(new LocalVCPrePushHook(localVCServletService, request));
+            receivePack.setPreReceiveHook(new LocalVCPrePushHook(localVCServletService, (User) request.getAttribute("user")));
             // Add a hook that triggers the creation of a new submission after the push went through successfully.
             receivePack.setPostReceiveHook(new LocalVCPostPushHook(localVCServletService));
             return receivePack;

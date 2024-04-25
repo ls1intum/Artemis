@@ -200,6 +200,8 @@ public class LocalVCServletService {
 
         authorizeUser(repositoryTypeOrUserName, user, exercise, repositoryAction, localVCRepositoryUri.isPracticeRepository());
 
+        request.setAttribute("user", user);
+
         log.debug("Authorizing user {} for repository {} took {}", user.getLogin(), localVCRepositoryUri, TimeLogUtil.formatDurationFrom(timeNanoStart));
     }
 
@@ -244,14 +246,12 @@ public class LocalVCServletService {
     /**
      * Determines whether a user is allowed to force-push to a certain repository.
      *
-     * @param request The request object containing all information about the incoming request.
+     * @param user       The user that wants to force-push to the repository.
+     * @param repository The repository the user wants to force-push to.
      * @return true if the user is allowed to force-push to the repository, false otherwise.
-     * @throws LocalVCAuthException If an internal error occurs, e.g. because the LocalVCRepositoryUri could not be created.
      */
-    public boolean isUserAllowedToForcePush(HttpServletRequest request) throws LocalVCAuthException {
-        User user = authenticateUser(request.getHeader(LocalVCServletService.AUTHORIZATION_HEADER));
-
-        LocalVCRepositoryUri localVCRepositoryUri = parseRepositoryUri(request);
+    public boolean isUserAllowedToForcePush(User user, Repository repository) {
+        LocalVCRepositoryUri localVCRepositoryUri = parseRepositoryUri(repository.getDirectory().toPath());
         String projectKey = localVCRepositoryUri.getProjectKey();
         String repositoryTypeOrUserName = localVCRepositoryUri.getRepositoryTypeOrUserName();
 
@@ -265,6 +265,10 @@ public class LocalVCServletService {
 
     private LocalVCRepositoryUri parseRepositoryUri(HttpServletRequest request) {
         return new LocalVCRepositoryUri(request.getRequestURL().toString().replace("/info/refs", ""), localVCBaseUrl);
+    }
+
+    private LocalVCRepositoryUri parseRepositoryUri(Path repositoryPath) {
+        return new LocalVCRepositoryUri(repositoryPath, localVCBaseUrl);
     }
 
     private ProgrammingExercise getProgrammingExerciseOrThrow(String projectKey) {
