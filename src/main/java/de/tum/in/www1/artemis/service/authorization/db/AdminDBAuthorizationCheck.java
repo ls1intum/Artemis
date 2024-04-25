@@ -1,7 +1,8 @@
 package de.tum.in.www1.artemis.service.authorization.db;
 
+import jakarta.validation.constraints.NotNull;
+
 import javax.annotation.CheckReturnValue;
-import javax.validation.constraints.NotNull;
 
 import de.tum.in.www1.artemis.service.authorization.AuthorizationCheck;
 

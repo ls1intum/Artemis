@@ -1,8 +1,9 @@
 package de.tum.in.www1.artemis.service.authorization;
 
+import jakarta.validation.constraints.NotNull;
+
 import javax.annotation.CheckReturnValue;
 import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
