@@ -135,7 +135,7 @@ public class CacheConfiguration {
         log.info("Current Hazelcast members: {}", hazelcastMemberAddresses);
         // TODO end
         for (ServiceInstance instance : discoveryClient.getInstances(serviceId)) {
-            var instanceHost = instance.getHost();
+            var instanceHost = instance.getHost().replace("[", "").replace("]", "");
             if (hazelcastMemberAddresses.stream().noneMatch(member -> member.equals(instanceHost))) {
                 var clusterMemberPort = instance.getMetadata().getOrDefault("hazelcast.port", String.valueOf(hazelcastPort));
                 var clusterMemberAddress = instanceHost + ":" + clusterMemberPort;
