@@ -123,7 +123,7 @@ public class CacheConfiguration {
             return;
         }
         // TODO: Remove debug statements after testing on staging
-        log.info("Current Registry members: {}", discoveryClient.getInstances(serviceId).stream().map(ServiceInstance::getHost).collect(Collectors.toList()));
+        log.info("Current Registry members: {}", discoveryClient.getInstances(serviceId).stream().map(ServiceInstance::getHost).toList());
         log.info("Current Hazelcast members: {}", hazelcastInstance.getCluster().getMembers().stream().map(member -> {
             try {
                 return member.getAddress().getInetAddress().getHostAddress();
@@ -147,8 +147,7 @@ public class CacheConfiguration {
                 var clusterMemberPort = instance.getMetadata().getOrDefault("hazelcast.port", String.valueOf(hazelcastPort));
                 var clusterMemberAddress = instanceHost + ":" + clusterMemberPort;
                 log.info("Adding Hazelcast cluster member {}", clusterMemberAddress);
-                log.info(instance.getMetadata().toString());
-                Hazelcast.getHazelcastInstanceByName("Artemis").getConfig().getNetworkConfig().getJoin().getTcpIpConfig().addMember(instance + ":" + hazelcastPort);
+                Hazelcast.getHazelcastInstanceByName("Artemis").getConfig().getNetworkConfig().getJoin().getTcpIpConfig().addMember(clusterMemberAddress);
             }
         }
     }
@@ -214,9 +213,9 @@ public class CacheConfiguration {
 
                 for (ServiceInstance instance : discoveryClient.getInstances(serviceId)) {
                     var clusterMemberPort = instance.getMetadata().getOrDefault("hazelcast.port", String.valueOf(serverProperties.getPort() + hazelcastPort));
-                    String clusterMember = instance.getHost() + ":" + clusterMemberPort; // Address where the other instance is expected
-                    log.info("Adding Hazelcast (dev) cluster member {}", clusterMember);
-                    config.getNetworkConfig().getJoin().getTcpIpConfig().addMember(clusterMember);
+                    String clusterMemberAddress = instance.getHost() + ":" + clusterMemberPort; // Address where the other instance is expected
+                    log.info("Adding Hazelcast (dev) cluster member {}", clusterMemberAddress);
+                    config.getNetworkConfig().getJoin().getTcpIpConfig().addMember(clusterMemberAddress);
                 }
             }
             else { // Production configuration, one host per instance all using the configured port
