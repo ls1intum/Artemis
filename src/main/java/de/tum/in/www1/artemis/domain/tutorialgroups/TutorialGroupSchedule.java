@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import javax.persistence.*;
-import javax.validation.constraints.Size;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.Size;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -63,7 +63,7 @@ public class TutorialGroupSchedule extends DomainObject {
     /**
      * Currently represents weekly recurrence, so 1 means every week, 2 means every other week, etc.
      * <p>
-     * E.g. if the tutorial group meets every Monday then the {@link #repetitionFrequency} is 1.
+     * E.g. if the tutorial group meets every Monday then the value is 1.
      */
     @Column(name = "repetition_frequency")
     private Integer repetitionFrequency;
@@ -71,7 +71,7 @@ public class TutorialGroupSchedule extends DomainObject {
     /**
      * The date from which this recurrence pattern starts.
      * <p>
-     * For example, if the tutorial group meets every Monday from 2021-01-01 to 2021-06-30, then the {@link #validFromInclusive} is 2021-01-01.
+     * For example, if the tutorial group meets every Monday from 2021-01-01 to 2021-06-30, then the value is 2021-01-01.
      * The first session will be on 2021-01-04 (Monday) and the last session will be on 2021-06-28 (Monday).
      * <p>
      * The date is in ISO 8601 format.
@@ -84,7 +84,7 @@ public class TutorialGroupSchedule extends DomainObject {
     /**
      * The date until which this recurrence pattern is valid.
      * <p>
-     * For example, if the tutorial group meets every Monday from 2021-01-01 to 2021-06-30, then the {@link #validToInclusive} is 2021-06-30.
+     * For example, if the tutorial group meets every Monday from 2021-01-01 to 2021-06-30, then the value is 2021-06-30.
      * The first session will be on 2021-01-04 (Monday) and the last session will be on 2021-06-28 (Monday).
      * <p>
      * The date is in ISO 8601 format.

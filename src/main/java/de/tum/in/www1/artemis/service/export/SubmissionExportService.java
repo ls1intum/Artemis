@@ -10,7 +10,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 
 import org.apache.commons.lang3.mutable.MutableInt;
 import org.slf4j.Logger;
@@ -69,7 +69,7 @@ public abstract class SubmissionExportService {
         if (zippedSubmissionsPaths.isEmpty()) {
             throw new BadRequestAlertException("Failed to export student submissions.", "SubmissionExport", "noSubmissions");
         }
-        return zippedSubmissionsPaths.get(0).toFile();
+        return zippedSubmissionsPaths.getFirst().toFile();
 
     }
 

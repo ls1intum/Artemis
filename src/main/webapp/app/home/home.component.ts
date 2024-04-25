@@ -3,7 +3,6 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ActivatedRoute, Router } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import { Credentials } from 'app/core/auth/auth-jwt.service';
-import { HttpErrorResponse } from '@angular/common/http';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { isOrion } from 'app/shared/orion/orion';
@@ -27,7 +26,6 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     USERNAME_MIN_LENGTH = USERNAME_MIN_LENGTH;
     PASSWORD_MIN_LENGTH = PASSWORD_MIN_LENGTH;
     authenticationError = false;
-    authenticationAttempts = 0;
     account: User;
     modalRef: NgbModalRef;
     password: string;
@@ -36,21 +34,18 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     needsToAcceptTerms = false;
     userAcceptedTerms = false;
     username: string;
-    captchaRequired = false;
     credentials: Credentials;
     isRegistrationEnabled = false;
     isPasswordLoginDisabled = false;
     loading = true;
     mainElementFocused = false;
 
-    // if the server is not connected to an external user management such as JIRA, we accept all valid username patterns
+    // if the server is not connected to an external user management, we accept all valid username patterns
     usernameRegexPattern = /^[a-z0-9_-]{3,50}$/; // default, might be overridden in ngOnInit
     errorMessageUsername = 'home.errors.usernameIncorrect'; // default, might be overridden in ngOnInit
     accountName?: string; // additional information in the welcome message
 
     externalUserManagementActive = true;
-    externalUserManagementUrl: string;
-    externalUserManagementName: string;
 
     isSubmittingLogin = false;
 
@@ -103,17 +98,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
      */
     private initializeWithProfileInfo(profileInfo: ProfileInfo) {
         this.profileInfo = profileInfo;
-
-        if (profileInfo.activeProfiles.includes('jira')) {
-            this.externalUserManagementUrl = profileInfo.externalUserManagementURL;
-            this.externalUserManagementName = profileInfo.externalUserManagementName;
-            if (profileInfo.allowedLdapUsernamePattern) {
-                this.usernameRegexPattern = new RegExp(profileInfo.allowedLdapUsernamePattern);
-            }
-        } else {
-            // TODO: in the future we might also allow external user management for non jira profiles
-            this.externalUserManagementActive = false;
-        }
+        this.externalUserManagementActive = false;
 
         this.accountName = profileInfo.accountName;
         if (this.accountName === 'TUM') {
@@ -168,11 +153,8 @@ export class HomeComponent implements OnInit, AfterViewChecked {
                 rememberMe: this.rememberMe,
             })
             .then(() => this.handleLoginSuccess())
-            .catch((error: HttpErrorResponse) => {
-                // TODO: if registration is enabled, handle the case "User was not activated"
-                this.captchaRequired = error.headers.get('X-artemisApp-error') === 'CAPTCHA required';
+            .catch(() => {
                 this.authenticationError = true;
-                this.authenticationAttempts++;
             })
             .finally(() => (this.isSubmittingLogin = false));
     }
@@ -182,8 +164,6 @@ export class HomeComponent implements OnInit, AfterViewChecked {
      */
     private handleLoginSuccess() {
         this.authenticationError = false;
-        this.authenticationAttempts = 0;
-        this.captchaRequired = false;
 
         if (this.router.url === '/register' || /^\/activate\//.test(this.router.url) || /^\/reset\//.test(this.router.url)) {
             this.router.navigate(['']);
@@ -205,7 +185,10 @@ export class HomeComponent implements OnInit, AfterViewChecked {
             return;
         }
 
-        const modalRef: NgbModalRef = this.modalService.open(ModalConfirmAutofocusComponent as Component, { size: 'lg', backdrop: 'static' });
+        const modalRef: NgbModalRef = this.modalService.open(ModalConfirmAutofocusComponent as Component, {
+            size: 'lg',
+            backdrop: 'static',
+        });
         modalRef.componentInstance.text = 'login.ide.confirmation';
         modalRef.componentInstance.title = 'login.ide.title';
         modalRef.result.then(

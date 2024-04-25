@@ -88,7 +88,7 @@ export class ProgrammingExamSummaryComponent implements OnInit {
     }
 
     private updateCommitUrl() {
-        // Get active profiles, to distinguish between Bitbucket and GitLab for the commit link of the result
+        // Get active profiles, to distinguish between VC systems for the commit link of the result
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             const commitHashURLTemplate = profileInfo?.commitHashURLTemplate;
             this.commitUrl = createCommitUrl(commitHashURLTemplate, this.exercise.projectKey, this.participation, this.submission);

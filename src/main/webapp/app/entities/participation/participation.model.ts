@@ -68,10 +68,10 @@ export const getExercise = (participation: Participation): Exercise | undefined 
                 return (participation as ProgrammingExerciseStudentParticipation).exercise;
             case ParticipationType.STUDENT:
                 return (participation as StudentParticipation).exercise;
-            case ParticipationType.SOLUTION:
-                return (participation as SolutionProgrammingExerciseParticipation).programmingExercise;
-            case ParticipationType.TEMPLATE:
-                return (participation as TemplateProgrammingExerciseParticipation).programmingExercise;
+            case ParticipationType.SOLUTION: // it could be stored in both programmingExercise or exercise
+                return (participation as SolutionProgrammingExerciseParticipation).programmingExercise ?? (participation as SolutionProgrammingExerciseParticipation).exercise;
+            case ParticipationType.TEMPLATE: // it could be stored in both programmingExercise or exercise
+                return (participation as TemplateProgrammingExerciseParticipation).programmingExercise ?? (participation as TemplateProgrammingExerciseParticipation).exercise;
         }
     }
 };

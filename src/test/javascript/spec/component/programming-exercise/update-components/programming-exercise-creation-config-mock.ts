@@ -40,7 +40,6 @@ export const programmingExerciseCreationConfigMock: ProgrammingExerciseCreationC
     packageNameRequired: false,
     problemStatementLoaded: false,
     projectTypes: [],
-    publishBuildPlanUrlAllowed: false,
     recreateBuildPlanOrUpdateTemplateChange(): void {},
     recreateBuildPlans: false,
     refreshAuxiliaryRepositoryChecks(): void {},

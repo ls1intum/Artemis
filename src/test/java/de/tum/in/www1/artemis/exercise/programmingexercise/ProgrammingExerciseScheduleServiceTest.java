@@ -545,12 +545,12 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationGi
         mockStudentRepoLocks();
         final ZonedDateTime now = ZonedDateTime.now();
 
-        setupProgrammingExerciseDates(now, DELAY_MS, null);
+        setupProgrammingExerciseDates(now, 1000L, null);
         var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
         testCases.stream().findFirst().orElseThrow().setVisibility(Visibility.AFTER_DUE_DATE);
         programmingExerciseTestCaseRepository.saveAllAndFlush(testCases);
 
-        var participationIndividualDueDate = setupParticipationIndividualDueDate(now, DELAY_MS * 2, TEST_PREFIX + "student3");
+        var participationIndividualDueDate = setupParticipationIndividualDueDate(now, 2000L, TEST_PREFIX + "student3");
         programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());

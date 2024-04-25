@@ -6,7 +6,7 @@ import static org.hibernate.Hibernate.isInitialized;
 import java.util.List;
 import java.util.Optional;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -31,7 +31,7 @@ public class TextAssessmentService extends AssessmentService {
             SubmissionService submissionService, Optional<LtiNewResultService> ltiNewResultService, SingleUserNotificationService singleUserNotificationService,
             ResultWebsocketService resultWebsocketService) {
         super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, submissionService,
-                submissionRepository, examDateService, gradingCriterionRepository, userRepository, ltiNewResultService, singleUserNotificationService, resultWebsocketService);
+                submissionRepository, examDateService, userRepository, ltiNewResultService, singleUserNotificationService, resultWebsocketService);
         this.textBlockService = textBlockService;
     }
 

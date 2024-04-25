@@ -34,7 +34,7 @@ describe('ProgrammingExerciseInstructionService', () => {
         expect(detailed3).toEqual({ successfulTests: [], failedTests: [], notExecutedTests: [] });
     });
 
-    it('should determine a failed state for a task if at least one test has failed (non legacy case)', () => {
+    it('should determine a failed state for a task if at least one test has failed', () => {
         const result: Result = {
             id: 1,
             completionDate: dayjs('2019-06-06T22:15:29.203+02:00'),
@@ -51,21 +51,7 @@ describe('ProgrammingExerciseInstructionService', () => {
         expect(detailed1).toEqual({ successfulTests: [2], failedTests: [1], notExecutedTests: [] });
     });
 
-    it('should determine a failed state for a task if at least one test has failed (legacy case)', () => {
-        const result: Result = {
-            id: 1,
-            completionDate: dayjs('2018-06-06T22:15:29.203+02:00'),
-            successful: false,
-            feedbacks: [{ testCase: { testName: 'testBubbleSort', id: 1 }, detailText: 'lorem ipsum', positive: false }],
-        };
-        const testCases = [1, 2];
-
-        const { testCaseState: taskState1, detailed: detailed1 } = programmingExerciseInstructionService.testStatusForTask(testCases, result);
-        expect(taskState1).toBe(TestCaseState.FAIL);
-        expect(detailed1).toEqual({ successfulTests: [2], failedTests: [1], notExecutedTests: [] });
-    });
-
-    it('should determine a state if there is no feedback for the specified tests (non legacy only)', () => {
+    it('should determine a state if there is no feedback for the specified tests', () => {
         const result: Result = {
             id: 1,
             completionDate: dayjs('2019-06-06T22:15:29.203+02:00'),

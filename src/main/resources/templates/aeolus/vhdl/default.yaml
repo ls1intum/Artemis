@@ -1,7 +1,7 @@
 api: v0.0.1
 actions:
   - name: provide_environment_information
-    script: |
+    script: |-
       #!/bin/bash
       echo "--------------------Python versions--------------------"
       python3 --version
@@ -23,12 +23,12 @@ actions:
       fi
     runAlways: false
   - name: prepare_makefile
-    script: |
+    script: |-
       rm -f assignment/{GNUmakefile, Makefile, makefile}
       cp -f tests/Makefile assignment/Makefile || exit 2
     runAlways: false
   - name: run_and_compile
-    script: |
+    script: |-
       python3 compileTest.py ../assignment/
       rm compileTest.py
       cp result.xml ../assignment/result.xml

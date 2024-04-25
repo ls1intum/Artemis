@@ -10,7 +10,7 @@ export const routes: Routes = [
         component: ModelingAssessmentEditorComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
-            pageTitle: 'artemisApp.apollonDiagram.detail.title',
+            pageTitle: 'artemisApp.modelingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -20,7 +20,7 @@ export const routes: Routes = [
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
             usePathForBreadcrumbs: true,
-            pageTitle: 'artemisApp.apollonDiagram.detail.title',
+            pageTitle: 'artemisApp.modelingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
     },

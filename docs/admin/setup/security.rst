@@ -43,7 +43,7 @@ variables (`Spring relaxed binding <https://github.com/spring-projects/spring-bo
 
 .. note::
 
-    The usernames/passwords for external systems (Bamboo, Bitbucket, GitLab,
+    The usernames/passwords for external systems (GitLab,
     Jenkins, …) are not listed here, since the general setup documentation
     describes how to set up those systems.
     Without replacing the default values, the connection to them will not work.

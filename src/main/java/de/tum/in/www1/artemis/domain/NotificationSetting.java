@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;

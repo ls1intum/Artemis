@@ -35,7 +35,7 @@ on:
 env:
   CI: true
   node: 20
-  java: 17
+  java: 21
   RAW_URL: https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}
 
 jobs:

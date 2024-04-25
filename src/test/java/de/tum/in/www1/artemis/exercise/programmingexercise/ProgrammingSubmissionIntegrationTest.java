@@ -5,10 +5,20 @@ import static de.tum.in.www1.artemis.config.Constants.SETUP_COMMIT_MESSAGE;
 import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 
 import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.AfterEach;
@@ -23,29 +33,40 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Commit;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.GradingCriterion;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
-import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
-import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildPlanDTO;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingSubmissionTestRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.TestConstants;
 import de.tum.in.www1.artemis.util.TestResourceUtils;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
-class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     private static final String TEST_PREFIX = "programmingsubmission";
 
@@ -109,20 +130,22 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @AfterEach
-    void tearDown() {
-        bitbucketRequestMockProvider.reset();
-        bambooRequestMockProvider.reset();
+    void tearDown() throws Exception {
+        gitlabRequestMockProvider.reset();
+        jenkinsRequestMockProvider.reset();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void triggerBuildStudent() throws Exception {
-        bambooRequestMockProvider.enableMockingOfRequests();
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
         doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
 
         String login = TEST_PREFIX + "student1";
         StudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login);
-        bambooRequestMockProvider.mockTriggerBuild((ProgrammingExerciseParticipation) participation);
+        final var programmingExerciseParticipation = ((ProgrammingExerciseParticipation) participation);
+        jenkinsRequestMockProvider.mockTriggerBuild(programmingExerciseParticipation.getProgrammingExercise().getProjectKey(), programmingExerciseParticipation.getBuildPlanId(),
+                false);
 
         String url = "/api/programming-submissions/" + participation.getId() + "/trigger-build";
         request.postWithoutLocation(url, null, HttpStatus.OK, new HttpHeaders());
@@ -155,12 +178,15 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void triggerBuildInstructor() throws Exception {
-        bambooRequestMockProvider.enableMockingOfRequests();
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
         doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
         String login = TEST_PREFIX + "student1";
         StudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login);
-        bambooRequestMockProvider.mockTriggerBuild((ProgrammingExerciseParticipation) participation);
-        bambooRequestMockProvider.mockTriggerBuild((ProgrammingExerciseParticipation) participation);
+        final var programmingExerciseParticipation = ((ProgrammingExerciseParticipation) participation);
+        jenkinsRequestMockProvider.mockTriggerBuild(programmingExerciseParticipation.getProgrammingExercise().getProjectKey(), programmingExerciseParticipation.getBuildPlanId(),
+                false);
+        jenkinsRequestMockProvider.mockTriggerBuild(programmingExerciseParticipation.getProgrammingExercise().getProjectKey(), programmingExerciseParticipation.getBuildPlanId(),
+                false);
         request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-build?submissionType=INSTRUCTOR", null, HttpStatus.OK, new HttpHeaders());
 
         List<ProgrammingSubmission> submissions = submissionRepository.findAllByParticipationIdWithResults(participation.getId());
@@ -183,12 +209,15 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void triggerBuildInstructor_cannotGetLastCommitHash() throws Exception {
-        bambooRequestMockProvider.enableMockingOfRequests();
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
         doThrow(EntityNotFoundException.class).when(gitService).getLastCommitHash(any());
         String login = TEST_PREFIX + "student1";
         StudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login);
-        bambooRequestMockProvider.mockTriggerBuild((ProgrammingExerciseParticipation) participation);
-        bambooRequestMockProvider.mockTriggerBuild((ProgrammingExerciseParticipation) participation);
+        final var programmingExerciseParticipation = ((ProgrammingExerciseParticipation) participation);
+        jenkinsRequestMockProvider.mockTriggerBuild(programmingExerciseParticipation.getProgrammingExercise().getProjectKey(), programmingExerciseParticipation.getBuildPlanId(),
+                false);
+        jenkinsRequestMockProvider.mockTriggerBuild(programmingExerciseParticipation.getProgrammingExercise().getProjectKey(), programmingExerciseParticipation.getBuildPlanId(),
+                false);
         request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-build?submissionType=INSTRUCTOR", null, HttpStatus.NOT_FOUND,
                 new HttpHeaders());
     }
@@ -224,7 +253,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void triggerBuildForExerciseAsInstructor() throws Exception {
-        bambooRequestMockProvider.enableMockingOfRequests();
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
         doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
 
         String login1 = TEST_PREFIX + "student1";
@@ -237,15 +266,24 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         // Set test cases changed to true; after the build run it should be false;
         exercise.setTestCasesChanged(true);
         exercise = programmingExerciseRepository.save(exercise);
-        bambooRequestMockProvider.mockTriggerBuild(firstParticipation);
-        bambooRequestMockProvider.mockTriggerBuild(secondParticipation);
-        bambooRequestMockProvider.mockTriggerBuild(thirdParticipation);
+        final var firstProgrammingExerciseParticipation = ((ProgrammingExerciseParticipation) firstParticipation);
+        jenkinsRequestMockProvider.mockTriggerBuild(firstProgrammingExerciseParticipation.getProgrammingExercise().getProjectKey(),
+                firstProgrammingExerciseParticipation.getBuildPlanId(), false);
+        final var secondProgrammingExerciseParticipation = ((ProgrammingExerciseParticipation) firstParticipation);
+        jenkinsRequestMockProvider.mockTriggerBuild(secondProgrammingExerciseParticipation.getProgrammingExercise().getProjectKey(),
+                secondProgrammingExerciseParticipation.getBuildPlanId(), false);
+        final var thirdProgrammingExerciseParticipation = ((ProgrammingExerciseParticipation) firstParticipation);
+        jenkinsRequestMockProvider.mockTriggerBuild(thirdProgrammingExerciseParticipation.getProgrammingExercise().getProjectKey(),
+                thirdProgrammingExerciseParticipation.getBuildPlanId(), false);
 
         // Each trigger build is mocked twice per participation so that we test
         // that no new submission is created on re-trigger
-        bambooRequestMockProvider.mockTriggerBuild(firstParticipation);
-        bambooRequestMockProvider.mockTriggerBuild(secondParticipation);
-        bambooRequestMockProvider.mockTriggerBuild(thirdParticipation);
+        jenkinsRequestMockProvider.mockTriggerBuild(firstProgrammingExerciseParticipation.getProgrammingExercise().getProjectKey(),
+                firstProgrammingExerciseParticipation.getBuildPlanId(), false);
+        jenkinsRequestMockProvider.mockTriggerBuild(secondProgrammingExerciseParticipation.getProgrammingExercise().getProjectKey(),
+                secondProgrammingExerciseParticipation.getBuildPlanId(), false);
+        jenkinsRequestMockProvider.mockTriggerBuild(thirdProgrammingExerciseParticipation.getProgrammingExercise().getProjectKey(),
+                thirdProgrammingExerciseParticipation.getBuildPlanId(), false);
 
         String url = "/api/programming-exercises/" + exercise.getId() + "/trigger-instructor-build-all";
         request.postWithoutLocation(url, null, HttpStatus.OK, new HttpHeaders());
@@ -287,7 +325,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void triggerBuildForParticipationsInstructorEmpty() throws Exception {
-        bambooRequestMockProvider.enableMockingOfRequests();
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
         String login1 = TEST_PREFIX + "student1";
         String login2 = TEST_PREFIX + "student2";
         String login3 = TEST_PREFIX + "student3";
@@ -296,12 +334,18 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         ProgrammingExerciseStudentParticipation participation3 = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login3);
 
         // We only trigger two participations here: 1 and 3.
-        bambooRequestMockProvider.mockTriggerBuild(participation1);
-        bambooRequestMockProvider.mockTriggerBuild(participation3);
+        final var programmingExerciseParticipation1 = ((ProgrammingExerciseParticipation) participation1);
+        jenkinsRequestMockProvider.mockTriggerBuild(programmingExerciseParticipation1.getProgrammingExercise().getProjectKey(), programmingExerciseParticipation1.getBuildPlanId(),
+                false);
+        final var programmingExerciseParticipation3 = ((ProgrammingExerciseParticipation) participation3);
+        jenkinsRequestMockProvider.mockTriggerBuild(programmingExerciseParticipation3.getProgrammingExercise().getProjectKey(), programmingExerciseParticipation3.getBuildPlanId(),
+                false);
 
         // Mock again because we call the trigger request two times
-        bambooRequestMockProvider.mockTriggerBuild(participation1);
-        bambooRequestMockProvider.mockTriggerBuild(participation3);
+        jenkinsRequestMockProvider.mockTriggerBuild(programmingExerciseParticipation1.getProgrammingExercise().getProjectKey(), programmingExerciseParticipation1.getBuildPlanId(),
+                false);
+        jenkinsRequestMockProvider.mockTriggerBuild(programmingExerciseParticipation3.getProgrammingExercise().getProjectKey(), programmingExerciseParticipation3.getBuildPlanId(),
+                false);
 
         List<Long> participationsToTrigger = new ArrayList<>(Arrays.asList(participation1.getId(), participation3.getId()));
 
@@ -359,11 +403,11 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         var optionalParticipation = programmingExerciseStudentParticipationRepository.findById(submission.getParticipation().getId());
         assertThat(optionalParticipation).isPresent();
         final var participation = optionalParticipation.get();
-        bambooRequestMockProvider.enableMockingOfRequests();
-        var buildPlan = new BambooBuildPlanDTO(true, false);
-        bambooRequestMockProvider.mockGetBuildPlan(participation.getBuildPlanId(), buildPlan, false);
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
+        final var programmingExerciseParticipation = ((ProgrammingExerciseParticipation) participation);
+        mockGetBuildPlan(programmingExerciseParticipation.getProgrammingExercise().getProjectKey(), participation.getBuildPlanId(), true, true, false, false);
         // Mock again because we call the trigger request two times
-        bambooRequestMockProvider.mockGetBuildPlan(participation.getBuildPlanId(), buildPlan, false);
+        mockGetBuildPlan(programmingExerciseParticipation.getProgrammingExercise().getProjectKey(), participation.getBuildPlanId(), true, true, false, false);
 
         String url = Constants.PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + participation.getId() + "/trigger-failed-build";
         request.postWithoutLocation(url, null, HttpStatus.OK, null);
@@ -392,13 +436,11 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void triggerFailedBuild_CIException() throws Exception {
         var participation = createExerciseWithSubmissionAndParticipation();
-        bambooRequestMockProvider.enableMockingOfRequests(true);
-        bitbucketRequestMockProvider.enableMockingOfRequests(true);
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
+        gitlabRequestMockProvider.enableMockingOfRequests();
         var repoUri = uriService.getRepositorySlugFromRepositoryUri(participation.getVcsRepositoryUri());
         doReturn(participation.getVcsRepositoryUri()).when(versionControlService).getCloneRepositoryUri(exercise.getProjectKey(), repoUri);
         mockConnectorRequestsForResumeParticipation(exercise, participation.getParticipantIdentifier(), participation.getParticipant().getParticipants(), true);
-
-        doThrow(ContinuousIntegrationException.class).when(continuousIntegrationTriggerService).triggerBuild(participation);
         String url = Constants.PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + participation.getId() + "/trigger-failed-build";
         request.postWithoutLocation(url, null, HttpStatus.OK, null);
     }
@@ -431,12 +473,14 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void triggerFailedBuildEmptyLatestPendingSubmission() throws Exception {
-        bambooRequestMockProvider.enableMockingOfRequests();
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
         doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
 
         String login = TEST_PREFIX + "student1";
         StudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login);
-        bambooRequestMockProvider.mockTriggerBuild((ProgrammingExerciseParticipation) participation);
+        final var programmingExerciseParticipation = ((ProgrammingExerciseParticipation) participation);
+        jenkinsRequestMockProvider.mockTriggerBuild(programmingExerciseParticipation.getProgrammingExercise().getProjectKey(), programmingExerciseParticipation.getBuildPlanId(),
+                false);
 
         String url = "/api/programming-submissions/" + participation.getId() + "/trigger-failed-build";
         request.postWithoutLocation(url, null, HttpStatus.NOT_FOUND, new HttpHeaders());
@@ -519,7 +563,6 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     void testNotifyPush_studentCommitUpdatesSubmissionCount() throws Exception {
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
 
-        doNothing().when(continuousIntegrationTriggerService).triggerBuild(any());
         Commit mockCommit = mock(Commit.class);
         doReturn(mockCommit).when(versionControlService).getLastCommitDetails(any());
         doReturn("default-branch").when(versionControlService).getDefaultBranchOfRepository(any());

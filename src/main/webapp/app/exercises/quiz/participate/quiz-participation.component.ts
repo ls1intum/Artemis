@@ -6,7 +6,6 @@ import { Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { Result } from 'app/entities/result.model';
 import { MultipleChoiceQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
 import { DragAndDropQuestionComponent } from 'app/exercises/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
@@ -133,7 +132,6 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         private jhiWebsocketService: JhiWebsocketService,
         private quizExerciseService: QuizExerciseService,
         private participationService: ParticipationService,
-        private participationWebsocketService: ParticipationWebsocketService,
         private route: ActivatedRoute,
         private alertService: AlertService,
         private quizParticipationService: QuizParticipationService,
@@ -470,17 +468,22 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
 
         if (this.quizExercise.quizQuestions) {
             this.quizExercise.quizQuestions.forEach((question) => {
-                if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
-                    // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                    this.selectedAnswerOptions.set(question.id!, []);
-                } else if (question.type === QuizQuestionType.DRAG_AND_DROP) {
-                    // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                    this.dragAndDropMappings.set(question.id!, []);
-                } else if (question.type === QuizQuestionType.SHORT_ANSWER) {
-                    // add the array of submitted texts to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                    this.shortAnswerSubmittedTexts.set(question.id!, []);
-                } else {
-                    console.error('Unknown question type: ' + question);
+                switch (question.type) {
+                    case QuizQuestionType.MULTIPLE_CHOICE:
+                        // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
+                        this.selectedAnswerOptions.set(question.id!, []);
+                        break;
+                    case QuizQuestionType.DRAG_AND_DROP:
+                        // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
+                        this.dragAndDropMappings.set(question.id!, []);
+                        break;
+                    case QuizQuestionType.SHORT_ANSWER:
+                        // add the array of submitted texts to the dictionary (add an empty array, if there is no submittedAnswer for this question)
+                        this.shortAnswerSubmittedTexts.set(question.id!, []);
+                        break;
+                    default:
+                        console.error('Unknown question type: ' + question);
+                        break;
                 }
             }, this);
         }
@@ -507,17 +510,22 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                     return answer.quizQuestion!.id === question.id;
                 });
 
-                if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
-                    // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                    this.selectedAnswerOptions.set(question.id!, (submittedAnswer as MultipleChoiceSubmittedAnswer)?.selectedOptions || []);
-                } else if (question.type === QuizQuestionType.DRAG_AND_DROP) {
-                    // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                    this.dragAndDropMappings.set(question.id!, (submittedAnswer as DragAndDropSubmittedAnswer)?.mappings || []);
-                } else if (question.type === QuizQuestionType.SHORT_ANSWER) {
-                    // add the array of submitted texts to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                    this.shortAnswerSubmittedTexts.set(question.id!, (submittedAnswer as ShortAnswerSubmittedAnswer)?.submittedTexts || []);
-                } else {
-                    console.error('Unknown question type: ' + question);
+                switch (question.type) {
+                    case QuizQuestionType.MULTIPLE_CHOICE:
+                        // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
+                        this.selectedAnswerOptions.set(question.id!, (submittedAnswer as MultipleChoiceSubmittedAnswer)?.selectedOptions || []);
+                        break;
+                    case QuizQuestionType.DRAG_AND_DROP:
+                        // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
+                        this.dragAndDropMappings.set(question.id!, (submittedAnswer as DragAndDropSubmittedAnswer)?.mappings || []);
+                        break;
+                    case QuizQuestionType.SHORT_ANSWER:
+                        // add the array of submitted texts to the dictionary (add an empty array, if there is no submittedAnswer for this question)
+                        this.shortAnswerSubmittedTexts.set(question.id!, (submittedAnswer as ShortAnswerSubmittedAnswer)?.submittedTexts || []);
+                        break;
+                    default:
+                        console.error('Unknown question type: ' + question);
+                        break;
                 }
             }, this);
         }
@@ -687,32 +695,36 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             if (fullQuestionFromServer) {
                 clientQuestion.explanation = fullQuestionFromServer.explanation;
 
-                if (clientQuestion.type === QuizQuestionType.MULTIPLE_CHOICE) {
-                    const mcClientQuestion = clientQuestion as MultipleChoiceQuestion;
-                    const mcFullQuestionFromServer = fullQuestionFromServer as MultipleChoiceQuestion;
+                switch (clientQuestion.type) {
+                    case QuizQuestionType.MULTIPLE_CHOICE:
+                        const mcClientQuestion = clientQuestion as MultipleChoiceQuestion;
+                        const mcFullQuestionFromServer = fullQuestionFromServer as MultipleChoiceQuestion;
 
-                    const answerOptions = mcClientQuestion.answerOptions!;
-                    answerOptions.forEach((clientAnswerOption) => {
-                        // find updated answerOption
-                        const fullAnswerOptionFromServer = mcFullQuestionFromServer.answerOptions!.find((option) => {
-                            return clientAnswerOption.id === option.id;
+                        const answerOptions = mcClientQuestion.answerOptions!;
+                        answerOptions.forEach((clientAnswerOption) => {
+                            // find updated answerOption
+                            const fullAnswerOptionFromServer = mcFullQuestionFromServer.answerOptions!.find((option) => {
+                                return clientAnswerOption.id === option.id;
+                            });
+                            if (fullAnswerOptionFromServer) {
+                                clientAnswerOption.explanation = fullAnswerOptionFromServer.explanation;
+                                clientAnswerOption.isCorrect = fullAnswerOptionFromServer.isCorrect;
+                            }
                         });
-                        if (fullAnswerOptionFromServer) {
-                            clientAnswerOption.explanation = fullAnswerOptionFromServer.explanation;
-                            clientAnswerOption.isCorrect = fullAnswerOptionFromServer.isCorrect;
-                        }
-                    });
-                } else if (clientQuestion.type === QuizQuestionType.DRAG_AND_DROP) {
-                    const dndClientQuestion = clientQuestion as DragAndDropQuestion;
-                    const dndFullQuestionFromServer = fullQuestionFromServer as DragAndDropQuestion;
-
-                    dndClientQuestion.correctMappings = dndFullQuestionFromServer.correctMappings;
-                } else if (clientQuestion.type === QuizQuestionType.SHORT_ANSWER) {
-                    const shortAnswerClientQuestion = clientQuestion as ShortAnswerQuestion;
-                    const shortAnswerFullQuestionFromServer = fullQuestionFromServer as ShortAnswerQuestion;
-                    shortAnswerClientQuestion.correctMappings = shortAnswerFullQuestionFromServer.correctMappings;
-                } else {
-                    captureException(new Error('Unknown question type: ' + clientQuestion));
+                        break;
+                    case QuizQuestionType.DRAG_AND_DROP:
+                        const dndClientQuestion = clientQuestion as DragAndDropQuestion;
+                        const dndFullQuestionFromServer = fullQuestionFromServer as DragAndDropQuestion;
+                        dndClientQuestion.correctMappings = dndFullQuestionFromServer.correctMappings;
+                        break;
+                    case QuizQuestionType.SHORT_ANSWER:
+                        const shortAnswerClientQuestion = clientQuestion as ShortAnswerQuestion;
+                        const shortAnswerFullQuestionFromServer = fullQuestionFromServer as ShortAnswerQuestion;
+                        shortAnswerClientQuestion.correctMappings = shortAnswerFullQuestionFromServer.correctMappings;
+                        break;
+                    default:
+                        captureException(new Error('Unknown question type: ' + clientQuestion));
+                        break;
                 }
             }
         }, this);
@@ -816,21 +828,25 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         }
 
         for (const question of this.quizExercise.quizQuestions) {
-            if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
-                const options = this.selectedAnswerOptions.get(question.id!);
-                if (options && options.length === 0) {
-                    return false;
-                }
-            } else if (question.type === QuizQuestionType.DRAG_AND_DROP) {
-                const mappings = this.dragAndDropMappings.get(question.id!);
-                if (mappings && mappings.length === 0) {
-                    return false;
-                }
-            } else if (question.type === QuizQuestionType.SHORT_ANSWER) {
-                const submittedTexts = this.shortAnswerSubmittedTexts.get(question.id!);
-                if (submittedTexts && submittedTexts.length === 0) {
-                    return false;
-                }
+            switch (question.type) {
+                case QuizQuestionType.MULTIPLE_CHOICE:
+                    const options = this.selectedAnswerOptions.get(question.id!);
+                    if (options && options.length === 0) {
+                        return false;
+                    }
+                    break;
+                case QuizQuestionType.DRAG_AND_DROP:
+                    const mappings = this.dragAndDropMappings.get(question.id!);
+                    if (mappings && mappings.length === 0) {
+                        return false;
+                    }
+                    break;
+                case QuizQuestionType.SHORT_ANSWER:
+                    const submittedTexts = this.shortAnswerSubmittedTexts.get(question.id!);
+                    if (submittedTexts && submittedTexts.length === 0) {
+                        return false;
+                    }
+                    break;
             }
         }
 

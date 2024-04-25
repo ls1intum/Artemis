@@ -132,23 +132,6 @@
         </div>
     }
     <div class="form-group">
-        <!-- Setting whether the solution repository should be checked out is only supported for Haskell exercises and is only available for new exercises -->
-        @if (!programmingExercise.id && programmingExercise.programmingLanguage && programmingExerciseCreationConfig.checkoutSolutionRepositoryAllowed) {
-            <div class="form-check">
-                <label class="form-check-label" for="field_checkoutSolutionRepository">
-                    <input
-                        #checkoutSolutionRepository="ngModel"
-                        class="form-check-input"
-                        type="checkbox"
-                        name="checkoutSolutionRepository"
-                        id="field_checkoutSolutionRepository"
-                        [(ngModel)]="programmingExercise.checkoutSolutionRepository"
-                    />
-                    <span jhiTranslate="artemisApp.programmingExercise.checkoutSolutionRepository.title"></span>
-                    <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.checkoutSolutionRepository.description" />
-                </label>
-            </div>
-        }
         @if (programmingExerciseCreationConfig.isImportFromExistingExercise) {
             <div class="form-check">
                 <label class="form-check-label" for="field_recreateBuildPlans">

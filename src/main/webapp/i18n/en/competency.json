@@ -48,7 +48,9 @@
                 "importAll": "Import all competencies of a course",
                 "create": "Create competency",
                 "generate": "Generate Competencies",
-                "empty": "No competencies exist for this course"
+                "empty": "No competencies exist for this course",
+                "deleteRelationModalTitle": "Confirm Delete",
+                "deleteRelationModalText": "Are you sure you want to delete the relation between \"{{titleTail}}\" and \"{{titleHead}}\"?"
             },
             "import": {
                 "title": "Import Competencies",

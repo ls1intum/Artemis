@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.domain.iris.session;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;

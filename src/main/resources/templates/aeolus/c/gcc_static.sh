@@ -24,7 +24,6 @@ setup_the_build_environment () {
       echo "$REQ_FILE does not exist"
   fi
   cd ..
-
 }
 
 setup_makefile () {
@@ -67,7 +66,6 @@ build_and_run_all_tests () {
   else
       exit 1
   fi
-
 }
 
 main () {

@@ -99,6 +99,9 @@
             "selectExternalTool": "Select an External Tool",
             "selectCourse": "Select Course",
             "addNewPlatform": "Add new platform configuration"
+        },
+        "lti-platform": {
+            "deleted": "LTI platform deleted successfully"
         }
     }
 }

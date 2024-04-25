@@ -12,10 +12,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
@@ -53,7 +50,6 @@ export class ExerciseService {
         private accountService: AccountService,
         private translateService: TranslateService,
         private entityTitleService: EntityTitleService,
-        private profileService: ProfileService,
     ) {}
 
     /**
@@ -429,7 +425,6 @@ export class ExerciseService {
         ExerciseService.convertExerciseCategoriesFromServer(exerciseRes);
         this.setAccessRightsExerciseEntityResponseType(exerciseRes);
         this.sendExerciseTitleToTitleService(exerciseRes?.body ?? undefined);
-        this.setBuildPlanUrlToParticipations(exerciseRes?.body ?? undefined);
         return exerciseRes;
     }
 
@@ -443,7 +438,6 @@ export class ExerciseService {
         this.setAccessRightsExerciseEntityArrayResponseType(exerciseResArray);
         exerciseResArray?.body?.forEach((exercise) => {
             this.sendExerciseTitleToTitleService(exercise);
-            this.setBuildPlanUrlToParticipations(exercise);
         });
         return exerciseResArray;
     }
@@ -474,15 +468,6 @@ export class ExerciseService {
         }
         if (exercise?.course) {
             this.entityTitleService.setTitle(EntityType.COURSE, [exercise.course.id], exercise.course.title);
-        }
-    }
-
-    private setBuildPlanUrlToParticipations(exercise?: Exercise) {
-        if (exercise?.type === ExerciseType.PROGRAMMING && (exercise as ProgrammingExercise).publishBuildPlanUrl) {
-            this.profileService.getProfileInfo().subscribe((profileInfo) => {
-                const programmingParticipations = exercise?.studentParticipations as ProgrammingExerciseStudentParticipation[];
-                setBuildPlanUrlForProgrammingParticipations(profileInfo, programmingParticipations, (exercise as ProgrammingExercise).projectKey);
-            });
         }
     }
 

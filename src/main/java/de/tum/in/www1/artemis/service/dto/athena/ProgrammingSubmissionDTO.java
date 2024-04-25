@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.service.dto.athena;
 
 import static de.tum.in.www1.artemis.config.Constants.ATHENA_PROGRAMMING_EXERCISE_REPOSITORY_API_PATH;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 

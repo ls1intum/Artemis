@@ -156,6 +156,7 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createAndImportJavaProgrammingExercise(boolean staticCodeAnalysisEnabled) throws Exception {
         forceDefaultBuildPlanCreation();
+        forceDefaultBuildPlanCreation();
         programmingExerciseTestService.createAndImportJavaProgrammingExercise(staticCodeAnalysisEnabled);
     }
 

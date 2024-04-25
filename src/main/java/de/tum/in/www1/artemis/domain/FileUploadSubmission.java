@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.domain;
 import java.net.URI;
 import java.nio.file.Path;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 

@@ -7,19 +7,14 @@ import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Set;
 
 import org.gitlab4j.api.GitLabApiException;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.parallel.Execution;
-import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpStatus;
@@ -27,7 +22,6 @@ import org.springframework.security.ldap.SpringSecurityLdapTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.github.dockerjava.api.DockerClient;
 
@@ -51,27 +45,21 @@ import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCService;
 import de.tum.in.www1.artemis.service.ldap.LdapUserService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingMessagingService;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.AbstractArtemisIntegrationTest;
-import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 
 // Must start up an actual web server such that the tests can communicate with the ArtemisGitServlet using JGit.
 // Otherwise, only MockMvc requests could be used. The port this runs on is defined at server.port (see @TestPropertySource).
 // Note: Cannot use WebEnvironment.RANDOM_PORT here because artemis.version-control.url must be set to the correct port in the @TestPropertySource annotation.
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
-@AutoConfigureMockMvc
-@ExtendWith(SpringExtension.class)
-@Execution(ExecutionMode.CONCURRENT)
 @ResourceLock("AbstractSpringIntegrationLocalCILocalVCTest")
-@AutoConfigureEmbeddedDatabase
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
-@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", PROFILE_CORE, "localci", "localvc", "scheduling", "ldap-only", "lti", "aeolus", PROFILE_BUILDAGENT })
+@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", PROFILE_CORE, "localci", "localvc", "scheduling", "ldap-only", "lti", "aeolus", "iris", PROFILE_BUILDAGENT })
 
 // Note: the server.port property must correspond to the port used in the artemis.version-control.url property.
 @TestPropertySource(properties = { "server.port=49152", "artemis.version-control.url=http://localhost:49152", "artemis.user-management.use-external=false",
-        "artemis.version-control.local-vcs-repo-path=${java.io.tmpdir}", "artemis.continuous-integration.specify-concurrent-builds=true",
-        "artemis.continuous-integration.concurrent-build-size=1", "artemis.continuous-integration.asynchronous=false",
-        "artemis.continuous-integration.build.images.java.default=dummy-docker-image", "artemis.continuous-integration.image-cleanup.enabled=true",
-        "spring.liquibase.enabled=true" })
+        "artemis.version-control.local-vcs-repo-path=${java.io.tmpdir}", "artemis.build-logs-path=${java.io.tmpdir}/build-logs",
+        "artemis.continuous-integration.specify-concurrent-builds=true", "artemis.continuous-integration.concurrent-build-size=1",
+        "artemis.continuous-integration.asynchronous=false", "artemis.continuous-integration.build.images.java.default=dummy-docker-image",
+        "artemis.continuous-integration.image-cleanup.enabled=true", "spring.liquibase.enabled=true" })
 @ContextConfiguration(classes = LocalCITestConfiguration.class)
 public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends AbstractArtemisIntegrationTest {
 
@@ -126,19 +114,27 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
 
     protected static final String DUMMY_COMMIT_HASH = "1234567890abcdef";
 
-    protected static final Path ALL_FAIL_TEST_RESULTS_PATH = Paths.get("src", "test", "resources", "test-data", "test-results", "java-gradle", "all-fail");
+    private static final Path TEST_RESULTS_PATH = Path.of("src", "test", "resources", "test-data", "test-results");
 
-    protected static final Path PARTLY_SUCCESSFUL_TEST_RESULTS_PATH = Paths.get("src", "test", "resources", "test-data", "test-results", "java-gradle", "partly-successful");
+    private static final Path GRADLE_TEST_RESULTS_PATH = TEST_RESULTS_PATH.resolve("java-gradle");
 
-    protected static final Path ALL_SUCCEED_TEST_RESULTS_PATH = Paths.get("src", "test", "resources", "test-data", "test-results", "java-gradle", "all-succeed");
+    protected static final Path ALL_FAIL_TEST_RESULTS_PATH = GRADLE_TEST_RESULTS_PATH.resolve("all-fail");
 
-    protected static final Path FAULTY_FILES_TEST_RESULTS_PATH = Paths.get("src", "test", "resources", "test-data", "test-results", "java-gradle", "faulty-files");
+    protected static final Path PARTLY_SUCCESSFUL_TEST_RESULTS_PATH = GRADLE_TEST_RESULTS_PATH.resolve("partly-successful");
 
-    protected static final Path SPOTBUGS_RESULTS_PATH = Paths.get("src", "test", "resources", "test-data", "static-code-analysis", "reports", "spotbugsXml.xml");
+    protected static final Path ALL_SUCCEED_TEST_RESULTS_PATH = GRADLE_TEST_RESULTS_PATH.resolve("all-succeed");
 
-    protected static final Path CHECKSTYLE_RESULTS_PATH = Paths.get("src", "test", "resources", "test-data", "static-code-analysis", "reports", "checkstyle-result.xml");
+    protected static final Path FAULTY_FILES_TEST_RESULTS_PATH = GRADLE_TEST_RESULTS_PATH.resolve("faulty-files");
 
-    protected static final Path PMD_RESULTS_PATH = Paths.get("src", "test", "resources", "test-data", "static-code-analysis", "reports", "pmd.xml");
+    protected static final Path OLD_REPORT_FORMAT_TEST_RESULTS_PATH = GRADLE_TEST_RESULTS_PATH.resolve("old-report-format");
+
+    private static final Path SCA_REPORTS_PATH = Path.of("src", "test", "resources", "test-data", "static-code-analysis", "reports");
+
+    protected static final Path SPOTBUGS_RESULTS_PATH = SCA_REPORTS_PATH.resolve("spotbugsXml.xml");
+
+    protected static final Path CHECKSTYLE_RESULTS_PATH = SCA_REPORTS_PATH.resolve("checkstyle-result.xml");
+
+    protected static final Path PMD_RESULTS_PATH = SCA_REPORTS_PATH.resolve("pmd.xml");
 
     @AfterEach
     protected void resetSpyBeans() {

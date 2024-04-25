@@ -66,7 +66,7 @@ export function getExerciseProblemDetailSection(formattedProblemStatement: SafeH
     const hasCompetencies = !!exercise.competencies?.length;
     const details: Detail[] = [
         {
-            title: hasCompetencies ? 'artemisApp.exercise.sections.problem' : undefined,
+            title: hasCompetencies ? 'artemisApp.exercise.problemStatement' : undefined,
             type: DetailType.Markdown,
             data: { innerHtml: formattedProblemStatement },
         },

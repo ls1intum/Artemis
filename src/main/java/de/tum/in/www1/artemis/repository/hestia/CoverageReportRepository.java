@@ -23,11 +23,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Repository
 public interface CoverageReportRepository extends JpaRepository<CoverageReport, Long> {
 
-    default CoverageReport findByIdElseThrow(Long coverageReportId) {
-        var optionalReport = findById(coverageReportId);
-        return optionalReport.orElseThrow(() -> new EntityNotFoundException("Coverage Report", coverageReportId));
-    }
-
     Boolean existsBySubmissionId(Long submissionId);
 
     @Transactional // ok because of delete

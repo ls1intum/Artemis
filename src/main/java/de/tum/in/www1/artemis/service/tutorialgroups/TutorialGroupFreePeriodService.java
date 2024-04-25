@@ -91,7 +91,7 @@ public class TutorialGroupFreePeriodService {
      */
     private void findAndUpdateStillCanceledSessions(Course course, TutorialGroupFreePeriod tutorialGroupFreePeriod, Set<TutorialGroupSession> overlappingSessions,
             TutorialGroupFreePeriod updatedFreePeriod, boolean onDeletion) {
-        overlappingSessions.stream().forEach(session -> {
+        overlappingSessions.forEach(session -> {
             Set<TutorialGroupFreePeriod> overlappingFreePeriods = tutorialGroupFreePeriodRepository.findOverlappingInSameCourseExclusive(course, session.getStart(),
                     session.getEnd());
             // if there is only one overlapping FreePeriod, the session is not still canceled

@@ -6,7 +6,7 @@ import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.Set;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
@@ -35,13 +35,6 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
             WHERE lecture.course.id = :courseId
             """)
     Set<Lecture> findAllByCourseIdWithAttachments(@Param("courseId") Long courseId);
-
-    @Query("""
-            SELECT lecture
-            FROM Lecture lecture
-            WHERE lecture.course.id = :courseId
-            """)
-    Set<Lecture> findAllByCourseId(@Param("courseId") Long courseId);
 
     @Query("""
             SELECT lecture

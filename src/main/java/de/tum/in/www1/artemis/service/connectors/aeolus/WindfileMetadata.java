@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.connectors.aeolus;
 
 /**
  * Represents the metadata of a {@link Windfile}
+ * TODO: convert to Record
  */
 public class WindfileMetadata {
 

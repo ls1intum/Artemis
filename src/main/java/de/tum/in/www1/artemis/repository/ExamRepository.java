@@ -8,7 +8,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
@@ -416,10 +416,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
      */
     default Set<Exercise> findAllExercisesByExamId(long examId) {
         var exam = findWithExerciseGroupsAndExercisesById(examId);
-        if (exam.isEmpty()) {
-            return Set.of();
-        }
-        return exam.get().getExerciseGroups().stream().map(ExerciseGroup::getExercises).flatMap(Collection::stream).collect(Collectors.toSet());
+        return exam.map(value -> value.getExerciseGroups().stream().map(ExerciseGroup::getExercises).flatMap(Collection::stream).collect(Collectors.toSet())).orElseGet(Set::of);
     }
 
     /**

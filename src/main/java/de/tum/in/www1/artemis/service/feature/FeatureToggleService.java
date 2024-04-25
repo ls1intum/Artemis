@@ -5,7 +5,7 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import java.util.List;
 import java.util.Map;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
@@ -45,14 +45,18 @@ public class FeatureToggleService {
 
         // Features that are neither enabled nor disabled should be enabled by default
         // This ensures that all features (except the Science API) are enabled once the system starts up
+        // Standardized Competencies are also disabled by default until the feature is ready
         for (Feature feature : Feature.values()) {
-            if (!features.containsKey(feature) && feature != Feature.Science) {
+            if (!features.containsKey(feature) && feature != Feature.Science && feature != Feature.StandardizedCompetencies) {
                 features.put(feature, true);
             }
         }
         // init science feature from config
         if (!features.containsKey(Feature.Science)) {
             features.put(Feature.Science, scienceEnabledOnStart);
+        }
+        if (!features.containsKey(Feature.StandardizedCompetencies)) {
+            features.put(Feature.StandardizedCompetencies, false);
         }
     }
 

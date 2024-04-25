@@ -99,6 +99,9 @@
                                         <fa-icon [icon]="faTrash" />
                                         {{ 'artemisApp.result.delete.buttonText' | artemisTranslate }}
                                     </span>
+                                    @if (result?.logsAvailable) {
+                                        <a class="detail-link" (click)="viewBuildLogs(result.id)" jhiTranslate="artemisApp.result.buildLogs.viewLogs"></a>
+                                    }
                                 }
                             </div>
                         }

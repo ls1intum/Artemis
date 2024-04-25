@@ -22,9 +22,9 @@ test.describe('Quiz Exercise Participation', () => {
             quizExercise = await exerciseAPIRequests.createQuizExercise({ course }, [multipleChoiceQuizTemplate]);
         });
 
-        test('Student cannot see hidden quiz', async ({ login, page }) => {
+        test('Student cannot see hidden quiz', async ({ login, courseOverview }) => {
             await login(studentOne, '/courses/' + course.id);
-            await expect(page.getByText('No exercises available for the course.')).toBeVisible();
+            await expect(courseOverview.getExercises()).toHaveCount(0);
         });
 
         test('Student can see a visible quiz', async ({ login, exerciseAPIRequests, courseOverview }) => {

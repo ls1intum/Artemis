@@ -3,9 +3,8 @@ package de.tum.in.www1.artemis.repository;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.repository.specs.UserSpecs.distinct;
 import static de.tum.in.www1.artemis.repository.specs.UserSpecs.getActivatedOrDeactivatedSpecification;
-import static de.tum.in.www1.artemis.repository.specs.UserSpecs.getAuthorityAndCourseSpecification;
+import static de.tum.in.www1.artemis.repository.specs.UserSpecs.getAllUsersWithoutUserGroups;
 import static de.tum.in.www1.artemis.repository.specs.UserSpecs.getAuthoritySpecification;
-import static de.tum.in.www1.artemis.repository.specs.UserSpecs.getCourseSpecification;
 import static de.tum.in.www1.artemis.repository.specs.UserSpecs.getInternalOrExternalSpecification;
 import static de.tum.in.www1.artemis.repository.specs.UserSpecs.getSearchTermSpecification;
 import static de.tum.in.www1.artemis.repository.specs.UserSpecs.getWithOrWithoutRegistrationNumberSpecification;
@@ -20,7 +19,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -189,7 +188,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                 AND :groupName = userGroup
                 AND (
                     user.login LIKE :#{#loginOrName}%
-                    OR CONCAT_WS(' ', user.firstName, user.lastName) LIKE %:#{#loginOrName}%
+                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
                 )
             """)
     List<User> searchByLoginOrNameInGroup(@Param("groupName") String groupName, @Param("loginOrName") String loginOrName);
@@ -208,9 +207,9 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             WHERE user.isDeleted = FALSE
                 AND (
                     userGroup IN :groupNames
-                    AND CONCAT_WS(' ', user.firstName, user.lastName) LIKE %:nameOfUser%
+                    AND CONCAT(user.firstName, ' ', user.lastName) LIKE %:nameOfUser%
                  )
-            ORDER BY CONCAT_WS(' ', user.firstName, user.lastName)
+            ORDER BY CONCAT(user.firstName, ' ', user.lastName)
             """)
     List<User> searchByNameInGroups(@Param("groupNames") Set<String> groupNames, @Param("nameOfUser") String nameOfUser);
 
@@ -230,7 +229,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                 AND :groupName = userGroup
                 AND (
                     user.login LIKE :#{#loginOrName}%
-                    OR CONCAT_WS(' ', user.firstName, user.lastName) LIKE %:#{#loginOrName}%
+                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
                 )
             """, countQuery = """
             SELECT COUNT(user)
@@ -240,7 +239,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                 AND :groupName = userGroup
                 AND (
                     user.login LIKE :#{#loginOrName}%
-                    OR CONCAT_WS(' ', user.firstName, user.lastName) LIKE %:#{#loginOrName}%
+                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
                 )
             """)
     Page<User> searchAllByLoginOrNameInGroup(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("groupName") String groupName);
@@ -253,9 +252,9 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                 AND userGroup IN :groupNames
                 AND (
                     user.login LIKE :#{#loginOrName}%
-                    OR CONCAT_WS(' ', user.firstName, user.lastName) LIKE %:#{#loginOrName}%
+                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
                 ) AND user.id <> :idOfUser
-            ORDER BY CONCAT_WS(' ', user.firstName, user.lastName)
+            ORDER BY CONCAT(user.firstName, ' ', user.lastName)
             """, countQuery = """
             SELECT COUNT(user)
             FROM User user
@@ -264,9 +263,9 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                 AND userGroup IN :groupNames
                 AND (
                     user.login LIKE :#{#loginOrName}%
-                    OR CONCAT_WS(' ', user.firstName, user.lastName) LIKE %:#{#loginOrName}%
+                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
                 ) AND user.id <> :idOfUser
-            ORDER BY CONCAT_WS(' ', user.firstName, user.lastName)
+            ORDER BY CONCAT(user.firstName, ' ', user.lastName)
             """)
     Page<User> searchAllByLoginOrNameInGroupsNotUserId(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("groupNames") Set<String> groupNames,
             @Param("idOfUser") long idOfUser);
@@ -287,7 +286,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                 AND userGroup IN :groupNames
                 AND (
                     user.login LIKE :#{#loginOrName}%
-                    OR CONCAT_WS(' ', user.firstName, user.lastName) LIKE %:#{#loginOrName}%
+                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
                 )
             """, countQuery = """
             SELECT COUNT(user)
@@ -297,7 +296,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                 AND userGroup IN :groupNames
                 AND (
                     user.login LIKE :#{#loginOrName}%
-                    OR CONCAT_WS(' ', user.firstName, user.lastName) LIKE %:#{#loginOrName}%
+                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
                 )
             """)
     Page<User> searchAllByLoginOrNameInGroups(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("groupNames") Set<String> groupNames);
@@ -313,7 +312,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                 AND (
                     :loginOrName = ''
                     OR user.login LIKE :#{#loginOrName}%
-                    OR CONCAT_WS(' ', user.firstName, user.lastName) LIKE %:#{#loginOrName}%
+                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
                 )
             """, countQuery = """
             SELECT COUNT(DISTINCT user)
@@ -325,7 +324,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                 AND (
                     :loginOrName = ''
                     OR user.login LIKE :#{#loginOrName}%
-                    OR CONCAT_WS(' ', user.firstName, user.lastName) LIKE %:#{#loginOrName}%
+                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
                 )
             """)
     Page<User> searchAllByLoginOrNameInConversation(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId);
@@ -341,7 +340,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                 AND (
                     :loginOrName = ''
                     OR user.login LIKE :#{#loginOrName}%
-                    OR CONCAT_WS(' ', user.firstName, user.lastName) LIKE %:#{#loginOrName}%
+                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
                 ) AND userGroup IN :groupNames
             """, countQuery = """
             SELECT COUNT(DISTINCT user)
@@ -354,7 +353,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                 AND (
                     :loginOrName = ''
                     OR user.login LIKE :#{#loginOrName}%
-                    OR CONCAT_WS(' ', user.firstName, user.lastName) LIKE %:#{#loginOrName}%
+                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
                 ) AND userGroup IN :groupNames
             """)
     Page<User> searchAllByLoginOrNameInConversationWithCourseGroups(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId,
@@ -371,7 +370,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                 AND (
                     :loginOrName = ''
                     OR user.login LIKE :#{#loginOrName}%
-                    OR CONCAT_WS(' ', user.firstName, user.lastName) LIKE %:#{#loginOrName}%
+                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
                 ) AND conversationParticipant.isModerator = TRUE
             """, countQuery = """
             SELECT COUNT(DISTINCT user)
@@ -384,7 +383,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                 AND (
                     :loginOrName = ''
                     OR user.login LIKE :#{#loginOrName}%
-                    OR CONCAT_WS(' ', user.firstName, user.lastName) LIKE %:#{#loginOrName}%
+                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
                 ) AND conversationParticipant.isModerator = TRUE
             """)
     Page<User> searchChannelModeratorsByLoginOrNameInConversation(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId);
@@ -424,7 +423,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             WHERE user.isDeleted = FALSE
                 AND (
                     user.login LIKE :#{#loginOrName}%
-                    OR CONCAT_WS(' ', user.firstName, user.lastName) LIKE %:#{#loginOrName}%
+                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
                 )
             """)
     Page<User> searchAllByLoginOrName(Pageable page, @Param("loginOrName") String loginOrName);
@@ -445,7 +444,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             WHERE user.isDeleted = FALSE
                 AND (
                     user.login LIKE :#{#loginOrName}%
-                    OR CONCAT_WS(' ', user.firstName, user.lastName) LIKE %:#{#loginOrName}%
+                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
                 )
                 AND (course.studentGroupName = userGroup
                     OR course.teachingAssistantGroupName = userGroup
@@ -460,7 +459,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             WHERE user.isDeleted = FALSE
                 AND (
                     user.login LIKE :#{#loginOrName}%
-                    OR CONCAT_WS(' ', user.firstName, user.lastName) LIKE %:#{#loginOrName}%
+                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
                 )
                 AND (course.studentGroupName = userGroup
                     OR course.teachingAssistantGroupName = userGroup
@@ -567,18 +566,17 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
         var activated = userSearch.getStatus().contains(FILTER_ACTIVATED);
         var deactivated = userSearch.getStatus().contains(FILTER_DEACTIVATED);
 
-        // Course Ids
-        var courseIds = userSearch.getCourseIds();
-
         // Users without registration numbers or with registration numbers
         var noRegistrationNumber = userSearch.getRegistrationNumbers().contains(FILTER_WITHOUT_REG_NO);
         var withRegistrationNumber = userSearch.getRegistrationNumbers().contains(FILTER_WITH_REG_NO);
 
         Specification<User> specification = Specification.where(distinct()).and(notSoftDeleted()).and(getSearchTermSpecification(searchTerm))
                 .and(getInternalOrExternalSpecification(internal, external)).and(getActivatedOrDeactivatedSpecification(activated, deactivated))
-                .and(getAuthoritySpecification(modifiedAuthorities, courseIds)).and(getCourseSpecification(courseIds, modifiedAuthorities))
-                .and(getAuthorityAndCourseSpecification(courseIds, modifiedAuthorities))
-                .and(getWithOrWithoutRegistrationNumberSpecification(noRegistrationNumber, withRegistrationNumber));
+                .and(getAuthoritySpecification(modifiedAuthorities)).and(getWithOrWithoutRegistrationNumberSpecification(noRegistrationNumber, withRegistrationNumber));
+
+        if (userSearch.isFindWithoutUserGroups()) {
+            specification = specification.and(getAllUsersWithoutUserGroups());
+        }
 
         return findAll(specification, sorted).map(user -> {
             user.setVisibleRegistrationNumber();
@@ -628,17 +626,6 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     default User getUserWithGroupsAndAuthorities() {
         String currentUserLogin = getCurrentUserLogin();
         Optional<User> user = findOneWithGroupsAndAuthoritiesByLogin(currentUserLogin);
-        return unwrapOptionalUser(user, currentUserLogin);
-    }
-
-    /**
-     * Get user with authorities of currently logged-in user
-     *
-     * @return currently logged-in user
-     */
-    default User getUserWithAuthorities() {
-        String currentUserLogin = getCurrentUserLogin();
-        Optional<User> user = findOneWithAuthoritiesByLogin(currentUserLogin);
         return unwrapOptionalUser(user, currentUserLogin);
     }
 
@@ -913,6 +900,14 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             WHERE user.vcsAccessToken IS NULL
             """)
     Set<User> getUsersWithAccessTokenNull();
+
+    @Query("""
+            SELECT COUNT(user) > 0
+            FROM User user
+            WHERE user.login = :login
+                AND :#{T(de.tum.in.www1.artemis.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
+            """)
+    boolean isAdmin(@Param("login") String login);
 
     @Query("""
             SELECT COUNT(user) > 0

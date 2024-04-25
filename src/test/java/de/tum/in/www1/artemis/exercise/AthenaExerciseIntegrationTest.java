@@ -151,7 +151,7 @@ class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
 
         course.setRestrictedAthenaModulesAccess(false);
 
-        request.getMvc().perform(courseTestService.buildUpdateCourse(course.getId(), course)).andExpect(status().isBadRequest());
+        request.performMvcRequest(courseTestService.buildUpdateCourse(course.getId(), course)).andExpect(status().isBadRequest());
     }
 
     @Test
@@ -178,7 +178,7 @@ class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
 
         // Revoke access to restricted Athena modules for the course
         course.setRestrictedAthenaModulesAccess(false);
-        MvcResult result = request.getMvc().perform(courseTestService.buildUpdateCourse(course.getId(), course)).andExpect(status().isOk()).andReturn();
+        MvcResult result = request.performMvcRequest(courseTestService.buildUpdateCourse(course.getId(), course)).andExpect(status().isOk()).andReturn();
         Course updatedCourse = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
 
         assertThat(updatedCourse.getRestrictedAthenaModulesAccess()).as("restricted Athena modules access was correctly updated for the course")

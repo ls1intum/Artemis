@@ -8,7 +8,7 @@ services:
         image: docker.io/library/postgres:16.1-alpine
         pull_policy: if_not_present
         user: postgres
-        command: ["postgres", "-c", "max_connections=200"]
+        command: ["postgres", "-c", "max_connections=10000"]
         volumes:
             - artemis-postgres-data:/var/lib/postgresql/data
         # DO NOT use this default file for production systems!

@@ -13,7 +13,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
@@ -76,7 +75,7 @@ public class QuizStatisticService {
         }
 
         // add the Results in every participation of the given quizExercise to the statistics
-        for (Participation participation : studentParticipationRepository.findByExerciseId(quizExercise.getId())) {
+        for (StudentParticipation participation : studentParticipationRepository.findByExerciseId(quizExercise.getId())) {
 
             Result latestRatedResult = null;
             Result latestUnratedResult = null;
@@ -104,9 +103,7 @@ public class QuizStatisticService {
                 quizExercise.addResultToAllStatistics(latestUnratedResult, latestUnratedSubmission);
             }
 
-            if (ltiNewResultService.isPresent()) {
-                ltiNewResultService.get().onNewResult((StudentParticipation) participation);
-            }
+            ltiNewResultService.ifPresent(newResultService -> newResultService.onNewResult(participation));
         }
 
         // save changed Statistics

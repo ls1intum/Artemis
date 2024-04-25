@@ -10,12 +10,6 @@ public final class ProgrammingSubmissionConstants {
 
     public static final String TEST_COMMIT = "a6250b6f03c3ae8fa8fb8fdf6bb1dc1c4cc57bad";
 
-    public static final String BITBUCKET_PUSH_EVENT_REQUEST;
-
-    public static final String BITBUCKET_PUSH_EVENT_REQUEST_WITHOUT_COMMIT;
-
-    public static final String BAMBOO_BUILD_RESULT_REQUEST;
-
     public static final String GITLAB_PUSH_EVENT_REQUEST;
 
     public static final String GITLAB_PUSH_EVENT_REQUEST_WITHOUT_COMMIT;
@@ -24,10 +18,6 @@ public final class ProgrammingSubmissionConstants {
 
     static {
         try {
-            BITBUCKET_PUSH_EVENT_REQUEST = IOUtils.toString(ProgrammingSubmissionConstants.class.getResource("bitbucketPushEventRequest.json"), StandardCharsets.UTF_8);
-            BITBUCKET_PUSH_EVENT_REQUEST_WITHOUT_COMMIT = IOUtils.toString(ProgrammingSubmissionConstants.class.getResource("bitbucketPushEventRequestWithoutCommit.json"),
-                    StandardCharsets.UTF_8);
-            BAMBOO_BUILD_RESULT_REQUEST = IOUtils.toString(ProgrammingSubmissionConstants.class.getResource("bambooBuildResultRequest.json"), StandardCharsets.UTF_8);
             GITLAB_PUSH_EVENT_REQUEST = IOUtils.toString(ProgrammingSubmissionConstants.class.getResource("gitlabPushEventRequest.json"), StandardCharsets.UTF_8);
             GITLAB_PUSH_EVENT_REQUEST_WITHOUT_COMMIT = IOUtils.toString(ProgrammingSubmissionConstants.class.getResource("gitlabPushEventRequestWithoutCommit.json"),
                     StandardCharsets.UTF_8);

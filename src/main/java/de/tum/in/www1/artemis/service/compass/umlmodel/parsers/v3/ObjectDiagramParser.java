@@ -5,7 +5,7 @@ import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.*;
 import java.io.IOException;
 import java.util.*;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;

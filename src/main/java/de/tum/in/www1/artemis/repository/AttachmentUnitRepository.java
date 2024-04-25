@@ -4,7 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.util.List;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -24,13 +24,14 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public interface AttachmentUnitRepository extends JpaRepository<AttachmentUnit, Long> {
 
     @Query("""
-            SELECT attachmentUnit
+            SELECT lectureUnit
             FROM Lecture lecture
-                LEFT JOIN TREAT(lecture.lectureUnits AS AttachmentUnit) attachmentUnit
-                LEFT JOIN FETCH attachmentUnit.attachment attachment
+                LEFT JOIN lecture.lectureUnits lectureUnit
+                LEFT JOIN FETCH lectureUnit.attachment attachment
             WHERE lecture.id = :lectureId
+                AND TYPE (lectureUnit) = AttachmentUnit
                 AND attachment.attachmentType = :attachmentType
-            ORDER BY INDEX(attachmentUnit)
+            ORDER BY INDEX(lectureUnit)
             """)
     // INDEX() is used to retrieve the order saved by @OrderColumn, see https://en.wikibooks.org/wiki/Java_Persistence/JPQL#Special_Operators
     List<AttachmentUnit> findAllByLectureIdAndAttachmentType(@Param("lectureId") long lectureId, @Param("attachmentType") AttachmentType attachmentType);

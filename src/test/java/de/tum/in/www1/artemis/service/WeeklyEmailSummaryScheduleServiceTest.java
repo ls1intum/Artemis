@@ -41,7 +41,7 @@ class WeeklyEmailSummaryScheduleServiceTest {
     @BeforeAll
     static void setUp() {
         profileService = mock(ProfileService.class);
-        when(profileService.isDev()).thenReturn(false);
+        when(profileService.isDevActive()).thenReturn(false);
 
         emailSummaryService = mock(EmailSummaryService.class);
 

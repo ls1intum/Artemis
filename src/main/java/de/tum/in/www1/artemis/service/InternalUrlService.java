@@ -6,7 +6,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Optional;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,9 +20,9 @@ import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 @Service
 public abstract class InternalUrlService {
 
-    protected Optional<URL> internalCiUrl;
+    protected final Optional<URL> internalCiUrl;
 
-    protected Optional<URL> internalVcsUrl;
+    protected final Optional<URL> internalVcsUrl;
 
     private static final Logger log = LoggerFactory.getLogger(InternalUrlService.class);
 
@@ -68,7 +68,7 @@ public abstract class InternalUrlService {
 
         if (vcsRepositoryUri == null) {
             log.warn("Cannot replace url to internal url {} because the url is null.", internalVcsUrl);
-            return vcsRepositoryUri;
+            return null;
         }
 
         return replaceUrl(vcsRepositoryUri, internalVcsUrl.get());

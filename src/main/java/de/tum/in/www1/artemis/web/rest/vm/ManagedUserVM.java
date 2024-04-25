@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.vm;
 
-import javax.validation.constraints.Size;
+import jakarta.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 

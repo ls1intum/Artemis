@@ -6,11 +6,13 @@ Tests are run using [stack](https://docs.haskellstack.org/en/stable/README/) in 
 
 ## Setup
 
-The executables specified in `test.cabal` expect the solution repository checked out in the `solution` subdirectory and the submission checked out in the `assignment` subdirectory.
+The executables specified in `test.cabal` expect the solution repository checked out in the `solution` subdirectory and
+the submission checked out in the `assignment` subdirectory.
 Moreover, `test.cabal` provides an executable to test the template repository locally.
 For this, it expects the template repository in the `template` subdirectory.
 
-You can find a script to conveniently setup this folder structure when checking out a new exercise in the [programming exercise setup documentation](https://docs.artemis.cit.tum.de/user/exercises/programming/#setup).
+You can find a script to conveniently set up this folder structure when checking out a new exercise in
+the [programming exercise setup documentation](https://docs.artemis.cit.tum.de/user/exercises/programming/#setup).
 
 ## Running Tests
 
@@ -27,4 +29,5 @@ You can modify `run.sh` to adapt the build and test process.
 
 ## Updating Dependencies
 
-If you plan to update the stack resolver including its GHC version, you also have to create a new docker image and update the corresponding Bamboo configuration.
+If you plan to update the stack resolver including its GHC version, you also have to create a new docker image and
+update the corresponding Build configuration.

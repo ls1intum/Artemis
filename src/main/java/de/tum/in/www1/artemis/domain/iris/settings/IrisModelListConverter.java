@@ -4,8 +4,8 @@ import java.util.Comparator;
 import java.util.Set;
 import java.util.TreeSet;
 
-import javax.persistence.AttributeConverter;
-import javax.persistence.Converter;
+import jakarta.persistence.AttributeConverter;
+import jakarta.persistence.Converter;
 
 @Converter
 public class IrisModelListConverter implements AttributeConverter<Set<String>, String> {

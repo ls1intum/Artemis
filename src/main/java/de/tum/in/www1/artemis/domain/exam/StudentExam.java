@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.domain.exam;
 import java.time.ZonedDateTime;
 import java.util.*;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;

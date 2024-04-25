@@ -137,7 +137,7 @@ public class GroupChatResource extends ConversationManagementResource {
         log.debug("REST request to register {} users to group chat: {}", userLogins.size(), groupChatId);
         var course = courseRepository.findByIdElseThrow(courseId);
         checkMessagingEnabledElseThrow(course);
-        if (userLogins == null || userLogins.isEmpty()) {
+        if (userLogins.isEmpty()) {
             throw new BadRequestAlertException("No user logins provided", GROUP_CHAT_ENTITY_NAME, "userLoginsEmpty");
         }
         var groupChatFromDatabase = groupChatRepository.findByIdElseThrow(groupChatId);
@@ -165,7 +165,7 @@ public class GroupChatResource extends ConversationManagementResource {
         log.debug("REST request to deregister {} users from the group chat : {}", userLogins.size(), groupChatId);
         var course = courseRepository.findByIdElseThrow(courseId);
         checkMessagingEnabledElseThrow(course);
-        if (userLogins == null || userLogins.isEmpty()) {
+        if (userLogins.isEmpty()) {
             throw new BadRequestAlertException("No user logins provided", GROUP_CHAT_ENTITY_NAME, "userLoginsEmpty");
         }
 

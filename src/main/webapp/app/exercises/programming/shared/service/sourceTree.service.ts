@@ -6,7 +6,7 @@ export class SourceTreeService {
 
     /**
      * Build source tree url.
-     * @param baseUrl - the base url of the version control system (e.g. Bitbucket or Bamboo)
+     * @param baseUrl - the base url of the version control system
      * @param cloneUrl - url of the target.
      */
     buildSourceTreeUrl(baseUrl: string, cloneUrl: string | undefined) {

@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.domain;
 
 import static de.tum.in.www1.artemis.domain.enumeration.ExerciseType.TEXT;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 

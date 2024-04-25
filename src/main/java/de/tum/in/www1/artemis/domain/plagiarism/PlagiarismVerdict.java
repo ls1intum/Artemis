@@ -13,7 +13,7 @@ public enum PlagiarismVerdict {
     /**
      * Finds the most severe plagiarism verdict where severity is defined by the order of the enum constants in {@link PlagiarismVerdict}
      * (The first enum constant is the most severe).
-     *
+     * <p>
      * In the intended usage scenario, all members of the plagiarismVerdicts should belong to the same student and in the same course or exam.
      *
      * @param plagiarismVerdicts an iterable of plagiarism verdicts.

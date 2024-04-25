@@ -40,7 +40,12 @@
             </div>
         </div>
     }
-    <jhi-competency-relation-graph [competencies]="competencies" [relations]="relations" (onCreateRelation)="createRelation($event)" (onRemoveRelation)="removeRelation($event)" />
+    <jhi-competency-relation-graph
+        [competencies]="competencies"
+        [relations]="relations"
+        (onCreateRelation)="createRelation($event)"
+        (onRemoveRelation)="onRemoveRelation($event)"
+    />
     <h2>{{ 'artemisApp.competency.competencies' | artemisTranslate }}</h2>
     <div class="container-fluid overflow-auto">
         @if (competencies.length) {

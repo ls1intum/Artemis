@@ -10,13 +10,7 @@ import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model'
 @Component({
     selector: 'jhi-user-import-button',
     template: `
-        <jhi-button
-            [btnType]="ButtonType.PRIMARY"
-            [btnSize]="buttonSize"
-            [icon]="faFileImport"
-            [title]="'artemisApp.importUsers.buttonLabel'"
-            (onClick)="openUsersImportDialog($event)"
-        />
+        <jhi-button [btnType]="buttonType" [btnSize]="buttonSize" [icon]="faFileImport" [title]="'artemisApp.importUsers.buttonLabel'" (onClick)="openUsersImportDialog($event)" />
     `,
 })
 export class UsersImportButtonComponent {
@@ -25,9 +19,11 @@ export class UsersImportButtonComponent {
 
     @Input() tutorialGroup: TutorialGroup | undefined = undefined;
     @Input() examUserMode: boolean;
+    @Input() adminUserMode: boolean;
     @Input() courseGroup: CourseGroup;
     @Input() courseId: number;
     @Input() buttonSize: ButtonSize = ButtonSize.MEDIUM;
+    @Input() buttonType: ButtonType = ButtonType.PRIMARY;
     @Input() exam: Exam;
 
     @Output() finish: EventEmitter<void> = new EventEmitter();
@@ -49,6 +45,7 @@ export class UsersImportButtonComponent {
         modalRef.componentInstance.exam = this.exam;
         modalRef.componentInstance.tutorialGroup = this.tutorialGroup;
         modalRef.componentInstance.examUserMode = this.examUserMode;
+        modalRef.componentInstance.adminUserMode = this.adminUserMode;
         modalRef.result.then(
             () => this.finish.emit(),
             () => {},

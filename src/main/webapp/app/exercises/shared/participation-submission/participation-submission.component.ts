@@ -53,9 +53,11 @@ export class ParticipationSubmissionComponent implements OnInit {
     eventSubscriber: Subscription;
     isLoading = true;
     commitHashURLTemplate?: string;
+    logsAvailable?: { [key: string]: boolean };
 
     // Icons
     faTrash = faTrash;
+
     constructor(
         private route: ActivatedRoute,
         private submissionService: SubmissionService,
@@ -91,42 +93,57 @@ export class ParticipationSubmissionComponent implements OnInit {
             if (queryParams?.['isTmpOrSolutionProgrParticipation'] != undefined) {
                 this.isTmpOrSolutionProgrParticipation = queryParams['isTmpOrSolutionProgrParticipation'] === 'true';
             }
-            if (this.isTmpOrSolutionProgrParticipation) {
-                // Find programming exercise of template and solution programming participation
-                this.programmingExerciseService.findWithTemplateAndSolutionParticipation(params['exerciseId'], true).subscribe((exerciseResponse) => {
-                    this.exercise = exerciseResponse.body!;
-                    this.exerciseStatusBadge = dayjs().isAfter(dayjs(this.exercise.dueDate!)) ? 'bg-danger' : 'bg-success';
-                    const templateParticipation = (this.exercise as ProgrammingExercise).templateParticipation;
-                    const solutionParticipation = (this.exercise as ProgrammingExercise).solutionParticipation;
+            this.participationService.getLogsAvailabilityForResultsOfParticipation(this.participationId).subscribe((logsAvailable) => {
+                this.logsAvailable = logsAvailable;
+                if (this.isTmpOrSolutionProgrParticipation) {
+                    // Find programming exercise of template and solution programming participation
+                    this.programmingExerciseService.findWithTemplateAndSolutionParticipation(params['exerciseId'], true).subscribe((exerciseResponse) => {
+                        this.exercise = exerciseResponse.body!;
+                        this.exerciseStatusBadge = dayjs().isAfter(dayjs(this.exercise.dueDate!)) ? 'bg-danger' : 'bg-success';
+                        const templateParticipation = (this.exercise as ProgrammingExercise).templateParticipation;
+                        const solutionParticipation = (this.exercise as ProgrammingExercise).solutionParticipation;
 
-                    // Check if requested participationId belongs to the template or solution participation
-                    if (this.participationId === templateParticipation?.id) {
-                        this.participation = templateParticipation;
-                        this.submissions = templateParticipation.submissions!;
-                        // This is needed to access the exercise in the result details
-                        templateParticipation.programmingExercise = this.exercise;
-                    } else if (this.participationId === solutionParticipation?.id) {
-                        this.participation = solutionParticipation;
-                        this.submissions = solutionParticipation.submissions!;
-                        // This is needed to access the exercise in the result details
-                        solutionParticipation.programmingExercise = this.exercise;
-                    } else {
-                        // Should not happen
-                        alert(this.translateService.instant('artemisApp.participation.noParticipation'));
-                    }
+                        // Check if requested participationId belongs to the template or solution participation
+                        if (this.participationId === templateParticipation?.id) {
+                            this.participation = templateParticipation;
+                            this.submissions = templateParticipation.submissions!;
+                            // This is needed to access the exercise in the result details
+                            templateParticipation.programmingExercise = this.exercise;
+                        } else if (this.participationId === solutionParticipation?.id) {
+                            this.participation = solutionParticipation;
+                            this.submissions = solutionParticipation.submissions!;
+                            // This is needed to access the exercise in the result details
+                            solutionParticipation.programmingExercise = this.exercise;
+                        } else {
+                            // Should not happen
+                            alert(this.translateService.instant('artemisApp.participation.noParticipation'));
+                        }
+
+                        if (this.submissions) {
+                            this.submissions.forEach((submission: ProgrammingSubmission) => {
+                                if (submission.results) {
+                                    submission.results.forEach((result: Result) => {
+                                        result.logsAvailable = this.logsAvailable?.[result.id!];
+                                    });
+                                }
+                            });
+                        }
+
+                        this.isLoading = false;
+                    });
+                } else {
+                    // Get exercise for release and due dates
+                    this.exerciseService.find(params['exerciseId']).subscribe((exerciseResponse) => {
+                        this.exercise = exerciseResponse.body!;
+                        this.updateStatusBadgeColor();
+                    });
+                    this.fetchParticipationAndSubmissionsForStudent();
                     this.isLoading = false;
-                });
-            } else {
-                // Get exercise for release and due dates
-                this.exerciseService.find(params['exerciseId']).subscribe((exerciseResponse) => {
-                    this.exercise = exerciseResponse.body!;
-                    this.updateStatusBadgeColor();
-                });
-                this.fetchParticipationAndSubmissionsForStudent();
-            }
+                }
+            });
         });
 
-        // Get active profiles, to distinguish between Bitbucket and GitLab
+        // Get active profiles, to distinguish between VC systems
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             this.commitHashURLTemplate = profileInfo.commitHashURLTemplate;
         });
@@ -157,9 +174,13 @@ export class ParticipationSubmissionComponent implements OnInit {
                         this.participation.submissions = submissions;
                     }
                     // set the submission to every result so it can be accessed via the result
+                    // set the build log availability for every result
                     submissions.forEach((submission: Submission) => {
                         if (submission.results) {
-                            submission.results.forEach((result: Result) => (result.submission = submission));
+                            submission.results.forEach((result: Result) => {
+                                result.submission = submission;
+                                result.logsAvailable = this.logsAvailable?.[result.id!];
+                            });
                         }
                     });
                 }
@@ -240,6 +261,11 @@ export class ParticipationSubmissionComponent implements OnInit {
                     break;
             }
         }
+    }
+
+    viewBuildLogs(resultId: number): void {
+        const url = `/api/build-log/${resultId}`;
+        window.open(url, '_blank');
     }
 
     private updateResults(submission: Submission, result: Result) {

@@ -43,23 +43,13 @@ For `cypress.env.json`:
 * `adminUsername`: The admin username (no template)
 * `adminPassword`: The admin password (no template)
 
-### Additional configuration for test environments using the Bamboo + Bitbucket setup
-On Bamboo + Bitbucket setups Artemis has issues with the group synchronization if a new course is created and immediately afterwards a programming exercise is created. This requires the tests to wait for over one minute in each test spec, which is related to programming exercises. This increases the total execution time of the test suite by a lot. The issue can be avoided by using already existing user groups in the course creation.
-
-Currently the tests require one pre-created user group for the roles `USER`, `TEACHING ASSISTANT`, `EDITOR` and `INSTRUCTOR` in the user management system of the test environment. Each group has its own setting in the configuration file. The `allowGroupCustomization` setting (found in the `cypress.env.json` file) has to be set to `true`. Otherwise the tests will not use the pre-created user groups (resulting in a failure of all programming exercise related tests on a Bamboo + Bitbucket setup).
-* `allowGroupCustomization`: `true`
-* `studentGroupName`: The group name for students (e.g. `artemis-e2etest-students`)
-* `tutorGroupName`: The group name for tutors (e.g. `artemis-e2etest-tutors`)
-* `editorGroupName`: The group name for tutors (e.g. `artemis-e2etest-editors`)
-* `instructorGroupName`: The group name for tutors (e.g. `artemis-e2etest-instructors`)
-
 ### Example configurations
 In the following we show example configurations of the test suite for imaginary Artemis setups. For readability we will leave out settings in the configuration files, which do not require the user to adjust them in order to run the tests.
 #### Test environment using Gitlab + Jenkins
 `cypress.json`:
 ```json
 {
-    "baseUrl": "https://imaginary-artemis-server.com",
+    "baseUrl": "https://imaginary-artemis-server.com"
 }
 ```
 `cypress.env.json`:
@@ -68,29 +58,7 @@ In the following we show example configurations of the test suite for imaginary 
     "username": "username_USERID",
     "password": "password_USERID",
     "adminUsername": "admin_username",
-    "adminPassword": "admin_password",
-}
-
-```
-#### Test environment using Bamboo + Bitbucket
-`cypress.json`:
-```json
-{
-    "baseUrl": "https://imaginary-artemis-server.com",
-}
-```
-`cypress.env.json`:
-```json
-{
-    "username": "username_USERID",
-    "password": "password_USERID",
-    "adminUsername": "admin_username",
-    "adminPassword": "admin_password",
-    "allowGroupCustomization": true,
-    "studentGroupName": "artemis-e2etest-students",
-    "tutorGroupName": "artemis-e2etest-tutors",
-    "editorGroupName": "artemis-e2etest-editors",
-    "instructorGroupName": "artemis-e2etest-instructors"
+    "adminPassword": "admin_password"
 }
 
 ```

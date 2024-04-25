@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { CompetencyValidators } from 'app/entities/competency.model';
-import { faChevronRight, faEdit, faSave, faTrash, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faChevronRight, faPencilAlt, faSave, faTrash, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { FormGroup, Validators } from '@angular/forms';
 import { CompetencyFormControlsWithViewed } from 'app/course/competencies/generate-competencies/generate-competencies.component';
@@ -23,7 +23,7 @@ export class CompetencyRecommendationDetailComponent implements OnInit {
     protected readonly faTrash = faTrash;
     protected readonly faWrench = faWrench;
     protected readonly faSave = faSave;
-    protected readonly faEdit = faEdit;
+    protected readonly faPencilAlt = faPencilAlt;
 
     //Other constants for html
     protected readonly competencyValidators = CompetencyValidators;

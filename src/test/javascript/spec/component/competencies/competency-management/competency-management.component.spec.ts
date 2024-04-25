@@ -256,13 +256,27 @@ describe('CompetencyManagementComponent', () => {
     });
 
     it('should handle remove relation callback', () => {
-        jest.spyOn(competencyService, 'removeCompetencyRelation').mockReturnValue(of(new HttpResponse<any>()));
+        const modalRef = {
+            result: Promise.resolve(),
+            componentInstance: {},
+        } as NgbModalRef;
+        jest.spyOn(modalService, 'open').mockReturnValue(modalRef);
+
         fixture.detectChanges();
-        component.relations = [{ id: 1 }, { id: 2 }];
 
         const relationGraph: CompetencyRelationGraphStubComponent = fixture.debugElement.query(By.directive(CompetencyRelationGraphStubComponent)).componentInstance;
         relationGraph.onRemoveRelation.emit(1);
         fixture.detectChanges();
+
+        expect(modalService.open).toHaveBeenCalledOnce();
+    });
+
+    it('should remove relation', () => {
+        jest.spyOn(competencyService, 'removeCompetencyRelation').mockReturnValue(of(new HttpResponse<any>()));
+        fixture.detectChanges();
+        component.relations = [{ id: 1 }, { id: 2 }];
+
+        component['removeRelation'](1);
 
         expect(component.relations).toHaveLength(1);
         expect(component.relations.at(0)?.id).toBe(2);

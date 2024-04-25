@@ -1,8 +1,12 @@
 package de.tum.in.www1.artemis.repository;
 
+import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
+
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Set;
 
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -68,4 +72,7 @@ public interface ProgrammingExerciseTestRepository extends JpaRepository<Program
     default List<ProgrammingExercise> findAllWithBuildAndTestAfterDueDateInFuture() {
         return findAllByBuildAndTestStudentSubmissionsAfterDueDateAfterDate(ZonedDateTime.now());
     }
+
+    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation" })
+    List<ProgrammingExercise> findAllWithTemplateAndSolutionParticipationByIdIn(Set<Long> exerciseIds);
 }

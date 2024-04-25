@@ -146,7 +146,7 @@ describe('Build Plan Editor', () => {
             activatedRoute.snapshot = {
                 params: { exerciseId: 3 },
             } as unknown as ActivatedRouteSnapshot;
-            const getBuildPlanStub = jest.spyOn(buildPlanService, 'getBuildPlan').mockReturnValue(throwError(new HttpResponse<BuildPlan>({ status })));
+            const getBuildPlanStub = jest.spyOn(buildPlanService, 'getBuildPlan').mockReturnValue(throwError(() => new HttpResponse<BuildPlan>({ status })));
 
             const alertStub = jest.spyOn(alertService, 'error');
 

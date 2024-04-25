@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.repository;
 import java.util.Collection;
 import java.util.Optional;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

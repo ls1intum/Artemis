@@ -52,7 +52,7 @@
                 "newAttachment": "New Attachment",
                 "editAttachment": "Edit Attachment",
                 "notificationText": "Notification Text",
-                "notificationPlaceholder": "Optional: Notification about changes",
+                "notificationPlaceholder": "What did you change?",
                 "chooseFile": "Choose File",
                 "error": "The file {{ fileName }} is too large. The maximum file size is 20MB.",
                 "fileLimitation": "(max. size 20 MB)",

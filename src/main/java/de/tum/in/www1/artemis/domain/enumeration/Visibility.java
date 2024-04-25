@@ -7,7 +7,7 @@ package de.tum.in.www1.artemis.domain.enumeration;
  * <p>
  * Tutors/Instructors/Admins should always see all levels of visibility.
  * <p>
- * Note: The order is used as part of an {@link javax.persistence.EnumType#ORDINAL} mapping in {@link de.tum.in.www1.artemis.domain.Feedback}.
+ * Note: The order is used as part of an {@link jakarta.persistence.EnumType#ORDINAL} mapping in {@link de.tum.in.www1.artemis.domain.Feedback}.
  * Do NOT change the order of existing values.
  */
 public enum Visibility {

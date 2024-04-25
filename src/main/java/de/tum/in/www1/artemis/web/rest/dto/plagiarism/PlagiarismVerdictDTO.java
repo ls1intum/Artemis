@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.dto.plagiarism;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 

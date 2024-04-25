@@ -178,7 +178,6 @@ describe('ProgrammingExercise Service', () => {
                 templateRepositoryUri: 'BBBBBB',
                 solutionRepositoryUri: 'BBBBBB',
                 templateBuildPlanId: 'BBBBBB',
-                publishBuildPlanUrl: true,
                 allowOnlineEditor: true,
                 releaseDate: undefined,
                 dueDate: undefined,
@@ -222,7 +221,6 @@ describe('ProgrammingExercise Service', () => {
                 templateRepositoryUri: 'BBBBBB',
                 solutionRepositoryUri: 'BBBBBB',
                 templateBuildPlanId: 'BBBBBB',
-                publishBuildPlanUrl: true,
                 allowOnlineEditor: true,
                 releaseDate: undefined,
                 dueDate: undefined,
@@ -371,7 +369,7 @@ describe('ProgrammingExercise Service', () => {
             service.lockAllRepositories(exerciseId).subscribe();
         }
         const url = `${resourceUrl}/${exerciseId}/${lockUnlock}-all-repositories`;
-        const req = httpMock.expectOne({ method: 'PUT', url });
+        const req = httpMock.expectOne({ method: 'POST', url });
         req.flush({ body: 'something' });
     });
 

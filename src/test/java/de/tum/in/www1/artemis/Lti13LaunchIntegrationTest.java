@@ -6,7 +6,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import javax.crypto.SecretKey;
 
@@ -36,7 +39,7 @@ import io.jsonwebtoken.Jwts;
  * see <a href="https://www.imsglobal.org/spec/lti/v1p3/#lti-message-general-details">LTI message general details</a>
  * see <a href="https://www.imsglobal.org/spec/security/v1p0/#openid_connect_launch_flow">OpenId Connect launch flow</a>
  */
-class Lti13LaunchIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class Lti13LaunchIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final SecretKey SIGNING_KEY = Jwts.SIG.HS256.key().build();
 
@@ -62,7 +65,6 @@ class Lti13LaunchIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         var user = userRepository.findUserWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student1").orElseThrow();
         user.setInternal(false);
         userRepository.save(user);
-        jiraRequestMockProvider.enableMockingOfRequests();
     }
 
     @Test

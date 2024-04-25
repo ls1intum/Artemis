@@ -5,7 +5,7 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import java.time.ZonedDateTime;
 import java.util.Set;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -24,37 +24,38 @@ import de.tum.in.www1.artemis.domain.notification.Notification;
 @Repository
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
 
-    // we can try to use something like TREAT(notification AS GroupNotification) here to avoid warnings
     @Query("""
             SELECT notification
             FROM Notification notification
-                LEFT JOIN notification.course
-                LEFT JOIN notification.recipient
+                LEFT JOIN TREAT(notification AS GroupNotification).course course
+                LEFT JOIN TREAT(notification AS SingleUserNotification).recipient recipient
             WHERE notification.notificationDate > :hideUntil
                 AND (
                     (TYPE(notification) = GroupNotification
                         AND ((
-                                notification.course.instructorGroupName IN :currentGroups
-                                AND notification.type = de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType.INSTRUCTOR
+                                course.instructorGroupName IN :currentGroups
+                                AND TREAT(notification AS GroupNotification).type = de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType.INSTRUCTOR
                             ) OR (
-                                notification.course.teachingAssistantGroupName IN :currentGroups
-                                AND notification.type = de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType.TA
+                                course.teachingAssistantGroupName IN :currentGroups
+                                AND TREAT(notification AS GroupNotification).type = de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType.TA
                             ) OR (
-                                notification.course.editorGroupName IN :currentGroups
-                                AND notification.type = de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType.EDITOR
+                                course.editorGroupName IN :currentGroups
+                                AND TREAT(notification AS GroupNotification).type = de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType.EDITOR
                             ) OR (
-                                notification.course.studentGroupName IN :currentGroups
-                                AND notification.type = de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType.STUDENT
+                                course.studentGroupName IN :currentGroups
+                                AND TREAT(notification AS GroupNotification).type = de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType.STUDENT
                             )
                         )
                     ) OR (TYPE(notification) = SingleUserNotification
-                        AND notification.recipient.login = :login
+                        AND recipient.login = :login
                         AND (notification.title NOT IN :titlesToNotLoadNotification OR notification.title IS NULL)
-                    ) OR (TYPE(notification) = TutorialGroupNotification
-                        AND notification.tutorialGroup.id IN :tutorialGroupIds
+                    ) OR (
+                        TYPE(notification) = TutorialGroupNotification
+                        AND TREAT(notification AS TutorialGroupNotification).tutorialGroup.id IN :tutorialGroupIds
                     )
                 )
             """)
+    // For some reason IntelliJ doesn't parse this JPQL, shows an error and the syntax highlighting is broken in the WHERE clause. However, it compiles and works fine.
     Page<Notification> findAllNotificationsForRecipientWithLogin(@Param("currentGroups") Set<String> currentGroups, @Param("login") String login,
             @NotNull @Param("hideUntil") ZonedDateTime hideUntil, @Param("tutorialGroupIds") Set<Long> tutorialGroupIds,
             @Param("titlesToNotLoadNotification") Set<String> titlesToNotLoadNotification, Pageable pageable);
@@ -62,36 +63,43 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     @Query("""
             SELECT notification
             FROM Notification notification
-                LEFT JOIN notification.course
-                LEFT JOIN notification.recipient
+                LEFT JOIN TREAT(notification AS GroupNotification).course course
+                LEFT JOIN TREAT(notification AS SingleUserNotification).recipient recipient
             WHERE notification.notificationDate > :hideUntil
                 AND (
                     (TYPE(notification) = GroupNotification
                         AND (notification.title NOT IN :deactivatedTitles OR notification.title IS NULL)
                         AND ((
-                                notification.course.instructorGroupName IN :currentGroups
-                                AND notification.type = de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType.INSTRUCTOR
+                                course.instructorGroupName IN :currentGroups
+                                AND TREAT(notification AS GroupNotification).type = de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType.INSTRUCTOR
                             ) OR (
-                                notification.course.teachingAssistantGroupName IN :currentGroups
-                                AND notification.type = de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType.TA
+                                course.teachingAssistantGroupName IN :currentGroups
+                                AND TREAT(notification AS GroupNotification).type = de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType.TA
                             ) OR (
-                                notification.course.editorGroupName IN :currentGroups
-                                AND notification.type = de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType.EDITOR
+                                course.editorGroupName IN :currentGroups
+                                AND TREAT(notification AS GroupNotification).type = de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType.EDITOR
                             ) OR (
-                                notification.course.studentGroupName IN :currentGroups
-                                AND notification.type = de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType.STUDENT
+                                course.studentGroupName IN :currentGroups
+                                AND TREAT(notification AS GroupNotification).type = de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType.STUDENT
                             )
                         )
                     ) OR (TYPE(notification) = SingleUserNotification
-                        AND notification.recipient.login = :login
-                        AND (notification.title NOT IN :titlesToNotLoadNotification OR notification.title IS NULL)
-                        AND (notification.title NOT IN :deactivatedTitles OR notification.title IS NULL)
-                    ) OR (type(notification) = TutorialGroupNotification
-                        AND notification.tutorialGroup.id IN :tutorialGroupIds
-                        AND (notification.title NOT IN :deactivatedTitles OR notification.title IS NULL)
+                        AND recipient.login = :login
+                        AND (notification.title NOT IN :titlesToNotLoadNotification
+                            OR notification.title IS NULL
+                        )
+                        AND (notification.title NOT IN :deactivatedTitles
+                            OR notification.title IS NULL
+                        )
+                    ) OR (TYPE(notification) = TutorialGroupNotification
+                        AND TREAT(notification AS TutorialGroupNotification).tutorialGroup.id IN :tutorialGroupIds
+                        AND (notification.title NOT IN :deactivatedTitles
+                            OR notification.title IS NULL
+                        )
                     )
                 )
             """)
+    // For some reason IntelliJ doesn't parse this JPQL, shows an error and the syntax highlighting is broken in the WHERE clause. However, it compiles and works fine.
     Page<Notification> findAllNotificationsFilteredBySettingsForRecipientWithLogin(@Param("currentGroups") Set<String> currentGroups, @Param("login") String login,
             @NotNull @Param("hideUntil") ZonedDateTime hideUntil, @Param("deactivatedTitles") Set<String> deactivatedTitles, @Param("tutorialGroupIds") Set<Long> tutorialGroupIds,
             @Param("titlesToNotLoadNotification") Set<String> titlesToNotLoadNotification, Pageable pageable);

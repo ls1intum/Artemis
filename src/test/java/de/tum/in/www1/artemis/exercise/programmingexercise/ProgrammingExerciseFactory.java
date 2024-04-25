@@ -3,19 +3,34 @@ package de.tum.in.www1.artemis.exercise.programmingexercise;
 import static de.tum.in.www1.artemis.exercise.ExerciseFactory.populateExerciseForExam;
 import static java.time.ZonedDateTime.now;
 
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.StaticCodeAnalysisCategory;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.CategoryState;
+import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
+import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.exercise.ExerciseFactory;
-import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildLogDTO;
-import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildPlanDTO;
-import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
-import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.*;
+import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.CommitDTO;
+import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.TestCaseDTO;
+import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.TestCaseDetailMessageDTO;
+import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.TestResultsDTO;
+import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.TestSuiteDTO;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 import de.tum.in.www1.artemis.util.TestConstants;
 
@@ -145,7 +160,6 @@ public class ProgrammingExerciseFactory {
         toBeImported.setExerciseHints(null);
         toBeImported.setSolutionParticipation(null);
         toBeImported.setTemplateParticipation(null);
-        toBeImported.setPublishBuildPlanUrl(template.isPublishBuildPlanUrl());
         toBeImported.setSequentialTestRuns(template.hasSequentialTestRuns());
         toBeImported.setProblemStatement(template.getProblemStatement());
         toBeImported.setMaxPoints(template.getMaxPoints());
@@ -202,14 +216,15 @@ public class ProgrammingExerciseFactory {
 
         final var testSuite = new TestSuiteDTO("TestSuiteName1", now().toEpochSecond(), 0, 0, failedTestNames.size(), successfulTestNames.size() + failedTestNames.size(),
                 new ArrayList<>());
-        testSuite.testCases().addAll(successfulTestNames.stream().map(name -> new TestCaseDTO(name, "Class", 0d)).toList());
+        testSuite.testCases()
+                .addAll(successfulTestNames.stream().map(name -> new TestCaseDTO(name, "Class", 0d, new ArrayList<>(), new ArrayList<>(), new ArrayList<>())).toList());
         testSuite.testCases().addAll(failedTestNames.stream()
                 .map(name -> new TestCaseDTO(name, "Class", 0d, new ArrayList<>(), List.of(new TestCaseDetailMessageDTO(name + " error message")), new ArrayList<>())).toList());
 
         final var commitDTO = new CommitDTO(TestConstants.COMMIT_HASH_STRING, repoName, DEFAULT_BRANCH);
         final var staticCodeAnalysisReports = enableStaticAnalysisReports ? generateStaticCodeAnalysisReports(programmingLanguage) : new ArrayList<StaticCodeAnalysisReportDTO>();
 
-        return new TestResultsDTO(successfulTestNames.size(), 0, 0, failedTestNames.size(), fullName, commits != null && commits.size() > 0 ? commits : List.of(commitDTO),
+        return new TestResultsDTO(successfulTestNames.size(), 0, 0, failedTestNames.size(), fullName, commits != null && !commits.isEmpty() ? commits : List.of(commitDTO),
                 List.of(testSuiteDto != null ? testSuiteDto : testSuite), staticCodeAnalysisReports, List.of(), buildRunDate != null ? buildRunDate : now(), false, logs);
     }
 
@@ -238,179 +253,34 @@ public class ProgrammingExerciseFactory {
 
         // successful with message
         {
-            var testCase = new TestCaseDTO("CustomSuccessMessage", null, 0d);
+            var testCase = new TestCaseDTO("CustomSuccessMessage", null, 0d, new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
             testCase.successInfos().add(new TestCaseDetailMessageDTO("Successful test with message"));
             testCases.add(testCase);
         }
 
         // successful without message
         {
-            var testCase = new TestCaseDTO("CustomSuccessNoMessage", null, 0d);
+            var testCase = new TestCaseDTO("CustomSuccessNoMessage", null, 0d, new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
             testCase.successInfos().add(new TestCaseDetailMessageDTO(null));
             testCases.add(testCase);
         }
 
         // failed with message
         {
-            var testCase = new TestCaseDTO("CustomFailedMessage", null, 0d);
+            var testCase = new TestCaseDTO("CustomFailedMessage", null, 0d, new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
             testCase.failures().add(new TestCaseDetailMessageDTO("Failed test with message"));
             testCases.add(testCase);
         }
 
         // failed without message
         {
-            var testCase = new TestCaseDTO("CustomFailedNoMessage", null, 0d);
+            var testCase = new TestCaseDTO("CustomFailedNoMessage", null, 0d, new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
             testCase.failures().add(new TestCaseDetailMessageDTO(null));
             testCases.add(testCase);
         }
         var testSuite = new TestSuiteDTO("customFeedbacks", 0d, 0, 0, failedTestNames.size(), successfulTestNames.size() + failedTestNames.size(), testCases);
         return generateTestResultDTO(null, repoName, null, programmingLanguage, enableStaticAnalysisReports, successfulTestNames, failedTestNames, new ArrayList<>(),
                 new ArrayList<>(), testSuite);
-    }
-
-    /**
-     * Generates a Bamboo build result notification DTO using the provided values. The successful boolean value is se to true if there are no failed test names.
-     * It first creates a BambooTestSummaryDTO, BambooJobDTO, BambooVCSDTO and BambooBuildDTO which are used to create the BambooBuildResultNotificationDTO.
-     *
-     * @param repoName               The repository name.
-     * @param planKey                The key of the build plan.
-     * @param testSummaryDescription The test summary description used to create a bamboo test summary DTO.
-     * @param buildCompletionDate    The completion date of the build.
-     * @param successfulTestNames    The names of successful tests.
-     * @param failedTestNames        The names of failed tests.
-     * @param vcsDtos                The vcs objects containing commit information.
-     * @return The generated Bamboo build result notification DTO
-     */
-    public static BambooBuildResultNotificationDTO generateBambooBuildResult(String repoName, String planKey, String testSummaryDescription, ZonedDateTime buildCompletionDate,
-            List<String> successfulTestNames, List<String> failedTestNames, List<BambooBuildResultNotificationDTO.BambooVCSDTO> vcsDtos) {
-        return generateBambooBuildResult(repoName, planKey, testSummaryDescription, buildCompletionDate, successfulTestNames, failedTestNames, vcsDtos, failedTestNames.isEmpty());
-    }
-
-    /**
-     * Generates a Bamboo build result notification DTO using the provided values.
-     * It first creates a BambooTestSummaryDTO, BambooJobDTO, BambooVCSDTO and BambooBuildDTO which are used to create the BambooBuildResultNotificationDTO.
-     *
-     * @param repoName               The repository name.
-     * @param planKey                The key of the build plan.
-     * @param testSummaryDescription The test summary description used to create a bamboo test summary DTO.
-     * @param buildCompletionDate    The completion date of the build.
-     * @param successfulTestNames    The names of successful tests.
-     * @param failedTestNames        The names of failed tests.
-     * @param vcsDtos                The vcs objects containing commit information.
-     * @param successful             True, id the build was successful. Used to create the Bamboo build dto.
-     * @return The generated Bamboo build result notification DTO
-     */
-    public static BambooBuildResultNotificationDTO generateBambooBuildResult(String repoName, String planKey, String testSummaryDescription, ZonedDateTime buildCompletionDate,
-            List<String> successfulTestNames, List<String> failedTestNames, List<BambooBuildResultNotificationDTO.BambooVCSDTO> vcsDtos, boolean successful) {
-
-        final var summary = new BambooBuildResultNotificationDTO.BambooTestSummaryDTO(42, 0, failedTestNames.size(), failedTestNames.size(), 0, successfulTestNames.size(),
-                testSummaryDescription, 0, 0, successfulTestNames.size() + failedTestNames.size(), failedTestNames.size());
-
-        final var successfulTests = successfulTestNames.stream().map(name -> generateBambooTestJob(name, true)).toList();
-        final var failedTests = failedTestNames.stream().map(name -> generateBambooTestJob(name, false)).toList();
-        final var job = new BambooBuildResultNotificationDTO.BambooJobDTO(42, failedTests, successfulTests, new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
-        final var vcs = new BambooBuildResultNotificationDTO.BambooVCSDTO(TestConstants.COMMIT_HASH_STRING, repoName, DEFAULT_BRANCH, new ArrayList<>());
-        final var plan = new BambooBuildPlanDTO(planKey != null ? planKey : "TEST201904BPROGRAMMINGEXERCISE6-STUDENT1");
-
-        final var build = new BambooBuildResultNotificationDTO.BambooBuildDTO(false, 42, "foobar", buildCompletionDate != null ? buildCompletionDate : now().minusSeconds(5),
-                successful, summary, vcsDtos != null && vcsDtos.size() > 0 ? vcsDtos : List.of(vcs), List.of(job));
-
-        return new BambooBuildResultNotificationDTO("secret", "TestNotification", plan, build);
-    }
-
-    /**
-     * Generate a Bamboo result notification DTO with 10 build logs of various sizes. The successful boolean value is set to true if there are no failed test names.
-     *
-     * @param buildPlanKey        The key of the build plan
-     * @param repoName            The repository name.
-     * @param successfulTestNames The names of successful tests.
-     * @param failedTestNames     The names of failed tests.
-     * @param buildCompletionDate The completion date of the build.
-     * @param vcsDtos             The vcs objects containing commit information.
-     * @return The Bamboo result notification DTO with build logs.
-     */
-    public static BambooBuildResultNotificationDTO generateBambooBuildResultWithLogs(String buildPlanKey, String repoName, List<String> successfulTestNames,
-            List<String> failedTestNames, ZonedDateTime buildCompletionDate, List<BambooBuildResultNotificationDTO.BambooVCSDTO> vcsDtos) {
-        return generateBambooBuildResultWithLogs(buildPlanKey, repoName, successfulTestNames, failedTestNames, buildCompletionDate, vcsDtos, failedTestNames.isEmpty());
-    }
-
-    /**
-     * Generate a Bamboo result notification DTO with 10 build logs of various sizes.
-     *
-     * @param buildPlanKey        The key of the build plan
-     * @param repoName            The repository name.
-     * @param successfulTestNames The names of successful tests.
-     * @param failedTestNames     The names of failed tests.
-     * @param buildCompletionDate The completion date of the build.
-     * @param vcsDtos             The vcs objects containing commit information.
-     * @return The Bamboo result notification DTO with build logs.
-     */
-    public static BambooBuildResultNotificationDTO generateBambooBuildResultWithLogs(String buildPlanKey, String repoName, List<String> successfulTestNames,
-            List<String> failedTestNames, ZonedDateTime buildCompletionDate, List<BambooBuildResultNotificationDTO.BambooVCSDTO> vcsDtos, boolean successful) {
-        var notification = generateBambooBuildResult(repoName, buildPlanKey, "No tests found", buildCompletionDate, successfulTestNames, failedTestNames, vcsDtos, successful);
-
-        String logWith254Chars = "a".repeat(254);
-
-        var buildLogDTO254Chars = new BambooBuildLogDTO(now(), logWith254Chars, null);
-        var buildLogDTO255Chars = new BambooBuildLogDTO(now(), logWith254Chars + "a", null);
-        var buildLogDTO256Chars = new BambooBuildLogDTO(now(), logWith254Chars + "aa", null);
-        var largeBuildLogDTO = new BambooBuildLogDTO(now(), logWith254Chars + logWith254Chars, null);
-        var logTypicalErrorLog = new BambooBuildLogDTO(now(), "error: the java class ABC does not exist", null);
-        var logTypicalDuplicatedErrorLog = new BambooBuildLogDTO(now(), "error: the java class ABC does not exist", null);
-        var logCompilationError = new BambooBuildLogDTO(now(), "COMPILATION ERROR", null);
-        var logBuildError = new BambooBuildLogDTO(now(), "BUILD FAILURE", null);
-        var logWarning = new BambooBuildLogDTO(now(), "[WARNING]", null);
-        var logWarningIllegalReflectiveAccess = new BambooBuildLogDTO(now(), "WARNING: Illegal reflective access by", null);
-
-        notification.getBuild().jobs().get(0).logs().addAll(List.of(buildLogDTO254Chars, buildLogDTO255Chars, buildLogDTO256Chars, largeBuildLogDTO, logTypicalErrorLog,
-                logTypicalDuplicatedErrorLog, logWarning, logWarningIllegalReflectiveAccess, logCompilationError, logBuildError));
-
-        return notification;
-    }
-
-    /**
-     * Generate a Bamboo result notification DTO with 9 analytics logs.
-     *
-     * @param buildPlanKey        The key of the build plan
-     * @param repoName            The repository name.
-     * @param successfulTestNames The names of successful tests.
-     * @param failedTestNames     The names of failed tests.
-     * @param buildCompletionDate The completion date of the build.
-     * @param vcsDtos             The vcs objects containing commit information.
-     * @return The Bamboo result notification DTO with analytics logs.
-     */
-    public static BambooBuildResultNotificationDTO generateBambooBuildResultWithAnalyticsLogs(String buildPlanKey, String repoName, List<String> successfulTestNames,
-            List<String> failedTestNames, ZonedDateTime buildCompletionDate, List<BambooBuildResultNotificationDTO.BambooVCSDTO> vcsDtos, boolean sca) {
-        var notification = generateBambooBuildResult(repoName, buildPlanKey, "Test executed", buildCompletionDate, successfulTestNames, failedTestNames, vcsDtos, true);
-
-        var jobStarted = new BambooBuildLogDTO(ZonedDateTime.of(2021, 5, 10, 14, 58, 30, 0, ZoneId.systemDefault()), "started building on agent 1", null);
-
-        var executingBuild = new BambooBuildLogDTO(ZonedDateTime.of(2021, 5, 10, 15, 0, 0, 0, ZoneId.systemDefault()), "Executing build", null);
-
-        var testingStarted = new BambooBuildLogDTO(ZonedDateTime.of(2021, 5, 10, 15, 0, 5, 0, ZoneId.systemDefault()), "Starting task 'Tests'", null);
-
-        var dependency1Downloaded = new BambooBuildLogDTO(ZonedDateTime.of(2021, 5, 10, 15, 0, 10, 0, ZoneId.systemDefault()), "Dependency 1 Downloaded from", null);
-
-        var testingFinished = new BambooBuildLogDTO(ZonedDateTime.of(2021, 5, 10, 15, 0, 15, 0, ZoneId.systemDefault()), "Finished task 'Tests' with result", null);
-
-        var scaStarted = new BambooBuildLogDTO(ZonedDateTime.of(2021, 5, 10, 15, 0, 16, 0, ZoneId.systemDefault()), "Starting task 'Static Code Analysis'", null);
-
-        var dependency2Downloaded = new BambooBuildLogDTO(ZonedDateTime.of(2021, 5, 10, 15, 0, 20, 0, ZoneId.systemDefault()), "Dependency 2 Downloaded from", null);
-
-        var scaFinished = new BambooBuildLogDTO(ZonedDateTime.of(2021, 5, 10, 15, 0, 27, 0, ZoneId.systemDefault()), "Finished task 'Static Code Analysis'", null);
-
-        var jobFinished = new BambooBuildLogDTO(ZonedDateTime.of(2021, 5, 10, 15, 0, 30, 0, ZoneId.systemDefault()), "Finished building", null);
-
-        notification.getBuild().jobs().get(0).logs().clear();
-        if (sca) {
-            notification.getBuild().jobs().get(0).logs().addAll(
-                    List.of(jobStarted, executingBuild, testingStarted, dependency1Downloaded, testingFinished, scaStarted, dependency2Downloaded, scaFinished, jobFinished));
-        }
-        else {
-            notification.getBuild().jobs().get(0).logs().addAll(List.of(jobStarted, executingBuild, testingStarted, dependency1Downloaded, testingFinished, jobFinished));
-        }
-
-        return notification;
     }
 
     /**
@@ -422,23 +292,6 @@ public class ProgrammingExerciseFactory {
     public static Feedback createSCAFeedbackWithInactiveCategory(Result result) {
         return new Feedback().result(result).text(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER).reference("CHECKSTYLE").detailText("{\"category\": \"miscellaneous\"}")
                 .type(FeedbackType.AUTOMATIC).positive(false);
-    }
-
-    /**
-     * Generates Bamboo build result notification DTO with a static code analysis report.
-     *
-     * @param repoName            The repository name.
-     * @param successfulTestNames The names of successful tests.
-     * @param failedTestNames     The names of failed tests.
-     * @param programmingLanguage The programming language of the static code analysis report.
-     * @return The created Bamboo build result notification DTO.
-     */
-    public static BambooBuildResultNotificationDTO generateBambooBuildResultWithStaticCodeAnalysisReport(String repoName, List<String> successfulTestNames,
-            List<String> failedTestNames, ProgrammingLanguage programmingLanguage) {
-        var notification = generateBambooBuildResult(repoName, null, null, null, successfulTestNames, failedTestNames, new ArrayList<>(), true);
-        var reports = generateStaticCodeAnalysisReports(programmingLanguage);
-        notification.getBuild().jobs().get(0).staticCodeAnalysisReports().addAll(reports);
-        return notification;
     }
 
     /**
@@ -517,17 +370,6 @@ public class ProgrammingExerciseFactory {
     }
 
     /**
-     * Generates a Bamboo test job DTO with the given name, <code>SpringTestClass</code> class name and errors based on the successful value.
-     *
-     * @param name       The name and method name of the DTO.
-     * @param successful If true, an empty list of errors is added to the DTO. Otherwise, the error <code>bad solution, did not work</code> is added.
-     * @return The created Bamboo test job DTO.
-     */
-    private static BambooBuildResultNotificationDTO.BambooTestJobDTO generateBambooTestJob(String name, boolean successful) {
-        return new BambooBuildResultNotificationDTO.BambooTestJobDTO(name, name, "SpringTestClass", successful ? List.of() : List.of("bad solution, did not work"));
-    }
-
-    /**
      * Populates the provided programming exercise with the given short name, title, and other values. The release date of the exercise is set in the future.
      * The programming language is set to java and test wise coverage analysis is disabled.
      *
@@ -560,7 +402,6 @@ public class ProgrammingExerciseFactory {
         programmingExercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(3));
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusDays(5));
         programmingExercise.setBonusPoints(0D);
-        programmingExercise.setPublishBuildPlanUrl(false);
         programmingExercise.setMaxPoints(42.0);
         programmingExercise.setDifficulty(DifficultyLevel.EASY);
         programmingExercise.setMode(ExerciseMode.INDIVIDUAL);

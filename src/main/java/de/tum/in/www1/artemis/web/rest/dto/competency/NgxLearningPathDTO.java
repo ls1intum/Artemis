@@ -37,7 +37,7 @@ public record NgxLearningPathDTO(Set<Node> nodes, Set<Edge> edges) {
         }
     }
 
-    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record Edge(String id, String source, String target) {
     }
 

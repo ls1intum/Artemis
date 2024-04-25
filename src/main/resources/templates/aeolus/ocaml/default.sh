@@ -7,7 +7,6 @@ build_and_test_the_code () {
   # the build process is specified in `run.sh` in the test repository
   chmod +x run.sh
   ./run.sh -s
-
 }
 
 junit () {

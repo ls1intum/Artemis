@@ -6,11 +6,11 @@
                 "createLabel": "Create a new Exercise"
             },
             "sections": {
-                "general": "General Information",
+                "general": "General",
                 "mode": "Mode",
                 "grading": "Grading",
-                "problem": "Problem Statement",
-                "solution": "Example Solution"
+                "problem": "Problem",
+                "solution": "Solution"
             },
             "details": "Exercise details",
             "addCriterion": "Add a Grading Criterion",
@@ -196,7 +196,7 @@
             "isQuiz": "This is a quiz exercise",
             "isText": "This is a text exercise",
             "isFileUpload": "This is a file upload exercise",
-            "notificationText": "Optional: Notification about changes",
+            "notificationText": "What did you change?",
             "submissionSuccessful": "The submission was successful",
             "submissionUnsuccessful": "The submission was unsuccessful",
             "lateSubmissionResultReceived": "Artemis received an ungraded result for a late submission, please scroll down to see the score in the result history.",

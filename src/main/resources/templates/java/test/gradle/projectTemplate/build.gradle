@@ -170,6 +170,7 @@ pmd {
     ruleSets = ["$scaConfigDirectory/pmd-configuration.xml"]
     rulesMinimumPriority = 5
     ignoreFailures = true
+    toolVersion = '6.55.0'
     // exclude the test files
     pmdTest.enabled = false
     pmdMain.reports {

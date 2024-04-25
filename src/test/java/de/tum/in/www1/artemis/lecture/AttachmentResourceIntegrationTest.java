@@ -76,7 +76,7 @@ class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationIndepen
         Attachment actualAttachment = request.postWithMultipartFile("/api/attachments", attachment, "attachment",
                 new MockMultipartFile("file", "test.txt", MediaType.TEXT_PLAIN_VALUE, "testContent".getBytes()), Attachment.class, HttpStatus.CREATED);
         assertThat(actualAttachment.getLink()).isNotNull();
-        MvcResult file = request.getMvc().perform(get(actualAttachment.getLink())).andExpect(status().isOk()).andExpect(content().contentType(MediaType.TEXT_PLAIN_VALUE))
+        MvcResult file = request.performMvcRequest(get(actualAttachment.getLink())).andExpect(status().isOk()).andExpect(content().contentType(MediaType.TEXT_PLAIN_VALUE))
                 .andReturn();
         assertThat(file.getResponse().getContentAsByteArray()).isNotEmpty();
         var expectedAttachment = attachmentRepository.findById(actualAttachment.getId()).orElseThrow();

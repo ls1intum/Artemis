@@ -113,6 +113,10 @@ export class CourseManagementExercisesPage {
         await this.page.locator('#import-quiz-exercise').click();
     }
 
+    async exportQuizExercise(exerciseID: number) {
+        await this.getExercise(exerciseID).locator('button', { hasText: 'Export' }).click();
+    }
+
     async clickImportExercise(exerciseID: number) {
         await this.page.locator(`.exercise-${exerciseID}`).locator('.import').click();
     }

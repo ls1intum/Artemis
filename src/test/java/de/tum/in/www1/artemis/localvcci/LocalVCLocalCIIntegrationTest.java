@@ -11,13 +11,18 @@ import static org.mockito.Mockito.doReturn;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 import javax.naming.InvalidNameException;
 import javax.naming.ldap.LdapName;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -504,7 +509,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         // Instructors should alway be able to fetch and push to the teaching assistant assignment repository.
         // Teaching assistants should be able to fetch and push to their personal assignment repository before the due date of the exercise.
         // After the due date, they should only be able to fetch.
-        // They can currently only push during the working time of the exercise on Bitbucket and Bamboo (see https://github.com/ls1intum/Artemis/issues/6422).
+        // They can currently only push during the working time of the exercise (see https://github.com/ls1intum/Artemis/issues/6422).
 
         // Create teaching assistant repository.
         String repositorySlug = projectKey1.toLowerCase() + "-" + tutor1Login;

@@ -51,9 +51,9 @@ public class ConsistencyCheckService {
     /**
      * Performs multiple checks for a given programming exercise and returns a list
      * of the resulting errors, if any.
-     *
+     * <p>
      * Make sure to load Template and Solution participations along with the programming exercise.
-     *
+     * <p>
      * Checks:
      * - Existence of VCS repositories and project
      * - Existence of CI build plans

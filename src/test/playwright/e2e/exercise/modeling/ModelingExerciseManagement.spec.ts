@@ -117,12 +117,12 @@ test.describe('Modeling Exercise Management', () => {
     test.describe('Modeling Exercise Release', () => {
         let modelingExercise: ModelingExercise;
 
-        test('Student can not see unreleased Modeling Exercise', async ({ page, login, exerciseAPIRequests }) => {
+        test('Student can not see unreleased Modeling Exercise', async ({ page, login, exerciseAPIRequests, courseOverview }) => {
             await login(instructor);
             modelingExercise = await exerciseAPIRequests.createModelingExercise({ course }, 'Modeling ' + generateUUID(), dayjs().add(1, 'hour'));
             await login(studentOne, '/courses');
             await page.getByText(course.title!).click({ force: true });
-            await expect(page.getByText('No exercises available for the course.')).toBeVisible();
+            await expect(courseOverview.getExercises()).toHaveCount(0);
         });
 
         test('Student can see released Modeling Exercise', async ({ login, page, exerciseAPIRequests }) => {

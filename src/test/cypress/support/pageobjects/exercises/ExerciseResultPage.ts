@@ -14,7 +14,7 @@ export class ExerciseResultPage {
 
     shouldShowScore(percentage: number) {
         cy.reloadUntilFound('#submission-result-graded');
-        cy.contains(`${percentage}%`).should('be.visible');
+        cy.contains('.tab-bar-exercise-details', `${percentage}%`).should('be.visible');
     }
 
     clickOpenExercise(exerciseId: number) {

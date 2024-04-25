@@ -16,8 +16,8 @@ export class CourseOverviewPage {
      * @param term The search term to use.
      */
     async search(term: string) {
-        await this.page.locator('#exercise-search-input').fill(term);
-        await this.page.locator('#exercise-search-button').click();
+        const searchInput = this.page.locator('input[formcontrolname="searchFilter"]');
+        await searchInput.pressSequentially(term, { delay: 20 });
     }
 
     /**
@@ -38,11 +38,19 @@ export class CourseOverviewPage {
 
     /**
      * Retrieves the Locator for an exercise card by its ID.
-     * @param exerciseID The ID of the exercise.
+     * @param exerciseName title of the exercise.
      * @returns The Locator for the exercise card.
      */
-    getExercise(exerciseID: number): Locator {
-        return this.page.locator(`#exercise-card-${exerciseID}`);
+    getExercise(exerciseName: string): Locator {
+        return this.page.locator('#test-sidebar-card').getByText(exerciseName);
+    }
+
+    /**
+     * Retrieves the Locator for all exercises.
+     * @returns The Locator for all exercises.
+     */
+    getExercises(): Locator {
+        return this.page.locator('#test-sidebar-card');
     }
 
     /**

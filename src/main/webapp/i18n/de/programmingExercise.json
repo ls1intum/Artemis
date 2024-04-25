@@ -57,13 +57,13 @@
                     "infrastructureStepTitle": "Infrastruktur"
                 },
                 "detailedSteps": {
-                    "generalInfoStepTitle": "Allgemeine Informationen",
+                    "generalInfoStepTitle": "Allgemein",
                     "generalInfoStepMessage": "Eingabe von Informationen, die die Grundlage für die Programmieraufgabe bilden",
                     "difficultyStepTitle": "Modus",
                     "difficultyStepMessage": "Konfiguration der Einstellungen bezüglich der Bearbeitung und Kollaboration der Aufgabe",
-                    "languageStepTitle": "Programmiersprache",
+                    "languageStepTitle": "Sprache",
                     "languageStepMessage": "Wähle die gewünschte Programmiersprache aus und konfiguriere zusätzliche Funktionen bezüglich der Programmiersprache",
-                    "problemStepTitle": "Aufgabenstellung",
+                    "problemStepTitle": "Aufgabe",
                     "problemStepMessage": "Erstelle eine detaillierte Aufgabenstellung für die Übung mit klaren Schritten und Erwartungen an die Studierenden",
                     "gradingStepTitle": "Bewertung",
                     "gradingStepMessage": "Definiere die Bewertungskriterien für diese Aufgabe und wie sich das Ergebnis auf die Gesamtnote des Kurses auswirkt"
@@ -103,7 +103,6 @@
             "buildConfiguration": "Build Konfiguration",
             "buildPlanEditor": "Build-Plan-Editor",
             "buildPlanFetchError": "Konnte keinen Build-Plan für diese Aufgabe finden. Das ist normal für ältere Aufgaben. Du kannst den Build-Plan im CI-System bearbeiten oder den Build-Plan in Artemis zurücksetzen, um einen neuen Build-Plan zu erstellen der hier bearbeitet werden kann.",
-            "publishBuildPlanUrl": "Build-Plan veröffentlichen",
             "customizeBuildPlan": "Build-Plan anpassen",
             "customizeBuildPlanWithAeolus": "Build-Plan mit Aeolus anpassen",
             "revertToTemplateBuildPlan": "Falls Sie mit Ihrem Build-Plan nicht zufrieden sind, können Sie ihn mit dem Zurücksetzen Knopf auf seine Vorlage zurücksetzen.",
@@ -116,12 +115,12 @@
                 "title": "Online-Editor erlauben",
                 "alert": "Es muss mindestens eine Option (Offline-IDE oder Online-Editor) ausgewählt sein"
             },
-            "onlineEditor": "Online-Editor",
+            "onlineEditor": "Online",
             "allowOfflineIde": {
                 "title": "Offline-IDE erlauben",
                 "alert": "Es muss mindestens eine Option (Offline-IDE oder Online-Editor) ausgewählt sein"
             },
-            "offlineIde": "Offline-IDE",
+            "offlineIde": "IDE",
             "showTestNamesToStudents": "Zeige die Test Namen den Studierenden",
             "showTestNamesToStudentsTooltip": "Durch Aktivierung dieser Option werden die Namen der automatischen Tests den Studierenden angezeigt. Lasse die Option deaktiviert, um keine visuelle Unterscheidung zwischen manuellem und automatischem Feedback für die Studierenden vorzunehmen.",
             "participationMode": "Teilnahmemodus",

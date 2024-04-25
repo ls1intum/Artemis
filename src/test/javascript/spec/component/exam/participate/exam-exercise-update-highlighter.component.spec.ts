@@ -50,15 +50,18 @@ describe('ExamExerciseUpdateHighlighterComponent', () => {
     });
 
     it('should display different problem statement after toggle method is called', () => {
+        const mouseEvent = new MouseEvent('click');
+        const stopPropagationSpy = jest.spyOn(mouseEvent, 'stopPropagation');
         const problemStatementBeforeClick = component.exercise.problemStatement;
         expect(problemStatementBeforeClick).toEqual(component.updatedProblemStatementWithHighlightedDifferences);
 
-        component.toggleHighlightedProblemStatement();
+        component.toggleHighlightedProblemStatement(mouseEvent);
 
         const problemStatementAfterClick = component.exercise.problemStatement;
         expect(problemStatementAfterClick).toEqual(updatedProblemStatement);
         expect(problemStatementAfterClick).not.toEqual(component.updatedProblemStatementWithHighlightedDifferences);
         expect(problemStatementAfterClick).not.toEqual(problemStatementBeforeClick);
+        expect(stopPropagationSpy).toHaveBeenCalledOnce();
     });
 
     describe('ExamExerciseUpdateHighlighterComponent for programming exercises', () => {
