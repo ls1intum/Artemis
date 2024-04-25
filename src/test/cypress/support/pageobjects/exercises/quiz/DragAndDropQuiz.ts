@@ -6,7 +6,6 @@ export class DragAndDropQuiz {
         cy.get('#create-apollon-diagram').should('be.visible').click();
         cy.get('#field_diagram_title').type(title);
         cy.get('#save-dnd-quiz').click();
-        cy.get('#open-diagram').click();
     }
 
     dragItemIntoDragArea(itemIndex: number) {

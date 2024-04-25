@@ -158,7 +158,6 @@
                             <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
                                 @if (value === 'SUCCESSFUL') {
                                     <jhi-result [result]="row.submissionResult" [showUngradedResults]="true" [showBadge]="true" />
-                                    <a class="detail-link" (click)="viewBuildLogs(row.submissionResult.id)" jhiTranslate="artemisApp.result.buildLogs.viewLogs"></a>
                                 } @else {
                                     <span
                                         [ngClass]="{
@@ -170,6 +169,15 @@
                                 }
                             </ng-template>
                         </ngx-datatable-column>
+                        <ngx-datatable-column [minWidth]="100">
+                            <ng-template ngx-datatable-header-template>
+                                <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.buildQueue.buildJob.buildLogs"></span>
+                            </ng-template>
+                            <ng-template ngx-datatable-cell-template let-row="row">
+                                <a class="detail-link" (click)="viewBuildLogs(row.id)" jhiTranslate="artemisApp.result.buildLogs.viewLogs"></a>
+                            </ng-template>
+                        </ngx-datatable-column>
+
                         <ngx-datatable-column prop="participationId" [minWidth]="100">
                             <ng-template ngx-datatable-header-template>
                                 <span class="datatable-header-cell-wrapper" (click)="controls.onSort('participationId')">

@@ -46,6 +46,7 @@ import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.BuildJobRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionTestRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.ResultBuildJob;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCServletService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWebsocketError;
@@ -375,13 +376,20 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
             var submissionOptional = programmingSubmissionRepository.findFirstByParticipationIdWithResultsOrderByLegalSubmissionDateDesc(studentParticipation.getId());
 
-            long resultId = submissionOptional.map(ProgrammingSubmission::getLatestResult).map(Result::getId).orElseThrow(() -> new AssertionError("Submission has no results"));
+            Result result = submissionOptional.map(ProgrammingSubmission::getLatestResult).orElseThrow(() -> new AssertionError("Submission has no results"));
 
-            // Assert that the build logs for the result are stored in the file system
-            assertThat(buildLogEntryService.resultHasLogFile(String.valueOf(resultId))).isTrue();
+            BuildJob buildJob = buildJobRepository.findBuildJobByResult(result).orElseThrow();
+
+            Set<ResultBuildJob> resultBuildJobSet = buildJobRepository.findBuildJobIdsForResultIds(List.of(result.getId()));
+
+            assertThat(resultBuildJobSet).hasSize(1);
+            assertThat(resultBuildJobSet.iterator().next().buildJobId()).isEqualTo(buildJob.getBuildJobId());
+
+            // Assert that the corresponding build job are stored in the file system
+            assertThat(buildLogEntryService.buildJobHasLogFile(buildJob.getBuildJobId())).isTrue();
 
             // Retrieve the build logs from the file system
-            buildLogs = buildLogEntryService.retrieveBuildLogsFromFileForResult(String.valueOf(resultId));
+            buildLogs = buildLogEntryService.retrieveBuildLogsFromFileForBuildJob(buildJob.getBuildJobId());
             assertThat(buildLogs).isNotNull();
             assertThat(buildLogs.getFile().exists()).isTrue();
 
