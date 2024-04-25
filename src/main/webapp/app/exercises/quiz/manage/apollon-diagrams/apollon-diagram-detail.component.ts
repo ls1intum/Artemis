@@ -16,6 +16,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 import { lastValueFrom } from 'rxjs';
+import { NgModel } from '@angular/forms';
 
 @Component({
     selector: 'jhi-apollon-diagram-detail',
@@ -24,6 +25,7 @@ import { lastValueFrom } from 'rxjs';
 })
 export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     @ViewChild('editorContainer', { static: false }) editorContainer: ElementRef;
+    @ViewChild('titleField') titleField?: NgModel;
 
     @Input()
     private courseId: number;

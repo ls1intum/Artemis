@@ -117,7 +117,7 @@ export class ApollonDiagramListComponent implements OnInit {
         const formComponentInstance = modalRef.componentInstance as ApollonDiagramCreateFormComponent;
         // class diagram is the default value and can be changed by the user in the creation dialog
         formComponentInstance.apollonDiagram = new ApollonDiagram(UMLDiagramType.ClassDiagram, courseId);
-        modalRef.result.then(() => this.loadDiagrams());
+        modalRef.result.then((diagram) => this.handleOpenDialogClick(diagram.id));
     }
 
     handleOpenDialogClick(apollonDiagramId: number) {
