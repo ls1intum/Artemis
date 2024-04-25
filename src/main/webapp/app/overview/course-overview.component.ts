@@ -67,6 +67,7 @@ interface CourseActionItem {
     translation: string;
     action?: (item?: CourseActionItem) => void;
 }
+
 interface SidebarItem {
     routerLink: string;
     icon?: IconDefinition;
@@ -205,6 +206,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         }
         return courseActionItems;
     }
+
     getSidebarItems(): SidebarItem[] {
         const sidebarItems = this.getDefaultItems();
         if (this.course?.lectures) {
@@ -238,6 +240,8 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
                 sidebarItems.push(learningPathItem);
             }
         }
+        const dashboardItem: SidebarItem = this.getDashboardItems();
+        sidebarItems.push(dashboardItem);
 
         return sidebarItems;
     }
@@ -251,6 +255,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         };
         return unenrollItem;
     }
+
     getLecturesItems() {
         const lecturesItem: SidebarItem = {
             routerLink: 'lectures',
@@ -262,6 +267,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         };
         return lecturesItem;
     }
+
     getExamsItems() {
         const examsItem: SidebarItem = {
             routerLink: 'exams',
@@ -274,6 +280,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         };
         return examsItem;
     }
+
     getCommunicationItems() {
         const communicationItem: SidebarItem = {
             routerLink: 'discussion',
@@ -285,6 +292,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         };
         return communicationItem;
     }
+
     getMessagesItems() {
         const messagesItem: SidebarItem = {
             routerLink: 'messages',
@@ -296,6 +304,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         };
         return messagesItem;
     }
+
     getTutorialGroupsItems() {
         const tutorialGroupsItem: SidebarItem = {
             routerLink: 'tutorial-groups',
@@ -308,6 +317,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         };
         return tutorialGroupsItem;
     }
+
     getCompetenciesItems() {
         const competenciesItem: SidebarItem = {
             routerLink: 'competencies',
@@ -319,6 +329,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         };
         return competenciesItem;
     }
+
     getLearningPathItems() {
         const learningPathItem: SidebarItem = {
             routerLink: 'learning-path',
@@ -330,6 +341,16 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             featureToggle: FeatureToggle.LearningPaths,
         };
         return learningPathItem;
+    }
+
+    getDashboardItems() {
+        const dashboardItem: SidebarItem = {
+            routerLink: 'dashboard',
+            icon: faChartBar,
+            title: 'Dashboard',
+            translation: 'artemisApp.courseOverview.menu.dashboard',
+        };
+        return dashboardItem;
     }
 
     getDefaultItems() {
@@ -457,6 +478,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         event.preventDefault();
         this.toggleSidebar();
     }
+
     getPageTitle(): void {
         const routePageTitle: string = this.route.snapshot.firstChild?.data?.pageTitle;
         this.pageTitle = routePageTitle?.substring(routePageTitle.indexOf('.') + 1);
@@ -465,6 +487,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     getHasSidebar(): boolean {
         return this.route.snapshot.firstChild?.data?.hasSidebar;
     }
+
     /**
      * Removes the controls component from the DOM and cancels the listener for controls changes.
      * Called by the router outlet as soon as the currently mounted component is removed
