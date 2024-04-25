@@ -180,6 +180,13 @@ public class CompetencyService {
         return idToImportedCompetency.values().stream().toList();
     }
 
+    /**
+     * Imports the standardized competencies with the given ids as competencies into a course
+     *
+     * @param competencyIdsToImport the ids of the standardized competencies to import
+     * @param courseId              the id of the course to import into
+     * @return the list of imported competencies
+     */
     public List<Competency> importStandardizedCompetencies(List<Long> competencyIdsToImport, long courseId) {
         var course = courseRepository.findByIdElseThrow(courseId);
         List<StandardizedCompetency> standardizedCompetencies = standardizedCompetencyRepository.findAllById(competencyIdsToImport);
