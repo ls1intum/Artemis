@@ -6,6 +6,8 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 import jakarta.annotation.Nullable;
 import jakarta.annotation.PreDestroy;
@@ -28,6 +30,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
+import org.springframework.scheduling.annotation.Scheduled;
 
 import com.hazelcast.config.*;
 import com.hazelcast.core.Hazelcast;
@@ -100,6 +103,31 @@ public class CacheConfiguration {
     public CacheManager cacheManager(HazelcastInstance hazelcastInstance) {
         log.debug("Starting HazelcastCacheManager");
         return new HazelcastCacheManager(hazelcastInstance);
+    }
+
+    /**
+     * This scheduled task regularly checks if all members of the Hazelcast cluster are connected to each other.
+     * This is one countermeasure to a split cluster.
+     */
+    @Scheduled(fixedRate = 1, timeUnit = TimeUnit.MINUTES)
+    public void connectToAllMembers() {
+        if (registration == null) {
+            return;
+        }
+        String serviceId = registration.getServiceId();
+        var hazelcastInstance = Hazelcast.getHazelcastInstanceByName("Artemis");
+        if (hazelcastInstance == null) {
+            log.warn("Hazelcast instance not found, cannot connect to cluster members");
+            return;
+        }
+        for (ServiceInstance instance : discoveryClient.getInstances(serviceId)) {
+            String clusterMember = instance.getHost() + ":" + hazelcastPort;
+            var members = hazelcastInstance.getCluster().getMembers();
+            if (members.stream().noneMatch(member -> member.getAddress().toString().equals(clusterMember))) {
+                log.info("Adding Hazelcast cluster member {}", clusterMember);
+                Hazelcast.getHazelcastInstanceByName("Artemis").getConfig().getNetworkConfig().getJoin().getTcpIpConfig().addMember(clusterMember);
+            }
+        }
     }
 
     /**
@@ -179,6 +207,14 @@ public class CacheConfiguration {
         config.getMapConfigs().put("default", initializeDefaultMapConfig(jHipsterProperties));
         config.getMapConfigs().put("files", initializeFilesMapConfig(jHipsterProperties));
         config.getMapConfigs().put("de.tum.in.www1.artemis.domain.*", initializeDomainMapConfig(jHipsterProperties));
+
+        // Configure split brain protection if the cluster was split at some point
+        var splitBrainProtectionConfig = new SplitBrainProtectionConfig();
+        splitBrainProtectionConfig.setName("artemis-split-brain-protection");
+        splitBrainProtectionConfig.setEnabled(true);
+        splitBrainProtectionConfig.setMinimumClusterSize(2);
+        config.setSplitBrainProtectionConfigs(new ConcurrentHashMap<>());
+        config.addSplitBrainProtectionConfig(splitBrainProtectionConfig);
 
         // only add the queue config if the profile "localci" is active
         Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
