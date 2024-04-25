@@ -91,15 +91,10 @@ export class CourseImportStandardizedCompetenciesComponent extends StandardizedC
 
     protected toggleSelect(selectedCompetency: StandardizedCompetencyForImport) {
         if (selectedCompetency.selected) {
-            this.selectCompetency(selectedCompetency);
+            this.selectedCompetencies.push(selectedCompetency);
         } else {
-            this.deselectCompetency(selectedCompetency);
+            this.selectedCompetencies = this.selectedCompetencies.filter((competency) => competency.id !== selectedCompetency.id);
         }
-    }
-
-    protected selectCompetency(selectedCompetency: StandardizedCompetencyForImport) {
-        selectedCompetency.selected = true;
-        this.selectedCompetencies.push(selectedCompetency);
     }
 
     protected deselectCompetency(selectedCompetency: StandardizedCompetencyForImport) {
