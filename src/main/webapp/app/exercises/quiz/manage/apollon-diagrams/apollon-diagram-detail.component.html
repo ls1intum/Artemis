@@ -1,6 +1,6 @@
 <div class="modal-header">
     <h4 class="modal-title">{{ 'artemisApp.apollonDiagram.detail.title' | artemisTranslate: { title: this.apollonDiagram?.title } }}</h4>
-    <button type="button ms-auto" class="btn" (click)="confirmExitDetailView(true)"><fa-icon [icon]="faX" size="lg" /></button>
+    <button type="button" class="btn ms-auto text-secondary" (click)="confirmExitDetailView(true)"><fa-icon [icon]="faX" size="lg" /></button>
 </div>
 <div class="modal-body">
     <div class="row">
@@ -22,15 +22,23 @@
     @if (apollonDiagram) {
         <div class="form-group mb-3">
             <label class="form-control-label" jhiTranslate="artemisApp.apollonDiagram.title" for="field_title"></label>
-            <input type="text" class="form-control" name="title" id="field_title" [(ngModel)]="apollonDiagram.title" />
+            <input #titleField="ngModel" required type="text" class="form-control" name="title" id="field_title" [(ngModel)]="apollonDiagram.title" />
         </div>
     }
     <div #editorContainer style="width: 100%; height: calc(100vh - 400px)"></div>
 </div>
 <div class="modal-footer">
     <button class="btn btn-outline-primary me-auto" (click)="confirmExitDetailView(true)">Close</button>
-    <button class="btn btn-outline-primary" (click)="saveDiagram()" [hidden]="!apollonDiagram" [disabled]="isSaved" jhiTranslate="artemisApp.apollonDiagram.detail.save"></button>
-    <button id="generate-quiz-exercise" class="btn btn-primary" (click)="generateExercise()" [hidden]="!apollonDiagram">
-        {{ 'artemisApp.apollonDiagram.detail.createLabel' | artemisTranslate }}
-    </button>
+    <button
+        class="btn btn-outline-primary"
+        (click)="saveDiagram()"
+        [hidden]="!apollonDiagram"
+        [disabled]="isSaved || (titleField && titleField?.invalid)"
+        jhiTranslate="artemisApp.apollonDiagram.detail.save"
+    ></button>
+    <div [ngbTooltip]="!hasInteractive ? ('artemisApp.apollonDiagram.create.validationError' | artemisTranslate) : undefined">
+        <button id="generate-quiz-exercise" class="btn btn-primary" (click)="generateExercise()" [hidden]="!apollonDiagram" [disabled]="!hasInteractive">
+            {{ 'artemisApp.apollonDiagram.detail.createLabel' | artemisTranslate }}
+        </button>
+    </div>
 </div>
