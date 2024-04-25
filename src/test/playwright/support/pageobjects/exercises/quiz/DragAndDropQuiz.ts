@@ -14,7 +14,6 @@ export class DragAndDropQuiz {
         await this.page.locator('#create-apollon-diagram').click();
         await this.page.locator('#field_diagram_title').fill(title);
         await this.page.locator('#save-dnd-quiz').click();
-        await this.page.locator('#open-diagram').click();
     }
 
     async dragItemIntoDragArea(itemIndex: number) {
