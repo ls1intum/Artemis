@@ -202,6 +202,4 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             filterToAnsweredOrReacted: false,
         });
     }
-
-    protected readonly getAsChannelDTO = getAsChannelDTO;
 }

@@ -165,7 +165,7 @@ examples.forEach((activeConversation) => {
             expect(component.courseWideSearchTerm).toBe('test input');
         });
 
-        it('should set search text in the conversation header correctly', () => {
+        it('should set search text in the courseWideSearchConfig correctly', () => {
             fixture.detectChanges();
             component.initializeCourseWideSearchConfig();
             component.courseWideSearchTerm = 'test';
@@ -173,6 +173,14 @@ examples.forEach((activeConversation) => {
             fixture.detectChanges();
             expect(component.courseWideSearchConfig.searchTerm).toBe(component.courseWideSearchTerm);
         });
+
+        it('should initialize formGroup correctly', fakeAsync(() => {
+            component.ngOnInit();
+            tick();
+            expect(component.formGroup.get('filterToOwn')?.value).toBeFalse();
+            expect(component.formGroup.get('filterToUnresolved')?.value).toBeFalse();
+            expect(component.formGroup.get('filterToAnsweredOrReacted')?.value).toBeFalse();
+        }));
 
         it('Should update filter setting when filterToUnresolved checkbox is checked', fakeAsync(() => {
             fixture.detectChanges();
