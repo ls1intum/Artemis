@@ -21,14 +21,12 @@ public class GitPublickeyAuthenticator implements PublickeyAuthenticator {
 
     private final UserRepository userRepository;
 
-    // Constructor injection for UserRepository
     public GitPublickeyAuthenticator(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
     @Override
     public boolean authenticate(String username, PublicKey publicKey, ServerSession session) {
-
         String keyHash = HashUtils.getSha512Fingerprint(publicKey);
         var user = userRepository.findBySshPublicKeyHash(keyHash);
         if (user.isPresent()) {

@@ -71,10 +71,10 @@ public class SshGitCommand extends GitPackCommand {
 
             Path rootDir = resolveRootDirectory(command, args);
             RepositoryCache.FileKey key = RepositoryCache.FileKey.lenient(rootDir.toFile(), FS.DETECTED);
-            Repository db = key.open(true /* must exist */);
+            Repository repository = key.open(true /* must exist */);
             String subCommand = args[0];
             if (RemoteConfig.DEFAULT_UPLOAD_PACK.equals(subCommand)) {
-                UploadPack uploadPack = new UploadPack(db);
+                UploadPack uploadPack = new UploadPack(repository);
                 Environment environment = getEnvironment();
                 Map<String, String> envVars = environment.getEnv();
                 String protocol = MapEntryUtils.isEmpty(envVars) ? null : envVars.get(GitProtocolConstants.PROTOCOL_ENVIRONMENT_VARIABLE);
@@ -84,7 +84,7 @@ public class SshGitCommand extends GitPackCommand {
                 uploadPack.upload(getInputStream(), getOutputStream(), getErrorStream());
             }
             else if (RemoteConfig.DEFAULT_RECEIVE_PACK.equals(subCommand)) {
-                var receivePack = new ReceivePack(db);
+                var receivePack = new ReceivePack(repository);
                 receivePack.setPreReceiveHook(new LocalVCPrePushHook(localVCServletService, null)); // TODO: Look into improving this
                 receivePack.setPostReceiveHook(new LocalVCPostPushHook(localVCServletService));
                 receivePack.receive(getInputStream(), getOutputStream(), getErrorStream());
