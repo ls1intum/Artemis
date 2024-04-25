@@ -260,23 +260,39 @@
                                         </button>
                                     }
                                     @if (programmingExercise.isAtLeastInstructor) {
-                                        <button
-                                            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-                                            jhiDeleteButton
-                                            [entityTitle]="programmingExercise.title!"
-                                            deleteQuestion="artemisApp.programmingExercise.delete.question"
-                                            (delete)="deleteProgrammingExercise(programmingExercise.id!, $event)"
-                                            [dialogError]="dialogError$"
-                                            deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
-                                            [additionalChecks]="{
-                                                deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',
-                                                deleteBaseReposBuildPlans: 'artemisApp.programmingExercise.delete.baseReposBuildPlans'
-                                            }"
-                                            class="mb-1"
-                                            id="delete-exercise"
-                                        >
-                                            <fa-icon [icon]="faTrash" />
-                                        </button>
+                                        @if (localVCEnabled) {
+                                            <button
+                                                [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+                                                jhiDeleteButton
+                                                [entityTitle]="programmingExercise.title!"
+                                                deleteQuestion="artemisApp.programmingExercise.delete.questionLocalVC.single"
+                                                (delete)="deleteProgrammingExercise(programmingExercise.id!, $event)"
+                                                [dialogError]="dialogError$"
+                                                deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
+                                                class="mb-1"
+                                                id="delete-exercise"
+                                            >
+                                                <fa-icon [icon]="faTrash" />
+                                            </button>
+                                        } @else {
+                                            <button
+                                                [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+                                                jhiDeleteButton
+                                                [entityTitle]="programmingExercise.title!"
+                                                deleteQuestion="artemisApp.programmingExercise.delete.question"
+                                                (delete)="deleteProgrammingExercise(programmingExercise.id!, $event)"
+                                                [dialogError]="dialogError$"
+                                                deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
+                                                [additionalChecks]="{
+                                                    deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',
+                                                    deleteBaseReposBuildPlans: 'artemisApp.programmingExercise.delete.baseReposBuildPlans'
+                                                }"
+                                                class="mb-1"
+                                                id="delete-exercise"
+                                            >
+                                                <fa-icon [icon]="faTrash" />
+                                            </button>
+                                        }
                                     }
                                 </div>
                             </div>
@@ -304,23 +320,38 @@
                     </button>
                 }
                 @if (course.isAtLeastInstructor) {
-                    <button
-                        [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-                        jhiDeleteButton
-                        [entityTitle]="'Multiple Programming Exercises'"
-                        deleteQuestion="artemisApp.exerciseActions.deleteMultipleExercisesQuestion"
-                        (delete)="deleteMultipleProgrammingExercises(selectedExercises, $event)"
-                        class="me-1"
-                        id="delete-exercises"
-                        [dialogError]="dialogError$"
-                        [requireConfirmationOnlyForAdditionalChecks]="true"
-                        [additionalChecks]="{
-                            deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',
-                            deleteBaseReposBuildPlans: 'artemisApp.programmingExercise.delete.baseReposBuildPlans'
-                        }"
-                    >
-                        <fa-icon [icon]="faTrash" />
-                    </button>
+                    @if (localVCEnabled) {
+                        <button
+                            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+                            jhiDeleteButton
+                            [entityTitle]="'Multiple Programming Exercises'"
+                            deleteQuestion="artemisApp.programmingExercise.delete.questionLocalVC.multiple"
+                            (delete)="deleteMultipleProgrammingExercises(selectedExercises, $event)"
+                            class="me-1"
+                            id="delete-exercises"
+                            [dialogError]="dialogError$"
+                        >
+                            <fa-icon [icon]="faTrash" />
+                        </button>
+                    } @else {
+                        <button
+                            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+                            jhiDeleteButton
+                            [entityTitle]="'Multiple Programming Exercises'"
+                            deleteQuestion="artemisApp.exerciseActions.deleteMultipleExercisesQuestion"
+                            (delete)="deleteMultipleProgrammingExercises(selectedExercises, $event)"
+                            class="me-1"
+                            id="delete-exercises"
+                            [dialogError]="dialogError$"
+                            [requireConfirmationOnlyForAdditionalChecks]="true"
+                            [additionalChecks]="{
+                                deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',
+                                deleteBaseReposBuildPlans: 'artemisApp.programmingExercise.delete.baseReposBuildPlans'
+                            }"
+                        >
+                            <fa-icon [icon]="faTrash" />
+                        </button>
+                    }
                 }
             </div>
         }

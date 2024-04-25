@@ -141,19 +141,32 @@
         </button>
     }
     @if (course.isAtLeastInstructor && exercise.type === exerciseType.PROGRAMMING) {
-        <button
-            jhiDeleteButton
-            [entityTitle]="exercise.title || ''"
-            deleteQuestion="artemisApp.programmingExercise.delete.question"
-            (delete)="deleteProgrammingExercise($event)"
-            [dialogError]="dialogError$"
-            deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
-            [additionalChecks]="{
-                deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',
-                deleteBaseReposBuildPlans: 'artemisApp.programmingExercise.delete.baseReposBuildPlans'
-            }"
-        >
-            <fa-icon [icon]="faTrash" />
-        </button>
+        @if (localVCEnabled) {
+            <button
+                jhiDeleteButton
+                [entityTitle]="exercise.title || ''"
+                deleteQuestion="artemisApp.programmingExercise.delete.questionLocalVC.single"
+                (delete)="deleteProgrammingExercise($event)"
+                [dialogError]="dialogError$"
+                deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
+            >
+                <fa-icon [icon]="faTrash" />
+            </button>
+        } @else {
+            <button
+                jhiDeleteButton
+                [entityTitle]="exercise.title || ''"
+                deleteQuestion="artemisApp.programmingExercise.delete.question"
+                (delete)="deleteProgrammingExercise($event)"
+                [dialogError]="dialogError$"
+                deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
+                [additionalChecks]="{
+                    deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',
+                    deleteBaseReposBuildPlans: 'artemisApp.programmingExercise.delete.baseReposBuildPlans'
+                }"
+            >
+                <fa-icon [icon]="faTrash" />
+            </button>
+        }
     }
 </div>
