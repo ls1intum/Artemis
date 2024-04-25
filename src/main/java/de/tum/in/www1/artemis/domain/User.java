@@ -147,7 +147,7 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Nullable
     @JsonIgnore
     @Column(name = "ssh_public_key")
-    private String sshPublicKey = null;
+    private final String sshPublicKey = null;
 
     /**
      * A hash of the public ssh key for fast comparison in the database (with an index)
@@ -156,7 +156,7 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Size(max = 100)
     @JsonIgnore
     @Column(name = "ssh_public_key_hash")
-    private String sshPublicKeyHash = null;
+    private final String sshPublicKeyHash = null;
 
     /**
      * Word "GROUPS" is being added as a restricted word starting in MySQL 8.0.2
@@ -523,5 +523,10 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Nullable
     public ZonedDateTime getIrisAcceptedTimestamp() {
         return irisAccepted;
+    }
+
+    @Nullable
+    public String getSshPublicKey() {
+        return sshPublicKey;
     }
 }

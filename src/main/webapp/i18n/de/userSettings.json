@@ -16,7 +16,8 @@
                 "fullName": "Vollständiger Name",
                 "login": "Login",
                 "email": "Email",
-                "joinedArtemis": "Artemis beigetreten am"
+                "joinedArtemis": "Artemis beigetreten am",
+                "sshKey": "Öffentlicher SSH Schlüssel"
             },
             "categories": {
                 "NOTIFICATION_SETTINGS": "Benachrichtigungseinstellungen",

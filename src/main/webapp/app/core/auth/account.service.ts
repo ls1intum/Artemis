@@ -29,6 +29,7 @@ export interface IAccountService {
     isAuthenticated: () => boolean;
     getAuthenticationState: () => Observable<User | undefined>;
     getImageUrl: () => string | undefined;
+    addSshPublicKey: (sshPublicKey: string) => Observable<void>;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -312,5 +313,12 @@ export class AccountService implements IAccountService {
      */
     setPrefilledUsername(prefilledUsername: string) {
         this.prefilledUsernameValue = prefilledUsername;
+    }
+
+    addSshPublicKey(sshPublicKey: string): Observable<void> {
+        if (this.userIdentity) {
+            this.userIdentity.sshPublicKey = sshPublicKey;
+        }
+        return this.http.put<void>('api/users/sshpublickey', sshPublicKey);
     }
 }

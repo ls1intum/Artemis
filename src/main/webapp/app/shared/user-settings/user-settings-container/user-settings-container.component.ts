@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { faUser } from '@fortawesome/free-solid-svg-icons';
 import { AccountService } from 'app/core/auth/account.service';
 import { AccountInformationComponent } from 'app/shared/user-settings/account-information/account-information.component';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 /**
  * UserSettingsContainerComponent serves as the common ground for different settings
@@ -15,7 +16,7 @@ export class UserSettingsContainerComponent extends AccountInformationComponent 
     // Icons
     faUser = faUser;
 
-    constructor(accountService: AccountService) {
-        super(accountService);
+    constructor(accountService: AccountService, profileService: ProfileService) {
+        super(accountService, profileService);
     }
 }
