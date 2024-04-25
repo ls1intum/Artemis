@@ -75,7 +75,6 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AssessmentDashboardService;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ConductAgreementService;
 import de.tum.in.www1.artemis.service.CourseScoreCalculationService;
 import de.tum.in.www1.artemis.service.CourseService;
