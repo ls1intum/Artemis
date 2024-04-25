@@ -100,6 +100,7 @@ examples.forEach((activeConversation) => {
             jest.spyOn(metisConversationService, 'activeConversation$', 'get').mockReturnValue(new BehaviorSubject(activeConversation).asObservable());
             setActiveConversationSpy = jest.spyOn(metisConversationService, 'setActiveConversation');
             acceptCodeOfConductSpy = jest.spyOn(metisConversationService, 'acceptCodeOfConduct');
+
             jest.spyOn(metisService, 'posts', 'get').mockReturnValue(postsSubject.asObservable());
         }));
 

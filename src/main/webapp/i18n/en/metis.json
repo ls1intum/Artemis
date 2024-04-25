@@ -63,6 +63,7 @@
             "overview": {
                 "title": "Posts",
                 "searchBarDefault": "Search for a message across all channels",
+                "sortedByDate": "Sorted by Date",
                 "postContextFilter": "Show messages for:",
                 "one_extra_context": "other",
                 "multiple_extra_contexts": "others",

@@ -20,7 +20,7 @@
                 <!-- sort dropdown -->
                 <div class="col-12 col-sm-5 col-md-auto order-lg-2" style="margin-left: 80px">
                     <div class="row align-items-baseline justify-content-center">
-                        <div class="col-auto p-0">Sorted by Date</div>
+                        <div class="col-auto p-0">{{ 'artemisApp.metis.overview.sortedByDate' | artemisTranslate }}</div>
                         <div class="col-auto p-0 clickable" role="button" (click)="onChangeSortDir()">
                             <fa-icon
                                 [icon]="sortingOrder === SortDirection.ASCENDING ? faLongArrowAltUp : faLongArrowAltDown"

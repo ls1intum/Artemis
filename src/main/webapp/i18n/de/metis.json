@@ -63,6 +63,7 @@
             "overview": {
                 "title": "Nachrichten",
                 "searchBarDefault": "Suche nach Nachrichten in allen Kanälen",
+                "sortedByDate": "Sortiert nach Datum",
                 "postContextFilter": "Zeige Nachrichten in:",
                 "one_extra_context": "weiterer",
                 "multiple_extra_contexts": "weitere",
