@@ -46,17 +46,9 @@ public class StaticCodeAnalysisService {
         }
 
         // Create new static code analysis using the default configuration as a template
-        List<StaticCodeAnalysisCategory> newCategories = new ArrayList<>();
-        for (var defaultCategory : defaultConfiguration) {
-            StaticCodeAnalysisCategory newCategory = new StaticCodeAnalysisCategory();
-            newCategory.setName(defaultCategory.name());
-            newCategory.setPenalty(defaultCategory.penalty());
-            newCategory.setMaxPenalty(defaultCategory.maxPenalty());
-            newCategory.setState(defaultCategory.state());
-            newCategory.setProgrammingExercise(programmingExercise);
-            newCategories.add(newCategory);
-        }
-        staticCodeAnalysisCategoryRepository.saveAll(newCategories);
+        List<StaticCodeAnalysisCategory> newCategoriesWithDefaultConfiguration = defaultConfiguration.stream()
+                .map(category -> category.toStaticCodeAnalysisCategory(programmingExercise)).toList();
+        staticCodeAnalysisCategoryRepository.saveAll(newCategoriesWithDefaultConfiguration);
     }
 
     /**
