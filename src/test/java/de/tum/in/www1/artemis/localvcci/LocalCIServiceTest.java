@@ -7,6 +7,7 @@ import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -67,6 +68,15 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     protected IMap<Long, LocalCIBuildJobQueueItem> processingJobs;
 
+    @AfterEach
+    void tearDown() {
+        queuedJobs.clear();
+        processingJobs.clear();
+
+        // init to activate queue listener again
+        sharedQueueProcessingService.init();
+    }
+
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testReturnCorrectBuildStatus() {
@@ -102,10 +112,6 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
         // No build jobs for the participation are queued, but at least one is building
         assertThat(continuousIntegrationService.getBuildStatus(participation)).isEqualTo(BuildStatus.BUILDING);
-        processingJobs.clear();
-
-        // init to activate queue listener again
-        sharedQueueProcessingService.init();
     }
 
     @Test
