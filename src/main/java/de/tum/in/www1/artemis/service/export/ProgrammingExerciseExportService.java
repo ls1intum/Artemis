@@ -118,13 +118,13 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
      * @param exercise              the programming exercise
      * @param exportErrors          List of failures that occurred during the export
      * @param includeStudentRepos   flag that indicates whether the student repos should also be exported
-     * @param shouldZipZipFiles     flag that indicates whether the zip files should be zipped again (this is necessary for the import to work)
+     * @param shouldZipDirs         flag that indicates whether the directories should be zipped (this is necessary for the import to work)
      * @param exportDir             the directory used to store the zip file
      * @param archivalReportEntries List of all exercises and their statistics
      * @return the path to the zip file
      */
     private Path exportProgrammingExerciseMaterialWithStudentReposOptional(ProgrammingExercise exercise, List<String> exportErrors, boolean includeStudentRepos,
-            boolean shouldZipZipFiles, Optional<Path> exportDir, List<ArchivalReportEntry> archivalReportEntries, List<Path> pathsToBeZipped) throws IOException {
+            boolean shouldZipDirs, Optional<Path> exportDir, List<ArchivalReportEntry> archivalReportEntries, List<Path> pathsToBeZipped) throws IOException {
         if (exportDir.isEmpty()) {
             // Create export directory for programming exercises
             if (!Files.exists(repoDownloadClonePath)) {
@@ -136,8 +136,8 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         // Add the exported zip folder containing template, solution, and tests repositories. Also export the build plan if one exists.
         // Wrap this in a try catch block to prevent the problem statement and exercise details not being exported if the repositories fail to export
         try {
-            var repoExportsPaths = exportProgrammingExerciseRepositories(exercise, includeStudentRepos, shouldZipZipFiles, repoDownloadClonePath, exportDir.orElseThrow(),
-                    exportErrors, archivalReportEntries);
+            var repoExportsPaths = exportProgrammingExerciseRepositories(exercise, includeStudentRepos, shouldZipDirs, repoDownloadClonePath, exportDir.orElseThrow(), exportErrors,
+                    archivalReportEntries);
             repoExportsPaths.forEach(path -> {
                 if (path != null) {
                     pathsToBeZipped.add(path);
@@ -217,21 +217,22 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
     }
 
     /**
-     * Export instructor repositories and optionally students' repositories in a zip file.
+     * Export instructor repositories and optionally students' repositories in a zip file or
+     * directory (without zipping).
      * <p>
      * The outputDir is used to store the zip file and temporary files used for zipping so make
      * sure to delete it if it's no longer used.
      *
      * @param exercise              the programming exercise
      * @param includingStudentRepos flag for including the students repos as well
-     * @param shouldZipZipFiles     flag for zipping the zip files again
+     * @param shouldZipDirs         flag for zipping the directories
      * @param workingDir            the directory used to clone the repository
      * @param outputDir             the path to a directory that will be used to store the zipped programming exercise.
      * @param exportErrors          List of failures that occurred during the export
      * @param reportData            List of all exercises and their statistics
-     * @return a list of paths to one or more zip files
+     * @return a list of paths to one zip file or more directories
      */
-    public List<Path> exportProgrammingExerciseRepositories(ProgrammingExercise exercise, boolean includingStudentRepos, boolean shouldZipZipFiles, Path workingDir, Path outputDir,
+    public List<Path> exportProgrammingExerciseRepositories(ProgrammingExercise exercise, boolean includingStudentRepos, boolean shouldZipDirs, Path workingDir, Path outputDir,
             List<String> exportErrors, List<ArchivalReportEntry> reportData) {
         log.info("Exporting programming exercise {} with title {}", exercise.getId(), exercise.getTitle());
         // List to add paths of files that should be contained in the zip folder of exported programming exercise repositories:
@@ -286,7 +287,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
             }
 
             // Create the zip folder of the exported programming exercise and return the path to the created folder
-            if (shouldZipZipFiles) {
+            if (shouldZipDirs) {
                 zipFileService.createZipFile(pathToZippedExercise, includedFilePathsNotNull);
                 return List.of(pathToZippedExercise);
             }
@@ -531,7 +532,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         var zippedRepos = exportStudentRepositories(programmingExercise, participations, repositoryExportOptions, outputDir, outputDir, new ArrayList<>());
 
         try {
-            // Create a zip folder containing the zipped repositories.
+            // Create a zip folder containing the directories with the repositories.
             return createZipWithAllRepositories(programmingExercise, zippedRepos, outputDir);
         }
         catch (IOException ex) {
