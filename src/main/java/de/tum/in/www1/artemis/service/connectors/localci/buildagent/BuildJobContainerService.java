@@ -29,6 +29,7 @@ import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.command.ExecCreateCmd;
 import com.github.dockerjava.api.command.ExecCreateCmdResponse;
+import com.github.dockerjava.api.exception.ConflictException;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Frame;
@@ -312,22 +313,27 @@ public class BuildJobContainerService {
         }
         ExecCreateCmdResponse execCreateCmdResponse = execCreateCmd.exec();
         final CountDownLatch latch = new CountDownLatch(1);
-        dockerClient.execStartCmd(execCreateCmdResponse.getId()).withDetach(detach).exec(new ResultCallback.Adapter<>() {
+        try {
+            dockerClient.execStartCmd(execCreateCmdResponse.getId()).withDetach(detach).exec(new ResultCallback.Adapter<>() {
 
-            @Override
-            public void onNext(Frame item) {
-                String text = new String(item.getPayload());
-                BuildLogEntry buildLogEntry = new BuildLogEntry(ZonedDateTime.now(), text);
-                if (buildJobId != null) {
-                    buildLogsMap.appendBuildLogEntry(buildJobId, buildLogEntry);
+                @Override
+                public void onNext(Frame item) {
+                  String text = new String(item.getPayload());
+                  BuildLogEntry buildLogEntry = new BuildLogEntry(ZonedDateTime.now(), text);
+                  if (buildJobId != null) {
+                      buildLogsMap.appendBuildLogEntry(buildJobId, buildLogEntry);
+                  }
                 }
-            }
 
-            @Override
-            public void onComplete() {
-                latch.countDown();
-            }
-        });
+                @Override
+                public void onComplete() {
+                    latch.countDown();
+                }
+            });
+        }
+        catch (ConflictException e) {
+            throw new LocalCIException("Could not execute Docker command: " + String.join(" ", command), e);
+        }
 
         try {
             latch.await();
