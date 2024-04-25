@@ -133,7 +133,7 @@ export class CourseUpdateComponent implements OnInit {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
                 if (!profileInfo.inProduction) {
-                    // developers may want to customize the groups, therefore this is prefilled
+                    // developers may want to customize the groups
                     this.customizeGroupNames = true;
                     if (!this.course.studentGroupName) {
                         this.course.studentGroupName = 'artemis-dev';
