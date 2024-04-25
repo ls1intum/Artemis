@@ -20,8 +20,18 @@ describe('CommitsInfoComponent', () => {
     let programmingExerciseParticipationServiceSpy: jest.SpyInstance;
     let profileService: ProfileService;
     let profileServiceSpy: jest.SpyInstance;
-    const commitInfo1 = { hash: '123', author: 'author', timestamp: dayjs('2021-01-02'), message: 'commit message' } as CommitInfo;
-    const commitInfo2 = { hash: '456', author: 'author2', timestamp: dayjs('2021-01-01'), message: 'other message' } as CommitInfo;
+    const commitInfo1 = {
+        hash: '123',
+        author: 'author',
+        timestamp: dayjs('2021-01-02'),
+        message: 'commit message',
+    } as CommitInfo;
+    const commitInfo2 = {
+        hash: '456',
+        author: 'author2',
+        timestamp: dayjs('2021-01-01'),
+        message: 'other message',
+    } as CommitInfo;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -38,9 +48,7 @@ describe('CommitsInfoComponent', () => {
         profileService = TestBed.inject(ProfileService);
         profileServiceSpy = jest
             .spyOn(profileService, 'getProfileInfo')
-            .mockReturnValue(
-                of({ commitHashURLTemplate: 'https://bitbucket.ase.in.tum.de/projects/{projectKey}/repos/{repoSlug}/commits/{commitHash}' } as unknown as ProfileInfo),
-            );
+            .mockReturnValue(of({ commitHashURLTemplate: 'https://gitlab.ase.in.tum.de/projects/{projectKey}/repos/{repoSlug}/commits/{commitHash}' } as unknown as ProfileInfo));
     });
 
     afterEach(() => {
@@ -78,7 +86,7 @@ describe('CommitsInfoComponent', () => {
 
         component.ngOnInit();
 
-        expect(component.commits[0].commitUrl).toBe('https://bitbucket.ase.in.tum.de/projects/key/repos/key-1/commits/123');
+        expect(component.commits[0].commitUrl).toBe('https://gitlab.ase.in.tum.de/projects/key/repos/key-1/commits/123');
     });
 
     it('should set localVC to true if active profiles contains localVc', () => {
@@ -88,7 +96,7 @@ describe('CommitsInfoComponent', () => {
     });
 
     it('should set localVC to false if active profiles does not contain localVc', () => {
-        profileServiceSpy.mockReturnValue(of({ activeProfiles: ['bitbucket'] } as unknown as ProfileInfo));
+        profileServiceSpy.mockReturnValue(of({ activeProfiles: ['gitlab'] } as unknown as ProfileInfo));
         component.ngOnInit();
         expect(component.localVC).toBeFalse();
     });

@@ -5,9 +5,12 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
@@ -76,15 +79,6 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             WHERE e.id = :exerciseId
             """)
     Optional<Exercise> findWithCompetenciesById(@Param("exerciseId") long exerciseId);
-
-    @Query("""
-            SELECT e
-            FROM Exercise e
-                LEFT JOIN FETCH e.competencies c
-                LEFT JOIN FETCH c.exercises
-            WHERE e.id = :exerciseId
-            """)
-    Optional<Exercise> findByIdWithCompetenciesBidirectional(@Param("exerciseId") Long exerciseId);
 
     @Query("""
             SELECT e
@@ -567,7 +561,8 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             FROM Course c
                 LEFT JOIN c.exercises e
                 LEFT JOIN FETCH e.studentParticipations p
-                LEFT JOIN p.team.students students
+                LEFT JOIN FETCH p.team t
+                LEFT JOIN FETCH t.students students
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results r
                 LEFT JOIN FETCH r.feedbacks f
@@ -612,7 +607,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             @Param("restrictedFeedbackSuggestionModule") Collection<String> restrictedFeedbackSuggestionModule);
 
     /**
-     * For an explanation, see {@link de.tum.in.www1.artemis.web.rest.ExamResource#getAllExercisesWithPotentialPlagiarismForExam(long,long)}
+     * For an explanation, see {@link de.tum.in.www1.artemis.web.rest.ExamResource#getAllExercisesWithPotentialPlagiarismForExam(long, long)}
      *
      * @param examId the id of the exam for which we want to get all exercises with potential plagiarism
      * @return a list of exercises with potential plagiarism
@@ -626,4 +621,12 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
                 AND TYPE (e) IN (ModelingExercise, TextExercise, ProgrammingExercise)
             """)
     Set<Exercise> findAllExercisesWithPotentialPlagiarismByExamId(@Param("examId") long examId);
+
+    @Query("""
+            SELECT count(e) > 0
+            FROM Exercise e
+            WHERE e.id = :exerciseId
+                AND e.exerciseGroup IS NOT NULL
+            """)
+    boolean isExamExercise(@Param("exerciseId") long exerciseId);
 }

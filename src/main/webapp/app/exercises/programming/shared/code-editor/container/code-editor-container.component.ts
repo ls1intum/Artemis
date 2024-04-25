@@ -26,6 +26,7 @@ import { CodeEditorInstructionsComponent } from 'app/exercises/programming/share
 import { Feedback } from 'app/entities/feedback.model';
 import { Course } from 'app/entities/course.model';
 import { ConnectionError } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
+import { CodeEditorMonacoComponent } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
 
 export enum CollapsableCodeEditorElement {
     FileBrowser,
@@ -40,13 +41,15 @@ export enum CollapsableCodeEditorElement {
 })
 export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeactivate {
     readonly CommitState = CommitState;
+    readonly EditorState = EditorState;
     readonly CollapsableCodeEditorElement = CollapsableCodeEditorElement;
     @ViewChild(CodeEditorGridComponent, { static: false }) grid: CodeEditorGridComponent;
 
     @ViewChild(CodeEditorFileBrowserComponent, { static: false }) fileBrowser: CodeEditorFileBrowserComponent;
     @ViewChild(CodeEditorActionsComponent, { static: false }) actions: CodeEditorActionsComponent;
     @ViewChild(CodeEditorBuildOutputComponent, { static: false }) buildOutput: CodeEditorBuildOutputComponent;
-    @ViewChild(CodeEditorAceComponent, { static: false }) aceEditor: CodeEditorAceComponent;
+    @ViewChild(CodeEditorAceComponent, { static: false }) aceEditor?: CodeEditorAceComponent;
+    @ViewChild('codeEditorMonaco', { static: false }) monacoEditor?: CodeEditorMonacoComponent;
     @ViewChild(CodeEditorInstructionsComponent, { static: false }) instructions: CodeEditorInstructionsComponent;
 
     @Input()
@@ -67,6 +70,8 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     highlightDifferences: boolean;
     @Input()
     disableAutoSave = false;
+    @Input()
+    useMonacoEditor = false;
 
     @Output()
     onResizeEditorInstructions = new EventEmitter<void>();
@@ -196,7 +201,9 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
         if (_isEmpty(this.unsavedFiles) && this.editorState === EditorState.UNSAVED_CHANGES) {
             this.editorState = EditorState.CLEAN;
         }
-        this.aceEditor.onFileChange(fileChange);
+        this.monacoEditor?.onFileChange(fileChange);
+        this.aceEditor?.onFileChange(fileChange);
+
         this.onFileChanged.emit();
     }
 
@@ -218,7 +225,8 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
         if (errorFiles.length) {
             this.onError('saveFailed');
         }
-        this.aceEditor.storeAnnotations(savedFiles);
+        this.aceEditor?.storeAnnotations(savedFiles);
+        this.monacoEditor?.storeAnnotations(savedFiles);
     }
 
     /**
@@ -280,7 +288,7 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
         if (type === ResizeType.SIDEBAR_RIGHT || type === ResizeType.MAIN_BOTTOM) {
             this.onResizeEditorInstructions.emit();
         }
-        if (type === ResizeType.SIDEBAR_LEFT || type === ResizeType.SIDEBAR_RIGHT || type === ResizeType.MAIN_BOTTOM) {
+        if (this.aceEditor && (type === ResizeType.SIDEBAR_LEFT || type === ResizeType.SIDEBAR_RIGHT || type === ResizeType.MAIN_BOTTOM)) {
             this.aceEditor.editor.getEditor().resize();
         }
     }

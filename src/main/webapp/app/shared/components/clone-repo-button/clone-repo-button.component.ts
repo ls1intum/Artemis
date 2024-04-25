@@ -33,10 +33,10 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
     exercise?: Exercise;
 
     useSsh = false;
-    sshKeysUrl: string;
-    sshEnabled: boolean;
-    sshTemplateUrl: string;
-    repositoryPassword: string;
+    sshKeysUrl?: string;
+    sshEnabled = false;
+    sshTemplateUrl?: string;
+    repositoryPassword?: string;
     versionControlUrl: string;
     versionControlAccessTokenRequired?: boolean;
     localVCEnabled = false;
@@ -104,7 +104,7 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
     }
 
     getHttpOrSshRepositoryUri(insertPlaceholder = true): string {
-        if (this.useSsh) {
+        if (this.useSsh && this.sshEnabled && this.sshTemplateUrl) {
             return this.getSshCloneUrl(this.getRepositoryUri()) || this.getRepositoryUri();
         }
 
@@ -155,7 +155,7 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
      * @return repository uri with username of current user inserted
      */
     private repositoryUriForTeam(url: string) {
-        // (https://)(bitbucket.ase.in.tum.de/...-team1.git)  =>  (https://)ga12abc@(bitbucket.ase.in.tum.de/...-team1.git)
+        // (https://)(gitlab.ase.in.tum.de/...-team1.git)  =>  (https://)ga12abc@(gitlab.ase.in.tum.de/...-team1.git)
         return url.replace(/^(\w*:\/\/)(.*)$/, `$1${this.user.login}@$2`);
     }
 

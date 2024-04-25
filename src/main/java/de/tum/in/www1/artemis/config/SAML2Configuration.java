@@ -22,27 +22,20 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.saml2.core.Saml2X509Credential;
 import org.springframework.security.saml2.provider.service.registration.InMemoryRelyingPartyRegistrationRepository;
 import org.springframework.security.saml2.provider.service.registration.RelyingPartyRegistration;
 import org.springframework.security.saml2.provider.service.registration.RelyingPartyRegistrationRepository;
 import org.springframework.security.saml2.provider.service.registration.RelyingPartyRegistrations;
+import org.springframework.security.web.SecurityFilterChain;
 
 /**
  * Describes the security configuration for SAML2.
- * <p>
- * Since this {@link WebSecurityConfigurerAdapter} is annotated with {@link Order} and {@link SecurityConfiguration}
- * is not, this configuration is evaluated first when the SAML2 Profile is active.
  */
 @Configuration
-@Order(1)
 @Profile("saml2")
-// ToDo: currently this cannot be replaced as recommended by
-// https://spring.io/blog/2022/02/21/spring-security-without-the-websecurityconfigureradapter
-// as that would break the SAML2 login functionality. For more information, see
-// https://github.com/ls1intum/Artemis/pull/5721.
-public class SAML2Configuration extends WebSecurityConfigurerAdapter {
+public class SAML2Configuration {
 
     private static final Logger log = LoggerFactory.getLogger(SAML2Configuration.class);
 
@@ -55,7 +48,7 @@ public class SAML2Configuration extends WebSecurityConfigurerAdapter {
      */
     public SAML2Configuration(final SAML2Properties properties) {
         this.properties = properties;
-
+        // TODO: we should describe why this line is actually needed
         Security.addProvider(new BouncyCastleProvider());
     }
 
@@ -71,8 +64,8 @@ public class SAML2Configuration extends WebSecurityConfigurerAdapter {
     @Bean
     RelyingPartyRegistrationRepository relyingPartyRegistrationRepository() {
         final List<RelyingPartyRegistration> relyingPartyRegistrations = new ArrayList<>();
-        // @formatter:off
         for (SAML2Properties.RelyingPartyProperties config : properties.getIdentityProviders()) {
+            // @formatter:off
             relyingPartyRegistrations.add(RelyingPartyRegistrations
                 .fromMetadataLocation(config.getMetadata())
                 .registrationId(config.getRegistrationId())
@@ -80,6 +73,7 @@ public class SAML2Configuration extends WebSecurityConfigurerAdapter {
                 .decryptionX509Credentials(credentialsSink -> this.addDecryptionInformation(credentialsSink, config))
                 .signingX509Credentials(credentialsSink -> this.addSigningInformation(credentialsSink, config))
                 .build());
+            // @formatter:on
         }
 
         return new InMemoryRelyingPartyRegistrationRepository(relyingPartyRegistrations);
@@ -93,11 +87,11 @@ public class SAML2Configuration extends WebSecurityConfigurerAdapter {
         try {
             Saml2X509Credential credentials = Saml2X509Credential.decryption(readPrivateKey(config.getKeyFile()), readPublicCert(config.getCertFile()));
             credentialsSink.add(credentials);
-        } catch (IOException | CertificateException e) {
+        }
+        catch (IOException | CertificateException e) {
             log.error(e.getMessage(), e);
         }
     }
-
 
     private void addSigningInformation(Collection<Saml2X509Credential> credentialsSink, SAML2Properties.RelyingPartyProperties config) {
         if (!this.checkFiles(config)) {
@@ -107,7 +101,8 @@ public class SAML2Configuration extends WebSecurityConfigurerAdapter {
         try {
             Saml2X509Credential credentials = Saml2X509Credential.signing(readPrivateKey(config.getKeyFile()), readPublicCert(config.getCertFile()));
             credentialsSink.add(credentials);
-        } catch (IOException | CertificateException e) {
+        }
+        catch (IOException | CertificateException e) {
             log.error(e.getMessage(), e);
         }
     }
@@ -145,33 +140,38 @@ public class SAML2Configuration extends WebSecurityConfigurerAdapter {
         }
     }
 
-    @Override
-    protected void configure(final HttpSecurity http) throws Exception {
+    /**
+     * Since this configuration is annotated with {@link Order} and {@link SecurityConfiguration}
+     * is not, this configuration is evaluated first when the SAML2 Profile is active.
+     *
+     * @param http The Spring http security configurer.
+     * @return The configured http security filter chain.
+     * @throws Exception Thrown in case Spring detects an issue with the security configuration.
+     */
+    @Bean
+    @Order(1)
+    protected SecurityFilterChain saml2FilterChain(final HttpSecurity http) throws Exception {
         // @formatter:off
         http
-            .requestMatchers()
-                // This filter chain is only applied if the URL matches
-                // Else the request is filtered by {@link SecurityConfiguration}.
-                .antMatchers("/api/public/saml2")
-                .antMatchers("/saml2/**")
-                .antMatchers("/login/**")
-            .and()
-            .csrf()
-                // Needed for SAML to work properly
-                .disable()
-            .authorizeRequests()
+            // This filter chain is only applied if the URL matches
+            // Else the request is filtered by {@link SecurityConfiguration}.
+            .securityMatcher("/api/public/saml2", "/saml2/**", "/login/**")
+            // Needed for SAML to work properly
+            .csrf(AbstractHttpConfigurer::disable)
+            .authorizeHttpRequests(auth -> auth
                 // The request to the api is permitted and checked directly
                 // This allows returning a 401 if the user is not logged in via SAML2
                 // to notify the client that a login is needed.
-                .antMatchers("/api/public/saml2").permitAll()
+                .requestMatchers("/api/public/saml2").permitAll()
                 // Every other request must be authenticated. Any request triggers a SAML2
                 // authentication flow
                 .anyRequest().authenticated()
-            .and()
+            )
             // Processes the RelyingPartyRegistrationRepository Bean and installs the filters for SAML2
-            .saml2Login()
-                // Redirect back to the root
-                .defaultSuccessUrl("/", true);
+            // Redirect back to the root
+            .saml2Login((config) -> config.defaultSuccessUrl("/", true));
         // @formatter:on
+
+        return http.build();
     }
 }

@@ -38,8 +38,11 @@ describe('ProgrammingExerciseInstructionStepWizardComponent', () => {
     it('should load the expected number of steps according to the provided tests', () => {
         const result: Result = {
             id: 1,
-            completionDate: dayjs('2019-01-06T22:15:29.203+02:00'),
-            feedbacks: [{ testCase: { testName: 'testBubbleSort', id: 1 }, detailText: 'lorem ipsum' }],
+            completionDate: dayjs('2022-01-06T22:15:29.203+02:00'),
+            feedbacks: [
+                { testCase: { testName: 'testBubbleSort', id: 1 }, positive: false, detailText: 'lorem ipsum' },
+                { testCase: { testName: 'testMergeSort', id: 2 }, positive: true, detailText: 'lorem ipsum' },
+            ],
         };
         const tasks: Task[] = [
             { id: 1, completeString: '[task][Implement BubbleSort](1)', taskName: 'Implement BubbleSort', testIds: [1] },
@@ -63,7 +66,7 @@ describe('ProgrammingExerciseInstructionStepWizardComponent', () => {
     it('should not show any icons for empty tasks list', () => {
         const result: Result = {
             id: 1,
-            completionDate: dayjs('2019-01-06T22:15:29.203+02:00'),
+            completionDate: dayjs('2022-01-06T22:15:29.203+02:00'),
             feedbacks: [{ testCase: { testName: 'testBubbleSort' }, detailText: 'lorem ipsum' }],
         };
         comp.latestResult = result;

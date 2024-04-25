@@ -1,7 +1,3 @@
-// See: https://github.com/ls1intum/Artemis/commit/c842a8995f9f837b010d1ddfa3ebe00df7652011
-// We changed the notification plugin to also send information about successful tests (previously only failed tests).
-// In some cases it needs to be checked explicitly wether a result is legacy or not.
-// The date used is the date of the merge: 2019-05-10T22:12:28Z.
 import { Result } from 'app/entities/result.model';
 import dayjs from 'dayjs/esm';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
@@ -11,19 +7,6 @@ import { SubmissionType } from 'app/entities/submission.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { isPracticeMode } from 'app/entities/participation/student-participation.model';
-
-const BAMBOO_RESULT_LEGACY_TIMESTAMP = 1557526348000;
-
-/*
- * This is a legacy check, results before the 24th May are considered legacy.
- */
-export const isLegacyResult = (result: Result) => {
-    if (result.completionDate) {
-        return result.completionDate.valueOf() < BAMBOO_RESULT_LEGACY_TIMESTAMP;
-    } else {
-        return false;
-    }
-};
 
 export const createBuildPlanUrl = (template: string, projectKey: string, buildPlanId: string): string | undefined => {
     if (template && projectKey && buildPlanId) {

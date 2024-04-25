@@ -72,7 +72,7 @@ class StructuralMethod implements StructuralElement {
                 modifiers.remove("abstract");
             }
             else {
-                modifiers.add(0, "default");
+                modifiers.addFirst("default");
             }
         }
         if (!modifiers.isEmpty()) {

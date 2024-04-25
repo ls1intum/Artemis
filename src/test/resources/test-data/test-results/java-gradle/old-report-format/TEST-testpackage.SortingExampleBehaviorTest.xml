@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report-3.0.xsd"
+           version="3.0" name="de.tum.tst.SortingExampleBehaviorTest" time="0.404" tests="4" errors="0" skipped="0"
+           failures="4">
+    <properties>
+        <property name="java.specification.version" value="17"/>
+        <property name="java.class.version" value="61.0"/>
+    </properties>
+    <testcase name="testMergeSort()" classname="testpackage.SortingExampleBehaviorTest" time="0.059">
+        <failure type="org.opentest4j.AssertionFailedError"><![CDATA[org.opentest4j.AssertionFailedError: Deine Einreichung enthält keine Ausgabe. (67cac2)
+]]></failure>
+    </testcase>
+    <testcase name='testBubbleSort()' classname="testpackage.SortingExampleBehaviorTest" time='0.000306'>
+        <failure>test `add` failed on ≥ 1 cases:
+(0, 0)
+Your submission raised an error Failure(&quot;TODO add&quot;)</failure>
+    </testcase>
+    <testcase name='testUseMergeSortForBigList()' classname="testpackage.SortingExampleBehaviorTest" time='0.000219'>
+        <error>test `filter` failed on ≥ 1 cases:
+(even, [1; 2; 3; 4])
+Your submission raised an error Failure(&quot;TODO filter&quot;)</error>
+    </testcase>
+</testsuite>

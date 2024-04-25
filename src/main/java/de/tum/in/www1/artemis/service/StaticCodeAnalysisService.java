@@ -46,17 +46,9 @@ public class StaticCodeAnalysisService {
         }
 
         // Create new static code analysis using the default configuration as a template
-        List<StaticCodeAnalysisCategory> newCategories = new ArrayList<>();
-        for (var defaultCategory : defaultConfiguration) {
-            StaticCodeAnalysisCategory newCategory = new StaticCodeAnalysisCategory();
-            newCategory.setName(defaultCategory.getName());
-            newCategory.setPenalty(defaultCategory.getPenalty());
-            newCategory.setMaxPenalty(defaultCategory.getMaxPenalty());
-            newCategory.setState(defaultCategory.getState());
-            newCategory.setProgrammingExercise(programmingExercise);
-            newCategories.add(newCategory);
-        }
-        staticCodeAnalysisCategoryRepository.saveAll(newCategories);
+        List<StaticCodeAnalysisCategory> newCategoriesWithDefaultConfiguration = defaultConfiguration.stream()
+                .map(category -> category.toStaticCodeAnalysisCategory(programmingExercise)).toList();
+        staticCodeAnalysisCategoryRepository.saveAll(newCategoriesWithDefaultConfiguration);
     }
 
     /**
@@ -110,11 +102,11 @@ public class StaticCodeAnalysisService {
 
         // Restore the default configuration. Ignore unknown categories by iterating over the default categories
         for (var defaultCategory : defaultCategories) {
-            var matchingCategory = categories.stream().filter(category -> Objects.equals(defaultCategory.getName(), category.getName())).findFirst();
+            var matchingCategory = categories.stream().filter(category -> Objects.equals(defaultCategory.name(), category.getName())).findFirst();
             matchingCategory.ifPresent(cat -> {
-                cat.setPenalty(defaultCategory.getPenalty());
-                cat.setMaxPenalty(defaultCategory.getMaxPenalty());
-                cat.setState(defaultCategory.getState());
+                cat.setPenalty(defaultCategory.penalty());
+                cat.setMaxPenalty(defaultCategory.maxPenalty());
+                cat.setState(defaultCategory.state());
             });
         }
         staticCodeAnalysisCategoryRepository.saveAll(categories);

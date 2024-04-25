@@ -2,8 +2,6 @@ package de.tum.in.www1.artemis.service.dto;
 
 import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 /**
  * Interface for DTOs that represent a build job.
  */
@@ -14,7 +12,6 @@ public interface BuildJobDTOInterface {
      *
      * @return list of failed tests.
      */
-    @JsonIgnore
     List<? extends TestCaseDTOInterface> getFailedTests();
 
     /**
@@ -22,6 +19,5 @@ public interface BuildJobDTOInterface {
      *
      * @return list of successful tests.
      */
-    @JsonIgnore
     List<? extends TestCaseDTOInterface> getSuccessfulTests();
 }

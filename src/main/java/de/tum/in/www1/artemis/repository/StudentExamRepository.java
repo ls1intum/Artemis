@@ -5,13 +5,19 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.security.SecureRandom;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.jpa.repository.*;
+import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,7 +29,6 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
-import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.exam.ExamQuizQuestionsGenerator;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -330,29 +335,6 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
     }
 
     /**
-     * Return the individual due date for the exercise of the participation's user
-     * <p>
-     * For exam exercises, this depends on the StudentExam's working time
-     *
-     * @param exercise      that is possibly part of an exam
-     * @param participation the participation of the student
-     * @return the time from which on submissions are not allowed, for exercises that are not part of an exam, this is just the due date.
-     */
-    @Nullable
-    default ZonedDateTime getIndividualDueDate(Exercise exercise, StudentParticipation participation) {
-        if (exercise.isExamExercise()) {
-            var studentExam = findStudentExam(exercise, participation).orElse(null);
-            if (studentExam == null) {
-                return exercise.getDueDate();
-            }
-            return studentExam.getExam().getStartDate().plusSeconds(studentExam.getWorkingTime());
-        }
-        else {
-            return ExerciseDateService.getDueDate(participation).orElse(null);
-        }
-    }
-
-    /**
      * Get one student exam by id with exercises.
      *
      * @param studentExamId the id of the student exam
@@ -463,25 +445,6 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
         List<Exercise> exercises = new ArrayList<>(exerciseGroup.getExercises());
         int randomIndex = random.nextInt(exercises.size());
         return exercises.get(randomIndex);
-    }
-
-    /**
-     * Generates the student exams randomly based on the exam configuration and the exercise groups
-     * Important: the passed exams needs to include the registered users, exercise groups and exercises (eagerly loaded)
-     *
-     * @param exam                       with eagerly loaded registered users, exerciseGroups and exercises loaded
-     * @param examQuizQuestionsGenerator generator to generate quiz questions for the exam
-     * @return the list of student exams with their corresponding users
-     */
-    default List<StudentExam> generateStudentExams(final Exam exam, ExamQuizQuestionsGenerator examQuizQuestionsGenerator) {
-        final var existingStudentExams = findByExamId(exam.getId());
-        // https://jira.spring.io/browse/DATAJPA-1367 deleteInBatch does not work, because it does not cascade the deletion of existing exam sessions, therefore use deleteAll
-        deleteAll(existingStudentExams);
-
-        Set<User> users = exam.getRegisteredUsers();
-
-        // StudentExams are saved in the called method
-        return createRandomStudentExams(exam, users, examQuizQuestionsGenerator);
     }
 
     /**

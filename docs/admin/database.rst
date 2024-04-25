@@ -226,5 +226,4 @@ In your Artemis config the following values might need to be added/updated to co
             username: <YOUR_DB_USER>
             password: <YOUR_DB_PASSWORD>
         jpa:
-            database-platform: org.hibernate.dialect.PostgreSQL10Dialect
             database: POSTGRESQL

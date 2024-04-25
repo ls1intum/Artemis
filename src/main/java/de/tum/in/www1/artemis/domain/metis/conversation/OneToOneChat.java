@@ -5,8 +5,8 @@ import static de.tum.in.www1.artemis.domain.metis.conversation.ConversationSetti
 import java.time.ZonedDateTime;
 import java.util.Set;
 
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.Entity;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 

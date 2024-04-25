@@ -318,7 +318,7 @@ describe('CourseStatisticsComponent', () => {
     course.title = 'Checking statistics';
     course.description = 'Testing the statistics view';
     course.shortName = 'CHS';
-    course.studentGroupName = 'jira-users';
+    course.studentGroupName = 'eist2019students';
     course.teachingAssistantGroupName = 'artemis-dev';
     course.instructorGroupName = 'artemis-dev';
     course.onlineCourse = false;
@@ -337,7 +337,14 @@ describe('CourseStatisticsComponent', () => {
                 MockTranslateValuesDirective,
                 ArtemisTranslatePipe,
             ],
-            providers: [MockProvider(ArtemisNavigationUtilService), MockProvider(ChartCategoryFilter), { provide: ActivatedRoute, useValue: { parent: { params: of(1) } } }],
+            providers: [
+                MockProvider(ArtemisNavigationUtilService),
+                MockProvider(ChartCategoryFilter),
+                {
+                    provide: ActivatedRoute,
+                    useValue: { parent: { params: of(1) } },
+                },
+            ],
         })
             .compileComponents()
             .then(() => {
@@ -418,7 +425,12 @@ describe('CourseStatisticsComponent', () => {
         courseToAdd.exercises = [...modelingExercises];
         jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(courseToAdd);
         const mockScoresPerExerciseType: Map<ExerciseType, CourseScores> = new Map<ExerciseType, CourseScores>();
-        const mockCourseScores: CourseScores = new CourseScores(36, 36, 0, { absoluteScore: 20, relativeScore: 0, currentRelativeScore: 0, presentationScore: 0 });
+        const mockCourseScores: CourseScores = new CourseScores(36, 36, 0, {
+            absoluteScore: 20,
+            relativeScore: 0,
+            currentRelativeScore: 0,
+            presentationScore: 0,
+        });
         mockScoresPerExerciseType.set(ExerciseType.MODELING, mockCourseScores);
         jest.spyOn(scoresStorageService, 'getStoredScoresPerExerciseType').mockReturnValue(mockScoresPerExerciseType);
         fixture.detectChanges();
@@ -525,7 +537,10 @@ describe('CourseStatisticsComponent', () => {
         const setupExercisesWithCategories = () => {
             const courseToAdd = { ...course };
             const programmingCategory = generateExerciseCategory(ExerciseType.PROGRAMMING, 1);
-            const programmingWithCategory = { ...programmingExercise, categories: [programmingCategory] as ExerciseCategory[] };
+            const programmingWithCategory = {
+                ...programmingExercise,
+                categories: [programmingCategory] as ExerciseCategory[],
+            };
             const quizCategory = generateExerciseCategory(ExerciseType.QUIZ, 1);
             const quizWithCategory = { ...quizExercise, categories: [quizCategory] as ExerciseCategory[] };
             courseToAdd.exercises = [...modelingExercises, programmingWithCategory, quizWithCategory];

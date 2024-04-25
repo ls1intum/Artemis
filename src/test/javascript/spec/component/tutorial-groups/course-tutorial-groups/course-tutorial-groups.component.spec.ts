@@ -48,8 +48,9 @@ describe('CourseTutorialGroupsComponent', () => {
     let fixture: ComponentFixture<CourseTutorialGroupsComponent>;
     let component: CourseTutorialGroupsComponent;
 
-    let tutorialGroupTwo: TutorialGroup;
     let tutorialGroupOne: TutorialGroup;
+    let tutorialGroupTwo: TutorialGroup;
+    let tutorialGroupThree: TutorialGroup;
 
     const router = new MockRouter();
 
@@ -88,8 +89,9 @@ describe('CourseTutorialGroupsComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(CourseTutorialGroupsComponent);
                 component = fixture.componentInstance;
-                tutorialGroupOne = generateExampleTutorialGroup({ id: 1 });
-                tutorialGroupTwo = generateExampleTutorialGroup({ id: 2 });
+                tutorialGroupOne = generateExampleTutorialGroup({ id: 1, isUserTutor: true });
+                tutorialGroupTwo = generateExampleTutorialGroup({ id: 2, isUserRegistered: true });
+                tutorialGroupThree = generateExampleTutorialGroup({ id: 3 });
             });
     });
 
@@ -163,5 +165,17 @@ describe('CourseTutorialGroupsComponent', () => {
             queryParamsHandling: 'merge',
             replaceUrl: true,
         });
+    });
+
+    it('should filter registered tutorial groups for student', () => {
+        component.tutorialGroups = [tutorialGroupOne, tutorialGroupTwo, tutorialGroupThree];
+        component.course = { id: 1, title: 'Test Course' } as Course;
+        expect(component.registeredTutorialGroups).toEqual([tutorialGroupTwo]);
+    });
+
+    it('should filter registered tutorial groups for tutor', () => {
+        component.tutorialGroups = [tutorialGroupOne, tutorialGroupTwo, tutorialGroupThree];
+        component.course = { id: 1, title: 'Test Course', isAtLeastTutor: true } as Course;
+        expect(component.registeredTutorialGroups).toEqual([tutorialGroupOne]);
     });
 });

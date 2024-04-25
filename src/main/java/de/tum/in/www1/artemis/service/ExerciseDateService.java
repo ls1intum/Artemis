@@ -5,6 +5,8 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
+import jakarta.annotation.Nullable;
+
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -12,6 +14,7 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.participation.ParticipationInterface;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
+import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 
 @Profile(PROFILE_CORE)
@@ -22,9 +25,12 @@ public class ExerciseDateService {
 
     private final ExamDateService examDateService;
 
-    public ExerciseDateService(ParticipationRepository participationRepository, ExamDateService examDateService) {
+    private final StudentExamRepository studentExamRepository;
+
+    public ExerciseDateService(ParticipationRepository participationRepository, ExamDateService examDateService, StudentExamRepository studentExamRepository) {
         this.participationRepository = participationRepository;
         this.examDateService = examDateService;
+        this.studentExamRepository = studentExamRepository;
     }
 
     /**
@@ -154,7 +160,7 @@ public class ExerciseDateService {
     /**
      * Checks if the current time is after the assessment due date
      * and manual results can be published to the student.
-     *
+     * <p>
      * Returns true if the assessment due date is null.
      *
      * @param exercise to check the assessment due date
@@ -176,5 +182,28 @@ public class ExerciseDateService {
     public boolean hasExerciseStarted(Exercise exercise) {
         ZonedDateTime exerciseStartDate = exercise.getParticipationStartDate();
         return exerciseStartDate == null || exerciseStartDate.isBefore(ZonedDateTime.now());
+    }
+
+    /**
+     * Return the individual due date for the exercise of the participation's user
+     * <p>
+     * For exam exercises, this depends on the StudentExam's working time
+     *
+     * @param exercise      that is possibly part of an exam
+     * @param participation the participation of the student
+     * @return the time from which on submissions are not allowed, for exercises that are not part of an exam, this is just the due date.
+     */
+    @Nullable
+    public ZonedDateTime getIndividualDueDate(Exercise exercise, StudentParticipation participation) {
+        if (exercise.isExamExercise()) {
+            var studentExam = studentExamRepository.findStudentExam(exercise, participation).orElse(null);
+            if (studentExam == null) {
+                return exercise.getDueDate();
+            }
+            return studentExam.getExam().getStartDate().plusSeconds(studentExam.getWorkingTime());
+        }
+        else {
+            return ExerciseDateService.getDueDate(participation).orElse(null);
+        }
     }
 }

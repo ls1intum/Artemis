@@ -37,7 +37,7 @@ public class IrisRateLimitService {
     public IrisRateLimitInformation getRateLimitInformation(User user) {
         var globalSettings = irisSettingsService.getGlobalSettings();
         var irisChatSettings = globalSettings.getIrisChatSettings();
-        var rateLimitTimeframeHours = Objects.requireNonNullElse(irisChatSettings.getRateLimitTimeframeHours(), 0);
+        int rateLimitTimeframeHours = Objects.requireNonNullElse(irisChatSettings.getRateLimitTimeframeHours(), 0);
         var start = ZonedDateTime.now().minusHours(rateLimitTimeframeHours);
         var end = ZonedDateTime.now();
         var currentMessageCount = irisMessageRepository.countLlmResponsesOfUserWithinTimeframe(user.getId(), start, end);

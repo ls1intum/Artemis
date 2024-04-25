@@ -5,7 +5,6 @@ tests () {
   echo '⚙️ executing tests'
   chmod +x ./gradlew
   ./gradlew clean test tiaTests --run-all-tests
-
 }
 
 static_code_analysis () {

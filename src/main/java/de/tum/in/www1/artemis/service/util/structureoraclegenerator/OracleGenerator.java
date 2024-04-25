@@ -25,10 +25,10 @@ import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
  * It is used to automatically generate the structure oracle with the solution of the exercise as the system model and the template as the test model.
  * The oracle is saved in the form of a JSON file in test.json.
  * The structure oracle is used in the structural tests and contains information on the expected structural elements that the student has to implement.
- * The generator uses the qdox framework (https://github.com/paul-hammant/qdox).
+ * The generator uses the <a href="https://github.com/paul-hammant/qdox">qdox framework</a>.
  * It extracts first the needed elements by doing a so-called diff of each element e.g. the difference between the solution of an exercise and its template.
  * The generator uses separate data structures that contain the elements of these diffs and then creates JSON representations of them.
- *
+ * <p>
  * The generator currently deals with the following structural elements:
  * <ul>
  * <li>Class hierarchy: abstract modifier, stereotype, declared super classes and implemented interfaces.</li>

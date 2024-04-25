@@ -13,6 +13,8 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { TranslateService } from '@ngx-translate/core';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { By } from '@angular/platform-browser';
+import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
 
 describe('ExamExerciseOverviewPageComponent', () => {
     let fixture: ComponentFixture<ExamExerciseOverviewPageComponent>;
@@ -21,7 +23,7 @@ describe('ExamExerciseOverviewPageComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, TranslateTestingModule, MockModule(NgbTooltipModule)],
-            declarations: [ExamExerciseOverviewPageComponent, MockComponent(ExamTimerComponent)],
+            declarations: [ExamExerciseOverviewPageComponent, MockComponent(ExamTimerComponent), MockComponent(UpdatingResultComponent)],
             providers: [
                 ExamParticipationService,
                 { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -59,5 +61,19 @@ describe('ExamExerciseOverviewPageComponent', () => {
         comp.openExercise(comp.studentExam.exercises![0]);
 
         expect(comp.onPageChanged.emit).toHaveBeenCalledOnce();
+    });
+
+    it('jhi-updating-result component should be defined', () => {
+        const exerciseWithParticipations =
+            comp.studentExam !== undefined && comp.studentExam.exercises !== undefined
+                ? comp.studentExam.exercises.find((ex) => ex.studentParticipations && ex.studentParticipations.length > 0)
+                : undefined;
+        expect(exerciseWithParticipations).toBeDefined();
+
+        fixture.detectChanges();
+
+        const resultComponent = fixture.debugElement.query(By.css(`#jhi-updating-result-0`));
+
+        expect(resultComponent).not.toBeNull();
     });
 });

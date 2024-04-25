@@ -30,7 +30,7 @@ export const ltiLaunchRoutes: Routes = [
         },
     },
     {
-        path: 'deep-linking',
+        path: 'select-course',
         component: LtiCoursesComponent,
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],

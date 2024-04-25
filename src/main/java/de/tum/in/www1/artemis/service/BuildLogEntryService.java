@@ -2,13 +2,25 @@ package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.io.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
@@ -22,9 +34,17 @@ import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService
 @Service
 public class BuildLogEntryService {
 
+    private static final Logger log = LoggerFactory.getLogger(BuildLogEntryService.class);
+
     private final BuildLogEntryRepository buildLogEntryRepository;
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
+
+    @Value("${artemis.continuous-integration.build-log.file-expiry-days:30}")
+    private int expiryDays;
+
+    @Value("${artemis.build-logs-path:./build-logs}")
+    private Path buildLogsPath;
 
     public BuildLogEntryService(BuildLogEntryRepository buildLogEntryRepository, ProgrammingSubmissionRepository programmingSubmissionRepository) {
         this.buildLogEntryRepository = buildLogEntryRepository;
@@ -181,7 +201,7 @@ public class BuildLogEntryService {
         if (!skipLanguage && !buildLogs.isEmpty()) {
             // E.g. Swift produces a lot of duplicate build logs when a build fails
             var existingLog = buildLogs.stream().filter(log -> log.getLog().equals(shortenedLogString)).findFirst();
-            String lastLog = buildLogs.get(buildLogs.size() - 1).getLog();
+            String lastLog = buildLogs.getLast().getLog();
             // If the log does not exist already or if the log is a single blank log add it to the build logs (avoid more than one empty log in a row)
             boolean isSingleBlankLog = shortenedLogString.isBlank() && !lastLog.isBlank();
             return existingLog.isEmpty() || isSingleBlankLog;
@@ -256,4 +276,85 @@ public class BuildLogEntryService {
         programmingSubmissionRepository.save(programmingSubmission);
         buildLogEntryRepository.deleteByProgrammingSubmissionId(programmingSubmission.getId());
     }
+
+    /**
+     * Save the build logs for a given submission to a file
+     *
+     * @param buildLogEntries the build logs to save
+     * @param resultId        the id of the result for which to save the build logs
+     */
+    public void saveBuildLogsToFile(List<BuildLogEntry> buildLogEntries, String resultId) {
+
+        if (!Files.exists(buildLogsPath)) {
+            try {
+                Files.createDirectories(buildLogsPath);
+            }
+            catch (Exception e) {
+                throw new IllegalStateException("Could not create directory for build logs", e);
+            }
+        }
+
+        Path logPath = buildLogsPath.resolve(resultId + ".log");
+
+        StringBuilder logsStringBuilder = new StringBuilder();
+        for (BuildLogEntry buildLogEntry : buildLogEntries) {
+            logsStringBuilder.append(buildLogEntry.getTime()).append("\t").append(buildLogEntry.getLog());
+        }
+
+        try {
+            FileUtils.writeStringToFile(logPath.toFile(), logsStringBuilder.toString(), StandardCharsets.UTF_8);
+            log.debug("Saved build logs for result {} to file {}", resultId, logPath);
+        }
+        catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Retrieves the build logs for a given submission from a file.
+     *
+     * @param resultId the id of the result for which to retrieve the build logs
+     * @return the build logs as a string or null if the file could not be found (e.g. if the build logs have been deleted)
+     */
+    public FileSystemResource retrieveBuildLogsFromFileForResult(String resultId) {
+        Path logPath = buildLogsPath.resolve(resultId + ".log");
+
+        FileSystemResource fileSystemResource = new FileSystemResource(logPath);
+        if (fileSystemResource.exists()) {
+            log.debug("Retrieved build logs for result {} from file {}", resultId, logPath);
+            return fileSystemResource;
+        }
+        else {
+            log.warn("Could not find build logs for result {} in file {}", resultId, logPath);
+            return null;
+        }
+    }
+
+    /**
+     * Deletes all build log files that are older than {@link #expiryDays} days on a schedule
+     */
+    @Scheduled(cron = "${artemis.continuous-integration.build-log.cleanup-schedule:0 0 3 1 * ?}")
+    public void deleteOldBuildLogsFiles() {
+        log.info("Deleting old build log files");
+        ZonedDateTime now = ZonedDateTime.now();
+
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(buildLogsPath)) {
+            for (Path file : stream) {
+                ZonedDateTime lastModified = ZonedDateTime.ofInstant(Files.getLastModifiedTime(file).toInstant(), now.getZone());
+                if (lastModified.isBefore(now.minusDays(expiryDays))) {
+                    Files.deleteIfExists(file);
+                    log.info("Deleted old build log file {}", file);
+                }
+            }
+        }
+        catch (IOException e) {
+            log.error("Error occurred while trying to delete old build log files", e);
+        }
+    }
+
+    public boolean resultHasLogFile(String resultId) {
+        Path logPath = buildLogsPath.resolve(resultId + ".log");
+        return Files.exists(logPath);
+    }
+
 }

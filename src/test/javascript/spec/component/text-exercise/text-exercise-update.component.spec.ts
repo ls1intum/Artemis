@@ -83,7 +83,7 @@ describe('TextExercise Management Update Component', () => {
                 // GIVEN
                 comp.ngOnInit();
 
-                jest.spyOn(service, 'update').mockReturnValue(throwError(new HttpErrorResponse({ error: { title: 'some-error' } })));
+                jest.spyOn(service, 'update').mockReturnValue(throwError(() => new HttpErrorResponse({ error: { title: 'some-error' } })));
 
                 // WHEN
                 comp.save();
@@ -202,7 +202,10 @@ describe('TextExercise Management Update Component', () => {
         it('should calculate valid sections', () => {
             const calculateValidSpy = jest.spyOn(comp, 'calculateFormSectionStatus');
             comp.exerciseTitleChannelNameComponent = { titleChannelNameComponent: { formValidChanges: new Subject() } } as ExerciseTitleChannelNameComponent;
-            comp.exerciseUpdatePlagiarismComponent = { formValidChanges: new Subject(), formValid: true } as ExerciseUpdatePlagiarismComponent;
+            comp.exerciseUpdatePlagiarismComponent = {
+                formValidChanges: new Subject(),
+                formValid: true,
+            } as ExerciseUpdatePlagiarismComponent;
             comp.teamConfigFormGroupComponent = { formValidChanges: new Subject() } as TeamConfigFormGroupComponent;
             comp.bonusPoints = { valueChanges: new Subject(), valid: true } as unknown as NgModel;
             comp.points = { valueChanges: new Subject(), valid: true } as unknown as NgModel;

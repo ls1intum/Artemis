@@ -5,7 +5,6 @@ gradle () {
   echo '⚙️ executing gradle'
   chmod +x ./gradlew
   ./gradlew clean test
-
 }
 
 static_code_analysis () {

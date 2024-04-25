@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.service.compass.umlmodel.activity;
 import java.io.Serializable;
 import java.util.Objects;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 

@@ -6,8 +6,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.persistence.Persistence;
-import javax.validation.constraints.NotNull;
+import jakarta.persistence.Persistence;
+import jakarta.validation.constraints.NotNull;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -250,7 +250,7 @@ public class ConversationDTOService {
     private Set<ConversationParticipant> getConversationParticipants(Conversation conversation) {
         Set<ConversationParticipant> conversationParticipants;
         var participantsInitialized = Persistence.getPersistenceUtil().isLoaded(conversation, "conversationParticipants") && conversation.getConversationParticipants() != null
-                && conversation.getConversationParticipants().size() > 0;
+                && !conversation.getConversationParticipants().isEmpty();
         if (participantsInitialized) {
             conversationParticipants = conversation.getConversationParticipants();
         }

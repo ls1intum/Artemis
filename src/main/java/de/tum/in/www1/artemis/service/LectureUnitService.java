@@ -2,7 +2,10 @@ package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
+import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,7 +14,8 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.BadRequestException;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -196,5 +200,21 @@ public class LectureUnitService {
     public void removeCompetency(Set<LectureUnit> lectureUnits, Competency competency) {
         lectureUnits.forEach(lectureUnit -> lectureUnit.getCompetencies().remove(competency));
         lectureUnitRepository.saveAll(lectureUnits);
+    }
+
+    /**
+     * Validates the given URL string and returns the URL object
+     *
+     * @param urlString The URL string to validate
+     * @return The URL object
+     * @throws BadRequestException If the URL string is invalid
+     */
+    public URL validateUrlStringAndReturnUrl(String urlString) {
+        try {
+            return new URI(urlString).toURL();
+        }
+        catch (URISyntaxException | MalformedURLException | IllegalArgumentException e) {
+            throw new BadRequestException();
+        }
     }
 }

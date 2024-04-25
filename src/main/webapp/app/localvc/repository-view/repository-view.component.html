@@ -18,11 +18,13 @@
             </div>
         </div>
         <jhi-code-editor-container
+            [useMonacoEditor]="true"
             [editable]="false"
             [buildable]="false"
             [participation]="participation"
             [showEditorInstructions]="showEditorInstructions"
             [isTutorAssessment]="true"
+            [readOnlyManualFeedback]="true"
             [course]="getCourseFromExercise(exercise)"
         >
             <jhi-programming-exercise-instructions

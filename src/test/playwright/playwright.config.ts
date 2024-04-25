@@ -1,6 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
 import dotenv from 'dotenv';
-import * as process from 'process';
 import { parseNumber } from './support/utils';
 
 /**

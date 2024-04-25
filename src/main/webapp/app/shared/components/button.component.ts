@@ -53,6 +53,7 @@ export class ButtonComponent {
     @Input() featureToggle: FeatureToggle | FeatureToggle[]; // Disable by feature toggle.
 
     @Input() shouldSubmit = true;
+    @Input() shouldToggle = false;
 
     @Output() onClick = new EventEmitter<MouseEvent>();
 

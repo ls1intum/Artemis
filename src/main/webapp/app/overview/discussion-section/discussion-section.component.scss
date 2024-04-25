@@ -1,6 +1,7 @@
 @import 'src/main/webapp/app/shared/metis/metis.component';
 
 $draggable-width: 15px;
+$discussion-section-card-min-width-sm: 230px;
 $discussion-section-card-min-width: 360px;
 
 .postings-container {
@@ -75,12 +76,17 @@ $discussion-section-card-min-width: 360px;
     }
 }
 
-@media screen and (max-width: 992px) {
+@media screen and (max-width: 832px) {
     .expanded-discussion {
-        width: 94vw;
+        max-width: $discussion-section-card-min-width-sm !important;
 
         .draggable-left {
             display: none;
+        }
+
+        .card {
+            width: inherit;
+            min-width: $discussion-section-card-min-width-sm;
         }
     }
 }

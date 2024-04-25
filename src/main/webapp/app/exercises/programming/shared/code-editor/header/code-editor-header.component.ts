@@ -14,6 +14,9 @@ export class CodeEditorHeaderComponent {
     @Input()
     isLoading: boolean;
 
+    @Input()
+    showTabSizeSelector = true;
+
     @Output()
     tabSizeChanged = new EventEmitter<number>();
 

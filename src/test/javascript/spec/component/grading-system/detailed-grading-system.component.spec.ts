@@ -673,7 +673,7 @@ describe('Detailed Grading System Component', () => {
         expect(comp.gradingScale.gradeSteps).toHaveLength(0);
     });
 
-    it('should have validation error for csv without header', async () => {
+    it('should have validation error for csv with duplicated header keys', async () => {
         // Csv without header
         const invalidCsv = `4.0,10,10,TRUE`;
 

@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.repository.iris;
 
 import java.util.Optional;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -43,8 +43,4 @@ public interface IrisSessionRepository extends JpaRepository<IrisSession, Long> 
         return findByIdWithMessages(sessionId).orElseThrow(() -> new EntityNotFoundException("Iris Session", sessionId));
     }
 
-    @NotNull
-    default IrisSession findByIdWithMessagesAndContentsElseThrow(long sessionId) throws EntityNotFoundException {
-        return Optional.ofNullable(findByIdWithMessagesAndContents(sessionId)).orElseThrow(() -> new EntityNotFoundException("Iris Session", sessionId));
-    }
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { downloadStream } from 'app/shared/util/download.util';
@@ -19,6 +19,8 @@ import { isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.
 import { AbstractScienceComponent } from 'app/shared/science/science.component';
 import { ScienceService } from 'app/shared/science/science.service';
 import { ScienceEventType } from 'app/shared/science/science.model';
+import { Subscription } from 'rxjs';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 export interface LectureUnitCompletionEvent {
     lectureUnit: LectureUnit;
@@ -30,14 +32,21 @@ export interface LectureUnitCompletionEvent {
     templateUrl: './course-lecture-details.component.html',
     styleUrls: ['../course-overview.scss', './course-lectures.scss'],
 })
-export class CourseLectureDetailsComponent extends AbstractScienceComponent implements OnInit {
+export class CourseLectureDetailsComponent extends AbstractScienceComponent implements OnInit, OnDestroy {
     lectureId?: number;
+    courseId?: number;
     isLoading = false;
     lecture?: Lecture;
     isDownloadingLink?: string;
     lectureUnits: LectureUnit[] = [];
     discussionComponent?: DiscussionSectionComponent;
     hasPdfLectureUnit: boolean;
+
+    paramsSubscription: Subscription;
+    profileSubscription?: Subscription;
+    isProduction = true;
+    isTestServer = false;
+    endsSameDay = false;
 
     readonly LectureUnitType = LectureUnitType;
     readonly isCommunicationEnabled = isCommunicationEnabled;
@@ -54,13 +63,14 @@ export class CourseLectureDetailsComponent extends AbstractScienceComponent impl
         private fileService: FileService,
         private router: Router,
         scienceService: ScienceService,
+        private profileService: ProfileService,
     ) {
         super(scienceService, ScienceEventType.LECTURE__OPEN);
     }
 
     ngOnInit(): void {
-        this.activatedRoute.params.subscribe((params) => {
-            this.lectureId = +params['lectureId'];
+        this.paramsSubscription = this.activatedRoute.params.subscribe((params) => {
+            this.lectureId = +params.lectureId;
             if (this.lectureId) {
                 // science logging
                 this.setResourceId(this.lectureId);
@@ -69,36 +79,43 @@ export class CourseLectureDetailsComponent extends AbstractScienceComponent impl
                 this.loadData();
             }
         });
+
+        this.profileSubscription = this.profileService.getProfileInfo()?.subscribe((profileInfo) => {
+            this.isProduction = profileInfo?.inProduction;
+            this.isTestServer = profileInfo.testServer ?? false;
+        });
     }
 
     loadData() {
         this.isLoading = true;
-        this.lectureService
-            .findWithDetails(this.lectureId!)
-            .pipe(
-                finalize(() => {
-                    this.isLoading = false;
-                }),
-            )
-            .subscribe({
-                next: (findLectureResult) => {
-                    this.lecture = findLectureResult.body!;
-                    if (this.lecture?.lectureUnits) {
-                        this.lectureUnits = this.lecture.lectureUnits;
-
-                        // Check if PDF attachments exist in lecture units
-                        this.hasPdfLectureUnit =
-                            (<AttachmentUnit[]>this.lectureUnits.filter((unit) => unit.type === LectureUnitType.ATTACHMENT)).filter(
-                                (unit) => unit.attachment?.link?.split('.').pop()!.toLocaleLowerCase() === 'pdf',
-                            ).length > 0;
-                    }
-                    if (this.discussionComponent) {
-                        // We need to manually update the lecture property of the student questions component
-                        this.discussionComponent.lecture = this.lecture;
-                    }
-                },
-                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
-            });
+        if (this.lectureId) {
+            this.lectureService
+                .findWithDetails(this.lectureId)
+                .pipe(
+                    finalize(() => {
+                        this.isLoading = false;
+                    }),
+                )
+                .subscribe({
+                    next: (findLectureResult) => {
+                        this.lecture = findLectureResult.body!;
+                        this.lectureUnits = this.lecture?.lectureUnits ?? [];
+                        if (this.lectureUnits?.length) {
+                            // Check if PDF attachments exist in lecture units
+                            this.hasPdfLectureUnit =
+                                (<AttachmentUnit[]>this.lectureUnits.filter((unit) => unit.type === LectureUnitType.ATTACHMENT)).filter(
+                                    (unit) => unit.attachment?.link?.split('.').pop()!.toLocaleLowerCase() === 'pdf',
+                                ).length > 0;
+                        }
+                        if (this.discussionComponent) {
+                            // We need to manually update the lecture property of the student questions component
+                            this.discussionComponent.lecture = this.lecture;
+                        }
+                        this.endsSameDay = !!this.lecture?.startDate && !!this.lecture.endDate && dayjs(this.lecture.startDate).isSame(this.lecture.endDate, 'day');
+                    },
+                    error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+                });
+        }
     }
 
     redirectToLectureManagement(): void {
@@ -154,5 +171,10 @@ export class CourseLectureDetailsComponent extends AbstractScienceComponent impl
             instance.lecture = this.lecture;
             instance.isCommunicationPage = false;
         }
+    }
+
+    ngOnDestroy() {
+        this.paramsSubscription?.unsubscribe();
+        this.profileSubscription?.unsubscribe();
     }
 }

@@ -13,11 +13,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 
 import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -43,6 +41,8 @@ public class AeolusTemplateService {
     private final ResourceLoaderService resourceLoaderService;
 
     private final BuildScriptProviderService buildScriptProviderService;
+
+    private static final ObjectMapper yamlMapper = new ObjectMapper(new YAMLFactory());
 
     public AeolusTemplateService(ProgrammingLanguageConfiguration programmingLanguageConfiguration, ResourceLoaderService resourceLoaderService,
             BuildScriptProviderService buildScriptProviderService) {
@@ -77,31 +77,30 @@ public class AeolusTemplateService {
     }
 
     /**
-     * Converts a YAML string to a JSON string for easier communication with the client and usage with Gson
+     * Reads a YAML representation of a Windfile from a string and deserializes it into a {@link Windfile} object.
+     * This method leverages the Jackson {@code ObjectMapper} configured with {@code YAMLFactory} to parse
+     * the YAML content directly. It registers a custom deserializer for handling instances of {@link Action}
+     * to accommodate polymorphic deserialization based on the specific fields present in the YAML content.
      *
-     * @param yaml YAML string
-     * @return JSON string
-     */
-    private static String convertYamlToJson(String yaml) throws JsonProcessingException {
-        ObjectMapper yamlReader = new ObjectMapper(new YAMLFactory());
-        Object obj = yamlReader.readValue(yaml, Object.class);
-
-        ObjectMapper jsonWriter = new ObjectMapper();
-        return jsonWriter.writeValueAsString(obj);
-    }
-
-    /**
-     * Reads the yaml file and returns a Windfile object
+     * <p>
+     * The method supports the dynamic instantiation of {@code Action} subclasses based on the content
+     * of the YAML, enabling the flexible representation of different types of actions within the serialized
+     * data. For instance, it can differentiate between {@code ScriptAction} and {@code PlatformAction}
+     * based on specific identifying fields in the YAML structure.
+     * </p>
      *
-     * @param yaml the yaml file
-     * @return the Windfile object
-     * @throws IOException if the yaml file is not valid
+     * @param yaml The YAML string that represents the content of a Windfile.
+     * @return A {@link Windfile} object deserialized from the provided YAML string.
+     * @throws IOException If there is an error reading the YAML content or if the YAML is not
+     *                         valid according to the Windfile structure or the custom action types expected.
+     *                         This includes scenarios where the YAML content cannot be parsed or
+     *                         does not match the expected schema.
      */
     private static Windfile readWindfile(String yaml) throws IOException {
-        GsonBuilder builder = new GsonBuilder();
-        builder.registerTypeAdapter(Action.class, new ActionDeserializer());
-        Gson gson = builder.create();
-        return gson.fromJson(convertYamlToJson(yaml), Windfile.class);
+        SimpleModule module = new SimpleModule();
+        module.addDeserializer(Action.class, new ActionDeserializer());
+        yamlMapper.registerModule(module);
+        return yamlMapper.readValue(yaml, Windfile.class);
     }
 
     /**

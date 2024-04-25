@@ -40,7 +40,6 @@ import de.tum.in.www1.artemis.lecture.LectureUtilService;
 import de.tum.in.www1.artemis.repository.CompetencyRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.LearningPathRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.learningpath.LearningPathNgxService;
 import de.tum.in.www1.artemis.service.learningpath.LearningPathRecommendationService;
@@ -79,9 +78,6 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     @Autowired
-    private LearningPathRepository learningPathRepository;
-
-    @Autowired
     private CompetencyRepository competencyRepository;
 
     @Autowired
@@ -108,7 +104,7 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Nested
-    class HeathCheckTest {
+    class HealthCheck {
 
         @BeforeEach
         void setup() {
@@ -168,7 +164,7 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Nested
-    class GenerateNgxGraphRepresentationBaseTest {
+    class GenerateNgxGraphRepresentationBase {
 
         @Test
         void testEmptyLearningPath() {
@@ -232,7 +228,7 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Nested
-    class GenerateNgxGraphRepresentationRelationTest {
+    class GenerateNgxGraphRepresentationRelation {
 
         private Competency competency1;
 
@@ -319,7 +315,7 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Nested
-    class GenerateNgxPathRepresentationTest {
+    class GenerateNgxPathRepresentation {
 
         @BeforeEach
         void setup() {
@@ -360,7 +356,7 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Nested
-    class GenerateNgxPathRepresentationCompetencyOrderTest {
+    class GenerateNgxPathRepresentationCompetencyOrder {
 
         private Competency competency1;
 
@@ -496,7 +492,7 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Nested
-    class GenerateNgxPathRepresentationLearningObjectOrderTest {
+    class GenerateNgxPathRepresentationLearningObjectOrder {
 
         private Competency competency;
 

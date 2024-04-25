@@ -195,6 +195,51 @@ In this screen, users can choose which notification types they want to receive.
   .. image:: native-applications/iOS/settings_push_detail.png
             :width: 300
 
+
+Modeling Exercises
+^^^^^^^^^^^^^^^^^^
+
+Users can participate in modeling exercises, view their submissions, and view the feedback they received in the Artemis iOS app.
+
+Participate in Modeling Exercise
+""""""""""""""""""""""""""""""""
+
+- Add UML elements to the canvas
+- Edit attributes and methods of UML elements
+- Draw UML relationships between UML elements
+- Edit UML relationship properties
+- Submit the diagram
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/43388?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Video tutorial for participating in a modeling exercise on TUM-Live.
+    </iframe>
+
+View Modeling Exercise Submission
+"""""""""""""""""""""""""""""""""
+
+- Interact with the submitted diagram (e.g., zooming in/out, moving the diagram for better viewing)
+- No modification to the submitted diagram is possible
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/43389?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Video tutorial for viewing a modeling exercise submission on TUM-Live.
+    </iframe>
+
+View Modeling Exercise Result
+"""""""""""""""""""""""""""""
+
+- Click on UML elements and UML relationships to view feedback and grading
+- See all feedback and grading in a list view
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/43390?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Video tutorial for viewing modeling exercise results on TUM-Live.
+    </iframe>
+
 Problems
 ^^^^^^^^
 

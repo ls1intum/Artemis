@@ -36,7 +36,7 @@ export class CourseCommunicationPage {
     }
 
     searchForMessage(search: string) {
-        cy.get('#search').type(search);
+        cy.get('input[name="searchText"]').type(search);
         cy.get('#search-submit').click();
     }
 

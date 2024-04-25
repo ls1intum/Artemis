@@ -32,7 +32,9 @@ class ResourceLoaderServiceTest extends AbstractSpringIntegrationIndependentTest
     @Autowired
     private ResourceLoaderService resourceLoaderService;
 
-    private final Path javaPath = Path.of("templates", "java", "java.txt");
+    private final Path publicPath = Path.of("public", "public_file.txt");
+
+    private final List<Path> publicFiles = List.of(Path.of("public", "p1.txt"), Path.of("public", "p2.txt"));
 
     private final Path jenkinsPath = Path.of("templates", "jenkins", "jenkins.txt");
 
@@ -40,27 +42,30 @@ class ResourceLoaderServiceTest extends AbstractSpringIntegrationIndependentTest
 
     @AfterEach
     void cleanup() throws IOException {
-        Files.deleteIfExists(javaPath);
+        Files.deleteIfExists(publicPath);
+        for (final Path publicFile : publicFiles) {
+            Files.deleteIfExists(publicFile);
+        }
         Files.deleteIfExists(jenkinsPath);
     }
 
     @Test
     void testShouldNotAllowAbsolutePathsSingleResource() {
-        final Path path = javaPath.toAbsolutePath();
+        final Path path = publicPath.toAbsolutePath();
         assertThatIllegalArgumentException().isThrownBy(() -> resourceLoaderService.getResource(path));
     }
 
     @Test
     void testShouldNotAllowAbsolutePathsMultipleResources() {
-        final Path path = javaPath.toAbsolutePath();
+        final Path path = publicPath.toAbsolutePath();
         assertThatIllegalArgumentException().isThrownBy(() -> resourceLoaderService.getResources(path));
     }
 
     @Test
-    void testShouldLoadJavaFileFromClasspath() throws IOException {
-        FileUtils.writeStringToFile(javaPath.toFile(), "filesystem", Charset.defaultCharset());
+    void testShouldLoadPublicFileFromClasspath() throws IOException {
+        FileUtils.writeStringToFile(publicPath.toFile(), "filesystem", Charset.defaultCharset());
 
-        try (InputStream inputStream = resourceLoaderService.getResource(javaPath).getInputStream()) {
+        try (InputStream inputStream = resourceLoaderService.getResource(publicPath).getInputStream()) {
             assertThat(inputStream).hasContent("classpath");
         }
     }
@@ -100,12 +105,11 @@ class ResourceLoaderServiceTest extends AbstractSpringIntegrationIndependentTest
     void testLoadMultipleResourcesNonOverridable(final String pathPattern) throws IOException {
         final String content = "filesystem";
 
-        final Path path1 = Path.of("templates", "java", "p1.txt");
-        FileUtils.writeStringToFile(path1.toFile(), content, Charset.defaultCharset());
-        final Path path2 = Path.of("templates", "java", "p2.txt");
-        FileUtils.writeStringToFile(path2.toFile(), content, Charset.defaultCharset());
+        for (final Path publicFile : publicFiles) {
+            FileUtils.writeStringToFile(publicFile.toFile(), content, Charset.defaultCharset());
+        }
 
-        Resource[] resources = resourceLoaderService.getResources(Path.of("templates", "java"), pathPattern);
+        Resource[] resources = resourceLoaderService.getResources(Path.of("public"), pathPattern);
         assertThat(resources).hasSize(1);
 
         assertThat(resources[0].getFile()).hasContent("classpath");

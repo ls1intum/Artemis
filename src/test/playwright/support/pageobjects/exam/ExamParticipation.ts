@@ -165,4 +165,10 @@ export class ExamParticipation {
         const submissionText = await Fixtures.get(textFixture);
         await expect(exercise.locator('#text-editor')).toHaveValue(submissionText!);
     }
+
+    async verifyGradingKeyOnFinalPage(gradeName: string) {
+        const gradingKeyCard = this.page.locator('jhi-collapsible-card').filter({ hasText: 'Grading Key Grade Interval' });
+        await gradingKeyCard.locator('button.rotate-icon').click();
+        await expect(gradingKeyCard.locator('tr.highlighted').locator('td', { hasText: gradeName })).toBeVisible();
+    }
 }

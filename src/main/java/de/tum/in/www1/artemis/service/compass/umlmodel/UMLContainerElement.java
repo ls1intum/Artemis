@@ -23,7 +23,7 @@ public abstract class UMLContainerElement extends UMLElement implements Serializ
      * empty constructor used to make mockito happy
      */
     public UMLContainerElement() {
-        super();
+        // default empty constructor
     }
 
     public UMLContainerElement(String jsonElementID) {

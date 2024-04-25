@@ -22,7 +22,6 @@ build_and_test_the_code () {
   # so we need to allow everyone to access these files
   cd ..
   chmod -R 777 .
-
 }
 
 main () {

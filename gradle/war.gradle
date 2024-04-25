@@ -8,6 +8,7 @@ bootWar {
         attributes('Implementation-Title': 'Artemis',
                    'Implementation-Version': version)
     }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 // Command for production build: ./gradlew -Pprod -Pwar clean bootWar
 

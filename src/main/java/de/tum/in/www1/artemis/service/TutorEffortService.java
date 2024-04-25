@@ -65,8 +65,8 @@ public class TutorEffortService {
     private TutorEffort createTutorEffortWithInformation(Long userId, List<TextAssessmentEvent> events, int submissions) {
         TutorEffort effort = new TutorEffort();
         effort.setUserId(userId);
-        effort.setCourseId(events.get(0).getCourseId());
-        effort.setExerciseId(events.get(0).getTextExerciseId());
+        effort.setCourseId(events.getFirst().getCourseId());
+        effort.setExerciseId(events.getFirst().getTextExerciseId());
         effort.setTotalTimeSpentMinutes(calculateTutorOverallTimeSpent(events));
         effort.setNumberOfSubmissionsAssessed(submissions);
         return effort;

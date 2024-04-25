@@ -4,11 +4,13 @@ import { Course, isMessagingEnabled } from 'app/entities/course.model';
 import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { getDayTranslationKey } from '../weekdays';
-import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
+import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
 import { TranslateService } from '@ngx-translate/core';
 import { Detail } from 'app/detail-overview-list/detail.model';
+import dayjs from 'dayjs/esm';
+import { SortService } from 'app/shared/service/sort.service';
 
 @Component({
     selector: 'jhi-tutorial-group-detail',
@@ -27,7 +29,6 @@ export class TutorialGroupDetailComponent implements OnChanges {
     @Input()
     course: Course;
     formattedAdditionalInformation?: SafeHtml;
-    getDayTranslationKey = getDayTranslationKey;
 
     faQuestionCircle = faQuestionCircle;
     readonly Math = Math;
@@ -40,6 +41,7 @@ export class TutorialGroupDetailComponent implements OnChanges {
         private artemisMarkdownService: ArtemisMarkdownService,
         private changeDetectorRef: ChangeDetectorRef,
         private translateService: TranslateService,
+        private sortService: SortService,
     ) {}
 
     ngOnChanges(changes: SimpleChanges) {
@@ -136,5 +138,19 @@ export class TutorialGroupDetailComponent implements OnChanges {
                 details: tutorialDetails,
             },
         ];
+    }
+
+    recalculateAttendanceDetails() {
+        let activeAndFinishedSessions =
+            this.tutorialGroup.tutorialGroupSessions?.filter((session) => session.status === TutorialGroupSessionStatus.ACTIVE && dayjs().isAfter(session.end)) ?? [];
+        activeAndFinishedSessions = this.sortService.sortByProperty(activeAndFinishedSessions, 'start', false);
+        const relevantSessions = activeAndFinishedSessions.slice(0, 3).filter((session) => session.attendanceCount !== undefined);
+
+        if (relevantSessions.length) {
+            const averageAttendance = relevantSessions.map((session) => session.attendanceCount ?? 0).reduce((acc, attendance) => acc + attendance) / relevantSessions.length;
+            this.tutorialGroup.averageAttendance = Math.round(averageAttendance);
+        }
+
+        this.getTutorialDetailSections();
     }
 }

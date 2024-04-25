@@ -26,6 +26,7 @@ import { MockRouter } from '../../helpers/mocks/mock-router';
 import { Title } from '@angular/platform-browser';
 import { LANGUAGES } from 'app/core/language/language.constants';
 import { AdminUserService } from 'app/core/user/admin-user.service';
+import * as Sentry from '@sentry/angular-ivy';
 // Preliminary mock before import to prevent errors
 jest.mock('@sentry/angular-ivy', () => {
     const originalModule = jest.requireActual('@sentry/angular-ivy');
@@ -34,7 +35,6 @@ jest.mock('@sentry/angular-ivy', () => {
         captureException: jest.fn(),
     };
 });
-import * as Sentry from '@sentry/angular-ivy';
 
 describe('UserManagementUpdateComponent', () => {
     let comp: UserManagementUpdateComponent;
@@ -97,7 +97,7 @@ describe('UserManagementUpdateComponent', () => {
                 const getAllSpy = jest.spyOn(languageHelper, 'getAll').mockReturnValue([]);
 
                 const profileInfoStub = jest.spyOn(TestBed.inject(ProfileService), 'getProfileInfo');
-                profileInfoStub.mockReturnValue(of({ activeProfiles: ['bamboo'] } as ProfileInfo));
+                profileInfoStub.mockReturnValue(of({ activeProfiles: ['jenkins'] } as ProfileInfo));
 
                 // WHEN
                 comp.ngOnInit();
@@ -116,7 +116,7 @@ describe('UserManagementUpdateComponent', () => {
                 // GIVEN
                 const getAllSpy = jest.spyOn(languageHelper, 'getAll');
                 const profileInfoStub = jest.spyOn(TestBed.inject(ProfileService), 'getProfileInfo');
-                profileInfoStub.mockReturnValue(of({ activeProfiles: ['bamboo'] } as ProfileInfo));
+                profileInfoStub.mockReturnValue(of({ activeProfiles: ['jenkins'] } as ProfileInfo));
 
                 // WHEN
                 comp.ngOnInit();
@@ -218,7 +218,7 @@ describe('UserManagementUpdateComponent', () => {
 
         it('foo', fakeAsync(() => {
             // GIVEN
-            jest.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue(of({ activeProfiles: ['bamboo'] } as ProfileInfo));
+            jest.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue(of({ activeProfiles: ['jenkins'] } as ProfileInfo));
 
             // WHEN
             comp.ngOnInit();

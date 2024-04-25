@@ -7,7 +7,6 @@ build_and_test_the_code () {
   # -s enables the safe testing mode
   chmod +x run.sh
   ./run.sh -s
-
 }
 
 main () {

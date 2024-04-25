@@ -4,7 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.*;
 
-import javax.ws.rs.BadRequestException;
+import jakarta.ws.rs.BadRequestException;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -216,7 +216,7 @@ public class IrisChatSessionService implements IrisChatBasedFeatureInterface<Iri
         if (participations.isEmpty()) {
             return Optional.empty();
         }
-        return participations.get(participations.size() - 1).getSubmissions().stream().max(Submission::compareTo)
+        return participations.getLast().getSubmissions().stream().max(Submission::compareTo)
                 .flatMap(sub -> programmingSubmissionRepository.findWithEagerBuildLogEntriesById(sub.getId()));
     }
 

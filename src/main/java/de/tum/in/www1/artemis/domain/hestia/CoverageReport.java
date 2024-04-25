@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.domain.hestia;
 
 import java.util.Set;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;

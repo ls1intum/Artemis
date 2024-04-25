@@ -1,14 +1,15 @@
 package de.tum.in.www1.artemis.domain.iris.message;
 
-import javax.annotation.Nullable;
-import javax.persistence.*;
+import jakarta.annotation.Nullable;
+import jakarta.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
 
@@ -28,8 +29,9 @@ import de.tum.in.www1.artemis.domain.DomainObject;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class IrisMessageContent extends DomainObject {
 
-    @ManyToOne(optional = false)
+    @ManyToOne
     @JsonIgnore
+    @JoinColumn(name = "message_id")
     IrisMessage message;
 
     public IrisMessage getMessage() {

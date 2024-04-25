@@ -1,25 +1,4 @@
-.quiz-content {
-    margin-top: 6px;
-    margin-bottom: 110px;
-    min-height: calc(100vh - 400px);
-    padding-left: 40px;
-
-    .question-index {
-        padding: 2px 6px;
-    }
-}
-
 .quiz-navigation {
-    width: 45px;
-    height: 100%;
-    position: absolute;
-    padding: 0 10px;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: 8;
-    background: var(--quiz-navigation-background);
-
     .draganddropcolor-question {
         background-color: var(--quiz-participation-footer-dnd-background) !important;
     }
@@ -34,100 +13,20 @@
     }
 }
 
-.quiz-content,
-.quiz-navigation-content-content {
-    font-size: 16px;
-}
-
-.quiz-navigation-content {
-    height: 300px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-
-    .form-control,
-    .input-group-btn {
-        width: auto;
-    }
-
-    .form-group {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-
-        > * {
-            margin: 0 4px;
-        }
-    }
-
-    .invalid-reasons-tooltip .tooltip-inner {
-        text-align: left;
-        max-width: 300px;
-
-        p {
-            margin: 4px 0;
-            padding: 4px;
-        }
-    }
-
-    @media (max-width: 767.98px) {
-        font-size: 12px;
-    }
-}
-
-.in-parentheses:before {
-    content: '(';
-}
-
-.in-parentheses:after {
-    content: ')';
-}
-
-.align-text {
-    max-height: 22px;
-    white-space: nowrap;
-}
-
-.hide-mobile {
-    @media (max-width: 699px) {
-        display: none;
-    }
-}
-.show-mobile {
-    @media (min-width: 700px) {
-        display: none;
-    }
-}
-
 .stepwizardquiz {
-    display: flex;
-    flex-direction: column;
-    flex-wrap: wrap;
-    overflow: visible;
-    position: fixed;
-    height: 90vh;
-    top: 45%;
-
     &__step {
-        display: inline-block;
-        text-align: center;
-        position: relative;
-        margin-bottom: 15px;
-
         .fa {
             vertical-align: initial;
         }
 
         .btn {
-            cursor: pointer;
+            cursor: help;
             opacity: 1 !important;
         }
     }
 }
 
-.btn-circle.btn-circle {
+.btn-circle {
     width: 30px;
     height: 30px;
     text-align: center;
@@ -159,19 +58,6 @@
         align-items: center;
         .fa {
             font-size: 6px;
-        }
-    }
-}
-
-@media (max-width: 990px) {
-    .btn-circle.btn-circle {
-        width: 23px;
-        height: 23px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        .fa {
-            font-size: 10px;
         }
     }
 }

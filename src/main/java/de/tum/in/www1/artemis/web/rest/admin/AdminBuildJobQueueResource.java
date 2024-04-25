@@ -62,6 +62,7 @@ public class AdminBuildJobQueueResource {
     public ResponseEntity<List<LocalCIBuildAgentInformation>> getBuildAgentInformation() {
         log.debug("REST request to get information on available build agents");
         List<LocalCIBuildAgentInformation> buildAgentInfo = localCIBuildJobQueueService.getBuildAgentInformation();
+        // TODO: convert into a proper DTO and strip unnecessary information, e.g. build config, because it's not shown in the client and contains too much information
         return ResponseEntity.ok(buildAgentInfo);
     }
 

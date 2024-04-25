@@ -7,13 +7,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHintActivation;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 public interface ExerciseHintActivationRepository extends JpaRepository<ExerciseHintActivation, Long> {
-
-    void deleteAllByUser(User user);
 
     @Query("""
             SELECT hintActivation

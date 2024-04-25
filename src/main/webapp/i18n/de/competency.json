@@ -48,7 +48,9 @@
                 "importAll": "Alle Kompetenzen eines Kurses importieren",
                 "create": "Kompetenz erstellen",
                 "generate": "Kompetenzen generieren",
-                "empty": "Es existieren keine Kompetenzen für diesen Kurs"
+                "empty": "Es existieren keine Kompetenzen für diesen Kurs",
+                "deleteRelationModalTitle": "Löschen bestätigen",
+                "deleteRelationModalText": "Bist du sicher, dass du die relation zwischen \"{{titleTail}}\" und \"{{titleHead}}\" löschen willst?"
             },
             "import": {
                 "title": "Kompetenzen importieren",

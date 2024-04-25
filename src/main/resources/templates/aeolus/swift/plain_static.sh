@@ -23,7 +23,6 @@ build_and_test_the_code () {
   # so we need to allow everyone to access these files
   cd ..
   chmod -R 777 .
-
 }
 
 run_static_code_analysis () {
@@ -35,7 +34,6 @@ run_static_code_analysis () {
   cd assignment
   # Execute static code analysis
   swiftlint > ../target/swiftlint-result.xml
-
 }
 
 final_aeolus_post_action () {

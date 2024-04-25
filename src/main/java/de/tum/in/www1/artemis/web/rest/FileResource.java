@@ -10,8 +10,9 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import jakarta.validation.constraints.NotNull;
+
 import javax.activation.MimetypesFileTypeMap;
-import javax.annotation.Nullable;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -65,8 +66,6 @@ public class FileResource {
 
     private final FileUploadSubmissionRepository fileUploadSubmissionRepository;
 
-    private final FileUploadExerciseRepository fileUploadExerciseRepository;
-
     private final AttachmentRepository attachmentRepository;
 
     private final AuthorizationCheckService authCheckService;
@@ -86,15 +85,13 @@ public class FileResource {
     private final LectureUnitService lectureUnitService;
 
     public FileResource(SlideRepository slideRepository, AuthorizationCheckService authorizationCheckService, FileService fileService, ResourceLoaderService resourceLoaderService,
-            LectureRepository lectureRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository, FileUploadExerciseRepository fileUploadExerciseRepository,
-            AttachmentRepository attachmentRepository, AttachmentUnitRepository attachmentUnitRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
-            ExamUserRepository examUserRepository, QuizQuestionRepository quizQuestionRepository, DragItemRepository dragItemRepository, CourseRepository courseRepository,
-            LectureUnitService lectureUnitService) {
+            LectureRepository lectureRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository, AttachmentRepository attachmentRepository,
+            AttachmentUnitRepository attachmentUnitRepository, AuthorizationCheckService authCheckService, UserRepository userRepository, ExamUserRepository examUserRepository,
+            QuizQuestionRepository quizQuestionRepository, DragItemRepository dragItemRepository, CourseRepository courseRepository, LectureUnitService lectureUnitService) {
         this.fileService = fileService;
         this.resourceLoaderService = resourceLoaderService;
         this.lectureRepository = lectureRepository;
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
-        this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.attachmentRepository = attachmentRepository;
         this.attachmentUnitRepository = attachmentUnitRepository;
         this.authCheckService = authCheckService;
@@ -230,8 +227,8 @@ public class FileResource {
     public ResponseEntity<byte[]> getFileUploadSubmission(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
         log.debug("REST request to get file for file upload submission : {}", exerciseId);
 
-        FileUploadSubmission submission = fileUploadSubmissionRepository.findByIdElseThrow(submissionId);
-        FileUploadExercise exercise = fileUploadExerciseRepository.findByIdElseThrow(exerciseId);
+        FileUploadSubmission submission = fileUploadSubmissionRepository.findWithTeamStudentsAndParticipationAndExerciseByIdAndExerciseIdElseThrow(submissionId, exerciseId);
+        FileUploadExercise exercise = (FileUploadExercise) submission.getParticipation().getExercise();
 
         // check if the participation is a StudentParticipation before the following cast
         if (!(submission.getParticipation() instanceof StudentParticipation)) {
@@ -492,7 +489,7 @@ public class FileResource {
         }
     }
 
-    private Path getActualPathFromPublicPathString(@Nullable String publicPath) {
+    private Path getActualPathFromPublicPathString(@NotNull String publicPath) {
         if (publicPath == null) {
             throw new EntityNotFoundException("No file linked");
         }

@@ -20,7 +20,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
 
-import com.google.gson.Gson;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.enumeration.AeolusTarget;
 
@@ -37,6 +38,8 @@ public class AeolusRequestMockProvider {
     private URL aeolusUrl;
 
     private MockRestServiceServer mockServer;
+
+    private ObjectMapper objectMapper = new ObjectMapper();
 
     /**
      * Constructor for the AeolusRequestMockProvider
@@ -60,13 +63,13 @@ public class AeolusRequestMockProvider {
      * @param target      the target to publish to
      * @param expectedKey the expected key
      */
-    public void mockSuccessfulPublishBuildPlan(AeolusTarget target, String expectedKey) {
+    public void mockSuccessfulPublishBuildPlan(AeolusTarget target, String expectedKey) throws JsonProcessingException {
         final var uriPattern = Pattern.compile(aeolusUrl + "/publish/" + target.getName());
 
         Map<String, String> responseBody = new HashMap<>();
         responseBody.put("key", expectedKey);
         responseBody.put("result", "imagine a result here");
-        String json = new Gson().toJson(responseBody);
+        String json = objectMapper.writeValueAsString(responseBody);
 
         mockServer.expect(requestTo(MatchesPattern.matchesPattern(uriPattern))).andExpect(method(HttpMethod.POST))
                 .andRespond(withStatus(HttpStatus.OK).body(json).contentType(org.springframework.http.MediaType.APPLICATION_JSON));
@@ -99,12 +102,12 @@ public class AeolusRequestMockProvider {
      *
      * @param target the target to generate for
      */
-    public void mockGeneratePreview(AeolusTarget target) {
+    public void mockGeneratePreview(AeolusTarget target) throws JsonProcessingException {
         final var uriPattern = Pattern.compile(aeolusUrl + "/generate/" + target.getName());
 
         Map<String, String> responseBody = new HashMap<>();
         responseBody.put("result", "imagine a result here");
-        String json = new Gson().toJson(responseBody);
+        String json = objectMapper.writeValueAsString(responseBody);
 
         mockServer.expect(requestTo(MatchesPattern.matchesPattern(uriPattern))).andExpect(method(HttpMethod.POST))
                 .andRespond(withStatus(HttpStatus.OK).body(json).contentType(org.springframework.http.MediaType.APPLICATION_JSON));

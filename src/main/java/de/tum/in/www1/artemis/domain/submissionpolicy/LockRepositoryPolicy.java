@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.domain.submissionpolicy;
 
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.Entity;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 

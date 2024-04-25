@@ -26,13 +26,13 @@ test.describe('Course exercise', () => {
 
         test('Filters exercises based on title', async ({ page, courseOverview }) => {
             await page.goto(`/courses/${course.id}/exercises`);
-            await expect(courseOverview.getExercise(exercise1.id!).first()).toBeVisible();
-            await expect(courseOverview.getExercise(exercise2.id!).first()).toBeVisible();
-            await expect(courseOverview.getExercise(exercise3.id!).first()).toBeVisible();
+            await expect(courseOverview.getExercise(exercise1.title!)).toBeVisible();
+            await expect(courseOverview.getExercise(exercise2.title!)).toBeVisible();
+            await expect(courseOverview.getExercise(exercise3.title!)).toBeVisible();
             await courseOverview.search('Course Exercise Quiz');
-            await expect(courseOverview.getExercise(exercise1.id!).first()).toBeVisible();
-            await expect(courseOverview.getExercise(exercise2.id!).first()).toBeVisible();
-            await expect(courseOverview.getExercise(exercise3.id!).first()).toBeHidden();
+            await expect(courseOverview.getExercise(exercise1.title!)).toBeVisible();
+            await expect(courseOverview.getExercise(exercise2.title!)).toBeVisible();
+            await expect(courseOverview.getExercise(exercise3.title!)).toBeHidden();
         });
 
         test.afterEach('Delete Exercises', async ({ exerciseAPIRequests }) => {

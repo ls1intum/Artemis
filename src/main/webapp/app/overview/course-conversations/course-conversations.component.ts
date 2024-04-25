@@ -25,7 +25,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     activeConversation?: ConversationDTO = undefined;
     conversationsOfUser: ConversationDTO[] = [];
 
-    isCodeOfConductAccepted: boolean = false;
+    // set undefined so nothing gets displayed until isCodeOfConductAccepted is loaded
+    isCodeOfConductAccepted?: boolean;
     isCodeOfConductPresented: boolean = false;
 
     // MetisConversationService is created in course overview, so we can use it here
@@ -52,6 +53,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit(): void {
+        this.isLoading = true;
         this.metisConversationService.isServiceSetup$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((isServiceSetUp: boolean) => {
             if (isServiceSetUp) {
                 this.course = this.metisConversationService.course;
@@ -64,9 +66,9 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                 this.subscribeToIsCodeOfConductPresented();
                 this.subscribeToConversationsOfUser();
                 this.subscribeToLoading();
-                this.isServiceSetUp = true;
                 this.updateQueryParameters();
                 this.metisConversationService.checkIsCodeOfConductAccepted(this.course!);
+                this.isServiceSetUp = true;
             }
         });
     }

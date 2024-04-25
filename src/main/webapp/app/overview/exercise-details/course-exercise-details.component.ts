@@ -2,7 +2,7 @@ import { Component, ContentChild, OnDestroy, OnInit, TemplateRef } from '@angula
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ActivatedRoute } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Subscription, combineLatest } from 'rxjs';
 import { filter, switchMap } from 'rxjs/operators';
 import { Result } from 'app/entities/result.model';
 import dayjs from 'dayjs/esm';
@@ -54,7 +54,7 @@ import { PROFILE_IRIS } from 'app/app.constants';
 @Component({
     selector: 'jhi-course-exercise-details',
     templateUrl: './course-exercise-details.component.html',
-    styleUrls: ['../course-overview.scss', './course-exercise-detail.component.scss'],
+    styleUrls: ['../course-overview.scss', './course-exercise-details.component.scss'],
     providers: [ExerciseCacheService],
 })
 export class CourseExerciseDetailsComponent extends AbstractScienceComponent implements OnInit, OnDestroy {
@@ -103,16 +103,15 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     availableExerciseHints: ExerciseHint[];
     activatedExerciseHints: ExerciseHint[];
     irisSettings?: IrisSettings;
+    paramsSubscription: Subscription;
+    profileSubscription?: Subscription;
+    isProduction = true;
+    isTestServer = false;
 
     exampleSolutionInfo?: ExampleSolutionInfo;
 
     // extension points, see shared/extension-point
     @ContentChild('overrideStudentActions') overrideStudentActions: TemplateRef<any>;
-
-    /**
-     * variables are only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
-     */
-    public inProductionEnvironment: boolean;
 
     // Icons
     faBook = faBook;
@@ -149,34 +148,37 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     }
 
     ngOnInit() {
-        this.route.params.subscribe((params) => {
-            const didExerciseChange = this.exerciseId !== parseInt(params['exerciseId'], 10);
-            const didCourseChange = this.courseId !== parseInt(params['courseId'], 10);
-            // if learningPathMode is enabled these attributes will be set by the parent
-            if (!this.learningPathMode) {
-                this.exerciseId = parseInt(params['exerciseId'], 10);
-                this.courseId = parseInt(params['courseId'], 10);
-            }
-            this.courseService.find(this.courseId).subscribe((courseResponse) => (this.course = courseResponse.body!));
-            this.accountService.identity().then((user: User) => {
-                this.currentUser = user;
+        const courseIdParams$ = this.route.parent?.parent?.parent?.params;
+        const exerciseIdParams$ = this.route.params;
+        if (courseIdParams$) {
+            this.paramsSubscription = combineLatest([courseIdParams$, exerciseIdParams$]).subscribe(([courseIdParams, exerciseIdParams]) => {
+                const didExerciseChange = this.exerciseId !== parseInt(exerciseIdParams.exerciseId, 10);
+                const didCourseChange = this.courseId !== parseInt(courseIdParams.courseId, 10);
+
+                // if learningPathMode is enabled these attributes will be set by the parent
+                if (!this.learningPathMode) {
+                    this.exerciseId = parseInt(exerciseIdParams.exerciseId, 10);
+                    this.courseId = parseInt(courseIdParams.courseId, 10);
+                }
+                this.courseService.find(this.courseId).subscribe((courseResponse) => (this.course = courseResponse.body!));
+                this.accountService.identity().then((user: User) => {
+                    this.currentUser = user;
+                });
+                if (didExerciseChange || didCourseChange) {
+                    this.loadExercise();
+                }
+
+                // log event
+                if (this.exerciseId) {
+                    this.setResourceId(this.exerciseId);
+                }
+                this.logEvent();
             });
-            if (didExerciseChange || didCourseChange) {
-                this.loadExercise();
-            }
+        }
 
-            // log event
-            if (this.exerciseId) {
-                this.setResourceId(this.exerciseId);
-            }
-            this.logEvent();
-        });
-
-        // Checks if the current environment is production
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            if (profileInfo) {
-                this.inProductionEnvironment = profileInfo.inProduction;
-            }
+        this.profileSubscription = this.profileService.getProfileInfo()?.subscribe((profileInfo) => {
+            this.isProduction = profileInfo?.inProduction;
+            this.isTestServer = profileInfo.testServer ?? false;
         });
     }
 
@@ -189,12 +191,10 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
                 });
             }
         }
-        if (this.teamAssignmentUpdateListener) {
-            this.teamAssignmentUpdateListener.unsubscribe();
-        }
-        if (this.submissionSubscription) {
-            this.submissionSubscription.unsubscribe();
-        }
+        this.teamAssignmentUpdateListener?.unsubscribe();
+        this.submissionSubscription?.unsubscribe();
+        this.paramsSubscription?.unsubscribe();
+        this.profileSubscription?.unsubscribe();
     }
 
     loadExercise() {

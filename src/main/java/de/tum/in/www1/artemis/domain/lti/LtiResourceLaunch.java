@@ -1,9 +1,9 @@
 package de.tum.in.www1.artemis.domain.lti;
 
-import javax.persistence.Entity;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
-import javax.validation.constraints.NotNull;
+import jakarta.persistence.Entity;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotNull;
 
 import de.tum.in.www1.artemis.domain.*;
 

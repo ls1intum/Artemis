@@ -29,7 +29,7 @@ proc PROGRAM_start {} {
 
     # Startup of the java engine needs to much time.
     set timeout $startup_timeout
-    spawn "java" -cp CLASSPATH "MAIN_CLASS"
+    spawn "java" JAVA_FLAGS -cp CLASSPATH "MAIN_CLASS"
 
     # Check for prompt
     expect {

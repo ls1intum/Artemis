@@ -2,8 +2,8 @@ package de.tum.in.www1.artemis.domain.plagiarism.text;
 
 import java.io.File;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
 
 import de.jplag.Token;
 import de.tum.in.www1.artemis.domain.Exercise;

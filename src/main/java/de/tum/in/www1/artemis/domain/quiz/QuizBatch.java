@@ -3,8 +3,8 @@ package de.tum.in.www1.artemis.domain.quiz;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 
-import javax.annotation.Nullable;
-import javax.persistence.*;
+import jakarta.annotation.Nullable;
+import jakarta.persistence.*;
 
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 

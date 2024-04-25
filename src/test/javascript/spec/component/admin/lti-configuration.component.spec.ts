@@ -70,7 +70,7 @@ describe('LtiConfigurationComponent', () => {
         expect(component.getDynamicRegistrationUrl()).toContain('/lti/dynamic-registration');
 
         // Test for getDeepLinkingUrl
-        expect(component.getDeepLinkingUrl()).toContain('/lti/deep-linking');
+        expect(component.getDeepLinkingUrl()).toContain('/api/public/lti13/deep-link');
 
         // Test for getToolUrl
         expect(component.getToolUrl()).toContain('/courses');

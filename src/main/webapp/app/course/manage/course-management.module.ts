@@ -67,6 +67,7 @@ import { ArtemisLearningPathManagementModule } from 'app/course/learning-paths/l
 import { IrisModule } from 'app/iris/iris.module';
 import { DetailModule } from 'app/detail-overview-list/detail.module';
 import { BuildQueueComponent } from 'app/localci/build-queue/build-queue.component';
+import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal.component';
 
 @NgModule({
     imports: [
@@ -140,6 +141,7 @@ import { BuildQueueComponent } from 'app/localci/build-queue/build-queue.compone
         EditCourseLtiConfigurationComponent,
         CourseManagementTabBarComponent,
         BuildQueueComponent,
+        ImageCropperModalComponent,
     ],
 })
 export class ArtemisCourseManagementModule {}

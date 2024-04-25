@@ -1,8 +1,8 @@
 package de.tum.in.www1.artemis.domain.participation;
 
-import javax.persistence.Column;
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.Entity;
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -34,7 +34,7 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
      * Defines if the participation is locked, i.e. if the student can currently not make any submissions.
      * This takes into account: the start date of the exercise (or the exam), the (individual) due date, and the lock repository policy.
      * Course exercise practice repositories and instructor exam test run repositories will never be locked.
-     *
+     * <p>
      * Important: this boolean flag must only be used for course programming exercises and is irrelevant for exam programming exercises!!!
      *
      */
@@ -120,10 +120,4 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
                 + getIndividualDueDate() + "'" + ", presentationScore=" + getPresentationScore() + "}";
     }
 
-    @Override
-    public Participation copyParticipationId() {
-        var participation = new ProgrammingExerciseStudentParticipation();
-        participation.setId(getId());
-        return participation;
-    }
 }

@@ -58,9 +58,9 @@ public interface StaticCodeAnalysisCategoryRepository extends JpaRepository<Stat
         List<ImmutablePair<StaticCodeAnalysisCategory, List<StaticCodeAnalysisDefaultCategory.CategoryMapping>>> categoryPairsWithMapping = new ArrayList<>();
 
         for (var category : categories) {
-            var defaultCategoryMatch = defaultCategories.stream().filter(defaultCategory -> defaultCategory.getName().equals(category.getName())).findFirst();
+            var defaultCategoryMatch = defaultCategories.stream().filter(defaultCategory -> defaultCategory.name().equals(category.getName())).findFirst();
             if (defaultCategoryMatch.isPresent()) {
-                var categoryMappings = defaultCategoryMatch.get().getCategoryMappings();
+                var categoryMappings = defaultCategoryMatch.get().categoryMappings();
                 categoryPairsWithMapping.add(new ImmutablePair<>(category, categoryMappings));
             }
         }

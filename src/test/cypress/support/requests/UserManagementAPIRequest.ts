@@ -29,7 +29,7 @@ export class UserManagementAPIRequests {
 
     getUser(username: string) {
         return cy.request({
-            url: `${BASE_API}/users/${username}`,
+            url: `${BASE_API}/admin/users/${username}`,
             method: GET,
             failOnStatusCode: false,
         });

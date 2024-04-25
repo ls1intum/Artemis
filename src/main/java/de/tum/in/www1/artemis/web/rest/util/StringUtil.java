@@ -7,7 +7,7 @@ import org.apache.commons.lang3.StringUtils;
  */
 public class StringUtil {
 
-    public static String ILLEGAL_CHARACTERS = "#%&{}\\<>*?/$!'\":@+`|=.";
+    public static final String ILLEGAL_CHARACTERS = "#%&{}\\<>*?/$!'\":@+`|=.";
 
     /**
      * Removes all chars from ILLEGAL_CHARACTERS from the input String

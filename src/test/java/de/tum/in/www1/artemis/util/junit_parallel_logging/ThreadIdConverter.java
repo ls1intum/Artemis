@@ -12,6 +12,6 @@ public class ThreadIdConverter extends ClassicConverter {
 
     @Override
     public String convert(ILoggingEvent iLoggingEvent) {
-        return String.valueOf(Thread.currentThread().getId());
+        return String.valueOf(Thread.currentThread().threadId());
     }
 }

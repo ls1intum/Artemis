@@ -10,9 +10,9 @@ import de.tum.in.www1.artemis.web.rest.errors.HttpStatusException;
 
 public class IrisException extends HttpStatusException {
 
-    protected String translationKey;
+    protected final String translationKey;
 
-    protected Map<String, Object> translationParams;
+    protected final Map<String, Object> translationParams;
 
     public IrisException(String translationKey, Map<String, Object> translationParams) {
         super(ErrorConstants.DEFAULT_TYPE, "An error within Iris has occured", Status.INTERNAL_SERVER_ERROR, "Iris", translationKey,

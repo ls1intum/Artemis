@@ -76,7 +76,7 @@ public class AuditEventConverter {
                     results.put("remoteAddress", authenticationDetails.getRemoteAddress());
                     results.put("sessionId", authenticationDetails.getSessionId());
                 }
-                else if (object instanceof Pair authenticationPair) {
+                else if (object instanceof Pair<?, ?> authenticationPair) {
                     results.put(authenticationPair.getFirst().toString(), authenticationPair.getSecond().toString());
                 }
                 else {

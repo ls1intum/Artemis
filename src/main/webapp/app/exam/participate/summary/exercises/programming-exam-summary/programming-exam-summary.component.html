@@ -49,7 +49,7 @@
             <div class="col-md-8">
                 <h5>{{ 'artemisApp.exam.examSummary.problemStatement' | artemisTranslate }}</h5>
                 @if (exercise.problemStatement) {
-                    <jhi-programming-exercise-instructions [exercise]="exercise" [participation]="exercise.templateParticipation!" />
+                    <jhi-programming-exercise-instructions [exercise]="exercise" [participation]="participation" />
                 }
             </div>
         </div>

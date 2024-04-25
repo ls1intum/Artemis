@@ -209,7 +209,9 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
 
         this.messages.changes.pipe(takeUntil(this.ngUnsubscribe)).subscribe(() => {
             this.handleScrollOnNewMessage();
-            this.metisConversationService.markAsRead(this.channel.id!);
+            if (this.isCommunicationPage) {
+                this.metisConversationService.markAsRead(this.channel.id!);
+            }
         });
     }
 

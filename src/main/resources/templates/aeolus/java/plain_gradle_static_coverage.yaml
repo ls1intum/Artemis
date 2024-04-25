@@ -1,7 +1,7 @@
 api: v0.0.1
 actions:
   - name: tests
-    script: |
+    script: |-
       chmod +x ./gradlew
       ./gradlew clean test tiaTests --run-all-tests
     runAlways: false

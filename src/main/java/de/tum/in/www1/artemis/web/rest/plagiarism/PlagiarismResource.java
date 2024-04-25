@@ -8,7 +8,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -201,13 +208,13 @@ public class PlagiarismResource {
      * This endpoint returns the number of plagiarism submissions for the given exercise excluding submissions of deleted users.
      *
      * @param exerciseId the id of the exercise
-     * @return the number of plagiarism results
+     * @return the ResponseEntity with status 200 (OK) and with body the number of plagiarism results
      */
     @GetMapping("exercises/{exerciseId}/potential-plagiarism-count")
     @EnforceAtLeastInstructor
-    public long getNumberOfPotentialPlagiarismCasesForExercise(@PathVariable("exerciseId") long exerciseId) {
+    public ResponseEntity<Long> getNumberOfPotentialPlagiarismCasesForExercise(@PathVariable("exerciseId") long exerciseId) {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
-        return plagiarismService.getNumberOfPotentialPlagiarismCasesForExercise(exerciseId);
+        return ResponseEntity.ok(plagiarismService.getNumberOfPotentialPlagiarismCasesForExercise(exerciseId));
     }
 }

@@ -6,9 +6,10 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
+
 import javax.annotation.CheckReturnValue;
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
 
 import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Value;
@@ -85,7 +86,7 @@ public class AuthorizationCheckService
      * An enum that represents the different reasons why a user is not allowed to self enroll in a course,
      * or ALLOWED if the user is allowed to self enroll in the course.
      */
-    private enum EnrollmentAuthorization {
+    public enum EnrollmentAuthorization {
         ALLOWED, USERNAME_PATTERN, ENROLLMENT_STATUS, ENROLLMENT_PERIOD, ONLINE, ORGANIZATIONS
     }
 
@@ -157,7 +158,7 @@ public class AuthorizationCheckService
      * An enum that represents the different reasons why a user is not allowed to unenroll from a course,
      * or ALLOWED if the user is allowed to unenroll from the course.
      */
-    private enum UnenrollmentAuthorization {
+    public enum UnenrollmentAuthorization {
         ALLOWED, UNENROLLMENT_STATUS, UNENROLLMENT_PERIOD, ONLINE
     }
 

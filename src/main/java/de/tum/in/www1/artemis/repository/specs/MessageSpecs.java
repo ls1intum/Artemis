@@ -4,12 +4,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import javax.persistence.criteria.*;
+import jakarta.persistence.criteria.*;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.jpa.domain.Specification;
 
 import de.tum.in.www1.artemis.domain.Course_;
+import de.tum.in.www1.artemis.domain.User_;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.domain.metis.*;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
@@ -25,14 +26,7 @@ public class MessageSpecs {
      * @return specification used to chain DB operations
      */
     public static Specification<Post> getConversationSpecification(Long conversationId) {
-        return ((root, query, criteriaBuilder) -> {
-            // fetch additional values to avoid subsequent db calls
-            var answerFetch = root.fetch(Post_.ANSWERS, JoinType.LEFT);
-            answerFetch.fetch(AnswerPost_.REACTIONS, JoinType.LEFT);
-            root.fetch(Post_.REACTIONS, JoinType.LEFT);
-            root.fetch(Post_.TAGS, JoinType.LEFT);
-            return criteriaBuilder.equal(root.get(Post_.CONVERSATION).get(Conversation_.ID), conversationId);
-        });
+        return ((root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get(Post_.CONVERSATION).get(Conversation_.ID), conversationId));
     }
 
     /**
@@ -71,12 +65,6 @@ public class MessageSpecs {
      */
     public static Specification<Post> getConversationsSpecification(long[] conversationIds) {
         return ((root, query, criteriaBuilder) -> {
-            // fetch additional values to avoid subsequent db calls
-            var answerFetch = root.fetch(Post_.ANSWERS, JoinType.LEFT);
-            answerFetch.fetch(AnswerPost_.REACTIONS, JoinType.LEFT);
-            root.fetch(Post_.REACTIONS, JoinType.LEFT);
-            root.fetch(Post_.TAGS, JoinType.LEFT);
-
             if (conversationIds == null || conversationIds.length == 0) {
                 return null;
             }
@@ -116,7 +104,7 @@ public class MessageSpecs {
                 return null;
             }
             else {
-                return criteriaBuilder.equal(root.get(Post_.AUTHOR), userId);
+                return criteriaBuilder.equal(root.get(Post_.AUTHOR).get(User_.ID), userId);
             }
         });
     }
@@ -140,8 +128,8 @@ public class MessageSpecs {
                 Join<Post, AnswerPost> joinedReactions = root.join(Post_.REACTIONS, JoinType.LEFT);
                 joinedReactions.on(criteriaBuilder.equal(root.get(Post_.ID), joinedReactions.get(Reaction_.POST).get(Post_.ID)));
 
-                Predicate answered = criteriaBuilder.equal(joinedAnswers.get(AnswerPost_.AUTHOR), userId);
-                Predicate reacted = criteriaBuilder.equal(joinedReactions.get(Reaction_.USER), userId);
+                Predicate answered = criteriaBuilder.equal(joinedAnswers.get(AnswerPost_.AUTHOR).get(User_.ID), userId);
+                Predicate reacted = criteriaBuilder.equal(joinedReactions.get(Reaction_.USER).get(User_.ID), userId);
 
                 return criteriaBuilder.or(answered, reacted);
             }
@@ -214,7 +202,7 @@ public class MessageSpecs {
      *
      * @return specification that adds the keyword GROUP BY to the query since DISTINCT and ORDER BY keywords are
      *         incompatible with each other at server tests
-     *         https://github.com/h2database/h2database/issues/408
+     *         <a href="https://github.com/h2database/h2database/issues/408">...</a>
      */
     public static Specification<Post> distinct() {
         return (root, query, criteriaBuilder) -> {

@@ -40,7 +40,7 @@ public class AeolusBuildScriptGenerationService extends BuildScriptGenerationSer
 
     @Override
     public String getScript(ProgrammingExercise programmingExercise) {
-        if (!profileService.isLocalCi()) {
+        if (!profileService.isLocalCiActive()) {
             return null;
         }
         Windfile windfile = programmingExercise.getWindfile();

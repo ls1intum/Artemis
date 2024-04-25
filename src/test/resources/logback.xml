@@ -43,8 +43,7 @@
     <logger name="LiquibaseSchemaResolver" level="INFO"/>
     <logger name="sun.rmi.transport" level="WARN"/>
 
-    <root>
-        <level>WARN</level>
+    <root level="WARN">
         <appender-ref ref="ParallelConsoleAppender"/>
     </root>
 

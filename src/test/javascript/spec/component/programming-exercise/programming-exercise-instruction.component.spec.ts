@@ -12,7 +12,6 @@ import { ParticipationWebsocketService } from 'app/overview/participation-websoc
 import { MockResultService } from '../../helpers/mocks/service/mock-result.service';
 import { MockRepositoryFileService } from '../../helpers/mocks/service/mock-repository-file.service';
 import {
-    problemStatementBubbleSortFailsHtml,
     problemStatementBubbleSortNotExecutedHtml,
     problemStatementEmptySecondTask,
     problemStatementEmptySecondTaskNotExecutedHtml,
@@ -331,7 +330,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(comp.isLoading).toBeFalse();
     });
 
-    it('should create the steps task icons for the tasks in problem statement markdown (non legacy case)', fakeAsync(() => {
+    it('should create the steps task icons for the tasks in problem statement markdown', fakeAsync(() => {
         const result: Result = {
             id: 1,
             completionDate: dayjs('2019-06-06T22:15:29.203+02:00'),
@@ -408,83 +407,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         } as any);
     }));
 
-    it('should create the steps task icons for the tasks in problem statement markdown (legacy case)', fakeAsync(() => {
-        const result: Result = {
-            id: 1,
-            completionDate: dayjs('2019-01-06T22:15:29.203+02:00'),
-            feedbacks: [{ testCase: { testName: 'testBubbleSort', id: 1 }, detailText: 'lorem ipsum' }],
-        };
-        const exercise: ProgrammingExercise = {
-            id: 3,
-            course: { id: 4 },
-            problemStatement: problemStatementWithIds,
-            numberOfAssessmentsOfCorrectionRounds: [],
-            secondCorrectionEnabled: false,
-            studentAssignedTeamIdComputed: false,
-        };
-
-        comp.problemStatement = exercise.problemStatement!;
-        comp.exercise = exercise;
-        comp.latestResult = result;
-        // @ts-ignore
-        comp.setupMarkdownSubscriptions();
-
-        comp.updateMarkdown();
-
-        expect(comp.tasks).toHaveLength(2);
-        expect(comp.tasks[0]).toEqual({
-            id: 0,
-            completeString: '[task][Implement Bubble Sort](<testid>1</testid>)',
-            taskName: 'Implement Bubble Sort',
-            testIds: [1],
-        });
-        expect(comp.tasks[1]).toEqual({
-            id: 1,
-            completeString: '[task][Implement Merge Sort](<testid>2</testid>)',
-            taskName: 'Implement Merge Sort',
-            testIds: [2],
-        });
-        fixture.detectChanges();
-
-        expect(debugElement.query(By.css('.stepwizard'))).not.toBeNull();
-        expect(debugElement.queryAll(By.css('.btn-circle'))).toHaveLength(2);
-        tick();
-        fixture.detectChanges();
-        expect(debugElement.query(By.css('.instructions__content__markdown')).nativeElement.innerHTML).toEqual(problemStatementBubbleSortFailsHtml);
-
-        const bubbleSortStep = debugElement.query(By.css('.stepwizard-step--failed'));
-        const mergeSortStep = debugElement.query(By.css('.stepwizard-step--success'));
-        expect(bubbleSortStep).not.toBeNull();
-        expect(mergeSortStep).not.toBeNull();
-
-        openModalStub.mockReturnValue(modalRef);
-
-        bubbleSortStep.nativeElement.click();
-        verifyTask(1, {
-            componentInstance: {
-                exercise,
-                exerciseType: ExerciseType.PROGRAMMING,
-                feedbackFilter: [1],
-                result,
-                taskName: 'Implement Bubble Sort',
-                numberOfNotExecutedTests: 0,
-            } as FeedbackComponent,
-        } as any);
-
-        mergeSortStep.nativeElement.click();
-        verifyTask(2, {
-            componentInstance: {
-                exercise,
-                exerciseType: ExerciseType.PROGRAMMING,
-                feedbackFilter: [2],
-                result,
-                taskName: 'Implement Merge Sort',
-                numberOfNotExecutedTests: 0,
-            } as FeedbackComponent,
-        } as any);
-    }));
-
-    it('should create the steps task icons for the tasks in problem statement markdown with no inserted tests (non legacy case)', fakeAsync(() => {
+    it('should create the steps task icons for the tasks in problem statement markdown with no inserted tests', fakeAsync(() => {
         const result: Result = {
             id: 1,
             completionDate: dayjs('2019-06-06T22:15:29.203+02:00'),
