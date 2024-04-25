@@ -31,6 +31,8 @@ import { onError } from 'app/shared/util/global.utils';
 import { getSemesters } from 'app/utils/semester-utils';
 import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal.component';
 
+const DEFAULT_CUSTOM_GROUP_NAME = 'artemis-dev';
+
 @Component({
     selector: 'jhi-course-update',
     templateUrl: './course-update.component.html',
@@ -72,6 +74,7 @@ export class CourseUpdateComponent implements OnInit {
     messagingEnabled = true;
     ltiEnabled = false;
     isAthenaEnabled = false;
+    tutorialGroupsFeatureActivated = false;
 
     readonly semesters = getSemesters();
 
@@ -80,7 +83,6 @@ export class CourseUpdateComponent implements OnInit {
     // Currently set to 65535 as this is the limit of TEXT
     readonly COMPLAINT_RESPONSE_TEXT_LIMIT = 65535;
     readonly COMPLAINT_TEXT_LIMIT = 65535;
-    tutorialGroupsFeatureActivated = false;
 
     constructor(
         private eventManager: EventManager,
@@ -136,16 +138,16 @@ export class CourseUpdateComponent implements OnInit {
                     // developers may want to customize the groups
                     this.customizeGroupNames = true;
                     if (!this.course.studentGroupName) {
-                        this.course.studentGroupName = 'artemis-dev';
+                        this.course.studentGroupName = DEFAULT_CUSTOM_GROUP_NAME;
                     }
                     if (!this.course.teachingAssistantGroupName) {
-                        this.course.teachingAssistantGroupName = 'artemis-dev';
+                        this.course.teachingAssistantGroupName = DEFAULT_CUSTOM_GROUP_NAME;
                     }
                     if (!this.course.editorGroupName) {
-                        this.course.editorGroupName = 'artemis-dev';
+                        this.course.editorGroupName = DEFAULT_CUSTOM_GROUP_NAME;
                     }
                     if (!this.course.instructorGroupName) {
-                        this.course.instructorGroupName = 'artemis-dev';
+                        this.course.instructorGroupName = DEFAULT_CUSTOM_GROUP_NAME;
                     }
                 }
                 this.ltiEnabled = profileInfo.activeProfiles.includes(PROFILE_LTI);
@@ -472,10 +474,10 @@ export class CourseUpdateComponent implements OnInit {
         if (!this.customizeGroupNames) {
             this.customizeGroupNames = true;
             this.setGroupNameValuesInCourseForm(
-                this.course.studentGroupName ?? 'artemis-dev',
-                this.course.teachingAssistantGroupName ?? 'artemis-dev',
-                this.course.editorGroupName ?? 'artemis-dev',
-                this.course.instructorGroupName ?? 'artemis-dev',
+                this.course.studentGroupName ?? DEFAULT_CUSTOM_GROUP_NAME,
+                this.course.teachingAssistantGroupName ?? DEFAULT_CUSTOM_GROUP_NAME,
+                this.course.editorGroupName ?? DEFAULT_CUSTOM_GROUP_NAME,
+                this.course.instructorGroupName ?? DEFAULT_CUSTOM_GROUP_NAME,
             );
         } else {
             this.customizeGroupNames = false;
