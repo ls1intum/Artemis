@@ -129,21 +129,35 @@
                                         course?.isAtLeastInstructor &&
                                         exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.PROGRAMMING)
                                     ) {
-                                        <button
-                                            jhiDeleteButton
-                                            [entityTitle]="exerciseGroup.title || ''"
-                                            deleteQuestion="artemisApp.examManagement.exerciseGroup.delete.question"
-                                            deleteConfirmationText="artemisApp.examManagement.exerciseGroup.delete.typeNameToConfirm"
-                                            [additionalChecks]="{
-                                                deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',
-                                                deleteBaseReposBuildPlans: 'artemisApp.programmingExercise.delete.baseReposBuildPlans'
-                                            }"
-                                            (delete)="deleteExerciseGroup(exerciseGroup.id, $event)"
-                                            [dialogError]="dialogError"
-                                            class="delete-group mb-0"
-                                        >
-                                            <fa-icon [icon]="faTrash" />
-                                        </button>
+                                        @if (localVCEnabled) {
+                                            <button
+                                                jhiDeleteButton
+                                                [entityTitle]="exerciseGroup.title || ''"
+                                                deleteQuestion="artemisApp.examManagement.exerciseGroup.delete.questionLocalVC"
+                                                deleteConfirmationText="artemisApp.examManagement.exerciseGroup.delete.typeNameToConfirm"
+                                                (delete)="deleteExerciseGroup(exerciseGroup.id, $event)"
+                                                [dialogError]="dialogError"
+                                                class="delete-group mb-0"
+                                            >
+                                                <fa-icon [icon]="faTrash" />
+                                            </button>
+                                        } @else {
+                                            <button
+                                                jhiDeleteButton
+                                                [entityTitle]="exerciseGroup.title || ''"
+                                                deleteQuestion="artemisApp.examManagement.exerciseGroup.delete.question"
+                                                deleteConfirmationText="artemisApp.examManagement.exerciseGroup.delete.typeNameToConfirm"
+                                                [additionalChecks]="{
+                                                    deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',
+                                                    deleteBaseReposBuildPlans: 'artemisApp.programmingExercise.delete.baseReposBuildPlans'
+                                                }"
+                                                (delete)="deleteExerciseGroup(exerciseGroup.id, $event)"
+                                                [dialogError]="dialogError"
+                                                class="delete-group mb-0"
+                                            >
+                                                <fa-icon [icon]="faTrash" />
+                                            </button>
+                                        }
                                     } @else {
                                         @if (exerciseGroup.id && course?.isAtLeastInstructor) {
                                             <button
