@@ -17,7 +17,9 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
 import de.tum.in.www1.artemis.domain.competency.RelationType;
+import de.tum.in.www1.artemis.domain.competency.StandardizedCompetency;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.competency.StandardizedCompetencyRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.LectureUnitService;
@@ -27,6 +29,7 @@ import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyRelationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyWithTailRelationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.CompetencyPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 
 /**
@@ -56,9 +59,14 @@ public class CompetencyService {
 
     private final LectureUnitCompletionRepository lectureUnitCompletionRepository;
 
+    private final StandardizedCompetencyRepository standardizedCompetencyRepository;
+
+    private final CourseRepository courseRepository;
+
     public CompetencyService(CompetencyRepository competencyRepository, AuthorizationCheckService authCheckService, CompetencyRelationRepository competencyRelationRepository,
             LearningPathService learningPathService, CompetencyProgressService competencyProgressService, LectureUnitService lectureUnitService, ExerciseService exerciseService,
-            CompetencyProgressRepository competencyProgressRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository) {
+            CompetencyProgressRepository competencyProgressRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
+            StandardizedCompetencyRepository standardizedCompetencyRepository, CourseRepository courseRepository) {
         this.competencyRepository = competencyRepository;
         this.authCheckService = authCheckService;
         this.competencyRelationRepository = competencyRelationRepository;
@@ -68,6 +76,8 @@ public class CompetencyService {
         this.exerciseService = exerciseService;
         this.competencyProgressRepository = competencyProgressRepository;
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
+        this.standardizedCompetencyRepository = standardizedCompetencyRepository;
+        this.courseRepository = courseRepository;
     }
 
     /**
@@ -168,6 +178,31 @@ public class CompetencyService {
             }
         }
         return idToImportedCompetency.values().stream().toList();
+    }
+
+    public List<Competency> importStandardizedCompetencies(List<Long> competencyIdsToImport, long courseId) {
+        var course = courseRepository.findByIdElseThrow(courseId);
+        List<StandardizedCompetency> standardizedCompetencies = standardizedCompetencyRepository.findAllById(competencyIdsToImport);
+
+        if (standardizedCompetencies.size() != competencyIdsToImport.size()) {
+            throw new EntityNotFoundException("Could not find all standardized competencies to import in the database!");
+        }
+
+        List<Competency> competenciesToCreate = new ArrayList<>();
+
+        for (var standardizedCompetency : standardizedCompetencies) {
+            var competency = new Competency();
+            competency.setTitle(standardizedCompetency.getTitle());
+            competency.setDescription(standardizedCompetency.getDescription());
+            competency.setTaxonomy(standardizedCompetency.getTaxonomy());
+            competency.setMasteryThreshold(Competency.DEFAULT_MASTERY_THRESHOLD);
+            competency.setLinkedStandardizedCompetency(standardizedCompetency);
+            competency.setCourse(course);
+
+            competenciesToCreate.add(competency);
+        }
+
+        return competencyRepository.saveAll(competenciesToCreate);
     }
 
     /**

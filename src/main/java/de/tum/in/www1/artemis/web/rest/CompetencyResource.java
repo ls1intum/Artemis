@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
+import de.tum.in.www1.artemis.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.competency.CompetencyRelationService;
@@ -347,6 +348,24 @@ public class CompetencyResource {
         else {
             importedCompetencies = competencyService.competenciesToCompetencyWithTailRelationDTOs(competencyService.importCompetencies(targetCourse, competencies));
         }
+
+        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/competencies/")).body(importedCompetencies);
+    }
+
+    /**
+     * POST /courses/:courseId/competencies/import-standardized : imports a number of standardized competencies (as competencies) into a course.
+     *
+     * @param courseId              the id of the course to which the competencies should be imported to
+     * @param competencyIdsToImport the ids of the standardized competencies that should be imported
+     * @return the ResponseEntity with status 201 (Created) and with body containing the imported competencies
+     * @throws URISyntaxException if the Location URI syntax is incorrect
+     */
+    @PostMapping("/courses/{courseId}/competencies/import-standardized")
+    @EnforceAtLeastEditorInCourse
+    public ResponseEntity<List<Competency>> importStandardizedCompetencies(@PathVariable long courseId, @RequestBody List<Long> competencyIdsToImport) throws URISyntaxException {
+        log.info("REST request to import standardized competencies with ids: {}", competencyIdsToImport);
+
+        var importedCompetencies = competencyService.importStandardizedCompetencies(competencyIdsToImport, courseId);
 
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/competencies/")).body(importedCompetencies);
     }

@@ -104,6 +104,12 @@ export class CompetencyService {
         });
     }
 
+    importStandardizedCompetencies(competencyIdsToImport: number[], courseId: number) {
+        return this.httpClient.post<Array<Competency>>(`${this.resourceURL}/courses/${courseId}/competencies/import-standardized`, competencyIdsToImport, {
+            observe: 'response',
+        });
+    }
+
     generateCompetenciesFromCourseDescription(courseDescription: string, courseId: number): Observable<EntityArrayResponseType> {
         return this.httpClient.post<Competency[]>(`${this.resourceURL}/courses/${courseId}/competencies/generate-from-description`, courseDescription, { observe: 'response' });
     }

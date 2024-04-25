@@ -67,6 +67,7 @@
             "courseImport": {
                 "title": "Standardisierte Kompetenzen Importieren",
                 "empty": "Es existieren keine standardisierten Kompetenzen",
+                "success": "Erfolgreich {{count}} standardisierte Kompetenzen importiert",
                 "selectedTitle": "Ausgewählte Kompetenzen",
                 "selectedEmpty": "Keine standardisierten Kompetenzen zum Import ausgewählt",
                 "selectedCompetencies": "{{count}} standardisierte Kompetenzen zum Import ausgewählt"

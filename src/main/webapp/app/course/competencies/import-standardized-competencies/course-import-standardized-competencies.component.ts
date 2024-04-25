@@ -13,6 +13,7 @@ import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { TranslateService } from '@ngx-translate/core';
 import { SortService } from 'app/shared/service/sort.service';
 import { StandardizedCompetencyService } from 'app/shared/standardized-competencies/standardized-competency.service';
+import { CompetencyService } from 'app/course/competencies/competency.service';
 
 interface StandardizedCompetencyForImport extends StandardizedCompetencyForTree {
     selected?: boolean;
@@ -31,6 +32,7 @@ interface KnowledgeAreaForImport extends KnowledgeAreaForTree {
 export class CourseImportStandardizedCompetenciesComponent extends StandardizedCompetencyFilterPageComponent implements OnInit, ComponentCanDeactivate {
     protected selectedCompetencies: StandardizedCompetencyForImport[] = [];
     protected selectedCompetency?: StandardizedCompetencyForImport;
+    private courseId: number;
     protected isLoading = false;
     protected isSubmitted = false;
 
@@ -50,6 +52,7 @@ export class CourseImportStandardizedCompetenciesComponent extends StandardizedC
         private router: Router,
         private activatedRoute: ActivatedRoute,
         private standardizedCompetencyService: StandardizedCompetencyService,
+        private competencyService: CompetencyService,
         private alertService: AlertService,
         private translateService: TranslateService,
         private sortService: SortService,
@@ -75,6 +78,7 @@ export class CourseImportStandardizedCompetenciesComponent extends StandardizedC
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });
+        this.courseId = Number(this.activatedRoute.snapshot.paramMap.get('courseId'));
     }
 
     protected openCompetencyDetails(competency: StandardizedCompetencyForImport) {
@@ -107,11 +111,25 @@ export class CourseImportStandardizedCompetenciesComponent extends StandardizedC
     }
 
     protected importCompetencies() {
-        //this.standardizedCompetencyService
-        //TODO: import, then
-        //alertService.success
-        this.isSubmitted = true;
-        this.router.navigate(['../'], { relativeTo: this.activatedRoute });
+        if (!this.selectedCompetencies.length) {
+            return;
+        }
+
+        const idsToImport = this.selectedCompetencies.map((competency) => competency.id!);
+
+        this.isLoading = true;
+        this.competencyService
+            .importStandardizedCompetencies(idsToImport, this.courseId)
+            .pipe(map((response) => response.body!.length))
+            .subscribe({
+                next: (countImportedCompetencies) => {
+                    this.isSubmitted = true;
+                    this.isLoading = false;
+                    this.alertService.success('artemisApp.standardizedCompetency.courseImport.success', { count: countImportedCompetencies });
+                    this.router.navigate(['../'], { relativeTo: this.activatedRoute });
+                },
+                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+            });
     }
 
     protected cancel() {

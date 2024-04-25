@@ -36,6 +36,8 @@ export enum CompetencyValidators {
     DESCRIPTION_MAX = 10000,
 }
 
+export const DEFAULT_MASTERY_THRESHOLD = 50;
+
 export class Competency implements BaseEntity {
     public id?: number;
     public title?: string;

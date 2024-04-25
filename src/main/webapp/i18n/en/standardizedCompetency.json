@@ -67,6 +67,7 @@
             "courseImport": {
                 "title": "Import Standardized Competencies",
                 "empty": "No knowledge areas or standardized competencies exist.",
+                "success": "Successfully imported {{count}} standardized competencies",
                 "selectedTitle": "Selected Competencies",
                 "selectedEmpty": "No standardized competencies selected for import",
                 "selectedCompetencies": "{{count}} standardized competencies selected for import"
