@@ -122,8 +122,7 @@ public class CacheConfiguration {
             log.warn("Hazelcast instance not found, cannot connect to cluster members");
             return;
         }
-        // TODO: Turn into debug statements after testing on staging
-        log.info("Current Registry members: {}", discoveryClient.getInstances(serviceId).stream().map(ServiceInstance::getHost).toList());
+
         var hazelcastMemberAddresses = hazelcastInstance.getCluster().getMembers().stream().map(member -> {
             try {
                 return member.getAddress().getInetAddress().getHostAddress();
@@ -132,8 +131,10 @@ public class CacheConfiguration {
                 return "unknown";
             }
         }).toList();
-        log.info("Current Hazelcast members: {}", hazelcastMemberAddresses);
-        // TODO end
+
+        log.debug("Current Registry members: {}", discoveryClient.getInstances(serviceId).stream().map(ServiceInstance::getHost).toList());
+        log.debug("Current Hazelcast members: {}", hazelcastMemberAddresses);
+
         for (ServiceInstance instance : discoveryClient.getInstances(serviceId)) {
             var instanceHost = instance.getHost();
             // Workaround for IPv6 addresses, as they are enclosed in brackets
