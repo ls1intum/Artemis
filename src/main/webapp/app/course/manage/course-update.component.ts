@@ -31,6 +31,8 @@ import { onError } from 'app/shared/util/global.utils';
 import { getSemesters } from 'app/utils/semester-utils';
 import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal.component';
 
+const DEFAULT_CUSTOM_GROUP_NAME = 'artemis-dev';
+
 @Component({
     selector: 'jhi-course-update',
     templateUrl: './course-update.component.html',
@@ -72,6 +74,7 @@ export class CourseUpdateComponent implements OnInit {
     messagingEnabled = true;
     ltiEnabled = false;
     isAthenaEnabled = false;
+    tutorialGroupsFeatureActivated = false;
 
     readonly semesters = getSemesters();
 
@@ -80,7 +83,6 @@ export class CourseUpdateComponent implements OnInit {
     // Currently set to 65535 as this is the limit of TEXT
     readonly COMPLAINT_RESPONSE_TEXT_LIMIT = 65535;
     readonly COMPLAINT_TEXT_LIMIT = 65535;
-    tutorialGroupsFeatureActivated = false;
 
     constructor(
         private eventManager: EventManager,
@@ -132,24 +134,20 @@ export class CourseUpdateComponent implements OnInit {
 
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
-                if (profileInfo.inProduction) {
-                    // in production mode, the groups should not be customized by default when creating a course
-                    // when editing a course, only admins can customize groups automatically
-                    this.customizeGroupNames = !!this.course.id;
-                } else {
-                    // developers typically want to customize the groups, therefore this is prefilled
+                if (!profileInfo.inProduction) {
+                    // developers may want to customize the groups
                     this.customizeGroupNames = true;
                     if (!this.course.studentGroupName) {
-                        this.course.studentGroupName = 'artemis-dev';
+                        this.course.studentGroupName = DEFAULT_CUSTOM_GROUP_NAME;
                     }
                     if (!this.course.teachingAssistantGroupName) {
-                        this.course.teachingAssistantGroupName = 'artemis-dev';
+                        this.course.teachingAssistantGroupName = DEFAULT_CUSTOM_GROUP_NAME;
                     }
                     if (!this.course.editorGroupName) {
-                        this.course.editorGroupName = 'artemis-dev';
+                        this.course.editorGroupName = DEFAULT_CUSTOM_GROUP_NAME;
                     }
                     if (!this.course.instructorGroupName) {
-                        this.course.instructorGroupName = 'artemis-dev';
+                        this.course.instructorGroupName = DEFAULT_CUSTOM_GROUP_NAME;
                     }
                 }
                 this.ltiEnabled = profileInfo.activeProfiles.includes(PROFILE_LTI);
@@ -475,17 +473,34 @@ export class CourseUpdateComponent implements OnInit {
     changeCustomizeGroupNames() {
         if (!this.customizeGroupNames) {
             this.customizeGroupNames = true;
-            this.courseForm.controls['studentGroupName'].setValue('artemis-dev');
-            this.courseForm.controls['teachingAssistantGroupName'].setValue('artemis-dev');
-            this.courseForm.controls['editorGroupName'].setValue('artemis-dev');
-            this.courseForm.controls['instructorGroupName'].setValue('artemis-dev');
+            this.setGroupNameValuesInCourseForm(
+                this.course.studentGroupName ?? DEFAULT_CUSTOM_GROUP_NAME,
+                this.course.teachingAssistantGroupName ?? DEFAULT_CUSTOM_GROUP_NAME,
+                this.course.editorGroupName ?? DEFAULT_CUSTOM_GROUP_NAME,
+                this.course.instructorGroupName ?? DEFAULT_CUSTOM_GROUP_NAME,
+            );
         } else {
             this.customizeGroupNames = false;
-            this.courseForm.controls['studentGroupName'].setValue(undefined);
-            this.courseForm.controls['teachingAssistantGroupName'].setValue(undefined);
-            this.courseForm.controls['editorGroupName'].setValue(undefined);
-            this.courseForm.controls['instructorGroupName'].setValue(undefined);
+            if (!this.course.id) {
+                // Creating: clear the values so groups are no longer customized
+                this.setGroupNameValuesInCourseForm(undefined, undefined, undefined, undefined);
+            } else {
+                // Editing: restore the old values -> no change.
+                this.setGroupNameValuesInCourseForm(
+                    this.course.studentGroupName,
+                    this.course.teachingAssistantGroupName,
+                    this.course.editorGroupName,
+                    this.course.instructorGroupName,
+                );
+            }
         }
+    }
+
+    private setGroupNameValuesInCourseForm(studentGroupName?: string, teachingAssistantGroupName?: string, editorGroupName?: string, instructorGroupName?: string) {
+        this.courseForm.controls['studentGroupName'].setValue(studentGroupName);
+        this.courseForm.controls['teachingAssistantGroupName'].setValue(teachingAssistantGroupName);
+        this.courseForm.controls['editorGroupName'].setValue(editorGroupName);
+        this.courseForm.controls['instructorGroupName'].setValue(instructorGroupName);
     }
 
     /**
