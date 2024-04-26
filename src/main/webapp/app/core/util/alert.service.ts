@@ -130,8 +130,8 @@ export class AlertService {
                         }
                         this.addErrorAlert(httpErrorResponse.error.title, httpErrorResponse.error.message, httpErrorResponse.error.params);
                     } else if (this.isErrorFromStatusCode(httpErrorResponse.status)) {
-                        let translationKey = httpErrorResponse.headers.get('x-artemisapp-message') ?? undefined;
-                        let message = httpErrorResponse.headers.get('x-artemisapp-error');
+                        let translationKey = httpErrorResponse.headers.get('x-artemisapp-error') ?? undefined;
+                        let message = httpErrorResponse.headers.get('x-artemisapp-message');
                         let translationParams;
 
                         if (!translationKey && !message) {
