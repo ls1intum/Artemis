@@ -48,8 +48,8 @@ type PatchProgrammingExerciseTestVisibilityDto = {
     visibility: Visibility;
 }[];
 
-const MAX_RETRIES: number = 15;
-const RETRY_DELAY: number = 5000;
+const MAX_RETRIES: number = 10;
+const RETRY_DELAY: number = 3000;
 
 export class ExerciseAPIRequests {
     private readonly page: Page;
