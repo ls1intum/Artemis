@@ -8,12 +8,12 @@
     }
 
     &.is-user-tutor {
-        --bs-table-bg: var(--bs-body-bg);
-        --bs-table-border-color: var(--bs-body-bg);
+        border-color: var(--link-item-bg);
+        --bs-table-bg: var(--link-item-bg);
         --bs-table-hover-bg: var(--link-item-bg);
     }
-
     &.is-user-not-tutor {
-        --bs-table-hover-bg: var(--link-item-bg);
+        --bs-table-bg: transparent;
+        --bs-table-hover-bg: transparent;
     }
 }
