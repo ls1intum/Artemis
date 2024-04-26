@@ -460,6 +460,7 @@ describe('Course Management Update Component', () => {
 
     describe('changeCustomizeGroupNames', () => {
         it('should initialize values if enabled and reset if disabled', () => {
+            comp.course = new Course();
             comp.courseForm = new FormGroup({
                 studentGroupName: new FormControl('noname'),
                 teachingAssistantGroupName: new FormControl('noname'),
