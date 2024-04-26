@@ -55,7 +55,7 @@
             },
             "customizeGroupNames": {
                 "title": "Customize group names",
-                "description": "Make sure that the groups exist in the external user management if you enable this option. The groups are not created automatically then."
+                "description": "Customizing the group names should not be necessary and may cause users to lose access to this course. Make sure you have a good reason for customizing the group names."
             },
             "studentGroupName": "Students",
             "teachingAssistantGroupName": "Tutors",
