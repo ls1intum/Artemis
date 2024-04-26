@@ -104,13 +104,13 @@
                     "codeOfConduct": "Messaging Code of Conduct"
                 }
             },
-            "registrationEnabled": {
-                "title": "Student Course Registration Enabled",
-                "description": "Activate this checkbox to allow students to register independently in the course if it is active (between start and end of the course). You can optionally enter a message that students have to confirm during registration."
+            "enrollmentEnabled": {
+                "title": "Student Course Enrollment Enabled",
+                "description": "Activate this checkbox to allow students to enroll independently in the course if it is active (between start and end of the course). You can optionally enter a message that students have to confirm during enrollment."
             },
             "enrollmentStartDate": "Enrollment Start",
             "enrollmentEndDate": "Enrollment End",
-            "registrationConfirmationMessage": "Registration Confirmation Message",
+            "enrollmentConfirmationMessage": "Enrollment Confirmation Message",
             "unenrollmentEnabled": {
                 "title": "Student Course Unenrollment Enabled",
                 "description": "Activate this checkbox to allow students to unenroll independently in the course. You can specify the latest date for unenrollment, otherwise the students can do so until the end of the course."
