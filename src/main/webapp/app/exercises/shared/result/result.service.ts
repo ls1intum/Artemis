@@ -217,7 +217,7 @@ export class ResultService implements IResultService {
             res.body.forEach((resultWithPoints: ResultWithPointsPerGradingCriterion) => {
                 this.convertResultDatesFromServer(resultWithPoints.result);
                 const pointsMap = new Map<number, number>();
-                if (!(resultWithPoints.pointsPerCriterion == undefined)) {
+                if (resultWithPoints.pointsPerCriterion != undefined) {
                     Object.keys(resultWithPoints.pointsPerCriterion).forEach((key) => {
                         pointsMap.set(Number(key), resultWithPoints.pointsPerCriterion[key]);
                     });
