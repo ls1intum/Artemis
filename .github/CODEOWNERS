@@ -7,7 +7,7 @@
 # Each line is a file pattern followed by one or more owners.
 
 # These owners will be the default owners for everything in the repo.
-# Unless a later match takes precedence, @krusche and @jpbernius will be
+# Unless a later match takes precedence, @krusche and @bassner will be
 # requested for review when someone opens a pull request.
 
 *    @ls1intum/artemis-maintainers
