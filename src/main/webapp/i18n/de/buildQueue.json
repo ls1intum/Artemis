@@ -19,7 +19,8 @@
                 "priority": "Priorität",
                 "buildCompletionDate": "Build Fertigstellungsdatum",
                 "buildDuration": "Build Dauer",
-                "status": "Status"
+                "status": "Status",
+                "buildLogs": "Build Logs"
             },
             "cancelAll": "Alle abbrechen"
         }
