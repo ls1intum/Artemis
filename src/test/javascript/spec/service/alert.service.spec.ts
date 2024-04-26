@@ -5,7 +5,7 @@ import { missingTranslationHandler } from 'app/core/config/translation.config';
 import { Alert, AlertCreationProperties, AlertService, AlertType } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 
-describe('Alert Service Test', () => {
+describe('AlertService', () => {
     const alertSample = {
         type: AlertType.SUCCESS,
         message: 'Hello Jhipster',
