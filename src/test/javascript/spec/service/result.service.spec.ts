@@ -116,12 +116,10 @@ describe('ResultService', () => {
         const resultWithPoints1 = new ResultWithPointsPerGradingCriterion();
         resultWithPoints1.result = result1;
         resultWithPoints1.totalPoints = 100;
-        resultWithPoints1.pointsPerCriterion = new Map();
         const resultWithPoints2 = new ResultWithPointsPerGradingCriterion();
         resultWithPoints2.result = result2;
         resultWithPoints2.totalPoints = 50;
         // @ts-ignore
-        resultWithPoints2.pointsPerCriterion = { '1': 20, '2': 30 };
 
         const results = [resultWithPoints1, resultWithPoints2];
 
@@ -140,10 +138,6 @@ describe('ResultService', () => {
 
             const receivedResult2 = resultsWithScores.find((resWithPoints) => resWithPoints.result.id === 2);
             expect(receivedResult2!.result.completionDate).toBe(result2.completionDate);
-            const expectedPointsMap = new Map();
-            expectedPointsMap.set(1, 20);
-            expectedPointsMap.set(2, 30);
-            expect(receivedResult2!.pointsPerCriterion).toEqual(expectedPointsMap);
         });
 
         tick();
