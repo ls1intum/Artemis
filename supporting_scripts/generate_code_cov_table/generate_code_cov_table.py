@@ -274,8 +274,10 @@ def main(argv):
 
     artifacts = get_artifacts_of_the_last_completed_run(headers, args.branch_name, args.build_id)
 
-    client_coverage_zip_bytes = download_and_extract_zip(get_coverage_artifact_for_key(artifacts, client_tests_key), headers)
-    server_coverage_zip_bytes = download_and_extract_zip(get_coverage_artifact_for_key(artifacts, server_tests_key), headers)
+    client_coverage_zip_bytes = download_and_extract_zip(get_coverage_artifact_for_key(artifacts, client_tests_key),
+                                                         headers)
+    server_coverage_zip_bytes = download_and_extract_zip(get_coverage_artifact_for_key(artifacts, server_tests_key),
+                                                         headers)
 
     client_cov = [
         get_client_line_coverage(client_coverage_zip_bytes, file_name, change_type)
