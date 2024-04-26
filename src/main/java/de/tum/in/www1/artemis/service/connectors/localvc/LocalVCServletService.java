@@ -249,7 +249,7 @@ public class LocalVCServletService {
     }
 
     private LocalVCRepositoryUri parseRepositoryUri(HttpServletRequest request) {
-        return new LocalVCRepositoryUri(request.getRequestURL().toString().replace("/info/refs", ""), localVCBaseUrl);
+        return new LocalVCRepositoryUri(request.getRequestURL().toString().replace("/info/refs", ""));
     }
 
     private ProgrammingExercise getProgrammingExerciseOrThrow(String projectKey) {

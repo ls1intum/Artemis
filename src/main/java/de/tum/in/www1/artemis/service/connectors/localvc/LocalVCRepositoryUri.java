@@ -48,31 +48,35 @@ public class LocalVCRepositoryUri extends VcsRepositoryUri {
     /**
      * Constructor that builds a LocalVCRepositoryUri from a URL string.
      *
-     * @param urlString      the entire URL string (should already contain the base URL, otherwise an exception is thrown).
-     * @param localVCBaseUrl the base URL of the local VC server defined in an environment variable.
+     * @param urlString the entire URL string (should already contain the base URL, otherwise an exception is thrown).
      * @throws LocalVCInternalException if the URL string is invalid.
      */
-    public LocalVCRepositoryUri(String urlString, URL localVCBaseUrl) {
-        if (!urlString.startsWith(localVCBaseUrl.toString())) {
-            throw new LocalVCInternalException("Invalid local VC Repository URI: " + urlString);
-        }
-
-        Path urlPath = Paths.get(urlString.replaceFirst(localVCBaseUrl.toString(), ""));
-
-        if (!("git".equals(urlPath.getName(0).toString())) || !urlPath.getName(2).toString().endsWith(".git")) {
-            throw new LocalVCInternalException("Invalid local VC Repository URI: " + urlString);
-        }
-
-        this.projectKey = urlPath.getName(1).toString();
-        this.repositorySlug = urlPath.getName(2).toString().replace(".git", "");
-        validateProjectKeyAndRepositorySlug(projectKey, repositorySlug);
-
+    public LocalVCRepositoryUri(String urlString) {
         try {
             this.uri = new URI(urlString);
         }
         catch (URISyntaxException e) {
             throw new LocalVCInternalException("Could not create local VC Repository URI", e);
         }
+
+        var urlPath = Paths.get(this.uri.getPath());
+
+        // Find index of "git" in the path. This is needed in case the base URL contains a path.
+        var startIndex = -1;
+        for (int i = 0; i < urlPath.getNameCount(); i++) {
+            if ("git".equals(urlPath.getName(i).toString())) {
+                startIndex = i;
+                break;
+            }
+        }
+
+        if (startIndex == -1 || urlPath.getNameCount() < startIndex + 3 || !urlPath.getName(startIndex + 2).toString().endsWith(".git")) {
+            throw new LocalVCInternalException("Invalid local VC Repository URI: " + urlString);
+        }
+
+        this.projectKey = urlPath.getName(startIndex + 1).toString();
+        this.repositorySlug = urlPath.getName(startIndex + 2).toString().replace(".git", "");
+        validateProjectKeyAndRepositorySlug(projectKey, repositorySlug);
 
         this.repositoryTypeOrUserName = getRepositoryTypeOrUserName(repositorySlug, projectKey);
         this.isPracticeRepository = getIsPracticeRepository(repositorySlug, projectKey);
