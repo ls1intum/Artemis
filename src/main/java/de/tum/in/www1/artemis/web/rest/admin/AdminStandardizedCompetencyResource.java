@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.service.competency.KnowledgeAreaService;
 import de.tum.in.www1.artemis.service.competency.StandardizedCompetencyService;
 import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreaRequestDTO;
 import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreaResultDTO;
+import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreasForImportDTO;
 import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.StandardizedCompetencyRequestDTO;
 import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.StandardizedCompetencyResultDTO;
 
@@ -149,4 +150,19 @@ public class AdminStandardizedCompetencyResource {
         return ResponseEntity.ok().build();
     }
 
+    /**
+     * PUT api/admin/standardized-competencies/import : Imports standardized competencies, knowledge areas and sources
+     *
+     * @param knowledgeAreasForImportDTO the DTO containing knowledge areas (and their competencies) and sources
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @PutMapping("standardized-competencies/import")
+    @EnforceAdmin
+    public ResponseEntity<Void> importStandardizedCompetencies(@RequestBody @Valid KnowledgeAreasForImportDTO knowledgeAreasForImportDTO) {
+        log.debug("REST request to import standardized competencies from .json");
+
+        standardizedCompetencyService.adminImportStandardizedCompetencies(knowledgeAreasForImportDTO);
+
+        return ResponseEntity.ok().build();
+    }
 }

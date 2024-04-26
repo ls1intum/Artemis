@@ -6,6 +6,7 @@ import static java.util.Comparator.naturalOrder;
 import static java.util.Comparator.nullsFirst;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.argThat;
@@ -334,6 +335,13 @@ public class ProgrammingExerciseResultTestService {
         // Call again and shouldn't re-create new submission.
         gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultRequestBody);
         assertThat(programmingSubmissionRepository.findAllByParticipationIdWithResults(programmingExerciseStudentParticipation.getId())).hasSize(1);
+    }
+
+    // Test
+    public void shouldRejectNotificationWithoutCommitHash(AbstractBuildResultNotificationDTO resultNotification) {
+        final Object resultRequestBody = convertBuildResultToJsonObject(resultNotification);
+        assertThatThrownBy(() -> gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultRequestBody))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("does not specify the assignment commit hash.");
     }
 
     private void activateFourTests() {
