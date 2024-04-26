@@ -5,6 +5,7 @@
             "manage": {
                 "title": "Standardized Competency Management",
                 "filter": "Filter competencies",
+                "importButton": "Import standardized competencies",
                 "expandButtonTooltip": "Expand all knowledge areas",
                 "collapseButtonTooltip": "Collapse all knowledge areas",
                 "updateTreeError": "Something went wrong while updating the knowledge area tree. Please reload the page.",
@@ -20,6 +21,28 @@
                     "create": "Successfully created standardized competency <strong>{{title}}</strong>",
                     "update": "Successfully updated standardized competency <strong>{{title}}</strong>",
                     "delete": "Successfully deleted standardized competency <strong>{{title}}</strong>"
+                },
+                "import": {
+                    "title": "Import Standardized Competencies",
+                    "preview": {
+                        "title": "Import Preview",
+                        "empty": "No objects available for the preview. Please select a file with valid objects."
+                    },
+                    "format": {
+                        "title": "Required File Format",
+                        "text1": "Standardized competencies can be imported from a .json file into Artemis. After selecting a file, you can then verify that the knowledge areas and competencies were read correctly.",
+                        "text2": "The .json file must contain an object with the keys <code>knowledgeAreas</code> and <code>sources</code>. The former contains all knowledge areas and standardized competencies to import and the latter contains all source details of the competencies imported.",
+                        "text3": "Example of a valid import file (except for the comments):"
+                    },
+                    "count": "Read {{competencies}} competencies and {{knowledgeAreas}} knowledge areas from the file",
+                    "error": {
+                        "fileCount": "Please only upload one file",
+                        "fileTooBig": "The file is too big. The maximum file size is 20 MB",
+                        "fileExtension": "Unsupported file extension. Please upload a .json file",
+                        "fileSyntax": "Unable to parse file. Please upload a file with valid .json syntax",
+                        "fileStructure": "Unable to parse file. Please verify it follows the required file structure"
+                    },
+                    "success": "Successfully imported all knowledge areas and standardized competencies"
                 }
             },
             "model": {
@@ -42,7 +65,7 @@
             }
         },
         "knowledgeArea": {
-            "empty": "This knowledge area has no content yet",
+            "empty": "This knowledge area has no content",
             "model": {
                 "title": "Title",
                 "shortTitle": "Short title",

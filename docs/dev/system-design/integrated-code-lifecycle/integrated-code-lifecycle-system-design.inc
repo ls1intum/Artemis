@@ -14,6 +14,8 @@ This new architecture simplifies the setup process, reduces dependencies on exte
 Developers have fewer applications to run in parallel, which translates into decreased system requirements.
 See :ref:`Integrated Code Lifecycle Setup` on how to set up a single-node environment for developing purposes. TODO: Additional reference to the production setup.
 
+.. _local_vc:
+
 Version Control Subsystem
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -56,6 +58,8 @@ The following diagram shows an overview of the components in the integrated cont
    Continuous Integration Subsystem
 
 The integrated CIS consists of two further subsystems: the CI Management and the Build Agent. Both systems are decoupled and can be deployed on separate servers if necessary (not obligatory). This allows for a flexible scaling of the system, as we can deploy multiple build agent instances to handle a high number of build jobs.
+
+.. _ci_management:
 
 CI Management
 ^^^^^^^^^^^^^
