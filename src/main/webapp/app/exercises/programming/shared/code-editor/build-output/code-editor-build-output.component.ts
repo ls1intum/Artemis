@@ -18,6 +18,7 @@ import { StaticCodeAnalysisIssue } from 'app/entities/static-code-analysis-issue
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { faChevronDown, faCircleNotch, faTerminal } from '@fortawesome/free-solid-svg-icons';
 import { hasParticipationChanged } from 'app/exercises/shared/participation/participation.utils';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 
 @Component({
     selector: 'jhi-code-editor-build-output',
@@ -201,7 +202,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
      * @param result
      */
     fetchBuildResults(result?: Result): Observable<BuildLogEntry[] | undefined> {
-        if (result && (!result.submission || (result.submission as ProgrammingSubmission).buildFailed)) {
+        if (result && result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA && (!result.submission || (result.submission as ProgrammingSubmission).buildFailed)) {
             return this.getBuildLogs();
         } else {
             return of([]);

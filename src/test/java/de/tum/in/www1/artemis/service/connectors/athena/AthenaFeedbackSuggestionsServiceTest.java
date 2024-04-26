@@ -14,7 +14,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractAthenaTest;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.NetworkingException;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
@@ -66,7 +69,7 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text", jsonPath("$.exercise.id").value(textExercise.getId()),
                 jsonPath("$.exercise.title").value(textExercise.getTitle()), jsonPath("$.submission.id").value(textSubmission.getId()),
                 jsonPath("$.submission.text").value(textSubmission.getText()));
-        List<TextFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getTextFeedbackSuggestions(textExercise, textSubmission);
+        List<TextFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getTextFeedbackSuggestions(textExercise, textSubmission, true);
         assertThat(suggestions.get(0).title()).isEqualTo("Not so good");
         assertThat(suggestions.get(0).indexStart()).isEqualTo(3);
         athenaRequestMockProvider.verify();
@@ -79,7 +82,7 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
                 jsonPath("$.exercise.title").value(programmingExercise.getTitle()), jsonPath("$.submission.id").value(programmingSubmission.getId()),
                 jsonPath("$.submission.repositoryUri")
                         .value("https://artemislocal.ase.in.tum.de/api/public/athena/programming-exercises/" + programmingExercise.getId() + "/submissions/3/repository"));
-        List<ProgrammingFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getProgrammingFeedbackSuggestions(programmingExercise, programmingSubmission);
+        List<ProgrammingFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getProgrammingFeedbackSuggestions(programmingExercise, programmingSubmission, true);
         assertThat(suggestions.get(0).title()).isEqualTo("Not so good");
         assertThat(suggestions.get(0).lineStart()).isEqualTo(3);
         athenaRequestMockProvider.verify();
@@ -90,6 +93,6 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text");
         var otherExercise = new TextExercise();
         textSubmission.setParticipation(new StudentParticipation().exercise(otherExercise)); // Add submission to wrong exercise
-        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> athenaFeedbackSuggestionsService.getTextFeedbackSuggestions(textExercise, textSubmission));
+        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> athenaFeedbackSuggestionsService.getTextFeedbackSuggestions(textExercise, textSubmission, true));
     }
 }
