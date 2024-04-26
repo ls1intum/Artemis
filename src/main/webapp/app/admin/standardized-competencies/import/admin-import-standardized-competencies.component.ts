@@ -1,16 +1,16 @@
-import { NestedTreeControl } from '@angular/cdk/tree';
-import { HttpErrorResponse } from '@angular/common/http';
 import { Component } from '@angular/core';
-import { MatTreeNestedDataSource } from '@angular/material/tree';
-import { ActivatedRoute, Router } from '@angular/router';
 import { faBan, faChevronRight, faFileImport, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
-import { AdminStandardizedCompetencyService } from 'app/admin/standardized-competencies/admin-standardized-competency.service';
-import { AlertService } from 'app/core/util/alert.service';
-import { getIcon } from 'app/entities/competency.model';
 import { KnowledgeAreaDTO, KnowledgeAreaForTree, KnowledgeAreasForImportDTO, convertToKnowledgeAreaForTree } from 'app/entities/competency/standardized-competency.model';
-import { ButtonType } from 'app/shared/components/button.component';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
+import { AlertService } from 'app/core/util/alert.service';
+import { AdminStandardizedCompetencyService } from 'app/admin/standardized-competencies/admin-standardized-competency.service';
+import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
+import { ButtonType } from 'app/shared/components/button.component';
+import { ActivatedRoute, Router } from '@angular/router';
+import { MatTreeNestedDataSource } from '@angular/material/tree';
+import { NestedTreeControl } from '@angular/cdk/tree';
+import { getIcon } from 'app/entities/competency.model';
 
 interface ImportCount {
     knowledgeAreas: number;
