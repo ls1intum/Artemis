@@ -43,7 +43,6 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabService;
 import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingMessagingService;
 
 @ResourceLock("AbstractSpringIntegrationJenkinsGitlabTest")
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
@@ -64,9 +63,6 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
 
     @SpyBean
     protected JenkinsServer jenkinsServer;
-
-    @SpyBean
-    protected ProgrammingMessagingService programmingMessagingService;
 
     @Autowired
     protected JenkinsRequestMockProvider jenkinsRequestMockProvider;

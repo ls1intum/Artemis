@@ -86,7 +86,7 @@
                             }}
                         </div>
                     </div>
-                    @if (exercise.assessmentType === assessmentType.SEMI_AUTOMATIC && !isExamMode && !exercise.allowFeedbackRequests) {
+                    @if (exercise.assessmentType === assessmentType.SEMI_AUTOMATIC && !isExamMode && !exercise.allowManualFeedbackRequests) {
                         <jhi-programming-exercise-test-schedule-date-picker
                             class="test-schedule-date"
                             [(ngModel)]="exercise.assessmentDueDate"
@@ -143,29 +143,19 @@
                 <input
                     type="checkbox"
                     class="form-check-input"
-                    name="allowFeedbackRequests"
-                    [checked]="exercise.allowFeedbackRequests"
+                    name="allowManualFeedbackRequests"
+                    [checked]="exercise.allowManualFeedbackRequests"
                     [disabled]="exercise.assessmentType !== assessmentType.SEMI_AUTOMATIC"
-                    id="allowFeedbackRequests"
-                    (change)="toggleFeedbackRequests()"
+                    id="allowManualFeedbackRequests"
+                    (change)="toggleManualFeedbackRequests()"
                 />
-                @if (isAthenaEnabled$ | async) {
-                    <label
-                        [ngStyle]="exercise.assessmentType !== assessmentType.SEMI_AUTOMATIC ? { color: 'grey' } : {}"
-                        class="form-control-label"
-                        for="allowFeedbackRequests"
-                        jhiTranslate="artemisApp.programmingExercise.timeline.allowFeedbackRequests"
-                    ></label>
-                    <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.allowFeedbackRequestsTooltip'" />
-                } @else {
-                    <label
-                        [ngStyle]="exercise.assessmentType !== assessmentType.SEMI_AUTOMATIC ? { color: 'grey' } : {}"
-                        class="form-control-label"
-                        for="allowFeedbackRequests"
-                        jhiTranslate="artemisApp.programmingExercise.timeline.manualFeedbackRequests"
-                    ></label>
-                    <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.manualFeedbackRequestsTooltip'" />
-                }
+                <label
+                    [ngStyle]="exercise.assessmentType !== assessmentType.SEMI_AUTOMATIC ? { color: 'grey' } : {}"
+                    class="form-control-label"
+                    for="allowManualFeedbackRequests"
+                    jhiTranslate="artemisApp.programmingExercise.timeline.manualFeedbackRequests"
+                ></label>
+                <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.manualFeedbackRequestsTooltip'" />
             </div>
         }
         <div class="form-check">

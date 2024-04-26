@@ -129,12 +129,12 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
     });
 
     it('should change feedback request allowed after toggling', () => {
-        comp.exercise = { ...exercise, allowFeedbackRequests: false };
-        expect(comp.exercise.allowFeedbackRequests).toBeFalse();
+        comp.exercise = { ...exercise, allowManualFeedbackRequests: false };
+        expect(comp.exercise.allowManualFeedbackRequests).toBeFalse();
 
-        comp.toggleFeedbackRequests();
+        comp.toggleManualFeedbackRequests();
 
-        expect(comp.exercise.allowFeedbackRequests).toBeTrue();
+        expect(comp.exercise.allowManualFeedbackRequests).toBeTrue();
     });
 
     it('should change assessment type from automatic to semi-automatic after toggling', () => {
