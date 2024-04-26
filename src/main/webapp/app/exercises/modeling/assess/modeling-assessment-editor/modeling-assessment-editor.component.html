@@ -27,7 +27,12 @@
             <div class="alert alert-info" jhiTranslate="artemisApp.modelingAssessmentEditor.automaticAssessmentAvailable"></div>
         }
         @if (hasAutomaticFeedback && isAssessor && !result?.completionDate && isFeedbackSuggestionsEnabled) {
-            <div class="alert alert-info" jhiTranslate="artemisApp.modelingAssessmentEditor.generativeAIAssessmentAvailable"></div>
+            <div class="alert alert-info">
+                <span jhiTranslate="artemisApp.modelingAssessmentEditor.generativeAIAssessmentAvailable"></span>
+                <span style="float: right" [ngbTooltip]="'artemisApp.modelingAssessmentEditor.generativeAIAssessmentInfo' | artemisTranslate">
+                    <fa-icon [icon]="faQuestionCircle" size="lg" />
+                </span>
+            </div>
         }
         @if (isLoading && isFeedbackSuggestionsEnabled) {
             <div class="alert">
@@ -102,7 +107,12 @@
         <div class="alert alert-info" jhiTranslate="artemisApp.modelingAssessmentEditor.automaticAssessmentAvailable"></div>
     }
     @if (hasAutomaticFeedback && isAssessor && !result?.completionDate && isFeedbackSuggestionsEnabled) {
-        <div class="alert alert-info" jhiTranslate="artemisApp.modelingAssessmentEditor.generativeAIAssessmentAvailable"></div>
+        <div class="alert alert-info">
+            <span jhiTranslate="artemisApp.modelingAssessmentEditor.generativeAIAssessmentAvailable"></span>
+            <span style="float: right" [ngbTooltip]="'artemisApp.modelingAssessmentEditor.generativeAIAssessmentInfo' | artemisTranslate">
+                <fa-icon [icon]="faQuestionCircle" size="lg" />
+            </span>
+        </div>
     }
     @if (isLoading && isFeedbackSuggestionsEnabled) {
         <div class="alert">

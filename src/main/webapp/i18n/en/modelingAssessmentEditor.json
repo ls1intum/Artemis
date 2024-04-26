@@ -31,6 +31,7 @@
             "automaticAssessmentAvailable": "Congratulations! To save you some time, parts of this model were already assessed automatically. Please review the automatic assessment and assess the rest of the model afterwards. By submitting the assessment you also confirm the automatic assessment. Please be aware that you are responsible for the whole assessment.",
             "automaticAssessmentLoading": "Loading automatically generated feedback suggestions...",
             "generativeAIAssessmentAvailable": "Artemis created initial feedback based on generative AI but can make mistakes doing so. Consider checking important information.",
+            "generativeAIAssessmentInfo": "Artemis is using generative AI to create feedback suggestions for submissions based on the problem statement and assessment instructions provided. While these suggestions hopefully help you grade submissions more efficiently, it is important to be aware that AI does not always produce entirely accurate results. It is therefore important that you review the suggestions made and adapt them when required. You are responsible for the whole assessment including the suggestions you reviewed.",
             "highlightingColors": {
                 "title": "Highlighting Color(s)",
                 "automaticAssessment": "automatic assessment",
