@@ -8,7 +8,7 @@ import { Subject, debounceTime } from 'rxjs';
 })
 export class StandardizedCompetencyFilterComponent implements OnInit, OnDestroy {
     @Input() competencyTitleFilter: string;
-    @Input() knowledgeAreaFilter: KnowledgeAreaDTO | undefined = undefined;
+    @Input() knowledgeAreaFilter?: KnowledgeAreaDTO;
     @Input() knowledgeAreasForSelect: KnowledgeAreaDTO[] = [];
 
     @Output() competencyTitleFilterChange = new EventEmitter<string>();
