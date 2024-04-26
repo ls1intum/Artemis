@@ -12,6 +12,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { TranslateService } from '@ngx-translate/core';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 export interface IAccountService {
     save: (account: any) => Observable<HttpResponse<any>>;
@@ -37,6 +38,7 @@ export class AccountService implements IAccountService {
     private authenticated = false;
     private authenticationState = new BehaviorSubject<User | undefined>(undefined);
     private prefilledUsernameValue?: string;
+    private versionControlAccessTokenRequired: boolean;
 
     constructor(
         private translateService: TranslateService,
@@ -44,6 +46,7 @@ export class AccountService implements IAccountService {
         private http: HttpClient,
         private websocketService: JhiWebsocketService,
         private featureToggleService: FeatureToggleService,
+        private profileService: ProfileService,
     ) {}
 
     get userIdentity() {
@@ -133,10 +136,19 @@ export class AccountService implements IAccountService {
             this.userIdentity = undefined;
         }
 
+        if (this.versionControlAccessTokenRequired === undefined) {
+            this.profileService.getProfileInfo().subscribe((profileInfo) => {
+                this.versionControlAccessTokenRequired = profileInfo.versionControlAccessToken ?? false;
+            });
+        }
+
         // check and see if we have retrieved the userIdentity data from the server.
         // if we have, reuse it by immediately resolving
         if (this.userIdentity) {
-            return Promise.resolve(this.userIdentity);
+            // in case a token is required but not present in the user, we cannot simply return the cached object
+            if (!this.versionControlAccessTokenRequired || this.userIdentity.vcsAccessToken !== undefined) {
+                return Promise.resolve(this.userIdentity);
+            }
         }
 
         // retrieve the userIdentity data from the server, update the identity object, and then resolve.
