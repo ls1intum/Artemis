@@ -85,7 +85,7 @@ describe('Course Management Update Component', () => {
         course.maxRequestMoreFeedbackTimeDays = 15;
         course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
         course.enrollmentEnabled = true;
-        course.enrollmentConfirmationMessage = 'testRegistrationConfirmationMessage';
+        course.enrollmentConfirmationMessage = 'testEnrollmentConfirmationMessage';
         course.presentationScore = 16;
         course.color = 'testColor';
         course.courseIcon = 'testCourseIcon';
@@ -189,8 +189,8 @@ describe('Course Management Update Component', () => {
             expect(comp.courseForm.get(['maxRequestMoreFeedbackTimeDays'])?.value).toBe(course.maxRequestMoreFeedbackTimeDays);
             expect(comp.messagingEnabled).toBe(isMessagingEnabled(course));
             expect(comp.communicationEnabled).toBe(isCommunicationEnabled(course));
-            expect(comp.courseForm.get(['registrationEnabled'])?.value).toBe(course.enrollmentEnabled);
-            expect(comp.courseForm.get(['registrationConfirmationMessage'])?.value).toBe(course.enrollmentConfirmationMessage);
+            expect(comp.courseForm.get(['enrollmentEnabled'])?.value).toBe(course.enrollmentEnabled);
+            expect(comp.courseForm.get(['enrollmentConfirmationMessage'])?.value).toBe(course.enrollmentConfirmationMessage);
             expect(comp.courseForm.get(['color'])?.value).toBe(course.color);
             expect(comp.courseForm.get(['courseIcon'])?.value).toBe(course.courseIcon);
             expect(comp.courseForm.get(['learningPathsEnabled'])?.value).toBe(course.learningPathsEnabled);
@@ -209,7 +209,7 @@ describe('Course Management Update Component', () => {
             comp.courseForm = new FormGroup({
                 id: new FormControl(entity.id),
                 onlineCourse: new FormControl(entity.onlineCourse),
-                registrationEnabled: new FormControl(entity.enrollmentEnabled),
+                enrollmentEnabled: new FormControl(entity.enrollmentEnabled),
                 restrictedAthenaModulesAccess: new FormControl(entity.restrictedAthenaModulesAccess),
                 presentationScore: new FormControl(entity.presentationScore),
                 maxComplaints: new FormControl(entity.maxComplaints),
@@ -243,7 +243,7 @@ describe('Course Management Update Component', () => {
             comp.course = entity;
             comp.courseForm = new FormGroup({
                 onlineCourse: new FormControl(entity.onlineCourse),
-                registrationEnabled: new FormControl(entity.enrollmentEnabled),
+                enrollmentEnabled: new FormControl(entity.enrollmentEnabled),
                 restrictedAthenaModulesAccess: new FormControl(entity.restrictedAthenaModulesAccess),
                 presentationScore: new FormControl(entity.presentationScore),
                 maxComplaints: new FormControl(entity.maxComplaints),
@@ -341,37 +341,37 @@ describe('Course Management Update Component', () => {
     });
 
     describe('changeOnlineCourse', () => {
-        it('should disable registration enabled if course becomes online', () => {
+        it('should disable enrollment enabled if course becomes online', () => {
             comp.course = new Course();
             comp.course.onlineCourse = false;
             comp.courseForm = new FormGroup({
                 onlineCourse: new FormControl(false),
-                registrationEnabled: new FormControl(true),
+                enrollmentEnabled: new FormControl(true),
             });
-            expect(comp.courseForm.controls['registrationEnabled'].value).toBeTrue();
+            expect(comp.courseForm.controls['enrollmentEnabled'].value).toBeTrue();
             expect(comp.courseForm.controls['onlineCourse'].value).toBeFalse();
             comp.changeOnlineCourse();
-            expect(comp.courseForm.controls['registrationEnabled'].value).toBeFalse();
+            expect(comp.courseForm.controls['enrollmentEnabled'].value).toBeFalse();
             expect(comp.courseForm.controls['onlineCourse'].value).toBeTrue();
             expect(comp.course.onlineCourse).toBeTrue();
         });
     });
 
-    describe('changeRegistrationEnabled', () => {
-        it('should disable online course if registration becomes enabled', () => {
+    describe('changeEnrollmentEnabled', () => {
+        it('should disable online course if enrollment becomes enabled', () => {
             comp.course = new Course();
             comp.course.enrollmentEnabled = false;
             comp.courseForm = new FormGroup({
-                registrationEnabled: new FormControl(false),
+                enrollmentEnabled: new FormControl(false),
                 onlineCourse: new FormControl(true),
                 enrollmentStartDate: new FormControl(),
                 enrollmentEndDate: new FormControl(),
             });
-            expect(comp.courseForm.controls['registrationEnabled'].value).toBeFalse();
+            expect(comp.courseForm.controls['enrollmentEnabled'].value).toBeFalse();
             expect(comp.courseForm.controls['onlineCourse'].value).toBeTrue();
-            comp.changeRegistrationEnabled();
+            comp.changeEnrollmentEnabled();
             expect(comp.courseForm.controls['onlineCourse'].value).toBeFalse();
-            expect(comp.courseForm.controls['registrationEnabled'].value).toBeTrue();
+            expect(comp.courseForm.controls['enrollmentEnabled'].value).toBeTrue();
             expect(comp.course.enrollmentEnabled).toBeTrue();
         });
 
@@ -381,12 +381,12 @@ describe('Course Management Update Component', () => {
             comp.course.enrollmentEnabled = true;
             comp.course.unenrollmentEnabled = true;
             comp.courseForm = new FormGroup({
-                registrationEnabled: new FormControl(false),
+                enrollmentEnabled: new FormControl(false),
                 onlineCourse: new FormControl(true),
                 enrollmentStartDate: new FormControl(),
                 enrollmentEndDate: new FormControl(),
             });
-            comp.changeRegistrationEnabled();
+            comp.changeEnrollmentEnabled();
             expect(enabelunrollSpy).toHaveBeenCalledOnce();
         });
     });

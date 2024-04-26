@@ -402,13 +402,13 @@
                         <input
                             type="checkbox"
                             class="form-check-input"
-                            name="registrationEnabled"
-                            id="field_registrationEnabled"
+                            name="enrollmentEnabled"
+                            id="field_enrollmentEnabled"
                             [checked]="course.enrollmentEnabled"
-                            (change)="this.changeRegistrationEnabled()"
+                            (change)="this.changeEnrollmentEnabled()"
                         />
-                        <label class="form-control-label" jhiTranslate="artemisApp.course.registrationEnabled.title" for="field_registrationEnabled"></label>
-                        <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.registrationEnabled.description' | artemisTranslate }}" />
+                        <label class="form-control-label" jhiTranslate="artemisApp.course.enrollmentEnabled.title" for="field_enrollmentEnabled"></label>
+                        <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.enrollmentEnabled.description' | artemisTranslate }}" />
                     </div>
                 }
                 @if (course.enrollmentEnabled) {
@@ -440,14 +440,14 @@
                     </div>
                 }
                 @if (course.enrollmentEnabled) {
-                    <div class="form-group" id="field_registrationConfirmationMessage">
-                        <label class="form-control-label" jhiTranslate="artemisApp.course.registrationConfirmationMessage" for="field_registrationConfirmationMessage"
-                            >Registration Confirmation Message</label
+                    <div class="form-group" id="field_enrollmentConfirmationMessage">
+                        <label class="form-control-label" jhiTranslate="artemisApp.course.enrollmentConfirmationMessage" for="field_enrollmentConfirmationMessage"
+                            >Enrollment Confirmation Message</label
                         >
                         <jhi-markdown-editor
                             class="markdown-editor"
                             [(markdown)]="course.enrollmentConfirmationMessage"
-                            (markdownChange)="updateRegistrationConfirmationMessage($event)"
+                            (markdownChange)="updateEnrollmentConfirmationMessage($event)"
                         />
                     </div>
                 }
