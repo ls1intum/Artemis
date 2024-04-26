@@ -70,8 +70,8 @@ public class BuildJobExecutionService {
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
 
-    public BuildJobExecutionService(BuildJobContainerService buildJobContainerService, XMLInputFactory localCIXMLInputFactory, GitService gitService,
-            LocalCIDockerService localCIDockerService, BuildLogsMap buildLogsMap) {
+    public BuildJobExecutionService(BuildJobContainerService buildJobContainerService, GitService gitService, LocalCIDockerService localCIDockerService,
+            BuildLogsMap buildLogsMap) {
         this.buildJobContainerService = buildJobContainerService;
         this.gitService = gitService;
         this.localCIDockerService = localCIDockerService;
@@ -285,7 +285,7 @@ public class BuildJobExecutionService {
     // --- Helper methods ----
 
     private LocalCIBuildResult parseTestResults(TarArchiveInputStream testResultsTarInputStream, String assignmentRepoBranchName, String assignmentRepoCommitHash,
-            String testsRepoCommitHash, ZonedDateTime buildCompletedDate, String buildJobId) throws IOException, XMLStreamException {
+            String testsRepoCommitHash, ZonedDateTime buildCompletedDate, String buildJobId) throws IOException {
 
         List<LocalCIBuildResult.LocalCITestJobDTO> failedTests = new ArrayList<>();
         List<LocalCIBuildResult.LocalCITestJobDTO> successfulTests = new ArrayList<>();
@@ -362,8 +362,6 @@ public class BuildJobExecutionService {
      * @param staticCodeAnalysisReports the list of static code analysis reports
      */
     private void processStaticCodeAnalysisReportFile(String fileName, String xmlString, List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports, String buildJobId) {
-        Document document = XmlFileUtils.readFromString(xmlString);
-        document.setDocumentURI(fileName);
         try {
             staticCodeAnalysisReports.add(ReportParser.getReport(xmlString, fileName));
         }
