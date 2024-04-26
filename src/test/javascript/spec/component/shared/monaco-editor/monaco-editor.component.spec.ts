@@ -8,6 +8,7 @@ import { BehaviorSubject } from 'rxjs';
 import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 import { MonacoEditorBuildAnnotationType } from 'app/shared/monaco-editor/model/monaco-editor-build-annotation.model';
 import { MonacoCodeEditorElement } from 'app/shared/monaco-editor/model/monaco-code-editor-element.model';
+import { MonacoEditorGlyphMarginHoverButton } from 'app/shared/monaco-editor/model/monaco-editor-glyph-margin-hover-button.model';
 
 describe('MonacoEditorComponent', () => {
     let fixture: ComponentFixture<MonacoEditorComponent>;
@@ -152,6 +153,50 @@ describe('MonacoEditorComponent', () => {
         expect(comp.editorBuildAnnotations[0].isOutdated()).toBeTrue();
     });
 
+    it('should highlight line ranges with the specified classnames', () => {
+        fixture.detectChanges();
+        comp.setText(multiLineText);
+        comp.highlightLines(1, 2, 'test-class-name', 'test-margin-class-name');
+        comp.highlightLines(4, 4, 'test-class-name', 'test-margin-class-name');
+        // The editor must be large enough to display all lines.
+        comp.layoutWithFixedSize(100, 100);
+        const documentHighlightedLines = document.getElementsByClassName('test-class-name');
+        const documentHighlightedMargins = document.getElementsByClassName('test-margin-class-name');
+        // Two highlight elements, each representing a range.
+        expect(comp.getLineHighlights()).toHaveLength(2);
+        // In total, three lines (including their margins) are highlighted.
+        expect(documentHighlightedLines).toHaveLength(3);
+        expect(documentHighlightedMargins).toHaveLength(3);
+    });
+
+    it('should pass the current line number to the glyph margin hover button when clicked', () => {
+        const marginElement = document.createElement('div');
+        const clickCallbackStub = jest.fn();
+        fixture.detectChanges();
+        comp.setText(multiLineText);
+        comp.setGlyphMarginHoverButton(marginElement, clickCallbackStub);
+        comp.glyphMarginHoverButton?.moveAndUpdate(1);
+        marginElement.click();
+        comp.glyphMarginHoverButton?.moveAndUpdate(3);
+        marginElement.click();
+        expect(clickCallbackStub).toHaveBeenNthCalledWith(1, 1);
+        expect(clickCallbackStub).toHaveBeenNthCalledWith(2, 3);
+    });
+
+    it('should hide the glyph margin hover button when no line number is available', () => {
+        fixture.detectChanges();
+        comp.setText(multiLineText);
+        comp.setGlyphMarginHoverButton(document.createElement('div'), () => {});
+        const button: MonacoEditorGlyphMarginHoverButton = comp.glyphMarginHoverButton!;
+        // Case 1 - by default
+        expect(button.isVisible()).toBeFalse();
+        button.moveAndUpdate(1);
+        expect(button.isVisible()).toBeTrue();
+        // Case 2 - undefined is passed as line number
+        button.moveAndUpdate(undefined);
+        expect(button.isVisible()).toBeFalse();
+    });
+
     it('should not allow editing in readonly mode', () => {
         comp.readOnly = true;
         fixture.detectChanges();
@@ -164,11 +209,17 @@ describe('MonacoEditorComponent', () => {
         fixture.detectChanges();
         comp.setAnnotations(buildAnnotationArray);
         comp.addLineWidget(1, 'widget', document.createElement('div'));
+        comp.setGlyphMarginHoverButton(document.createElement('div'), jest.fn());
+        comp.highlightLines(1, 1);
         const disposeAnnotationSpy = jest.spyOn(comp.editorBuildAnnotations[0], 'dispose');
         const disposeWidgetSpy = jest.spyOn(comp.lineWidgets[0], 'dispose');
+        const disposeHoverButtonSpy = jest.spyOn(comp.glyphMarginHoverButton!, 'dispose');
+        const disposeLineHighlightSpy = jest.spyOn(comp.lineHighlights[0], 'dispose');
         comp.ngOnDestroy();
         expect(disposeWidgetSpy).toHaveBeenCalledOnce();
         expect(disposeAnnotationSpy).toHaveBeenCalledOnce();
+        expect(disposeHoverButtonSpy).toHaveBeenCalledOnce();
+        expect(disposeLineHighlightSpy).toHaveBeenCalledOnce();
     });
 
     it('should switch to and update the text of a single model', () => {
