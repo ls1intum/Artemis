@@ -93,11 +93,11 @@ public class LocalCIDockerService {
         }
         else {
             // Cleanup all containers that are older than 5 minutes for all subsequent cleanups
-            // Get current time in milliseconds
-            long now = Instant.now().toEpochMilli();
+            // Get current time in seconds
+            long now = Instant.now().getEpochSecond();
 
-            // Threshold for "stuck" containers in milliseconds
-            long ageThreshold = containerExpiryMinutes * 60L * 1000L;
+            // Threshold for "stuck" containers in seconds
+            long ageThreshold = containerExpiryMinutes * 60L;
 
             buildContainers = dockerClient.listContainersCmd().withShowAll(true).exec().stream().filter(container -> container.getNames()[0].startsWith("/" + buildContainerPrefix))
                     .filter(container -> (now - container.getCreated()) > ageThreshold).toList();
