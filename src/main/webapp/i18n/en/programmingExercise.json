@@ -17,8 +17,8 @@
             "delete": {
                 "question": "Are you sure you want to delete the Programming Exercise <strong>{{ title }}</strong>?",
                 "questionLocalVC": {
-                    "single": "Are you sure you want to delete the Programming Exercise <strong>{{ title }}</strong>?<br>All student, template, solution, test, and auxiliary repositories and build plans will be deleted.<br>Be careful: this <strong class='text-danger'>CANNOT</strong> be undone!<br>Before you activate this option, we recommend that you archive the repositories and build plans first!",
-                    "multiple": "Are you sure you want to delete selected programming exercises?<br>All student, template, solution, test, and auxiliary repositories and build plans will be deleted.<br>Be careful: this <strong class='text-danger'>CANNOT</strong> be undone!<br>Before you activate this option, we recommend that you archive the repositories and build plans first!"
+                    "single": "Are you sure you want to delete the Programming Exercise <strong>{{ title }}</strong>?<br>All student, template, solution, test, and auxiliary repositories and build plans will be deleted.<br>Be careful: this can <strong class='text-danger'>NOT</strong> be undone!<br>Before you activate this option, we recommend that you archive the repositories and build plans first!",
+                    "multiple": "Are you sure you want to delete selected programming exercises?<br>All student, template, solution, test, and auxiliary repositories and build plans will be deleted.<br>Be careful: this can <strong class='text-danger'>NOT</strong> be undone!<br>Before you activate this option, we recommend that you archive the repositories and build plans first!"
                 },
                 "studentReposBuildPlans": "Additionally delete all student repositories and student build plans (Be careful: this can NOT be undone!). Before you activate this option, we recommend that you archive the repositories and build plans first!",
                 "studentRepos": "Additionally delete all student repositories (Be careful: this can NOT be undone!). Before you activate this option, we recommend that you archive the repositories and build plans first!",
@@ -42,7 +42,7 @@
                 "deleteParticipationsSubmissionsAndResults": "Delete all student participations, submissions and results (on Artemis).",
                 "artefactsWarning": "Deleting student participations, submissions, and results without removing the associated repositories and build plans may lead to undeleted artifacts on {{ vcPlatform }} and {{ ciPlatform }}. Please carefully review if this is the desired action before proceeding.",
                 "recreateBuildPlans": "Recreate the exercise build plans (BASE and SOLUTION) again from the latest exercise template, overwriting any previous changes.",
-                "question": "<strong>Warning:</strong> This action <strong>CANNOT</strong> be undone!<br>To confirm your selection, please type in the name of the exercise: <strong>{{ title }}</strong>",
+                "question": "<strong>Warning:</strong> This action can <strong>NOT</strong> be undone!<br>To confirm your selection, please type in the name of the exercise: <strong>{{ title }}</strong>",
                 "successMessage": "Reset operation was successful.",
                 "errorMessage": "Reset operation failed."
             },
