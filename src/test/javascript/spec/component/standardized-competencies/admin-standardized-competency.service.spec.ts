@@ -2,9 +2,9 @@ import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { AdminStandardizedCompetencyService } from 'app/admin/standardized-competencies/admin-standardized-competency.service';
-import { CompetencyTaxonomy } from 'app/entities/competency.model';
 import { KnowledgeAreaDTO, KnowledgeAreasForImportDTO, StandardizedCompetencyDTO } from 'app/entities/competency/standardized-competency.model';
 import { take } from 'rxjs';
+import { CompetencyTaxonomy } from 'app/entities/competency.model';
 
 describe('AdminStandardizedCompetencyService', () => {
     let adminStandardizedCompetencyService: AdminStandardizedCompetencyService;

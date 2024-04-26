@@ -1,19 +1,19 @@
-import { HttpResponse } from '@angular/common/http';
+import { ArtemisTestModule } from '../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Router } from '@angular/router';
-import { AdminStandardizedCompetencyService } from 'app/admin/standardized-competencies/admin-standardized-competency.service';
-import { AdminImportStandardizedCompetenciesComponent } from 'app/admin/standardized-competencies/import/admin-import-standardized-competencies.component';
-import { AlertService } from 'app/core/util/alert.service';
-import { KnowledgeAreasForImportDTO } from 'app/entities/competency/standardized-competency.model';
-import { ButtonComponent } from 'app/shared/components/button.component';
-import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
+import { AdminImportStandardizedCompetenciesComponent } from 'app/admin/standardized-competencies/import/admin-import-standardized-competencies.component';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { KnowledgeAreaTreeStubComponent } from './knowledge-area-tree-stub.component';
+import { ButtonComponent } from 'app/shared/components/button.component';
 import { NgbCollapseMocksModule } from '../../helpers/mocks/directive/ngbCollapseMocks.module';
 import { MockRouter } from '../../helpers/mocks/mock-router';
-import { ArtemisTestModule } from '../../test.module';
-import { KnowledgeAreaTreeStubComponent } from './knowledge-area-tree-stub.component';
+import { Router } from '@angular/router';
+import { AlertService } from 'app/core/util/alert.service';
+import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
+import { AdminStandardizedCompetencyService } from 'app/admin/standardized-competencies/admin-standardized-competency.service';
+import { HttpResponse } from '@angular/common/http';
+import { of } from 'rxjs';
+import { KnowledgeAreasForImportDTO } from 'app/entities/competency/standardized-competency.model';
 
 describe('ImportStandardizedCompetenciesComponent', () => {
     let componentFixture: ComponentFixture<AdminImportStandardizedCompetenciesComponent>;
