@@ -40,6 +40,7 @@ describe('Alert Service Test', () => {
             'Second Error Message': 'Second Error Message',
             'Bad Request': 'Bad Request',
             'artemisApp.foo.minField': 'artemisApp.foo.minField',
+            'error.unexpectedError': 'error.unexpectedError',
         });
         service = TestBed.inject(AlertService);
         eventManager = TestBed.inject(EventManager);
@@ -334,19 +335,18 @@ describe('Alert Service Test', () => {
             expect(service.get()[0].message).toBe('Error Message Translation Key');
         });
 
-        // TODO Mock usage of translate service
-        // it('based on statusText', () => {
-        //     // GIVEN
-        //     const response = new HttpErrorResponse({
-        //         url: 'http://localhost:8080/api/foos',
-        //         headers: new HttpHeaders().append('app-error', 'Error Message').append('app-params', 'foo'),
-        //         status: 500,
-        //         statusText: 'Internal Server Error',
-        //     });
-        //     eventManager.broadcast({ name: 'artemisApp.httpError', content: response });
-        //     // THEN
-        //     expect(service.get()).toHaveLength(1);
-        //     expect(service.get()[0].message).toBe('Internal Server Error');
-        // });
+        it('based on statusText', () => {
+            // GIVEN
+            const response = new HttpErrorResponse({
+                url: 'http://localhost:8080/api/foos',
+                headers: new HttpHeaders().append('app-error', 'Error Message').append('app-params', 'foo'),
+                status: 500,
+                statusText: 'Internal Server Error',
+            });
+            eventManager.broadcast({ name: 'artemisApp.httpError', content: response });
+            // THEN
+            expect(service.get()).toHaveLength(1);
+            expect(service.get()[0].message).toBe('error.unexpectedError');
+        });
     });
 });

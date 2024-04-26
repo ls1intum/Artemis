@@ -130,13 +130,14 @@ export class AlertService {
                         }
                         this.addErrorAlert(httpErrorResponse.error.title, httpErrorResponse.error.message, httpErrorResponse.error.params);
                     } else if (this.isErrorFromStatusCode(httpErrorResponse.status)) {
-                        const message = httpErrorResponse.headers.get('x-artemisapp-error');
                         let translationKey = httpErrorResponse.headers.get('x-artemisapp-message') ?? undefined;
+                        let message = httpErrorResponse.headers.get('x-artemisapp-error');
                         let translationParams;
 
-                        if (!(message || translationKey)) {
+                        if (!translationKey && !message) {
                             translationKey = 'error.unexpectedError';
                             translationParams = { error: httpErrorResponse.statusText };
+                            message = httpErrorResponse.statusText;
                         }
 
                         this.addErrorAlert(message, translationKey, translationParams);
