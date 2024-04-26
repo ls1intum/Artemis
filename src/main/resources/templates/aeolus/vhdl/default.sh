@@ -22,14 +22,12 @@ provide_environment_information () {
   else
       echo "$REQ_FILE does not exist"
   fi
-
 }
 
 prepare_makefile () {
   echo '⚙️ executing prepare_makefile'
   rm -f assignment/{GNUmakefile, Makefile, makefile}
   cp -f tests/Makefile assignment/Makefile || exit 2
-
 }
 
 run_and_compile () {
@@ -38,7 +36,6 @@ run_and_compile () {
   python3 compileTest.py ../assignment/
   rm compileTest.py
   cp result.xml ../assignment/result.xml
-
 }
 
 junit () {

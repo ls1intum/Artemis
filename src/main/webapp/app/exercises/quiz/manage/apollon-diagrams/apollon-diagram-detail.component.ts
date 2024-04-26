@@ -1,21 +1,22 @@
 import { Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import { NgModel } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
+import { faArrowLeft, faDownload, faQuestionCircle, faX } from '@fortawesome/free-solid-svg-icons';
 import { ApollonEditor, ApollonMode, Locale, UMLModel } from '@ls1intum/apollon';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { JhiLanguageHelper } from 'app/core/language/language.helper';
-import { convertRenderedSVGToPNG } from './exercise-generation/svg-renderer';
-import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
-import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
-import { AlertService } from 'app/core/util/alert.service';
-import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
 import { TranslateService } from '@ngx-translate/core';
-import { faArrowLeft, faDownload, faQuestionCircle, faX } from '@fortawesome/free-solid-svg-icons';
-import { generateDragAndDropQuizExercise } from 'app/exercises/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
-import { Course } from 'app/entities/course.model';
+import { JhiLanguageHelper } from 'app/core/language/language.helper';
+import { AlertService } from 'app/core/util/alert.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
+import { Course } from 'app/entities/course.model';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
+import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
+import { generateDragAndDropQuizExercise } from 'app/exercises/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
+import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
 import { lastValueFrom } from 'rxjs';
+import { convertRenderedSVGToPNG } from './exercise-generation/svg-renderer';
 
 @Component({
     selector: 'jhi-apollon-diagram-detail',
@@ -24,6 +25,7 @@ import { lastValueFrom } from 'rxjs';
 })
 export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     @ViewChild('editorContainer', { static: false }) editorContainer: ElementRef;
+    @ViewChild('titleField') titleField?: NgModel;
 
     @Input()
     private courseId: number;
