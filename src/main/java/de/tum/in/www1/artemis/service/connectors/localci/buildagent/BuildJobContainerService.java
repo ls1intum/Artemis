@@ -318,11 +318,11 @@ public class BuildJobContainerService {
 
                 @Override
                 public void onNext(Frame item) {
-                  String text = new String(item.getPayload());
-                  BuildLogEntry buildLogEntry = new BuildLogEntry(ZonedDateTime.now(), text);
-                  if (buildJobId != null) {
-                      buildLogsMap.appendBuildLogEntry(buildJobId, buildLogEntry);
-                  }
+                    String text = new String(item.getPayload());
+                    BuildLogEntry buildLogEntry = new BuildLogEntry(ZonedDateTime.now(), text);
+                    if (buildJobId != null) {
+                        buildLogsMap.appendBuildLogEntry(buildJobId, buildLogEntry);
+                    }
                 }
 
                 @Override
