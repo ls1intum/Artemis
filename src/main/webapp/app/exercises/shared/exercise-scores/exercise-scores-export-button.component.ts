@@ -73,13 +73,13 @@ export class ExerciseScoresExportButtonComponent implements OnInit {
                 rows = results.map((resultWithPoints) => {
                     const studentParticipation = resultWithPoints.result.participation! as StudentParticipation;
                     const testCaseResults = getTestCaseResults(resultWithPoints, testCasesNames, withFeedback);
-                    return new ExerciseScoresRowBuilder(exercise, studentParticipation, resultWithPoints, testCaseResults).build();
+                    return new ExerciseScoresRowBuilder(exercise, gradingCriteria, studentParticipation, resultWithPoints, testCaseResults).build();
                 });
             } else {
                 keys = ExerciseScoresRowBuilder.keys(exercise, isTeamExercise, gradingCriteria);
                 rows = results.map((resultWithPoints) => {
                     const studentParticipation = resultWithPoints.result.participation! as StudentParticipation;
-                    return new ExerciseScoresRowBuilder(exercise, studentParticipation, resultWithPoints).build();
+                    return new ExerciseScoresRowBuilder(exercise, gradingCriteria, studentParticipation, resultWithPoints).build();
                 });
             }
             const fileNamePrefix = exercise.shortName ?? exercise.title?.split(/\s+/).join('_');
@@ -146,14 +146,22 @@ type ExerciseScoresRow = any;
 
 class ExerciseScoresRowBuilder {
     private readonly exercise: Exercise;
+    private readonly gradingCriteria: GradingCriterion[];
     private readonly participation: StudentParticipation;
     private readonly resultWithPoints: ResultWithPointsPerGradingCriterion;
     private readonly testCaseResults?: TestCaseResult[];
 
     private csvRow: ExerciseScoresRow = {};
 
-    constructor(exercise: Exercise, participation: StudentParticipation, resultWithPoints: ResultWithPointsPerGradingCriterion, testCaseResults?: TestCaseResult[]) {
+    constructor(
+        exercise: Exercise,
+        gradingCriteria: GradingCriterion[],
+        participation: StudentParticipation,
+        resultWithPoints: ResultWithPointsPerGradingCriterion,
+        testCaseResults?: TestCaseResult[],
+    ) {
         this.exercise = exercise;
+        this.gradingCriteria = gradingCriteria;
         this.participation = participation;
         this.resultWithPoints = resultWithPoints;
         this.testCaseResults = testCaseResults;
@@ -169,6 +177,7 @@ class ExerciseScoresRowBuilder {
         this.set('Score', score);
         this.set('Points', this.resultWithPoints.totalPoints);
 
+        this.setGradingCriteriaPoints();
         this.setProgrammingExerciseInformation();
         this.setTeamInformation();
 
@@ -199,6 +208,22 @@ class ExerciseScoresRowBuilder {
             this.set('Name', this.participation.participantName);
             this.set('Username', this.participation.participantIdentifier);
         }
+    }
+
+    /**
+     * Sets the points for each grading criterion in the row.
+     */
+    private setGradingCriteriaPoints() {
+        let unnamedCriterionIndex = 1;
+        this.gradingCriteria.forEach((criterion) => {
+            const points = this.resultWithPoints.pointsPerCriterion.get(criterion.id!) || 0;
+            if (criterion.title) {
+                this.set(criterion.title, points);
+            } else {
+                this.set(`Unnamed Criterion ${unnamedCriterionIndex}`, points);
+                unnamedCriterionIndex += 1;
+            }
+        });
     }
 
     /**
