@@ -764,10 +764,12 @@ public class ParticipationService {
             var repositoryUri = programmingExerciseParticipation.getVcsRepositoryUri();
             String buildPlanId = programmingExerciseParticipation.getBuildPlanId();
 
+            // If LocalVC is active the flag deleteBuildPlan is ignored and build plans are always deleted
             if ((deleteBuildPlan || profileService.isLocalVcsActive()) && buildPlanId != null) {
                 final var projectKey = programmingExerciseParticipation.getProgrammingExercise().getProjectKey();
                 continuousIntegrationService.orElseThrow().deleteBuildPlan(projectKey, buildPlanId);
             }
+            // If LocalVC is active the flag deleteRepository is ignored and repositories are always deleted
             if ((deleteRepository || profileService.isLocalVcsActive()) && programmingExerciseParticipation.getRepositoryUri() != null) {
                 try {
                     versionControlService.orElseThrow().deleteRepository(repositoryUri);
