@@ -145,10 +145,18 @@
             <button
                 jhiDeleteButton
                 [entityTitle]="exercise.title || ''"
-                deleteQuestion="artemisApp.programmingExercise.delete.questionLocalVC.single"
+                deleteQuestion="{{ localVCEnabled ? 'artemisApp.programmingExercise.delete.questionLocalVC.single' : 'artemisApp.programmingExercise.delete.question' }}"
                 (delete)="deleteProgrammingExercise($event)"
                 [dialogError]="dialogError$"
                 deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
+                [additionalChecks]="
+                    localVCEnabled
+                        ? {}
+                        : {
+                              deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',
+                              deleteBaseReposBuildPlans: 'artemisApp.programmingExercise.delete.baseReposBuildPlans'
+                          }
+                "
             >
                 <fa-icon [icon]="faTrash" />
             </button>

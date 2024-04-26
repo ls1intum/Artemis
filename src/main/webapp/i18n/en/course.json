@@ -210,7 +210,7 @@
             "assessmentDueDate": "Assessment Due",
             "cleanup": {
                 "title": "Cleanup",
-                "question": "Are you sure you want to clean up the course <strong>{{ title }}</strong>? This will delete all student programming exercise repositories for course <strong>exercises</strong> and <strong>exams</strong>. This action can <strong class='text-danger'>NOT</strong> be undone!"
+                "question": "Are you sure you want to clean up the course <strong>{{ title }}</strong>? This will delete all student programming exercise repositories for course <strong>exercises</strong> and <strong>exams</strong>. This action <strong class='text-danger'>CANNOT</strong> be undone!"
             },
             "detail": {
                 "title": "Course Details:",
