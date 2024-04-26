@@ -15,6 +15,7 @@
         <input
             id="field_categories"
             [hidden]="categories && categories.length >= 2"
+            [ngStyle]="categories.length > 0 ? { 'margin-top': '3px' } : { 'margin-top': '0px' }"
             class="category-chip-input"
             #categoryInput
             [placeholder]="'artemisApp.exercise.tagPlaceholder' | artemisTranslate"
