@@ -41,6 +41,7 @@ describe('Alert Service Test', () => {
             'Bad Request': 'Bad Request',
             'artemisApp.foo.minField': 'artemisApp.foo.minField',
             'error.unexpectedError': 'error.unexpectedError',
+            'error.translationKey': 'error.translationKey',
         });
         service = TestBed.inject(AlertService);
         eventManager = TestBed.inject(EventManager);
@@ -321,18 +322,32 @@ describe('Alert Service Test', () => {
     });
 
     describe('should display an alert on status 500 without error object', () => {
-        it('based on error headers', () => {
+        it('based on error headers x-artemisapp-error translation key', () => {
             // GIVEN
             const response = new HttpErrorResponse({
                 url: 'http://localhost:8080/api/foos',
-                headers: new HttpHeaders().append('x-artemisapp-error', 'Error Message Translation Key').append('x-artemisapp-message', 'Default Error Message'),
+                headers: new HttpHeaders().append('x-artemisapp-error', 'error.translationKey').append('x-artemisapp-message', 'Default Error Message'),
                 status: 500,
                 statusText: 'Internal Server Error',
             });
             eventManager.broadcast({ name: 'artemisApp.httpError', content: response });
             // THEN
             expect(service.get()).toHaveLength(1);
-            expect(service.get()[0].message).toBe('Error Message Translation Key');
+            expect(service.get()[0].message).toBe('error.translationKey');
+        });
+
+        it('based on error headers x-artemisapp-message', () => {
+            // GIVEN
+            const response = new HttpErrorResponse({
+                url: 'http://localhost:8080/api/foos',
+                headers: new HttpHeaders().append('x-artemisapp-message', 'Default Error Message'),
+                status: 500,
+                statusText: 'Internal Server Error',
+            });
+            eventManager.broadcast({ name: 'artemisApp.httpError', content: response });
+            // THEN
+            expect(service.get()).toHaveLength(1);
+            expect(service.get()[0].message).toBe('Default Error Message');
         });
 
         it('based on statusText', () => {
