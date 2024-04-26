@@ -1,9 +1,9 @@
 <div class="modal-header">
     <h4 class="modal-title">{{ 'artemisApp.apollonDiagram.home.title' | artemisTranslate }}</h4>
-    <button type="button ms-auto" class="btn" (click)="handleCloseDiagramClick()"><fa-icon [icon]="faX" size="lg" /></button>
+    <button type="button" class="btn ms-auto text-secondary" (click)="handleCloseDiagramClick()"><fa-icon [icon]="faX" size="lg" /></button>
 </div>
 <div class="modal-body">
-    <div class="row">
+    <div class="row mb-2">
         <div class="col">
             <button (click)="openCreateDiagramDialog(courseId)" id="create-apollon-diagram" class="btn btn-primary">
                 <fa-icon [icon]="faPlus" />
