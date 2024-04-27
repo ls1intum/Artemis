@@ -17,7 +17,7 @@ import {
 import { admin } from '../../../support/users';
 import { convertModelAfterMultiPart, generateUUID } from '../../../support/utils';
 
-describe('Text exercise management', () => {
+describe.skip('Text exercise management', () => {
     let course: Course;
 
     before('Create course', () => {

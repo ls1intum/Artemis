@@ -260,6 +260,16 @@ export class ExamManagementService {
     }
 
     /**
+     * Verify student's attendance. It will return true if student's attendance was successfully verified. False otherwise
+     * @param courseId
+     * @param examId
+     * @return boolean indicating if the student's attendance was checked
+     */
+    isAttendanceChecked(courseId: number, examId: number): Observable<HttpResponse<boolean>> {
+        return this.http.get<boolean>(`${this.resourceUrl}/${courseId}/exams/${examId}/attendance`, { observe: 'response' });
+    }
+
+    /**
      * Verify exam user attendance check. It will return exam users that started the exam but did not sign.
      * @param courseId
      * @param examId
