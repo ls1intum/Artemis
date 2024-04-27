@@ -63,6 +63,8 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     @Input()
     highlightFileChanges = false;
     @Input()
+    allowHiddenFiles = false;
+    @Input()
     feedbackSuggestions: Feedback[] = [];
     @Input()
     readOnlyManualFeedback = false;
