@@ -21,6 +21,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 public class MultipleChoiceQuestion extends QuizQuestion {
 
     @Transient
+    @JsonView(QuizView.Before.class)
     private List<AnswerOptionDTO> answerOptions = new ArrayList<>();
 
     @Column(name = "single_choice")

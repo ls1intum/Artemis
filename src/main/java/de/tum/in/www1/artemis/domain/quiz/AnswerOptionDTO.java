@@ -1,12 +1,14 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
+import java.io.Serializable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * A AnswerOption.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class AnswerOptionDTO {
+public class AnswerOptionDTO implements Serializable {
 
     private Long id;
 
