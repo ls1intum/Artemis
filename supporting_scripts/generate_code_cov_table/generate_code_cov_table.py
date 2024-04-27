@@ -82,14 +82,14 @@ def get_artifacts_of_the_last_completed_run(headers, branch, run_id):
             latest_completed_workflow = max(completed_runs, key=lambda x: x['created_at'], default=None)
             artifacts_url = latest_completed_workflow['artifacts_url']
         else:
-            filtered_runs = [run for run in runs if run['id'] == run_id]
-            artifacts_url = filtered_runs[0]['artifacts_url']
+            filtered_runs = [run for run in runs if str(run['id']) == str(run_id)]
             if len(filtered_runs) == 0:
                 logging.error("No run found with the specified ID.")
                 sys.exit(1)
             elif len(filtered_runs) > 1:
                 logging.error("Multiple runs found with the same ID. ID should be unique.")
                 sys.exit(1)
+            artifacts_url = filtered_runs[0]['artifacts_url']
 
         response = requests.get(artifacts_url, headers=headers)
         artifacts = response.json()['artifacts']
@@ -243,7 +243,7 @@ def main(argv):
         "--base-branch-name", default="origin/develop", help="Name of the Git base branch (default: origin/develop)"
     )
     parser.add_argument(
-        "--build-id", default=None, help="Build ID of the Bamboo build (ARTEMIS-TESTS{BUILD_ID})"
+        "--build-id", default=None, help="Build ID of the Github run id"
     )
     parser.add_argument(
         "--verbose", action="store_true", help="Enable verbose logging"
