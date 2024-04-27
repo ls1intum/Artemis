@@ -379,7 +379,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetFilesWithContentAtCommitParticipationNotFound() throws Exception {
-        request.getMap(studentRepoBaseUrl + UUID.randomUUID().getLeastSignificantBits() + "/files-content/" + "abc", HttpStatus.NOT_FOUND, String.class, String.class);
+        request.getMap(studentRepoBaseUrl + UUID.randomUUID().getLeastSignificantBits() + "/files-content/abc", HttpStatus.NOT_FOUND, String.class, String.class);
     }
 
     private void prepareRepository() throws GitAPIException, IOException {
@@ -388,7 +388,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTe
         studentRepository.localGit.add().addFilepattern(".").call();
         GitService.commit(studentRepository.localGit).setMessage("my commit 1").call();
         // second commit
-        Files.createFile(Path.of(studentRepository.localRepoFile + "/" + "dummy.txt"));
+        Files.createFile(Path.of(studentRepository.localRepoFile + "/dummy.txt"));
         studentRepository.localGit.add().addFilepattern(".").call();
         GitService.commit(studentRepository.localGit).setMessage("my commit 2").call();
     }

@@ -16,7 +16,6 @@ import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authorization.AuthorizationDecision;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -222,9 +221,10 @@ public class SecurityConfiguration {
                 }
             )
             // Applies additional configurations defined in a custom security configurer adapter.
-            .with(securityConfigurerAdapter(), configurer -> configurer.configure(http))
+            .with(securityConfigurerAdapter(), configurer -> configurer.configure(http));
             // Enable HTTP Basic authentication so that people can authenticate using username and password against the server's REST API
-            .httpBasic(Customizer.withDefaults());
+            // FIXME: This breaks LocalCI buildagents
+            //.httpBasic(Customizer.withDefaults());
         // @formatter:on
 
         // Conditionally adds configuration for LTI if it is active.
