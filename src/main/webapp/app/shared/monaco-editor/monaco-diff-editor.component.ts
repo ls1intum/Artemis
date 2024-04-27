@@ -85,13 +85,27 @@ export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
         monaco.editor.setTheme(artemisTheme === Theme.DARK ? 'vs-dark' : 'vs-light');
     }
 
-    setFileContents(original?: string, modified?: string): void {
+    setFileContents(original?: string, originalFileName?: string, modified?: string, modifiedFileName?: string): void {
+        // TODO constructing this string and making a model if it is unavailable is already implemented in the default monaco editor. define utils or a service for this
         this.onReadyForDisplayChange.emit(false);
+        const originalModelUri = monaco.Uri.parse(`inmemory://model/${this._editor.getId()}/${originalFileName ?? 'original'}`);
+        const modifiedFileUri = monaco.Uri.parse(`inmemory://model/${this._editor.getId()}/${modifiedFileName ?? 'modified'}`);
+        const originalModel = monaco.editor.getModel(originalModelUri) ?? monaco.editor.createModel(original ?? '', undefined, originalModelUri);
+        const modifiedModel = monaco.editor.getModel(modifiedFileUri) ?? monaco.editor.createModel(modified ?? '', undefined, modifiedFileUri);
+
+        originalModel.setValue(original ?? '');
+        modifiedModel.setValue(modified ?? '');
+
+        monaco.editor.setModelLanguage(originalModel, originalModel.getLanguageId());
+        monaco.editor.setModelLanguage(modifiedModel, modifiedModel.getLanguageId());
+
+        console.log(original + ' ' + originalFileName + ' ' + modified + ' ' + modifiedFileName);
+
         this.original = original;
         this.modified = modified;
         const newModel = {
-            original: monaco.editor.createModel(original ?? '', 'java'),
-            modified: monaco.editor.createModel(modified ?? '', 'java'),
+            original: originalModel,
+            modified: modifiedModel,
         };
 
         this._editor.setModel(newModel);

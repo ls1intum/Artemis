@@ -50,17 +50,11 @@ export class GitDiffFileComponent implements OnInit {
     ngOnInit(): void {
         ace.Range = ace.acequire('ace/range').Range;
 
-        const test = 1;
-
-        if (test === 1) {
-            this.mEditor.setFileContents(this.templateFileContent, this.solutionFileContent);
-            return;
-        }
-
         // Create a clone of the diff entries to prevent modifications to the original diff entries
         this.diffEntries = this.diffEntries.map((entry) => ({ ...entry }));
 
         this.determineFilePaths();
+        this.mEditor.setFileContents(this.templateFileContent, this.previousFilePath, this.solutionFileContent, this.filePath);
         this.createLineArrays();
         this.determineActualStartLine();
         this.determineEndLines();
