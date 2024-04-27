@@ -433,6 +433,9 @@ $monaco-editor-build-annotation-warning-background: scale-color($warning, $alpha
 $monaco-editor-build-annotation-warning-glyph: $warning;
 $monaco-editor-build-annotation-outdated-background: scale-color($gray-500, $alpha: -90%);
 $monaco-editor-build-annotation-outdated-glyph: $gray-500;
+$monaco-editor-diff-highlight-green: $success;
+$monaco-editor-diff-line-highlight: scale-color($monaco-editor-diff-highlight-green, $alpha: -80%, $lightness: -20%);
+$monaco-editor-diff-margin-highlight: scale-color($monaco-editor-diff-highlight-green, $alpha: -70%, $lightness: -10%);
 
 // Git-Diff Viewer
 $git-diff-viewer-added-line-background: rgba(63, 185, 80, 0.15);
