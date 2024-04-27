@@ -35,6 +35,7 @@
               "is-mobile",
               "js-video-url-parser",
               "jszip",
+              "localforage",
               "mobile-drag-drop",
               "papaparse",
               "pepjs",
