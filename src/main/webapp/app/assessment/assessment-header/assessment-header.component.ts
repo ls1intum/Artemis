@@ -94,16 +94,20 @@ export class AssessmentHeaderComponent {
         if (this.result?.completionDate) {
             return true;
         } else if (Result.hasNonEmptyAssessmentNote(this.result)) {
-            // this is almost identical to submitDisabled, but without the assessmentsAreValid check
-            // otherwise, we wouldn't be able to save the assessment note without making prior changes to the feedback
-            return !this.isAssessor || this.saveBusy || this.submitBusy || this.cancelBusy;
+            return this.saveDisabledWithAssessmentNotePresent;
         } else {
-            return this.saveDisabledWhenNoAssessmentNotePresent;
+            return this.saveDisabledWithoutAssessmentNotePresent;
         }
     }
 
-    get saveDisabledWhenNoAssessmentNotePresent() {
-        return !this.assessmentsAreValid || !this.isAssessor || this.saveBusy || this.submitBusy || this.cancelBusy;
+    get saveDisabledWithAssessmentNotePresent() {
+        // this is almost identical to submitDisabled, but without the assessmentsAreValid check
+        // otherwise, we wouldn't be able to save the assessment note without making prior changes to the feedback
+        return !this.isAssessor || this.saveBusy || this.submitBusy || this.cancelBusy;
+    }
+
+    get saveDisabledWithoutAssessmentNotePresent() {
+        return !this.assessmentsAreValid || this.saveDisabledWithAssessmentNotePresent;
     }
 
     get submitDisabled() {
