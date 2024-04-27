@@ -262,7 +262,7 @@ def main(argv):
         args.branch_name = get_branch_name()
         logging.info(f"Using current branch: {args.branch_name}")
     if args.build_id is None:
-        logging.info(f"Using latest build ID")
+        logging.info("Using latest build ID")
 
     file_changes = get_changed_files(args.branch_name, args.base_branch_name)
     client_file_changes, server_file_changes = filter_file_changes(file_changes)
