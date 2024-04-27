@@ -22,8 +22,15 @@
                     />
                     <!-- manual input for file upload -->
                     @if (enableFileUpload) {
-                        <input id="file-upload" class="markdown-editor__file-input" type="file" accept="image/*" [multiple]="true" (change)="onFileUpload($event)" />
-                        <label for="file-upload" class="markdown-editor__file-label d-inline">
+                        <input
+                            [id]="'file-upload ' + uniqueMarkdownEditorId"
+                            class="markdown-editor__file-input"
+                            type="file"
+                            accept="image/*"
+                            [multiple]="true"
+                            (change)="onFileUpload($event)"
+                        />
+                        <label [for]="'file-upload ' + uniqueMarkdownEditorId" class="markdown-editor__file-label d-inline">
                             <div class="row mx-0 align-items-baseline">
                                 <span class="col upload-subtitle">{{ 'artemisApp.markdownEditor.fileUpload' | artemisTranslate }}</span>
                                 <a class="col-auto" href="http://demo.showdownjs.com">
