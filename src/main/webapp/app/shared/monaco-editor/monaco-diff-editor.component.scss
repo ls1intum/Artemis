@@ -2,3 +2,29 @@
     min-height: 100px;
     min-width: 100px;
 }
+
+.diff-hidden-lines .top {
+    padding-bottom: 3px;
+    background-color: var(--gray-700) !important;
+}
+
+.diff-hidden-lines .top:hover {
+    background-color: var(--primary) !important;
+}
+
+.diff-hidden-lines .top .dragging {
+    background-color: var(--primary) !important;
+}
+
+.diff-hidden-lines .bottom:hover {
+    background-color: var(--primary) !important;
+}
+
+.diff-hidden-lines .bottom .dragging {
+    background-color: var(--primary) !important;
+}
+
+.diff-hidden-lines .bottom {
+    padding-top: 3px;
+    background-color: var(--gray-700) !important;
+}

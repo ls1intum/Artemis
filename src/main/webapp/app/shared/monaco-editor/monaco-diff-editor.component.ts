@@ -49,6 +49,10 @@ export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
                 alwaysConsumeMouseWheel: false,
             },
             fontSize: 12,
+            padding: {
+                top: 2,
+                bottom: 2,
+            },
         });
         renderer.appendChild(elementRef.nativeElement, this.monacoDiffEditorContainerElement);
 
