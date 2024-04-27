@@ -47,7 +47,7 @@ def download_and_extract_zip(url, headers):
 
             return BytesIO(response.content)
         except zipfile.BadZipFile:
-            logging.error(f"The downloaded content is not a valid ZIP file.")
+            logging.error("The downloaded content is not a valid ZIP file.")
             return None
     except requests.RequestException as e:
         logging.error(f"Failed to download the file: {e}")
