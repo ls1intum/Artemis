@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
@@ -322,6 +323,7 @@ public class BuildJobContainerService {
             execCreateCmd = execCreateCmd.withUser("root");
         }
         ExecCreateCmdResponse execCreateCmdResponse = execCreateCmd.exec();
+        final CountDownLatch latch = new CountDownLatch(1);
         try {
             dockerClient.execStartCmd(execCreateCmdResponse.getId()).withDetach(detach).exec(new ResultCallback.Adapter<>() {
 
@@ -333,10 +335,19 @@ public class BuildJobContainerService {
                         buildLogsMap.appendBuildLogEntry(buildJobId, buildLogEntry);
                     }
                 }
-            }).awaitCompletion();
+
+                @Override
+                public void onComplete() {
+                    latch.countDown();
+                }
+            });
         }
         catch (ConflictException e) {
             throw new LocalCIException("Could not execute Docker command: " + String.join(" ", command), e);
+        }
+
+        try {
+            latch.await();
         }
         catch (InterruptedException e) {
             throw new LocalCIException("Interrupted while executing Docker command: " + String.join(" ", command), e);
