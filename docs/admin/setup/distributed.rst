@@ -693,7 +693,7 @@ instances will also use a ActiveMQ Artemis broker to synchronize WebSocket messa
 
     - You may run into the following error when starting the containers
       ``No member group is available to assign partition ownership...``. This issue should resolve itself after a few
-      seconds. Otherwise, you can first start the following containers:
+      minutes. Otherwise, you can first start the following containers:
       ``docker compose -f docker/test-server-multi-node-mysql-localci.yml up mysql jhipster-registry activemq-broker artemis-app-node-1``.
       After these containers are up and running, you can start the remaining containers:
       ``docker compose -f docker/test-server-multi-node-mysql-localci.yml up artemis-app-node-2 artemis-app-node-3 nginx``.
