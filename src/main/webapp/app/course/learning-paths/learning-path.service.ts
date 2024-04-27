@@ -60,6 +60,10 @@ export class LearningPathService {
         return this.httpClient.get<number>(`${this.resourceURL}/courses/${courseId}/learning-path-id`, { observe: 'response' });
     }
 
+    generateLearningPath(courseId: number) {
+        return this.httpClient.post<number>(`${this.resourceURL}/courses/${courseId}/learning-path`, null, { observe: 'response' });
+    }
+
     getCompetencyProgressForLearningPath(learningPathId: number) {
         return this.httpClient.get<CompetencyProgressForLearningPathDTO[]>(`${this.resourceURL}/learning-path/${learningPathId}/competency-progress`, { observe: 'response' });
     }

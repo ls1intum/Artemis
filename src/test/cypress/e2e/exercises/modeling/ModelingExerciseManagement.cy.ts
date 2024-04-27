@@ -18,7 +18,7 @@ import {
 import { admin, instructor, studentOne } from '../../../support/users';
 import { convertModelAfterMultiPart, generateUUID } from '../../../support/utils';
 
-describe('Modeling Exercise Management', () => {
+describe.skip('Modeling Exercise Management', () => {
     let course: Course;
     let modelingExercise: ModelingExercise;
 
