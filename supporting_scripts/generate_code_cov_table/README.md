@@ -44,9 +44,9 @@ Fill out the following variables:
 TOKEN=ab12cd
 ```
 
-Alternatively, you can use the command line argument `--token`) to pass the credentials.
+Alternatively, you can use the command line argument `--token` to pass the credentials.
 ### Token
-The token you must provide is a GitHub token with "public repo" checked.
+The token you must provide is a Github token with "public repo" checked.
 
 **Recommended for security, but not for convenience:**  
 Don't store the `TOKEN` in the `.env` file, but let the script prompt you for it.
