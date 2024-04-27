@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable, map, of, switchMap } from 'rxjs';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ModelingFeedbackSuggestion, ProgrammingFeedbackSuggestion, TextFeedbackSuggestion } from 'app/entities/feedback-suggestion.model';
 import { Exercise } from 'app/entities/exercise.model';
@@ -21,6 +20,9 @@ export class AthenaService {
         private profileService: ProfileService,
     ) {}
 
+    /**
+     * Determine if the Athena service is available based on whether the corresponding profile is active
+     */
     public isEnabled(): Observable<boolean> {
         return this.profileService.getProfileInfo().pipe(switchMap((profileInfo) => of(profileInfo.activeProfiles.includes(PROFILE_ATHENA))));
     }
@@ -71,8 +73,8 @@ export class AthenaService {
      * Find a grading instruction by id in the given exercise
      */
     private findGradingInstruction(exercise: Exercise, id: number): any | undefined {
-        for (const criterium of exercise.gradingCriteria ?? []) {
-            for (const instruction of criterium.structuredGradingInstructions) {
+        for (const criterion of exercise.gradingCriteria ?? []) {
+            for (const instruction of criterion.structuredGradingInstructions) {
                 if (instruction.id == id) {
                     return instruction;
                 }
