@@ -13,7 +13,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.concurrent.CountDownLatch;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
@@ -216,7 +215,7 @@ public class BuildJobContainerService {
         String assignmentCheckoutPath = RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage);
 
         // make sure to create the working directory in case it does not exist
-        addDirectory(buildJobContainerId, LOCALCI_WORKING_DIRECTORY + "/testing-dir", true);
+        addDirectory(buildJobContainerId, LOCALCI_WORKING_DIRECTORY + (testCheckoutPath.isEmpty() ? "" : "/testing-dir"), true);
         // make sure the working directory and all sub directories are accessible
         executeDockerCommand(buildJobContainerId, null, false, false, true, "chmod", "-R", "777", LOCALCI_WORKING_DIRECTORY + "/testing-dir");
 
@@ -323,7 +322,6 @@ public class BuildJobContainerService {
             execCreateCmd = execCreateCmd.withUser("root");
         }
         ExecCreateCmdResponse execCreateCmdResponse = execCreateCmd.exec();
-        final CountDownLatch latch = new CountDownLatch(1);
         try {
             dockerClient.execStartCmd(execCreateCmdResponse.getId()).withDetach(detach).exec(new ResultCallback.Adapter<>() {
 
@@ -335,19 +333,10 @@ public class BuildJobContainerService {
                         buildLogsMap.appendBuildLogEntry(buildJobId, buildLogEntry);
                     }
                 }
-
-                @Override
-                public void onComplete() {
-                    latch.countDown();
-                }
-            });
+            }).awaitCompletion();
         }
         catch (ConflictException e) {
             throw new LocalCIException("Could not execute Docker command: " + String.join(" ", command), e);
-        }
-
-        try {
-            latch.await();
         }
         catch (InterruptedException e) {
             throw new LocalCIException("Interrupted while executing Docker command: " + String.join(" ", command), e);
