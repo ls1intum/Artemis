@@ -16,7 +16,7 @@ public class ScoringStrategyMultipleChoiceAllOrNothing implements ScoringStrateg
 
         if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer mcAnswer && quizQuestion instanceof MultipleChoiceQuestion mcQuestion) {
             // iterate through each answer option and compare its correctness with the answer's selection
-            for (AnswerOption answerOption : mcQuestion.getAnswerOptions()) {
+            for (AnswerOptionDTO answerOption : mcQuestion.getAnswerOptions()) {
                 boolean isSelected = mcAnswer.isSelected(answerOption);
                 // check if the answer is invalid: if true: -> ignore the answer in calculation
                 if (!answerOption.isInvalid()) {

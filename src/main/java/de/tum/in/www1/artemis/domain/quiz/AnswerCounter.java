@@ -11,15 +11,14 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @Entity
 @DiscriminatorValue(value = "AC")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class AnswerCounter extends QuizStatisticCounter implements QuizQuestionStatisticComponent<MultipleChoiceQuestionStatistic, AnswerOption, MultipleChoiceQuestion> {
+public class AnswerCounter extends QuizStatisticCounter {
 
     @ManyToOne
     @JsonIgnore
     private MultipleChoiceQuestionStatistic multipleChoiceQuestionStatistic;
 
-    @OneToOne(cascade = { CascadeType.PERSIST })
-    @JoinColumn(unique = true)
-    private AnswerOption answer;
+    @Transient
+    private AnswerOptionDTO answer;
 
     public MultipleChoiceQuestionStatistic getMultipleChoiceQuestionStatistic() {
         return multipleChoiceQuestionStatistic;
@@ -29,30 +28,12 @@ public class AnswerCounter extends QuizStatisticCounter implements QuizQuestionS
         this.multipleChoiceQuestionStatistic = multipleChoiceQuestionStatistic;
     }
 
-    public AnswerOption getAnswer() {
+    public AnswerOptionDTO getAnswer() {
         return answer;
     }
 
-    public void setAnswer(AnswerOption answerOption) {
+    public void setAnswer(AnswerOptionDTO answerOption) {
         this.answer = answerOption;
-    }
-
-    @Override
-    @JsonIgnore
-    public void setQuizQuestionStatistic(MultipleChoiceQuestionStatistic quizQuestionStatistic) {
-        setMultipleChoiceQuestionStatistic(quizQuestionStatistic);
-    }
-
-    @Override
-    @JsonIgnore
-    public AnswerOption getQuizQuestionComponent() {
-        return getAnswer();
-    }
-
-    @Override
-    @JsonIgnore
-    public void setQuizQuestionComponent(AnswerOption answerOption) {
-        setAnswer(answerOption);
     }
 
     @Override

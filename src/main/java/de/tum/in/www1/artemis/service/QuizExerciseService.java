@@ -459,7 +459,9 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         ObjectMapper objectMapper = new ObjectMapper();
 
         for (QuizQuestion question : quizExercise.getQuizQuestions()) {
-            question.setContent(serializeToJson(question, objectMapper));
+            if (question instanceof MultipleChoiceQuestion) {
+                question.setContent(serializeToJson(((MultipleChoiceQuestion) question).getAnswerOptions(), objectMapper));
+            }
         }
     }
 
@@ -467,14 +469,14 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * Serializes a QuizQuestion object to its JSON representation using the provided ObjectMapper.
      * This method is called for each individual question during the quiz processing.
      *
-     * @param question     the QuizQuestion object to serialize. It must not be null.
-     * @param objectMapper the ObjectMapper instance used for serialization. It must not be null.
+     * @param answerOptions
+     * @param objectMapper  the ObjectMapper instance used for serialization. It must not be null.
      * @return String representing the JSON serialized form of the QuizQuestion.
      * @throws RuntimeException if JSON processing fails, encapsulating the underlying JsonProcessingException.
      */
-    private String serializeToJson(QuizQuestion question, ObjectMapper objectMapper) {
+    private String serializeToJson(List<AnswerOptionDTO> answerOptions, ObjectMapper objectMapper) {
         try {
-            return objectMapper.writeValueAsString(question);
+            return objectMapper.writeValueAsString(answerOptions);
         }
         catch (JsonProcessingException e) {
             throw new RuntimeException("Error serializing to JSON", e);

@@ -4,9 +4,6 @@ import java.util.*;
 
 import jakarta.persistence.*;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
@@ -23,22 +20,18 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class MultipleChoiceQuestion extends QuizQuestion {
 
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
-    @JoinColumn(name = "question_id")
-    @OrderColumn
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonView(QuizView.Before.class)
-    private List<AnswerOption> answerOptions = new ArrayList<>();
+    @Transient
+    private List<AnswerOptionDTO> answerOptions = new ArrayList<>();
 
     @Column(name = "single_choice")
     @JsonView(QuizView.Before.class)
     private boolean singleChoice = false;
 
-    public List<AnswerOption> getAnswerOptions() {
+    public List<AnswerOptionDTO> getAnswerOptions() {
         return answerOptions;
     }
 
-    public void setAnswerOptions(List<AnswerOption> answerOptions) {
+    public void setAnswerOptions(List<AnswerOptionDTO> answerOptions) {
         this.answerOptions = answerOptions;
     }
 
@@ -56,11 +49,11 @@ public class MultipleChoiceQuestion extends QuizQuestion {
      * @param answerOptionId the ID of the answerOption, which should be found
      * @return the answerOption with the given ID, or null if the answerOption is not contained in this question
      */
-    public AnswerOption findAnswerOptionById(Long answerOptionId) {
+    public AnswerOptionDTO findAnswerOptionById(Long answerOptionId) {
 
         if (answerOptionId != null) {
             // iterate through all answers of this quiz
-            for (AnswerOption answer : answerOptions) {
+            for (AnswerOptionDTO answer : answerOptions) {
                 // return answer if the IDs are equal
                 if (answer.getId().equals(answerOptionId)) {
                     return answer;
@@ -89,13 +82,13 @@ public class MultipleChoiceQuestion extends QuizQuestion {
     private void undoUnallowedAnswerChanges(MultipleChoiceQuestion originalQuestion) {
 
         // find added Answers, which are not allowed to be added
-        Set<AnswerOption> notAllowedAddedAnswers = new HashSet<>();
+        Set<AnswerOptionDTO> notAllowedAddedAnswers = new HashSet<>();
         // check every answer of the question
-        for (AnswerOption answer : this.getAnswerOptions()) {
+        for (AnswerOptionDTO answer : this.getAnswerOptions()) {
             // check if the answer were already in the originalQuizExercise -> if not it's an added answer
             if (originalQuestion.getAnswerOptions().contains(answer)) {
                 // find original answer
-                AnswerOption originalAnswer = originalQuestion.findAnswerOptionById(answer.getId());
+                AnswerOptionDTO originalAnswer = originalQuestion.findAnswerOptionById(answer.getId());
                 // correct invalid = null to invalid = false
                 if (answer.isInvalid() == null) {
                     answer.setInvalid(false);
@@ -142,11 +135,11 @@ public class MultipleChoiceQuestion extends QuizQuestion {
         boolean updateNecessary = false;
 
         // check every answer of the question
-        for (AnswerOption answer : this.getAnswerOptions()) {
+        for (AnswerOptionDTO answer : this.getAnswerOptions()) {
             // check if the answer were already in the originalQuizExercise
             if (originalQuestion.getAnswerOptions().contains(answer)) {
                 // find original answer
-                AnswerOption originalAnswer = originalQuestion.findAnswerOptionById(answer.getId());
+                AnswerOptionDTO originalAnswer = originalQuestion.findAnswerOptionById(answer.getId());
 
                 // check if an answer is set invalid or if the correctness has changed
                 // if true an update of the Statistics and Results is necessary
@@ -169,7 +162,7 @@ public class MultipleChoiceQuestion extends QuizQuestion {
     @Override
     public void filterForStudentsDuringQuiz() {
         super.filterForStudentsDuringQuiz();
-        for (AnswerOption answerOption : getAnswerOptions()) {
+        for (AnswerOptionDTO answerOption : getAnswerOptions()) {
             answerOption.setIsCorrect(null);
             answerOption.setExplanation(null);
         }
@@ -178,7 +171,7 @@ public class MultipleChoiceQuestion extends QuizQuestion {
     @Override
     public void filterForStatisticWebsocket() {
         super.filterForStatisticWebsocket();
-        for (AnswerOption answerOption : getAnswerOptions()) {
+        for (AnswerOptionDTO answerOption : getAnswerOptions()) {
             answerOption.setIsCorrect(null);
             answerOption.setExplanation(null);
         }
@@ -200,7 +193,7 @@ public class MultipleChoiceQuestion extends QuizQuestion {
 
         // check answer options
         if (getAnswerOptions() != null) {
-            for (AnswerOption answerOption : getAnswerOptions()) {
+            for (AnswerOptionDTO answerOption : getAnswerOptions()) {
                 if (answerOption.isIsCorrect()) {
                     correctAnswerCount++;
                 }

@@ -21,7 +21,7 @@ public class ScoringStrategyMultipleChoiceProportionalWithPenalty implements Sco
             double incorrectSelections = 0;
 
             // iterate through each answer option and count the correctly selected and incorrectly selected options
-            for (AnswerOption answerOption : mcQuestion.getAnswerOptions()) {
+            for (AnswerOptionDTO answerOption : mcQuestion.getAnswerOptions()) {
                 boolean isSelected = mcAnswer.isSelected(answerOption);
                 // correct selection means either a correct option was selected or an incorrect option was not selected
                 // invalid answer options are treated as if they were answered correctly

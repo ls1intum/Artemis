@@ -36,9 +36,11 @@ public interface QuizConfiguration {
                 if (quizQuestion instanceof MultipleChoiceQuestion mcQuestion) {
                     MultipleChoiceQuestionStatistic mcStatistic = (MultipleChoiceQuestionStatistic) mcQuestion.getQuizQuestionStatistic();
                     // reconnect answerCounters
-                    setQuizQuestionStatistics(mcStatistic.getAnswerCounters(), mcQuestion, mcStatistic);
-                    // reconnect answerOptions
-                    setQuizQuestions(mcQuestion.getAnswerOptions(), mcQuestion);
+                    for (AnswerCounter statisticComponent : mcStatistic.getAnswerCounters()) {
+                        if (statisticComponent.getId() != null) {
+                            statisticComponent.setMultipleChoiceQuestionStatistic((mcStatistic));
+                        }
+                    }
                 }
                 if (quizQuestion instanceof DragAndDropQuestion dragAndDropQuestion) {
                     DragAndDropQuestionStatistic dragAndDropStatistic = (DragAndDropQuestionStatistic) dragAndDropQuestion.getQuizQuestionStatistic();
