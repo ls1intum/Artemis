@@ -1,7 +1,7 @@
 # Generate Code Coverage Table Script
 
-This script generates a code coverage report for changed files in a Github build, comparing a specified Git branch against the develop branch. 
-The generated report is copied to the clipboard, ready for pasting into a pull request or documentation.
+This script generates a code coverage report for changed files in a GitHub build, comparing a specified Git branch against the develop branch. 
+The generated report is copied to the clipboard and pasted into a pull request or documentation.
 
 ## Setup
 
