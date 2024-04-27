@@ -48,6 +48,8 @@ import org.springframework.stereotype.Service;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CopyArchiveFromContainerCmd;
+import com.github.dockerjava.api.command.InspectImageCmd;
+import com.github.dockerjava.api.command.InspectImageResponse;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
@@ -142,6 +144,21 @@ public class LocalVCLocalCITestService {
      */
     public void mockTestResults(DockerClient dockerClient, List<Path> mockedTestResultsPaths, String testResultsPath) throws IOException {
         mockInputStreamReturnedFromContainer(dockerClient, testResultsPath, createMapFromMultipleTestResultFolders(mockedTestResultsPaths));
+    }
+
+    /**
+     * Mocks the inspection of the image returned by dockerClient.inspectImageCmd(String imageId).exec().
+     * The mocked image inspection will have the architecture "amd64" to pass the check in LocalCIBuildService.
+     *
+     * @param dockerClient the DockerClient to mock.
+     */
+    public void mockInspectImage(DockerClient dockerClient) {
+        InspectImageResponse inspectImageResponse = new InspectImageResponse();
+        inspectImageResponse.withArch("amd64");
+
+        InspectImageCmd inspectImageCmd = mock(InspectImageCmd.class);
+        doReturn(inspectImageCmd).when(dockerClient).inspectImageCmd(anyString());
+        doReturn(inspectImageResponse).when(inspectImageCmd).exec();
     }
 
     /**
