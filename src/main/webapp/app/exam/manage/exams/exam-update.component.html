@@ -35,6 +35,14 @@
                 </div>
                 <jhi-exam-mode-picker [exam]="exam" [disableInput]="exam.id !== undefined" (examModeChanged)="onExamModeChange()" />
             </div>
+            @if (!exam.testExam) {
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="examWithAttendanceCheck" name="examWithAttendanceCheck" [(ngModel)]="exam.examWithAttendanceCheck" />
+                    <label class="form-check-label" for="examWithAttendanceCheck" jhiTranslate="artemisApp.examManagement.examWithAttendanceCheck"
+                        >Exam with attendance check
+                    </label>
+                </div>
+            }
             <div class="row mb-3">
                 <div class="col-sm-4 form-group">
                     <label class="form-check-label" for="examiner" jhiTranslate="artemisApp.examManagement.examiner"></label>

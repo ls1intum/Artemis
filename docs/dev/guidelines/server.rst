@@ -535,7 +535,7 @@ To reduce duplication, do not add explicit checks for authorization or existence
 
 .. code-block:: java
 
-    @GetMapping(Endpoints.GET_FOR_COURSE)
+    @GetMapping("courses/{courseId}/programming-exercises")
     @EnforceAtLeastTutor
     public ResponseEntity<List<ProgrammingExercise>> getActiveProgrammingExercisesForCourse(@PathVariable Long courseId) {
         Course course = courseRepository.findByIdElseThrow(courseId);

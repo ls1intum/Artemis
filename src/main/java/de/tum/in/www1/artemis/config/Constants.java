@@ -57,13 +57,9 @@ public final class Constants {
 
     public static final String NEW_RESULT_RESOURCE_API_PATH = "/api/public/programming-exercises/new-result";
 
-    public static final String PROGRAMMING_SUBMISSION_RESOURCE_API_PATH = "/api/programming-submissions/";
-
     public static final String PROGRAMMING_SUBMISSION_TOPIC = "/newSubmissions";
 
     public static final String NEW_SUBMISSION_TOPIC = "/topic" + PROGRAMMING_SUBMISSION_TOPIC;
-
-    public static final String APOLLON_CONVERSION_API_PATH = "/api/apollon/convert-to-pdf";
 
     public static final String ATHENA_PROGRAMMING_EXERCISE_REPOSITORY_API_PATH = "/api/public/athena/programming-exercises/";
 
@@ -236,10 +232,6 @@ public final class Constants {
     public static final String INFO_SSH_KEYS_URL_DETAIL = "sshKeysURL";
 
     public static final String INFO_VERSION_CONTROL_ACCESS_TOKEN_DETAIL = "versionControlAccessToken";
-
-    public static final String EXTERNAL_USER_MANAGEMENT_URL = "externalUserManagementURL";
-
-    public static final String EXTERNAL_USER_MANAGEMENT_NAME = "externalUserManagementName";
 
     public static final String REGISTRATION_ENABLED = "registrationEnabled";
 

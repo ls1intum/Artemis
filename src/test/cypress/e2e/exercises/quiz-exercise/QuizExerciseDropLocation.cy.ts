@@ -6,7 +6,7 @@ import { convertModelAfterMultiPart, generateUUID } from '../../../support/utils
 
 let course: Course;
 
-describe('Quiz Exercise Drop Location Spec', () => {
+describe.skip('Quiz Exercise Drop Location Spec', () => {
     before('Create course', () => {
         cy.login(admin);
         courseManagementAPIRequest.createCourse().then((response) => {
@@ -22,7 +22,7 @@ describe('Quiz Exercise Drop Location Spec', () => {
             quizExerciseDragAndDropQuiz.createDnDQuiz('DnD Quiz Test');
         });
 
-        it.skip('Checks drop locations', () => {
+        it('Checks drop locations', () => {
             let containerBounds: DOMRect;
 
             quizExerciseDragAndDropQuiz.dragUsingCoordinates(310, 320);

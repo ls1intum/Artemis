@@ -190,25 +190,36 @@ public class BuildJobContainerService {
     }
 
     /**
-     * Copy the repositories and build script from the Artemis container to the build job container.
+     * Prepares a Docker container for a build job by setting up the required directories and repositories within the container.
+     * This includes setting up directories for assignment, tests, solutions, and any auxiliary repositories provided.
+     * Directories are created and permissions are set to ensure they are fully accessible.
+     * <p>
+     * Steps involved:
+     * 1. Ensures the existence of a working directory within the container.
+     * 2. Sets directory permissions to be fully accessible (chmod 777).
+     * 3. Adds and prepares directories for the test, assignment, and optionally the solution repositories based on their respective paths.
+     * 4. Processes auxiliary repositories, if any, by setting up their specified directories.
+     * 5. Converts DOS-style line endings to Unix style to ensure file compatibility within the container.
+     * 6. Creates a script file for further processing or setup within the container.
      *
-     * @param buildJobContainerId                    the id of the build job container
-     * @param assignmentRepositoryPath               the path to the assignment repository
-     * @param testRepositoryPath                     the path to the test repository
-     * @param solutionRepositoryPath                 the path to the solution repository
-     * @param auxiliaryRepositoriesPaths             the paths to the auxiliary repositories
-     * @param auxiliaryRepositoryCheckoutDirectories the names of the auxiliary repositories
-     * @param programmingLanguage                    the programming language of the exercise
+     * @param buildJobContainerId                    The identifier for the Docker container being prepared.
+     * @param assignmentRepositoryPath               The filesystem path to the assignment repository.
+     * @param testRepositoryPath                     The filesystem path to the test repository.
+     * @param solutionRepositoryPath                 The optional filesystem path to the solution repository; can be null if not applicable.
+     * @param auxiliaryRepositoriesPaths             An array of paths for auxiliary repositories to be included in the build process.
+     * @param auxiliaryRepositoryCheckoutDirectories An array of directory names within the container where each auxiliary repository should be checked out.
+     * @param programmingLanguage                    The programming language of the repositories, which influences directory naming conventions.
      */
     public void populateBuildJobContainer(String buildJobContainerId, Path assignmentRepositoryPath, Path testRepositoryPath, Path solutionRepositoryPath,
             Path[] auxiliaryRepositoriesPaths, String[] auxiliaryRepositoryCheckoutDirectories, ProgrammingLanguage programmingLanguage) {
         String testCheckoutPath = RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage);
         String assignmentCheckoutPath = RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage);
 
-        if (!Objects.equals(testCheckoutPath, "")) {
-            addDirectory(buildJobContainerId, LOCALCI_WORKING_DIRECTORY + "/testing-dir", true);
-            executeDockerCommand(buildJobContainerId, null, false, false, true, "chmod", "-R", "777", LOCALCI_WORKING_DIRECTORY + "/testing-dir");
-        }
+        // make sure to create the working directory in case it does not exist
+        addDirectory(buildJobContainerId, LOCALCI_WORKING_DIRECTORY + "/testing-dir", true);
+        // make sure the working directory and all sub directories are accessible
+        executeDockerCommand(buildJobContainerId, null, false, false, true, "chmod", "-R", "777", LOCALCI_WORKING_DIRECTORY + "/testing-dir");
+
         addAndPrepareDirectory(buildJobContainerId, testRepositoryPath, LOCALCI_WORKING_DIRECTORY + "/testing-dir/" + testCheckoutPath);
         addAndPrepareDirectory(buildJobContainerId, assignmentRepositoryPath, LOCALCI_WORKING_DIRECTORY + "/testing-dir/" + assignmentCheckoutPath);
         if (solutionRepositoryPath != null) {
@@ -318,11 +329,11 @@ public class BuildJobContainerService {
 
                 @Override
                 public void onNext(Frame item) {
-                  String text = new String(item.getPayload());
-                  BuildLogEntry buildLogEntry = new BuildLogEntry(ZonedDateTime.now(), text);
-                  if (buildJobId != null) {
-                      buildLogsMap.appendBuildLogEntry(buildJobId, buildLogEntry);
-                  }
+                    String text = new String(item.getPayload());
+                    BuildLogEntry buildLogEntry = new BuildLogEntry(ZonedDateTime.now(), text);
+                    if (buildJobId != null) {
+                        buildLogsMap.appendBuildLogEntry(buildJobId, buildLogEntry);
+                    }
                 }
 
                 @Override
