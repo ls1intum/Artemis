@@ -88,8 +88,8 @@ export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
     setFileContents(original?: string, originalFileName?: string, modified?: string, modifiedFileName?: string): void {
         // TODO constructing this string and making a model if it is unavailable is already implemented in the default monaco editor. define utils or a service for this
         this.onReadyForDisplayChange.emit(false);
-        const originalModelUri = monaco.Uri.parse(`inmemory://model/${this._editor.getId()}/${originalFileName ?? 'original'}`);
-        const modifiedFileUri = monaco.Uri.parse(`inmemory://model/${this._editor.getId()}/${modifiedFileName ?? 'modified'}`);
+        const originalModelUri = monaco.Uri.parse(`inmemory://model/original-${this._editor.getId()}/${originalFileName ?? 'left'}`);
+        const modifiedFileUri = monaco.Uri.parse(`inmemory://model/modified-${this._editor.getId()}/${modifiedFileName ?? 'right'}`);
         const originalModel = monaco.editor.getModel(originalModelUri) ?? monaco.editor.createModel(original ?? '', undefined, originalModelUri);
         const modifiedModel = monaco.editor.getModel(modifiedFileUri) ?? monaco.editor.createModel(modified ?? '', undefined, modifiedFileUri);
 
@@ -98,8 +98,6 @@ export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
 
         monaco.editor.setModelLanguage(originalModel, originalModel.getLanguageId());
         monaco.editor.setModelLanguage(modifiedModel, modifiedModel.getLanguageId());
-
-        console.log(original + ' ' + originalFileName + ' ' + modified + ' ' + modifiedFileName);
 
         this.original = original;
         this.modified = modified;
