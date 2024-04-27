@@ -672,9 +672,9 @@ instances will also use a ActiveMQ Artemis broker to synchronize WebSocket messa
 
 * 3 Artemis instances:
 
-    * artemis-app-node-1: using following spring profile: ``prod,localvc,localci,buildagent,core,scheduling,docker``
+    * artemis-app-node-1: using following spring profile: ``prod,localvc,localci,core,scheduling,docker``
     * artemis-app-node-2: using following profile: ``prod,localvc,localci,buildagent,core,docker``
-    * artemis-app-node-3: using following profile: ``prod,localvc,localci,buildagent,core,docker``
+    * artemis-app-node-3: using following profile: ``prod,buildagent``
 * A MySQL database addressable on port 3306 of the host system
 * A Load balancer (nginx) addressable on ports 80/443 of the host system: ``http(s)://localhost``
 * A Registry service addressable on port 8761 of the host system: ``http://localhost:8761``
@@ -688,8 +688,16 @@ instances will also use a ActiveMQ Artemis broker to synchronize WebSocket messa
 
 .. note::
 
-    You don't have to start the client manually. The client files are served by the Artemis instances and can be
-    accessed through the load balancer on ``http(s)://localhost``.
+    - You don't have to start the client manually. The client files are served by the Artemis instances and can be
+      accessed through the load balancer on ``http(s)://localhost``.
+
+    - You may run into the following error when starting the containers
+      ``No member group is available to assign partition ownership...``. This issue should resolve itself after a few
+      seconds. Otherwise, you can first start the following containers:
+      ``docker compose -f docker/test-server-multi-node-mysql-localci.yml up mysql jhipster-registry activemq-broker artemis-app-node-1``.
+      After these containers are up and running, you can start the remaining containers:
+      ``docker compose -f docker/test-server-multi-node-mysql-localci.yml up artemis-app-node-2 artemis-app-node-3 nginx``.
+
 
 Linux setup
 """""""""""
@@ -762,57 +770,3 @@ MacOS setup
         docker compose -f docker/test-server-multi-node-mysql-localci.yml up
 
 #. You can now access artemis on ``http(s)://localhost`` and the registry on ``http://localhost:8761``.
-
-
-Separate Core and BuildAgent Instances
-""""""""""""""""""""""""""""""""""""""
-
-In a multi instance setup, it is possible to separate the core and build agent instances. This can be useful if you want
-to have a dedicated instances for running the build agents. The core instances will then only be responsible for handling
-the core functionality of Artemis (e.g. managing courses, exercises, users, etc.). The build agent instances will only be
-responsible for running the build agents. This can be useful if you want to scale the build agents independently from the
-core instances. The setup will be similar to the one described in :ref:`Running multiple instances locally with Docker`.
-The main differences are:
-
-* The artemis instances will be separated into core and build agent instances:
-
-    * artemis-app-node-1: using following spring profile: ``prod,localvc,localci,core,scheduling,docker``
-    * artemis-app-node-2: using following spring profile: ``prod,buildagent``
-    * artemis-app-node-3: using following spring profile: ``prod,localvc,localci,core,docker``
-
-* The load balancer will not forward requests to the build agent instance (node-2).
-
-
-#. Follow the steps described in :ref:`Running multiple instances locally with Docker`. However, do not run the
-   ``docker compose`` command to start the docker containers yet.
-
-#. Add the following environment variables to the file ``docker/.env``:
-
-    .. code:: bash
-
-        ARTEMIS_NODE_1_ENV_FILE=./artemis/config/node1-core.env
-        ARTEMIS_NODE_2_ENV_FILE=./artemis/config/node2-buildagent.env
-        ARTEMIS_NODE_3_ENV_FILE=./artemis/config/node3-core.env
-
-#. Comment out the following line in the file ``docker/nginx/artemis-upstream-multi-node.conf``:
-
-    .. code:: bash
-
-        server artemis-app-node-1:8080;
-        # server artemis-app-node-2:8080;
-        server artemis-app-node-3:8080;
-
-#. Start the docker containers by running the following command:
-
-    .. code:: bash
-
-        docker compose -f docker/test-server-multi-node-mysql-localci.yml up
-
-    .. hint::
-
-        You may run into the following error when starting the containers
-        ``No member group is available to assign partition ownership...``. To fix this, you can first start the following
-        containers:
-        ``docker compose -f docker/test-server-multi-node-mysql-localci.yml up mysql jhipster-registry activemq-broker artemis-app-node-1``.
-        After these containers are up and running, you can start the remaining containers:
-        ``docker compose -f docker/test-server-multi-node-mysql-localci.yml up artemis-app-node-2 artemis-app-node-3 nginx``.
