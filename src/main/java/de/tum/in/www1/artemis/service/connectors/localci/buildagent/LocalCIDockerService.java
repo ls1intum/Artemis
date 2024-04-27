@@ -68,6 +68,7 @@ public class LocalCIDockerService {
     private int containerCleanupScheduleMinutes;
 
     // The image architecture that is supported by the build agent
+    // amd64 is the default value, as this is the architecture of Intel and AMD CPUs, which most systems still use
     @Value("${artemis.continuous-integration.image-architecture:amd64}")
     private String imageArchitecture;
 

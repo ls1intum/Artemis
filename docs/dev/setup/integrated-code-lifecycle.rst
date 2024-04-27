@@ -44,7 +44,8 @@ Create a file ``src/main/resources/config/application-local.yml`` with the follo
            version-control:
                url: http://localhost:8080
            continuous-integration:
-               # Only necessary on ARM-based systems:
+               # Only necessary on ARM-based systems, the default is amd64 for Intel/AMD systems
+               # ARM-based systems include Apple M-series, Raspberry Pi, etc.
                image-architecture: arm64
                # Only necessary on Windows:
                docker-connection-uri: tcp://localhost:2375
