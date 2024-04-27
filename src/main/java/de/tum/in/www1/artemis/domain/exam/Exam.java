@@ -38,6 +38,12 @@ public class Exam extends DomainObject {
     private boolean testExam;
 
     /**
+     * This boolean indicates whether attendance is checked during exam
+     */
+    @Column(name = "exam_with_attendance_check")
+    private boolean examWithAttendanceCheck;
+
+    /**
      * student can see the exam in the UI from this date onwards
      */
     @Column(name = "visible_date", nullable = false)
@@ -167,6 +173,14 @@ public class Exam extends DomainObject {
 
     public void setTestExam(boolean testExam) {
         this.testExam = testExam;
+    }
+
+    public boolean isExamWithAttendanceCheck() {
+        return examWithAttendanceCheck;
+    }
+
+    public void setExamWithAttendanceCheck(boolean examWithAttendanceCheck) {
+        this.examWithAttendanceCheck = examWithAttendanceCheck;
     }
 
     @NotNull

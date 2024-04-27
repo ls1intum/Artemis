@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.service.BuildLogEntryService;
 
 @Profile("localci")
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class BuildLogResource {
 
     private static final Logger log = LoggerFactory.getLogger(BuildLogResource.class);
@@ -36,7 +36,7 @@ public class BuildLogResource {
      * @param buildJobId the id of the build job for which to retrieve the build log
      * @return the ResponseEntity with status 200 (OK) and the build log in the body, or with status 404 (Not Found) if the build log could not be found
      */
-    @GetMapping("/build-log/{buildJobId}")
+    @GetMapping("build-log/{buildJobId}")
     @EnforceAtLeastEditor
     public ResponseEntity<Resource> getBuildLogForBuildJob(@PathVariable long buildJobId) {
         log.debug("REST request to get the build log for build job {}", buildJobId);

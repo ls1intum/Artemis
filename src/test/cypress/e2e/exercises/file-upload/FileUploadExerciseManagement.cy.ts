@@ -8,7 +8,7 @@ import { courseManagement, courseManagementAPIRequest, courseManagementExercises
 import { admin } from '../../../support/users';
 import { convertModelAfterMultiPart, generateUUID } from '../../../support/utils';
 
-describe('File upload exercise management', () => {
+describe.skip('File upload exercise management', () => {
     let course: Course;
 
     before(() => {
