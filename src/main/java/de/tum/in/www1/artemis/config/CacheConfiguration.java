@@ -117,7 +117,7 @@ public class CacheConfiguration {
             return;
         }
         String serviceId = registration.getServiceId();
-        var hazelcastInstance = Hazelcast.getHazelcastInstanceByName("Artemis");
+        var hazelcastInstance = Hazelcast.getHazelcastInstanceByName(instanceName);
         if (hazelcastInstance == null) {
             log.warn("Hazelcast instance not found, cannot connect to cluster members");
             return;
@@ -157,7 +157,7 @@ public class CacheConfiguration {
     @Bean
     public HazelcastInstance hazelcastInstance(JHipsterProperties jHipsterProperties) {
         log.debug("Configuring Hazelcast");
-        HazelcastInstance hazelCastInstance = Hazelcast.getHazelcastInstanceByName("Artemis");
+        HazelcastInstance hazelCastInstance = Hazelcast.getHazelcastInstanceByName(instanceName);
         if (hazelCastInstance != null) {
             log.debug("Hazelcast already initialized");
             return hazelCastInstance;
