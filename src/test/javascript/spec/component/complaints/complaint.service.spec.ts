@@ -12,6 +12,7 @@ import { Result } from 'app/entities/result.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
+import { ComplaintRequestDTO } from 'app/entities/complaint-request-dto.model';
 
 describe('ComplaintService', () => {
     let complaintService: ComplaintService;
@@ -38,9 +39,15 @@ describe('ComplaintService', () => {
     clientComplaint2.complaintType = ComplaintType.MORE_FEEDBACK;
     clientComplaint2.result = new Result();
     clientComplaint2.submittedTime = dayjsTime2;
-    clientComplaint2.complaintText = 'Another test text';
+    clientComplaint2.complaintText = 'Test text';
 
     const serverComplaint2 = { ...clientComplaint2, submittedTime: stringTime2 };
+
+    const clientComplaintReq = new ComplaintRequestDTO();
+    clientComplaintReq.examId = 1337;
+    clientComplaintReq.complaintText = 'Test text';
+    clientComplaintReq.resultId = 1;
+    clientComplaintReq.complaintType = ComplaintType.MORE_FEEDBACK;
 
     let exercise: Exercise;
     let emptyResult: Result;
@@ -191,27 +198,26 @@ describe('ComplaintService', () => {
 
     describe('create', () => {
         it('For course', () => {
-            complaintService.create(clientComplaint1).subscribe((received) => {
-                expect(received).toEqual(clientComplaint1);
+            clientComplaintReq.examId = undefined;
+            complaintService.create(clientComplaintReq).subscribe((received) => {
+                expect(received).toEqual(serverComplaint1);
             });
 
             const res = httpMock.expectOne({ method: 'POST' });
             expect(res.request.url).toBe('api/complaints');
-            expect(res.request.body).toEqual(serverComplaint1);
+            expect(res.request.body).toEqual(clientComplaintReq);
 
             res.flush(clone(serverComplaint1));
         });
 
         it('For exam', () => {
-            const examId = 1337;
-
-            complaintService.create(clientComplaint1, examId).subscribe((received) => {
-                expect(received).toEqual(clientComplaint1);
+            complaintService.create(clientComplaintReq).subscribe((received) => {
+                expect(received).toEqual(serverComplaint1);
             });
 
             const res = httpMock.expectOne({ method: 'POST' });
-            expect(res.request.url).toBe(`api/complaints/exam/${examId}`);
-            expect(res.request.body).toEqual(serverComplaint1);
+            expect(res.request.url).toBe(`api/complaints`);
+            expect(res.request.body).toEqual(clientComplaintReq);
 
             res.flush(clone(serverComplaint1));
         });
@@ -346,7 +352,7 @@ describe('ComplaintService', () => {
         });
 
         const res = httpMock.expectOne({ method: 'GET' });
-        expect(res.request.url).toBe(`api/complaints/submissions/${submissionId}`);
+        expect(res.request.url).toBe(`api/complaints?submissionId=${submissionId}`);
 
         res.flush(clone(serverComplaint1));
     });
@@ -358,36 +364,9 @@ describe('ComplaintService', () => {
         });
 
         const res = httpMock.expectOne({ method: 'GET' });
-        expect(res.request.url).toBe(`api/exercises/${exerciseId}/complaints-for-test-run-dashboard`);
+        expect(res.request.url).toBe(`api/complaints?exerciseId=${exerciseId}`);
 
         res.flush([clone(serverComplaint1), clone(serverComplaint2)]);
-    });
-
-    it('getMoreFeedbackRequestsForTutor', () => {
-        const exerciseId = 1337;
-        complaintService.getMoreFeedbackRequestsForTutor(exerciseId).subscribe((received) => {
-            expect(received).toIncludeSameMembers([clientComplaint1, clientComplaint2]);
-        });
-
-        const res = httpMock.expectOne({ method: 'GET' });
-        expect(res.request.url).toBe(`api/exercises/${exerciseId}/more-feedback-for-assessment-dashboard`);
-
-        res.flush([clone(serverComplaint1), clone(serverComplaint2)]);
-    });
-
-    it('getNumberOfAllowedComplaintsInCourse', () => {
-        const courseId = 42;
-        const teamMode = true;
-        const expectedCount = 69;
-
-        complaintService.getNumberOfAllowedComplaintsInCourse(courseId, teamMode).subscribe((received) => {
-            expect(received).toBe(expectedCount);
-        });
-
-        const res = httpMock.expectOne({ method: 'GET' });
-        expect(res.request.url).toBe(`api/courses/${courseId}/allowed-complaints?teamMode=${teamMode}`);
-
-        res.flush(expectedCount);
     });
 
     it('findAllByTutorIdForCourseId', () => {
@@ -400,7 +379,7 @@ describe('ComplaintService', () => {
         });
 
         const res = httpMock.expectOne({ method: 'GET' });
-        expect(res.request.url).toBe(`api/courses/${courseId}/complaints?complaintType=${complaintType}&tutorId=${tutorId}`);
+        expect(res.request.url).toBe(`api/complaints?courseId=${courseId}&complaintType=${complaintType}&tutorId=${tutorId}`);
 
         res.flush([clone(clientComplaint1), clone(clientComplaint2)]);
     });
@@ -415,7 +394,7 @@ describe('ComplaintService', () => {
         });
 
         const res = httpMock.expectOne({ method: 'GET' });
-        expect(res.request.url).toBe(`api/exercises/${exerciseId}/complaints?complaintType=${complaintType}&tutorId=${tutorId}`);
+        expect(res.request.url).toBe(`api/complaints?exerciseId=${exerciseId}&complaintType=${complaintType}&tutorId=${tutorId}`);
 
         res.flush([clone(clientComplaint1), clone(clientComplaint2)]);
     });
@@ -429,7 +408,7 @@ describe('ComplaintService', () => {
         });
 
         const res = httpMock.expectOne({ method: 'GET' });
-        expect(res.request.url).toBe(`api/courses/${courseId}/complaints?complaintType=${complaintType}`);
+        expect(res.request.url).toBe(`api/complaints?courseId=${courseId}&complaintType=${complaintType}`);
 
         res.flush([clone(clientComplaint1), clone(clientComplaint2)]);
     });
@@ -443,7 +422,7 @@ describe('ComplaintService', () => {
         });
 
         const res = httpMock.expectOne({ method: 'GET' });
-        expect(res.request.url).toBe(`api/courses/${courseId}/exams/${examId}/complaints`);
+        expect(res.request.url).toBe(`api/complaints?courseId=${courseId}&examId=${examId}`);
 
         res.flush([clone(clientComplaint1), clone(clientComplaint2)]);
     });
@@ -457,7 +436,7 @@ describe('ComplaintService', () => {
         });
 
         const res = httpMock.expectOne({ method: 'GET' });
-        expect(res.request.url).toBe(`api/exercises/${exerciseId}/complaints?complaintType=${complaintType}`);
+        expect(res.request.url).toBe(`api/complaints?exerciseId=${exerciseId}&complaintType=${complaintType}`);
 
         res.flush([clone(clientComplaint1), clone(clientComplaint2)]);
     });

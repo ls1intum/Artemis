@@ -7,7 +7,10 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,7 +24,12 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
@@ -36,7 +44,6 @@ import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.service.exam.ExamLiveEventsService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleService;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints;
 
 class ProgrammingExerciseTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
@@ -127,7 +134,7 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationJenkinsGitlabTest
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateProblemStatement() throws Exception {
         final var newProblem = "a new problem statement";
-        final var endpoint = "/api" + ProgrammingExerciseResourceEndpoints.PROBLEM.replace("{exerciseId}", String.valueOf(programmingExerciseId));
+        final var endpoint = "/api/programming-exercises/" + programmingExerciseId + "/problem-statement";
         ProgrammingExercise updatedProgrammingExercise = request.patchWithResponseBody(endpoint, newProblem, ProgrammingExercise.class, HttpStatus.OK, MediaType.TEXT_PLAIN);
 
         assertThat(updatedProgrammingExercise.getProblemStatement()).isEqualTo(newProblem);

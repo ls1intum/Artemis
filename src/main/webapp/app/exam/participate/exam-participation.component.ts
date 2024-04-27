@@ -35,6 +35,8 @@ import { CourseExerciseService } from 'app/exercises/shared/course-exercises/cou
 import { faCheckCircle, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { ExamLiveEventType, ExamParticipationLiveEventsService, WorkingTimeUpdateEvent } from 'app/exam/participate/exam-participation-live-events.service';
+import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import {
     ExamLiveEventType,
     ExamParticipationLiveEventsService,
@@ -85,6 +87,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     handInEarly = false;
     handInPossible = true;
     submitInProgress = false;
+    attendanceChecked = false;
 
     examSummaryButtonSecondsLeft = 10;
     examSummaryButtonTimer: ReturnType<typeof setInterval>;
@@ -147,6 +150,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         private courseService: CourseManagementService,
         private courseStorageService: CourseStorageService,
         private examExerciseUpdateService: ExamExerciseUpdateService,
+        private examManagementService: ExamManagementService,
     ) {
         // show only one synchronization error every 5s
         this.errorSubscription = this.synchronizationAlert.pipe(throttleTime(5000)).subscribe(() => {
@@ -436,6 +440,20 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * Called when a user wants to hand in early or decides to continue.
      */
     toggleHandInEarly() {
+        // no need to fetch attendance check status from the server if it is a test exam or an exam without attendance check or when clicking continue
+        if (this.exam.testExam || !this.exam.examWithAttendanceCheck || this.handInEarly) {
+            this.handleHandInEarly();
+        } else {
+            this.examManagementService.isAttendanceChecked(this.courseId, this.examId).subscribe((res) => {
+                if (res.body) {
+                    this.attendanceChecked = res.body;
+                }
+                this.handleHandInEarly();
+            });
+        }
+    }
+
+    handleHandInEarly() {
         this.handInEarly = !this.handInEarly;
         if (this.handInEarly) {
             // update local studentExam for later sync with server if the student wants to hand in early
