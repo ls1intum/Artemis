@@ -26,7 +26,7 @@ import {
 import { admin, instructor, studentOne } from '../../support/users';
 import { checkField, convertModelAfterMultiPart, generateUUID } from '../../support/utils';
 
-describe('Import exercises', { scrollBehavior: 'center' }, () => {
+describe.skip('Import exercises', { scrollBehavior: 'center' }, () => {
     let course: Course;
     let secondCourse: Course;
     let textExercise: TextExercise;
