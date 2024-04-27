@@ -55,7 +55,7 @@ export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
         // called once diff has been computed.
         // TODO explain
         this._editor.onDidChangeModel(() => {
-            this.monacoDiffEditorContainerElement.style.height = this.getContentHeight() + 'px';
+            this.monacoDiffEditorContainerElement.style.height = this.getMaximumContentHeight() + 'px';
             this._editor.layout();
             if (this.original === undefined) {
                 this.replaceEditorWithPlaceholder('create', this._editor.getOriginalEditor());
@@ -73,6 +73,18 @@ export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
         });
         resizeObserver.observe(this.monacoDiffEditorContainerElement);
         this.themeSubscription = this.themeService.getCurrentThemeObservable().subscribe((theme) => this.changeTheme(theme));
+
+        this._editor.getOriginalEditor().onDidContentSizeChange((e) => {
+            if (e.contentHeightChanged) {
+                this.monacoDiffEditorContainerElement.style.height = this.getMaximumContentHeight() + 'px';
+                this._editor.layout();
+            }
+        });
+
+        this._editor.getOriginalEditor().onDidChangeHiddenAreas(() => {
+            this.monacoDiffEditorContainerElement.style.height = this.getContentHeightOfEditor(this._editor.getOriginalEditor()) + 'px';
+            this._editor.layout();
+        });
     }
 
     ngOnDestroy(): void {
@@ -109,6 +121,17 @@ export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
         this._editor.setModel(newModel);
     }
 
+    setUnchangedRegionHidingOptions(enabled: boolean, revealLineCount = 5, contextLineCount = 3, minimumLineCount = 5): void {
+        this._editor.updateOptions({
+            hideUnchangedRegions: {
+                enabled,
+                revealLineCount,
+                contextLineCount,
+                minimumLineCount,
+            },
+        });
+    }
+
     private replaceEditorWithPlaceholder(action: 'create' | 'delete', editorToReplace: monaco.editor.IStandaloneCodeEditor): void {
         // TODO remove this hack
         const container: HTMLElement = editorToReplace.getContainerDomNode();
@@ -123,7 +146,11 @@ export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
         container.appendChild(placeholder);
     }
 
-    private getContentHeight(): number {
+    private getMaximumContentHeight(): number {
         return Math.max(this._editor.getOriginalEditor().getContentHeight(), this._editor.getModifiedEditor().getContentHeight());
+    }
+
+    private getContentHeightOfEditor(editor: monaco.editor.ICodeEditor): number {
+        return editor.getContentHeight();
     }
 }
