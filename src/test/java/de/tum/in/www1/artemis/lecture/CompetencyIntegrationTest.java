@@ -1004,7 +1004,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-        void shouldNotFoundForNotExistingIds() throws Exception {
+        void shouldReturnNotFoundForNotExistingIds() throws Exception {
             var idList = List.of(-1000, -1001);
             request.post("/api/courses/" + course.getId() + "/competencies/import-standardized", idList, HttpStatus.NOT_FOUND);
         }

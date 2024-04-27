@@ -7,7 +7,7 @@ import { KnowledgeAreaDTO } from 'app/entities/competency/standardized-competenc
 })
 export class StandardizedCompetencyFilterStubComponent {
     @Input() competencyTitleFilter: string;
-    @Input() knowledgeAreaFilter: KnowledgeAreaDTO | undefined = undefined;
+    @Input() knowledgeAreaFilter?: KnowledgeAreaDTO;
     @Input() knowledgeAreasForSelect: KnowledgeAreaDTO[] = [];
 
     @Output() competencyTitleFilterChange = new EventEmitter<string>();
