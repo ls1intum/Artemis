@@ -68,7 +68,11 @@ describe('Programming exercise assessment', () => {
         });
     });
 
-    it('Assesses the programming exercise submission and verifies it', () => {
+    /*
+     * Skipped because the hovering behavior required to manually assess a submission is not supported by Cypress.
+     * Please refer to the playwright E2E test.
+     */
+    it.skip('Assesses the programming exercise submission and verifies it', () => {
         // Asses submission
         cy.login(tutor, '/course-management');
         courseManagement.openAssessmentDashboardOfCourse(course.id!);
