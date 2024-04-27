@@ -22,6 +22,7 @@ import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Image;
 
 import de.tum.in.www1.artemis.config.localvcci.LocalCIConfiguration;
+import de.tum.in.www1.artemis.service.connectors.localci.buildagent.LocalCIDockerService;
 import de.tum.in.www1.artemis.util.FixMissingServletPathProcessor;
 
 /**
@@ -50,8 +51,8 @@ public class LocalCITestConfiguration {
         // Mock PullImageCmd
         PullImageCmd pullImageCmd = mock(PullImageCmd.class);
         doReturn(pullImageCmd).when(dockerClient).pullImageCmd(anyString());
-        PullImageResultCallback callback1 = mock(PullImageResultCallback.class);
-        doReturn(callback1).when(pullImageCmd).exec(any(PullImageResultCallback.class));
+        LocalCIDockerService.MyPullImageResultCallback callback1 = mock(LocalCIDockerService.MyPullImageResultCallback.class);
+        doReturn(callback1).when(pullImageCmd).exec(any(LocalCIDockerService.MyPullImageResultCallback.class));
         doReturn(null).when(callback1).awaitCompletion();
 
         String dummyContainerId = "1234567890";

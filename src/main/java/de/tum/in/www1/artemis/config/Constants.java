@@ -233,10 +233,6 @@ public final class Constants {
 
     public static final String INFO_VERSION_CONTROL_ACCESS_TOKEN_DETAIL = "versionControlAccessToken";
 
-    public static final String EXTERNAL_USER_MANAGEMENT_URL = "externalUserManagementURL";
-
-    public static final String EXTERNAL_USER_MANAGEMENT_NAME = "externalUserManagementName";
-
     public static final String REGISTRATION_ENABLED = "registrationEnabled";
 
     public static final String NEEDS_TO_ACCEPT_TERMS = "needsToAcceptTerms";
