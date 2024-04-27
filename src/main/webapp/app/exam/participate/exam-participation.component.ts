@@ -35,7 +35,6 @@ import { CourseExerciseService } from 'app/exercises/shared/course-exercises/cou
 import { faCheckCircle, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { ExamLiveEventType, ExamParticipationLiveEventsService, WorkingTimeUpdateEvent } from 'app/exam/participate/exam-participation-live-events.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import {
     ExamLiveEventType,
