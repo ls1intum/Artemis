@@ -143,4 +143,14 @@ describe('LtiConfigurationComponent', () => {
         expect(mockLtiConfigurationService.deleteLtiPlatform).toHaveBeenCalledWith(platformIdToDelete);
         expect(mockRouter.navigate).toHaveBeenCalledWith(['admin', 'lti-configuration']);
     });
+
+    it('should handle navigation on transition', () => {
+        component.transition();
+        expect(mockRouter.navigate).toHaveBeenCalledWith(['/admin/lti-configuration'], {
+            queryParams: {
+                page: component.page,
+                sort: 'id,asc',
+            },
+        });
+    });
 });
