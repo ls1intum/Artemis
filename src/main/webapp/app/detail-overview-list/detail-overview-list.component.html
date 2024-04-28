@@ -70,7 +70,7 @@
                                         </a>
                                     }
                                     @if (isLocalVC) {
-                                        <a [href]="routerLink + '/repository/' + detail.data.type" class="btn btn-sm btn-primary ms-2">
+                                        <a [routerLink]="['./', 'repository', detail.data.type]" class="btn btn-sm btn-primary ms-2">
                                             <fa-icon [icon]="faCodeBranch" />
                                             <span jhiTranslate="artemisApp.exerciseActions.openRepository"></span>
                                         </a>
