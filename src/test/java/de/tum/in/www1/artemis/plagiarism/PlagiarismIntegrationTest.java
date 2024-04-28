@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.plagiarism;
 
-import static de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus.*;
+import static de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus.CONFIRMED;
+import static de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus.DENIED;
+import static de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus.NONE;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Optional;
