@@ -1,7 +1,9 @@
 package de.tum.in.www1.artemis.service.connectors.gitlabci;
 
-import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.*;
-import static de.tum.in.www1.artemis.domain.enumeration.ProjectType.*;
+import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.EMPTY;
+import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.JAVA;
+import static de.tum.in.www1.artemis.domain.enumeration.ProjectType.MAVEN_MAVEN;
+import static de.tum.in.www1.artemis.domain.enumeration.ProjectType.PLAIN_MAVEN;
 
 import java.util.List;
 
