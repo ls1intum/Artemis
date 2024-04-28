@@ -193,12 +193,10 @@ export class AthenaService {
 
                         referencedElementIDs.add(referenceId);
 
-                        if (model) {
-                            if (feedback.referenceId) {
-                                const element = findElement(model, feedback.referenceId);
-                                feedback.referenceType = element?.type;
-                                feedback.reference = `${element?.type}:${referenceId}`;
-                            }
+                        if (model && feedback.referenceId) {
+                            const element = findElement(model, feedback.referenceId);
+                            feedback.referenceType = element?.type;
+                            feedback.reference = `${element?.type}:${referenceId}`;
                         }
                     } else {
                         feedback.type = FeedbackType.MANUAL_UNREFERENCED;
@@ -207,7 +205,7 @@ export class AthenaService {
                     }
 
                     // Load grading instruction from exercise, if available
-                    if (suggestion.structuredGradingInstructionId != undefined) {
+                    if (suggestion.structuredGradingInstructionId) {
                         feedback.gradingInstruction = this.findGradingInstruction(exercise, suggestion.structuredGradingInstructionId);
                     }
                     return feedback;

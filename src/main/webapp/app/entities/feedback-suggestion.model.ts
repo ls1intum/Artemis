@@ -37,8 +37,7 @@ export class ModelingFeedbackSuggestion {
      * @param title The title of the suggestions
      * @param description A detailed description of the suggestion
      * @param credits The number of credits awarded as part of this suggestion
-     * @param structuredGradingInstructionId The ID of the structured grading instruction this suggestion is related to
-     * if a corresponding grading instruction exists
+     * @param structuredGradingInstructionId The ID of the structured grading instruction this suggestion is related to if a corresponding grading instruction exists
      * @param elementIds The IDs of elements referenced by the suggestion
      */
     constructor(

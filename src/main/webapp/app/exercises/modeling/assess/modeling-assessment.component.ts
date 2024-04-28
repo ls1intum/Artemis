@@ -90,18 +90,11 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
 
         if (changes.highlightedElements) {
             this.highlightedElements = changes.highlightedElements.currentValue;
-
-            if (this.apollonEditor) {
-                await this.updateApollonAssessments(this.referencedFeedbacks);
-                await this.applyStateConfiguration();
-            }
         }
 
-        if (changes.highlightDifferences) {
-            if (this.apollonEditor) {
-                await this.updateApollonAssessments(this.referencedFeedbacks);
-                await this.applyStateConfiguration();
-            }
+        if ((changes.highlightedElements || changes.highlightDifferences) && this.apollonEditor) {
+            await this.updateApollonAssessments(this.referencedFeedbacks);
+            await this.applyStateConfiguration();
         }
     }
 
