@@ -82,4 +82,4 @@ REST interfaces to the application client.
 Integrated Code Lifecycle
 -------------------------
 
-.. include:: system-design/integrated-code-lifecycle/integrated-code-lifecycle-system-design.rst
+.. include:: system-design/integrated-code-lifecycle/integrated-code-lifecycle-system-design.inc

@@ -2,7 +2,11 @@ package de.tum.in.www1.artemis.service.hestia.behavioral;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
@@ -19,7 +23,17 @@ import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseGitDiffReportService;
 import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
-import de.tum.in.www1.artemis.service.hestia.behavioral.knowledgesource.*;
+import de.tum.in.www1.artemis.service.hestia.behavioral.knowledgesource.AddUncoveredLinesAsPotentialCodeBlocks;
+import de.tum.in.www1.artemis.service.hestia.behavioral.knowledgesource.BehavioralKnowledgeSource;
+import de.tum.in.www1.artemis.service.hestia.behavioral.knowledgesource.CombineChangeBlocks;
+import de.tum.in.www1.artemis.service.hestia.behavioral.knowledgesource.CreateCommonChangeBlocks;
+import de.tum.in.www1.artemis.service.hestia.behavioral.knowledgesource.CreateSolutionEntries;
+import de.tum.in.www1.artemis.service.hestia.behavioral.knowledgesource.DropRemovedGitDiffEntries;
+import de.tum.in.www1.artemis.service.hestia.behavioral.knowledgesource.ExtractChangedLines;
+import de.tum.in.www1.artemis.service.hestia.behavioral.knowledgesource.ExtractCoveredLines;
+import de.tum.in.www1.artemis.service.hestia.behavioral.knowledgesource.FindCommonLines;
+import de.tum.in.www1.artemis.service.hestia.behavioral.knowledgesource.GroupGitDiffAndCoverageEntriesByFilePathAndTestCase;
+import de.tum.in.www1.artemis.service.hestia.behavioral.knowledgesource.InsertFileContents;
 
 /**
  * Service for handling Solution Entries of behavioral Test Cases.

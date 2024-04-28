@@ -2,9 +2,16 @@ package de.tum.in.www1.artemis.service.programming;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
-import java.io.*;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 import org.apache.commons.io.FileUtils;

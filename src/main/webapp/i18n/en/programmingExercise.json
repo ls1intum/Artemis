@@ -16,8 +16,12 @@
             "deleted": "Deleted Programming Exercise with title {{ param }}",
             "delete": {
                 "question": "Are you sure you want to delete the Programming Exercise <strong>{{ title }}</strong>?",
-                "studentReposBuildPlans": "Additionally delete all student repositories and student build plans (Be careful: this can NOT be undone!). Before you activate this option, we recommend that you archive the exercise first!",
-                "studentRepos": "Additionally delete all student repositories (Be careful: this can NOT be undone!). Before you activate this option, we recommend that you archive the exercise first!",
+                "questionLocalVC": {
+                    "single": "Are you sure you want to delete the Programming Exercise <strong>{{ title }}</strong>?<br>All student, template, solution, test, and auxiliary repositories and build plans will be deleted.<br>Be careful: this can <strong class='text-danger'>NOT</strong> be undone!<br>Before you activate this option, we recommend that you archive the repositories and build plans first!",
+                    "multiple": "Are you sure you want to delete selected programming exercises?<br>All student, template, solution, test, and auxiliary repositories and build plans will be deleted.<br>Be careful: this can <strong class='text-danger'>NOT</strong> be undone!<br>Before you activate this option, we recommend that you archive the repositories and build plans first!"
+                },
+                "studentReposBuildPlans": "Additionally delete all student repositories and student build plans (Be careful: this can NOT be undone!). Before you activate this option, we recommend that you archive the repositories and build plans first!",
+                "studentRepos": "Additionally delete all student repositories (Be careful: this can NOT be undone!). Before you activate this option, we recommend that you archive the repositories and build plans first!",
                 "baseReposBuildPlans": "Additionally delete template, solution, test, and auxiliary repos and build plans (Be careful: this can NOT be undone!). Before you activate this option, we recommend that you back up these build plans and repos first!"
             },
             "cleanup": {
@@ -33,7 +37,7 @@
                 },
                 "deleteRepositories": {
                     "title": "Delete student repositories (on {{ vcPlatform }}).",
-                    "warning": "Before you activate this option, we recommend that you archive the exercise first."
+                    "warning": "Before you activate this option, we recommend that you archive the repositories and build plans first."
                 },
                 "deleteParticipationsSubmissionsAndResults": "Delete all student participations, submissions and results (on Artemis).",
                 "artefactsWarning": "Deleting student participations, submissions, and results without removing the associated repositories and build plans may lead to undeleted artifacts on {{ vcPlatform }} and {{ ciPlatform }}. Please carefully review if this is the desired action before proceeding.",
@@ -74,7 +78,7 @@
                     "buildPlansTitle": "Build Plans",
                     "difficultyStepMessage": "Configure the settings related to the execution and collaboration aspects of the programming exercise",
                     "languageStepTitle": "Language",
-                    "languageStepMessage": "Set the specific details related to the programming language used in the exercise as well as features directly related to it",
+                    "languageStepMessage": "Configure the specific details related to the programming language and build mechanism used in the exercise",
                     "problemStepTitle": "Problem",
                     "problemStepMessage": "Create a comprehensive problem statement for the new exercise, including detailed tasks that clearly outline the required actions and expectations for students.",
                     "gradingStepTitle": "Grading",
@@ -115,14 +119,15 @@
             "buildConfiguration": "Build Configuration",
             "buildPlanEditor": "Build Plan Editor",
             "buildPlanFetchError": "Could not find a build plan for this exercise. This is expected for older exercises. Edit the build plan in the CI system or reset the build plan in Artemis to create a new one that is editable here.",
-            "customizeBuildPlan": "Customize Build Plan",
-            "customizeBuildPlanWithAeolus": "Customize Build Plan with Aeolus",
-            "revertToTemplateBuildPlan": "If you are not happy with your build plan, you can reset it to its template by using the Reset button.",
+            "customizeBuildPlan": "Customize Build Script",
+            "customizeBuildPlanWithAeolus": "Customize Build Script",
+            "revertToTemplateBuildPlan": "Artemis executes the following build script for each submission in a Docker container. You can customize the build script and reset it to its default value by using the Reset button above.",
             "runActionAlways": "Always run, even if other actions fail",
             "workdir": "Working Directory",
             "parameters": "Parameters",
             "dockerImage": "Docker Image",
-            "script": "Script",
+            "script": "Build script",
+            "customizeDockerImage": "You can customize the Docker image. Make sure to provide it in amd64 and arm64 and include all build dependencies to guarantee a short build duration.",
             "allowOnlineEditor": {
                 "title": "Allow Online Editor",
                 "alert": "At least one option (Offline IDE or Online Editor) must be selected"
@@ -569,8 +574,8 @@
             "withDependenciesTooltip": "Adds an external Apache commons-lang dependency to the generated project as an example how Maven dependencies should be used with Artemis exercises.",
             "recordTestwiseCoverage": "Record Testwise Coverage",
             "recordTestwiseCoverageTooltip": "Activate this option to record the testwise coverage for the solution repository. This option is only available for Java/Kotlin-exercises with non-sequential test runs.",
-            "customizeBuildPlansWithAeolusTooltip": "Activate this option to customize the build plans with Aeolus.",
-            "customizeBuildPlansTooltip": "Activate this option to customize the build plan for this exercise.",
+            "customizeBuildPlansWithAeolusTooltip": "Activate this option to customize the docker image and build plan which is executed on Artemis for each submission in a Docker container.",
+            "customizeBuildPlansTooltip": "Activate this option to customize the docker image and build plan which is executed on Artemis for each submission in a Docker container.",
             "coveredLineRatio": "Ratio Test-Covered Lines",
             "testwiseCoverageReport": {
                 "button": "Show testwise coverage",

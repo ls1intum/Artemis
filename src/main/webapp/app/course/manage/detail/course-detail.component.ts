@@ -304,7 +304,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
 
     getEnrollmentDetailSection(): DetailOverviewSection {
         const enrollmentDetails: Detail[] = [
-            { type: DetailType.Boolean, title: 'artemisApp.course.registrationEnabled.title', data: { boolean: this.course.enrollmentEnabled } },
+            { type: DetailType.Boolean, title: 'artemisApp.course.enrollmentEnabled.title', data: { boolean: this.course.enrollmentEnabled } },
             { type: DetailType.Boolean, title: 'artemisApp.course.unenrollmentEnabled.title', data: { boolean: this.course.unenrollmentEnabled } },
         ];
 
@@ -317,7 +317,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
                 { type: DetailType.Date, title: 'artemisApp.course.enrollmentEndDate', data: { date: this.course.enrollmentEndDate } },
                 {
                     type: DetailType.Markdown,
-                    title: 'artemisApp.course.registrationConfirmationMessage',
+                    title: 'artemisApp.course.enrollmentConfirmationMessage',
                     data: { innerHtml: this.markdownService.safeHtmlForMarkdown(this.course.enrollmentConfirmationMessage) },
                 },
             );

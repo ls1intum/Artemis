@@ -525,4 +525,19 @@ describe('Course Management Service', () => {
         req.flush(returnedFromService);
         tick();
     }));
+
+    it('getNumberOfAllowedComplaintsInCourse', () => {
+        const courseId = 42;
+        const teamMode = true;
+        const expectedCount = 69;
+
+        courseManagementService.getNumberOfAllowedComplaintsInCourse(courseId, teamMode).subscribe((received) => {
+            expect(received).toBe(expectedCount);
+        });
+
+        const res = httpMock.expectOne({ method: 'GET' });
+        expect(res.request.url).toBe(`api/courses/${courseId}/allowed-complaints?teamMode=true`);
+
+        res.flush(expectedCount);
+    });
 });

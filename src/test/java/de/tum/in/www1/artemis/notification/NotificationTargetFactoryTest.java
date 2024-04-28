@@ -1,13 +1,29 @@
 package de.tum.in.www1.artemis.notification;
 
 import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.FILE_SUBMISSION_SUCCESSFUL_TITLE;
-import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.*;
+import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.COURSES_TEXT;
+import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.COURSE_MANAGEMENT_TEXT;
+import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.DUPLICATE_TEST_CASE_TEXT;
+import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.EXAMS_TEXT;
+import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.EXERCISES_TEXT;
+import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.LECTURES_TEXT;
+import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.PROGRAMMING_EXERCISES_TEXT;
+import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.createAttachmentUpdatedTarget;
+import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.createExamProgrammingExerciseOrTestCaseTarget;
+import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.createExerciseReleasedTarget;
+import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.createExerciseTarget;
+import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.createExerciseUpdatedTarget;
+import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.extractNotificationUrl;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;

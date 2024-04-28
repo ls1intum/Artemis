@@ -14,8 +14,15 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.domain.quiz.*;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.domain.quiz.QuizPointStatistic;
+import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
+import de.tum.in.www1.artemis.domain.quiz.QuizQuestionStatistic;
+import de.tum.in.www1.artemis.repository.QuizPointStatisticRepository;
+import de.tum.in.www1.artemis.repository.QuizQuestionStatisticRepository;
+import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiNewResultService;
 
 @Profile(PROFILE_CORE)
