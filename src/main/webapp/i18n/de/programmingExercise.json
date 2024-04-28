@@ -26,7 +26,7 @@
                 "successMessageCleanup": "Die Bereinigung verlief erfolgreich. Alle Studierenden Repositories wurden gelöscht."
             },
             "reset": {
-                "pleaseSelectOperations": "Bitte wählen Sie die durchzuführenden Operationen für <strong>{{ title }}</strong> aus:",
+                "pleaseSelectOperations": "Bitte wähle die durchzuführenden Operationen für <strong>{{ title }}</strong> aus:",
                 "deleteBuildPlans": {
                     "title": "Lösche Build-Pläne der Studierenden (auf {{ ciPlatform }}).",
                     "info": "Die Build-Pläne werden automatisch neu erstellt, sobald Studierende erneut abgeben."
@@ -36,9 +36,9 @@
                     "warning": "Archivierung der Übung vor Aktivierung dieser Option wird empfohlen."
                 },
                 "deleteParticipationsSubmissionsAndResults": "Lösche Teilnahmen, Abgaben und Ergebnisse der Studierenden (in Artemis).",
-                "artefactsWarning": "Das Löschen von Teilnahmen, Abgaben und Ergebnissen von Studierenden, ohne dabei die zugehörigen Repositories und Build-Pläne zu entfernen, kann zu nicht gelöschten Artefakten auf {{ vcPlatform }} und {{ ciPlatform }} führen. Bitte überprüfen Sie sorgfältig, ob dies die gewünschte Aktion ist, bevor Sie den Vorgang fortsetzen.",
+                "artefactsWarning": "Das Löschen von Teilnahmen, Abgaben und Ergebnissen von Studierenden, ohne dabei die zugehörigen Repositories und Build-Pläne zu entfernen, kann zu nicht gelöschten Artefakten auf {{ vcPlatform }} und {{ ciPlatform }} führen. Bitte überprüfe sorgfältig, ob dies die gewünschte Aktion ist, bevor den Vorgang fortsetzen.",
                 "recreateBuildPlans": "Erstelle Build-Pläne der Aufgabe (BASE und SOLUTION) erneut und überschreibe frühere Änderungen.",
-                "question": "<strong>Warnung:</strong> Diese Aktion kann <strong>NICHT</strong> rückgängig gemacht werden!<br>Um Ihre Auswahl zu bestätigen, geben Sie bitte den Namen der Übung ein: <strong>{{ title }}</strong>",
+                "question": "<strong>Warnung:</strong> Diese Aktion kann <strong>NICHT</strong> rückgängig gemacht werden!<br>Um Ihre Auswahl zu bestätigen, gebe bitte den Namen der Übung ein: <strong>{{ title }}</strong>",
                 "successMessage": "Das Zurücksetzen war erfolgreich.",
                 "errorMessage": "Das Zurücksetzen war nicht erfolgreich."
             },
@@ -105,7 +105,7 @@
             "buildPlanFetchError": "Konnte keinen Build-Plan für diese Aufgabe finden. Das ist normal für ältere Aufgaben. Du kannst den Build-Plan im CI-System bearbeiten oder den Build-Plan in Artemis zurücksetzen, um einen neuen Build-Plan zu erstellen der hier bearbeitet werden kann.",
             "customizeBuildPlan": "Build-Plan anpassen",
             "customizeBuildPlanWithAeolus": "Build-Plan mit Aeolus anpassen",
-            "revertToTemplateBuildPlan": "Falls Sie mit Ihrem Build-Plan nicht zufrieden sind, können Sie ihn mit dem Zurücksetzen Knopf auf seine Vorlage zurücksetzen.",
+            "revertToTemplateBuildPlan": "Falls Du mit deinem Build-Plan nicht zufrieden bist, kannst Du ihn mit dem Zurücksetzen Knopf auf seine Vorlage zurücksetzen.",
             "runActionAlways": "Immer ausführen, auch wenn andere Aktionen fehlschlagen",
             "script": "Script",
             "parameters": "Parameter",
@@ -444,7 +444,7 @@
             "reEvaluateSuccessful": "{{number}} automatischen Ergebnisse wurden erfolgreich aktualisiert, einschließlich der Vorlage und der Lösung.",
             "reEvaluateFailed": "Die Neubewertung ist fehlgeschlagen: {{message}}",
             "editSelectedModal": {
-                "currentlyEdited": "Sie bearbeiten die folgenden Übungen:",
+                "currentlyEdited": "D bearbeitest die folgenden Übungen:",
                 "errorReadButton": "Ok",
                 "errorOccurred": "Die folgende Aufgaben konnten nicht bearbeitet werden:"
             },
@@ -569,8 +569,8 @@
             "withDependenciesTooltip": "Fügt dem generierten Projekt eine externe Apache commons-lang-Abhängigkeit als Beispiel dafür hinzu, wie Maven-Abhängigkeiten mit Artemis-Aufgaben verwendet werden sollten.",
             "recordTestwiseCoverage": "Testbasierte Code-Abdeckung aufzeichnen",
             "recordTestwiseCoverageTooltip": "Durch Aktivierung dieser Option wird die testbasierte Code-Abdeckung für das Lösungs-Repository aufgezeichnet. Diese Option ist nur für Java/Kotlin-Aufgaben mit nicht-sequentiellen Testläufen verfügbar.",
-            "customizeBuildPlansWithAeolusTooltip": "Aktivieren Sie diese Option, um die Build-Pläne mit Aeolus anzupassen.",
-            "customizeBuildPlansTooltip": "Aktivieren Sie diese Option, um die Build-Pläne für diese Aufgabe anzupassen.",
+            "customizeBuildPlansWithAeolusTooltip": "Aktiviere diese Option, um die Build-Pläne mit Aeolus anzupassen.",
+            "customizeBuildPlansTooltip": "Aktiviere diese Option, um die Build-Pläne für diese Aufgabe anzupassen.",
             "coveredLineRatio": "Anteil Test-Abgedeckter Zeilen",
             "testwiseCoverageReport": {
                 "button": "Testbasierte Code-Abdeckung anzeigen",
