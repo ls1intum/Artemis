@@ -1,6 +1,9 @@
+import com.diffplug.spotless.FormatterFunc
 import com.diffplug.spotless.FormatterStep
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
+
+import static com.diffplug.spotless.Formatter.NO_FILE_SENTINEL
 
 buildscript {
     repositories {
@@ -65,17 +68,17 @@ spotless {
             fileTree(rootDir) {
                 include "**/*.java"
                 exclude(
-                        "**/src/test/resources/test-data/repository-export/EncodingISO_8559_1.java",
-                        "**/node_modules/**",
-                        "**/out/**",
-                        "**/repos/**",
-                        "**/repos-download/**",
-                        "**/build/**",
-                        "**/src/main/generated/**",
-                        "**/src/main/resources/templates/**",
-                        "/docker/**",
-                        "checked-out-repos/**",
-                        "**/src/main/java/org/eclipse/**"
+                    "**/src/test/resources/test-data/repository-export/EncodingISO_8559_1.java",
+                    "**/node_modules/**",
+                    "**/out/**",
+                    "**/repos/**",
+                    "**/repos-download/**",
+                    "**/build/**",
+                    "**/src/main/generated/**",
+                    "**/src/main/resources/templates/**",
+                    "/docker/**",
+                    "checked-out-repos/**",
+                    "**/src/main/java/org/eclipse/**"
                 )
             }
         }
@@ -87,11 +90,18 @@ spotless {
 
         // Wildcard imports can't be resolved by spotless itself.
         // This will require the developer themselves to adhere to best practices.
-        addStep(FormatterStep.createNeverUpToDate("Refuse wildcard imports", str -> {
-            def violatingLines = str.lines().filter { it.matches(/import .*\*;/) }.toList()
-            if (!violatingLines.isEmpty()) {
-                throw new AssertionError("Do not use wildcard imports. 'spotlessApply' cannot resolve this issue.\n" +
-                    "The following lines violates this rule:\n" + violatingLines)
+        addStep(FormatterStep.createNeverUpToDate("Refuse wildcard imports", new FormatterFunc() {
+            @Override
+            String apply(String s) throws Exception {
+                apply(s, NO_FILE_SENTINEL)
+            }
+
+            @Override
+            String apply(String s, File file) throws Exception {
+                if (s =~ /\nimport .*\*;/) {
+                    throw new AssertionError("Do not use wildcard imports. 'spotlessApply' cannot resolve this issue.\n" +
+                        "The following file violates this rule: " + file.getName())
+                }
             }
         }))
     }
@@ -147,12 +157,12 @@ jar {
 private excludedClassFilesForReport(classDirectories) {
     classDirectories.setFrom(files(classDirectories.files.collect {
         fileTree(dir: it,
-                exclude: [
-                        "**/de/tum/in/www1/artemis/domain/**/*_*",
-                        "**/de/tum/in/www1/artemis/config/migration/entries/**",
-                        "**/org/eclipse/jgit/**",
-                        "**/gradle-wrapper.jar/**"
-                ]
+            exclude: [
+                "**/de/tum/in/www1/artemis/domain/**/*_*",
+                "**/de/tum/in/www1/artemis/config/migration/entries/**",
+                "**/org/eclipse/jgit/**",
+                "**/gradle-wrapper.jar/**"
+            ]
         )
     }))
 }
@@ -491,8 +501,8 @@ tasks.withType(Test).configureEach {
     testLogging {
         // set options for log level LIFECYCLE
         events TestLogEvent.FAILED,
-                TestLogEvent.PASSED,
-                TestLogEvent.SKIPPED
+            TestLogEvent.PASSED,
+            TestLogEvent.SKIPPED
         exceptionFormat TestExceptionFormat.FULL
         showExceptions true
         showCauses true
