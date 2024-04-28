@@ -283,7 +283,7 @@ public class QuizExerciseResource {
      * @param courseId id of the course of which all exercises should be fetched
      * @return the ResponseEntity with status 200 (OK) and the list of quiz exercises in body
      */
-    @GetMapping(value = "courses/{courseId}/quiz-exercises")
+    @GetMapping("courses/{courseId}/quiz-exercises")
     @EnforceAtLeastTutor
     public ResponseEntity<List<QuizExercise>> getQuizExercisesForCourse(@PathVariable Long courseId) {
         log.info("REST request to get all quiz exercises for the course with id : {}", courseId);

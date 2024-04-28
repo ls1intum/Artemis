@@ -372,7 +372,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      * @param commit          whether to commit after updating the files
      * @return {Map<String, String>} file submissions or the appropriate http error
      */
-    @PutMapping(value = "repository/{participationId}/files")
+    @PutMapping("repository/{participationId}/files")
     @EnforceAtLeastStudent
     public ResponseEntity<Map<String, String>> updateParticipationFiles(@PathVariable("participationId") Long participationId, @RequestBody List<FileSubmission> submissions,
             @RequestParam(defaultValue = "false") boolean commit) {
