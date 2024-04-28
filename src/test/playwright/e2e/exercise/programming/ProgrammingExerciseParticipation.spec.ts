@@ -90,7 +90,9 @@ test.describe('Programming exercise participation', () => {
             test('Makes a partially successful submission', async ({ page, programmingExerciseOverview }) => {
                 await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
                 let repoUrl = await programmingExerciseOverview.getRepoUrl();
-                repoUrl = repoUrl.replace('localhost', 'artemis-nginx');
+                if (process.env.CI === 'true') {
+                    repoUrl = repoUrl.replace('localhost', 'artemis-app');
+                }
                 repoUrl = repoUrl.replace(studentOne.username!, `${studentOne.username!}:${studentOne.password!}`);
                 console.log('Repo URL in UI: ' + repoUrl);
                 const urlParts = repoUrl.split('/');
@@ -236,7 +238,6 @@ async function makeGitSubmission(
     try {
         await exerciseRepo.addConfig('user.email', `${user.username}@example.com`);
         await exerciseRepo.addConfig('user.name', user.username);
-        exerciseRepo.env('GIT_SSL_NO_VERIFY', 'true');
         await exerciseRepo.commit(commitMessage);
         console.log('Changes committed successfully');
     } catch (error) {

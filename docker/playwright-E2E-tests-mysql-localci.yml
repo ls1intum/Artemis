@@ -21,8 +21,6 @@ services:
             - ./artemis/config/cypress-local.env
         volumes:
             - /var/run/docker.sock:/var/run/docker.sock
-        expose:
-            - "443"
 
     nginx:
         extends:
@@ -51,8 +49,6 @@ services:
             PLAYWRIGHT_DB_TYPE: 'MySQL'
         command: >
             sh -c '
-            echo "Checking connectivity to artemis-app..." &&
-            curl http://artemis-app:8080 &&
             cd /app/artemis/src/test/playwright &&
             chmod 777 /root &&
             npm ci &&

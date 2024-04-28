@@ -7,6 +7,7 @@ services:
         image: mcr.microsoft.com/playwright:v1.40.0-jammy
         pull_policy: if_not_present
         environment:
+            CI: 'true'
             BASE_URL: 'https://artemis-nginx'
             ADMIN_USERNAME: '${bamboo_artemis_admin_username}'
             ADMIN_PASSWORD: '${bamboo_artemis_admin_password}'
