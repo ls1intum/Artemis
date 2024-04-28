@@ -37,7 +37,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public record Lti13DeepLinkingResponse(@JsonProperty(IdTokenClaimNames.AUD) String aud, @JsonProperty(IdTokenClaimNames.ISS) String iss,
         @JsonProperty(IdTokenClaimNames.EXP) String exp, @JsonProperty(IdTokenClaimNames.IAT) String iat, @JsonProperty(IdTokenClaimNames.NONCE) String nonce,
         @JsonProperty(Claims.MSG) String message, @JsonProperty(Claims.LTI_DEPLOYMENT_ID) String deploymentId, @JsonProperty(Claims.MESSAGE_TYPE) String messageType,
-        @JsonProperty(Claims.LTI_VERSION) String ltiVersion, @JsonProperty(Claims.CONTENT_ITEMS) ArrayList<Map<String, Object>> contentItems, JsonNode deepLinkingSettings,
+        @JsonProperty(Claims.LTI_VERSION) String ltiVersion, @JsonProperty(Claims.CONTENT_ITEMS) List<Map<String, Object>> contentItems, JsonNode deepLinkingSettings,
         String clientRegistrationId, String returnUrl) {
 
     /**
