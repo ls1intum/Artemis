@@ -1,3 +1,4 @@
+import com.diffplug.spotless.FormatterStep
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 
@@ -84,13 +85,15 @@ spotless {
         removeUnusedImports()
         trimTrailingWhitespace()
 
-        custom 'Refuse wildcard imports', {
-            // Wildcard imports can't be resolved by spotless itself.
-            // This will require the developer themselves to adhere to best practices.
-            if (it =~ /\nimport .*\*;/) {
-                throw new AssertionError("Do not use wildcard imports.  'spotlessApply' cannot resolve this issue. The following class vioaltes this rule:\n" +  it)
+        // Wildcard imports can't be resolved by spotless itself.
+        // This will require the developer themselves to adhere to best practices.
+        addStep(FormatterStep.createNeverUpToDate("Refuse wildcard imports", str -> {
+            def violatingLines = str.lines().filter { it.matches(/import .*\*;/) }.toList()
+            if (!violatingLines.isEmpty()) {
+                throw new AssertionError("Do not use wildcard imports. 'spotlessApply' cannot resolve this issue.\n" +
+                    "The following lines violates this rule:\n" + violatingLines)
             }
-        }
+        }))
     }
 }
 
