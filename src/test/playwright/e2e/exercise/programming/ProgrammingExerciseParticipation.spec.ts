@@ -234,8 +234,9 @@ async function makeGitSubmission(
 
     console.log('Committing changes');
     try {
-        await exerciseRepo.addConfig('user.email', `${studentOne.username}@example.com`);
-        await exerciseRepo.addConfig('user.name', studentOne.username);
+        await exerciseRepo.addConfig('user.email', `${user.username}@example.com`);
+        await exerciseRepo.addConfig('user.name', user.username);
+        exerciseRepo.env('GIT_SSL_NO_VERIFY', 'true');
         await exerciseRepo.commit(commitMessage);
         console.log('Changes committed successfully');
     } catch (error) {
