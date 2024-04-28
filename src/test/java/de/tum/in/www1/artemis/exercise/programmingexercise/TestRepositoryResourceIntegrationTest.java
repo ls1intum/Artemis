@@ -1,7 +1,12 @@
 package de.tum.in.www1.artemis.exercise.programmingexercise;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
 
 import java.io.IOException;
 import java.nio.charset.Charset;

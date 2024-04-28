@@ -4,7 +4,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
-import com.thoughtworks.qdox.model.*;
+import com.thoughtworks.qdox.model.JavaAnnotation;
+import com.thoughtworks.qdox.model.JavaClass;
+import com.thoughtworks.qdox.model.JavaConstructor;
+import com.thoughtworks.qdox.model.JavaExecutable;
+import com.thoughtworks.qdox.model.JavaField;
+import com.thoughtworks.qdox.model.JavaMethod;
+import com.thoughtworks.qdox.model.JavaParameter;
 
 /**
  * This class represents the so-called diff of the solution type and the template type. The solution type is a fully defined type found in the solution of a programming exercise.
@@ -22,25 +28,25 @@ public class JavaClassDiff {
 
     private final String packageName;
 
-    boolean isInterfaceDifferent;
+    final boolean isInterfaceDifferent;
 
-    boolean isEnumDifferent;
+    final boolean isEnumDifferent;
 
-    boolean isAbstractDifferent;
+    final boolean isAbstractDifferent;
 
-    String superClassNameDiff;
+    final String superClassNameDiff;
 
-    List<JavaClass> superInterfacesDiff;
+    final List<JavaClass> superInterfacesDiff;
 
-    List<JavaAnnotation> annotationsDiff;
+    final List<JavaAnnotation> annotationsDiff;
 
-    List<JavaField> attributesDiff;
+    final List<JavaField> attributesDiff;
 
-    List<JavaField> enumsDiff;
+    final List<JavaField> enumsDiff;
 
-    List<JavaConstructor> constructorsDiff;
+    final List<JavaConstructor> constructorsDiff;
 
-    List<JavaMethod> methodsDiff;
+    final List<JavaMethod> methodsDiff;
 
     JavaClassDiff(JavaClass solutionClass, JavaClass templateClass) {
         this.solutionClass = solutionClass;

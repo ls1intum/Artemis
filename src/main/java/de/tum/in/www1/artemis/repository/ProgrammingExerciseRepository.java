@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.repository;
 
-import static de.tum.in.www1.artemis.config.Constants.*;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.in.www1.artemis.config.Constants.SHORT_NAME_PATTERN;
+import static de.tum.in.www1.artemis.config.Constants.TITLE_NAME_PATTERN;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;
@@ -23,10 +25,14 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.DomainObject_;
+import de.tum.in.www1.artemis.domain.Exercise_;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise_;
 import de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -118,7 +124,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
         if (exercises.size() != 1) {
             throw new EntityNotFoundException("No exercise or multiple exercises found for the given project key: " + projectKey);
         }
-        return exercises.get(0);
+        return exercises.getFirst();
     }
 
     /**

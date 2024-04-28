@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 
 import org.junit.jupiter.api.BeforeEach;

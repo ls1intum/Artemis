@@ -10,6 +10,7 @@ describe('LearningPathService', () => {
     let storageService: LearningPathStorageService;
     let httpService: HttpClient;
     let putStub: jest.SpyInstance;
+    let postStub: jest.SpyInstance;
     let getStub: jest.SpyInstance;
 
     beforeEach(() => {
@@ -23,6 +24,7 @@ describe('LearningPathService', () => {
                 storageService = TestBed.inject(LearningPathStorageService);
                 learningPathService = new LearningPathService(httpService, storageService);
                 putStub = jest.spyOn(httpService, 'put');
+                postStub = jest.spyOn(httpService, 'post');
                 getStub = jest.spyOn(httpService, 'get');
             });
     });
@@ -64,6 +66,11 @@ describe('LearningPathService', () => {
     it('should send a request to the server to get learning path id of the current user in the course', () => {
         learningPathService.getLearningPathId(1).subscribe();
         expect(getStub).toHaveBeenCalledExactlyOnceWith('api/courses/1/learning-path-id', { observe: 'response' });
+    });
+
+    it('should send a request to the server to generate learning path for course', () => {
+        learningPathService.generateLearningPath(1).subscribe();
+        expect(postStub).toHaveBeenCalledExactlyOnceWith('api/courses/1/learning-path', null, { observe: 'response' });
     });
 
     it('should send a request to the server to get competency progress for learning path', () => {

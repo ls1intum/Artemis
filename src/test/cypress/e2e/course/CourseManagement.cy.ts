@@ -252,7 +252,7 @@ describe.skip('Course management', () => {
         });
     });
 
-    describe('Course icon deletion', () => {
+    describe.only('Course icon deletion', () => {
         describe('Course within icon', () => {
             let course: Course;
 

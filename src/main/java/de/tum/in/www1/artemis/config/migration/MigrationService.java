@@ -6,7 +6,13 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.HashSet;
+import java.util.HexFormat;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -129,7 +135,7 @@ public class MigrationService {
         List<MigrationEntry> entryList = entryMap.values().stream().toList();
         if (!entryList.isEmpty()) {
             int startIndex = 1;
-            MigrationEntry baseEntry = entryList.get(0);
+            MigrationEntry baseEntry = entryList.getFirst();
             // Make sure the base date is not null. If it is, it was already caught and logged above.
             while (!StringUtils.hasLength(baseEntry.date()) && startIndex < entryList.size()) {
                 baseEntry = entryList.get(startIndex);

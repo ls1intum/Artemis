@@ -1,7 +1,12 @@
 package de.tum.in.www1.artemis.exercise.modelingexercise.compass.umlmodel.flowchart;
 
 import static com.google.gson.JsonParser.parseString;
-import static de.tum.in.www1.artemis.exercise.modelingexercise.compass.umlmodel.flowchart.FlowchartUtil.*;
+import static de.tum.in.www1.artemis.exercise.modelingexercise.compass.umlmodel.flowchart.FlowchartUtil.FLOWCHART_MODEL_1A;
+import static de.tum.in.www1.artemis.exercise.modelingexercise.compass.umlmodel.flowchart.FlowchartUtil.FLOWCHART_MODEL_1A_V3;
+import static de.tum.in.www1.artemis.exercise.modelingexercise.compass.umlmodel.flowchart.FlowchartUtil.FLOWCHART_MODEL_1B;
+import static de.tum.in.www1.artemis.exercise.modelingexercise.compass.umlmodel.flowchart.FlowchartUtil.FLOWCHART_MODEL_1B_V3;
+import static de.tum.in.www1.artemis.exercise.modelingexercise.compass.umlmodel.flowchart.FlowchartUtil.FLOWCHART_MODEL_2;
+import static de.tum.in.www1.artemis.exercise.modelingexercise.compass.umlmodel.flowchart.FlowchartUtil.FLOWCHART_MODEL_2_V3;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.InstanceOfAssertFactories.type;
 
@@ -11,7 +16,13 @@ import org.junit.jupiter.api.Test;
 
 import de.tum.in.www1.artemis.exercise.modelingexercise.compass.umlmodel.AbstractUMLDiagramTest;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
-import de.tum.in.www1.artemis.service.compass.umlmodel.flowchart.*;
+import de.tum.in.www1.artemis.service.compass.umlmodel.flowchart.Flowchart;
+import de.tum.in.www1.artemis.service.compass.umlmodel.flowchart.FlowchartDecision;
+import de.tum.in.www1.artemis.service.compass.umlmodel.flowchart.FlowchartFlowline;
+import de.tum.in.www1.artemis.service.compass.umlmodel.flowchart.FlowchartFunctionCall;
+import de.tum.in.www1.artemis.service.compass.umlmodel.flowchart.FlowchartInputOutput;
+import de.tum.in.www1.artemis.service.compass.umlmodel.flowchart.FlowchartProcess;
+import de.tum.in.www1.artemis.service.compass.umlmodel.flowchart.FlowchartTerminal;
 import de.tum.in.www1.artemis.service.compass.umlmodel.parsers.UMLModelParser;
 
 class FlowchartTest extends AbstractUMLDiagramTest {
