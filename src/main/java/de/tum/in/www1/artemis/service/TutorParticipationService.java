@@ -1,11 +1,18 @@
 package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
-import static de.tum.in.www1.artemis.domain.enumeration.FeedbackType.*;
-import static de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus.*;
-import static de.tum.in.www1.artemis.service.TutorParticipationService.FeedbackCorrectionErrorType.*;
+import static de.tum.in.www1.artemis.domain.enumeration.FeedbackType.MANUAL_UNREFERENCED;
+import static de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus.NOT_PARTICIPATED;
+import static de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus.REVIEWED_INSTRUCTIONS;
+import static de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus.TRAINED;
+import static de.tum.in.www1.artemis.service.TutorParticipationService.FeedbackCorrectionErrorType.UNNECESSARY_FEEDBACK;
 
-import java.util.*;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -17,7 +24,10 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.ExampleSubmission;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.TutorParticipationRepository;
