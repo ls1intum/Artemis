@@ -158,7 +158,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         try {
             return (await firstValueFrom(this.athenaService.getModelingFeedbackSuggestions(exercise, submission))) ?? [];
         } catch (error) {
-            this.alertService.closeAll();
             this.alertService.error('artemisApp.modelingAssessmentEditor.messages.loadFeedbackSuggestionsFailed');
             return [];
         }
