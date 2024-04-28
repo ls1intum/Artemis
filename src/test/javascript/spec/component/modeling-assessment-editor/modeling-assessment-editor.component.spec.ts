@@ -536,6 +536,7 @@ describe('ModelingAssessmentEditorComponent', () => {
     it('should return unreferenced feedback only', () => {
         component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
         component.modelingExercise.feedbackSuggestionModule = 'module_text_llm';
+        component.ngOnInit();
 
         const unreferencedFeedback = createTestFeedback();
         const referencedFeedback = createTestFeedback();
@@ -543,10 +544,9 @@ describe('ModelingAssessmentEditorComponent', () => {
         referencedFeedback.type = FeedbackType.MANUAL;
         referencedFeedback.reference = 'element_id';
 
-        component.unreferencedFeedback = [unreferencedFeedback];
-        component.referencedFeedback = [unreferencedFeedback];
+        component.feedbackSuggestions = [unreferencedFeedback, referencedFeedback];
 
-        expect(component.unreferencedFeedback).toHaveLength(1);
-        expect(component.unreferencedFeedback[0]?.id).toBe(unreferencedFeedback.id);
+        expect(component.unreferencedFeedbackSuggestions).toHaveLength(1);
+        expect(component.unreferencedFeedbackSuggestions[0]?.id).toBe(unreferencedFeedback.id);
     });
 });
