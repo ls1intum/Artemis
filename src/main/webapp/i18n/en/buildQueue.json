@@ -20,10 +20,11 @@
                 "priority": "Priority",
                 "buildCompletionDate": "Build Completion Date",
                 "buildDuration": "Build Duration",
-                "status": "Status",
                 "completion": "Completion",
                 "start": "Start",
-                "duration": "Duration"
+                "duration": "Duration",
+                "status": "Status",
+                "buildLogs": "Build Logs"
             },
             "cancelAll": "Cancel All"
         }

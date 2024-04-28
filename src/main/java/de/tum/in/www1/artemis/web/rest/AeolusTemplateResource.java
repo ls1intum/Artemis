@@ -25,7 +25,7 @@ import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
  */
 @Profile("aeolus | localci")
 @RestController
-@RequestMapping("api/aeolus")
+@RequestMapping("api/aeolus/")
 public class AeolusTemplateResource {
 
     private static final Logger log = LoggerFactory.getLogger(AeolusTemplateResource.class);
@@ -57,7 +57,7 @@ public class AeolusTemplateResource {
      * @param testCoverage   Whether the test coverage template should be used
      * @return The requested file, or 404 if the file doesn't exist
      */
-    @GetMapping({ "/templates/{language}/{projectType}", "/templates/{language}" })
+    @GetMapping({ "templates/{language}/{projectType}", "/templates/{language}" })
     @EnforceAtLeastEditor
     public ResponseEntity<String> getAeolusTemplate(@PathVariable ProgrammingLanguage language, @PathVariable Optional<ProjectType> projectType,
             @RequestParam(value = "staticAnalysis", defaultValue = "false") boolean staticAnalysis,
@@ -84,7 +84,7 @@ public class AeolusTemplateResource {
      * @param testCoverage   Whether the test coverage template should be used
      * @return The requested file, or 404 if the file doesn't exist
      */
-    @GetMapping({ "/templateScripts/{language}/{projectType}", "/templateScripts/{language}" })
+    @GetMapping({ "templateScripts/{language}/{projectType}", "/templateScripts/{language}" })
     @EnforceAtLeastEditor
     public ResponseEntity<String> getAeolusTemplateScript(@PathVariable ProgrammingLanguage language, @PathVariable Optional<ProjectType> projectType,
             @RequestParam(value = "staticAnalysis", defaultValue = "false") boolean staticAnalysis,

@@ -68,6 +68,7 @@ import { IrisModule } from 'app/iris/iris.module';
 import { DetailModule } from 'app/detail-overview-list/detail.module';
 import { BuildQueueComponent } from 'app/localci/build-queue/build-queue.component';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
+import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal.component';
 
 @NgModule({
     imports: [
@@ -142,6 +143,7 @@ import { SubmissionResultStatusModule } from 'app/overview/submission-result-sta
         EditCourseLtiConfigurationComponent,
         CourseManagementTabBarComponent,
         BuildQueueComponent,
+        ImageCropperModalComponent,
     ],
 })
 export class ArtemisCourseManagementModule {}

@@ -19,9 +19,12 @@ import com.hazelcast.map.IMap;
 
 import de.tum.in.www1.artemis.domain.BuildJob;
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.BuildStatus;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.repository.BuildJobRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.connectors.localci.buildagent.SharedQueueProcessingService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.*;
@@ -61,6 +64,9 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
     @Autowired
     private PageableSearchUtilService pageableSearchUtilService;
 
+    @Autowired
+    private ResultRepository resultRepository;
+
     @BeforeEach
     void createJobs() {
         // temporarily remove listener to avoid triggering build job processing
@@ -78,8 +84,14 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
                 jobTimingInfo, buildConfig, null);
         LocalCIBuildJobQueueItem finishedJobQueueItem2 = new LocalCIBuildJobQueueItem("4", "job4", "address1", 4, course.getId() + 1, 1, 1, 1, BuildStatus.FAILED, repositoryInfo,
                 jobTimingInfo, buildConfig, null);
-        finishedJob1 = new BuildJob(finishedJobQueueItem1, BuildStatus.SUCCESSFUL);
-        finishedJob2 = new BuildJob(finishedJobQueueItem2, BuildStatus.FAILED);
+        var result1 = new Result().successful(true).rated(true).score(100D).assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now());
+        var result2 = new Result().successful(false).rated(true).score(0D).assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now());
+
+        resultRepository.save(result1);
+        resultRepository.save(result2);
+
+        finishedJob1 = new BuildJob(finishedJobQueueItem1, BuildStatus.SUCCESSFUL, result1);
+        finishedJob2 = new BuildJob(finishedJobQueueItem2, BuildStatus.FAILED, result2);
 
         queuedJobs = hazelcastInstance.getQueue("buildJobQueue");
         processingJobs = hazelcastInstance.getMap("processingJobs");

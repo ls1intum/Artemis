@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.domain.Complaint;
 import de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.leaderboard.tutor.*;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data JPA repository for the Complaint entity.
@@ -517,4 +518,8 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
             GROUP BY cr.reviewer.id
             """)
     List<TutorLeaderboardAnsweredMoreFeedbackRequests> findTutorLeaderboardAnsweredMoreFeedbackRequestsByExerciseId(@Param("exerciseId") long exerciseId);
+
+    default Complaint findByIdElseThrow(Long complaintId) {
+        return findByIdWithEagerAssessor(complaintId).orElseThrow(() -> new EntityNotFoundException("Complaint", complaintId));
+    }
 }

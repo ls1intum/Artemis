@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.in.www1.artemis.domain.ComplaintResponse;
 import de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data JPA repository for the ComplaintResponse entity.
@@ -111,4 +112,8 @@ public interface ComplaintResponseRepository extends JpaRepository<ComplaintResp
     @Transactional // ok because of delete
     @Modifying
     void deleteByComplaint_Result_Id(long resultId);
+
+    default ComplaintResponse findByIdElseThrow(Long complaintResponseId) {
+        return findById(complaintResponseId).orElseThrow(() -> new EntityNotFoundException("ComplaintResponse", complaintResponseId));
+    }
 }
