@@ -99,7 +99,7 @@ test.describe('Programming exercise participation', () => {
                 const submission = javaPartiallySuccessfulSubmission;
                 const commitMessage = 'Initial implementation';
                 console.log('Making git submission');
-                await makeGitSubmission(exerciseRepo, repoName, submission, commitMessage);
+                await makeGitSubmission(exerciseRepo, repoName, studentOne, submission, commitMessage);
                 await fs.rmdir(`./test-exercise-repos/${repoName}`, { recursive: true });
                 await page.goto(`courses/${course.id}/exercises/${exercise.id!}`);
                 const resultScore = await programmingExerciseEditor.getResultScore();
