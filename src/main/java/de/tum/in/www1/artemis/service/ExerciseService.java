@@ -776,22 +776,6 @@ public class ExerciseService {
     }
 
     /**
-     * Checks if the user has achieved the minimum score.
-     *
-     * @param exercise the exercise that should be checked
-     * @param user     the user for which to check the score
-     * @param minScore the minimum score that should be achieved
-     * @return true if the user achieved the minimum score, false otherwise
-     */
-    public boolean hasScoredAtLeast(@NotNull Exercise exercise, @NotNull User user, double minScore) {
-        final var score = participantScoreService.getStudentAndTeamParticipationScoresAsDoubleStream(user, Set.of(exercise)).max();
-        if (score.isEmpty()) {
-            return false;
-        }
-        return score.getAsDouble() >= minScore;
-    }
-
-    /**
      * Removes competency from all exercises.
      *
      * @param exercises  set of exercises
@@ -807,7 +791,7 @@ public class ExerciseService {
      * For course exercises, notifications are used. For exam exercises, live events are used instead.
      *
      * @param originalExercise the original exercise
-     * @param updatedExercise  the updatedExercise
+     * @param updatedExercise  the updated exercise
      */
     public void notifyAboutExerciseChanges(Exercise originalExercise, Exercise updatedExercise, String notificationText) {
         if (originalExercise.isCourseExercise()) {
