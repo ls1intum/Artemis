@@ -120,8 +120,6 @@ public class ExerciseService {
 
     private final QuizBatchService quizBatchService;
 
-    private final ParticipantScoreService participantScoreService;
-
     private final ExamLiveEventsService examLiveEventsService;
 
     private final GroupNotificationScheduleService groupNotificationScheduleService;
@@ -132,8 +130,8 @@ public class ExerciseService {
             SubmissionRepository submissionRepository, ParticipantScoreRepository participantScoreRepository, UserRepository userRepository,
             ComplaintRepository complaintRepository, TutorLeaderboardService tutorLeaderboardService, ComplaintResponseRepository complaintResponseRepository,
             GradingCriterionRepository gradingCriterionRepository, FeedbackRepository feedbackRepository, RatingService ratingService, ExerciseDateService exerciseDateService,
-            ExampleSubmissionRepository exampleSubmissionRepository, QuizBatchService quizBatchService, ParticipantScoreService participantScoreService,
-            ExamLiveEventsService examLiveEventsService, GroupNotificationScheduleService groupNotificationScheduleService) {
+            ExampleSubmissionRepository exampleSubmissionRepository, QuizBatchService quizBatchService, ExamLiveEventsService examLiveEventsService,
+            GroupNotificationScheduleService groupNotificationScheduleService) {
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.authCheckService = authCheckService;
@@ -155,7 +153,6 @@ public class ExerciseService {
         this.ratingService = ratingService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.quizBatchService = quizBatchService;
-        this.participantScoreService = participantScoreService;
         this.examLiveEventsService = examLiveEventsService;
         this.groupNotificationScheduleService = groupNotificationScheduleService;
     }
