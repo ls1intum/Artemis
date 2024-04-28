@@ -37,7 +37,7 @@ test.describe('Programming exercise participation', () => {
             exercise = await exerciseAPIRequests.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.JAVA });
         });
 
-        test.describe.skip('Make a submission using code editor', () => {
+        test.describe('Make a submission using code editor', () => {
             test('Makes a failing submission', async ({ programmingExerciseOverview, programmingExerciseEditor }) => {
                 await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
                 await programmingExerciseOverview.openCodeEditor(exercise.id!);
@@ -173,7 +173,7 @@ test.describe('Programming exercise participation', () => {
     // Skip C tests within Jenkins used by the Postgres setup, since C is currently not supported there
     // See https://github.com/ls1intum/Artemis/issues/6994
     if (process.env.PLAYWRIGHT_DB_TYPE !== 'Postgres') {
-        test.describe.skip('C programming exercise', () => {
+        test.describe('C programming exercise', () => {
             let exercise: ProgrammingExercise;
 
             test.beforeEach('Setup c programming exercise', async ({ login, exerciseAPIRequests }) => {
@@ -193,7 +193,7 @@ test.describe('Programming exercise participation', () => {
         });
     }
 
-    test.describe.skip('Python programming exercise', () => {
+    test.describe('Python programming exercise', () => {
         let exercise: ProgrammingExercise;
 
         test.beforeEach('Setup python programming exercise', async ({ login, exerciseAPIRequests }) => {
