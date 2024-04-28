@@ -8,13 +8,13 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
-import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.TextBlock;
 import de.tum.in.www1.artemis.domain.TextSubmission;
-import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.repository.GradingCriterionRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
@@ -47,17 +47,13 @@ public class AthenaDTOConverterService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final ModelingExerciseRepository modelingExerciseRepository;
-
     private final GradingCriterionRepository gradingCriterionRepository;
 
     public AthenaDTOConverterService(TextBlockRepository textBlockRepository, TextExerciseRepository textExerciseRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, ModelingExerciseRepository modelingExerciseRepository,
-            GradingCriterionRepository gradingCriterionRepository) {
+            ProgrammingExerciseRepository programmingExerciseRepository, GradingCriterionRepository gradingCriterionRepository) {
         this.textBlockRepository = textBlockRepository;
         this.textExerciseRepository = textExerciseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
-        this.modelingExerciseRepository = modelingExerciseRepository;
         this.gradingCriterionRepository = gradingCriterionRepository;
     }
 
