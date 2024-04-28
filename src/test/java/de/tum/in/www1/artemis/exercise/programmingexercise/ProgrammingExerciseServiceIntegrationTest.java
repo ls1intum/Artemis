@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.exercise.programmingexercise;
 
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.IMPORT;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.ROOT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
@@ -18,7 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -37,11 +35,11 @@ import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.ExerciseIntegrationTestService;
 import de.tum.in.www1.artemis.util.PageableSearchUtilService;
 
-class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "progexserviceintegration";
 
-    private static final String BASE_RESOURCE = "/api/programming-exercises/";
+    private static final String BASE_RESOURCE = "/api/programming-exercises";
 
     @Autowired
     ProgrammingExerciseService programmingExerciseService;
@@ -76,8 +74,6 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
 
     @BeforeEach
     void setUp() {
-        bambooRequestMockProvider.enableMockingOfRequests();
-        bitbucketRequestMockProvider.enableMockingOfRequests();
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         userUtilService.addInstructor("other-instructors", TEST_PREFIX + "instructorother");
         additionalEmptyCourse = courseUtilService.addEmptyCourse();
@@ -166,14 +162,14 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void importExercise_tutor_forbidden() throws Exception {
         final var toBeImported = createToBeImported();
-        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", programmingExercise.getId().toString()), toBeImported, HttpStatus.FORBIDDEN);
+        request.post("/api/programming-exercises/import/" + programmingExercise.getId(), toBeImported, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "user1", roles = "USER")
     void importExercise_user_forbidden() throws Exception {
         final var toBeImported = createToBeImported();
-        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", programmingExercise.getId().toString()), toBeImported, HttpStatus.FORBIDDEN);
+        request.post("/api/programming-exercises/import/" + programmingExercise.getId(), toBeImported, HttpStatus.FORBIDDEN);
     }
 
     @Test

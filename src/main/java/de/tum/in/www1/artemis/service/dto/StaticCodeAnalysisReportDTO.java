@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 
+// TODO: convert to record
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class StaticCodeAnalysisReportDTO implements Serializable {
@@ -33,6 +34,7 @@ public class StaticCodeAnalysisReportDTO implements Serializable {
         this.issues = issues;
     }
 
+    // TODO: convert to record
     @JsonIgnoreProperties(ignoreUnknown = true)
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public static final class StaticCodeAnalysisIssue implements Serializable {

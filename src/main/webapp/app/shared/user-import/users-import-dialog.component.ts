@@ -4,6 +4,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
 import { HttpResponse } from '@angular/common/http';
 import { ExamUserDTO } from 'app/entities/exam-user-dto.model';
+import { cleanString } from 'app/shared/util/utils';
 import { Subject } from 'rxjs';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -14,6 +15,7 @@ import { parse } from 'papaparse';
 import { faArrowRight, faBan, faCheck, faCircleNotch, faSpinner, faUpload } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
+import { AdminUserService } from 'app/core/user/admin-user.service';
 
 const POSSIBLE_REGISTRATION_NUMBER_HEADERS = ['registrationnumber', 'matriculationnumber', 'matrikelnummer', 'number'];
 const POSSIBLE_LOGIN_HEADERS = ['login', 'user', 'username', 'benutzer', 'benutzername'];
@@ -41,10 +43,11 @@ export class UsersImportDialogComponent implements OnDestroy {
     @Input() exam: Exam | undefined;
     @Input() tutorialGroup: TutorialGroup | undefined;
     @Input() examUserMode: boolean;
+    @Input() adminUserMode: boolean;
 
     usersToImport: StudentDTO[] = [];
     examUsersToImport: ExamUserDTO[] = [];
-    notFoundUsers: StudentDTO[] = [];
+    notFoundUsers: Partial<StudentDTO>[] = [];
 
     isParsing = false;
     validationError?: string;
@@ -68,6 +71,7 @@ export class UsersImportDialogComponent implements OnDestroy {
         private alertService: AlertService,
         private examManagementService: ExamManagementService,
         private courseManagementService: CourseManagementService,
+        private adminUserService: AdminUserService,
         private tutorialGroupService: TutorialGroupsService,
     ) {}
 
@@ -111,7 +115,7 @@ export class UsersImportDialogComponent implements OnDestroy {
             this.isParsing = false;
         }
         if (csvUsers.length > 0) {
-            this.performExtraValidations(csvFile, csvUsers);
+            this.performExtraValidations(csvUsers);
         } else if (csvUsers.length === 0) {
             this.noUsersFoundError = true;
         }
@@ -162,10 +166,9 @@ export class UsersImportDialogComponent implements OnDestroy {
      * Performs validations on the parsed users
      * - checks if values for the required column {csvColumns.registrationNumber} are present
      *
-     * @param csvFile File that contains one user per row and has at least the columns specified in csvColumns
      * @param csvUsers Parsed list of users
      */
-    performExtraValidations(csvFile: File, csvUsers: CsvUser[]) {
+    performExtraValidations(csvUsers: CsvUser[]) {
         const invalidUserEntries = this.computeInvalidUserEntries(csvUsers);
         if (invalidUserEntries) {
             const maxLength = 30;
@@ -209,7 +212,7 @@ export class UsersImportDialogComponent implements OnDestroy {
         return new Promise((resolve, reject) => {
             parse(csvFile, {
                 header: true,
-                transformHeader: (header: string) => header.toLowerCase().replaceAll(' ', '').replaceAll('_', '').replaceAll('-', ''),
+                transformHeader: (header: string) => cleanString(header),
                 skipEmptyLines: true,
                 complete: (results) => resolve(results.data as CsvUser[]),
                 error: (error) => reject(error),
@@ -237,6 +240,21 @@ export class UsersImportDialogComponent implements OnDestroy {
                 next: (res) => this.onSaveSuccess(res),
                 error: () => this.onSaveError(),
             });
+        } else if (this.adminUserMode) {
+            // convert StudentDTO to User
+            const artemisUsers = this.usersToImport.map((student) => ({ ...student, visibleRegistrationNumber: student.registrationNumber }));
+            this.adminUserService.importAll(artemisUsers).subscribe({
+                next: (res) => {
+                    const convertedRes = new HttpResponse({
+                        body: res.body?.map((user) => ({
+                            ...user,
+                            registrationNumber: user.visibleRegistrationNumber,
+                        })),
+                    });
+                    this.onSaveSuccess(convertedRes);
+                },
+                error: () => this.onSaveError(),
+            });
         } else {
             this.alertService.error('artemisApp.importUsers.genericErrorMessage');
         }
@@ -261,9 +279,9 @@ export class UsersImportDialogComponent implements OnDestroy {
 
         for (const notFound of this.notFoundUsers) {
             if (
-                (notFound.registrationNumber?.length > 0 && notFound.registrationNumber === user.registrationNumber) ||
-                (notFound.login?.length > 0 && notFound.login === user.login) ||
-                (notFound.email?.length > 0 && notFound.email === user.email)
+                (notFound.registrationNumber?.length && notFound.registrationNumber === user.registrationNumber) ||
+                (notFound.login?.length && notFound.login === user.login) ||
+                (notFound.email?.length && notFound.email === user.email)
             ) {
                 return true;
             }
@@ -298,7 +316,7 @@ export class UsersImportDialogComponent implements OnDestroy {
      * Callback method that is called when the import request was successful
      * @param {HttpResponse<StudentDTO[]>} notFoundUsers - List of users that could NOT be imported since they were not found
      */
-    onSaveSuccess(notFoundUsers: HttpResponse<StudentDTO[]>) {
+    onSaveSuccess(notFoundUsers: HttpResponse<Partial<StudentDTO>[]>) {
         this.isImporting = false;
         this.hasImported = true;
         this.notFoundUsers = notFoundUsers.body! || [];

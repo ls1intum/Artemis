@@ -35,7 +35,8 @@ export interface IResultService {
     find: (resultId: number) => Observable<EntityResponseType>;
     getResultsForExerciseWithPointsPerGradingCriterion: (exerciseId: number, req?: any) => Observable<ResultsWithPointsArrayResponseType>;
     getFeedbackDetailsForResult: (participationId: number, result: Result) => Observable<HttpResponse<Feedback[]>>;
-    delete: (participationId: number, resultId: number) => Observable<HttpResponse<void>>;
+    getResultsWithPointsPerGradingCriterion: (exercise: Exercise) => Observable<ResultsWithPointsArrayResponseType>;
+    triggerDownloadCSV: (rows: string[], csvFileName: string) => void;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -197,10 +198,6 @@ export class ResultService implements IResultService {
         );
     }
 
-    delete(participationId: number, resultId: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resultResourceUrl}/${resultId}`, { observe: 'response' });
-    }
-
     public convertResultDatesFromClient(result: Result): Result {
         return Object.assign({}, result, {
             completionDate: convertDateFromClient(result.completionDate),
@@ -220,9 +217,11 @@ export class ResultService implements IResultService {
             res.body.forEach((resultWithPoints: ResultWithPointsPerGradingCriterion) => {
                 this.convertResultDatesFromServer(resultWithPoints.result);
                 const pointsMap = new Map<number, number>();
-                Object.keys(resultWithPoints.pointsPerCriterion).forEach((key) => {
-                    pointsMap.set(Number(key), resultWithPoints.pointsPerCriterion[key]);
-                });
+                if (resultWithPoints.pointsPerCriterion) {
+                    Object.keys(resultWithPoints.pointsPerCriterion).forEach((key) => {
+                        pointsMap.set(Number(key), resultWithPoints.pointsPerCriterion[key]);
+                    });
+                }
                 resultWithPoints.pointsPerCriterion = pointsMap;
             });
         }

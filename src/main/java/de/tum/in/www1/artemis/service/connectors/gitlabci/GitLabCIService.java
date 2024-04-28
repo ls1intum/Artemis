@@ -11,7 +11,11 @@ import java.util.Optional;
 import org.gitlab4j.api.GitLabApi;
 import org.gitlab4j.api.GitLabApiException;
 import org.gitlab4j.api.ProjectApi;
-import org.gitlab4j.api.models.*;
+import org.gitlab4j.api.models.Pipeline;
+import org.gitlab4j.api.models.PipelineFilter;
+import org.gitlab4j.api.models.PipelineStatus;
+import org.gitlab4j.api.models.Project;
+import org.gitlab4j.api.models.Variable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,18 +31,18 @@ import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.GitLabCIException;
-import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.BuildLogEntryService;
+import de.tum.in.www1.artemis.repository.BuildPlanRepository;
 import de.tum.in.www1.artemis.service.UriService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.ci.AbstractContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.ci.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.TestResultsDTO;
-import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 
 @Profile("gitlabci")
 @Service
 public class GitLabCIService extends AbstractContinuousIntegrationService {
+
+    private static final String GITLAB_CI_FILE_EXTENSION = ".yml";
 
     private static final Logger log = LoggerFactory.getLogger(GitLabCIService.class);
 
@@ -96,11 +100,8 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     @Value("${artemis.version-control.token}")
     private String gitlabToken;
 
-    public GitLabCIService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository, BuildLogEntryService buildLogService,
-            GitLabApi gitlab, UriService uriService, BuildPlanRepository buildPlanRepository, GitLabCIBuildPlanService buildPlanService,
-            ProgrammingLanguageConfiguration programmingLanguageConfiguration, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository,
-            TestwiseCoverageService testwiseCoverageService) {
-        super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, testwiseCoverageService);
+    public GitLabCIService(GitLabApi gitlab, UriService uriService, BuildPlanRepository buildPlanRepository, GitLabCIBuildPlanService buildPlanService,
+            ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
         this.gitlab = gitlab;
         this.uriService = uriService;
         this.buildPlanRepository = buildPlanRepository;
@@ -112,7 +113,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUri repositoryUri, VcsRepositoryUri testRepositoryUri,
             VcsRepositoryUri solutionRepositoryUri) {
         addBuildPlanToProgrammingExerciseIfUnset(exercise);
-        setupGitLabCIConfiguration(repositoryUri, exercise, planKey);
+        setupGitLabCIConfiguration(repositoryUri, exercise, generateBuildPlanId(exercise.getProjectKey(), planKey));
         // TODO: triggerBuild(repositoryUri, exercise.getBranch());
     }
 
@@ -126,7 +127,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
             project.setSharedRunnersEnabled(true);
             project.setAutoDevopsEnabled(false);
 
-            final String buildPlanUrl = buildPlanService.generateBuildPlanURL(exercise);
+            final String buildPlanUrl = buildPlanService.generateBuildPlanURL(exercise) + "&file-extension=" + GITLAB_CI_FILE_EXTENSION;
             project.setCiConfigPath(buildPlanUrl);
 
             projectApi.updateProject(project);
@@ -200,7 +201,11 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
         // When sending the build results back, the build plan key is used to identify the participation.
         // Therefore, we return the key here even though GitLab CI does not need it.
-        return targetExercise.getProjectKey() + "-" + targetPlanName.toUpperCase().replaceAll("[^A-Z0-9]", "");
+        return generateBuildPlanId(targetExercise.getProjectKey(), targetPlanName);
+    }
+
+    private String generateBuildPlanId(String projectKey, String planKey) {
+        return projectKey + "-" + planKey.toUpperCase().replaceAll("[^A-Z0-9]", "");
     }
 
     @Override

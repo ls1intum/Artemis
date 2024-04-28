@@ -1,8 +1,14 @@
 package de.tum.in.www1.artemis.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.RETURNS_MOCKS;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
+import java.security.Principal;
 import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
@@ -15,13 +21,18 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.user.UserUtilService;
+import de.tum.in.www1.artemis.web.websocket.dto.SubmissionPatch;
 import de.tum.in.www1.artemis.web.websocket.team.ParticipationTeamWebsocketService;
 
 class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationIndependentTest {
@@ -38,12 +49,17 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
     private ModelingExerciseUtilService modelingExerciseUtilService;
 
     @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
+
+    @Autowired
     private ExerciseUtilService exerciseUtilService;
 
     @Autowired
     private ParticipationUtilService participationUtilService;
 
     private StudentParticipation participation;
+
+    private StudentParticipation textParticipation;
 
     private static String websocketTopic(Participation participation) {
         return "/topic/participations/" + participation.getId() + "/team";
@@ -57,6 +73,10 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
         Course course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
         ModelingExercise modelingExercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
         participation = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student1");
+
+        Course textCourse = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
+        TextExercise textExercise = exerciseUtilService.findTextExerciseWithTitle(textCourse.getExercises(), "Text");
+        textParticipation = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
 
         closeable = MockitoAnnotations.openMocks(this);
         participationTeamWebsocketService.clearDestinationTracker();
@@ -100,9 +120,89 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
         assertThat(participationTeamWebsocketService.getDestinationTracker()).as("Correct session was removed.").containsKey(stompHeaderAccessor2.getSessionId());
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testPatchModelingSubmission() {
+        SubmissionPatch patch = new SubmissionPatch(participation, null);
+
+        // when we submit a patch ...
+        participationTeamWebsocketService.patchModelingSubmission(participation.getId(), patch, getPrincipalMock());
+        // the patch should be broadcast.
+        verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(websocketTopic(participation), List.of());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testPatchModelingSubmissionWithWrongPrincipal() {
+        SubmissionPatch patch = new SubmissionPatch(participation, null);
+
+        // when we submit a patch, but with the wrong user ...
+        participationTeamWebsocketService.patchModelingSubmission(participation.getId(), patch, getPrincipalMock("student2"));
+        // the patch should not be broadcast.
+        verify(websocketMessagingService, timeout(2000).times(0)).sendMessage(websocketTopic(participation), List.of());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUpdateModelingSubmission() {
+        ModelingSubmission submission = new ModelingSubmission();
+
+        // when we submit a new modeling submission ...
+        participationTeamWebsocketService.updateModelingSubmission(participation.getId(), submission, getPrincipalMock());
+        // the submission should be handled by the service (i.e. saved), ...
+        verify(modelingSubmissionService, timeout(2000).times(1)).handleModelingSubmission(any(), any(), any());
+        // but it should NOT be broadcast (sync is handled with patches only).
+        verify(websocketMessagingService, timeout(2000).times(0)).sendMessage(websocketTopic(participation), List.of());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUpdateModelingSubmissionWithWrongPrincipal() {
+        ModelingSubmission submission = new ModelingSubmission();
+
+        // when we submit a new modeling submission with the wrong user ...
+        participationTeamWebsocketService.updateModelingSubmission(participation.getId(), submission, getPrincipalMock("student2"));
+        // the submission is NOT saved ...
+        verify(modelingSubmissionService, timeout(2000).times(0)).handleModelingSubmission(any(), any(), any());
+        // it is also not broadcast.
+        verify(websocketMessagingService, timeout(2000).times(0)).sendMessage(websocketTopic(participation), List.of());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUpdateTextSubmission() {
+        TextSubmission submission = new TextSubmission();
+
+        // when we submit a new text submission ...
+        participationTeamWebsocketService.updateTextSubmission(textParticipation.getId(), submission, getPrincipalMock());
+        // the submission should be handled by the service (i.e. saved), ...
+        verify(textSubmissionService, timeout(2000).times(1)).handleTextSubmission(any(), any(), any());
+        // and it should be broadcast (unlike modeling exercises).
+        verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(websocketTopic(textParticipation), List.of());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testStartTyping() {
+        participationTeamWebsocketService.startTyping(participation.getId(), getPrincipalMock());
+        verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(websocketTopic(participation), List.of());
+    }
+
     private StompHeaderAccessor getStompHeaderAccessorMock(String fakeSessionId) {
         StompHeaderAccessor stompHeaderAccessor = mock(StompHeaderAccessor.class, RETURNS_MOCKS);
         when(stompHeaderAccessor.getSessionId()).thenReturn(fakeSessionId);
         return stompHeaderAccessor;
+    }
+
+    private Principal getPrincipalMock() {
+        Principal principal = mock(Principal.class);
+        when(principal.getName()).thenReturn(TEST_PREFIX + "student1");
+        return principal;
+    }
+
+    private Principal getPrincipalMock(String username) {
+        Principal principal = mock(Principal.class);
+        when(principal.getName()).thenReturn(TEST_PREFIX + username);
+        return principal;
     }
 }

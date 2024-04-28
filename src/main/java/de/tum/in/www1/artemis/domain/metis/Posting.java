@@ -3,8 +3,11 @@ package de.tum.in.www1.artemis.domain.metis;
 import java.time.ZonedDateTime;
 import java.util.Set;
 
-import javax.persistence.*;
-import javax.validation.constraints.Size;
+import jakarta.persistence.Column;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.Transient;
+import jakarta.validation.constraints.Size;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;

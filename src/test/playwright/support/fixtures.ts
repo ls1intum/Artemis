@@ -58,6 +58,8 @@ import { FileUploadExerciseAssessmentPage } from './pageobjects/assessment/FileU
 import { FileUploadExerciseFeedbackPage } from './pageobjects/exercises/file-upload/FileUploadExerciseFeedbackPage';
 import { ProgrammingExerciseOverviewPage } from './pageobjects/exercises/programming/ProgrammingExerciseOverviewPage';
 import { RepositoryPage } from './pageobjects/exercises/programming/RepositoryPage';
+import { ExamGradingPage } from './pageobjects/exam/ExamGradingPage';
+import { ExamScoresPage } from './pageobjects/exam/ExamScoresPage';
 
 /*
  * Define custom types for fixtures
@@ -90,9 +92,11 @@ export type ArtemisPageObjects = {
     examDetails: ExamDetailsPage;
     examExerciseGroupCreation: ExamExerciseGroupCreationPage;
     examExerciseGroups: ExamExerciseGroupsPage;
+    examGrading: ExamGradingPage;
     examNavigation: ExamNavigationBar;
     examManagement: ExamManagementPage;
     examParticipation: ExamParticipation;
+    examScores: ExamScoresPage;
     examStartEnd: ExamStartEndPage;
     examTestRun: ExamTestRunPage;
     studentExamManagement: StudentExamManagementPage;
@@ -207,6 +211,9 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     examExerciseGroups: async ({ page }, use) => {
         await use(new ExamExerciseGroupsPage(page));
     },
+    examGrading: async ({ page }, use) => {
+        await use(new ExamGradingPage(page));
+    },
     examManagement: async ({ page }, use) => {
         await use(new ExamManagementPage(page));
     },
@@ -230,6 +237,9 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
                 page,
             ),
         );
+    },
+    examScores: async ({ page }, use) => {
+        await use(new ExamScoresPage(page));
     },
     examStartEnd: async ({ page }, use) => {
         await use(new ExamStartEndPage(page));

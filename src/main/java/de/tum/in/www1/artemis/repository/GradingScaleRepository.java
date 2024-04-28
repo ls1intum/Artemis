@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
@@ -241,6 +241,6 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
         for (int i = 1; i < gradingScales.size(); i++) {
             deleteById(gradingScales.get(i).getId());
         }
-        return gradingScales.get(0);
+        return gradingScales.getFirst();
     }
 }

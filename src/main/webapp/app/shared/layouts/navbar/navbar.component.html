@@ -292,6 +292,14 @@
                             <span jhiTranslate="global.menu.admin.lti"></span>
                         </a>
                     }
+                    @if (standardizedCompetenciesEnabled) {
+                        <li>
+                            <a class="dropdown-item" routerLink="/admin/standardized-competencies" routerLinkActive="active" (click)="collapseNavbar()">
+                                <fa-icon [icon]="faFlag" [fixedWidth]="true" />
+                                <span jhiTranslate="global.menu.admin.standardizedCompetencies"></span>
+                            </a>
+                        </li>
+                    }
                     <!-- jhipster-needle-add-element-to-admin-menu - JHipster will add entities to the admin menu here -->
                 </ul>
             </li>
@@ -324,6 +332,9 @@
         <div>
             <ol class="breadcrumb">
                 @for (breadcrumb of breadcrumbs; track breadcrumb; let i = $index) {
+                    @if (i !== 0) {
+                        <fa-icon [icon]="faChevronRight" size="xs" class="breadcrumb-divider mx-2" />
+                    }
                     <li class="breadcrumb-item">
                         @if (breadcrumb && breadcrumb.translate) {
                             <a

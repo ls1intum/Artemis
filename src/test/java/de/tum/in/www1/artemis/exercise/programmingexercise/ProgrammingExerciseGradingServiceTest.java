@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.exercise.programmingexercise;
 
 import static de.tum.in.www1.artemis.config.Constants.TEST_CASES_DUPLICATE_NOTIFICATION;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.ROOT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.timeout;
@@ -17,10 +16,9 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import javax.mail.internet.MimeMessage;
+import jakarta.mail.internet.MimeMessage;
 
 import org.assertj.core.data.Offset;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -31,7 +29,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -61,7 +59,6 @@ import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.service.util.RoundingUtil;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseGradingResource;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGradingStatisticsDTO;
 
 /**
@@ -75,7 +72,7 @@ import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGradingStatisticsD
  * <li>{@link ExamProgrammingExerciseGradingServiceTest} - for exercises in an exam setting.</li>
  * </ul>
  */
-abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "progexgradingservice";
 
@@ -156,7 +153,6 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         }
         result = new Result();
         result.setParticipation(participation);
-        bambooRequestMockProvider.enableMockingOfRequests();
     }
 
     /**
@@ -238,11 +234,6 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
             super.examRepository.save(exam);
             return programmingExercise;
         }
-    }
-
-    @AfterEach
-    void tearDown() {
-        bambooRequestMockProvider.reset();
     }
 
     private Map<String, ProgrammingExerciseTestCase> getTestCases(ProgrammingExercise programmingExercise) {
@@ -618,8 +609,8 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         changeTestCaseWeights(testCases);
 
         // re-evaluate
-        final var endpoint = ProgrammingExerciseGradingResource.RE_EVALUATE.replace("{exerciseId}", programmingExercise.getId().toString());
-        final var response = request.putWithResponseBody(ROOT + endpoint, "{}", Integer.class, HttpStatus.OK);
+        final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/grading/re-evaluate";
+        final var response = request.putWithResponseBody("/api" + endpoint, "{}", Integer.class, HttpStatus.OK);
         assertThat(response).isEqualTo(7);
 
         // this fixes an issue with the authentication context after a mock request
@@ -677,8 +668,8 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         changeTestCaseWeights(testCases);
 
         // re-evaluate
-        final var endpoint = ProgrammingExerciseGradingResource.RE_EVALUATE.replace("{exerciseId}", programmingExercise.getId().toString());
-        final var response = request.putWithResponseBody(ROOT + endpoint, "{}", Integer.class, HttpStatus.OK);
+        final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/grading/re-evaluate";
+        final var response = request.putWithResponseBody("/api" + endpoint, "{}", Integer.class, HttpStatus.OK);
         assertThat(response).isEqualTo(7);
 
         // this fixes an issue with the authentication context after a mock request
@@ -1231,8 +1222,8 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         createTestParticipationsWithResults();
 
         // get statistics
-        final var endpoint = ProgrammingExerciseGradingResource.STATISTICS.replace("{exerciseId}", programmingExerciseSCAEnabled.getId().toString());
-        final var statistics = request.get(ROOT + endpoint, HttpStatus.OK, ProgrammingExerciseGradingStatisticsDTO.class);
+        final var endpoint = "/programming-exercises/" + programmingExerciseSCAEnabled.getId() + "/grading/statistics";
+        final var statistics = request.get("/api" + endpoint, HttpStatus.OK, ProgrammingExerciseGradingStatisticsDTO.class);
 
         assertThat(statistics.getNumParticipations()).isEqualTo(5);
 

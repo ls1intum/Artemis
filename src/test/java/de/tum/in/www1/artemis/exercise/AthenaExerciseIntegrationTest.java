@@ -1,6 +1,9 @@
 package de.tum.in.www1.artemis.exercise;
 
-import static de.tum.in.www1.artemis.connector.AthenaRequestMockProvider.*;
+import static de.tum.in.www1.artemis.connector.AthenaRequestMockProvider.ATHENA_MODULE_PROGRAMMING_TEST;
+import static de.tum.in.www1.artemis.connector.AthenaRequestMockProvider.ATHENA_MODULE_TEXT_TEST;
+import static de.tum.in.www1.artemis.connector.AthenaRequestMockProvider.ATHENA_RESTRICTED_MODULE_PROGRAMMING_TEST;
+import static de.tum.in.www1.artemis.connector.AthenaRequestMockProvider.ATHENA_RESTRICTED_MODULE_TEXT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -27,7 +30,9 @@ import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
 class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
@@ -151,7 +156,7 @@ class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
 
         course.setRestrictedAthenaModulesAccess(false);
 
-        request.getMvc().perform(courseTestService.buildUpdateCourse(course.getId(), course)).andExpect(status().isBadRequest());
+        request.performMvcRequest(courseTestService.buildUpdateCourse(course.getId(), course)).andExpect(status().isBadRequest());
     }
 
     @Test
@@ -178,7 +183,7 @@ class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
 
         // Revoke access to restricted Athena modules for the course
         course.setRestrictedAthenaModulesAccess(false);
-        MvcResult result = request.getMvc().perform(courseTestService.buildUpdateCourse(course.getId(), course)).andExpect(status().isOk()).andReturn();
+        MvcResult result = request.performMvcRequest(courseTestService.buildUpdateCourse(course.getId(), course)).andExpect(status().isOk()).andReturn();
         Course updatedCourse = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
 
         assertThat(updatedCourse.getRestrictedAthenaModulesAccess()).as("restricted Athena modules access was correctly updated for the course")

@@ -48,9 +48,6 @@ export class MockComplaintService implements IComplaintService {
         }
         return of(MockComplaintResponse);
     }
-    getNumberOfAllowedComplaintsInCourse(courseId: number): Observable<number> {
-        return of(3);
-    }
 
     findAllByCourseId(courseId: number, complaintType: ComplaintType): Observable<EntityResponseTypeArray> {
         return of(MockComplaintArrayResponse);
@@ -73,10 +70,6 @@ export class MockComplaintService implements IComplaintService {
     }
 
     getComplaintsForTestRun(exerciseId: number): Observable<EntityResponseTypeArray> {
-        return of(MockComplaintArrayResponse);
-    }
-
-    getMoreFeedbackRequestsForTutor(exerciseId: number): Observable<EntityResponseTypeArray> {
         return of(MockComplaintArrayResponse);
     }
 

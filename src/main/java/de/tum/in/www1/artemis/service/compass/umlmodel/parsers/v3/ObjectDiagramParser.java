@@ -1,18 +1,32 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.parsers.v3;
 
-import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.*;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.ELEMENT_ATTRIBUTES;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.ELEMENT_ID;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.ELEMENT_METHODS;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.ELEMENT_NAME;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.ELEMENT_TYPE;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.RELATIONSHIP_SOURCE;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.RELATIONSHIP_TARGET;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLAttribute;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLMethod;
-import de.tum.in.www1.artemis.service.compass.umlmodel.object.*;
+import de.tum.in.www1.artemis.service.compass.umlmodel.object.UMLObject;
+import de.tum.in.www1.artemis.service.compass.umlmodel.object.UMLObjectAttribute;
+import de.tum.in.www1.artemis.service.compass.umlmodel.object.UMLObjectDiagram;
+import de.tum.in.www1.artemis.service.compass.umlmodel.object.UMLObjectLink;
+import de.tum.in.www1.artemis.service.compass.umlmodel.object.UMLObjectMethod;
 import de.tum.in.www1.artemis.service.compass.umlmodel.parsers.UMLModelParser;
 
 public class ObjectDiagramParser {

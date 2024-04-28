@@ -16,7 +16,15 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.FileUploadExercise;
+import de.tum.in.www1.artemis.domain.FileUploadSubmission;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
@@ -403,10 +411,6 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
             """)
     <T extends Submission> List<T> findAllByParticipationExerciseIdAndResultAssessorIgnoreTestRuns(@Param("exerciseId") Long exerciseId, @Param("assessor") User assessor);
 
-    /**
-     * @param submissionId the submission id we are interested in
-     * @return the submission with its feedback and assessor
-     */
     @Query("""
             SELECT DISTINCT submission
             FROM Submission submission
@@ -417,6 +421,20 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
             WHERE submission.id = :submissionId
             """)
     Optional<Submission> findWithEagerResultAndFeedbackById(@Param("submissionId") long submissionId);
+
+    @Query("""
+            SELECT DISTINCT submission
+            FROM Submission submission
+                LEFT JOIN FETCH submission.results r
+                LEFT JOIN FETCH r.feedbacks f
+                LEFT JOIN FETCH f.testCase
+                LEFT JOIN FETCH r.assessor
+                LEFT JOIN FETCH submission.participation p
+                LEFT JOIN FETCH p.team t
+                LEFT JOIN FETCH t.students
+            WHERE submission.id = :submissionId
+            """)
+    Optional<Submission> findWithEagerResultAndFeedbackAndTeamStudentsById(@Param("submissionId") long submissionId);
 
     /**
      * Initializes a new text, modeling or file upload submission (depending on the type of the given exercise), connects it with the given participation and stores it in the
@@ -467,22 +485,35 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     }
 
     /**
-     * Get the submission with the given id from the database. The submission is loaded together with its result, the feedback of the result and the assessor of the
-     * result. Throws an EntityNotFoundException if no submission could be found for the given id.
+     * Get the submission with the given id from the database. The submission is loaded together with its result, the feedback of the result and the assessor of the result.
      *
      * @param submissionId the id of the submission that should be loaded from the database
      * @return the submission with the given id
+     * @throws EntityNotFoundException if no submission could be found for the given id
      */
     default Submission findOneWithEagerResultAndFeedback(long submissionId) {
-        return this.findWithEagerResultAndFeedbackById(submissionId).orElseThrow(() -> new EntityNotFoundException("Submission with id \"" + submissionId + "\" does not exist"));
+        return findWithEagerResultAndFeedbackById(submissionId).orElseThrow(() -> new EntityNotFoundException("Submission with id \"" + submissionId + "\" does not exist"));
     }
 
     /**
-     * Get the submission with the given id from the database. The submission is loaded together with its results and the assessors. Throws an EntityNotFoundException if no
-     * submission could be found for the given id.
+     * Get the submission with the given id from the database. The submission is loaded together with its result, the feedback of the result, the assessor of the result and the
+     * team students of the participation.
      *
      * @param submissionId the id of the submission that should be loaded from the database
      * @return the submission with the given id
+     * @throws EntityNotFoundException if no submission could be found for the given id
+     */
+    default Submission findOneWithEagerResultAndFeedbackAndTeamStudents(long submissionId) {
+        return findWithEagerResultAndFeedbackAndTeamStudentsById(submissionId)
+                .orElseThrow(() -> new EntityNotFoundException("Submission with id \"" + submissionId + "\" does not exist"));
+    }
+
+    /**
+     * Get the submission with the given id from the database. The submission is loaded together with its results and the assessors.
+     *
+     * @param submissionId the id of the submission that should be loaded from the database
+     * @return the submission with the given id
+     * @throws EntityNotFoundException if no submission could be found for the given id
      */
     default Submission findByIdWithResultsElseThrow(long submissionId) {
         return findWithEagerResultsAndAssessorById(submissionId).orElseThrow(() -> new EntityNotFoundException("Submission", +submissionId));

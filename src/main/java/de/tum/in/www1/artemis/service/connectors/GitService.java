@@ -16,29 +16,68 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import javax.annotation.Nullable;
-import javax.annotation.PostConstruct;
-import javax.validation.constraints.NotNull;
+import jakarta.annotation.Nullable;
+import jakarta.annotation.PostConstruct;
+import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.HiddenFileFilter;
+import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.lang3.StringUtils;
-import org.eclipse.jgit.api.*;
-import org.eclipse.jgit.api.errors.*;
+import org.eclipse.jgit.api.CloneCommand;
+import org.eclipse.jgit.api.CommitCommand;
+import org.eclipse.jgit.api.FetchCommand;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.GitCommand;
+import org.eclipse.jgit.api.LsRemoteCommand;
+import org.eclipse.jgit.api.PullCommand;
+import org.eclipse.jgit.api.PullResult;
+import org.eclipse.jgit.api.PushCommand;
+import org.eclipse.jgit.api.ResetCommand;
+import org.eclipse.jgit.api.Status;
+import org.eclipse.jgit.api.TransportCommand;
+import org.eclipse.jgit.api.TransportConfigCallback;
+import org.eclipse.jgit.api.errors.CanceledException;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.InvalidRefNameException;
+import org.eclipse.jgit.api.errors.JGitInternalException;
+import org.eclipse.jgit.api.errors.NoHeadException;
+import org.eclipse.jgit.api.errors.TransportException;
 import org.eclipse.jgit.errors.UnsupportedCredentialItem;
-import org.eclipse.jgit.lib.*;
+import org.eclipse.jgit.lib.ConfigConstants;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.PersonIdent;
+import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.lib.RefUpdate;
+import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.filter.CommitTimeRevFilter;
 import org.eclipse.jgit.revwalk.filter.RevFilter;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
-import org.eclipse.jgit.transport.*;
+import org.eclipse.jgit.transport.CredentialItem;
+import org.eclipse.jgit.transport.CredentialsProvider;
+import org.eclipse.jgit.transport.RemoteConfig;
+import org.eclipse.jgit.transport.SshConfigStore;
+import org.eclipse.jgit.transport.SshConstants;
+import org.eclipse.jgit.transport.SshTransport;
+import org.eclipse.jgit.transport.URIish;
+import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.eclipse.jgit.transport.sshd.JGitKeyCache;
 import org.eclipse.jgit.transport.sshd.KeyPasswordProvider;
 import org.eclipse.jgit.transport.sshd.SshdSessionFactoryBuilder;
@@ -49,8 +88,14 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.File;
+import de.tum.in.www1.artemis.domain.FileType;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Repository;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -267,7 +312,7 @@ public class GitService {
      * Get the URI for a {@link VcsRepositoryUri}. This either retrieves the SSH URI, if SSH is used, the HTTP(S) URI, or the path to the repository's folder if the local VCS is
      * used.
      * This method is for internal use (getting the URI for cloning the repository into the Artemis file system).
-     * For Bitbucket and GitLab, the URI is the same internally as the one that is used by the students to clone the repository using their local Git client.
+     * For GitLab, the URI is the same internally as the one that is used by the students to clone the repository using their local Git client.
      * For the local VCS however, the repository is cloned from the folder defined in the environment variable "artemis.version-control.local-vcs-repo-path".
      *
      * @param vcsRepositoryUri the {@link VcsRepositoryUri} for which to get the URI
@@ -275,9 +320,9 @@ public class GitService {
      * @throws URISyntaxException if SSH is used and the SSH URI could not be retrieved.
      */
     private URI getGitUri(VcsRepositoryUri vcsRepositoryUri) throws URISyntaxException {
-        if (profileService.isLocalVcsCi()) {
+        if (profileService.isLocalVcsCiActive()) {
             // Create less generic LocalVCRepositoryUri out of VcsRepositoryUri.
-            LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(vcsRepositoryUri.toString(), gitUrl);
+            LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(vcsRepositoryUri.toString());
             String localVCBasePath = environment.getProperty("artemis.version-control.local-vcs-repo-path");
             return localVCRepositoryUri.getLocalRepositoryPath(localVCBasePath).toUri();
         }
@@ -286,11 +331,8 @@ public class GitService {
 
     private URI getSshUri(VcsRepositoryUri vcsRepositoryUri) throws URISyntaxException {
         URI templateUri = new URI(sshUrlTemplate.orElseThrow());
-        // Example Bitbucket: ssh://git@bitbucket.ase.in.tum.de:7999/se2021w07h02/se2021w07h02-ga27yox.git
         // Example Gitlab: ssh://git@gitlab.ase.in.tum.de:2222/se2021w07h02/se2021w07h02-ga27yox.git
         final var repositoryUri = vcsRepositoryUri.getURI();
-        // Bitbucket repository uris (until now mainly used with username and password authentication) include "/scm" in the url, which cannot be used in ssh urls,
-        // therefore we need to replace it here
         final var path = repositoryUri.getPath().replace("/scm", "");
         return new URI(templateUri.getScheme(), templateUri.getUserInfo(), templateUri.getHost(), templateUri.getPort(), path, null, repositoryUri.getFragment());
     }
@@ -1119,6 +1161,21 @@ public class GitService {
         }
     }
 
+    private static class FileAndDirectoryFilter implements IOFileFilter {
+
+        private static final String GIT_DIRECTORY_NAME = ".git";
+
+        @Override
+        public boolean accept(java.io.File file) {
+            return !GIT_DIRECTORY_NAME.equals(file.getName());
+        }
+
+        @Override
+        public boolean accept(java.io.File directory, String fileName) {
+            return !GIT_DIRECTORY_NAME.equals(directory.getName());
+        }
+    }
+
     /**
      * List all files and folders in the repository
      *
@@ -1128,7 +1185,9 @@ public class GitService {
     public Map<File, FileType> listFilesAndFolders(Repository repo) {
         // Check if list of files is already cached
         if (repo.getContent() == null) {
-            Iterator<java.io.File> itr = FileUtils.iterateFilesAndDirs(repo.getLocalPath().toFile(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE);
+            FileAndDirectoryFilter filter = new FileAndDirectoryFilter();
+
+            Iterator<java.io.File> itr = FileUtils.iterateFilesAndDirs(repo.getLocalPath().toFile(), filter, filter);
             Map<File, FileType> files = new HashMap<>();
 
             while (itr.hasNext()) {
@@ -1141,19 +1200,8 @@ public class GitService {
                     continue;
                 }
 
-                // Files starting with a '.' are not marked as hidden in Windows. WE must exclude these
-                if (nextFile.getName().charAt(0) != '.') {
-                    files.put(nextFile, nextFile.isFile() ? FileType.FILE : FileType.FOLDER);
-                }
+                files.put(nextFile, nextFile.isFile() ? FileType.FILE : FileType.FOLDER);
             }
-
-            // TODO: rene: idea: ask in setup to include hidden files? only allow for tutors and instructors?
-            // Current problem: .swiftlint.yml gets filtered out
-            /*
-             * Uncomment to show hidden files // Filter for hidden config files, e.g. '.swiftlint.yml' Iterator<java.io.File> hiddenFiles =
-             * FileUtils.iterateFilesAndDirs(repo.getLocalPath().toFile(), HiddenFileFilter.HIDDEN, HiddenFileFilter.HIDDEN); while (hiddenFiles.hasNext()) { File nextFile = new
-             * File(hiddenFiles.next(), repo); if (nextFile.isFile() && nextFile.getName().contains(".swiftlint")) { files.put(nextFile, FileType.FILE); } }
-             */
 
             // Cache the list of files
             // Avoid expensive rescanning
@@ -1172,7 +1220,8 @@ public class GitService {
     public Collection<File> listFiles(Repository repo) {
         // Check if list of files is already cached
         if (repo.getFiles() == null) {
-            Iterator<java.io.File> itr = FileUtils.iterateFiles(repo.getLocalPath().toFile(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE);
+            FileAndDirectoryFilter filter = new FileAndDirectoryFilter();
+            Iterator<java.io.File> itr = FileUtils.iterateFiles(repo.getLocalPath().toFile(), filter, filter);
             Collection<File> files = new ArrayList<>();
 
             while (itr.hasNext()) {
@@ -1230,7 +1279,7 @@ public class GitService {
         try (Git git = new Git(repo)) {
             resetToOriginHead(repo);
             List<RevCommit> commits = StreamSupport.stream(git.log().call().spliterator(), false).toList();
-            RevCommit firstCommit = commits.get(commits.size() - 1);
+            RevCommit firstCommit = commits.getLast();
             // If there is a first commit, combine all other commits into it.
             if (firstCommit != null) {
                 git.reset().setMode(ResetCommand.ResetType.SOFT).setRef(firstCommit.getId().getName()).call();

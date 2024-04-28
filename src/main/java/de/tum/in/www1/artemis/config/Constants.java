@@ -57,13 +57,9 @@ public final class Constants {
 
     public static final String NEW_RESULT_RESOURCE_API_PATH = "/api/public/programming-exercises/new-result";
 
-    public static final String PROGRAMMING_SUBMISSION_RESOURCE_API_PATH = "/api/programming-submissions/";
-
     public static final String PROGRAMMING_SUBMISSION_TOPIC = "/newSubmissions";
 
     public static final String NEW_SUBMISSION_TOPIC = "/topic" + PROGRAMMING_SUBMISSION_TOPIC;
-
-    public static final String APOLLON_CONVERSION_API_PATH = "/api/apollon/convert-to-pdf";
 
     public static final String ATHENA_PROGRAMMING_EXERCISE_REPOSITORY_API_PATH = "/api/public/athena/programming-exercises/";
 
@@ -237,10 +233,6 @@ public final class Constants {
 
     public static final String INFO_VERSION_CONTROL_ACCESS_TOKEN_DETAIL = "versionControlAccessToken";
 
-    public static final String EXTERNAL_USER_MANAGEMENT_URL = "externalUserManagementURL";
-
-    public static final String EXTERNAL_USER_MANAGEMENT_NAME = "externalUserManagementName";
-
     public static final String REGISTRATION_ENABLED = "registrationEnabled";
 
     public static final String NEEDS_TO_ACCEPT_TERMS = "needsToAcceptTerms";
@@ -290,12 +282,12 @@ public final class Constants {
     public static final String PUSH_NOTIFICATION_ENCRYPTION_ALGORITHM = "AES/CBC/PKCS5Padding";
 
     /**
-     * The name of the Spring profile used to choose the local VC system instead of Bitbucket or GitLab.
+     * The name of the Spring profile used to choose the local VC system instead of GitLab.
      */
     public static final String PROFILE_LOCALVC = "localvc";
 
     /**
-     * The name of the Spring profile used to choose the local CI system instead of Bamboo, Jenkins, or GitLabCI.
+     * The name of the Spring profile used to choose the local CI system instead of Jenkins, or GitLabCI.
      */
     public static final String PROFILE_LOCALCI = "localci";
 
@@ -315,6 +307,11 @@ public final class Constants {
     public static final String PROFILE_AEOLUS = "aeolus";
 
     /**
+     * The name of the Spring profile used for activating LTI in Artemis, see {@link de.tum.in.www1.artemis.web.rest.LtiResource}.
+     */
+    public static final String PROFILE_LTI = "lti";
+
+    /**
      * Size of an unsigned tinyInt in SQL, that is used in the database
      */
     public static final int SIZE_OF_UNSIGNED_TINYINT = 255;
@@ -323,11 +320,6 @@ public final class Constants {
      * The maximum length of a group conversation human-readable name before it is truncated if no name is specified.
      */
     public static final int GROUP_CONVERSATION_HUMAN_READABLE_NAME_LIMIT = 100;
-
-    /**
-     * The name of the topic for notifying the client about changes in the exam working time.
-     */
-    public static final String STUDENT_WORKING_TIME_CHANGE_DURING_CONDUCTION_TOPIC = "/topic/studentExams/%s/working-time-change-during-conduction";
 
     /**
      * The value of the version field we send with each push notification to the native clients (Android & iOS).

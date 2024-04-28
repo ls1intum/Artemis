@@ -365,8 +365,10 @@ export class ProgrammingExerciseService {
      */
     delete(programmingExerciseId: number, deleteStudentReposBuildPlans: boolean, deleteBaseReposBuildPlans: boolean): Observable<HttpResponse<any>> {
         let params = new HttpParams();
-        params = params.set('deleteStudentReposBuildPlans', deleteStudentReposBuildPlans.toString());
-        params = params.set('deleteBaseReposBuildPlans', deleteBaseReposBuildPlans.toString());
+        if (deleteBaseReposBuildPlans != undefined && deleteStudentReposBuildPlans != undefined) {
+            params = params.set('deleteStudentReposBuildPlans', deleteStudentReposBuildPlans.toString());
+            params = params.set('deleteBaseReposBuildPlans', deleteBaseReposBuildPlans.toString());
+        }
         return this.http.delete(`${this.resourceUrl}/${programmingExerciseId}`, { params, observe: 'response' });
     }
 
@@ -412,7 +414,7 @@ export class ProgrammingExerciseService {
      * @param exerciseId of the particular programming exercise
      */
     unlockAllRepositories(exerciseId: number): Observable<HttpResponse<any>> {
-        return this.http.put<any>(`${this.resourceUrl}/${exerciseId}/unlock-all-repositories`, {}, { observe: 'response' });
+        return this.http.post<any>(`${this.resourceUrl}/${exerciseId}/unlock-all-repositories`, {}, { observe: 'response' });
     }
 
     /**
@@ -420,7 +422,7 @@ export class ProgrammingExerciseService {
      * @param exerciseId of the particular programming exercise
      */
     lockAllRepositories(exerciseId: number): Observable<HttpResponse<any>> {
-        return this.http.put<any>(`${this.resourceUrl}/${exerciseId}/lock-all-repositories`, {}, { observe: 'response' });
+        return this.http.post<any>(`${this.resourceUrl}/${exerciseId}/lock-all-repositories`, {}, { observe: 'response' });
     }
 
     /**

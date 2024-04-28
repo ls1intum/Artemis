@@ -55,7 +55,7 @@
             },
             "customizeGroupNames": {
                 "title": "Customize group names",
-                "description": "Make sure that the groups exist in the external user management if you enable this option. The groups are not created automatically then."
+                "description": "Customizing the group names should not be necessary and may cause users to lose access to this course. Make sure you have a good reason for customizing the group names."
             },
             "studentGroupName": "Students",
             "teachingAssistantGroupName": "Tutors",
@@ -104,13 +104,13 @@
                     "codeOfConduct": "Messaging Code of Conduct"
                 }
             },
-            "registrationEnabled": {
-                "title": "Student Course Registration Enabled",
-                "description": "Activate this checkbox to allow students to register independently in the course if it is active (between start and end of the course). You can optionally enter a message that students have to confirm during registration."
+            "enrollmentEnabled": {
+                "title": "Student Course Enrollment Enabled",
+                "description": "Activate this checkbox to allow students to enroll independently in the course if it is active (between start and end of the course). You can optionally enter a message that students have to confirm during enrollment."
             },
             "enrollmentStartDate": "Enrollment Start",
             "enrollmentEndDate": "Enrollment End",
-            "registrationConfirmationMessage": "Registration Confirmation Message",
+            "enrollmentConfirmationMessage": "Enrollment Confirmation Message",
             "unenrollmentEnabled": {
                 "title": "Student Course Unenrollment Enabled",
                 "description": "Activate this checkbox to allow students to unenroll independently in the course. You can specify the latest date for unenrollment, otherwise the students can do so until the end of the course."
@@ -127,6 +127,7 @@
             "exercise": {
                 "search": {
                     "searchButton": "Search",
+                    "searchPlaceholder": "Search...",
                     "resetButton": "Reset",
                     "toggleButton": {
                         "true": "Hide Advanced Search",
@@ -227,7 +228,11 @@
             "activeStudents": "Active students: {{ students }}",
             "notStartedYet": "The course has not officially started yet. Official course start:",
             "noOrganizations": "No Organizations",
-            "organizationAddingHint": "Administrators can add organizations to courses."
+            "organizationAddingHint": "Administrators can add organizations to courses.",
+            "imageCropper": {
+                "title": "Crop your image",
+                "uploadTitle": "Add an icon"
+            }
         },
         "courseStatistics": {
             "statistics": "Statistics",

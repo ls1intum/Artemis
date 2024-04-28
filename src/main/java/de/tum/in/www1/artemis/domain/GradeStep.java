@@ -3,7 +3,10 @@ package de.tum.in.www1.artemis.domain;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 
 import org.apache.commons.math3.util.Precision;
 import org.hibernate.annotations.Cache;
@@ -149,7 +152,7 @@ public class GradeStep extends DomainObject {
     /**
      * Parses the {@link #gradeName} as a number in order to use it in grade and bonus calculations.
      * Accepts both "," and "." as decimal separators.
-     *
+     * <p>
      * Does not throw exception, returns null on failure.
      *
      * @return {@link Double} value corresponding to the {@link #gradeName} or null if it is not parseable or null.

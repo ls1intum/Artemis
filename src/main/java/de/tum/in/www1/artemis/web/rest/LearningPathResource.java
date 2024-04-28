@@ -2,10 +2,12 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.ws.rs.BadRequestException;
+import jakarta.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +15,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -212,7 +215,6 @@ public class LearningPathResource {
 
     /**
      * GET courses/:courseId/learning-path-id : Gets the id of the learning path.
-     * If the learning path has not been generated although the course has learning paths enabled, the corresponding learning path will be created.
      *
      * @param courseId the id of the course from which the learning path id should be fetched
      * @return the ResponseEntity with status 200 (OK) and with body the id of the learning path
@@ -222,23 +224,37 @@ public class LearningPathResource {
     public ResponseEntity<Long> getLearningPathId(@PathVariable long courseId) {
         log.debug("REST request to get learning path id for course with id: {}", courseId);
         courseService.checkLearningPathsEnabledElseThrow(courseId);
-
-        // generate learning path if missing
         User user = userRepository.getUser();
-        final var learningPathOptional = learningPathRepository.findByCourseIdAndUserId(courseId, user.getId());
-        LearningPath learningPath;
-        if (learningPathOptional.isEmpty()) {
-            final var course = courseRepository.findWithEagerCompetenciesByIdElseThrow(courseId);
-            learningPath = learningPathService.generateLearningPathForUser(course, user);
-        }
-        else {
-            learningPath = learningPathOptional.get();
-        }
+        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(courseId, user.getId());
         return ResponseEntity.ok(learningPath.getId());
     }
 
     /**
-     * GET learning-path/:learningPathId : Gets the competency progress in a learning path
+     * POST courses/:courseId/learning-path : Generates a learning path in the course for the logged-in user.
+     *
+     * @param courseId the id of the course for which the learning path should be created
+     * @return the ResponseEntity with status 200 (OK) and with body the id of the learning path
+     */
+    @PostMapping("courses/{courseId}/learning-path")
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<Long> generateLearningPath(@PathVariable long courseId) throws URISyntaxException {
+        log.debug("REST request to generate learning path for user in course with id: {}", courseId);
+        courseService.checkLearningPathsEnabledElseThrow(courseId);
+
+        User user = userRepository.getUser();
+        final var learningPathOptional = learningPathRepository.findByCourseIdAndUserId(courseId, user.getId());
+
+        if (learningPathOptional.isPresent()) {
+            throw new BadRequestException("Learning path already exists.");
+        }
+
+        final var course = courseRepository.findWithEagerCompetenciesByIdElseThrow(courseId);
+        final var learningPath = learningPathService.generateLearningPathForUser(course, user);
+        return ResponseEntity.created(new URI("api/learning-path/" + learningPath.getId())).body(learningPath.getId());
+    }
+
+    /**
+     * GET learning-path/:learningPathId/competency-progress : Gets the competency progress in a learning path
      *
      * @param learningPathId the id of the learning path for which to get the progress
      * @return the ResponseEntity with status 200 (OK) and with the progress in the body

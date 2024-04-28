@@ -23,7 +23,7 @@ export type ProgrammingExerciseCreationConfig = {
     isImportFromExistingExercise: boolean;
     isImportFromFile: boolean;
     appNamePatternForSwift: string;
-    modePickerOptions: ModePickerOption<ProjectType>[];
+    modePickerOptions?: ModePickerOption<ProjectType>[];
     withDependencies: boolean;
     onWithDependenciesChanged: (withDependencies: boolean) => boolean;
     packageNameRequired: boolean;
@@ -31,9 +31,9 @@ export type ProgrammingExerciseCreationConfig = {
     supportedLanguages: string[];
     selectedProgrammingLanguage: ProgrammingLanguage;
     onProgrammingLanguageChange: (language: ProgrammingLanguage) => ProgrammingLanguage;
-    projectTypes: ProjectType[];
-    selectedProjectType: ProjectType;
-    onProjectTypeChange: (projectType: ProjectType) => ProjectType;
+    projectTypes?: ProjectType[];
+    selectedProjectType?: ProjectType;
+    onProjectTypeChange: (projectType: ProjectType) => ProjectType | undefined;
     staticCodeAnalysisAllowed: boolean;
     onStaticCodeAnalysisChanged: () => void;
     maxPenaltyPattern: string;
@@ -48,7 +48,6 @@ export type ProgrammingExerciseCreationConfig = {
     recreateBuildPlans: boolean;
     onRecreateBuildPlanOrUpdateTemplateChange: () => void;
     updateTemplate: boolean;
-    publishBuildPlanUrlAllowed: boolean;
     recreateBuildPlanOrUpdateTemplateChange: () => void; // default false
     isExamMode: boolean;
     isEdit: boolean;

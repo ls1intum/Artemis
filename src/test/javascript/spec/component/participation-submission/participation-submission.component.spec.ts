@@ -69,14 +69,18 @@ describe('ParticipationSubmissionComponent', () => {
     let debugElement: DebugElement;
     let router: Router;
     const route = () => ({ params: of({ participationId: 1, exerciseId: 42 }) });
-    // Template for Bitbucket commit hash url
-    const commitHashURLTemplate = 'https://bitbucket.ase.in.tum.de/projects/{projectKey}/repos/{repoSlug}/commits/{commitHash}';
+    // Template for commit hash url
+    const commitHashURLTemplate = 'https://gitlab.ase.in.tum.de/projects/{projectKey}/repos/{repoSlug}/commits/{commitHash}';
 
     const result1 = { id: 44 } as Result;
     const result2 = { id: 45 } as Result;
     const participation1 = { id: 66 } as Participation;
     const submissionWithTwoResults = { id: 77, results: [result1, result2], participation: participation1 } as Submission;
-    const submissionWithTwoResults2 = { id: 78, results: [result1, result2], participation: participation1 } as Submission;
+    const submissionWithTwoResults2 = {
+        id: 78,
+        results: [result1, result2],
+        participation: participation1,
+    } as Submission;
 
     const programmingExercise1 = { id: 100, type: ExerciseType.PROGRAMMING } as Exercise;
     const modelingExercise = { id: 100, type: ExerciseType.MODELING } as Exercise;
@@ -164,6 +168,9 @@ describe('ParticipationSubmissionComponent', () => {
         jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: exercise })));
         findAllSubmissionsOfParticipationStub.mockReturnValue(of({ body: submissions }));
 
+        const getBuildJobIdsForResultsOfParticipationStub = jest.spyOn(participationService, 'getBuildJobIdsForResultsOfParticipation');
+        getBuildJobIdsForResultsOfParticipationStub.mockReturnValue(of({ '4': '2' }));
+
         fixture.detectChanges();
         tick();
 
@@ -202,9 +209,16 @@ describe('ParticipationSubmissionComponent', () => {
                 participation: templateParticipation,
             },
         ] as ProgrammingSubmission[];
-        const programmingExercise = { type: ExerciseType.PROGRAMMING, projectKey: 'SUBMISSION1', templateParticipation } as ProgrammingExercise;
+        const programmingExercise = {
+            type: ExerciseType.PROGRAMMING,
+            projectKey: 'SUBMISSION1',
+            templateParticipation,
+        } as ProgrammingExercise;
         const findWithTemplateAndSolutionParticipationStub = jest.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipation');
         findWithTemplateAndSolutionParticipationStub.mockReturnValue(of(new HttpResponse({ body: programmingExercise })));
+
+        const getBuildJobIdsForResultsOfParticipationStub = jest.spyOn(participationService, 'getBuildJobIdsForResultsOfParticipation');
+        getBuildJobIdsForResultsOfParticipationStub.mockReturnValue(of({ '4': '2' }));
 
         fixture.detectChanges();
         tick();
@@ -239,9 +253,16 @@ describe('ParticipationSubmissionComponent', () => {
                 participation: solutionParticipation,
             },
         ] as ProgrammingSubmission[];
-        const programmingExercise = { type: ExerciseType.PROGRAMMING, projectKey: 'SUBMISSION1', solutionParticipation } as ProgrammingExercise;
+        const programmingExercise = {
+            type: ExerciseType.PROGRAMMING,
+            projectKey: 'SUBMISSION1',
+            solutionParticipation,
+        } as ProgrammingExercise;
         const findWithTemplateAndSolutionParticipationStub = jest.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipation');
         findWithTemplateAndSolutionParticipationStub.mockReturnValue(of(new HttpResponse({ body: programmingExercise })));
+
+        const getBuildJobIdsForResultsOfParticipationStub = jest.spyOn(participationService, 'getBuildJobIdsForResultsOfParticipation');
+        getBuildJobIdsForResultsOfParticipationStub.mockReturnValue(of({ '4': '2' }));
 
         fixture.detectChanges();
         tick();
@@ -267,6 +288,8 @@ describe('ParticipationSubmissionComponent', () => {
             deleteProgrammingAssessmentStub.mockReturnValue(of({}));
             findAllSubmissionsOfParticipationStub.mockReturnValue(of({ body: [submissionWithTwoResults] }));
             jest.spyOn(participationService, 'find').mockReturnValue(of(new HttpResponse({ body: participation1 })));
+            const getBuildJobIdsForResultsOfParticipationStub = jest.spyOn(participationService, 'getBuildJobIdsForResultsOfParticipation');
+            getBuildJobIdsForResultsOfParticipationStub.mockReturnValue(of({ '4': '2' }));
         });
 
         it('should delete result of fileUploadSubmission', fakeAsync(() => {
@@ -321,6 +344,8 @@ describe('ParticipationSubmissionComponent', () => {
             deleteTextAssessmentStub.mockReturnValue(throwError(() => error));
             findAllSubmissionsOfParticipationStub.mockReturnValue(of({ body: [submissionWithTwoResults2] }));
             jest.spyOn(participationService, 'find').mockReturnValue(of(new HttpResponse({ body: participation1 })));
+            const getBuildJobIdsForResultsOfParticipationStub = jest.spyOn(participationService, 'getBuildJobIdsForResultsOfParticipation');
+            getBuildJobIdsForResultsOfParticipationStub.mockReturnValue(of({ '4': '2' }));
         });
 
         it('should not delete result of fileUploadSubmission because of server error', fakeAsync(() => {

@@ -1,20 +1,27 @@
 package de.tum.in.www1.artemis.web.rest.tutorialgroups;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
-import static de.tum.in.www1.artemis.web.rest.util.DateUtil.*;
+import static de.tum.in.www1.artemis.web.rest.util.DateUtil.interpretInTimeZone;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Optional;
 
-import javax.validation.Valid;
-import javax.ws.rs.BadRequestException;
+import jakarta.validation.Valid;
+import jakarta.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupFreePeriod;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;

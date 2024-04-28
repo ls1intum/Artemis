@@ -17,7 +17,9 @@
                     <th jhiSortBy="bonusPoints"><span jhiTranslate="artemisApp.exercise.bonus"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
                     <th jhiSortBy="includedInOverallScore"><span jhiTranslate="artemisApp.exercise.includedCompletely"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
                     <th *jhiExtensionPoint="overrideRepositoryAndBuildPlan"><span jhiTranslate="artemisApp.programmingExercise.repositories"></span></th>
-                    <th *jhiExtensionPoint="overrideRepositoryAndBuildPlan"><span jhiTranslate="artemisApp.programmingExercise.buildplans"></span>&nbsp;</th>
+                    @if (!localVCEnabled) {
+                        <th *jhiExtensionPoint="overrideRepositoryAndBuildPlan"><span jhiTranslate="artemisApp.programmingExercise.buildplans"></span>&nbsp;</th>
+                    }
                     <th class="d-md-table-cell">
                         <span jhiTranslate="artemisApp.exercise.mode"></span>
                     </th>
@@ -68,7 +70,7 @@
                                 [hasUpdatedGradingConfigInitialValue]="!!programmingExercise.testCasesChanged"
                             />
                         </td>
-                        <td class="d-md-table-cell">{{ programmingExercise.shortName }}</td>
+                        <td class="d-md-table-cell">{{ programmingExercise.shortName | slice: 0 : 15 }}{{ (programmingExercise.shortName?.length ?? 0) > 15 ? '...' : '' }}</td>
                         <td>{{ programmingExercise.releaseDate | artemisDate }}</td>
                         <td>{{ programmingExercise.dueDate | artemisDate }}</td>
                         <td class="d-md-table-cell">{{ programmingExercise.maxPoints }}</td>
@@ -125,28 +127,24 @@
                                 }
                             </div>
                         </td>
-                        <td *jhiExtensionPoint="overrideRepositoryAndBuildPlan">
-                            @if (programmingExercise.templateParticipation?.buildPlanId) {
-                                @if (!localVCEnabled) {
+                        @if (!localVCEnabled) {
+                            <td *jhiExtensionPoint="overrideRepositoryAndBuildPlan">
+                                @if (programmingExercise.templateParticipation?.buildPlanId) {
                                     <span> <a target="_blank" rel="noreferrer" href="{{ programmingExercise.templateParticipation!.buildPlanUrl }}">Template</a> </span>
-                                } @else {
-                                    <span>{{ programmingExercise.templateParticipation!.buildPlanId }}</span>
                                 }
-                            }
-                            @if (programmingExercise.solutionParticipation?.buildPlanId) {
-                                @if (!localVCEnabled) {
+                                @if (programmingExercise.solutionParticipation?.buildPlanId) {
                                     <span> <a target="_blank" rel="noreferrer" href="{{ programmingExercise.solutionParticipation!.buildPlanUrl }}">Solution</a> </span>
-                                } @else {
-                                    <span>{{ programmingExercise.solutionParticipation!.buildPlanId }}</span>
                                 }
-                            }
-                        </td>
+                            </td>
+                        }
                         <td class="d-md-table-cell">
                             <div class="d-flex justify-content-between">
-                                {{ 'artemisApp.programmingExercise.offlineIde' | artemisTranslate }}: {{ programmingExercise.allowOfflineIde }}
+                                {{ 'artemisApp.programmingExercise.offlineIde' | artemisTranslate }}:
+                                {{ programmingExercise.allowOfflineIde ? ('artemisApp.exercise.yes' | artemisTranslate) : ('artemisApp.exercise.no' | artemisTranslate) }}
                             </div>
                             <div class="d-flex justify-content-between">
-                                {{ 'artemisApp.programmingExercise.onlineEditor' | artemisTranslate }}: {{ programmingExercise.allowOnlineEditor }}
+                                {{ 'artemisApp.programmingExercise.onlineEditor' | artemisTranslate }}:
+                                {{ programmingExercise.allowOnlineEditor ? ('artemisApp.exercise.yes' | artemisTranslate) : ('artemisApp.exercise.no' | artemisTranslate) }}
                             </div>
                         </td>
                         @if (course.presentationScore !== 0) {
@@ -266,14 +264,20 @@
                                             [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                                             jhiDeleteButton
                                             [entityTitle]="programmingExercise.title!"
-                                            deleteQuestion="artemisApp.programmingExercise.delete.question"
+                                            deleteQuestion="{{
+                                                localVCEnabled ? 'artemisApp.programmingExercise.delete.questionLocalVC.single' : 'artemisApp.programmingExercise.delete.question'
+                                            }}"
                                             (delete)="deleteProgrammingExercise(programmingExercise.id!, $event)"
                                             [dialogError]="dialogError$"
+                                            [additionalChecks]="
+                                                localVCEnabled
+                                                    ? {}
+                                                    : {
+                                                          deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',
+                                                          deleteBaseReposBuildPlans: 'artemisApp.programmingExercise.delete.baseReposBuildPlans'
+                                                      }
+                                            "
                                             deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
-                                            [additionalChecks]="{
-                                                deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',
-                                                deleteBaseReposBuildPlans: 'artemisApp.programmingExercise.delete.baseReposBuildPlans'
-                                            }"
                                             class="mb-1"
                                             id="delete-exercise"
                                         >
@@ -310,16 +314,22 @@
                         [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                         jhiDeleteButton
                         [entityTitle]="'Multiple Programming Exercises'"
-                        deleteQuestion="artemisApp.exerciseActions.deleteMultipleExercisesQuestion"
+                        deleteQuestion="{{
+                            localVCEnabled ? 'artemisApp.programmingExercise.delete.questionLocalVC.multiple' : 'artemisApp.exerciseActions.deleteMultipleExercisesQuestion'
+                        }}"
                         (delete)="deleteMultipleProgrammingExercises(selectedExercises, $event)"
+                        [requireConfirmationOnlyForAdditionalChecks]="true"
+                        [additionalChecks]="
+                            localVCEnabled
+                                ? {}
+                                : {
+                                      deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',
+                                      deleteBaseReposBuildPlans: 'artemisApp.programmingExercise.delete.baseReposBuildPlans'
+                                  }
+                        "
                         class="me-1"
                         id="delete-exercises"
                         [dialogError]="dialogError$"
-                        [requireConfirmationOnlyForAdditionalChecks]="true"
-                        [additionalChecks]="{
-                            deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',
-                            deleteBaseReposBuildPlans: 'artemisApp.programmingExercise.delete.baseReposBuildPlans'
-                        }"
                     >
                         <fa-icon [icon]="faTrash" />
                     </button>

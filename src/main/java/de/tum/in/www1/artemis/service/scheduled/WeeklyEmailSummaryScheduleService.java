@@ -1,8 +1,13 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
-import java.time.*;
+import java.time.DayOfWeek;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,7 +55,7 @@ public class WeeklyEmailSummaryScheduleService {
     @PostConstruct
     public void scheduleEmailSummariesOnStartUp() {
         try {
-            if (profileService.isDev()) {
+            if (profileService.isDevActive()) {
                 // only execute this on production server, i.e. when the prod profile is active
                 // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
                 return;

@@ -87,8 +87,7 @@ Setting up Artemis in your development environment or a demo production environm
 
 Artemis can also be set up in conjunction with external tools for version control and continuous integration:
 1. [GitLab and Jenkins](https://docs.artemis.cit.tum.de/dev/setup/#jenkins-and-gitlab-setup)
-2. [Jira, Bitbucket and Bamboo](https://docs.artemis.cit.tum.de/dev/setup/#bamboo-bitbucket-and-jira-setup)
-3. [GitLab and GitLab CI (experimental)](https://docs.artemis.cit.tum.de/dev/setup/#gitlab-ci-and-gitlab-setup)
+2. [GitLab and GitLab CI (experimental)](https://docs.artemis.cit.tum.de/dev/setup/#gitlab-ci-and-gitlab-setup)
 
 Artemis uses these external tools for user management and the configuration of programming exercises.
 
@@ -146,7 +145,7 @@ To build and optimize the Artemis application for production, run:
 This will create a Artemis-<version>.war file in the folder `build/libs`. The build command compiles the TypeScript into JavaScript files, concatenates and minifies the created files (including HTML and CSS files). It will also modify `index.html` so it references these new files. To ensure everything worked, run the following command to start the application on your local computer:
 
 ```shell
-java -jar build/libs/*.war --spring.profiles.active=dev,artemis,bamboo,bitbucket,jira
+java -jar build/libs/*.war --spring.profiles.active=dev,localci,localvc,artemis,scheduling,buildagent,core,local
 ```
 
 (You might need to copy a yml file into the folder build/libs before, also see [development setup](https://docs.artemis.cit.tum.de/dev/setup/))
@@ -158,7 +157,7 @@ Refer to [Using JHipster in production](http://www.jhipster.tech/production) for
 The following command can automate the deployment to a server. The example shows the deployment to the main Artemis test server (which runs a virtual machine):
 
 ```shell
-./artemis-server-cli deploy username@artemistest.ase.in.tum.de -w build/libs/Artemis-7.0.0.war
+./artemis-server-cli deploy username@artemistest.ase.in.tum.de -w build/libs/Artemis-7.0.3.war
 ```
 
 ## Architecture

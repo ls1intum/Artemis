@@ -3,18 +3,21 @@ package de.tum.in.www1.artemis.repository.specs;
 import java.util.Arrays;
 import java.util.Set;
 
-import javax.persistence.criteria.*;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.Predicate;
 
 import org.springframework.data.jpa.domain.Specification;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Authority;
+import de.tum.in.www1.artemis.domain.Authority_;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.User_;
 
 /**
  * This class contains possible specifications to query for specified users.
  */
 public class UserSpecs {
-
-    private static final long FILTER_EMPTY_COURSES = -1;
 
     private static final String FILTER_NO_AUTHORITY = "ROLE_NO_AUTHORITY";
 
@@ -66,15 +69,14 @@ public class UserSpecs {
      * This method returns the selected authority specification based on the provided list of authorities.
      *
      * @param authorities provided authorities
-     * @param courseIds   a set of courseIds which the users need to match
      * @return specification used to chain database operations
      */
-    public static Specification<User> getAuthoritySpecification(Set<String> authorities, Set<Long> courseIds) {
+    public static Specification<User> getAuthoritySpecification(Set<String> authorities) {
         if (authorities.contains(FILTER_NO_AUTHORITY)) {
             // Empty authorities
             return getAllUsersMatchingEmptyAuthorities();
         }
-        else if (!authorities.isEmpty() && (courseIds.isEmpty() || courseIds.contains(FILTER_EMPTY_COURSES))) {
+        else if (!authorities.isEmpty()) {
             // Match all authorities
             return getAllUsersMatchingAuthorities(authorities);
         }
@@ -149,92 +151,12 @@ public class UserSpecs {
     }
 
     /**
-     * Creates the specification to find all users that are not part of any course.
+     * Creates the specification to find all users that are assigned no user groups.
      *
      * @return specification used to chain database operations
      */
-    public static Specification<User> getAllUsersMatchingEmptyCourses() {
+    public static Specification<User> getAllUsersWithoutUserGroups() {
         return (root, query, criteriaBuilder) -> criteriaBuilder.isEmpty(root.get(User_.GROUPS));
-    }
-
-    /**
-     * Creates the specification to find users that are part of any of the given courses.
-     *
-     * @param courseIds a set of courseIds which the users need to match
-     * @return specification used to chain database operations
-     */
-    public static Specification<User> getAllUsersMatchingCourses(Set<Long> courseIds) {
-        return (root, query, criteriaBuilder) -> {
-            Root<Course> courseRoot = query.from(Course.class);
-
-            Join<User, String> userToGroupJoin = root.join(User_.GROUPS, JoinType.LEFT);
-
-            updateAllUsersMatchingCoursesJoin(criteriaBuilder, courseRoot, userToGroupJoin);
-
-            query.groupBy(root.get(User_.ID)).having(criteriaBuilder.equal(criteriaBuilder.count(userToGroupJoin), courseIds.size()));
-
-            return criteriaBuilder.in(courseRoot.get(Course_.ID)).value(courseIds);
-        };
-    }
-
-    /**
-     * Helper method to update the course join. We join the users with the course via the groups of the users and the authority groups of the courses.
-     *
-     * @param criteriaBuilder to build the criteria
-     * @param courseRoot      used to get course data
-     * @param userToGroupJoin users joined with their groups
-     */
-    private static void updateAllUsersMatchingCoursesJoin(CriteriaBuilder criteriaBuilder, Root<Course> courseRoot, Join<User, String> userToGroupJoin) {
-        // Select all possible group types
-        String[] columns = { Course_.STUDENT_GROUP_NAME, Course_.TEACHING_ASSISTANT_GROUP_NAME, Course_.EDITOR_GROUP_NAME, Course_.INSTRUCTOR_GROUP_NAME };
-        Predicate[] predicates = Arrays.stream(columns).map(column -> criteriaBuilder.in(courseRoot.get(column)).value(userToGroupJoin)).toArray(Predicate[]::new);
-
-        userToGroupJoin.on(criteriaBuilder.or(predicates));
-    }
-
-    /**
-     * Creates the specification to find users that are part of any of the given courses.
-     *
-     * @param courseIds   a set of courseIds which the users need to match at least one
-     * @param authorities provided authorities
-     * @return specification used to chain database operations
-     */
-    public static Specification<User> getCourseSpecification(Set<Long> courseIds, Set<String> authorities) {
-        if (courseIds.size() == 1 && courseIds.contains(FILTER_EMPTY_COURSES)) {
-            // Empty courses
-            return getAllUsersMatchingEmptyCourses();
-        }
-        else if (!courseIds.isEmpty() && (authorities.isEmpty() || authorities.contains(FILTER_NO_AUTHORITY))) {
-            // Match all selected
-            return getAllUsersMatchingCourses(courseIds);
-        }
-        return null;
-    }
-
-    /**
-     * Creates the specification for authorities and courses. We need to combine adapt the group by statement.
-     *
-     * @param courseIds   a set of courseIds which the users need to match at least one
-     * @param authorities set of possible authorities
-     * @return specification used to chain database operations
-     */
-    public static Specification<User> getAuthorityAndCourseSpecification(Set<Long> courseIds, Set<String> authorities) {
-        return (root, query, criteriaBuilder) -> {
-            if ((!courseIds.isEmpty() && !courseIds.contains(FILTER_EMPTY_COURSES)) && (!authorities.isEmpty() && !authorities.contains(FILTER_NO_AUTHORITY))) {
-                Join<User, Authority> joinedAuthorities = root.join(User_.AUTHORITIES, JoinType.LEFT);
-                joinedAuthorities.on(criteriaBuilder.in(joinedAuthorities.get(Authority_.NAME)).value(authorities));
-
-                Root<Course> courseRoot = query.from(Course.class);
-                Join<User, String> userToGroupJoin = root.join(User_.GROUPS, JoinType.LEFT);
-                updateAllUsersMatchingCoursesJoin(criteriaBuilder, courseRoot, userToGroupJoin);
-
-                query.groupBy(root.get(User_.ID)).having(criteriaBuilder.equal(criteriaBuilder.count(joinedAuthorities), authorities.size()),
-                        criteriaBuilder.equal(criteriaBuilder.count(userToGroupJoin), courseIds.size()));
-
-                return criteriaBuilder.in(courseRoot.get(Course_.ID)).value(courseIds);
-            }
-            return null;
-        };
     }
 
     /**

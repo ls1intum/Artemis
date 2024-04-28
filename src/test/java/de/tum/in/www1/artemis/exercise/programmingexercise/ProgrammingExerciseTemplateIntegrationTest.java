@@ -1,17 +1,22 @@
 package de.tum.in.www1.artemis.exercise.programmingexercise;
 
 import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Fail.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
@@ -23,12 +28,20 @@ import org.apache.maven.plugin.surefire.log.api.PrintStreamLogger;
 import org.apache.maven.plugins.surefire.report.ReportTestCase;
 import org.apache.maven.plugins.surefire.report.ReportTestSuite;
 import org.apache.maven.plugins.surefire.report.SurefireReportParser;
-import org.apache.maven.shared.invoker.*;
+import org.apache.maven.shared.invoker.DefaultInvocationRequest;
+import org.apache.maven.shared.invoker.DefaultInvoker;
+import org.apache.maven.shared.invoker.InvocationRequest;
+import org.apache.maven.shared.invoker.InvocationResult;
+import org.apache.maven.shared.invoker.Invoker;
+import org.apache.maven.shared.invoker.MavenInvocationException;
 import org.apache.maven.shared.utils.Os;
 import org.gradle.tooling.BuildLauncher;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -53,6 +66,8 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseTemplateIntegrationTest.class);
 
     private static final String TEST_PREFIX = "progextemplate";
+
+    private static File java17Home;
 
     @Autowired
     private ProgrammingExerciseTestService programmingExerciseTestService;
@@ -92,26 +107,83 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
 
         try {
             String mvnExecutable = Os.isFamily(Os.FAMILY_WINDOWS) ? "mvn.cmd" : "mvn";
-            ProcessBuilder processBuilder = new ProcessBuilder(mvnExecutable, "-version");
-            Process mvn = processBuilder.start();
-            boolean finished = mvn.waitFor(120, TimeUnit.SECONDS);
-
-            if (!finished) {
-                throw new TimeoutException("Maven version command timed out.");
+            var lines = runProcess(new ProcessBuilder(mvnExecutable, "-version"));
+            String prefix = "maven home:";
+            Optional<String> home = lines.stream().filter(line -> line.toLowerCase().startsWith(prefix)).findFirst();
+            if (home.isPresent()) {
+                System.setProperty("maven.home", home.get().substring(prefix.length()).strip());
             }
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(mvn.getInputStream()))) {
-                String prefix = "maven home:";
-                Optional<String> home = reader.lines().filter(line -> line.toLowerCase().startsWith(prefix)).findFirst();
-                if (home.isPresent()) {
-                    System.setProperty("maven.home", home.get().substring(prefix.length()).strip());
-                }
-                else {
-                    fail("maven home not found, unexpected '-version' format");
-                }
+            else {
+                fail("maven home not found, unexpected '-version' format");
             }
         }
         catch (Exception e) {
             fail("maven home not found", e);
+        }
+    }
+
+    @BeforeAll
+    static void findAndSetJava17Home() throws Exception {
+        if (Os.isFamily(Os.FAMILY_UNIX) || Os.isFamily(Os.FAMILY_MAC)) {
+            // Use which to find all java installations on Linux
+            var javaInstallations = runProcess(new ProcessBuilder("which", "-a", "java"));
+            for (String path : javaInstallations) {
+                File binFolder = new File(path).getParentFile();
+                if (checkJavaVersion(binFolder, "./java", "-version")) {
+                    return;
+                }
+            }
+
+            var alternativeInstallations = runProcess(new ProcessBuilder("/usr/libexec/java_home", "-v", "17"));
+            for (String path : alternativeInstallations) {
+                File binFolder = new File(path).getParentFile();
+                binFolder = new File(binFolder, "Home/bin");
+                if (checkJavaVersion(binFolder, "./java", "-version")) {
+                    return;
+                }
+            }
+        }
+        else if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+            // Use PATH to find all java installations on windows
+            String[] path = System.getenv("PATH").split(";");
+            var java17 = Arrays.stream(path).map(Path::of).filter(p -> p.endsWith("bin")).filter(Files::isDirectory).filter(binDir -> Files.exists(binDir.resolve("java.exe")))
+                    .filter(binDir -> {
+                        try {
+                            return checkJavaVersion(binDir.toFile(), "cmd", "/c", "java.exe", "-version");
+                        }
+                        catch (Exception e) {
+                            return false;
+                        }
+                    }).findFirst();
+
+            if (java17.isPresent()) {
+                return;
+            }
+        }
+        fail("Java 17 not found");
+    }
+
+    private static boolean checkJavaVersion(File binFolder, String... command) throws Exception {
+        ProcessBuilder processBuilder = new ProcessBuilder(command).directory(binFolder);
+        var version = runProcess(processBuilder);
+        if (!version.isEmpty() && version.getFirst().contains("version \"17")) {
+            java17Home = binFolder.getParentFile(); // JAVA_HOME/bin/java
+            log.debug("Using {} as JAVA_HOME.", java17Home);
+            return true;
+        }
+        return false;
+    }
+
+    private static List<String> runProcess(ProcessBuilder processBuilder) throws Exception {
+        Process process = processBuilder.start();
+        boolean finished = process.waitFor(120, TimeUnit.SECONDS);
+
+        if (!finished) {
+            throw new TimeoutException("command timed out.");
+        }
+        try (BufferedReader error = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+                BufferedReader stdout = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+            return Stream.concat(error.lines(), stdout.lines()).toList();
         }
     }
 
@@ -207,7 +279,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
         if (testwiseCoverageAnalysis) {
             exercise.setTestwiseCoverageEnabled(true);
         }
-        request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED);
+        request.postWithResponseBody("/api/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED);
 
         moveAssignmentSourcesOf(repository);
         int exitCode;
@@ -232,6 +304,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
 
     private int invokeMaven(boolean testwiseCoverageAnalysis) throws MavenInvocationException {
         InvocationRequest mvnRequest = new DefaultInvocationRequest();
+        mvnRequest.setJavaHome(java17Home);
         mvnRequest.setPomFile(testRepo.localRepoFile);
         mvnRequest.setGoals(List.of("clean", "test"));
         if (testwiseCoverageAnalysis) {
@@ -249,6 +322,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
     private int invokeGradle(boolean recordTestwiseCoverage) {
         try (ProjectConnection connector = GradleConnector.newConnector().forProjectDirectory(testRepo.localRepoFile).useBuildDistribution().connect()) {
             BuildLauncher launcher = connector.newBuild();
+            launcher.setJavaHome(java17Home);
             String[] tasks;
             if (recordTestwiseCoverage) {
                 tasks = new String[] { "clean", "test", "tiaTests", "--run-all-tests" };

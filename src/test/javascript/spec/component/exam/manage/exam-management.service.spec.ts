@@ -563,7 +563,7 @@ describe('Exam Management Service Tests', () => {
         // THEN
         const req = httpMock.expectOne({
             method: 'POST',
-            url: `${service.resourceUrl}/${course.id}/exams/${mockExam.id}/student-exams/unlock-all-repositories`,
+            url: `${service.resourceUrl}/${course.id}/exams/${mockExam.id}/unlock-all-repositories`,
         });
         req.flush(expected);
         tick();
@@ -581,7 +581,7 @@ describe('Exam Management Service Tests', () => {
         // THEN
         const req = httpMock.expectOne({
             method: 'POST',
-            url: `${service.resourceUrl}/${course.id}/exams/${mockExam.id}/student-exams/lock-all-repositories`,
+            url: `${service.resourceUrl}/${course.id}/exams/${mockExam.id}/lock-all-repositories`,
         });
         req.flush(expected);
         tick();
@@ -698,6 +698,21 @@ describe('Exam Management Service Tests', () => {
         service.getExercisesWithPotentialPlagiarismForExam(1, 1).subscribe((resp) => expect(resp).toEqual(exercises));
         const req = httpMock.expectOne({ method: 'GET', url: 'api/courses/1/exams/1/exercises-with-potential-plagiarism' });
         req.flush(exercises);
+        tick();
+    }));
+
+    it('should verify user attendance', fakeAsync(() => {
+        // GIVEN
+        const mockExam: Exam = { id: 1 };
+
+        // WHEN
+        service.isAttendanceChecked(course.id!, mockExam.id!).subscribe((res) => expect(res.body).toBeTrue());
+
+        // THEN
+        const req = httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/attendance` });
+
+        // CLEANUP
+        req.flush(true);
         tick();
     }));
 });

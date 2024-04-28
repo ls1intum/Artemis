@@ -17,11 +17,9 @@ import org.springframework.security.ldap.SpringSecurityLdapTemplate;
 import org.springframework.stereotype.Component;
 
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProviderImpl;
-import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.service.ldap.LdapUserService;
 import de.tum.in.www1.artemis.service.user.AuthorityService;
@@ -72,14 +70,14 @@ public class LdapAuthenticationProvider extends ArtemisAuthenticationProviderImp
             return null;
         }
 
-        log.info("Finished userRepository.findOneWithGroupsAndAuthoritiesByLogin in {}", TimeLogUtil.formatDurationFrom(start));
+        log.debug("Finished userRepository.findOneWithGroupsAndAuthoritiesByLogin in {}", TimeLogUtil.formatDurationFrom(start));
         start = System.nanoTime();
 
         // If the following code is executed, the user is either not yet existent or an external user
 
         final LdapUserDto ldapUserDto = ldapUserService.findByUsername(username).orElseThrow(() -> new BadCredentialsException("Wrong credentials"));
 
-        log.info("Finished ldapUserService.findByUsername in {}", TimeLogUtil.formatDurationFrom(start));
+        log.debug("Finished ldapUserService.findByUsername in {}", TimeLogUtil.formatDurationFrom(start));
         start = System.nanoTime();
 
         // We create our own authorization and use the credentials of the user.
@@ -91,7 +89,7 @@ public class LdapAuthenticationProvider extends ArtemisAuthenticationProviderImp
             throw new BadCredentialsException("Wrong credentials");
         }
 
-        log.info("Finished ldapTemplate.compare password in {}", TimeLogUtil.formatDurationFrom(start));
+        log.debug("Finished ldapTemplate.compare password in {}", TimeLogUtil.formatDurationFrom(start));
 
         return optionalUser.orElseGet(() -> {
             User newUser = userCreationService.createUser(ldapUserDto.getUsername(), null, null, ldapUserDto.getFirstName(), ldapUserDto.getLastName(), ldapUserDto.getEmail(),
@@ -114,58 +112,13 @@ public class LdapAuthenticationProvider extends ArtemisAuthenticationProviderImp
     }
 
     /**
-     * Adds a user to a group. Ignores "user is already a member of" errors.
-     *
-     * @param user  The user
-     * @param group The group name
-     * @throws ArtemisAuthenticationException returns an error
-     */
-    @Override
-    public void addUserToGroup(User user, String group) throws ArtemisAuthenticationException {
-        // not relevant: this would only be possible if the LDAP supports groups and the connection has write access
-    }
-
-    @Override
-    public void createUserInExternalUserManagement(User user) {
-        // not relevant
-    }
-
-    @Override
-    public void createGroup(String groupName) {
-        // not relevant
-    }
-
-    @Override
-    public void deleteGroup(String groupName) {
-        // not relevant
-    }
-
-    @Override
-    public void removeUserFromGroup(User user, String group) {
-        // not relevant: this would only be possible if the LDAP supports groups and the connection has write access
-    }
-
-    @Override
-    public boolean isGroupAvailable(String group) {
-        // not relevant: this would only be possible if the LDAP supports groups
-        return true;
-    }
-
-    @Override
-    public ConnectorHealth health() {
-        // we cannot
-        return new ConnectorHealth(true);
-    }
-
-    /**
      * Checks if a user for the given email address exists.
      *
      * @param email The user email address
      * @return Optional String of username
-     * @throws ArtemisAuthenticationException an exception when the user cannot be retrieved
      */
     @Override
-    public Optional<String> getUsernameForEmail(String email) throws ArtemisAuthenticationException {
+    public Optional<String> getUsernameForEmail(String email) {
         return ldapUserService.findByEmail(email).map(LdapUserDto::getUsername);
     }
 }

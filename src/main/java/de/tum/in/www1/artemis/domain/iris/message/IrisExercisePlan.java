@@ -2,9 +2,18 @@ package de.tum.in.www1.artemis.domain.iris.message;
 
 import java.util.List;
 
-import javax.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderColumn;
+import jakarta.persistence.Table;
 
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 
 /**
  * An IrisExercisePlanMessageContent represents an Iris-generated plan to make changes to an exercise.
@@ -19,6 +28,7 @@ public class IrisExercisePlan extends IrisMessageContent {
 
     @OrderColumn(name = "exercise_plan_step_order")
     @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @JsonIgnoreProperties(value = "plan")
     private List<IrisExercisePlanStep> steps;
 
     public List<IrisExercisePlanStep> getSteps() {

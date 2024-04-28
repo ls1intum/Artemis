@@ -3,11 +3,15 @@ package de.tum.in.www1.artemis.service.metis;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 
 import org.commonmark.node.Node;
 import org.commonmark.parser.Parser;
@@ -29,12 +33,21 @@ import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.CreatedConversationMessage;
 import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.domain.metis.conversation.*;
-import de.tum.in.www1.artemis.domain.notification.*;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
+import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
+import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
+import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
+import de.tum.in.www1.artemis.domain.notification.ConversationNotification;
+import de.tum.in.www1.artemis.domain.notification.NotificationConstants;
+import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
+import de.tum.in.www1.artemis.domain.notification.SingleUserNotificationFactory;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.LectureRepository;
+import de.tum.in.www1.artemis.repository.SingleUserNotificationRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationMessageRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
-import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -66,8 +79,6 @@ public class ConversationMessagingService extends PostingService {
 
     private final ChannelAuthorizationService channelAuthorizationService;
 
-    private final ConversationRepository conversationRepository;
-
     private final GroupNotificationService groupNotificationService;
 
     private final SingleUserNotificationRepository singleUserNotificationRepository;
@@ -77,7 +88,7 @@ public class ConversationMessagingService extends PostingService {
     protected ConversationMessagingService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
             ConversationMessageRepository conversationMessageRepository, AuthorizationCheckService authorizationCheckService, WebsocketMessagingService websocketMessagingService,
             UserRepository userRepository, ConversationService conversationService, ConversationParticipantRepository conversationParticipantRepository,
-            ConversationNotificationService conversationNotificationService, ChannelAuthorizationService channelAuthorizationService, ConversationRepository conversationRepository,
+            ConversationNotificationService conversationNotificationService, ChannelAuthorizationService channelAuthorizationService,
             GroupNotificationService groupNotificationService, SingleUserNotificationRepository singleUserNotificationRepository,
             PostSimilarityComparisonStrategy postContentCompareStrategy) {
         super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository);
@@ -85,7 +96,6 @@ public class ConversationMessagingService extends PostingService {
         this.conversationMessageRepository = conversationMessageRepository;
         this.conversationNotificationService = conversationNotificationService;
         this.channelAuthorizationService = channelAuthorizationService;
-        this.conversationRepository = conversationRepository;
         this.groupNotificationService = groupNotificationService;
         this.singleUserNotificationRepository = singleUserNotificationRepository;
         this.postContentCompareStrategy = postContentCompareStrategy;

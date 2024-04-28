@@ -3,7 +3,13 @@ package de.tum.in.www1.artemis.service;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.hibernate.Hibernate;
@@ -12,13 +18,34 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.*;
-import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.Team;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.participation.Participant;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.BuildLogStatisticsEntryRepository;
+import de.tum.in.www1.artemis.repository.ParticipantScoreRepository;
+import de.tum.in.www1.artemis.repository.ParticipationRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.StudentScoreRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.repository.TeamRepository;
+import de.tum.in.www1.artemis.repository.TeamScoreRepository;
 import de.tum.in.www1.artemis.repository.hestia.CoverageReportRepository;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
@@ -71,13 +98,15 @@ public class ParticipationService {
 
     private final Optional<SharedQueueManagementService> localCISharedBuildJobQueueService;
 
+    private final ProfileService profileService;
+
     public ParticipationService(GitService gitService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
             BuildLogEntryService buildLogEntryService, ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             SubmissionRepository submissionRepository, TeamRepository teamRepository, UriService uriService, ResultService resultService,
             CoverageReportRepository coverageReportRepository, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository,
             ParticipantScoreRepository participantScoreRepository, StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository,
-            Optional<SharedQueueManagementService> localCISharedBuildJobQueueService) {
+            Optional<SharedQueueManagementService> localCISharedBuildJobQueueService, ProfileService profileService) {
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
@@ -96,6 +125,7 @@ public class ParticipationService {
         this.studentScoreRepository = studentScoreRepository;
         this.teamScoreRepository = teamScoreRepository;
         this.localCISharedBuildJobQueueService = localCISharedBuildJobQueueService;
+        this.profileService = profileService;
     }
 
     /**
@@ -507,6 +537,29 @@ public class ParticipationService {
     }
 
     /**
+     * Ensures that all team students of a list of team participations are loaded from the database. If not, one database call for all participations is made to load the students.
+     *
+     * @param participations the team participations to load the students for
+     */
+    public void initializeTeamParticipations(List<StudentParticipation> participations) {
+        List<Long> teamIds = new ArrayList<>();
+        participations.forEach(participation -> {
+            if (participation.getParticipant() instanceof Team team && !Hibernate.isInitialized(team.getStudents())) {
+                teamIds.add(team.getId());
+            }
+        });
+        if (teamIds.isEmpty()) {
+            return;
+        }
+        Map<Long, Team> teamMap = teamRepository.findAllWithStudentsByIdIn(teamIds).stream().collect(Collectors.toMap(Team::getId, team -> team));
+        participations.forEach(participation -> {
+            if (participation.getParticipant() instanceof Team team) {
+                team.setStudents(teamMap.get(team.getId()).getStudents());
+            }
+        });
+    }
+
+    /**
      * Get one participation (in any state) by its student and exercise.
      *
      * @param exercise the exercise for which to find a participation
@@ -604,8 +657,7 @@ public class ParticipationService {
      */
     public List<StudentParticipation> findByExerciseAndStudentId(Exercise exercise, Long studentId) {
         if (exercise.isTeamMode()) {
-            Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), studentId);
-            return optionalTeam.map(team -> studentParticipationRepository.findAllByExerciseIdAndTeamId(exercise.getId(), team.getId())).orElse(List.of());
+            return studentParticipationRepository.findAllWithTeamStudentsByExerciseIdAndTeamStudentId(exercise.getId(), studentId);
         }
         return studentParticipationRepository.findByExerciseIdAndStudentId(exercise.getId(), studentId);
     }
@@ -686,7 +738,7 @@ public class ParticipationService {
 
     /**
      * Updates the individual due date for each given participation.
-     *
+     * <p>
      * Only sets individual due dates if the exercise has a due date and the
      * individual due date is after this regular due date.
      *
@@ -739,11 +791,13 @@ public class ParticipationService {
             var repositoryUri = programmingExerciseParticipation.getVcsRepositoryUri();
             String buildPlanId = programmingExerciseParticipation.getBuildPlanId();
 
-            if (deleteBuildPlan && buildPlanId != null) {
+            // If LocalVC is active the flag deleteBuildPlan is ignored and build plans are always deleted
+            if ((deleteBuildPlan || profileService.isLocalVcsActive()) && buildPlanId != null) {
                 final var projectKey = programmingExerciseParticipation.getProgrammingExercise().getProjectKey();
                 continuousIntegrationService.orElseThrow().deleteBuildPlan(projectKey, buildPlanId);
             }
-            if (deleteRepository && programmingExerciseParticipation.getRepositoryUri() != null) {
+            // If LocalVC is active the flag deleteRepository is ignored and repositories are always deleted
+            if ((deleteRepository || profileService.isLocalVcsActive()) && programmingExerciseParticipation.getRepositoryUri() != null) {
                 try {
                     versionControlService.orElseThrow().deleteRepository(repositoryUri);
                 }

@@ -2,7 +2,14 @@ package de.tum.in.www1.artemis.domain;
 
 import java.time.ZonedDateTime;
 
-import javax.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -15,6 +22,9 @@ import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueu
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class BuildJob extends DomainObject {
 
+    @Column(name = "build_job_id")
+    private String buildJobId;
+
     @Column(name = "name")
     private String name;
 
@@ -26,6 +36,10 @@ public class BuildJob extends DomainObject {
 
     @Column(name = "participation_id")
     private Long participationId;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(unique = true)
+    private Result result;
 
     @Column(name = "build_agent_address")
     private String buildAgentAddress;
@@ -66,11 +80,13 @@ public class BuildJob extends DomainObject {
     public BuildJob() {
     }
 
-    public BuildJob(LocalCIBuildJobQueueItem queueItem, BuildStatus result) {
+    public BuildJob(LocalCIBuildJobQueueItem queueItem, BuildStatus buildStatus, Result result) {
+        this.buildJobId = queueItem.id();
         this.name = queueItem.name();
         this.exerciseId = queueItem.exerciseId();
         this.courseId = queueItem.courseId();
         this.participationId = queueItem.participationId();
+        this.result = result;
         this.buildAgentAddress = queueItem.buildAgentAddress();
         this.buildStartDate = queueItem.jobTimingInfo().buildStartDate();
         this.buildCompletionDate = queueItem.jobTimingInfo().buildCompletionDate();
@@ -80,8 +96,16 @@ public class BuildJob extends DomainObject {
         this.retryCount = queueItem.retryCount();
         this.priority = queueItem.priority();
         this.triggeredByPushTo = queueItem.repositoryInfo().triggeredByPushTo();
-        this.buildStatus = result;
+        this.buildStatus = buildStatus;
         this.dockerImage = queueItem.buildConfig().dockerImage();
+    }
+
+    public String getBuildJobId() {
+        return buildJobId;
+    }
+
+    public void setBuildJobId(String buildJobId) {
+        this.buildJobId = buildJobId;
     }
 
     public String getName() {
@@ -114,6 +138,14 @@ public class BuildJob extends DomainObject {
 
     public void setParticipationId(Long participationId) {
         this.participationId = participationId;
+    }
+
+    public Result getResult() {
+        return result;
+    }
+
+    public void setResult(Result result) {
+        this.result = result;
     }
 
     public String getBuildAgentAddress() {

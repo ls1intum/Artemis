@@ -2,13 +2,24 @@ package de.tum.in.www1.artemis.service.connectors.localci.buildagent;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +30,7 @@ import org.springframework.stereotype.Service;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.topic.ITopic;
 
+import de.tum.in.www1.artemis.domain.BuildLogEntry;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
@@ -39,11 +51,13 @@ public class BuildJobManagementService {
 
     private final BuildJobContainerService buildJobContainerService;
 
-    private final LocalCIDockerService localCIDockerService;
-
     private final HazelcastInstance hazelcastInstance;
 
-    @Value("${artemis.continuous-integration.timeout-seconds:120}")
+    private final BuildLogsMap buildLogsMap;
+
+    private final ReentrantLock lock = new ReentrantLock();
+
+    @Value("${artemis.continuous-integration.timeout-seconds:240}")
     private int timeoutSeconds;
 
     @Value("${artemis.continuous-integration.asynchronous:true}")
@@ -66,12 +80,12 @@ public class BuildJobManagementService {
     private final Set<String> cancelledBuildJobs = new ConcurrentSkipListSet<>();
 
     public BuildJobManagementService(HazelcastInstance hazelcastInstance, BuildJobExecutionService buildJobExecutionService, ExecutorService localCIBuildExecutorService,
-            BuildJobContainerService buildJobContainerService, LocalCIDockerService localCIDockerService) {
+            BuildJobContainerService buildJobContainerService, BuildLogsMap buildLogsMap) {
         this.buildJobExecutionService = buildJobExecutionService;
         this.localCIBuildExecutorService = localCIBuildExecutorService;
         this.buildJobContainerService = buildJobContainerService;
-        this.localCIDockerService = localCIDockerService;
         this.hazelcastInstance = hazelcastInstance;
+        this.buildLogsMap = buildLogsMap;
     }
 
     /**
@@ -83,8 +97,14 @@ public class BuildJobManagementService {
         ITopic<String> canceledBuildJobsTopic = hazelcastInstance.getTopic("canceledBuildJobsTopic");
         canceledBuildJobsTopic.addMessageListener(message -> {
             String buildJobId = message.getMessageObject();
-            if (runningFutures.containsKey(buildJobId)) {
-                cancelBuildJob(buildJobId);
+            lock.lock();
+            try {
+                if (runningFutures.containsKey(buildJobId)) {
+                    cancelBuildJob(buildJobId);
+                }
+            }
+            finally {
+                lock.unlock();
             }
         });
     }
@@ -98,11 +118,8 @@ public class BuildJobManagementService {
      */
     public CompletableFuture<LocalCIBuildResult> executeBuildJob(LocalCIBuildJobQueueItem buildJobItem) throws LocalCIException {
 
-        // Check if the Docker image is available. If not, pull it.
-        localCIDockerService.pullDockerImage(buildJobItem.buildConfig().dockerImage());
-
         // Prepare the Docker container name before submitting the build job to the executor service, so we can remove the container if something goes wrong.
-        String containerName = buildContainerPrefix + buildJobItem.participationId() + "-" + ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS"));
+        String containerName = buildContainerPrefix + buildJobItem.id();
 
         // Prepare a Callable that will later be called. It contains the actual steps needed to execute the build job.
         Callable<LocalCIBuildResult> buildJob = () -> buildJobExecutionService.runBuildJob(buildJobItem, containerName);
@@ -112,24 +129,42 @@ public class BuildJobManagementService {
          * createCompletableFuture() is only used to provide a way to run build jobs synchronously for testing and debugging purposes and depends on the
          * artemis.continuous-integration.asynchronous environment variable.
          * Usually, when using asynchronous build jobs, it will just resolve to "CompletableFuture.supplyAsync".
+         * The future is stored in the runningFutures map so that it can be cancelled if needed.
+         * We add a lock to prevent the job from being submitted even though it was cancelled.
          */
-        Future<LocalCIBuildResult> future = localCIBuildExecutorService.submit(buildJob);
-        runningFutures.put(buildJobItem.id(), future);
+        lock.lock();
+        Future<LocalCIBuildResult> future;
+        try {
+            if (cancelledBuildJobs.contains(buildJobItem.id())) {
+                finishCancelledBuildJob(buildJobItem.repositoryInfo().assignmentRepositoryUri(), buildJobItem.id(), containerName);
+                String msg = "Build job with id " + buildJobItem.id() + " was cancelled before it was submitted to the executor service.";
+                buildLogsMap.appendBuildLogEntry(buildJobItem.id(), msg);
+                throw new CompletionException(msg, null);
+            }
+            future = localCIBuildExecutorService.submit(buildJob);
+            runningFutures.put(buildJobItem.id(), future);
+        }
+        finally {
+            lock.unlock();
+        }
 
         CompletableFuture<LocalCIBuildResult> futureResult = createCompletableFuture(() -> {
             try {
                 return future.get(timeoutSeconds, TimeUnit.SECONDS);
             }
-            catch (RejectedExecutionException | CancellationException | ExecutionException | InterruptedException | TimeoutException e) {
+            catch (Exception e) {
                 // RejectedExecutionException is thrown if the queue size limit (defined in "artemis.continuous-integration.queue-size-limit") is reached.
                 // Wrap the exception in a CompletionException so that the future is completed exceptionally and the thenAccept block is not run.
                 // This CompletionException will not resurface anywhere else as it is thrown in this completable future's separate thread.
                 if (cancelledBuildJobs.contains(buildJobItem.id())) {
                     finishCancelledBuildJob(buildJobItem.repositoryInfo().assignmentRepositoryUri(), buildJobItem.id(), containerName);
-                    throw new CompletionException("Build job with id " + buildJobItem.id() + " was cancelled.", e);
+                    String msg = "Build job with id " + buildJobItem.id() + " was cancelled.";
+                    String stackTrace = stackTraceToString(e);
+                    buildLogsMap.appendBuildLogEntry(buildJobItem.id(), new BuildLogEntry(ZonedDateTime.now(), msg + "\n" + stackTrace));
+                    throw new CompletionException(msg, e);
                 }
                 else {
-                    finishBuildJobExceptionally(buildJobItem.repositoryInfo().assignmentRepositoryUri(), buildJobItem.buildConfig().commitHash(), containerName, e);
+                    finishBuildJobExceptionally(buildJobItem.id(), containerName, e);
                     throw new CompletionException(e);
                 }
             }
@@ -168,12 +203,15 @@ public class BuildJobManagementService {
     /**
      * Finish the build job if an exception occurred while building and testing the repository.
      *
-     * @param repositoryUri The URI of the repository for which the build job was executed.
+     * @param buildJobId    The id of the build job that failed.
      * @param containerName The name of the Docker container that was used to execute the build job.
      * @param exception     The exception that occurred while building and testing the repository.
      */
-    private void finishBuildJobExceptionally(String repositoryUri, String commitHash, String containerName, Exception exception) {
-        log.error("Error while building and testing commit {} in repository {}", commitHash, repositoryUri, exception);
+    private void finishBuildJobExceptionally(String buildJobId, String containerName, Exception exception) {
+        String msg = "Error while executing build job " + buildJobId + ": " + exception.getMessage();
+        String stackTrace = stackTraceToString(exception);
+        buildLogsMap.appendBuildLogEntry(buildJobId, new BuildLogEntry(ZonedDateTime.now(), msg + "\n" + stackTrace));
+        log.error(msg);
 
         buildJobContainerService.stopContainer(containerName);
     }
@@ -212,5 +250,12 @@ public class BuildJobManagementService {
         buildJobContainerService.stopContainer(containerName);
 
         cancelledBuildJobs.remove(buildJobId);
+    }
+
+    private String stackTraceToString(Throwable e) {
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        e.printStackTrace(pw);
+        return sw.toString();
     }
 }

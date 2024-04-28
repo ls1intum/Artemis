@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.domain.enumeration.ComplaintType.COMPLAINT;
 import static de.tum.in.www1.artemis.domain.enumeration.ComplaintType.MORE_FEEDBACK;
 import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_PRODUCTION;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -17,7 +16,6 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.IsoFields;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -30,8 +28,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.validation.constraints.NotNull;
-import javax.ws.rs.BadRequestException;
+import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,7 +37,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.env.Environment;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
@@ -62,8 +59,6 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.domain.statistics.StatisticsEntry;
-import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
-import de.tum.in.www1.artemis.exception.GroupAlreadyExistsException;
 import de.tum.in.www1.artemis.repository.CompetencyRepository;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
@@ -86,7 +81,6 @@ import de.tum.in.www1.artemis.repository.metis.conversation.ConversationReposito
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupNotificationRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
-import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
@@ -105,7 +99,6 @@ import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 
 /**
@@ -121,10 +114,6 @@ public class CourseService {
     private Path courseArchivesDirPath;
 
     private static final Logger log = LoggerFactory.getLogger(CourseService.class);
-
-    private final Environment env;
-
-    private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
     private final ExerciseService exerciseService;
 
@@ -198,20 +187,18 @@ public class CourseService {
 
     private final TutorialGroupNotificationRepository tutorialGroupNotificationRepository;
 
-    public CourseService(Environment env, ArtemisAuthenticationProvider artemisAuthenticationProvider, CourseRepository courseRepository, ExerciseService exerciseService,
-            ExerciseDeletionService exerciseDeletionService, AuthorizationCheckService authCheckService, UserRepository userRepository, LectureService lectureService,
-            GroupNotificationRepository groupNotificationRepository, ExerciseGroupRepository exerciseGroupRepository, AuditEventRepository auditEventRepository,
-            UserService userService, ExamDeletionService examDeletionService, CompetencyRepository competencyRepository, GroupNotificationService groupNotificationService,
-            ExamRepository examRepository, CourseExamExportService courseExamExportService, GradingScaleRepository gradingScaleRepository,
-            StatisticsRepository statisticsRepository, StudentParticipationRepository studentParticipationRepository, TutorLeaderboardService tutorLeaderboardService,
-            RatingRepository ratingRepository, ComplaintService complaintService, ComplaintRepository complaintRepository, ResultRepository resultRepository,
-            ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            ExerciseRepository exerciseRepository, ParticipantScoreRepository participantScoreRepository, PresentationPointsCalculationService presentationPointsCalculationService,
+    public CourseService(CourseRepository courseRepository, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
+            AuthorizationCheckService authCheckService, UserRepository userRepository, LectureService lectureService, GroupNotificationRepository groupNotificationRepository,
+            ExerciseGroupRepository exerciseGroupRepository, AuditEventRepository auditEventRepository, UserService userService, ExamDeletionService examDeletionService,
+            CompetencyRepository competencyRepository, GroupNotificationService groupNotificationService, ExamRepository examRepository,
+            CourseExamExportService courseExamExportService, GradingScaleRepository gradingScaleRepository, StatisticsRepository statisticsRepository,
+            StudentParticipationRepository studentParticipationRepository, TutorLeaderboardService tutorLeaderboardService, RatingRepository ratingRepository,
+            ComplaintService complaintService, ComplaintRepository complaintRepository, ResultRepository resultRepository, ComplaintResponseRepository complaintResponseRepository,
+            SubmissionRepository submissionRepository, ProgrammingExerciseRepository programmingExerciseRepository, ExerciseRepository exerciseRepository,
+            ParticipantScoreRepository participantScoreRepository, PresentationPointsCalculationService presentationPointsCalculationService,
             TutorialGroupRepository tutorialGroupRepository, PlagiarismCaseRepository plagiarismCaseRepository, ConversationRepository conversationRepository,
             LearningPathService learningPathService, Optional<IrisSettingsService> irisSettingsService, LectureRepository lectureRepository,
             TutorialGroupNotificationRepository tutorialGroupNotificationRepository, TutorialGroupChannelManagementService tutorialGroupChannelManagementService) {
-        this.env = env;
-        this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
@@ -570,7 +557,7 @@ public class CourseService {
      */
     public void enrollUserForCourseOrThrow(User user, Course course) {
         authCheckService.checkUserAllowedToEnrollInCourseElseThrow(user, course);
-        userService.addUserToGroup(user, course.getStudentGroupName(), Role.STUDENT);
+        userService.addUserToGroup(user, course.getStudentGroupName());
         if (course.getLearningPathsEnabled()) {
             learningPathService.generateLearningPathForUser(course, user);
         }
@@ -600,7 +587,7 @@ public class CourseService {
         Role courseGroupRole = Role.fromString(courseGroup);
         List<StudentDTO> notFoundStudentsDTOs = new ArrayList<>();
         for (var studentDto : studentDTOs) {
-            var optionalStudent = userService.findUserAndAddToCourse(studentDto.registrationNumber(), studentDto.login(), studentDto.email(), courseGroupName, courseGroupRole);
+            var optionalStudent = userService.findUserAndAddToCourse(studentDto.registrationNumber(), studentDto.login(), studentDto.email(), courseGroupName);
             if (optionalStudent.isEmpty()) {
                 notFoundStudentsDTOs.add(studentDto);
             }
@@ -633,10 +620,22 @@ public class CourseService {
      * @return A list of Courses for the course management overview
      */
     public List<Course> getAllCoursesForManagementOverview(boolean onlyActive) {
-        var dateTimeNow = onlyActive ? ZonedDateTime.now() : null;
         var user = userRepository.getUserWithGroupsAndAuthorities();
+        boolean isAdmin = authCheckService.isAdmin(user);
+        if (isAdmin && !onlyActive) {
+            return courseRepository.findAll();
+        }
+
+        if (isAdmin) {
+            return courseRepository.findAllNotEnded(ZonedDateTime.now());
+        }
         var userGroups = new ArrayList<>(user.getGroups());
-        return courseRepository.getAllCoursesForManagementOverview(dateTimeNow, authCheckService.isAdmin(user), userGroups);
+
+        if (onlyActive) {
+            return courseRepository.findAllNotEndedCoursesByManagementGroupNames(ZonedDateTime.now(), userGroups);
+        }
+
+        return courseRepository.findAllCoursesByManagementGroupNames(userGroups);
     }
 
     /**
@@ -961,82 +960,46 @@ public class CourseService {
         return (searchResult);
     }
 
-    public void addUserToGroup(User user, String group, Role role) {
-        userService.addUserToGroup(user, group, role);
+    /**
+     * adds a given user to a user group
+     *
+     * @param user  user to be added to a group
+     * @param group user-group where the user should be added
+     */
+    public void addUserToGroup(User user, String group) {
+        userService.addUserToGroup(user, group);
     }
 
+    /**
+     * removes a given user to a user group
+     *
+     * @param user  user to be removed from a group
+     * @param group user-group where the user should be removed
+     */
     public void removeUserFromGroup(User user, String group) {
         userService.removeUserFromGroup(user, group);
     }
 
     /**
-     * checks if the given group exists in the authentication provider, only on production systems
-     *
-     * @param group the group that should be available
-     */
-    public void checkIfGroupsExists(String group) {
-        if (!Arrays.asList(env.getActiveProfiles()).contains(SPRING_PROFILE_PRODUCTION)) {
-            return;
-        }
-        // only execute this check in the production environment because normal developers (while testing) might not have the right to call this method on the authentication server
-        if (!artemisAuthenticationProvider.isGroupAvailable(group)) {
-            throw new ArtemisAuthenticationException("Cannot save! The group " + group + " does not exist. Please double check the group name!");
-        }
-    }
-
-    /**
-     * If the corresponding group (student, tutor, editor, instructor) is not defined, this method will create the default group.
-     * If the group is defined, it will check that the group exists
+     * If the corresponding group (student, tutor, editor, instructor) is not defined, this method will set the default group.
      *
      * @param course the course (typically created on the client and not yet existing) for which the groups should be validated
      */
-    public void createOrValidateGroups(Course course) {
-        try {
-            // We use default names if a group was not specified by the ADMIN.
-            // NOTE: instructors cannot change the group of a course, because this would be a security issue!
-            // only create default group names, if the ADMIN has used a custom group names, we assume that it already exists.
-
-            if (!StringUtils.hasText(course.getStudentGroupName())) {
-                course.setStudentGroupName(course.getDefaultStudentGroupName());
-                artemisAuthenticationProvider.createGroup(course.getStudentGroupName());
-            }
-            else {
-                checkIfGroupsExists(course.getStudentGroupName());
-            }
-
-            if (!StringUtils.hasText(course.getTeachingAssistantGroupName())) {
-                course.setTeachingAssistantGroupName(course.getDefaultTeachingAssistantGroupName());
-                artemisAuthenticationProvider.createGroup(course.getTeachingAssistantGroupName());
-            }
-            else {
-                checkIfGroupsExists(course.getTeachingAssistantGroupName());
-            }
-
-            if (!StringUtils.hasText(course.getEditorGroupName())) {
-                course.setEditorGroupName(course.getDefaultEditorGroupName());
-                artemisAuthenticationProvider.createGroup(course.getEditorGroupName());
-            }
-            else {
-                checkIfGroupsExists(course.getEditorGroupName());
-            }
-
-            if (!StringUtils.hasText(course.getInstructorGroupName())) {
-                course.setInstructorGroupName(course.getDefaultInstructorGroupName());
-                artemisAuthenticationProvider.createGroup(course.getInstructorGroupName());
-            }
-            else {
-                checkIfGroupsExists(course.getInstructorGroupName());
-            }
+    public void setDefaultGroupsIfNotSet(Course course) {
+        if (!StringUtils.hasText(course.getStudentGroupName())) {
+            course.setStudentGroupName(course.getDefaultStudentGroupName());
         }
-        catch (GroupAlreadyExistsException ex) {
-            throw new BadRequestAlertException(
-                    ex.getMessage() + ": One of the groups already exists (in the external user management), because the short name was already used in Artemis before. "
-                            + "Please choose a different short name!",
-                    Course.ENTITY_NAME, "shortNameWasAlreadyUsed", true);
+
+        if (!StringUtils.hasText(course.getTeachingAssistantGroupName())) {
+            course.setTeachingAssistantGroupName(course.getDefaultTeachingAssistantGroupName());
         }
-        catch (ArtemisAuthenticationException ex) {
-            // a specified group does not exist, notify the client
-            throw new BadRequestAlertException(ex.getMessage(), Course.ENTITY_NAME, "groupNotFound", true);
+
+        if (!StringUtils.hasText(course.getEditorGroupName())) {
+            course.setEditorGroupName(course.getDefaultEditorGroupName());
+        }
+
+        if (!StringUtils.hasText(course.getInstructorGroupName())) {
+            course.setInstructorGroupName(course.getDefaultInstructorGroupName());
         }
     }
 
@@ -1047,25 +1010,10 @@ public class CourseService {
      */
     public void checkIfEditorGroupsNeedsToBeCreated(Course course) {
         // Courses that have been created before Artemis version 4.11.9 do not have an editor group.
-        // The editor group would be need to be set manually by instructors for the course and manually added to Jira.
+        // The editor group would be need to be set manually by instructors for the course and manually added to external user management.
         // To increase the usability the group is automatically generated when a user is added.
         if (!StringUtils.hasText(course.getEditorGroupName())) {
-            try {
-                course.setEditorGroupName(course.getDefaultEditorGroupName());
-                if (!artemisAuthenticationProvider.isGroupAvailable(course.getDefaultEditorGroupName())) {
-                    artemisAuthenticationProvider.createGroup(course.getDefaultEditorGroupName());
-                }
-            }
-            catch (GroupAlreadyExistsException ex) {
-                throw new BadRequestAlertException(
-                        ex.getMessage() + ": One of the groups already exists (in the external user management), because the short name was already used in Artemis before. "
-                                + "Please choose a different short name!",
-                        Course.ENTITY_NAME, "shortNameWasAlreadyUsed", true);
-            }
-            catch (ArtemisAuthenticationException ex) {
-                // a specified group does not exist, notify the client
-                throw new BadRequestAlertException(ex.getMessage(), Course.ENTITY_NAME, "groupNotFound", true);
-            }
+            course.setEditorGroupName(course.getDefaultEditorGroupName());
             courseRepository.save(course);
         }
     }

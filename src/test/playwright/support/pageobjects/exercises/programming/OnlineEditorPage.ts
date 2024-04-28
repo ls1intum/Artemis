@@ -14,6 +14,10 @@ export class OnlineEditorPage {
         return getExercise(this.page, exerciseID).locator('#cardFiles');
     }
 
+    findEditorTextField(exerciseID: number) {
+        return getExercise(this.page, exerciseID).locator('.view-lines').first();
+    }
+
     async typeSubmission(exerciseID: number, submission: ProgrammingExerciseSubmission) {
         for (const newFile of submission.files) {
             if (submission.createFilesInRootFolder) {
@@ -22,17 +26,19 @@ export class OnlineEditorPage {
                 await this.createFileInRootPackage(exerciseID, newFile.name, submission.packageName!);
             }
             const fileContent = await Fixtures.get(newFile.path);
-            await this.page.evaluate(
-                ({ editorSelector, fileContent }) => {
-                    const editorElement = document.querySelector(editorSelector);
-                    if (editorElement) {
-                        // @ts-expect-error ace does not exists on windows, but works without issue
-                        const editor = ace.edit(editorElement);
-                        editor.setValue(fileContent, 1); // Set the editor's content
-                    }
+            const editorElement = this.findEditorTextField(exerciseID);
+            await editorElement.click();
+            await editorElement.evaluate(
+                (element, { fileContent }) => {
+                    const clipboardData = new DataTransfer();
+                    const format = 'text/plain';
+                    clipboardData.setData(format, fileContent);
+                    const event = new ClipboardEvent('paste', { clipboardData });
+                    element.dispatchEvent(event);
                 },
-                { editorSelector: '#ace-code-editor', fileContent: fileContent! },
+                { fileContent: fileContent! },
             );
+            await this.page.waitForTimeout(500);
         }
         await this.page.waitForTimeout(500);
     }

@@ -11,7 +11,7 @@
             <!-- exam nav -->
             <jhi-exam-navigation-bar
                 id="exam-navigation-bar"
-                class="sticky-top d-block"
+                class="exam-navigation-sticky d-block"
                 [exercises]="studentExam.exercises!"
                 [exerciseIndex]="exerciseIndex"
                 [endDate]="individualStudentEndDate"
@@ -28,7 +28,7 @@
             @for (exercise of studentExam.exercises; track exercise; let i = $index) {
                 @if (exercise && exercise.studentParticipations && exercise.studentParticipations[0]) {
                     @if (pageComponentVisited[i]) {
-                        <div [hidden]="i !== activePageIndex" [id]="'exercise-' + exercise.id">
+                        <div class="mb-4" [hidden]="i !== activePageIndex" [id]="'exercise-' + exercise.id">
                             @switch (exercise.type) {
                                 @case (QUIZ) {
                                     <jhi-quiz-submission-exam [quizConfiguration]="exercise" [studentSubmission]="exercise.studentParticipations[0].submissions![0]" />
@@ -112,6 +112,7 @@
                 [handInEarly]="handInEarly"
                 [handInPossible]="handInPossible"
                 [submitInProgress]="submitInProgress"
+                [attendanceChecked]="attendanceChecked"
                 (onExamEnded)="onExamEndConfirmed()"
                 (onExamContinueAfterHandInEarly)="toggleHandInEarly()"
             />

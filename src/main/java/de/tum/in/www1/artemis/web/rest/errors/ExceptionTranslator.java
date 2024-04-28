@@ -3,10 +3,10 @@ package de.tum.in.www1.artemis.web.rest.errors;
 import java.io.IOException;
 import java.util.List;
 
-import javax.annotation.Nullable;
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.constraints.NotNull;
-import javax.ws.rs.BadRequestException;
+import jakarta.annotation.Nullable;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.BadRequestException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -23,8 +23,12 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.context.request.NativeWebRequest;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.web.socket.sockjs.SockJsMessageDeliveryException;
-import org.zalando.problem.*;
+import org.zalando.problem.DefaultProblem;
+import org.zalando.problem.Problem;
+import org.zalando.problem.ProblemBuilder;
+import org.zalando.problem.Status;
 import org.zalando.problem.spring.web.advice.ProblemHandling;
 import org.zalando.problem.spring.web.advice.security.SecurityAdviceTrait;
 import org.zalando.problem.violations.ConstraintViolationProblem;
@@ -33,8 +37,8 @@ import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabException;
 import tech.jhipster.web.util.HeaderUtil;
 
 /**
- * Controller advice to translate the server side exceptions to client-friendly json structures. The error response follows RFC7807 - Problem Details for HTTP APIs
- * (https://tools.ietf.org/html/rfc7807)
+ * Controller advice to translate the server side exceptions to client-friendly json structures. The error response follows
+ * <a href="https://tools.ietf.org/html/rfc7807">RFC7807 - Problem Details for HTTP APIs</a>
  */
 @ControllerAdvice
 public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait {
@@ -181,4 +185,9 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
         return create(ex, problem, request);
     }
 
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<Problem> handleResourceNotFoundException(NoResourceFoundException ex, NativeWebRequest request) {
+        final var problem = Problem.builder().withStatus(Status.NOT_FOUND).withDetail(ex.getMessage()).build();
+        return create(ex, problem, request);
+    }
 }

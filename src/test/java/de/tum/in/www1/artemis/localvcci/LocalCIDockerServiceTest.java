@@ -1,23 +1,35 @@
 package de.tum.in.www1.artemis.localvcci;
 
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
+import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.github.dockerjava.api.command.InspectImageCmd;
+import com.github.dockerjava.api.command.ListContainersCmd;
 import com.github.dockerjava.api.exception.NotFoundException;
+import com.github.dockerjava.api.model.Container;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.in.www1.artemis.domain.BuildJob;
+import de.tum.in.www1.artemis.domain.enumeration.BuildStatus;
 import de.tum.in.www1.artemis.repository.BuildJobRepository;
+import de.tum.in.www1.artemis.service.connectors.localci.buildagent.BuildLogsMap;
 import de.tum.in.www1.artemis.service.connectors.localci.buildagent.LocalCIDockerService;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildConfig;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
 
 class LocalCIDockerServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
@@ -79,11 +91,41 @@ class LocalCIDockerServiceTest extends AbstractSpringIntegrationLocalCILocalVCTe
         InspectImageCmd inspectImageCmd = mock(InspectImageCmd.class);
         doReturn(inspectImageCmd).when(dockerClient).inspectImageCmd(anyString());
         doThrow(new NotFoundException("")).when(inspectImageCmd).exec();
-
+        BuildConfig buildConfig = new BuildConfig("echo 'test'", "test-image-name", "test", "test", null, null, false, false, false, null);
+        var build = new LocalCIBuildJobQueueItem("1", "job1", "address1", 1, 1, 1, 1, 1, BuildStatus.SUCCESSFUL, null, null, buildConfig, null);
         // Pull image
-        localCIDockerService.pullDockerImage("test-image-name");
+        localCIDockerService.pullDockerImage(build, new BuildLogsMap());
 
         // Verify that pullImageCmd() was called.
         verify(dockerClient, times(1)).pullImageCmd("test-image-name");
+    }
+
+    @Test
+    void testRemoveStrandedContainers() {
+
+        // Mocks
+        ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
+        doReturn(listContainersCmd).when(dockerClient).listContainersCmd();
+        doReturn(listContainersCmd).when(listContainersCmd).withShowAll(true);
+
+        Container mockContainer = mock(Container.class);
+        doReturn(List.of(mockContainer)).when(listContainersCmd).exec();
+        doReturn(new String[] { "/local-ci-dummycontainer" }).when(mockContainer).getNames();
+        // Mock container creation time to be older than 5 minutes
+        doReturn(Instant.now().getEpochSecond() - (6 * 60)).when(mockContainer).getCreated();
+        doReturn("dummy-container-id").when(mockContainer).getId();
+
+        localCIDockerService.cleanUpContainers();
+
+        // Verify that removeContainerCmd() was called
+        verify(dockerClient, times(1)).removeContainerCmd(anyString());
+
+        // Mock container creation time to be younger than 5 minutes
+        doReturn(Instant.now().getEpochSecond()).when(mockContainer).getCreated();
+
+        localCIDockerService.cleanUpContainers();
+
+        // Verify that removeContainerCmd() was not called a second time
+        verify(dockerClient, times(1)).removeContainerCmd(anyString());
     }
 }

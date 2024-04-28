@@ -15,7 +15,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
-import javax.annotation.Nonnull;
+import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
@@ -47,7 +47,7 @@ public class ResourceLoaderService {
     /**
      * Files that start with a prefix that is included in this list can be overwritten from the file system
      */
-    private static final List<Path> ALLOWED_OVERRIDE_PREFIXES = List.of(Path.of("templates", "jenkins"));
+    private static final List<Path> ALLOWED_OVERRIDE_PREFIXES = List.of(Path.of("templates"));
 
     public ResourceLoaderService(ResourceLoader resourceLoader) {
         this.resourceLoader = ResourcePatternUtils.getResourcePatternResolver(resourceLoader);
@@ -89,7 +89,7 @@ public class ResourceLoaderService {
      * @param basePath A relative path pattern to a resource.
      * @return The resources located by the specified pathPattern.
      */
-    @Nonnull
+    @NotNull
     public Resource[] getResources(final Path basePath) {
         return getResources(basePath, ALL_FILES_GLOB);
     }
@@ -105,7 +105,7 @@ public class ResourceLoaderService {
      * @param pattern  A pattern that limits which files in the directory of the base path are matched.
      * @return The resources located by the specified pathPattern.
      */
-    @Nonnull
+    @NotNull
     public Resource[] getResources(final Path basePath, final String pattern) {
         checkValidPathElseThrow(basePath);
 
