@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.domain.lti;
 
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.security.oauth2.core.oidc.IdTokenClaimNames;
@@ -56,7 +56,7 @@ public record Lti13DeepLinkingResponse(@JsonProperty(IdTokenClaimNames.AUD) Stri
         JsonNode deepLinkingSettingsJson = objectMapper.convertValue(ltiIdToken.getClaim(Claims.DEEP_LINKING_SETTINGS), JsonNode.class);
         String returnUrl = deepLinkingSettingsJson.get(Claims.DEEPLINK_RETURN_URL_CLAIM).asText();
 
-        return new Lti13DeepLinkingResponse(ltiIdToken.getIssuer().toString(), ltiIdToken.getAudience().get(0), String.valueOf(ltiIdToken.getExpiresAt()),
+        return new Lti13DeepLinkingResponse(ltiIdToken.getIssuer().toString(), ltiIdToken.getAudience().getFirst(), String.valueOf(ltiIdToken.getExpiresAt()),
                 String.valueOf(ltiIdToken.getIssuedAt()), ltiIdToken.getClaimAsString(IdTokenClaimNames.NONCE), "Content successfully linked",
                 ltiIdToken.getClaimAsString(Claims.LTI_DEPLOYMENT_ID), "LtiDeepLinkingResponse", "1.3.0", null,  // ContentItems needs to be set separately
                 deepLinkingSettingsJson, clientRegistrationId, returnUrl);
