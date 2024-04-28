@@ -554,6 +554,11 @@ public class ProgrammingExerciseService {
 
         participationRepository.removeIndividualDueDatesIfBeforeDueDate(savedProgrammingExercise, programmingExerciseBeforeUpdate.getDueDate());
         programmingExerciseTaskService.updateTasksFromProblemStatement(savedProgrammingExercise);
+
+        if (programmingExerciseBeforeUpdate.isCourseExercise()) {
+            scheduleOperations(updatedProgrammingExercise.getId());
+        }
+
         exerciseService.notifyAboutProblemStatementChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise, notificationText);
 
         return savedProgrammingExercise;
