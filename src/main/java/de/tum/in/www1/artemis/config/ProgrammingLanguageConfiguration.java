@@ -2,7 +2,11 @@ package de.tum.in.www1.artemis.config;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
-import java.util.*;
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.slf4j.Logger;

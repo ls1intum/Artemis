@@ -3,7 +3,9 @@ package de.tum.in.www1.artemis.config.websocket;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.web.websocket.ResultWebsocketService.getExerciseIdFromNonPersonalExerciseResultDestination;
 import static de.tum.in.www1.artemis.web.websocket.ResultWebsocketService.isNonPersonalExerciseResultDestination;
-import static de.tum.in.www1.artemis.web.websocket.localci.LocalCIWebsocketMessagingService.*;
+import static de.tum.in.www1.artemis.web.websocket.localci.LocalCIWebsocketMessagingService.isBuildAgentDestination;
+import static de.tum.in.www1.artemis.web.websocket.localci.LocalCIWebsocketMessagingService.isBuildQueueAdminDestination;
+import static de.tum.in.www1.artemis.web.websocket.localci.LocalCIWebsocketMessagingService.isBuildQueueCourseDestination;
 import static de.tum.in.www1.artemis.web.websocket.team.ParticipationTeamWebsocketService.getParticipationIdFromDestination;
 import static de.tum.in.www1.artemis.web.websocket.team.ParticipationTeamWebsocketService.isParticipationTeamDestination;
 

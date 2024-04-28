@@ -7,7 +7,6 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.in.www1.artemis.service.connectors.localci.buildagent.TestResultXmlParser.processTestResultFile;
 
 import java.io.IOException;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -30,7 +29,6 @@ import org.springframework.stereotype.Service;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
 
-import de.tum.in.www1.artemis.domain.BuildLogEntry;
 import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
@@ -63,9 +61,6 @@ public class BuildJobExecutionService {
     private final LocalCIDockerService localCIDockerService;
 
     private final BuildLogsMap buildLogsMap;
-
-    @Value("${artemis.version-control.url}")
-    private URL localVCBaseUrl;
 
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;

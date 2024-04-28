@@ -34,7 +34,10 @@ import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusResult;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.*;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildConfig;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.JobTimingInfo;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.RepositoryInfo;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
 

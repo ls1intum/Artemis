@@ -1,7 +1,21 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
-import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.*;
-import static de.tum.in.www1.artemis.domain.enumeration.ProjectType.*;
+import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.ASSEMBLER;
+import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.C;
+import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.HASKELL;
+import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.JAVA;
+import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.KOTLIN;
+import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.OCAML;
+import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.PYTHON;
+import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.SWIFT;
+import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.VHDL;
+import static de.tum.in.www1.artemis.domain.enumeration.ProjectType.FACT;
+import static de.tum.in.www1.artemis.domain.enumeration.ProjectType.GCC;
+import static de.tum.in.www1.artemis.domain.enumeration.ProjectType.GRADLE_GRADLE;
+import static de.tum.in.www1.artemis.domain.enumeration.ProjectType.MAVEN_MAVEN;
+import static de.tum.in.www1.artemis.domain.enumeration.ProjectType.PLAIN;
+import static de.tum.in.www1.artemis.domain.enumeration.ProjectType.PLAIN_GRADLE;
+import static de.tum.in.www1.artemis.domain.enumeration.ProjectType.PLAIN_MAVEN;
 
 import java.util.List;
 
