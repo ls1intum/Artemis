@@ -70,7 +70,7 @@ test.describe('Programming exercise participation', () => {
         });
 
         test.describe('Make a submission using git', () => {
-            test.skip('Makes a failing submission', async ({ page, programmingExerciseOverview, programmingExerciseEditor }) => {
+            test.skip('Makes a failing submission', async ({ page, programmingExerciseOverview }) => {
                 await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
                 let repoUrl = await programmingExerciseOverview.getRepoUrl();
                 repoUrl = repoUrl.replace('localhost', 'artemis-app:8080');
@@ -80,14 +80,14 @@ test.describe('Programming exercise participation', () => {
                 const exerciseRepo = await gitClient.cloneRepo(repoUrl, repoName);
                 const submission = javaBuildErrorSubmission;
                 const commitMessage = "Let's try and see";
-                await makeGitSubmission(exerciseRepo, repoName, submission, commitMessage);
+                await makeGitSubmission(exerciseRepo, repoName, studentOne, submission, commitMessage);
                 await fs.rmdir(`./test-exercise-repos/${repoName}`, { recursive: true });
                 await page.goto(`courses/${course.id}/exercises/${exercise.id!}`);
-                const resultScore = await programmingExerciseEditor.getResultScore();
+                const resultScore = await programmingExerciseOverview.getResultScore();
                 await expect(resultScore.getByText(submission.expectedResult)).toBeVisible();
             });
 
-            test('Makes a partially successful submission', async ({ page, programmingExerciseOverview, programmingExerciseEditor }) => {
+            test('Makes a partially successful submission', async ({ page, programmingExerciseOverview }) => {
                 await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
                 let repoUrl = await programmingExerciseOverview.getRepoUrl();
                 repoUrl = repoUrl.replace('localhost', 'artemis-app');
@@ -102,11 +102,11 @@ test.describe('Programming exercise participation', () => {
                 await makeGitSubmission(exerciseRepo, repoName, studentOne, submission, commitMessage);
                 await fs.rmdir(`./test-exercise-repos/${repoName}`, { recursive: true });
                 await page.goto(`courses/${course.id}/exercises/${exercise.id!}`);
-                const resultScore = await programmingExerciseEditor.getResultScore();
+                const resultScore = await programmingExerciseOverview.getResultScore();
                 await expect(resultScore.getByText(submission.expectedResult)).toBeVisible();
             });
 
-            test.skip('Makes a successful submission', async ({ page, programmingExerciseOverview, programmingExerciseEditor }) => {
+            test.skip('Makes a successful submission', async ({ page, programmingExerciseOverview }) => {
                 await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
                 const repoUrl = await programmingExerciseOverview.getRepoUrl();
                 // repoUrl = repoUrl.replace('localhost', 'artemis-app');
@@ -116,10 +116,10 @@ test.describe('Programming exercise participation', () => {
                 const exerciseRepo = await gitClient.cloneRepo(repoUrl, repoName);
                 const submission = javaAllSuccessfulSubmission;
                 const commitMessage = 'Implemented all tasks';
-                await makeGitSubmission(exerciseRepo, repoName, submission, commitMessage);
+                await makeGitSubmission(exerciseRepo, repoName, studentOne, submission, commitMessage);
                 await fs.rmdir(`./test-exercise-repos/${repoName}`, { recursive: true });
                 await page.goto(`courses/${course.id}/exercises/${exercise.id!}`);
-                const resultScore = await programmingExerciseEditor.getResultScore();
+                const resultScore = await programmingExerciseOverview.getResultScore();
                 await expect(resultScore.getByText(submission.expectedResult)).toBeVisible();
             });
 
@@ -134,11 +134,11 @@ test.describe('Programming exercise participation', () => {
 
                 const partialSubmission = javaPartiallySuccessfulSubmission;
                 const initialCommitMessage = 'Initial commit';
-                await makeGitSubmission(exerciseRepo, repoName, partialSubmission, initialCommitMessage);
+                await makeGitSubmission(exerciseRepo, repoName, studentOne, partialSubmission, initialCommitMessage);
 
                 const correctSubmission = javaAllSuccessfulSubmission;
                 const finalCommitMessage = 'Implemented all tasks';
-                await makeGitSubmission(exerciseRepo, repoName, correctSubmission, finalCommitMessage, false);
+                await makeGitSubmission(exerciseRepo, repoName, studentOne, correctSubmission, finalCommitMessage, false);
                 await fs.rmdir(`./test-exercise-repos/${repoName}`, { recursive: true });
                 await page.goto(`courses/${course.id}/exercises/${exercise.id!}`);
                 await programmingExerciseOverview.getResultScore();
