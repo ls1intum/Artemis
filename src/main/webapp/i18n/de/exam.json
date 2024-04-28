@@ -312,9 +312,12 @@
             "pendingChanges": "Alle ungespeicherten Änderungen gehen beim Verlassen der Klausur verloren. Bist du sicher, dass du fortfahren möchtest?",
             "handInEarly": "Vorzeitig abgeben",
             "continueAfterHandInEarly": "Weitermachen",
+            "attendanceCheck": "Anwesenheitskontrolle",
             "continueAfterHandInEarlyDescription": "Du willst doch nicht vorzeitig abgeben?",
             "handInEarlyNoticeFirstSentence": "Du bist dabei die Klausur vorzeitig abzugeben.",
             "handInEarlyNoticeSecondSentence": "Du kannst danach nicht mehr an der Klausur teilnehmen.",
+            "attendanceNotVerifiedWarningFirstSentence": "Deine Anwesenheit wurde noch nicht kontrolliert.",
+            "attendanceNotVerifiedWarningSecondSentence": "Bitte warte, bis deine Anwesenheit kontrolliert wurde, oder kontaktiere die Hörsaalaufsicht wenn du denkst dass ein Fehler aufgetreten ist.",
             "namePlaceholder": "Trage deinen vollen Namen hier ein",
             "submissionSuccessful": {
                 "title": "Deine Klausur wurde erfolgreich abgegeben!",
@@ -463,6 +466,7 @@
             "numberOfExercisesInExam": "Anzahl an Aufgaben in der Klausur",
             "numberOfCorrectionRoundsInExam": "Anzahl der Korrekturrunden der Klausur",
             "randomizeQuestionOrder": "Zufällige Reihenfolge der Aufgabengruppen",
+            "examWithAttendanceCheck": "Klausur mit Anwesenheitskontrolle",
             "startText": "Information zu Klausurbeginn",
             "endText": "Information zum Klausurende",
             "confirmationStartText": "Bestätigungstext bei Klausurbeginn",
@@ -560,6 +564,7 @@
                 "titleInfo": "Der Name der Aufgabengruppe wird den Studierenden als Aufgabenname angezeigt.",
                 "delete": {
                     "question": "Soll die Aufgabengruppe <strong>{{ title }}</strong> wirklich gelöscht werden? Alle zugehörigen Aufgaben werden ebenfalls gelöscht.",
+                    "questionLocalVC": "Soll die Aufgabengruppe <strong>{{ title }}</strong> wirklich gelöscht werden? Alle zugehörigen Aufgaben werden gelöscht.<br>Alle Studierenden- Template-, Lösungs- und Test-Repositories sowie Build-Pläne werden ebenfalls gelöscht.<br>Achtung: Dies kann <strong class='text-danger'>NICHT</strong> rückgängig gemacht werden!<br>Es wird empfohlen die Repositories und Build-Pläne erst zu sichern! ",
                     "typeNameToConfirm": "Bitte gib den Namen der Aufgabengruppe zur Bestätigung ein."
                 },
                 "orderCouldNotBeSaved": "Die Reihenfolge konnte nicht gespeichert werden.",

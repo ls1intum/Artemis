@@ -1,4 +1,17 @@
-import { Component, EventEmitter, Input, OnChanges, Output, QueryList, SimpleChanges, ViewChild, ViewChildren, ViewEncapsulation } from '@angular/core';
+import {
+    ChangeDetectorRef,
+    Component,
+    ElementRef,
+    EventEmitter,
+    Input,
+    OnChanges,
+    Output,
+    QueryList,
+    SimpleChanges,
+    ViewChild,
+    ViewChildren,
+    ViewEncapsulation,
+} from '@angular/core';
 import { RepositoryFileService } from 'app/exercises/shared/result/repository.service';
 import { CodeEditorRepositoryFileService, ConnectionError } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
@@ -6,7 +19,7 @@ import { LocalStorageService } from 'ngx-webstorage';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { firstValueFrom } from 'rxjs';
 import { Annotation, FileSession } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
-import { Feedback } from 'app/entities/feedback.model';
+import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER, Feedback } from 'app/entities/feedback.model';
 import { Course } from 'app/entities/course.model';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
 import {
@@ -19,6 +32,10 @@ import {
     RenameFileChange,
 } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { fromPairs, pickBy } from 'lodash-es';
+import { faPlusSquare } from '@fortawesome/free-solid-svg-icons';
+import { CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback-suggestion.component';
+import { MonacoEditorLineHighlight } from 'app/shared/monaco-editor/model/monaco-editor-line-highlight.model';
+import { FileTypeService } from 'app/exercises/programming/shared/service/file-type.service';
 
 @Component({
     selector: 'jhi-code-editor-monaco',
@@ -30,8 +47,12 @@ import { fromPairs, pickBy } from 'lodash-es';
 export class CodeEditorMonacoComponent implements OnChanges {
     @ViewChild('editor', { static: true })
     editor: MonacoEditorComponent;
+    @ViewChild('addFeedbackButton', { static: true })
+    addFeedbackButton: ElementRef<HTMLDivElement>;
     @ViewChildren(CodeEditorTutorAssessmentInlineFeedbackComponent)
     inlineFeedbackComponents: QueryList<CodeEditorTutorAssessmentInlineFeedbackComponent>;
+    @ViewChildren(CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent)
+    inlineFeedbackSuggestionComponents: QueryList<CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent>;
     @Input()
     commitState: CommitState;
     @Input()
@@ -40,6 +61,12 @@ export class CodeEditorMonacoComponent implements OnChanges {
     course?: Course;
     @Input()
     feedbacks: Feedback[] = [];
+    @Input()
+    feedbackSuggestions: Feedback[] = [];
+    @Input()
+    readOnlyManualFeedback: boolean;
+    @Input()
+    highlightDifferences: boolean;
     @Input()
     isTutorAssessment = false;
     @Input()
@@ -59,11 +86,26 @@ export class CodeEditorMonacoComponent implements OnChanges {
     onError: EventEmitter<string> = new EventEmitter();
     @Output()
     onFileContentChange: EventEmitter<{ file: string; fileContent: string }> = new EventEmitter<{ file: string; fileContent: string }>();
+    @Output()
+    onUpdateFeedback = new EventEmitter<Feedback[]>();
+    @Output()
+    onFileLoad = new EventEmitter<string>();
+    @Output()
+    onAcceptSuggestion = new EventEmitter<Feedback>();
+    @Output()
+    onDiscardSuggestion = new EventEmitter<Feedback>();
 
     editorLocked = false;
     isLoading = false;
 
     fileSession: FileSession = {};
+    newFeedbackLines: number[] = [];
+    binaryFileSelected = false;
+
+    faPlusSquare = faPlusSquare;
+
+    static readonly CLASS_DIFF_LINE_HIGHLIGHT = 'monaco-diff-line-highlight';
+    static readonly CLASS_DIFF_MARGIN_HIGHLIGHT = 'monaco-diff-margin-highlight';
 
     // Expose to template
     protected readonly Feedback = Feedback;
@@ -73,6 +115,8 @@ export class CodeEditorMonacoComponent implements OnChanges {
         private repositoryFileService: CodeEditorRepositoryFileService,
         private fileService: CodeEditorFileService,
         protected localStorageService: LocalStorageService,
+        private changeDetectorRef: ChangeDetectorRef,
+        private fileTypeService: FileTypeService,
     ) {}
 
     async ngOnChanges(changes: SimpleChanges): Promise<void> {
@@ -86,11 +130,23 @@ export class CodeEditorMonacoComponent implements OnChanges {
         if ((changes.selectedFile && this.selectedFile) || editorWasRefreshed) {
             await this.selectFileInEditor(this.selectedFile);
             this.setBuildAnnotations(this.annotationsArray);
+            this.newFeedbackLines = [];
+            this.renderFeedbackWidgets();
+            if (this.isTutorAssessment && !this.readOnlyManualFeedback) {
+                this.setupAddFeedbackButton();
+            }
+            this.onFileLoad.emit(this.selectedFile);
+        }
+
+        if (changes.feedbacks) {
+            this.newFeedbackLines = [];
             this.renderFeedbackWidgets();
         }
 
         this.editorLocked =
             this.disableActions || this.isTutorAssessment || this.commitState === CommitState.CONFLICT || !this.selectedFile || !!this.fileSession[this.selectedFile]?.loadingError;
+
+        this.editor.layout();
     }
 
     async selectFileInEditor(fileName: string | undefined): Promise<void> {
@@ -116,8 +172,13 @@ export class CodeEditorMonacoComponent implements OnChanges {
             this.isLoading = false;
         }
 
-        this.editor.changeModel(fileName, this.fileSession[fileName].code);
-        this.editor.setPosition(this.fileSession[fileName].cursor);
+        const code = this.fileSession[fileName].code;
+        this.binaryFileSelected = this.fileTypeService.isBinaryContent(code);
+
+        if (!this.binaryFileSelected) {
+            this.editor.changeModel(fileName, code);
+            this.editor.setPosition(this.fileSession[fileName].cursor);
+        }
     }
 
     onFileTextChanged(text: string): void {
@@ -130,23 +191,151 @@ export class CodeEditorMonacoComponent implements OnChanges {
         }
     }
 
-    protected renderFeedbackWidgets() {
-        for (const feedback of this.filterFeedbackForSelectedFile([...this.feedbacks])) {
-            this.addLineWidgetWithFeedback(feedback);
+    getText(): string {
+        return this.editor.getText();
+    }
+
+    getNumberOfLines(): number {
+        return this.editor.getNumberOfLines();
+    }
+
+    highlightLines(startLine: number, endLine: number) {
+        this.editor.highlightLines(startLine, endLine, CodeEditorMonacoComponent.CLASS_DIFF_LINE_HIGHLIGHT, CodeEditorMonacoComponent.CLASS_DIFF_MARGIN_HIGHLIGHT);
+    }
+
+    setupAddFeedbackButton(): void {
+        this.editor.setGlyphMarginHoverButton(this.addFeedbackButton.nativeElement, (lineNumber) => this.addNewFeedback(lineNumber));
+    }
+
+    /**
+     * Adds a new feedback widget to the specified line and renders it. The text field will be focused automatically.
+     * @param lineNumber The line (as shown in the editor) to render the widget in.
+     */
+    addNewFeedback(lineNumber: number): void {
+        // TODO for a follow-up: in the future, there might be multiple feedback items on the same line.
+        const lineNumberZeroBased = lineNumber - 1;
+        if (!this.getInlineFeedbackNode(lineNumberZeroBased)) {
+            this.newFeedbackLines.push(lineNumberZeroBased);
+            this.renderFeedbackWidgets(lineNumberZeroBased);
         }
     }
 
-    getInlineFeedbackNode(line: number) {
-        return [...this.inlineFeedbackComponents].find((c) => c.codeLine === line)?.elementRef?.nativeElement;
+    /**
+     * Updates an existing feedback item and renders it. If necessary, an unsaved feedback item will be converted into an actual feedback item.
+     * @param feedback The feedback item to save.
+     */
+    updateFeedback(feedback: Feedback) {
+        const line = Feedback.getReferenceLine(feedback);
+        const existingFeedbackIndex = this.feedbacks.findIndex((f) => f.reference === feedback.reference);
+        if (existingFeedbackIndex !== -1) {
+            // Existing feedback -> update only
+            this.feedbacks[existingFeedbackIndex] = feedback;
+        } else {
+            // New feedback -> save as actual feedback.
+            this.feedbacks.push(feedback);
+            this.newFeedbackLines = this.newFeedbackLines.filter((l) => l !== line);
+        }
+        this.renderFeedbackWidgets();
+        this.onUpdateFeedback.emit(this.feedbacks);
+    }
+
+    /**
+     * Cancels the edit of a feedback item, removing the widget if necessary.
+     * @param line The line the feedback item refers to.
+     */
+    cancelFeedback(line: number) {
+        // We only have to remove new feedback.
+        if (this.newFeedbackLines.includes(line)) {
+            this.newFeedbackLines = this.newFeedbackLines.filter((l) => l !== line);
+            this.renderFeedbackWidgets();
+        }
+    }
+
+    /**
+     * Removes an existing feedback item and renders the updated state.
+     * @param feedback The feedback to remove.
+     */
+    deleteFeedback(feedback: Feedback) {
+        this.feedbacks = this.feedbacks.filter((f) => !Feedback.areIdentical(f, feedback));
+        this.onUpdateFeedback.emit(this.feedbacks);
+        this.renderFeedbackWidgets();
+    }
+
+    /**
+     * Accepts a feedback suggestion by storing a feedback suggestion as actual feedback.
+     * @param feedback The feedback item of the feedback suggestion.
+     */
+    acceptSuggestion(feedback: Feedback): void {
+        this.feedbackSuggestions = this.feedbackSuggestions.filter((f) => f !== feedback);
+        feedback.text = (feedback.text ?? FEEDBACK_SUGGESTION_IDENTIFIER).replace(FEEDBACK_SUGGESTION_IDENTIFIER, FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER);
+        this.updateFeedback(feedback);
+        this.onAcceptSuggestion.emit(feedback);
+    }
+
+    /**
+     * Discards a feedback suggestion and removes its widget.
+     * @param feedback The feedback item of the feedback suggestion.
+     */
+    discardSuggestion(feedback: Feedback): void {
+        this.feedbackSuggestions = this.feedbackSuggestions.filter((f) => f !== feedback);
+        this.renderFeedbackWidgets();
+        this.onDiscardSuggestion.emit(feedback);
+    }
+
+    /**
+     * Renders the current state of feedback in the editor.
+     * @param lineOfWidgetToFocus The line number of the widget whose text area should be focused.
+     * @protected
+     */
+    protected renderFeedbackWidgets(lineOfWidgetToFocus?: number) {
+        // Since the feedback widgets rely on the DOM nodes of each feedback item, Angular needs to re-render each node, hence the timeout.
+        this.changeDetectorRef.detectChanges();
+        setTimeout(() => {
+            this.editor.disposeWidgets();
+            for (const feedback of this.filterFeedbackForSelectedFile([...this.feedbacks, ...this.feedbackSuggestions])) {
+                this.addLineWidgetWithFeedback(feedback);
+            }
+
+            // New, unsaved feedback has no associated object yet.
+            for (const line of this.newFeedbackLines) {
+                const feedbackNode = this.getInlineFeedbackNodeOrElseThrow(line);
+                this.editor.addLineWidget(line + 1, 'feedback-new-' + line, feedbackNode);
+            }
+
+            // Focus the text area of the widget on the specified line if available.
+            if (lineOfWidgetToFocus !== undefined) {
+                this.getInlineFeedbackNode(lineOfWidgetToFocus)?.querySelector<HTMLTextAreaElement>('#feedback-textarea')?.focus();
+            }
+        }, 0);
+    }
+
+    /**
+     * Retrieves the feedback node currently rendered at the specified line and throws an error if it is not available.
+     * @param line The line (0-based) for which to retrieve the feedback node.
+     */
+    getInlineFeedbackNodeOrElseThrow(line: number): HTMLElement {
+        const element = this.getInlineFeedbackNode(line);
+        if (!element) {
+            throw new Error('No feedback node found at line ' + line);
+        }
+        return element;
+    }
+
+    /**
+     * Retrieves the feedback node currently rendered at the specified line, or undefined if it is not available.
+     * @param line The line (0-based) for which to retrieve the feedback node.
+     */
+    getInlineFeedbackNode(line: number): HTMLElement | undefined {
+        return [...this.inlineFeedbackComponents, ...this.inlineFeedbackSuggestionComponents].find((c) => c.codeLine === line)?.elementRef?.nativeElement;
     }
 
     private addLineWidgetWithFeedback(feedback: Feedback): void {
         const line = Feedback.getReferenceLine(feedback);
-        if (!line) {
+        if (line === undefined) {
             throw new Error('No line found for feedback ' + feedback.id);
         }
         // In the future, there may be more than one feedback node per line.
-        const feedbackNode = this.getInlineFeedbackNode(line);
+        const feedbackNode = this.getInlineFeedbackNodeOrElseThrow(line);
         // The lines are 0-based for Ace, but 1-based for Monaco -> increase by 1 to ensure it works in both editors.
         this.editor.addLineWidget(line + 1, 'feedback-' + feedback.id, feedbackNode);
     }
@@ -233,5 +422,9 @@ export class CodeEditorMonacoComponent implements OnChanges {
             buildAnnotations.filter((buildAnnotation) => buildAnnotation.fileName === this.selectedFile),
             this.commitState === CommitState.UNCOMMITTED_CHANGES,
         );
+    }
+
+    getLineHighlights(): MonacoEditorLineHighlight[] {
+        return this.editor.getLineHighlights();
     }
 }

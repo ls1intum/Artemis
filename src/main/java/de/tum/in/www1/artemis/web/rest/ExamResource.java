@@ -403,6 +403,8 @@ public class ExamResource {
         checkExamForDatesConflictsElseThrow(exam);
         checkExamForWorkingTimeConflictsElseThrow(exam);
         checkExamPointsAndCorrectionRoundsElseThrow(exam);
+
+        checkExamAttendanceCheckSettings(exam);
     }
 
     /**
@@ -488,6 +490,17 @@ public class ExamResource {
 
         if (!exam.isTestExam() && (exam.getNumberOfCorrectionRoundsInExam() <= 0 || exam.getNumberOfCorrectionRoundsInExam() > 2)) {
             throw new BadRequestAlertException("A realExam has to have either 1 or 2 correction rounds", ENTITY_NAME, "correctionRoundViolation");
+        }
+    }
+
+    /**
+     * Checks if the test exam doesn't have attendance check turned on
+     *
+     * @param exam the exam to be checked
+     */
+    private void checkExamAttendanceCheckSettings(Exam exam) {
+        if (exam.isTestExam() && exam.isExamWithAttendanceCheck()) {
+            throw new BadRequestAlertException("A test exam cannot have attendance check turned on", ENTITY_NAME, "attendanceCheckViolation");
         }
     }
 

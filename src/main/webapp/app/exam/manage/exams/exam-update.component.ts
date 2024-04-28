@@ -144,6 +144,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
     onExamModeChange() {
         if (this.exam.testExam) {
             // Preserve the rounded value
+            this.exam.examWithAttendanceCheck = false;
             this.roundWorkingTime();
         } else {
             // Otherwise, the working time should depend on the dates as usual
