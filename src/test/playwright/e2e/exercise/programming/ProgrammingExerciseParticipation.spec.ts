@@ -15,7 +15,7 @@ import { Fixtures } from '../../../fixtures/fixtures';
 import { createFileWithContent } from '../../../support/utils';
 import { ProgrammingExerciseSubmission } from '../../../support/pageobjects/exercises/programming/OnlineEditorPage';
 import cAllSuccessful from '../../../fixtures/exercise/programming/c/all_successful/submission.json';
-import { admin, studentOne, studentThree, studentTwo } from '../../../support/users';
+import { UserCredentials, admin, studentOne, studentThree, studentTwo } from '../../../support/users';
 import { RepositoryPage } from '../../../support/pageobjects/exercises/programming/RepositoryPage';
 
 test.describe('Programming exercise participation', () => {
@@ -206,7 +206,14 @@ test.describe('Programming exercise participation', () => {
     });
 });
 
-async function makeGitSubmission(exerciseRepo: SimpleGit, exerciseRepoName: string, submission: ProgrammingExerciseSubmission, commitMessage: string, deleteFiles: boolean = true) {
+async function makeGitSubmission(
+    exerciseRepo: SimpleGit,
+    exerciseRepoName: string,
+    user: UserCredentials,
+    submission: ProgrammingExerciseSubmission,
+    commitMessage: string,
+    deleteFiles: boolean = true,
+) {
     if (deleteFiles) {
         console.log('Deleting redundant files');
         for (const fileName of submission.deleteFiles) {
@@ -227,6 +234,8 @@ async function makeGitSubmission(exerciseRepo: SimpleGit, exerciseRepoName: stri
 
     console.log('Committing changes');
     try {
+        await exerciseRepo.addConfig('user.email', `${studentOne.username}@example.com`);
+        await exerciseRepo.addConfig('user.name', studentOne.username);
         await exerciseRepo.commit(commitMessage);
         console.log('Changes committed successfully');
     } catch (error) {
