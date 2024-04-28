@@ -34,7 +34,6 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.*;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.athena.AthenaModuleService;
-import de.tum.in.www1.artemis.service.exam.ExamLiveEventsService;
 import de.tum.in.www1.artemis.service.export.TextSubmissionExportService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
@@ -118,8 +117,6 @@ public class TextExerciseResource {
 
     private final Optional<AthenaModuleService> athenaModuleService;
 
-    private final ExamLiveEventsService examLiveEventsService;
-
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, FeedbackRepository feedbackRepository,
             ExerciseDeletionService exerciseDeletionService, PlagiarismResultRepository plagiarismResultRepository, UserRepository userRepository,
             AuthorizationCheckService authCheckService, CourseService courseService, StudentParticipationRepository studentParticipationRepository,
@@ -127,7 +124,7 @@ public class TextExerciseResource {
             TextSubmissionExportService textSubmissionExportService, ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService,
             GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository, GroupNotificationScheduleService groupNotificationScheduleService,
             InstanceMessageSendService instanceMessageSendService, PlagiarismDetectionService plagiarismDetectionService, CourseRepository courseRepository,
-            ChannelService channelService, ChannelRepository channelRepository, ExamLiveEventsService examLiveEventsService, Optional<AthenaModuleService> athenaModuleService) {
+            ChannelService channelService, ChannelRepository channelRepository, Optional<AthenaModuleService> athenaModuleService) {
         this.feedbackRepository = feedbackRepository;
         this.exerciseDeletionService = exerciseDeletionService;
         this.plagiarismResultRepository = plagiarismResultRepository;
@@ -151,7 +148,6 @@ public class TextExerciseResource {
         this.courseRepository = courseRepository;
         this.channelService = channelService;
         this.channelRepository = channelRepository;
-        this.examLiveEventsService = examLiveEventsService;
         this.athenaModuleService = athenaModuleService;
     }
 
@@ -247,12 +243,7 @@ public class TextExerciseResource {
         participationRepository.removeIndividualDueDatesIfBeforeDueDate(updatedTextExercise, textExerciseBeforeUpdate.getDueDate());
         instanceMessageSendService.sendTextExerciseSchedule(updatedTextExercise.getId());
         exerciseService.checkExampleSubmissions(updatedTextExercise);
-        if (textExerciseBeforeUpdate.isExamExercise() && !Objects.equals(textExerciseBeforeUpdate.getProblemStatement(), updatedTextExercise.getProblemStatement())) {
-            this.examLiveEventsService.createAndSendProblemStatementUpdateEvent(updatedTextExercise, notificationText);
-        }
-        else if (textExerciseBeforeUpdate.isCourseExercise()) {
-            groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(textExerciseBeforeUpdate, updatedTextExercise, notificationText);
-        }
+        exerciseService.notifyAboutProblemStatementChanges(textExerciseBeforeUpdate, updatedTextExercise, notificationText);
 
         return ResponseEntity.ok(updatedTextExercise);
     }

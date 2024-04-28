@@ -28,6 +28,8 @@ import de.tum.in.www1.artemis.domain.quiz.AbstractQuizSubmission;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.scores.ParticipantScore;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.exam.ExamLiveEventsService;
+import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleService;
 import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewExerciseStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
@@ -89,13 +91,18 @@ public class ExerciseService {
 
     private final ParticipantScoreService participantScoreService;
 
+    private final ExamLiveEventsService examLiveEventsService;
+
+    private final GroupNotificationScheduleService groupNotificationScheduleService;
+
     public ExerciseService(ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService, QuizScheduleService quizScheduleService,
             AuditEventRepository auditEventRepository, TeamRepository teamRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             Lti13ResourceLaunchRepository lti13ResourceLaunchRepository, StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
             SubmissionRepository submissionRepository, ParticipantScoreRepository participantScoreRepository, UserRepository userRepository,
             ComplaintRepository complaintRepository, TutorLeaderboardService tutorLeaderboardService, ComplaintResponseRepository complaintResponseRepository,
             GradingCriterionRepository gradingCriterionRepository, FeedbackRepository feedbackRepository, RatingService ratingService, ExerciseDateService exerciseDateService,
-            ExampleSubmissionRepository exampleSubmissionRepository, QuizBatchService quizBatchService, ParticipantScoreService participantScoreService) {
+            ExampleSubmissionRepository exampleSubmissionRepository, QuizBatchService quizBatchService, ParticipantScoreService participantScoreService,
+            ExamLiveEventsService examLiveEventsService, GroupNotificationScheduleService groupNotificationScheduleService) {
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.authCheckService = authCheckService;
@@ -118,6 +125,8 @@ public class ExerciseService {
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.quizBatchService = quizBatchService;
         this.participantScoreService = participantScoreService;
+        this.examLiveEventsService = examLiveEventsService;
+        this.groupNotificationScheduleService = groupNotificationScheduleService;
     }
 
     /**
@@ -760,5 +769,20 @@ public class ExerciseService {
     public void removeCompetency(@NotNull Set<Exercise> exercises, @NotNull Competency competency) {
         exercises.forEach(exercise -> exercise.getCompetencies().remove(competency));
         exerciseRepository.saveAll(exercises);
+    }
+
+    /**
+     * Notifies students that the problem statement of an exercise was changed.
+     *
+     * @param originalExercise the original exercise
+     * @param updatedExercise  the updatedExercise
+     */
+    public void notifyAboutProblemStatementChanges(Exercise originalExercise, Exercise updatedExercise, String notificationText) {
+        if (originalExercise.isCourseExercise()) {
+            groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(originalExercise, updatedExercise, notificationText);
+        }
+        else if (originalExercise.isExamExercise() && !Objects.equals(originalExercise.getProblemStatement(), updatedExercise.getProblemStatement())) {
+            this.examLiveEventsService.createAndSendProblemStatementUpdateEvent(updatedExercise, notificationText);
+        }
     }
 }

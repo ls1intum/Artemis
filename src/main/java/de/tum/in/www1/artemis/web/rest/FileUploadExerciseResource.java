@@ -7,7 +7,6 @@ import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -50,7 +49,6 @@ import de.tum.in.www1.artemis.service.ExerciseDeletionService;
 import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.FileUploadExerciseImportService;
 import de.tum.in.www1.artemis.service.FileUploadExerciseService;
-import de.tum.in.www1.artemis.service.exam.ExamLiveEventsService;
 import de.tum.in.www1.artemis.service.export.FileUploadSubmissionExportService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
@@ -109,14 +107,12 @@ public class FileUploadExerciseResource {
 
     private final ChannelRepository channelRepository;
 
-    private final ExamLiveEventsService examLiveEventsService;
-
     public FileUploadExerciseResource(FileUploadExerciseRepository fileUploadExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
             FileUploadSubmissionExportService fileUploadSubmissionExportService, GradingCriterionRepository gradingCriterionRepository, CourseRepository courseRepository,
             ParticipationRepository participationRepository, GroupNotificationScheduleService groupNotificationScheduleService,
             FileUploadExerciseImportService fileUploadExerciseImportService, FileUploadExerciseService fileUploadExerciseService, ChannelService channelService,
-            ChannelRepository channelRepository, ExamLiveEventsService examLiveEventsService) {
+            ChannelRepository channelRepository) {
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -132,7 +128,6 @@ public class FileUploadExerciseResource {
         this.fileUploadExerciseService = fileUploadExerciseService;
         this.channelService = channelService;
         this.channelRepository = channelRepository;
-        this.examLiveEventsService = examLiveEventsService;
     }
 
     /**
@@ -286,12 +281,9 @@ public class FileUploadExerciseResource {
         exerciseService.logUpdate(updatedExercise, updatedExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(fileUploadExerciseBeforeUpdate, updatedExercise);
         participationRepository.removeIndividualDueDatesIfBeforeDueDate(updatedExercise, fileUploadExerciseBeforeUpdate.getDueDate());
-        if (fileUploadExercise.isExamExercise() && !Objects.equals(fileUploadExerciseBeforeUpdate.getProblemStatement(), updatedExercise.getProblemStatement())) {
-            this.examLiveEventsService.createAndSendProblemStatementUpdateEvent(updatedExercise, notificationText);
-        }
-        else if (fileUploadExercise.isCourseExercise()) {
-            groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(fileUploadExerciseBeforeUpdate, updatedExercise, notificationText);
-        }
+
+        exerciseService.notifyAboutProblemStatementChanges(fileUploadExerciseBeforeUpdate, updatedExercise, notificationText);
+
         return ResponseEntity.ok(updatedExercise);
     }
 

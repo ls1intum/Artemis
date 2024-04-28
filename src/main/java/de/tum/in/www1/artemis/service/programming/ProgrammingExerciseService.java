@@ -64,6 +64,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseGitDiffReportRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
+import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.ExerciseSpecificationService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.ProfileService;
@@ -76,7 +77,6 @@ import de.tum.in.www1.artemis.service.connectors.ci.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
-import de.tum.in.www1.artemis.service.exam.ExamLiveEventsService;
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
 import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
@@ -176,7 +176,7 @@ public class ProgrammingExerciseService {
 
     private final ProfileService profileService;
 
-    private final ExamLiveEventsService examLiveEventsService;
+    private final ExerciseService exerciseService;
 
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, GitService gitService, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService,
@@ -191,8 +191,7 @@ public class ProgrammingExerciseService {
             SubmissionPolicyService submissionPolicyService, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService, ChannelService channelService,
             ProgrammingSubmissionService programmingSubmissionService, Optional<IrisSettingsService> irisSettingsService, Optional<AeolusTemplateService> aeolusTemplateService,
             Optional<BuildScriptGenerationService> buildScriptGenerationService,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProfileService profileService,
-            ExamLiveEventsService examLiveEventsService) {
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProfileService profileService, ExerciseService exerciseService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.gitService = gitService;
         this.versionControlService = versionControlService;
@@ -224,7 +223,7 @@ public class ProgrammingExerciseService {
         this.buildScriptGenerationService = buildScriptGenerationService;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.profileService = profileService;
-        this.examLiveEventsService = examLiveEventsService;
+        this.exerciseService = exerciseService;
     }
 
     /**
@@ -555,15 +554,8 @@ public class ProgrammingExerciseService {
 
         participationRepository.removeIndividualDueDatesIfBeforeDueDate(savedProgrammingExercise, programmingExerciseBeforeUpdate.getDueDate());
         programmingExerciseTaskService.updateTasksFromProblemStatement(savedProgrammingExercise);
-        if (programmingExerciseBeforeUpdate.isExamExercise()
-                && !Objects.equals(programmingExerciseBeforeUpdate.getProblemStatement(), updatedProgrammingExercise.getProblemStatement())) {
-            this.examLiveEventsService.createAndSendProblemStatementUpdateEvent(updatedProgrammingExercise, notificationText);
-        }
-        else {
-            groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(programmingExerciseBeforeUpdate, savedProgrammingExercise,
-                    notificationText);
-            scheduleOperations(updatedProgrammingExercise.getId());
-        }
+        exerciseService.notifyAboutProblemStatementChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise, notificationText);
+
         return savedProgrammingExercise;
     }
 
@@ -674,12 +666,7 @@ public class ProgrammingExerciseService {
 
         programmingExerciseTaskService.updateTasksFromProblemStatement(updatedProgrammingExercise);
 
-        if (programmingExercise.isExamExercise()) {
-            this.examLiveEventsService.createAndSendProblemStatementUpdateEvent(programmingExercise, notificationText);
-        }
-        else {
-            groupNotificationService.notifyAboutExerciseUpdate(programmingExercise, notificationText);
-        }
+        exerciseService.notifyAboutProblemStatementChanges(programmingExercise, updatedProgrammingExercise, notificationText);
 
         return updatedProgrammingExercise;
     }
