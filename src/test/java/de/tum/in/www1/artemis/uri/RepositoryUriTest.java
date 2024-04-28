@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUri;
 
-class RepositoryUriTests {
+class RepositoryUriTest {
 
     @Test
     void testValidUrlWithGit() {
