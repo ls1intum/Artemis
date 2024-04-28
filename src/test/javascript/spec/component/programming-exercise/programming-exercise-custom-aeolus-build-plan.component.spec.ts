@@ -41,7 +41,7 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
 
     beforeEach(() => {
         programmingExercise = new ProgrammingExercise(course, undefined);
-        programmingExercise.customizeBuildPlanWithAeolus = true;
+        programmingExercise.customizeBuildScript = true;
         windFile = new WindFile();
         const metadata = new WindMetadata();
         metadata.docker = new DockerConfiguration();

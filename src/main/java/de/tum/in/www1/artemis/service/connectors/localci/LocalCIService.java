@@ -10,7 +10,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import com.google.gson.Gson;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
@@ -61,14 +62,14 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
      * @param exercise for which the build plans should be recreated
      */
     @Override
-    public void recreateBuildPlansForExercise(ProgrammingExercise exercise) {
+    public void recreateBuildPlansForExercise(ProgrammingExercise exercise) throws JsonProcessingException {
         if (exercise == null) {
             return;
         }
         String script = buildScriptProviderService.getScriptFor(exercise);
         Windfile windfile = aeolusTemplateService.getDefaultWindfileFor(exercise);
         exercise.setBuildScript(script);
-        exercise.setBuildPlanConfiguration(new Gson().toJson(windfile));
+        exercise.setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(windfile));
         // recreating the build plans for the exercise means we need to store the updated exercise in the database
         programmingExerciseRepository.save(exercise);
     }

@@ -135,7 +135,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     public packageNameRequired = true;
     public staticCodeAnalysisAllowed = false;
     public checkoutSolutionRepositoryAllowed = false;
-    public customizeBuildPlanWithAeolus = false;
     public sequentialTestRunsAllowed = false;
     public testwiseCoverageAnalysisSupported = false;
     public auxiliaryRepositoriesSupported = false;
@@ -600,7 +599,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      * Saves the programming exercise with the provided input
      */
     saveExercise() {
-        if (this.programmingExercise.customizeBuildPlanWithAeolus) {
+        if (this.programmingExercise.customizeBuildScript) {
             this.programmingExercise.buildPlanConfiguration = this.aeolusService.serializeWindFile(this.programmingExercise.windFile!);
         } else {
             this.programmingExercise.buildPlanConfiguration = undefined;

@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.google.gson.Gson;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.offbytwo.jenkins.JenkinsServer;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -85,7 +85,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public void recreateBuildPlansForExercise(ProgrammingExercise exercise) {
+    public void recreateBuildPlansForExercise(ProgrammingExercise exercise) throws JsonProcessingException {
         final String projectKey = exercise.getProjectKey();
 
         if (!jenkinsBuildPlanService.projectFolderExists(projectKey)) {
@@ -108,13 +108,13 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
      *
      * @param exercise the programming exercise for which the build plan should be reset
      */
-    private void resetCustomBuildPlanToTemplate(ProgrammingExercise exercise) {
+    private void resetCustomBuildPlanToTemplate(ProgrammingExercise exercise) throws JsonProcessingException {
         if (aeolusTemplateService.isEmpty()) {
             return;
         }
         Windfile windfile = aeolusTemplateService.get().getDefaultWindfileFor(exercise);
         if (windfile != null) {
-            exercise.setBuildPlanConfiguration(new Gson().toJson(windfile));
+            exercise.setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(windfile));
         }
         if (profileService.isAeolusActive()) {
             programmingExerciseRepository.save(exercise);

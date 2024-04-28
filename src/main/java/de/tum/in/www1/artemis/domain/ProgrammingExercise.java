@@ -28,6 +28,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.OrderColumn;
 import jakarta.persistence.SecondaryTable;
+import jakarta.persistence.Transient;
 import jakarta.validation.constraints.Size;
 
 import org.hibernate.Hibernate;
@@ -176,6 +177,9 @@ public class ProgrammingExercise extends Exercise {
 
     @Column(name = "build_script", table = "programming_exercise_details", columnDefinition = "longtext")
     private String buildScript;
+
+    @Transient
+    private boolean customizeBuildScript = false;
 
     /**
      * This boolean flag determines whether the solution repository should be checked out during the build (additional to the student's submission).
@@ -940,5 +944,13 @@ public class ProgrammingExercise extends Exercise {
      */
     public void setBuildScript(String buildScript) {
         this.buildScript = buildScript;
+    }
+
+    public boolean isCustomizeBuildScript() {
+        return customizeBuildScript;
+    }
+
+    public void setCustomizeBuildScript(boolean customizeBuildScript) {
+        this.customizeBuildScript = customizeBuildScript;
     }
 }

@@ -75,7 +75,7 @@ export class ProgrammingExerciseLanguageComponent implements AfterViewChecked, A
     }
 
     isCustomBuildPlanValid(): boolean {
-        if (!this.programmingExercise.customizeBuildPlanWithAeolus) {
+        if (!this.programmingExercise.customizeBuildScript) {
             return true;
         }
 
