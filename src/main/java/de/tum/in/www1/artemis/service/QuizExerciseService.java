@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.config.Constants;
@@ -491,25 +492,23 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * is thrown encapsulating the original exception.
      *
      * @param quizQuestions the list of QuizQuestions with JSON content to be deserialized.
-     * @return a list of QuizQuestion objects deserialized from the JSON content.
      * @throws RuntimeException if any JSON parsing errors occur during the deserialization process,
      *                              encapsulating the underlying JsonProcessingException.
      */
-    public List<QuizQuestion> deserializeFromJSON(List<QuizQuestion> quizQuestions) {
+    public void deserializeFromJSON(List<QuizQuestion> quizQuestions) {
         ObjectMapper objectMapper = new ObjectMapper();
-        List<QuizQuestion> quizQuestionsCopy = new ArrayList<>();
 
         for (QuizQuestion quizQuestion : quizQuestions) {
-            try {
-                QuizQuestion parsedQuestion = objectMapper.readValue(quizQuestion.getContent(), QuizQuestion.class);
-                parsedQuestion.setId(quizQuestion.getId());
-                parsedQuestion.setExercise(quizQuestion.getExercise());
-                quizQuestionsCopy.add(parsedQuestion);
-            }
-            catch (JsonProcessingException e) {
-                throw new RuntimeException("Error deserializing from JSON", e);
+            if (quizQuestion instanceof MultipleChoiceQuestion) {
+                try {
+                    List<AnswerOptionDTO> answerOptions = objectMapper.readValue(quizQuestion.getContent(), new TypeReference<>() {
+                    });
+                    ((MultipleChoiceQuestion) quizQuestion).setAnswerOptions(answerOptions);
+                }
+                catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
             }
         }
-        return quizQuestionsCopy;
     }
 }

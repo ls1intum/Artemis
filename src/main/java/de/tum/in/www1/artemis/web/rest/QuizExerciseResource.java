@@ -341,7 +341,7 @@ public class QuizExerciseResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsAndCompetenciesElseThrow(quizExerciseId);
         var c = quizExercise.getQuizQuestions();
-        quizExercise.setQuizQuestions(quizExerciseService.deserializeFromJSON(quizExercise.getQuizQuestions()));
+        quizExerciseService.deserializeFromJSON(quizExercise.getQuizQuestions());
         var d = quizExercise.getQuizQuestions();
 
         if (quizExercise.isExamExercise()) {
