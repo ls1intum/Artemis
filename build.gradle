@@ -157,12 +157,12 @@ jar {
 private excludedClassFilesForReport(classDirectories) {
     classDirectories.setFrom(files(classDirectories.files.collect {
         fileTree(dir: it,
-            exclude: [
-                    "**/de/tum/in/www1/artemis/domain/**/*_*",
-                    "**/de/tum/in/www1/artemis/config/migration/entries/**",
-                    "**/org/eclipse/jgit/**",
-                    "**/gradle-wrapper.jar/**"
-            ]
+                exclude: [
+                        "**/de/tum/in/www1/artemis/domain/**/*_*",
+                        "**/de/tum/in/www1/artemis/config/migration/entries/**",
+                        "**/org/eclipse/jgit/**",
+                        "**/gradle-wrapper.jar/**"
+                ]
         )
     }))
 }
