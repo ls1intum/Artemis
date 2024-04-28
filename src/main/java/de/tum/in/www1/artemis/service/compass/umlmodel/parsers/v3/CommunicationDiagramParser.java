@@ -1,13 +1,22 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.parsers.v3;
 
-import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.*;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.ELEMENT_ID;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.RELATIONSHIP_MESSAGES;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.RELATIONSHIP_SOURCE;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.RELATIONSHIP_TARGET;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import com.google.gson.JsonObject;
 
-import de.tum.in.www1.artemis.service.compass.umlmodel.communication.*;
+import de.tum.in.www1.artemis.service.compass.umlmodel.communication.Direction;
+import de.tum.in.www1.artemis.service.compass.umlmodel.communication.UMLCommunicationDiagram;
+import de.tum.in.www1.artemis.service.compass.umlmodel.communication.UMLCommunicationLink;
+import de.tum.in.www1.artemis.service.compass.umlmodel.communication.UMLMessage;
 import de.tum.in.www1.artemis.service.compass.umlmodel.object.UMLObject;
 import de.tum.in.www1.artemis.service.compass.umlmodel.parsers.UMLModelParser;
 

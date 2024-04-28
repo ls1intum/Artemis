@@ -119,7 +119,7 @@ public class LocalVCService extends AbstractVersionControlService {
     @Override
     public void deleteRepository(VcsRepositoryUri repositoryUri) {
 
-        LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(repositoryUri.toString(), localVCBaseUrl);
+        LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(repositoryUri.toString());
         Path localRepositoryPath = localVCRepositoryUri.getLocalRepositoryPath(localVCBasePath);
 
         try {
@@ -157,7 +157,7 @@ public class LocalVCService extends AbstractVersionControlService {
      */
     @Override
     public String getDefaultBranchOfRepository(VcsRepositoryUri repositoryUri) {
-        LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(repositoryUri.toString(), localVCBaseUrl);
+        LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(repositoryUri.toString());
         return getDefaultBranchOfRepository(localVCRepositoryUri);
     }
 
@@ -280,7 +280,7 @@ public class LocalVCService extends AbstractVersionControlService {
         }
 
         try {
-            new LocalVCRepositoryUri(repositoryUri.toString(), localVCBaseUrl);
+            new LocalVCRepositoryUri(repositoryUri.toString());
         }
         catch (LocalVCInternalException e) {
             return false;
