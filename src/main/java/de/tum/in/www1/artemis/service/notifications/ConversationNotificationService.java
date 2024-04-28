@@ -1,9 +1,11 @@
 package de.tum.in.www1.artemis.service.notifications;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
-import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.CONVERSATION_NEW_MESSAGE;
 import static de.tum.in.www1.artemis.domain.notification.ConversationNotificationFactory.createConversationMessageNotification;
-import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.*;
+import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.NEW_MESSAGE_CHANNEL_TEXT;
+import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.NEW_MESSAGE_DIRECT_TEXT;
+import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.NEW_MESSAGE_GROUP_CHAT_TEXT;
 
 import java.util.Set;
 import java.util.stream.Collectors;

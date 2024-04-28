@@ -1,7 +1,12 @@
 package de.tum.in.www1.artemis.exercise.modelingexercise.compass.umlmodel.petrinet;
 
 import static com.google.gson.JsonParser.parseString;
-import static de.tum.in.www1.artemis.exercise.modelingexercise.compass.umlmodel.petrinet.PetriNets.*;
+import static de.tum.in.www1.artemis.exercise.modelingexercise.compass.umlmodel.petrinet.PetriNets.PETRI_NET_MODEL_1A;
+import static de.tum.in.www1.artemis.exercise.modelingexercise.compass.umlmodel.petrinet.PetriNets.PETRI_NET_MODEL_1A_V3;
+import static de.tum.in.www1.artemis.exercise.modelingexercise.compass.umlmodel.petrinet.PetriNets.PETRI_NET_MODEL_1B;
+import static de.tum.in.www1.artemis.exercise.modelingexercise.compass.umlmodel.petrinet.PetriNets.PETRI_NET_MODEL_1B_V3;
+import static de.tum.in.www1.artemis.exercise.modelingexercise.compass.umlmodel.petrinet.PetriNets.PETRI_NET_MODEL_2;
+import static de.tum.in.www1.artemis.exercise.modelingexercise.compass.umlmodel.petrinet.PetriNets.PETRI_NET_MODEL_2_V3;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.InstanceOfAssertFactories.type;
 

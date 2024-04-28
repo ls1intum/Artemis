@@ -2,13 +2,15 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable, map, of, switchMap } from 'rxjs';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { ProgrammingFeedbackSuggestion, TextFeedbackSuggestion } from 'app/entities/feedback-suggestion.model';
+import { ModelingFeedbackSuggestion, ProgrammingFeedbackSuggestion, TextFeedbackSuggestion } from 'app/entities/feedback-suggestion.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER, Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { TextBlock } from 'app/entities/text-block.model';
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { PROFILE_ATHENA } from 'app/app.constants';
+import { ModelingSubmission } from 'app/entities/modeling-submission.model';
+import { UMLModel, findElement } from '@ls1intum/apollon';
 
 @Injectable({ providedIn: 'root' })
 export class AthenaService {
@@ -19,6 +21,9 @@ export class AthenaService {
         private profileService: ProfileService,
     ) {}
 
+    /**
+     * Determine if the Athena service is available based on whether the corresponding profile is active
+     */
     public isEnabled(): Observable<boolean> {
         return this.profileService.getProfileInfo().pipe(switchMap((profileInfo) => of(profileInfo.activeProfiles.includes(PROFILE_ATHENA))));
     }
@@ -69,8 +74,8 @@ export class AthenaService {
      * Find a grading instruction by id in the given exercise
      */
     private findGradingInstruction(exercise: Exercise, id: number): any | undefined {
-        for (const criterium of exercise.gradingCriteria ?? []) {
-            for (const instruction of criterium.structuredGradingInstructions) {
+        for (const criterion of exercise.gradingCriteria ?? []) {
+            for (const instruction of criterion.structuredGradingInstructions) {
                 if (instruction.id == id) {
                     return instruction;
                 }
@@ -146,6 +151,61 @@ export class AthenaService {
                     }
                     // Load grading instruction from exercise, if available
                     if (suggestion.structuredGradingInstructionId != undefined) {
+                        feedback.gradingInstruction = this.findGradingInstruction(exercise, suggestion.structuredGradingInstructionId);
+                    }
+                    return feedback;
+                });
+            }),
+        );
+    }
+
+    /**
+     * Get feedback suggestions for the given modeling submission from Athena.
+     *
+     * @param exercise The exercise for which a submission is assessed
+     * @param submission The assessed submission
+     * @return observable that emits the feedback suggestions as Feedback objects with the "FeedbackSuggestion:" prefix
+     */
+    public getModelingFeedbackSuggestions(exercise: Exercise, submission: ModelingSubmission): Observable<Feedback[]> {
+        return this.getFeedbackSuggestions<ModelingFeedbackSuggestion>(exercise, submission.id!).pipe(
+            map((suggestions) => {
+                const referencedElementIDs = new Set();
+
+                const model: UMLModel | undefined = submission.model ? JSON.parse(submission.model) : undefined;
+
+                return suggestions.map((suggestion, index) => {
+                    const feedback = new Feedback();
+                    feedback.id = index;
+                    feedback.credits = suggestion.credits;
+                    feedback.positive = suggestion.credits >= 1;
+
+                    // Even though Athena can reference multiple elements for the same feedback item, Apollon can only
+                    // attach feedback to one element, so we select the first element ID mentioned. To ensure that not
+                    // more than one feedback item is attached to the same element, we additionally ensure that the
+                    // same element is only referenced once.
+                    const referenceId: string | undefined = suggestion.elementIds.filter((id) => !referencedElementIDs.has(id))[0];
+
+                    if (referenceId) {
+                        feedback.type = FeedbackType.AUTOMATIC;
+                        feedback.text = suggestion.description;
+
+                        feedback.referenceId = referenceId;
+
+                        referencedElementIDs.add(referenceId);
+
+                        if (model && feedback.referenceId) {
+                            const element = findElement(model, feedback.referenceId);
+                            feedback.referenceType = element?.type;
+                            feedback.reference = `${element?.type}:${referenceId}`;
+                        }
+                    } else {
+                        feedback.type = FeedbackType.MANUAL_UNREFERENCED;
+                        feedback.text = `${FEEDBACK_SUGGESTION_IDENTIFIER}${suggestion.title}`;
+                        feedback.detailText = suggestion.description;
+                    }
+
+                    // Load grading instruction from exercise, if available
+                    if (suggestion.structuredGradingInstructionId) {
                         feedback.gradingInstruction = this.findGradingInstruction(exercise, suggestion.structuredGradingInstructionId);
                     }
                     return feedback;
