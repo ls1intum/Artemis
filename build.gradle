@@ -68,17 +68,17 @@ spotless {
             fileTree(rootDir) {
                 include "**/*.java"
                 exclude(
-                    "**/src/test/resources/test-data/repository-export/EncodingISO_8559_1.java",
-                    "**/node_modules/**",
-                    "**/out/**",
-                    "**/repos/**",
-                    "**/repos-download/**",
-                    "**/build/**",
-                    "**/src/main/generated/**",
-                    "**/src/main/resources/templates/**",
-                    "/docker/**",
-                    "checked-out-repos/**",
-                    "**/src/main/java/org/eclipse/**"
+                        "**/src/test/resources/test-data/repository-export/EncodingISO_8559_1.java",
+                        "**/node_modules/**",
+                        "**/out/**",
+                        "**/repos/**",
+                        "**/repos-download/**",
+                        "**/build/**",
+                        "**/src/main/generated/**",
+                        "**/src/main/resources/templates/**",
+                        "/docker/**",
+                        "checked-out-repos/**",
+                        "**/src/main/java/org/eclipse/**"
                 )
             }
         }
