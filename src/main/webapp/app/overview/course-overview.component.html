@@ -37,7 +37,6 @@
                                     }
                                 </li>
                             }
-                            <!-- More icon and label in case of window minimization -->
                             <li class="nav-item">
                                 <div [hidden]="!anyItemHidden" class="three-dots nav-link px-3" (click)="toggleDropdown()">
                                     <fa-icon [fixedWidth]="true" [icon]="faEllipsis" class="ms-2 me-3" />
@@ -84,7 +83,6 @@
                 </div>
             </mat-sidenav>
             <mat-sidenav-content [ngClass]="{ 'sidenav-height-dev': !isProduction || isTestServer }">
-                <!-- Dropdown menu -->
                 <div class="dropdown">
                     <div class="dropdown-content" [hidden]="!dropdownOpen" [style.top.px]="dropdownOffset">
                         @for (hiddenItem of hiddenItems; track hiddenItem) {
