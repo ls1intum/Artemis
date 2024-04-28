@@ -60,8 +60,6 @@ export class CourseManagementExercisesPage {
     async deleteProgrammingExercise(exercise: Exercise) {
         const exerciseElement = this.getExercise(exercise.id!);
         await exerciseElement.locator('#delete-exercise').click();
-        await this.page.locator('#additional-check-0').check();
-        await this.page.locator('#additional-check-1').check();
         await this.page.locator('#confirm-entity-name').fill(exercise.title!);
         const responsePromise = this.page.waitForResponse(`${PROGRAMMING_EXERCISE_BASE}/*`);
         await this.page.locator('#delete').click();

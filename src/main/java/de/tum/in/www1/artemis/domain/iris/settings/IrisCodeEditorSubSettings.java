@@ -1,7 +1,13 @@
 package de.tum.in.www1.artemis.domain.iris.settings;
 
 import jakarta.annotation.Nullable;
-import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.SecondaryTable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 

@@ -2,7 +2,10 @@ package de.tum.in.www1.artemis.service.compass;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -18,7 +21,10 @@ import de.tum.in.www1.artemis.domain.modeling.ModelElement;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.FeedbackRepository;
+import de.tum.in.www1.artemis.repository.ModelClusterRepository;
+import de.tum.in.www1.artemis.repository.ModelElementRepository;
+import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
 import de.tum.in.www1.artemis.service.compass.controller.FeedbackSelector;
 import de.tum.in.www1.artemis.service.compass.controller.ModelClusterFactory;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;

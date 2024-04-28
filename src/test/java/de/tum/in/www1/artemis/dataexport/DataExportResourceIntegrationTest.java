@@ -1,7 +1,10 @@
 package de.tum.in.www1.artemis.dataexport;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyInt;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
 import java.nio.file.Path;

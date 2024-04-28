@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.domain.lti;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 
@@ -34,6 +36,7 @@ public record Lti13AgsClaim(List<String> scope, String lineItem) {
                 scopeList = Collections.singletonList(Scopes.AGS_SCORE);
             }
 
+            // For moodle lineItem is stored in lineitem claim, for edX it is in lineitems
             JsonNode lineItemNode;
             if (agsClaimJson.get("lineitem") == null) {
                 lineItemNode = agsClaimJson.get("lineitems");
