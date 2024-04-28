@@ -32,6 +32,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exercise.GradingCriterionUtil;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.repository.GradingCriterionRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
@@ -49,6 +50,9 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
 
     @Mock
     private ProgrammingExerciseRepository programmingExerciseRepository;
+
+    @Mock
+    private GradingCriterionRepository gradingCriterionRepository;
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
@@ -75,7 +79,7 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
     @BeforeEach
     void setUp() {
         athenaFeedbackSendingService = new AthenaFeedbackSendingService(athenaRequestMockProvider.getRestTemplate(), athenaModuleService,
-                new AthenaDTOConverterService(textBlockRepository, textExerciseRepository, programmingExerciseRepository));
+                new AthenaDTOConverterService(textBlockRepository, textExerciseRepository, programmingExerciseRepository, gradingCriterionRepository));
 
         athenaRequestMockProvider.enableMockingOfRequests();
 
@@ -183,7 +187,7 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
     }
 
     @Test
-    void testFeedbackSendingUnsupportedExerciseType() {
+    void testFeedbackSendingModeling() {
         athenaRequestMockProvider.mockSendFeedbackAndExpect("modeling");
         assertThatThrownBy(() -> athenaFeedbackSendingService.sendFeedback(new ModelingExercise(), new ModelingSubmission(), List.of()))
                 .isInstanceOf(IllegalArgumentException.class);

@@ -274,7 +274,7 @@ describe('ModelingAssessmentComponent', () => {
 
     it('should update model', async () => {
         const newModel = generateMockModel('newElement1', 'newElement2', 'newRelationship');
-        const changes = { model: { currentValue: newModel } as SimpleChange };
+        const changes = { umlModel: { currentValue: newModel } as SimpleChange };
         fixture.detectChanges();
         const apollonSpy = jest.spyOn(comp.apollonEditor!, 'model', 'set');
         await fixture.whenStable();

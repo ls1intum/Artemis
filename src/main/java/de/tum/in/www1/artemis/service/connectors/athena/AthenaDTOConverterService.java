@@ -12,11 +12,17 @@ import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.TextBlock;
 import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.repository.GradingCriterionRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.service.dto.athena.ExerciseDTO;
 import de.tum.in.www1.artemis.service.dto.athena.FeedbackDTO;
+import de.tum.in.www1.artemis.service.dto.athena.ModelingExerciseDTO;
+import de.tum.in.www1.artemis.service.dto.athena.ModelingFeedbackDTO;
+import de.tum.in.www1.artemis.service.dto.athena.ModelingSubmissionDTO;
 import de.tum.in.www1.artemis.service.dto.athena.ProgrammingExerciseDTO;
 import de.tum.in.www1.artemis.service.dto.athena.ProgrammingFeedbackDTO;
 import de.tum.in.www1.artemis.service.dto.athena.ProgrammingSubmissionDTO;
@@ -41,11 +47,14 @@ public class AthenaDTOConverterService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final GradingCriterionRepository gradingCriterionRepository;
+
     public AthenaDTOConverterService(TextBlockRepository textBlockRepository, TextExerciseRepository textExerciseRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository) {
+            ProgrammingExerciseRepository programmingExerciseRepository, GradingCriterionRepository gradingCriterionRepository) {
         this.textBlockRepository = textBlockRepository;
         this.textExerciseRepository = textExerciseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.gradingCriterionRepository = gradingCriterionRepository;
     }
 
     /**
@@ -66,6 +75,12 @@ public class AthenaDTOConverterService {
                 var programmingExercise = programmingExerciseRepository.findByIdWithGradingCriteriaElseThrow(exercise.getId());
                 return ProgrammingExerciseDTO.of(programmingExercise, artemisServerUrl);
             }
+            case MODELING -> {
+                // Fetch grading criteria for modeling exercise
+                var gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
+                exercise.setGradingCriteria(gradingCriteria);
+                return ModelingExerciseDTO.of((ModelingExercise) exercise);
+            }
         }
         throw new IllegalArgumentException("Exercise type not supported: " + exercise.getExerciseType());
     }
@@ -83,6 +98,9 @@ public class AthenaDTOConverterService {
         }
         else if (submission instanceof ProgrammingSubmission programmingSubmission) {
             return ProgrammingSubmissionDTO.of(exerciseId, programmingSubmission, artemisServerUrl);
+        }
+        else if (submission instanceof ModelingSubmission modelingSubmission) {
+            return ModelingSubmissionDTO.of(exerciseId, modelingSubmission);
         }
         throw new IllegalArgumentException("Submission type not supported: " + submission.getType());
     }
@@ -106,6 +124,9 @@ public class AthenaDTOConverterService {
             }
             case PROGRAMMING -> {
                 return ProgrammingFeedbackDTO.of(exercise.getId(), submissionId, feedback);
+            }
+            case MODELING -> {
+                return ModelingFeedbackDTO.of(exercise.getId(), submissionId, feedback);
             }
         }
         throw new IllegalArgumentException("Feedback type not supported: " + exercise.getId());
