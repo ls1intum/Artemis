@@ -230,6 +230,9 @@ describe('ModelingAssessmentEditorComponent', () => {
                 rated: true,
                 hasComplaint: false,
             } as unknown as Result;
+            component.result.participation = {
+                results: [component.result],
+            } as unknown as Participation;
 
             component.submission = {
                 id: 1,
@@ -291,6 +294,19 @@ describe('ModelingAssessmentEditorComponent', () => {
             tick(500);
             component.onSaveAssessment();
             expect(component.assessmentsAreValid).toBeTrue();
+        }));
+
+        it('should submit the assessment', fakeAsync(() => {
+            const submitMock = jest.spyOn(service, 'saveAssessment').mockReturnValue(of(component.result!));
+            jest.spyOn(window, 'confirm').mockReturnValue(true);
+
+            component.validateFeedback();
+            expect(component.assessmentsAreValid).toBeTrue();
+
+            component.onSubmitAssessment();
+            tick(500);
+
+            expect(submitMock).toHaveBeenCalledOnce();
         }));
     });
 
