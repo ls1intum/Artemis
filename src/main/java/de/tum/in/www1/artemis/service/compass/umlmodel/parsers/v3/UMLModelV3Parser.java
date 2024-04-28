@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.parsers.v3;
 
-import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.*;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.DIAGRAM_TYPE;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.ELEMENTS;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.RELATIONSHIPS;
 
 import java.io.IOException;
 

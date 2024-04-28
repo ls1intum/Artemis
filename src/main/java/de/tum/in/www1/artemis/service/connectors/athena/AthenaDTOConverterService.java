@@ -6,11 +6,30 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
-import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.dto.athena.*;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.TextBlock;
+import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.TextBlockRepository;
+import de.tum.in.www1.artemis.repository.TextExerciseRepository;
+import de.tum.in.www1.artemis.service.dto.athena.ExerciseDTO;
+import de.tum.in.www1.artemis.service.dto.athena.FeedbackDTO;
+import de.tum.in.www1.artemis.service.dto.athena.ModelingExerciseDTO;
+import de.tum.in.www1.artemis.service.dto.athena.ModelingFeedbackDTO;
+import de.tum.in.www1.artemis.service.dto.athena.ModelingSubmissionDTO;
+import de.tum.in.www1.artemis.service.dto.athena.ProgrammingExerciseDTO;
+import de.tum.in.www1.artemis.service.dto.athena.ProgrammingFeedbackDTO;
+import de.tum.in.www1.artemis.service.dto.athena.ProgrammingSubmissionDTO;
+import de.tum.in.www1.artemis.service.dto.athena.SubmissionDTO;
+import de.tum.in.www1.artemis.service.dto.athena.TextExerciseDTO;
+import de.tum.in.www1.artemis.service.dto.athena.TextFeedbackDTO;
+import de.tum.in.www1.artemis.service.dto.athena.TextSubmissionDTO;
 
 /**
  * Service to convert exercises, submissions and feedback to DTOs for Athena.
