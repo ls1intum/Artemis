@@ -1,6 +1,9 @@
 package de.tum.in.www1.artemis.authentication;
 
-import static de.tum.in.www1.artemis.domain.Authority.*;
+import static de.tum.in.www1.artemis.domain.Authority.EDITOR_AUTHORITY;
+import static de.tum.in.www1.artemis.domain.Authority.INSTRUCTOR_AUTHORITY;
+import static de.tum.in.www1.artemis.domain.Authority.TA_AUTHORITY;
+import static de.tum.in.www1.artemis.domain.Authority.USER_AUTHORITY;
 import static de.tum.in.www1.artemis.user.UserFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -33,7 +36,10 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.AuthorityRepository;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.user.PasswordService;

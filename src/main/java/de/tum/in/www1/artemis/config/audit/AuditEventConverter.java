@@ -3,7 +3,12 @@ package de.tum.in.www1.artemis.config.audit;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.context.annotation.Profile;
