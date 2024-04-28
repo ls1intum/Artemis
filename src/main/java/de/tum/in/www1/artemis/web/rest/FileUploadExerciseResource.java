@@ -42,7 +42,6 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
-import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.service.ExerciseDeletionService;
@@ -282,7 +281,7 @@ public class FileUploadExerciseResource {
         exerciseService.updatePointsInRelatedParticipantScores(fileUploadExerciseBeforeUpdate, updatedExercise);
         participationRepository.removeIndividualDueDatesIfBeforeDueDate(updatedExercise, fileUploadExerciseBeforeUpdate.getDueDate());
 
-        exerciseService.notifyAboutProblemStatementChanges(fileUploadExerciseBeforeUpdate, updatedExercise, notificationText);
+        exerciseService.notifyAboutExerciseChanges(fileUploadExerciseBeforeUpdate, updatedExercise, notificationText);
 
         return ResponseEntity.ok(updatedExercise);
     }

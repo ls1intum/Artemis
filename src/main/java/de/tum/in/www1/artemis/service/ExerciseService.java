@@ -773,12 +773,13 @@ public class ExerciseService {
     }
 
     /**
-     * Notifies students that the problem statement of an exercise was changed.
+     * Notifies students about exercise changes.
+     * For course exercises, notifications are used. For exam exercises, live events are used instead.
      *
      * @param originalExercise the original exercise
      * @param updatedExercise  the updatedExercise
      */
-    public void notifyAboutProblemStatementChanges(Exercise originalExercise, Exercise updatedExercise, String notificationText) {
+    public void notifyAboutExerciseChanges(Exercise originalExercise, Exercise updatedExercise, String notificationText) {
         if (originalExercise.isCourseExercise()) {
             groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(originalExercise, updatedExercise, notificationText);
         }

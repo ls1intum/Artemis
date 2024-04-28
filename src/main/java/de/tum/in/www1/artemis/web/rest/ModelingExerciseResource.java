@@ -221,7 +221,7 @@ public class ModelingExerciseResource {
         modelingExerciseService.scheduleOperations(updatedModelingExercise.getId());
         exerciseService.checkExampleSubmissions(updatedModelingExercise);
 
-        exerciseService.notifyAboutProblemStatementChanges(modelingExerciseBeforeUpdate, updatedModelingExercise, notificationText);
+        exerciseService.notifyAboutExerciseChanges(modelingExerciseBeforeUpdate, updatedModelingExercise, notificationText);
 
         return ResponseEntity.ok(updatedModelingExercise);
     }

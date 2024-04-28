@@ -559,7 +559,7 @@ public class ProgrammingExerciseService {
             scheduleOperations(updatedProgrammingExercise.getId());
         }
 
-        exerciseService.notifyAboutProblemStatementChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise, notificationText);
+        exerciseService.notifyAboutExerciseChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise, notificationText);
 
         return savedProgrammingExercise;
     }
@@ -671,7 +671,7 @@ public class ProgrammingExerciseService {
 
         programmingExerciseTaskService.updateTasksFromProblemStatement(updatedProgrammingExercise);
 
-        exerciseService.notifyAboutProblemStatementChanges(programmingExercise, updatedProgrammingExercise, notificationText);
+        exerciseService.notifyAboutExerciseChanges(programmingExercise, updatedProgrammingExercise, notificationText);
 
         return updatedProgrammingExercise;
     }
