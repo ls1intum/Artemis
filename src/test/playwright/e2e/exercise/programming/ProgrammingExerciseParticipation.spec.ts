@@ -226,8 +226,18 @@ async function makeGitSubmission(exerciseRepo: SimpleGit, exerciseRepoName: stri
     }
 
     console.log('Committing changes');
-    await exerciseRepo.commit(commitMessage);
+    try {
+        await exerciseRepo.commit(commitMessage);
+        console.log('Changes committed successfully');
+    } catch (error) {
+        console.error('Error while committing changes:', error);
+    }
 
     console.log('Pushing changes');
-    await exerciseRepo.push();
+    try {
+        await exerciseRepo.push();
+        console.log('Changes pushed successfully');
+    } catch (error) {
+        console.error('Error while pushing changes:', error);
+    }
 }
