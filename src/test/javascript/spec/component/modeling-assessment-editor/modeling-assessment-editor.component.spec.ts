@@ -519,4 +519,16 @@ describe('ModelingAssessmentEditorComponent', () => {
         expect(onSuccessCalled).toBeFalse();
         expect(onErrorCalled).toBeTrue();
     });
+
+    it('should report feedback suggestions not enabled', () => {
+        component.ngOnInit();
+        expect(component.isFeedbackSuggestionsEnabled).toBeFalse();
+    });
+
+    it('should report feedback suggestions enabled', () => {
+        const course = new Course();
+        component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
+        component.modelingExercise.feedbackSuggestionModule = 'module_text_llm';
+        expect(component.isFeedbackSuggestionsEnabled).toBeTrue();
+    });
 });
