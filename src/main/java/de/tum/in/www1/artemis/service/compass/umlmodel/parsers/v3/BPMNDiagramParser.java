@@ -1,6 +1,11 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.parsers.v3;
 
-import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.*;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.ELEMENT_ID;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.ELEMENT_NAME;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.ELEMENT_OWNER;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.ELEMENT_TYPE;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.RELATIONSHIP_SOURCE;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.RELATIONSHIP_TARGET;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -12,7 +17,22 @@ import com.google.gson.JsonObject;
 
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLContainerElement;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
-import de.tum.in.www1.artemis.service.compass.umlmodel.bpmn.*;
+import de.tum.in.www1.artemis.service.compass.umlmodel.bpmn.BPMNAnnotation;
+import de.tum.in.www1.artemis.service.compass.umlmodel.bpmn.BPMNCallActivity;
+import de.tum.in.www1.artemis.service.compass.umlmodel.bpmn.BPMNDataObject;
+import de.tum.in.www1.artemis.service.compass.umlmodel.bpmn.BPMNDataStore;
+import de.tum.in.www1.artemis.service.compass.umlmodel.bpmn.BPMNDiagram;
+import de.tum.in.www1.artemis.service.compass.umlmodel.bpmn.BPMNEndEvent;
+import de.tum.in.www1.artemis.service.compass.umlmodel.bpmn.BPMNFlow;
+import de.tum.in.www1.artemis.service.compass.umlmodel.bpmn.BPMNGateway;
+import de.tum.in.www1.artemis.service.compass.umlmodel.bpmn.BPMNGroup;
+import de.tum.in.www1.artemis.service.compass.umlmodel.bpmn.BPMNIntermediateEvent;
+import de.tum.in.www1.artemis.service.compass.umlmodel.bpmn.BPMNPool;
+import de.tum.in.www1.artemis.service.compass.umlmodel.bpmn.BPMNStartEvent;
+import de.tum.in.www1.artemis.service.compass.umlmodel.bpmn.BPMNSubprocess;
+import de.tum.in.www1.artemis.service.compass.umlmodel.bpmn.BPMNSwimlane;
+import de.tum.in.www1.artemis.service.compass.umlmodel.bpmn.BPMNTask;
+import de.tum.in.www1.artemis.service.compass.umlmodel.bpmn.BPMNTransaction;
 import de.tum.in.www1.artemis.service.compass.umlmodel.parsers.UMLModelParser;
 
 public class BPMNDiagramParser {

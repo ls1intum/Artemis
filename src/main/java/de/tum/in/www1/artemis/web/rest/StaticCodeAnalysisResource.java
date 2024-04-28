@@ -9,7 +9,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.StaticCodeAnalysisCategory;
@@ -59,7 +64,7 @@ public class StaticCodeAnalysisResource {
      * @param exerciseId of the exercise
      * @return the static code analysis categories
      */
-    @GetMapping(Endpoints.CATEGORIES)
+    @GetMapping("programming-exercises/{exerciseId}/static-code-analysis-categories")
     @EnforceAtLeastTutor
     public ResponseEntity<Set<StaticCodeAnalysisCategory>> getStaticCodeAnalysisCategories(@PathVariable Long exerciseId) {
         log.debug("REST request to get static code analysis categories for programming exercise {}", exerciseId);
@@ -79,7 +84,7 @@ public class StaticCodeAnalysisResource {
      * @param categories used for the update
      * @return the updated static code analysis categories
      */
-    @PatchMapping(Endpoints.CATEGORIES)
+    @PatchMapping("programming-exercises/{exerciseId}/static-code-analysis-categories")
     @EnforceAtLeastEditor
     public ResponseEntity<Set<StaticCodeAnalysisCategory>> updateStaticCodeAnalysisCategories(@PathVariable Long exerciseId,
             @RequestBody Set<StaticCodeAnalysisCategory> categories) {
@@ -101,7 +106,7 @@ public class StaticCodeAnalysisResource {
      * @param exerciseId if of the exercise for which the categories should be reset
      * @return static code analysis categories with the default configuration
      */
-    @PatchMapping(Endpoints.RESET)
+    @PatchMapping("programming-exercises/{exerciseId}/static-code-analysis-categories/reset")
     @EnforceAtLeastEditor
     public ResponseEntity<Set<StaticCodeAnalysisCategory>> resetStaticCodeAnalysisCategories(@PathVariable Long exerciseId) {
         log.debug("REST request to reset static code analysis categories for programming exercise {}", exerciseId);
@@ -122,7 +127,7 @@ public class StaticCodeAnalysisResource {
      * @return The newly created SCA configuration
      * @see StaticCodeAnalysisService#importCategoriesFromExercise(ProgrammingExercise, ProgrammingExercise)
      */
-    @PatchMapping(Endpoints.IMPORT)
+    @PatchMapping("programming-exercises/{exerciseId}" + "/static-code-analysis-categories/import")
     @EnforceAtLeastEditor
     public ResponseEntity<Set<StaticCodeAnalysisCategory>> importStaticCodeAnalysisCategoriesFromExercise(@PathVariable Long exerciseId, @RequestParam Long sourceExerciseId) {
         log.debug("REST request to import static code analysis categories to programming exercise {} from exercise {}", exerciseId, sourceExerciseId);
@@ -185,20 +190,6 @@ public class StaticCodeAnalysisResource {
                 throw new ConflictException("Exercise id path variable does not match exercise id of static code analysis category " + category.getName(), ENTITY_NAME,
                         "scaCategoryExerciseIdError");
             }
-        }
-    }
-
-    public static final class Endpoints {
-
-        private static final String PROGRAMMING_EXERCISE = "/programming-exercises/{exerciseId}";
-
-        public static final String CATEGORIES = PROGRAMMING_EXERCISE + "/static-code-analysis-categories";
-
-        public static final String RESET = PROGRAMMING_EXERCISE + "/static-code-analysis-categories/reset";
-
-        public static final String IMPORT = PROGRAMMING_EXERCISE + "/static-code-analysis-categories/import";
-
-        private Endpoints() {
         }
     }
 }

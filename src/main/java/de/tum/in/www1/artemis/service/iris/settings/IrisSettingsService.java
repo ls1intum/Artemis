@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.service.iris.settings;
 
-import static de.tum.in.www1.artemis.domain.iris.settings.IrisSettingsType.*;
+import static de.tum.in.www1.artemis.domain.iris.settings.IrisSettingsType.COURSE;
+import static de.tum.in.www1.artemis.domain.iris.settings.IrisSettingsType.EXERCISE;
+import static de.tum.in.www1.artemis.domain.iris.settings.IrisSettingsType.GLOBAL;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -15,7 +17,16 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.iris.IrisTemplate;
-import de.tum.in.www1.artemis.domain.iris.settings.*;
+import de.tum.in.www1.artemis.domain.iris.settings.IrisChatSubSettings;
+import de.tum.in.www1.artemis.domain.iris.settings.IrisCodeEditorSubSettings;
+import de.tum.in.www1.artemis.domain.iris.settings.IrisCompetencyGenerationSubSettings;
+import de.tum.in.www1.artemis.domain.iris.settings.IrisCourseSettings;
+import de.tum.in.www1.artemis.domain.iris.settings.IrisExerciseSettings;
+import de.tum.in.www1.artemis.domain.iris.settings.IrisGlobalSettings;
+import de.tum.in.www1.artemis.domain.iris.settings.IrisHestiaSubSettings;
+import de.tum.in.www1.artemis.domain.iris.settings.IrisSettings;
+import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettings;
+import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettingsType;
 import de.tum.in.www1.artemis.repository.iris.IrisSettingsRepository;
 import de.tum.in.www1.artemis.service.dto.iris.IrisCombinedSettingsDTO;
 import de.tum.in.www1.artemis.service.iris.IrisDefaultTemplateService;

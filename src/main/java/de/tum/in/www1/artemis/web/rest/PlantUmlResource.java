@@ -8,8 +8,14 @@ import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.*;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.PlantUmlService;
@@ -20,6 +26,7 @@ import de.tum.in.www1.artemis.service.PlantUmlService;
 
 @Profile(PROFILE_CORE)
 @RestController
+@RequestMapping("plantuml/")
 public class PlantUmlResource {
 
     private static final Logger log = LoggerFactory.getLogger(PlantUmlResource.class);
@@ -38,7 +45,7 @@ public class PlantUmlResource {
      * @return ResponseEntity PNG stream
      * @throws IOException if generateImage can't create the PNG
      */
-    @GetMapping("plantuml/png")
+    @GetMapping("png")
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> generatePng(@RequestParam("plantuml") String plantuml, @RequestParam(value = "useDarkTheme", defaultValue = "false") boolean useDarkTheme)
             throws IOException {
@@ -60,7 +67,7 @@ public class PlantUmlResource {
      * @return ResponseEntity PNG stream
      * @throws IOException if generateImage can't create the PNG
      */
-    @GetMapping("plantuml/svg")
+    @GetMapping("svg")
     @EnforceAtLeastStudent
     public ResponseEntity<String> generateSvg(@RequestParam("plantuml") String plantuml, @RequestParam(value = "useDarkTheme", defaultValue = "false") boolean useDarkTheme)
             throws IOException {

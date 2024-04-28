@@ -1,6 +1,14 @@
 package de.tum.in.www1.artemis.versioning;
 
-import static de.tum.in.www1.artemis.versioning.VersionRangeComparisonType.*;
+import static de.tum.in.www1.artemis.versioning.VersionRangeComparisonType.A_CUT_B;
+import static de.tum.in.www1.artemis.versioning.VersionRangeComparisonType.A_INCLUDES_B;
+import static de.tum.in.www1.artemis.versioning.VersionRangeComparisonType.A_THEN_B;
+import static de.tum.in.www1.artemis.versioning.VersionRangeComparisonType.B_CUT_A;
+import static de.tum.in.www1.artemis.versioning.VersionRangeComparisonType.B_INCLUDES_A;
+import static de.tum.in.www1.artemis.versioning.VersionRangeComparisonType.B_THEN_A;
+import static de.tum.in.www1.artemis.versioning.VersionRangeComparisonType.EQUALS;
+import static de.tum.in.www1.artemis.versioning.VersionRangeComparisonType.FIRST_A_NO_INTERSECT;
+import static de.tum.in.www1.artemis.versioning.VersionRangeComparisonType.FIRST_B_NO_INTERSECT;
 
 /**
  * Holds comparison logic for {@link VersionRange} annotations.

@@ -1,9 +1,20 @@
 package de.tum.in.www1.artemis.versioning;
 
-import static de.tum.in.www1.artemis.versioning.VersionRangeComparisonType.*;
+import static de.tum.in.www1.artemis.versioning.VersionRangeComparisonType.A_CUT_B;
+import static de.tum.in.www1.artemis.versioning.VersionRangeComparisonType.A_INCLUDES_B;
+import static de.tum.in.www1.artemis.versioning.VersionRangeComparisonType.B_CUT_A;
+import static de.tum.in.www1.artemis.versioning.VersionRangeComparisonType.B_INCLUDES_A;
+import static de.tum.in.www1.artemis.versioning.VersionRangeComparisonType.EQUALS;
 import static de.tum.in.www1.artemis.versioning.VersionRangeFactory.getInstanceOfVersionRange;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
