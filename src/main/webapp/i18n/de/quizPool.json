@@ -6,7 +6,7 @@
             "groupName": "Gruppenname",
             "addGroup": "Gruppe hinzufügen",
             "delete": {
-                "question": "Möchtest Du die Quizgruppe <strong>{{ title }}</strong> wirklich löschen? Alle zugewiesenen Fragen werden nicht zugeordnet."
+                "question": "Möchtest du die Quizgruppe <strong>{{ title }}</strong> wirklich löschen? Alle zugewiesenen Fragen werden nicht zugeordnet."
             },
             "dragExplanation": "Ziehe die Frage unten, um sie einer Gruppe zuzuordnen.",
             "groupExplanation": "Fragen in der gleichen Gruppe werden für jeden Schüler nach dem Zufallsprinzip ausgewählt. Fragen, die nicht in einer Gruppe sind, werden allen Schülern zugewiesen.",
