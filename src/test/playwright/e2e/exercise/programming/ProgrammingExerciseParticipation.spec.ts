@@ -90,7 +90,7 @@ test.describe('Programming exercise participation', () => {
             test('Makes a partially successful submission', async ({ page, programmingExerciseOverview }) => {
                 await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
                 let repoUrl = await programmingExerciseOverview.getRepoUrl();
-                repoUrl = repoUrl.replace('localhost', 'artemis-app');
+                repoUrl = repoUrl.replace('localhost', 'artemis-nginx');
                 repoUrl = repoUrl.replace(studentOne.username!, `${studentOne.username!}:${studentOne.password!}`);
                 console.log('Repo URL in UI: ' + repoUrl);
                 const urlParts = repoUrl.split('/');
