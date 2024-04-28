@@ -13,6 +13,7 @@ import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.exam.event.ExamAttendanceCheckEvent;
 import de.tum.in.www1.artemis.domain.exam.event.ExamLiveEvent;
 import de.tum.in.www1.artemis.domain.exam.event.ExamWideAnnouncementEvent;
+import de.tum.in.www1.artemis.domain.exam.event.ProblemStatementUpdateEvent;
 import de.tum.in.www1.artemis.domain.exam.event.WorkingTimeUpdateEvent;
 import de.tum.in.www1.artemis.repository.ExamLiveEventRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
