@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import jakarta.validation.constraints.NotNull;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.audit.AuditEvent;
@@ -781,7 +782,7 @@ public class ExerciseService {
         if (originalExercise.isCourseExercise()) {
             groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(originalExercise, updatedExercise, notificationText);
         }
-        else if (originalExercise.isExamExercise() && !Objects.equals(originalExercise.getProblemStatement(), updatedExercise.getProblemStatement())) {
+        else if (originalExercise.isExamExercise() && !StringUtils.equals(originalExercise.getProblemStatement(), updatedExercise.getProblemStatement())) {
             this.examLiveEventsService.createAndSendProblemStatementUpdateEvent(updatedExercise, notificationText);
         }
     }
