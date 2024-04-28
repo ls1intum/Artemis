@@ -71,7 +71,11 @@
                             <li class="nav-item">
                                 <div [hidden]="!anyItemHidden" class="three-dots nav-link px-3" (click)="toggleDropdown()">
                                     <fa-icon [fixedWidth]="true" [icon]="faEllipsis" class="ms-2 me-3" />
-                                    <span class="more" [hidden]="isNavbarCollapsed" [jhiTranslate]="'artemisApp.courseOverview.menu.more'"></span>
+                                    <span
+                                        class="more"
+                                        [ngClass]="{ 'auto-collapse': !isNavbarCollapsed, 'sidebar-collapsed': isNavbarCollapsed }"
+                                        [jhiTranslate]="'artemisApp.courseOverview.menu.more'"
+                                    ></span>
                                 </div>
                             </li>
                         </ul>
