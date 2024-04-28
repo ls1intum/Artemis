@@ -72,7 +72,8 @@ public class CustomLti13Configurer extends Lti13Configurer {
         // https://www.imsglobal.org/spec/security/v1p0/#step-3-authentication-response
         OAuth2LoginAuthenticationFilter defaultLoginFilter = configureLoginFilter(clientRegistrationRepository(http), oidcLaunchFlowAuthenticationProvider,
                 authorizationRequestRepository);
-        http.addFilterAfter(new Lti13LaunchFilter(defaultLoginFilter, LTI13_BASE_PATH + LOGIN_PATH, lti13Service(http)), AbstractPreAuthenticatedProcessingFilter.class);
+        String loginPath = "/" + LTI13_BASE_PATH + LOGIN_PATH;
+        http.addFilterAfter(new Lti13LaunchFilter(defaultLoginFilter, loginPath, lti13Service(http)), AbstractPreAuthenticatedProcessingFilter.class);
     }
 
     protected Lti13Service lti13Service(HttpSecurity http) {
