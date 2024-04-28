@@ -10,13 +10,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.repository.ExamUserRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
@@ -134,4 +142,21 @@ public class ExamUserResource {
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
         return ResponseEntity.ok().body(examUserRepository.findAllExamUsersWhoDidNotSign(examId));
     }
+
+    /**
+     * GET courses/{courseId}/exams/{examId}/attendance : Verifies attendance check status of the current student
+     *
+     * @param courseId the id of the course
+     * @param examId   the id of the exam
+     * @return boolean indicating if attendance was checked ResponseEntity with status 200 (OK)
+     */
+    @GetMapping("courses/{courseId}/exams/{examId}/attendance")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Boolean> isAttendanceChecked(@PathVariable Long courseId, @PathVariable Long examId) {
+        log.debug("REST request to verify attendance of a student for exam with id: {}", examId);
+        examAccessService.checkCourseAndExamAccessForStudentElseThrow(courseId, examId);
+        String login = SecurityUtils.getCurrentUserLogin().orElseThrow(() -> new EntityNotFoundException("ERROR: No current user login found!"));
+        return ResponseEntity.ok().body(examUserRepository.isAttendanceChecked(examId, login));
+    }
+
 }

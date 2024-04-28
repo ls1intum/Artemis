@@ -10,13 +10,19 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.*;
+import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.in.www1.artemis.service.connectors.pyris.dto.*;
-import de.tum.in.www1.artemis.service.iris.exception.*;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisModelDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisPipelineExecutionDTO;
+import de.tum.in.www1.artemis.service.iris.exception.IrisException;
+import de.tum.in.www1.artemis.service.iris.exception.IrisForbiddenException;
+import de.tum.in.www1.artemis.service.iris.exception.IrisInternalPyrisErrorException;
+import de.tum.in.www1.artemis.service.iris.exception.IrisInvalidTemplateException;
 
 /**
  * This service connects to the Python implementation of Iris (called Pyris) responsible for connecting to different

@@ -39,4 +39,8 @@ export class MockCourseManagementService {
     getAll(): Observable<EntityArrayResponseType> {
         return of(new HttpResponse({ body: [] }));
     }
+
+    getNumberOfAllowedComplaintsInCourse(courseId: number): Observable<number> {
+        return of(3);
+    }
 }

@@ -4,8 +4,13 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
@@ -24,10 +29,13 @@ import com.github.dockerjava.api.exception.BadRequestException;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Image;
+import com.github.dockerjava.api.model.PullResponseItem;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
 import de.tum.in.www1.artemis.exception.LocalCIException;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
+import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 
 /**
  * Service for Docker related operations in local CI
@@ -76,7 +84,22 @@ public class LocalCIDockerService {
     }
 
     /**
-     * Removes all stranded build containers
+     * Cleans up stranded build containers from the system. This method differentiates between the initial cleanup
+     * and subsequent cleanups to handle containers differently based on their age and status.
+     * <p>
+     * For the initial cleanup, it removes all containers that match the build container prefix, assuming these containers
+     * are left from before the application started. For subsequent cleanups, it only removes containers that are older
+     * than a specified age threshold (defaulted to 5 minutes), targeting containers likely stuck or inactive.
+     * <p>
+     * Detailed steps include:
+     * - Logging the start of the cleanup process.
+     * - Determining whether it's the initial or a subsequent cleanup.
+     * - Listing all containers, filtering them based on name prefix and, for subsequent cleanups, their age.
+     * - Forcibly removing the identified stranded containers.
+     * - Logging the results and completion of the cleanup process.
+     *
+     * @implNote The method uses Docker commands to list and remove containers. It handles state changes using a flag
+     *           (`isFirstCleanup`) to toggle the cleanup logic between the initial and subsequent runs.
      */
     public void cleanUpContainers() {
         List<Container> buildContainers;
@@ -109,50 +132,118 @@ public class LocalCIDockerService {
     }
 
     /**
-     * Pulls a docker image if it is not already present on the system
-     * Uses a lock to prevent multiple threads from pulling the same image
-     *
-     * @param imageName the name of the docker image
+     * Callback that allows us to provide more information about the docker pull operation results
      */
-    public void pullDockerImage(String imageName) {
-        try {
-            log.info("Inspecting docker image {}", imageName);
-            dockerClient.inspectImageCmd(imageName).exec();
-        }
-        catch (NotFoundException e) {
-            lock.lock();
+    public static class MyPullImageResultCallback extends PullImageResultCallback {
 
-            // Check again if image was pulled in the meantime
-            try {
-                log.info("Inspecting docker image {} again", imageName);
-                dockerClient.inspectImageCmd(imageName).exec();
-            }
-            catch (NotFoundException e2) {
-                log.info("Pulling docker image {}", imageName);
-                try {
-                    dockerClient.pullImageCmd(imageName).exec(new PullImageResultCallback()).awaitCompletion();
-                }
-                catch (InterruptedException ie) {
-                    throw new LocalCIException("Interrupted while pulling docker image " + imageName, ie);
-                }
-                catch (Exception e3) {
-                    throw new LocalCIException("Error while pulling docker image " + imageName, e3);
-                }
-            }
-            finally {
-                lock.unlock();
-            }
+        private final String buildJobId;
 
+        private final BuildLogsMap buildLogsMap;
+
+        MyPullImageResultCallback(String buildJobId, BuildLogsMap buildLogsMap) {
+            this.buildJobId = buildJobId;
+            this.buildLogsMap = buildLogsMap;
         }
-        catch (BadRequestException e) {
-            throw new LocalCIException("Error while inspecting docker image " + imageName, e);
+
+        @Override
+        public void onNext(PullResponseItem item) {
+            String msg = "~~~~~~~~~~~~~~~~~~~~ Pull image progress: " + item.getStatus() + " ~~~~~~~~~~~~~~~~~~~~";
+            log.info(msg);
+            buildLogsMap.appendBuildLogEntry(buildJobId, msg);
+            super.onNext(item);
+        }
+
+        @Override
+        public void onComplete() {
+            String msg = "~~~~~~~~~~~~~~~~~~~~ Pull image complete ~~~~~~~~~~~~~~~~~~~~";
+            log.info(msg);
+            buildLogsMap.appendBuildLogEntry(buildJobId, msg);
+            super.onComplete();
         }
     }
 
     /**
-     * Deletes all docker images that have not been used for more than {@link #imageExpiryDays} days on a schedule
-     * If not otherwise specified, the schedule is set to 3:00 AM every day
+     * Attempts to pull a specified Docker image associated with a build job if it is not already present on the local system.
+     * This method uses a locking mechanism to ensure that the Docker image is not concurrently pulled by multiple threads.
+     * <p>
+     * The process includes:
+     * - Checking if the Docker image is already available locally.
+     * - If not available, acquiring a lock and checking again to handle any race conditions.
+     * - Pulling the image if both checks confirm its absence.
+     * - Logging the operations and their outcomes to build logs for user visibility.
+     * <p>
+     * This method handles specific exceptions that might occur during the Docker operations, such as NotFoundException or BadRequestException,
+     * by attempting to pull the image within a locked section. Other exceptions, including interruptions during the pull process,
+     * are caught and rethrown as a LocalCIException with appropriate messages.
+     *
+     * @param buildJob     the build job that includes the configuration with the name of the Docker image.
+     * @param buildLogsMap a map for appending log entries related to the build process, facilitating real-time logging for end users.
+     * @throws LocalCIException if the image pull is interrupted or fails due to other exceptions.
      */
+    public void pullDockerImage(LocalCIBuildJobQueueItem buildJob, BuildLogsMap buildLogsMap) {
+        final String imageName = buildJob.buildConfig().dockerImage();
+        try {
+            // First check if the image is already available
+            String msg = "~~~~~~~~~~~~~~~~~~~~ Inspecting docker image " + imageName + " ~~~~~~~~~~~~~~~~~~~~";
+            log.info(msg);
+            buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
+            dockerClient.inspectImageCmd(imageName).exec();
+        }
+        catch (NotFoundException | BadRequestException e) {
+            lock.lock();
+
+            // Check again if image was pulled in the meantime
+            try {
+                String msg = "~~~~~~~~~~~~~~~~~~~~ Inspecting docker image " + imageName + " again with a lock due to error " + e.getMessage() + " ~~~~~~~~~~~~~~~~~~~~";
+                log.info(msg);
+                buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
+                dockerClient.inspectImageCmd(imageName).exec();
+            }
+            catch (NotFoundException | BadRequestException e2) {
+                long start = System.nanoTime();
+                String msg = "~~~~~~~~~~~~~~~~~~~~ Pulling docker image " + imageName + " with a lock after error " + e.getMessage() + " ~~~~~~~~~~~~~~~~~~~~";
+                log.info(msg);
+                buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
+
+                try {
+                    // only pull the image if the inspect command failed
+                    var command = dockerClient.pullImageCmd(imageName);
+                    var exec = command.exec(new MyPullImageResultCallback(buildJob.id(), buildLogsMap));
+                    exec.awaitCompletion();
+                }
+                catch (InterruptedException ie) {
+                    throw new LocalCIException("Interrupted while pulling docker image " + imageName, ie);
+                }
+                catch (Exception ex) {
+                    throw new LocalCIException("Error while pulling docker image " + imageName, ex);
+                }
+                String msg2 = "~~~~~~~~~~~~~~~~~~~~ Pulling docker image " + imageName + " done after " + TimeLogUtil.formatDurationFrom(start) + " ~~~~~~~~~~~~~~~~~~~~";
+                log.info(msg2);
+                buildLogsMap.appendBuildLogEntry(buildJob.id(), msg2);
+            }
+            finally {
+                lock.unlock();
+            }
+        }
+    }
+
+    /**
+     * Schedules the deletion of Docker images that have not been used within a specified number of days, determined by {@link #imageExpiryDays}.
+     * The default schedule for this cleanup task is daily at 3:00 AM, configurable via the 'cleanup-schedule-time' property in the application settings.
+     * <p>
+     * The process involves:
+     * - Checking if image cleanup is enabled; if disabled, the operation is aborted.
+     * - Retrieving a map of Docker images and their last usage dates.
+     * - Listing all currently running containers to ensure their images are not deleted.
+     * - Identifying all Docker images that are not currently in use.
+     * - Removing images that have exceeded the configured expiry days and are not associated with any running containers.
+     * <p>
+     * Exception handling includes catching NotFoundException for cases where images are already deleted or not found during the cleanup process.
+     *
+     * @implNote This method relies on Docker commands to list images and containers, and uses Hazelcast for managing image usage data.
+     * @throws NotFoundException if an attempt is made to delete an image that no longer exists on the Docker host.
+     */
+
     @Scheduled(cron = "${artemis.continuous-integration.image-cleanup.cleanup-schedule-time:0 0 3 * * *}")
     public void deleteOldDockerImages() {
 

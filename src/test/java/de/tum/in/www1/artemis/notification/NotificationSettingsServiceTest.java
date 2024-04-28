@@ -1,12 +1,22 @@
 package de.tum.in.www1.artemis.notification;
 
-import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.ATTACHMENT_CHANGE;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.COURSE_ARCHIVE_STARTED;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.DATA_EXPORT_CREATED;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.DATA_EXPORT_FAILED;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.EXAM_ARCHIVE_STARTED;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.EXERCISE_PRACTICE;
 import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel.EMAIL;
 import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel.PUSH;
-import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsService.*;
+import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsService.DEFAULT_NOTIFICATION_SETTINGS;
+import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsService.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE;
+import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsService.NOTIFICATION__INSTRUCTOR_NOTIFICATION__COURSE_AND_EXAM_ARCHIVING_STARTED;
+import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsService.NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

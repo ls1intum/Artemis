@@ -10,9 +10,15 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.exception.NetworkingException;
-import de.tum.in.www1.artemis.service.dto.athena.*;
+import de.tum.in.www1.artemis.service.dto.athena.ExerciseDTO;
+import de.tum.in.www1.artemis.service.dto.athena.ProgrammingFeedbackDTO;
+import de.tum.in.www1.artemis.service.dto.athena.SubmissionDTO;
+import de.tum.in.www1.artemis.service.dto.athena.TextFeedbackDTO;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
 /**

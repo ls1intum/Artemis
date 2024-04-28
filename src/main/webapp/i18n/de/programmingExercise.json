@@ -16,9 +16,13 @@
             "deleted": "Programmieraufgabe gelöscht mit Titel {{ param }}",
             "delete": {
                 "question": "Soll die Programmieraufgabe <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden?",
-                "studentRepos": "Alle Studierenden-Repositories löschen (Achtung: Dies kann NICHT rückgängig gemacht werden!). Es wird empfohlen, die Übung zuerst zu archivieren!",
-                "studentReposBuildPlans": "Alle Studierenden-Repositories und Studierenden-Build-Pläne löschen (Achtung: Dies kann NICHT rückgängig gemacht werden!). Es wird empfohlen, die Übung zuerst zu archivieren!",
-                "baseReposBuildPlans": "Alle Template-, Lösungs- und Test-Repositories sowie Build-Pläne löschen (Achtung: Dies kann NICHT rückgängig gemacht werden!). Es wird empfohlen die Repositories und Build-Pläne erst zu sichern!"
+                "questionLocalVC": {
+                    "single": "Soll die Programmieraufgabe <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden?<br>Alle Studierenden-, Template-, Lösungs- und Test-Repositories sowie Build-Pläne werden gelöscht.<br>Achtung: Dies kann <strong class='text-danger'>NICHT</strong> rückgängig gemacht werden!<br>Es wird empfohlen die Repositories und Build-Pläne erst zu sichern!",
+                    "multiple": "Sollen die ausgewählten Aufgaben wirklich dauerhaft gelöscht werden?<br>Alle Studierenden-, Template-, Lösungs- und Test-Repositories sowie Build-Pläne werden gelöscht.<br>Achtung: Dies kann <strong class='text-danger'>NICHT</strong> rückgängig gemacht werden!.<br>Es wird empfohlen die Repositories und Build-Pläne erst zu sichern!"
+                },
+                "studentRepos": "Alle Studierenden-Repositories löschen (Achtung: Dies kann NICHT rückgängig gemacht werden! Es wird empfohlen, die Übung zuerst zu archivieren!",
+                "studentReposBuildPlans": "Alle Studierenden-Repositories und Studierenden-Build-Pläne löschen (Achtung: Dies kann NICHT rückgängig gemacht werden! Es wird empfohlen, die Übung zuerst zu archivieren!",
+                "baseReposBuildPlans": "Alle Template-, Lösungs- und Test-Repositories sowie Build-Pläne löschen (Achtung: Dies kann NICHT rückgängig gemacht werden! Es wird empfohlen die Repositories und Build-Pläne erst zu sichern!"
             },
             "cleanup": {
                 "successMessage": "Die Bereinigung war erfolgreich. Alle Build-Pläne wurden gelöscht. Die Studierenden können ihre Teilnahme wieder aufnehmen.",
@@ -26,9 +30,9 @@
                 "successMessageCleanup": "Die Bereinigung verlief erfolgreich. Alle Studierenden Repositories wurden gelöscht."
             },
             "reset": {
-                "pleaseSelectOperations": "Bitte wählen Sie die durchzuführenden Operationen für <strong>{{ title }}</strong> aus:",
+                "pleaseSelectOperations": "Bitte wähle die durchzuführenden Operationen für <strong>{{ title }}</strong> aus:",
                 "deleteBuildPlans": {
-                    "title": "Lösche Build-Pläne der Studierenden (auf {{ ciPlatform }}).",
+                    "title": "Lösche Build Pläne der Studierenden (auf {{ ciPlatform }}).",
                     "info": "Die Build-Pläne werden automatisch neu erstellt, sobald Studierende erneut abgeben."
                 },
                 "deleteRepositories": {
@@ -36,9 +40,9 @@
                     "warning": "Archivierung der Übung vor Aktivierung dieser Option wird empfohlen."
                 },
                 "deleteParticipationsSubmissionsAndResults": "Lösche Teilnahmen, Abgaben und Ergebnisse der Studierenden (in Artemis).",
-                "artefactsWarning": "Das Löschen von Teilnahmen, Abgaben und Ergebnissen von Studierenden, ohne dabei die zugehörigen Repositories und Build-Pläne zu entfernen, kann zu nicht gelöschten Artefakten auf {{ vcPlatform }} und {{ ciPlatform }} führen. Bitte überprüfen Sie sorgfältig, ob dies die gewünschte Aktion ist, bevor Sie den Vorgang fortsetzen.",
-                "recreateBuildPlans": "Erstelle Build-Pläne der Aufgabe (BASE und SOLUTION) erneut und überschreibe frühere Änderungen.",
-                "question": "<strong>Warnung:</strong> Diese Aktion kann <strong>NICHT</strong> rückgängig gemacht werden!<br>Um Ihre Auswahl zu bestätigen, geben Sie bitte den Namen der Übung ein: <strong>{{ title }}</strong>",
+                "artefactsWarning": "Das Löschen von Teilnahmen, Abgaben und Ergebnissen von Studierenden, ohne dabei die zugehörigen Repositories und Build-Pläne zu entfernen, kann zu nicht gelöschten Artefakten auf {{ vcPlatform }} und {{ ciPlatform }} führen. Bitte überprüfe sorgfältig, ob dies die gewünschte Aktion ist, bevor du den Vorgang fortsetzt.",
+                "recreateBuildPlans": "Erstelle Build Pläne der Aufgabe (BASE und SOLUTION) erneut und überschreibe frühere Änderungen.",
+                "question": "<strong>Warnung:</strong> Diese Aktion kann <strong>NICHT</strong> rückgängig gemacht werden!<br>Um Ihre Auswahl zu bestätigen, gebe bitte den Namen der Übung ein: <strong>{{ title }}</strong>",
                 "successMessage": "Das Zurücksetzen war erfolgreich.",
                 "errorMessage": "Das Zurücksetzen war nicht erfolgreich."
             },
@@ -62,7 +66,7 @@
                     "difficultyStepTitle": "Modus",
                     "difficultyStepMessage": "Konfiguration der Einstellungen bezüglich der Bearbeitung und Kollaboration der Aufgabe",
                     "languageStepTitle": "Sprache",
-                    "languageStepMessage": "Wähle die gewünschte Programmiersprache aus und konfiguriere zusätzliche Funktionen bezüglich der Programmiersprache",
+                    "languageStepMessage": "Wähle die gewünschte Programmiersprache aus und konfiguriere zusätzliche Funktionen bezüglich der Build Umgebung",
                     "problemStepTitle": "Aufgabe",
                     "problemStepMessage": "Erstelle eine detaillierte Aufgabenstellung für die Übung mit klaren Schritten und Erwartungen an die Studierenden",
                     "gradingStepTitle": "Bewertung",
@@ -84,7 +88,7 @@
                     "assessmentSemiautomatic": "halb-automatisch"
                 }
             },
-            "noReleaseDateWarning": "Du hast kein Veröffentlichungsdatum definiert, daher wird die Aufgabe sofort veröffentlicht und sichtbar für die Studierenden sein. Sie können aber erst nach dem Startdatum an der Aufgabe teilnehmen.",
+            "noReleaseDateWarning": "Du hast kein Veröffentlichungsdatum definiert, daher wird die Aufgabe sofort veröffentlicht und sichtbar für die Studierenden sein. Du kannst aber erst nach dem Startdatum an der Aufgabe teilnehmen.",
             "noReleaseAndStartDateWarning": "Du hast kein Veröffentlichungs- und Startdatum definiert, daher wird die Aufgabe sofort veröffentlicht und Studierende können direkt an der Aufgabe teilnehmen.",
             "unsavedChangesLanguageChange": "Die Aufgabenstellung enthält noch nicht gespeicherte Änderungen. Soll die Programmiersprache wirklich geändert werden?",
             "unsavedChangesProjectTypeChange": "Die Aufgabenstellung enthält noch nicht gespeicherte Änderungen. Soll der Projekt Typ wirklich geändert werden?",
@@ -103,11 +107,12 @@
             "buildConfiguration": "Build Konfiguration",
             "buildPlanEditor": "Build-Plan-Editor",
             "buildPlanFetchError": "Konnte keinen Build-Plan für diese Aufgabe finden. Das ist normal für ältere Aufgaben. Du kannst den Build-Plan im CI-System bearbeiten oder den Build-Plan in Artemis zurücksetzen, um einen neuen Build-Plan zu erstellen der hier bearbeitet werden kann.",
-            "customizeBuildPlan": "Build-Plan anpassen",
-            "customizeBuildPlanWithAeolus": "Build-Plan mit Aeolus anpassen",
-            "revertToTemplateBuildPlan": "Falls Sie mit Ihrem Build-Plan nicht zufrieden sind, können Sie ihn mit dem Zurücksetzen Knopf auf seine Vorlage zurücksetzen.",
+            "customizeBuildPlan": "Build Skript anpassen",
+            "customizeBuildPlanWithAeolus": "Build Skript anpassen",
+            "revertToTemplateBuildPlan": "Artemis führt das folgende Build-Skript für jede Einreichung in einem Docker-Container aus. Du kannst das Build Skript anpassen und auf seinen Standardwert zurücksetzen, indem du die Schaltfläche Zurücksetzen oben verwendest.",
             "runActionAlways": "Immer ausführen, auch wenn andere Aktionen fehlschlagen",
-            "script": "Script",
+            "script": "Build Script",
+            "customizeDockerImage": "Du kannst das Docker-Image anpassen. Stelle sicher, dass du es in amd64 und arm64 bereitstellst und alle Build Abhängigkeiten enthalten sind, um eine kurze Build Dauer zu gewährleisten.",
             "parameters": "Parameter",
             "dockerImage": "Docker Image",
             "workdir": "Verzeichnis",
@@ -444,7 +449,7 @@
             "reEvaluateSuccessful": "{{number}} automatischen Ergebnisse wurden erfolgreich aktualisiert, einschließlich der Vorlage und der Lösung.",
             "reEvaluateFailed": "Die Neubewertung ist fehlgeschlagen: {{message}}",
             "editSelectedModal": {
-                "currentlyEdited": "Sie bearbeiten die folgenden Übungen:",
+                "currentlyEdited": "Du bearbeitest die folgenden Übungen:",
                 "errorReadButton": "Ok",
                 "errorOccurred": "Die folgende Aufgaben konnten nicht bearbeitet werden:"
             },
@@ -569,8 +574,8 @@
             "withDependenciesTooltip": "Fügt dem generierten Projekt eine externe Apache commons-lang-Abhängigkeit als Beispiel dafür hinzu, wie Maven-Abhängigkeiten mit Artemis-Aufgaben verwendet werden sollten.",
             "recordTestwiseCoverage": "Testbasierte Code-Abdeckung aufzeichnen",
             "recordTestwiseCoverageTooltip": "Durch Aktivierung dieser Option wird die testbasierte Code-Abdeckung für das Lösungs-Repository aufgezeichnet. Diese Option ist nur für Java/Kotlin-Aufgaben mit nicht-sequentiellen Testläufen verfügbar.",
-            "customizeBuildPlansWithAeolusTooltip": "Aktivieren Sie diese Option, um die Build-Pläne mit Aeolus anzupassen.",
-            "customizeBuildPlansTooltip": "Aktivieren Sie diese Option, um die Build-Pläne für diese Aufgabe anzupassen.",
+            "customizeBuildPlansWithAeolusTooltip": "Aktiviere diese Option, um das Docker Image und das Build Skript anzupassen, das auf Artemis für jede Einreichung in einem Docker Container ausgeführt wird.",
+            "customizeBuildPlansTooltip": "Aktiviere diese Option, um das Docker Image und das Build Skript anzupassen, das auf Artemis für jede Einreichung in einem Docker Container ausgeführt wird.",
             "coveredLineRatio": "Anteil Test-Abgedeckter Zeilen",
             "testwiseCoverageReport": {
                 "button": "Testbasierte Code-Abdeckung anzeigen",

@@ -1,6 +1,11 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
-import java.time.*;
+import java.time.DayOfWeek;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 
 import jakarta.annotation.PostConstruct;
 

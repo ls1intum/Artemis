@@ -1,13 +1,25 @@
 package de.tum.in.www1.artemis.service.iris.settings;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.Function;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.iris.IrisTemplate;
-import de.tum.in.www1.artemis.domain.iris.settings.*;
+import de.tum.in.www1.artemis.domain.iris.settings.IrisChatSubSettings;
+import de.tum.in.www1.artemis.domain.iris.settings.IrisCodeEditorSubSettings;
+import de.tum.in.www1.artemis.domain.iris.settings.IrisCompetencyGenerationSubSettings;
+import de.tum.in.www1.artemis.domain.iris.settings.IrisExerciseSettings;
+import de.tum.in.www1.artemis.domain.iris.settings.IrisHestiaSubSettings;
+import de.tum.in.www1.artemis.domain.iris.settings.IrisSettings;
+import de.tum.in.www1.artemis.domain.iris.settings.IrisSettingsType;
+import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettings;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.iris.dto.IrisCombinedChatSubSettingsDTO;
 import de.tum.in.www1.artemis.service.iris.dto.IrisCombinedCodeEditorSubSettingsDTO;
