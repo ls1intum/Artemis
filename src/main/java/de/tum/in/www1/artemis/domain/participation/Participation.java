@@ -98,6 +98,12 @@ public abstract class Participation extends DomainObject implements Participatio
     @Transient
     private Integer submissionCountTransient;
 
+    @OneToMany(mappedBy = "participation")
+    @JsonIgnoreProperties(value = "participation", allowSetters = true)
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JsonView(QuizView.Before.class)
+    private Set<SelfLearningFeedbackRequest> selfLearningFeedbackRequests = new HashSet<>();
+
     public Integer getSubmissionCount() {
         return submissionCountTransient;
     }

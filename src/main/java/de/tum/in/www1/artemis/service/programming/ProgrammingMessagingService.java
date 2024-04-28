@@ -159,4 +159,12 @@ public class ProgrammingMessagingService {
             ltiNewResultService.get().onNewResult(studentParticipation);
         }
     }
+
+    public void notifyUserAboutNewRequest(SelfLearningFeedbackRequest request, ProgrammingExerciseParticipation participation) {
+        // log.debug("Send result to client over websocket. Result: {}, Submission: {}, Participation: {}", result, result.getSubmission(), result.getParticipation());
+        // notify user via websocket
+
+        resultWebsocketService.broadcastNewSelfLearningRequest((StudentParticipation) participation, request);
+        // resultWebsocketService.broadcastNewResult((Participation) participation, result);
+    }
 }

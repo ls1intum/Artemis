@@ -414,6 +414,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.results
                 LEFT JOIN FETCH p.submissions
+                LEFT JOIN FETCH p.selfLearningFeedbackRequests
             WHERE p.exercise.id = :exerciseId
                 AND p.student.id = :studentId
              """)
@@ -447,6 +448,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH p.team t
                 LEFT JOIN FETCH t.students
+                LEFT JOIN FETCH p.selfLearningFeedbackRequests
             WHERE p.exercise.id = :exerciseId
                 AND p.team.id = :teamId
                 AND (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)

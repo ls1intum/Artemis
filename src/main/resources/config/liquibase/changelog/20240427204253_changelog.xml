@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Change Set for creating the self_learning_feedback_request table -->
+    <changeSet id="20240427204253" author="undernagruzez">
+        <createTable tableName="self_learning_feedback_request">
+            <column autoIncrement="true" name="id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="request_datetime" type="datetime(3)"/>
+            <column name="response_datetime" type="datetime(3)"/>
+            <column name="participation_id" type="bigint"/>
+            <column name="submission_id" type="bigint"/>
+            <column name="result_id" type="bigint"/>
+            <column name="successful" type="boolean"/>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="self_learning_feedback_request" baseColumnNames="result_id" constraintName="fk_self_learning_feedback_request_result" referencedTableName="result"
+                                 referencedColumnNames="id" onDelete="SET NULL"/>
+        <addForeignKeyConstraint baseTableName="self_learning_feedback_request" baseColumnNames="submission_id" constraintName="fk_self_learning_feedback_request_submission" referencedTableName="submission"
+                                 referencedColumnNames="id" onDelete="SET NULL"/>
+        <addForeignKeyConstraint baseTableName="self_learning_feedback_request" baseColumnNames="participation_id" constraintName="fk_self_learning_feedback_request_participation" referencedTableName="participation"
+                                 referencedColumnNames="id" onDelete="SET NULL"/>
+    </changeSet>
+</databaseChangeLog>

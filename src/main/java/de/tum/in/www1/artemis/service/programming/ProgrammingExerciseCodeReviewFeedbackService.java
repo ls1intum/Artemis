@@ -18,11 +18,13 @@ import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.SelfLearningFeedbackRequest;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.SelfLearningFeedbackRequestRepository;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.SubmissionService;
 import de.tum.in.www1.artemis.service.connectors.athena.AthenaFeedbackSuggestionsService;
@@ -55,6 +57,8 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
 
     private final ResultRepository resultRepository;
 
+    private final SelfLearningFeedbackRequestRepository selfLearningFeedbackRequestRepository;
+
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
     private final ProgrammingMessagingService programmingMessagingService;
@@ -62,13 +66,15 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
     public ProgrammingExerciseCodeReviewFeedbackService(GroupNotificationService groupNotificationService,
             Optional<AthenaFeedbackSuggestionsService> athenaFeedbackSuggestionsService, SubmissionService submissionService, ResultService resultService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ResultRepository resultRepository,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService1, ProgrammingMessagingService programmingMessagingService) {
+            SelfLearningFeedbackRequestRepository selfLearningFeedbackRequestRepository, ProgrammingExerciseParticipationService programmingExerciseParticipationService1,
+            ProgrammingMessagingService programmingMessagingService) {
         this.groupNotificationService = groupNotificationService;
         this.athenaFeedbackSuggestionsService = athenaFeedbackSuggestionsService;
         this.submissionService = submissionService;
         this.resultService = resultService;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.resultRepository = resultRepository;
+        this.selfLearningFeedbackRequestRepository = selfLearningFeedbackRequestRepository;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService1;
         this.programmingMessagingService = programmingMessagingService;
     }
@@ -115,20 +121,18 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
         }
         var submission = submissionOptional.get();
 
-        // save result and transmit it over websockets to notify the client about the status
-        var automaticResult = this.submissionService.saveNewEmptyResult(submission);
-        automaticResult.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
-        automaticResult.setRated(false);
-        automaticResult.setScore(100.0);
-        automaticResult.setSuccessful(null);
-        automaticResult.setCompletionDate(ZonedDateTime.now().plusMinutes(5)); // we do not want to show dates without a completion date, but we want the students to know their
-                                                                               // feedback request is in work
-        automaticResult = this.resultRepository.save(automaticResult);
+        // save self learning feedback request and transmit it over websockets to notify the client about the status
+
+        var newRequest = new SelfLearningFeedbackRequest();
+        newRequest.setParticipation(participation);
+        newRequest.setSubmission(submission);
+        newRequest.setRequestDateTime(now());
+        this.selfLearningFeedbackRequestRepository.save(newRequest);
 
         try {
 
             setIndividualDueDateAndLockRepository(participation, programmingExercise, false);
-            this.programmingMessagingService.notifyUserAboutNewResult(automaticResult, participation);
+            this.programmingMessagingService.notifyUserAboutNewRequest(newRequest, participation);
             // now the client should be able to see new result
 
             log.debug("Submission id: {}", submission.getId());
@@ -162,19 +166,25 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
                         return feedback;
                     }).toList();
 
-            automaticResult.setSuccessful(true);
+            var automaticResult = this.submissionService.saveNewEmptyResult(submission);
+            automaticResult.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
+            automaticResult.setRated(false);
+            automaticResult.setScore(100.0);
             automaticResult.setCompletionDate(ZonedDateTime.now());
+            automaticResult.setSuccessful(true);
 
+            newRequest.setLinkedResult(automaticResult);
             this.resultService.storeFeedbackInResult(automaticResult, feedbacks, true);
+            this.selfLearningFeedbackRequestRepository.save(newRequest);
 
-            this.programmingMessagingService.notifyUserAboutNewResult(automaticResult, participation);
+            this.programmingMessagingService.notifyUserAboutNewRequest(newRequest, participation);
         }
         catch (Exception e) {
             log.error("Could not generate feedback", e);
-            automaticResult.setSuccessful(false);
-            automaticResult.setCompletionDate(ZonedDateTime.now());
-            this.resultRepository.save(automaticResult);
-            this.programmingMessagingService.notifyUserAboutNewResult(automaticResult, participation);
+            // automaticResult.setSuccessful(false);
+            // automaticResult.setCompletionDate(ZonedDateTime.now());
+            // this.resultRepository.save(automaticResult);
+            // this.programmingMessagingService.notifyUserAboutNewResult(automaticResult, participation);
         }
         finally {
             unlockRepository(participation, programmingExercise);
