@@ -14,7 +14,6 @@ import static com.tngtech.archunit.core.domain.JavaClass.Predicates.type;
 import static com.tngtech.archunit.core.domain.JavaCodeUnit.Predicates.constructor;
 import static com.tngtech.archunit.core.domain.properties.HasName.Predicates.nameMatching;
 import static com.tngtech.archunit.core.domain.properties.HasOwner.Predicates.With.owner;
-import static com.tngtech.archunit.core.domain.properties.HasType.Predicates.rawType;
 import static com.tngtech.archunit.lang.SimpleConditionEvent.violated;
 import static com.tngtech.archunit.lang.conditions.ArchPredicates.are;
 import static com.tngtech.archunit.lang.conditions.ArchPredicates.have;
@@ -253,7 +252,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
             @Override
             public void check(T item, ConditionEvents events) {
-                var annotation = item.getAnnotations().stream().filter(rawType(JsonInclude.class)).findAny().orElseThrow();
+                var annotation = findJavaAnnotation(item, JsonInclude.class);
                 var valueProperty = annotation.tryGetExplicitlyDeclaredProperty("value");
                 if (valueProperty.isEmpty()) {
                     // @JsonInclude() is ok since it allows explicitly including properties

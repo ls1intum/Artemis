@@ -1,15 +1,30 @@
 package de.tum.in.www1.artemis.architecture;
 
+import static com.tngtech.archunit.lang.ConditionEvent.createMessage;
+import static com.tngtech.archunit.lang.SimpleConditionEvent.violated;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.methods;
 
+import java.lang.annotation.Annotation;
+import java.util.Set;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.ModelAndView;
 
+import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
+import com.tngtech.archunit.core.domain.JavaMethod;
+import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
+import com.tngtech.archunit.lang.ConditionEvents;
 
 import de.tum.in.www1.artemis.web.rest.ogparser.LinkPreviewResource;
 
@@ -36,5 +51,62 @@ class ResourceArchitectureTest extends AbstractArchitectureTest {
         // We exclude the LinkPreviewResource from this check, as it is a special case that requires the serialization of the response which is not possible with ResponseEntities
         JavaClasses classes = classesExcept(allClasses, LinkPreviewResource.class);
         rule.check(classes);
+    }
+
+    private static final Set<Class<? extends Annotation>> annotationClasses = Set.of(GetMapping.class, PatchMapping.class, PostMapping.class, PutMapping.class, DeleteMapping.class,
+            RequestMapping.class);
+
+    @Test
+    void shouldCorrectlyUseRequestMappingAnnotations() {
+        classes().that().areAnnotatedWith(RequestMapping.class).should(haveCorrectRequestMappingPathForClasses()).check(productionClasses);
+        for (var annotation : annotationClasses) {
+            methods().that().areAnnotatedWith(annotation).should(haveCorrectRequestMappingPathForMethods(annotation)).allowEmptyShould(true).check(productionClasses);
+        }
+    }
+
+    private ArchCondition<JavaClass> haveCorrectRequestMappingPathForClasses() {
+        return new ArchCondition<>("correctly use @RequestMapping") {
+
+            @Override
+            public void check(JavaClass javaClass, ConditionEvents conditionEvents) {
+                var annotation = findJavaAnnotation(javaClass, RequestMapping.class);
+                var valueProperty = annotation.tryGetExplicitlyDeclaredProperty("value");
+                if (valueProperty.isEmpty()) {
+                    conditionEvents.add(violated(javaClass, createMessage(javaClass, "RequestMapping should declare a path value.")));
+                    return;
+                }
+                String[] values = ((String[]) valueProperty.get());
+                for (String value : values) {
+                    if (value.startsWith("/")) {
+                        conditionEvents.add(violated(javaClass, createMessage(javaClass, "The @RequestMapping path value should not start with /")));
+                    }
+                    if (!value.endsWith("/")) {
+                        conditionEvents.add(violated(javaClass, createMessage(javaClass, "The @RequestMapping path value should always end with /")));
+                    }
+                }
+            }
+        };
+    }
+
+    private ArchCondition<JavaMethod> haveCorrectRequestMappingPathForMethods(Class<?> annotationClass) {
+        return new ArchCondition<>("correctly use @RequestMapping") {
+
+            @Override
+            public void check(JavaMethod javaMethod, ConditionEvents conditionEvents) {
+                var annotation = findJavaAnnotation(javaMethod, annotationClass);
+                var valueProperty = annotation.tryGetExplicitlyDeclaredProperty("value");
+                if (valueProperty.isEmpty()) {
+                    conditionEvents.add(violated(javaMethod, createMessage(javaMethod, "RequestMapping should declare a path value.")));
+                    return;
+                }
+                String value = ((String[]) valueProperty.get())[0];
+                if (value.startsWith("/")) {
+                    conditionEvents.add(violated(javaMethod, createMessage(javaMethod, "The @RequestMapping path value should not start with /")));
+                }
+                if (value.endsWith("/")) {
+                    conditionEvents.add(violated(javaMethod, createMessage(javaMethod, "The @RequestMapping path value should not end with /")));
+                }
+            }
+        };
     }
 }

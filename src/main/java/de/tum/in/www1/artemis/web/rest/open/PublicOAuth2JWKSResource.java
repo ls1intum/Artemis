@@ -26,7 +26,7 @@ public class PublicOAuth2JWKSResource {
         this.jwksService = jwksService;
     }
 
-    @GetMapping("/.well-known/jwks.json")
+    @GetMapping(".well-known/jwks.json")
     @EnforceNothing
     @ManualConfig
     public ResponseEntity<String> getJwkSet() {
