@@ -15,6 +15,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import jakarta.annotation.Nullable;
+
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.io.FileUtils;
@@ -119,7 +121,10 @@ public class BuildJobExecutionService {
         String assignmentCommitHash = buildJob.buildConfig().commitHash();
         if (assignmentCommitHash == null) {
             try {
-                assignmentCommitHash = gitService.getLastCommitHash(assignmentRepoUri).getName();
+                var commitObjectId = gitService.getLastCommitHash(assignmentRepoUri);
+                if (commitObjectId != null) {
+                    assignmentCommitHash = commitObjectId.getName();
+                }
             }
             catch (EntityNotFoundException e) {
                 msg = "Could not find last commit hash for assignment repository " + assignmentRepoUri.repositorySlug();
@@ -127,9 +132,12 @@ public class BuildJobExecutionService {
                 throw new LocalCIException(msg, e);
             }
         }
-        String testCommitHash;
+        String testCommitHash = null;
         try {
-            testCommitHash = gitService.getLastCommitHash(testsRepoUri).getName();
+            var commitObjectId = gitService.getLastCommitHash(testsRepoUri);
+            if (commitObjectId != null) {
+                testCommitHash = commitObjectId.getName();
+            }
         }
         catch (EntityNotFoundException e) {
             msg = "Could not find last commit hash for test repository " + testsRepoUri.repositorySlug();
@@ -215,7 +223,8 @@ public class BuildJobExecutionService {
     // TODO: This method has too many params, we should reduce the number an rather pass an object (record)
     private LocalCIBuildResult runScriptAndParseResults(LocalCIBuildJobQueueItem buildJob, String containerName, String containerId, VcsRepositoryUri assignmentRepositoryUri,
             VcsRepositoryUri testRepositoryUri, VcsRepositoryUri solutionRepositoryUri, VcsRepositoryUri[] auxiliaryRepositoriesUris, Path assignmentRepositoryPath,
-            Path testsRepositoryPath, Path solutionRepositoryPath, Path[] auxiliaryRepositoriesPaths, String assignmentRepoCommitHash, String testRepoCommitHash) {
+            Path testsRepositoryPath, Path solutionRepositoryPath, Path[] auxiliaryRepositoriesPaths, @Nullable String assignmentRepoCommitHash,
+            @Nullable String testRepoCommitHash) {
 
         long timeNanoStart = System.nanoTime();
 
@@ -408,7 +417,7 @@ public class BuildJobExecutionService {
      * @param buildRunDate             The date when the build was completed.
      * @return a {@link LocalCIBuildResult} that indicates a failed build
      */
-    private LocalCIBuildResult constructFailedBuildResult(String assignmentRepoBranchName, String assignmentRepoCommitHash, String testsRepoCommitHash,
+    private LocalCIBuildResult constructFailedBuildResult(String assignmentRepoBranchName, @Nullable String assignmentRepoCommitHash, @Nullable String testsRepoCommitHash,
             ZonedDateTime buildRunDate) {
         return constructBuildResult(List.of(), List.of(), assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, false, buildRunDate, List.of());
     }
@@ -435,12 +444,13 @@ public class BuildJobExecutionService {
                 staticCodeAnalysisReports);
     }
 
-    private Path cloneRepository(VcsRepositoryUri repositoryUri, String commitHash, boolean checkout, String buildJobId) {
+    private Path cloneRepository(VcsRepositoryUri repositoryUri, @Nullable String commitHash, boolean checkout, String buildJobId) {
         try {
             // Clone the assignment repository into a temporary directory
+            // TODO: use a random value if commitHash is null
             Repository repository = gitService.getOrCheckoutRepository(repositoryUri, Paths.get(CHECKED_OUT_REPOS_TEMP_DIR, commitHash, repositoryUri.folderNameForRepositoryUri()),
                     false);
-            if (checkout) {
+            if (checkout && commitHash != null) {
                 // Checkout the commit hash
                 gitService.checkoutRepositoryAtCommit(repository, commitHash);
             }
@@ -453,9 +463,10 @@ public class BuildJobExecutionService {
         }
     }
 
-    private void deleteCloneRepo(VcsRepositoryUri repositoryUri, String commitHash, String buildJobId) {
+    private void deleteCloneRepo(VcsRepositoryUri repositoryUri, @Nullable String commitHash, String buildJobId) {
         String msg;
         try {
+            // TODO: handle the case when commitHash is null
             Repository repository = gitService.getExistingCheckedOutRepositoryByLocalPath(
                     Paths.get(CHECKED_OUT_REPOS_TEMP_DIR, commitHash, repositoryUri.folderNameForRepositoryUri()), repositoryUri, defaultBranch);
             if (repository == null) {
