@@ -132,12 +132,20 @@
                                         <button
                                             jhiDeleteButton
                                             [entityTitle]="exerciseGroup.title || ''"
-                                            deleteQuestion="artemisApp.examManagement.exerciseGroup.delete.question"
+                                            deleteQuestion="{{
+                                                localVCEnabled
+                                                    ? 'artemisApp.examManagement.exerciseGroup.delete.questionLocalVC'
+                                                    : 'artemisApp.examManagement.exerciseGroup.delete.question'
+                                            }}"
                                             deleteConfirmationText="artemisApp.examManagement.exerciseGroup.delete.typeNameToConfirm"
-                                            [additionalChecks]="{
-                                                deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',
-                                                deleteBaseReposBuildPlans: 'artemisApp.programmingExercise.delete.baseReposBuildPlans'
-                                            }"
+                                            [additionalChecks]="
+                                                localVCEnabled
+                                                    ? {}
+                                                    : {
+                                                          deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',
+                                                          deleteBaseReposBuildPlans: 'artemisApp.programmingExercise.delete.baseReposBuildPlans'
+                                                      }
+                                            "
                                             (delete)="deleteExerciseGroup(exerciseGroup.id, $event)"
                                             [dialogError]="dialogError"
                                             class="delete-group mb-0"

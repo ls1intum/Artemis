@@ -117,8 +117,8 @@ public class BuildJobExecutionService {
                 || buildJob.repositoryInfo().triggeredByPushTo() == RepositoryType.AUXILIARY;
 
         // get the local repository paths for assignment, tests, auxiliary and solution
-        LocalVCRepositoryUri assignmentRepoUri = new LocalVCRepositoryUri(buildJob.repositoryInfo().assignmentRepositoryUri(), localVCBaseUrl);
-        LocalVCRepositoryUri testsRepoUri = new LocalVCRepositoryUri(buildJob.repositoryInfo().testRepositoryUri(), localVCBaseUrl);
+        LocalVCRepositoryUri assignmentRepoUri = new LocalVCRepositoryUri(buildJob.repositoryInfo().assignmentRepositoryUri());
+        LocalVCRepositoryUri testsRepoUri = new LocalVCRepositoryUri(buildJob.repositoryInfo().testRepositoryUri());
 
         // retrieve last commit hash from repositories
         String assignmentCommitHash = buildJob.buildConfig().commitHash();
@@ -162,7 +162,7 @@ public class BuildJobExecutionService {
         LocalVCRepositoryUri solutionRepoUri = null;
         Path solutionRepositoryPath = null;
         if (buildJob.repositoryInfo().solutionRepositoryUri() != null) {
-            solutionRepoUri = new LocalVCRepositoryUri(buildJob.repositoryInfo().solutionRepositoryUri(), localVCBaseUrl);
+            solutionRepoUri = new LocalVCRepositoryUri(buildJob.repositoryInfo().solutionRepositoryUri());
             // In case we have the same repository for assignment and solution, we can use the same path
             if (Objects.equals(solutionRepoUri.repositorySlug(), assignmentRepoUri.repositorySlug())) {
                 solutionRepositoryPath = assignmentRepositoryPath;
@@ -178,7 +178,7 @@ public class BuildJobExecutionService {
 
         int index = 0;
         for (String auxiliaryRepositoryUri : auxiliaryRepositoryUriList) {
-            auxiliaryRepositoriesUris[index] = new LocalVCRepositoryUri(auxiliaryRepositoryUri, localVCBaseUrl);
+            auxiliaryRepositoriesUris[index] = new LocalVCRepositoryUri(auxiliaryRepositoryUri);
             auxiliaryRepositoriesPaths[index] = cloneRepository(auxiliaryRepositoriesUris[index], assignmentCommitHash, false, buildJob.id());
             index++;
         }
