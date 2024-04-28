@@ -8,5 +8,6 @@
             <column name="exercise_id" type="bigint"/>
             <column name="exercise_name" type="varchar(255)"/>
         </addColumn>
+        <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="exam_live_event" constraintName="fk_exam_live_event_exercise_id" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="exercise" validate="true"/>
     </changeSet>
 </databaseChangeLog>
