@@ -201,7 +201,7 @@ public class BuildLogEntryService {
         if (!skipLanguage && !buildLogs.isEmpty()) {
             // E.g. Swift produces a lot of duplicate build logs when a build fails
             var existingLog = buildLogs.stream().filter(log -> log.getLog().equals(shortenedLogString)).findFirst();
-            String lastLog = buildLogs.get(buildLogs.size() - 1).getLog();
+            String lastLog = buildLogs.getLast().getLog();
             // If the log does not exist already or if the log is a single blank log add it to the build logs (avoid more than one empty log in a row)
             boolean isSingleBlankLog = shortenedLogString.isBlank() && !lastLog.isBlank();
             return existingLog.isEmpty() || isSingleBlankLog;
@@ -281,9 +281,9 @@ public class BuildLogEntryService {
      * Save the build logs for a given submission to a file
      *
      * @param buildLogEntries the build logs to save
-     * @param resultId        the id of the result for which to save the build logs
+     * @param buildJobId      the id of the build job for which to save the build logs
      */
-    public void saveBuildLogsToFile(List<BuildLogEntry> buildLogEntries, String resultId) {
+    public void saveBuildLogsToFile(List<BuildLogEntry> buildLogEntries, String buildJobId) {
 
         if (!Files.exists(buildLogsPath)) {
             try {
@@ -294,7 +294,7 @@ public class BuildLogEntryService {
             }
         }
 
-        Path logPath = buildLogsPath.resolve(resultId + ".log");
+        Path logPath = buildLogsPath.resolve(buildJobId + ".log");
 
         StringBuilder logsStringBuilder = new StringBuilder();
         for (BuildLogEntry buildLogEntry : buildLogEntries) {
@@ -303,7 +303,7 @@ public class BuildLogEntryService {
 
         try {
             FileUtils.writeStringToFile(logPath.toFile(), logsStringBuilder.toString(), StandardCharsets.UTF_8);
-            log.debug("Saved build logs for result {} to file {}", resultId, logPath);
+            log.debug("Saved build logs for build job {} to file {}", buildJobId, logPath);
         }
         catch (IOException e) {
             throw new RuntimeException(e);
@@ -313,19 +313,19 @@ public class BuildLogEntryService {
     /**
      * Retrieves the build logs for a given submission from a file.
      *
-     * @param resultId the id of the result for which to retrieve the build logs
+     * @param buildJobId the id of the build job for which to retrieve the build logs
      * @return the build logs as a string or null if the file could not be found (e.g. if the build logs have been deleted)
      */
-    public FileSystemResource retrieveBuildLogsFromFileForResult(String resultId) {
-        Path logPath = buildLogsPath.resolve(resultId + ".log");
+    public FileSystemResource retrieveBuildLogsFromFileForBuildJob(String buildJobId) {
+        Path logPath = buildLogsPath.resolve(buildJobId + ".log");
 
         FileSystemResource fileSystemResource = new FileSystemResource(logPath);
         if (fileSystemResource.exists()) {
-            log.debug("Retrieved build logs for result {} from file {}", resultId, logPath);
+            log.debug("Retrieved build logs for build job {} from file {}", buildJobId, logPath);
             return fileSystemResource;
         }
         else {
-            log.warn("Could not find build logs for result {} in file {}", resultId, logPath);
+            log.warn("Could not find build logs for build job {} in file {}", buildJobId, logPath);
             return null;
         }
     }
@@ -352,8 +352,8 @@ public class BuildLogEntryService {
         }
     }
 
-    public boolean resultHasLogFile(String resultId) {
-        Path logPath = buildLogsPath.resolve(resultId + ".log");
+    public boolean buildJobHasLogFile(String buildJobId) {
+        Path logPath = buildLogsPath.resolve(buildJobId + ".log");
         return Files.exists(logPath);
     }
 

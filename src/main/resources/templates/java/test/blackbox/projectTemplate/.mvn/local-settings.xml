@@ -1,0 +1,18 @@
+<settings xmlns="http://maven.apache.org/SETTINGS/1.2.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.2.0 https://maven.apache.org/xsd/settings-1.2.0.xsd">
+  <mirrors>
+    <mirror>
+      <id>artemis-cache</id>
+      <name>Artemis Cache</name>
+      <!--
+        Here you can specify another Maven proxy e.g. one in your local network to improve performance
+        Details are in the documentation:
+        https://docs.artemis.cit.tum.de/admin/setup/programming-exercises.html#caching-maven-dependencies-with-sonatype-nexus
+      -->
+      <url>https://repo1.maven.org/maven2/</url>
+      <mirrorOf>*</mirrorOf>
+      <blocked>false</blocked>
+    </mirror>
+  </mirrors>
+</settings>

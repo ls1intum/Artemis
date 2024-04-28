@@ -14,6 +14,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.ZonedDateTime;
 import java.util.*;
 
 import org.junit.jupiter.api.AfterEach;
@@ -45,6 +46,7 @@ import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.BuildJobRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionTestRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.ResultBuildJob;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCServletService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWebsocketError;
@@ -293,6 +295,35 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testLegacyResultFormat() throws IOException {
+        ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+        localVCLocalCITestService.mockTestResults(dockerClient, OLD_REPORT_FORMAT_TEST_RESULTS_PATH, LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY);
+        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
+        localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), commitHash, 0, false);
+
+        studentParticipation = programmingExerciseStudentParticipationRepository
+                .findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(studentParticipation.getId(), ZonedDateTime.now()).orElseThrow();
+        var result = studentParticipation.getResults().iterator().next();
+
+        var noPrintTest = result.getFeedbacks().stream().filter(feedback -> feedback.getTestCase().getTestName().equals("testMergeSort()")).findFirst().orElseThrow();
+        assertThat(noPrintTest.getDetailText()).isEqualTo("Deine Einreichung enthält keine Ausgabe. (67cac2)");
+
+        var todoTest = result.getFeedbacks().stream().filter(feedback -> feedback.getTestCase().getTestName().equals("testBubbleSort()")).findFirst().orElseThrow();
+        assertThat(todoTest.getDetailText()).isEqualTo("""
+                test `add` failed on ≥ 1 cases:
+                (0, 0)
+                Your submission raised an error Failure("TODO add")""");
+
+        var filterTest = result.getFeedbacks().stream().filter(feedback -> feedback.getTestCase().getTestName().equals("testUseMergeSortForBigList()")).findFirst().orElseThrow();
+        assertThat(filterTest.getDetailText()).isEqualTo("""
+                test `filter` failed on ≥ 1 cases:
+                (even, [1; 2; 3; 4])
+                Your submission raised an error Failure("TODO filter")""");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testStaticCodeAnalysis() throws IOException {
         programmingExercise.setStaticCodeAnalysisEnabled(true);
         programmingExerciseRepository.save(programmingExercise);
@@ -345,13 +376,20 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
             var submissionOptional = programmingSubmissionRepository.findFirstByParticipationIdWithResultsOrderByLegalSubmissionDateDesc(studentParticipation.getId());
 
-            long resultId = submissionOptional.map(ProgrammingSubmission::getLatestResult).map(Result::getId).orElseThrow(() -> new AssertionError("Submission has no results"));
+            Result result = submissionOptional.map(ProgrammingSubmission::getLatestResult).orElseThrow(() -> new AssertionError("Submission has no results"));
 
-            // Assert that the build logs for the result are stored in the file system
-            assertThat(buildLogEntryService.resultHasLogFile(String.valueOf(resultId))).isTrue();
+            BuildJob buildJob = buildJobRepository.findBuildJobByResult(result).orElseThrow();
+
+            Set<ResultBuildJob> resultBuildJobSet = buildJobRepository.findBuildJobIdsForResultIds(List.of(result.getId()));
+
+            assertThat(resultBuildJobSet).hasSize(1);
+            assertThat(resultBuildJobSet.iterator().next().buildJobId()).isEqualTo(buildJob.getBuildJobId());
+
+            // Assert that the corresponding build job are stored in the file system
+            assertThat(buildLogEntryService.buildJobHasLogFile(buildJob.getBuildJobId())).isTrue();
 
             // Retrieve the build logs from the file system
-            buildLogs = buildLogEntryService.retrieveBuildLogsFromFileForResult(String.valueOf(resultId));
+            buildLogs = buildLogEntryService.retrieveBuildLogsFromFileForBuildJob(buildJob.getBuildJobId());
             assertThat(buildLogs).isNotNull();
             assertThat(buildLogs.getFile().exists()).isTrue();
 
