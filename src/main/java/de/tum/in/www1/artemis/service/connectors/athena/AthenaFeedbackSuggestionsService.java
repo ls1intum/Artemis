@@ -114,7 +114,6 @@ public class AthenaFeedbackSuggestionsService {
         log.debug("Start Athena Feedback Suggestions Service for Exercise '{}' (#{}).", exercise.getTitle(), exercise.getId());
 
         if (!Objects.equals(submission.getParticipation().getExercise().getId(), exercise.getId())) {
-            log.error("Exercise id {} does not match submission's exercise id {}", exercise.getId(), submission.getParticipation().getExercise().getId());
             throw new ConflictException("Exercise id " + exercise.getId() + " does not match submission's exercise id " + submission.getParticipation().getExercise().getId(),
                     "Exercise", "exerciseIdDoesNotMatch");
         }
