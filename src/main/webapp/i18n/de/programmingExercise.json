@@ -444,7 +444,7 @@
             "reEvaluateSuccessful": "{{number}} automatischen Ergebnisse wurden erfolgreich aktualisiert, einschließlich der Vorlage und der Lösung.",
             "reEvaluateFailed": "Die Neubewertung ist fehlgeschlagen: {{message}}",
             "editSelectedModal": {
-                "currentlyEdited": "D bearbeitest die folgenden Übungen:",
+                "currentlyEdited": "Du bearbeitest die folgenden Übungen:",
                 "errorReadButton": "Ok",
                 "errorOccurred": "Die folgende Aufgaben konnten nicht bearbeitet werden:"
             },
