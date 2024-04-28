@@ -91,16 +91,23 @@ public class BuildJobExecutionService {
     }
 
     /**
-     * Prepare the paths to the assignment and test repositories, the branch to check out, the volume configuration for the Docker container, and the container configuration,
-     * and then call to
-     * execute the
-     * job.
+     * Orchestrates the execution of a build job in a Docker container. This method handles the preparation and configuration of the container,
+     * including cloning the necessary repositories, checking out the appropriate branches, and preparing the environment for the build.
+     * The method concludes by executing the build script within the Docker environment and parsing the results.
+     * <p>
+     * Key Steps:
+     * 1. Pulls the required Docker image if not already available.
+     * 2. Retrieves commit hashes for assignment and test repositories.
+     * 3. Clones the repositories for assignment, tests, solution (if applicable), and any auxiliary repositories into the container.
+     * 4. Configures the Docker container with the necessary environment and volume settings.
+     * 5. Delegates to the 'runScriptAndParseResults' method to execute the build script and process the results.
+     * <p>
+     * If any step fails, an exception is thrown and the container cleanup is initiated.
      *
-     * @param buildJob      The build job object containing necessary information to execute the build job.
-     * @param containerName The name of the Docker container that will be used to run the build job.
-     *                          It needs to be prepared beforehand to stop and remove the container if something goes wrong here.
-     * @return The build result.
-     * @throws LocalCIException If some error occurs while preparing or running the build job.
+     * @param buildJob      The build job object containing details necessary for executing the build.
+     * @param containerName The name of the Docker container that will be prepared and used for the build job.
+     * @return The result of the build job as a {@link LocalCIBuildResult}.
+     * @throws LocalCIException If any error occurs during the preparation or execution of the build job.
      */
     public LocalCIBuildResult runBuildJob(LocalCIBuildJobQueueItem buildJob, String containerName) {
 
@@ -195,14 +202,34 @@ public class BuildJobExecutionService {
     }
 
     /**
-     * Runs the build job. This includes creating and starting a Docker container, executing the build script, and processing the build result.
+     * Executes a build job within a Docker container by running a designated build script and processing the results.
+     * The method manages the entire lifecycle of the container used for the build, from starting it, populating it with necessary repositories,
+     * running the build script, to finally stopping the container and cleaning up resources.
+     * <p>
+     * The method handles:
+     * - Container preparation and initialization.
+     * - Repository setup within the container for assignment, tests, solutions, and auxiliary content.
+     * - Execution of the build script and capturing its results.
+     * - Retrieval and parsing of the build results stored in a specified format (e.g., tar files).
+     * - Handling exceptions that occur during the build process, including not finding expected results, and managing filesystem cleanups.
      *
-     * @param containerName The name of the container that should be used for the build job. This is used to remove the container and is also accessible from outside build job
-     *                          running in its own thread.
-     * @param containerId   The id of the container that should be used for the build job.
-     * @return The build result.
-     * @throws LocalCIException if something went wrong while running the build job.
+     * @param buildJob                   The build job queue item containing details needed for the build process.
+     * @param containerName              The name of the Docker container, used for logging and management purposes.
+     * @param containerId                The identifier of the Docker container used for the build job.
+     * @param assignmentRepositoryUri    URI for the assignment repository.
+     * @param testRepositoryUri          URI for the test repository.
+     * @param solutionRepositoryUri      Optional URI for the solution repository.
+     * @param auxiliaryRepositoriesUris  Array of URIs for any auxiliary repositories needed for the build.
+     * @param assignmentRepositoryPath   Local file system path to the assignment repository.
+     * @param testsRepositoryPath        Local file system path to the test repository.
+     * @param solutionRepositoryPath     Optional local file system path to the solution repository.
+     * @param auxiliaryRepositoriesPaths Array of paths for the auxiliary repositories.
+     * @param assignmentRepoCommitHash   Commit hash for the assignment repository used to fetch the specific state of the repository.
+     * @param testRepoCommitHash         Commit hash for the test repository used similarly.
+     * @return A {@link LocalCIBuildResult} object representing the outcome of the build job.
+     * @throws LocalCIException If errors occur during the build process or if the test results cannot be parsed successfully.
      */
+    // TODO: This method has too many params, we should reduce the number an rather pass an object (record)
     private LocalCIBuildResult runScriptAndParseResults(LocalCIBuildJobQueueItem buildJob, String containerName, String containerId, VcsRepositoryUri assignmentRepositoryUri,
             VcsRepositoryUri testRepositoryUri, VcsRepositoryUri solutionRepositoryUri, VcsRepositoryUri[] auxiliaryRepositoriesUris, Path assignmentRepositoryPath,
             Path testsRepositoryPath, Path solutionRepositoryPath, Path[] auxiliaryRepositoriesPaths, String assignmentRepoCommitHash, String testRepoCommitHash) {
@@ -211,12 +238,12 @@ public class BuildJobExecutionService {
 
         buildJobContainerService.startContainer(containerId);
 
-        String msg = "Started container " + containerName + " for build job " + buildJob.id();
+        String msg = "~~~~~~~~~~~~~~~~~~~~ Started container " + containerName + " for build job " + buildJob.id() + " ~~~~~~~~~~~~~~~~~~~~";
         buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
 
         log.info(msg, containerName);
 
-        msg = "Populating build job container with repositories and build script";
+        msg = "~~~~~~~~~~~~~~~~~~~~ Populating build job container with repositories and build script ~~~~~~~~~~~~~~~~~~~~";
         buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
         log.debug(msg);
         buildJobContainerService.populateBuildJobContainer(containerId, assignmentRepositoryPath, testsRepositoryPath, solutionRepositoryPath, auxiliaryRepositoriesPaths,
