@@ -206,10 +206,11 @@ class ArchitectureTest extends AbstractArchitectureTest {
     @Test
     void testGsonExclusion() {
         // TODO: Replace all uses of gson with Jackson and check that gson is not used any more
-        var gsonUsageRule = noClasses().should().accessClassesThat().resideInAnyPackage("com.google.gson..").because("we use an alternative JSON parsing library.");
+        var gsonUsageRule = noClasses().should().accessClassesThat().resideInAnyPackage("com.google.gson..")
+                .because("we want to consistently use fasterxml's ObjectMapper as JSON parsing library.");
         var result = gsonUsageRule.evaluate(allClasses);
         // TODO: reduce the following number to 0
-        assertThat(result.getFailureReport().getDetails()).hasSize(822);
+        assertThat(result.getFailureReport().getDetails()).hasSizeLessThanOrEqualTo(814);
     }
 
     /**
