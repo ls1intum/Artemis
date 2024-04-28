@@ -48,7 +48,7 @@ class IrisHestiaIntegrationTest extends AbstractIrisIntegrationTest {
         addCodeHints();
 
         irisRequestMockProvider.mockRunResponse(dto -> {
-            assertThat(dto.getSettings().authenticationToken()).isNotNull();
+            assertThat(dto.settings().authenticationToken()).isNotNull();
 
             pipelineDone.set(true);
         });

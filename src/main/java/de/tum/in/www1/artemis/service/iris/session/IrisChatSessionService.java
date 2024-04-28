@@ -165,14 +165,14 @@ public class IrisChatSessionService implements IrisChatBasedFeatureInterface<Iri
      */
     public void handleStatusUpdate(TutorChatJob job, PyrisTutorChatStatusUpdateDTO statusUpdate) {
         var session = (IrisChatSession) irisSessionRepository.findByIdWithMessagesAndContents(job.getSessionId());
-        if (statusUpdate.getResult() != null) {
+        if (statusUpdate.result() != null) {
             var message = new IrisMessage();
-            message.addContent(new IrisTextMessageContent(statusUpdate.getResult()));
+            message.addContent(new IrisTextMessageContent(statusUpdate.result()));
             var savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
-            irisChatWebsocketService.sendMessage(savedMessage, statusUpdate.getStages());
+            irisChatWebsocketService.sendMessage(savedMessage, statusUpdate.stages());
         }
         else {
-            irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.getStages());
+            irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages());
         }
     }
 }

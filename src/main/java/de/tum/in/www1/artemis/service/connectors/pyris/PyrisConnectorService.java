@@ -18,7 +18,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisModelDTO;
-import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisPipelineExecutionDTO;
 import de.tum.in.www1.artemis.service.iris.exception.IrisException;
 import de.tum.in.www1.artemis.service.iris.exception.IrisForbiddenException;
 import de.tum.in.www1.artemis.service.iris.exception.IrisInternalPyrisErrorException;
@@ -65,7 +64,7 @@ public class PyrisConnectorService {
         }
     }
 
-    void executePipeline(String feature, String variant, PyrisPipelineExecutionDTO executionDTO) {
+    void executePipeline(String feature, String variant, Object executionDTO) {
         var endpoint = "/api/v1/pipelines/" + feature + "/" + variant + "/run";
         try {
             restTemplate.postForEntity(pyrisUrl + endpoint, objectMapper.valueToTree(executionDTO), Void.class);

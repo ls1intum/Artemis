@@ -31,7 +31,7 @@ public class PyrisStatusUpdateService {
     public void handleStatusUpdate(TutorChatJob job, PyrisTutorChatStatusUpdateDTO statusUpdate) {
         irisChatSessionService.handleStatusUpdate(job, statusUpdate);
 
-        var isDone = statusUpdate.getStages().stream().map(PyrisStageDTO::state)
+        var isDone = statusUpdate.stages().stream().map(PyrisStageDTO::state)
                 .allMatch(state -> state == PyrisStageStateDTO.DONE || state == PyrisStageStateDTO.ERROR || state == PyrisStageStateDTO.SKIPPED);
         if (isDone) {
             pyrisJobService.removeJob(job.getId());

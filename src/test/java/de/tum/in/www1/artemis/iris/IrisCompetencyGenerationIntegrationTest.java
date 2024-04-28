@@ -55,7 +55,7 @@ class IrisCompetencyGenerationIntegrationTest extends AbstractIrisIntegrationTes
         var responseMap = Map.of("competencies", List.of(competencyMap1, competencyMap2, competencyMap3));
 
         irisRequestMockProvider.mockRunResponse(dto -> {
-            assertThat(dto.getSettings().authenticationToken()).isNotNull();
+            assertThat(dto.settings().authenticationToken()).isNotNull();
 
             pipelineDone.set(true);
         });
