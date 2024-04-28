@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.connectors.athena;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -90,13 +91,13 @@ public class AthenaModuleService {
 
         final String exerciseTypeName = exerciseType.getExerciseTypeAsReadableString();
 
-        List<String> availableModules = getAthenaModules().stream().filter(module -> exerciseTypeName.equals(module.type)).map(module -> module.name).toList();
+        Stream<String> availableModules = getAthenaModules().stream().filter(module -> exerciseTypeName.equals(module.type)).map(module -> module.name);
 
         if (!course.getRestrictedAthenaModulesAccess()) {
             // filter out restricted modules
-            availableModules = availableModules.stream().filter(moduleName -> !restrictedModules.contains(moduleName)).toList();
+            availableModules = availableModules.filter(moduleName -> !restrictedModules.contains(moduleName));
         }
-        return availableModules;
+        return availableModules.toList();
     }
 
     /**
