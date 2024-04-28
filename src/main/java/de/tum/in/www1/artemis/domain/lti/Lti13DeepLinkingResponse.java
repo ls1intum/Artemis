@@ -40,6 +40,8 @@ public record Lti13DeepLinkingResponse(@JsonProperty(IdTokenClaimNames.AUD) Stri
         @JsonProperty(Claims.LTI_VERSION) String ltiVersion, @JsonProperty(Claims.CONTENT_ITEMS) List<Map<String, Object>> contentItems, JsonNode deepLinkingSettings,
         String clientRegistrationId, String returnUrl) {
 
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+
     /**
      * Constructs an Lti13DeepLinkingResponse from an OIDC ID token and client registration ID.
      * The 'aud' and 'iss' fields are reversed in the response compared to the request. This is a specific requirement in LTI 1.3 Deep Linking:
@@ -52,7 +54,6 @@ public record Lti13DeepLinkingResponse(@JsonProperty(IdTokenClaimNames.AUD) Stri
      */
     public static Lti13DeepLinkingResponse from(OidcIdToken ltiIdToken, String clientRegistrationId) {
         validateClaims(ltiIdToken);
-        ObjectMapper objectMapper = new ObjectMapper();
         JsonNode deepLinkingSettingsJson = objectMapper.convertValue(ltiIdToken.getClaim(Claims.DEEP_LINKING_SETTINGS), JsonNode.class);
         String returnUrl = deepLinkingSettingsJson.get(Claims.DEEPLINK_RETURN_URL_CLAIM).asText();
 
