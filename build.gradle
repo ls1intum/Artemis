@@ -25,6 +25,7 @@ plugins {
     id "com.gorylenko.gradle-git-properties" version "2.4.1"
     id "org.owasp.dependencycheck" version "9.1.0"
     id "com.adarshr.test-logger" version "4.0.0"
+    id "org.springdoc.openapi-gradle-plugin" version "${springdoc_version}"
 }
 
 group = "de.tum.in.www1.artemis"
@@ -391,7 +392,9 @@ dependencies {
     implementation "org.bouncycastle:bcpkix-jdk18on:1.78.1"
     implementation "org.bouncycastle:bcprov-jdk18on:1.78.1"
 
-    implementation "org.springdoc:springdoc-openapi-ui:1.8.0"
+    implementation "org.springdoc:springdoc-openapi-ui:${springdoc_version}"
+    implementation "org.springdoc:springdoc-openapi-starter-webmvc-api:2.5.0"
+
     implementation "com.mysql:mysql-connector-j:8.3.0"
     implementation "org.postgresql:postgresql:42.7.3"
     implementation "com.h2database:h2:2.2.224"
@@ -532,6 +535,29 @@ checkstyle {
     maxErrors = 0
 }
 
+openApi {
+    def apiVersions = [1]
+    outputDir.set(layout.buildDirectory.file("docs").get().asFile)
+    waitTimeInSeconds.set(90)
+    setGroupedApiMappings(apiVersions.collectEntries{["http://localhost:8080/api-docs/v$it", "v${it}.json"]})
+
+    customBootRun {
+        args.set(["--spring.profiles.active=dev,core,openapi"])
+    }
+}
+
+tasks {
+    forkedSpringBootRun {
+        doNotTrackState("See https://github.com/springdoc/springdoc-openapi-gradle-plugin/issues/102")
+    }
+}
+tasks.configureEach {
+    // Hack to force the task to not get wrongly cached (https://github.com/springdoc/springdoc-openapi-gradle-plugin/issues/107)
+    if (name.contains("generateOpenApiDocs")) {
+        outputs.upToDateWhen { false }
+    }
+}
+
 def isNonStable = { String version ->
     def stableKeyword = ["RELEASE", "FINAL", "GA"].any { it -> version.toUpperCase().contains(it) }
     def regex = /^[0-9,.v-]+(-r)?$/
@@ -566,3 +592,4 @@ tasks.named("dependencyUpdates").configure {
 // 10) Clear Liquibase checksums:                   ./gradlew liquibaseClearChecksums
 // 11) Create changelog between Java and DB         ./gradlew liquibaseDiffChangeLog (make sure to set the correct username and password in liquibase.gradle)
 // 12) Generate initial schema from DB              ./gradlew liquibaseGenerateChangelog (make sure to set the correct username and password in liquibase.gradle)
+// 13) Generate API docs                            ./gradlew generateOpenApiDocs -x webapp
