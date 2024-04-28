@@ -70,10 +70,13 @@ test.describe('Programming exercise participation', () => {
         });
 
         test.describe('Make a submission using git', () => {
-            test.skip('Makes a failing submission', async ({ page, programmingExerciseOverview }) => {
+            test('Makes a failing submission', async ({ page, programmingExerciseOverview }) => {
                 await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
                 let repoUrl = await programmingExerciseOverview.getRepoUrl();
-                repoUrl = repoUrl.replace('localhost', 'artemis-app:8080');
+                if (process.env.CI === 'true') {
+                    repoUrl = repoUrl.replace('localhost', 'artemis-app');
+                }
+                repoUrl = repoUrl.replace(studentOne.username!, `${studentOne.username!}:${studentOne.password!}`);
                 console.log('Repo URL in UI: ' + repoUrl);
                 const urlParts = repoUrl.split('/');
                 const repoName = urlParts[urlParts.length - 1];
@@ -108,10 +111,13 @@ test.describe('Programming exercise participation', () => {
                 await expect(resultScore.getByText(submission.expectedResult)).toBeVisible();
             });
 
-            test.skip('Makes a successful submission', async ({ page, programmingExerciseOverview }) => {
+            test('Makes a successful submission', async ({ page, programmingExerciseOverview }) => {
                 await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
-                const repoUrl = await programmingExerciseOverview.getRepoUrl();
-                // repoUrl = repoUrl.replace('localhost', 'artemis-app');
+                let repoUrl = await programmingExerciseOverview.getRepoUrl();
+                if (process.env.CI === 'true') {
+                    repoUrl = repoUrl.replace('localhost', 'artemis-app');
+                }
+                repoUrl = repoUrl.replace(studentOne.username!, `${studentOne.username!}:${studentOne.password!}`);
                 console.log('Repo URL in UI: ' + repoUrl);
                 const urlParts = repoUrl.split('/');
                 const repoName = urlParts[urlParts.length - 1];
@@ -125,10 +131,13 @@ test.describe('Programming exercise participation', () => {
                 await expect(resultScore.getByText(submission.expectedResult)).toBeVisible();
             });
 
-            test.skip('Checks commit history', async ({ page, programmingExerciseOverview }) => {
+            test('Checks commit history', async ({ page, programmingExerciseOverview }) => {
                 await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
                 let repoUrl = await programmingExerciseOverview.getRepoUrl();
-                repoUrl = repoUrl.replace('localhost', 'artemis-app:8080');
+                if (process.env.CI === 'true') {
+                    repoUrl = repoUrl.replace('localhost', 'artemis-app');
+                }
+                repoUrl = repoUrl.replace(studentOne.username!, `${studentOne.username!}:${studentOne.password!}`);
                 console.log('Repo URL in UI: ' + repoUrl);
                 const urlParts = repoUrl.split('/');
                 const repoName = urlParts[urlParts.length - 1];
