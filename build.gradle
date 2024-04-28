@@ -158,10 +158,10 @@ private excludedClassFilesForReport(classDirectories) {
     classDirectories.setFrom(files(classDirectories.files.collect {
         fileTree(dir: it,
             exclude: [
-                "**/de/tum/in/www1/artemis/domain/**/*_*",
-                "**/de/tum/in/www1/artemis/config/migration/entries/**",
-                "**/org/eclipse/jgit/**",
-                "**/gradle-wrapper.jar/**"
+                    "**/de/tum/in/www1/artemis/domain/**/*_*",
+                    "**/de/tum/in/www1/artemis/config/migration/entries/**",
+                    "**/org/eclipse/jgit/**",
+                    "**/gradle-wrapper.jar/**"
             ]
         )
     }))
@@ -501,8 +501,8 @@ tasks.withType(Test).configureEach {
     testLogging {
         // set options for log level LIFECYCLE
         events TestLogEvent.FAILED,
-            TestLogEvent.PASSED,
-            TestLogEvent.SKIPPED
+                TestLogEvent.PASSED,
+                TestLogEvent.SKIPPED
         exceptionFormat TestExceptionFormat.FULL
         showExceptions true
         showCauses true
