@@ -114,7 +114,7 @@ public record Lti13DeepLinkingResponse(@JsonProperty(IdTokenClaimNames.AUD) Stri
      * @param contentItems The new contentItems value.
      * @return A new Lti13DeepLinkingResponse instance.
      */
-    public Lti13DeepLinkingResponse setContentItems(ArrayList<Map<String, Object>> contentItems) {
+    public Lti13DeepLinkingResponse setContentItems(List<Map<String, Object>> contentItems) {
         return new Lti13DeepLinkingResponse(this.aud, this.iss, this.exp, this.iat, this.nonce, this.message, this.deploymentId, this.messageType, this.ltiVersion, contentItems,
                 this.deepLinkingSettings, this.clientRegistrationId, this.returnUrl);
     }
