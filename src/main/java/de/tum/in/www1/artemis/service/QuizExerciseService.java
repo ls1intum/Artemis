@@ -25,7 +25,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.config.Constants;
@@ -443,7 +442,6 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         // Note: save will automatically remove deleted questions from the exercise and deleted answer options from the questions
         // and delete the now orphaned entries from the database
         log.debug("Save quiz exercise to database: {}", quizExercise);
-        processQuizQuestions(quizExercise);
 
         return quizExerciseRepository.saveAndFlush(quizExercise);
     }
@@ -481,34 +479,6 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         }
         catch (JsonProcessingException e) {
             throw new RuntimeException("Error serializing to JSON", e);
-        }
-    }
-
-    /**
-     * Deserializes a list of QuizQuestion objects from their JSON representation.
-     * Each QuizQuestion in the input list is assumed to have its content in a JSON format.
-     * This method attempts to deserialize that JSON content back into QuizQuestion objects,
-     * preserving the original IDs. If any JSON parsing errors occur, a RuntimeException
-     * is thrown encapsulating the original exception.
-     *
-     * @param quizQuestions the list of QuizQuestions with JSON content to be deserialized.
-     * @throws RuntimeException if any JSON parsing errors occur during the deserialization process,
-     *                              encapsulating the underlying JsonProcessingException.
-     */
-    public void deserializeFromJSON(List<QuizQuestion> quizQuestions) {
-        ObjectMapper objectMapper = new ObjectMapper();
-
-        for (QuizQuestion quizQuestion : quizQuestions) {
-            if (quizQuestion instanceof MultipleChoiceQuestion) {
-                try {
-                    List<AnswerOptionDTO> answerOptions = objectMapper.readValue(quizQuestion.getContent(), new TypeReference<>() {
-                    });
-                    ((MultipleChoiceQuestion) quizQuestion).setAnswerOptions(answerOptions);
-                }
-                catch (JsonProcessingException e) {
-                    throw new RuntimeException(e);
-                }
-            }
         }
     }
 }

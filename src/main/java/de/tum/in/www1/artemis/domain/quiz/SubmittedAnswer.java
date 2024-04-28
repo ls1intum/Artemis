@@ -48,6 +48,10 @@ public abstract class SubmittedAnswer extends DomainObject {
     @JsonIgnore
     private AbstractQuizSubmission submission;
 
+    @Column(name = "selection")
+    @JsonView(QuizView.Before.class)
+    private String selection;
+
     public Double getScoreInPoints() {
         return scoreInPoints;
     }
@@ -70,6 +74,14 @@ public abstract class SubmittedAnswer extends DomainObject {
 
     public void setSubmission(AbstractQuizSubmission quizSubmission) {
         this.submission = quizSubmission;
+    }
+
+    public String getSelection() {
+        return selection;
+    }
+
+    public void setSelection(String selection) {
+        this.selection = selection;
     }
 
     /**

@@ -1,11 +1,13 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
+import java.io.Serializable;
+
 /**
  * A AnswerOption.
  */
-public class AnswerOptionDTO {
+public class AnswerOptionDTO implements Serializable {
 
-    private Long id;
+    private Long id = 1L;
 
     private String text;
 
