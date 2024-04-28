@@ -4,8 +4,6 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.util.List;
 
-import jakarta.transaction.Transactional;
-
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Aspect;
@@ -21,19 +19,11 @@ import de.tum.in.www1.artemis.domain.quiz.AnswerOptionDTO;
 import de.tum.in.www1.artemis.domain.quiz.MultipleChoiceQuestion;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
-import de.tum.in.www1.artemis.service.QuizExerciseService;
 
 @Profile(PROFILE_CORE)
 @Component
 @Aspect
-@Transactional
 public class QuizExerciseAspect {
-
-    private final QuizExerciseService quizExerciseService;
-
-    public QuizExerciseAspect(QuizExerciseService quizExerciseService) {
-        this.quizExerciseService = quizExerciseService;
-    }
 
     @Before("execution(* de.tum.in.www1.artemis.repository.QuizExerciseRepository.save*(..)) && args(de.tum.in.www1.artemis.domain.quiz.QuizExercise)")
     public void beforeSavingQuizExercise(JoinPoint joinPoint) {
@@ -45,13 +35,13 @@ public class QuizExerciseAspect {
 
     @AfterReturning(pointcut = "execution(de.tum.in.www1.artemis.domain.quiz.QuizExercise de.tum.in.www1.artemis.repository.QuizExerciseRepository.find*(..))", returning = "quizExercise")
     public void afterReturningQuizExercise(QuizExercise quizExercise) {
-        quizExerciseService.deserializeFromJSON(quizExercise.getQuizQuestions());
+        deserializeFromJSON(quizExercise.getQuizQuestions());
     }
 
     @AfterReturning(pointcut = "execution(java.util.List<de.tum.in.www1.artemis.domain.quiz.QuizExercise> de.tum.in.www1.artemis.repository.QuizExerciseRepository.find*(..))", returning = "quizExercises")
     public void afterReturningQuizExerciseList(List<QuizExercise> quizExercises) {
         for (QuizExercise quizExercise : quizExercises) {
-            quizExerciseService.deserializeFromJSON(quizExercise.getQuizQuestions());
+            deserializeFromJSON(quizExercise.getQuizQuestions());
         }
     }
 
@@ -104,7 +94,6 @@ public class QuizExerciseAspect {
      * @throws RuntimeException if any JSON parsing errors occur during the deserialization process,
      *                              encapsulating the underlying JsonProcessingException.
      */
-    @Transactional
     public void deserializeFromJSON(List<QuizQuestion> quizQuestions) {
         ObjectMapper objectMapper = new ObjectMapper();
 
