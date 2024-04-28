@@ -17,9 +17,11 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.di
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ActivatedRoute } from '@angular/router';
-import { of } from 'rxjs';
-import { HttpHeaders, HttpResponse } from '@angular/common/http';
+import { of, throwError } from 'rxjs';
+import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { AlertService } from 'app/core/util/alert.service';
+import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
 
 describe('LtiConfigurationComponent', () => {
     let component: LtiConfigurationComponent;
@@ -28,6 +30,7 @@ describe('LtiConfigurationComponent', () => {
     let mockActivatedRoute: any;
     let mockSortService: any;
     let mockLtiConfigurationService: any;
+    let mockAlertService: AlertService;
 
     beforeEach(async () => {
         mockRouter = { navigate: jest.fn() };
@@ -70,6 +73,7 @@ describe('LtiConfigurationComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: mockActivatedRoute },
                 { provide: LtiConfigurationService, useValue: mockLtiConfigurationService },
+                { provide: AlertService, useClass: MockAlertService },
             ],
             schemas: [NO_ERRORS_SCHEMA],
         }).compileComponents();
@@ -78,6 +82,7 @@ describe('LtiConfigurationComponent', () => {
         component = fixture.componentInstance;
         fixture.detectChanges();
         component.predicate = 'id';
+        mockAlertService = fixture.debugElement.injector.get(AlertService);
     });
 
     it('should create', () => {
@@ -152,5 +157,13 @@ describe('LtiConfigurationComponent', () => {
                 sort: 'id,asc',
             },
         });
+    });
+
+    it('should handle errors on deleting LTI platform', () => {
+        const errorResponse = new HttpErrorResponse({ status: 500, statusText: 'Server Error', error: { message: 'Error occurred' } });
+        const errorSpy = jest.spyOn(mockAlertService, 'error');
+        mockLtiConfigurationService.deleteLtiPlatform.mockReturnValue(throwError(() => errorResponse));
+        component.deleteLtiPlatform(123);
+        expect(errorSpy).toHaveBeenCalled();
     });
 });
