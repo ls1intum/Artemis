@@ -122,6 +122,6 @@ public class AthenaFeedbackSuggestionsService {
         final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission));
         ResponseDTOModeling response = modelingAthenaConnector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/feedback_suggestions", request, 0);
         log.info("Athena responded to feedback suggestions request: {}", response.data);
-        return response.data.stream().toList();
+        return response.data;
     }
 }
