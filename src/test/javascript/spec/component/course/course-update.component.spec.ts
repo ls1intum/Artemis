@@ -39,6 +39,7 @@ import { cloneDeep } from 'lodash-es';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
+import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal.component';
 
 @Component({ selector: 'jhi-markdown-editor', template: '' })
 class MarkdownEditorStubComponent {
@@ -84,7 +85,7 @@ describe('Course Management Update Component', () => {
         course.maxRequestMoreFeedbackTimeDays = 15;
         course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
         course.enrollmentEnabled = true;
-        course.enrollmentConfirmationMessage = 'testRegistrationConfirmationMessage';
+        course.enrollmentConfirmationMessage = 'testEnrollmentConfirmationMessage';
         course.presentationScore = 16;
         course.color = 'testColor';
         course.courseIcon = 'testCourseIcon';
@@ -188,8 +189,8 @@ describe('Course Management Update Component', () => {
             expect(comp.courseForm.get(['maxRequestMoreFeedbackTimeDays'])?.value).toBe(course.maxRequestMoreFeedbackTimeDays);
             expect(comp.messagingEnabled).toBe(isMessagingEnabled(course));
             expect(comp.communicationEnabled).toBe(isCommunicationEnabled(course));
-            expect(comp.courseForm.get(['registrationEnabled'])?.value).toBe(course.enrollmentEnabled);
-            expect(comp.courseForm.get(['registrationConfirmationMessage'])?.value).toBe(course.enrollmentConfirmationMessage);
+            expect(comp.courseForm.get(['enrollmentEnabled'])?.value).toBe(course.enrollmentEnabled);
+            expect(comp.courseForm.get(['enrollmentConfirmationMessage'])?.value).toBe(course.enrollmentConfirmationMessage);
             expect(comp.courseForm.get(['color'])?.value).toBe(course.color);
             expect(comp.courseForm.get(['courseIcon'])?.value).toBe(course.courseIcon);
             expect(comp.courseForm.get(['learningPathsEnabled'])?.value).toBe(course.learningPathsEnabled);
@@ -208,7 +209,7 @@ describe('Course Management Update Component', () => {
             comp.courseForm = new FormGroup({
                 id: new FormControl(entity.id),
                 onlineCourse: new FormControl(entity.onlineCourse),
-                registrationEnabled: new FormControl(entity.enrollmentEnabled),
+                enrollmentEnabled: new FormControl(entity.enrollmentEnabled),
                 restrictedAthenaModulesAccess: new FormControl(entity.restrictedAthenaModulesAccess),
                 presentationScore: new FormControl(entity.presentationScore),
                 maxComplaints: new FormControl(entity.maxComplaints),
@@ -242,7 +243,7 @@ describe('Course Management Update Component', () => {
             comp.course = entity;
             comp.courseForm = new FormGroup({
                 onlineCourse: new FormControl(entity.onlineCourse),
-                registrationEnabled: new FormControl(entity.enrollmentEnabled),
+                enrollmentEnabled: new FormControl(entity.enrollmentEnabled),
                 restrictedAthenaModulesAccess: new FormControl(entity.restrictedAthenaModulesAccess),
                 presentationScore: new FormControl(entity.presentationScore),
                 maxComplaints: new FormControl(entity.maxComplaints),
@@ -318,48 +319,59 @@ describe('Course Management Update Component', () => {
             comp.setCourseImage(event);
             expect(comp.courseImageUploadFile).toEqual(file);
         });
-    });
 
-    describe('imageLoaded', () => {
-        it('should show cropper', () => {
-            expect(comp.showCropper).toBeFalse();
-            comp.imageLoaded();
-            expect(comp.showCropper).toBeTrue();
+        it('should trigger openCropper when a file is selected', async () => {
+            const openCropperSpy = jest.spyOn(comp, 'openCropper');
+            const file = new File([''], 'test-file.jpg', { type: 'image/jpeg' });
+            const mockEvent = {
+                target: {
+                    files: [file],
+                    value: '',
+                },
+                currentTarget: {
+                    files: [file],
+                },
+            } as any;
+            if (comp.setCourseImage) {
+                comp.setCourseImage(mockEvent);
+            }
+            await fixture.whenStable();
+            expect(openCropperSpy).toHaveBeenCalled();
         });
     });
 
     describe('changeOnlineCourse', () => {
-        it('should disable registration enabled if course becomes online', () => {
+        it('should disable enrollment enabled if course becomes online', () => {
             comp.course = new Course();
             comp.course.onlineCourse = false;
             comp.courseForm = new FormGroup({
                 onlineCourse: new FormControl(false),
-                registrationEnabled: new FormControl(true),
+                enrollmentEnabled: new FormControl(true),
             });
-            expect(comp.courseForm.controls['registrationEnabled'].value).toBeTrue();
+            expect(comp.courseForm.controls['enrollmentEnabled'].value).toBeTrue();
             expect(comp.courseForm.controls['onlineCourse'].value).toBeFalse();
             comp.changeOnlineCourse();
-            expect(comp.courseForm.controls['registrationEnabled'].value).toBeFalse();
+            expect(comp.courseForm.controls['enrollmentEnabled'].value).toBeFalse();
             expect(comp.courseForm.controls['onlineCourse'].value).toBeTrue();
             expect(comp.course.onlineCourse).toBeTrue();
         });
     });
 
-    describe('changeRegistrationEnabled', () => {
-        it('should disable online course if registration becomes enabled', () => {
+    describe('changeEnrollmentEnabled', () => {
+        it('should disable online course if enrollment becomes enabled', () => {
             comp.course = new Course();
             comp.course.enrollmentEnabled = false;
             comp.courseForm = new FormGroup({
-                registrationEnabled: new FormControl(false),
+                enrollmentEnabled: new FormControl(false),
                 onlineCourse: new FormControl(true),
                 enrollmentStartDate: new FormControl(),
                 enrollmentEndDate: new FormControl(),
             });
-            expect(comp.courseForm.controls['registrationEnabled'].value).toBeFalse();
+            expect(comp.courseForm.controls['enrollmentEnabled'].value).toBeFalse();
             expect(comp.courseForm.controls['onlineCourse'].value).toBeTrue();
-            comp.changeRegistrationEnabled();
+            comp.changeEnrollmentEnabled();
             expect(comp.courseForm.controls['onlineCourse'].value).toBeFalse();
-            expect(comp.courseForm.controls['registrationEnabled'].value).toBeTrue();
+            expect(comp.courseForm.controls['enrollmentEnabled'].value).toBeTrue();
             expect(comp.course.enrollmentEnabled).toBeTrue();
         });
 
@@ -369,12 +381,12 @@ describe('Course Management Update Component', () => {
             comp.course.enrollmentEnabled = true;
             comp.course.unenrollmentEnabled = true;
             comp.courseForm = new FormGroup({
-                registrationEnabled: new FormControl(false),
+                enrollmentEnabled: new FormControl(false),
                 onlineCourse: new FormControl(true),
                 enrollmentStartDate: new FormControl(),
                 enrollmentEndDate: new FormControl(),
             });
-            comp.changeRegistrationEnabled();
+            comp.changeEnrollmentEnabled();
             expect(enabelunrollSpy).toHaveBeenCalledOnce();
         });
     });
@@ -448,6 +460,7 @@ describe('Course Management Update Component', () => {
 
     describe('changeCustomizeGroupNames', () => {
         it('should initialize values if enabled and reset if disabled', () => {
+            comp.course = new Course();
             comp.courseForm = new FormGroup({
                 studentGroupName: new FormControl('noname'),
                 teachingAssistantGroupName: new FormControl('noname'),
@@ -667,6 +680,13 @@ describe('Course Management Update Component', () => {
     });
 
     describe('deleteIcon', () => {
+        it('should create the delete button when croppedImage is present', () => {
+            comp.croppedImage = 'some-image-url';
+            fixture.detectChanges();
+            const deleteButton = getDeleteIconButton();
+            expect(deleteButton).toBeTruthy();
+        });
+
         it('should remove icon image and delete icon button from component', () => {
             const base64String = Buffer.from('testContent').toString('base64');
             loadImageSpy.mockImplementation(() => Promise.resolve({ transformed: { base64: base64String } } as LoadedImage));
@@ -689,7 +709,6 @@ describe('Course Management Update Component', () => {
 
         function setIcon(): void {
             comp.courseImageUploadFile = new File([''], 'testFilename.png', { type: 'image/png' });
-            comp.showCropper = true;
             comp.ngOnInit();
             fixture.detectChanges();
         }
@@ -697,6 +716,65 @@ describe('Course Management Update Component', () => {
         function getDeleteIconButton() {
             return fixture.debugElement.nativeElement.querySelector('#delete-course-icon');
         }
+    });
+
+    describe('editIcon', () => {
+        it('should create the edit button when croppedImage is present', () => {
+            comp.croppedImage = 'some-image-url';
+            fixture.detectChanges();
+            const editButton = getEditIconButton();
+            expect(editButton).toBeTruthy();
+        });
+
+        it('should not be able to edit icon if icon does not exist', () => {
+            const iconImage = fixture.debugElement.nativeElement.querySelector('jhi-secured-image');
+            const editIconButton = getEditIconButton();
+            expect(iconImage).toBeNull();
+            expect(editIconButton).toBeNull();
+        });
+
+        it('should trigger triggerFileInput when edit button is clicked', () => {
+            const triggerFileInputSpy = jest.spyOn(comp, 'triggerFileInput').mockImplementation(() => {});
+            fixture.detectChanges();
+            const editButton = getEditIconButton();
+            editButton.dispatchEvent(new Event('click'));
+            fixture.detectChanges();
+            expect(triggerFileInputSpy).toHaveBeenCalled();
+        });
+
+        function getEditIconButton() {
+            return fixture.debugElement.nativeElement.querySelector('#edit-course-icon');
+        }
+    });
+
+    describe('noImagePlaceholder', () => {
+        it('should trigger file input when no-image div is clicked', () => {
+            const triggerFileInputSpy = jest.spyOn(comp, 'triggerFileInput').mockImplementation(() => {});
+            fixture.detectChanges();
+            comp.croppedImage = undefined;
+            fixture.detectChanges();
+            const noImageDiv = fixture.debugElement.nativeElement.querySelector('#no-image-placeholder');
+            noImageDiv.dispatchEvent(new Event('click'));
+            fixture.detectChanges();
+            expect(triggerFileInputSpy).toHaveBeenCalled();
+        });
+    });
+
+    describe('openImageCropper', () => {
+        it('should open the image cropper modal and update the croppedImage on result', async () => {
+            const mockModalRef: Partial<NgbModalRef> = {
+                componentInstance: {},
+                result: Promise.resolve('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA'),
+                close: jest.fn(),
+                dismiss: jest.fn(),
+            };
+            jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
+            comp.courseImageUploadFile = new File([''], 'filename.png', { type: 'image/png' });
+            comp.openCropper();
+            expect(modalService.open).toHaveBeenCalledWith(ImageCropperModalComponent, expect.any(Object));
+            const croppedImage = await mockModalRef.result;
+            expect(comp.croppedImage).toBe(croppedImage);
+        });
     });
 
     describe('changeOrganizations', () => {
