@@ -6,7 +6,15 @@ import { MockProvider } from 'ng-mocks';
 import { take } from 'rxjs/operators';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import { CompetencyService } from 'app/course/competencies/competency.service';
-import { Competency, CompetencyProgress, CompetencyRelation, CompetencyRelationType, CompetencyWithTailRelationDTO, CourseCompetencyProgress } from 'app/entities/competency.model';
+import {
+    Competency,
+    CompetencyImportResponseDTO,
+    CompetencyProgress,
+    CompetencyRelation,
+    CompetencyRelationType,
+    CompetencyWithTailRelationDTO,
+    CourseCompetencyProgress,
+} from 'app/entities/competency.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { CompetencyPageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
@@ -30,7 +38,7 @@ describe('CompetencyService', () => {
     let resultImportBulk: HttpResponse<CompetencyWithTailRelationDTO[]>;
     let resultGetRelations: HttpResponse<CompetencyRelation[]>;
     let resultGetForImport: SearchResult<Competency>;
-    let resultImportStandardized: HttpResponse<Competency[]>;
+    let resultImportStandardized: HttpResponse<CompetencyImportResponseDTO[]>;
     let resultImport: HttpResponse<Competency>;
 
     beforeEach(() => {
@@ -285,7 +293,7 @@ describe('CompetencyService', () => {
     }));
 
     it('should import standardized competencies', fakeAsync(() => {
-        const returnedFromService: Competency[] = [
+        const returnedFromService: CompetencyImportResponseDTO[] = [
             { id: 1, title: 'standardizedCompetency1' },
             { id: 2, title: 'standardizedCompetency2' },
         ];

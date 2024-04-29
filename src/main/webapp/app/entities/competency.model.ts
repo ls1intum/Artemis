@@ -5,6 +5,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faBrain, faComments, faCubesStacked, faMagnifyingGlass, faPenFancy, faPlusMinus, faQuestion } from '@fortawesome/free-solid-svg-icons';
+import { StandardizedCompetency } from 'app/entities/competency/standardized-competency.model';
 
 /**
  * The available competency types (based on Bloom's Taxonomy)
@@ -51,8 +52,20 @@ export class Competency implements BaseEntity {
     public lectureUnits?: LectureUnit[];
     public userProgress?: CompetencyProgress[];
     public courseProgress?: CourseCompetencyProgress;
+    public linkedStandardizedCompetency?: StandardizedCompetency;
 
     constructor() {}
+}
+
+export interface CompetencyImportResponseDTO extends BaseEntity {
+    title?: string;
+    description?: string;
+    softDueDate?: dayjs.Dayjs;
+    taxonomy?: CompetencyTaxonomy;
+    masteryThreshold?: number;
+    optional?: boolean;
+    courseId?: number;
+    linkedStandardizedCompetencyId?: number;
 }
 
 export class CompetencyProgress {
