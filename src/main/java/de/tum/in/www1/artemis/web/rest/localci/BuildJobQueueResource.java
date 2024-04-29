@@ -162,7 +162,7 @@ public class BuildJobQueueResource {
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<List<BuildJob>> getFinishedBuildJobsForCourse(@PathVariable long courseId, PageableSearchDTO<String> search) {
         log.debug("REST request to get the finished build jobs for course {}", courseId);
-        final Page<BuildJob> page = buildJobRepository.findAllByCourseId(courseId, PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.BUILD_JOB));
+        final Page<BuildJob> page = buildJobRepository.findAllWithEagerResultsByCourseId(courseId, PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.BUILD_JOB));
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }

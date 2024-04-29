@@ -29,14 +29,13 @@ import de.tum.in.www1.artemis.repository.BuildJobRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.connectors.localci.buildagent.SharedQueueProcessingService;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.*;
-import de.tum.in.www1.artemis.util.PageableSearchUtilService;
-import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.PageableSearchDTO;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildConfig;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.JobTimingInfo;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildAgentInformation;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.RepositoryInfo;
+import de.tum.in.www1.artemis.util.PageableSearchUtilService;
+import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.PageableSearchDTO;
 
 class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 

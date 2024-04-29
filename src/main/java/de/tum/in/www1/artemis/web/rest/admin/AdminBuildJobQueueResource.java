@@ -9,7 +9,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.in.www1.artemis.domain.BuildJob;
@@ -150,7 +155,7 @@ public class AdminBuildJobQueueResource {
     @EnforceAdmin
     public ResponseEntity<List<BuildJob>> getFinishedBuildJobs(PageableSearchDTO<String> search) {
         log.debug("REST request to get a page of finished build jobs");
-        final Page<BuildJob> page = buildJobRepository.findAll(PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.BUILD_JOB));
+        final Page<BuildJob> page = buildJobRepository.findAllWithEagerResults(PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.BUILD_JOB));
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }

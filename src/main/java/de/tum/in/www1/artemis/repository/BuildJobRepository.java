@@ -29,6 +29,13 @@ public interface BuildJobRepository extends JpaRepository<BuildJob, Long>, JpaSp
     Optional<BuildJob> findBuildJobByResult(Result result);
 
     @Query("""
+                    SELECT b
+                    FROM BuildJob b
+                        LEFT JOIN FETCH b.result r
+            """)
+    Page<BuildJob> findAllWithEagerResults(Pageable pageable);
+
+    @Query("""
             SELECT new de.tum.in.www1.artemis.service.connectors.localci.dto.DockerImageBuild(
                 b.dockerImage,
                 MAX(b.buildStartDate)
@@ -38,7 +45,13 @@ public interface BuildJobRepository extends JpaRepository<BuildJob, Long>, JpaSp
             """)
     Set<DockerImageBuild> findAllLastBuildDatesForDockerImages();
 
-    Page<BuildJob> findAllByCourseId(long courseId, Pageable pageable);
+    @Query("""
+            SELECT b
+            FROM BuildJob b
+                LEFT JOIN FETCH b.result r
+            WHERE b.courseId = :courseId
+            """)
+    Page<BuildJob> findAllWithEagerResultsByCourseId(long courseId, Pageable pageable);
 
     @Query("""
              SELECT new de.tum.in.www1.artemis.service.connectors.localci.dto.ResultBuildJob(
