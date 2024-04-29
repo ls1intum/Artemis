@@ -13,7 +13,7 @@ import { IrisErrorMessageKey, IrisErrorType } from 'app/entities/iris/iris-error
 import { AnimationEvent, animate, state, style, transition, trigger } from '@angular/animations';
 import { UserService } from 'app/core/user/user.service';
 import { IrisLogoSize } from 'app/iris/iris-logo/iris-logo.component';
-import { IrisChatSessionService } from 'app/iris/chat-session.service';
+import { IrisCourseChatSessionService } from 'app/iris/course-chat-session.service';
 import { TranslateService } from '@ngx-translate/core';
 
 @Component({
@@ -147,7 +147,7 @@ export class IrisBaseChatbotComponentComponent implements OnInit, AfterViewInit,
      * Inserts the correct link to import the current programming exercise for a new variant generation.
      */
     getFirstMessageContent(): string {
-        if (this.isChatSession()) {
+        if (this.isCourseChatSession()) {
             return this.translateService.instant('artemisApp.exerciseChatbot.tutorFirstMessage');
         }
         this.importExerciseUrl = `/course-management/${this.courseId}/programming-exercises/import/${this.exerciseId}`;
@@ -454,8 +454,8 @@ export class IrisBaseChatbotComponentComponent implements OnInit, AfterViewInit,
     createNewSession() {
         this.sessionService.createNewSession(this.exerciseId);
     }
-    isChatSession() {
-        return this.sessionService instanceof IrisChatSessionService;
+    isCourseChatSession() {
+        return this.sessionService instanceof IrisCourseChatSessionService;
     }
     protected readonly IrisSender = IrisSender;
     protected readonly getTextContent = getTextContent;

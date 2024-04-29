@@ -95,10 +95,10 @@ public class IrisCourseChatSessionResource extends IrisCourseChatBasedSessionRes
      * @param sessionId id of the session
      * @return a status {@code 200 (Ok)} and with body true if Iris is active, false otherwise
      */
-    @GetMapping("sessions/{sessionId}/active")
+    @GetMapping("course/sessions/{sessionId}/active")
     @EnforceAtLeastStudent
     public ResponseEntity<IrisHealthDTO> isIrisActive(@PathVariable Long sessionId) {
         var session = irisCourseChatSessionRepository.findByIdElseThrow(sessionId);
-        return ResponseEntity.ok(super.isIrisActiveInternal(session.getCourse(), session, IrisCombinedSettingsDTO::irisChatSettings));
+        return ResponseEntity.ok(super.isIrisActiveInternal(session.getCourse(), session, IrisCombinedSettingsDTO::irisCourseChatSettings));
     }
 }

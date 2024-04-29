@@ -2,20 +2,16 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { IrisHttpSessionService } from 'app/iris/http-session.service';
-import { IrisRateLimitInformation } from 'app/iris/websocket.service';
+import { HeartbeatDTO } from 'app/iris/http-chat-session.service';
 
-export class HeartbeatDTO {
-    active: boolean;
-    rateLimitInfo: IrisRateLimitInformation;
-}
 /**
  * The `IrisHttpChatSessionService` provides methods for retrieving existing or creating new Iris chat sessions.
  * It interacts with the server-side API to perform session-related operations.
  */
 @Injectable({ providedIn: 'root' })
-export class IrisHttpChatSessionService extends IrisHttpSessionService {
+export class IrisHttpCourseChatSessionService extends IrisHttpSessionService {
     protected constructor(http: HttpClient) {
-        super(http, 'sessions', 'programming-exercises');
+        super(http, 'sessions', 'course');
     }
 
     /**

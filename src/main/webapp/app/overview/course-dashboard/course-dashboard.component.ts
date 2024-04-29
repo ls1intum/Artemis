@@ -16,15 +16,15 @@ import dayjs from 'dayjs/esm';
 import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { IrisStateStore } from 'app/iris/state-store.service';
-import { IrisChatSessionService } from 'app/iris/chat-session.service';
 import { IrisChatWebsocketService } from 'app/iris/chat-websocket.service';
 import { IrisHeartbeatService } from 'app/iris/heartbeat.service';
+import { IrisCourseChatSessionService } from 'app/iris/course-chat-session.service';
 
 @Component({
     selector: 'jhi-course-dashboard',
     templateUrl: './course-dashboard.component.html',
     styleUrl: './course-dashboard.component.scss',
-    providers: [IrisChatWebsocketService, IrisChatSessionService, IrisHeartbeatService],
+    providers: [IrisChatWebsocketService, IrisCourseChatSessionService, IrisHeartbeatService],
 })
 export class CourseDashboardComponent implements OnInit, OnDestroy, AfterViewInit {
     courseId: number;
@@ -51,7 +51,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy, AfterViewIni
     constructor(
         private courseStorageService: CourseStorageService,
         private translateService: TranslateService,
-        public sessionService: IrisChatSessionService,
+        public sessionService: IrisCourseChatSessionService,
         public stateStore: IrisStateStore,
         // Note: These 2 unused services are injected to ensure that they are instantiated
         websocketService: IrisChatWebsocketService,
@@ -201,17 +201,13 @@ export class CourseDashboardComponent implements OnInit, OnDestroy, AfterViewIni
         } else {
             this.loadCompetencies();
         }
-        this.exerciseId = this.course!.exercises![1]!.id!;
         this.data = {
             stateStore: this.stateStore,
             course: this.course,
-            exerciseId: this.exerciseId,
             sessionService: this.sessionService,
         };
-        if (this.exerciseId != null) {
-            console.log('exerciseId:', this.exerciseId);
-            console.log('exerciseId is not null');
-            this.sessionService.getCurrentSessionOrCreate(this.exerciseId);
+        if (this.courseId != null) {
+            this.sessionService.getCurrentSessionOrCreate(this.courseId);
         }
     }
 

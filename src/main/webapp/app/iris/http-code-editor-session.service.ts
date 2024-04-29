@@ -9,6 +9,6 @@ import { IrisHttpSessionService } from 'app/iris/http-session.service';
 @Injectable({ providedIn: 'root' })
 export class IrisHttpCodeEditorSessionService extends IrisHttpSessionService {
     constructor(protected http: HttpClient) {
-        super(http, 'code-editor-sessions');
+        super(http, 'code-editor-sessions', 'programming-exercises');
     }
 }

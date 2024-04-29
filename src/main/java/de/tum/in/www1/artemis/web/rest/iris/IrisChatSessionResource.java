@@ -94,7 +94,7 @@ public class IrisChatSessionResource extends IrisExerciseChatBasedSessionResourc
      * @param sessionId id of the session
      * @return a status {@code 200 (Ok)} and with body true if Iris is active, false otherwise
      */
-    @GetMapping("sessions/{sessionId}/active")
+    @GetMapping("programming-exercises/sessions/{sessionId}/active")
     @EnforceAtLeastStudent
     public ResponseEntity<IrisHealthDTO> isIrisActive(@PathVariable Long sessionId) {
         var session = irisChatSessionRepository.findByIdElseThrow(sessionId);

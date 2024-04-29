@@ -9,7 +9,7 @@ public record PyrisCourseDTO(long id, String name, String description, String or
         ZonedDateTime startDate, ZonedDateTime endDate, Boolean onlineCourse) {
 
     public PyrisCourseDTO(Course course) {
-        this(course.getId(), course.getTitle(), course.getDescription(), course.getOrganizationalDetails(), course.getLanguage().name(), course.getDefaultProgrammingLanguage(),
+        this(course.getId(), course.getTitle(), course.getDescription(), course.getOrganizationalDetails(), "English", course.getDefaultProgrammingLanguage(),
                 course.getStartDate(), course.getEndDate(), course.isOnlineCourse());
     }
 }

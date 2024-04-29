@@ -13,6 +13,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
+import de.tum.in.www1.artemis.domain.iris.session.IrisCourseChatSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageDTO;
@@ -33,10 +34,15 @@ public class IrisChatWebsocketService extends IrisWebsocketService {
     }
 
     private User checkSessionTypeAndGetUser(IrisSession irisSession) {
-        if (!(irisSession instanceof IrisChatSession chatSession)) {
+        if (irisSession instanceof IrisChatSession chatSession) {
+            return chatSession.getUser();
+        }
+        else if (irisSession instanceof IrisCourseChatSession courseChatSession) {
+            return courseChatSession.getUser();
+        }
+        else {
             throw new UnsupportedOperationException("Only IrisChatSession is supported");
         }
-        return chatSession.getUser();
     }
 
     /**

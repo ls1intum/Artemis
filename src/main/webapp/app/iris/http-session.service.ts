@@ -16,23 +16,24 @@ export abstract class IrisHttpSessionService {
     protected constructor(
         protected http: HttpClient,
         protected sessionType: string,
+        protected sessionLevel: string,
     ) {}
 
     /**
      * gets the current session by the exerciseId
-     * @param {number} exerciseId of the exercise
+     * @param {number} id of the exercise
      * @return {Observable<EntityResponseType>} an Observable of the HTTP response
      */
-    getCurrentSession(exerciseId: number): Observable<EntityResponseType> {
-        return this.http.get<IrisSession>(`${this.apiPrefix}/programming-exercises/${exerciseId}/${this.sessionType}/current`, { observe: 'response' });
+    getCurrentSession(id: number): Observable<EntityResponseType> {
+        return this.http.get<IrisSession>(`${this.apiPrefix}/${this.sessionLevel}/${id}/${this.sessionType}/current`, { observe: 'response' });
     }
 
     /**
      * creates a session for a programming exercise
-     * @param {number} exerciseId of the session in which the message should be created
+     * @param {number} id of the session in which the message should be created
      * @return {Observable<EntityResponseType>} an Observable of the HTTP responses
      */
-    createSession(exerciseId: number): Observable<IrisSession> {
-        return this.http.post<never>(`${this.apiPrefix}/programming-exercises/${exerciseId}/${this.sessionType}`, {});
+    createSession(id: number): Observable<IrisSession> {
+        return this.http.post<never>(`${this.apiPrefix}/${this.sessionLevel}/${id}/${this.sessionType}`, {});
     }
 }

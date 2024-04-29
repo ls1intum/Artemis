@@ -28,12 +28,12 @@ export abstract class IrisSessionService {
 
     /**
      * Retrieves the current session or creates a new one if it doesn't exist.
-     * @param exerciseId The exercise ID to which the session will be attached.
+     * @param id The ID to which the session will be attached.
      */
-    getCurrentSessionOrCreate(exerciseId: number): void {
+    getCurrentSessionOrCreate(id: number): void {
         let sessionId: number;
 
-        firstValueFrom(this.httpSessionService.getCurrentSession(exerciseId))
+        firstValueFrom(this.httpSessionService.getCurrentSession(id))
             .then((irisSessionResponse: HttpResponse<IrisSession>) => {
                 sessionId = irisSessionResponse.body!.id;
                 return firstValueFrom(this.httpMessageService.getMessages(sessionId))
@@ -54,7 +54,7 @@ export abstract class IrisSessionService {
             })
             .catch((error: HttpErrorResponse) => {
                 if (error.status == 404) {
-                    return this.createNewSession(exerciseId);
+                    return this.createNewSession(id);
                 } else {
                     this.dispatchError(IrisErrorMessageKey.SESSION_LOAD_FAILED);
                 }
@@ -63,10 +63,10 @@ export abstract class IrisSessionService {
 
     /**
      * Creates a new session for the given exercise ID.
-     * @param exerciseId The exercise ID for which to create a new session.
+     * @param id The exercise ID for which to create a new session.
      */
-    createNewSession(exerciseId: number): void {
-        this.httpSessionService.createSession(exerciseId).subscribe({
+    createNewSession(id: number): void {
+        this.httpSessionService.createSession(id).subscribe({
             next: (irisSessionResponse: IrisSession) => {
                 this.dispatchSuccess(irisSessionResponse.id, []);
             },

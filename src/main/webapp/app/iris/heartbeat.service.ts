@@ -1,11 +1,12 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { IrisStateStore } from 'app/iris/state-store.service';
-import { HeartbeatDTO, IrisHttpChatSessionService } from 'app/iris/http-chat-session.service';
+import { HeartbeatDTO } from 'app/iris/http-chat-session.service';
 import { HttpResponse } from '@angular/common/http';
 import { ConversationErrorOccurredAction, MessageStoreAction, RateLimitUpdatedAction, isSessionReceivedAction } from 'app/iris/state-store.model';
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
 import { Subscription, firstValueFrom } from 'rxjs';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { IrisHttpCourseChatSessionService } from 'app/iris/http-course-chat-session.service';
 
 /**
  * The `IrisHeartbeatService` is responsible for monitoring the heartbeat of an Iris session.
@@ -28,7 +29,7 @@ export class IrisHeartbeatService implements OnDestroy {
     constructor(
         private websocketService: JhiWebsocketService,
         private stateStore: IrisStateStore,
-        private httpSessionService: IrisHttpChatSessionService,
+        private httpSessionService: IrisHttpCourseChatSessionService,
     ) {
         // Subscribe to changes in the session ID
         this.sessionIdChangedSub = this.stateStore.getActionObservable().subscribe((newAction: MessageStoreAction) => {
