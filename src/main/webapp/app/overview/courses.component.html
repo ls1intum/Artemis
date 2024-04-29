@@ -44,8 +44,14 @@
         </div>
     }
 }
-<div class="row">
-    @for (course of regularCourses; track course) {
-        <jhi-overview-course-card class="col-12 col-lg-6 col-xl-4 pe-2 ps-2 mb-3" [course]="course" [hasGuidedTour]="course === courseForGuidedTour" />
-    }
-</div>
+@if (regularCourses.length === 0 && recentlyAccessedCourses.length === 0) {
+    <div class="mt-5 mb-5 container">
+        <h4 class="text-secondary text-center" jhiTranslate="artemisApp.studentDashboard.noCourses"></h4>
+    </div>
+} @else {
+    <div class="row">
+        @for (course of regularCourses; track course) {
+            <jhi-overview-course-card class="col-12 col-lg-6 col-xl-4 pe-2 ps-2 mb-3" [course]="course" [hasGuidedTour]="course === courseForGuidedTour" />
+        }
+    </div>
+}
