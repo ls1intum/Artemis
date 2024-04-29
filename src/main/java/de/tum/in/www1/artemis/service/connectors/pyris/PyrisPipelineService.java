@@ -7,15 +7,19 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
+import de.tum.in.www1.artemis.domain.iris.session.IrisCourseChatSession;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisPipelineExecutionSettingsDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.courseChat.PyrisCourseChatPipelineExecutionDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisCourseDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisUserDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageStateDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.tutorChat.PyrisTutorChatPipelineExecutionDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.job.CourseChatJob;
 import de.tum.in.www1.artemis.service.connectors.pyris.job.TutorChatJob;
 import de.tum.in.www1.artemis.service.iris.websocket.IrisChatWebsocketService;
 
@@ -66,5 +70,29 @@ public class PyrisPipelineService {
         irisChatWebsocketService.sendStatusUpdate(session, List.of(preparingRequestStageDone, executingPipelineStageInProgress));
 
         pyrisConnectorService.executePipeline("tutor-chat", variant, executionDTO);
+    }
+
+    /**
+     * Executes the tutor chat pipeline for the given session
+     *
+     * @param variant the variant of the pipeline
+     * @param course  the course the student asks about
+     * @param session the chat session
+     */
+    public void executeCourseChatPipeline(String variant, Course course, IrisCourseChatSession session) {
+        var jobToken = pyrisJobService.addJob(new CourseChatJob(course.getId(), session.getId()));
+        var settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, List.of(), artemisBaseUrl);
+        var preparingRequestStageInProgress = new PyrisStageDTO("Preparing request", 10, PyrisStageStateDTO.IN_PROGRESS, "Loading course data");
+        var preparingRequestStageDone = new PyrisStageDTO("Preparing request", 10, PyrisStageStateDTO.DONE, "Loading course data");
+        var executingPipelineStageNotStarted = new PyrisStageDTO("Executing pipeline", 30, PyrisStageStateDTO.NOT_STARTED, null);
+        var executingPipelineStageInProgress = new PyrisStageDTO("Executing pipeline", 30, PyrisStageStateDTO.IN_PROGRESS, null);
+        irisChatWebsocketService.sendStatusUpdate(session, List.of(preparingRequestStageInProgress, executingPipelineStageNotStarted));
+
+        var executionDTO = new PyrisCourseChatPipelineExecutionDTO(settingsDTO, List.of(preparingRequestStageDone), new PyrisCourseDTO(course),
+                pyrisDTOService.toPyrisDTO(session.getMessages()), new PyrisUserDTO(session.getUser()));
+
+        irisChatWebsocketService.sendStatusUpdate(session, List.of(preparingRequestStageDone, executingPipelineStageInProgress));
+
+        pyrisConnectorService.executePipeline("course-chat", variant, executionDTO);
     }
 }

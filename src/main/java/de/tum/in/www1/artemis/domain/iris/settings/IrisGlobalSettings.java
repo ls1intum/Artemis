@@ -22,6 +22,9 @@ public class IrisGlobalSettings extends IrisSettings {
     @Column(name = "enable_auto_update_chat")
     private boolean enableAutoUpdateChat;
 
+    @Column(name = "enable_auto_update_course_chat")
+    private boolean enableAutoUpdateCourseChat;
+
     @Column(name = "enable_auto_update_hestia")
     private boolean enableAutoUpdateHestia;
 
@@ -34,6 +37,10 @@ public class IrisGlobalSettings extends IrisSettings {
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "iris_chat_settings_id")
     private IrisChatSubSettings irisChatSettings;
+
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER, optional = false)
+    @JoinColumn(name = "iris_course_chat_settings_id")
+    private IrisCourseChatSubSettings irisCourseChatSettings;
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "iris_hestia_settings_id")
@@ -81,6 +88,14 @@ public class IrisGlobalSettings extends IrisSettings {
 
     public void setEnableAutoUpdateHestia(boolean enableAutoUpdateHestia) {
         this.enableAutoUpdateHestia = enableAutoUpdateHestia;
+    }
+
+    public boolean isEnableAutoUpdateCourseChat() {
+        return enableAutoUpdateCourseChat;
+    }
+
+    public void setEnableAutoUpdateCourseChat(boolean enableAutoUpdateCourseChat) {
+        this.enableAutoUpdateCourseChat = enableAutoUpdateCourseChat;
     }
 
     public boolean isEnableAutoUpdateCodeEditor() {
@@ -132,6 +147,16 @@ public class IrisGlobalSettings extends IrisSettings {
     @Override
     public IrisCompetencyGenerationSubSettings getIrisCompetencyGenerationSettings() {
         return irisCompetencyGenerationSettings;
+    }
+
+    @Override
+    public IrisCourseChatSubSettings getIrisCourseChatSettings() {
+        return irisCourseChatSettings;
+    }
+
+    @Override
+    public void setIrisCourseChatSettings(IrisCourseChatSubSettings irisCourseChatSettings) {
+        this.irisCourseChatSettings = irisCourseChatSettings;
     }
 
     @Override

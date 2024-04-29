@@ -51,6 +51,10 @@ public class Course extends DomainObject {
     @JsonView(QuizView.Before.class)
     private String description;
 
+    @Column(name = "organizational_details")
+    @JsonView(QuizView.Before.class)
+    private String organizationalDetails;
+
     @Column(name = "short_name", unique = true)
     @JsonView(QuizView.Before.class)
     private String shortName;
@@ -208,6 +212,9 @@ public class Course extends DomainObject {
     @Column(name = "learning_paths_enabled", nullable = false)
     private boolean learningPathsEnabled = false;
 
+    @Column(name = "dashboard_enabled", nullable = false)
+    private boolean dashboardEnabled = false;
+
     @OneToMany(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("course")
     private Set<LearningPath> learningPaths = new HashSet<>();
@@ -318,6 +325,14 @@ public class Course extends DomainObject {
 
     public String getDescription() {
         return description;
+    }
+
+    public void setOrganizationalDetails(String organizationalDetails) {
+        this.organizationalDetails = organizationalDetails;
+    }
+
+    public String getOrganizationalDetails() {
+        return organizationalDetails;
     }
 
     public void setTitle(String title) {
@@ -756,6 +771,14 @@ public class Course extends DomainObject {
 
     public void setLearningPathsEnabled(boolean learningPathsEnabled) {
         this.learningPathsEnabled = learningPathsEnabled;
+    }
+
+    public boolean getDashboardEnabled() {
+        return dashboardEnabled;
+    }
+
+    public void setDashboardEnabled(boolean dashboardEnabled) {
+        this.dashboardEnabled = dashboardEnabled;
     }
 
     public Set<LearningPath> getLearningPaths() {

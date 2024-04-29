@@ -6,6 +6,7 @@ export enum IrisSubSettingsType {
     HESTIA = 'hestia',
     CODE_EDITOR = 'code-editor',
     COMPETENCY_GENERATION = 'competency-generation',
+    COURSE_CHAT = 'course-chat',
 }
 
 export abstract class IrisSubSettings implements BaseEntity {
@@ -18,6 +19,13 @@ export abstract class IrisSubSettings implements BaseEntity {
 
 export class IrisChatSubSettings extends IrisSubSettings {
     type = IrisSubSettingsType.CHAT;
+    template?: IrisTemplate;
+    rateLimit?: number;
+    rateLimitTimeframeHours?: number;
+}
+
+export class IrisCourseChatSubSettings extends IrisSubSettings {
+    type = IrisSubSettingsType.COURSE_CHAT;
     template?: IrisTemplate;
     rateLimit?: number;
     rateLimitTimeframeHours?: number;

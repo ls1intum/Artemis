@@ -24,6 +24,10 @@ public class IrisCourseSettings extends IrisSettings {
     private IrisChatSubSettings irisChatSettings;
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @JoinColumn(name = "iris_course_chat_settings_id")
+    private IrisCourseChatSubSettings irisCourseChatSettings;
+
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JoinColumn(name = "iris_hestia_settings_id")
     private IrisHestiaSubSettings irisHestiaSettings;
 
@@ -81,6 +85,16 @@ public class IrisCourseSettings extends IrisSettings {
     @Override
     public IrisCompetencyGenerationSubSettings getIrisCompetencyGenerationSettings() {
         return irisCompetencyGenerationSettings;
+    }
+
+    @Override
+    public IrisCourseChatSubSettings getIrisCourseChatSettings() {
+        return irisCourseChatSettings;
+    }
+
+    @Override
+    public void setIrisCourseChatSettings(IrisCourseChatSubSettings irisCourseChatSettings) {
+        this.irisCourseChatSettings = irisCourseChatSettings;
     }
 
     @Override

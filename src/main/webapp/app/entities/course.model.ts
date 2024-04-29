@@ -48,6 +48,13 @@ export function isMessagingOrCommunicationEnabled(course: Course | undefined) {
     );
 }
 
+/**
+ * Note: Keep in sync with method in CourseRepository.java
+ */
+export function isProactiveDashboardEnabled(course: Course | undefined) {
+    return course?.dashboardEnabled;
+}
+
 export const enum Language {
     ENGLISH = 'ENGLISH',
     GERMAN = 'GERMAN',
@@ -56,6 +63,7 @@ export class Course implements BaseEntity {
     public id?: number;
     public title?: string;
     public description?: string;
+    public organizationalDetails?: string;
     public shortName?: string;
     public studentGroupName?: string;
     public teachingAssistantGroupName?: string;
@@ -74,6 +82,7 @@ export class Course implements BaseEntity {
     public courseIcon?: string;
     public onlineCourse?: boolean;
     public enrollmentEnabled?: boolean;
+    public dashboardEnabled?: boolean;
     public enrollmentConfirmationMessage?: string;
     public unenrollmentEnabled?: boolean;
     public presentationScore?: number;

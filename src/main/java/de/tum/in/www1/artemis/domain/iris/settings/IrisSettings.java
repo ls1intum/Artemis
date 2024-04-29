@@ -50,6 +50,10 @@ public abstract class IrisSettings extends DomainObject {
 
     public abstract IrisCompetencyGenerationSubSettings getIrisCompetencyGenerationSettings();
 
+    public abstract IrisCourseChatSubSettings getIrisCourseChatSettings();
+
+    public abstract void setIrisCourseChatSettings(IrisCourseChatSubSettings irisCourseChatSettings);
+
     public abstract void setIrisCompetencyGenerationSettings(IrisCompetencyGenerationSubSettings irisCompetencyGenerationSubSettings);
 
     public abstract boolean isValid();

@@ -12,6 +12,7 @@ import { HttpClient } from '@angular/common/http';
 export enum FeatureToggle {
     ProgrammingExercises = 'ProgrammingExercises',
     PlagiarismChecks = 'PlagiarismChecks',
+    Dashboard = 'Dashboard',
     Exports = 'Exports',
     TutorialGroups = 'TutorialGroups',
     LearningPaths = 'LearningPaths',

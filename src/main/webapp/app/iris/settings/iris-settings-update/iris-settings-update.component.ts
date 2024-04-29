@@ -9,7 +9,13 @@ import { faRotate, faSave } from '@fortawesome/free-solid-svg-icons';
 import { IrisModel } from 'app/entities/iris/settings/iris-model';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { cloneDeep, isEqual } from 'lodash-es';
-import { IrisChatSubSettings, IrisCodeEditorSubSettings, IrisCompetencyGenerationSubSettings, IrisHestiaSubSettings } from 'app/entities/iris/settings/iris-sub-settings.model';
+import {
+    IrisChatSubSettings,
+    IrisCodeEditorSubSettings,
+    IrisCompetencyGenerationSubSettings,
+    IrisCourseChatSubSettings,
+    IrisHestiaSubSettings,
+} from 'app/entities/iris/settings/iris-sub-settings.model';
 
 @Component({
     selector: 'jhi-iris-settings-update',
@@ -109,6 +115,9 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
         }
         if (!this.irisSettings.irisCompetencyGenerationSettings) {
             this.irisSettings.irisCompetencyGenerationSettings = new IrisCompetencyGenerationSubSettings();
+        }
+        if (!this.irisSettings.irisCourseChatSettings) {
+            this.irisSettings.irisCourseChatSettings = new IrisCourseChatSubSettings();
         }
     }
 

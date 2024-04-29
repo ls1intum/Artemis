@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        Change Set for adding following changes to the database schema:
+        - Organizational Details (organizational_details) for storing organizational details of a course
+        - Dashboard Enabled (dashboard_enabled) for enabling or disabling the dashboard
+        - Iris Course Chat Settings ID (iris_course_chat_settings_id) for storing the course chat settings ID
+        - Enable Auto Update Course Chat (enable_auto_update_course_chat) for enabling or disabling the auto update course chat
+
+    -->
+    <changeSet id="20240428210130" author="kaancayli">
+        <addColumn tableName="course">
+            <column name="organizational_details" type="longtext">
+                <constraints nullable="true"/>
+            </column>
+            <column defaultValueBoolean="false" name="dashboard_enabled" type="boolean">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+
+        <addColumn tableName="iris_settings">
+            <column name="iris_course_chat_settings_id"
+                    type="BIGINT"/>
+            <column name="enable_auto_update_course_chat"
+                    type="BOOLEAN"/>
+        </addColumn>
+        <addForeignKeyConstraint baseColumnNames="iris_course_chat_settings_id" baseTableName="iris_settings"
+                                 constraintName="FK_IRIS_SETTINGS_ON_IRIS_COURSE_CHAT_SETTINGS" referencedColumnNames="id"
+                                 referencedTableName="iris_sub_settings"/>
+        <sql>
+            UPDATE iris_settings SET enable_auto_update_competency_generation = FALSE WHERE discriminator = 'GLOBAL';
+        </sql>
+    </changeSet>
+</databaseChangeLog>

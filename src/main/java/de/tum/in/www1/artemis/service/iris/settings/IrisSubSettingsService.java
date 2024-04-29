@@ -12,6 +12,7 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.iris.dto.IrisCombinedChatSubSettingsDTO;
 import de.tum.in.www1.artemis.service.iris.dto.IrisCombinedCodeEditorSubSettingsDTO;
 import de.tum.in.www1.artemis.service.iris.dto.IrisCombinedCompetencyGenerationSubSettingsDTO;
+import de.tum.in.www1.artemis.service.iris.dto.IrisCombinedCourseChatSubSettingsDTO;
 import de.tum.in.www1.artemis.service.iris.dto.IrisCombinedHestiaSubSettingsDTO;
 
 /**
@@ -58,6 +59,44 @@ public class IrisSubSettingsService {
             currentSettings.setEnabled(newSettings.isEnabled());
         }
         if (authCheckService.isAdmin()) {
+            currentSettings.setRateLimit(newSettings.getRateLimit());
+            currentSettings.setRateLimitTimeframeHours(newSettings.getRateLimitTimeframeHours());
+        }
+        currentSettings.setAllowedModels(selectAllowedModels(currentSettings.getAllowedModels(), newSettings.getAllowedModels()));
+        currentSettings.setPreferredModel(validatePreferredModel(currentSettings.getPreferredModel(), newSettings.getPreferredModel(), currentSettings.getAllowedModels(),
+                parentSettings != null ? parentSettings.getAllowedModels() : null));
+        currentSettings.setTemplate(newSettings.getTemplate());
+        return currentSettings;
+    }
+
+    /**
+     * Updates a course chat sub settings object.
+     * If the new settings are null, the current settings will be deleted (except if the parent settings are null == if the settings are global).
+     * Special notes:
+     * - If the user is not an admin the rate limit will not be updated.
+     * - If the user is not an admin the allowed models will not be updated.
+     * - If the user is not an admin the preferred model will only be updated if it is included in the allowed models.
+     *
+     * @param currentSettings Current chat sub settings.
+     * @param newSettings     Updated chat sub settings.
+     * @param parentSettings  Parent chat sub settings.
+     * @param settingsType    Type of the settings the sub settings belong to.
+     * @return Updated chat sub settings.
+     */
+    public IrisCourseChatSubSettings update(IrisCourseChatSubSettings currentSettings, IrisCourseChatSubSettings newSettings, IrisCombinedCourseChatSubSettingsDTO parentSettings,
+            IrisSettingsType settingsType) {
+        if (newSettings == null) {
+            if (parentSettings == null) {
+                throw new IllegalArgumentException("Cannot delete the chat settings");
+            }
+            return null;
+        }
+        if (currentSettings == null) {
+            currentSettings = new IrisCourseChatSubSettings();
+        }
+
+        if (authCheckService.isAdmin()) {
+            currentSettings.setEnabled(newSettings.isEnabled());
             currentSettings.setRateLimit(newSettings.getRateLimit());
             currentSettings.setRateLimitTimeframeHours(newSettings.getRateLimitTimeframeHours());
         }
@@ -230,6 +269,27 @@ public class IrisSubSettingsService {
             combinedChatSettings.setTemplate(getCombinedTemplate(settingsList, IrisSettings::getIrisChatSettings, IrisChatSubSettings::getTemplate));
         }
         return combinedChatSettings;
+    }
+
+    /**
+     * Combines the course chat settings of multiple {@link IrisSettings} objects.
+     * If minimal is true, the returned object will only contain the enabled and rateLimit fields.
+     * The minimal version can safely be sent to students.
+     *
+     * @param settingsList List of {@link IrisSettings} objects to combine.
+     * @param minimal      Whether to return a minimal version of the combined settings.
+     * @return Combined chat settings.
+     */
+    public IrisCombinedCourseChatSubSettingsDTO combineCourseChatSettings(ArrayList<IrisSettings> settingsList, boolean minimal) {
+        var combinedCourseChatSettings = new IrisCombinedCourseChatSubSettingsDTO();
+        combinedCourseChatSettings.setEnabled(getCombinedEnabled(settingsList, IrisSettings::getIrisChatSettings));
+        combinedCourseChatSettings.setRateLimit(getCombinedRateLimit(settingsList));
+        if (!minimal) {
+            combinedCourseChatSettings.setAllowedModels(getCombinedAllowedModels(settingsList, IrisSettings::getIrisCourseChatSettings));
+            combinedCourseChatSettings.setPreferredModel(getCombinedPreferredModel(settingsList, IrisSettings::getIrisCourseChatSettings));
+            combinedCourseChatSettings.setTemplate(getCombinedTemplate(settingsList, IrisSettings::getIrisCourseChatSettings, IrisCourseChatSubSettings::getTemplate));
+        }
+        return combinedCourseChatSettings;
     }
 
     /**

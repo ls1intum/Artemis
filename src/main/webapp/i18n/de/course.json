@@ -62,6 +62,7 @@
             "editorGroupName": "Gruppe der Editor:innen",
             "instructorGroupName": "Gruppe der Lehrenden",
             "description": "Kursbeschreibung",
+            "organizationalDetails": "Organisatorische Details",
             "organizations": "Kurs Organisationen",
             "startDate": "Start",
             "endDate": "Ende",
@@ -84,6 +85,10 @@
             "learningPaths": {
                 "label": "Lernpfade aktiviert",
                 "tooltip": "Ermöglicht es aus Kompetenzen und deren Lerninhalten einen individuellen Lernpfad für Studierende zu generieren."
+            },
+            "dashboard": {
+                "label": "Dashboard aktiviert",
+                "tooltip": "Aktiviert das Kurs-Dashboard für Studenten. Das Dashboard bietet einen Überblick über den Kurs, die Übungen und den Fortschritt des Schülers.."
             },
             "restrictedAthenaModulesAccess": {
                 "label": "Zugriff auf geschützte Athena-Module aktiviert",

@@ -62,6 +62,7 @@
             "editorGroupName": "Editors",
             "instructorGroupName": "Instructors",
             "description": "Course Description",
+            "organizationalDetails": "Organizational Details",
             "organizations": "Course Organizations",
             "startDate": "Start",
             "endDate": "End",
@@ -84,6 +85,10 @@
             "learningPaths": {
                 "label": "Learning Paths Enabled",
                 "tooltip": "Enables generation of individualized learning paths for students consisting of competencies and their linked learning materials."
+            },
+            "dashboard": {
+                "label": "Dashboard Enabled",
+                "tooltip": "Enables the course dashboard for students. The dashboard provides an overview of the course, the exercises and the student's progress."
             },
             "restrictedAthenaModulesAccess": {
                 "label": "Access to Restricted Athena Modules Enabled",

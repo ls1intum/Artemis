@@ -21,6 +21,7 @@
                 },
                 "subSettings": {
                     "chatSettings": "Chat Einstellungen",
+                    "courseChatSettings": "Kurs Chat Einstellungen",
                     "hestiaSettings": "Hestia Einstellungen",
                     "codeEditorSettings": "Code Editor Einstellungen",
                     "competencyGenerationSettings": "Kompetenzgenerierung Einstellungen",
@@ -58,7 +59,8 @@
                         "off": "Deaktiviert",
                         "chat": "Iris Chat",
                         "codeEditor": "Programmieraufgaben Erstellungs Chat",
-                        "hestia": "Hestia Integration"
+                        "hestia": "Hestia Integration",
+                        "courseChat": "Kurs Chat"
                     },
                     "disabled": {
                         "course": "IRIS ist in den Kurs-IRIS-Einstellungen deaktiviert",
@@ -77,7 +79,8 @@
                     "chatLabel": "Auto Update der Chat Einstellungen",
                     "hestiaLabel": "Auto Update der Hestia Einstellungen",
                     "competencyGenerationLabel": "Auto Update der Kompetenzgenerierung Einstellungen",
-                    "codeEditorLabel": "Auto Update der Code Editor Einstellungen"
+                    "codeEditorLabel": "Auto Update der Code Editor Einstellungen",
+                    "courseChatLabel": "Auto Update der Kurs Chat Einstellungen"
                 }
             },
             "error": {

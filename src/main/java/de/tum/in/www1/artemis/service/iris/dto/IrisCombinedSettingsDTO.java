@@ -4,5 +4,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record IrisCombinedSettingsDTO(IrisCombinedChatSubSettingsDTO irisChatSettings, IrisCombinedHestiaSubSettingsDTO irisHestiaSettings,
-        IrisCombinedCodeEditorSubSettingsDTO irisCodeEditorSettings, IrisCombinedCompetencyGenerationSubSettingsDTO irisCompetencyGenerationSettings) {
+        IrisCombinedCodeEditorSubSettingsDTO irisCodeEditorSettings, IrisCombinedCompetencyGenerationSubSettingsDTO irisCompetencyGenerationSettings,
+        IrisCombinedCourseChatSubSettingsDTO irisCourseChatSettings) {
 }

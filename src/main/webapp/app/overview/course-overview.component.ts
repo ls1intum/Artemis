@@ -12,7 +12,7 @@ import {
     ViewChildren,
     ViewContainerRef,
 } from '@angular/core';
-import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
+import { Course, isCommunicationEnabled, isMessagingEnabled, isProactiveDashboardEnabled } from 'app/entities/course.model';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { CourseManagementService } from '../course/manage/course-management.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -159,6 +159,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
 
     readonly isMessagingEnabled = isMessagingEnabled;
     readonly isCommunicationEnabled = isCommunicationEnabled;
+    readonly isDashboardEnabled = isProactiveDashboardEnabled;
 
     constructor(
         private courseService: CourseManagementService,
@@ -240,8 +241,10 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
                 sidebarItems.push(learningPathItem);
             }
         }
-        const dashboardItem: SidebarItem = this.getDashboardItems();
-        sidebarItems.push(dashboardItem);
+        if (this.isDashboardEnabled(this.course)) {
+            const dashboardItem: SidebarItem = this.getDashboardItems();
+            sidebarItems.push(dashboardItem);
+        }
 
         return sidebarItems;
     }
@@ -349,6 +352,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             icon: faChartBar,
             title: 'Dashboard',
             translation: 'artemisApp.courseOverview.menu.dashboard',
+            featureToggle: FeatureToggle.Dashboard,
         };
         return dashboardItem;
     }

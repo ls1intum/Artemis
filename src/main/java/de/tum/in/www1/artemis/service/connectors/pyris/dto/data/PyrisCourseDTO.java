@@ -1,10 +1,15 @@
 package de.tum.in.www1.artemis.service.connectors.pyris.dto.data;
 
-import de.tum.in.www1.artemis.domain.Course;
+import java.time.ZonedDateTime;
 
-public record PyrisCourseDTO(long id, String name, String description) {
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+
+public record PyrisCourseDTO(long id, String name, String description, String organizationalDetails, String language, ProgrammingLanguage defaultProgrammingLanguage,
+        ZonedDateTime startDate, ZonedDateTime endDate, Boolean onlineCourse) {
 
     public PyrisCourseDTO(Course course) {
-        this(course.getId(), course.getTitle(), course.getDescription());
+        this(course.getId(), course.getTitle(), course.getDescription(), course.getOrganizationalDetails(), course.getLanguage().name(), course.getDefaultProgrammingLanguage(),
+                course.getStartDate(), course.getEndDate(), course.isOnlineCourse());
     }
 }

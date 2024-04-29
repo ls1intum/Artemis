@@ -13,7 +13,9 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
 import de.tum.in.www1.artemis.service.connectors.pyris.PyrisJobService;
 import de.tum.in.www1.artemis.service.connectors.pyris.PyrisStatusUpdateService;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.courseChat.PyrisCourseChatStatusUpdateDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.tutorChat.PyrisTutorChatStatusUpdateDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.job.CourseChatJob;
 import de.tum.in.www1.artemis.service.connectors.pyris.job.TutorChatJob;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
@@ -57,6 +59,32 @@ public class PyrisStatusUpdateResource {
         }
 
         pyrisStatusUpdateService.handleStatusUpdate(tutorChatJob, statusUpdateDTO);
+
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * {@code POST /api/public/pyris/pipelines/course-chat/runs/{runId}/status} : Set the status of a course chat job.
+     *
+     * @param runId           the ID of the job
+     * @param statusUpdateDTO the status update
+     * @param request         the HTTP request
+     * @throws ConflictException        if the run ID in the URL does not match the run ID in the request body
+     * @throws AccessForbiddenException if the token is invalid
+     * @return a {@link ResponseEntity} with status {@code 200 (OK)}
+     */
+    @PostMapping("course-chat/runs/{runId}/status")
+    @EnforceNothing // We do token based authentication
+    public ResponseEntity<Void> setStatusOfJob(@PathVariable String runId, @RequestBody PyrisCourseChatStatusUpdateDTO statusUpdateDTO, HttpServletRequest request) {
+        var job = pyrisJobService.getJobFromHeader(request);
+        if (!job.getId().equals(runId)) {
+            throw new ConflictException("Run ID in URL does not match run ID in request body", "Job", "runIdMismatch");
+        }
+        if (!(job instanceof CourseChatJob courseChatJob)) {
+            throw new ConflictException("Run ID is not a course chat job", "Job", "invalidRunId");
+        }
+
+        pyrisStatusUpdateService.handleStatusUpdate(courseChatJob, statusUpdateDTO);
 
         return ResponseEntity.ok().build();
     }
