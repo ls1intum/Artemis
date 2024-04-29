@@ -77,7 +77,6 @@ test.describe('Programming exercise participation', () => {
                     repoUrl = repoUrl.replace('localhost', 'artemis-app');
                 }
                 repoUrl = repoUrl.replace(studentOne.username!, `${studentOne.username!}:${studentOne.password!}`);
-                console.log('Repo URL in UI: ' + repoUrl);
                 const urlParts = repoUrl.split('/');
                 const repoName = urlParts[urlParts.length - 1];
                 const exerciseRepo = await gitClient.cloneRepo(repoUrl, repoName);
@@ -97,13 +96,11 @@ test.describe('Programming exercise participation', () => {
                     repoUrl = repoUrl.replace('localhost', 'artemis-app');
                 }
                 repoUrl = repoUrl.replace(studentOne.username!, `${studentOne.username!}:${studentOne.password!}`);
-                console.log('Repo URL in UI: ' + repoUrl);
                 const urlParts = repoUrl.split('/');
                 const repoName = urlParts[urlParts.length - 1];
                 const exerciseRepo = await gitClient.cloneRepo(repoUrl, repoName);
                 const submission = javaPartiallySuccessfulSubmission;
                 const commitMessage = 'Initial implementation';
-                console.log('Making git submission');
                 await makeGitSubmission(exerciseRepo, repoName, studentOne, submission, commitMessage);
                 await fs.rmdir(`./test-exercise-repos/${repoName}`, { recursive: true });
                 await page.goto(`courses/${course.id}/exercises/${exercise.id!}`);
@@ -138,7 +135,6 @@ test.describe('Programming exercise participation', () => {
                     repoUrl = repoUrl.replace('localhost', 'artemis-app');
                 }
                 repoUrl = repoUrl.replace(studentOne.username!, `${studentOne.username!}:${studentOne.password!}`);
-                console.log('Repo URL in UI: ' + repoUrl);
                 const urlParts = repoUrl.split('/');
                 const repoName = urlParts[urlParts.length - 1];
                 const exerciseRepo = await gitClient.cloneRepo(repoUrl, repoName);
@@ -181,12 +177,35 @@ test.describe('Programming exercise participation', () => {
                 exercise = await exerciseAPIRequests.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.C });
             });
 
-            test('Makes a submission', async ({ programmingExerciseOverview, programmingExerciseEditor }) => {
-                await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
-                await programmingExerciseOverview.openCodeEditor(exercise.id!);
-                const submission = cAllSuccessful;
-                await programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, submission, async () => {
-                    const resultScore = await programmingExerciseEditor.getResultScore();
+            test.describe('Make a submission using code editor', () => {
+                test('Makes a submission using code editor', async ({ programmingExerciseOverview, programmingExerciseEditor }) => {
+                    await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
+                    await programmingExerciseOverview.openCodeEditor(exercise.id!);
+                    const submission = cAllSuccessful;
+                    await programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, submission, async () => {
+                        const resultScore = await programmingExerciseEditor.getResultScore();
+                        await expect(resultScore.getByText(submission.expectedResult)).toBeVisible();
+                    });
+                });
+            });
+
+            test.describe('Make a submission using git', () => {
+                test('Makes a submission using git', async ({ page, programmingExerciseOverview }) => {
+                    await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
+                    let repoUrl = await programmingExerciseOverview.getRepoUrl();
+                    if (process.env.CI === 'true') {
+                        repoUrl = repoUrl.replace('localhost', 'artemis-app');
+                    }
+                    repoUrl = repoUrl.replace(studentOne.username!, `${studentOne.username!}:${studentOne.password!}`);
+                    const urlParts = repoUrl.split('/');
+                    const repoName = urlParts[urlParts.length - 1];
+                    const exerciseRepo = await gitClient.cloneRepo(repoUrl, repoName);
+                    const submission = cAllSuccessful;
+                    const commitMessage = 'Implemented all tasks';
+                    await makeGitSubmission(exerciseRepo, repoName, studentOne, submission, commitMessage);
+                    await fs.rmdir(`./test-exercise-repos/${repoName}`, { recursive: true });
+                    await page.goto(`courses/${course.id}/exercises/${exercise.id!}`);
+                    const resultScore = await programmingExerciseOverview.getResultScore();
                     await expect(resultScore.getByText(submission.expectedResult)).toBeVisible();
                 });
             });
@@ -198,15 +217,41 @@ test.describe('Programming exercise participation', () => {
 
         test.beforeEach('Setup python programming exercise', async ({ login, exerciseAPIRequests }) => {
             await login(admin);
-            exercise = await exerciseAPIRequests.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.PYTHON });
+            exercise = await exerciseAPIRequests.createProgrammingExercise({
+                course,
+                programmingLanguage: ProgrammingLanguage.PYTHON,
+            });
         });
 
-        test('Makes a submission', async ({ programmingExerciseOverview, programmingExerciseEditor }) => {
-            await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
-            await programmingExerciseOverview.openCodeEditor(exercise.id!);
-            const submission = pythonAllSuccessful;
-            await programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, submission, async () => {
-                const resultScore = await programmingExerciseEditor.getResultScore();
+        test.describe('Make a submission using code editor', () => {
+            test('Makes a submission using code editor', async ({ programmingExerciseOverview, programmingExerciseEditor }) => {
+                await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
+                await programmingExerciseOverview.openCodeEditor(exercise.id!);
+                const submission = pythonAllSuccessful;
+                await programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, submission, async () => {
+                    const resultScore = await programmingExerciseEditor.getResultScore();
+                    await expect(resultScore.getByText(submission.expectedResult)).toBeVisible();
+                });
+            });
+        });
+
+        test.describe('Make a submission using git', () => {
+            test('Makes a submission using git', async ({ page, programmingExerciseOverview }) => {
+                await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
+                let repoUrl = await programmingExerciseOverview.getRepoUrl();
+                if (process.env.CI === 'true') {
+                    repoUrl = repoUrl.replace('localhost', 'artemis-app');
+                }
+                repoUrl = repoUrl.replace(studentOne.username!, `${studentOne.username!}:${studentOne.password!}`);
+                const urlParts = repoUrl.split('/');
+                const repoName = urlParts[urlParts.length - 1];
+                const exerciseRepo = await gitClient.cloneRepo(repoUrl, repoName);
+                const submission = pythonAllSuccessful;
+                const commitMessage = 'Implemented all tasks';
+                await makeGitSubmission(exerciseRepo, repoName, studentOne, submission, commitMessage);
+                await fs.rmdir(`./test-exercise-repos/${repoName}`, { recursive: true });
+                await page.goto(`courses/${course.id}/exercises/${exercise.id!}`);
+                const resultScore = await programmingExerciseOverview.getResultScore();
                 await expect(resultScore.getByText(submission.expectedResult)).toBeVisible();
             });
         });
@@ -217,6 +262,15 @@ test.describe('Programming exercise participation', () => {
     });
 });
 
+/**
+ * Helper function to make a submission to a git repository.
+ * @param exerciseRepo - The git repository to which the submission should be made.
+ * @param exerciseRepoName - The name of the git repository.
+ * @param user - The user who is making the submission.
+ * @param submission - The programming exercise submission to be made.
+ * @param commitMessage - The commit message for the submission.
+ * @param deleteFiles - Whether to delete files from the repository directory before making the submission.
+ */
 async function makeGitSubmission(
     exerciseRepo: SimpleGit,
     exerciseRepoName: string,
@@ -225,39 +279,28 @@ async function makeGitSubmission(
     commitMessage: string,
     deleteFiles: boolean = true,
 ) {
+    let sourcePath = '';
+    if (submission.packageName) {
+        const packagePath = submission.packageName.replace(/\./g, '/');
+        sourcePath = `src/${packagePath}/`;
+    }
+
     if (deleteFiles) {
-        console.log('Deleting redundant files');
         for (const fileName of submission.deleteFiles) {
-            const packagePath = submission.packageName!.replace(/\./g, '/');
-            const filePath = `./src/${packagePath}/${fileName}`;
+            const filePath = `./${sourcePath}${fileName}`;
             await exerciseRepo.rm(filePath);
         }
     }
 
-    console.log('Creating new files');
     for (const file of submission.files) {
-        const packagePath = submission.packageName!.replace(/\./g, '/');
-        const filePath = `src/${packagePath}/${file.name}`;
+        const filePath = `./${sourcePath}${file.name}`;
         const sourceCode = await Fixtures.get(file.path);
         await createFileWithContent(`./test-exercise-repos/${exerciseRepoName}/${filePath}`, sourceCode!);
         await exerciseRepo.add(`./${filePath}`);
     }
 
-    console.log('Committing changes');
-    try {
-        await exerciseRepo.addConfig('user.email', `${user.username}@example.com`);
-        await exerciseRepo.addConfig('user.name', user.username);
-        await exerciseRepo.commit(commitMessage);
-        console.log('Changes committed successfully');
-    } catch (error) {
-        console.error('Error while committing changes:', error);
-    }
-
-    console.log('Pushing changes');
-    try {
-        await exerciseRepo.push();
-        console.log('Changes pushed successfully');
-    } catch (error) {
-        console.error('Error while pushing changes:', error);
-    }
+    await exerciseRepo.addConfig('user.email', `${user.username}@example.com`);
+    await exerciseRepo.addConfig('user.name', user.username);
+    await exerciseRepo.commit(commitMessage);
+    await exerciseRepo.push();
 }
