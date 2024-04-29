@@ -49,7 +49,7 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     @ViewChild(CodeEditorActionsComponent, { static: false }) actions: CodeEditorActionsComponent;
     @ViewChild(CodeEditorBuildOutputComponent, { static: false }) buildOutput: CodeEditorBuildOutputComponent;
     @ViewChild(CodeEditorAceComponent, { static: false }) aceEditor?: CodeEditorAceComponent;
-    @ViewChild('codeEditorMonaco', { static: false }) monacoEditor?: CodeEditorMonacoComponent;
+    @ViewChild(CodeEditorMonacoComponent, { static: false }) monacoEditor?: CodeEditorMonacoComponent;
     @ViewChild(CodeEditorInstructionsComponent, { static: false }) instructions: CodeEditorInstructionsComponent;
 
     @Input()
@@ -62,6 +62,8 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     isTutorAssessment = false;
     @Input()
     highlightFileChanges = false;
+    @Input()
+    allowHiddenFiles = false;
     @Input()
     feedbackSuggestions: Feedback[] = [];
     @Input()
@@ -270,6 +272,24 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
      */
     canDeactivate() {
         return _isEmpty(this.unsavedFiles);
+    }
+
+    getText(): string {
+        return this.monacoEditor?.getText() ?? '';
+    }
+
+    getNumberOfLines(): number {
+        if (this.aceEditor) {
+            return this.aceEditor.editorSession.getLength();
+        }
+        return this.monacoEditor?.getNumberOfLines() ?? 0;
+    }
+
+    highlightLines(startLine: number, endLine: number): void {
+        // Workaround: increase line number by 1 for monaco
+        // Will be removed once ace is gone from every instance of this component
+        this.monacoEditor?.highlightLines(startLine + 1, endLine + 1);
+        this.aceEditor?.highlightLines(startLine, endLine, 'diff-newLine', 'gutter-diff-newLine');
     }
 
     // displays the alert for confirming refreshing or closing the page if there are unsaved changes

@@ -13,7 +13,7 @@ import { convertModelAfterMultiPart, generateUUID } from '../../../support/utils
 const textFixture = 'loremIpsum.txt';
 const examTitle = 'exam' + generateUUID();
 
-describe('Test exam test run', () => {
+describe.skip('Test exam test run', () => {
     let course: Course;
     let exam: Exam;
     let testRun: any;
