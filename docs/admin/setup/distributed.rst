@@ -662,11 +662,11 @@ You should now be able to see all instances in the registry interface at ``http:
 Running multiple instances locally with Docker
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-You can also run multiple instances of Artemis locally using Docker. This will start 3 artemis instances, each running
+You can also run multiple instances of Artemis locally using Docker. This will start 3 Artemis instances, each running
 on a its own container. A load balancer (nginx) will be used to distribute the requests to the different instances. The
-load balancer will be running on a separate container and will be accessible on ports 80/443 of the host system. The
+load balancer will be running in a separate container and will be accessible on ports 80/443 of the host system. The
 instances will be registered in the registry service running on a separate container. The instances will use the registry
-service to discover each other and form a hazelcast cluster. Further details can be found in :ref:`Database Cache`. The
+service to discover each other and form a Hazelcast cluster. Further details can be found in :ref:`Database Cache`. The
 instances will also use a ActiveMQ Artemis broker to synchronize WebSocket messages. Further details can be found in
 :ref:`WebSockets`. In summary, the setup will look like this:
 
@@ -702,8 +702,7 @@ instances will also use a ActiveMQ Artemis broker to synchronize WebSocket messa
 Linux setup
 """""""""""
 
-#. (This step is not necessary for MacOS. Here's why: `post <https://stackoverflow.com/a/70385997>`_)
-   When running the Artemis container on a Unix system, you will have to give the user running in the container
+#. When running the Artemis container on a Unix system, you will have to give the user running in the container
    permission to access the Docker socket by adding them to the docker group. You can find the group ID of the docker
    group by running ``getent group docker | cut -d: -f3``. Afterwards, create a new file ``docker/.env`` with the
    following content:
@@ -747,7 +746,7 @@ Windows setup
     .. note::
 
         - Make sure that option "Expose daemon on tcp://localhost:2375 without TLS" is enabled. This can be found under
-          Settings > General in the Docker Desktop.
+          Settings > General in Docker Desktop.
 
 #. Start the docker containers by running the following command:
 
@@ -760,8 +759,8 @@ Windows setup
 MacOS setup
 """""""""""
 
-#. Make sure to enable "Allow the default Docker socket to be used (requires password)" in Docker Desktop settings.
-   This can be found under Settings > Advanced in the Docker Desktop.
+#. Make sure to enable "Allow the default Docker socket to be used (requires password)" in the Docker Desktop settings.
+   This can be found under Settings > Advanced in Docker Desktop.
 
 #. Start the docker containers by running the following command:
 
