@@ -313,10 +313,13 @@
             "pendingChanges": "All unsaved changes will be lost when leaving the exam! Are you sure that you want to continue?",
             "handInEarly": "Hand in early",
             "continueAfterHandInEarly": "Continue",
+            "attendanceCheck": "Attendance check",
             "continueAfterHandInEarlyDescription": "You don't want to hand in yet?",
             "handInEarlyNotice": "You are about to hand in your submission before the end of the exam.\nAfter finishing the exam you cannot participate any longer.",
             "handInEarlyNoticeFirstSentence": "You are about to hand in your submission before the end of the exam.",
             "handInEarlyNoticeSecondSentence": "After finishing the exam you cannot participate any longer.",
+            "attendanceNotVerifiedWarningFirstSentence": "Your attendance has not been checked yet.",
+            "attendanceNotVerifiedWarningSecondSentence": "Please wait for your attendance to be checked or contact your instructors if you believe this is a mistake.",
             "namePlaceholder": "Enter your full name here",
             "submissionSuccessful": {
                 "title": "Your exam has been submitted successfully!",
@@ -464,6 +467,7 @@
             "numberOfExercisesInExam": "Number of exercises in exam",
             "numberOfCorrectionRoundsInExam": "Number of correction rounds in exam",
             "randomizeQuestionOrder": "Randomize order of exercise groups",
+            "examWithAttendanceCheck": "Exam with attendance check",
             "startText": "Exam start text",
             "endText": "Exam end text",
             "confirmationStartText": "Exam start confirmation text",
@@ -561,6 +565,7 @@
                 "titleInfo": "The title of the exercise group is shown to the students as the name of the exercise.",
                 "delete": {
                     "question": "Are you sure you want to delete the exercise group <strong>{{ title }}</strong>? All associated exercises will also be deleted.",
+                    "questionLocalVC": "Are you sure you want to delete the exercise group <strong>{{ title }}</strong>? All associated exercises will be deleted.<br>All student, template, solution, test, and auxiliary repositories and build plans will also be deleted.<br>Be careful: this can <strong class='text-danger'>NOT</strong> be undone!<br>Before you activate this option, we recommend that you archive the repositories and build plans first! ",
                     "typeNameToConfirm": "Please type in the name of the exercise group to confirm."
                 },
                 "orderCouldNotBeSaved": "The order could not be saved",

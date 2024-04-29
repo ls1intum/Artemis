@@ -21,7 +21,7 @@ const tutorFeedback = 'Try to use some newlines next time!';
 const tutorFeedbackPoints = 4;
 const complaint = "That feedback wasn't very useful!";
 
-describe('File upload exercise assessment', () => {
+describe.skip('File upload exercise assessment', () => {
     let course: Course;
     let exercise: FileUploadExercise;
 

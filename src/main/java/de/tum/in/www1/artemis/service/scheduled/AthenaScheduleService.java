@@ -1,7 +1,9 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
 
 import jakarta.annotation.PostConstruct;

@@ -48,8 +48,6 @@ export class CourseManagementExercisesPage {
 
     deleteProgrammingExercise(exercise: Exercise) {
         this.getExercise(exercise.id!).find('#delete-exercise').click();
-        cy.get('#additional-check-0').check();
-        cy.get('#additional-check-1').check();
         cy.get('#confirm-entity-name').type(exercise.title!);
         cy.intercept(DELETE, `${PROGRAMMING_EXERCISE_BASE}/*`).as('deleteProgrammingExercise');
         cy.get('#delete').click();

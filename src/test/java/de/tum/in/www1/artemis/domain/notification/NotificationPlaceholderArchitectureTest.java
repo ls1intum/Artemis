@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.domain.notification;
 import static com.tngtech.archunit.base.DescribedPredicate.allElements;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.type;
 import static com.tngtech.archunit.lang.SimpleConditionEvent.violated;
-import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.*;
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.methods;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;

@@ -2,7 +2,9 @@ package de.tum.in.www1.artemis.config;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
-import static tech.jhipster.config.logging.LoggingUtils.*;
+import static tech.jhipster.config.logging.LoggingUtils.addContextListener;
+import static tech.jhipster.config.logging.LoggingUtils.addJsonConsoleAppender;
+import static tech.jhipster.config.logging.LoggingUtils.addLogstashTcpSocketAppender;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.connectors.localci.buildagent;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -16,10 +17,14 @@ import de.tum.in.www1.artemis.domain.BuildLogEntry;
 @Component
 public class BuildLogsMap {
 
-    private ConcurrentMap<String, List<BuildLogEntry>> buildLogsMap = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, List<BuildLogEntry>> buildLogsMap = new ConcurrentHashMap<>();
 
     public List<BuildLogEntry> getBuildLogs(String buildLogId) {
         return buildLogsMap.get(buildLogId);
+    }
+
+    public void appendBuildLogEntry(String buildLogId, String message) {
+        appendBuildLogEntry(buildLogId, new BuildLogEntry(ZonedDateTime.now(), message + "\n"));
     }
 
     public void appendBuildLogEntry(String buildLogId, BuildLogEntry buildLog) {
