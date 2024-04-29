@@ -58,6 +58,7 @@ import { FileUploadExerciseAssessmentPage } from './pageobjects/assessment/FileU
 import { FileUploadExerciseFeedbackPage } from './pageobjects/exercises/file-upload/FileUploadExerciseFeedbackPage';
 import { ExamGradingPage } from './pageobjects/exam/ExamGradingPage';
 import { ExamScoresPage } from './pageobjects/exam/ExamScoresPage';
+import { ExamResultsPage } from './pageobjects/exam/ExamResultsPage';
 
 /*
  * Define custom types for fixtures
@@ -94,6 +95,7 @@ export type ArtemisPageObjects = {
     examNavigation: ExamNavigationBar;
     examManagement: ExamManagementPage;
     examParticipation: ExamParticipation;
+    examResultsPage: ExamResultsPage;
     examScores: ExamScoresPage;
     examStartEnd: ExamStartEndPage;
     examTestRun: ExamTestRunPage;
@@ -233,6 +235,9 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
                 page,
             ),
         );
+    },
+    examResultsPage: async ({ page }, use) => {
+        await use(new ExamResultsPage(page));
     },
     examScores: async ({ page }, use) => {
         await use(new ExamScoresPage(page));

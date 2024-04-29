@@ -15,7 +15,7 @@ export class ExerciseAssessmentDashboardPage {
 
     async clickStartNewAssessment() {
         const startAssessingSelector = '#start-new-assessment';
-        await Commands.reloadUntilFound(this.page, startAssessingSelector);
+        await Commands.reloadUntilFound(this.page, this.page.locator(startAssessingSelector));
         await this.page.locator(startAssessingSelector).click();
     }
 
