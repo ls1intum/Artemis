@@ -19,7 +19,7 @@
                     [entityTitle]="competency.title ?? ''"
                     [deleteQuestion]="'artemisApp.standardizedCompetency.manage.deleteModal.question'"
                     [deleteConfirmationText]="'artemisApp.standardizedCompetency.manage.deleteModal.typeNameToConfirm'"
-                    (delete)="delete()"
+                    (delete)="onDelete.emit(competency.id)"
                     [dialogError]="dialogError"
                 >
                     <fa-icon [icon]="faTrash" />
@@ -34,10 +34,10 @@
             @if (form.controls.title.invalid && (form.controls.title.dirty || form.controls.title.touched)) {
                 <div class="alert alert-danger">
                     @if (form.controls.title.errors?.required) {
-                        <div jhiTranslate="artemisApp.standardizedCompetency.details.titleRequiredError"></div>
+                        <div jhiTranslate="artemisApp.standardizedCompetency.details.error.titleRequired"></div>
                     }
                     @if (form.controls.title.errors?.maxlength) {
-                        <div jhiTranslate="artemisApp.standardizedCompetency.details.titleMaxLengthError" [translateValues]="{ max: validators.TITLE_MAX }"></div>
+                        <div jhiTranslate="artemisApp.standardizedCompetency.details.error.titleMaxLength" [translateValues]="{ max: validators.TITLE_MAX }"></div>
                     }
                 </div>
             }
@@ -57,7 +57,7 @@
             @if (form.controls.description.invalid && form.controls.description.dirty) {
                 <div
                     class="alert alert-danger"
-                    jhiTranslate="artemisApp.standardizedCompetency.details.descriptionMaxLengthError"
+                    jhiTranslate="artemisApp.standardizedCompetency.details.error.descriptionMaxLength"
                     [translateValues]="{ max: validators.DESCRIPTION_MAX }"
                 ></div>
             }
@@ -76,7 +76,7 @@
                 }
             </select>
             @if (form.controls.knowledgeAreaId.invalid && (form.controls.knowledgeAreaId.dirty || form.controls.knowledgeAreaId.touched)) {
-                <div class="alert alert-danger" jhiTranslate="artemisApp.standardizedCompetency.details.knowledgeAreaRequiredError"></div>
+                <div class="alert alert-danger" jhiTranslate="artemisApp.standardizedCompetency.details.error.knowledgeAreaRequired"></div>
             }
         </div>
         <!-- TODO: add source handling in follow-up PR -->

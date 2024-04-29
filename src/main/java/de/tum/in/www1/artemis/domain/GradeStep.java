@@ -149,7 +149,7 @@ public class GradeStep extends DomainObject {
     /**
      * Parses the {@link #gradeName} as a number in order to use it in grade and bonus calculations.
      * Accepts both "," and "." as decimal separators.
-     *
+     * <p>
      * Does not throw exception, returns null on failure.
      *
      * @return {@link Double} value corresponding to the {@link #gradeName} or null if it is not parseable or null.
