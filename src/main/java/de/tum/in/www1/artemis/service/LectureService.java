@@ -5,13 +5,9 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import java.time.ZonedDateTime;
 import java.util.*;
 
-import jakarta.persistence.FetchType;
-import jakarta.persistence.OneToMany;
-
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
@@ -135,13 +131,11 @@ public class LectureService {
      *
      * @param lecture the lecture to be deleted
      */
-    @OneToMany(fetch = FetchType.EAGER)
-    @Transactional
     public void delete(Lecture lecture) {
+        List<Attachment> attachmentList = new ArrayList<>(lecture.getAttachments());
+        webhookService.executeIngestionPipeline(false, attachmentList);
         Channel lectureChannel = channelRepository.findChannelByLectureId(lecture.getId());
         channelService.deleteChannel(lectureChannel);
         lectureRepository.deleteById(lecture.getId());
-        List<Attachment> attachmentList = new ArrayList<>(lecture.getAttachments());
-        webhookService.executeIngestionPipeline(false, attachmentList);
     }
 }
