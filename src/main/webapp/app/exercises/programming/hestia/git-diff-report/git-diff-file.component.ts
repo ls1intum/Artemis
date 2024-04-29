@@ -23,6 +23,9 @@ export class GitDiffFileComponent implements OnInit {
     mEditorReady = false;
 
     @Input()
+    diffForTemplateAndSolution: boolean = false;
+
+    @Input()
     diffEntries: ProgrammingExerciseGitDiffEntry[];
 
     @Input()
@@ -54,7 +57,7 @@ export class GitDiffFileComponent implements OnInit {
         this.diffEntries = this.diffEntries.map((entry) => ({ ...entry }));
 
         this.determineFilePaths();
-        this.mEditor.setUnchangedRegionHidingOptions(true);
+        this.mEditor.setUnchangedRegionHidingOptions(!this.diffForTemplateAndSolution);
         this.mEditor.setFileContents(this.templateFileContent, this.previousFilePath, this.solutionFileContent, this.filePath);
         this.createLineArrays();
         this.determineActualStartLine();
