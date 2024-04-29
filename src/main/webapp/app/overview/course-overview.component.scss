@@ -239,16 +239,20 @@ jhi-secured-image {
 .dropdown-li {
     display: block;
     text-decoration: none;
-    padding-bottom: 5px;
-    padding-top: 5px;
 }
 
-.dropdown .dropdown-content {
-    position: absolute;
-    z-index: 1000000;
+.dropdown-content {
     overflow-y: auto;
-    max-height: 150px;
-    border: 1px solid var(--bs-body-bg);
-    border-radius: 5px;
-    background-color: var(--link-item-bg);
+    position: absolute;
+    padding-bottom: 3px;
+    padding-top: 3px;
+    z-index: 1000000;
+    max-height: 65px;
+    border: 1px solid var(--border-color);
+    background-color: var(--dropdown-bg);
+    border-radius: 4px;
+    &.moreThreeElem {
+        bottom: 0px;
+        max-height: 100px;
+    }
 }

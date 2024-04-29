@@ -115,8 +115,12 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     dropdownOpen: boolean = false;
     anyItemHidden: boolean = false;
     hiddenItems: SidebarItem[];
+    thresholdsForEachSidebarItem: number[] = [];
     dropdownOffset: number;
     dropdownClickNumber: number = 0;
+    readonly WINDOW_OFFSET: number = 300;
+    readonly ITEM_HEIGHT: number = 38;
+    readonly BREADCRUMB_AND_NAVBAR_HEIGHT: number = 88;
 
     private conversationServiceInstantiated = false;
     private checkedForUnreadMessages = false;
@@ -205,7 +209,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.sidebarItems = this.getSidebarItems();
         this.courseActionItems = this.getCourseActionItems();
         this.updateVisibility(window.innerHeight);
-        this.updateMenuOffset();
+        this.updateMenuPosition();
     }
 
     /** Listen window resizement event by height */
@@ -214,7 +218,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.dropdownOpen = false;
         this.dropdownClickNumber = 0;
         this.updateVisibility(window.innerHeight);
-        this.updateMenuOffset();
+        this.updateMenuPosition();
     }
 
     /** Listen click event whether on outside of the menu or one of the items in the menu to close the dropdown menu */
@@ -231,20 +235,18 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
 
     /** Update sidebar item's hidden property based on the window height to display three-dots */
     updateVisibility(height: number) {
-        const thresholds: number[] = [];
-        const itemHeight: number = 35;
-        let threshold = this.calculateThreshold();
+        let thresholdLevelForCurrentSidebar = this.calculateThreshold();
         this.anyItemHidden = false;
         this.hiddenItems = [];
 
         for (let i = 0; i < this.sidebarItems.length - 1; i++) {
-            thresholds.unshift(threshold);
-            threshold -= itemHeight;
+            this.thresholdsForEachSidebarItem.unshift(thresholdLevelForCurrentSidebar);
+            thresholdLevelForCurrentSidebar -= this.ITEM_HEIGHT;
         }
-        thresholds.unshift(0);
+        this.thresholdsForEachSidebarItem.unshift(0);
 
         this.sidebarItems.forEach((item, index) => {
-            item.hidden = height <= thresholds[index];
+            item.hidden = height <= this.thresholdsForEachSidebarItem[index];
             if (item.hidden) {
                 this.anyItemHidden = true;
                 this.hiddenItems.push(item);
@@ -253,37 +255,16 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     }
 
     /** Calculate dropdown-menu position based on the number of entries in the sidebar */
-    updateMenuOffset() {
+    updateMenuPosition() {
         const leftSidebarItems: number = this.sidebarItems.length - this.hiddenItems.length;
-        const minHeightForSidebar: number = 330; // Minimum height for the sidebar to dynamically position dropdown menu
-        const offsetForEachElement: number = 40; // Offset to be added to the dropdown menu for each element left in the sidebar
-        const maxSidebarElements: number = 9;
-
-        if (leftSidebarItems === 1) {
-            // In order to fit all content of the dropdown menu, we put the menu at the top of the page
-            this.dropdownOffset = 0;
-            if (window.innerHeight > minHeightForSidebar) {
-                // To move the dropdown menu a little to the bottom even if there is one element left in the sidebar but the minimum height of the sidebar is not exceeded yet
-                this.dropdownOffset += (maxSidebarElements - this.hiddenItems.length) * 10;
-            }
-        } else {
-            // To adjust dropdown menu position based on the amount of entries/elements left in the sidebar
-            this.dropdownOffset = leftSidebarItems * offsetForEachElement;
-        }
+        this.dropdownOffset = leftSidebarItems * this.ITEM_HEIGHT + this.BREADCRUMB_AND_NAVBAR_HEIGHT;
     }
 
     /** Calculating threshold levels based on the number of entries in the sidebar */
     calculateThreshold(): number {
-        const maxThreshold: number = 650; // The threshold level at which the 'More' element will appear
-        const offsetForEachElement: number = 35; // Offset to be subtracted from the max threshold level for each element in the sidebar
-        const maxSidebarElements: number = 9;
         const numberOfSidebarItems: number = this.sidebarItems.length;
-
-        if (numberOfSidebarItems === maxSidebarElements) {
-            return maxThreshold;
-        }
         // Dynamically calculate the threshold level based the amount of entries/elements left in the sidebar
-        return maxThreshold - (maxSidebarElements - numberOfSidebarItems) * offsetForEachElement;
+        return numberOfSidebarItems * this.ITEM_HEIGHT + this.WINDOW_OFFSET;
     }
 
     toggleDropdown() {
