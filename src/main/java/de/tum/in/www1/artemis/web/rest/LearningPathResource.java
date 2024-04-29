@@ -5,16 +5,19 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import jakarta.validation.Valid;
 import jakarta.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -36,7 +39,8 @@ import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyProgressForLearningPathDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathHealthDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathInformationDTO;
-import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathUnitNavigationDto;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationDto;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationDto.LearningPathNavigationObjectDto.LearningObjectType;
 import de.tum.in.www1.artemis.web.rest.dto.competency.NgxLearningPathDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -190,9 +194,11 @@ public class LearningPathResource {
         return getLearningPathNgx(learningPathId, NgxRequestType.PATH);
     }
 
-    @GetMapping("learning-path/test/{learningPathId}")
-    public ResponseEntity<LearningPathUnitNavigationDto> getTest(@PathVariable long learningPathId) {
-        return ResponseEntity.ok(learningPathService.test(learningPathId));
+    @GetMapping("learning-path/{learningPathId}/navigation")
+    public ResponseEntity<LearningPathNavigationDto> getLearningPathNavigation(@PathVariable @Valid long learningPathId,
+            @RequestParam(required = false, name = "learningObjectId") @Nullable @Valid Long learningObjectId,
+            @RequestParam(required = false, name = "learningObjectType") @Nullable @Valid LearningObjectType learningObjectType) {
+        return ResponseEntity.ok(learningPathService.getLearningPathNavigation(learningPathId, learningObjectId, learningObjectType));
     }
 
     private ResponseEntity<NgxLearningPathDTO> getLearningPathNgx(@PathVariable long learningPathId, NgxRequestType type) {

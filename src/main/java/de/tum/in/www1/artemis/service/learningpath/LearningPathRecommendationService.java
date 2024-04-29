@@ -23,7 +23,6 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.CompetencyRelationRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
-import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathUnitNavigationDto;
 
 /**
  * Service Implementation for the recommendation of competencies and learning objects in learning paths.
@@ -100,49 +99,62 @@ public class LearningPathRecommendationService {
         return state;
     }
 
-    public LearningPathUnitNavigationDto getLearningPathUnitNavigation(LearningPath learningPath) {
-        var competencies = learningPath.getCompetencies();
-        var recommendationState = getRecommendedOrderOfCompetencies(learningPath);
+    public LearningObject getCurrentUncompletedLearningObject(LearningPath learningPath, RecommendationState recommendationState) {
         var recommendedOrderOfCompetencies = recommendationState.recommendedOrderOfCompetencies;
+        if (recommendedOrderOfCompetencies.isEmpty()) {
+            return null;
+        }
+        var currentCompetency = recommendationState.competencyIdMap.get(recommendedOrderOfCompetencies.getFirst());
+        var recommendedOrderOfLearningObjects = getRecommendedOrderOfLearningObjects(learningPath, currentCompetency, recommendationState);
+        return recommendedOrderOfLearningObjects.getFirst();
+    }
 
-        var pendingCompetencies = getPendingCompetencies(competencies, recommendationState);
-
-        Competency previousCompetency;
-        Competency currentCompetency;
-        Competency nextCompetency;
-
-        for (int i = 0; i < recommendedOrderOfCompetencies.size(); i++) {
-            var competencyId = recommendedOrderOfCompetencies.get(i);
-            for (var competency : competencies) {
-                if (competency.getId().equals(competencyId) && !CompetencyProgressService.isMastered(competency.getUserProgress().stream().findFirst().get())) {
-                    currentCompetency = competency;
-                    if (i == 0 && i == recommendedOrderOfCompetencies.size() - 1) {
-                        previousCompetency = null;
-                        nextCompetency = null;
-                        break;
-                    }
-                    else if (i == 0) {
-                        previousCompetency = null;
-                        var nextIndex = i + 1;
-                        nextCompetency = competencies.stream().filter(c -> c.getId().equals(recommendedOrderOfCompetencies.get(nextIndex))).findFirst().get();
-                        break;
-                    }
-                    else if (i == recommendedOrderOfCompetencies.size() - 1) {
-                        nextCompetency = null;
-                        var previousIndex = i - 1;
-                        previousCompetency = competencies.stream().filter(c -> c.getId().equals(recommendedOrderOfCompetencies.get(previousIndex))).findFirst().get();
-                        break;
-                    }
-                    var previousIndex = i - 1;
-                    previousCompetency = competencies.stream().filter(c -> c.getId().equals(recommendedOrderOfCompetencies.get(previousIndex))).findFirst().get();
-                    var nextIndex = i + 1;
-                    nextCompetency = competencies.stream().filter(c -> c.getId().equals(recommendedOrderOfCompetencies.get(nextIndex))).findFirst().get();
-                    break;
-                }
+    public LearningObject getUncompletedPredecessorOfLearningObject(LearningObject currentLearningObject, LearningPath learningPath, RecommendationState recommendationState) {
+        var orderOfCompetencies = recommendationState.recommendedOrderOfCompetencies;
+        var currentCompetency = getCompetencyOfUncompletedLearningObjectOnLearningPath(learningPath, currentLearningObject, recommendationState);
+        if (currentCompetency != null) {
+            var orderOfLearningObjects = getRecommendedOrderOfLearningObjects(learningPath, currentCompetency, recommendationState);
+            var currentLearningObjectIndex = orderOfLearningObjects.indexOf(currentLearningObject);
+            if (currentLearningObjectIndex > 0) {
+                return orderOfLearningObjects.get(currentLearningObjectIndex - 1);
+            }
+            var currentCompetencyIndex = orderOfCompetencies.indexOf(currentCompetency.getId());
+            if (currentLearningObjectIndex == 0 && currentCompetencyIndex > 0) {
+                var predecessorCompetency = recommendationState.competencyIdMap.get(orderOfCompetencies.get(currentCompetencyIndex - 1));
+                var predecessorOrderOfLearningObjects = getRecommendedOrderOfLearningObjects(learningPath, predecessorCompetency, recommendationState);
+                return predecessorOrderOfLearningObjects.getLast();
             }
         }
-
         return null;
+    }
+
+    public LearningObject getUncompletedSuccessorOfLearningObject(LearningPath learningPath, RecommendationState recommendationState, LearningObject currentLearningObject) {
+        var orderOfCompetencies = recommendationState.recommendedOrderOfCompetencies;
+        var currentCompetency = getCompetencyOfUncompletedLearningObjectOnLearningPath(learningPath, currentLearningObject, recommendationState);
+
+        if (currentCompetency != null) {
+            var orderOfLearningObjects = getRecommendedOrderOfLearningObjects(learningPath, currentCompetency, recommendationState);
+            var currentLearningObjectIndex = orderOfLearningObjects.indexOf(currentLearningObject);
+            if (currentLearningObjectIndex < orderOfLearningObjects.size() - 1) {
+                return orderOfLearningObjects.get(currentLearningObjectIndex + 1);
+            }
+            var currentCompetencyIndex = orderOfCompetencies.indexOf(currentCompetency.getId());
+            if (currentLearningObjectIndex == orderOfLearningObjects.size() - 1 && currentCompetencyIndex < orderOfCompetencies.size() - 1) {
+                var successorCompetency = recommendationState.competencyIdMap.get(orderOfCompetencies.get(currentCompetencyIndex + 1));
+                var successorOrderOfLearningObjects = getRecommendedOrderOfLearningObjects(learningPath, successorCompetency, recommendationState);
+                return successorOrderOfLearningObjects.getLast();
+            }
+        }
+        return null;
+    }
+
+    private Competency getCompetencyOfUncompletedLearningObjectOnLearningPath(LearningPath learningPath, LearningObject learningObject, RecommendationState recommendationState) {
+        return recommendationState.recommendedOrderOfCompetencies.stream().map(recommendationState.competencyIdMap::get)
+                .filter(competency -> getRecommendedOrderOfLearningObjects(learningPath, competency, recommendationState).contains(learningObject)).findFirst().orElse(null);
+    }
+
+    public List<Competency> getMasteredCompetencies(Set<Competency> competencies, List<Long> recommendedOrderOfCompetencies) {
+        return competencies.stream().filter(competency -> !recommendedOrderOfCompetencies.contains(competency.getId())).toList();
     }
 
     /**
@@ -274,10 +286,6 @@ public class LearningPathRecommendationService {
     private Set<Competency> getPendingCompetencies(Set<Competency> competencies, RecommendationState state) {
         return competencies.stream().filter(competency -> !state.masteredCompetencies.contains(competency.getId())
                 || state.matchingClusters.get(competency.getId()).stream().noneMatch(state.masteredCompetencies::contains)).collect(Collectors.toSet());
-        // Set<Competency> pendingCompetencies = new HashSet<>(competencies);
-        // pendingCompetencies.removeIf(competency -> state.masteredCompetencies.contains(competency.getId())
-        // || state.matchingClusters.get(competency.getId()).stream().anyMatch(state.masteredCompetencies::contains));
-        // return pendingCompetencies;
     }
 
     /**

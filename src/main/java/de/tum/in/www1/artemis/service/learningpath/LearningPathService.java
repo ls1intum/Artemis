@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -38,7 +39,8 @@ import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathHealthDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathInformationDTO;
-import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathUnitNavigationDto;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationDto;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationDto.LearningPathNavigationObjectDto.LearningObjectType;
 import de.tum.in.www1.artemis.web.rest.dto.competency.NgxLearningPathDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
@@ -66,6 +68,8 @@ public class LearningPathService {
 
     private final CompetencyProgressRepository competencyProgressRepository;
 
+    private final LearningPathNavigationService learningPathNavigationService;
+
     private final CourseRepository courseRepository;
 
     private final CompetencyRepository competencyRepository;
@@ -79,12 +83,13 @@ public class LearningPathService {
     private final StudentParticipationRepository studentParticipationRepository;
 
     public LearningPathService(UserRepository userRepository, LearningPathRepository learningPathRepository, CompetencyProgressRepository competencyProgressRepository,
-            CourseRepository courseRepository, CompetencyRepository competencyRepository, CompetencyRelationRepository competencyRelationRepository,
-            LearningPathNgxService learningPathNgxService, LectureUnitCompletionRepository lectureUnitCompletionRepository,
-            StudentParticipationRepository studentParticipationRepository) {
+            LearningPathNavigationService learningPathNavigationService, CourseRepository courseRepository, CompetencyRepository competencyRepository,
+            CompetencyRelationRepository competencyRelationRepository, LearningPathNgxService learningPathNgxService,
+            LectureUnitCompletionRepository lectureUnitCompletionRepository, StudentParticipationRepository studentParticipationRepository) {
         this.userRepository = userRepository;
         this.learningPathRepository = learningPathRepository;
         this.competencyProgressRepository = competencyProgressRepository;
+        this.learningPathNavigationService = learningPathNavigationService;
         this.courseRepository = courseRepository;
         this.competencyRepository = competencyRepository;
         this.competencyRelationRepository = competencyRelationRepository;
@@ -305,9 +310,12 @@ public class LearningPathService {
         return this.learningPathNgxService.generateNgxPathRepresentation(learningPath);
     }
 
-    public LearningPathUnitNavigationDto test(Long learningPathId) {
+    public LearningPathNavigationDto getLearningPathNavigation(Long learningPathId, @Nullable Long learningObjectId, @Nullable LearningObjectType learningObjectType) {
         var learningPath = findWithCompetenciesAndLearningObjectsAndCompletedUsersById(learningPathId);
-        return learningPathNgxService.test(learningPath);
+        if (learningObjectId != null && learningObjectType != null) {
+            return learningPathNavigationService.getLearningPathNavigationRelativeToLearningObject(learningPath, learningObjectId, learningObjectType);
+        }
+        return learningPathNavigationService.getLearningPathNavigation(learningPath);
     }
 
     /**
