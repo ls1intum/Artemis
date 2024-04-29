@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.authorization;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
