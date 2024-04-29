@@ -1,5 +1,5 @@
 <jhi-loading-indicator-container [isLoading]="isLoading">
-    <div class="input-group">
+    <div class="input-group" [hidden]="!isCodeOfConductAccepted">
         <!-- search bar -->
         <input
             name="searchText"
@@ -13,7 +13,7 @@
         <jhi-button id="search-submit" class="ms-1" [icon]="faSearch" (onClick)="onSearch()" />
         <jhi-documentation-button [type]="documentationType" class="information-button" />
     </div>
-    @if (formGroup) {
+    @if (formGroup && isCodeOfConductAccepted) {
         <form [formGroup]="formGroup">
             <!-- filter and sort controls -->
             <div class="row mx-1 my-2 justify-content-start">
