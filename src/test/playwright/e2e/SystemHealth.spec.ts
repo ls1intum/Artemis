@@ -21,8 +21,6 @@ test.describe('Check artemis system health', () => {
     test.beforeAll('Login as admin and visit system health page', async ({ browser }) => {
         page = await browser.newPage();
         await Commands.login(page, admin, '/admin/health');
-        await page.waitForTimeout(5000);
-        await page.waitForLoadState('networkidle');
     });
 
     for (const healthCheck of healthChecks) {
