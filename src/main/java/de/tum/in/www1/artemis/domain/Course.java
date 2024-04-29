@@ -67,6 +67,10 @@ public class Course extends DomainObject {
     @JsonView(QuizView.Before.class)
     private String description;
 
+    @Column(name = "organizational_details")
+    @JsonView(QuizView.Before.class)
+    private String organizationalDetails;
+
     @Column(name = "short_name", unique = true)
     @JsonView(QuizView.Before.class)
     private String shortName;
@@ -334,6 +338,14 @@ public class Course extends DomainObject {
 
     public String getDescription() {
         return description;
+    }
+
+    public void setOrganizationalDetails(String organizationalDetails) {
+        this.organizationalDetails = organizationalDetails;
+    }
+
+    public String getOrganizationalDetails() {
+        return organizationalDetails;
     }
 
     public void setTitle(String title) {
