@@ -116,7 +116,7 @@ Possible types are:
 * bugfix
 
 Possible areas are all allowed feature tags (see :ref:`pr_naming_conventions`, written in lowercase and connected with dashes. E.g., ``Programming exercises`` becomes **programming-exercises**.
-Branches that do not follow this structure might get rejected by GitHub.
+Branches that do not follow this structure will get rejected by GitHub.
 
 5. Implement the Feature
 ========================
