@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, ViewChild, ViewEncapsulation } from '@angular/core';
 import { ProgrammingExerciseGitDiffEntry } from 'app/entities/hestia/programming-exercise-git-diff-entry.model';
 import { MonacoDiffEditorComponent } from 'app/shared/monaco-editor/monaco-diff-editor.component';
 
@@ -28,6 +28,9 @@ export class GitDiffFileComponent implements OnInit {
 
     @Input()
     numberOfContextLines = 3;
+
+    @Output()
+    onDiffReady = new EventEmitter<boolean>();
 
     previousFilePath: string | undefined;
     filePath: string | undefined;

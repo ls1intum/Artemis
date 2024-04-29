@@ -52,16 +52,24 @@
         />
     </div>
 </div>
-@for (filePath of filePaths; track filePath) {
-    <div class="mt-2">
-        @if (entriesByPath.get(filePath)?.length) {
-            <jhi-git-diff-file-panel
-                [diffForTemplateAndSolution]="diffForTemplateAndSolution"
-                [diffEntries]="entriesByPath.get(filePath) ?? []"
-                [templateFileContent]="templateFileContentByPath.get(filePath)"
-                [solutionFileContent]="solutionFileContentByPath.get(filePath)"
-                [numberOfContextLines]="numberOfContextLines"
-            />
-        }
+<div [hidden]="!allDiffsReady">
+    @for (filePath of filePaths; track filePath) {
+        <div class="mt-2">
+            @if (entriesByPath.get(filePath)?.length) {
+                <jhi-git-diff-file-panel
+                    [diffForTemplateAndSolution]="diffForTemplateAndSolution"
+                    [diffEntries]="entriesByPath.get(filePath) ?? []"
+                    [templateFileContent]="templateFileContentByPath.get(filePath)"
+                    [solutionFileContent]="solutionFileContentByPath.get(filePath)"
+                    [numberOfContextLines]="numberOfContextLines"
+                    (onDiffReady)="onDiffReady(filePath, $event)"
+                />
+            }
+        </div>
+    }
+</div>
+@if (!allDiffsReady) {
+    <div class="loading-spinner">
+        <fa-icon [icon]="faSpinner" [spin]="true" />
     </div>
 }

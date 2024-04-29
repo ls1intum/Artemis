@@ -1,6 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 import { ProgrammingExerciseGitDiffEntry } from 'app/entities/hestia/programming-exercise-git-diff-entry.model';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-git-diff-report',
@@ -31,6 +32,10 @@ export class GitDiffReportComponent implements OnInit {
     entriesByPath: Map<string, ProgrammingExerciseGitDiffEntry[]>;
     addedLineCount: number;
     removedLineCount: number;
+    diffsReadyByPath: { [path: string]: boolean } = {};
+    allDiffsReady: boolean = false;
+
+    faSpinner = faSpinner;
 
     constructor() {}
 
@@ -73,7 +78,6 @@ export class GitDiffReportComponent implements OnInit {
 
         // Create a set of all file paths
         this.filePaths = [...new Set([...this.templateFileContentByPath.keys(), ...this.solutionFileContentByPath.keys()])].sort();
-
         // Group the diff entries by file path
         this.entriesByPath = new Map<string, ProgrammingExerciseGitDiffEntry[]>();
         [...this.templateFileContentByPath.keys()].forEach((filePath) => {
@@ -90,5 +94,16 @@ export class GitDiffReportComponent implements OnInit {
         });
         this.leftCommit = this.report.leftCommitHash?.substring(0, 10);
         this.rightCommit = this.report.rightCommitHash?.substring(0, 10);
+        this.filePaths.forEach((path) => {
+            if (this.entriesByPath.get(path)?.length) {
+                this.diffsReadyByPath[path] = false;
+            }
+        });
+    }
+
+    onDiffReady(path: string, ready: boolean) {
+        this.diffsReadyByPath[path] = ready;
+        this.allDiffsReady = Object.values(this.diffsReadyByPath).reduce((a, b) => a && b, true);
+        console.warn(path + ' diff ready: ' + ready + ' state before ' + JSON.stringify(this.diffsReadyByPath));
     }
 }

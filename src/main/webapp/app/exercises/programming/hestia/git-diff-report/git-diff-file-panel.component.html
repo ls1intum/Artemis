@@ -32,6 +32,7 @@
                     [templateFileContent]="templateFileContent"
                     [solutionFileContent]="solutionFileContent"
                     [numberOfContextLines]="numberOfContextLines"
+                    (onDiffReady)="onDiffReady.emit($event)"
                 />
             </div>
         </div>

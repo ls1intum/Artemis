@@ -1,4 +1,3 @@
 <div class="git-diff-file ph-1">
-    <jhi-monaco-diff-editor [hidden]="!monacoDiffEditorReady" (onReadyForDisplayChange)="monacoDiffEditorReady = $event" />
-    <div [hidden]="monacoDiffEditorReady">Loading diff...</div>
+    <jhi-monaco-diff-editor (onReadyForDisplayChange)="onDiffReady.emit($event)" />
 </div>
