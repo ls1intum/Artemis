@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.config;
 
-import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
-import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_OPENAPI;
 import static de.tum.in.www1.artemis.config.VersioningConfiguration.API_VERSIONS;
 
@@ -32,7 +30,7 @@ import io.swagger.v3.oas.models.info.License;
  * Configures the available API versions and the versioned OpenAPI/Swagger documentation.
  */
 @Configuration
-@Profile({ PROFILE_CORE, PROFILE_BUILDAGENT, PROFILE_OPENAPI })
+@Profile({ PROFILE_OPENAPI })
 public class ApiDocsConfiguration {
 
     @Bean

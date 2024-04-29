@@ -312,6 +312,11 @@ public final class Constants {
     public static final String PROFILE_LTI = "lti";
 
     /**
+     * The name of the Spring profile used for running the API documentation generation.
+     */
+    public static final String PROFILE_OPENAPI = "openapi";
+
+    /**
      * Size of an unsigned tinyInt in SQL, that is used in the database
      */
     public static final int SIZE_OF_UNSIGNED_TINYINT = 255;
