@@ -9,10 +9,10 @@ import { MonacoDiffEditorComponent } from 'app/shared/monaco-editor/monaco-diff-
     encapsulation: ViewEncapsulation.None,
 })
 export class GitDiffFileComponent implements OnInit {
-    @ViewChild('mEditor', { static: true })
-    mEditor: MonacoDiffEditorComponent;
+    @ViewChild(MonacoDiffEditorComponent, { static: true })
+    monacoDiffEditor: MonacoDiffEditorComponent;
 
-    mEditorReady = false;
+    monacoDiffEditorReady = false;
 
     @Input()
     diffForTemplateAndSolution: boolean = false;
@@ -34,8 +34,8 @@ export class GitDiffFileComponent implements OnInit {
 
     ngOnInit(): void {
         this.determineFilePaths();
-        this.mEditor.setUnchangedRegionHidingOptions(!this.diffForTemplateAndSolution);
-        this.mEditor.setFileContents(this.templateFileContent, this.previousFilePath, this.solutionFileContent, this.filePath);
+        this.monacoDiffEditor.setUnchangedRegionHidingOptions(!this.diffForTemplateAndSolution);
+        this.monacoDiffEditor.setFileContents(this.templateFileContent, this.previousFilePath, this.solutionFileContent, this.filePath);
     }
 
     /**
