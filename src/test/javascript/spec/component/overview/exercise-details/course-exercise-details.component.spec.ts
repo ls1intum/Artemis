@@ -357,7 +357,7 @@ describe('CourseExerciseDetailsComponent', () => {
 
         const submissionId = 55;
         comp.gradedStudentParticipation = { submissions: [{ id: submissionId }] };
-        comp.sortedHistoryResults = [{ id: 2 }];
+        comp.sortedHistoryEntries = [{ id: 2 }];
         comp.exercise = { ...exercise };
 
         comp.loadComplaintAndLatestRatedResult();

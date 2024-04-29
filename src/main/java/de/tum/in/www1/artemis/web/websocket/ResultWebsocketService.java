@@ -129,7 +129,7 @@ public class ResultWebsocketService {
     }
 
     private static String getNonPersonalExerciseResultDestination(String exerciseId) {
-        return EXERCISE_TOPIC_ROOT + exerciseId + "/newResults";
+        return EXERCISE_TOPIC_ROOT + exerciseId + "/newParticipationInfo";
     }
 
     public void broadcastNewSelfLearningRequest(StudentParticipation studentParticipation, SelfLearningFeedbackRequest selfLearningFeedbackRequest) {

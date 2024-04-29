@@ -17,7 +17,6 @@ import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { captureException } from '@sentry/angular-ivy';
 import { faCircleNotch, faExclamationCircle, faExclamationTriangle, faFile } from '@fortawesome/free-solid-svg-icons';
-import { faCircle } from '@fortawesome/free-regular-svg-icons';
 import { Badge, ResultService } from 'app/exercises/shared/result/result.service';
 import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cache.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -66,7 +65,6 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     // Icons
     readonly faCircleNotch = faCircleNotch;
     readonly faFile = faFile;
-    readonly farCircle = faCircle;
     readonly faExclamationCircle = faExclamationCircle;
     readonly faExclamationTriangle = faExclamationTriangle;
 

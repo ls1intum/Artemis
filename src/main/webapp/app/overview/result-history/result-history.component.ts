@@ -2,6 +2,7 @@ import { Component, Input, OnChanges } from '@angular/core';
 import { Result } from 'app/entities/result.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { MissingResultInformation, evaluateTemplateStatus, getResultIconClass, getTextColorClass } from 'app/exercises/shared/result/result.utils';
+import { SelfLearningFeedbackRequest } from 'app/entities/self-learning-feedback-request.model';
 
 export const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -17,7 +18,7 @@ export class ResultHistoryComponent implements OnChanges {
     readonly evaluateTemplateStatus = evaluateTemplateStatus;
     readonly MissingResultInfo = MissingResultInformation;
 
-    @Input() results: Result[];
+    @Input() results: (Result | SelfLearningFeedbackRequest)[];
     @Input() exercise: Exercise;
 
     showPreviousDivider = false;
@@ -32,7 +33,7 @@ export class ResultHistoryComponent implements OnChanges {
         } else {
             this.displayedResults = this.results.slice(this.results.length - MAX_RESULT_HISTORY_LENGTH);
 
-            const lastRatedResult = this.results.filter((result) => result.rated).last();
+            const lastRatedResult = this.results.filter((entry) => entry instanceof Result && entry.rated).last();
             if (!this.displayedResults.first()?.rated && lastRatedResult) {
                 this.displayedResults[0] = lastRatedResult;
                 this.movedLastRatedResult = true;

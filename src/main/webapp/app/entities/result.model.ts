@@ -54,4 +54,8 @@ export class Result implements BaseEntity {
     public static isAthenaAIResult(that: Result): boolean {
         return that.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
     }
+
+    public static isResult(obj: any): obj is Result {
+        return obj.type === 'Result';
+    }
 }

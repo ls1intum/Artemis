@@ -154,7 +154,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
             this.resultSubscription.unsubscribe();
         }
         this.resultSubscription = this.participationWebsocketService
-            .subscribeForLatestResultOfParticipation(this.participation.id!, true)
+            .subscribeForLatestResultsOfParticipation(this.participation.id!, true)
             .pipe(
                 // Ignore initial null/undefined result from service
                 filter((result) => !!result),

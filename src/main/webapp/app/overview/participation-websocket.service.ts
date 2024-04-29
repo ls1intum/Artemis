@@ -10,25 +10,34 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import dayjs from 'dayjs/esm';
 import { cloneDeep } from 'lodash-es';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { SelfLearningFeedbackRequest } from 'app/entities/self-learning-feedback-request.model';
+import { convertDateFromServer } from 'app/utils/date.utils';
 
-const PERSONAL_PARTICIPATION_TOPIC = `/user/topic/newResults`;
-const EXERCISE_PARTICIPATION_TOPIC = (exerciseId: number) => `/topic/exercise/${exerciseId}/newResults`;
+const PERSONAL_PARTICIPATION_TOPIC_PREFIX = `/user/topic`;
+const RESULTS_SUFFIX = `/newResults`;
+const SELF_LEARNING_FEEDBACK_SUFFIX = `/newSelfLearningFeedback`;
+
+const EXERCISE_PARTICIPATION_TOPIC_PREFIX = (exerciseId: number) => `/topic/exercise/${exerciseId}`;
 
 export interface IParticipationWebsocketService {
     addParticipation: (participation: Participation, exercise?: Exercise) => void;
     getParticipationsForExercise: (exerciseId: number) => StudentParticipation[] | undefined;
     subscribeForParticipationChanges: () => BehaviorSubject<Participation | undefined>;
-    subscribeForLatestResultOfParticipation: (participationId: number, personal: boolean, exerciseId?: number) => BehaviorSubject<Result | undefined>;
-    unsubscribeForLatestResultOfParticipation: (participationId: number, exercise: Exercise) => void;
+    subscribeForLatestResultsOfParticipation: (participationId: number, personal: boolean, exerciseId?: number) => BehaviorSubject<Result | undefined>;
+    unsubscribeForLatestUpdatesOfParticipation: (participationId: number, exercise: Exercise) => void;
     notifyAllResultSubscribers: (result: Result) => void;
 }
 
 @Injectable({ providedIn: 'root' })
 export class ParticipationWebsocketService implements IParticipationWebsocketService {
     cachedParticipations: Map<number /* ID of participation */, StudentParticipation> = new Map<number, StudentParticipation>();
-    openResultWebsocketSubscriptions: Map<number /*ID of participation */, string /* url of websocket connection */> = new Map<number, string>();
-    openPersonalWebsocketSubscription?: string; /* url of websocket connection */
+    openParticipationWebsocketSubscriptionsPrefix: Map<number /*ID of participation */, string /* prefix of url of websocket connections */> = new Map<number, string>();
+    openPersonalWebsocketSubscription?: string; /* prefix of url of websocket connections */
     resultObservables: Map<number /* ID of participation */, BehaviorSubject<Result | undefined>> = new Map<number, BehaviorSubject<Result>>();
+    selfLearningFeedbackObservables: Map<number /* ID of participation */, BehaviorSubject<SelfLearningFeedbackRequest | undefined>> = new Map<
+        number,
+        BehaviorSubject<SelfLearningFeedbackRequest>
+    >();
     participationObservable?: BehaviorSubject<Participation | undefined>;
     subscribedExercises: Map<number /* ID of exercise */, Set<number> /* IDs of the participations of this exercise */> = new Map<number, Set<number>>();
     participationSubscriptionTypes: Map<number /* ID of participation */, boolean /* Whether the participation was subscribed in personal mode */> = new Map<number, boolean>();
@@ -38,8 +47,12 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
         private participationService: ParticipationService,
     ) {}
 
-    private getNotifyAllSubscribersPipe = () => {
+    private getNotifyAllResultSubscribersPipe = () => {
         return pipe(tap(this.notifyResultSubscribers), switchMap(this.addResultToParticipation), tap(this.notifyParticipationSubscribers));
+    };
+
+    private getNotifyAllSelfLearningFeedbackSubscribersPipe = () => {
+        return pipe(tap(this.notifySelfLearningFeedbackSubscribers), switchMap(this.addSelfLearningFeedbackToParticipation), tap(this.notifyParticipationSubscribers));
     };
 
     /**
@@ -53,6 +66,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
         });
         this.cachedParticipations = new Map<number, StudentParticipation>();
         this.resultObservables = new Map<number, BehaviorSubject<Result>>();
+        this.selfLearningFeedbackObservables = new Map<number, BehaviorSubject<SelfLearningFeedbackRequest>>();
         this.participationObservable = undefined;
         this.subscribedExercises = new Map<number, Set<number>>();
         this.participationSubscriptionTypes = new Map<number, boolean>();
@@ -75,13 +89,28 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * @param result
      */
     private notifyResultSubscribers = (result: Result) => {
+        result.completionDate = convertDateFromServer(result.completionDate);
         const resultObservable = this.resultObservables.get(result.participation!.id!);
-        // TODO: We never convert the date strings of the result (e.g. completionDate) to a Dayjs object
-        //  this could be an issue in some parts of app when a formatted date is needed.
         if (!resultObservable) {
             this.resultObservables.set(result.participation!.id!, new BehaviorSubject(result));
         } else {
             resultObservable.next(result);
+        }
+    };
+
+    /**
+     * Notify all self-learning-feedback subscribers with the newest information provided.
+     * @param selfLearnigFeedback
+     */
+    private notifySelfLearningFeedbackSubscribers = (selfLearnigFeedback: SelfLearningFeedbackRequest) => {
+        console.log(selfLearnigFeedback);
+        selfLearnigFeedback.requestDateTime = convertDateFromServer(selfLearnigFeedback.requestDateTime);
+        selfLearnigFeedback.responseDateTime = convertDateFromServer(selfLearnigFeedback.responseDateTime);
+        const selfLearnigFeedbackObservable = this.selfLearningFeedbackObservables.get(selfLearnigFeedback.participation!.id!);
+        if (!selfLearnigFeedbackObservable) {
+            this.selfLearningFeedbackObservables.set(selfLearnigFeedback.participation!.id!, new BehaviorSubject(selfLearnigFeedback));
+        } else {
+            selfLearnigFeedbackObservable.next(selfLearnigFeedback);
         }
     };
 
@@ -98,6 +127,26 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
             // create a clone
             this.cachedParticipations.set(result.participation!.id!, { ...cachedParticipation, results: updatedResults } as StudentParticipation);
             return of(this.cachedParticipations.get(result.participation!.id!));
+        }
+        return of();
+    };
+
+    /**
+     * Update a cachedParticipation with the given self-learning-feedback, meaning that the new information will be added to it.
+     * @param selfLearnigFeedback
+     */
+    private addSelfLearningFeedbackToParticipation = (selfLearnigFeedback: SelfLearningFeedbackRequest) => {
+        const cachedParticipation = this.cachedParticipations.get(selfLearnigFeedback.participation!.id!);
+        if (cachedParticipation) {
+            // update the results with the new received one by filtering the old result
+            const updatedselfLearnigFeedbacks = [...(cachedParticipation.results || [])].filter((r) => r.id !== selfLearnigFeedback.id);
+            updatedselfLearnigFeedbacks.push(selfLearnigFeedback);
+            // create a clone
+            this.cachedParticipations.set(selfLearnigFeedback.participation!.id!, {
+                ...cachedParticipation,
+                selfLearningFeedbackRequests: updatedselfLearnigFeedbacks,
+            } as StudentParticipation);
+            return of(this.cachedParticipations.get(selfLearnigFeedback.participation!.id!));
         }
         return of();
     };
@@ -161,7 +210,8 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
                 // The subscription was a personal subscription, so it should only be removed if it was the last of it kind
                 const openPersonalSubscriptions = [...this.participationSubscriptionTypes.values()].filter((personal: boolean) => personal).length;
                 if (openPersonalSubscriptions === 0) {
-                    this.jhiWebsocketService.unsubscribe(PERSONAL_PARTICIPATION_TOPIC);
+                    this.jhiWebsocketService.unsubscribe(PERSONAL_PARTICIPATION_TOPIC_PREFIX + SELF_LEARNING_FEEDBACK_SUFFIX);
+                    this.jhiWebsocketService.unsubscribe(PERSONAL_PARTICIPATION_TOPIC_PREFIX + RESULTS_SUFFIX);
                     this.openPersonalWebsocketSubscription = undefined;
                 }
             } else {
@@ -171,10 +221,11 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
                     openSubscriptionsForExercise.delete(participationId);
                     if (openSubscriptionsForExercise.size === 0) {
                         this.subscribedExercises.delete(exerciseId!);
-                        const subscribedTopic = this.openResultWebsocketSubscriptions.get(exerciseId!);
-                        if (subscribedTopic) {
-                            this.jhiWebsocketService.unsubscribe(subscribedTopic);
-                            this.openResultWebsocketSubscriptions.delete(exerciseId!);
+                        const subscribedTopicPrefix = this.openParticipationWebsocketSubscriptionsPrefix.get(exerciseId!);
+                        if (subscribedTopicPrefix) {
+                            this.jhiWebsocketService.unsubscribe(subscribedTopicPrefix + RESULTS_SUFFIX);
+                            this.jhiWebsocketService.unsubscribe(subscribedTopicPrefix + SELF_LEARNING_FEEDBACK_SUFFIX);
+                            this.openParticipationWebsocketSubscriptionsPrefix.delete(exerciseId!);
                         }
                     }
                 }
@@ -191,14 +242,14 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * @param exerciseId optional exerciseId of the exercise where the participation is part of, only needed if personal == false
      */
     private openResultWebsocketSubscriptionIfNotExisting(participationId: number, personal: boolean, exerciseId?: number) {
-        if ((personal && !this.openPersonalWebsocketSubscription) || (!personal && !this.openResultWebsocketSubscriptions.has(exerciseId!))) {
-            let participationResultTopic: string;
+        if ((personal && !this.openPersonalWebsocketSubscription) || (!personal && !this.openParticipationWebsocketSubscriptionsPrefix.has(exerciseId!))) {
+            let participationTopicPrefix: string;
             if (personal) {
-                participationResultTopic = PERSONAL_PARTICIPATION_TOPIC;
-                this.openPersonalWebsocketSubscription = participationResultTopic;
+                participationTopicPrefix = PERSONAL_PARTICIPATION_TOPIC_PREFIX;
+                this.openPersonalWebsocketSubscription = participationTopicPrefix;
             } else {
-                participationResultTopic = EXERCISE_PARTICIPATION_TOPIC(exerciseId!);
-                this.openResultWebsocketSubscriptions.set(exerciseId!, participationResultTopic);
+                participationTopicPrefix = EXERCISE_PARTICIPATION_TOPIC_PREFIX(exerciseId!);
+                this.openParticipationWebsocketSubscriptionsPrefix.set(exerciseId!, participationTopicPrefix);
             }
             this.participationSubscriptionTypes.set(participationId, personal);
             if (!this.subscribedExercises.has(exerciseId!)) {
@@ -207,8 +258,16 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
             const subscribedParticipations = this.subscribedExercises.get(exerciseId!);
             subscribedParticipations!.add(participationId);
 
-            this.jhiWebsocketService.subscribe(participationResultTopic);
-            this.jhiWebsocketService.receive(participationResultTopic).pipe(this.getNotifyAllSubscribersPipe()).subscribe();
+            this.jhiWebsocketService.subscribe(participationTopicPrefix + RESULTS_SUFFIX);
+            this.jhiWebsocketService.subscribe(participationTopicPrefix + SELF_LEARNING_FEEDBACK_SUFFIX);
+            this.jhiWebsocketService
+                .receive(participationTopicPrefix + RESULTS_SUFFIX)
+                .pipe(this.getNotifyAllResultSubscribersPipe())
+                .subscribe();
+            this.jhiWebsocketService
+                .receive(participationTopicPrefix + SELF_LEARNING_FEEDBACK_SUFFIX)
+                .pipe(this.getNotifyAllSelfLearningFeedbackSubscribersPipe())
+                .subscribe();
         }
     }
 
@@ -219,7 +278,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * @param result The result with which the subscribers get notified
      */
     public notifyAllResultSubscribers = (result: Result) => {
-        of(result).pipe(this.getNotifyAllSubscribersPipe()).subscribe();
+        of(result).pipe(this.getNotifyAllResultSubscribersPipe()).subscribe();
     };
 
     /**
@@ -245,7 +304,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * @param personal whether the current user is a participant in the participation.
      * @param exerciseId optional exerciseId of the exercise where the participation is part of, only needed if personal == false
      */
-    public subscribeForLatestResultOfParticipation(participationId: number, personal: boolean, exerciseId?: number): BehaviorSubject<Result | undefined> {
+    public subscribeForLatestResultsOfParticipation(participationId: number, personal: boolean, exerciseId?: number): BehaviorSubject<Result | undefined> {
         this.openResultWebsocketSubscriptionIfNotExisting(participationId, personal, exerciseId);
         let resultObservable = this.resultObservables.get(participationId)!;
         if (!resultObservable) {
@@ -256,11 +315,11 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
     }
 
     /**
-     * Unsubscribe from the result
+     * Unsubscribe from the updates of the participation. This will cancel results and self-learning-feedback subscriptions.
      * @param participationId
      * @param exercise The exercise to which the participationId belongs to. Needed for deciding whether to unsubscribe from the websocket
      */
-    public unsubscribeForLatestResultOfParticipation(participationId: number, exercise: Exercise): void {
+    public unsubscribeForLatestUpdatesOfParticipation(participationId: number, exercise: Exercise): void {
         // Only unsubscribe from websocket, if the exercise is not active any more
         let isInactiveProgrammingExercise = false;
         if (exercise.type === ExerciseType.PROGRAMMING) {

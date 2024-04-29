@@ -55,7 +55,7 @@ public final class Constants {
 
     public static final String NEW_RESULT_TOPIC = "/topic/newResults";
 
-    public static final String NEW_SELF_LEARNING_FEEDBACK = "/topic/selfLearningFeedback";
+    public static final String NEW_SELF_LEARNING_FEEDBACK = "/topic/newSelfLearningFeedbacks";
 
     public static final String NEW_RESULT_RESOURCE_API_PATH = "/api/public/programming-exercises/new-result";
 

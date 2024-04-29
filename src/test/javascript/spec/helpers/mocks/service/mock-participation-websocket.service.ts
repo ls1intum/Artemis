@@ -8,7 +8,7 @@ export class MockParticipationWebsocketService implements IParticipationWebsocke
     addParticipation = (participation: Participation, exercise?: Exercise) => {};
     getParticipationsForExercise = (exerciseId: number) => undefined;
     subscribeForParticipationChanges = () => new BehaviorSubject<Participation | undefined>(undefined);
-    subscribeForLatestResultOfParticipation = (participationId: number) => new BehaviorSubject<Result | undefined>(undefined);
-    unsubscribeForLatestResultOfParticipation = (participationId: number, exercise: Exercise) => {};
+    subscribeForLatesInfosOfParticipation = (participationId: number) => new BehaviorSubject<Result | undefined>(undefined);
+    unsubscribeForLatestInfosOfParticipation = (participationId: number, exercise: Exercise) => {};
     notifyAllResultSubscribers = (result: Result) => {};
 }

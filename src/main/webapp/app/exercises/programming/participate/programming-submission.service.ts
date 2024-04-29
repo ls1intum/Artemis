@@ -229,7 +229,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         if (this.resultSubscriptions[participationId]) {
             return;
         }
-        const resultObservable = this.participationWebsocketService.subscribeForLatestResultOfParticipation(participationId, personal, exerciseId).pipe(
+        const resultObservable = this.participationWebsocketService.subscribeForLatestResultsOfParticipation(participationId, personal, exerciseId).pipe(
             // Make sure that the incoming result belongs the latest submission!
             filter((result: Result | undefined) => this.isResultOfLatestSubmission(result, exerciseId, participationId)),
             distinctUntilChanged(),
@@ -656,7 +656,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         Object.values(this.resultTimerSubscriptions).forEach((sub) => sub.unsubscribe());
         this.resultTimerSubscriptions = {};
         this.submissionTopicsSubscribed.forEach((topic) => this.websocketService.unsubscribe(topic));
-        this.submissionTopicsSubscribed.forEach((_, participationId) => this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(participationId, exercise));
+        this.submissionTopicsSubscribed.forEach((_, participationId) => this.participationWebsocketService.unsubscribeForLatestUpdatesOfParticipation(participationId, exercise));
         this.submissionTopicsSubscribed.clear();
         this.submissionSubjects = {};
         this.exerciseBuildStateSubjects.delete(exercise.id!);

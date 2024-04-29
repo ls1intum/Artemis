@@ -74,7 +74,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
      */
     ngOnDestroy() {
         if (this.resultSubscription) {
-            this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(this.participation.id!, this.exercise);
+            this.participationWebsocketService.unsubscribeForLatestUpdatesOfParticipation(this.participation.id!, this.exercise);
             this.resultSubscription.unsubscribe();
         }
         if (this.submissionSubscription) {
@@ -91,7 +91,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
             this.resultSubscription.unsubscribe();
         }
         this.resultSubscription = this.participationWebsocketService
-            .subscribeForLatestResultOfParticipation(this.participation.id!, this.personalParticipation, this.exercise ? this.exercise.id : undefined)
+            .subscribeForLatestResultsOfParticipation(this.participation.id!, this.personalParticipation, this.exercise ? this.exercise.id : undefined)
             .pipe(
                 // Ignore initial null result of subscription
                 filter((result) => !!result),

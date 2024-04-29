@@ -79,7 +79,7 @@ describe('ParticipationWebsocketService', () => {
     });
 
     it('should setup a result subscriptions with the websocket service on subscribeForLatestResult for instructors', () => {
-        participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id!, false, exerciseId2);
+        participationWebsocketService.subscribeForLatesInfosOfParticipation(participation.id!, false, exerciseId2);
         expect(subscribeSpy).toHaveBeenCalledOnce();
         expect(subscribeSpy).toHaveBeenCalledWith(participationInstructorResultTopic);
         expect(receiveStub).toHaveBeenCalledOnce();
@@ -88,17 +88,17 @@ describe('ParticipationWebsocketService', () => {
 
         expect(participationWebsocketService.cachedParticipations.size).toBe(0);
 
-        expect(participationWebsocketService.openResultWebsocketSubscriptions.size).toBe(1);
+        expect(participationWebsocketService.openParticipationInfoWebsocketSubscriptions.size).toBe(1);
         expect(participationWebsocketService.openPersonalWebsocketSubscription).toBeUndefined();
 
-        expect(participationWebsocketService.resultObservables.size).toBe(1);
-        expect(participationWebsocketService.resultObservables.has(participation.id!)).toBeTrue();
+        expect(participationWebsocketService.infoObservables.size).toBe(1);
+        expect(participationWebsocketService.infoObservables.has(participation.id!)).toBeTrue();
 
         expect(participationWebsocketService.participationObservable).toBeUndefined();
     });
 
     it('should setup a result subscriptions with the websocket service on subscribeForLatestResult for students', () => {
-        participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id!, true);
+        participationWebsocketService.subscribeForLatesInfosOfParticipation(participation.id!, true);
         expect(subscribeSpy).toHaveBeenCalledOnce();
         expect(subscribeSpy).toHaveBeenCalledWith(participationPersonalResultTopic);
         expect(receiveStub).toHaveBeenCalledOnce();
@@ -107,20 +107,20 @@ describe('ParticipationWebsocketService', () => {
 
         expect(participationWebsocketService.cachedParticipations.size).toBe(0);
 
-        expect(participationWebsocketService.openResultWebsocketSubscriptions.size).toBe(0);
+        expect(participationWebsocketService.openParticipationInfoWebsocketSubscriptions.size).toBe(0);
         expect(participationWebsocketService.openPersonalWebsocketSubscription).toBe(participationPersonalResultTopic);
 
-        expect(participationWebsocketService.resultObservables.size).toBe(1);
-        expect(participationWebsocketService.resultObservables.has(participation.id!)).toBeTrue();
+        expect(participationWebsocketService.infoObservables.size).toBe(1);
+        expect(participationWebsocketService.infoObservables.has(participation.id!)).toBeTrue();
 
         expect(participationWebsocketService.participationObservable).toBeUndefined();
     });
 
     it('should emit rated result when received through websocket', () => {
-        participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id!, true);
+        participationWebsocketService.subscribeForLatesInfosOfParticipation(participation.id!, true);
         const resultObservable = new BehaviorSubject(undefined);
         const resultSpy = jest.spyOn(resultObservable, 'next');
-        participationWebsocketService.resultObservables.set(participation.id!, resultObservable);
+        participationWebsocketService.infoObservables.set(participation.id!, resultObservable);
 
         // Emit new result from websocket
         receiveResultForParticipationSubject.next(newRatedResult);
@@ -130,10 +130,10 @@ describe('ParticipationWebsocketService', () => {
     });
 
     it('should emit unrated result received through websocket', () => {
-        participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id!, true);
+        participationWebsocketService.subscribeForLatesInfosOfParticipation(participation.id!, true);
         const resultObservable = new BehaviorSubject(undefined);
         const resultSpy = jest.spyOn(resultObservable, 'next');
-        participationWebsocketService.resultObservables.set(participation.id!, resultObservable);
+        participationWebsocketService.infoObservables.set(participation.id!, resultObservable);
 
         // Emit new result from websocket
         receiveResultForParticipationSubject.next(newUnratedResult);
@@ -143,12 +143,12 @@ describe('ParticipationWebsocketService', () => {
     });
 
     it('should also emit participation update with new result when new rated result arrives through websocket', () => {
-        participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id!, true);
+        participationWebsocketService.subscribeForLatesInfosOfParticipation(participation.id!, true);
         participationWebsocketService.addParticipation(participation);
         participationWebsocketService.subscribeForParticipationChanges();
         const resultObservable = new BehaviorSubject(undefined);
         const resultSpy = jest.spyOn(resultObservable, 'next');
-        participationWebsocketService.resultObservables.set(participation.id!, resultObservable);
+        participationWebsocketService.infoObservables.set(participation.id!, resultObservable);
         const participationObservable = new BehaviorSubject(undefined);
         const participationSpy = jest.spyOn(participationObservable, 'next');
         participationWebsocketService.participationObservable = participationObservable;
@@ -164,12 +164,12 @@ describe('ParticipationWebsocketService', () => {
     });
 
     it('should emit participation update with new result when unrated result arrives through websocket', () => {
-        participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id!, true);
+        participationWebsocketService.subscribeForLatesInfosOfParticipation(participation.id!, true);
         participationWebsocketService.addParticipation(participation);
         participationWebsocketService.subscribeForParticipationChanges();
         const resultObservable = new BehaviorSubject(undefined);
         const resultSpy = jest.spyOn(resultObservable, 'next');
-        participationWebsocketService.resultObservables.set(participation.id!, resultObservable);
+        participationWebsocketService.infoObservables.set(participation.id!, resultObservable);
         const participationObservable = new BehaviorSubject(undefined);
         const participationSpy = jest.spyOn(participationObservable, 'next');
         participationWebsocketService.participationObservable = participationObservable;
@@ -188,14 +188,14 @@ describe('ParticipationWebsocketService', () => {
     });
 
     it('should attach the result to right participation if multiple participations are cached', () => {
-        participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id!, true);
-        participationWebsocketService.subscribeForLatestResultOfParticipation(participation2.id!, true);
+        participationWebsocketService.subscribeForLatesInfosOfParticipation(participation.id!, true);
+        participationWebsocketService.subscribeForLatesInfosOfParticipation(participation2.id!, true);
         participationWebsocketService.addParticipation(participation);
         participationWebsocketService.addParticipation(participation2);
         participationWebsocketService.subscribeForParticipationChanges();
         const resultObservable = new BehaviorSubject(undefined);
         const resultSpy = jest.spyOn(resultObservable, 'next');
-        participationWebsocketService.resultObservables.set(participation.id!, resultObservable);
+        participationWebsocketService.infoObservables.set(participation.id!, resultObservable);
         const participationObservable = new BehaviorSubject(undefined);
         const participationSpy = jest.spyOn(participationObservable, 'next');
         participationWebsocketService.participationObservable = participationObservable;
@@ -217,12 +217,12 @@ describe('ParticipationWebsocketService', () => {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { results, ...participationWithoutResult } = participation;
 
-        participationWebsocketService.subscribeForLatestResultOfParticipation(participationWithoutResult.id!, true);
+        participationWebsocketService.subscribeForLatesInfosOfParticipation(participationWithoutResult.id!, true);
         participationWebsocketService.addParticipation(participationWithoutResult as Participation);
         participationWebsocketService.subscribeForParticipationChanges();
         const resultObservable = new BehaviorSubject(undefined);
         const resultSpy = jest.spyOn(resultObservable, 'next');
-        participationWebsocketService.resultObservables.set(participationWithoutResult.id!, resultObservable);
+        participationWebsocketService.infoObservables.set(participationWithoutResult.id!, resultObservable);
         const participationObservable = new BehaviorSubject(undefined);
         const participationSpy = jest.spyOn(participationObservable, 'next');
         participationWebsocketService.participationObservable = participationObservable;
@@ -240,18 +240,18 @@ describe('ParticipationWebsocketService', () => {
     });
 
     it('should reset the local cache', () => {
-        participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id!, true);
-        participationWebsocketService.subscribeForLatestResultOfParticipation(participation2.id!, false, participation2.exercise!.id);
+        participationWebsocketService.subscribeForLatesInfosOfParticipation(participation.id!, true);
+        participationWebsocketService.subscribeForLatesInfosOfParticipation(participation2.id!, false, participation2.exercise!.id);
         participationWebsocketService.addParticipation(participation);
         participationWebsocketService.addParticipation(participation2);
 
         expect(participationWebsocketService.openPersonalWebsocketSubscription).toBe(participationPersonalResultTopic);
-        expect(participationWebsocketService.openResultWebsocketSubscriptions.size).toBe(1);
+        expect(participationWebsocketService.openParticipationInfoWebsocketSubscriptions.size).toBe(1);
 
         participationWebsocketService.resetLocalCache();
 
         expect(participationWebsocketService.openPersonalWebsocketSubscription).toBeUndefined();
-        expect(participationWebsocketService.openResultWebsocketSubscriptions.size).toBe(0);
+        expect(participationWebsocketService.openParticipationInfoWebsocketSubscriptions.size).toBe(0);
     });
 
     it('should return the cached participation after adding it', () => {

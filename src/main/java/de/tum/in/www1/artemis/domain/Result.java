@@ -39,6 +39,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.google.common.base.Strings;
 
@@ -472,6 +473,12 @@ public class Result extends DomainObject implements Comparable<Result> {
 
     public void setCoverageFileReportsByTestCaseName(Map<String, Set<CoverageFileReport>> fileReportsByTestCaseName) {
         this.fileReportsByTestCaseName = fileReportsByTestCaseName;
+    }
+
+    @Transient
+    @JsonProperty("type")
+    public String getType() {
+        return this.getClass().getSimpleName();
     }
 
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove

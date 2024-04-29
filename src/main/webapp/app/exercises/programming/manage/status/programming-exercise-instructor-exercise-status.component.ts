@@ -47,7 +47,7 @@ export class ProgrammingExerciseInstructorExerciseStatusComponent implements OnC
                 this.templateParticipationSubscription.unsubscribe();
             }
             this.templateParticipationSubscription = this.participationWebsocketService
-                .subscribeForLatestResultOfParticipation(this.templateParticipation.id!, false, this.exercise.id)
+                .subscribeForLatestResultsOfParticipation(this.templateParticipation.id!, false, this.exercise.id)
                 .pipe(
                     filter((result) => !!result),
                     tap((result) => (this.templateParticipation.results = [result!])),
@@ -61,7 +61,7 @@ export class ProgrammingExerciseInstructorExerciseStatusComponent implements OnC
                 this.solutionParticipationSubscription.unsubscribe();
             }
             this.solutionParticipationSubscription = this.participationWebsocketService
-                .subscribeForLatestResultOfParticipation(this.solutionParticipation.id!, false, this.exercise.id)
+                .subscribeForLatestResultsOfParticipation(this.solutionParticipation.id!, false, this.exercise.id)
                 .pipe(
                     filter((result) => !!result),
                     tap((result) => (this.solutionParticipation.results = [result!])),

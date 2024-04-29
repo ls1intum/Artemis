@@ -50,6 +50,7 @@ import { AbstractScienceComponent } from 'app/shared/science/science.component';
 import { ScienceService } from 'app/shared/science/science.service';
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { PROFILE_IRIS } from 'app/app.constants';
+import { SelfLearningFeedbackRequest } from 'app/entities/self-learning-feedback-request.model';
 
 @Component({
     selector: 'jhi-course-exercise-details',
@@ -83,7 +84,7 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     public latestRatedResult?: Result;
     public complaint?: Complaint;
     public showMoreResults = false;
-    public sortedHistoryResults: Result[];
+    public sortedHistoryEntries: (Result | SelfLearningFeedbackRequest)[];
     public exerciseCategories: ExerciseCategory[];
     private participationUpdateListener: Subscription;
     private teamAssignmentUpdateListener: Subscription;
@@ -187,7 +188,7 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
             this.participationUpdateListener.unsubscribe();
             if (this.studentParticipations) {
                 this.studentParticipations.forEach((participation) => {
-                    this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(participation.id!, this.exercise!);
+                    this.participationWebsocketService.unsubscribeForLatestUpdatesOfParticipation(participation.id!, this.exercise!);
                 });
             }
         }
@@ -277,10 +278,12 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
         });
     }
 
-    sortResults() {
+    sortHistoryEntries() {
         if (this.studentParticipations?.length) {
             this.studentParticipations.forEach((participation) => participation.results?.sort(this.resultSortFunction));
-            this.sortedHistoryResults = this.studentParticipations.flatMap((participation) => participation.results ?? []).sort(this.resultSortFunction);
+            const sortedResults = this.studentParticipations.flatMap((participation) => participation.results ?? []).sort(this.resultSortFunction);
+            const sortedSelfLearningRequests = this.studentParticipations.flatMap((participation) => participation.results ?? []).sort(this.selfLearningFeedbackSortFunction);
+            this.sortedHistoryEntries = this.mergeAndSortHistoryLists(sortedResults, sortedSelfLearningRequests);
         }
     }
 
@@ -290,19 +293,49 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
         return aValue - bValue;
     };
 
+    private selfLearningFeedbackSortFunction = (a: SelfLearningFeedbackRequest, b: SelfLearningFeedbackRequest) => {
+        const aValue = dayjs(a.requestDateTime!).valueOf();
+        const bValue = dayjs(b.requestDateTime!).valueOf();
+        return aValue - bValue;
+    };
+
     mergeResultsAndSubmissionsForParticipations() {
         // if there are new student participation(s) from the server, we need to update this.studentParticipation
         if (this.exercise?.studentParticipations?.length) {
             this.studentParticipations = this.participationService.mergeStudentParticipations(this.exercise.studentParticipations);
             this.exercise.studentParticipations = this.studentParticipations;
             this.updateStudentParticipations();
-            this.sortResults();
+            this.sortHistoryEntries();
             // Add exercise to studentParticipation, as the result component is dependent on its existence.
             this.studentParticipations.forEach((participation) => (participation.exercise = this.exercise));
         } else if (this.studentParticipations?.length && this.exercise) {
             // otherwise we make sure that the student participation in exercise is correct
             this.exercise.studentParticipations = this.studentParticipations;
         }
+    }
+
+    private mergeAndSortHistoryLists(sortedResults: Result[], selfLearningFeedbackRequests: SelfLearningFeedbackRequest[]): (Result | SelfLearningFeedbackRequest)[] {
+        let i = 0,
+            j = 0;
+        const sortedMergedLists: (Result | SelfLearningFeedbackRequest)[] = [];
+
+        while (i < sortedResults.length && j < SelfLearningFeedbackRequest.length) {
+            if (sortedResults[i].completionDate! < selfLearningFeedbackRequests[j].requestDateTime!) {
+                sortedMergedLists.push(sortedResults[i++]);
+            } else {
+                sortedMergedLists.push(selfLearningFeedbackRequests[j++]);
+            }
+        }
+
+        // Append any remaining items from either list
+        while (i < sortedResults.length) {
+            sortedMergedLists.push(sortedResults[i++]);
+        }
+        while (j < selfLearningFeedbackRequests.length) {
+            sortedMergedLists.push(selfLearningFeedbackRequests[j++]);
+        }
+
+        return sortedMergedLists;
     }
 
     subscribeForNewResults() {
@@ -384,17 +417,17 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     }
 
     get hasMoreResults(): boolean {
-        if (!this.studentParticipations?.length || !this.sortedHistoryResults.length) {
+        if (!this.studentParticipations?.length || !this.sortedHistoryEntries.length) {
             return false;
         }
-        return this.sortedHistoryResults.length > MAX_RESULT_HISTORY_LENGTH;
+        return this.sortedHistoryEntries.length > MAX_RESULT_HISTORY_LENGTH;
     }
 
     /**
      * Loads and stores the complaint if any exists. Furthermore, loads the latest rated result and stores it.
      */
     loadComplaintAndLatestRatedResult(): void {
-        if (!this.gradedStudentParticipation?.submissions?.[0] || !this.sortedHistoryResults?.length) {
+        if (!this.gradedStudentParticipation?.submissions?.[0] || !this.sortedHistoryEntries?.length) {
             return;
         }
         this.complaintService.findBySubmissionId(this.gradedStudentParticipation!.submissions![0].id!).subscribe({

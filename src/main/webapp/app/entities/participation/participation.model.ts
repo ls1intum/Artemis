@@ -7,6 +7,7 @@ import { SolutionProgrammingExerciseParticipation } from 'app/entities/participa
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { Submission } from 'app/entities/submission.model';
 import { Result } from 'app/entities/result.model';
+import { SelfLearningFeedbackRequest } from 'app/entities/self-learning-feedback-request.model';
 
 export enum InitializationState {
     /**
@@ -43,6 +44,7 @@ export abstract class Participation implements BaseEntity {
     public submissions?: Submission[];
     public exercise?: Exercise;
     public type?: ParticipationType;
+    public selfLearningFeedbackRequests?: SelfLearningFeedbackRequest[];
 
     // workaround for strict template here, only used in case of StudentParticipation
     public participantName?: string;

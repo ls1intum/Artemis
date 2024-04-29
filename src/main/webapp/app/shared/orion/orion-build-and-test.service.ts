@@ -63,7 +63,7 @@ export class OrionBuildAndTestService {
             this.buildLogSubscription.unsubscribe();
         }
         this.resultSubscription = this.participationWebsocketService
-            .subscribeForLatestResultOfParticipation(participationId, true)
+            .subscribeForLatestResultsOfParticipation(participationId, true)
             .pipe(
                 filter(Boolean),
                 map((result) => result as Result),
@@ -80,7 +80,7 @@ export class OrionBuildAndTestService {
                         this.orionConnectorService.onBuildFinished();
                         this.buildFinished.next();
                     }
-                    this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(participationId, exercise);
+                    this.participationWebsocketService.unsubscribeForLatestUpdatesOfParticipation(participationId, exercise);
                 }),
             )
             .subscribe();

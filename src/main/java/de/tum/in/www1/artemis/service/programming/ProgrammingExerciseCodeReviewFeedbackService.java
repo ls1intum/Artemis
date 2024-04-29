@@ -127,7 +127,7 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
         newRequest.setParticipation(participation);
         newRequest.setSubmission(submission);
         newRequest.setRequestDateTime(now());
-        this.selfLearningFeedbackRequestRepository.save(newRequest);
+        newRequest = this.selfLearningFeedbackRequestRepository.save(newRequest);
 
         try {
 

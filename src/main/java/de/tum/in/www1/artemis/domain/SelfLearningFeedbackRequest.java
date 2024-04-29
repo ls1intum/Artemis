@@ -9,6 +9,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -16,6 +17,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -93,5 +95,11 @@ public class SelfLearningFeedbackRequest extends DomainObject {
 
     public void setSubmission(Submission submission) {
         this.submission = submission;
+    }
+
+    @Transient
+    @JsonProperty("type")
+    public String getType() {
+        return this.getClass().getSimpleName();
     }
 }

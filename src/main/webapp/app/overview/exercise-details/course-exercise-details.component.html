@@ -104,7 +104,7 @@
             <div class="col flex-grow-1">
                 <!-- EXERCISE ACTIONS END -->
                 <!-- RESULTS START -->
-                @if ((this.sortedHistoryResults?.length && this.sortedHistoryResults.length > 1) || this.practiceStudentParticipation?.results?.length) {
+                @if ((this.sortedHistoryEntries?.length && this.sortedHistoryEntries.length > 1) || this.practiceStudentParticipation?.results?.length) {
                     <div class="row">
                         <div class="row mb-2 mt-2 align-items-baseline d-none d-md-flex">
                             <div class="col-auto">
@@ -112,7 +112,7 @@
                             </div>
                         </div>
                         <div class="row">
-                            <jhi-result-history [results]="sortedHistoryResults" [exercise]="exercise" />
+                            <jhi-result-history [results]="sortedHistoryEntries" [exercise]="exercise" />
                         </div>
                         <div class="row mb-2 mt-2 align-items-baseline">
                             <div class="col-auto">
@@ -130,15 +130,15 @@
                             </div>
                             <div class="row">
                                 <div class="col-12 col-md-12">
-                                    @for (result of sortedHistoryResults; track result; let i = $index) {
+                                    @for (result of sortedHistoryEntries; track result; let i = $index) {
                                         <div>
                                             @if (
                                                 result.submission &&
                                                 result.submission.submissionDate &&
                                                 (i === 0 ||
-                                                    !sortedHistoryResults[i - 1].submission ||
-                                                    !sortedHistoryResults[i - 1].submission?.submissionDate ||
-                                                    !dayjs(result.submission.submissionDate).isSame(sortedHistoryResults[i - 1].submission?.submissionDate, 'day'))
+                                                    !sortedHistoryEntries[i - 1].submission ||
+                                                    !sortedHistoryEntries[i - 1].submission?.submissionDate ||
+                                                    !dayjs(result.submission.submissionDate).isSame(sortedHistoryEntries[i - 1].submission?.submissionDate, 'day'))
                                             ) {
                                                 <h4 class="mt-2">
                                                     {{ result.submission.submissionDate | artemisDate: 'long-date' }}
@@ -147,7 +147,7 @@
                                             <jhi-result [result]="result" [showUngradedResults]="true" [showBadge]="true" [exercise]="exercise" />
                                         </div>
                                     }
-                                    @if (!sortedHistoryResults) {
+                                    @if (!sortedHistoryEntries) {
                                         <div class="no-results">
                                             {{ 'artemisApp.courseOverview.exerciseDetails.noResults' | artemisTranslate }}
                                         </div>
