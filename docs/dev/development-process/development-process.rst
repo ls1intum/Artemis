@@ -116,9 +116,6 @@ We use the following structure for branch names: ``<type>/<area>/<short-descript
 In this step, the development team converts the detailed plans and designs outlined in the functional proposal into working code.
 This step requires careful adherence to the previously defined requirements and system architecture to ensure that the function fits seamlessly into the existing system and fulfills the specified functional and performance criteria.
 
-Naming Conventions for Branches
---------------------------------
-
 .. note::
       Make sure to follow the `Artemis Code and Design Guidelines <https://docs.artemis.cit.tum.de/dev/guidelines.html>`_.
 
