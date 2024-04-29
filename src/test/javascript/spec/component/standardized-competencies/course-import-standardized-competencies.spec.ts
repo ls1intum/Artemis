@@ -16,6 +16,8 @@ import { HttpResponse } from '@angular/common/http';
 import { StandardizedCompetencyService } from 'app/shared/standardized-competencies/standardized-competency.service';
 import { KnowledgeAreaTreeStubComponent } from './knowledge-area-tree-stub.component';
 import { SortService } from 'app/shared/service/sort.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('CourseImportStandardizedCompetenciesComponent', () => {
     let componentFixture: ComponentFixture<CourseImportStandardizedCompetenciesComponent>;
@@ -43,6 +45,7 @@ describe('CourseImportStandardizedCompetenciesComponent', () => {
                 MockProvider(CompetencyService),
                 MockProvider(StandardizedCompetencyService),
                 MockProvider(SortService),
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
             .compileComponents()
@@ -79,6 +82,11 @@ describe('CourseImportStandardizedCompetenciesComponent', () => {
                     {
                         id: 21,
                         parentId: 2,
+                    },
+                ],
+                competencies: [
+                    {
+                        id: 1,
                     },
                 ],
             },
@@ -174,11 +182,14 @@ describe('CourseImportStandardizedCompetenciesComponent', () => {
     });
 
     it('should not deactivate with pending changes', () => {
-        component['isLoading'] = true;
-        expect(component['canDeactivate']()).toBeFalse();
+        const deactivateWarningSpy = jest.spyOn(component as any, 'canDeactivateWarning', 'get');
 
         component['isLoading'] = false;
-        component['selectedCompetencies'] = [{ id: 1, isVisible: true }];
-        expect(component['canDeactivate']()).toBeFalse();
+        component['unloadNotification']({ returnValue: '' });
+        expect(deactivateWarningSpy).not.toHaveBeenCalled();
+
+        component['isLoading'] = true;
+        component['unloadNotification']({ returnValue: '' });
+        expect(deactivateWarningSpy).toHaveBeenCalled();
     });
 });
