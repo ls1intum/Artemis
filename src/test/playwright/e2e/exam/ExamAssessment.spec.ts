@@ -70,7 +70,7 @@ test.describe('Exam assessment', () => {
             await login(instructor);
             await examManagement.verifySubmitted(course.id!, exam.id!, studentOneName);
             await login(tutor);
-            await startAssessing(course.id!, exam.id!, 0, 155000, examManagement, courseAssessment, exerciseAssessment);
+            await startAssessing(course.id!, exam.id!, 155000, examManagement, courseAssessment, exerciseAssessment);
             await examAssessment.addNewFeedback(2, 'Good job');
             await examAssessment.submit();
             await login(studentOne, `/courses/${course.id}/exams/${exam.id}`);
@@ -104,7 +104,7 @@ test.describe('Exam assessment', () => {
             await login(instructor);
             await examManagement.verifySubmitted(course.id!, exam.id!, studentOneName);
             await login(tutor);
-            await startAssessing(course.id!, exam.id!, 0, 60000, examManagement, courseAssessment, exerciseAssessment);
+            await startAssessing(course.id!, exam.id!, 60000, examManagement, courseAssessment, exerciseAssessment);
             await modelingExerciseAssessment.addNewFeedback(5, 'Good');
             await modelingExerciseAssessment.openAssessmentForComponent(0);
             await modelingExerciseAssessment.assessComponent(-1, 'Wrong');
@@ -137,7 +137,7 @@ test.describe('Exam assessment', () => {
             await login(instructor);
             await examManagement.verifySubmitted(course.id!, exam.id!, studentOneName);
             await login(tutor);
-            await startAssessing(course.id!, exam.id!, 0, 60000, examManagement, courseAssessment, exerciseAssessment);
+            await startAssessing(course.id!, exam.id!, 60000, examManagement, courseAssessment, exerciseAssessment);
             await examAssessment.addNewFeedback(7, 'Good job');
             const response = await examAssessment.submitTextAssessment();
             expect(response.status()).toBe(200);
@@ -212,7 +212,7 @@ test.describe('Exam grading', () => {
             await login(instructor);
             await examManagement.verifySubmitted(course.id!, exam.id!, studentOneName);
             await login(tutor);
-            await startAssessing(course.id!, exam.id!, 0, 60000, examManagement, courseAssessment, exerciseAssessment);
+            await startAssessing(course.id!, exam.id!, 60000, examManagement, courseAssessment, exerciseAssessment);
             await examAssessment.addNewFeedback(7, 'Good job');
             const response = await examAssessment.submitTextAssessment();
             expect(response.status()).toBe(200);
@@ -265,7 +265,7 @@ test.describe('Exam statistics', () => {
 
     test.beforeEach('Assess a text exercise submission', async ({ login, examManagement, examAssessment, courseAssessment, exerciseAssessment }) => {
         await login(tutor);
-        await startAssessing(course.id!, exam.id!, 0, 60000, examManagement, courseAssessment, exerciseAssessment);
+        await startAssessing(course.id!, exam.id!, 60000, examManagement, courseAssessment, exerciseAssessment);
 
         const assessment = examStatisticsSample.assessment;
         for (let i = 0; i < students.length; i++) {
@@ -372,17 +372,16 @@ async function makeExamSubmission(
     await examStartEnd.finishExam();
 }
 
-export async function startAssessing(
+async function startAssessing(
     courseID: number,
     examID: number,
-    exerciseIndex: number = 0,
     timeout: number,
     examManagement: ExamManagementPage,
     courseAssessment: CourseAssessmentDashboardPage,
     exerciseAssessment: ExerciseAssessmentDashboardPage,
 ) {
     await examManagement.openAssessmentDashboard(courseID, examID, timeout);
-    await courseAssessment.clickExerciseDashboardButton(exerciseIndex);
+    await courseAssessment.clickExerciseDashboardButton(0);
     await exerciseAssessment.clickHaveReadInstructionsButton();
     await exerciseAssessment.clickStartNewAssessment();
     exerciseAssessment.getLockedMessage();

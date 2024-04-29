@@ -6,7 +6,6 @@ import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs';
 import { generateUUID } from '../../support/utils';
 import { Exercise, ExerciseType } from '../../support/constants';
-import { startAssessing } from './ExamAssessment.spec';
 import { ExamManagementPage } from '../../support/pageobjects/exam/ExamManagementPage';
 import { CourseAssessmentDashboardPage } from '../../support/pageobjects/assessment/CourseAssessmentDashboardPage';
 import { ExerciseAssessmentDashboardPage } from '../../support/pageobjects/assessment/ExerciseAssessmentDashboardPage';
@@ -198,3 +197,19 @@ test.describe('Exam Results', () => {
         await courseManagementAPIRequests.deleteCourse(course, admin);
     });
 });
+
+async function startAssessing(
+    courseID: number,
+    examID: number,
+    exerciseIndex: number = 0,
+    timeout: number,
+    examManagement: ExamManagementPage,
+    courseAssessment: CourseAssessmentDashboardPage,
+    exerciseAssessment: ExerciseAssessmentDashboardPage,
+) {
+    await examManagement.openAssessmentDashboard(courseID, examID, timeout);
+    await courseAssessment.clickExerciseDashboardButton(exerciseIndex);
+    await exerciseAssessment.clickHaveReadInstructionsButton();
+    await exerciseAssessment.clickStartNewAssessment();
+    exerciseAssessment.getLockedMessage();
+}
