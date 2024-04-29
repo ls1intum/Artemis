@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -132,8 +133,9 @@ public class LectureService {
      * @param lecture the lecture to be deleted
      */
     public void delete(Lecture lecture) {
-        List<Attachment> attachmentList = new ArrayList<>(lecture.getAttachments());
-        webhookService.executeIngestionPipeline(false, attachmentList);
+        List<AttachmentUnit> attachmentUnitList = lecture.getLectureUnits().stream().filter(lectureUnit -> lectureUnit.getType().equals("attachment"))
+                .map(lectureUnit -> (AttachmentUnit) lectureUnit).collect(Collectors.toList());
+        webhookService.executeIngestionPipeline(false, attachmentUnitList);
         Channel lectureChannel = channelRepository.findChannelByLectureId(lecture.getId());
         channelService.deleteChannel(lectureChannel);
         lectureRepository.deleteById(lecture.getId());

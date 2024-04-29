@@ -76,7 +76,7 @@ public class AttachmentUnitService {
         savedAttachmentUnit.setAttachment(savedAttachment);
         evictCache(file, savedAttachmentUnit);
         if (savedAttachment.getAttachmentType() == AttachmentType.FILE) {
-            webhookService.executeIngestionPipeline(true, List.of(savedAttachment));
+            webhookService.executeIngestionPipeline(true, List.of(savedAttachmentUnit));
         }
         return savedAttachmentUnit;
     }
@@ -125,7 +125,7 @@ public class AttachmentUnitService {
             if (Objects.equals(FilenameUtils.getExtension(updateFile.getOriginalFilename()), "pdf")) {
                 slideSplitterService.splitAttachmentUnitIntoSingleSlides(savedAttachmentUnit);
             }
-            webhookService.executeIngestionPipeline(true, List.of(savedAttachment));
+            webhookService.executeIngestionPipeline(true, List.of(savedAttachmentUnit));
         }
 
         return savedAttachmentUnit;

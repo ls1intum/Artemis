@@ -39,11 +39,11 @@ public class Lecture extends DomainObject {
     @Column(name = "visible_date")
     private ZonedDateTime visibleDate;
 
-    @OneToMany(mappedBy = "lecture", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "lecture", cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnoreProperties(value = "lecture", allowSetters = true)
     private Set<Attachment> attachments = new HashSet<>();
 
-    @OneToMany(mappedBy = "lecture", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "lecture", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @OrderColumn(name = "lecture_unit_order")
     @JsonIgnoreProperties("lecture")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)

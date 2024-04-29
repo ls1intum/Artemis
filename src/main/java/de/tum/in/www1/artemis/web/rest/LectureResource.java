@@ -14,7 +14,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.Attachment;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
@@ -110,8 +109,9 @@ public class LectureResource {
 
         Lecture savedLecture = lectureRepository.save(lecture);
         channelService.createLectureChannel(savedLecture, Optional.ofNullable(lecture.getChannelName()));
-        List<Attachment> attachmentList = new ArrayList<>(lecture.getAttachments());
-        webhookService.executeIngestionPipeline(true, attachmentList);
+        List<AttachmentUnit> attachmentUnitList = lecture.getLectureUnits().stream().filter(lectureUnit -> lectureUnit.getType().equals("attachment"))
+                .map(lectureUnit -> (AttachmentUnit) lectureUnit).collect(Collectors.toList());
+        webhookService.executeIngestionPipeline(true, attachmentUnitList);
         return ResponseEntity.created(new URI("/api/lectures/" + savedLecture.getId())).body(savedLecture);
     }
 
@@ -252,8 +252,9 @@ public class LectureResource {
 
         final var savedLecture = lectureImportService.importLecture(sourceLecture, destinationCourse);
         channelService.createLectureChannel(savedLecture, Optional.empty());
-        List<Attachment> attachmentList = new ArrayList<>(savedLecture.getAttachments());
-        webhookService.executeIngestionPipeline(true, attachmentList);
+        List<AttachmentUnit> attachmentUnitList = savedLecture.getLectureUnits().stream().filter(lectureUnit -> lectureUnit.getType().equals("attachment"))
+                .map(lectureUnit -> (AttachmentUnit) lectureUnit).collect(Collectors.toList());
+        webhookService.executeIngestionPipeline(true, attachmentUnitList);
         return ResponseEntity.created(new URI("/api/lectures/" + savedLecture.getId())).body(savedLecture);
     }
 

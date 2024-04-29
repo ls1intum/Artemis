@@ -14,7 +14,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.Attachment;
 import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.service.FilePathService;
@@ -54,8 +53,7 @@ public class PyrisWebhookService {
         }
     }
 
-    private PyrisLectureUnitWebhookDTO processAttachments(Boolean toUpdate, Attachment attachment) {
-        AttachmentUnit attachmentUnit = attachment.getAttachmentUnit();
+    private PyrisLectureUnitWebhookDTO processAttachments(Boolean toUpdate, AttachmentUnit attachmentUnit) {
         try {
             if (toUpdate) {
                 int lectureUnitId = attachmentUnit.hashCode();
@@ -64,7 +62,7 @@ public class PyrisWebhookService {
                 String lectureTitle = attachmentUnit.getLecture().getTitle();
                 int courseId = attachmentUnit.getLecture().getCourse().hashCode();
                 String courseTitle = attachmentUnit.getLecture().getCourse().getTitle();
-                String courseDescription = attachmentUnit.getLecture().getCourse().getDescription();
+                String courseDescription = attachmentUnit.getLecture().getCourse().getDescription() == null ? "" : attachmentUnit.getLecture().getCourse().getDescription();
                 String base64EncodedPdf = attachmentToBase64(attachmentUnit);
                 return new PyrisLectureUnitWebhookDTO(true, base64EncodedPdf, lectureUnitId, lectureUnitName, lectureId, lectureTitle, courseId, courseTitle, courseDescription);
             }
@@ -84,17 +82,17 @@ public class PyrisWebhookService {
     /**
      * Executes the tutor chat pipeline for the given session
      *
-     * @param toUpdate    True if the lecture is updated, False if the lecture is erased
-     * @param attachments The attachmentUnit that got Updated / erased
+     * @param toUpdate        True if the lecture is updated, False if the lecture is erased
+     * @param attachmentUnits The attachmentUnit that got Updated / erased
      */
-    public void executeIngestionPipeline(Boolean toUpdate, List<Attachment> attachments) {
+    public void executeIngestionPipeline(Boolean toUpdate, List<AttachmentUnit> attachmentUnits) {
         PyrisWebhookLectureIngestionExecutionDTO executionDTO;
         var jobToken = pyrisJobService.addJob(new IngestionWebhookJob());
         var settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, List.of(), artemisBaseUrl);
         List<PyrisLectureUnitWebhookDTO> toUpdateAttachmentUnits = new ArrayList<>();
-        for (Attachment attachment : attachments) {
-            if (attachment.getAttachmentType() == AttachmentType.FILE)
-                toUpdateAttachmentUnits.add(processAttachments(toUpdate, attachment));
+        for (AttachmentUnit attachmentUnit : attachmentUnits) {
+            if (attachmentUnit.getAttachment().getAttachmentType() == AttachmentType.FILE)
+                toUpdateAttachmentUnits.add(processAttachments(toUpdate, attachmentUnit));
         }
         if (!toUpdateAttachmentUnits.isEmpty()) {
             executionDTO = new PyrisWebhookLectureIngestionExecutionDTO(settingsDTO, List.of(), toUpdateAttachmentUnits);

@@ -157,7 +157,7 @@ public class LectureUnitService {
                 for (Slide slide : slides) {
                     fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(URI.create(slide.getSlideImagePath())), 5);
                 }
-                webhookService.executeIngestionPipeline(false, List.of(attachmentUnit.getAttachment()));
+                webhookService.executeIngestionPipeline(false, List.of(attachmentUnit));
                 slideRepository.deleteAll(slides);
             }
         }
