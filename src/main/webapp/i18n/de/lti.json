@@ -92,7 +92,7 @@
             "missingConfigurationWarning": "Fehlende Werte in der LTI1.3-Konfiguration. Starts werden nicht funktionieren. Bitte wende dich für die Konfiguration an den Administrator.",
             "selectContentFromCourse": "Wähle Inhalte aus dem Kurs {{ title }} aus",
             "deletePlatformError": "Die LTI-Plattform konnte nicht gelöscht werden",
-            "selectContentTooltip": "Wähle einfach deine bevorzugten Übungen aus und klicke dann auf die Schaltfläche Link, um diese in die Plattform zu integrieren.",
+            "selectContentTooltip": "Wähle deine bevorzugten Übungen aus und klicke dann auf die Schaltfläche Link, um diese in die Plattform zu integrieren.",
             "externalToolSettings": "Externe Tool-Einstellungen",
             "externalToolSettingsTooltip": "Ein Externes Tool ist für die Verknüpfung und Teilnahme an Übungen erforderlich und ermöglicht die nahtlose Integration mit externen Ressourcen und Aktivitäten",
             "editExternalToolSettingsTooltip": "Bitte wähle ein Externes Tool für diesen Kurs, um eine erfolgreiche LTI-Kommunikation zu ermöglichen. Sobald ein vorkonfiguriertes Externes Tool ausgewählt wurde, ist dieser Online-Kurs für die Verknüpfung mit Übungen und die Teilnahme daran verfügbar.",
