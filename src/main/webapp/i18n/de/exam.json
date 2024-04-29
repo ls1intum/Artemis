@@ -566,6 +566,7 @@
                 "titleInfo": "Der Name der Aufgabengruppe wird den Studierenden als Aufgabenname angezeigt.",
                 "delete": {
                     "question": "Soll die Aufgabengruppe <strong>{{ title }}</strong> wirklich gelöscht werden? Alle zugehörigen Aufgaben werden ebenfalls gelöscht.",
+                    "questionLocalVC": "Soll die Aufgabengruppe <strong>{{ title }}</strong> wirklich gelöscht werden? Alle zugehörigen Aufgaben werden gelöscht.<br>Alle Studierenden- Template-, Lösungs- und Test-Repositories sowie Build-Pläne werden ebenfalls gelöscht.<br>Achtung: Dies kann <strong class='text-danger'>NICHT</strong> rückgängig gemacht werden!<br>Es wird empfohlen die Repositories und Build-Pläne erst zu sichern! ",
                     "typeNameToConfirm": "Bitte gib den Namen der Aufgabengruppe zur Bestätigung ein."
                 },
                 "orderCouldNotBeSaved": "Die Reihenfolge konnte nicht gespeichert werden.",

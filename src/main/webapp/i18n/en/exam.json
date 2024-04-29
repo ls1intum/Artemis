@@ -567,6 +567,7 @@
                 "titleInfo": "The title of the exercise group is shown to the students as the name of the exercise.",
                 "delete": {
                     "question": "Are you sure you want to delete the exercise group <strong>{{ title }}</strong>? All associated exercises will also be deleted.",
+                    "questionLocalVC": "Are you sure you want to delete the exercise group <strong>{{ title }}</strong>? All associated exercises will be deleted.<br>All student, template, solution, test, and auxiliary repositories and build plans will also be deleted.<br>Be careful: this can <strong class='text-danger'>NOT</strong> be undone!<br>Before you activate this option, we recommend that you archive the repositories and build plans first! ",
                     "typeNameToConfirm": "Please type in the name of the exercise group to confirm."
                 },
                 "orderCouldNotBeSaved": "The order could not be saved",

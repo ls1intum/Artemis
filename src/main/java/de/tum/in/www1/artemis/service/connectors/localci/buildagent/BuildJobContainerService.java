@@ -12,7 +12,9 @@ import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
@@ -215,12 +217,15 @@ public class BuildJobContainerService {
         String testCheckoutPath = RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage);
         String assignmentCheckoutPath = RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage);
 
-        // make sure to create the working directory in case it does not exist
-        addDirectory(buildJobContainerId, LOCALCI_WORKING_DIRECTORY + "/testing-dir", true);
-        // make sure the working directory and all sub directories are accessible
+        // Make sure to create the working directory in case it does not exist.
+        // In case the test checkout path is the working directory, we only create up to the parent, as the working directory is created below.
+        addDirectory(buildJobContainerId, LOCALCI_WORKING_DIRECTORY + (testCheckoutPath.isEmpty() ? "" : "/testing-dir"), true);
+        // Make sure the working directory and all subdirectories are accessible
         executeDockerCommand(buildJobContainerId, null, false, false, true, "chmod", "-R", "777", LOCALCI_WORKING_DIRECTORY + "/testing-dir");
 
+        // Copy the test repository to the container and move it to the test checkout path (may be the working directory)
         addAndPrepareDirectory(buildJobContainerId, testRepositoryPath, LOCALCI_WORKING_DIRECTORY + "/testing-dir/" + testCheckoutPath);
+        // Copy the assignment repository to the container and move it to the assignment checkout path
         addAndPrepareDirectory(buildJobContainerId, assignmentRepositoryPath, LOCALCI_WORKING_DIRECTORY + "/testing-dir/" + assignmentCheckoutPath);
         if (solutionRepositoryPath != null) {
             String solutionCheckoutPath = RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(programmingLanguage);
