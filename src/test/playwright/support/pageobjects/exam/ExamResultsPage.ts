@@ -9,33 +9,46 @@ export class ExamResultsPage {
         this.page = page;
     }
 
-    async checkTextExerciseContent(exerciseID: number, textFixture: string) {
-        const textExercise = getExercise(this.page, exerciseID);
+    async checkGradeSummary(gradeSummary: any) {
+        const examSummary = this.page.locator('#exam-summary-result-overview .exam-points-summary-container');
+        for (const exercise of gradeSummary.studentExam.exercises) {
+            const exerciseGroup = exercise.exerciseGroup;
+            const exerciseRow = examSummary.locator('tr', { hasText: exerciseGroup.title });
+
+            const exerciseResult = gradeSummary.studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id];
+            const achievedPoints = Math.floor(exerciseResult.achievedPoints).toString();
+            const achievablePoints = Math.floor(exerciseResult.maxScore).toString();
+            const achievedPercentage = exerciseResult.achievedScore.toString();
+            const bonusPoints = Math.floor(exercise.bonusPoints).toString();
+
+            await expect(exerciseRow.locator('td').nth(1).getByText(achievedPoints)).toBeVisible();
+            await expect(exerciseRow.locator('td').nth(2).getByText(achievablePoints)).toBeVisible();
+            await expect(exerciseRow.locator('td').nth(3).getByText(`${achievedPercentage} %`)).toBeVisible();
+            await expect(exerciseRow.locator('td').nth(4).getByText(bonusPoints)).toBeVisible();
+        }
+    }
+
+    async checkTextExerciseContent(exerciseId: number, textFixture: string) {
+        const textExercise = getExercise(this.page, exerciseId);
         const submissionText = await Fixtures.get(textFixture);
         await expect(textExercise.locator('span', { hasText: submissionText })).toBeVisible();
     }
 
-    async checkAdditionalFeedback(exerciseID: number, points: number, feedback: string) {
-        const exercise = getExercise(this.page, exerciseID);
+    async checkAdditionalFeedback(exerciseId: number, points: number, feedback: string) {
+        const exercise = getExercise(this.page, exerciseId);
         const feedbackElement = exercise.locator(`#additional-feedback`);
         await expect(feedbackElement.locator('.feedback-points', { hasText: points.toString() })).toBeVisible();
         await expect(feedbackElement.locator('span', { hasText: feedback })).toBeVisible();
     }
 
-    async checkProgrammingExerciseAssessment(exerciseID: number, points: number) {
-        const exercise = getExercise(this.page, exerciseID);
-        const feedback = exercise.locator('.feedback-item-group');
-        await expect(feedback).toHaveText(`${points}P`);
-    }
-
-    async checkProgrammingExerciseAssessments(exerciseID: number, resultType: string, count: number) {
-        const exercise = getExercise(this.page, exerciseID);
+    async checkProgrammingExerciseAssessments(exerciseId: number, resultType: string, count: number) {
+        const exercise = getExercise(this.page, exerciseId);
         const results = exercise.locator('.feedback-item-group', { hasText: resultType });
         await expect(results.getByText(`(${count})`)).toBeVisible();
     }
 
-    async checkProgrammingExerciseTasks(exerciseID: number, taskFeedbacks: ProgrammingExerciseTaskStatus[]) {
-        const exercise = getExercise(this.page, exerciseID);
+    async checkProgrammingExerciseTasks(exerciseId: number, taskFeedbacks: ProgrammingExerciseTaskStatus[]) {
+        const exercise = getExercise(this.page, exerciseId);
         const tasks = exercise.locator('.stepwizard .stepwizard-step');
         for (let taskIndex = 0; taskIndex < taskFeedbacks.length; taskIndex++) {
             const taskElement = tasks.nth(taskIndex);
@@ -53,8 +66,30 @@ export class ExamResultsPage {
         }
     }
 
-    async checkModellingExerciseAssessment(exerciseID: number, element: string, feedback: string, points: number) {
-        const exercise = getExercise(this.page, exerciseID);
+    async checkQuizExerciseScore(exerciseId: number, score: number, maxScore: number) {
+        const exercise = getExercise(this.page, exerciseId);
+        await expect(exercise.locator('.question-score').getByText(`${score}/${maxScore}`)).toBeVisible();
+    }
+
+    async checkQuizExerciseAnswers(exerciseId: number, studentAnswers: boolean[], correctAnswers: boolean[]) {
+        const exercise = getExercise(this.page, exerciseId);
+
+        for (let i = 0; i < studentAnswers.length; i++) {
+            const selectedAnswer = exercise.locator('.selection').nth(i + 1);
+            if (studentAnswers[i]) {
+                await expect(selectedAnswer.locator('.fa-square-check')).toBeVisible();
+            }
+            if (!studentAnswers[i]) {
+                await expect(selectedAnswer.locator('.fa-square')).toBeVisible();
+            }
+
+            const solution = exercise.locator('.solution').nth(i + 1);
+            await expect(solution).toHaveText(correctAnswers[i] ? 'Correct' : 'Wrong');
+        }
+    }
+
+    async checkModellingExerciseAssessment(exerciseId: number, element: string, feedback: string, points: number) {
+        const exercise = getExercise(this.page, exerciseId);
         const componentFeedbacks = exercise.locator('#component-feedback-table');
         const assessmentRow = componentFeedbacks.locator('tr', { hasText: element });
         await expect(assessmentRow).toBeVisible();
