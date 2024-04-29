@@ -67,6 +67,11 @@ export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
             if (this.modified === undefined) {
                 this.replaceEditorWithPlaceholder('delete', this._editor.getModifiedEditor());
             }
+        });
+
+        this._editor.onDidUpdateDiff(() => {
+            // called when the editor is truly ready
+            this.monacoDiffEditorContainerElement.style.height = this.getMaximumContentHeight() + 'px';
             this.onReadyForDisplayChange.emit(true);
         });
     }
@@ -79,6 +84,13 @@ export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
         this.themeSubscription = this.themeService.getCurrentThemeObservable().subscribe((theme) => this.changeTheme(theme));
 
         this._editor.getOriginalEditor().onDidContentSizeChange((e) => {
+            if (e.contentHeightChanged) {
+                this.monacoDiffEditorContainerElement.style.height = this.getMaximumContentHeight() + 'px';
+                this._editor.layout();
+            }
+        });
+
+        this._editor.getModifiedEditor().onDidContentSizeChange((e) => {
             if (e.contentHeightChanged) {
                 this.monacoDiffEditorContainerElement.style.height = this.getMaximumContentHeight() + 'px';
                 this._editor.layout();
