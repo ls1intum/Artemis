@@ -295,20 +295,18 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     /**
-     * Triggers when a new file was selected in the code editor. Compares the content of the file with the template (if available), calculates the diff
-     * and highlights the changed/added lines or all lines if the file is not in the template.
-     *
-     * @param selectedFile name of the file which is currently displayed
+     * For a file, computes the diff between the template and the submission currently being viewed, then highlights changed or edited lines in the editor.
+     * If the file did not exist in the template, all lines will be highlighted.
+     * @param selectedFile The file that has been selected in the editor.
      */
-    onFileLoad(selectedFile: string): void {
-        if (selectedFile && this.codeEditorContainer?.selectedFile && this.codeEditorContainer.aceEditor) {
-            // When the selectedFile is not part of the template, then this is a new file and all lines in code editor are highlighted
+    highlightChangedLines(selectedFile: string) {
+        if (selectedFile && this.codeEditorContainer?.selectedFile) {
             if (!this.templateFileSession[selectedFile]) {
-                const lastLine = this.codeEditorContainer.aceEditor.editorSession.getLength() - 1;
+                const lastLine = this.codeEditorContainer.getNumberOfLines() - 1;
                 this.highlightLines(0, lastLine);
             } else {
                 // Calculation of the diff, see: https://github.com/google/diff-match-patch/wiki/Line-or-Word-Diffs
-                const diffArray = this.diffMatchPatch.diff_linesToChars(this.templateFileSession[selectedFile], this.codeEditorContainer.aceEditor.editorSession.getValue());
+                const diffArray = this.diffMatchPatch.diff_linesToChars(this.templateFileSession[selectedFile], this.codeEditorContainer.getText());
                 const lineText1 = diffArray.chars1;
                 const lineText2 = diffArray.chars2;
                 const lineArray = diffArray.lineArray;
@@ -337,9 +335,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private highlightLines(firstLine: number, lastLine: number) {
-        if (this.codeEditorContainer?.aceEditor) {
-            this.codeEditorContainer.aceEditor.highlightLines(firstLine, lastLine, 'diff-newLine', 'gutter-diff-newLine');
-        }
+        this.codeEditorContainer.highlightLines(firstLine, lastLine);
     }
 
     /**

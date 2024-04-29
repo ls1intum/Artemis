@@ -1,7 +1,14 @@
 package de.tum.in.www1.artemis.repository.metis;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
-import static de.tum.in.www1.artemis.repository.specs.MessageSpecs.*;
+import static de.tum.in.www1.artemis.repository.specs.MessageSpecs.getAnsweredOrReactedSpecification;
+import static de.tum.in.www1.artemis.repository.specs.MessageSpecs.getConversationSpecification;
+import static de.tum.in.www1.artemis.repository.specs.MessageSpecs.getConversationsSpecification;
+import static de.tum.in.www1.artemis.repository.specs.MessageSpecs.getCourseWideChannelsSpecification;
+import static de.tum.in.www1.artemis.repository.specs.MessageSpecs.getOwnSpecification;
+import static de.tum.in.www1.artemis.repository.specs.MessageSpecs.getSearchTextSpecification;
+import static de.tum.in.www1.artemis.repository.specs.MessageSpecs.getSortSpecification;
+import static de.tum.in.www1.artemis.repository.specs.MessageSpecs.getUnresolvedSpecification;
 
 import java.util.List;
 import java.util.Set;

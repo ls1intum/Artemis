@@ -4,20 +4,37 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.security.Principal;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Complaint;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.DomainObject;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Team;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ComplaintRepository;
+import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
+import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.TeamRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.dto.ComplaintRequestDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
@@ -55,13 +72,13 @@ public class ComplaintService {
      * Create a new complaint by checking if the user is still allowed to submit complaints and in the case of normal course exercises
      * whether the user still enough complaints left.
      *
-     * @param complaint the complaint to create
-     * @param principal the current Principal
-     * @param examId    the optional examId. This is only set if the exercise is an exam exercise
+     * @param complaintRequest the complaint to create
+     * @param principal        the current Principal
+     * @param examId           the optional examId. This is only set if the exercise is an exam exercise
      * @return the saved complaint
      */
-    public Complaint createComplaint(Complaint complaint, OptionalLong examId, Principal principal) {
-        Result originalResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(complaint.getResult().getId())
+    public Complaint createComplaint(ComplaintRequestDTO complaintRequest, Optional<Long> examId, Principal principal) {
+        Result originalResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(complaintRequest.resultId())
                 .orElseThrow(() -> new BadRequestAlertException("The result you are referring to does not exist", ENTITY_NAME, "resultnotfound"));
 
         StudentParticipation studentParticipation = (StudentParticipation) originalResult.getParticipation();
@@ -74,14 +91,14 @@ public class ComplaintService {
 
         // Check whether the complaint text limit is exceeded
         int maxLength = course.getMaxComplaintTextLimitForExercise(studentParticipation.getExercise());
-        if (maxLength < complaint.getComplaintText().length()) {
+        if (maxLength < complaintRequest.complaintText().length()) {
             throw new BadRequestAlertException("You cannot submit a complaint that exceeds the maximum number of " + maxLength + " characters", ENTITY_NAME,
                     "exceededComplaintTextLimit");
         }
 
         // checking if it is allowed to create a complaint
         if (examId.isPresent()) {
-            final Exam exam = examRepository.findByIdElseThrow(examId.getAsLong());
+            final Exam exam = examRepository.findByIdElseThrow(examId.get());
             final Set<User> instructors = userRepository.getInstructors(exam.getCourse());
             boolean examTestRun = instructors.stream().anyMatch(instructor -> instructor.getLogin().equals(principal.getName()));
             if (!examTestRun && !isTimeOfComplaintValid(exam)) {
@@ -89,19 +106,23 @@ public class ComplaintService {
             }
         }
         else {
-            if (complaint.getComplaintType() == ComplaintType.COMPLAINT) {
-                long numberOfUnacceptedComplaints = countUnacceptedComplaintsByParticipantAndCourseId(participant, courseId);
-                long numberOfAllowedComplaintsInCourse = getMaxComplaintsPerParticipant(course, participant);
-                if (numberOfUnacceptedComplaints >= numberOfAllowedComplaintsInCourse) {
-                    throw new BadRequestAlertException("You cannot have more than " + numberOfAllowedComplaintsInCourse + " open or rejected complaints at the same time.",
-                            ENTITY_NAME, "tooManyComplaints");
+            switch (complaintRequest.complaintType()) {
+                case COMPLAINT -> {
+                    long numberOfUnacceptedComplaints = countUnacceptedComplaintsByParticipantAndCourseId(participant, courseId);
+                    long numberOfAllowedComplaintsInCourse = getMaxComplaintsPerParticipant(course, participant);
+                    if (numberOfUnacceptedComplaints >= numberOfAllowedComplaintsInCourse) {
+                        throw new BadRequestAlertException("You cannot have more than " + numberOfAllowedComplaintsInCourse + " open or rejected complaints at the same time.",
+                                ENTITY_NAME, "tooManyComplaints");
+                    }
+                }
+                case MORE_FEEDBACK -> {
+                    if (!course.getRequestMoreFeedbackEnabled()) {
+                        throw new BadRequestAlertException("You cannot request more feedback in this course because this feature has been disabled by the instructors.",
+                                ENTITY_NAME, "moreFeedbackRequestsDisabled");
+                    }
                 }
             }
-            else if (complaint.getComplaintType() == ComplaintType.MORE_FEEDBACK && !course.getRequestMoreFeedbackEnabled()) {
-                throw new BadRequestAlertException("You cannot request more feedback in this course because this feature has been disabled by the instructors.", ENTITY_NAME,
-                        "moreFeedbackRequestsDisabled");
-            }
-            validateTimeOfComplaintOrRequestMoreFeedback(originalResult, studentParticipation.getExercise(), studentParticipation, course, complaint.getComplaintType());
+            validateTimeOfComplaintOrRequestMoreFeedback(originalResult, studentParticipation.getExercise(), studentParticipation, course, complaintRequest.complaintType());
         }
 
         if (studentParticipation.getParticipant() instanceof Team team) {
@@ -117,7 +138,9 @@ public class ComplaintService {
         if (originalResult.getAssessmentType() == AssessmentType.AUTOMATIC) {
             originalResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         }
-
+        Complaint complaint = new Complaint();
+        complaint.setComplaintText(complaintRequest.complaintText());
+        complaint.setComplaintType(complaintRequest.complaintType());
         complaint.setSubmittedTime(ZonedDateTime.now());
         complaint.setParticipant(participant);
         complaint.setResult(originalResult);
@@ -216,20 +239,6 @@ public class ComplaintService {
                     numberOfMoreFeedbackRequestsMap.getOrDefault(exercise.getId(), 0L) - numberOfMoreFeedbackResponsesMap.getOrDefault(exercise.getId(), 0L));
             exercise.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequestsMap.getOrDefault(exercise.getId(), 0L));
         });
-    }
-
-    /**
-     * Given an exercise id, retrieve more feedback requests related to whoever is calling the method. Useful for creating a list of more feedback requests a tutor can review.
-     *
-     * @param exerciseId - the id of the exercise we are interested in
-     * @return a list of complaints
-     */
-    public List<Complaint> getMyMoreFeedbackRequests(long exerciseId) {
-        return complaintRepository.getAllComplaintsByExerciseIdAndComplaintType(exerciseId, ComplaintType.MORE_FEEDBACK);
-    }
-
-    public List<Complaint> getAllComplaintsByTutorId(Long tutorId) {
-        return complaintRepository.getAllByResult_Assessor_Id(tutorId);
     }
 
     public List<Complaint> getAllComplaintsByCourseId(Long courseId) {

@@ -6,6 +6,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,7 +15,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.AssessmentUpdate;
+import de.tum.in.www1.artemis.domain.Complaint;
+import de.tum.in.www1.artemis.domain.ComplaintResponse;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
@@ -25,7 +33,13 @@ import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ComplaintRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.service.dto.ComplaintAction;
+import de.tum.in.www1.artemis.service.dto.ComplaintRequestDTO;
+import de.tum.in.www1.artemis.service.dto.ComplaintResponseUpdateDTO;
 import de.tum.in.www1.artemis.team.TeamUtilService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.TestResourceUtils;
@@ -72,6 +86,8 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
 
     private Complaint complaint;
 
+    private ComplaintRequestDTO complaintRequest;
+
     private Complaint moreFeedbackRequest;
 
     private Course course;
@@ -91,6 +107,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
         team = teamUtilService.addTeamForExercise(modelingExercise, userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"), TEST_PREFIX);
         saveModelingSubmissionAndAssessment();
         complaint = new Complaint().result(modelingAssessment).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
+        complaintRequest = new ComplaintRequestDTO(complaint.getResult().getId(), complaint.getComplaintText(), complaint.getComplaintType(), Optional.empty());
         moreFeedbackRequest = new Complaint().result(modelingAssessment).complaintText("Please explain").complaintType(ComplaintType.MORE_FEEDBACK);
     }
 
@@ -103,7 +120,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
         // 2 complaints are allowed, the course is created with 3 max team complaints
         complaintUtilService.addTeamComplaints(team, modelingAssessment.getParticipation(), 2, ComplaintType.COMPLAINT);
 
-        request.post(resourceUrl, complaint, HttpStatus.CREATED);
+        request.post(resourceUrl, complaintRequest, HttpStatus.CREATED);
 
         assertThat(complaintRepo.findByResultId(modelingAssessment.getId())).as("complaint is saved").isPresent();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();
@@ -115,7 +132,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
     void submitComplaintAboutModelingAssessment_complaintLimitReached() throws Exception {
         complaintUtilService.addTeamComplaints(team, modelingAssessment.getParticipation(), 3, ComplaintType.COMPLAINT);
 
-        request.post(resourceUrl, complaint, HttpStatus.BAD_REQUEST);
+        request.post(resourceUrl, complaintRequest, HttpStatus.BAD_REQUEST);
 
         assertThat(complaintRepo.findByResultId(modelingAssessment.getId())).as("complaint is not saved").isNotPresent();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();
@@ -129,14 +146,16 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
         exerciseUtilService.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(1));
         complaintUtilService.addTeamComplaints(team, modelingAssessment.getParticipation(), 5, ComplaintType.MORE_FEEDBACK);
 
-        request.post(resourceUrl, complaint, HttpStatus.CREATED);
+        request.post(resourceUrl, complaintRequest, HttpStatus.CREATED);
 
         assertThat(complaintRepo.findByResultId(modelingAssessment.getId())).as("complaint is saved").isPresent();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();
         assertThat(storedResult.hasComplaint()).as("hasComplaint flag of result is true").isTrue();
 
         // Only one complaint is possible for exercise regardless of its type
+        var moreFeedbackRequest = new ComplaintRequestDTO(modelingAssessment.getId(), "Please explain", ComplaintType.MORE_FEEDBACK, Optional.empty());
         request.post(resourceUrl, moreFeedbackRequest, HttpStatus.BAD_REQUEST);
+
         assertThat(complaintRepo.findByResultId(modelingAssessment.getId()).orElseThrow().getComplaintType()).as("more feedback request is not saved")
                 .isNotEqualTo(ComplaintType.MORE_FEEDBACK);
     }
@@ -148,7 +167,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
         exerciseUtilService.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusWeeks(1));
         exerciseUtilService.updateResultCompletionDate(modelingAssessment.getId(), ZonedDateTime.now().minusWeeks(1));
 
-        request.post(resourceUrl, complaint, HttpStatus.CREATED);
+        request.post(resourceUrl, complaintRequest, HttpStatus.CREATED);
 
         assertThat(complaintRepo.findByResultId(modelingAssessment.getId())).as("complaint is saved").isPresent();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();
@@ -163,7 +182,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
         exerciseUtilService.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusWeeks(3));
         exerciseUtilService.updateResultCompletionDate(modelingAssessment.getId(), ZonedDateTime.now().minusWeeks(3));
 
-        request.post(resourceUrl, complaint, HttpStatus.BAD_REQUEST);
+        request.post(resourceUrl, complaintRequest, HttpStatus.BAD_REQUEST);
 
         assertThat(complaintRepo.findByResultId(modelingAssessment.getId())).as("complaint is not saved").isNotPresent();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();
@@ -176,10 +195,9 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
         complaint = complaintRepo.saveAndFlush(complaint);
 
         ComplaintResponse complaintResponse = complaintUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor1", complaint);
-        complaintResponse.getComplaint().setAccepted(false);
-        complaintResponse.setResponseText("rejected");
+        ComplaintResponseUpdateDTO complaintResponseUpdate = new ComplaintResponseUpdateDTO("rejected", false, ComplaintAction.RESOLVE_COMPLAINT);
 
-        request.put("/api/complaint-responses/complaint/" + complaint.getId() + "/resolve", complaintResponse, HttpStatus.OK);
+        request.patch("/api/complaints/" + complaint.getId() + "/response", complaintResponseUpdate, HttpStatus.OK);
         assertThat(complaintResponse.getComplaint().getParticipant()).isNull();
         Complaint storedComplaint = complaintRepo.findByResultId(modelingAssessment.getId()).orElseThrow();
         assertThat(storedComplaint.isAccepted()).as("complaint is not accepted").isFalse();
@@ -200,7 +218,10 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
         ComplaintResponse complaintResponse = complaintUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
         complaintResponse.getComplaint().setAccepted(false);
         complaintResponse.setResponseText("rejected");
-        request.put("/api/complaint-responses/complaint/" + complaint.getId() + "/resolve", complaintResponse, HttpStatus.FORBIDDEN);
+
+        ComplaintResponseUpdateDTO complaintResponseUpdate = new ComplaintResponseUpdateDTO("rejected", false, ComplaintAction.RESOLVE_COMPLAINT);
+
+        request.patch("/api/complaints/" + complaint.getId() + "/response", complaintResponseUpdate, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -255,7 +276,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
         complaint.setParticipant(team);
         complaintRepo.save(complaint);
 
-        request.get("/api/complaints/submissions/" + modelingSubmission.getId(), HttpStatus.FORBIDDEN, Complaint.class);
+        request.get("/api/complaints?submissionId=" + modelingSubmission.getId(), HttpStatus.FORBIDDEN, Complaint.class);
     }
 
     private void saveModelingSubmissionAndAssessment() throws Exception {
@@ -264,15 +285,4 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
         modelingAssessment = modelingExerciseUtilService.addModelingAssessmentForSubmission(modelingExercise, modelingSubmission,
                 "test-data/model-assessment/assessment.54727.v2.json", TEST_PREFIX + "tutor1", true);
     }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void getNumberOfAllowedTeamComplaintsInCourse() throws Exception {
-        complaint.setParticipant(team);
-        complaintRepo.save(complaint);
-        Long nrOfAllowedComplaints = request.get("/api/courses/" + modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/allowed-complaints?isTeamMode=true",
-                HttpStatus.OK, Long.class);
-        assertThat(nrOfAllowedComplaints.intValue()).isEqualTo(course.getMaxTeamComplaints());
-    }
-
 }
