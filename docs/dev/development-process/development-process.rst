@@ -107,7 +107,7 @@ For more details and to get started with UICompanion, visit the `UICompanion Rep
 ========================
 We use the following structure for branch names:
 
-\<type\>/\<area\>/\<short-description\>
+``<type>/<area>/<short-description>``
 
 Possible types are:
 
@@ -115,7 +115,7 @@ Possible types are:
 * chore
 * bugfix
 
-Possible areas are all allowed feature tags (see :ref:`pr_naming_conventions`, written in lowercase and connected with dashes. E.g., ``Programming exercises`` becomes **programming-exercises**.
+Possible areas are all allowed feature tags (see :ref:`pr_naming_conventions`), written kebab-case. For example, ``Programming exercises`` becomes **programming-exercises**.
 Branches that do not follow this structure will get rejected by GitHub.
 
 5. Implement the Feature
@@ -196,7 +196,7 @@ Steps to Create and Merge a Pull Request
     * contain thorough documentation where applicable.
     * maintain reasonable performance (e.g. no excessive/unnecessary database queries or HTTP calls).
 * Respect the PR scope: Implementations that are unrelated to the PRs topic should not be enforced in a code review.
-* Explain your rational when requesting changes: E.g., not "Please change X to Y", but "Please change X to Y, because this would improve Z"
+* Explain your rationale when requesting changes: E.g., not "Please change X to Y", but "Please change X to Y, because this would improve Z"
 * Submit your comments and status (👍 Approve or 👎 Request Changes) using GitHub.
     * Explain what you did (test, review code) and on which test server in the review comment.
 

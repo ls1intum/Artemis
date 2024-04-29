@@ -476,9 +476,8 @@ Best Practices:
 
 We are using `Scss <https://sass-lang.com>`_ to write modular, reusable css. We have a couple of global scss files in ``webapp/content/scss`` but encourage `component dependent css with angular's styleUrls <https://angular.io/guide/component-styles>`_.
 
-Within the component html files, we encourage the use of `bootstrap css <https://getbootstrap.com/>`_.
+Within the component html files, we encourage the use of `bootstrap css <https://getbootstrap.com/>`_:
 
-Encouraged html styling:
 .. code-block:: html
 
 <div class="d-flex ms-2">some content</div>
