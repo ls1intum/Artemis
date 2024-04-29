@@ -40,6 +40,7 @@ export abstract class IrisChatbotButtonComponent implements OnInit, OnDestroy {
         this.paramsSubscription = this.route.params.subscribe((params) => {
             if (this.exerciseId !== undefined && this.exerciseId !== parseInt(params['exerciseId'], 10)) {
                 return;
+            }
             this.courseId = parseInt(params['courseId'], 10);
             this.exerciseId = parseInt(params['exerciseId'], 10);
             if (this.exerciseId != null) {
