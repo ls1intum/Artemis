@@ -5,7 +5,11 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Bonus;
+import de.tum.in.www1.artemis.domain.GradeStep;
+import de.tum.in.www1.artemis.domain.GradeType;
+import de.tum.in.www1.artemis.domain.GradingScale;
+import de.tum.in.www1.artemis.domain.IBonusStrategy;
 import de.tum.in.www1.artemis.repository.BonusRepository;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
 import de.tum.in.www1.artemis.web.rest.dto.BonusExampleDTO;

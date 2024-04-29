@@ -409,7 +409,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationJenk
         // Mock again because we call the trigger request two times
         mockGetBuildPlan(programmingExerciseParticipation.getProgrammingExercise().getProjectKey(), participation.getBuildPlanId(), true, true, false, false);
 
-        String url = Constants.PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + participation.getId() + "/trigger-failed-build";
+        String url = "/api/programming-submissions/" + participation.getId() + "/trigger-failed-build";
         request.postWithoutLocation(url, null, HttpStatus.OK, null);
 
         final Long submissionId = submission.getId();
@@ -428,7 +428,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationJenk
     void triggerFailedBuildSubmissionNotLatestButLastGradedNotFound() throws Exception {
         var participation = createExerciseWithSubmissionAndParticipation();
 
-        String url = Constants.PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + participation.getId() + "/trigger-failed-build?lastGraded=true";
+        String url = "/api/programming-submissions/" + participation.getId() + "/trigger-failed-build?lastGraded=true";
         request.postWithoutLocation(url, null, HttpStatus.NOT_FOUND, null);
     }
 
@@ -441,7 +441,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationJenk
         var repoUri = uriService.getRepositorySlugFromRepositoryUri(participation.getVcsRepositoryUri());
         doReturn(participation.getVcsRepositoryUri()).when(versionControlService).getCloneRepositoryUri(exercise.getProjectKey(), repoUri);
         mockConnectorRequestsForResumeParticipation(exercise, participation.getParticipantIdentifier(), participation.getParticipant().getParticipants(), true);
-        String url = Constants.PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + participation.getId() + "/trigger-failed-build";
+        String url = "/api/programming-submissions/" + participation.getId() + "/trigger-failed-build";
         request.postWithoutLocation(url, null, HttpStatus.OK, null);
     }
 
