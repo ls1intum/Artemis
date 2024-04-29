@@ -151,6 +151,15 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateTestExam_asInstructor_attendanceCheckTurnedOn() throws Exception {
+        // Test for bad request if the attendance check is turned on
+        Exam examD = ExamFactory.generateTestExam(course1);
+        examD.setExamWithAttendanceCheck(true);
+        request.post("/api/courses/" + course1.getId() + "/exams", examD, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateTestExam_asInstructor_testExam_CorrectionRoundViolation() throws Exception {
         Exam exam = ExamFactory.generateTestExam(course1);
         exam.setNumberOfCorrectionRoundsInExam(1);

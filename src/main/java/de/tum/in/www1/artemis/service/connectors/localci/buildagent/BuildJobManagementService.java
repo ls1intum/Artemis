@@ -5,8 +5,17 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.time.ZonedDateTime;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
@@ -129,7 +138,7 @@ public class BuildJobManagementService {
             if (cancelledBuildJobs.contains(buildJobItem.id())) {
                 finishCancelledBuildJob(buildJobItem.repositoryInfo().assignmentRepositoryUri(), buildJobItem.id(), containerName);
                 String msg = "Build job with id " + buildJobItem.id() + " was cancelled before it was submitted to the executor service.";
-                buildLogsMap.appendBuildLogEntry(buildJobItem.id(), new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
+                buildLogsMap.appendBuildLogEntry(buildJobItem.id(), msg);
                 throw new CompletionException(msg, null);
             }
             future = localCIBuildExecutorService.submit(buildJob);
@@ -143,7 +152,7 @@ public class BuildJobManagementService {
             try {
                 return future.get(timeoutSeconds, TimeUnit.SECONDS);
             }
-            catch (RejectedExecutionException | CancellationException | ExecutionException | InterruptedException | TimeoutException | LocalCIException e) {
+            catch (Exception e) {
                 // RejectedExecutionException is thrown if the queue size limit (defined in "artemis.continuous-integration.queue-size-limit") is reached.
                 // Wrap the exception in a CompletionException so that the future is completed exceptionally and the thenAccept block is not run.
                 // This CompletionException will not resurface anywhere else as it is thrown in this completable future's separate thread.

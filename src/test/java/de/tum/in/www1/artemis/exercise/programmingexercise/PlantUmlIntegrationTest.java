@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.exercise.programmingexercise;
 
-import static de.tum.in.www1.artemis.web.rest.PlantUmlResource.Endpoints.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
@@ -51,7 +50,7 @@ class PlantUmlIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             try (var ignored2 = Mockito.mockConstruction(SourceStringReader.class, (readerMock, context) -> doReturn(description).when(readerMock).outputImage(any(), any()))) {
                 final var paramMap = new LinkedMultiValueMap<String, String>();
                 paramMap.setAll(Map.of("plantuml", UML_DIAGRAM_STRING));
-                final var pngResponse = request.getPng(ROOT + GENERATE_PNG, HttpStatus.OK, paramMap);
+                final var pngResponse = request.getPng("/api/plantuml/png", HttpStatus.OK, paramMap);
                 assertThat(pngResponse).isEqualTo(UML_PNG);
             }
         }
@@ -69,7 +68,7 @@ class PlantUmlIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         try (var ignored = Mockito.mockConstruction(SourceStringReader.class, (readerMock, context) -> when(readerMock.outputImage(any(), any())).then(answer))) {
             final var paramMap = new LinkedMultiValueMap<String, String>();
             paramMap.setAll(Map.of("plantuml", UML_DIAGRAM_STRING));
-            final var svgResponse = request.get(ROOT + GENERATE_SVG, HttpStatus.OK, String.class, paramMap);
+            final var svgResponse = request.get("/api/plantuml/svg", HttpStatus.OK, String.class, paramMap);
             assertThat(svgResponse).isEqualTo(UML_SVG);
         }
     }
@@ -79,10 +78,10 @@ class PlantUmlIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void generateSvg_asStudent_error() throws Exception {
         final var paramMap = new LinkedMultiValueMap<String, String>();
         paramMap.setAll(Map.of("plantuml", ""));    // empty string
-        request.get(ROOT + GENERATE_SVG, HttpStatus.INTERNAL_SERVER_ERROR, String.class, paramMap);
+        request.get("/api/plantuml/svg", HttpStatus.INTERNAL_SERVER_ERROR, String.class, paramMap);
 
         var veryLongString = new String(new char[10001]).replace('\0', 'a');
         paramMap.setAll(Map.of("plantuml", veryLongString));
-        request.get(ROOT + GENERATE_SVG, HttpStatus.INTERNAL_SERVER_ERROR, String.class, paramMap);
+        request.get("/api/plantuml/svg", HttpStatus.INTERNAL_SERVER_ERROR, String.class, paramMap);
     }
 }

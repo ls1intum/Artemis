@@ -17,11 +17,25 @@ import org.springframework.context.annotation.Import;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.async.ResultCallback;
-import com.github.dockerjava.api.command.*;
+import com.github.dockerjava.api.command.CopyArchiveToContainerCmd;
+import com.github.dockerjava.api.command.CreateContainerCmd;
+import com.github.dockerjava.api.command.CreateContainerResponse;
+import com.github.dockerjava.api.command.ExecCreateCmd;
+import com.github.dockerjava.api.command.ExecCreateCmdResponse;
+import com.github.dockerjava.api.command.ExecStartCmd;
+import com.github.dockerjava.api.command.InspectImageCmd;
+import com.github.dockerjava.api.command.InspectImageResponse;
+import com.github.dockerjava.api.command.ListContainersCmd;
+import com.github.dockerjava.api.command.ListImagesCmd;
+import com.github.dockerjava.api.command.PullImageCmd;
+import com.github.dockerjava.api.command.RemoveContainerCmd;
+import com.github.dockerjava.api.command.RemoveImageCmd;
+import com.github.dockerjava.api.command.StartContainerCmd;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Image;
 
 import de.tum.in.www1.artemis.config.localvcci.LocalCIConfiguration;
+import de.tum.in.www1.artemis.service.connectors.localci.buildagent.LocalCIDockerService;
 import de.tum.in.www1.artemis.util.FixMissingServletPathProcessor;
 
 /**
@@ -50,8 +64,8 @@ public class LocalCITestConfiguration {
         // Mock PullImageCmd
         PullImageCmd pullImageCmd = mock(PullImageCmd.class);
         doReturn(pullImageCmd).when(dockerClient).pullImageCmd(anyString());
-        PullImageResultCallback callback1 = mock(PullImageResultCallback.class);
-        doReturn(callback1).when(pullImageCmd).exec(any(PullImageResultCallback.class));
+        LocalCIDockerService.MyPullImageResultCallback callback1 = mock(LocalCIDockerService.MyPullImageResultCallback.class);
+        doReturn(callback1).when(pullImageCmd).exec(any(LocalCIDockerService.MyPullImageResultCallback.class));
         doReturn(null).when(callback1).awaitCompletion();
 
         String dummyContainerId = "1234567890";

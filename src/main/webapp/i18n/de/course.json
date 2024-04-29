@@ -55,7 +55,7 @@
             },
             "customizeGroupNames": {
                 "title": "Passe Gruppennamen an",
-                "description": "Stelle sicher, dass die Gruppen in der externen Verwaltung von Nutzer:innen existieren, wenn du diese Option aktivierst. Die Gruppen werden dann nicht automatisch erzeugt."
+                "description": "Das Anpassen der Gruppennamen sollte nicht nötig sein und kann dazu führen, dass Nutzer:innen den Zugang zum Kurs verlieren. Stelle sicher, dass du einen guten Grund für das Anpassen der Gruppennamen hast."
             },
             "studentGroupName": "Gruppe der Studierenden",
             "teachingAssistantGroupName": "Gruppe der Tutor:innen",
@@ -104,13 +104,13 @@
                     "codeOfConduct": "Nachrichten: Code of Conduct"
                 }
             },
-            "registrationEnabled": {
-                "title": "Kursregistrierung für Studierende aktiviert",
-                "description": "Aktiviere diese Checkbox, damit sich Studierende selbständig im Kurs registrieren können, sofern dieser aktiv ist (zwischen Start und Ende des Kurses). Du kannst optional eine Nachricht eingeben, die Studierende bei der Registrierung bestätigen müssen."
+            "enrollmentEnabled": {
+                "title": "Kurseinschreibung für Studierende aktiviert",
+                "description": "Aktiviere diese Checkbox, damit sich Studierende selbständig im Kurs einschreiben können, sofern dieser aktiv ist (zwischen Start und Ende des Kurses). Du kannst optional eine Nachricht eingeben, die Studierende bei der Einschreibung bestätigen müssen."
             },
             "enrollmentStartDate": "Einschreibungs Start",
             "enrollmentEndDate": "Einschreibungs Ende",
-            "registrationConfirmationMessage": "Nachricht zur Bestätigung der Registrierung",
+            "enrollmentConfirmationMessage": "Nachricht zur Bestätigung der Einschreibung",
             "unenrollmentEnabled": {
                 "title": "Austragen aus dem Kurs für Studierende aktiviert",
                 "description": "Aktiviere diese Checkbox, damit sich Studierende selbstständig vom Kurs austragen können. Du kannst das späteste Datum hierfür einstellen, andernfalls ist es den Studenten bis zum Ende des Kurses möglich sich auszutragen."

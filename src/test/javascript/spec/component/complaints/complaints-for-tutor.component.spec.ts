@@ -138,7 +138,7 @@ describe('ComplaintsForTutorComponent', () => {
         freshlyCreatedComplaintResponse.isCurrentlyLocked = true;
         freshlyCreatedComplaintResponse.complaint = unhandledComplaint;
 
-        const createLockStub = jest.spyOn(injectedComplaintResponseService, 'refreshLock').mockReturnValue(
+        const createLockStub = jest.spyOn(injectedComplaintResponseService, 'refreshLockOrResolveComplaint').mockReturnValue(
             of(
                 new HttpResponse({
                     body: freshlyCreatedComplaintResponse,
@@ -216,7 +216,7 @@ describe('ComplaintsForTutorComponent', () => {
         freshlyCreatedComplaintResponse.isCurrentlyLocked = true;
         freshlyCreatedComplaintResponse.complaint = unhandledComplaint;
 
-        const resolveStub = jest.spyOn(injectedComplaintResponseService, 'resolveComplaint').mockReturnValue(
+        const resolveStub = jest.spyOn(injectedComplaintResponseService, 'refreshLockOrResolveComplaint').mockReturnValue(
             of(
                 new HttpResponse({
                     body: freshlyCreatedComplaintResponse,
@@ -247,7 +247,7 @@ describe('ComplaintsForTutorComponent', () => {
         freshlyCreatedComplaintResponse.isCurrentlyLocked = true;
         freshlyCreatedComplaintResponse.complaint = unhandledComplaint;
 
-        jest.spyOn(injectedComplaintResponseService, 'refreshLock').mockReturnValue(
+        jest.spyOn(injectedComplaintResponseService, 'refreshLockOrResolveComplaint').mockReturnValue(
             of(
                 new HttpResponse({
                     body: freshlyCreatedComplaintResponse,
@@ -298,7 +298,7 @@ describe('ComplaintsForTutorComponent', () => {
         freshlyCreatedComplaintResponse.isCurrentlyLocked = true;
         freshlyCreatedComplaintResponse.complaint = unhandledComplaint;
 
-        jest.spyOn(injectedComplaintResponseService, 'refreshLock').mockReturnValue(
+        jest.spyOn(injectedComplaintResponseService, 'refreshLockOrResolveComplaint').mockReturnValue(
             of(
                 new HttpResponse({
                     body: freshlyCreatedComplaintResponse,

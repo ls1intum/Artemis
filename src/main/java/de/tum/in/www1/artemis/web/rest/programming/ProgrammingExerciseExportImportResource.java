@@ -2,15 +2,6 @@ package de.tum.in.www1.artemis.web.rest.programming;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
-import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.EXPORT_INSTRUCTOR_AUXILIARY_REPOSITORY;
-import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.EXPORT_INSTRUCTOR_EXERCISE;
-import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.EXPORT_INSTRUCTOR_REPOSITORY;
-import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.EXPORT_SOLUTION_REPOSITORY;
-import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.EXPORT_SUBMISSIONS_BY_PARTICIPANTS;
-import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.EXPORT_SUBMISSIONS_BY_PARTICIPATIONS;
-import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.IMPORT;
-import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.IMPORT_FROM_FILE;
-import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.ROOT;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -90,7 +81,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping(ROOT)
+@RequestMapping("api/")
 public class ProgrammingExerciseExportImportResource {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseExportImportResource.class);
@@ -181,7 +172,7 @@ public class ProgrammingExerciseExportImportResource {
      *         (403) if the user is not at least an instructor in the target course.
      * @see ProgrammingExerciseImportService#importProgrammingExercise(ProgrammingExercise, ProgrammingExercise, boolean, boolean)
      */
-    @PostMapping(IMPORT)
+    @PostMapping("programming-exercises/import/{sourceExerciseId}")
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<ProgrammingExercise> importProgrammingExercise(@PathVariable long sourceExerciseId, @RequestBody ProgrammingExercise newExercise,
@@ -279,7 +270,7 @@ public class ProgrammingExerciseExportImportResource {
      * @return The imported exercise (200)
      *         (403) if the user is not at least an editor in the target course.
      */
-    @PostMapping(IMPORT_FROM_FILE)
+    @PostMapping("courses/{courseId}/programming-exercises/import-from-file")
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<ProgrammingExercise> importProgrammingExerciseFromFile(@PathVariable long courseId,
@@ -306,7 +297,7 @@ public class ProgrammingExerciseExportImportResource {
      * @return ResponseEntity with status
      * @throws IOException if something during the zip process went wrong
      */
-    @GetMapping(EXPORT_INSTRUCTOR_EXERCISE)
+    @GetMapping("programming-exercises/{exerciseId}/export-instructor-exercise")
     @EnforceAtLeastInstructor
     @FeatureToggle({ Feature.ProgrammingExercises, Feature.Exports })
     public ResponseEntity<Resource> exportInstructorExercise(@PathVariable long exerciseId) throws IOException {
@@ -340,7 +331,7 @@ public class ProgrammingExerciseExportImportResource {
      * @return ResponseEntity with status
      * @throws IOException if something during the zip process went wrong
      */
-    @GetMapping(EXPORT_INSTRUCTOR_REPOSITORY)
+    @GetMapping("programming-exercises/{exerciseId}/export-instructor-repository/{repositoryType}")
     @EnforceAtLeastTutor
     @FeatureToggle({ Feature.ProgrammingExercises, Feature.Exports })
     public ResponseEntity<Resource> exportInstructorRepository(@PathVariable long exerciseId, @PathVariable RepositoryType repositoryType) throws IOException {
@@ -361,7 +352,7 @@ public class ProgrammingExerciseExportImportResource {
      * @return ResponseEntity with status
      * @throws IOException if something during the zip process went wrong
      */
-    @GetMapping(EXPORT_INSTRUCTOR_AUXILIARY_REPOSITORY)
+    @GetMapping("programming-exercises/{exerciseId}/export-instructor-auxiliary-repository/{repositoryId}")
     @EnforceAtLeastTutor
     @FeatureToggle({ Feature.ProgrammingExercises, Feature.Exports })
     public ResponseEntity<Resource> exportInstructorAuxiliaryRepository(@PathVariable long exerciseId, @PathVariable long repositoryId) throws IOException {
@@ -407,7 +398,7 @@ public class ProgrammingExerciseExportImportResource {
      * @return ResponseEntity with status
      * @throws IOException if something during the zip process went wrong
      */
-    @PostMapping(EXPORT_SUBMISSIONS_BY_PARTICIPANTS)
+    @PostMapping("programming-exercises/{exerciseId}/export-repos-by-participant-identifiers/{participantIdentifiers}")
     @EnforceAtLeastTutor
     @FeatureToggle({ Feature.ProgrammingExercises, Feature.Exports })
     public ResponseEntity<Resource> exportSubmissionsByStudentLogins(@PathVariable long exerciseId, @PathVariable String participantIdentifiers,
@@ -452,7 +443,7 @@ public class ProgrammingExerciseExportImportResource {
      * @return ResponseEntity with status
      * @throws IOException if submissions can't be zippedRequestBody
      */
-    @PostMapping(EXPORT_SUBMISSIONS_BY_PARTICIPATIONS)
+    @PostMapping("programming-exercises/{exerciseId}/export-repos-by-participation-ids/{participationIds}")
     @EnforceAtLeastTutor
     @FeatureToggle({ Feature.ProgrammingExercises, Feature.Exports })
     public ResponseEntity<Resource> exportSubmissionsByParticipationIds(@PathVariable long exerciseId, @PathVariable String participationIds,
@@ -511,7 +502,7 @@ public class ProgrammingExerciseExportImportResource {
      * @return ResponseEntity with status
      * @throws IOException if something during the zip process went wrong
      */
-    @GetMapping(EXPORT_SOLUTION_REPOSITORY)
+    @GetMapping("programming-exercises/{exerciseId}/export-student-requested-repository")
     @EnforceAtLeastStudent
     @FeatureToggle({ Feature.ProgrammingExercises, Feature.Exports })
     public ResponseEntity<Resource> exportStudentRequestedRepository(@PathVariable long exerciseId, @RequestParam() boolean includeTests) throws IOException {

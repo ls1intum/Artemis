@@ -5,28 +5,51 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Complaint;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.FileUploadExercise;
+import de.tum.in.www1.artemis.domain.FileUploadSubmission;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.Team;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
-import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ComplaintRepository;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ComplaintService;
+import de.tum.in.www1.artemis.service.dto.ComplaintRequestDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -54,8 +77,6 @@ public class ComplaintResource {
 
     private final UserRepository userRepository;
 
-    private final TeamRepository teamRepository;
-
     private final ResultRepository resultRepository;
 
     private final ComplaintService complaintService;
@@ -64,12 +85,11 @@ public class ComplaintResource {
 
     private final CourseRepository courseRepository;
 
-    public ComplaintResource(AuthorizationCheckService authCheckService, ExerciseRepository exerciseRepository, UserRepository userRepository, TeamRepository teamRepository,
-            ResultRepository resultRepository, ComplaintService complaintService, ComplaintRepository complaintRepository, CourseRepository courseRepository) {
+    public ComplaintResource(AuthorizationCheckService authCheckService, ExerciseRepository exerciseRepository, UserRepository userRepository, ResultRepository resultRepository,
+            ComplaintService complaintService, ComplaintRepository complaintRepository, CourseRepository courseRepository) {
         this.authCheckService = authCheckService;
         this.exerciseRepository = exerciseRepository;
         this.userRepository = userRepository;
-        this.teamRepository = teamRepository;
         this.resultRepository = resultRepository;
         this.complaintService = complaintService;
         this.courseRepository = courseRepository;
@@ -84,94 +104,53 @@ public class ComplaintResource {
      * @return the ResponseEntity with status 201 (Created) and with body the new complaints
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("complaints") // TODO: should be participations/{participationId}/results/{resultId}/complaints
+    @PostMapping("complaints")
     @EnforceAtLeastStudent
-    public ResponseEntity<Complaint> createComplaint(@RequestBody Complaint complaint, Principal principal) throws URISyntaxException {
+    public ResponseEntity<Complaint> createComplaint(@RequestBody ComplaintRequestDTO complaint, Principal principal) throws URISyntaxException {
         log.debug("REST request to save Complaint: {}", complaint);
 
-        validateNewComplaint(complaint);
-
-        Result result = resultRepository.findByIdElseThrow(complaint.getResult().getId());
-
-        // For exam exercises, the POST complaints/exam/examId should be used
-        if (result.getParticipation().getExercise().isExamExercise()) {
-            throw new BadRequestAlertException("A complaint for an exam exercise cannot be filed using this component", COMPLAINT_ENTITY_NAME,
-                    "complaintAboutExamExerciseWrongComponent");
-        }
-
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, result.getParticipation().getExercise(), null);
-
-        // To build correct creation alert on the front-end we must check which type is the complaint to apply correct i18n key.
-        String entityName = complaint.getComplaintType() == ComplaintType.MORE_FEEDBACK ? MORE_FEEDBACK_ENTITY_NAME : COMPLAINT_ENTITY_NAME;
-        Complaint savedComplaint = complaintService.createComplaint(complaint, OptionalLong.empty(), principal);
-
-        // Remove assessor information from client request
-        savedComplaint.getResult().filterSensitiveInformation();
-
-        return ResponseEntity.created(new URI("/api/complaints/" + savedComplaint.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, entityName, savedComplaint.getId().toString())).body(savedComplaint);
-    }
-
-    /**
-     * POST complaints/exam/examId: create a new complaint for an exam exercise
-     *
-     * @param complaint the complaint to create
-     * @param principal that wants to complain
-     * @param examId    the examId of the exam which contains the exercise
-     * @return the ResponseEntity with status 201 (Created) and with body the new complaints
-     * @throws URISyntaxException if the Location URI syntax is incorrect
-     */
-    @PostMapping("complaints/exam/{examId}") // TODO: should be exams/{examId}/(participations/{participationId}/)complaints
-    @EnforceAtLeastStudent
-    public ResponseEntity<Complaint> createComplaintForExamExercise(@PathVariable Long examId, @RequestBody Complaint complaint, Principal principal) throws URISyntaxException {
-        log.debug("REST request to save Complaint for exam exercise: {}", complaint);
-
-        validateNewComplaint(complaint);
-
-        Result result = resultRepository.findByIdElseThrow(complaint.getResult().getId());
-
-        // For non-exam exercises, the POST complaints should be used
-        if (!result.getParticipation().getExercise().isExamExercise()) {
-            throw new BadRequestAlertException("A complaint for an course exercise cannot be filed using this component", COMPLAINT_ENTITY_NAME,
-                    "complaintAboutCourseExerciseWrongComponent");
-        }
-
-        authCheckService.isOwnerOfParticipationElseThrow((StudentParticipation) result.getParticipation());
-        // To build correct creation alert on the front-end we must check which type is the complaint to apply correct i18n key.
-        String entityName = complaint.getComplaintType() == ComplaintType.MORE_FEEDBACK ? MORE_FEEDBACK_ENTITY_NAME : COMPLAINT_ENTITY_NAME;
-        Complaint savedComplaint = complaintService.createComplaint(complaint, OptionalLong.of(examId), principal);
-
-        // Remove assessor information from client request
-        savedComplaint.getResult().filterSensitiveInformation();
-
-        return ResponseEntity.created(new URI("/api/complaints/" + savedComplaint.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, entityName, savedComplaint.getId().toString())).body(savedComplaint);
-    }
-
-    private void validateNewComplaint(Complaint complaint) {
-        if (complaint.getId() != null) {
-            throw new BadRequestAlertException("A new complaint cannot already have an id", COMPLAINT_ENTITY_NAME, "idExists");
-        }
-
-        if (complaint.getResult() == null || complaint.getResult().getId() == null) {
-            throw new BadRequestAlertException("A complaint can be only associated to a result", COMPLAINT_ENTITY_NAME, "noresultid");
-        }
-
-        if (complaintRepository.findByResultId(complaint.getResult().getId()).isPresent()) {
+        if (complaintRepository.findByResultId(complaint.resultId()).isPresent()) {
             throw new BadRequestAlertException("A complaint for this result already exists", COMPLAINT_ENTITY_NAME, "complaintexists");
         }
+
+        Result result = resultRepository.findByIdElseThrow(complaint.resultId());
+
+        String entityName = complaint.complaintType() == ComplaintType.MORE_FEEDBACK ? MORE_FEEDBACK_ENTITY_NAME : COMPLAINT_ENTITY_NAME;
+        Complaint savedComplaint;
+        if (complaint.examId().isPresent()) {
+            if (!result.getParticipation().getExercise().isExamExercise()) {
+                throw new BadRequestAlertException("A complaint for an course exercise cannot be filed using this component", COMPLAINT_ENTITY_NAME,
+                        "complaintAboutCourseExerciseWrongComponent");
+            }
+            authCheckService.isOwnerOfParticipationElseThrow((StudentParticipation) result.getParticipation());
+        }
+        else {
+            if (result.getParticipation().getExercise().isExamExercise()) {
+                throw new BadRequestAlertException("A complaint for an exam exercise cannot be filed using this component", COMPLAINT_ENTITY_NAME,
+                        "complaintAboutExamExerciseWrongComponent");
+            }
+            // Assumes user with participation in an exam exercise can file a complaint for that participation.
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, result.getParticipation().getExercise(), null);
+        }
+        savedComplaint = complaintService.createComplaint(complaint, complaint.examId(), principal);
+
+        // Remove assessor information from client request
+        savedComplaint.getResult().filterSensitiveInformation();
+
+        return ResponseEntity.created(new URI("/api/complaints/" + savedComplaint.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, entityName, savedComplaint.getId().toString())).body(savedComplaint);
     }
 
     /**
-     * Get complaints/submissions/{submissionId} get a complaint associated with a result of the submission "id"
+     * GET complaints: get a complaint associated with a result of the submission "id"
      *
      * @param submissionId the id of the submission for whose results we want to find a linked complaint
      * @return the ResponseEntity with status 200 (OK) and either with the complaint as body or an empty body, if no complaint was found for the result
      */
-    @GetMapping("complaints/submissions/{submissionId}")
+
+    @GetMapping(value = "complaints", params = { "submissionId" })
     @EnforceAtLeastStudent
-    // TODO: the URL should rather be "submissions/{submissionId}/complaints"
-    public ResponseEntity<Complaint> getComplaintBySubmissionId(@PathVariable Long submissionId) {
+    public ResponseEntity<Complaint> getComplaintBySubmissionId(@RequestParam Long submissionId) {
         log.debug("REST request to get latest Complaint associated with a result of submission : {}", submissionId);
 
         Optional<Complaint> optionalComplaint = complaintRepository.findByResultSubmissionId(submissionId);
@@ -206,46 +185,17 @@ public class ComplaintResource {
     }
 
     /**
-     * Get courses/{courseId}/allowed-complaints get the number of complaints that a student or team is still allowed to submit in the given course.
-     * It is determined by the max. complaint limit and the current number of open or rejected complaints of the student or team in the course.
-     * Students use their personal complaints for individual exercises and team complaints for team-based exercises, i.e. each student has
-     * maxComplaints for personal complaints and additionally maxTeamComplaints for complaints by their team in the course.
-     *
-     * @param courseId the id of the course for which we want to get the number of allowed complaints
-     * @param teamMode whether to return the number of allowed complaints per team (instead of per student)
-     * @return the ResponseEntity with status 200 (OK) and the number of still allowed complaints
-     */
-    @GetMapping("courses/{courseId}/allowed-complaints")
-    @EnforceAtLeastStudent
-    public ResponseEntity<Long> getNumberOfAllowedComplaintsInCourse(@PathVariable Long courseId, @RequestParam(defaultValue = "false") Boolean teamMode) {
-        log.debug("REST request to get the number of unaccepted Complaints associated to the current user in course : {}", courseId);
-        User user = userRepository.getUser();
-        Participant participant = user;
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        if (!course.getComplaintsEnabled()) {
-            throw new BadRequestAlertException("Complaints are disabled for this course", COMPLAINT_ENTITY_NAME, "complaintsDisabled");
-        }
-        if (teamMode) {
-            Optional<Team> team = teamRepository.findAllByCourseIdAndUserIdOrderByIdDesc(course.getId(), user.getId()).stream().findFirst();
-            participant = team.orElseThrow(() -> new BadRequestAlertException("You do not belong to a team in this course.", COMPLAINT_ENTITY_NAME, "noAssignedTeamInCourse"));
-        }
-        long unacceptedComplaints = complaintService.countUnacceptedComplaintsByParticipantAndCourseId(participant, courseId);
-        return ResponseEntity.ok(Math.max(complaintService.getMaxComplaintsPerParticipant(course, participant) - unacceptedComplaints, 0));
-    }
-
-    /**
-     * Get exercises/{exerciseId}/complaints-for-test-run-dashboard
-     * <p>
-     * Get all the complaints associated to a test run exercise, but filter out the ones that are not about the tutor who is doing the request, since this indicates test run
+     * GET complaints: get all the complaints associated to a test run exercise, but filter out the ones that are not about the tutor who is doing the request,
+     * since this indicates test run
      * exercises
      *
      * @param exerciseId the id of the exercise we are interested in
      * @param principal  the user that wants to get complaints
-     * @return the ResponseEntity with status 200 (OK) and a list of complaints. The list can be empty
+     * @return the ResponseEntity with status 200 (OK) and a list of complaints or a list of more feedback requests. The list can be empty
      */
-    @GetMapping("exercises/{exerciseId}/complaints-for-test-run-dashboard")
+    @GetMapping(value = "complaints", params = { "exerciseId" })
     @EnforceAtLeastInstructor
-    public ResponseEntity<List<Complaint>> getComplaintsForTestRunDashboard(@PathVariable Long exerciseId, Principal principal) {
+    public ResponseEntity<List<Complaint>> getComplaintsForTestRunDashboard(Principal principal, @RequestParam Long exerciseId) {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
         List<Complaint> responseComplaints = complaintRepository.getAllComplaintsByExerciseIdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
@@ -254,49 +204,7 @@ public class ComplaintResource {
     }
 
     /**
-     * Get exercises/:exerciseId/more-feedback-for-assessment-dashboard
-     * <p>
-     * Get all the more feedback requests associated to an exercise, that are about the tutor who is doing the request.
-     *
-     * @param exerciseId the id of the exercise we are interested in
-     * @param principal  that wants to get more feedback requests
-     * @return the ResponseEntity with status 200 (OK) and a list of more feedback requests. The list can be empty
-     */
-    @GetMapping("exercises/{exerciseId}/more-feedback-for-assessment-dashboard")
-    @EnforceAtLeastTutor
-    public ResponseEntity<List<Complaint>> getMoreFeedbackRequestsForAssessmentDashboard(@PathVariable Long exerciseId, Principal principal) {
-        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
-        List<Complaint> responseComplaints = complaintService.getMyMoreFeedbackRequests(exerciseId);
-        responseComplaints = buildComplaintsListForAssessor(responseComplaints, principal, true, false, false);
-        return ResponseEntity.ok(responseComplaints);
-    }
-
-    /**
-     * Get complaints
-     * <p>
-     * Get all the complaints for tutor.
-     *
-     * @param complaintType the type of complaints we are interested in
-     * @return the ResponseEntity with status 200 (OK) and a list of complaints. The list can be empty
-     */
-    @GetMapping("complaints") // TODO: should be "courses/{courseId}/tutors/{tutorId}/complaints"
-    @EnforceAtLeastTutor
-    public ResponseEntity<List<Complaint>> getComplaintsForTutor(@RequestParam ComplaintType complaintType) {
-        // Only tutors can retrieve all their own complaints without filter by course or exerciseId. Instructors need
-        // to filter by at least exerciseId or courseId, to be sure they are really instructors for that course /
-        // exercise.
-        // Of course tutors cannot ask for complaints about other tutors.
-        User user = userRepository.getUser();
-        List<Complaint> complaints = complaintService.getAllComplaintsByTutorId(user.getId());
-        filterOutUselessDataFromComplaints(complaints, true);
-        return ResponseEntity.ok(getComplaintsByComplaintType(complaints, complaintType));
-    }
-
-    /**
-     * Get courses/:courseId/complaints/:complaintType
-     * <p>
-     * Get all the complaints filtered by courseId, complaintType and optionally tutorId.
+     * GET complaints: get all the complaints filtered by courseId, complaintType and optionally tutorId.
      *
      * @param tutorId               the id of the tutor by which we want to filter
      * @param courseId              the id of the course we are interested in
@@ -304,9 +212,9 @@ public class ComplaintResource {
      * @param allComplaintsForTutor flag if all complaints should be send for a tutor
      * @return the ResponseEntity with status 200 (OK) and a list of complaints. The list can be empty
      */
-    @GetMapping("courses/{courseId}/complaints")
+    @GetMapping(value = "complaints", params = { "courseId", "complaintType" })
     @EnforceAtLeastTutor
-    public ResponseEntity<List<Complaint>> getComplaintsByCourseId(@PathVariable Long courseId, @RequestParam ComplaintType complaintType,
+    public ResponseEntity<List<Complaint>> getComplaintsByCourseId(@RequestParam Long courseId, @RequestParam ComplaintType complaintType,
             @RequestParam(required = false) Long tutorId, @RequestParam(required = false) boolean allComplaintsForTutor) {
         // Filtering by courseId
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -339,18 +247,16 @@ public class ComplaintResource {
     }
 
     /**
-     * Get exercises/:exerciseId/complaints
-     * <p>
-     * Get all the complaints filtered by exerciseId, complaintType and optionally tutorId.
+     * GET complaints: get all the complaints filtered by exerciseId, complaintType and optionally tutorId.
      *
      * @param tutorId       the id of the tutor by which we want to filter
      * @param exerciseId    the id of the exercise we are interested in
      * @param complaintType the type of complaints we are interested in
      * @return the ResponseEntity with status 200 (OK) and a list of complaints. The list can be empty
      */
-    @GetMapping("exercises/{exerciseId}/complaints")
+    @GetMapping(value = "complaints", params = { "exerciseId", "complaintType" })
     @EnforceAtLeastTutor
-    public ResponseEntity<List<Complaint>> getComplaintsByExerciseId(@PathVariable Long exerciseId, @RequestParam ComplaintType complaintType,
+    public ResponseEntity<List<Complaint>> getComplaintsByExerciseId(@RequestParam Long exerciseId, @RequestParam ComplaintType complaintType,
             @RequestParam(required = false) Long tutorId) {
         // Filtering by exerciseId
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
@@ -379,17 +285,15 @@ public class ComplaintResource {
     }
 
     /**
-     * Get courses/:courseId/exams/:examId/complaints
-     * <p>
-     * Get all the complaints filtered by courseId, complaintType and optionally tutorId.
+     * GET complaints: get all the complaints filtered by courseId, complaintType and optionally tutorId.
      *
      * @param examId   the id of the tutor by which we want to filter
      * @param courseId the id of the course we are interested in
      * @return the ResponseEntity with status 200 (OK) and a list of complaints. The list can be empty
      */
-    @GetMapping("courses/{courseId}/exams/{examId}/complaints")
+    @GetMapping(value = "complaints", params = { "courseId", "examId" })
     @EnforceAtLeastInstructor
-    public ResponseEntity<List<Complaint>> getComplaintsByCourseIdAndExamId(@PathVariable Long courseId, @PathVariable Long examId) {
+    public ResponseEntity<List<Complaint>> getComplaintsByCourseIdAndExamId(@RequestParam Long courseId, @RequestParam Long examId) {
         // Filtering by courseId
         Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();

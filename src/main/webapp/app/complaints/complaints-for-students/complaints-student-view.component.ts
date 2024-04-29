@@ -13,6 +13,7 @@ import { filter } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 import { HttpResponse } from '@angular/common/http';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 
 @Component({
     selector: 'jhi-complaint-student-view',
@@ -49,6 +50,7 @@ export class ComplaintsStudentViewComponent implements OnInit {
         private complaintService: ComplaintService,
         private serverDateService: ArtemisServerDateService,
         private accountService: AccountService,
+        private courseService: CourseManagementService,
     ) {}
 
     /**
@@ -66,7 +68,7 @@ export class ComplaintsStudentViewComponent implements OnInit {
             }
             // for course exercises we track the number of allowed complaints
             if (this.course?.complaintsEnabled) {
-                this.complaintService.getNumberOfAllowedComplaintsInCourse(this.course!.id!, this.exercise.teamMode).subscribe((allowedComplaints: number) => {
+                this.courseService.getNumberOfAllowedComplaintsInCourse(this.course!.id!, this.exercise.teamMode).subscribe((allowedComplaints: number) => {
                     this.remainingNumberOfComplaints = allowedComplaints;
                 });
             }

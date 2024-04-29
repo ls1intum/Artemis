@@ -23,6 +23,8 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import dayjs from 'dayjs/esm';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
 
 describe('ComplaintsStudentViewComponent', () => {
     const complaintTimeLimitDays = 7;
@@ -58,6 +60,7 @@ describe('ComplaintsStudentViewComponent', () => {
     let component: ComplaintsStudentViewComponent;
     let fixture: ComponentFixture<ComplaintsStudentViewComponent>;
     let complaintService: ComplaintService;
+    let courseService: CourseManagementService;
     let accountService: AccountService;
     let serverDateService: ArtemisServerDateService;
     let numberOfAllowedComplaintsStub: jest.SpyInstance<Observable<number>, [courseId: number, teamMode?: boolean | undefined]>;
@@ -82,6 +85,10 @@ describe('ComplaintsStudentViewComponent', () => {
                     provide: AccountService,
                     useClass: MockAccountService,
                 },
+                {
+                    provide: CourseManagementService,
+                    useClass: MockCourseManagementService,
+                },
             ],
         })
             .compileComponents()
@@ -89,11 +96,12 @@ describe('ComplaintsStudentViewComponent', () => {
                 fixture = TestBed.createComponent(ComplaintsStudentViewComponent);
                 component = fixture.componentInstance;
                 complaintService = TestBed.inject(ComplaintService);
+                courseService = TestBed.inject(CourseManagementService);
                 accountService = TestBed.inject(AccountService);
                 serverDateService = TestBed.inject(ArtemisServerDateService);
                 component.participation = participation;
                 component.result = result;
-                numberOfAllowedComplaintsStub = jest.spyOn(complaintService, 'getNumberOfAllowedComplaintsInCourse').mockReturnValue(of(numberOfComplaints));
+                numberOfAllowedComplaintsStub = jest.spyOn(courseService, 'getNumberOfAllowedComplaintsInCourse').mockReturnValue(of(numberOfComplaints));
             });
     });
 
@@ -107,7 +115,7 @@ describe('ComplaintsStudentViewComponent', () => {
             component.result = result;
             component.exam = defaultExam;
             const complaintBySubmissionMock = jest.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of());
-            const numberOfAllowedComplaintsMock = jest.spyOn(complaintService, 'getNumberOfAllowedComplaintsInCourse').mockReturnValue(of(numberOfComplaints));
+            const numberOfAllowedComplaintsMock = jest.spyOn(courseService, 'getNumberOfAllowedComplaintsInCourse').mockReturnValue(of(numberOfComplaints));
             const userMock = jest.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(user));
 
             fixture.detectChanges();
@@ -125,7 +133,7 @@ describe('ComplaintsStudentViewComponent', () => {
             component.result = result;
             component.exam = defaultExam;
             const complaintBySubmissionMock = jest.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: complaint } as EntityResponseType));
-            const numberOfAllowedComplaintsMock = jest.spyOn(complaintService, 'getNumberOfAllowedComplaintsInCourse').mockReturnValue(of(numberOfComplaints));
+            const numberOfAllowedComplaintsMock = jest.spyOn(courseService, 'getNumberOfAllowedComplaintsInCourse').mockReturnValue(of(numberOfComplaints));
             const userMock = jest.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(user));
 
             fixture.detectChanges();

@@ -76,6 +76,8 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     highlightFileChanges = false;
     @Input()
     fileBadges: { [path: string]: FileBadge[] } = {};
+    @Input()
+    allowHiddenFiles = false;
 
     @Output()
     onToggleCollapse = new EventEmitter<InteractableEvent>();
@@ -416,7 +418,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
         if (Object.keys(this.repositoryFiles).includes(newFilePath)) {
             this.onError.emit('fileExists');
             return;
-        } else if (!CodeEditorFileBrowserComponent.shouldDisplayFile(newFileName, fileType)) {
+        } else if (!this.allowHiddenFiles && !CodeEditorFileBrowserComponent.shouldDisplayFile(newFileName, fileType)) {
             this.onError.emit('unsupportedFile');
             return;
         }
@@ -454,7 +456,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
         }
         const [folderPath, fileType] = this.creatingFile;
 
-        if (!CodeEditorFileBrowserComponent.shouldDisplayFile(fileName, fileType)) {
+        if (!this.allowHiddenFiles && !CodeEditorFileBrowserComponent.shouldDisplayFile(fileName, fileType)) {
             this.onError.emit('unsupportedFile');
             return;
         } else if (Object.keys(this.repositoryFiles).includes(folderPath ? [folderPath, fileName].join('/') : fileName)) {
@@ -509,7 +511,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
             rxMap((files) =>
                 fromPairs(
                     toPairs(files)
-                        .filter(([fileName, fileType]) => CodeEditorFileBrowserComponent.shouldDisplayFile(fileName, fileType))
+                        .filter(([fileName, fileType]) => this.allowHiddenFiles || CodeEditorFileBrowserComponent.shouldDisplayFile(fileName, fileType))
                         // Filter Readme file that was historically in the student's assignment repo
                         .filter(([value]) => !value.includes('README.md'))
                         // Filter root folder
@@ -525,7 +527,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
             rxMap((files) =>
                 fromPairs(
                     toPairs(files)
-                        .filter(([filename]) => CodeEditorFileBrowserComponent.shouldDisplayFile(filename, FileType.FILE))
+                        .filter(([filename]) => this.allowHiddenFiles || CodeEditorFileBrowserComponent.shouldDisplayFile(filename, FileType.FILE))
                         // Filter Readme file that was historically in the student's assignment repo
                         .filter(([value]) => !value.includes('README.md')),
                 ),

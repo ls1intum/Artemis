@@ -2,11 +2,11 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { Complaint, ComplaintType } from 'app/entities/complaint.model';
+import { ComplaintType } from 'app/entities/complaint.model';
 import { Course } from 'app/entities/course.model';
 import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
-import { Result } from 'app/entities/result.model';
 import { onError } from 'app/shared/util/global.utils';
+import { ComplaintRequestDTO } from 'app/entities/complaint-request-dto.model';
 
 @Component({
     selector: 'jhi-complaint-form',
@@ -49,19 +49,19 @@ export class ComplaintsFormComponent implements OnInit {
      * Creates a new complaint on the provided result with the entered text and notifies the output emitter on success.
      */
     createComplaint(): void {
-        const complaint = new Complaint();
-        complaint.complaintText = this.complaintText;
-        complaint.result = new Result();
-        complaint.result.id = this.resultId;
-        complaint.complaintType = this.complaintType;
+        const complaintRequest = new ComplaintRequestDTO();
+        complaintRequest.resultId = this.resultId;
+        complaintRequest.complaintType = this.complaintType;
+        complaintRequest.complaintText = this.complaintText;
+        complaintRequest.examId = this.examId;
 
         // TODO: Rethink global client error handling and adapt this line accordingly
-        if (complaint.complaintText !== undefined && this.maxComplaintTextLimit < complaint.complaintText!.length) {
+        if (complaintRequest.complaintText !== undefined && this.maxComplaintTextLimit < complaintRequest.complaintText!.length) {
             this.alertService.error('artemisApp.complaint.exceededComplaintTextLimit', { maxComplaintTextLimit: this.maxComplaintTextLimit! });
             return;
         }
 
-        this.complaintService.create(complaint, this.examId).subscribe({
+        this.complaintService.create(complaintRequest).subscribe({
             next: () => {
                 this.submit.emit();
             },
