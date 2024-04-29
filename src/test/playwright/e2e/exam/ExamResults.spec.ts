@@ -28,6 +28,8 @@ import { TextEditorPage } from '../../support/pageobjects/exercises/text/TextEdi
 import { ModelingExerciseAssessmentEditor } from '../../support/pageobjects/assessment/ModelingExerciseAssessmentEditor';
 import { ProgrammingExerciseTaskStatus } from '../../support/pageobjects/exam/ExamResultsPage';
 
+test.describe.configure({ mode: 'default' });
+
 test.describe('Exam Results', () => {
     let course: Course;
 
@@ -45,7 +47,7 @@ test.describe('Exam Results', () => {
         await courseManagementAPIRequests.addInstructorToCourse(course, instructor);
     });
 
-    test.describe.serial('Check exam exercise results', () => {
+    test.describe('Check exam exercise results', () => {
         let exam: Exam;
         let exerciseArray: Array<Exercise> = [];
 
