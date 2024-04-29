@@ -105,9 +105,7 @@ For more details and to get started with UICompanion, visit the `UICompanion Rep
 
 4. Create a local Branch
 ========================
-We use the following structure for branch names:
-
-``<type>/<area>/<short-description>``
+We use the following structure for branch names: ``<type>/<area>/<short-description>``
 
 Possible types are:
 
@@ -116,12 +114,16 @@ Possible types are:
 * bugfix
 
 Possible areas are all allowed feature tags (see :ref:`pr_naming_conventions`), written kebab-case. For example, ``Programming exercises`` becomes **programming-exercises**.
-Branches that do not follow this structure will get rejected by GitHub.
+
+*Branches that do not follow this structure will get rejected by GitHub!*
 
 5. Implement the Feature
 ========================
 In this step, the development team converts the detailed plans and designs outlined in the functional proposal into working code.
 This step requires careful adherence to the previously defined requirements and system architecture to ensure that the function fits seamlessly into the existing system and fulfills the specified functional and performance criteria.
+
+Naming Conventions for Branches
+--------------------------------
 
 .. note::
       Make sure to follow the `Artemis Code and Design Guidelines <https://docs.artemis.cit.tum.de/dev/guidelines.html>`_.

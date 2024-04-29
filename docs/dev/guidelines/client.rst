@@ -480,5 +480,5 @@ Within the component html files, we encourage the use of `bootstrap css <https:/
 
 .. code-block:: html
 
-<div class="d-flex ms-2">some content</div>
+    <div class="d-flex ms-2">some content</div>
 
