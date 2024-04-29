@@ -62,6 +62,7 @@
             "editorGroupName": "Gruppe der Editor:innen",
             "instructorGroupName": "Gruppe der Lehrenden",
             "description": "Kursbeschreibung",
+            "organizationalDetails": "Organisatorische Details",
             "organizations": "Kurs Organisationen",
             "startDate": "Start",
             "endDate": "Ende",
