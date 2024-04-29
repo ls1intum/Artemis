@@ -85,7 +85,7 @@
                 </div>
             </mat-sidenav>
             <mat-sidenav-content [ngClass]="{ 'sidenav-height-dev': !isProduction || isTestServer }">
-                <div class="dropdown-content" [hidden]="!dropdownOpen" [style.top.px]="dropdownOffset" [ngClass]="{ moreThreeElem: hiddenItems.length >= 3 }">
+                <div class="dropdown-content" [hidden]="!dropdownOpen" [style.top.px]="dropdownOffset" [ngClass]="{ fixedContentSize: hiddenItems.length >= 3 }">
                     @for (hiddenItem of hiddenItems; track hiddenItem) {
                         <li class="dropdown-li">
                             @if (hiddenItem.hasInOrionProperty && hiddenItem.showInOrionWindow !== undefined) {

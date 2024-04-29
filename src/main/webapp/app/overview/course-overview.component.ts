@@ -114,7 +114,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     // Properties to track hidden items for dropdown menu
     dropdownOpen: boolean = false;
     anyItemHidden: boolean = false;
-    hiddenItems: SidebarItem[];
+    hiddenItems: SidebarItem[] = [];
     thresholdsForEachSidebarItem: number[] = [];
     dropdownOffset: number;
     dropdownClickNumber: number = 0;

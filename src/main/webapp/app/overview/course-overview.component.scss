@@ -248,7 +248,7 @@ jhi-secured-image {
     border: 1px solid var(--border-color);
     z-index: 1000000;
     border-radius: 4px;
-    &.moreThreeElem {
+    &.fixedContentSize {
         bottom: 0px;
         max-height: 91px; // To avoid cut offs in the dropdown menu content
     }
