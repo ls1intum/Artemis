@@ -96,7 +96,6 @@ public class AttachmentResource {
         attachment.setLink(FilePathService.publicPathForActualPath(savePath, attachment.getLecture().getId()).toString());
 
         Attachment result = attachmentRepository.save(attachment);
-
         return ResponseEntity.created(new URI("/api/attachments/" + result.getId())).body(result);
     }
 
@@ -208,6 +207,7 @@ public class AttachmentResource {
         catch (RuntimeException exception) {
             // this catch is required for deleting wrongly formatted attachment database entries
         }
+        // call webhook to delete the lecture from the database
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, attachmentId.toString())).build();
     }
 }

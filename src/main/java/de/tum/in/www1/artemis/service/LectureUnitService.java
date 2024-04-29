@@ -27,6 +27,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.lecture.*;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.connectors.pyris.PyrisWebhookService;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -46,8 +47,11 @@ public class LectureUnitService {
 
     private final ExerciseRepository exerciseRepository;
 
+    private final PyrisWebhookService webhookService;
+
     public LectureUnitService(LectureUnitRepository lectureUnitRepository, LectureRepository lectureRepository, CompetencyRepository competencyRepository,
-            LectureUnitCompletionRepository lectureUnitCompletionRepository, FileService fileService, SlideRepository slideRepository, ExerciseRepository exerciseRepository) {
+            LectureUnitCompletionRepository lectureUnitCompletionRepository, FileService fileService, SlideRepository slideRepository, ExerciseRepository exerciseRepository,
+            PyrisWebhookService webhookService) {
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
         this.competencyRepository = competencyRepository;
@@ -55,6 +59,7 @@ public class LectureUnitService {
         this.fileService = fileService;
         this.slideRepository = slideRepository;
         this.exerciseRepository = exerciseRepository;
+        this.webhookService = webhookService;
     }
 
     /**
@@ -137,7 +142,6 @@ public class LectureUnitService {
         LectureUnit lectureUnitToDelete = lectureUnitRepository.findByIdWithCompetenciesAndSlidesElseThrow(lectureUnit.getId());
 
         if (!(lectureUnitToDelete instanceof ExerciseUnit)) {
-            // update associated competencies
             Set<Competency> competencies = lectureUnitToDelete.getCompetencies();
             competencyRepository.saveAll(competencies.stream().map(competency -> {
                 competency = competencyRepository.findByIdWithLectureUnitsElseThrow(competency.getId());
@@ -153,14 +157,15 @@ public class LectureUnitService {
                 for (Slide slide : slides) {
                     fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(URI.create(slide.getSlideImagePath())), 5);
                 }
+                webhookService.executeIngestionPipeline(false, List.of(attachmentUnit.getAttachment()));
                 slideRepository.deleteAll(slides);
             }
         }
 
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureUnitToDelete.getLecture().getId());
-        // Creating a new list of lecture units without the one we want to remove
         lecture.getLectureUnits().removeIf(unit -> unit == null || unit.getId().equals(lectureUnitToDelete.getId()));
         lectureRepository.save(lecture);
+
     }
 
     /**

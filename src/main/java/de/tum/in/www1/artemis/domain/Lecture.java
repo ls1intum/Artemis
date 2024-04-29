@@ -104,6 +104,7 @@ public class Lecture extends DomainObject {
         this.visibleDate = visibleDate;
     }
 
+    @OneToMany(fetch = FetchType.EAGER)
     public Set<Attachment> getAttachments() {
         return attachments;
     }

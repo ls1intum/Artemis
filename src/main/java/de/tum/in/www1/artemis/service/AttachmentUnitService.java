@@ -15,11 +15,13 @@ import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.in.www1.artemis.domain.Attachment;
 import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.lecture.Slide;
 import de.tum.in.www1.artemis.repository.AttachmentRepository;
 import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
 import de.tum.in.www1.artemis.repository.SlideRepository;
+import de.tum.in.www1.artemis.service.connectors.pyris.PyrisWebhookService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @Profile(PROFILE_CORE)
@@ -36,13 +38,16 @@ public class AttachmentUnitService {
 
     private final SlideRepository slideRepository;
 
+    private final PyrisWebhookService webhookService;
+
     public AttachmentUnitService(SlideRepository slideRepository, SlideSplitterService slideSplitterService, AttachmentUnitRepository attachmentUnitRepository,
-            AttachmentRepository attachmentRepository, FileService fileService) {
+            AttachmentRepository attachmentRepository, FileService fileService, PyrisWebhookService webhookService) {
         this.attachmentUnitRepository = attachmentUnitRepository;
         this.attachmentRepository = attachmentRepository;
         this.fileService = fileService;
         this.slideSplitterService = slideSplitterService;
         this.slideRepository = slideRepository;
+        this.webhookService = webhookService;
     }
 
     /**
@@ -70,7 +75,9 @@ public class AttachmentUnitService {
         Attachment savedAttachment = attachmentRepository.saveAndFlush(attachment);
         savedAttachmentUnit.setAttachment(savedAttachment);
         evictCache(file, savedAttachmentUnit);
-
+        if (savedAttachment.getAttachmentType() == AttachmentType.FILE) {
+            webhookService.executeIngestionPipeline(true, List.of(savedAttachment));
+        }
         return savedAttachmentUnit;
     }
 
@@ -118,6 +125,7 @@ public class AttachmentUnitService {
             if (Objects.equals(FilenameUtils.getExtension(updateFile.getOriginalFilename()), "pdf")) {
                 slideSplitterService.splitAttachmentUnitIntoSingleSlides(savedAttachmentUnit);
             }
+            webhookService.executeIngestionPipeline(true, List.of(savedAttachment));
         }
 
         return savedAttachmentUnit;
@@ -141,6 +149,7 @@ public class AttachmentUnitService {
 
     /**
      * Handles the file after upload if provided.
+     * f
      *
      * @param file         Potential file to handle
      * @param attachment   Attachment linked to the file.

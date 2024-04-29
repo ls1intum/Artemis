@@ -5,9 +5,13 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import java.time.ZonedDateTime;
 import java.util.*;
 
+import jakarta.persistence.FetchType;
+import jakarta.persistence.OneToMany;
+
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
@@ -15,6 +19,7 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
+import de.tum.in.www1.artemis.service.connectors.pyris.PyrisWebhookService;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
@@ -32,11 +37,15 @@ public class LectureService {
 
     private final ChannelService channelService;
 
-    public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService, ChannelRepository channelRepository, ChannelService channelService) {
+    private final PyrisWebhookService webhookService;
+
+    public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService, ChannelRepository channelRepository, ChannelService channelService,
+            PyrisWebhookService webhookService) {
         this.lectureRepository = lectureRepository;
         this.authCheckService = authCheckService;
         this.channelRepository = channelRepository;
         this.channelService = channelService;
+        this.webhookService = webhookService;
     }
 
     /**
@@ -126,10 +135,13 @@ public class LectureService {
      *
      * @param lecture the lecture to be deleted
      */
+    @OneToMany(fetch = FetchType.EAGER)
+    @Transactional
     public void delete(Lecture lecture) {
         Channel lectureChannel = channelRepository.findChannelByLectureId(lecture.getId());
         channelService.deleteChannel(lectureChannel);
         lectureRepository.deleteById(lecture.getId());
+        List<Attachment> attachmentList = new ArrayList<>(lecture.getAttachments());
+        webhookService.executeIngestionPipeline(false, attachmentList);
     }
-
 }
