@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 import de.tum.in.www1.artemis.service.connectors.localci.SharedQueueManagementService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildAgentInformation;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
+import de.tum.in.www1.artemis.service.dto.FinishedBuildJobDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 import tech.jhipster.web.util.PaginationUtil;
@@ -153,10 +154,11 @@ public class AdminBuildJobQueueResource {
      */
     @GetMapping("finished-jobs")
     @EnforceAdmin
-    public ResponseEntity<List<BuildJob>> getFinishedBuildJobs(PageableSearchDTO<String> search) {
+    public ResponseEntity<List<FinishedBuildJobDTO>> getFinishedBuildJobs(PageableSearchDTO<String> search) {
         log.debug("REST request to get a page of finished build jobs");
         final Page<BuildJob> page = buildJobRepository.findAllWithEagerResults(PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.BUILD_JOB));
+        Page<FinishedBuildJobDTO> finishedBuildJobDTOs = FinishedBuildJobDTO.fromBuildJobsPage(page);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
-        return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
+        return new ResponseEntity<>(finishedBuildJobDTOs.getContent(), headers, HttpStatus.OK);
     }
 }

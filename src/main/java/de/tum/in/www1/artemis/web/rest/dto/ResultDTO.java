@@ -63,7 +63,12 @@ public record ResultDTO(Long id, ZonedDateTime completionDate, Boolean successfu
         if (Hibernate.isInitialized(result.getSubmission()) && result.getSubmission() != null) {
             submissionDTO = SubmissionDTO.of(result.getSubmission());
         }
-        var feedbackDTOs = filteredFeedback.stream().map(FeedbackDTO::of).toList();
+
+        List<FeedbackDTO> feedbackDTOs = null;
+        if (Hibernate.isInitialized(filteredFeedback)) {
+            feedbackDTOs = filteredFeedback.stream().map(FeedbackDTO::of).toList();
+        }
+
         return new ResultDTO(result.getId(), result.getCompletionDate(), result.isSuccessful(), result.getScore(), result.isRated(), submissionDTO,
                 ParticipationDTO.of(result.getParticipation()), feedbackDTOs, result.getAssessmentType(), result.hasComplaint(), result.isExampleResult(),
                 result.getTestCaseCount(), result.getPassedTestCaseCount(), result.getCodeIssueCount());
