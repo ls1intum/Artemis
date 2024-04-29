@@ -62,7 +62,7 @@
                         "forbidden": "Nutzer-Präfix darf keine Sonderzeichen beinhalten."
                     }
                 },
-                "customNameIdTooltip": "Gebe einen erkennbaren Namen für die Plattform ein, um sie in der Liste leicht identifizieren zu können. Dieser Name dient nur als administrative Referenz und hat keinen Einfluss auf die tatsächliche Konfiguration oder Konnektivität der Plattform."
+                "customNameIdTooltip": "Gib einen erkennbaren Namen für die Plattform ein, um sie in der Liste leicht identifizieren zu können. Dieser Name dient nur als administrative Referenz und hat keinen Einfluss auf die tatsächliche Konfiguration oder Konnektivität der Plattform."
             },
             "configuredPlatforms": "Konfigurierte Plattformen",
             "viewAdvancedSettings": "Erweiterte Einstellungen anzeigen",
