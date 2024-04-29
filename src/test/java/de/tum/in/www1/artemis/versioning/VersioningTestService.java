@@ -22,11 +22,10 @@ import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
+import de.tum.in.www1.artemis.config.VersioningConfiguration;
+
 @Service
 public class VersioningTestService {
-
-    @Autowired
-    private List<Integer> apiVersions;
 
     @Autowired
     private ApplicationContext applicationContext;
@@ -89,7 +88,7 @@ public class VersioningTestService {
 
             // If there is no more than one method, there can be no collision
             if (methodList.size() < 2) {
-                new VersionRangesRequestCondition(apiVersions, (VersionRange) getClass().getMethods()[0].getAnnotation(VersionRanges.class));
+                new VersionRangesRequestCondition(VersioningConfiguration.API_VERSIONS, (VersionRange) getClass().getMethods()[0].getAnnotation(VersionRanges.class));
                 break;
             }
 
@@ -102,10 +101,10 @@ public class VersioningTestService {
         while (!methodList.isEmpty()) {
             var method = methodList.removeFirst();
 
-            VersionRangesRequestCondition condition = new VersionRangesRequestCondition(apiVersions, getVersionRangeFromMethod(method));
+            VersionRangesRequestCondition condition = new VersionRangesRequestCondition(VersioningConfiguration.API_VERSIONS, getVersionRangeFromMethod(method));
 
             for (var collision : methodList) {
-                if (condition.collide(new VersionRangesRequestCondition(apiVersions, getVersionRangeFromMethod(collision)))) {
+                if (condition.collide(new VersionRangesRequestCondition(VersioningConfiguration.API_VERSIONS, getVersionRangeFromMethod(collision)))) {
                     fail("Version ranges of class " + collision.getDeclaringClass().getName() + " of method " + getPrintableMethodName(method)
                             + " collide with version ranges of method " + collision.getName() + "() of same " + "class.");
                 }
