@@ -31,6 +31,7 @@ describe('CompetencyService', () => {
     let resultGetRelations: HttpResponse<CompetencyRelation[]>;
     let resultGetForImport: SearchResult<Competency>;
     let resultImportStandardized: HttpResponse<Competency[]>;
+    let resultImport: HttpResponse<Competency>;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -300,6 +301,22 @@ describe('CompetencyService', () => {
         tick();
 
         expect(resultImportStandardized.body).toEqual(expected);
+    }));
+
+    it('should import competency', fakeAsync(() => {
+        const returnedFromService = defaultCompetencies[0];
+        const expected = { ...returnedFromService };
+
+        competencyService
+            .import(expected, 2)
+            .pipe(take(1))
+            .subscribe((resp) => (resultImport = resp));
+
+        const req = httpTestingController.expectOne({ method: 'POST' });
+        req.flush(returnedFromService);
+        tick();
+
+        expect(resultImport.body).toEqual(expected);
     }));
 
     it('should get competency relations', fakeAsync(() => {

@@ -470,6 +470,18 @@ describe('StandardizedCompetencyManagementComponent', () => {
         expect(newParent.children).toContainEqual(expectedKnowledgeAreaInTree);
     });
 
+    it('should not deactivate with pending changes', () => {
+        const deactivateWarningSpy = jest.spyOn(component, 'canDeactivateWarning', 'get');
+
+        component['isEditing'] = false;
+        component['unloadNotification']({ returnValue: '' });
+        expect(deactivateWarningSpy).not.toHaveBeenCalled();
+
+        component['isEditing'] = true;
+        component['unloadNotification']({ returnValue: '' });
+        expect(deactivateWarningSpy).toHaveBeenCalled();
+    });
+
     function prepareAndExecuteCompetencyUpdate(tree: KnowledgeAreaDTO[], competencyToUpdate: StandardizedCompetencyDTO, updatedCompetency: StandardizedCompetencyDTO) {
         getForTreeViewSpy.mockReturnValue(of(new HttpResponse({ body: tree })));
         component['selectedCompetency'] = competencyToUpdate;
