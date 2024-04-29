@@ -17,7 +17,7 @@ test.describe('Logout tests', () => {
         modelingExercise = await exerciseAPIRequests.createModelingExercise({ course });
     });
 
-    test('Logs out by pressing OK when unsaved changes on exercise mode', async ({ page, login, courseOverview, modelingExerciseEditor, navigationBar }) => {
+    test('Logs out after confirmation of dialog for unsaved changes on exercise mode', async ({ page, login, courseOverview, modelingExerciseEditor, navigationBar }) => {
         await login(studentOne);
 
         const exerciseID = modelingExercise.id!;
