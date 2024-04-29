@@ -219,7 +219,13 @@ public class CompetencyService {
             competenciesToCreate.add(competency);
         }
 
-        return competencyRepository.saveAll(competenciesToCreate);
+        var importedCompetencies = competencyRepository.saveAll(competenciesToCreate);
+
+        if (course.getLearningPathsEnabled()) {
+            learningPathService.linkCompetenciesToLearningPathsOfCourse(importedCompetencies, course.getId());
+        }
+
+        return importedCompetencies;
     }
 
     /**

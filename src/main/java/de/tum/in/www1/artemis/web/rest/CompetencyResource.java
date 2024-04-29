@@ -57,6 +57,7 @@ import de.tum.in.www1.artemis.service.iris.session.IrisCompetencyGenerationSessi
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.CourseCompetencyProgressDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyImportResponseDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyRelationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyWithTailRelationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.CompetencyPageableSearchDTO;
@@ -386,12 +387,13 @@ public class CompetencyResource {
      */
     @PostMapping("/courses/{courseId}/competencies/import-standardized")
     @EnforceAtLeastEditorInCourse
-    public ResponseEntity<List<Competency>> importStandardizedCompetencies(@PathVariable long courseId, @RequestBody List<Long> competencyIdsToImport) throws URISyntaxException {
+    public ResponseEntity<List<CompetencyImportResponseDTO>> importStandardizedCompetencies(@PathVariable long courseId, @RequestBody List<Long> competencyIdsToImport)
+            throws URISyntaxException {
         log.info("REST request to import standardized competencies with ids: {}", competencyIdsToImport);
 
         var importedCompetencies = competencyService.importStandardizedCompetencies(competencyIdsToImport, courseId);
 
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/competencies/")).body(importedCompetencies);
+        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/competencies/")).body(importedCompetencies.stream().map(CompetencyImportResponseDTO::of).toList());
     }
 
     /**

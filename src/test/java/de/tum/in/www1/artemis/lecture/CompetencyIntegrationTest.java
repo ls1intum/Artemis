@@ -67,6 +67,7 @@ import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.PageableSearchUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseCompetencyProgressDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyImportResponseDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyRelationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyWithTailRelationDTO;
 
@@ -987,22 +988,22 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
 
             var idList = List.of(competency1.getId(), competency2.getId());
 
-            var actualCompetencies = request.postListWithResponseBody("/api/courses/" + course.getId() + "/competencies/import-standardized", idList, Competency.class,
-                    HttpStatus.CREATED);
+            var actualCompetencies = request.postListWithResponseBody("/api/courses/" + course.getId() + "/competencies/import-standardized", idList,
+                    CompetencyImportResponseDTO.class, HttpStatus.CREATED);
 
             assertThat(actualCompetencies).hasSize(2);
             var actualCompetency1 = actualCompetencies.getFirst();
             var actualCompetency2 = actualCompetencies.get(1);
-            if (!competency1.getId().equals(actualCompetency1.getLinkedStandardizedCompetency().getId())) {
+            if (!competency1.getId().equals(actualCompetency1.linkedStandardizedCompetencyId())) {
                 var tempCompetency = actualCompetency1;
                 actualCompetency1 = actualCompetency2;
                 actualCompetency2 = tempCompetency;
             }
 
             assertThat(actualCompetency1).usingRecursiveComparison().comparingOnlyFields("title", "description", "taxonomy").isEqualTo(competency1);
-            assertThat(actualCompetency1.getLinkedStandardizedCompetency()).isEqualTo(competency1);
+            assertThat(actualCompetency1.linkedStandardizedCompetencyId()).isEqualTo(competency1.getId());
             assertThat(actualCompetency2).usingRecursiveComparison().comparingOnlyFields("title", "description", "taxonomy").isEqualTo(competency2);
-            assertThat(actualCompetency2.getLinkedStandardizedCompetency()).isEqualTo(competency2);
+            assertThat(actualCompetency2.linkedStandardizedCompetencyId()).isEqualTo(competency2.getId());
         }
 
         @Test
