@@ -146,7 +146,9 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         replacements.put(REPLACE_GIT_CREDENTIALS, gitCredentialsKey);
         replacements.put(REPLACE_ASSIGNMENT_CHECKOUT_PATH, ContinuousIntegrationService.RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage));
         replacements.put(REPLACE_TESTS_CHECKOUT_PATH, ContinuousIntegrationService.RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage));
-        replacements.put(REPLACE_SOLUTION_CHECKOUT_PATH, ContinuousIntegrationService.RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(programmingLanguage));
+        if (checkoutSolution) {
+            replacements.put(REPLACE_SOLUTION_CHECKOUT_PATH, ContinuousIntegrationService.RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(programmingLanguage));
+        }
         replacements.put(REPLACE_ARTEMIS_NOTIFICATION_URL, artemisNotificationUrl);
         replacements.put(REPLACE_NOTIFICATIONS_TOKEN, artemisAuthenticationTokenKey);
         replacements.put(REPLACE_JENKINS_TIMEOUT, buildTimeout);
