@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.authorization;
 
-import java.util.*;
-
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;

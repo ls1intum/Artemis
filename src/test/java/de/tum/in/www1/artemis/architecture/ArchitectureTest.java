@@ -92,16 +92,20 @@ class ArchitectureTest extends AbstractArchitectureTest {
     @Test
     void testNoJUnit4() {
         ArchRule noJUnit4Imports = noClasses().should().dependOnClassesThat().resideInAPackage("org.junit");
-        ArchRule noPublicTests = noMethods().that().areAnnotatedWith(Test.class).or().areAnnotatedWith(ParameterizedTest.class).or().areAnnotatedWith(BeforeEach.class).or()
-                .areAnnotatedWith(BeforeAll.class).or().areAnnotatedWith(AfterEach.class).or().areAnnotatedWith(AfterAll.class).should().bePublic();
+        noJUnit4Imports.check(testClasses);
+    }
+
+    @Test
+    void testClassNameAndVisibility() {
         ArchRule classNames = methods().that().areAnnotatedWith(Test.class).should().beDeclaredInClassesThat().haveNameMatching(".*Test").orShould().beDeclaredInClassesThat()
                 .areAnnotatedWith(Nested.class);
         ArchRule noPublicTestClasses = noClasses().that().haveNameMatching(".*Test").should().bePublic();
+        ArchRule noPublicTests = noMethods().that().areAnnotatedWith(Test.class).or().areAnnotatedWith(ParameterizedTest.class).or().areAnnotatedWith(BeforeEach.class).or()
+                .areAnnotatedWith(BeforeAll.class).or().areAnnotatedWith(AfterEach.class).or().areAnnotatedWith(AfterAll.class).should().bePublic();
 
-        noJUnit4Imports.check(testClasses);
-        noPublicTests.check(testClasses);
         classNames.check(testClasses);
         noPublicTestClasses.check(testClasses.that(are(not(simpleNameContaining("Abstract")))));
+        noPublicTests.check(testClasses);
     }
 
     @Test

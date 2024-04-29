@@ -2,14 +2,43 @@ package de.tum.in.www1.artemis.domain.notification;
 
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationPriority.HIGH;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationPriority.MEDIUM;
-import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
-import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.*;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.ATTACHMENT_CHANGE;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.COURSE_ARCHIVE_FAILED;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.COURSE_ARCHIVE_FINISHED;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.COURSE_ARCHIVE_STARTED;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.DUPLICATE_TEST_CASE;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.EXAM_ARCHIVE_FAILED;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.EXAM_ARCHIVE_FINISHED;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.EXAM_ARCHIVE_STARTED;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.EXERCISE_PRACTICE;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.EXERCISE_RELEASED;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.EXERCISE_UPDATED;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.ILLEGAL_SUBMISSION;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.NEW_ANNOUNCEMENT_POST;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.NEW_MANUAL_FEEDBACK_REQUEST;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.PROGRAMMING_BUILD_RUN_UPDATE;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.PROGRAMMING_REPOSITORY_LOCKS;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.PROGRAMMING_TEST_CASES_CHANGED;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.QUIZ_EXERCISE_STARTED;
+import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.createAttachmentUpdatedTarget;
+import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.createCoursePostTarget;
+import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.createCourseTarget;
+import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.createDuplicateTestCaseTarget;
+import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.createExamExerciseTargetWithExerciseUpdate;
+import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.createExamProgrammingExerciseOrTestCaseTarget;
+import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.createExerciseReleasedTarget;
+import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.createExerciseUpdatedTarget;
 
 import java.util.List;
 
 import org.jsoup.Jsoup;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Attachment;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationPriority;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
