@@ -4,7 +4,10 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.net.URI;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -13,7 +16,19 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.quiz.*;
+import de.tum.in.www1.artemis.domain.quiz.AnswerOption;
+import de.tum.in.www1.artemis.domain.quiz.DragAndDropMapping;
+import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestion;
+import de.tum.in.www1.artemis.domain.quiz.DragItem;
+import de.tum.in.www1.artemis.domain.quiz.DropLocation;
+import de.tum.in.www1.artemis.domain.quiz.MultipleChoiceQuestion;
+import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
+import de.tum.in.www1.artemis.domain.quiz.ShortAnswerMapping;
+import de.tum.in.www1.artemis.domain.quiz.ShortAnswerQuestion;
+import de.tum.in.www1.artemis.domain.quiz.ShortAnswerSolution;
+import de.tum.in.www1.artemis.domain.quiz.ShortAnswerSpot;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;

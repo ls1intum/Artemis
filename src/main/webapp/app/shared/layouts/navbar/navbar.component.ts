@@ -31,6 +31,7 @@ import {
     faBell,
     faBook,
     faBookOpen,
+    faChevronRight,
     faCog,
     faEye,
     faFlag,
@@ -124,6 +125,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     faSignOutAlt = faSignOutAlt;
     faGears = faGears;
     faPuzzlePiece = faPuzzlePiece;
+    faChevronRight = faChevronRight;
 
     private standardizedCompetencySubscription: Subscription;
     private authStateSubscription: Subscription;

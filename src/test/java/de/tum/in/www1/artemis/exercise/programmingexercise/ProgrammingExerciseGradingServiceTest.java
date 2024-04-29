@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.exercise.programmingexercise;
 
 import static de.tum.in.www1.artemis.config.Constants.TEST_CASES_DUPLICATE_NOTIFICATION;
-import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.ROOT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.timeout;
@@ -61,7 +60,6 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingServ
 import de.tum.in.www1.artemis.service.util.RoundingUtil;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGradingStatisticsDTO;
-import de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseGradingResource;
 
 /**
  * Tests the {@link ProgrammingExerciseGradingService}.
@@ -611,8 +609,8 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         changeTestCaseWeights(testCases);
 
         // re-evaluate
-        final var endpoint = ProgrammingExerciseGradingResource.RE_EVALUATE.replace("{exerciseId}", programmingExercise.getId().toString());
-        final var response = request.putWithResponseBody(ROOT + endpoint, "{}", Integer.class, HttpStatus.OK);
+        final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/grading/re-evaluate";
+        final var response = request.putWithResponseBody("/api" + endpoint, "{}", Integer.class, HttpStatus.OK);
         assertThat(response).isEqualTo(7);
 
         // this fixes an issue with the authentication context after a mock request
@@ -670,8 +668,8 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         changeTestCaseWeights(testCases);
 
         // re-evaluate
-        final var endpoint = ProgrammingExerciseGradingResource.RE_EVALUATE.replace("{exerciseId}", programmingExercise.getId().toString());
-        final var response = request.putWithResponseBody(ROOT + endpoint, "{}", Integer.class, HttpStatus.OK);
+        final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/grading/re-evaluate";
+        final var response = request.putWithResponseBody("/api" + endpoint, "{}", Integer.class, HttpStatus.OK);
         assertThat(response).isEqualTo(7);
 
         // this fixes an issue with the authentication context after a mock request
@@ -1224,8 +1222,8 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         createTestParticipationsWithResults();
 
         // get statistics
-        final var endpoint = ProgrammingExerciseGradingResource.STATISTICS.replace("{exerciseId}", programmingExerciseSCAEnabled.getId().toString());
-        final var statistics = request.get(ROOT + endpoint, HttpStatus.OK, ProgrammingExerciseGradingStatisticsDTO.class);
+        final var endpoint = "/programming-exercises/" + programmingExerciseSCAEnabled.getId() + "/grading/statistics";
+        final var statistics = request.get("/api" + endpoint, HttpStatus.OK, ProgrammingExerciseGradingStatisticsDTO.class);
 
         assertThat(statistics.getNumParticipations()).isEqualTo(5);
 

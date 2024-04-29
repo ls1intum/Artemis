@@ -17,7 +17,6 @@ import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -268,8 +267,6 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsGit
                 HttpStatus.FORBIDDEN);
     }
 
-    // TODO enable again (Issue - https://github.com/ls1intum/Artemis/issues/8305)
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void unlockAllRepositories() throws Exception {

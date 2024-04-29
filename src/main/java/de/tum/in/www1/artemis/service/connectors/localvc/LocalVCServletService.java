@@ -5,7 +5,9 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -26,20 +28,29 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.Commit;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
-import de.tum.in.www1.artemis.exception.localvc.*;
+import de.tum.in.www1.artemis.exception.localvc.LocalVCAuthException;
+import de.tum.in.www1.artemis.exception.localvc.LocalVCForbiddenException;
+import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.RepositoryAccessService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
-import de.tum.in.www1.artemis.service.programming.*;
+import de.tum.in.www1.artemis.service.programming.AuxiliaryRepositoryService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingMessagingService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingTriggerService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -249,7 +260,7 @@ public class LocalVCServletService {
     }
 
     private LocalVCRepositoryUri parseRepositoryUri(HttpServletRequest request) {
-        return new LocalVCRepositoryUri(request.getRequestURL().toString().replace("/info/refs", ""), localVCBaseUrl);
+        return new LocalVCRepositoryUri(request.getRequestURL().toString().replace("/info/refs", ""));
     }
 
     private ProgrammingExercise getProgrammingExerciseOrThrow(String projectKey) {
