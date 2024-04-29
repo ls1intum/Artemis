@@ -5,10 +5,21 @@ import static de.tum.in.www1.artemis.config.Constants.FEEDBACK_DETAIL_TEXT_SOFT_
 import static de.tum.in.www1.artemis.config.Constants.FEEDBACK_PREVIEW_TEXT_MAX_LENGTH;
 import static de.tum.in.www1.artemis.config.Constants.LONG_FEEDBACK_MAX_LENGTH;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 import jakarta.annotation.Nullable;
-import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.Size;
 
 import org.apache.commons.lang3.StringUtils;

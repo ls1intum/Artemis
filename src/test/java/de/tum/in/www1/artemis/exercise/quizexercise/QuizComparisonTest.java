@@ -4,7 +4,10 @@ import static de.tum.in.www1.artemis.service.exam.StudentExamService.isContentEq
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.assertj.core.api.Assertions;
@@ -14,7 +17,21 @@ import de.tum.in.www1.artemis.course.CourseFactory;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
 import de.tum.in.www1.artemis.domain.exam.Exam;
-import de.tum.in.www1.artemis.domain.quiz.*;
+import de.tum.in.www1.artemis.domain.quiz.AnswerOption;
+import de.tum.in.www1.artemis.domain.quiz.DragAndDropMapping;
+import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestion;
+import de.tum.in.www1.artemis.domain.quiz.DragAndDropSubmittedAnswer;
+import de.tum.in.www1.artemis.domain.quiz.DragItem;
+import de.tum.in.www1.artemis.domain.quiz.DropLocation;
+import de.tum.in.www1.artemis.domain.quiz.MultipleChoiceQuestion;
+import de.tum.in.www1.artemis.domain.quiz.MultipleChoiceSubmittedAnswer;
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
+import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
+import de.tum.in.www1.artemis.domain.quiz.ShortAnswerQuestion;
+import de.tum.in.www1.artemis.domain.quiz.ShortAnswerSpot;
+import de.tum.in.www1.artemis.domain.quiz.ShortAnswerSubmittedAnswer;
+import de.tum.in.www1.artemis.domain.quiz.ShortAnswerSubmittedText;
 import de.tum.in.www1.artemis.domain.quiz.compare.DnDMapping;
 import de.tum.in.www1.artemis.domain.quiz.compare.SAMapping;
 import de.tum.in.www1.artemis.exam.ExamFactory;
