@@ -1,9 +1,19 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.parsers.v2;
 
-import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.*;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.ELEMENT_ID;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.ELEMENT_NAME;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.ELEMENT_OWNER;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.ELEMENT_TYPE;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.RELATIONSHIP_SOURCE;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.RELATIONSHIP_TARGET;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.RELATIONSHIP_TYPE;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import org.apache.commons.lang3.EnumUtils;
 
@@ -14,7 +24,11 @@ import com.google.gson.JsonObject;
 
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.compass.umlmodel.parsers.UMLModelParser;
-import de.tum.in.www1.artemis.service.compass.umlmodel.usecase.*;
+import de.tum.in.www1.artemis.service.compass.umlmodel.usecase.UMLActor;
+import de.tum.in.www1.artemis.service.compass.umlmodel.usecase.UMLSystemBoundary;
+import de.tum.in.www1.artemis.service.compass.umlmodel.usecase.UMLUseCase;
+import de.tum.in.www1.artemis.service.compass.umlmodel.usecase.UMLUseCaseAssociation;
+import de.tum.in.www1.artemis.service.compass.umlmodel.usecase.UMLUseCaseDiagram;
 
 public class UseCaseDiagramParser {
 
