@@ -244,15 +244,12 @@ jhi-secured-image {
 .dropdown-content {
     overflow-y: auto;
     position: absolute;
-    padding-bottom: 3px;
-    padding-top: 3px;
-    z-index: 1000000;
-    max-height: 65px;
-    border: 1px solid var(--border-color);
     background-color: var(--dropdown-bg);
+    border: 1px solid var(--border-color);
+    z-index: 1000000;
     border-radius: 4px;
     &.moreThreeElem {
         bottom: 0px;
-        max-height: 100px;
+        max-height: 91px; // To avoid cut offs in the dropdown menu content
     }
 }
