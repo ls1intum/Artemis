@@ -8,7 +8,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -19,14 +19,28 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.Repository;
+import de.tum.in.www1.artemis.domain.Team;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
-import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.VersionControlException;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ParticipationRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.repository.TeamRepository;
+import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlRepositoryPermission;
@@ -469,12 +483,29 @@ public class ProgrammingExerciseParticipationService {
      * @param participation the participation for which to get the commits.
      * @return a list of CommitInfo DTOs containing author, timestamp, commit-hash and commit message.
      */
-    public List<CommitInfoDTO> getCommitInfos(ProgrammingExerciseStudentParticipation participation) {
+    public List<CommitInfoDTO> getCommitInfos(ProgrammingExerciseParticipation participation) {
         try {
             return gitService.getCommitInfos(participation.getVcsRepositoryUri());
         }
         catch (GitAPIException e) {
             log.error("Could not get commit infos for participation {} with repository uri {}", participation.getId(), participation.getVcsRepositoryUri());
+            return List.of();
+        }
+    }
+
+    /**
+     * Get the commits information for the test repository of the given participation's exercise.
+     *
+     * @param participation the participation for which to get the commits.
+     * @return a list of CommitInfo DTOs containing author, timestamp, commit-hash and commit message.
+     */
+    public List<CommitInfoDTO> getCommitInfosTestRepo(ProgrammingExerciseParticipation participation) {
+        ProgrammingExercise exercise = (ProgrammingExercise) participation.getExercise();
+        try {
+            return gitService.getCommitInfos(exercise.getVcsTestRepositoryUri());
+        }
+        catch (GitAPIException e) {
+            log.error("Could not get commit infos for test repository with participation id {}", participation.getId());
             return List.of();
         }
     }

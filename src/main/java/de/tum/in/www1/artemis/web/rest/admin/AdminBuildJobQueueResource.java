@@ -6,7 +6,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 import de.tum.in.www1.artemis.service.connectors.localci.SharedQueueManagementService;
@@ -62,6 +67,7 @@ public class AdminBuildJobQueueResource {
     public ResponseEntity<List<LocalCIBuildAgentInformation>> getBuildAgentInformation() {
         log.debug("REST request to get information on available build agents");
         List<LocalCIBuildAgentInformation> buildAgentInfo = localCIBuildJobQueueService.getBuildAgentInformation();
+        // TODO: convert into a proper DTO and strip unnecessary information, e.g. build config, because it's not shown in the client and contains too much information
         return ResponseEntity.ok(buildAgentInfo);
     }
 
@@ -107,6 +113,22 @@ public class AdminBuildJobQueueResource {
         log.debug("REST request to cancel all running build jobs");
         // Call the cancelAllRunningBuildJobs method in LocalCIBuildJobManagementService
         localCIBuildJobQueueService.cancelAllRunningBuildJobs();
+
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Cancels all running build jobs for the given agents
+     *
+     * @param agentName the name of the agent
+     * @return the ResponseEntity with the result of the cancellation
+     */
+    @DeleteMapping("/cancel-all-running-jobs-for-agent")
+    @EnforceAdmin
+    public ResponseEntity<Void> cancelAllRunningBuildJobsForAgent(@RequestParam String agentName) {
+        log.debug("REST request to cancel all running build jobs for agent {}", agentName);
+        // Call the cancelAllRunningBuildJobsForAgent method in LocalCIBuildJobManagementService
+        localCIBuildJobQueueService.cancelAllRunningBuildJobsForAgent(agentName);
 
         return ResponseEntity.noContent().build();
     }

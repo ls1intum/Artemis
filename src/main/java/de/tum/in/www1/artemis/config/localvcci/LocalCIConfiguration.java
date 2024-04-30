@@ -3,7 +3,13 @@ package de.tum.in.www1.artemis.config.localvcci;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
 
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.RejectedExecutionHandler;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import javax.xml.stream.XMLInputFactory;
 
@@ -37,9 +43,6 @@ public class LocalCIConfiguration {
     private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
 
     private static final Logger log = LoggerFactory.getLogger(LocalCIConfiguration.class);
-
-    @Value("${artemis.continuous-integration.queue-size-limit:30}")
-    int queueSizeLimit;
 
     @Value("${artemis.continuous-integration.docker-connection-uri}")
     String dockerConnectionUri;
@@ -113,9 +116,8 @@ public class LocalCIConfiguration {
             throw new RejectedExecutionException("Task " + runnable.toString() + " rejected from " + executor.toString());
         };
 
-        log.info("Using ExecutorService with thread pool size {} and a queue size limit of {}.", threadPoolSize, queueSizeLimit);
-        return new ThreadPoolExecutor(threadPoolSize, threadPoolSize, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(queueSizeLimit), customThreadFactory,
-                customRejectedExecutionHandler);
+        log.info("Using ExecutorService with thread pool size {}.", threadPoolSize);
+        return new ThreadPoolExecutor(threadPoolSize, threadPoolSize, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(1), customThreadFactory, customRejectedExecutionHandler);
     }
 
     /**

@@ -7,11 +7,18 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,25 +29,63 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.json.MappingJacksonValue;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.config.GuidedTourConfiguration;
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.GradingScale;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
-import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.domain.participation.Participant;
+import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.AbstractQuizSubmission;
 import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.repository.SubmittedAnswerRepository;
+import de.tum.in.www1.artemis.repository.TeamRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ExerciseDateService;
+import de.tum.in.www1.artemis.service.GradingScaleService;
+import de.tum.in.www1.artemis.service.ParticipationAuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.QuizBatchService;
+import de.tum.in.www1.artemis.service.QuizSubmissionService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
@@ -338,8 +383,10 @@ public class ParticipationResource {
         // The participations due date is a flag showing that a feedback request is sent
         participation.setIndividualDueDate(currentDate);
 
-        participation = programmingExerciseStudentParticipationRepository.save(participation);
-        programmingExerciseParticipationService.lockStudentRepositoryAndParticipation(programmingExercise, participation);
+        var savedParticipation = programmingExerciseStudentParticipationRepository.save(participation);
+        // Circumvent lazy loading after save
+        savedParticipation.setParticipant(participation.getParticipant());
+        programmingExerciseParticipationService.lockStudentRepositoryAndParticipation(programmingExercise, savedParticipation);
 
         // Set all past results to automatic to reset earlier feedback request assessments
         var participationResults = studentParticipation.getResults();
@@ -352,7 +399,7 @@ public class ParticipationResource {
 
         groupNotificationService.notifyTutorGroupAboutNewFeedbackRequest(programmingExercise);
 
-        return ResponseEntity.ok().body(participation);
+        return ResponseEntity.ok().body(savedParticipation);
     }
 
     /**
@@ -500,13 +547,19 @@ public class ParticipationResource {
         if (!updatedParticipations.isEmpty() && exercise instanceof ProgrammingExercise programmingExercise) {
             log.info("Updating scheduling for exercise {} (id {}) due to changed individual due dates.", exercise.getTitle(), exercise.getId());
             instanceMessageSendService.sendProgrammingExerciseSchedule(programmingExercise.getId());
+            List<StudentParticipation> participationsBeforeDueDate = updatedParticipations.stream().filter(exerciseDateService::isBeforeDueDate).toList();
+            List<StudentParticipation> participationsAfterDueDate = updatedParticipations.stream().filter(exerciseDateService::isAfterDueDate).toList();
 
+            if (exercise.isTeamMode()) {
+                participationService.initializeTeamParticipations(participationsBeforeDueDate);
+                participationService.initializeTeamParticipations(participationsAfterDueDate);
+            }
             // when changing the individual due date after the regular due date, the repository might already have been locked
-            updatedParticipations.stream().filter(exerciseDateService::isBeforeDueDate).forEach(
+            participationsBeforeDueDate.forEach(
                     participation -> programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation((ProgrammingExerciseStudentParticipation) participation));
             // the new due date may be in the past, students should no longer be able to make any changes
-            updatedParticipations.stream().filter(exerciseDateService::isAfterDueDate).forEach(participation -> programmingExerciseParticipationService
-                    .lockStudentRepositoryAndParticipation(programmingExercise, (ProgrammingExerciseStudentParticipation) participation));
+            participationsAfterDueDate.forEach(participation -> programmingExerciseParticipationService.lockStudentRepositoryAndParticipation(programmingExercise,
+                    (ProgrammingExerciseStudentParticipation) participation));
         }
 
         return ResponseEntity.ok().body(updatedParticipations);
@@ -598,26 +651,27 @@ public class ParticipationResource {
             exercise.setGradingInstructions(null);
             exercise.setDifficulty(null);
             exercise.setMode(null);
-            if (exercise instanceof ProgrammingExercise programmingExercise) {
-                programmingExercise.setSolutionParticipation(null);
-                programmingExercise.setTemplateParticipation(null);
-                programmingExercise.setTestRepositoryUri(null);
-                programmingExercise.setShortName(null);
-                programmingExercise.setPublishBuildPlanUrl(null);
-                programmingExercise.setProgrammingLanguage(null);
-                programmingExercise.setPackageName(null);
-                programmingExercise.setAllowOnlineEditor(null);
-            }
-            else if (exercise instanceof QuizExercise quizExercise) {
-                quizExercise.setQuizQuestions(null);
-                quizExercise.setQuizPointStatistic(null);
-            }
-            else if (exercise instanceof TextExercise textExercise) {
-                textExercise.setExampleSolution(null);
-            }
-            else if (exercise instanceof ModelingExercise modelingExercise) {
-                modelingExercise.setExampleSolutionModel(null);
-                modelingExercise.setExampleSolutionExplanation(null);
+            switch (exercise) {
+                case ProgrammingExercise programmingExercise -> {
+                    programmingExercise.setSolutionParticipation(null);
+                    programmingExercise.setTemplateParticipation(null);
+                    programmingExercise.setTestRepositoryUri(null);
+                    programmingExercise.setShortName(null);
+                    programmingExercise.setProgrammingLanguage(null);
+                    programmingExercise.setPackageName(null);
+                    programmingExercise.setAllowOnlineEditor(null);
+                }
+                case QuizExercise quizExercise -> {
+                    quizExercise.setQuizQuestions(null);
+                    quizExercise.setQuizPointStatistic(null);
+                }
+                case TextExercise textExercise -> textExercise.setExampleSolution(null);
+                case ModelingExercise modelingExercise -> {
+                    modelingExercise.setExampleSolutionModel(null);
+                    modelingExercise.setExampleSolutionExplanation(null);
+                }
+                default -> {
+                }
             }
             resultCount += participation.getResults().size();
         }

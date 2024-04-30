@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -20,7 +20,11 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.DomainObject;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.Repository;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffEntry;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffReport;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
@@ -81,7 +85,7 @@ public class ProgrammingExerciseGitDiffReportService {
      * If there were no changes since the last report was created this will not do anything.
      * If there were changes to at least one of the repositories a new report will be created.
      * This method should not be called twice for the same programming exercise at the same time, as this will result in
-     * the creation of 2 reports. See https://github.com/ls1intum/Artemis/pull/4893 for more information about it.
+     * the creation of 2 reports. See <a href="https://github.com/ls1intum/Artemis/pull/4893">Artemis 4893</a> for more information about it.
      *
      * @param programmingExercise The programming exercise
      * @return The git-diff report for the given programming exercise
@@ -142,7 +146,7 @@ public class ProgrammingExerciseGitDiffReportService {
             return null;
         }
         else if (reports.size() == 1) {
-            return reports.get(0);
+            return reports.getFirst();
         }
         // Error handling in case more than one reports exist for the exercise
         var latestReport = reports.stream().max(Comparator.comparing(DomainObject::getId)).get();

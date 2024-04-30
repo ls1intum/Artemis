@@ -71,10 +71,10 @@ Avoid code duplication. If we cannot reuse a method elsewhere, then the method i
 
 * Write performant queries that can also deal with more than 1000 objects in a reasonable time.
 * Prefer one query that fetches additional data instead of many small queries, but don't overdo it. A good rule of thumb is to query not more than 3 associations at the same time.
-* Think about lazy vs. eager fetching when modeling the data types.
-* Only if it is inevitable, use nested queries. You should try use as few tables as possible.
+* Think about lazy vs. eager fetching when modeling the data types. Generally avoid ``fetch = FetchType.EAGER``.
+* Do NOT use nested queries, because those hava a bad performance, in particular for many objects.
 * Simple datatypes: immediately think about whether ``null`` should be supported as additional state or not. In most cases it is preferable to avoid ``null``.
-* Use ``Datetime`` instead of ``Timestamp``. ``Datetime`` occupies more storage space compared to ``Timestamp``, however it covers a greater date range that justifies its use in the long run.
+* Use ``Datetime`` instead of ``Timestamp``. ``Datetime`` occupies more storage space compared to ``Timestamp``, however it covers a greater date range that justifies its use in the long run. Always use ``datetime(3)``
 
 8. Comments
 ===========
@@ -394,8 +394,8 @@ We prefer to write SQL statements all in upper case. Split queries onto multiple
             """)
     Optional<Result> findByIdWithEagerFeedbacks(@Param("resultId") Long resultId);
 
-20. Avoid the usage of Sub-queries
-==================================
+20. Do NOT use Sub-queries
+==========================
 
 SQL statements which do not contain sub-queries are preferable as they are more readable and have a better performance.
 So instead of:
@@ -535,7 +535,7 @@ To reduce duplication, do not add explicit checks for authorization or existence
 
 .. code-block:: java
 
-    @GetMapping(Endpoints.GET_FOR_COURSE)
+    @GetMapping("courses/{courseId}/programming-exercises")
     @EnforceAtLeastTutor
     public ResponseEntity<List<ProgrammingExercise>> getActiveProgrammingExercisesForCourse(@PathVariable Long courseId) {
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -546,3 +546,9 @@ To reduce duplication, do not add explicit checks for authorization or existence
     }
 
 The course repository call takes care of throwing a ``404 Not Found`` exception if there exists no matching course. The ``AuthorizationCheckService`` throws a ``403 Forbidden`` exception if the user with the given role is unauthorized. Afterwards delegate to a service or repository method. The code becomes much shorter, cleaner and more maintainable.
+
+
+22. JSON serialization and deserialization
+==========================================
+
+Always use ObjectMapper (Jackson) and do not use other libraries. If you find code that relies on gson, please consider to migrate it to use ObjectMapper!

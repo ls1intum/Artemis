@@ -2,7 +2,13 @@ package de.tum.in.www1.artemis.metis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -12,7 +18,10 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.validation.*;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
+import jakarta.validation.ValidatorFactory;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -647,8 +656,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testDecreaseUnreadMessageCountAfterMessageRead() throws Exception {
         Post postToSave1 = createPostWithOneToOneChat(TEST_PREFIX);
 
-        ResultActions resultActions = request.getMvc()
-                .perform(MockMvcRequestBuilders.post("/api/courses/" + courseId + "/messages").contentType(MediaType.APPLICATION_JSON)
+        ResultActions resultActions = request
+                .performMvcRequest(MockMvcRequestBuilders.post("/api/courses/" + courseId + "/messages").contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(postToSave1)).with(user(TEST_PREFIX + "student1").roles("USER")).accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isCreated());
 
@@ -656,11 +665,9 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         String contentAsString = result.getResponse().getContentAsString();
         Post createdPost1 = objectMapper.readValue(contentAsString, Post.class);
 
-        request.getMvc()
-                .perform(MockMvcRequestBuilders.get("/api/courses/" + courseId + "/messages").param("conversationId", createdPost1.getConversation().getId().toString())
-                        .param("pagingEnabled", "true").param("size", String.valueOf(MAX_POSTS_PER_PAGE)).with(user(TEST_PREFIX + "student2").roles("USER"))
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
+        request.performMvcRequest(MockMvcRequestBuilders.get("/api/courses/" + courseId + "/messages").param("conversationId", createdPost1.getConversation().getId().toString())
+                .param("pagingEnabled", "true").param("size", String.valueOf(MAX_POSTS_PER_PAGE)).with(user(TEST_PREFIX + "student2").roles("USER"))
+                .accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
 
         await().untilAsserted(() -> {
             SecurityUtils.setAuthorizationObject();
@@ -676,8 +683,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Post postToSave1 = createPostWithOneToOneChat(TEST_PREFIX);
         Post postToSave2 = createPostWithOneToOneChat(TEST_PREFIX);
 
-        ResultActions resultActions = request.getMvc()
-                .perform(MockMvcRequestBuilders.post("/api/courses/" + courseId + "/messages").contentType(MediaType.APPLICATION_JSON)
+        ResultActions resultActions = request
+                .performMvcRequest(MockMvcRequestBuilders.post("/api/courses/" + courseId + "/messages").contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(postToSave1)).with(user(TEST_PREFIX + "student1").roles("USER")).accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isCreated());
 
@@ -685,8 +692,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         String contentAsString = result.getResponse().getContentAsString();
         Post createdPost1 = objectMapper.readValue(contentAsString, Post.class);
 
-        ResultActions resultActions2 = request.getMvc()
-                .perform(MockMvcRequestBuilders.post("/api/courses/" + courseId + "/messages").contentType(MediaType.APPLICATION_JSON)
+        ResultActions resultActions2 = request
+                .performMvcRequest(MockMvcRequestBuilders.post("/api/courses/" + courseId + "/messages").contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(postToSave2)).with(user(TEST_PREFIX + "student1").roles("USER")).accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isCreated());
 
@@ -694,7 +701,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         String contentAsString2 = result2.getResponse().getContentAsString();
         Post createdPost2 = objectMapper.readValue(contentAsString2, Post.class);
 
-        request.getMvc().perform(MockMvcRequestBuilders.delete("/api/courses/" + courseId + "/messages/" + createdPost2.getId()).with(user(TEST_PREFIX + "student1").roles("USER"))
+        request.performMvcRequest(MockMvcRequestBuilders.delete("/api/courses/" + courseId + "/messages/" + createdPost2.getId()).with(user(TEST_PREFIX + "student1").roles("USER"))
                 .accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
 
         SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());

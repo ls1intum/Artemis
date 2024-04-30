@@ -4,11 +4,16 @@ import java.io.File;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
-
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
@@ -59,8 +64,6 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
      */
     @CollectionTable(name = "plagiarism_comparison_matches", joinColumns = @JoinColumn(name = "plagiarism_comparison_id"))
     @ElementCollection(fetch = FetchType.EAGER)
-    @JoinColumn(name = "plagiarism_comparison_id")
-    @OnDelete(action = OnDeleteAction.CASCADE)
     protected Set<PlagiarismMatch> matches;
 
     /**

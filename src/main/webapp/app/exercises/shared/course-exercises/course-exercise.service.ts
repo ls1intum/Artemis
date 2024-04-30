@@ -5,14 +5,12 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Observable, map } from 'rxjs';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { convertDateFromServer } from 'app/utils/date.utils';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 @Injectable({ providedIn: 'root' })
@@ -33,7 +31,7 @@ export class CourseExerciseService {
      */
     findAllProgrammingExercisesForCourse(courseId: number): Observable<HttpResponse<ProgrammingExercise[]>> {
         return this.http
-            .get<ProgrammingExercise[]>(`${this.resourceUrl}/${courseId}/programming-exercises/`, { observe: 'response' })
+            .get<ProgrammingExercise[]>(`${this.resourceUrl}/${courseId}/programming-exercises`, { observe: 'response' })
             .pipe(map((res: HttpResponse<ProgrammingExercise[]>) => this.processExercisesHttpResponses(res)));
     }
 
@@ -44,7 +42,7 @@ export class CourseExerciseService {
      */
     findAllModelingExercisesForCourse(courseId: number): Observable<HttpResponse<ModelingExercise[]>> {
         return this.http
-            .get<ModelingExercise[]>(`${this.resourceUrl}/${courseId}/modeling-exercises/`, { observe: 'response' })
+            .get<ModelingExercise[]>(`${this.resourceUrl}/${courseId}/modeling-exercises`, { observe: 'response' })
             .pipe(map((res: HttpResponse<ModelingExercise[]>) => this.processExercisesHttpResponses(res)));
     }
 
@@ -55,7 +53,7 @@ export class CourseExerciseService {
      */
     findAllTextExercisesForCourse(courseId: number): Observable<HttpResponse<TextExercise[]>> {
         return this.http
-            .get<TextExercise[]>(`${this.resourceUrl}/${courseId}/text-exercises/`, { observe: 'response' })
+            .get<TextExercise[]>(`${this.resourceUrl}/${courseId}/text-exercises`, { observe: 'response' })
             .pipe(map((res: HttpResponse<TextExercise[]>) => this.processExercisesHttpResponses(res)));
     }
 
@@ -66,7 +64,7 @@ export class CourseExerciseService {
      */
     findAllFileUploadExercisesForCourse(courseId: number): Observable<HttpResponse<FileUploadExercise[]>> {
         return this.http
-            .get<FileUploadExercise[]>(`${this.resourceUrl}/${courseId}/file-upload-exercises/`, { observe: 'response' })
+            .get<FileUploadExercise[]>(`${this.resourceUrl}/${courseId}/file-upload-exercises`, { observe: 'response' })
             .pipe(map((res: HttpResponse<FileUploadExercise[]>) => this.processExercisesHttpResponses(res)));
     }
 
@@ -137,12 +135,6 @@ export class CourseExerciseService {
                 const exercise = participation.exercise;
                 this.convertExerciseDatesFromServer(exercise);
                 exercise.studentParticipations = [participation];
-                if (exercise.type === ExerciseType.PROGRAMMING && (exercise as ProgrammingExercise).publishBuildPlanUrl) {
-                    this.profileService.getProfileInfo().subscribe((profileInfo) => {
-                        const programmingParticipations = participation.exercise!.studentParticipations as ProgrammingExerciseStudentParticipation[];
-                        setBuildPlanUrlForProgrammingParticipations(profileInfo, programmingParticipations, (participation.exercise as ProgrammingExercise).projectKey);
-                    });
-                }
             }
             this.participationWebsocketService.addParticipation(participation);
         }

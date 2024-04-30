@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.service;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
-import java.io.*;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -12,10 +12,10 @@ import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 
-import org.apache.commons.compress.utils.FileNameUtils;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -94,12 +94,12 @@ public class ZipFileService {
      * @throws IOException if an error occurred while extracting
      */
     public void extractZipFileRecursively(Path zipPath) throws IOException {
-        var dirToUnzip = Files.createDirectory(zipPath.toAbsolutePath().getParent().resolve(FileNameUtils.getBaseName(zipPath.toString())));
+        var dirToUnzip = Files.createDirectory(zipPath.toAbsolutePath().getParent().resolve(FilenameUtils.getBaseName(zipPath.toString())));
         try (ZipFile zipFile = new ZipFile(zipPath.toFile())) {
             zipFile.extractAll(dirToUnzip.toString());
         }
         List<Path> zipFilesInDirList;
-        try (var zipFilesInDir = Files.list(dirToUnzip).filter(path -> "zip".equalsIgnoreCase(FileNameUtils.getExtension(path.toString())))) {
+        try (var zipFilesInDir = Files.list(dirToUnzip).filter(path -> "zip".equalsIgnoreCase(FilenameUtils.getExtension(path.toString())))) {
             zipFilesInDirList = zipFilesInDir.toList();
         }
         for (Path path : zipFilesInDirList) {

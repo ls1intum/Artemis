@@ -21,7 +21,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.config.StaticCodeAnalysisConfigurer;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.StaticCodeAnalysisCategory;
+import de.tum.in.www1.artemis.domain.StaticCodeAnalysisDefaultCategory;
 import de.tum.in.www1.artemis.domain.enumeration.CategoryState;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 
@@ -58,9 +62,9 @@ public interface StaticCodeAnalysisCategoryRepository extends JpaRepository<Stat
         List<ImmutablePair<StaticCodeAnalysisCategory, List<StaticCodeAnalysisDefaultCategory.CategoryMapping>>> categoryPairsWithMapping = new ArrayList<>();
 
         for (var category : categories) {
-            var defaultCategoryMatch = defaultCategories.stream().filter(defaultCategory -> defaultCategory.getName().equals(category.getName())).findFirst();
+            var defaultCategoryMatch = defaultCategories.stream().filter(defaultCategory -> defaultCategory.name().equals(category.getName())).findFirst();
             if (defaultCategoryMatch.isPresent()) {
-                var categoryMappings = defaultCategoryMatch.get().getCategoryMappings();
+                var categoryMappings = defaultCategoryMatch.get().categoryMappings();
                 categoryPairsWithMapping.add(new ImmutablePair<>(category, categoryMappings));
             }
         }

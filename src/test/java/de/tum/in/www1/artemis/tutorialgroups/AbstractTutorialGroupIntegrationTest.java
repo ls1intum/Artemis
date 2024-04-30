@@ -29,12 +29,22 @@ import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.enumeration.TutorialGroupSessionStatus;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
-import de.tum.in.www1.artemis.domain.tutorialgroups.*;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupRegistration;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSchedule;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSession;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
-import de.tum.in.www1.artemis.repository.tutorialgroups.*;
+import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupFreePeriodRepository;
+import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupNotificationRepository;
+import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRegistrationRepository;
+import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
+import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupScheduleRepository;
+import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupSessionRepository;
+import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupsConfigurationRepository;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupChannelManagementService;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupService;
 import de.tum.in.www1.artemis.user.UserUtilService;
@@ -160,23 +170,35 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
 
     // === Paths ===
     String getTutorialGroupsPath(Long courseId) {
-        return "/api/courses/" + courseId + "/tutorial-groups/";
+        return "/api/courses/" + courseId + "/tutorial-groups";
+    }
+
+    String getTutorialGroupsPath(Long courseId, Long tutorialGroupId) {
+        return this.getTutorialGroupsPath(courseId) + "/" + tutorialGroupId;
     }
 
     String getTutorialGroupsConfigurationPath(Long courseId) {
-        return "/api/courses/" + courseId + "/tutorial-groups-configuration/";
+        return "/api/courses/" + courseId + "/tutorial-groups-configuration";
+    }
+
+    String getTutorialGroupsConfigurationPath(Long courseId, Long configurationId) {
+        return this.getTutorialGroupsConfigurationPath(courseId) + "/" + configurationId;
     }
 
     String getTutorialGroupFreePeriodsPath() {
-        return this.getTutorialGroupsConfigurationPath(exampleCourseId) + exampleConfigurationId + "/tutorial-free-periods/";
+        return this.getTutorialGroupsConfigurationPath(exampleCourseId, exampleConfigurationId) + "/tutorial-free-periods";
     }
 
-    String getSessionsPathOfDefaultTutorialGroup(Long tutorialGroupId) {
-        return this.getTutorialGroupsPath(this.exampleCourseId) + tutorialGroupId + "/sessions/";
+    String getTutorialGroupFreePeriodsPath(Long freePeriodId) {
+        return this.getTutorialGroupFreePeriodsPath() + "/" + freePeriodId;
     }
 
     String getSessionsPathOfTutorialGroup(Long tutorialGroupId) {
-        return this.getTutorialGroupsPath(this.exampleCourseId) + tutorialGroupId + "/sessions/";
+        return this.getTutorialGroupsPath(this.exampleCourseId, tutorialGroupId) + "/sessions";
+    }
+
+    String getSessionsPathOfTutorialGroup(Long tutorialGroupId, Long sessionId) {
+        return this.getSessionsPathOfTutorialGroup(tutorialGroupId) + "/" + sessionId;
     }
 
     // === UTILS ===

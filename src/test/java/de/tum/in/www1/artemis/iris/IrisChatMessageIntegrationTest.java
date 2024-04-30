@@ -21,7 +21,10 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.iris.message.*;
+import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
+import de.tum.in.www1.artemis.domain.iris.message.IrisMessageContent;
+import de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender;
+import de.tum.in.www1.artemis.domain.iris.message.IrisTextMessageContent;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.iris.IrisMessageRepository;
@@ -96,9 +99,9 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void sendOneMessageToWrongSession() throws Exception {
         irisChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
-        var irisSession2 = irisChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student2"));
-        IrisMessage messageToSend = createDefaultMockMessage(irisSession2);
-        request.postWithResponseBody("/api/iris/sessions/" + irisSession2.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.FORBIDDEN);
+        var irisSession = irisChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student2"));
+        IrisMessage messageToSend = createDefaultMockMessage(irisSession);
+        request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -145,15 +148,11 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getMessages() throws Exception {
         var irisSession = irisChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
-        IrisMessage message1 = createDefaultMockMessage(irisSession);
-        IrisMessage message2 = createDefaultMockMessage(irisSession);
-        IrisMessage message3 = createDefaultMockMessage(irisSession);
-        IrisMessage message4 = createDefaultMockMessage(irisSession);
 
-        message1 = irisMessageService.saveMessage(message1, irisSession, IrisMessageSender.USER);
-        message2 = irisMessageService.saveMessage(message2, irisSession, IrisMessageSender.LLM);
-        message3 = irisMessageService.saveMessage(message3, irisSession, IrisMessageSender.USER);
-        message4 = irisMessageService.saveMessage(message4, irisSession, IrisMessageSender.LLM);
+        IrisMessage message1 = irisMessageService.saveMessage(createDefaultMockMessage(irisSession), irisSession, IrisMessageSender.USER);
+        IrisMessage message2 = irisMessageService.saveMessage(createDefaultMockMessage(irisSession), irisSession, IrisMessageSender.LLM);
+        IrisMessage message3 = irisMessageService.saveMessage(createDefaultMockMessage(irisSession), irisSession, IrisMessageSender.USER);
+        IrisMessage message4 = irisMessageService.saveMessage(createDefaultMockMessage(irisSession), irisSession, IrisMessageSender.LLM);
 
         var messages = request.getList("/api/iris/sessions/" + irisSession.getId() + "/messages", HttpStatus.OK, IrisMessage.class);
         assertThat(messages).hasSize(4).containsAll(List.of(message1, message2, message3, message4));
@@ -313,9 +312,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
         String randomNoun = nouns[rdm.nextInt(nouns.length)];
 
         var text = "The " + randomAdjective + " " + randomNoun + " jumped over the lazy dog.";
-        var content = new IrisTextMessageContent(text);
-        content.setId(rdm.nextLong());
-        return content;
+        return new IrisTextMessageContent(text);
     }
 
     private ArgumentMatcher<Object> messageDTO(String message) {

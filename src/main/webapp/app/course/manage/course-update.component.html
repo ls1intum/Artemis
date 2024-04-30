@@ -1,19 +1,34 @@
 <div class="row justify-content-center">
     <div class="col-md-8">
         <form [formGroup]="courseForm" (ngSubmit)="save()" #formDir="ngForm">
-            <div class="headline">
+            <div class="container headline">
+                <input type="file" #fileInput style="display: none" (change)="setCourseImage($event)" />
                 @if (croppedImage) {
-                    <jhi-secured-image [src]="croppedImage" [cachingStrategy]="CachingStrategy.LOCAL_STORAGE" />
+                    <div class="position-relative">
+                        <jhi-secured-image class="secured-image" [src]="croppedImage" [cachingStrategy]="CachingStrategy.LOCAL_STORAGE" />
+
+                        <button id="delete-course-icon" type="button" class="btn icon-button-wrapper btn-danger position-absolute bottom-0 start-0" (click)="deleteCourseIcon()">
+                            <fa-icon [icon]="faTrash" />
+                        </button>
+
+                        <button id="edit-course-icon" type="button" class="btn icon-button-wrapper btn-warning position-absolute bottom-0 end-0" (click)="triggerFileInput()">
+                            <fa-icon [icon]="faPen" />
+                        </button>
+                    </div>
                 }
                 @if (!croppedImage) {
-                    <div class="no-image"></div>
+                    <div id="no-image-placeholder" class="no-image clickable me-2 lh-sm" (click)="triggerFileInput()">
+                        <div class="h3 my-0 font-weight-bold">+</div>
+                        <div class="small" jhiTranslate="artemisApp.course.imageCropper.uploadTitle"></div>
+                    </div>
                 }
-                @if (!course.id) {
-                    <h4 id="jhi-course-heading-create" jhiTranslate="artemisApp.course.home.createLabel"></h4>
-                }
-                @if (course.id) {
-                    <h4 id="jhi-course-heading-edit" jhiTranslate="artemisApp.course.home.editLabel"></h4>
-                }
+                <div class="col ps-3">
+                    @if (!course.id) {
+                        <h4 id="jhi-course-heading-create" jhiTranslate="artemisApp.course.home.createLabel"></h4>
+                    } @else {
+                        <h4 id="jhi-course-heading-edit" jhiTranslate="artemisApp.course.home.editLabel"></h4>
+                    }
+                </div>
             </div>
             <hr />
             <div>
@@ -50,46 +65,6 @@
                             </div>
                         }
                     }
-                </div>
-                <div class="row">
-                    <div class="col-sm-9 col-xl-10">
-                        <div class="form-group">
-                            <label class="form-control-label" jhiTranslate="artemisApp.course.courseIcon" for="field_shortName"></label>
-                            <div class="input-group background-file">
-                                <div class="custom-file">
-                                    <input id="courseImageInput{{ course.id }}" type="file" accept="image/*" class="custom-file-input" (change)="setCourseImage($event)" />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="delete-course-icon col-sm-3 col-xl-2 mt-sm-3 mb-3">
-                        <div>
-                            @if (croppedImage && course.courseIcon) {
-                                <button id="delete-course-icon" class="btn btn-danger btn-sm" (click)="deleteCourseIcon()">
-                                    <fa-icon [icon]="faTrash" />
-                                    <span jhiTranslate="artemisApp.course.delete.icon"></span>
-                                </button>
-                            }
-                        </div>
-                    </div>
-                </div>
-                <div class="container no-padding">
-                    <div class="row">
-                        <div class="col-6">
-                            <image-cropper
-                                [imageFile]="courseImageUploadFile"
-                                [maintainAspectRatio]="true"
-                                [aspectRatio]="1"
-                                [resizeToWidth]="200"
-                                [cropperMinWidth]="100"
-                                [onlyScaleDown]="true"
-                                [roundCropper]="true"
-                                (imageCropped)="imageCropped($event)"
-                                (imageLoaded)="imageLoaded()"
-                                [style.display]="showCropper ? null : 'none'"
-                            />
-                        </div>
-                    </div>
                 </div>
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="artemisApp.course.description" for="field_description"></label>
@@ -195,23 +170,21 @@
                     </select>
                 </div>
                 <div *jhiHasAnyAuthority="'ROLE_ADMIN'">
-                    @if (!course.id) {
-                        <div class="form-check">
-                            <input
-                                type="checkbox"
-                                [checked]="customizeGroupNames"
-                                (change)="changeCustomizeGroupNames()"
-                                class="form-check-input"
-                                name="customizeGroupNamesEnabled"
-                                id="field_customizeGroupNamesEnabled"
-                                formControlName="customizeGroupNames"
-                            />
-                            <label class="form-control-label" jhiTranslate="artemisApp.course.customizeGroupNames.title" for="field_customizeGroupNamesEnabled"
-                                >Customize Group Names</label
-                            >
-                            <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.customizeGroupNames.description' | artemisTranslate }}" />
-                        </div>
-                    }
+                    <div class="form-check">
+                        <input
+                            type="checkbox"
+                            [checked]="customizeGroupNames"
+                            (change)="changeCustomizeGroupNames()"
+                            class="form-check-input"
+                            name="customizeGroupNamesEnabled"
+                            id="field_customizeGroupNamesEnabled"
+                            formControlName="customizeGroupNames"
+                        />
+                        <label class="form-control-label" jhiTranslate="artemisApp.course.customizeGroupNames.title" for="field_customizeGroupNamesEnabled"
+                            >Customize Group Names</label
+                        >
+                        <fa-icon [icon]="faExclamationTriangle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.customizeGroupNames.description' | artemisTranslate }}" />
+                    </div>
                     @if (customizeGroupNames) {
                         <div>
                             <div class="form-group">
@@ -338,8 +311,16 @@
                 <div class="form-group">
                     <!-- Not part of model -->
                     <div class="form-check">
-                        <input class="form-check-input" type="checkbox" [(ngModel)]="communicationEnabled" [ngModelOptions]="{ standalone: true }" />
-                        <label class="form-check-label">{{ 'artemisApp.course.courseCommunicationSetting.communicationEnabled.label' | artemisTranslate }}</label>
+                        <input
+                            id="field_communicationEnabled"
+                            class="form-check-input"
+                            type="checkbox"
+                            [(ngModel)]="communicationEnabled"
+                            [ngModelOptions]="{ standalone: true }"
+                        />
+                        <label for="field_communicationEnabled" class="form-check-label">
+                            {{ 'artemisApp.course.courseCommunicationSetting.communicationEnabled.label' | artemisTranslate }}
+                        </label>
                         <fa-icon
                             [icon]="faQuestionCircle"
                             class="text-secondary"
@@ -348,8 +329,10 @@
                     </div>
                     <!-- Not part of model -->
                     <div class="form-check">
-                        <input class="form-check-input" type="checkbox" [(ngModel)]="messagingEnabled" [ngModelOptions]="{ standalone: true }" />
-                        <label class="form-check-label">{{ 'artemisApp.course.courseCommunicationSetting.messagingEnabled.label' | artemisTranslate }}</label>
+                        <input id="field_messagingEnabled" class="form-check-input" type="checkbox" [(ngModel)]="messagingEnabled" [ngModelOptions]="{ standalone: true }" />
+                        <label for="field_messagingEnabled" class="form-check-label">
+                            {{ 'artemisApp.course.courseCommunicationSetting.messagingEnabled.label' | artemisTranslate }}
+                        </label>
                         <fa-icon
                             [icon]="faQuestionCircle"
                             class="text-secondary"
@@ -419,13 +402,13 @@
                         <input
                             type="checkbox"
                             class="form-check-input"
-                            name="registrationEnabled"
-                            id="field_registrationEnabled"
+                            name="enrollmentEnabled"
+                            id="field_enrollmentEnabled"
                             [checked]="course.enrollmentEnabled"
-                            (change)="this.changeRegistrationEnabled()"
+                            (change)="this.changeEnrollmentEnabled()"
                         />
-                        <label class="form-control-label" jhiTranslate="artemisApp.course.registrationEnabled.title" for="field_registrationEnabled"></label>
-                        <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.registrationEnabled.description' | artemisTranslate }}" />
+                        <label class="form-control-label" jhiTranslate="artemisApp.course.enrollmentEnabled.title" for="field_enrollmentEnabled"></label>
+                        <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.enrollmentEnabled.description' | artemisTranslate }}" />
                     </div>
                 }
                 @if (course.enrollmentEnabled) {
@@ -457,14 +440,14 @@
                     </div>
                 }
                 @if (course.enrollmentEnabled) {
-                    <div class="form-group" id="field_registrationConfirmationMessage">
-                        <label class="form-control-label" jhiTranslate="artemisApp.course.registrationConfirmationMessage" for="field_registrationConfirmationMessage"
-                            >Registration Confirmation Message</label
+                    <div class="form-group" id="field_enrollmentConfirmationMessage">
+                        <label class="form-control-label" jhiTranslate="artemisApp.course.enrollmentConfirmationMessage" for="field_enrollmentConfirmationMessage"
+                            >Enrollment Confirmation Message</label
                         >
                         <jhi-markdown-editor
                             class="markdown-editor"
                             [(markdown)]="course.enrollmentConfirmationMessage"
-                            (markdownChange)="updateRegistrationConfirmationMessage($event)"
+                            (markdownChange)="updateEnrollmentConfirmationMessage($event)"
                         />
                     </div>
                 }

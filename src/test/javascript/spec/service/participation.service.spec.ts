@@ -245,6 +245,24 @@ describe('Participation Service', () => {
         tick();
     }));
 
+    it('should get build job ids for participation results', fakeAsync(() => {
+        let resultGetBuildJobId: any;
+        const resultIdToBuildJobIdMap: { [key: string]: boolean } = { '1': true, '2': false };
+        const returnedFromService = resultIdToBuildJobIdMap;
+        const expected = { ...returnedFromService };
+
+        service
+            .getBuildJobIdsForResultsOfParticipation(1)
+            .pipe(take(1))
+            .subscribe((resp) => (resultGetBuildJobId = resp));
+
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush(returnedFromService);
+        tick();
+
+        expect(resultGetBuildJobId).toEqual(expected);
+    }));
+
     it.each<any>([
         ['attachment; filename="FixArtifactDownload-Tests-1.0.jar"', 'FixArtifactDownload-Tests-1.0.jar'],
         ['', 'artifact'],

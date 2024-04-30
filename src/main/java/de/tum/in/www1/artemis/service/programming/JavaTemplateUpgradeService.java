@@ -2,9 +2,16 @@ package de.tum.in.www1.artemis.service.programming;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
-import java.io.*;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 import org.apache.commons.io.FileUtils;
@@ -95,15 +102,15 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
             return;
         }
         try {
-            String templatePomDir = repositoryType == RepositoryType.TESTS ? "test/projectTemplate" : repositoryType.getName();
+            String templatePomDir = repositoryType == RepositoryType.TESTS ? "test/maven/projectTemplate" : repositoryType.getName();
             Resource[] templatePoms = getTemplateResources(exercise, templatePomDir + "/**/" + POM_FILE);
             Repository repository = gitService.getOrCheckoutRepository(exercise.getRepositoryURL(repositoryType), true);
             List<File> repositoryPoms = gitService.listFiles(repository).stream().filter(file -> Objects.equals(file.getName(), POM_FILE)).toList();
 
             // Validate that template and repository have the same number of pom.xml files, otherwise no upgrade will take place
             if (templatePoms.length == 1 && repositoryPoms.size() == 1) {
-                Model updatedRepoModel = upgradeProjectObjectModel(templatePoms[0], repositoryPoms.get(0), Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled()));
-                writeProjectObjectModel(updatedRepoModel, repositoryPoms.get(0));
+                Model updatedRepoModel = upgradeProjectObjectModel(templatePoms[0], repositoryPoms.getFirst(), Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled()));
+                writeProjectObjectModel(updatedRepoModel, repositoryPoms.getFirst());
             }
 
             if (repositoryType == RepositoryType.TESTS) {

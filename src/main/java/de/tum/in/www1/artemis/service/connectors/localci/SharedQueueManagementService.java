@@ -1,9 +1,12 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +21,9 @@ import com.hazelcast.map.IMap;
 import com.hazelcast.topic.ITopic;
 
 import de.tum.in.www1.artemis.repository.BuildJobRepository;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.*;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.DockerImageBuild;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildAgentInformation;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
 
 /**
  * Includes methods for managing and retrieving the shared build job queue and build agent information. Also contains methods for cancelling build jobs.
@@ -72,7 +77,7 @@ public class SharedQueueManagementService {
     /**
      * Pushes the last build dates for all docker images to the hazelcast map dockerImageCleanupInfo
      */
-    @Scheduled(fixedRate = 90000, initialDelay = Long.MAX_VALUE)
+    @Scheduled(fixedRate = 90000, initialDelay = 1000 * 60 * 10)
     public void pushDockerImageCleanupInfo() {
         dockerImageCleanupInfo.clear();
         Set<DockerImageBuild> lastBuildDatesForDockerImages = buildJobRepository.findAllLastBuildDatesForDockerImages();
@@ -166,6 +171,22 @@ public class SharedQueueManagementService {
             for (LocalCIBuildJobQueueItem buildJob : processingJobs.values()) {
                 cancelBuildJob(buildJob.id());
             }
+        }
+        finally {
+            sharedLock.unlock();
+        }
+
+    }
+
+    /**
+     * Cancel all running build jobs for an agent.
+     *
+     * @param agentName name of the agent
+     */
+    public void cancelAllRunningBuildJobsForAgent(String agentName) {
+        sharedLock.lock();
+        try {
+            processingJobs.values().stream().filter(job -> Objects.equals(job.buildAgentAddress(), agentName)).forEach(job -> cancelBuildJob(job.id()));
         }
         finally {
             sharedLock.unlock();

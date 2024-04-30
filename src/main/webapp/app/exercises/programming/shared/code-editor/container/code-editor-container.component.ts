@@ -26,6 +26,7 @@ import { CodeEditorInstructionsComponent } from 'app/exercises/programming/share
 import { Feedback } from 'app/entities/feedback.model';
 import { Course } from 'app/entities/course.model';
 import { ConnectionError } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
+import { CodeEditorMonacoComponent } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
 
 export enum CollapsableCodeEditorElement {
     FileBrowser,
@@ -40,13 +41,15 @@ export enum CollapsableCodeEditorElement {
 })
 export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeactivate {
     readonly CommitState = CommitState;
+    readonly EditorState = EditorState;
     readonly CollapsableCodeEditorElement = CollapsableCodeEditorElement;
     @ViewChild(CodeEditorGridComponent, { static: false }) grid: CodeEditorGridComponent;
 
     @ViewChild(CodeEditorFileBrowserComponent, { static: false }) fileBrowser: CodeEditorFileBrowserComponent;
     @ViewChild(CodeEditorActionsComponent, { static: false }) actions: CodeEditorActionsComponent;
     @ViewChild(CodeEditorBuildOutputComponent, { static: false }) buildOutput: CodeEditorBuildOutputComponent;
-    @ViewChild(CodeEditorAceComponent, { static: false }) aceEditor: CodeEditorAceComponent;
+    @ViewChild(CodeEditorAceComponent, { static: false }) aceEditor?: CodeEditorAceComponent;
+    @ViewChild(CodeEditorMonacoComponent, { static: false }) monacoEditor?: CodeEditorMonacoComponent;
     @ViewChild(CodeEditorInstructionsComponent, { static: false }) instructions: CodeEditorInstructionsComponent;
 
     @Input()
@@ -60,6 +63,8 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     @Input()
     highlightFileChanges = false;
     @Input()
+    allowHiddenFiles = false;
+    @Input()
     feedbackSuggestions: Feedback[] = [];
     @Input()
     readOnlyManualFeedback = false;
@@ -67,6 +72,8 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     highlightDifferences: boolean;
     @Input()
     disableAutoSave = false;
+    @Input()
+    useMonacoEditor = false;
 
     @Output()
     onResizeEditorInstructions = new EventEmitter<void>();
@@ -196,7 +203,9 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
         if (_isEmpty(this.unsavedFiles) && this.editorState === EditorState.UNSAVED_CHANGES) {
             this.editorState = EditorState.CLEAN;
         }
-        this.aceEditor.onFileChange(fileChange);
+        this.monacoEditor?.onFileChange(fileChange);
+        this.aceEditor?.onFileChange(fileChange);
+
         this.onFileChanged.emit();
     }
 
@@ -218,7 +227,8 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
         if (errorFiles.length) {
             this.onError('saveFailed');
         }
-        this.aceEditor.storeAnnotations(savedFiles);
+        this.aceEditor?.storeAnnotations(savedFiles);
+        this.monacoEditor?.storeAnnotations(savedFiles);
     }
 
     /**
@@ -264,6 +274,24 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
         return _isEmpty(this.unsavedFiles);
     }
 
+    getText(): string {
+        return this.monacoEditor?.getText() ?? '';
+    }
+
+    getNumberOfLines(): number {
+        if (this.aceEditor) {
+            return this.aceEditor.editorSession.getLength();
+        }
+        return this.monacoEditor?.getNumberOfLines() ?? 0;
+    }
+
+    highlightLines(startLine: number, endLine: number): void {
+        // Workaround: increase line number by 1 for monaco
+        // Will be removed once ace is gone from every instance of this component
+        this.monacoEditor?.highlightLines(startLine + 1, endLine + 1);
+        this.aceEditor?.highlightLines(startLine, endLine, 'diff-newLine', 'gutter-diff-newLine');
+    }
+
     // displays the alert for confirming refreshing or closing the page if there are unsaved changes
     @HostListener('window:beforeunload', ['$event'])
     unloadNotification(event: any) {
@@ -280,7 +308,7 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
         if (type === ResizeType.SIDEBAR_RIGHT || type === ResizeType.MAIN_BOTTOM) {
             this.onResizeEditorInstructions.emit();
         }
-        if (type === ResizeType.SIDEBAR_LEFT || type === ResizeType.SIDEBAR_RIGHT || type === ResizeType.MAIN_BOTTOM) {
+        if (this.aceEditor && (type === ResizeType.SIDEBAR_LEFT || type === ResizeType.SIDEBAR_RIGHT || type === ResizeType.MAIN_BOTTOM)) {
             this.aceEditor.editor.getEditor().resize();
         }
     }

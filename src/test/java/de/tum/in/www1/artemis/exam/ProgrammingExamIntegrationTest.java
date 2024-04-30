@@ -2,12 +2,18 @@ package de.tum.in.www1.artemis.exam;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,7 +27,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -34,12 +40,15 @@ import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseFa
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.ExamPrepareExercisesTestUtil;
 
-class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     private static final String TEST_PREFIX = "programmingexamtest";
 
@@ -94,7 +103,7 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationBambooBitb
         student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         exam1 = examUtilService.addExam(course1);
 
-        bitbucketRequestMockProvider.enableMockingOfRequests();
+        gitlabRequestMockProvider.enableMockingOfRequests();
 
         ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 200;
         participantScoreScheduleService.activate();
@@ -102,8 +111,8 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @AfterEach
     void tearDown() throws Exception {
-        bitbucketRequestMockProvider.reset();
-        bambooRequestMockProvider.reset();
+        gitlabRequestMockProvider.reset();
+        jenkinsRequestMockProvider.reset();
         if (programmingExerciseTestService.exerciseRepo != null) {
             programmingExerciseTestService.tearDown();
         }
@@ -226,7 +235,6 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void lockAllRepositories() throws Exception {
         Exam exam = examUtilService.addExamWithExerciseGroup(course1, true);
-
         Exam examWithExerciseGroups = examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).orElseThrow();
         ExerciseGroup exerciseGroup1 = examWithExerciseGroups.getExerciseGroups().get(0);
 
@@ -236,8 +244,8 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationBambooBitb
         ProgrammingExercise programmingExercise2 = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup1);
         programmingExerciseRepository.save(programmingExercise2);
 
-        Integer numOfLockedExercises = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams/lock-all-repositories",
-                Optional.empty(), Integer.class, HttpStatus.OK);
+        Integer numOfLockedExercises = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/lock-all-repositories", Optional.empty(),
+                Integer.class, HttpStatus.OK);
 
         assertThat(numOfLockedExercises).isEqualTo(2);
 
@@ -248,23 +256,21 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void lockAllRepositories_noInstructor() throws Exception {
-        request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/lock-all-repositories", Optional.empty(), Integer.class,
+        request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/lock-all-repositories", Optional.empty(), Integer.class,
                 HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void unlockAllRepositories_preAuthNoInstructor() throws Exception {
-        request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/unlock-all-repositories", Optional.empty(), Integer.class,
+        request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/unlock-all-repositories", Optional.empty(), Integer.class,
                 HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void unlockAllRepositories() throws Exception {
-        bitbucketRequestMockProvider.enableMockingOfRequests(true);
         assertThat(studentExamRepository.findStudentExam(new ProgrammingExercise(), null)).isEmpty();
-
         Exam exam = examUtilService.addExamWithExerciseGroup(course1, true);
         ExerciseGroup exerciseGroup1 = exam.getExerciseGroups().get(0);
 
@@ -297,8 +303,8 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationBambooBitb
         mockConfigureRepository(programmingExercise2, TEST_PREFIX + "student1", Set.of(student1), true);
         mockConfigureRepository(programmingExercise2, TEST_PREFIX + "student2", Set.of(student2), true);
 
-        Integer numOfUnlockedExercises = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams/unlock-all-repositories",
-                Optional.empty(), Integer.class, HttpStatus.OK);
+        Integer numOfUnlockedExercises = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/unlock-all-repositories", Optional.empty(),
+                Integer.class, HttpStatus.OK);
 
         assertThat(numOfUnlockedExercises).isEqualTo(2);
 
@@ -338,7 +344,7 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationBambooBitb
         doReturn(true).when(versionControlService).checkIfProjectExists(any(), any());
         doReturn(null).when(continuousIntegrationService).checkIfProjectExists(any(), any());
 
-        request.getMvc().perform(post("/api/courses/" + course1.getId() + "/exam-import").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(exam)))
+        request.performMvcRequest(post("/api/courses/" + course1.getId() + "/exam-import").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(exam)))
                 .andExpect(status().isBadRequest())
                 .andExpect(result -> assertThat(result.getResolvedException()).hasMessage("Exam contains programming exercise(s) with invalid short name."));
     }

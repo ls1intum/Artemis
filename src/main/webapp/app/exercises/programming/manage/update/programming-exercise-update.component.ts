@@ -39,6 +39,11 @@ import { ProgrammingExerciseLanguageComponent } from 'app/exercises/programming/
 import { ProgrammingExerciseGradingComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-grading.component';
 import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.component';
 
+export interface ImportOptions {
+    recreateBuildPlans: boolean;
+    updateTemplate: boolean;
+}
+
 @Component({
     selector: 'jhi-programming-exercise-update',
     templateUrl: './programming-exercise-update.component.html',
@@ -90,7 +95,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     // This is used to revert the select if the user cancels to override the new selected programming language.
     private selectedProgrammingLanguageValue: ProgrammingLanguage;
     // This is used to revert the select if the user cancels to override the new selected project type.
-    private selectedProjectTypeValue: ProjectType;
+    private selectedProjectTypeValue?: ProjectType;
     maxPenaltyPattern = '^([0-9]|([1-9][0-9])|100)$';
     // Java package name Regex according to Java 14 JLS (https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1),
     // with the restriction to a-z,A-Z,_ as "Java letter" and 0-9 as digits due to JavaScript/Browser Unicode character class limitations
@@ -132,22 +137,24 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     public checkoutSolutionRepositoryAllowed = false;
     public customizeBuildPlanWithAeolus = false;
     public sequentialTestRunsAllowed = false;
-    public publishBuildPlanUrlAllowed = false;
     public testwiseCoverageAnalysisSupported = false;
     public auxiliaryRepositoriesSupported = false;
     public auxiliaryRepositoriesValid = true;
     public customBuildPlansSupported: string = '';
 
     // Additional options for import
-    public recreateBuildPlans = false;
-    public updateTemplate = false;
+    // This is a wrapper to allow modifications from the other subcomponents
+    public readonly importOptions: ImportOptions = {
+        recreateBuildPlans: false,
+        updateTemplate: false,
+    };
     public originalStaticCodeAnalysisEnabled: boolean | undefined;
 
-    public projectTypes: ProjectType[] = [];
+    public projectTypes?: ProjectType[] = [];
     // flag describing if the template and solution projects should include a dependency
     public withDependenciesValue = false;
 
-    public modePickerOptions: ModePickerOption<ProjectType>[] = [];
+    public modePickerOptions?: ModePickerOption<ProjectType>[] = [];
 
     // Icons
     faQuestionCircle = faQuestionCircle;
@@ -241,12 +248,11 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.staticCodeAnalysisAllowed = programmingLanguageFeature.staticCodeAnalysis;
         this.checkoutSolutionRepositoryAllowed = programmingLanguageFeature.checkoutSolutionRepositoryAllowed;
         this.sequentialTestRunsAllowed = programmingLanguageFeature.sequentialTestRuns;
-        this.publishBuildPlanUrlAllowed = programmingLanguageFeature.publishBuildPlanUrlAllowed;
         this.testwiseCoverageAnalysisSupported = programmingLanguageFeature.testwiseCoverageAnalysisSupported;
         this.auxiliaryRepositoriesSupported = programmingLanguageFeature.auxiliaryRepositoriesSupported;
         // filter out MAVEN_MAVEN and GRADLE_GRADLE because they are not directly selectable but only via a checkbox
-        this.projectTypes = programmingLanguageFeature.projectTypes.filter((projectType) => projectType !== ProjectType.MAVEN_MAVEN && projectType !== ProjectType.GRADLE_GRADLE);
-        this.modePickerOptions = this.projectTypes.map((projectType) => ({
+        this.projectTypes = programmingLanguageFeature.projectTypes?.filter((projectType) => projectType !== ProjectType.MAVEN_MAVEN && projectType !== ProjectType.GRADLE_GRADLE);
+        this.modePickerOptions = this.projectTypes?.map((projectType) => ({
             value: projectType,
             labelKey: 'artemisApp.programmingExercise.projectTypes.' + projectType.toString(),
             btnClass: 'btn-secondary',
@@ -254,8 +260,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
         if (languageChanged) {
             // Reset project type when changing programming language as not all programming languages support (the same) project types
-            this.programmingExercise.projectType = this.projectTypes[0];
-            this.selectedProjectTypeValue = this.projectTypes[0]!;
+            this.programmingExercise.projectType = this.projectTypes?.[0];
+            this.selectedProjectTypeValue = this.projectTypes?.[0];
             this.withDependenciesValue = false;
             this.buildPlanLoaded = false;
             this.programmingExercise.windFile = undefined;
@@ -268,8 +274,14 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             this.programmingExercise.maxStaticCodeAnalysisPenalty = undefined;
         }
 
-        // Automatically enable the checkout of the solution repository for Haskell exercises
-        this.programmingExercise.checkoutSolutionRepository = this.checkoutSolutionRepositoryAllowed && language === ProgrammingLanguage.HASKELL;
+        if (language == ProgrammingLanguage.HASKELL || language == ProgrammingLanguage.OCAML) {
+            // Instructors typically test against the example solution for Haskell and OCAML exercises.
+            // If supported by the current CI configuration, this line activates the option per default.
+            this.programmingExercise.checkoutSolutionRepository = this.checkoutSolutionRepositoryAllowed;
+        }
+        if (!this.checkoutSolutionRepositoryAllowed) {
+            this.programmingExercise.checkoutSolutionRepository = false;
+        }
 
         // Only load problem statement template when creating a new exercise and not when importing an existing exercise
         if (this.programmingExercise.id === undefined && !this.isImportFromFile) {
@@ -300,7 +312,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         }
     }
 
-    get selectedProjectType() {
+    get selectedProjectType(): ProjectType | undefined {
         return this.selectedProjectTypeValue;
     }
 
@@ -479,7 +491,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             { title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.generalInfoStepTitle', valid: this.exerciseInfoComponent?.formValid ?? false },
             {
                 title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.difficultyStepTitle',
-                valid: this.exerciseDifficultyComponent?.teamConfigComponent.formValid ?? false,
+                valid: (this.exerciseDifficultyComponent?.teamConfigComponent.formValid && this.validIdeSelection()) ?? false,
             },
             { title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepTitle', valid: this.exerciseLanguageComponent?.formValid ?? false },
             { title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle', valid: true, empty: !this.programmingExercise.problemStatement },
@@ -626,7 +638,9 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         if (this.isImportFromFile) {
             this.subscribeToSaveResponse(this.programmingExerciseService.importFromFile(this.programmingExercise, this.courseId));
         } else if (this.isImportFromExistingExercise) {
-            this.subscribeToSaveResponse(this.programmingExerciseService.importExercise(this.programmingExercise, this.recreateBuildPlans, this.updateTemplate));
+            this.subscribeToSaveResponse(
+                this.programmingExerciseService.importExercise(this.programmingExercise, this.importOptions.recreateBuildPlans, this.importOptions.updateTemplate),
+            );
         } else if (this.programmingExercise.id !== undefined) {
             const requestOptions = {} as any;
             if (this.notificationText) {
@@ -742,8 +756,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     onStaticCodeAnalysisChanged() {
         // On import: If SCA mode changed, activate recreation of build plans and update of the template
         if (this.isImportFromExistingExercise && this.programmingExercise.staticCodeAnalysisEnabled !== this.originalStaticCodeAnalysisEnabled) {
-            this.recreateBuildPlans = true;
-            this.updateTemplate = true;
+            this.importOptions.recreateBuildPlans = true;
+            this.importOptions.updateTemplate = true;
         }
 
         if (!this.programmingExercise.staticCodeAnalysisEnabled) {
@@ -752,7 +766,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     onRecreateBuildPlanOrUpdateTemplateChange() {
-        if (!this.recreateBuildPlans || !this.updateTemplate) {
+        if (!this.importOptions.recreateBuildPlans || !this.importOptions.updateTemplate) {
             this.programmingExercise.staticCodeAnalysisEnabled = this.originalStaticCodeAnalysisEnabled;
         }
 
@@ -1075,10 +1089,9 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             rerenderSubject: this.rerenderSubject.asObservable(),
             validIdeSelection: this.validIdeSelection,
             inProductionEnvironment: this.inProductionEnvironment,
-            recreateBuildPlans: this.recreateBuildPlans,
+            recreateBuildPlans: this.importOptions.recreateBuildPlans,
             onRecreateBuildPlanOrUpdateTemplateChange: this.onRecreateBuildPlanOrUpdateTemplateChange,
-            updateTemplate: this.updateTemplate,
-            publishBuildPlanUrlAllowed: this.publishBuildPlanUrlAllowed,
+            updateTemplate: this.importOptions.updateTemplate,
             recreateBuildPlanOrUpdateTemplateChange: this.onRecreateBuildPlanOrUpdateTemplateChange,
             buildPlanLoaded: this.buildPlanLoaded,
         };

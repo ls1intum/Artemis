@@ -7,10 +7,15 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 
 import org.apache.commons.lang3.mutable.MutableInt;
 import org.slf4j.Logger;
@@ -69,7 +74,7 @@ public abstract class SubmissionExportService {
         if (zippedSubmissionsPaths.isEmpty()) {
             throw new BadRequestAlertException("Failed to export student submissions.", "SubmissionExport", "noSubmissions");
         }
-        return zippedSubmissionsPaths.get(0).toFile();
+        return zippedSubmissionsPaths.getFirst().toFile();
 
     }
 

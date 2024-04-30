@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.exercise.programmingexercise;
 
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.*;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 
 import java.io.IOException;
@@ -129,7 +128,7 @@ class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpringInte
     void testProgrammingExerciseDelete_buildPlanNotFoundInJenkins() throws Exception {
         var programmingExercise = programmingExerciseIntegrationTestService.programmingExercise;
         final var projectKey = programmingExercise.getProjectKey();
-        final var path = ROOT + PROGRAMMING_EXERCISE.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        final var path = "/api/programming-exercises/" + programmingExercise.getId();
         var params = new LinkedMultiValueMap<String, String>();
         params.add("deleteStudentReposBuildPlans", "true");
         params.add("deleteBaseReposBuildPlans", "true");
@@ -147,7 +146,7 @@ class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpringInte
     void testProgrammingExerciseDelete_buildPlanFailsInJenkins() throws Exception {
         var programmingExercise = programmingExerciseIntegrationTestService.programmingExercise;
         final var projectKey = programmingExercise.getProjectKey();
-        final var path = ROOT + PROGRAMMING_EXERCISE.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        final var path = "/api/programming-exercises/" + programmingExercise.getId();
         var params = new LinkedMultiValueMap<String, String>();
         params.add("deleteStudentReposBuildPlans", "true");
         params.add("deleteBaseReposBuildPlans", "true");
@@ -554,20 +553,8 @@ class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpringInte
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createProgrammingExercise_bambooProjectWithSameKeyAlreadyExists_badRequest() throws Exception {
-        programmingExerciseIntegrationTestService.createProgrammingExercise_bambooProjectWithSameKeyAlreadyExists_badRequest();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createProgrammingExercise_vcsProjectWithSameTitleAlreadyExists_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.createProgrammingExercise_vcsProjectWithSameTitleAlreadyExists_badRequest();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createProgrammingExercise_bambooProjectWithSameTitleAlreadyExists_badRequest() throws Exception {
-        programmingExerciseIntegrationTestService.createProgrammingExercise_bambooProjectWithSameTitleAlreadyExists_badRequest();
     }
 
     @Test
@@ -692,20 +679,8 @@ class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpringInte
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void importProgrammingExercise_bambooProjectWithSameKeyAlreadyExists_badRequest() throws Exception {
-        programmingExerciseIntegrationTestService.importProgrammingExercise_bambooProjectWithSameKeyAlreadyExists_badRequest();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importProgrammingExercise_vcsProjectWithSameTitleAlreadyExists_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.importProgrammingExercise_vcsProjectWithSameTitleAlreadyExists_badRequest();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void importProgrammingExercise_bambooProjectWithSameTitleAlreadyExists_badRequest() throws Exception {
-        programmingExerciseIntegrationTestService.importProgrammingExercise_bambooProjectWithSameTitleAlreadyExists_badRequest();
     }
 
     @Test

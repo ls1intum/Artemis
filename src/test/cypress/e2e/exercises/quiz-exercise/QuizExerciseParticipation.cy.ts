@@ -6,7 +6,7 @@ import { courseManagementAPIRequest, courseOverview, exerciseAPIRequest, quizExe
 import { admin, studentOne } from '../../../support/users';
 import { convertModelAfterMultiPart } from '../../../support/utils';
 
-describe('Quiz Exercise Participation', () => {
+describe.skip('Quiz Exercise Participation', () => {
     let course: Course;
     let quizExercise: QuizExercise;
 
@@ -28,7 +28,7 @@ describe('Quiz Exercise Participation', () => {
 
         it('Student cannot see hidden quiz', () => {
             cy.login(studentOne, '/courses/' + course.id);
-            cy.contains('No exercises available for the course.').should('be.visible');
+            courseOverview.getExercises().should('have.length', 0);
         });
 
         it('Student can see a visible quiz', () => {

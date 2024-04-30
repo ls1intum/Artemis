@@ -15,7 +15,9 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.export.ProgrammingExerciseExportService;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
@@ -104,7 +106,7 @@ public class AthenaRepositoryExportService {
             var submission = programmingSubmissionRepository.findById(submissionId).orElseThrow();
             // Load participation with eager submissions
             var participation = (ProgrammingExerciseStudentParticipation) programmingExerciseStudentParticipationRepository
-                    .findWithSubmissionsById(submission.getParticipation().getId()).get(0);
+                    .findWithSubmissionsById(submission.getParticipation().getId()).getFirst();
             zipFile = programmingExerciseExportService.createZipForRepositoryWithParticipation(programmingExercise, participation, exportOptions, exportDir, exportDir);
         }
         else {

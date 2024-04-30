@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
@@ -34,7 +34,10 @@ import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusResult;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.*;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildConfig;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.JobTimingInfo;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.RepositoryInfo;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
 
@@ -128,7 +131,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         BuildConfig buildConfig = getBuildConfig(participation, commitHash);
 
         LocalCIBuildJobQueueItem buildJobQueueItem = new LocalCIBuildJobQueueItem(buildJobId, participation.getBuildPlanId(), null, participation.getId(), courseId,
-                programmingExercise.getId(), 0, priority, null, repositoryInfo, jobTimingInfo, buildConfig);
+                programmingExercise.getId(), 0, priority, null, repositoryInfo, jobTimingInfo, buildConfig, null);
 
         queue.add(buildJobQueueItem);
 

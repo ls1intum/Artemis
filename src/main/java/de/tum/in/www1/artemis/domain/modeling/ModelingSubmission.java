@@ -6,8 +6,11 @@ import static de.tum.in.www1.artemis.config.Constants.MAX_SUBMISSION_TEXT_LENGTH
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.persistence.*;
-import javax.validation.constraints.Size;
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Transient;
+import jakarta.validation.constraints.Size;
 
 import org.springframework.util.StringUtils;
 

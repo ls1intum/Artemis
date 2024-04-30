@@ -16,10 +16,18 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.google.gson.Gson;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.Attachment;
 import de.tum.in.www1.artemis.domain.Lecture;
@@ -28,11 +36,17 @@ import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.AttachmentUnitService;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.FileService;
+import de.tum.in.www1.artemis.service.LectureUnitProcessingService;
+import de.tum.in.www1.artemis.service.SlideSplitterService;
 import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitInformationDTO;
-import de.tum.in.www1.artemis.web.rest.errors.*;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 @Profile(PROFILE_CORE)
 @RestController
@@ -42,8 +56,6 @@ public class AttachmentUnitResource {
     private static final Logger log = LoggerFactory.getLogger(AttachmentUnitResource.class);
 
     private static final String ENTITY_NAME = "attachmentUnit";
-
-    private static final Gson GSON = new Gson();
 
     private final AttachmentUnitRepository attachmentUnitRepository;
 
@@ -188,7 +200,7 @@ public class AttachmentUnitResource {
         }
         try {
             String filename = lectureUnitProcessingService.saveTempFileForProcessing(lectureId, file, minutesUntilDeletion);
-            return ResponseEntity.ok().body(GSON.toJson(filename));
+            return ResponseEntity.ok().body(new ObjectMapper().writeValueAsString(filename));
         }
         catch (IOException e) {
             log.error("Could not save file {}", originalFilename, e);

@@ -12,7 +12,10 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
-import de.tum.in.www1.artemis.service.compass.umlmodel.component.*;
+import de.tum.in.www1.artemis.service.compass.umlmodel.component.UMLComponent;
+import de.tum.in.www1.artemis.service.compass.umlmodel.component.UMLComponentDiagram;
+import de.tum.in.www1.artemis.service.compass.umlmodel.component.UMLComponentInterface;
+import de.tum.in.www1.artemis.service.compass.umlmodel.component.UMLComponentRelationship;
 import de.tum.in.www1.artemis.service.plagiarism.ModelingPlagiarismDetectionService;
 import de.tum.in.www1.artemis.service.plagiarism.PlagiarismService;
 import de.tum.in.www1.artemis.service.plagiarism.PlagiarismWebsocketService;
@@ -22,7 +25,7 @@ public abstract class AbstractUMLDiagramTest {
 
     // TODO: we should not mock like this!
     protected ModelingPlagiarismDetectionService modelingPlagiarismDetectionService = new ModelingPlagiarismDetectionService(mock(PlagiarismWebsocketService.class),
-            mock(PlagiarismCacheService.class), new PlagiarismService(null, null, null, null, null));
+            mock(PlagiarismCacheService.class), new PlagiarismService(null, null, null, null, null, null));
 
     protected void compareSubmissions(ModelingSubmission modelingSubmission1, ModelingSubmission modelingSubmission2, double minimumSimilarity, double expectedSimilarity) {
         // not really necessary, but avoids issues.

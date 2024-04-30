@@ -1,6 +1,6 @@
 import { courseList, courseOverview } from '../../../artemis';
 import { DELETE } from '../../../constants';
-import { BASE_API, GET, POST } from '../../../constants';
+import { BASE_API, POST } from '../../../constants';
 import { CypressCredentials } from '../../../users';
 import { getExercise } from '../../../utils';
 
@@ -29,17 +29,21 @@ export class OnlineEditorPage {
             } else {
                 this.createFileInRootPackage(exerciseID, newFile.name, submission.packageName!);
             }
-            cy.fixture(newFile.path).then(($fileContent) => {
-                cy.window().then((win) => {
-                    getExercise(exerciseID)
-                        .find('#ace-code-editor')
-                        .then(($el) => {
-                            // @ts-expect-error ace does not exists on windows, but works without issue
-                            const editor = win.ace.edit($el.get(0));
-                            editor.setValue($fileContent, 1);
-                        });
-                });
-            });
+            cy.fixture(newFile.path)
+                .then(($fileContent) => {
+                    const clipboardData = new DataTransfer();
+                    const format = 'text/plain';
+                    clipboardData.setData(format, $fileContent);
+                    const pasteEvent = new ClipboardEvent('paste', { clipboardData });
+                    const editorElement = getExercise(exerciseID).find('.view-lines').first();
+                    editorElement
+                        .click()
+                        .then((element) => {
+                            element[0].dispatchEvent(pasteEvent);
+                        })
+                        .wait(500);
+                })
+                .wait(500);
         }
         cy.wait(500);
     }
@@ -98,16 +102,11 @@ export class OnlineEditorPage {
      */
     createFileInRootFolder(exerciseID: number, fileName: string) {
         const postRequestId = 'createFile' + fileName;
-        const getRequestId = 'getFile' + fileName;
         const requestPath = `${BASE_API}/repository/*/file?file=${fileName}`;
         getExercise(exerciseID).find('[id="create_file_root"]').click().wait(500);
         cy.intercept(POST, requestPath).as(postRequestId);
-        cy.intercept(GET, requestPath).as(getRequestId);
         getExercise(exerciseID).find('#file-browser-create-node').type(fileName).wait(500).type('{enter}');
         cy.wait('@' + postRequestId)
-            .its('response.statusCode')
-            .should('eq', 200);
-        cy.wait('@' + getRequestId)
             .its('response.statusCode')
             .should('eq', 200);
         this.findFileBrowser(exerciseID).contains(fileName).should('be.visible').wait(500);
@@ -123,16 +122,11 @@ export class OnlineEditorPage {
         const packagePath = packageName.replace(/\./g, '/');
         const filePath = `src/${packagePath}/${fileName}`;
         const postRequestId = 'createFile' + fileName;
-        const getRequestId = 'getFile' + fileName;
         const requestPath = `${BASE_API}/repository/*/file?file=${filePath}`;
         getExercise(exerciseID).find('[id="file-browser-folder-create-file"]').eq(2).click().wait(500);
         cy.intercept(POST, requestPath).as(postRequestId);
-        cy.intercept(GET, requestPath).as(getRequestId);
         getExercise(exerciseID).find('#file-browser-create-node').type(fileName).wait(500).type('{enter}');
         cy.wait('@' + postRequestId)
-            .its('response.statusCode')
-            .should('eq', 200);
-        cy.wait('@' + getRequestId)
             .its('response.statusCode')
             .should('eq', 200);
         this.findFileBrowser(exerciseID).contains(fileName).should('be.visible').wait(500);
@@ -191,13 +185,15 @@ export class OnlineEditorPage {
      * Starts the participation in the test programming exercise.
      */
     startParticipation(courseId: number, exerciseId: number, credentials: CypressCredentials) {
+        // For shorter intervals, the reload may come before the app can render the elements.
+        const reloadInterval = 4000;
         cy.login(credentials, '/');
         cy.url().should('include', '/courses');
         cy.log('Participating in the programming exercise as a student...');
         courseList.openCourse(courseId!);
         cy.url().should('include', '/exercises');
-        courseOverview.startExercise(exerciseId);
-        cy.reloadUntilFound('#open-exercise-' + exerciseId);
+        courseOverview.startExercise(exerciseId, reloadInterval);
+        cy.reloadUntilFound('#open-exercise-' + exerciseId, reloadInterval);
         courseOverview.openRunningProgrammingExercise(exerciseId);
     }
 }

@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.service.programming;
 
-import static de.tum.in.www1.artemis.config.Constants.*;
+import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -14,7 +16,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.Repository;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
@@ -264,47 +270,47 @@ public class ProgrammingExerciseImportService {
      * Referenced entities, s.a. the test cases or the hints will get cloned and assigned a new id.
      *
      * @param originalProgrammingExercise the Programming Exercise which should be used as a blueprint
-     * @param newExercise                 The new exercise already containing values which should not get copied, i.e. overwritten
+     * @param newProgrammingExercise      The new exercise already containing values which should not get copied, i.e. overwritten
      * @param updateTemplate              if the template files should be updated
      * @param recreateBuildPlans          if the build plans should be recreated
      * @return the imported programming exercise
      */
-    public ProgrammingExercise importProgrammingExercise(ProgrammingExercise originalProgrammingExercise, ProgrammingExercise newExercise, boolean updateTemplate,
+    public ProgrammingExercise importProgrammingExercise(ProgrammingExercise originalProgrammingExercise, ProgrammingExercise newProgrammingExercise, boolean updateTemplate,
             boolean recreateBuildPlans) {
         // remove all non-alphanumeric characters from the short name. This gets already done in the client, but we do it again here to be sure
-        newExercise.setShortName(newExercise.getShortName().replaceAll("[^a-zA-Z0-9]", ""));
-        newExercise.generateAndSetProjectKey();
-        programmingExerciseService.checkIfProjectExists(newExercise);
+        newProgrammingExercise.setShortName(newProgrammingExercise.getShortName().replaceAll("[^a-zA-Z0-9]", ""));
+        newProgrammingExercise.generateAndSetProjectKey();
+        programmingExerciseService.checkIfProjectExists(newProgrammingExercise);
 
-        if (newExercise.isExamExercise()) {
+        if (newProgrammingExercise.isExamExercise()) {
             // Disable feedback suggestions on exam exercises (currently not supported)
-            newExercise.setFeedbackSuggestionModule(null);
+            newProgrammingExercise.setFeedbackSuggestionModule(null);
         }
 
-        final var importedProgrammingExercise = programmingExerciseImportBasicService.importProgrammingExerciseBasis(originalProgrammingExercise, newExercise);
-        importRepositories(originalProgrammingExercise, importedProgrammingExercise);
+        newProgrammingExercise = programmingExerciseImportBasicService.importProgrammingExerciseBasis(originalProgrammingExercise, newProgrammingExercise);
+        importRepositories(originalProgrammingExercise, newProgrammingExercise);
 
         // Update the template files
         if (updateTemplate) {
-            TemplateUpgradeService upgradeService = templateUpgradePolicyService.getUpgradeService(importedProgrammingExercise.getProgrammingLanguage());
-            upgradeService.upgradeTemplate(importedProgrammingExercise);
+            TemplateUpgradeService upgradeService = templateUpgradePolicyService.getUpgradeService(newProgrammingExercise.getProgrammingLanguage());
+            upgradeService.upgradeTemplate(newProgrammingExercise);
         }
 
         if (recreateBuildPlans) {
             // Create completely new build plans for the exercise
-            programmingExerciseService.setupBuildPlansForNewExercise(importedProgrammingExercise, false);
+            programmingExerciseService.setupBuildPlansForNewExercise(newProgrammingExercise, false);
         }
         else {
             // We have removed the automatic build trigger from test to base for new programming exercises.
             // We also remove this build trigger in the case of an import as the source exercise might still have this trigger.
             // The importBuildPlans method includes this process
-            importBuildPlans(originalProgrammingExercise, importedProgrammingExercise);
+            importBuildPlans(originalProgrammingExercise, newProgrammingExercise);
         }
 
-        programmingExerciseService.scheduleOperations(importedProgrammingExercise.getId());
+        programmingExerciseService.scheduleOperations(newProgrammingExercise.getId());
 
-        programmingExerciseTaskService.replaceTestIdsWithNames(importedProgrammingExercise);
-        return importedProgrammingExercise;
+        programmingExerciseTaskService.replaceTestIdsWithNames(newProgrammingExercise);
+        return newProgrammingExercise;
     }
 
 }

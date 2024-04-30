@@ -2,9 +2,12 @@ package de.tum.in.www1.artemis.service.iris.session;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 
-import javax.ws.rs.BadRequestException;
+import jakarta.ws.rs.BadRequestException;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -14,7 +17,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.BuildLogEntry;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.Repository;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender;
 import de.tum.in.www1.artemis.domain.iris.message.IrisTextMessageContent;
@@ -216,7 +225,7 @@ public class IrisChatSessionService implements IrisChatBasedFeatureInterface<Iri
         if (participations.isEmpty()) {
             return Optional.empty();
         }
-        return participations.get(participations.size() - 1).getSubmissions().stream().max(Submission::compareTo)
+        return participations.getLast().getSubmissions().stream().max(Submission::compareTo)
                 .flatMap(sub -> programmingSubmissionRepository.findWithEagerBuildLogEntriesById(sub.getId()));
     }
 

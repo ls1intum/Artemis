@@ -42,6 +42,7 @@ const esModules = [
     'franc-min',
     'internmap',
     'lodash-es',
+    'monaco-editor',
     'n-gram',
     'ngx-device-detector',
     'ngx-infinite-scroll',
@@ -100,10 +101,10 @@ module.exports = {
     coverageThreshold: {
         global: {
             // TODO: in the future, the following values should increase to at least 90%
-            statements: 87.2,
-            branches: 73.8,
-            functions: 81.6,
-            lines: 87.2,
+            statements: 87.3,
+            branches: 73.9,
+            functions: 81.8,
+            lines: 87.4,
         },
     },
     coverageReporters: ['clover', 'json', 'lcov', 'text-summary'],
@@ -148,5 +149,7 @@ module.exports = {
         '@state/(.*)': '<rootDir>/src/app/state/$1',
         '^lodash-es$': 'lodash',
         '@sentry/angular-ivy': '<rootDir>/node_modules/@sentry/angular-ivy/bundles/sentry-angular-ivy.umd.js',
+        '\\.css$': '<rootDir>/stub.js',
+        '^monaco-editor$': '<rootDir>/node_modules/monaco-editor/esm/vs/editor/editor.api.js',
     },
 };

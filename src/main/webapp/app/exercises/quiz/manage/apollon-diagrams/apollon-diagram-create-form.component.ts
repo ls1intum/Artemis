@@ -3,7 +3,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
 import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
 import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
-import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faSave } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-apollon-diagram-create-form',
@@ -16,7 +16,6 @@ export class ApollonDiagramCreateFormComponent implements AfterViewInit {
     @ViewChild('titleInput', { static: false }) titleInput: ElementRef;
 
     // Icons
-    faBan = faBan;
     faSave = faSave;
 
     constructor(
@@ -38,9 +37,11 @@ export class ApollonDiagramCreateFormComponent implements AfterViewInit {
     save() {
         this.isSaving = true;
         this.apollonDiagramService.create(this.apollonDiagram, this.apollonDiagram.courseId!).subscribe({
-            next: () => {
-                this.isSaving = false;
-                this.activeModal.close();
+            next: ({ body }) => {
+                if (body) {
+                    this.isSaving = false;
+                    this.activeModal.close(body);
+                }
             },
             error: () => {
                 this.alertService.error('artemisApp.apollonDiagram.create.error');

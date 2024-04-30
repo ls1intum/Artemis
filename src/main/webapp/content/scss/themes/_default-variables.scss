@@ -48,7 +48,18 @@ $link-color: $primary;
 $border-color: #dee2e6;
 
 // Footer
-$footer-bg: #fff;
+$footer-bg: $white;
+$footer-height-dev: 3rem;
+$footer-height-prod: 2rem;
+$sidebar-footer-height-dev: 148px;
+$sidebar-footer-height-prod: 132px;
+
+//Module and Navigationbar
+$module-bg: $white;
+$course-image-bg: $body-bg;
+$link-item-color: $primary;
+$link-item-bg: $gray-100;
+$sidebar-card-selected-bg: #ebf3f9;
 
 // Cards
 $card-bg: $white;
@@ -342,6 +353,17 @@ $code-editor-file-browser-badge-background: $code-editor-file-browser-tree-hover
 $code-editor-diff-newline-background: rgba(63, 185, 80, 0.4);
 $code-editor-gutter-newline-background: rgba(63, 185, 80, 0.8);
 
+// Monaco editor
+$monaco-editor-build-annotation-error-background: scale-color($danger, $alpha: -80%);
+$monaco-editor-build-annotation-error-glyph: $danger;
+$monaco-editor-build-annotation-warning-background: scale-color($warning, $alpha: -80%);
+$monaco-editor-build-annotation-warning-glyph: $warning;
+$monaco-editor-build-annotation-outdated-background: scale-color($gray-500, $alpha: -80%);
+$monaco-editor-build-annotation-outdated-glyph: $gray-500;
+$monaco-editor-diff-highlight-green: rgb(63, 185, 80);
+$monaco-editor-diff-line-highlight: scale-color($monaco-editor-diff-highlight-green, $alpha: -60%);
+$monaco-editor-diff-margin-highlight: scale-color($monaco-editor-diff-highlight-green, $alpha: -30%);
+
 // Git-Diff Viewer
 $git-diff-viewer-added-line-background: rgba(63, 185, 80, 0.5);
 $git-diff-viewer-added-line-gutter-background: rgba(63, 185, 80, 0.5);
@@ -545,3 +567,6 @@ $iris-client-chat-input: var(--gray-200);
 $iris-my-chat-background: #a9dcb5;
 $iris-btn-circle: var(--success);
 $iris-btn-circle-hover: #3eb058;
+
+// Image Cropper
+$cropper-overlay-color: transparent;

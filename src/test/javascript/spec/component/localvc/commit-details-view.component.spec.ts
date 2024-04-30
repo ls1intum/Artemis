@@ -16,6 +16,8 @@ import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programmin
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { GitDiffReportComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report.component';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { HttpResponse } from '@angular/common/http';
 describe('CommitDetailsViewComponent', () => {
     let component: CommitDetailsViewComponent;
     let fixture: ComponentFixture<CommitDetailsViewComponent>;
@@ -25,6 +27,19 @@ describe('CommitDetailsViewComponent', () => {
 
     // Define mock data for participation and commits
     const exercise = { id: 1, numberOfAssessmentsOfCorrectionRounds: [new DueDateStat()], studentAssignedTeamIdComputed: true, secondCorrectionEnabled: true };
+
+    const mockExerciseWithTemplateAndSolution: ProgrammingExercise = {
+        id: 1,
+        templateParticipation: { id: 1, repositoryUri: 'template-repo-uri' },
+        solutionParticipation: { id: 1, repositoryUri: 'solution-repo-uri' },
+        numberOfAssessmentsOfCorrectionRounds: [new DueDateStat()],
+        studentAssignedTeamIdComputed: true,
+        secondCorrectionEnabled: true,
+    };
+
+    const mockTemplateCommit1: CommitInfo = { hash: 'templateCommit1', author: 'author1', message: 'message1', timestamp: dayjs('2021-01-01') };
+    const mockTemplateCommit2: CommitInfo = { hash: 'templateCommit2', author: 'author2', message: 'message2', timestamp: dayjs('2021-01-02') };
+    const mockTemplateCommits: CommitInfo[] = [mockTemplateCommit2, mockTemplateCommit1];
 
     const mockParticipation: ProgrammingExerciseStudentParticipation = {
         id: 2,
@@ -99,7 +114,12 @@ describe('CommitDetailsViewComponent', () => {
         mockRepositoryFiles.set('file2', 'content2');
 
         jest.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithAllResults').mockReturnValue(of(mockParticipation));
+
+        const mockExerciseResponse: HttpResponse<ProgrammingExercise> = new HttpResponse({ body: mockExerciseWithTemplateAndSolution });
+        jest.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipation').mockReturnValue(of(mockExerciseResponse));
+
         jest.spyOn(programmingExerciseParticipationService, 'retrieveCommitHistoryForParticipation').mockReturnValue(of(mockCommits));
+        jest.spyOn(programmingExerciseParticipationService, 'retrieveCommitHistoryForTemplateSolutionOrTests').mockReturnValue(of(mockTemplateCommits));
         jest.spyOn(programmingExerciseService, 'getDiffReportForCommits').mockReturnValue(of(mockDiffReportForCommits));
 
         fixture.detectChanges();
@@ -118,7 +138,7 @@ describe('CommitDetailsViewComponent', () => {
         component.ngOnInit();
 
         // Expectations
-        expect(component.studentParticipation).toEqual(mockParticipation);
+        expect(component.participation).toEqual(mockParticipation);
 
         // Trigger ngOnDestroy
         component.ngOnDestroy();
@@ -127,7 +147,26 @@ describe('CommitDetailsViewComponent', () => {
         expect(component.paramSub?.closed).toBeTrue();
     });
 
-    it('should handle commits', () => {
+    it('should load template participation', () => {
+        setupComponent();
+        activatedRoute.setParameters({ participationId: 2, commitHash: 'templateCommit2', exerciseId: 1, repositoryType: 'TEMPLATE' });
+
+        // Trigger ngOnInit
+        component.ngOnInit();
+
+        // Expectations
+        expect(component.participation).toEqual(mockExerciseWithTemplateAndSolution.templateParticipation);
+        expect(component.exercise).toEqual(mockExerciseWithTemplateAndSolution);
+        expect(component.participationId).toEqual(mockExerciseWithTemplateAndSolution.templateParticipation?.id);
+
+        // Trigger ngOnDestroy
+        component.ngOnDestroy();
+
+        // Expect subscription to be unsubscribed
+        expect(component.paramSub?.closed).toBeTrue();
+    });
+
+    it('should handle commits for student participation', () => {
         setupComponent();
         activatedRoute.setParameters({ participationId: 2, commitHash: 'commit2', exerciseId: 1 });
 
@@ -137,6 +176,25 @@ describe('CommitDetailsViewComponent', () => {
         expect(component.currentCommit).toEqual(commit2);
         expect(component.previousCommit).toEqual(commit1);
         expect(component.commits).toEqual([commit3, commit2, commit1]);
+
+        // Trigger ngOnDestroy
+        component.ngOnDestroy();
+
+        // Expect subscription to be unsubscribed
+        expect(component.paramSub?.closed).toBeTrue();
+        expect(component.commitsInfoSubscription?.closed).toBeTrue();
+    });
+
+    it('should handle commits for template participation', () => {
+        setupComponent();
+        activatedRoute.setParameters({ participationId: 2, commitHash: 'templateCommit2', exerciseId: 1, repositoryType: 'TEMPLATE' });
+
+        // Trigger ngOnInit
+        component.ngOnInit();
+
+        expect(component.currentCommit).toEqual(mockTemplateCommit2);
+        expect(component.previousCommit).toEqual(mockTemplateCommit1);
+        expect(component.commits).toEqual(mockTemplateCommits);
 
         // Trigger ngOnDestroy
         component.ngOnDestroy();

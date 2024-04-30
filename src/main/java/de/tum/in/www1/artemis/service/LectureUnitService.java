@@ -2,7 +2,10 @@ package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
+import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,7 +14,8 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.BadRequestException;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -21,8 +25,17 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.Competency;
-import de.tum.in.www1.artemis.domain.lecture.*;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
+import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
+import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
+import de.tum.in.www1.artemis.domain.lecture.LectureUnitCompletion;
+import de.tum.in.www1.artemis.domain.lecture.Slide;
+import de.tum.in.www1.artemis.repository.CompetencyRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.LectureRepository;
+import de.tum.in.www1.artemis.repository.LectureUnitCompletionRepository;
+import de.tum.in.www1.artemis.repository.LectureUnitRepository;
+import de.tum.in.www1.artemis.repository.SlideRepository;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -196,5 +209,21 @@ public class LectureUnitService {
     public void removeCompetency(Set<LectureUnit> lectureUnits, Competency competency) {
         lectureUnits.forEach(lectureUnit -> lectureUnit.getCompetencies().remove(competency));
         lectureUnitRepository.saveAll(lectureUnits);
+    }
+
+    /**
+     * Validates the given URL string and returns the URL object
+     *
+     * @param urlString The URL string to validate
+     * @return The URL object
+     * @throws BadRequestException If the URL string is invalid
+     */
+    public URL validateUrlStringAndReturnUrl(String urlString) {
+        try {
+            return new URI(urlString).toURL();
+        }
+        catch (URISyntaxException | MalformedURLException | IllegalArgumentException e) {
+            throw new BadRequestException();
+        }
     }
 }

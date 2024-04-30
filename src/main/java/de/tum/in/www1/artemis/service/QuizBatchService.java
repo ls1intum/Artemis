@@ -4,9 +4,11 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.security.SecureRandom;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
@@ -17,9 +19,10 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
-import de.tum.in.www1.artemis.domain.quiz.*;
+import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.exception.QuizJoinException;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.QuizBatchRepository;
 import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 
 @Profile(PROFILE_CORE)

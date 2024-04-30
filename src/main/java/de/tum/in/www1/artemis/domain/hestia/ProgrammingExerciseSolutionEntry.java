@@ -1,6 +1,10 @@
 package de.tum.in.www1.artemis.domain.hestia;
 
-import javax.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -20,7 +24,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
  * If it encompasses the addition of an entire file, previousLine will be null.
  * If it deletes an entire file, line will be null.
  * previousLine and line will be different when there are other changes higher up in the file.
- *
+ * <p>
  * Example:
  * A print statement gets changed:
  * <code>

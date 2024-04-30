@@ -1,9 +1,19 @@
 package de.tum.in.www1.artemis.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-import java.time.*;
+import java.time.DayOfWeek;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -41,7 +51,7 @@ class WeeklyEmailSummaryScheduleServiceTest {
     @BeforeAll
     static void setUp() {
         profileService = mock(ProfileService.class);
-        when(profileService.isDev()).thenReturn(false);
+        when(profileService.isDevActive()).thenReturn(false);
 
         emailSummaryService = mock(EmailSummaryService.class);
 

@@ -1,10 +1,18 @@
 package de.tum.in.www1.artemis.authorization;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static org.assertj.core.api.Fail.fail;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -12,7 +20,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 
-import de.tum.in.www1.artemis.security.annotations.*;
+import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
+import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
+import de.tum.in.www1.artemis.security.annotations.ManualConfig;
 
 /**
  * This service is used to check if the authorization annotations are used correctly.
@@ -34,7 +48,31 @@ public class AuthorizationTestService {
      *
      * @param endpointMap The map of all endpoints
      */
-    public void testEndpoints(Map<RequestMappingInfo, HandlerMethod> endpointMap) {
+    public void testAllEndpoints(Map<RequestMappingInfo, HandlerMethod> endpointMap) {
+        var endpointsToBeTested = endpointMap.entrySet().stream().filter(entry -> validEndpointToTest(entry.getValue(), false))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+        testEndpoints(endpointsToBeTested);
+    }
+
+    /**
+     * Tests only endpoints that depend on a specific non-core profile and that most likely is only relevant for the currently running test environment.
+     *
+     * @param endpointMap The map of all endpoints
+     */
+    public void testConditionalEndpoints(Map<RequestMappingInfo, HandlerMethod> endpointMap) {
+        var endpointsToBeTested = endpointMap.entrySet().stream().filter(entry -> validEndpointToTest(entry.getValue(), true))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+        testEndpoints(endpointsToBeTested);
+    }
+
+    /**
+     * Tests the given endpoints and prints the reports
+     *
+     * @param endpointMap The map of all endpoints to test
+     */
+    private void testEndpoints(Map<RequestMappingInfo, HandlerMethod> endpointMap) {
         Map<Class<?>, Set<String>> classReports = new HashMap<>();
         Map<Method, Set<String>> methodReports = new HashMap<>();
 
@@ -67,7 +105,14 @@ public class AuthorizationTestService {
      * @return true if the endpoint depends on a profile, false otherwise
      */
     private boolean isConditionalEndpoint(HandlerMethod handlerMethod) {
-        return handlerMethod.getMethod().getAnnotation(Profile.class) != null || handlerMethod.getMethod().getDeclaringClass().getAnnotation(Profile.class) != null;
+        var methodProfileAnnotation = handlerMethod.getMethod().getAnnotation(Profile.class);
+        var classProfileAnnotation = handlerMethod.getMethod().getDeclaringClass().getAnnotation(Profile.class);
+        // No null-check required for classes because we have tests ensuring Profile annotations on classes
+        return (methodProfileAnnotation != null && isNonCoreProfile(methodProfileAnnotation)) || isNonCoreProfile(classProfileAnnotation);
+    }
+
+    private boolean isNonCoreProfile(Profile profileAnnotation) {
+        return !(profileAnnotation.value().length == 1 && profileAnnotation.value()[0].equals(PROFILE_CORE));
     }
 
     /**
@@ -91,7 +136,7 @@ public class AuthorizationTestService {
      */
     private void checkForPath(RequestMappingInfo info, HandlerMethod method, Map<Method, Set<String>> methodReports) {
         Method javaMethod = method.getMethod();
-        Set<String> patterns = Objects.requireNonNull(info.getPatternsCondition()).getPatterns();
+        Set<String> patterns = Objects.requireNonNull(info.getPathPatternsCondition()).getPatternValues();
         Annotation annotation = getSingleAuthAnnotation(javaMethod);
         if (annotation == null) {
             // We already logged an error in this case

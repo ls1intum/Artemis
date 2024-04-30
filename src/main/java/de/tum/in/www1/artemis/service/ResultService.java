@@ -3,11 +3,19 @@ package de.tum.in.www1.artemis.service;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
@@ -15,14 +23,36 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.LongFeedbackText;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
-import de.tum.in.www1.artemis.domain.participation.*;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.BuildJobRepository;
+import de.tum.in.www1.artemis.repository.ComplaintRepository;
+import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
+import de.tum.in.www1.artemis.repository.FeedbackRepository;
+import de.tum.in.www1.artemis.repository.LongFeedbackTextRepository;
+import de.tum.in.www1.artemis.repository.ParticipantScoreRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.RatingRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.repository.StudentExamRepository;
+import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.ResultBuildJob;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiNewResultService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.websocket.ResultWebsocketService;
@@ -65,13 +95,18 @@ public class ResultService {
 
     private final LongFeedbackTextRepository longFeedbackTextRepository;
 
+    private final BuildJobRepository buildJobRepository;
+
+    private final BuildLogEntryService buildLogEntryService;
+
     public ResultService(UserRepository userRepository, ResultRepository resultRepository, Optional<LtiNewResultService> ltiNewResultService,
             ResultWebsocketService resultWebsocketService, ComplaintResponseRepository complaintResponseRepository, RatingRepository ratingRepository,
             FeedbackRepository feedbackRepository, LongFeedbackTextRepository longFeedbackTextRepository, ComplaintRepository complaintRepository,
             ParticipantScoreRepository participantScoreRepository, AuthorizationCheckService authCheckService, ExerciseDateService exerciseDateService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, StudentExamRepository studentExamRepository) {
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, StudentExamRepository studentExamRepository,
+            BuildJobRepository buildJobRepository, BuildLogEntryService buildLogEntryService) {
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
         this.ltiNewResultService = ltiNewResultService;
@@ -88,6 +123,8 @@ public class ResultService {
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.studentExamRepository = studentExamRepository;
+        this.buildJobRepository = buildJobRepository;
+        this.buildLogEntryService = buildLogEntryService;
     }
 
     /**
@@ -112,7 +149,7 @@ public class ResultService {
         // this call should cascade all feedback relevant changed and save them accordingly
         resultRepository.save(result);
         // The websocket client expects the submission and feedbacks, so we retrieve the result again instead of using the save result.
-        var savedResult = resultRepository.findByIdWithEagerSubmissionAndFeedbackElseThrow(result.getId());
+        var savedResult = resultRepository.findWithSubmissionAndFeedbackAndTeamStudentsByIdElseThrow(result.getId());
 
         // if it is an example result we do not have any participation (isExampleResult can be also null)
         if (Boolean.FALSE.equals(savedResult.isExampleResult()) || savedResult.isExampleResult() == null) {
@@ -326,7 +363,7 @@ public class ResultService {
                 .findWithResultsAndExerciseAndTeamStudentsByBuildPlanId(planKey);
         ProgrammingExerciseStudentParticipation participation = null;
         if (!participations.isEmpty()) {
-            participation = participations.get(0);
+            participation = participations.getFirst();
             if (participations.size() > 1) {
                 // in the rare case of multiple participations, take the latest one.
                 for (ProgrammingExerciseStudentParticipation otherParticipation : participations) {
@@ -400,6 +437,39 @@ public class ResultService {
         Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(role, course, null);
         return result;
+    }
+
+    /**
+     * Get a map of result ids to the respective build job ids if build log files for this build job exist.
+     *
+     * @param results the results for which to check the availability of build logs
+     * @return a map of result ids to respective build job ids if the build log files exist, null otherwise
+     */
+    public Map<Long, String> getLogsAvailabilityForResults(List<Result> results) {
+
+        Map<Long, String> logsAvailability = new HashMap<>();
+
+        List<Long> resultIds = results.stream().map(Result::getId).toList();
+
+        Map<Long, String> resultBuildJobSet = buildJobRepository.findBuildJobIdsForResultIds(resultIds).stream()
+                .collect(Collectors.toMap(ResultBuildJob::resultId, ResultBuildJob::buildJobId, (existing, replacement) -> existing));
+
+        for (Long resultId : resultIds) {
+            String buildJobId = resultBuildJobSet.get(resultId);
+            if (buildJobId != null) {
+
+                if (buildLogEntryService.buildJobHasLogFile(buildJobId)) {
+                    logsAvailability.put(resultId, buildJobId);
+                }
+                else {
+                    logsAvailability.put(resultId, null);
+                }
+            }
+            else {
+                logsAvailability.put(resultId, null);
+            }
+        }
+        return logsAvailability;
     }
 
     @NotNull

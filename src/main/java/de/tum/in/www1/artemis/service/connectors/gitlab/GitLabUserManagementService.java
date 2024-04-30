@@ -1,8 +1,13 @@
 package de.tum.in.www1.artemis.service.connectors.gitlab;
 
-import static org.gitlab4j.api.models.AccessLevel.*;
+import static org.gitlab4j.api.models.AccessLevel.MAINTAINER;
+import static org.gitlab4j.api.models.AccessLevel.OWNER;
+import static org.gitlab4j.api.models.AccessLevel.REPORTER;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import org.gitlab4j.api.GitLabApi;
 import org.gitlab4j.api.GitLabApiException;
@@ -490,7 +495,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
      * It is needed if
      * 1. the config option is enabled, and
      * 2. the user does not yet have an access token
-     *
+     * <p>
      * The GitLab user will be extracted from the Gitlab user API
      *
      * @param user the Artemis user (where the token will be stored)

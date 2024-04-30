@@ -3,15 +3,18 @@ package de.tum.in.www1.artemis.service.scheduled;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import javax.validation.constraints.NotNull;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+import jakarta.validation.constraints.NotNull;
 
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -29,7 +32,13 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.scores.ParticipantScore;
 import de.tum.in.www1.artemis.domain.scores.StudentScore;
 import de.tum.in.www1.artemis.domain.scores.TeamScore;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.ParticipantScoreRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.StudentScoreRepository;
+import de.tum.in.www1.artemis.repository.TeamRepository;
+import de.tum.in.www1.artemis.repository.TeamScoreRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.util.RoundingUtil;
@@ -229,7 +238,7 @@ public class ParticipantScoreScheduleService {
      */
     private void executeTask(Long exerciseId, Long participantId, Instant resultLastModified, Long resultIdToBeDeleted) {
         long start = System.currentTimeMillis();
-        log.info("Processing exercise {} and participant {} to update participant scores.", exerciseId, participantId);
+        log.debug("Processing exercise {} and participant {} to update participant scores.", exerciseId, participantId);
         try {
             SecurityUtils.setAuthorizationObject();
 
@@ -293,14 +302,12 @@ public class ParticipantScoreScheduleService {
                     teamScore.setExercise(exercise);
                     return teamScore;
                 }
-                else if (participant instanceof User user) {
+                else {
+                    User user = (User) participant;
                     var studentScore = new StudentScore();
                     studentScore.setUser(user);
                     studentScore.setExercise(exercise);
                     return studentScore;
-                }
-                else {
-                    return null;
                 }
             });
 
@@ -314,7 +321,11 @@ public class ParticipantScoreScheduleService {
             }
 
             // Update the progress for competencies linked to this exercise
-            competencyProgressService.updateProgressByLearningObject(score.getExercise(), score.getParticipant().getParticipants());
+            Participant scoreParticipant = score.getParticipant();
+            if (scoreParticipant instanceof Team team && !Hibernate.isInitialized(team.getStudents())) {
+                scoreParticipant = teamRepository.findWithStudentsByIdElseThrow(team.getId());
+            }
+            competencyProgressService.updateProgressByLearningObject(score.getExercise(), scoreParticipant.getParticipants());
         }
         catch (Exception e) {
             log.error("Exception while processing participant score for exercise {} and participant {} for participant scores:", exerciseId, participantId, e);
@@ -323,7 +334,7 @@ public class ParticipantScoreScheduleService {
             scheduledTasks.remove(new ParticipantScoreId(exerciseId, participantId).hashCode());
         }
         long end = System.currentTimeMillis();
-        log.info("Updating the participant score for exercise {} and participant {} took {} ms.", exerciseId, participantId, end - start);
+        log.debug("Updating the participant score for exercise {} and participant {} took {} ms.", exerciseId, participantId, end - start);
     }
 
     /**

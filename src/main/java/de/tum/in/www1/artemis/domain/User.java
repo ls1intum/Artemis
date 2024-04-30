@@ -10,12 +10,23 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
-import javax.annotation.Nullable;
-import javax.persistence.*;
-import javax.validation.constraints.Email;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
-import javax.validation.constraints.Size;
+import jakarta.annotation.Nullable;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.annotations.BatchSize;
@@ -141,13 +152,9 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Column(name = "vcs_access_token_expiry_date")
     private ZonedDateTime vcsAccessTokenExpiryDate = null;
 
-    /**
-     * Word "GROUPS" is being added as a restricted word starting in MySQL 8.0.2
-     * Workaround: Annotation @Column(name = "`groups`") escapes this word using backticks.
-     */
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "user_groups", joinColumns = @JoinColumn(name = "user_id"))
-    @Column(name = "`groups`")
+    @Column(name = "user_groups")
     private Set<String> groups = new HashSet<>();
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)

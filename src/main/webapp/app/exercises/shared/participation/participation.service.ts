@@ -107,6 +107,10 @@ export class ParticipationService {
         return !!exercise?.dueDate && dayjs().isAfter(exercise.dueDate);
     }
 
+    getBuildJobIdsForResultsOfParticipation(participationId: number): Observable<{ [key: string]: string }> {
+        return this.http.get<{ [key: string]: string }>(`${this.resourceUrl}/${participationId}/results/build-job-ids`);
+    }
+
     protected convertParticipationDatesFromClient(participation: StudentParticipation): StudentParticipation {
         // return a copy of the object
         return Object.assign({}, participation, {

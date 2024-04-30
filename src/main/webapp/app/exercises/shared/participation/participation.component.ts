@@ -18,12 +18,10 @@ import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
 import { faCircleNotch, faCodeBranch, faEraser, faFilePowerpoint, faTable, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeStepsDTO } from 'app/entities/grade-step.model';
 import { PROFILE_LOCALVC } from 'app/app.constants';
-import { Router } from '@angular/router';
 
 enum FilterProp {
     ALL = 'all',
@@ -57,7 +55,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     gradeStepsDTO?: GradeStepsDTO;
     gradeStepsDTOSub: Subscription;
 
-    // Used to show the "Clone Repository URI" button instead of a link to Bitbucket/GitLab when the "localvc" profile is active.
+    // Used to show the "Clone Repository URI" button instead of a link to GitLab when the "localvc" profile is active.
     localVCEnabled = false;
 
     private dialogErrorSource = new Subject<string>();
@@ -76,8 +74,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     isSaving: boolean;
 
     afterDueDate = false;
-
-    routerLink: string;
 
     // Icons
     faTable = faTable;
@@ -98,7 +94,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         private accountService: AccountService,
         private profileService: ProfileService,
         private gradingSystemService: GradingSystemService,
-        private router: Router,
     ) {
         this.participationCriteria = {
             filterProp: FilterProp.ALL,
@@ -109,7 +104,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
      * Initialize component by calling loadAll and registerChangeInParticipation
      */
     ngOnInit() {
-        this.routerLink = this.router.url;
         this.paramSub = this.route.params.subscribe((params) => this.loadExercise(+params['exerciseId']));
         this.registerChangeInParticipations();
         this.isAdmin = this.accountService.isAdmin();
@@ -163,7 +157,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
                 const programmingExercise = this.exercise as ProgrammingExercise;
                 if (programmingExercise.projectKey) {
                     this.profileService.getProfileInfo().subscribe((profileInfo) => {
-                        setBuildPlanUrlForProgrammingParticipations(profileInfo, this.participations, (this.exercise as ProgrammingExercise).projectKey);
                         this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
                     });
                 }

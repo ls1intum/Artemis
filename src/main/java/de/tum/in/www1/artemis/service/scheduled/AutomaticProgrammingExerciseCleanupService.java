@@ -4,7 +4,9 @@ import static java.time.ZonedDateTime.now;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
@@ -13,7 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -24,8 +25,8 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
-import tech.jhipster.config.JHipsterConstants;
 
 @Service
 @Profile("scheduling")
@@ -33,7 +34,7 @@ public class AutomaticProgrammingExerciseCleanupService {
 
     private static final Logger log = LoggerFactory.getLogger(AutomaticProgrammingExerciseCleanupService.class);
 
-    private final Environment env;
+    private final ProfileService profileService;
 
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
@@ -49,9 +50,10 @@ public class AutomaticProgrammingExerciseCleanupService {
     @Value("${artemis.external-system-request.batch-waiting-time}")
     private int externalSystemRequestBatchWaitingTime;
 
-    public AutomaticProgrammingExerciseCleanupService(Environment env, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
-            ParticipationService participationService, ProgrammingExerciseRepository programmingExerciseRepository, GitService gitService) {
-        this.env = env;
+    public AutomaticProgrammingExerciseCleanupService(ProfileService profileService,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ParticipationService participationService,
+            ProgrammingExerciseRepository programmingExerciseRepository, GitService gitService) {
+        this.profileService = profileService;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.participationService = participationService;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -64,14 +66,17 @@ public class AutomaticProgrammingExerciseCleanupService {
      */
     @Scheduled(cron = "${artemis.scheduling.programming-exercises-cleanup-time:0 0 3 * * *}") // execute this every night at 3:00:00 am
     public void cleanup() {
-        Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
-        if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_PRODUCTION)) {
+
+        if (!profileService.isProductionActive()) {
             // only execute this on production server, i.e. when the prod profile is active
             // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
             return;
         }
         try {
-            cleanupBuildPlansOnContinuousIntegrationServer();
+            if (!profileService.isLocalCiActive()) {
+                // no build plan cleanup is needed for systems using LocalCI
+                cleanupBuildPlansOnContinuousIntegrationServer();
+            }
         }
         catch (Exception ex) {
             log.error("Exception occurred during cleanupBuildPlansOnContinuousIntegrationServer", ex);
@@ -154,11 +159,6 @@ public class AutomaticProgrammingExerciseCleanupService {
                 }
 
                 if (checkBuildAndTestExercises(programmingExercise, participation, participationsWithBuildPlanToDelete, countAfterBuildAndTestDate)) {
-                    return;
-                }
-
-                if (Boolean.TRUE.equals(programmingExercise.isPublishBuildPlanUrl())) {
-                    // this was an exercise where students needed to configure the build plan, therefore we should not clean it up
                     return;
                 }
             }

@@ -44,6 +44,11 @@ export abstract class AbstractExerciseAssessmentPage {
         await this.page.locator('.message', { hasText: message }).waitFor({ state: 'attached' });
     }
 
+    async nextAssessment() {
+        await this.page.locator('#assessNextButton').click();
+        await this.page.locator('#assessNextButton').waitFor({ state: 'hidden' });
+    }
+
     private async handleComplaint(response: string, accept: boolean, exerciseType: ExerciseType, examMode: boolean) {
         if (exerciseType !== ExerciseType.MODELING && !examMode) {
             await this.page.locator('#show-complaint').click();
@@ -59,7 +64,7 @@ export abstract class AbstractExerciseAssessmentPage {
                 responsePromise = this.page.waitForResponse(`${BASE_API}/participations/*/submissions/*/text-assessment-after-complaint`);
                 break;
             case ExerciseType.MODELING:
-                responsePromise = this.page.waitForResponse(`${BASE_API}/complaint-responses/complaint/*/resolve`);
+                responsePromise = this.page.waitForResponse(`${BASE_API}/complaints/*/response`);
                 break;
             case ExerciseType.FILE_UPLOAD:
                 responsePromise = this.page.waitForResponse(`${BASE_API}/file-upload-submissions/*/assessment-after-complaint`);

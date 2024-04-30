@@ -1,7 +1,10 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -59,7 +62,7 @@ public class DataExportScheduleService {
      */
     @Scheduled(cron = "${artemis.scheduling.data-export-creation-time: 0 0 4 * * *}")
     public void createDataExportsAndDeleteOldOnes() throws InterruptedException {
-        if (profileService.isDev()) {
+        if (profileService.isDevActive()) {
             // do not execute this in a development environment
             // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
             return;

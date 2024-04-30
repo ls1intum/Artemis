@@ -1,4 +1,4 @@
-<section class="mb-5">
+<section>
     <h3
         jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.difficultyStepTitle"
         id="artemisApp.programmingExercise.wizardMode.detailedSteps.difficultyStepTitle"
@@ -16,7 +16,15 @@
     <div class="form-group">
         <div class="form-check">
             <label [class]="!programmingExerciseCreationConfig.validIdeSelection() ? 'form-check-label text-danger' : 'form-check-label'" for="field_allowOfflineIde">
-                <input class="form-check-input" type="checkbox" name="allowOfflineIde" id="field_allowOfflineIde" [(ngModel)]="programmingExercise.allowOfflineIde" checked />
+                <input
+                    class="form-check-input"
+                    type="checkbox"
+                    name="allowOfflineIde"
+                    id="field_allowOfflineIde"
+                    [(ngModel)]="programmingExercise.allowOfflineIde"
+                    checked
+                    (ngModelChange)="triggerValidation.emit()"
+                />
                 <span jhiTranslate="artemisApp.programmingExercise.allowOfflineIde.title"></span>
                 @if (!programmingExerciseCreationConfig.validIdeSelection()) {
                     <fa-icon
@@ -38,6 +46,7 @@
                         id="field_allowOnlineEditor"
                         [(ngModel)]="programmingExercise.allowOnlineEditor"
                         checked
+                        (ngModelChange)="triggerValidation.emit()"
                     />
                     <span jhiTranslate="artemisApp.programmingExercise.allowOnlineEditor.title"></span>
                     @if (!programmingExerciseCreationConfig.validIdeSelection()) {
@@ -48,21 +57,6 @@
                             ngbTooltip="{{ 'artemisApp.programmingExercise.allowOnlineEditor.alert' | artemisTranslate }}"
                         />
                     }
-                </label>
-            </div>
-        }
-        @if (programmingExerciseCreationConfig.publishBuildPlanUrlAllowed) {
-            <div class="form-check">
-                <label class="form-check-label" for="field_publishBuildPlanUrl">
-                    <input
-                        class="form-check-input"
-                        type="checkbox"
-                        name="publishBuildPlanUrl"
-                        id="field_publishBuildPlanUrl"
-                        [(ngModel)]="programmingExercise.publishBuildPlanUrl"
-                        checked
-                    />
-                    <span jhiTranslate="artemisApp.programmingExercise.publishBuildPlanUrl"></span>
                 </label>
             </div>
         }
