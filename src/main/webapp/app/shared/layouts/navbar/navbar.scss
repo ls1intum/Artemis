@@ -210,8 +210,8 @@ a:not(.btn):hover {
         }
     }
 
-    .breadcrumb-item:not(:first-of-type)::before {
-        content: '>';
+    .breadcrumb-divider {
+        color: var(--bs-breadcrumb-divider-color);
     }
 }
 

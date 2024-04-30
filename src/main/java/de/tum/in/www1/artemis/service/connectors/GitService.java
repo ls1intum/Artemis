@@ -37,7 +37,7 @@ import jakarta.annotation.PostConstruct;
 import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.HiddenFileFilter;
+import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.CommitCommand;
@@ -322,7 +322,7 @@ public class GitService {
     private URI getGitUri(VcsRepositoryUri vcsRepositoryUri) throws URISyntaxException {
         if (profileService.isLocalVcsCiActive()) {
             // Create less generic LocalVCRepositoryUri out of VcsRepositoryUri.
-            LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(vcsRepositoryUri.toString(), gitUrl);
+            LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(vcsRepositoryUri.toString());
             String localVCBasePath = environment.getProperty("artemis.version-control.local-vcs-repo-path");
             return localVCRepositoryUri.getLocalRepositoryPath(localVCBasePath).toUri();
         }
@@ -1161,6 +1161,21 @@ public class GitService {
         }
     }
 
+    private static class FileAndDirectoryFilter implements IOFileFilter {
+
+        private static final String GIT_DIRECTORY_NAME = ".git";
+
+        @Override
+        public boolean accept(java.io.File file) {
+            return !GIT_DIRECTORY_NAME.equals(file.getName());
+        }
+
+        @Override
+        public boolean accept(java.io.File directory, String fileName) {
+            return !GIT_DIRECTORY_NAME.equals(directory.getName());
+        }
+    }
+
     /**
      * List all files and folders in the repository
      *
@@ -1170,7 +1185,9 @@ public class GitService {
     public Map<File, FileType> listFilesAndFolders(Repository repo) {
         // Check if list of files is already cached
         if (repo.getContent() == null) {
-            Iterator<java.io.File> itr = FileUtils.iterateFilesAndDirs(repo.getLocalPath().toFile(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE);
+            FileAndDirectoryFilter filter = new FileAndDirectoryFilter();
+
+            Iterator<java.io.File> itr = FileUtils.iterateFilesAndDirs(repo.getLocalPath().toFile(), filter, filter);
             Map<File, FileType> files = new HashMap<>();
 
             while (itr.hasNext()) {
@@ -1183,19 +1200,8 @@ public class GitService {
                     continue;
                 }
 
-                // Files starting with a '.' are not marked as hidden in Windows. WE must exclude these
-                if (nextFile.getName().charAt(0) != '.') {
-                    files.put(nextFile, nextFile.isFile() ? FileType.FILE : FileType.FOLDER);
-                }
+                files.put(nextFile, nextFile.isFile() ? FileType.FILE : FileType.FOLDER);
             }
-
-            // TODO: rene: idea: ask in setup to include hidden files? only allow for tutors and instructors?
-            // Current problem: .swiftlint.yml gets filtered out
-            /*
-             * Uncomment to show hidden files // Filter for hidden config files, e.g. '.swiftlint.yml' Iterator<java.io.File> hiddenFiles =
-             * FileUtils.iterateFilesAndDirs(repo.getLocalPath().toFile(), HiddenFileFilter.HIDDEN, HiddenFileFilter.HIDDEN); while (hiddenFiles.hasNext()) { File nextFile = new
-             * File(hiddenFiles.next(), repo); if (nextFile.isFile() && nextFile.getName().contains(".swiftlint")) { files.put(nextFile, FileType.FILE); } }
-             */
 
             // Cache the list of files
             // Avoid expensive rescanning
@@ -1214,7 +1220,8 @@ public class GitService {
     public Collection<File> listFiles(Repository repo) {
         // Check if list of files is already cached
         if (repo.getFiles() == null) {
-            Iterator<java.io.File> itr = FileUtils.iterateFiles(repo.getLocalPath().toFile(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE);
+            FileAndDirectoryFilter filter = new FileAndDirectoryFilter();
+            Iterator<java.io.File> itr = FileUtils.iterateFiles(repo.getLocalPath().toFile(), filter, filter);
             Collection<File> files = new ArrayList<>();
 
             while (itr.hasNext()) {

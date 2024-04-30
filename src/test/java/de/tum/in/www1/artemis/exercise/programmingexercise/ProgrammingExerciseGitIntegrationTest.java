@@ -2,7 +2,11 @@ package de.tum.in.www1.artemis.exercise.programmingexercise;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyBoolean;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
 
 import java.io.File;
 import java.io.IOException;
@@ -33,13 +37,12 @@ import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.GitUtilService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
-import de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints;
 
 class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "progexgitintegration";
 
-    private static final String COMBINE_COMMITS_ENDPOINT = ProgrammingExerciseResourceEndpoints.ROOT + ProgrammingExerciseResourceEndpoints.COMBINE_COMMITS;
+    private static final String COMBINE_COMMITS_ENDPOINT = "/api/programming-exercises/{exerciseId}/combine-template-commits";
 
     @Autowired
     private GitUtilService gitUtilService;

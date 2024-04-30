@@ -5,7 +5,10 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.DomainObject;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.LtiPlatformConfiguration;
+import de.tum.in.www1.artemis.domain.User;
 
 /**
  * Represents an LTI 1.3 Resource Link Launch.

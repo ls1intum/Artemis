@@ -1,9 +1,13 @@
 package de.tum.in.www1.artemis.service.notifications;
 
-import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.*;
+import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.TUTORIAL_GROUP_DELETED_TITLE;
+import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.TUTORIAL_GROUP_UPDATED_TITLE;
 import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsService.NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_DELETE_UPDATE;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
 
 import java.util.HashSet;
 import java.util.List;
@@ -23,7 +27,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.NotificationSetting;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.enumeration.tutorialgroups.TutorialGroupRegistrationType;
 import de.tum.in.www1.artemis.domain.notification.Notification;
