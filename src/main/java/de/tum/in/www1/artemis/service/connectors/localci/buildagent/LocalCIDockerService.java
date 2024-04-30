@@ -2,11 +2,13 @@ package de.tum.in.www1.artemis.service.connectors.localci.buildagent;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
 
+import java.io.File;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -59,6 +61,9 @@ public class LocalCIDockerService {
 
     @Value("${artemis.continuous-integration.image-cleanup.expiry-days:2}")
     private int imageExpiryDays;
+
+    @Value("${artemis.continuous-integration.image-cleanup.disk-space-threshold-mb:1300}")
+    private int imageCleanupDiskSpaceThresholdMb;
 
     @Value("${artemis.continuous-integration.build-container-prefix:local-ci-}")
     private String buildContainerPrefix;
@@ -194,6 +199,25 @@ public class LocalCIDockerService {
 
             // Check again if image was pulled in the meantime
             try {
+                if (imageCleanupEnabled) {
+                    try {
+                        // Get the root partition.
+                        File file = new File(Objects.requireNonNullElse(dockerClient.infoCmd().exec().getDockerRootDir(), "/"));
+                        // Get the usable space in bytes.
+                        long usableSpace = file.getUsableSpace();
+                        // Get the threshold in bytes.
+                        long threshold = imageCleanupDiskSpaceThresholdMb * 1024 * 1024L;
+                        if (usableSpace < threshold) {
+                            // If the usable space is less than the threshold, delete old Docker images.
+                            log.info("Disk space is below the threshold of {} MB, starting Docker image cleanup", imageCleanupDiskSpaceThresholdMb);
+                            deleteOldDockerImages();
+                        }
+                    }
+                    catch (Exception e1) {
+                        log.error("Error while checking disk space for Docker image cleanup", e1);
+                    }
+                }
+
                 String msg = "~~~~~~~~~~~~~~~~~~~~ Inspecting docker image " + imageName + " again with a lock due to error " + e.getMessage() + " ~~~~~~~~~~~~~~~~~~~~";
                 log.info(msg);
                 buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);

@@ -14,11 +14,14 @@ import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 
+import com.github.dockerjava.api.command.InfoCmd;
 import com.github.dockerjava.api.command.InspectImageCmd;
 import com.github.dockerjava.api.command.ListContainersCmd;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Container;
+import com.github.dockerjava.api.model.Info;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
@@ -33,7 +36,7 @@ import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueu
 
 class LocalCIDockerServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
-    @Autowired
+    @SpyBean
     private LocalCIDockerService localCIDockerService;
 
     @Autowired
@@ -98,6 +101,26 @@ class LocalCIDockerServiceTest extends AbstractSpringIntegrationLocalCILocalVCTe
 
         // Verify that pullImageCmd() was called.
         verify(dockerClient, times(1)).pullImageCmd("test-image-name");
+    }
+
+    @Test
+    void testPullDockerImage_NoDiskSpace() {
+        InspectImageCmd inspectImageCmd = mock(InspectImageCmd.class);
+        doReturn(inspectImageCmd).when(dockerClient).inspectImageCmd(anyString());
+        doThrow(new NotFoundException("")).when(inspectImageCmd).exec();
+        BuildConfig buildConfig = new BuildConfig("echo 'test'", "test-image-name", "test", "test", null, null, false, false, false, null);
+        var build = new LocalCIBuildJobQueueItem("1", "job1", "address1", 1, 1, 1, 1, 1, BuildStatus.SUCCESSFUL, null, null, buildConfig, null);
+
+        InfoCmd infoCmd = mock(InfoCmd.class);
+        Info info = mock(Info.class);
+        doReturn(infoCmd).when(dockerClient).infoCmd();
+        doReturn(info).when(infoCmd).exec();
+        doReturn("/").when(info).getDockerRootDir();
+
+        localCIDockerService.pullDockerImage(build, new BuildLogsMap());
+
+        // Verify that pullImageCmd() was called.
+        verify(localCIDockerService, times(1)).deleteOldDockerImages();
     }
 
     @Test
