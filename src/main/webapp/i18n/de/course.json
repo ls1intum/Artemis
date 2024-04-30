@@ -86,8 +86,8 @@
                 "tooltip": "Ermöglicht es aus Kompetenzen und deren Lerninhalten einen individuellen Lernpfad für Studierende zu generieren."
             },
             "dashboard": {
-                "label": "Übersichtsseite aktiviert",
-                "tooltip": "Aktiviert die Übersichtsseite für Studierende, Tutoren und Lehrende. Die Übersichtsseite zeigt Nutzern eine Übersicht über die Kursaktivitäten und den Fortschritt der Studierenden."
+                "label": "Übersichtsseite zur Kursanalyse für Studierende aktiviert",
+                "tooltip": "Aktiviert die Übersichtsseite zur Kursanalyse für Studierende, Tutoren und Dozenten. Die Übersichtsseite ermöglicht es den Nutzern, ihren Fortschritt und ihre Leistung im Kurs zu verfolgen."
             },
             "restrictedAthenaModulesAccess": {
                 "label": "Zugriff auf geschützte Athena-Module aktiviert",
