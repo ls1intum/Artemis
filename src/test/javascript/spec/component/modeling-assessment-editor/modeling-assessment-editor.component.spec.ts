@@ -519,4 +519,34 @@ describe('ModelingAssessmentEditorComponent', () => {
         expect(onSuccessCalled).toBeFalse();
         expect(onErrorCalled).toBeTrue();
     });
+
+    it('should report feedback suggestions not enabled', () => {
+        component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+        component.ngOnInit();
+        expect(component.isFeedbackSuggestionsEnabled).toBeFalse();
+    });
+
+    it('should report feedback suggestions enabled', () => {
+        component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+        component.modelingExercise.feedbackSuggestionModule = 'module_text_llm';
+        component.ngOnInit();
+        expect(component.isFeedbackSuggestionsEnabled).toBeTrue();
+    });
+
+    it('should return unreferenced feedback only', () => {
+        component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+        component.modelingExercise.feedbackSuggestionModule = 'module_text_llm';
+        component.ngOnInit();
+
+        const unreferencedFeedback = createTestFeedback();
+        const referencedFeedback = createTestFeedback();
+
+        referencedFeedback.type = FeedbackType.MANUAL;
+        referencedFeedback.reference = 'element_id';
+
+        component.feedbackSuggestions = [unreferencedFeedback, referencedFeedback];
+
+        expect(component.unreferencedFeedbackSuggestions).toHaveLength(1);
+        expect(component.unreferencedFeedbackSuggestions[0]?.id).toBe(unreferencedFeedback.id);
+    });
 });
