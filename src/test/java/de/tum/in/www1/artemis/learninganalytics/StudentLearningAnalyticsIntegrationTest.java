@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
-public class StudentLearningAnalyticsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class StudentLearningAnalyticsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "studentlearninganalytics";
 
