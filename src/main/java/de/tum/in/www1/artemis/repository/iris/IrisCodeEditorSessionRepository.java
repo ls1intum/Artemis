@@ -75,6 +75,6 @@ public interface IrisCodeEditorSessionRepository extends JpaRepository<IrisCodeE
         if (result.isEmpty()) {
             throw new EntityNotFoundException("Iris Code Editor Session");
         }
-        return result.get(0);
+        return result.getFirst();
     }
 }

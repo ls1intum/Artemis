@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.lti;
 
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
@@ -29,10 +29,25 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.google.gson.JsonObject;
 
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.lti.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.LtiPlatformConfiguration;
+import de.tum.in.www1.artemis.domain.OnlineCourseConfiguration;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.lti.Claims;
+import de.tum.in.www1.artemis.domain.lti.Lti13AgsClaim;
+import de.tum.in.www1.artemis.domain.lti.Lti13LaunchRequest;
+import de.tum.in.www1.artemis.domain.lti.LtiResourceLaunch;
+import de.tum.in.www1.artemis.domain.lti.Scopes;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.Lti13ResourceLaunchRepository;
+import de.tum.in.www1.artemis.repository.LtiPlatformConfigurationRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.lti.Lti13TokenRetriever;
 import de.tum.in.www1.artemis.service.OnlineCourseConfigurationService;
@@ -267,9 +282,9 @@ public class Lti13Service {
 
         String targetLinkPath;
         try {
-            targetLinkPath = (new URL(targetLinkUrl)).getPath();
+            targetLinkPath = new URI(targetLinkUrl).getPath();
         }
-        catch (MalformedURLException ex) {
+        catch (URISyntaxException ex) {
             log.info("Malformed target link url: {}", targetLinkUrl);
             return Optional.empty();
         }
@@ -308,9 +323,7 @@ public class Lti13Service {
         launch.setUser(user);
 
         Optional<LtiPlatformConfiguration> ltiPlatformConfiguration = ltiPlatformConfigurationRepository.findByRegistrationId(launchRequest.getClientRegistrationId());
-        if (ltiPlatformConfiguration.isPresent()) {
-            launch.setLtiPlatformConfiguration(ltiPlatformConfiguration.get());
-        }
+        ltiPlatformConfiguration.ifPresent(launch::setLtiPlatformConfiguration);
 
         launchRepository.save(launch);
     }

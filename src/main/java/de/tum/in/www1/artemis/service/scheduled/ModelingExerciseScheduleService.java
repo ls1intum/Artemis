@@ -4,7 +4,10 @@ import static de.tum.in.www1.artemis.config.Constants.EXAM_END_WAIT_TIME_FOR_COM
 import static java.time.Instant.now;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.validation.constraints.NotNull;

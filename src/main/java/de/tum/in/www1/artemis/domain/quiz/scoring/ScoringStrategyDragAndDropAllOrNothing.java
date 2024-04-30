@@ -1,6 +1,11 @@
 package de.tum.in.www1.artemis.domain.quiz.scoring;
 
-import de.tum.in.www1.artemis.domain.quiz.*;
+import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestion;
+import de.tum.in.www1.artemis.domain.quiz.DragAndDropSubmittedAnswer;
+import de.tum.in.www1.artemis.domain.quiz.DragItem;
+import de.tum.in.www1.artemis.domain.quiz.DropLocation;
+import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
+import de.tum.in.www1.artemis.domain.quiz.SubmittedAnswer;
 
 /**
  * All or nothing means the full score is given if the answer is 100% correct, otherwise a score of 0 is given

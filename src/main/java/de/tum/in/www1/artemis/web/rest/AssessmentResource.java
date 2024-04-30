@@ -24,7 +24,6 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -43,20 +42,17 @@ public abstract class AssessmentResource {
 
     protected final ResultRepository resultRepository;
 
-    protected final ExamService examService;
-
     protected final ExampleSubmissionRepository exampleSubmissionRepository;
 
     protected final SubmissionRepository submissionRepository;
 
     public AssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ExerciseRepository exerciseRepository, AssessmentService assessmentService,
-            ResultRepository resultRepository, ExamService examService, ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository) {
+            ResultRepository resultRepository, ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository) {
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
         this.assessmentService = assessmentService;
         this.resultRepository = resultRepository;
-        this.examService = examService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.submissionRepository = submissionRepository;
     }

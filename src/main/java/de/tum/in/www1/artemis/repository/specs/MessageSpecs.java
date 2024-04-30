@@ -4,7 +4,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import jakarta.persistence.criteria.*;
+import jakarta.persistence.criteria.Expression;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.Order;
+import jakarta.persistence.criteria.Predicate;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.jpa.domain.Specification;
@@ -12,7 +16,12 @@ import org.springframework.data.jpa.domain.Specification;
 import de.tum.in.www1.artemis.domain.Course_;
 import de.tum.in.www1.artemis.domain.User_;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
-import de.tum.in.www1.artemis.domain.metis.*;
+import de.tum.in.www1.artemis.domain.metis.AnswerPost;
+import de.tum.in.www1.artemis.domain.metis.AnswerPost_;
+import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.metis.PostSortCriterion;
+import de.tum.in.www1.artemis.domain.metis.Post_;
+import de.tum.in.www1.artemis.domain.metis.Reaction_;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel_;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation_;
@@ -202,7 +211,7 @@ public class MessageSpecs {
      *
      * @return specification that adds the keyword GROUP BY to the query since DISTINCT and ORDER BY keywords are
      *         incompatible with each other at server tests
-     *         https://github.com/h2database/h2database/issues/408
+     *         <a href="https://github.com/h2database/h2database/issues/408">...</a>
      */
     public static Specification<Post> distinct() {
         return (root, query, criteriaBuilder) -> {
