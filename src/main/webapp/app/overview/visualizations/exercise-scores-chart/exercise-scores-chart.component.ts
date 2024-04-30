@@ -14,7 +14,6 @@ import { faFilter } from '@fortawesome/free-solid-svg-icons';
 import { ChartExerciseTypeFilter } from 'app/shared/chart/chart-exercise-type-filter';
 import { GraphColors } from 'app/entities/statistics.model';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { LegendPosition } from '@swimlane/ngx-charts';
 
 type ChartSeries = {
     name: string;
@@ -39,14 +38,12 @@ type SeriesDatapoint = {
 })
 export class ExerciseScoresChartComponent implements AfterViewInit, OnChanges {
     @Input() filteredExerciseIDs: number[];
-    @Input() isDashboardInlineView = false;
 
     courseId: number;
     isLoading = false;
     exerciseScores: ExerciseScoresDTO[] = [];
     excludedExerciseScores: ExerciseScoresDTO[] = [];
     visibleExerciseScores: ExerciseScoresDTO[] = [];
-    legendPosition = LegendPosition.Right;
 
     readonly Math = Math;
     readonly ExerciseType = ExerciseType;
@@ -92,7 +89,6 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnChanges {
                 this.loadDataAndInitializeChart();
             }
         });
-        //this.legendPosition = this.isDashboardInlineView ? LegendPosition.Below : LegendPosition.Right;
     }
 
     ngOnChanges(): void {

@@ -87,7 +87,7 @@
             },
             "dashboard": {
                 "label": "Übersichtsseite aktiviert",
-                "tooltip": "Aktiviert die Übersichtsseite für Studierende, Tutor:innen und Lehrende. Die Übersichtsseite zeigt Nutzern eine Übersicht über die Kursaktivitäten und den Fortschritt der Studierenden."
+                "tooltip": "Aktiviert die Übersichtsseite für Studierende, Tutoren und Lehrende. Die Übersichtsseite zeigt Nutzern eine Übersicht über die Kursaktivitäten und den Fortschritt der Studierenden."
             },
             "restrictedAthenaModulesAccess": {
                 "label": "Zugriff auf geschützte Athena-Module aktiviert",
