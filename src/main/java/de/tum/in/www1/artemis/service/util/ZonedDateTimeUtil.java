@@ -1,8 +1,8 @@
 package de.tum.in.www1.artemis.service.util;
 
-import jakarta.validation.constraints.NotNull;
-
 import java.time.ZonedDateTime;
+
+import jakarta.validation.constraints.NotNull;
 
 public class ZonedDateTimeUtil {
 
