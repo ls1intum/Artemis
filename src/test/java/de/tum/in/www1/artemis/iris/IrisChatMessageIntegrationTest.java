@@ -39,7 +39,7 @@ import de.tum.in.www1.artemis.repository.iris.IrisMessageRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageStateDTO;
-import de.tum.in.www1.artemis.service.connectors.pyris.dto.tutorChat.PyrisTutorChatStatusUpdateDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStatusUpdateDTO;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.session.IrisChatSessionService;
 import de.tum.in.www1.artemis.service.iris.websocket.IrisChatWebsocketService;
@@ -399,7 +399,6 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
     private void sendStatus(String jobId, String result, List<PyrisStageDTO> stages) throws Exception {
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of("Authorization", List.of("Bearer " + jobId))));
-        request.postWithoutResponseBody("/api/public/pyris/pipelines/tutor-chat/runs/" + jobId + "/status", new PyrisTutorChatStatusUpdateDTO(result, stages), HttpStatus.OK,
-                headers);
+        request.postWithoutResponseBody("/api/public/pyris/pipelines/tutor-chat/runs/" + jobId + "/status", new PyrisStatusUpdateDTO(result, stages), HttpStatus.OK, headers);
     }
 }

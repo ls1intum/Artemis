@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -21,6 +22,7 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
+import de.tum.in.www1.artemis.service.connectors.pyris.PyrisWebhookService;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
@@ -30,6 +32,8 @@ import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 @Service
 public class LectureService {
 
+    private final PyrisWebhookService webhookService;
+
     private final LectureRepository lectureRepository;
 
     private final AuthorizationCheckService authCheckService;
@@ -38,7 +42,9 @@ public class LectureService {
 
     private final ChannelService channelService;
 
-    public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService, ChannelRepository channelRepository, ChannelService channelService) {
+    public LectureService(PyrisWebhookService webhookService, LectureRepository lectureRepository, AuthorizationCheckService authCheckService, ChannelRepository channelRepository,
+            ChannelService channelService) {
+        this.webhookService = webhookService;
         this.lectureRepository = lectureRepository;
         this.authCheckService = authCheckService;
         this.channelRepository = channelRepository;
@@ -133,6 +139,9 @@ public class LectureService {
      * @param lecture the lecture to be deleted
      */
     public void delete(Lecture lecture) {
+        List<AttachmentUnit> attachmentUnitList = lecture.getLectureUnits().stream().filter(lectureUnit -> lectureUnit.getType().equals("attachment"))
+                .map(lectureUnit -> (AttachmentUnit) lectureUnit).collect(Collectors.toList());
+        webhookService.executeIngestionPipeline(false, attachmentUnitList);
         Channel lectureChannel = channelRepository.findChannelByLectureId(lecture.getId());
         channelService.deleteChannel(lectureChannel);
         lectureRepository.deleteById(lecture.getId());

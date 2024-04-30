@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.pyris.PyrisPipelineService;
-import de.tum.in.www1.artemis.service.connectors.pyris.dto.tutorChat.PyrisTutorChatStatusUpdateDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStatusUpdateDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.job.TutorChatJob;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;
@@ -163,7 +163,7 @@ public class IrisChatSessionService implements IrisChatBasedFeatureInterface<Iri
      * @param job          The job that was executed
      * @param statusUpdate The status update of the job
      */
-    public void handleStatusUpdate(TutorChatJob job, PyrisTutorChatStatusUpdateDTO statusUpdate) {
+    public void handleStatusUpdate(TutorChatJob job, PyrisStatusUpdateDTO statusUpdate) {
         var session = (IrisChatSession) irisSessionRepository.findByIdWithMessagesAndContents(job.getSessionId());
         if (statusUpdate.result() != null) {
             var message = new IrisMessage();

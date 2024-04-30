@@ -78,6 +78,20 @@ public class PyrisConnectorService {
         }
     }
 
+    void executeWebhook(String variant, de.tum.in.www1.artemis.service.connectors.pyris.dto.lectureIngestionWebhook.PyrisWebhookLectureIngestionExecutionDTO executionDTO) {
+        var endpoint = "/api/v1/webhooks/" + variant;
+        try {
+            restTemplate.postForEntity(pyrisUrl + endpoint, objectMapper.valueToTree(executionDTO), Void.class);
+        }
+        catch (HttpStatusCodeException e) {
+            throw toIrisException(e);
+        }
+        catch (RestClientException | IllegalArgumentException e) {
+            log.error("Failed to send lectures to Pyris", e);
+            throw new PyrisConnectorException("Could not fetch response from Iris");
+        }
+    }
+
     private IrisException toIrisException(HttpStatusCodeException e) {
         return switch (e.getStatusCode().value()) {
             case 401, 403 -> new IrisForbiddenException();
