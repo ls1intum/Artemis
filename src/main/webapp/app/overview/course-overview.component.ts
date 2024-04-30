@@ -350,6 +350,9 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             icon: faChartBar,
             title: 'Dashboard',
             translation: 'artemisApp.courseOverview.menu.dashboard',
+            hasInOrionProperty: true,
+            showInOrionWindow: false,
+            featureToggle: FeatureToggle.Dashboard,
         };
         return dashboardItem;
     }
