@@ -30,7 +30,7 @@ export class FinishedBuildJob implements StringBaseEntity {
     public exerciseId?: number;
     public retryCount?: number;
     public priority?: number;
-    public buildStatus?: string;
+    public status?: string;
     public triggeredByPushTo?: TriggeredByPushTo;
     public repositoryName?: string;
     public repositoryType?: string;

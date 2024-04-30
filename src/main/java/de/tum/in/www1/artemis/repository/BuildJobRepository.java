@@ -9,6 +9,7 @@ import java.util.Set;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -28,11 +29,8 @@ public interface BuildJobRepository extends JpaRepository<BuildJob, Long>, JpaSp
 
     Optional<BuildJob> findBuildJobByResult(Result result);
 
-    @Query("""
-                    SELECT b
-                    FROM BuildJob b
-                        LEFT JOIN FETCH b.result r
-            """)
+    @EntityGraph(attributePaths = { "result", "result.feedbacks", "result.feedbacks.testCase", "result.participation", "result.submission" })
+    @Query("SELECT b FROM BuildJob b")
     Page<BuildJob> findAllWithEagerResults(Pageable pageable);
 
     @Query("""
@@ -45,6 +43,7 @@ public interface BuildJobRepository extends JpaRepository<BuildJob, Long>, JpaSp
             """)
     Set<DockerImageBuild> findAllLastBuildDatesForDockerImages();
 
+    @EntityGraph(attributePaths = { "result", "result.feedbacks", "result.feedbacks.testCase", "result.participation", "result.submission" })
     @Query("""
             SELECT b
             FROM BuildJob b

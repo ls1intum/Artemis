@@ -417,14 +417,12 @@
                         <ng-template ngx-datatable-cell-template let-row="row">
                             <span
                                 [ngClass]="{
-                                    'text-success': row.buildStatus === 'SUCCESSFUL',
-                                    'text-warning': row.buildStatus === 'CANCELLED',
-                                    'text-danger': row.buildStatus === 'FAILED' || row.buildStatus === 'ERROR'
+                                    'text-success': row.status === 'SUCCESSFUL',
+                                    'text-warning': row.status === 'CANCELLED',
+                                    'text-danger': row.status === 'FAILED' || row.status === 'ERROR'
                                 }"
                             >
-                                <fa-icon
-                                    [icon]="row.buildStatus === 'SUCCESSFUL' ? faCircleCheck : row.buildStatus === 'CANCELLED' ? faExclamationTriangle : faExclamationCircle"
-                                />
+                                <fa-icon [icon]="row.status === 'SUCCESSFUL' ? faCircleCheck : row.status === 'CANCELLED' ? faExclamationTriangle : faExclamationCircle" />
                             </span>
                         </ng-template>
                     </ngx-datatable-column>
@@ -438,36 +436,41 @@
                         <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
                             <span
                                 [ngClass]="{
-                                    'text-success': row.buildStatus === 'SUCCESSFUL',
-                                    'text-warning': row.buildStatus === 'CANCELLED',
-                                    'text-danger': row.buildStatus === 'FAILED' || row.buildStatus === 'ERROR'
+                                    'text-success': row.status === 'SUCCESSFUL',
+                                    'text-warning': row.status === 'CANCELLED',
+                                    'text-danger': row.status === 'FAILED' || row.status === 'ERROR'
                                 }"
                                 >{{ value }}</span
                             >
                         </ng-template>
                     </ngx-datatable-column>
-                    <ngx-datatable-column prop="buildStatus" [minWidth]="100">
+                    <ngx-datatable-column prop="status" [minWidth]="100">
                         <ng-template ngx-datatable-header-template>
-                            <span class="datatable-header-cell-wrapper" (click)="controls.onSort('buildStatus')">
+                            <span class="datatable-header-cell-wrapper" (click)="controls.onSort('status')">
                                 <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.status"></span>
-                                <fa-icon [icon]="controls.iconForSortPropField('buildStatus')" />
+                                <fa-icon [icon]="controls.iconForSortPropField('status')" />
                             </span>
                         </ng-template>
                         <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
                             @if (value === 'SUCCESSFUL') {
                                 <jhi-result [result]="row.submissionResult" [showUngradedResults]="true" [showBadge]="true" />
-                                @if (row?.submissionResult?.id) {
-                                    <a class="detail-link" (click)="viewBuildLogs(row.submissionResult.id)" jhiTranslate="artemisApp.result.buildLogs.viewLogs"></a>
-                                }
                             } @else {
                                 <span
                                     [ngClass]="{
-                                        'text-warning': row.buildStatus === 'CANCELLED',
-                                        'text-danger': row.buildStatus === 'FAILED' || row.buildStatus === 'ERROR'
+                                        'text-warning': row.status === 'CANCELLED',
+                                        'text-danger': row.status === 'FAILED' || row.status === 'ERROR'
                                     }"
                                     >{{ value }}
                                 </span>
                             }
+                        </ng-template>
+                    </ngx-datatable-column>
+                    <ngx-datatable-column [minWidth]="100">
+                        <ng-template ngx-datatable-header-template>
+                            <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.buildQueue.buildJob.buildLogs"></span>
+                        </ng-template>
+                        <ng-template ngx-datatable-cell-template let-row="row">
+                            <a class="detail-link" (click)="viewBuildLogs(row.id)" jhiTranslate="artemisApp.result.buildLogs.viewLogs"></a>
                         </ng-template>
                     </ngx-datatable-column>
                     <ngx-datatable-column prop="buildAgentAddress" [minWidth]="100">
