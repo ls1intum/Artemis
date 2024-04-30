@@ -11,7 +11,8 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.hestia.CodeHint;
-import de.tum.in.www1.artemis.domain.iris.message.*;
+import de.tum.in.www1.artemis.domain.iris.message.IrisJsonMessageContent;
+import de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender;
 import de.tum.in.www1.artemis.domain.iris.session.IrisHestiaSession;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettingsType;
 import de.tum.in.www1.artemis.repository.iris.IrisHestiaSessionRepository;
@@ -60,9 +61,9 @@ public class IrisHestiaSessionService implements IrisButtonBasedFeatureInterface
     public IrisHestiaSession getOrCreateSession(CodeHint codeHint) {
         var existingSessions = irisHestiaSessionRepository.findByCodeHintIdOrderByCreationDateDesc(codeHint.getId());
         // Return the newest session if there is one and it is not older than 1 hour
-        if (!existingSessions.isEmpty() && existingSessions.get(0).getCreationDate().plusHours(1).isAfter(ZonedDateTime.now())) {
-            checkHasAccessTo(null, existingSessions.get(0));
-            return existingSessions.get(0);
+        if (!existingSessions.isEmpty() && existingSessions.getFirst().getCreationDate().plusHours(1).isAfter(ZonedDateTime.now())) {
+            checkHasAccessTo(null, existingSessions.getFirst());
+            return existingSessions.getFirst();
         }
 
         // Otherwise create a new session

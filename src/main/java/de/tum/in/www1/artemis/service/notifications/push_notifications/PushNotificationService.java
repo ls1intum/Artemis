@@ -1,9 +1,16 @@
 package de.tum.in.www1.artemis.service.notifications.push_notifications;
 
 import java.nio.charset.StandardCharsets;
-import java.security.*;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.time.Instant;
-import java.util.*;
+import java.util.Base64;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import javax.crypto.Cipher;
@@ -79,7 +86,7 @@ public abstract class PushNotificationService implements InstantNotificationServ
     }
 
     /**
-     * Sends the actual request to the Hermes Relay Service (see here: https://github.com/ls1intum/Hermes)
+     * Sends the actual request to the Hermes Relay Service (see here: <a href="https://github.com/ls1intum/Hermes">...</a>)
      * It uses exponential backoff to retry once the request fails
      *
      * @param body               to be sent to Hermes. Differs between iOS and Android

@@ -2,10 +2,16 @@ package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -87,10 +93,10 @@ public class LectureUnitProcessingService {
                 List<PDDocument> documentUnits = pdfSplitter.split(document);
                 pdDocumentInformation.setTitle(lectureUnit.unitName());
                 if (!StringUtils.isEmpty(lectureUnitInformationDTO.removeSlidesCommaSeparatedKeyPhrases())) {
-                    removeSlidesContainingAnyKeyPhrases(documentUnits.get(0), lectureUnitInformationDTO.removeSlidesCommaSeparatedKeyPhrases());
+                    removeSlidesContainingAnyKeyPhrases(documentUnits.getFirst(), lectureUnitInformationDTO.removeSlidesCommaSeparatedKeyPhrases());
                 }
-                documentUnits.get(0).setDocumentInformation(pdDocumentInformation);
-                documentUnits.get(0).save(outputStream);
+                documentUnits.getFirst().setDocumentInformation(pdDocumentInformation);
+                documentUnits.getFirst().save(outputStream);
 
                 // setup attachmentUnit and attachment
                 attachmentUnit.setDescription("");
@@ -101,8 +107,8 @@ public class LectureUnitProcessingService {
 
                 MultipartFile multipartFile = fileService.convertByteArrayToMultipart(lectureUnit.unitName(), ".pdf", outputStream.toByteArray());
                 AttachmentUnit savedAttachmentUnit = attachmentUnitService.createAttachmentUnit(attachmentUnit, attachment, lecture, multipartFile, true);
-                slideSplitterService.splitAttachmentUnitIntoSingleSlides(documentUnits.get(0), savedAttachmentUnit, multipartFile.getOriginalFilename());
-                documentUnits.get(0).close(); // make sure to close the document
+                slideSplitterService.splitAttachmentUnitIntoSingleSlides(documentUnits.getFirst(), savedAttachmentUnit, multipartFile.getOriginalFilename());
+                documentUnits.getFirst().close(); // make sure to close the document
                 units.add(savedAttachmentUnit);
             }
             lectureRepository.save(lecture);

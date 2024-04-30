@@ -1,9 +1,19 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.parsers.v2;
 
-import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.*;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.ELEMENT_ID;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.ELEMENT_NAME;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.ELEMENT_OWNER;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.ELEMENT_TYPE;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.RELATIONSHIP_SOURCE;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.RELATIONSHIP_TARGET;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.RELATIONSHIP_TYPE;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import org.apache.commons.lang3.EnumUtils;
 
@@ -130,7 +140,6 @@ public class ComponentDiagramParser {
      *
      * @param allUmlElementsMap  map of uml elements and ids to find owner element
      * @param ownerRelationships map of uml elements and ids of their owners
-     * @return the UMLComponent object parsed from the JSON object
      */
     protected static void resolveParentComponent(Map<String, UMLElement> allUmlElementsMap, Map<UMLElement, String> ownerRelationships) {
         for (var ownerEntry : ownerRelationships.entrySet()) {
@@ -147,7 +156,6 @@ public class ComponentDiagramParser {
      * @param ownerRelationships map of uml relationship elements and their ids
      * @param jsonObject         json representation of element
      * @param umlElement         uml element
-     * @return the UMLComponent object parsed from the JSON object
      */
     protected static void findOwner(Map<UMLElement, String> ownerRelationships, JsonObject jsonObject, UMLElement umlElement) {
         if (jsonObject.has(ELEMENT_OWNER) && !jsonObject.get(ELEMENT_OWNER).isJsonNull()) {

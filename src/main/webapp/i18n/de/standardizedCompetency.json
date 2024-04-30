@@ -5,6 +5,7 @@
             "manage": {
                 "title": "Standardisierte Kompetenzen Verwalten",
                 "filter": "Kompetenzen Filtern",
+                "importButton": "Standardisierte Kompetenzen importieren",
                 "expandButtonTooltip": "Alle Wissensgebiete ausklappen",
                 "collapseButtonTooltip": "Alle Wissensgebiete einklappen",
                 "updateTreeError": "Bei der Aktualisierung des Wissensbereichsbaums ist ein Fehler aufgetreten. Bitte lade die Seite neu",
@@ -20,6 +21,28 @@
                     "create": "Erfolgreich die standardisierte Kompetenz <strong>{{title}}</strong> erstellt",
                     "update": "Erfolgreich die standardisierte Kompetenz <strong>{{title}}</strong> aktualisiert",
                     "delete": "Erfolgreich die standardisierte Kompetenz <strong>{{title}}</strong> gelöscht"
+                },
+                "import": {
+                    "title": "Standardisierte Kompetenzen Importieren",
+                    "count": "{{competencies}} standardisierte Kompetenzen und {{knowledgeAreas}} Wissensgebiete aus der Datei gelesen",
+                    "preview": {
+                        "title": "Vorschau des Imports",
+                        "empty": "Keine Objekte für die Vorschau vorhanden. Bitte wähle eine Datei mit gültigen Objekten aus."
+                    },
+                    "format": {
+                        "title": "Benötigtes Dateiformat",
+                        "text1": "Standardisierte Kompetenzen können aus einer .json-Datei in Artemis hinein importiert werden. Nachdem du eine Datei ausgewählt hast, kannst du noch überprüfen, ob die Wissensgebiete und Kompetenzen korrekt ausgelesen wurden.",
+                        "text2": "Die .json-Datei muss ein Objekt mit den Schlüsseln <code>knowledgeAreas</code> und <code>sources</code> enthalten. Ersteres enthält alle zu importierenden Wissensgebiete und standardisierten Kompetenzen, letzteres alle Quellen der importierten Kompetenzen.",
+                        "text3": "Beispiel für eine gültige Importdatei ( bis auf die Kommentare):"
+                    },
+                    "error": {
+                        "fileCount": "Bitte lade nur eine Datei hoch",
+                        "fileTooBig": "Die Datei ist zu groß. Bitte lade eine Datei mit maximal 20 MB hoch",
+                        "fileExtension": "Falscher Dateityp. Bitte lade eine .json Datei hoch",
+                        "fileSyntax": "Die Datei kann nicht verarbeitet werden. Bitte lade eine Datei mit gültiger .json-Syntax hoch",
+                        "fileStructure": "Die Datei kann nicht verarbeitet werden. Bitte überprüfe, ob die erforderliche Dateistruktur eingehalten wird"
+                    },
+                    "success": "Erfolgreich alle standardisierte Kompetenzen und Wissensgebiete importiert"
                 }
             },
             "model": {
@@ -42,7 +65,7 @@
             }
         },
         "knowledgeArea": {
-            "empty": "Dieses Wissensgebiet hat noch keinen Inhalt",
+            "empty": "Dieses Wissensgebiet hat keinen Inhalt",
             "model": {
                 "title": "Titel",
                 "description": "Beschreibung",

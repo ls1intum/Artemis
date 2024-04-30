@@ -4,7 +4,10 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static java.lang.Math.toIntExact;
 import static java.util.stream.Collectors.groupingBy;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.springframework.context.annotation.Profile;
@@ -65,8 +68,8 @@ public class TutorEffortService {
     private TutorEffort createTutorEffortWithInformation(Long userId, List<TextAssessmentEvent> events, int submissions) {
         TutorEffort effort = new TutorEffort();
         effort.setUserId(userId);
-        effort.setCourseId(events.get(0).getCourseId());
-        effort.setExerciseId(events.get(0).getTextExerciseId());
+        effort.setCourseId(events.getFirst().getCourseId());
+        effort.setExerciseId(events.getFirst().getTextExerciseId());
         effort.setTotalTimeSpentMinutes(calculateTutorOverallTimeSpent(events));
         effort.setNumberOfSubmissionsAssessed(submissions);
         return effort;

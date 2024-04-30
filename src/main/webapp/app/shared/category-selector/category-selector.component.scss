@@ -34,7 +34,12 @@ jhi-category-selector {
     }
 }
 
-// Otherwise the x will jump when opening the colorpicker
+/* Otherwise each custom tag will have an additional border */
+.mat-mdc-standard-chip .mdc-evolution-chip__action--primary::before {
+    border-style: none !important;
+}
+
+/* Otherwise the x will jump when opening the colorpicker */
 .remove-button::before {
     position: absolute;
 }
