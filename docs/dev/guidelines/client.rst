@@ -471,7 +471,7 @@ Best Practices:
 2. Efficient Topic Aggregation: Use topic aggregation techniques to consolidate related data streams into a single subscription wherever possible. Consequently, don't create a new topic if an existing one can be reused.
 3. Small Messages: Send small messages and use DTOs. See :ref:`server-guideline-dto-usage` for more information and examples.
 
-18. Styling
+19. Styling
 ===========
 
 We are using `Scss <https://sass-lang.com>`_ to write modular, reusable css. We have a couple of global scss files in ``webapp/content/scss``, but encourage component dependent css using `Angular styleUrls <https://angular.io/guide/component-styles>`_.
