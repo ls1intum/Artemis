@@ -180,7 +180,7 @@ public class GitLabPersonalAccessTokenManagementService extends VcsTokenManageme
         }
 
         // We assume that there exists no other personal access token with a name that contains the value of PERSONAL_ACCESS_TOKEN_NAME.
-        return responseBody.get(0);
+        return responseBody.getFirst();
     }
 
     private org.gitlab4j.api.models.User getGitLabUserFromUser(User user) {
