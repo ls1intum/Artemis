@@ -14,7 +14,6 @@ import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 
 import com.github.dockerjava.api.command.InfoCmd;
 import com.github.dockerjava.api.command.InspectImageCmd;
@@ -36,7 +35,7 @@ import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueu
 
 class LocalCIDockerServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
-    @SpyBean
+    @Autowired
     private LocalCIDockerService localCIDockerService;
 
     @Autowired
@@ -120,7 +119,7 @@ class LocalCIDockerServiceTest extends AbstractSpringIntegrationLocalCILocalVCTe
         localCIDockerService.pullDockerImage(build, new BuildLogsMap());
 
         // Verify that pullImageCmd() was called.
-        verify(localCIDockerService, times(1)).deleteOldDockerImages();
+        verify(info, times(1)).getDockerRootDir();
     }
 
     @Test
