@@ -112,8 +112,9 @@ export class OnlineEditorPage {
     }
 
     async getResultScore() {
-        await Commands.reloadUntilFound(this.page, '#result-score');
-        return this.page.locator('#result-score');
+        const resultScoreElement = this.page.locator('#result-score');
+        await Commands.reloadUntilFound(this.page, resultScoreElement);
+        return resultScoreElement;
     }
 
     getResultScoreFromExercise(exerciseID: number) {
@@ -145,7 +146,7 @@ export class OnlineEditorPage {
         await this.page.waitForURL(/\/courses/);
         await this.courseList.openCourse(courseId!);
         await this.courseOverview.startExercise(exerciseId);
-        await Commands.reloadUntilFound(this.page, '#open-exercise-' + exerciseId);
+        await Commands.reloadUntilFound(this.page, this.page.locator('#open-exercise-' + exerciseId));
         await this.courseOverview.openRunningProgrammingExercise(exerciseId);
     }
 }

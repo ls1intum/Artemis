@@ -53,7 +53,6 @@ export class Commands {
 
         while (Date.now() - startTime < timeout) {
             try {
-                await page.waitForLoadState('load');
                 await locator.waitFor({ state: 'visible', timeout: interval });
                 return;
             } catch (error) {
