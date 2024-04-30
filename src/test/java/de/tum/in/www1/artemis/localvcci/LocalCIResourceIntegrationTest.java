@@ -34,6 +34,7 @@ import de.tum.in.www1.artemis.service.connectors.localci.dto.JobTimingInfo;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildAgentInformation;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.RepositoryInfo;
+import de.tum.in.www1.artemis.service.dto.FinishedBuildJobDTO;
 import de.tum.in.www1.artemis.util.PageableSearchUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.PageableSearchDTO;
 
@@ -229,9 +230,10 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
         buildJobRepository.save(finishedJob1);
         buildJobRepository.save(finishedJob2);
         PageableSearchDTO<String> pageableSearchDTO = pageableSearchUtilService.configureFinishedJobsSearchDTO();
-        var result = request.getList("/api/admin/finished-jobs", HttpStatus.OK, BuildJob.class, pageableSearchUtilService.searchMapping(pageableSearchDTO));
+        var result = request.getList("/api/admin/finished-jobs", HttpStatus.OK, FinishedBuildJobDTO.class, pageableSearchUtilService.searchMapping(pageableSearchDTO));
         assertThat(result).hasSize(2);
-        assertThat(result).contains(finishedJob1, finishedJob2);
+        assertThat(result.get(0).id()).isEqualTo(finishedJob1.getBuildJobId());
+        assertThat(result.get(1).id()).isEqualTo(finishedJob2.getBuildJobId());
     }
 
     @Test
@@ -241,10 +243,10 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
         buildJobRepository.save(finishedJob1);
         buildJobRepository.save(finishedJob2);
         PageableSearchDTO<String> pageableSearchDTO = pageableSearchUtilService.configureFinishedJobsSearchDTO();
-        var result = request.getList("/api/courses/" + course.getId() + "/finished-jobs", HttpStatus.OK, BuildJob.class,
+        var result = request.getList("/api/courses/" + course.getId() + "/finished-jobs", HttpStatus.OK, FinishedBuildJobDTO.class,
                 pageableSearchUtilService.searchMapping(pageableSearchDTO));
         assertThat(result).hasSize(1);
-        assertThat(result).isEqualTo(List.of(finishedJob1));
+        assertThat(result.getFirst().id()).isEqualTo(finishedJob1.getBuildJobId());
     }
 
     @Test
