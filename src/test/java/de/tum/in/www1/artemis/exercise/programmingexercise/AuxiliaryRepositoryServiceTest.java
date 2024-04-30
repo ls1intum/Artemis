@@ -58,7 +58,7 @@ class AuxiliaryRepositoryServiceTest extends AbstractSpringIntegrationIndependen
     }
 
     @Test
-    void shouldReturnTureIfAuxiliaryRepositoryOfExercise() {
+    void shouldReturnTrueIfAuxiliaryRepositoryOfExercise() {
         auxiliaryRepositoryRepository.save(createAuxiliaryRepository("test", "test", "test", programmingExerciseBeforeUpdate, null));
 
         assertThat(auxiliaryRepositoryService.isAuxiliaryRepositoryOfExercise("test", programmingExerciseBeforeUpdate)).isTrue();
