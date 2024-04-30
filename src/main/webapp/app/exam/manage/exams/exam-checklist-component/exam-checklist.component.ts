@@ -8,12 +8,10 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 @Component({
     selector: 'jhi-exam-checklist',
     templateUrl: './exam-checklist.component.html',
-    styleUrls: ['./exam-checklist.component.scss'],
 })
 export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
     @Input() exam: Exam;
     @Input() getExamRoutesByIdentifier: any;
-    @Input() getAssessmentLinkBySubmission: any;
 
     examChecklist: ExamChecklist;
     isLoading = false;
