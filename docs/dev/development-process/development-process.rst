@@ -106,10 +106,10 @@ For more details and to get started with UICompanion, visit the `UICompanion Rep
 4. Create a local Branch
 ========================
 We use the following structure for branch names: ``<type>/<area>/<short-description>``
-- Possible types are: **feature**, **chore** and **bugfix**
+- Possible types are: **feature**, **chore**, and **bugfix**
 - Possible areas are all allowed feature tags (see :ref:`pr_naming_conventions`), written kebab-case. For example, ``Programming exercises`` becomes **programming-exercises**.
 
-**Branches that do not follow this structure will get rejected by GitHub!**
+**Branches that do not follow this structure will get rejected automatically!**
 
 5. Implement the Feature
 ========================

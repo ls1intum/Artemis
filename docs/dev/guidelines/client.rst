@@ -474,7 +474,21 @@ Best Practices:
 18. Styling
 ===========
 
-We are using `Scss <https://sass-lang.com>`_ to write modular, reusable css. We have a couple of global scss files in ``webapp/content/scss`` but encourage `component dependent css with angular's styleUrls <https://angular.io/guide/component-styles>`_.
+We are using `Scss <https://sass-lang.com>`_ to write modular, reusable css. We have a couple of global scss files in ``webapp/content/scss``, but encourage component dependent css using `Angular styleUrls <https://angular.io/guide/component-styles>`_.
+
+From a methodology viewpoint we encourage the use of `BEM <http://getbem.com/introduction/>`_:
+
+.. code-block:: scss
+
+    .my-container {
+        // container styles
+        &__content {
+            // content styles
+            &--modifier {
+                // modifier styles
+            }
+        }
+    }
 
 Within the component html files, we encourage the use of `bootstrap css <https://getbootstrap.com/>`_:
 
