@@ -85,6 +85,10 @@
                 "label": "Lernpfade aktiviert",
                 "tooltip": "Ermöglicht es aus Kompetenzen und deren Lerninhalten einen individuellen Lernpfad für Studierende zu generieren."
             },
+            "dashboard": {
+                "label": "Dashboard aktiviert",
+                "tooltip": "Aktiviert das Dashboard für Studierende, Tutor:innen und Lehrende. Das Dashboard zeigt Nutzern eine Übersicht über die Kursaktivitäten und den Fortschritt der Studierenden."
+            },
             "restrictedAthenaModulesAccess": {
                 "label": "Zugriff auf geschützte Athena-Module aktiviert",
                 "tooltip": "Wenn diese Option ausgewählt ist, können die Übungen des Kurses auch geschützte Athena-Module für die Feedbackerstellung verwenden."
