@@ -27,7 +27,6 @@ import { IrisEnabledComponent } from 'app/iris/settings/shared/iris-enabled.comp
 import { IrisCompetencyGenerationSubSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-competency-generation-sub-settings-update/iris-competency-generation-sub-settings-update.component';
 import { IrisLogoButtonComponent } from 'app/iris/iris-logo-button/iris-logo-button.component';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
-import { IrisBaseChatbotComponentComponent } from 'app/iris/iris-base-chatbot-component/iris-base-chatbot-component.component';
 
 @NgModule({
     declarations: [
@@ -48,7 +47,6 @@ import { IrisBaseChatbotComponentComponent } from 'app/iris/iris-base-chatbot-co
         IrisCodeEditorSubSettingsUpdateComponent,
         IrisEnabledComponent,
         IrisLogoButtonComponent,
-        IrisBaseChatbotComponentComponent,
     ],
     imports: [
         CommonModule,
@@ -62,6 +60,6 @@ import { IrisBaseChatbotComponentComponent } from 'app/iris/iris-base-chatbot-co
         FeatureToggleModule,
     ],
     providers: [IrisCodeEditorWebsocketService, IrisStateStore],
-    exports: [IrisCodeEditorChatbotButtonComponent, IrisTutorChatbotButtonComponent, IrisEnabledComponent, IrisLogoButtonComponent, IrisBaseChatbotComponentComponent],
+    exports: [IrisCodeEditorChatbotButtonComponent, IrisTutorChatbotButtonComponent, IrisEnabledComponent, IrisLogoButtonComponent],
 })
 export class IrisModule {}
