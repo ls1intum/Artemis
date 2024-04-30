@@ -13,11 +13,11 @@ export enum FeatureToggle {
     ProgrammingExercises = 'ProgrammingExercises',
     PlagiarismChecks = 'PlagiarismChecks',
     Exports = 'Exports',
-    Dashboard = 'Dashboard',
     TutorialGroups = 'TutorialGroups',
     LearningPaths = 'LearningPaths',
     Science = 'Science',
     StandardizedCompetencies = 'StandardizedCompetencies',
+    StudentCourseAnalyticsDashboard = 'StudentCourseAnalyticsDashboard',
 }
 export type ActiveFeatureToggles = Array<FeatureToggle>;
 

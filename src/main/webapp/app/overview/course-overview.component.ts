@@ -348,14 +348,14 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             translation: 'artemisApp.courseOverview.menu.dashboard',
             hasInOrionProperty: false,
             showInOrionWindow: false,
-            featureToggle: FeatureToggle.Dashboard,
+            featureToggle: FeatureToggle.StudentCourseAnalyticsDashboard,
         };
         return dashboardItem;
     }
 
     getDefaultItems() {
         const items = [];
-        if (this.course?.dashboardEnabled) {
+        if (this.course?.studentCourseAnalyticsDashboardEnabled) {
             const dashboardItem: SidebarItem = this.getDashboardItems();
             items.push(dashboardItem);
         }

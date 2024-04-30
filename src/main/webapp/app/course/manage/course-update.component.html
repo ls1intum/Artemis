@@ -366,7 +366,7 @@
                     </div>
                 </div>
                 @if (this.isAdmin) {
-                    <div class="form-group" [jhiFeatureToggleHide]="FeatureToggle.Dashboard">
+                    <div class="form-group" [jhiFeatureToggleHide]="FeatureToggle.StudentCourseAnalyticsDashboard">
                         <div class="form-check">
                             <input
                                 type="checkbox"
@@ -374,7 +374,7 @@
                                 name="dashboardEnabled"
                                 id="field_dashboardEnabled"
                                 formControlName="dashboardEnabled"
-                                [(ngModel)]="course.dashboardEnabled"
+                                [(ngModel)]="course.studentCourseAnalyticsDashboardEnabled"
                             />
                             <label class="form-control-label" jhiTranslate="artemisApp.course.dashboard.label" for="field_dashboardEnabled"></label>
                             <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.dashboard.tooltip' | artemisTranslate }}" />
