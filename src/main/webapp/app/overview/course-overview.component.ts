@@ -240,10 +240,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
                 sidebarItems.push(learningPathItem);
             }
         }
-        if (this.course?.dashboardEnabled) {
-            const dashboardItem: SidebarItem = this.getDashboardItems();
-            sidebarItems.push(dashboardItem);
-        }
         return sidebarItems;
     }
 
@@ -358,6 +354,11 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     }
 
     getDefaultItems() {
+        const items = [];
+        if (this.course?.dashboardEnabled) {
+            const dashboardItem: SidebarItem = this.getDashboardItems();
+            items.push(dashboardItem);
+        }
         const exercisesItem: SidebarItem = {
             routerLink: 'exercises',
             icon: faListCheck,
@@ -375,7 +376,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             guidedTour: true,
         };
 
-        return [exercisesItem, statisticsItem];
+        return items.concat([exercisesItem, statisticsItem]);
     }
 
     async initAfterCourseLoad() {
