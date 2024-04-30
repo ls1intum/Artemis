@@ -37,13 +37,7 @@ test.describe('Logout tests', () => {
         await page.waitForURL(process.env.BASE_URL!);
     });
 
-    test('Stays logged in by pressing cancel when trying to logout during unsaved changes on exercise mode', async ({
-        login,
-        page,
-        courseOverview,
-        modelingExerciseEditor,
-        navigationBar,
-    }) => {
+    test('Stays logged in after dismissal of dialog for unsaved changes on exercise mode', async ({ login, page, courseOverview, modelingExerciseEditor, navigationBar }) => {
         await login(studentTwo);
 
         const exerciseID = modelingExercise.id!;
