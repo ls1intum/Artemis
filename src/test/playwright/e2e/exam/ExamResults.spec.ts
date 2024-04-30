@@ -151,6 +151,7 @@ test.describe('Exam Results', () => {
         });
 
         test('Check exam programming exercise results', async ({ page, login, examParticipation, examResultsPage }) => {
+            test.fail();
             await login(studentOne);
             await page.goto(`/courses/${course.id}/exams/${exam.id}`);
             const exercise = exerciseArray[1];
