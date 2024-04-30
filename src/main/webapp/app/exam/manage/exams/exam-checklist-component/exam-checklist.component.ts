@@ -4,7 +4,6 @@ import { ExamChecklist } from 'app/entities/exam-checklist.model';
 import { faChartBar, faEye, faListAlt, faThList, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import { Submission } from 'app/entities/submission.model';
 
 @Component({
     selector: 'jhi-exam-checklist',
@@ -25,8 +24,9 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
     hasOptionalExercises = false;
     countMandatoryExercises = 0;
     isTestExam: boolean;
-    allAssessmentsFinished: boolean = true;
-    unfinishedAssessments: Submission[];
+    existsUnfinishedAssessments: boolean = false;
+    existsUnassessedQuizzes: boolean;
+    existsUnsubmittedExercises: boolean;
 
     numberOfSubmitted = 0;
     numberOfStarted = 0;
@@ -68,8 +68,12 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
                 !!this.exam.numberOfExamUsers && this.exam.numberOfExamUsers > 0 && this.examChecklistService.checkAllExamsGenerated(this.exam, this.examChecklist);
             this.numberOfStarted = this.examChecklist.numberOfExamsStarted;
             this.numberOfSubmitted = this.examChecklist.numberOfExamsSubmitted;
-            this.unfinishedAssessments = this.examChecklist.unfinishedAssessments;
-            this.allAssessmentsFinished = !(this.unfinishedAssessments && this.unfinishedAssessments.length > 0);
+            if (this.examChecklist.numberOfTotalExamAssessmentsFinishedByCorrectionRound) {
+                const lastAssessmentFinished = this.examChecklist.numberOfTotalExamAssessmentsFinishedByCorrectionRound.last();
+                this.existsUnfinishedAssessments = lastAssessmentFinished !== this.examChecklist.numberOfTotalParticipationsForAssessment;
+            }
+            this.existsUnassessedQuizzes = this.examChecklist.existsUnassessedQuizzes;
+            this.existsUnsubmittedExercises = this.examChecklist.existsUnsubmittedExercises;
         });
     }
 
@@ -78,9 +82,5 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
         this.websocketService.unsubscribe(submittedTopic);
         const startedTopic = this.examChecklistService.getStartedTopic(this.exam);
         this.websocketService.unsubscribe(startedTopic);
-    }
-
-    getAssessmentTitle(submission: Submission): string | undefined {
-        return submission.participation?.exercise?.title;
     }
 }

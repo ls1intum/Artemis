@@ -675,8 +675,12 @@
                     "points": "Punkte",
                     "numberParticipants": "Teilnehmende",
                     "variants": "Varianten",
-                    "exercisesAssessed": "Alle Übungen sind bewertet",
-                    "exercisesAttention": "Übungen die Aufmerksamkeit erfordern"
+                    "assessmentCheckType": "Check Typ",
+                    "assessmentStatus": "Status",
+                    "assessmentAction": "Aktion",
+                    "checkUnfinishedAssessments": "Unvollendete Beurteilungen",
+                    "checkUnassessedQuizzes": "Unbewertete Quizübungen",
+                    "checkUnsubmittedExercises": "Nicht eingereichte Übungen"
                 }
             },
             "editWorkingTime": {

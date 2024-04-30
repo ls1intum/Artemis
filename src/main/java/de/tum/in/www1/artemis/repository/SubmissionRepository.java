@@ -551,4 +551,29 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     default Submission findByIdElseThrow(long submissionId) {
         return findById(submissionId).orElseThrow(() -> new EntityNotFoundException("Submission", submissionId));
     }
+
+    @Query("""
+                SELECT COUNT(p.exercise) > 0
+                FROM StudentParticipation p
+                    JOIN p.submissions s
+                    LEFT JOIN s.results r
+                WHERE p.exercise.exerciseGroup.exam.id = :examId
+                    AND p.testRun IS FALSE
+                    AND TYPE(s) = QuizSubmission
+                    AND s.submitted IS TRUE
+                    AND r.id IS NULL
+            """)
+    boolean existsUnassessedQuizzesByExamId(@Param("examId") long examId);
+
+    @Query("""
+            SELECT COUNT(p.exercise) > 0
+            FROM StudentParticipation p
+                JOIN p.submissions s
+            WHERE p.exercise.exerciseGroup.exam.id = :examId
+                AND p.testRun IS FALSE
+                AND TYPE(s) != QuizSubmission
+                AND s.submitted IS NULL
+                AND s.submissionDate IS NULL
+            """)
+    boolean existsUnsubmittedExercisesByExamId(@Param("examId") long examId);
 }

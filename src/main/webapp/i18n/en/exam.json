@@ -676,8 +676,12 @@
                     "points": "Points",
                     "numberParticipants": "Participants",
                     "variants": "Variants",
-                    "exercisesAssessed": "All exercises are assessed",
-                    "exercisesAttention": "Exercises that need attention"
+                    "assessmentCheckType": "Check Type",
+                    "assessmentStatus": "Status",
+                    "assessmentAction": "Action",
+                    "checkUnfinishedAssessments": "Unfinished Assessments",
+                    "checkUnassessedQuizzes": "Unassessed Quiz Exercises",
+                    "checkUnsubmittedExercises": "Unsubmitted Exercises"
                 }
             },
             "editWorkingTime": {
