@@ -1,33 +1,7 @@
 <div class="row justify-content-between m-4">
-    <!-- Grid Item 1 -->
-    <div class="col-sm-4 col-12 mb-4">
-        <jhi-proactive-welcome-banner />
-        @if (course && course.exercises && course.exercises.length > 0) {
-            <h4 class="mt-5 mb-3">Your next exercise:</h4>
-            <jhi-course-exercise-row [hasGuidedTour]="false" [course]="course" [exercise]="course.exercises[0]" />
-        }
-    </div>
-    <!-- Grid Item 2 -->
-    <div class="col-sm-7 col-12 mb-4">
-        <jhi-course-statistics-summary [currentRelativeScore]="currentRelativeScore" [overallPoints]="overallPoints" [reachablePoints]="reachablePoints" />
-        <h4 class="mt-4">Your current competency</h4>
-        <div class="mt-4">
-            @if (nextCompetency) {
-                <jhi-competency-card [competency]="nextCompetency" [courseId]="courseId" />
-            }
-        </div>
-        @if (nextCompetency && course?.learningPathsEnabled) {
-            <a class="btn btn-primary mt-4 w-100" routerLink="../learning-path" routerLinkActive="active">
-                <span>Show</span> <span jhiTranslate="artemisApp.courseOverview.menu.learningPath"></span>
-            </a>
-        }
-    </div>
-    <!-- Grid Item 3 -->
-    <div class="col-sm-4 col-12 mb-4">
-        <jhi-iris-base-chatbot-component [data]="data" />
-    </div>
-    <!-- Grid Item 4 -->
-    <div class="col-sm-7 col-12 mb-4">
-        <jhi-exercise-scores-chart [filteredExerciseIDs]="filteredExerciseIDs" [isDashboardInlineView]="true" />
-    </div>
+    <!--
+    TODO: A page with two columns.
+        - Left part: Iris Course Chat
+        - Right part: Statistics and competencies.
+    -->
 </div>

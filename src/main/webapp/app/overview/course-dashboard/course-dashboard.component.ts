@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { Subscription, forkJoin } from 'rxjs';
 import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
@@ -15,18 +15,13 @@ import { AlertService } from 'app/core/util/alert.service';
 import dayjs from 'dayjs/esm';
 import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { IrisStateStore } from 'app/iris/state-store.service';
-import { IrisChatSessionService } from 'app/iris/chat-session.service';
-import { IrisChatWebsocketService } from 'app/iris/chat-websocket.service';
-import { IrisHeartbeatService } from 'app/iris/heartbeat.service';
 
 @Component({
     selector: 'jhi-course-dashboard',
     templateUrl: './course-dashboard.component.html',
     styleUrl: './course-dashboard.component.scss',
-    providers: [IrisChatWebsocketService, IrisChatSessionService, IrisHeartbeatService],
 })
-export class CourseDashboardComponent implements OnInit, OnDestroy, AfterViewInit {
+export class CourseDashboardComponent implements OnInit, OnDestroy {
     courseId: number;
     exerciseId: number;
     isLoading = false;
@@ -44,18 +39,11 @@ export class CourseDashboardComponent implements OnInit, OnDestroy, AfterViewIni
     public course?: Course;
     filteredExerciseIDs: number[];
     courseExercisesNotIncludedInScore: Exercise[] = [];
-    private stateSubscription?: Subscription;
-    private hasNewMessages: boolean;
     public data: any;
 
     constructor(
         private courseStorageService: CourseStorageService,
         private translateService: TranslateService,
-        public sessionService: IrisChatSessionService,
-        public stateStore: IrisStateStore,
-        // Note: These 2 unused services are injected to ensure that they are instantiated
-        websocketService: IrisChatWebsocketService,
-        heartbeatService: IrisHeartbeatService,
         private scoresStorageService: ScoresStorageService,
         private alertService: AlertService,
         private route: ActivatedRoute,
@@ -70,12 +58,6 @@ export class CourseDashboardComponent implements OnInit, OnDestroy, AfterViewIni
 
         this.courseUpdatesSubscription = this.courseStorageService.subscribeToCourseUpdates(this.courseId).subscribe((course: Course) => {
             this.setCourse(course);
-        });
-    }
-    ngAfterViewInit() {
-        this.stateSubscription = this.stateStore.getState().subscribe((state) => {
-            this.hasNewMessages = state.numNewMessages > 0;
-            console.log(state);
         });
     }
 
@@ -123,7 +105,6 @@ export class CourseDashboardComponent implements OnInit, OnDestroy, AfterViewIni
         if (!scores) {
             return NaN;
         }
-
         switch (scoreType) {
             case ScoreType.MAX_POINTS:
                 return scores.maxPoints;
@@ -161,7 +142,6 @@ export class CourseDashboardComponent implements OnInit, OnDestroy, AfterViewIni
                     this.course.prerequisites = this.prerequisites;
                 }
                 this.isLoading = false;
-                console.log(competencies);
             },
             error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
         });
@@ -201,18 +181,9 @@ export class CourseDashboardComponent implements OnInit, OnDestroy, AfterViewIni
         } else {
             this.loadCompetencies();
         }
-        this.exerciseId = this.course!.exercises![1]!.id!;
         this.data = {
-            stateStore: this.stateStore,
             course: this.course,
-            exerciseId: this.exerciseId,
-            sessionService: this.sessionService,
         };
-        if (this.exerciseId != null) {
-            console.log('exerciseId:', this.exerciseId);
-            console.log('exerciseId is not null');
-            this.sessionService.getCurrentSessionOrCreate(this.exerciseId);
-        }
     }
 
     protected readonly FeatureToggle = FeatureToggle;

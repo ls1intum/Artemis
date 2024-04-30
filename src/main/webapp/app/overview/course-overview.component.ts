@@ -240,9 +240,10 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
                 sidebarItems.push(learningPathItem);
             }
         }
-        const dashboardItem: SidebarItem = this.getDashboardItems();
-        sidebarItems.push(dashboardItem);
-
+        if (this.course?.dashboardEnabled) {
+            const dashboardItem: SidebarItem = this.getDashboardItems();
+            sidebarItems.push(dashboardItem);
+        }
         return sidebarItems;
     }
 

@@ -10,7 +10,6 @@ import { CourseStatisticsSummaryModule } from 'app/overview/visualizations/cours
 import { RouterModule, Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { ProactiveWelcomeBannerComponent } from 'app/overview/course-dashboard/proactive-welcome-banner/proactive-welcome-banner.component';
 import { ArtemisCourseExerciseRowModule } from 'app/overview/course-exercises/course-exercise-row.module';
 import { OrionModule } from 'app/shared/orion/orion.module';
 import { IrisModule } from 'app/iris/iris.module';
@@ -29,7 +28,7 @@ const routes: Routes = [
 ];
 
 @NgModule({
-    declarations: [CourseDashboardComponent, ProactiveWelcomeBannerComponent],
+    declarations: [CourseDashboardComponent],
     exports: [CourseDashboardComponent],
     imports: [
         CommonModule,

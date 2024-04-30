@@ -208,6 +208,9 @@ public class Course extends DomainObject {
     @Column(name = "learning_paths_enabled", nullable = false)
     private boolean learningPathsEnabled = false;
 
+    @Column(name = "dashboard_enabled", nullable = false)
+    private boolean dashboardEnabled = false;
+
     @OneToMany(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("course")
     private Set<LearningPath> learningPaths = new HashSet<>();
@@ -756,6 +759,14 @@ public class Course extends DomainObject {
 
     public void setLearningPathsEnabled(boolean learningPathsEnabled) {
         this.learningPathsEnabled = learningPathsEnabled;
+    }
+
+    public boolean getDashboardEnabled() {
+        return dashboardEnabled;
+    }
+
+    public void setDashboardEnabled(boolean dashboardEnabled) {
+        this.dashboardEnabled = dashboardEnabled;
     }
 
     public Set<LearningPath> getLearningPaths() {
