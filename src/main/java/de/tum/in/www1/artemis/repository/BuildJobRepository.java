@@ -30,8 +30,7 @@ public interface BuildJobRepository extends JpaRepository<BuildJob, Long>, JpaSp
     Optional<BuildJob> findBuildJobByResult(Result result);
 
     @EntityGraph(attributePaths = { "result", "result.feedbacks", "result.feedbacks.testCase", "result.participation", "result.submission" })
-    @Query("SELECT b FROM BuildJob b")
-    Page<BuildJob> findAllWithEagerResults(Pageable pageable);
+    Page<BuildJob> findAll(Pageable pageable);
 
     @Query("""
             SELECT new de.tum.in.www1.artemis.service.connectors.localci.dto.DockerImageBuild(
@@ -44,13 +43,7 @@ public interface BuildJobRepository extends JpaRepository<BuildJob, Long>, JpaSp
     Set<DockerImageBuild> findAllLastBuildDatesForDockerImages();
 
     @EntityGraph(attributePaths = { "result", "result.feedbacks", "result.feedbacks.testCase", "result.participation", "result.submission" })
-    @Query("""
-            SELECT b
-            FROM BuildJob b
-                LEFT JOIN FETCH b.result r
-            WHERE b.courseId = :courseId
-            """)
-    Page<BuildJob> findAllWithEagerResultsByCourseId(long courseId, Pageable pageable);
+    Page<BuildJob> findAllByCourseId(long courseId, Pageable pageable);
 
     @Query("""
              SELECT new de.tum.in.www1.artemis.service.connectors.localci.dto.ResultBuildJob(

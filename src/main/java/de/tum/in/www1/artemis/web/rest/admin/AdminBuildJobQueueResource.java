@@ -156,7 +156,7 @@ public class AdminBuildJobQueueResource {
     @EnforceAdmin
     public ResponseEntity<List<FinishedBuildJobDTO>> getFinishedBuildJobs(PageableSearchDTO<String> search) {
         log.debug("REST request to get a page of finished build jobs");
-        final Page<BuildJob> page = buildJobRepository.findAllWithEagerResults(PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.BUILD_JOB));
+        final Page<BuildJob> page = buildJobRepository.findAll(PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.BUILD_JOB));
         Page<FinishedBuildJobDTO> finishedBuildJobDTOs = FinishedBuildJobDTO.fromBuildJobsPage(page);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(finishedBuildJobDTOs.getContent(), headers, HttpStatus.OK);
