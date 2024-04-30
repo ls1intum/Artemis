@@ -13,6 +13,7 @@ import org.springframework.stereotype.Repository;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.ExerciseInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.ResourceTimestampDTO;
+import de.tum.in.www1.artemis.web.rest.dto.metrics.ScoreDTO;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.SubmissionTimestampDTO;
 
 /**
@@ -34,6 +35,18 @@ public interface ExerciseMetricsRepository extends JpaRepository<Exercise, Long>
             WHERE e.course.id = :courseId
             """)
     Set<ExerciseInformationDTO> findAllExerciseInformationByCourseId(long courseId);
+
+    @Query("""
+            SELECT new de.tum.in.www1.artemis.web.rest.dto.metrics.ScoreDTO(e.id, AVG(r.score))
+            FROM Exercise e
+                LEFT JOIN StudentParticipation p
+                LEFT JOIN p.submissions s
+                LEFT JOIN s.results r
+            WHERE e.id IN :exerciseIds
+                AND s.submitted = TRUE
+            GROUP BY e.id
+            """)
+    Set<ScoreDTO> findAverageScore(@Param("exerciseIds") Set<Long> exerciseIds);
 
     /**
      * Get the latest submissions for a user in a set of exercises.
@@ -59,6 +72,29 @@ public interface ExerciseMetricsRepository extends JpaRepository<Exercise, Long>
                 AND (p.student.id = :userId OR u.id = :userId)
             """)
     Set<ResourceTimestampDTO> findLatestSubmissionsForUser(@Param("exerciseIds") Set<Long> exerciseIds, @Param("userId") long userId);
+
+    /**
+     * Get the latest submissions for a set of users in a set of exercises.
+     *
+     * @param exerciseIds the ids of the exercises
+     * @return the latest submissions for the user in the exercises
+     */
+    @Query("""
+            SELECT new de.tum.in.www1.artemis.web.rest.dto.metrics.ResourceTimestampDTO(e.id, s.submissionDate)
+            FROM Submission s
+                LEFT JOIN StudentParticipation p
+                LEFT JOIN p.exercise e
+                LEFT JOIN p.team t
+                LEFT JOIN t.students u
+            WHERE e.id IN :exerciseIds
+                AND s.submissionDate = (
+                    SELECT MAX(s2.submissionDate)
+                    FROM Submission s2
+                    WHERE s2.participation.id = s.participation.id
+                        AND s2.submitted = TRUE
+                )
+            """)
+    Set<ResourceTimestampDTO> findLatestSubmissions(@Param("exerciseIds") Set<Long> exerciseIds);
 
     /**
      * Get the timestamps when the user started participating in the exercise.

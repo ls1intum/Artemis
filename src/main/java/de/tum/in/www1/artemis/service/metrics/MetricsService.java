@@ -1,7 +1,9 @@
 package de.tum.in.www1.artemis.service.metrics;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.in.www1.artemis.service.util.ZonedDateTimeUtil.toRelativeTime;
 import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.averagingDouble;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.mapping;
 import static java.util.stream.Collectors.toMap;
@@ -9,6 +11,7 @@ import static java.util.stream.Collectors.toSet;
 
 import java.time.ZonedDateTime;
 import java.util.function.Predicate;
+import java.util.function.ToDoubleFunction;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -20,6 +23,7 @@ import de.tum.in.www1.artemis.web.rest.dto.metrics.ExerciseStudentMetricsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.LectureUnitInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.LectureUnitStudentMetricsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.ResourceTimestampDTO;
+import de.tum.in.www1.artemis.web.rest.dto.metrics.ScoreDTO;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.StudentMetricsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.SubmissionTimestampDTO;
 
@@ -67,8 +71,16 @@ public class MetricsService {
 
         final var exerciseIds = exerciseInfoMap.keySet();
 
-        final var latestSubmission = exerciseMetricsRepository.findLatestSubmissionsForUser(exerciseIds, userId);
-        final var latestSubmissionMap = latestSubmission.stream().collect(toMap(ResourceTimestampDTO::id, ResourceTimestampDTO::timestamp));
+        final var averageScore = exerciseMetricsRepository.findAverageScore(exerciseIds);
+        final var averageScoreMap = averageScore.stream().collect(toMap(ScoreDTO::exerciseId, ScoreDTO::score));
+
+        final var latestSubmissionOfUser = exerciseMetricsRepository.findLatestSubmissionsForUser(exerciseIds, userId);
+        final var latestSubmissionMap = latestSubmissionOfUser.stream().collect(toMap(ResourceTimestampDTO::id, ResourceTimestampDTO::timestamp));
+
+        final var latestSubmissions = exerciseMetricsRepository.findLatestSubmissions(exerciseIds);
+        final ToDoubleFunction<ResourceTimestampDTO> relativeTime = dto -> toRelativeTime(exerciseInfoMap.get(dto.id()).start(), exerciseInfoMap.get(dto.id()).due(),
+                dto.timestamp());
+        final var averageLatestSubmissionMap = latestSubmissions.stream().collect(groupingBy(ResourceTimestampDTO::id, averagingDouble(relativeTime)));
 
         final var exerciseStart = exerciseMetricsRepository.findExerciseStartForUser(exerciseIds, userId);
         final var exerciseStartMap = exerciseStart.stream().collect(toMap(ResourceTimestampDTO::id, ResourceTimestampDTO::timestamp));
@@ -76,7 +88,7 @@ public class MetricsService {
         final var submissionTimestamps = exerciseMetricsRepository.findSubmissionTimestampsForUser(exerciseIds, userId);
         final var submissionTimestampMap = submissionTimestamps.stream().collect(groupingBy(SubmissionTimestampDTO::exerciseId, mapping(identity(), toSet())));
 
-        return new ExerciseStudentMetricsDTO(exerciseInfoMap, latestSubmissionMap, exerciseStartMap, submissionTimestampMap);
+        return new ExerciseStudentMetricsDTO(exerciseInfoMap, averageScoreMap, averageLatestSubmissionMap, latestSubmissionMap, exerciseStartMap, submissionTimestampMap);
     }
 
     /**
