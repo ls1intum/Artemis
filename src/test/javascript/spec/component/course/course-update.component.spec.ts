@@ -91,6 +91,7 @@ describe('Course Management Update Component', () => {
         course.courseIcon = 'testCourseIcon';
         course.timeZone = 'Europe/London';
         course.learningPathsEnabled = true;
+        course.dashboardEnabled = true;
 
         const parentRoute = {
             data: of({ course }),
@@ -194,6 +195,7 @@ describe('Course Management Update Component', () => {
             expect(comp.courseForm.get(['color'])?.value).toBe(course.color);
             expect(comp.courseForm.get(['courseIcon'])?.value).toBe(course.courseIcon);
             expect(comp.courseForm.get(['learningPathsEnabled'])?.value).toBe(course.learningPathsEnabled);
+            expect(comp.courseForm.get(['dashboardEnabled'])?.value).toBe(course.dashboardEnabled);
             flush();
         }));
     });
