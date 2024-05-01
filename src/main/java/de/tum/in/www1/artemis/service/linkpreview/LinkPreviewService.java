@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.service.linkpreview.ogparser.Content;
 import de.tum.in.www1.artemis.service.linkpreview.ogparser.OgParser;
 import de.tum.in.www1.artemis.service.linkpreview.ogparser.OpenGraph;
+import de.tum.in.www1.artemis.service.linkpreview.ogparser.htmlparser.OgMetaElementHtmlParser;
 import de.tum.in.www1.artemis.web.rest.dto.LinkPreviewDTO;
 
 /**
@@ -31,7 +32,7 @@ public class LinkPreviewService {
         log.info("Parsing html meta elements from url: {}", url);
 
         // Create a new OgParser instance and parse the html meta elements, then get the OpenGraph object
-        OgParser ogParser = new OgParser();
+        OgParser ogParser = new OgParser(new OgMetaElementHtmlParser());
         OpenGraph openGraph = ogParser.getOpenGraphOf(url);
 
         Content titleContent = openGraph.getContentOf("title");

@@ -19,6 +19,10 @@ public class OgParser {
         this.ogMetaElementHtmlParser = new OgMetaElementHtmlParser();
     }
 
+    public OgParser(OgMetaElementHtmlParser ogMetaElementHtmlParser) {
+        this.ogMetaElementHtmlParser = ogMetaElementHtmlParser;
+    }
+
     /**
      * Returns the OpenGraph data of the given url.
      *
