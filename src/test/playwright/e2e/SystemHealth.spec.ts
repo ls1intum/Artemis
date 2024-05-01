@@ -6,7 +6,6 @@ import { Commands } from '../support/commands';
 const healthChecks = [
     { selector: '#continuousIntegrationServer', name: 'continuous integration server', expectedStatus: 'UP' },
     { selector: '#versionControlServer', name: 'version control server', expectedStatus: 'UP' },
-    { selector: '#userManagement', name: 'user management', expectedStatus: 'UP' },
     { selector: '#db', name: 'db', expectedStatus: 'UP' },
     { selector: '#hazelcast', name: 'hazelcast', expectedStatus: 'UP' },
     { selector: '#ping', name: 'ping', expectedStatus: 'UP' },
