@@ -11,9 +11,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
@@ -22,7 +19,6 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.AbstractQuizSubmission;
-import de.tum.in.www1.artemis.domain.quiz.MultipleChoiceSubmittedAnswer;
 import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
@@ -244,41 +240,5 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
     protected QuizSubmission save(QuizExercise quizExercise, QuizSubmission quizSubmission, User user) {
         quizSubmission.setParticipation(this.getParticipation(quizExercise, quizSubmission, user));
         return quizSubmissionRepository.save(quizSubmission);
-    }
-
-    /**
-     * Processes a list of quiz questions by converting each question into a JSON string
-     * and setting it as the content of the question. This method iterates over all
-     * questions in the given quiz exercise.
-     *
-     * @param quizSubmission the QuizSubmission object containing the list of submitted answers. It must not be null.
-     * @throws RuntimeException if there is a problem in serializing the question object to JSON.
-     */
-    public void processSubmittedAnswers(QuizSubmission quizSubmission) {
-        ObjectMapper objectMapper = new ObjectMapper();
-
-        for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
-            if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer) {
-                submittedAnswer.setSelection(serializeToJson(((MultipleChoiceSubmittedAnswer) submittedAnswer).getSelectedOptions(), objectMapper));
-            }
-        }
-    }
-
-    /**
-     * Serializes a QuizQuestion object to its JSON representation using the provided ObjectMapper.
-     * This method is called for each individual question during the quiz processing.
-     *
-     * @param object
-     * @param objectMapper the ObjectMapper instance used for serialization. It must not be null.
-     * @return String representing the JSON serialized form of the QuizQuestion.
-     * @throws RuntimeException if JSON processing fails, encapsulating the underlying JsonProcessingException.
-     */
-    private String serializeToJson(Object object, ObjectMapper objectMapper) {
-        try {
-            return objectMapper.writeValueAsString(object);
-        }
-        catch (JsonProcessingException e) {
-            throw new RuntimeException("Error serializing to JSON", e);
-        }
     }
 }
