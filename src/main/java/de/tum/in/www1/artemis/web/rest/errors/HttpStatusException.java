@@ -34,9 +34,9 @@ public abstract class HttpStatusException extends AbstractThrowableProblem {
     /**
      * @param entityName of the component where the error occurred
      * @param errorKey   that matches a translation key in the client side i18n files
-     * @param skipAlert  if the error should not be handled by the client side alert service
-     *                       (e.g. when a component has more information to display a more concrete error message and
-     *                       handles the error instead of the interceptor)
+     * @param skipAlert  if the error should not be handled by the client side intercepting alert service
+     *                       (e.g. when a client side component has more information to display a more concrete error
+     *                       message and handles the error instead of the interceptor)
      */
     protected static Map<String, Object> getAlertParameters(String entityName, String errorKey, boolean skipAlert) {
         Map<String, Object> parameters = new HashMap<>();

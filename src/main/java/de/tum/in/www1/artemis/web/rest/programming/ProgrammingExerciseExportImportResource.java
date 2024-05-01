@@ -73,6 +73,7 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.web.rest.errors.HttpStatusException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -255,8 +256,8 @@ public class ProgrammingExerciseExportImportResource {
         catch (Exception exception) {
             log.error(exception.getMessage(), exception);
 
-            // TODO maybe throw all HttpsError Exceptions? (= AlertException)
-            if (exception instanceof BadRequestAlertException) {
+            boolean isExceptionWithTranslationKeys = exception instanceof HttpStatusException;
+            if (isExceptionWithTranslationKeys) {
                 throw exception;
             }
 
