@@ -217,7 +217,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
             // load submission with results either by resultId or by correctionRound
             if (resultId != null) {
                 // load the submission with additional needed properties
-                modelingSubmission = (ModelingSubmission) submissionRepository.findOneWithEagerResultAndFeedback(submissionId);
+                modelingSubmission = (ModelingSubmission) submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submissionId);
                 // check if result exists
                 Result result = modelingSubmission.getManualResultsById(resultId);
                 if (result == null) {
@@ -348,7 +348,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         }
 
         if (modelingSubmission.getLatestResult() != null && !authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise)) {
-            modelingSubmission.getLatestResult().setAssessor(null);
+            modelingSubmission.getLatestResult().filterSensitiveInformation();
         }
 
         // make sure sensitive information are not sent to the client
