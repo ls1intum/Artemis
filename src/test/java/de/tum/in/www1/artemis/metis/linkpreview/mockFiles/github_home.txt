@@ -654,20 +654,6 @@
                 <div data-target="custom-scopes.customScopesModalDialogFlash"></div>
                 <div hidden class="create-custom-scope-form" data-target="custom-scopes.createCustomScopeForm">
                  <!-- '"` --><!-- </textarea></xmp> -->
-                 <form id="custom-scopes-dialog-form" data-turbo="false" action="/search/custom_scopes" accept-charset="UTF-8" method="post">
-                  <input type="hidden" data-csrf="true" name="authenticity_token" value="1dZKMRHgOEo9rmu8WRNRtEgUHwjMGXaVIKuAFpW3ZY/EEr1MKV7FnPuI/HRRDf4Z9dwZ/KTgkLOhAN/rPQSSTw==">
-                  <div data-target="custom-scopes.customScopesModalDialogFlash"></div><input type="hidden" id="custom_scope_id" name="custom_scope_id" data-target="custom-scopes.customScopesIdField">
-                  <div class="form-group">
-                   <label for="custom_scope_name">Name</label> <auto-check src="/search/custom_scopes/check_name" required>
-                    <input type="text" name="custom_scope_name" id="custom_scope_name" data-target="custom-scopes.customScopesNameField" class="form-control" autocomplete="off" placeholder="github-ruby" required maxlength="50">
-                    <input type="hidden" data-csrf="true" value="jct4XIZoLGFwM6blODUCgTfIRAJ4ywFGrHwBz5nNvM2yWNSWAIEOs6SPfgr68CS/iZkjtV5VZZq0wVTD85dQPg==">
-                   </auto-check>
-                  </div>
-                  <div class="form-group">
-                   <label for="custom_scope_query">Query</label> <input type="text" name="custom_scope_query" id="custom_scope_query" data-target="custom-scopes.customScopesQueryField" class="form-control" autocomplete="off" placeholder="(repo:mona/a OR repo:mona/b) AND lang:python" required maxlength="500">
-                  </div>
-                  <p class="text-small color-fg-muted">To see all available qualifiers, see our <a class="Link--inTextBlock" href="https://docs.github.com/search-github/github-code-search/understanding-github-code-search-syntax">documentation</a>.</p>
-                 </form>
                 </div>
                 <div data-target="custom-scopes.manageCustomScopesForm">
                  <div data-target="custom-scopes.list"></div>
