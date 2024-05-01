@@ -30,7 +30,7 @@ test.describe('Static code analysis tests', () => {
         await programmingExercisesScaConfig.saveChanges();
 
         // Make submission with SCA errors
-        await programmingExerciseEditor.startParticipation(course.id!, exercise.id!, studentOne);
+        await programmingExerciseEditor.startParticipation(course.id!, exercise, studentOne);
         await programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, javaScaSubmission, async () => {
             const resultScore = await programmingExerciseEditor.getResultScore();
             await expect(resultScore.getByText(javaScaSubmission.expectedResult)).toBeVisible();

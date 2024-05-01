@@ -6,6 +6,7 @@ import { UserCredentials } from '../../../users';
 import { CoursesPage } from '../../course/CoursesPage';
 import { CourseOverviewPage } from '../../course/CourseOverviewPage';
 import { Fixtures } from '../../../../fixtures/fixtures';
+import { Exercise } from 'app/entities/exercise.model';
 
 export class OnlineEditorPage {
     private readonly page: Page;
@@ -140,13 +141,18 @@ export class OnlineEditorPage {
         await verifyOutput();
     }
 
-    async startParticipation(courseId: number, exerciseId: number, credentials: UserCredentials) {
+    async startParticipation(courseId: number, exercise: Exercise, credentials: UserCredentials, isStarted: boolean = false) {
         await Commands.login(this.page, credentials, '/');
-        await this.page.waitForURL(/\/courses/);
+        await this.page.waitForURL('**/courses');
         await this.courseList.openCourse(courseId!);
-        await this.courseOverview.startExercise(exerciseId);
-        await Commands.reloadUntilFound(this.page, '#open-exercise-' + exerciseId);
-        await this.courseOverview.openRunningProgrammingExercise(exerciseId);
+        await this.page.waitForURL('**/exercises');
+        await this.page.locator('jhi-course-exercise-details').waitFor({ state: 'visible' });
+        await this.courseOverview.getExercise(exercise.title!).click();
+        if (!isStarted) {
+            await this.courseOverview.startExercise(exercise.id!);
+            await Commands.reloadUntilFound(this.page, `#open-exercise-${exercise.id!}`);
+        }
+        await this.courseOverview.openRunningProgrammingExercise(exercise.id!);
     }
 }
 
