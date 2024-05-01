@@ -8,7 +8,10 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
-import de.tum.in.www1.artemis.domain.exam.event.*;
+import de.tum.in.www1.artemis.domain.exam.event.ExamAttendanceCheckEvent;
+import de.tum.in.www1.artemis.domain.exam.event.ExamLiveEvent;
+import de.tum.in.www1.artemis.domain.exam.event.ExamWideAnnouncementEvent;
+import de.tum.in.www1.artemis.domain.exam.event.WorkingTimeUpdateEvent;
 import de.tum.in.www1.artemis.repository.ExamLiveEventRepository;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 

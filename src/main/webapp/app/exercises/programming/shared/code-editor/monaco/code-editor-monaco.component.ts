@@ -35,6 +35,8 @@ import { fromPairs, pickBy } from 'lodash-es';
 import { faPlusSquare } from '@fortawesome/free-solid-svg-icons';
 import { CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback-suggestion.component';
 import { MonacoEditorLineHighlight } from 'app/shared/monaco-editor/model/monaco-editor-line-highlight.model';
+import { FileTypeService } from 'app/exercises/programming/shared/service/file-type.service';
+
 @Component({
     selector: 'jhi-code-editor-monaco',
     templateUrl: './code-editor-monaco.component.html',
@@ -98,6 +100,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
 
     fileSession: FileSession = {};
     newFeedbackLines: number[] = [];
+    binaryFileSelected = false;
 
     faPlusSquare = faPlusSquare;
 
@@ -113,6 +116,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
         private fileService: CodeEditorFileService,
         protected localStorageService: LocalStorageService,
         private changeDetectorRef: ChangeDetectorRef,
+        private fileTypeService: FileTypeService,
     ) {}
 
     async ngOnChanges(changes: SimpleChanges): Promise<void> {
@@ -168,8 +172,13 @@ export class CodeEditorMonacoComponent implements OnChanges {
             this.isLoading = false;
         }
 
-        this.editor.changeModel(fileName, this.fileSession[fileName].code);
-        this.editor.setPosition(this.fileSession[fileName].cursor);
+        const code = this.fileSession[fileName].code;
+        this.binaryFileSelected = this.fileTypeService.isBinaryContent(code);
+
+        if (!this.binaryFileSelected) {
+            this.editor.changeModel(fileName, code);
+            this.editor.setPosition(this.fileSession[fileName].cursor);
+        }
     }
 
     onFileTextChanged(text: string): void {

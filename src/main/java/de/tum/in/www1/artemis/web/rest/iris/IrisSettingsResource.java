@@ -2,7 +2,12 @@ package de.tum.in.www1.artemis.web.rest.iris;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.iris.settings.IrisCourseSettings;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisExerciseSettings;
@@ -11,7 +16,9 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.security.annotations.*;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.dto.iris.IrisCombinedSettingsDTO;
 import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;

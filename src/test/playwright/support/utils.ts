@@ -91,6 +91,26 @@ export function convertBooleanToCheckIconClass(boolean: boolean) {
     return boolean ? '.checked' : '.unchecked';
 }
 
+/**
+ * Convert a base64-encoded string to a `Blob`.
+ *
+ * This is an adaptation of the `base64StringToBlob` function from `blob-util` library.
+ * Since Playwright has no access to DOM APIs, we cannot use the one in `blob-util` library as it uses `window` object.
+ *
+ * Example:
+ *
+ * ```js
+ * var blob = blobUtil.base64StringToBlob(base64String);
+ * ```
+ * @param base64 - base64-encoded string
+ * @param type - the content type (optional)
+ * @returns Blob
+ */
+export function base64StringToBlob(base64: string, type?: string): Blob {
+    const buffer = Buffer.from(base64!, 'base64');
+    return new Blob([buffer], { type });
+}
+
 export async function clearTextField(textField: Locator) {
     await textField.click({ clickCount: 4, force: true });
     await textField.press('Backspace');
