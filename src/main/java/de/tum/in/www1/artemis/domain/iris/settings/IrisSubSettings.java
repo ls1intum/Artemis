@@ -27,7 +27,6 @@ import de.tum.in.www1.artemis.domain.DomainObject;
  * Sub Settings are settings for a specific feature of Iris.
  * {@link IrisChatSubSettings} are used to specify settings for the chat feature.
  * {@link IrisHestiaSubSettings} are used to specify settings for the Hestia integration.
- * {@link IrisCodeEditorSubSettings} are used to specify settings for the code editor feature.
  * {@link IrisCompetencyGenerationSubSettings} are used to specify settings for the competency generation feature.
  * <p>
  * Also see {@link de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService} for more information.

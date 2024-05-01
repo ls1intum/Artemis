@@ -230,11 +230,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         //     title: 'artemisApp.iris.settings.subSettings.enabled.hesita',
         //     data: { course: this.course, disabled: !this.isAdmin, subSettingsType: this.HESTIA },
         // });
-        // details.push({
-        //     type: DetailType.ProgrammingIrisEnabled,
-        //     title: 'artemisApp.iris.settings.subSettings.enabled.codeEditor',
-        //     data: { course: this.course, disabled: !this.isAdmin, subSettingsType: this.CODE_EDITOR },
-        // });
         return irisDetails;
     }
 
