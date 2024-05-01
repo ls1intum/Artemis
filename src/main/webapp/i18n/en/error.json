@@ -91,6 +91,7 @@
         "systemNotificationNeedsNotificationBeforeExpiration": "The expiration date must be after the notification date.",
         "ltiNotSupported": "LTI is not supported on this Artemis instance",
         "exportFailed": "Exercise export failed",
-        "unableToImportProgrammingExercise": "Unable to import programming exercise."
+        "unableToImportProgrammingExercise": "Unable to import programming exercise.",
+        "shortnameAlreadyExists": "A programming exercise with the same short name already exists. Please choose a different short name."
     }
 }

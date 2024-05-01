@@ -91,6 +91,7 @@
         "systemNotificationNeedsNotificationBeforeExpiration": "Das Ablaufdatum muss nach dem Mitteilungsdatum liegen.",
         "ltiNotSupported": "LTI wird auf dieser Artemis-Instanz nicht unterstützt",
         "exportFailed": "Aufgabenexport fehlgeschlagen",
-        "unableToImportProgrammingExercise": "Fehler beim Importieren der Programmieraufgabe."
+        "unableToImportProgrammingExercise": "Fehler beim Importieren der Programmieraufgabe.",
+        "shortnameAlreadyExists": "Es existiert bereits eine Programmieraufgabe mit dem gewählten Kurznamen, bitte nutze einen anderen Kurznamen."
     }
 }
