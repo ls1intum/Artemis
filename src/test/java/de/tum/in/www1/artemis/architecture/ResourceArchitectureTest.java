@@ -7,6 +7,7 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.methods;
 
 import java.lang.annotation.Annotation;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.http.ResponseEntity;
@@ -19,9 +20,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.ModelAndView;
 
+import com.tngtech.archunit.base.HasDescription;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.domain.JavaMethod;
+import com.tngtech.archunit.core.domain.properties.HasAnnotations;
+import com.tngtech.archunit.core.domain.properties.HasSourceCodeLocation;
 import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.ConditionEvents;
@@ -69,21 +73,14 @@ class ResourceArchitectureTest extends AbstractArchitectureTest {
 
             @Override
             public void check(JavaClass javaClass, ConditionEvents conditionEvents) {
-                var annotation = findJavaAnnotation(javaClass, RequestMapping.class);
-                var valueProperty = annotation.tryGetExplicitlyDeclaredProperty("value");
-                if (valueProperty.isEmpty()) {
-                    conditionEvents.add(violated(javaClass, createMessage(javaClass, "RequestMapping should declare a path value.")));
-                    return;
-                }
-                String[] values = ((String[]) valueProperty.get());
-                for (String value : values) {
+                testRequestAnnotation(javaClass, RequestMapping.class, conditionEvents, value -> {
                     if (value.startsWith("/")) {
                         conditionEvents.add(violated(javaClass, createMessage(javaClass, "The @RequestMapping path value should not start with /")));
                     }
                     if (!value.endsWith("/")) {
                         conditionEvents.add(violated(javaClass, createMessage(javaClass, "The @RequestMapping path value should always end with /")));
                     }
-                }
+                });
             }
         };
     }
@@ -93,20 +90,29 @@ class ResourceArchitectureTest extends AbstractArchitectureTest {
 
             @Override
             public void check(JavaMethod javaMethod, ConditionEvents conditionEvents) {
-                var annotation = findJavaAnnotation(javaMethod, annotationClass);
-                var valueProperty = annotation.tryGetExplicitlyDeclaredProperty("value");
-                if (valueProperty.isEmpty()) {
-                    conditionEvents.add(violated(javaMethod, createMessage(javaMethod, "RequestMapping should declare a path value.")));
-                    return;
-                }
-                String value = ((String[]) valueProperty.get())[0];
-                if (value.startsWith("/")) {
-                    conditionEvents.add(violated(javaMethod, createMessage(javaMethod, "The @RequestMapping path value should not start with /")));
-                }
-                if (value.endsWith("/")) {
-                    conditionEvents.add(violated(javaMethod, createMessage(javaMethod, "The @RequestMapping path value should not end with /")));
-                }
+                testRequestAnnotation(javaMethod, annotationClass, conditionEvents, value -> {
+                    if (value.startsWith("/")) {
+                        conditionEvents.add(violated(javaMethod, createMessage(javaMethod, "The @RequestMapping path value should not start with /")));
+                    }
+                    if (value.endsWith("/")) {
+                        conditionEvents.add(violated(javaMethod, createMessage(javaMethod, "The @RequestMapping path value should not end with /")));
+                    }
+                });
             }
         };
+    }
+
+    private <T extends HasAnnotations<T> & HasDescription & HasSourceCodeLocation> void testRequestAnnotation(T item, Class<?> annotationClass, ConditionEvents conditionEvents,
+            Consumer<String> tester) {
+        var annotation = findJavaAnnotation(item, annotationClass);
+        var valueProperty = annotation.tryGetExplicitlyDeclaredProperty("value");
+        if (valueProperty.isEmpty()) {
+            conditionEvents.add(violated(item, createMessage(item, "RequestMapping should declare a path value.")));
+            return;
+        }
+        String[] values = ((String[]) valueProperty.get());
+        for (String value : values) {
+            tester.accept(value);
+        }
     }
 }
