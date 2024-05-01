@@ -21,7 +21,7 @@ public class PyrisStatusUpdateService {
 
     private final IrisChatSessionService irisChatSessionService;
 
-    private static final Logger logger = LoggerFactory.getLogger(PyrisStatusUpdateService.class);
+    private static final Logger log = LoggerFactory.getLogger(PyrisStatusUpdateService.class);
 
     public PyrisStatusUpdateService(PyrisJobService pyrisJobService, IrisChatSessionService irisChatSessionService) {
         this.pyrisJobService = pyrisJobService;
@@ -39,10 +39,10 @@ public class PyrisStatusUpdateService {
             irisChatSessionService.handleStatusUpdate((TutorChatJob) job, statusUpdate);
         }
         else if (job instanceof IngestionWebhookJob ingestionJob) {
-            logger.info("Ingestion job status updated with result: {}", ingestionJob.getId());
+            log.info("Ingestion job status updated with result: {}", ingestionJob.getId());
         }
         else {
-            logger.error("Unsupported job type or mismatch in DTO type");
+            log.error("Unsupported job type or mismatch in DTO type");
             throw new IllegalArgumentException("Unsupported job type or mismatch in DTO type");
         }
         var isDone = statusUpdate.stages().stream().map(PyrisStageDTO::state)

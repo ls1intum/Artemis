@@ -140,7 +140,7 @@ public class LectureService {
      */
     public void delete(Lecture lecture) {
         List<AttachmentUnit> attachmentUnitList = lecture.getLectureUnits().stream().filter(lectureUnit -> lectureUnit.getType().equals("attachment"))
-                .map(lectureUnit -> (AttachmentUnit) lectureUnit).collect(Collectors.toList());
+                .map(lectureUnit -> (AttachmentUnit) lectureUnit).collect(Collectors.toCollection(ArrayList::new));
         webhookService.executeIngestionPipeline(false, attachmentUnitList);
         Channel lectureChannel = channelRepository.findChannelByLectureId(lecture.getId());
         channelService.deleteChannel(lectureChannel);
