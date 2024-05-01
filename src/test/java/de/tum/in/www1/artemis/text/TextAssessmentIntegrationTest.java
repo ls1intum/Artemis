@@ -1256,7 +1256,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         Result lastResult = submission.getLatestResult();
         request.delete("/api/participations/" + submission.getParticipation().getId() + "/text-submissions/" + submission.getId() + "/results/" + firstResult.getId(),
                 HttpStatus.OK);
-        submission = submissionRepository.findOneWithEagerResultAndFeedback(submission.getId());
+        submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId());
         assertThat(submission.getResults()).hasSize(1);
         assertThat(submission.getResults().get(0)).isEqualTo(lastResult);
     }
