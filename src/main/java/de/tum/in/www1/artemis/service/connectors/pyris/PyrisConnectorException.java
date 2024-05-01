@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service.connectors.pyris;
 
-// TODO
 public class PyrisConnectorException extends RuntimeException {
 
     public PyrisConnectorException(String message) {

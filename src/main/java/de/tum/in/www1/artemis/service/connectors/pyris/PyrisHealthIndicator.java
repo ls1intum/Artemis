@@ -37,8 +37,8 @@ public class PyrisHealthIndicator implements HealthIndicator {
             var isUp = status != null;
             health = new ConnectorHealth(isUp);
         }
-        catch (Exception emAll) {
-            health = new ConnectorHealth(emAll);
+        catch (Exception e) {
+            health = new ConnectorHealth(e);
             health.setUp(false);
         }
 

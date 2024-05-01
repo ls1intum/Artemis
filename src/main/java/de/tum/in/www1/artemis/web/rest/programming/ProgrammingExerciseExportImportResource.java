@@ -460,27 +460,6 @@ public class ProgrammingExerciseExportImportResource {
         return provideZipForParticipations(exportedStudentParticipations, programmingExercise, repositoryExportOptions);
     }
 
-    /**
-     * GET /programming-exercises/:exerciseId/export-repo-of-participation-id/:participationId : sends the submission from participation id as zip
-     *
-     * @param exerciseId      the id of the exercise to get the repos from
-     * @param participationId the id of the participation
-     * @return ResponseEntity with status
-     * @throws IOException if submissions can't be zippedRequestBody
-     */
-    @GetMapping("programming-exercises/{exerciseId}/export-repo-of-participation-id/{participationId}")
-    @EnforceAtLeastTutor
-    @FeatureToggle({ Feature.ProgrammingExercises, Feature.Exports })
-    public ResponseEntity<Resource> exportSubmissionOfParticipationId(@PathVariable long exerciseId, @PathVariable long participationId) throws IOException {
-        var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
-        var participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
-
-        long start = System.nanoTime();
-        Optional<File> zipFile = programmingExerciseExportService.exportStudentRepositoryToZipFile(programmingExercise, participation);
-        return returnZipFileForRepositoryExport(zipFile, participation.getParticipantIdentifier(), programmingExercise, start);
-    }
-
     private ResponseEntity<Resource> provideZipForParticipations(@NotNull List<ProgrammingExerciseStudentParticipation> exportedStudentParticipations,
             ProgrammingExercise programmingExercise, RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
         long start = System.nanoTime();
