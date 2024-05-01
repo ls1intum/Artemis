@@ -12,8 +12,6 @@ export class GitDiffFileComponent implements OnInit {
     @ViewChild(MonacoDiffEditorComponent, { static: true })
     monacoDiffEditor: MonacoDiffEditorComponent;
 
-    monacoDiffEditorReady = false;
-
     @Input()
     diffForTemplateAndSolution: boolean = false;
 
