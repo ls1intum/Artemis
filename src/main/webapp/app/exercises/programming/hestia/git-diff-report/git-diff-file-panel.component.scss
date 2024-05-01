@@ -4,3 +4,9 @@
         overflow: inherit;
     }
 }
+
+.file-path-with-badge {
+    display: flex;
+    align-items: center;
+    column-gap: 5px;
+}

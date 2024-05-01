@@ -4,17 +4,21 @@
             <div class="my-2 ps-1">
                 @if (filePath && previousFilePath) {
                     @if (filePath !== previousFilePath) {
-                        <div>
+                        <div class="file-path-with-badge">
                             {{ previousFilePath }} → {{ filePath }}
                             <span jhiTranslate="artemisApp.programmingExercise.diffReport.fileChange.renamed" class="badge bg-warning"></span>
                         </div>
                     } @else {
-                        <div>{{ filePath }}</div>
+                        <div class="file-path-with-badge">{{ filePath }}</div>
                     }
                 } @else if (!filePath) {
-                    <div>{{ previousFilePath }} <span class="badge bg-danger" jhiTranslate="artemisApp.programmingExercise.diffReport.fileChange.deleted"></span></div>
+                    <div class="file-path-with-badge">
+                        {{ previousFilePath }} <span class="badge bg-danger" jhiTranslate="artemisApp.programmingExercise.diffReport.fileChange.deleted"></span>
+                    </div>
                 } @else {
-                    <div>{{ filePath }} <span class="badge bg-success" jhiTranslate="artemisApp.programmingExercise.diffReport.fileChange.created"></span></div>
+                    <div class="file-path-with-badge">
+                        {{ filePath }} <span class="badge bg-success" jhiTranslate="artemisApp.programmingExercise.diffReport.fileChange.created"></span>
+                    </div>
                 }
             </div>
             <div>
