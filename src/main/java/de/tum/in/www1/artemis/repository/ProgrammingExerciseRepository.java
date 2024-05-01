@@ -275,23 +275,6 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @Query("""
             SELECT pe
             FROM ProgrammingExercise pe
-                LEFT JOIN pe.studentParticipations pep
-            WHERE pep.id = :participationId
-                OR pe.templateParticipation.id = :participationId
-                OR pe.solutionParticipation.id = :participationId
-            """)
-    @Deprecated(forRemoval = true)
-    Optional<ProgrammingExercise> findByParticipationId(@Param("participationId") long participationId);
-
-    @Deprecated(forRemoval = true)
-    default ProgrammingExercise findByParticipationIdOrElseThrow(long participationId) throws EntityNotFoundException {
-        return findByParticipationId(participationId)
-                .orElseThrow(() -> new EntityNotFoundException("Programming exercise for participation with id " + participationId + " does not exist"));
-    }
-
-    @Query("""
-            SELECT pe
-            FROM ProgrammingExercise pe
                 LEFT JOIN pe.studentParticipations spep
             WHERE spep.id = :participationId
             """)
