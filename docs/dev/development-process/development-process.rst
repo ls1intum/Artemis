@@ -21,7 +21,7 @@ Once a feature request has been submitted, the maintainers will evaluate the req
 
 3. Create a Feature Proposal
 ===============================
-If the feature request is deemed feasible, the development team will create a feature proposal that extensively describes the proposed feature. This step will be performed by the development team and will consist of the artifacts mentioned in the model "Create Feature Proposal" below:
+If the feature request is deemed feasible, the development team will create a feature proposal that extensively describes the proposed feature. This step will consist of the artifacts mentioned in the model "Create Feature Proposal" below:
 
 .. figure:: ./aremtis-feature-proposal-flow.png
     :align: center
@@ -87,21 +87,6 @@ Furthermore it is important to include a description of the user flow that refer
         </iframe>
     </div>
 
-To facilitate this process, we have introduced UICompanion, a tool that integrates seamlessly with GitHub and Figma to assist developers through the UI/UX design phase.
-
-What is UICompanion?
---------------------
-UICompanion is a combination of a GitHub bot and a Figma plugin designed to support developers working on the Artemis project through the UI/UX design step. This tool automates several aspects of the design process, making it easier for developers to create and iterate on UI designs.
-
-How to Use UICompanion
-----------------------
-When an issue is labeled with "UI" on GitHub, UICompanion automatically attaches a comment to the issue prompting the developer to start the UI design process in Figma. Here's how to proceed:
-
-1. **Initiate Design Process**: Upon receiving the UICompanion comment, click on the provided Figma Project Link to access our Figma project.
-2. **Follow Guidance**: Inside Figma, use the UICompanion Figma app for step-by-step guidance through the design process. This includes creating prototypes and seeking approval from designated Artemis maintainers.
-3. **Automate Tasks**: UICompanion helps automate tasks such as adding the necessary UI components from the Artemis Design System, ensuring that designs remain consistent with the project's UI guidelines.
-
-For more details and to get started with UICompanion, visit the `UICompanion Repository on GitHub <https://github.com/ls1intum/UICompanion>`_.
 
 4. Create a local Branch
 ========================
@@ -131,9 +116,9 @@ Naming Conventions for GitHub Pull Requests
 
 1. The first term is a main feature of Artemis and should use code highlighting, e.g.  ``Programming exercises``:
 
-    1. Possible feature tags are: ``Programming exercises``, ``Integrated code lifecycle``, ``Quiz exercises``, ``Modeling exercises``, ``Text exercises``, ``File upload exercises``, ``Exam mode``,
-       ``Grading``, ``Assessment``, ``Communication``, ``Notifications``, ``Team exercises``, ``Lectures``, ``Integrated Markdown Editor``, ``Plagiarism checks``, ``Learning analytics``,
-       ``Adaptive learning``, ``Learning path``, ``Tutorial groups``, ``Iris``, ``Scalability``, ``Usability``, ``Performance``, ``Infrastructure``, ``Mobile Apps``.
+    1. Possible feature tags are: ``Programming Exercises``, ``Integrated Code Lifecycle``, ``Quiz Exercises``, ``Modeling Exercises``, ``Text Exercises``, ``File Upload Exercises``, ``Exam Mode``,
+       ``Grading``, ``Assessment``, ``Communication``, ``Notifications``, ``Team Exercises``, ``Lectures``, ``Integrated Markdown Editor``, ``Plagiarism Checks``, ``Learning Analytics``,
+       ``Adaptive Learning``, ``Learning Path``, ``Tutorial Groups``, ``Iris``, ``Scalability``, ``Usability``, ``Performance``, ``Intrastructure``, ``Mobile Apps``.
     2. If the change is not visible to end users, or it is a pure development or test improvement, we use the term ``Development``:.
     3. Everything else belongs to the ``General`` category.
 
@@ -190,7 +175,7 @@ Steps to Create and Merge a Pull Request
     * maintain reasonable performance (e.g. no excessive/unnecessary database queries or HTTP calls).
 * Respect the PR scope: Implementations that are unrelated to the PRs topic should not be enforced in a code review.
 * Explain your rationale when requesting changes: E.g., not "Please change X to Y", but "Please change X to Y, because this would improve Z"
-* Submit your comments and status (👍 Approve or 👎 Request Changes) using GitHub.
+* Submit your comments and status (✅ Approve or ❌ Request Changes) using GitHub.
     * Explain what you did (test, review code) and on which test server in the review comment.
 
 4. Address Review Comments
@@ -201,13 +186,17 @@ Steps to Create and Merge a Pull Request
 * Update your code where necessary.
 * Revert to draft if the changes will take a while during which review is not needed/possible.
 * Set back to ready for review afterwards.
-* Notify the reviewer(s) once your revised version is ready for the next review.
+* After making revisions, re-request reviews through GitHub initially. If no response is received, then follow up with a targeted message on Slack to the relevant reviewers.
 * Comment on "inline comments" (e.g. "Done").
+* Once all changes are made, ensure that the feature-specific maintainer reviews and approves the changes.
+* After maintainer approval, an "Artemis Maintainer" reviews and finalizes the approval process.
 
 **For Reviewers:**
 
 * Respond to questions raised by the developer.
 * Mark conversations as resolved if the change is sufficient.
+* Feature-specific maintainers should verify changes within their scope and mark them as approved.
+* Artemis Maintainers conduct the final review before merging.
 
 .. note::
       Repeat steps 3 & 4 until the pull request is approved by all designated reviewers. It's only ready to merge when it has approvals from at least four reviewers.
