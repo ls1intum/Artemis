@@ -547,6 +547,11 @@
                 "previousCommit": "Vorheriger Commit",
                 "currentSubmission": "Aktuelle Abgabe",
                 "currentCommit": "Aktueller Commit",
+                "fileChange": {
+                    "created": "Erstellt",
+                    "deleted": "Gelöscht",
+                    "renamed": "Umbenannt"
+                },
                 "errorWhileFetchingRepos": "Fehler beim Abrufen der Repositories. Bitte überprüfe deine Internetverbindung und öffne das Popup erneut.",
                 "404": "Template-Lösungs-Diff wurde noch nicht generiert. Bitte pusche etwas in die Template- oder Lösungs-Repositories, um ihn zu erstellen.",
                 "lineStatLabel": "Zeilen, die zwischen Vorlage und Lösung hinzugefügt/entfernt wurden",

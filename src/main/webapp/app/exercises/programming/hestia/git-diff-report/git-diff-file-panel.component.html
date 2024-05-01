@@ -2,10 +2,19 @@
     <div ngbAccordionItem #fileDiffPanel="ngbAccordionItem" [collapsed]="false">
         <div ngbAccordionHeader class="d-flex align-items-center justify-content-between">
             <div class="my-2 ps-1">
-                @if (filePath && previousFilePath && filePath !== previousFilePath) {
-                    <div>{{ previousFilePath }} → {{ filePath }}</div>
+                @if (filePath && previousFilePath) {
+                    @if (filePath !== previousFilePath) {
+                        <div>
+                            {{ previousFilePath }} → {{ filePath }}
+                            <span jhiTranslate="artemisApp.programmingExercise.diffReport.fileChange.renamed" class="badge bg-warning"></span>
+                        </div>
+                    } @else {
+                        <div>{{ filePath }}</div>
+                    }
+                } @else if (!filePath) {
+                    <div>{{ previousFilePath }} <span class="badge bg-danger" jhiTranslate="artemisApp.programmingExercise.diffReport.fileChange.deleted"></span></div>
                 } @else {
-                    {{ filePath || previousFilePath }}
+                    <div>{{ filePath }} <span class="badge bg-success" jhiTranslate="artemisApp.programmingExercise.diffReport.fileChange.created"></span></div>
                 }
             </div>
             <div>
