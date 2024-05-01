@@ -27,6 +27,9 @@ public interface TextSubmissionRepository extends JpaRepository<TextSubmission, 
     @EntityGraph(type = LOAD, attributePaths = { "results.feedbacks", "results.assessor", "participation.exercise" })
     Optional<TextSubmission> findWithEagerParticipationExerciseResultAssessorById(long submissionId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "results.feedbacks", "results.assessor", "results.assessmentNote", "participation.exercise" })
+    Optional<TextSubmission> findWithEagerParticipationExerciseResultAssessorAssessmentNoteById(long submissionId);
+
     /**
      * Load text submission only
      *
@@ -75,6 +78,11 @@ public interface TextSubmissionRepository extends JpaRepository<TextSubmission, 
     @NotNull
     default TextSubmission findByIdWithParticipationExerciseResultAssessorElseThrow(long submissionId) {
         return findWithEagerParticipationExerciseResultAssessorById(submissionId).orElseThrow(() -> new EntityNotFoundException("TextSubmission", submissionId));
+    }
+
+    @NotNull
+    default TextSubmission findByIdWithParticipationExerciseResultAssessorAssessmentNoteElseThrow(long submissionId) {
+        return findWithEagerParticipationExerciseResultAssessorAssessmentNoteById(submissionId).orElseThrow(() -> new EntityNotFoundException("TextSubmission", submissionId));
     }
 
     default TextSubmission findByIdWithEagerResultsAndFeedbackAndTextBlocksElseThrow(long submissionId) {
