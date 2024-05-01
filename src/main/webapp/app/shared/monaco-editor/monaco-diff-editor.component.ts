@@ -17,9 +17,6 @@ export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
     listeners: monaco.IDisposable[] = [];
     resizeObserver?: ResizeObserver;
 
-    private original: string | undefined;
-    private modified: string | undefined;
-
     @Output()
     onReadyForDisplayChange = new EventEmitter<boolean>();
 
@@ -53,22 +50,7 @@ export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
             fontSize: 12,
         });
         renderer.appendChild(elementRef.nativeElement, this.monacoDiffEditorContainerElement);
-
-        this._editor.onDidChangeModel(() => {
-            this.adjustHeightAndLayout(this.getMaximumContentHeight());
-            if (this.original === undefined) {
-                this.replaceEditorWithPlaceholder('create', this._editor.getOriginalEditor());
-            }
-            if (this.modified === undefined) {
-                this.replaceEditorWithPlaceholder('delete', this._editor.getModifiedEditor());
-            }
-        });
-
-        this._editor.onDidUpdateDiff(() => {
-            // called when the editor is truly ready
-            this.monacoDiffEditorContainerElement.style.height = this.getMaximumContentHeight() + 'px';
-            this.onReadyForDisplayChange.emit(true);
-        });
+        this.setupModelAndDiffListeners();
         this.setupContentHeightListeners();
     }
 
@@ -78,6 +60,23 @@ export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
         });
         this.resizeObserver.observe(this.monacoDiffEditorContainerElement);
         this.themeSubscription = this.themeService.getCurrentThemeObservable().subscribe((theme) => this.changeTheme(theme));
+    }
+
+    /**
+     * Sets up listeners that respond to changes in the model and the diff.
+     * The latter results in the editor reporting that it is ready to display the diff.
+     */
+    setupModelAndDiffListeners(): void {
+        const modelListener = this._editor.onDidChangeModel(() => {
+            this.adjustHeightAndLayout(this.getMaximumContentHeight());
+        });
+
+        const diffListener = this._editor.onDidUpdateDiff(() => {
+            this.adjustHeightAndLayout(this.getMaximumContentHeight());
+            setTimeout(() => this.onReadyForDisplayChange.emit(true), 100);
+        });
+
+        this.listeners.push(modelListener, diffListener);
     }
 
     /**
@@ -138,6 +137,14 @@ export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
         monaco.editor.setTheme(artemisTheme === Theme.DARK ? 'vs-dark' : 'vs-light');
     }
 
+    /**
+     * Updates the files displayed in this editor. When this happens, {@link onReadyForDisplayChange} will signal that the editor is not
+     * ready to display the diff (as it must be computed first). This will later be change by the appropriate listener.
+     * @param original The content of the original file, if available.
+     * @param originalFileName The name of the original file, if available. The name is used to determine the syntax highlighting of the left editor.
+     * @param modified The content of the modified file, if available.
+     * @param modifiedFileName The name of the modified file, if available. The name is used to determine the syntax highlighting of the right editor.
+     */
     setFileContents(original?: string, originalFileName?: string, modified?: string, modifiedFileName?: string): void {
         this.onReadyForDisplayChange.emit(false);
         const originalModelUri = monaco.Uri.parse(`inmemory://model/original-${this._editor.getId()}/${originalFileName ?? 'left'}`);
@@ -151,8 +158,6 @@ export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
         monaco.editor.setModelLanguage(originalModel, originalModel.getLanguageId());
         monaco.editor.setModelLanguage(modifiedModel, modifiedModel.getLanguageId());
 
-        this.original = original;
-        this.modified = modified;
         const newModel = {
             original: originalModel,
             modified: modifiedModel,
@@ -161,29 +166,17 @@ export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
         this._editor.setModel(newModel);
     }
 
-    setUnchangedRegionHidingOptions(enabled: boolean, revealLineCount = 5, contextLineCount = 3, minimumLineCount = 5): void {
+    /**
+     * Changes whether unchanged regions should be hidden. Note that this setting must be active before the model is changed.
+     * Otherwise, it will have no effect.
+     * @param enabled Whether to hide unchanged regions in the editor.
+     */
+    setUnchangedRegionHidingEnabled(enabled: boolean): void {
         this._editor.updateOptions({
             hideUnchangedRegions: {
                 enabled,
-                revealLineCount,
-                contextLineCount,
-                minimumLineCount,
             },
         });
-    }
-
-    private replaceEditorWithPlaceholder(action: 'create' | 'delete', editorToReplace: monaco.editor.IStandaloneCodeEditor): void {
-        // TODO remove this hack
-        const container: HTMLElement = editorToReplace.getContainerDomNode();
-        const placeholder = document.createElement('div');
-        placeholder.innerHTML = action === 'create' ? 'This file was created.' : 'This file was deleted.';
-        placeholder.style.position = 'absolute';
-        placeholder.style.top = '50%';
-        placeholder.style.left = '50%';
-        placeholder.style.transform = 'translate(-50%, -50%)';
-        container.style.backgroundColor = 'rgb(30,30,30)';
-        container.children[0]['hidden'] = true;
-        container.appendChild(placeholder);
     }
 
     /**

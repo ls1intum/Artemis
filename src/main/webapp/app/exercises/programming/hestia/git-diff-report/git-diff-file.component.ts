@@ -35,7 +35,7 @@ export class GitDiffFileComponent implements OnInit {
 
     ngOnInit(): void {
         this.determineFilePaths();
-        this.monacoDiffEditor.setUnchangedRegionHidingOptions(!this.diffForTemplateAndSolution);
+        this.monacoDiffEditor.setUnchangedRegionHidingEnabled(!this.diffForTemplateAndSolution);
         this.monacoDiffEditor.setFileContents(this.templateFileContent, this.previousFilePath, this.solutionFileContent, this.filePath);
     }
 
