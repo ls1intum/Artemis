@@ -58,6 +58,8 @@ import { FileUploadExerciseAssessmentPage } from './pageobjects/assessment/FileU
 import { FileUploadExerciseFeedbackPage } from './pageobjects/exercises/file-upload/FileUploadExerciseFeedbackPage';
 import { ExamGradingPage } from './pageobjects/exam/ExamGradingPage';
 import { ExamScoresPage } from './pageobjects/exam/ExamScoresPage';
+import { ExerciseTeamsPage } from './pageobjects/exercises/ExerciseTeamsPage';
+import { ProgrammingExerciseOverviewPage } from './pageobjects/exercises/programming/ProgrammingExerciseOverviewPage';
 
 /*
  * Define custom types for fixtures
@@ -107,6 +109,7 @@ export type ArtemisPageObjects = {
     programmingExerciseCreation: ProgrammingExerciseCreationPage;
     programmingExerciseEditor: OnlineEditorPage;
     programmingExerciseFeedback: ProgrammingExerciseFeedbackPage;
+    programmingExerciseOverview: ProgrammingExerciseOverviewPage;
     programmingExercisesScaConfig: CodeAnalysisGradingPage;
     programmingExerciseScaFeedback: ScaFeedbackModal;
     quizExerciseCreation: QuizExerciseCreationPage;
@@ -119,6 +122,7 @@ export type ArtemisPageObjects = {
     textExerciseExampleSubmissionCreation: TextExerciseExampleSubmissionCreationPage;
     textExerciseFeedback: TextExerciseFeedbackPage;
     exerciseResult: ExerciseResultPage;
+    exerciseTeams: ExerciseTeamsPage;
 };
 
 export type ArtemisRequests = {
@@ -273,6 +277,9 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     programmingExerciseFeedback: async ({ page }, use) => {
         await use(new ProgrammingExerciseFeedbackPage(page));
     },
+    programmingExerciseOverview: async ({ page }, use) => {
+        await use(new ProgrammingExerciseOverviewPage(page));
+    },
     programmingExercisesScaConfig: async ({ page }, use) => {
         await use(new CodeAnalysisGradingPage(page));
     },
@@ -308,6 +315,9 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     },
     exerciseResult: async ({ page }, use) => {
         await use(new ExerciseResultPage(page));
+    },
+    exerciseTeams: async ({ page }, use) => {
+        await use(new ExerciseTeamsPage(page));
     },
     courseManagementAPIRequests: async ({ page }, use) => {
         await use(new CourseManagementAPIRequests(page));
