@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service.programming;
 
-import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_CHECKOUT_PATH;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.util.ArrayList;
@@ -15,8 +14,10 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
+import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceErrorKeys;
 
@@ -44,7 +45,7 @@ public class AuxiliaryRepositoryService {
         List<AuxiliaryRepository> auxiliaryRepositories = new ArrayList<>(Objects
                 .requireNonNullElse(programmingExercise.getAuxiliaryRepositories(), new ArrayList<AuxiliaryRepository>()).stream().filter(repo -> repo.getId() != null).toList());
         for (AuxiliaryRepository repo : newAuxiliaryRepositories) {
-            validateAuxiliaryRepository(repo, auxiliaryRepositories, true);
+            validateAuxiliaryRepository(programmingExercise.getProgrammingLanguage(), repo, auxiliaryRepositories, true);
             auxiliaryRepositories.add(repo);
         }
         programmingExercise.setAuxiliaryRepositories(new ArrayList<>());
@@ -85,7 +86,7 @@ public class AuxiliaryRepositoryService {
                         .toList());
 
         for (AuxiliaryRepository repo : updatedAuxiliaryRepositories) {
-            validateAuxiliaryRepository(repo, auxiliaryRepositories,
+            validateAuxiliaryRepository(programmingExercise.getProgrammingLanguage(), repo, auxiliaryRepositories,
                     programmingExercise.getAuxiliaryRepositories().stream().noneMatch(existingRepo -> existingRepo.getId().equals(repo.getId())));
             auxiliaryRepositories.add(repo);
         }
@@ -134,9 +135,10 @@ public class AuxiliaryRepositoryService {
         }
     }
 
-    private void validateAuxiliaryRepositoryCheckoutDirectoryValid(AuxiliaryRepository auxiliaryRepository) {
+    private void validateAuxiliaryRepositoryCheckoutDirectoryValid(ProgrammingLanguage programmingLanguage, AuxiliaryRepository auxiliaryRepository) {
         Matcher ciCheckoutDirectoryMatcher = ALLOWED_CHECKOUT_DIRECTORY.matcher(auxiliaryRepository.getCheckoutDirectory());
-        if (!ciCheckoutDirectoryMatcher.matches() || auxiliaryRepository.getCheckoutDirectory().equals(ASSIGNMENT_CHECKOUT_PATH)) {
+        String assignmentCheckoutPath = ContinuousIntegrationService.RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage);
+        if (!ciCheckoutDirectoryMatcher.matches() || auxiliaryRepository.getCheckoutDirectory().equals(assignmentCheckoutPath)) {
             throw new BadRequestAlertException("The checkout directory '" + auxiliaryRepository.getCheckoutDirectory() + "' is invalid!", AUX_REPO_ENTITY_NAME,
                     ProgrammingExerciseResourceErrorKeys.INVALID_AUXILIARY_REPOSITORY_CHECKOUT_DIRECTORY);
         }
@@ -165,7 +167,8 @@ public class AuxiliaryRepositoryService {
         }
     }
 
-    private void validateAuxiliaryRepository(AuxiliaryRepository auxiliaryRepository, List<AuxiliaryRepository> otherRepositories, boolean checkID) {
+    private void validateAuxiliaryRepository(ProgrammingLanguage programmingLanguage, AuxiliaryRepository auxiliaryRepository, List<AuxiliaryRepository> otherRepositories,
+            boolean checkID) {
         if (checkID) {
             // ID of the auxiliary repository must not be set, because the id is set by the database.
             validateAuxiliaryRepositoryId(auxiliaryRepository);
@@ -195,7 +198,7 @@ public class AuxiliaryRepositoryService {
             else {
 
                 // We want to make sure, that the checkout directory path is valid.
-                validateAuxiliaryRepositoryCheckoutDirectoryValid(auxiliaryRepository);
+                validateAuxiliaryRepositoryCheckoutDirectoryValid(programmingLanguage, auxiliaryRepository);
 
                 // The checkout directory path must not be longer than 100 characters, since the database column is
                 // limited to 100 characters.
