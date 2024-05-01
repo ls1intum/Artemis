@@ -261,7 +261,7 @@ public class ProgrammingExerciseExportImportResource {
                 throw exception;
             }
 
-            throw new InternalServerErrorAlertException("Unable to import programming exercise: " + exception.getMessage(), ENTITY_NAME, "importExerciseTriggerPlanFail");
+            throw new InternalServerErrorAlertException("Unable to import programming exercise: " + exception.getMessage(), ENTITY_NAME, "unableToImportProgrammingExercise");
         }
     }
 
