@@ -7,17 +7,8 @@ import org.zalando.problem.Status;
 
 public class InternalServerErrorAlertException extends HttpStatusException {
 
-    public InternalServerErrorAlertException(String defaultMessage, String entityName, String errorKey, boolean skipAlert) {
-        this(ErrorConstants.DEFAULT_TYPE, defaultMessage, entityName, errorKey, skipAlert);
-    }
-
     public InternalServerErrorAlertException(String defaultMessage, String entityName, String errorKey) {
         this(ErrorConstants.DEFAULT_TYPE, defaultMessage, entityName, errorKey, false);
-    }
-
-    public InternalServerErrorAlertException(String defaultMessage, String entityName, String errorKey, Map<String, Object> translationParameters) {
-        // translation params are expected to be a child of the "params" object
-        this(ErrorConstants.PARAMETERIZED_TYPE, defaultMessage, entityName, errorKey, Map.of("params", translationParameters));
     }
 
     public InternalServerErrorAlertException(URI type, String defaultMessage, String entityName, String errorKey, boolean skipAlert) {
