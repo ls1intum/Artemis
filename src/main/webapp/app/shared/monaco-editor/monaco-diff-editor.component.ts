@@ -50,7 +50,7 @@ export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
             fontSize: 12,
         });
         renderer.appendChild(elementRef.nativeElement, this.monacoDiffEditorContainerElement);
-        this.setupModelAndDiffListeners();
+        this.setupDiffListener();
         this.setupContentHeightListeners();
     }
 
@@ -63,20 +63,16 @@ export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Sets up listeners that respond to changes in the model and the diff.
-     * The latter results in the editor reporting that it is ready to display the diff.
+     * Sets up a listener that responds to changes in the diff. It will signal via {@link onReadyForDisplayChange} that
+     * the component is ready to display the diff.
      */
-    setupModelAndDiffListeners(): void {
-        const modelListener = this._editor.onDidChangeModel(() => {
-            this.adjustHeightAndLayout(this.getMaximumContentHeight());
-        });
-
+    setupDiffListener(): void {
         const diffListener = this._editor.onDidUpdateDiff(() => {
             this.adjustHeightAndLayout(this.getMaximumContentHeight());
-            setTimeout(() => this.onReadyForDisplayChange.emit(true), 100);
+            this.onReadyForDisplayChange.emit(true);
         });
 
-        this.listeners.push(modelListener, diffListener);
+        this.listeners.push(diffListener);
     }
 
     /**

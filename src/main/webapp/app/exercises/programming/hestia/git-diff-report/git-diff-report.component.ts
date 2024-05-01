@@ -104,6 +104,5 @@ export class GitDiffReportComponent implements OnInit {
     onDiffReady(path: string, ready: boolean) {
         this.diffsReadyByPath[path] = ready;
         this.allDiffsReady = Object.values(this.diffsReadyByPath).reduce((a, b) => a && b, true);
-        console.warn(path + ' diff ready: ' + ready + ' state before ' + JSON.stringify(this.diffsReadyByPath));
     }
 }
