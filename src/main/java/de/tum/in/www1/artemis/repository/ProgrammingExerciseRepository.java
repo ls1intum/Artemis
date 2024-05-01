@@ -290,6 +290,28 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @Query("""
             SELECT pe
             FROM ProgrammingExercise pe
+                LEFT JOIN pe.studentParticipations spep
+            WHERE spep.id = :participationId
+            """)
+    Optional<ProgrammingExercise> findByStudentParticipationId(@Param("participationId") long participationId);
+
+    @Query("""
+            SELECT pe
+            FROM ProgrammingExercise pe
+            WHERE pe.templateParticipation.id = :participationId
+            """)
+    Optional<ProgrammingExercise> findByTemplateParticipationId(@Param("participationId") long participationId);
+
+    @Query("""
+                    SELECT pe
+                    FROM ProgrammingExercise pe
+                    WHERE pe.solutionParticipation.id = :participationId
+            """)
+    Optional<ProgrammingExercise> findBySolutionParticipationId(@Param("participationId") long participationId);
+
+    @Query("""
+            SELECT pe
+            FROM ProgrammingExercise pe
                 LEFT JOIN pe.studentParticipations pep
                 LEFT JOIN FETCH pe.templateParticipation tp
             WHERE pep.id = :participationId
