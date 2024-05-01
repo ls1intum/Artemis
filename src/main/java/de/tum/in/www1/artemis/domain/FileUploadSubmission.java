@@ -3,7 +3,11 @@ package de.tum.in.www1.artemis.domain;
 import java.net.URI;
 import java.nio.file.Path;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+import jakarta.persistence.PostRemove;
+import jakarta.persistence.Transient;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
