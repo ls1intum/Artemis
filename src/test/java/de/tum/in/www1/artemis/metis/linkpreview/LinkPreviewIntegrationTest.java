@@ -1,14 +1,20 @@
 package de.tum.in.www1.artemis.metis.linkpreview;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
+import java.io.File;
 import java.util.Objects;
 import java.util.stream.Stream;
 
+import org.jsoup.Connection;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
@@ -16,8 +22,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
-import de.tum.in.www1.artemis.service.linkpreview.ogparser.Content;
-import de.tum.in.www1.artemis.service.linkpreview.ogparser.OpenGraph;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.LinkPreviewDTO;
 
@@ -28,19 +32,13 @@ class LinkPreviewIntegrationTest extends AbstractSpringIntegrationIndependentTes
     // this link will return null for all fields because it does not include OG tags
     private static final String GOOGLE_URL = "https://google.com";
 
-    private static final String[] URLS = { "https://github.com/ls1intum/Artemis/pull/6615", "https://github.com/ls1intum/Artemis/pull/6618", "https://github.com/", GOOGLE_URL };
+    private static final String MOCK_FILE_PATH_PREFIX = "src/test/java/de/tum/in/www1/artemis/metis/linkpreview/mockFiles/";
 
     @Autowired
     private UserUtilService userUtilService;
 
     @Autowired
     private CacheManager cacheManager;
-
-    @Mock
-    private OpenGraph mockOpenGraph;
-
-    @Mock
-    private Content mockContent;
 
     @BeforeEach
     void initTestCase() {
@@ -50,51 +48,44 @@ class LinkPreviewIntegrationTest extends AbstractSpringIntegrationIndependentTes
     @ParameterizedTest
     @MethodSource("provideUrls")
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testLinkPreviewDataExtraction(String url) throws Exception {
-        // Mock the part where the URL has to be parsed
-        mockOpenGraph(url);
+    void testLinkPreviewDataExtraction(String url, File htmlFile) throws Exception {
+        Document document = Jsoup.parse(htmlFile);
 
-        LinkPreviewDTO linkPreviewData = request.postWithPlainStringResponseBody("/api/link-preview", url, LinkPreviewDTO.class, HttpStatus.OK);
-        assertThat(linkPreviewData).isNotNull();
+        try (MockedStatic<Jsoup> jsoupMock = Mockito.mockStatic(Jsoup.class)) {
+            Connection connection = Mockito.mock(Connection.class);
+            jsoupMock.when(() -> Jsoup.connect(url)).thenReturn(connection);
 
-        if (url.equals(GOOGLE_URL)) {
-            assertThat(linkPreviewData.url()).isNull();
-            assertThat(linkPreviewData.description()).isNull();
-            assertThat(linkPreviewData.image()).isNull();
-            assertThat(linkPreviewData.title()).isNull();
+            // When Jsoup.connect(anyString()).get() is called, return the mocked Document
+            when(connection.get()).thenReturn(document);
 
-            // check that the cache is available
-            assertThat(Objects.requireNonNull(cacheManager.getCache("linkPreview")).get(url)).isNotNull();
-        }
-        else {
-            assertThat(linkPreviewData.url()).isNotNull();
-            assertThat(linkPreviewData.description()).isNotNull();
-            assertThat(linkPreviewData.image()).isNotNull();
-            assertThat(linkPreviewData.title()).isNotNull();
-            assertThat(linkPreviewData.url()).isEqualTo(url);
+            LinkPreviewDTO linkPreviewData = request.postWithPlainStringResponseBody("/api/link-preview", url, LinkPreviewDTO.class, HttpStatus.OK);
+            assertThat(linkPreviewData).isNotNull();
 
-            // check that the cache is available
-            assertThat(Objects.requireNonNull(cacheManager.getCache("linkPreview")).get(url)).isNotNull();
-        }
-    }
+            if (url.equals(GOOGLE_URL)) {
+                assertThat(linkPreviewData.url()).isNull();
+                assertThat(linkPreviewData.description()).isNull();
+                assertThat(linkPreviewData.image()).isNull();
+                assertThat(linkPreviewData.title()).isNull();
 
-    /**
-     * Mocks the OpenGraph object and its content for the given url.
-     *
-     * @param url the url
-     */
-    private void mockOpenGraph(String url) {
-        Mockito.doReturn(mockOpenGraph).when(ogParser).getOpenGraphOf(url);
-        Mockito.when(mockOpenGraph.getContentOf("title")).thenReturn(mockContent);
-        Mockito.when(mockOpenGraph.getContentOf("description")).thenReturn(mockContent);
-        Mockito.when(mockOpenGraph.getContentOf("image")).thenReturn(mockContent);
-        Mockito.when(mockOpenGraph.getContentOf("url")).thenReturn(mockContent);
-        if (!GOOGLE_URL.equals(url)) {
-            Mockito.when(mockContent.getValue()).thenReturn(url);
+                // check that the cache is available
+                assertThat(Objects.requireNonNull(cacheManager.getCache("linkPreview")).get(url)).isNotNull();
+            }
+            else {
+                assertThat(linkPreviewData.url()).isNotNull();
+                assertThat(linkPreviewData.description()).isNotNull();
+                assertThat(linkPreviewData.image()).isNotNull();
+                assertThat(linkPreviewData.title()).isNotNull();
+                assertThat(linkPreviewData.url()).isEqualTo(url);
+
+                // check that the cache is available
+                assertThat(Objects.requireNonNull(cacheManager.getCache("linkPreview")).get(url)).isNotNull();
+            }
         }
     }
 
-    private static Stream<String> provideUrls() {
-        return Stream.of(URLS);
+    private static Stream<Arguments> provideUrls() {
+        return Stream.of(Arguments.of("https://github.com/ls1intum/Artemis/pull/6615", new File(MOCK_FILE_PATH_PREFIX + "github_pull_request_6615.txt")),
+                Arguments.of("https://github.com/ls1intum/Artemis/pull/6618", new File(MOCK_FILE_PATH_PREFIX + "github_pull_request_6618.txt")),
+                Arguments.of("https://github.com/", new File(MOCK_FILE_PATH_PREFIX + "github_home.txt")), Arguments.of(GOOGLE_URL, new File(MOCK_FILE_PATH_PREFIX + "google.txt")));
     }
 }

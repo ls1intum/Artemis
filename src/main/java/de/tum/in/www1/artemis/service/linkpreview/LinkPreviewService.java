@@ -21,12 +21,6 @@ public class LinkPreviewService {
 
     private static final Logger log = LoggerFactory.getLogger(LinkPreviewService.class);
 
-    private final OgParser ogParser;
-
-    public LinkPreviewService(OgParser ogParser) {
-        this.ogParser = ogParser;
-    }
-
     /**
      * Retrieves meta information from a given url.
      *
@@ -37,6 +31,7 @@ public class LinkPreviewService {
         log.info("Parsing html meta elements from url: {}", url);
 
         // Create a new OgParser instance and parse the html meta elements, then get the OpenGraph object
+        OgParser ogParser = new OgParser();
         OpenGraph openGraph = ogParser.getOpenGraphOf(url);
 
         Content titleContent = openGraph.getContentOf("title");

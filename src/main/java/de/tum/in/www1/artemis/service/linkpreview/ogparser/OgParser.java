@@ -1,14 +1,9 @@
 package de.tum.in.www1.artemis.service.linkpreview.ogparser;
 
-import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 
 import de.tum.in.www1.artemis.service.linkpreview.ogparser.htmlparser.OgMetaElement;
 import de.tum.in.www1.artemis.service.linkpreview.ogparser.htmlparser.OgMetaElementHtmlParser;
@@ -16,8 +11,6 @@ import de.tum.in.www1.artemis.service.linkpreview.ogparser.htmlparser.OgMetaElem
 /**
  * Parses the Open Graph meta tags of a website.
  */
-@Profile(PROFILE_CORE)
-@Component
 public class OgParser {
 
     private final OgMetaElementHtmlParser ogMetaElementHtmlParser;
