@@ -24,9 +24,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
@@ -444,41 +441,5 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         log.debug("Save quiz exercise to database: {}", quizExercise);
 
         return quizExerciseRepository.saveAndFlush(quizExercise);
-    }
-
-    /**
-     * Processes a list of quiz questions by converting each question into a JSON string
-     * and setting it as the content of the question. This method iterates over all
-     * questions in the given quiz exercise.
-     *
-     * @param quizExercise the QuizExercise object containing the list of quiz questions. It must not be null.
-     * @throws RuntimeException if there is a problem in serializing the question object to JSON.
-     */
-    private void processQuizQuestions(QuizExercise quizExercise) {
-        ObjectMapper objectMapper = new ObjectMapper();
-
-        for (QuizQuestion question : quizExercise.getQuizQuestions()) {
-            if (question instanceof MultipleChoiceQuestion) {
-                question.setContent(serializeToJson(((MultipleChoiceQuestion) question).getAnswerOptions(), objectMapper));
-            }
-        }
-    }
-
-    /**
-     * Serializes a QuizQuestion object to its JSON representation using the provided ObjectMapper.
-     * This method is called for each individual question during the quiz processing.
-     *
-     * @param answerOptions
-     * @param objectMapper  the ObjectMapper instance used for serialization. It must not be null.
-     * @return String representing the JSON serialized form of the QuizQuestion.
-     * @throws RuntimeException if JSON processing fails, encapsulating the underlying JsonProcessingException.
-     */
-    private String serializeToJson(List<AnswerOptionDTO> answerOptions, ObjectMapper objectMapper) {
-        try {
-            return objectMapper.writeValueAsString(answerOptions);
-        }
-        catch (JsonProcessingException e) {
-            throw new RuntimeException("Error serializing to JSON", e);
-        }
     }
 }
