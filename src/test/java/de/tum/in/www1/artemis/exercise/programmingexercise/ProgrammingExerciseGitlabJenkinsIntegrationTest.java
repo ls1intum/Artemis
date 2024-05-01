@@ -578,8 +578,6 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
         verify(fileService, times(3)).scheduleDirectoryPathForRecursiveDeletion(any(Path.class), eq(5L));
     }
 
-    // TODO: add startProgrammingExerciseStudentSubmissionFailedWithBuildlog & copyRepository_testConflictError
-
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testBuildLogStatistics_unauthorized() throws Exception {
