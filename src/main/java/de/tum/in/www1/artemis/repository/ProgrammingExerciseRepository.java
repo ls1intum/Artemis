@@ -33,6 +33,8 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise_;
 import de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -773,7 +775,13 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
         // Note: if this participation was retrieved as Participation (abstract super class) from the database, the programming exercise might not be correctly initialized
         if (participation.getProgrammingExercise() == null || !Hibernate.isInitialized(participation.getProgrammingExercise())) {
             // Find the programming exercise for the given participation
-            var optionalProgrammingExercise = findByParticipationId(participation.getId());
+            long participationId = participation.getId();
+            Optional<ProgrammingExercise> optionalProgrammingExercise = switch (participation) {
+                case TemplateProgrammingExerciseParticipation ignored -> findByTemplateParticipationId(participationId);
+                case SolutionProgrammingExerciseParticipationRepository ignored -> findBySolutionParticipationId(participationId);
+                case ProgrammingExerciseStudentParticipation ignored -> findByStudentParticipationId(participationId);
+                default -> Optional.empty();
+            };
             if (optionalProgrammingExercise.isEmpty()) {
                 return null;
             }
