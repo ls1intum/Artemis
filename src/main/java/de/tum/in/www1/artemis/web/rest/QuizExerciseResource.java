@@ -340,7 +340,6 @@ public class QuizExerciseResource {
         log.info("REST request to get quiz exercise : {}", quizExerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsAndCompetenciesElseThrow(quizExerciseId);
-
         if (quizExercise.isExamExercise()) {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, quizExercise, user);
             studentParticipationRepository.checkTestRunsExist(quizExercise);

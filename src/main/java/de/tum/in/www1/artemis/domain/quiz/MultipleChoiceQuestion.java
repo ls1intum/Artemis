@@ -4,6 +4,9 @@ import java.util.*;
 
 import jakarta.persistence.*;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
@@ -20,7 +23,9 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class MultipleChoiceQuestion extends QuizQuestion {
 
-    @Transient
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "content", columnDefinition = "json")
+    @JsonView(QuizView.Before.class)
     private List<AnswerOptionDTO> answerOptions = new ArrayList<>();
 
     @Column(name = "single_choice")
