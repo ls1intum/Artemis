@@ -260,10 +260,9 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.dropdownOffset = leftSidebarItems * this.ITEM_HEIGHT + this.BREADCRUMB_AND_NAVBAR_HEIGHT;
     }
 
-    /** Calculating threshold levels based on the number of entries in the sidebar */
+    /** Calculate threshold levels based on the number of entries in the sidebar */
     calculateThreshold(): number {
         const numberOfSidebarItems: number = this.sidebarItems.length;
-        // Dynamically calculate the threshold level based the amount of entries/elements left in the sidebar
         return numberOfSidebarItems * this.ITEM_HEIGHT + this.WINDOW_OFFSET;
     }
 
