@@ -791,6 +791,21 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     }
 
     /**
+     * Retrieve the programming exercise from a programming exercise participation.
+     *
+     * @param participation The programming exercise participation for which to retrieve the programming exercise.
+     * @return The programming exercise of the provided participation.
+     */
+    @NotNull
+    default ProgrammingExercise getProgrammingExerciseFromParticipationElseThrow(ProgrammingExerciseParticipation participation) {
+        ProgrammingExercise programmingExercise = getProgrammingExerciseFromParticipation(participation);
+        if (programmingExercise == null) {
+            throw new EntityNotFoundException("No programming exercise found for the participation with id " + participation.getId());
+        }
+        return programmingExercise;
+    }
+
+    /**
      * Validate the programming exercise title.
      * 1. Check presence and length of exercise title
      * 2. Find forbidden patterns in exercise title
