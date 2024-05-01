@@ -109,23 +109,24 @@ public class LearningPathRecommendationService {
         return recommendedOrderOfLearningObjects.getFirst();
     }
 
-    public LearningObject getUncompletedPredecessorOfLearningObject(LearningObject currentLearningObject, LearningPath learningPath, RecommendationState recommendationState) {
+    public Optional<LearningObject> getUncompletedPredecessorOfLearningObject(LearningObject currentLearningObject, LearningPath learningPath,
+            RecommendationState recommendationState) {
         var orderOfCompetencies = recommendationState.recommendedOrderOfCompetencies;
         var currentCompetency = getCompetencyOfUncompletedLearningObjectOnLearningPath(learningPath, currentLearningObject, recommendationState);
         if (currentCompetency != null) {
             var orderOfLearningObjects = getRecommendedOrderOfLearningObjects(learningPath, currentCompetency, recommendationState);
             var currentLearningObjectIndex = orderOfLearningObjects.indexOf(currentLearningObject);
             if (currentLearningObjectIndex > 0) {
-                return orderOfLearningObjects.get(currentLearningObjectIndex - 1);
+                return Optional.of(orderOfLearningObjects.get(currentLearningObjectIndex - 1));
             }
             var currentCompetencyIndex = orderOfCompetencies.indexOf(currentCompetency.getId());
             if (currentLearningObjectIndex == 0 && currentCompetencyIndex > 0) {
                 var predecessorCompetency = recommendationState.competencyIdMap.get(orderOfCompetencies.get(currentCompetencyIndex - 1));
                 var predecessorOrderOfLearningObjects = getRecommendedOrderOfLearningObjects(learningPath, predecessorCompetency, recommendationState);
-                return predecessorOrderOfLearningObjects.getLast();
+                return Optional.of(predecessorOrderOfLearningObjects.getLast());
             }
         }
-        return null;
+        return Optional.empty();
     }
 
     public LearningObject getUncompletedSuccessorOfLearningObject(LearningPath learningPath, RecommendationState recommendationState, LearningObject currentLearningObject) {

@@ -1,8 +1,14 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { LearningPathHealthDTO } from 'app/entities/competency/learning-path-health.model';
-import { CompetencyProgressForLearningPathDTO, LearningPathInformationDTO, NgxLearningPathDTO } from 'app/entities/competency/learning-path.model';
+import {
+    CompetencyProgressForLearningPathDTO,
+    LearningObjectType,
+    LearningPathInformationDTO,
+    LearningPathNavigationDto,
+    NgxLearningPathDTO,
+} from 'app/entities/competency/learning-path.model';
 import { map, tap } from 'rxjs/operators';
 import { LearningPathStorageService } from 'app/course/learning-paths/participate/learning-path-storage.service';
 
@@ -29,6 +35,19 @@ export class LearningPathService {
 
     getLearningPath(learningPathId: number): Observable<HttpResponse<LearningPathInformationDTO>> {
         return this.httpClient.get<LearningPathInformationDTO>(`${this.resourceURL}/learning-path/${learningPathId}`, { observe: 'response' });
+    }
+
+    getLearningPathNavigation(
+        learningPathId: number,
+        learningObjectId: number | undefined,
+        learningObjectType: LearningObjectType | undefined,
+    ): Observable<HttpResponse<LearningPathNavigationDto>> {
+        let params = new HttpParams();
+        if (learningObjectId && learningObjectType) {
+            params = params.set('learningObjectId', learningObjectId.toString());
+            params = params.set('learningObjectType', learningObjectType);
+        }
+        return this.httpClient.get<LearningPathNavigationDto>(`${this.resourceURL}/learning-path/${learningPathId}/navigation`, { params: params, observe: 'response' });
     }
 
     getLearningPathNgxGraph(learningPathId: number): Observable<HttpResponse<NgxLearningPathDTO>> {

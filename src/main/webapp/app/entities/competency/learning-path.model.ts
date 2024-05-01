@@ -21,6 +21,25 @@ export class LearningPathInformationDTO {
     public progress?: number;
 }
 
+export enum LearningObjectType {
+    LECTURE = 'LECTURE',
+    EXERCISE = 'EXERCISE',
+}
+
+export class LearningPathNavigationObjectDto {
+    public id: number;
+    public completed: boolean;
+    public name: string;
+    public type: LearningObjectType;
+}
+
+export class LearningPathNavigationDto {
+    public predecessorLearningObject?: LearningPathNavigationObjectDto;
+    public currentLearningObject: LearningPathNavigationObjectDto;
+    public successorLearningObject?: LearningPathNavigationObjectDto;
+    public progress: number;
+}
+
 export class NgxLearningPathDTO {
     public nodes: NgxLearningPathNode[];
     public edges: NgxLearningPathEdge[];

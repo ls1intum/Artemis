@@ -2,15 +2,25 @@
     <div class="row justify-content-between">
         <div class="col">
             <div class="row justify-content-start align-items-center">
-                <div class="col-md-auto">
-                    <button type="button" class="btn btn-secondary">Previous</button>
-                </div>
-                <span class="col-md-auto ms-3 gradient-text" style="--gradient-deg: 90deg">Variablen und Funktionen</span>
+                @if (predecessorLearningObject()) {
+                    <div class="col-md-auto">
+                        <button (click)="setRelativeLearningObject(predecessorLearningObject()!.id, predecessorLearningObject()!.type)" type="button" class="btn btn-secondary">
+                            Previous
+                        </button>
+                    </div>
+                    <span class="col-md-auto ms-3 gradient-text" style="--gradient-deg: 90deg">{{ predecessorLearningObject()!.name }}</span>
+                }
             </div>
         </div>
         <div ngbDropdown class="col dropdown">
             <div type="button" class="row justify-content-center align-items-center h-100" id="dropdownBasic1" ngbDropdownToggle>
-                <span class="col-md-auto fw-bold">Kontrollstrukturen (2/6)</span>
+                <span class="col-md-auto fw-bold">
+                    @if (isLoading()) {
+                        Loading...
+                    } @else {
+                        {{ currentLearningObject()?.name }}
+                    }
+                </span>
                 <fa-icon [icon]="faChevronDown" class="col-md-auto ps-0" />
             </div>
             <div ngbDropdownMenu class="mt-3 col p-0" aria-labelledby="dropdownBasic1">
@@ -58,15 +68,19 @@
         </div>
         <div class="col">
             <div class="row justify-content-end align-items-center">
-                <span class="col-md-auto me-3 gradient-text" style="--gradient-deg: -90deg">Basistypen und Operatoren</span>
-                <div class="col-md-auto">
-                    <button type="button" class="btn btn-primary">Next</button>
-                </div>
+                @if (successorLearningObject()) {
+                    <span class="col-md-auto me-3 gradient-text" style="--gradient-deg: -90deg">{{ successorLearningObject()!.name }}</span>
+                    <div class="col-md-auto">
+                        <button (click)="setRelativeLearningObject(successorLearningObject()!.id, successorLearningObject()!.type)" type="button" class="btn btn-primary">
+                            Next
+                        </button>
+                    </div>
+                }
             </div>
         </div>
     </div>
     <div class="progress my-3" role="progressbar" style="height: 2px">
-        <div class="progress-bar" style="width: 25%"></div>
+        <div class="progress-bar" [ngStyle]="{ width: learningPathProgress() + '%' }"></div>
     </div>
     <div>Body</div>
 </div>

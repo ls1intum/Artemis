@@ -60,8 +60,8 @@ public class LearningPathNavigationService {
             return mapLearningPathObjectNavigationDto(learningPath.getUser(), learningPath.getProgress(), predecessorLearningObject, currentLearningObject,
                     successorLearningObject);
         }
-        var predecessorLearningObject = learningObjectService.getCompletedPredecessorOfLearningObjectRelatedToDate(learningPathUser, completionDateOptional, masteredCompetencies)
-                .orElse(learningPathRecommendationService.getUncompletedPredecessorOfLearningObject(currentLearningObject, learningPath, recommendationState));
+        var predecessorLearningObject = learningPathRecommendationService.getUncompletedPredecessorOfLearningObject(currentLearningObject, learningPath, recommendationState)
+                .orElse(learningObjectService.getCompletedPredecessorOfLearningObjectRelatedToDate(learningPathUser, completionDateOptional, masteredCompetencies).orElse(null));
 
         var successorLearningObject = learningPathRecommendationService.getUncompletedSuccessorOfLearningObject(learningPath, recommendationState, currentLearningObject);
         return mapLearningPathObjectNavigationDto(learningPath.getUser(), learningPath.getProgress(), predecessorLearningObject, currentLearningObject, successorLearningObject);

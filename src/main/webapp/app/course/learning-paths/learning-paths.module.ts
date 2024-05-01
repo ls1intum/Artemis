@@ -15,9 +15,10 @@ import { LearningPathStudentPageComponent } from 'app/course/learning-paths/page
 const routes: Routes = [
     {
         path: '',
-        component: LearningPathContainerComponent,
+        component: LearningPathStudentPageComponent,
         data: {
             authorities: [Authority.USER],
+            learningPathId: 5,
             pageTitle: 'overview.learningPath',
         },
         canActivate: [UserRouteAccessService],
@@ -63,7 +64,7 @@ const routes: Routes = [
         ArtemisLearningPathGraphModule,
         ArtemisLearningPathProgressModule,
     ],
-    declarations: [LearningPathContainerComponent, LearningPathStudentPageComponent],
+    declarations: [LearningPathContainerComponent],
     exports: [LearningPathContainerComponent],
 })
 export class ArtemisLearningPathsModule {}
