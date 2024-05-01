@@ -62,7 +62,7 @@ public class LocalCIDockerService {
     @Value("${artemis.continuous-integration.image-cleanup.expiry-days:2}")
     private int imageExpiryDays;
 
-    @Value("${artemis.continuous-integration.image-cleanup.disk-space-threshold-mb:1300}")
+    @Value("${artemis.continuous-integration.image-cleanup.disk-space-threshold-mb:2000}")
     private int imageCleanupDiskSpaceThresholdMb;
 
     @Value("${artemis.continuous-integration.build-container-prefix:local-ci-}")
@@ -173,7 +173,9 @@ public class LocalCIDockerService {
      * <p>
      * The process includes:
      * - Checking if the Docker image is already available locally.
-     * - If not available, acquiring a lock and checking again to handle any race conditions.
+     * - If not available, acquiring a lock to prevent concurrent pulls.
+     * - Checking for usable disk space and triggering image cleanup if the threshold is exceeded.
+     * - Re-inspecting the image to confirm its absence after acquiring the lock.
      * - Pulling the image if both checks confirm its absence.
      * - Logging the operations and their outcomes to build logs for user visibility.
      * <p>
@@ -199,24 +201,7 @@ public class LocalCIDockerService {
 
             // Check again if image was pulled in the meantime
             try {
-                if (imageCleanupEnabled) {
-                    try {
-                        // Get the root partition.
-                        File file = new File(Objects.requireNonNullElse(dockerClient.infoCmd().exec().getDockerRootDir(), "/"));
-                        // Get the usable space in bytes.
-                        long usableSpace = file.getUsableSpace();
-                        // Get the threshold in bytes.
-                        long threshold = imageCleanupDiskSpaceThresholdMb * 1024 * 1024L;
-                        if (usableSpace < threshold) {
-                            // If the usable space is less than the threshold, delete old Docker images.
-                            log.info("Disk space is below the threshold of {} MB, starting Docker image cleanup", imageCleanupDiskSpaceThresholdMb);
-                            deleteOldDockerImages();
-                        }
-                    }
-                    catch (Exception e1) {
-                        log.error("Error while checking disk space for Docker image cleanup", e1);
-                    }
-                }
+                CheckUsableDiskSpaceThenCleanUp();
 
                 String msg = "~~~~~~~~~~~~~~~~~~~~ Inspecting docker image " + imageName + " again with a lock due to error " + e.getMessage() + " ~~~~~~~~~~~~~~~~~~~~";
                 log.info(msg);
@@ -311,6 +296,33 @@ public class LocalCIDockerService {
                         log.warn("Docker image {} not found during cleanup", dockerImage);
                     }
                 }
+            }
+        }
+    }
+
+    /**
+     * Periodically checks for available disk space and triggers the cleanup of old Docker images if the available space falls below a specified threshold.
+     * The threshold is configurable via the 'artemis.continuous-integration.image-cleanup.disk-space-threshold-mb' property in the application settings.
+     */
+
+    @Scheduled(fixedRateString = "${artemis.continuous-integration.image-cleanup.disk-space-check-interval-ms:3600000}")
+    public void CheckUsableDiskSpaceThenCleanUp() {
+        if (imageCleanupEnabled) {
+            try {
+                // Get the root partition.
+                File file = new File(Objects.requireNonNullElse(dockerClient.infoCmd().exec().getDockerRootDir(), "/"));
+                // Get the usable space in bytes.
+                long usableSpace = file.getUsableSpace();
+                // Get the threshold in bytes.
+                long threshold = imageCleanupDiskSpaceThresholdMb * 1024 * 1024L;
+                if (usableSpace < threshold) {
+                    // If the usable space is less than the threshold, delete old Docker images.
+                    log.info("Disk space is below the threshold of {} MB, starting Docker image cleanup", imageCleanupDiskSpaceThresholdMb);
+                    deleteOldDockerImages();
+                }
+            }
+            catch (Exception e) {
+                log.error("Error while checking disk space for Docker image cleanup", e);
             }
         }
     }
