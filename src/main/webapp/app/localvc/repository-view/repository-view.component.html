@@ -13,7 +13,14 @@
                     </a>
                 }
                 @if (exercise?.allowOfflineIde) {
-                    <jhi-clone-repo-button [loading]="!!exercise.loading" [smallButtons]="false" [repositoryUri]="repositoryUri" [exercise]="exercise" style="padding-left: 15px" />
+                    <jhi-clone-repo-button [loading]="!!exercise.loading" [smallButtons]="false" [repositoryUri]="repositoryUri" [exercise]="exercise" />
+                }
+
+                @if (exercise.id) {
+                    @if (repositoryType === 'USER') {
+                    } @else {
+                        <jhi-programming-exercise-instructor-repo-download [repositoryType]="repositoryType" [exerciseId]="exercise.id" [buttonSize]="ButtonSize.MEDIUM" />
+                    }
                 }
             </div>
         </div>

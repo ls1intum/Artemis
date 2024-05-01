@@ -25,6 +25,9 @@ export class ProgrammingExerciseInstructorRepoDownloadComponent {
     auxiliaryRepositoryId: number;
 
     @Input()
+    buttonSize: ButtonSize = ButtonSize.SMALL;
+
+    @Input()
     title = 'artemisApp.programmingExercise.export.downloadRepo';
 
     // Icons
