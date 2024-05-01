@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.errors;
 
 import java.net.URI;
-import java.util.Map;
 
 import org.zalando.problem.Status;
 
@@ -13,9 +12,5 @@ public class InternalServerErrorAlertException extends HttpStatusException {
 
     public InternalServerErrorAlertException(URI type, String defaultMessage, String entityName, String errorKey, boolean skipAlert) {
         super(type, defaultMessage, Status.INTERNAL_SERVER_ERROR, entityName, errorKey, getAlertParameters(entityName, errorKey, skipAlert));
-    }
-
-    public InternalServerErrorAlertException(URI type, String defaultMessage, String entityName, String errorKey, Map<String, Object> parameters) {
-        super(type, defaultMessage, Status.INTERNAL_SERVER_ERROR, entityName, errorKey, parameters);
     }
 }
