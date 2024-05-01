@@ -92,6 +92,26 @@ export class CourseManagementPage {
         await this.page.locator('.modal #delete').click();
     }
 
+    async clickEditCourse() {
+        await this.page.locator('#edit-course').click();
+    }
+
+    async updateCourse(course: Course) {
+        const response = this.page.waitForResponse(`${COURSE_BASE}/${course.id}`);
+        await this.page.locator('#save-entity').click();
+        await response;
+    }
+
+    async checkCourseHasNoIcon() {
+        await expect(this.page.locator('#delete-course-icon')).not.toBeVisible();
+        await expect(this.page.locator('.no-image')).toBeVisible();
+    }
+
+    async removeIconFromCourse() {
+        await this.page.locator('#delete-course-icon').click();
+        await this.checkCourseHasNoIcon();
+    }
+
     /**
      * Confirms the user into the group.
      * @param credentials - The user credentials to be confirmed into the group.

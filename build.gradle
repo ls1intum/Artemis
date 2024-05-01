@@ -28,7 +28,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "7.0.2"
+version = "7.0.3"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -83,6 +83,14 @@ spotless {
 
         removeUnusedImports()
         trimTrailingWhitespace()
+
+        custom 'Refuse wildcard imports', {
+            // Wildcard imports can't be resolved by spotless itself.
+            // This will require the developer themselves to adhere to best practices.
+            if (it =~ /\nimport .*\*;/) {
+                throw new AssertionError("Do not use wildcard imports.  'spotlessApply' cannot resolve this issue. The following class vioaltes this rule:\n" +  it)
+            }
+        }
     }
 }
 
@@ -126,7 +134,7 @@ tasks.register("testReport", TestReport) {
 }
 
 jacoco {
-    toolVersion = "0.8.11"
+    toolVersion = "0.8.12"
 }
 
 jar {
@@ -162,13 +170,14 @@ jacocoTestCoverageVerification {
             limit {
                 counter = "INSTRUCTION"
                 value = "COVEREDRATIO"
-                minimum = 0.88
+                // TODO: in the future the following value should become higher than 0.92
+                minimum = 0.897
             }
             limit {
                 counter = "CLASS"
                 value = "MISSEDCOUNT"
                 // TODO: in the future the following value should become less than 10
-                maximum = 34
+                maximum = 25
             }
         }
     }
@@ -270,13 +279,16 @@ dependencies {
     // NOTE: the following six dependencies use the newer versions explicitly to avoid other dependencies to use older versions
     implementation "ch.qos.logback:logback-classic:${logback_version}"
     implementation "ch.qos.logback:logback-core:${logback_version}"
+    // required by eureka client
     implementation "com.thoughtworks.xstream:xstream:1.4.20"
+    // required by JPlag
     implementation "xerces:xercesImpl:2.12.2"
+    // required by JPlag
     implementation "xalan:xalan:2.7.3"
+    // required by JPlag
     implementation "xalan:serializer:2.7.3"
-
-    // NOTE: use the latest 2.x version to avoid security vulnerabilities, upgrade to 4.x not possible yet
-    implementation "org.apache.santuario:xmlsec:2.3.4"
+    // required by Saml2
+    implementation "org.apache.santuario:xmlsec:4.0.2"
 
     implementation "org.jsoup:jsoup:1.17.2"
     implementation "commons-codec:commons-codec:1.16.1"   // needed for spring security saml2
@@ -373,7 +385,6 @@ dependencies {
     implementation "org.opensaml:opensaml-saml-impl:${opensaml_version}"
     implementation "org.opensaml:opensaml-saml-api:${opensaml_version}"
 
-    implementation "org.xmlbeam:xmlprojector:1.4.24"
     implementation "io.jsonwebtoken:jjwt-api:${jwt_version}"
     runtimeOnly "io.jsonwebtoken:jjwt-impl:${jwt_version}"
     runtimeOnly "io.jsonwebtoken:jjwt-jackson:${jwt_version}"
@@ -451,7 +462,7 @@ dependencies {
     }
     testImplementation("net.bytebuddy:byte-buddy") {
         version {
-            strictly "1.14.13"
+            strictly "1.14.14"
         }
     }
     testImplementation "io.github.classgraph:classgraph:4.8.172"

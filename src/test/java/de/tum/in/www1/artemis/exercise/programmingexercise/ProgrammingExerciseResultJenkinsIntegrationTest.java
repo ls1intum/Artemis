@@ -116,6 +116,17 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractSpringInte
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldRejectCommitsWithoutCommitHash() {
+        // Dummy needed to keep the list modifiable, then use clear to create a notification without a commit hash
+        CommitDTO dummy = new CommitDTO("", "", "");
+        var notification = ProgrammingExerciseFactory.generateTestResultDTO(null, Constants.ASSIGNMENT_REPO_NAME, null, ProgrammingLanguage.JAVA, true,
+                List.of("test1", "test2", "test4"), List.of(), new ArrayList<>(), new ArrayList<>(List.of(dummy)), null);
+        notification.getCommits().clear();
+        programmingExerciseResultTestService.shouldRejectNotificationWithoutCommitHash(notification);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldIgnoreResultOnOtherBranches() {
         var commit = new CommitDTO("abc123", "slug", "other");
         var notification = ProgrammingExerciseFactory.generateTestResultDTO(null, Constants.SOLUTION_REPO_NAME, null, ProgrammingLanguage.JAVA, false, List.of(), List.of(),

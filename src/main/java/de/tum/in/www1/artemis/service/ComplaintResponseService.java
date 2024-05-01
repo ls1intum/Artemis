@@ -3,17 +3,24 @@ package de.tum.in.www1.artemis.service;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Complaint;
+import de.tum.in.www1.artemis.domain.ComplaintResponse;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Team;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ComplaintRepository;
+import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.dto.ComplaintResponseUpdateDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ComplaintResponseLockedException;
@@ -160,69 +167,103 @@ public class ComplaintResponseService {
     }
 
     /**
-     * Resolves a complaint by filling in the empty complaint response attached to it
-     * <p>
-     * The empty complaint response acts as a lock. Only the creator of the empty complaint response and instructors can resolve empty complaint response as long as the lock
-     * is running. For lock duration calculation see: {@link ComplaintResponse#isCurrentlyLocked()}. These methods fill in the initial complaint response and either accepts
-     * or denies the associated complaint, thus resolving the complaint
+     * Resolves a complaint based on the updated complaint response details and a specific complaint ID.
+     * This method handles updating the state of a complaint based on user-provided acceptance and response text.
      *
-     * @param updatedComplaintResponse complaint response containing the information necessary for resolving the complaint
-     * @return complaintResponse of resolved complaint
+     * @param updatedComplaintResponse The DTO containing updated response details such as acceptance state and response text.
+     * @param complaintResponseId      The ID of the complaint response to be updated.
+     * @return ComplaintResponse The updated and persisted complaint response reflecting the new state and information.
+     */
+    public ComplaintResponse resolveComplaint(ComplaintResponseUpdateDTO updatedComplaintResponse, Long complaintResponseId) {
+        return processComplaint(complaintResponseId, updatedComplaintResponse.complaintIsAccepted(), updatedComplaintResponse.responseText());
+    }
+
+    /**
+     * Resolves a complaint using an updated ComplaintResponse object. This method processes the complaint
+     * based on the inherent acceptance status and response text within the updated ComplaintResponse.
+     *
+     * @param updatedComplaintResponse The updated ComplaintResponse object containing the new state, such as acceptance and response text.
+     * @return ComplaintResponse The updated and persisted complaint response reflecting the changes made.
      */
     public ComplaintResponse resolveComplaint(ComplaintResponse updatedComplaintResponse) {
-        if (updatedComplaintResponse.getId() == null) {
-            throw new IllegalArgumentException("The complaint response needs to have an id");
-        }
-        Optional<ComplaintResponse> complaintResponseFromDatabaseOptional = complaintResponseRepository.findById(updatedComplaintResponse.getId());
-        if (complaintResponseFromDatabaseOptional.isEmpty()) {
-            throw new IllegalArgumentException("The complaint response was not found in the database");
-        }
-        ComplaintResponse emptyComplaintResponseFromDatabase = complaintResponseFromDatabaseOptional.get();
-        if (emptyComplaintResponseFromDatabase.getSubmittedTime() != null || emptyComplaintResponseFromDatabase.getResponseText() != null) {
-            throw new IllegalArgumentException("The complaint response is not empty");
-        }
-        Optional<Complaint> originalComplaintOptional = complaintRepository.findByIdWithEagerAssessor(emptyComplaintResponseFromDatabase.getComplaint().getId());
-        if (originalComplaintOptional.isEmpty()) {
-            throw new IllegalArgumentException("The complaint was not found in the database");
-        }
-        Complaint originalComplaint = originalComplaintOptional.get();
-        if (originalComplaint.isAccepted() != null) {
-            throw new IllegalArgumentException("You can not update the response to an already answered complaint");
-        }
-        if (updatedComplaintResponse.getComplaint().isAccepted() == null) {
+        return processComplaint(updatedComplaintResponse.getId(), updatedComplaintResponse.getComplaint().isAccepted(), updatedComplaintResponse.getResponseText());
+    }
+
+    /**
+     * Processes the updating of a complaint response. This method consolidates the common logic for updating complaint responses,
+     * including validating user permissions, checking lock status, validating complaint details, and updating the complaint
+     * in the database.
+     *
+     * @param complaintResponseId The ID of the complaint response to be updated.
+     * @param isAccepted          Boolean indicating whether the complaint has been accepted or rejected.
+     * @param responseText        String containing the response text associated with the complaint response.
+     * @return ComplaintResponse The updated and persisted complaint response.
+     * @throws IllegalArgumentException if the acceptance status is not clearly defined (null).
+     */
+    private ComplaintResponse processComplaint(Long complaintResponseId, Boolean isAccepted, String responseText) {
+        validateComplaintResponseId(complaintResponseId);
+        // TODO: make this retrieval redundant by proper fetching
+        ComplaintResponse complaintResponseFromDatabase = complaintResponseRepository.findByIdElseThrow(complaintResponseId);
+        // TODO: make this retrieval redundant by proper fetching
+        Complaint originalComplaint = complaintRepository.findByIdElseThrow(complaintResponseFromDatabase.getComplaint().getId());
+        User user = this.userRepository.getUserWithGroupsAndAuthorities();
+        validateUserPermissionAndLockStatus(originalComplaint, complaintResponseFromDatabase, user);
+        validateComplaintResponseEmpty(complaintResponseFromDatabase);
+        validateOriginalComplaintNotAnswered(originalComplaint);
+
+        if (isAccepted == null) {
             throw new IllegalArgumentException("You need to either accept or reject a complaint");
         }
 
-        if (updatedComplaintResponse.getResponseText() != null) {
-            // Retrieve course to get max complaint response limit
-            final Course course = originalComplaint.getResult().getParticipation().getExercise().getCourseViaExerciseGroupOrCourseMember();
+        validateResponseTextLimit(responseText, originalComplaint);
 
-            // Check whether the complaint text limit is exceeded
-            Exercise exercise = originalComplaint.getResult().getParticipation().getExercise();
-            int maxLength = course.getMaxComplaintResponseTextLimitForExercise(exercise);
-            if (maxLength < updatedComplaintResponse.getResponseText().length()) {
+        originalComplaint.setAccepted(isAccepted);
+        originalComplaint = complaintRepository.save(originalComplaint);
+
+        complaintResponseFromDatabase.setSubmittedTime(ZonedDateTime.now());
+        complaintResponseFromDatabase.setResponseText(responseText);
+        complaintResponseFromDatabase.setComplaint(originalComplaint);
+        complaintResponseFromDatabase.setReviewer(user);
+        return complaintResponseRepository.save(complaintResponseFromDatabase);
+    }
+
+    private void validateComplaintResponseId(Long complaintResponseId) {
+        if (complaintResponseId == null) {
+            throw new IllegalArgumentException("The complaint response needs to have an id");
+        }
+    }
+
+    private void validateComplaintResponseEmpty(ComplaintResponse complaintResponse) {
+        if (complaintResponse.getSubmittedTime() != null || complaintResponse.getResponseText() != null) {
+            throw new IllegalArgumentException("The complaint response is not empty");
+        }
+    }
+
+    private void validateOriginalComplaintNotAnswered(Complaint originalComplaint) {
+        if (originalComplaint.isAccepted() != null) {
+            throw new IllegalArgumentException("You cannot update the response to an already answered complaint");
+        }
+    }
+
+    private void validateResponseTextLimit(String responseText, Complaint originalComplaint) {
+        if (responseText != null) {
+            Course course = originalComplaint.getResult().getParticipation().getExercise().getCourseViaExerciseGroupOrCourseMember();
+            int maxLength = course.getMaxComplaintResponseTextLimitForExercise(originalComplaint.getResult().getParticipation().getExercise());
+            if (responseText.length() > maxLength) {
                 throw new BadRequestAlertException("You cannot submit a complaint response that exceeds the maximum number of " + maxLength + " characters", ENTITY_NAME,
                         "exceededComplaintResponseTextLimit");
             }
         }
+    }
 
-        User user = this.userRepository.getUserWithGroupsAndAuthorities();
+    private void validateUserPermissionAndLockStatus(Complaint originalComplaint, ComplaintResponse complaintResponse, User user) {
         if (!isUserAuthorizedToRespondToComplaint(originalComplaint, user)) {
             throw new AccessForbiddenException("Insufficient permission for resolving the complaint");
         }
-        // only instructors and the original reviewer can ignore the lock on a complaint response
-        if (blockedByLock(emptyComplaintResponseFromDatabase, user)) {
-            throw new ComplaintResponseLockedException(emptyComplaintResponseFromDatabase);
+
+        if (blockedByLock(complaintResponse, user)) {
+            throw new ComplaintResponseLockedException(complaintResponse);
         }
-
-        originalComplaint.setAccepted(updatedComplaintResponse.getComplaint().isAccepted()); // accepted or denied
-        originalComplaint = complaintRepository.save(originalComplaint);
-
-        emptyComplaintResponseFromDatabase.setSubmittedTime(ZonedDateTime.now());
-        emptyComplaintResponseFromDatabase.setResponseText(updatedComplaintResponse.getResponseText());
-        emptyComplaintResponseFromDatabase.setComplaint(originalComplaint);
-        emptyComplaintResponseFromDatabase.setReviewer(user);
-        return complaintResponseRepository.save(emptyComplaintResponseFromDatabase);
     }
 
     /**

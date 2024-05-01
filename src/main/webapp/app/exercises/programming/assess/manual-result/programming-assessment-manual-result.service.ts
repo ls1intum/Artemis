@@ -42,13 +42,15 @@ export class ProgrammingAssessmentManualResultService {
      * @param feedbacks list of feedback items (the score is not evaluated from them, as we pass score directly from the result)
      * @param complaintResponse contains main information about the complaint response (time, responseText, reviewer)
      * @param submissionId the id of the submission
+     * @param assessmentNote the assessment note of the submission, if one exists
      * @return updated result with updated feedbacks and score
      */
-    updateAfterComplaint(feedbacks: Feedback[], complaintResponse: ComplaintResponse, submissionId: number): Observable<Result> {
+    updateAfterComplaint(feedbacks: Feedback[], complaintResponse: ComplaintResponse, submissionId: number, assessmentNote?: string): Observable<Result> {
         const url = `${this.resourceUrl}/programming-submissions/${submissionId}/assessment-after-complaint`;
         const assessmentUpdate = {
             feedbacks,
             complaintResponse,
+            assessmentNote,
         };
         return this.http.put<Result>(url, assessmentUpdate);
     }
