@@ -68,7 +68,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         this.contextInformation = this.metisService.getContextInformation(this.posting);
         this.routerLink = this.metisService.getLinkForPost();
         this.queryParams = this.metisService.getQueryParamsForPost(this.posting);
-        this.showAnnouncementIcon = (getAsChannelDTO(this.posting.conversation)?.isAnnouncementChannel && !this.isCourseMessagesPage) ?? false;
+        this.showAnnouncementIcon = (getAsChannelDTO(this.posting.conversation)?.isAnnouncementChannel && this.isCommunicationPage) ?? false;
     }
 
     /**
@@ -96,6 +96,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     onNavigateToContext($event: MouseEvent) {
         if (!$event.metaKey) {
             this.modalRef?.dismiss();
+            this.metisConversationService.setActiveConversation(this.contextInformation.queryParams!['conversationId']);
         }
     }
 
