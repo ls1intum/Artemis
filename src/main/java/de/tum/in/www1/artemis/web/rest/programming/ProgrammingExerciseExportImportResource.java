@@ -73,6 +73,7 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -236,7 +237,7 @@ public class ProgrammingExerciseExportImportResource {
         }
 
         try {
-            var importedProgrammingExercise = programmingExerciseImportService.importProgrammingExercise(originalProgrammingExercise, newExercise, updateTemplate,
+            ProgrammingExercise importedProgrammingExercise = programmingExerciseImportService.importProgrammingExercise(originalProgrammingExercise, newExercise, updateTemplate,
                     recreateBuildPlans);
 
             // remove certain properties which are not relevant for the client to keep the response small
@@ -251,10 +252,15 @@ public class ProgrammingExerciseExportImportResource {
                     .body(importedProgrammingExercise);
 
         }
-        catch (Exception ex) {
-            log.error(ex.getMessage(), ex);
-            return ResponseEntity.internalServerError()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "importExerciseTriggerPlanFail", "Unable to import programming exercise")).build();
+        catch (Exception exception) {
+            log.error(exception.getMessage(), exception);
+
+            // TODO maybe throw all HttpsError Exceptions? (= AlertException)
+            if (exception instanceof BadRequestAlertException) {
+                throw exception;
+            }
+
+            throw new InternalServerErrorAlertException("Unable to import programming exercise: " + exception.getMessage(), ENTITY_NAME, "importExerciseTriggerPlanFail");
         }
     }
 
