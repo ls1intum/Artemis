@@ -5,7 +5,6 @@ import { MonacoDiffEditorComponent } from 'app/shared/monaco-editor/monaco-diff-
 @Component({
     selector: 'jhi-git-diff-file',
     templateUrl: './git-diff-file.component.html',
-    styleUrls: ['./git-diff-file.component.scss'],
     encapsulation: ViewEncapsulation.None,
 })
 export class GitDiffFileComponent implements OnInit {
