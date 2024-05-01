@@ -13,6 +13,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
  * Represents a windfile, the definition file for an aeolus build plan that
  * can then be used to generate a Jenkinsfile.
  */
+// TODO convert into Record
 public class Windfile {
 
     private static final ObjectMapper mapper = new ObjectMapper();

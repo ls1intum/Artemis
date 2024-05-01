@@ -11,6 +11,6 @@
         name="dockerImage"
         id="field_dockerImage"
         [(ngModel)]="dockerImage"
-        (ngModelChange)="dockerImageChange.emit($event)"
+        (ngModelChange)="dockerImage = $event.trim(); dockerImageChange.emit(dockerImage)"
     />
 </div>
