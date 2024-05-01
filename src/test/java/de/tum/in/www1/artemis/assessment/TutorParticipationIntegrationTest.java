@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.assessment;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 import jakarta.validation.constraints.NotNull;
@@ -20,6 +21,7 @@ import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ExampleSubmission;
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.TextBlock;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
@@ -34,7 +36,9 @@ import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.GradingCriterionRepository;
 import de.tum.in.www1.artemis.repository.GradingInstructionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.service.ExampleSubmissionService;
+import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.SubmissionService;
 import de.tum.in.www1.artemis.service.TutorParticipationService;
 import de.tum.in.www1.artemis.user.UserUtilService;
@@ -73,6 +77,12 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
 
     @Autowired
     private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private ResultService resultService;
+
+    @Autowired
+    private SubmissionRepository submissionRepository;
 
     private ModelingExercise modelingExercise;
 
@@ -127,18 +137,19 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
 
         // Tutor reviewed the instructions.
         var tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
-        var tutorParticipation = new TutorParticipation().tutor(tutor).status(TutorParticipationStatus.REVIEWED_INSTRUCTIONS);
-        tutorParticipationService.createNewParticipation(textExercise, tutor);
+        var tutorParticipation = tutorParticipationService.createNewParticipation(textExercise, tutor);
         exampleSubmission.addTutorParticipations(tutorParticipation);
-        exampleSubmissionService.save(exampleSubmission);
+        exampleSubmission = exampleSubmissionService.save(exampleSubmission);
 
-        exampleSubmission.getSubmission().getLatestResult().addFeedback(ParticipationFactory.createManualTextFeedback(1D, textBlockIds.get(1)));
+        Submission submissionWithResults = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(exampleSubmission.getSubmission().getId());
+        submissionWithResults.getLatestResult().addFeedback(ParticipationFactory.createManualTextFeedback(1D, textBlockIds.get(1)));
+
         var path = "/api/exercises/" + textExercise.getId() + "/assess-example-submission";
         request.postWithResponseBody(path, exampleSubmission, TutorParticipation.class, HttpStatus.BAD_REQUEST);
     }
 
     /**
-     * Tests when tutor provides unnecessry unreferenced feedback in text example assessment, bad request exception is thrown
+     * Tests when tutor provides unnecessary unreferenced feedback in text example assessment, bad request exception is thrown
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
@@ -147,12 +158,13 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
 
         // Tutor reviewed the instructions.
         var tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
-        var tutorParticipation = new TutorParticipation().tutor(tutor).status(TutorParticipationStatus.REVIEWED_INSTRUCTIONS);
-        tutorParticipationService.createNewParticipation(textExercise, tutor);
+        var tutorParticipation = tutorParticipationService.createNewParticipation(textExercise, tutor);
         exampleSubmission.addTutorParticipations(tutorParticipation);
-        exampleSubmissionService.save(exampleSubmission);
+        exampleSubmission = exampleSubmissionService.save(exampleSubmission);
 
-        exampleSubmission.getSubmission().getLatestResult().addFeedback(ParticipationFactory.createPositiveFeedback(FeedbackType.MANUAL_UNREFERENCED));
+        Submission submissionWithResults = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(exampleSubmission.getSubmission().getId());
+        submissionWithResults.getLatestResult().addFeedback(ParticipationFactory.createPositiveFeedback(FeedbackType.MANUAL_UNREFERENCED));
+
         var path = "/api/exercises/" + textExercise.getId() + "/assess-example-submission";
         request.postWithResponseBody(path, exampleSubmission, TutorParticipation.class, HttpStatus.BAD_REQUEST);
     }
@@ -216,7 +228,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
             textBlockIds.add(textBlock.getId());
         }
 
-        exampleSubmissionService.save(exampleSubmission);
+        exampleSubmission = exampleSubmissionService.save(exampleSubmission);
 
         if (usedForTutorial) {
             var result = submissionService.saveNewEmptyResult(exampleSubmission.getSubmission());
@@ -224,13 +236,12 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
 
             var feedback = ParticipationFactory.createManualTextFeedback(1D, textBlockIds.get(0));
             var gradingCriterion = ExerciseFactory.generateGradingCriterion("criterion");
-            gradingCriterionRepository.save(gradingCriterion);
+            gradingCriterion = gradingCriterionRepository.save(gradingCriterion);
 
             var instructions = ExerciseFactory.generateGradingInstructions(gradingCriterion, 1, 1);
-            gradingInstructionRepository.saveAll(instructions);
+            instructions = new HashSet<>(gradingInstructionRepository.saveAll(instructions));
             instructions.forEach(feedback::setGradingInstruction);
-            result.addFeedback(feedback);
-            resultRepository.save(result);
+            resultService.addFeedbackToResult(result, List.of(feedback), true);
         }
 
         request.postWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/tutor-participations", null, TutorParticipation.class, HttpStatus.CREATED);
