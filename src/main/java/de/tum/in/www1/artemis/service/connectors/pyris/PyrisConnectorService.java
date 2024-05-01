@@ -21,11 +21,11 @@ import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisModelDTO;
 import de.tum.in.www1.artemis.service.iris.exception.IrisException;
 import de.tum.in.www1.artemis.service.iris.exception.IrisForbiddenException;
 import de.tum.in.www1.artemis.service.iris.exception.IrisInternalPyrisErrorException;
-import de.tum.in.www1.artemis.service.iris.exception.IrisInvalidTemplateException;
 
 /**
- * This service connects to the Python implementation of Iris (called Pyris) responsible for connecting to different
- * LLMs and handle messages with Microsoft Guidance
+ * This service connects to the Python implementation of Iris (called Pyris).
+ * Pyris is responsible for executing the pipelines using (MM)LLMs and other tools asynchronously.
+ * Status updates are sent to Artemis via {@link de.tum.in.www1.artemis.web.rest.open.PyrisStatusUpdateResource}
  */
 @Service
 @Profile("iris")
@@ -81,8 +81,7 @@ public class PyrisConnectorService {
     private IrisException toIrisException(HttpStatusCodeException e) {
         return switch (e.getStatusCode().value()) {
             case 401, 403 -> new IrisForbiddenException();
-            case 400 -> new IrisInvalidTemplateException(tryExtractErrorMessage(e));
-            case 500 -> new IrisInternalPyrisErrorException(tryExtractErrorMessage(e));
+            case 400, 500 -> new IrisInternalPyrisErrorException(tryExtractErrorMessage(e));
             default -> new IrisInternalPyrisErrorException(e.getMessage());
         };
     }
