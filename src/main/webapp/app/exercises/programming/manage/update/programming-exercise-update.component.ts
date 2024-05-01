@@ -604,7 +604,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         if (this.programmingExercise.windFile?.metadata?.docker?.image) {
             this.programmingExercise.windFile.metadata.docker.image = this.programmingExercise.windFile.metadata.docker.image.trim();
         }
-        this.programmingExercise.windFile?.metadata?.docker?.image?.trim();
+
         if (this.programmingExercise.customizeBuildPlanWithAeolus) {
             this.programmingExercise.buildPlanConfiguration = this.aeolusService.serializeWindFile(this.programmingExercise.windFile!);
         } else {
