@@ -12,8 +12,10 @@ import { Subscription } from 'rxjs';
 })
 export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
     private _editor: monaco.editor.IStandaloneDiffEditor;
-    private monacoDiffEditorContainerElement: HTMLElement;
-    private themeSubscription: Subscription;
+    monacoDiffEditorContainerElement: HTMLElement;
+    themeSubscription?: Subscription;
+    listeners: monaco.IDisposable[] = [];
+    resizeObserver?: ResizeObserver;
 
     private original: string | undefined;
     private modified: string | undefined;
@@ -49,18 +51,11 @@ export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
                 alwaysConsumeMouseWheel: false,
             },
             fontSize: 12,
-            padding: {
-                top: 2,
-                bottom: 2,
-            },
         });
         renderer.appendChild(elementRef.nativeElement, this.monacoDiffEditorContainerElement);
 
-        // called once diff has been computed.
-        // TODO explain
         this._editor.onDidChangeModel(() => {
-            this.monacoDiffEditorContainerElement.style.height = this.getMaximumContentHeight() + 'px';
-            this._editor.layout();
+            this.adjustHeightAndLayout(this.getMaximumContentHeight());
             if (this.original === undefined) {
                 this.replaceEditorWithPlaceholder('create', this._editor.getOriginalEditor());
             }
@@ -74,47 +69,76 @@ export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
             this.monacoDiffEditorContainerElement.style.height = this.getMaximumContentHeight() + 'px';
             this.onReadyForDisplayChange.emit(true);
         });
+        this.setupContentHeightListeners();
     }
 
     ngOnInit(): void {
-        const resizeObserver = new ResizeObserver(() => {
-            this._editor.layout();
+        this.resizeObserver = new ResizeObserver(() => {
+            this.layout();
         });
-        resizeObserver.observe(this.monacoDiffEditorContainerElement);
+        this.resizeObserver.observe(this.monacoDiffEditorContainerElement);
         this.themeSubscription = this.themeService.getCurrentThemeObservable().subscribe((theme) => this.changeTheme(theme));
+    }
 
-        this._editor.getOriginalEditor().onDidContentSizeChange((e) => {
-            if (e.contentHeightChanged) {
-                this.monacoDiffEditorContainerElement.style.height = this.getMaximumContentHeight() + 'px';
-                this._editor.layout();
-            }
-        });
+    /**
+     * Sets up listeners that adjust the height of the editor to the height of its current content.
+     */
+    setupContentHeightListeners(): void {
+        const editors = [this._editor.getOriginalEditor(), this._editor.getModifiedEditor()];
 
-        this._editor.getModifiedEditor().onDidContentSizeChange((e) => {
-            if (e.contentHeightChanged) {
-                this.monacoDiffEditorContainerElement.style.height = this.getMaximumContentHeight() + 'px';
-                this._editor.layout();
-            }
-        });
+        editors.forEach((editor) => {
+            // Called e.g. when the content of the editor changes.
+            const contentSizeListener = editor.onDidContentSizeChange((e: monaco.editor.IContentSizeChangedEvent) => {
+                if (e.contentHeightChanged) {
+                    // Using the content height of the larger editor here ensures that neither of the editors break out of the container.
+                    this.adjustHeightAndLayout(this.getMaximumContentHeight());
+                }
+            });
 
-        this._editor.getOriginalEditor().onDidChangeHiddenAreas(() => {
-            this.monacoDiffEditorContainerElement.style.height = this.getContentHeightOfEditor(this._editor.getOriginalEditor()) + 'px';
-            this._editor.layout();
+            // Called when the user reveals or collapses a hidden region.
+            const hiddenAreaListener = editor.onDidChangeHiddenAreas(() => {
+                this.adjustHeightAndLayout(this.getContentHeightOfEditor(editor));
+            });
+
+            this.listeners.push(contentSizeListener, hiddenAreaListener);
         });
+    }
+
+    /**
+     * Adjusts the height of the editor to fit the new content height.
+     * @param newContentHeight
+     */
+    adjustHeightAndLayout(newContentHeight: number) {
+        this.monacoDiffEditorContainerElement.style.height = newContentHeight + 'px';
+        this.layout();
+    }
+
+    /**
+     * Adjusts this editor to fit its container.
+     */
+    layout(): void {
+        this._editor.layout();
     }
 
     ngOnDestroy(): void {
         this.themeSubscription?.unsubscribe();
+        this.resizeObserver?.disconnect();
+        this.listeners.forEach((listener) => {
+            listener.dispose();
+        });
         this._editor.dispose();
     }
 
+    /**
+     * Sets the theme of all Monaco editors according to the Artemis theme.
+     * As of now, it is not possible to have two editors with different themes.
+     * @param artemisTheme The active Artemis theme.
+     */
     changeTheme(artemisTheme: Theme): void {
-        // TODO explain
         monaco.editor.setTheme(artemisTheme === Theme.DARK ? 'vs-dark' : 'vs-light');
     }
 
     setFileContents(original?: string, originalFileName?: string, modified?: string, modifiedFileName?: string): void {
-        // TODO constructing this string and making a model if it is unavailable is already implemented in the default monaco editor. define utils or a service for this
         this.onReadyForDisplayChange.emit(false);
         const originalModelUri = monaco.Uri.parse(`inmemory://model/original-${this._editor.getId()}/${originalFileName ?? 'left'}`);
         const modifiedFileUri = monaco.Uri.parse(`inmemory://model/modified-${this._editor.getId()}/${modifiedFileName ?? 'right'}`);
@@ -162,10 +186,19 @@ export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
         container.appendChild(placeholder);
     }
 
-    private getMaximumContentHeight(): number {
-        return Math.max(this._editor.getOriginalEditor().getContentHeight(), this._editor.getModifiedEditor().getContentHeight());
+    /**
+     * Returns the content height of the larger of the two editors in this view.
+     * @private
+     */
+    getMaximumContentHeight(): number {
+        return Math.max(this.getContentHeightOfEditor(this._editor.getOriginalEditor()), this.getContentHeightOfEditor(this._editor.getModifiedEditor()));
     }
 
+    /**
+     * Returns the content height of the provided editor.
+     * @param editor The editor whose content height should be retrieved.
+     * @private
+     */
     private getContentHeightOfEditor(editor: monaco.editor.ICodeEditor): number {
         return editor.getContentHeight();
     }
