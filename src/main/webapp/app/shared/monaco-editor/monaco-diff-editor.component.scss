@@ -1,9 +1,7 @@
-.monaco-diff-editor-container {
-    min-height: 100px;
-    min-width: 100px;
-}
+/*
+ * Hide the drag handles of the hidden lines, as this feature would result in unintuitive behavior.
+ */
 
-// TODO: explain
 .diff-hidden-lines .top {
     visibility: hidden;
 }

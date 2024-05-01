@@ -31,7 +31,6 @@ export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
          * of this component are called.
          */
         this.monacoDiffEditorContainerElement = renderer.createElement('div');
-        renderer.addClass(this.monacoDiffEditorContainerElement, 'monaco-diff-editor-container');
         this._editor = monaco.editor.createDiffEditor(this.monacoDiffEditorContainerElement, {
             glyphMargin: true,
             minimap: { enabled: false },

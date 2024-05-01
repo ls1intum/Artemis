@@ -101,6 +101,12 @@ export class GitDiffReportComponent implements OnInit {
         });
     }
 
+    /**
+     * Records that the diff editor for a file has changed its "ready" state.
+     * If all paths have reported that they are ready, {@link allDiffsReady} will be set to true.
+     * @param path The path of the file whose diff this event refers to.
+     * @param ready Whether the diff is ready to be displayed or not.
+     */
     onDiffReady(path: string, ready: boolean) {
         this.diffsReadyByPath[path] = ready;
         this.allDiffsReady = Object.values(this.diffsReadyByPath).reduce((a, b) => a && b, true);
