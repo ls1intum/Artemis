@@ -449,6 +449,14 @@ export class ProgrammingExerciseService {
         }
     }
 
+    // TODO docs
+    exportUserRepository(exerciseId: number, participationId: number): Observable<HttpResponse<Blob>> {
+        return this.http.get(`${this.resourceUrl}/${exerciseId}/export-user-repository/${participationId}`, {
+            observe: 'response',
+            responseType: 'blob',
+        });
+    }
+
     /**
      * Exports all instructor repositories (solution, template, test), the problem statement and the exercise details.
      * @param exerciseId
