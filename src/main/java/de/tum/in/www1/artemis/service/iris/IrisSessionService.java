@@ -8,14 +8,12 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
-import de.tum.in.www1.artemis.domain.iris.session.IrisCodeEditorSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisCompetencyGenerationSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisHestiaSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.iris.session.IrisChatBasedFeatureInterface;
 import de.tum.in.www1.artemis.service.iris.session.IrisChatSessionService;
-import de.tum.in.www1.artemis.service.iris.session.IrisCodeEditorSessionService;
 import de.tum.in.www1.artemis.service.iris.session.IrisCompetencyGenerationSessionService;
 import de.tum.in.www1.artemis.service.iris.session.IrisHestiaSessionService;
 import de.tum.in.www1.artemis.service.iris.session.IrisRateLimitedFeatureInterface;
@@ -34,16 +32,13 @@ public class IrisSessionService {
 
     private final IrisHestiaSessionService irisHestiaSessionService;
 
-    private final IrisCodeEditorSessionService irisCodeEditorSessionService;
-
     private final IrisCompetencyGenerationSessionService irisCompetencyGenerationSessionService;
 
     public IrisSessionService(UserRepository userRepository, IrisChatSessionService irisChatSessionService, IrisHestiaSessionService irisHestiaSessionService,
-            IrisCodeEditorSessionService irisCodeEditorSessionService, IrisCompetencyGenerationSessionService irisCompetencyGenerationSessionService) {
+            IrisCompetencyGenerationSessionService irisCompetencyGenerationSessionService) {
         this.userRepository = userRepository;
         this.irisChatSessionService = irisChatSessionService;
         this.irisHestiaSessionService = irisHestiaSessionService;
-        this.irisCodeEditorSessionService = irisCodeEditorSessionService;
         this.irisCompetencyGenerationSessionService = irisCompetencyGenerationSessionService;
     }
 
@@ -139,9 +134,6 @@ public class IrisSessionService {
         }
         if (session instanceof IrisHestiaSession hestiaSession) {
             return (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisHestiaSessionService, hestiaSession);
-        }
-        if (session instanceof IrisCodeEditorSession codeEditorSession) {
-            return (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisCodeEditorSessionService, codeEditorSession);
         }
         if (session instanceof IrisCompetencyGenerationSession irisCompetencyGenerationSession) {
             return (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisCompetencyGenerationSessionService, irisCompetencyGenerationSession);
