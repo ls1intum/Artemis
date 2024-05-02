@@ -166,7 +166,7 @@ public class AeolusBuildPlanService {
      * @return the generated build script
      */
     public String generateBuildScript(Windfile windfile, AeolusTarget target) throws JsonProcessingException {
-        String buildPlan = new ObjectMapper().writeValueAsString(windfile);
+        String buildPlan = objectMapper.writeValueAsString(windfile);
         String requestUrl = aeolusUrl + "/generate/" + target.getName();
         UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl);
 
