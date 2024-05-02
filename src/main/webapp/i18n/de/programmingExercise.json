@@ -462,6 +462,7 @@
             "auxiliaryRepository": {
                 "error": "Es gibt ein Problem mit den Hilfs-Repositories!",
                 "addAuxiliaryRepository": "Hilfs-Repository anlegen",
+                "usageDescription": "Du kannst Hilfsrepositorys verwenden, um zusätzlichen Code bereitzustellen, den Studierende nicht sehen oder ändern können. Der zusätzliche Code wird während des Builds der Abgabe am angegebenen Pfad eingefügt.",
                 "repositoryName": "Name des Repositorys",
                 "checkoutDirectory": "Checkout-Verzeichnis",
                 "duplicateRepositoryNames": "Verschiedene Hilfs-Repositories dürfen nicht den gleichen Namen haben.",
