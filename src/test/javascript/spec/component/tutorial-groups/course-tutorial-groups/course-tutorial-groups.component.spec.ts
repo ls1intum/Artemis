@@ -5,7 +5,7 @@ import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AlertService } from 'app/core/util/alert.service';
-import { ActivatedRoute, Params, Router, RouterModule, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule, convertToParamMap } from '@angular/router';
 import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleModels';
 import { CourseTutorialGroupsComponent } from 'app/overview/course-tutorial-groups/course-tutorial-groups.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -28,12 +28,9 @@ describe('CourseTutorialGroupsComponent', () => {
 
     const router = new MockRouter();
 
-    let queryParamsSubject: BehaviorSubject<Params>;
-
     beforeEach(() => {
         router.navigate.mockImplementation(() => Promise.resolve(true));
 
-        queryParamsSubject = new BehaviorSubject(convertToParamMap({}));
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, RouterModule, MockModule(FormsModule), MockModule(ReactiveFormsModule)],
             declarations: [CourseTutorialGroupsComponent, MockPipe(ArtemisTranslatePipe), SidebarComponent, SearchFilterComponent, MockPipe(SearchFilterPipe)],
@@ -54,8 +51,6 @@ describe('CourseTutorialGroupsComponent', () => {
                             ),
                         },
                         params: of({ tutorialGroupId: 5 }),
-
-                        queryParams: queryParamsSubject,
                     },
                 },
             ],
@@ -67,7 +62,6 @@ describe('CourseTutorialGroupsComponent', () => {
                 component.sidebarData = { groupByCategory: true, sidebarType: 'default', storageId: 'tutorialGroup' };
                 tutorialGroupOne = generateExampleTutorialGroup({ id: 1, isUserTutor: true });
                 tutorialGroupTwo = generateExampleTutorialGroup({ id: 2, isUserRegistered: true });
-                tutorialGroupThree = generateExampleTutorialGroup({ id: 3 });
             });
     });
 

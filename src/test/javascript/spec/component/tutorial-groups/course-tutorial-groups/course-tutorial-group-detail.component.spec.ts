@@ -27,7 +27,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
 
     const parentParams = { courseId: 2 };
     const parentRoute = { parent: { params: of(parentParams) } } as any as ActivatedRoute;
-    const route = { params: of({ tutorialGroupId: 1 }), parent: parentRoute, queryParams: of({ welcome: '' }) } as any as ActivatedRoute;
+    const route = { params: of({ tutorialGroupId: 1 }), parent: parentRoute } as any as ActivatedRoute;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
