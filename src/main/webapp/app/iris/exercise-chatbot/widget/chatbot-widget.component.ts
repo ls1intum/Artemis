@@ -35,24 +35,7 @@ import {
     isServerSentMessage,
     isStudentSentMessage,
 } from 'app/entities/iris/iris-message.model';
-import {
-    ExecutionStage,
-    ExerciseComponent,
-    IrisExercisePlan,
-    IrisExercisePlanStep,
-    IrisMessageContent,
-    IrisMessageContentType,
-    IrisTextMessageContent,
-    getTextContent,
-    hideOrUnhide,
-    isComplete,
-    isExercisePlan,
-    isFailed,
-    isHidden,
-    isInProgress,
-    isNotExecuted,
-    isTextContent,
-} from 'app/entities/iris/iris-content-type.model';
+import { IrisMessageContent, IrisMessageContentType, IrisTextMessageContent, getTextContent, isTextContent } from 'app/entities/iris/iris-content-type.model';
 import { Subscription } from 'rxjs';
 import { SharedService } from 'app/iris/shared.service';
 import { IrisSessionService } from 'app/iris/session.service';
@@ -65,7 +48,6 @@ import interact from 'interactjs';
 import { DOCUMENT } from '@angular/common';
 import { IrisChatSessionService } from 'app/iris/chat-session.service';
 import { TranslateService } from '@ngx-translate/core';
-import { IrisCodeEditorSessionService } from 'app/iris/code-editor-session.service';
 
 @Component({
     selector: 'jhi-chatbot-widget',
@@ -134,7 +116,6 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
     rateLimit: number;
     rateLimitTimeframeHours: number;
     importExerciseUrl: string;
-    stepError: string;
 
     // User preferences
     userAccepted: boolean;
@@ -323,10 +304,7 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
         if (this.isChatSession()) {
             return this.translateService.instant('artemisApp.exerciseChatbot.tutorFirstMessage');
         }
-        this.importExerciseUrl = `/course-management/${this.courseId}/programming-exercises/import/${this.exerciseId}`;
-        return this.translateService
-            .instant('artemisApp.exerciseChatbot.codeEditorFirstMessage')
-            .replace(/{link:(.*)}/, '<a href="' + this.importExerciseUrl + '" target="_blank">$1</a>');
+        return '';
     }
 
     /**
@@ -629,214 +607,6 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
     }
 
     /**
-     * Gets the title of the button which toggles the execution of an IrisExercisePlan.
-     * This depends on the state of the steps in the plan.
-     * Currently executing -> 'Pause'
-     * All steps complete -> 'Completed'
-     * Next step is failed -> 'Retry'
-     * Next step is first step -> 'Execute'
-     * Paused somewhere in the middle of the plan -> 'Resume'
-     * @param plan - The plan to get the button title for.
-     */
-    getPlanButtonTitle(plan: IrisExercisePlan): string {
-        if (plan.executing) {
-            return 'Pause';
-        }
-        const nextStepIndex = this.getNextStepIndex(plan);
-        if (nextStepIndex >= plan.steps.length) {
-            return 'Completed';
-        }
-        const nextStep = plan.steps[nextStepIndex];
-        if (isFailed(nextStep)) {
-            return 'Retry';
-        }
-        if (nextStepIndex === 0) {
-            return 'Execute';
-        }
-        return 'Resume';
-    }
-
-    /**
-     * Pauses the execution of an exercise plan.
-     * @param plan - The plan to pause.
-     */
-    pausePlan(plan: IrisExercisePlan) {
-        plan.executing = false;
-    }
-
-    /**
-     * Returns the index of the next step to execute in an IrisExercisePlan.
-     * This is the index of the last step that is complete + 1, or 0 if no steps are complete.
-     * Range will always be [0, plan.steps.length].
-     * @param plan - The plan to get the next step index for.
-     */
-    getNextStepIndex(plan: IrisExercisePlan) {
-        for (let i = plan.steps.length - 1; i >= 0; i--) {
-            const step = plan.steps[i];
-            if (isComplete(step)) {
-                return i + 1;
-            }
-        }
-        return 0;
-    }
-
-    /**
-     * Returns whether this plan has more steps to execute.
-     * @param plan - The plan to check.
-     */
-    canExecute(plan: IrisExercisePlan) {
-        return this.getNextStepIndex(plan) < plan.steps.length;
-    }
-
-    /**
-     * Toggles an IrisExercisePlan to be executing.
-     * When an exercise plan is executing, the next step will be executed automatically when the previous step is complete.
-     * This will also trigger the immediate execution of the next step if it is not already in progress,
-     * and we are not still waiting for the previous step to complete.
-     * @param messageId - The id of the message which contains the plan.
-     * @param plan - The plan to execute.
-     */
-    setExecuting(messageId: number, plan: IrisExercisePlan) {
-        const nextStepIndex = this.getNextStepIndex(plan);
-        if (nextStepIndex >= plan.steps.length) {
-            console.error('Tried to execute plan that is already complete.');
-            return;
-        }
-        const step = plan.steps[nextStepIndex];
-        if (!step) {
-            console.error('Could not find next step to execute.');
-            return;
-        }
-        plan.executing = true;
-        if (isInProgress(step)) {
-            console.log('Step already in progress, awaiting response.');
-            return;
-        }
-        this.executePlanStep(messageId, step);
-    }
-
-    /**
-     * Execute the specified step of an exercise plan.
-     * This will set the executionStage of the step to IN_PROGRESS and send a request to the server.
-     * @param messageId - The id of the message which contains the plan.
-     * @param step - The step to execute.
-     */
-    executePlanStep(messageId: number, step: IrisExercisePlanStep) {
-        if (!(this.sessionService instanceof IrisCodeEditorSessionService)) {
-            return;
-        }
-        if (!step.id || !step.plan) {
-            console.error('Could not execute plan step, one of the required ids is null: ' + step.id + ' ' + step.plan);
-            return;
-        }
-        step.executionStage = ExecutionStage.IN_PROGRESS;
-        this.sessionService
-            .executePlanStep(this.sessionId, messageId, step.plan, step.id)
-            // .then(() => this.stateStore.dispatch(new ExecutePlanSuccessAction(planId)))
-            .catch(() => {
-                //this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.EXECUTE_PLAN_FAILED));
-                step.executionStage = ExecutionStage.FAILED;
-                this.scrollToBottom('smooth');
-            });
-    }
-
-    /**
-     * Notifies the chat widget that a step of an exercise plan has been completed.
-     * This method is called by the code editor session service.
-     * @param messageId - The id of the message which contains the plan.
-     * @param planId - The id of the plan.
-     * @param stepId - The id of the step that was completed.
-     */
-    notifyStepCompleted(messageId: number, planId: number, stepId: number) {
-        const [plan, step] = this.findPlanStep(messageId, planId, stepId);
-        if (!plan || !step) {
-            return;
-        }
-        step.executionStage = ExecutionStage.COMPLETE;
-        if (plan.executing) {
-            const nextStepIndex = this.getNextStepIndex(plan);
-            if (nextStepIndex < plan.steps.length) {
-                // The plan is still executing and there are more steps to execute
-                this.executePlanStep(messageId, plan.steps[nextStepIndex]);
-            } else {
-                plan.executing = false;
-            }
-        }
-    }
-
-    notifyStepFailed(messageId: number, planId: number, stepId: number, errorTranslationKey?: IrisErrorMessageKey, translationParams?: Map<string, any>) {
-        const [plan, step] = this.findPlanStep(messageId, planId, stepId);
-        if (!plan || !step) {
-            return;
-        }
-        plan.executing = false;
-        step.executionStage = ExecutionStage.FAILED;
-        if (!errorTranslationKey) {
-            this.stepError = this.translateService.instant(IrisErrorMessageKey.TECHNICAL_ERROR_RESPONSE);
-        } else {
-            this.stepError = this.translateService.instant(errorTranslationKey, translationParams);
-        }
-    }
-
-    private findPlanStep(messageId: number, planId: number, stepId: number): [IrisExercisePlan?, IrisExercisePlanStep?] {
-        const message = this.messages.find((m) => m.id === messageId);
-        if (!message) {
-            console.error('Could not find message with id ' + messageId);
-            return [undefined, undefined];
-        }
-        const plan = message.content.find((c) => c.id === planId) as IrisExercisePlan;
-        if (!plan) {
-            console.error('Could not find plan with id ' + planId);
-            return [undefined, undefined];
-        }
-        const step = plan.steps.find((s) => s.id === stepId);
-        if (!step) {
-            console.error('Could not find exercise step with id ' + stepId);
-            return [plan, undefined];
-        }
-        return [plan, step];
-    }
-
-    getStepColor(step: IrisExercisePlanStep) {
-        switch (step.executionStage) {
-            case ExecutionStage.NOT_EXECUTED:
-                return 'var(--iris-chat-widget-background)';
-            case ExecutionStage.IN_PROGRESS:
-                return '#ffc107';
-            case ExecutionStage.COMPLETE:
-                return '#28a745';
-            case ExecutionStage.FAILED:
-                return '#dc3545';
-        }
-    }
-
-    getStepName(step: IrisExercisePlanStep) {
-        switch (step.component) {
-            case ExerciseComponent.PROBLEM_STATEMENT:
-                return 'Problem Statement';
-            case ExerciseComponent.SOLUTION_REPOSITORY:
-                return 'Solution Repository';
-            case ExerciseComponent.TEMPLATE_REPOSITORY:
-                return 'Template Repository';
-            case ExerciseComponent.TEST_REPOSITORY:
-                return 'Test Repository';
-        }
-    }
-
-    getStepStatus(step: IrisExercisePlanStep) {
-        switch (step.executionStage) {
-            case ExecutionStage.NOT_EXECUTED:
-                return '';
-            case ExecutionStage.IN_PROGRESS:
-                return 'Generating changes, please be patient...';
-            case ExecutionStage.COMPLETE:
-                return 'Changes applied.';
-            case ExecutionStage.FAILED:
-                return this.stepError ?? 'Encountered an error.';
-        }
-    }
-
-    /**
      * Creates a new user message.
      * @param message - The content of the message.
      * @returns A new IrisClientMessage object representing the user message.
@@ -902,13 +672,8 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
     }
 
     protected readonly IrisSender = IrisSender;
-    protected readonly isInProgress = isInProgress;
     protected readonly getTextContent = getTextContent;
     protected readonly isTextContent = isTextContent;
-    protected readonly isNotExecuted = isNotExecuted;
-    protected readonly isExercisePlan = isExercisePlan;
-    protected readonly isHidden = isHidden;
-    protected readonly hideOrUnhide = hideOrUnhide;
     protected readonly isStudentSentMessage = isStudentSentMessage;
     protected readonly isServerSentMessage = isServerSentMessage;
     protected readonly isArtemisClientSentMessage = isArtemisClientSentMessage;
