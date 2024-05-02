@@ -247,7 +247,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
         List<StudentExam> studentExamsDB = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
         assertThat(studentExamsDB).hasSize(3);
         List<StudentParticipation> participationList = new ArrayList<>();
-        Exercise[] exercises = examRepository.findAllExercisesByExamId(exam.getId()).toArray(Exercise[]::new);
+        Exercise[] exercises = examRepository.findAllExercisesWithDetailsByExamId(exam.getId()).toArray(Exercise[]::new);
         for (Exercise value : exercises) {
             participationList.addAll(studentParticipationRepository.findByExerciseId(value.getId()));
         }
@@ -268,7 +268,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
         assertThat(studentExamsDB).isEmpty();
 
         // Fetch participations
-        exercises = examRepository.findAllExercisesByExamId(exam.getId()).toArray(Exercise[]::new);
+        exercises = examRepository.findAllExercisesWithDetailsByExamId(exam.getId()).toArray(Exercise[]::new);
         participationList = new ArrayList<>();
         for (Exercise exercise : exercises) {
             participationList.addAll(studentParticipationRepository.findByExerciseId(exercise.getId()));
@@ -295,7 +295,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
         List<StudentExam> studentExamsDB = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
         assertThat(studentExamsDB).hasSize(3);
         List<StudentParticipation> participationList = new ArrayList<>();
-        Exercise[] exercises = examRepository.findAllExercisesByExamId(exam.getId()).toArray(Exercise[]::new);
+        Exercise[] exercises = examRepository.findAllExercisesWithDetailsByExamId(exam.getId()).toArray(Exercise[]::new);
         for (Exercise value : exercises) {
             participationList.addAll(studentParticipationRepository.findByExerciseId(value.getId()));
         }
@@ -318,7 +318,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
         assertThat(studentExamsDB).isEmpty();
 
         // Fetch participations
-        exercises = examRepository.findAllExercisesByExamId(exam.getId()).toArray(Exercise[]::new);
+        exercises = examRepository.findAllExercisesWithDetailsByExamId(exam.getId()).toArray(Exercise[]::new);
         participationList = new ArrayList<>();
         for (Exercise exercise : exercises) {
             participationList.addAll(studentParticipationRepository.findByExerciseId(exercise.getId()));
