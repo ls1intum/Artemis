@@ -51,7 +51,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     irisEnabled = false;
     irisChatEnabled = false;
     irisHestiaEnabled = false;
-    irisCodeEditorEnabled = false;
     ltiEnabled = false;
     isAthenaEnabled = false;
     tutorialEnabled = false;
@@ -98,7 +97,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
             const irisSettings = await firstValueFrom(this.irisSettingsService.getGlobalSettings());
             this.irisChatEnabled = irisSettings?.irisChatSettings?.enabled ?? false;
             this.irisHestiaEnabled = irisSettings?.irisHestiaSettings?.enabled ?? false;
-            this.irisCodeEditorEnabled = irisSettings?.irisCodeEditorSettings?.enabled ?? false;
         }
         this.route.data.subscribe(({ course }) => {
             if (course) {
@@ -231,11 +229,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         //     type: DetailType.ProgrammingIrisEnabled,
         //     title: 'artemisApp.iris.settings.subSettings.enabled.hesita',
         //     data: { course: this.course, disabled: !this.isAdmin, subSettingsType: this.HESTIA },
-        // });
-        // details.push({
-        //     type: DetailType.ProgrammingIrisEnabled,
-        //     title: 'artemisApp.iris.settings.subSettings.enabled.codeEditor',
-        //     data: { course: this.course, disabled: !this.isAdmin, subSettingsType: this.CODE_EDITOR },
         // });
         return irisDetails;
     }

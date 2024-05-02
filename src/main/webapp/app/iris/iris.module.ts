@@ -15,9 +15,7 @@ import { IrisCourseSettingsUpdateComponent } from 'app/iris/settings/iris-course
 import { IrisExerciseSettingsUpdateComponent } from 'app/iris/settings/iris-exercise-settings-update/iris-exercise-settings-update.component';
 import { IrisLogoComponent } from './iris-logo/iris-logo.component';
 import { IrisGlobalAutoupdateSettingsUpdateComponent } from './settings/iris-settings-update/iris-global-autoupdate-settings-update/iris-global-autoupdate-settings-update.component';
-import { IrisCodeEditorChatbotButtonComponent } from 'app/iris/exercise-chatbot/code-editor-chatbot-button.component';
 import { IrisTutorChatbotButtonComponent } from 'app/iris/exercise-chatbot/tutor-chatbot-button.component';
-import { IrisCodeEditorWebsocketService } from 'app/iris/code-editor-websocket.service';
 import { IrisStateStore } from 'app/iris/state-store.service';
 import { IrisChatbotWidgetComponent } from 'app/iris/exercise-chatbot/widget/chatbot-widget.component';
 import { IrisEnabledComponent } from 'app/iris/settings/shared/iris-enabled.component';
@@ -27,7 +25,6 @@ import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.mo
 @NgModule({
     declarations: [
         IrisChatbotWidgetComponent,
-        IrisCodeEditorChatbotButtonComponent,
         IrisTutorChatbotButtonComponent,
         AboutIrisComponent,
         IrisSettingsUpdateComponent,
@@ -51,7 +48,7 @@ import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.mo
         RouterModule,
         FeatureToggleModule,
     ],
-    providers: [IrisCodeEditorWebsocketService, IrisStateStore],
-    exports: [IrisCodeEditorChatbotButtonComponent, IrisTutorChatbotButtonComponent, IrisEnabledComponent, IrisLogoButtonComponent],
+    providers: [IrisStateStore],
+    exports: [IrisTutorChatbotButtonComponent, IrisEnabledComponent, IrisLogoButtonComponent],
 })
 export class IrisModule {}

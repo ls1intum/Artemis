@@ -71,8 +71,8 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
         var loadedSettings2 = request.get("/api/courses/" + course.getId() + "/iris-settings", HttpStatus.OK, IrisCombinedSettingsDTO.class);
 
         assertThat(loadedSettings1).isNotNull().usingRecursiveComparison()
-                .ignoringFields("id", "course", "irisChatSettings.id", "irisHestiaSettings.id", "irisCodeEditorSettings.id", "irisCompetencyGenerationSettings.id")
-                .ignoringExpectedNullFields().isEqualTo(loadedSettings2);
+                .ignoringFields("id", "course", "irisChatSettings.id", "irisHestiaSettings.id", "irisCompetencyGenerationSettings.id").ignoringExpectedNullFields()
+                .isEqualTo(loadedSettings2);
         assertThat(loadedSettings1).isNotNull().usingRecursiveComparison().ignoringFields("course")
                 .isEqualTo(irisSettingsRepository.findCourseSettings(course.getId()).orElseThrow());
     }
