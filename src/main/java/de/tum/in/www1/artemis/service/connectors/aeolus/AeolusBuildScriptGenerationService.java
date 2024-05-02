@@ -50,11 +50,15 @@ public class AeolusBuildScriptGenerationService extends BuildScriptGenerationSer
             windfile = aeolusTemplateService.getDefaultWindfileFor(programmingExercise);
         }
         if (windfile != null) {
-            windfile.setId("not-used");
-            windfile.setDescription("not-used");
-            windfile.setName("not-used");
+            WindfileMetadata oldMetadata = windfile.getMetadata();
+            // Creating a new instance of WindfileMetadata with placeholder values for id, name, and description,
+            // and copying the rest of the fields from oldMetadata
+            WindfileMetadata updatedMetadata = new WindfileMetadata("not-used", "not-used", "not-used", oldMetadata.author(), oldMetadata.gitCredentials(), oldMetadata.docker(),
+                    oldMetadata.resultHook(), oldMetadata.resultHookCredentials());
+            windfile.setMetadata(updatedMetadata); // You will need to implement this method
             return aeolusBuildPlanService.generateBuildScript(windfile, AeolusTarget.CLI);
         }
         return null;
     }
+
 }

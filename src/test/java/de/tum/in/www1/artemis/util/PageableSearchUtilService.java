@@ -5,8 +5,8 @@ import java.util.Map;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.CompetencyPageableSearchDTO;
@@ -106,11 +106,10 @@ public class PageableSearchUtilService {
      * @return The generated LinkedMultiValueMap
      */
     public LinkedMultiValueMap<String, String> searchMapping(PageableSearchDTO<String> search) {
-        final var mapType = new TypeToken<Map<String, String>>() {
-        }.getType();
-        final var gson = new Gson();
-        final Map<String, String> params = new Gson().fromJson(gson.toJson(search), mapType);
-        final var paramMap = new LinkedMultiValueMap<String, String>();
+        ObjectMapper mapper = new ObjectMapper();
+        Map<String, String> params = mapper.convertValue(search, new TypeReference<>() {
+        });
+        LinkedMultiValueMap<String, String> paramMap = new LinkedMultiValueMap<>();
         params.forEach(paramMap::add);
         return paramMap;
     }

@@ -712,7 +712,7 @@ public class ProgrammingExerciseResource {
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> reset(@PathVariable Long exerciseId, @RequestBody ProgrammingExerciseResetOptionsDTO programmingExerciseResetOptionsDTO)
             throws JsonProcessingException {
-        log.debug("REST request to reset ProgrammingExercise : {}", exerciseId);
+        log.debug("REST request to reset programming exercise {} with options {}", exerciseId, programmingExerciseResetOptionsDTO);
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(exerciseId);
         final var user = userRepository.getUserWithGroupsAndAuthorities();
 
