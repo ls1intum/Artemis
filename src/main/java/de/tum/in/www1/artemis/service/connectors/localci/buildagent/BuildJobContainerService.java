@@ -234,7 +234,8 @@ public class BuildJobContainerService {
         for (int i = 0; i < auxiliaryRepositoriesPaths.length; i++) {
             addAndPrepareDirectory(buildJobContainerId, auxiliaryRepositoriesPaths[i], LOCALCI_WORKING_DIRECTORY + "/testing-dir/" + auxiliaryRepositoryCheckoutDirectories[i]);
         }
-        convertDosFilesToUnix(LOCALCI_WORKING_DIRECTORY + "/testing-dir/", buildJobContainerId);
+        // TODO: this might lead to issues in certain builds
+        // convertDosFilesToUnix(LOCALCI_WORKING_DIRECTORY + "/testing-dir/", buildJobContainerId);
 
         createScriptFile(buildJobContainerId);
     }

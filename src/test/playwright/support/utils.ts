@@ -1,8 +1,10 @@
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import { v4 as uuidv4 } from 'uuid';
-import { Browser, Locator, Page, expect } from '@playwright/test';
 import { TIME_FORMAT } from './constants';
+import * as fs from 'fs';
+import { dirname } from 'path';
+import { Browser, Locator, Page, expect } from '@playwright/test';
 
 // Add utc plugin to use the utc timezone
 dayjs.extend(utc);
@@ -91,6 +93,26 @@ export function convertBooleanToCheckIconClass(boolean: boolean) {
     return boolean ? '.checked' : '.unchecked';
 }
 
+/**
+ * Convert a base64-encoded string to a `Blob`.
+ *
+ * This is an adaptation of the `base64StringToBlob` function from `blob-util` library.
+ * Since Playwright has no access to DOM APIs, we cannot use the one in `blob-util` library as it uses `window` object.
+ *
+ * Example:
+ *
+ * ```js
+ * var blob = blobUtil.base64StringToBlob(base64String);
+ * ```
+ * @param base64 - base64-encoded string
+ * @param type - the content type (optional)
+ * @returns Blob
+ */
+export function base64StringToBlob(base64: string, type?: string): Blob {
+    const buffer = Buffer.from(base64!, 'base64');
+    return new Blob([buffer], { type });
+}
+
 export async function clearTextField(textField: Locator) {
     await textField.click({ clickCount: 4, force: true });
     await textField.press('Backspace');
@@ -114,6 +136,15 @@ export async function hasAttributeWithValue(page: Page, selector: string, value:
 
 export function parseNumber(text?: string): number | undefined {
     return text ? parseInt(text) : undefined;
+}
+
+export async function createFileWithContent(filePath: string, content: string) {
+    const directory = dirname(filePath);
+
+    if (!fs.existsSync(directory)) {
+        fs.mkdirSync(directory, { recursive: true });
+    }
+    fs.writeFileSync(filePath, content);
 }
 
 export async function newBrowserPage(browser: Browser) {

@@ -72,6 +72,7 @@ import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-obse
 import { EntityResponseType } from 'app/exercises/shared/result/result.service';
 import { CodeEditorMonacoComponent } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
+import dayjs from 'dayjs/esm';
 
 function addFeedbackAndValidateScore(comp: CodeEditorTutorAssessmentContainerComponent, pointsAwarded: number, scoreExpected: number) {
     comp.unreferencedFeedback.push({
@@ -295,6 +296,20 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         });
         flush();
     }));
+
+    it('should be able to override directly after submitting', () => {
+        jest.spyOn(programmingAssessmentManualResultService, 'saveAssessment');
+
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        exercise.isAtLeastInstructor = true;
+        exercise.dueDate = dayjs();
+        comp.exercise = exercise;
+        comp.isAssessor = true;
+        comp.participation = participation;
+        comp.manualResult = result;
+        comp.submit();
+        expect(comp.canOverride).toBeTrue();
+    });
 
     it('should show unreferenced feedback suggestions', () => {
         comp.feedbackSuggestions = [{ reference: 'file:src/Test.java_line:1' }, { reference: 'file:src/Test.java_line:2' }, { reference: undefined }];
@@ -684,6 +699,35 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
             }
         }),
     );
+
+    it('should validate assessments after submission is received during component init', async () => {
+        // make assessment valid
+        submission.results![0].feedbacks = [
+            {
+                detailText: 'text',
+                credits: 1,
+                type: FeedbackType.MANUAL_UNREFERENCED,
+            },
+        ];
+
+        await comp['onSubmissionReceived']('123', submission);
+        expect(comp.assessmentsAreValid).toBeTrue();
+    });
+
+    it('should not invalidate assessment after saving', async () => {
+        jest.spyOn(programmingAssessmentManualResultService, 'saveAssessment');
+
+        submission.results![0].feedbacks = [
+            {
+                detailText: 'text',
+                credits: 1,
+                type: FeedbackType.MANUAL_UNREFERENCED,
+            },
+        ];
+        await comp['onSubmissionReceived']('123', submission);
+        comp.save();
+        expect(comp.assessmentsAreValid).toBeTrue();
+    });
 
     it('should display error when complaint resolved but assessment invalid', () => {
         let onSuccessCalled = false;
