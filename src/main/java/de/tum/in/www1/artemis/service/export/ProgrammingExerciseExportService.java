@@ -439,6 +439,14 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         }
     }
 
+    /**
+     * Exports the repository belonging to a student's programming exercise participation.
+     *
+     * @param exerciseId    The ID of the programming exercise.
+     * @param participation The participation for which to export the repository.
+     * @param exportErrors  A list in which to store errors that occur during the export.
+     * @return The zipped repository if the export was successful, otherwise an empty optional.
+     */
     public Optional<File> exportStudentRepository(long exerciseId, ProgrammingExerciseStudentParticipation participation, List<String> exportErrors) {
         var exerciseOrEmpty = loadExerciseForRepoExport(exerciseId, exportErrors);
         if (exerciseOrEmpty.isEmpty()) {

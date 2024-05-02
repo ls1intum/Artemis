@@ -37,7 +37,7 @@ export class ProgrammingExerciseUserRepoDownloadComponent {
 
     exportRepository() {
         if (this.exerciseId && this.participationId) {
-            this.programmingExerciseService.exportUserRepository(this.exerciseId, this.participationId).subscribe((response) => {
+            this.programmingExerciseService.exportStudentRepository(this.exerciseId, this.participationId).subscribe((response) => {
                 downloadZipFileFromResponse(response);
                 this.alertService.success('artemisApp.programmingExercise.export.successMessageRepos');
             });

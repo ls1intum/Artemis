@@ -521,8 +521,15 @@ public class ProgrammingExerciseExportImportResource {
         return returnZipFileForRepositoryExport(zipFile, RepositoryType.SOLUTION.getName(), programmingExercise, start);
     }
 
-    /* TODO: docs. also maybe rename s.t. it refers to student participation */
-    @GetMapping("programming-exercises/{exerciseId}/export-user-repository/{participationId}")
+    /**
+     * GET /programming-exercises/:exerciseId/export-student-repository/:participationId : Exports the repository belonging to a participation as a zip file.
+     *
+     * @param exerciseId      The id of the programming exercise
+     * @param participationId The id of the student participation for which to export the repository.
+     * @return A ResponseEntity containing the zipped repository.
+     * @throws IOException If the repository could not be zipped.
+     */
+    @GetMapping("programming-exercises/{exerciseId}/export-student-repository/{participationId}")
     @EnforceAtLeastStudent
     public ResponseEntity<Resource> exportUserRepository(@PathVariable long exerciseId, @PathVariable long participationId) throws IOException {
         var programmingExercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndLegalSubmissionsElseThrow(exerciseId);

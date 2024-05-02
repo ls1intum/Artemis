@@ -449,9 +449,13 @@ export class ProgrammingExerciseService {
         }
     }
 
-    // TODO docs
-    exportUserRepository(exerciseId: number, participationId: number): Observable<HttpResponse<Blob>> {
-        return this.http.get(`${this.resourceUrl}/${exerciseId}/export-user-repository/${participationId}`, {
+    /**
+     * Exports the repository belonging to a specific student participation of a programming exercise.
+     * @param exerciseId The ID of the programming exercise.
+     * @param participationId The ID of the (student) participation
+     */
+    exportStudentRepository(exerciseId: number, participationId: number): Observable<HttpResponse<Blob>> {
+        return this.http.get(`${this.resourceUrl}/${exerciseId}/export-student-repository/${participationId}`, {
             observe: 'response',
             responseType: 'blob',
         });
