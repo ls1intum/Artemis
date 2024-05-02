@@ -190,13 +190,9 @@ public class AeolusTemplateService {
             windfile.getMetadata().setDocker(null);
             return;
         }
-        if (windfile.getMetadata().getDocker() == null) {
-            windfile.getMetadata().setDocker(new DockerConfig());
-        }
+        String image = programmingLanguageConfiguration.getImage(language, projectType);
+        DockerConfig dockerConfig = new DockerConfig(image, null, null, programmingLanguageConfiguration.getDefaultDockerFlags());
         WindfileMetadata metadata = windfile.getMetadata();
-        DockerConfig dockerConfig = windfile.getMetadata().getDocker();
-        dockerConfig.setImage(programmingLanguageConfiguration.getImage(language, projectType));
-        dockerConfig.setParameters(programmingLanguageConfiguration.getDefaultDockerFlags());
         metadata.setDocker(dockerConfig);
         windfile.setMetadata(metadata);
     }

@@ -51,9 +51,13 @@ public class AeolusBuildScriptGenerationService extends BuildScriptGenerationSer
             windfile.setId("not-used");
             windfile.setDescription("not-used");
             windfile.setName("not-used");
-            // Trim potential white spaces in the docker image
-            var dockerImage = windfile.getMetadata().getDocker().getImage().trim();
-            windfile.getMetadata().getDocker().setImage(dockerImage);
+            var existingDockerConfig = windfile.getMetadata().getDocker();
+            // existingDockerConfig.image() trims potential white spaces in the docker image
+            DockerConfig newDockerConfig = new DockerConfig(existingDockerConfig.image(), existingDockerConfig.tag(), existingDockerConfig.volumes(),
+                    existingDockerConfig.parameters());
+            WindfileMetadata metadata = windfile.getMetadata();
+            metadata.setDocker(newDockerConfig);
+            windfile.setMetadata(metadata);
             return aeolusBuildPlanService.generateBuildScript(windfile, AeolusTarget.CLI);
         }
         return null;
