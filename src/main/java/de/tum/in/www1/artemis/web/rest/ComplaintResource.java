@@ -171,7 +171,7 @@ public class ComplaintResource {
         boolean isTutorOfTeam = user.getLogin().equals(participation.getTeam().map(team -> team.getOwner() != null ? team.getOwner().getLogin() : null).orElse(null));
 
         if (!isAtLeastTutor) {
-            complaint.getResult().setAssessor(null);
+            complaint.getResult().filterSensitiveInformation();
             if (complaint.getComplaintResponse() != null) {
                 complaint.getComplaintResponse().setReviewer(null);
             }
