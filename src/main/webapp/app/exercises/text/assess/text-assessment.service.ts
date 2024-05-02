@@ -16,7 +16,7 @@ import { convertDateFromServer } from 'app/utils/date.utils';
 
 type EntityResponseType = HttpResponse<Result>;
 type EntityResponseEventType = HttpResponse<TextAssessmentEvent>;
-type TextAssessmentDTO = { feedbacks: Feedback[]; textBlocks: TextBlock[] };
+type TextAssessmentDTO = { feedbacks: Feedback[]; textBlocks: TextBlock[]; assessmentNote?: string };
 
 @Injectable({
     providedIn: 'root',
@@ -35,9 +35,10 @@ export class TextAssessmentService {
      * @param resultId id of the corresponding result of type {number}
      * @param feedbacks list of feedback made during assessment of type {Feedback[]}
      * @param textBlocks list of text blocks of type {TextBlock[]}
+     * @param assessmentNote the internal tutor note for the text assessment
      */
-    public save(participationId: number, resultId: number, feedbacks: Feedback[], textBlocks: TextBlock[]): Observable<EntityResponseType> {
-        const body = TextAssessmentService.prepareFeedbacksAndTextblocksForRequest(feedbacks, textBlocks);
+    public save(participationId: number, resultId: number, feedbacks: Feedback[], textBlocks: TextBlock[], assessmentNote?: string): Observable<EntityResponseType> {
+        const body = TextAssessmentService.prepareFeedbacksAndTextblocksForRequest(feedbacks, textBlocks, assessmentNote);
         return this.http
             .put<Result>(`${this.resourceUrl}/participations/${participationId}/results/${resultId}/text-assessment`, body, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertResultEntityResponseTypeFromServer(res)));
@@ -49,9 +50,10 @@ export class TextAssessmentService {
      * @param resultId of the corresponding result of type {number}
      * @param feedbacks made during assessment of type {Feedback[]}
      * @param textBlocks of type {TextBlock[]}
+     * @param assessmentNote of the result
      */
-    public submit(participationId: number, resultId: number, feedbacks: Feedback[], textBlocks: TextBlock[]): Observable<EntityResponseType> {
-        const body = TextAssessmentService.prepareFeedbacksAndTextblocksForRequest(feedbacks, textBlocks);
+    public submit(participationId: number, resultId: number, feedbacks: Feedback[], textBlocks: TextBlock[], assessmentNote?: string): Observable<EntityResponseType> {
+        const body = TextAssessmentService.prepareFeedbacksAndTextblocksForRequest(feedbacks, textBlocks, assessmentNote);
         return this.http
             .post<Result>(`${this.resourceUrl}/participations/${participationId}/results/${resultId}/submit-text-assessment`, body, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertResultEntityResponseTypeFromServer(res)));
@@ -83,6 +85,7 @@ export class TextAssessmentService {
      * @param textBlocks of type {TextBlock[]}
      * @param complaintResponse of type {ComplaintResponse}
      * @param submissionId of corresponding submission of type {number}
+     * @param assessmentNote of the result, if one exists
      */
     public updateAssessmentAfterComplaint(
         feedbacks: Feedback[],
@@ -90,12 +93,14 @@ export class TextAssessmentService {
         complaintResponse: ComplaintResponse,
         submissionId: number,
         participationId: number,
+        assessmentNote?: string,
     ): Observable<EntityResponseType> {
         const url = `${this.resourceUrl}/participations/${participationId}/submissions/${submissionId}/text-assessment-after-complaint`;
         const assessmentUpdate = {
             feedbacks,
             textBlocks,
             complaintResponse,
+            assessmentNote,
         };
         return this.http.put<Result>(url, assessmentUpdate, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertResultEntityResponseTypeFromServer(res)));
     }
@@ -179,7 +184,7 @@ export class TextAssessmentService {
         return this.http.delete<void>(`${this.resourceUrl}/exercises/${exerciseId}/example-submissions/${exampleSubmissionId}/example-text-assessment/feedback`);
     }
 
-    private static prepareFeedbacksAndTextblocksForRequest(feedbacks: Feedback[], textBlocks: TextBlock[]): TextAssessmentDTO {
+    private static prepareFeedbacksAndTextblocksForRequest(feedbacks: Feedback[], textBlocks: TextBlock[], assessmentNote?: string): TextAssessmentDTO {
         feedbacks = feedbacks.map((feedback) => {
             feedback = Object.assign({}, feedback);
             delete feedback.result;
@@ -197,7 +202,7 @@ export class TextAssessmentService {
             };
         });
 
-        return { feedbacks, textBlocks: textBlocksRequestObjects } as TextAssessmentDTO;
+        return { feedbacks, textBlocks: textBlocksRequestObjects, assessmentNote } as TextAssessmentDTO;
     }
 
     private convertResultEntityResponseTypeFromServer(res: EntityResponseType): EntityResponseType {

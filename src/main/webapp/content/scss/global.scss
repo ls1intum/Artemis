@@ -1024,3 +1024,8 @@ Course Info Bar
 body.transparent-background {
     background: transparent;
 }
+
+.tooltip-wide .tooltip-inner {
+    max-width: 600px !important;
+    width: 600px !important;
+}

@@ -107,8 +107,8 @@ export class ParticipationService {
         return !!exercise?.dueDate && dayjs().isAfter(exercise.dueDate);
     }
 
-    getLogsAvailabilityForResultsOfParticipation(participationId: number): Observable<{ [key: string]: boolean }> {
-        return this.http.get<{ [key: string]: boolean }>(`${this.resourceUrl}/${participationId}/results/logs-available`);
+    getBuildJobIdsForResultsOfParticipation(participationId: number): Observable<{ [key: string]: string }> {
+        return this.http.get<{ [key: string]: string }>(`${this.resourceUrl}/${participationId}/results/build-job-ids`);
     }
 
     protected convertParticipationDatesFromClient(participation: StudentParticipation): StudentParticipation {
