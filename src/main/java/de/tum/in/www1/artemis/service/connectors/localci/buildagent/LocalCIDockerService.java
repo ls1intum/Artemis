@@ -292,21 +292,7 @@ public class LocalCIDockerService {
     public void checkUsableDiskSpaceThenCleanUp() {
         if (imageCleanupEnabled) {
             try {
-                // Get the threshold in bytes.
-                long bytesConversionFactor = 1024;
-                long threshold = imageCleanupDiskSpaceThresholdMb * bytesConversionFactor * bytesConversionFactor;
-
-                // Get the Docker root directory to check disk space.
-                File file = new File(Objects.requireNonNullElse(dockerClient.infoCmd().exec().getDockerRootDir(), "/"));
-                long usableSpace = file.getUsableSpace();
-
-                int maxAttempts = 5;
-                boolean continueCleanup = true;
-                while (usableSpace < threshold && maxAttempts > 0 && continueCleanup) {
-                    continueCleanup = deleteOldestDockerImage();
-                    usableSpace = file.getUsableSpace();
-                    maxAttempts--;
-                }
+                deleteOldestUnusedDockerImage();
             }
             catch (Exception e) {
                 log.error("Error while checking disk space for Docker image cleanup", e);
@@ -317,36 +303,55 @@ public class LocalCIDockerService {
     /**
      * Deletes the oldest Docker image used by this build agent that is not associated with any running containers.
      *
-     * @return true if an image was deleted, false otherwise.
+     * @implNote We need to iterate over the map entries since don't remove the oldest image from the map.
      */
 
-    private boolean deleteOldestDockerImage() {
+    private void deleteOldestUnusedDockerImage() {
+        // Get the Docker root directory to check disk space.
+        File file = new File(Objects.requireNonNullElse(dockerClient.infoCmd().exec().getDockerRootDir(), "/"));
+        long usableSpace = file.getUsableSpace();
+
+        // Get the threshold in bytes.
+        long bytesConversionFactor = 1024;
+        long threshold = imageCleanupDiskSpaceThresholdMb * bytesConversionFactor * bytesConversionFactor;
+
+        if (usableSpace >= threshold) {
+            return;
+        }
+
         // Get map of docker images and their last build dates
         IMap<String, ZonedDateTime> dockerImageCleanupInfo = hazelcastInstance.getMap("dockerImageCleanupInfo");
-
-        // Get the oldest image
-        String oldestImage = dockerImageCleanupInfo.entrySet().stream().min(Map.Entry.comparingByValue()).map(Map.Entry::getKey).orElse(null);
-
-        if (oldestImage == null) {
-            return false;
-        }
 
         // Get unused images
         Set<String> unusedImages = getUnusedDockerImages();
 
-        // Check if the oldest image is unused
-        if (unusedImages.contains(oldestImage)) {
-            log.info("Deleting oldest docker image {}", oldestImage);
-            try {
-                dockerClient.removeImageCmd(oldestImage).exec();
-                return true;
-            }
-            catch (NotFoundException e) {
-                log.warn("Docker image {} not found during cleanup", oldestImage);
-            }
+        // Get a sorted list of images by last build date
+        // We cast to ArrayList since we need the list to be mutable
+        List<Map.Entry<String, ZonedDateTime>> sortedImages = new java.util.ArrayList<>(dockerImageCleanupInfo.entrySet().stream().sorted(Map.Entry.comparingByValue()).toList());
+
+        if (sortedImages.isEmpty()) {
+            return;
         }
 
-        return false;
+        int maxDeleteAttempts = 5;
+        int maxTotalAttempts = sortedImages.size(); // We limit the total number of attempts to avoid infinite loops
+        Map.Entry<String, ZonedDateTime> oldestImage = sortedImages.getFirst();
+        while (oldestImage != null && usableSpace < threshold && maxDeleteAttempts > 0 && maxTotalAttempts > 0) {
+            if (unusedImages.contains(oldestImage.getKey())) {
+                log.info("Deleting docker image {}", oldestImage.getKey());
+                try {
+                    dockerClient.removeImageCmd(oldestImage.getKey()).exec();
+                    usableSpace = file.getUsableSpace();
+                    maxDeleteAttempts--;
+                }
+                catch (NotFoundException e) {
+                    log.warn("Docker image {} not found during cleanup", oldestImage.getKey());
+                }
+            }
+            sortedImages.remove(oldestImage);
+            oldestImage = sortedImages.getFirst();
+            maxTotalAttempts--;
+        }
     }
 
     /**
