@@ -341,7 +341,7 @@ public class LocalCIDockerService {
                 }
             }
             catch (Exception e) {
-                log.error("Error while checking disk space for Docker image cleanup", e);
+                log.error("Error while checking disk space for Docker image cleanup: {}", e.getMessage(), e);
             }
         }
     }
