@@ -182,12 +182,11 @@ jacocoTestReport {
 jacocoTestCoverageVerification {
     violationRules {
         rule {
-            // TODO: Temporarily increased, until Iris code editor feature is removed
             limit {
                 counter = "INSTRUCTION"
                 value = "COVEREDRATIO"
                 // TODO: in the future the following value should become higher than 0.92
-                minimum = 0.88
+                minimum = 0.89
             }
             limit {
                 counter = "CLASS"
