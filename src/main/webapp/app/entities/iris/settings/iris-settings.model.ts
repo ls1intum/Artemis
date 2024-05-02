@@ -1,5 +1,5 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
-import { IrisChatSubSettings, IrisCodeEditorSubSettings, IrisCompetencyGenerationSubSettings, IrisHestiaSubSettings } from 'app/entities/iris/settings/iris-sub-settings.model';
+import { IrisChatSubSettings, IrisCompetencyGenerationSubSettings, IrisHestiaSubSettings } from 'app/entities/iris/settings/iris-sub-settings.model';
 
 export enum IrisSettingsType {
     GLOBAL = 'global',
@@ -12,7 +12,6 @@ export abstract class IrisSettings implements BaseEntity {
     type: IrisSettingsType;
     irisChatSettings?: IrisChatSubSettings;
     irisHestiaSettings?: IrisHestiaSubSettings;
-    irisCodeEditorSettings?: IrisCodeEditorSubSettings;
     irisCompetencyGenerationSettings?: IrisCompetencyGenerationSubSettings;
 }
 
@@ -22,11 +21,9 @@ export class IrisGlobalSettings implements IrisSettings {
     currentVersion?: number;
     enableAutoUpdateChat?: boolean;
     enableAutoUpdateHestia?: boolean;
-    enableAutoUpdateCodeEditor?: boolean;
     enableAutoUpdateCompetencyGeneration?: boolean;
     irisChatSettings?: IrisChatSubSettings;
     irisHestiaSettings?: IrisHestiaSubSettings;
-    irisCodeEditorSettings?: IrisCodeEditorSubSettings;
     irisCompetencyGenerationSettings?: IrisCompetencyGenerationSubSettings;
 }
 
@@ -36,7 +33,6 @@ export class IrisCourseSettings implements IrisSettings {
     courseId?: number;
     irisChatSettings?: IrisChatSubSettings;
     irisHestiaSettings?: IrisHestiaSubSettings;
-    irisCodeEditorSettings?: IrisCodeEditorSubSettings;
     irisCompetencyGenerationSettings?: IrisCompetencyGenerationSubSettings;
 }
 
