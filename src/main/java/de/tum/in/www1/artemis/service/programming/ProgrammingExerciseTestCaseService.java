@@ -2,7 +2,12 @@ package de.tum.in.www1.artemis.service.programming;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,8 +17,10 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.Visibility;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
@@ -117,22 +124,21 @@ public class ProgrammingExerciseTestCaseService {
     /**
      * Reset all tests to their initial configuration
      *
-     * @param exerciseId        to find exercise test cases
-     * @param defaultVisibility of the test cases
+     * @param programmingExercise that shall be reset
      * @return test cases that have been reset
      */
-    public List<ProgrammingExerciseTestCase> reset(Long exerciseId, Visibility defaultVisibility) {
-        Set<ProgrammingExerciseTestCase> testCases = this.testCaseRepository.findByExerciseId(exerciseId);
+    public List<ProgrammingExerciseTestCase> reset(ProgrammingExercise programmingExercise) {
+        Set<ProgrammingExerciseTestCase> testCases = this.testCaseRepository.findByExerciseId(programmingExercise.getId());
         for (ProgrammingExerciseTestCase testCase : testCases) {
             testCase.setWeight(1.0);
             testCase.setBonusMultiplier(1.0);
             testCase.setBonusPoints(0.0);
-            testCase.setVisibility(defaultVisibility);
+            testCase.setVisibility(programmingExercise.getDefaultTestCaseVisibility());
         }
         List<ProgrammingExerciseTestCase> updatedTestCases = testCaseRepository.saveAll(testCases);
 
         // The tests' weights were updated. We use this flag to inform the instructor about outdated student results.
-        programmingTriggerService.setTestCasesChangedAndTriggerTestCaseUpdate(exerciseId);
+        programmingTriggerService.setTestCasesChangedAndTriggerTestCaseUpdate(programmingExercise.getId());
         return updatedTestCases;
     }
 

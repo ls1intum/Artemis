@@ -98,7 +98,7 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationLo
 
         assertThat(programmingExercise.getTestCasesChanged()).isFalse();
 
-        testCaseService.reset(programmingExercise.getId(), programmingExercise.getDefaultTestCaseVisibility());
+        testCaseService.reset(programmingExercise);
 
         Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
         ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository
