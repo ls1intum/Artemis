@@ -381,7 +381,7 @@ async function startAssessing(
     exerciseAssessment: ExerciseAssessmentDashboardPage,
 ) {
     await examManagement.openAssessmentDashboard(courseID, examID, timeout);
-    await courseAssessment.clickExerciseDashboardButton(0);
+    await courseAssessment.clickExerciseDashboardButton();
     await exerciseAssessment.clickHaveReadInstructionsButton();
     await exerciseAssessment.clickStartNewAssessment();
     exerciseAssessment.getLockedMessage();
