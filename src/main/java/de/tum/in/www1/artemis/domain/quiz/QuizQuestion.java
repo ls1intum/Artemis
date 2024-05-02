@@ -6,6 +6,8 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.enumeration.ScoringType;
@@ -188,12 +190,15 @@ public abstract class QuizQuestion extends DomainObject {
         this.quizGroupId = quizGroupId;
     }
 
+    @JsonGetter("content")
     public Object getContent() {
         return content;
     }
 
+    @JsonSetter("content")
     public void setContent(Object content) {
         this.content = content;
+        updateSubclassField(content);
     }
 
     @JsonProperty(value = "quizGroup", access = JsonProperty.Access.READ_ONLY)
@@ -283,4 +288,12 @@ public abstract class QuizQuestion extends DomainObject {
      *
      */
     public abstract void initializeStatistic();
+
+    public void updateSubclassField(Object object) {
+        ObjectMapper mapper = new ObjectMapper();
+        if (this instanceof MultipleChoiceQuestion) {
+            ((MultipleChoiceQuestion) this).setAnswerOptions(mapper.convertValue(object, new TypeReference<>() {
+            }));
+        }
+    }
 }

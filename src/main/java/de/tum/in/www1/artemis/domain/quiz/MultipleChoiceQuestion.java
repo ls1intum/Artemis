@@ -7,8 +7,6 @@ import jakarta.persistence.*;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.enumeration.ScoringType;
 import de.tum.in.www1.artemis.domain.quiz.scoring.*;
@@ -30,9 +28,7 @@ public class MultipleChoiceQuestion extends QuizQuestion {
     private boolean singleChoice = false;
 
     public List<AnswerOptionDTO> getAnswerOptions() {
-        ObjectMapper mapper = new ObjectMapper();
-        return mapper.convertValue(this.getContent(), new TypeReference<>() {
-        });
+        return answerOptions;
     }
 
     public void setAnswerOptions(List<AnswerOptionDTO> answerOptions) {
