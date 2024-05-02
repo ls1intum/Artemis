@@ -17,11 +17,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.repository.metrics.ExerciseMetricsRepository;
-import de.tum.in.www1.artemis.repository.metrics.LectureUnitMetricsRepository;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.ExerciseInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.ExerciseStudentMetricsDTO;
-import de.tum.in.www1.artemis.web.rest.dto.metrics.LectureUnitInformationDTO;
-import de.tum.in.www1.artemis.web.rest.dto.metrics.LectureUnitStudentMetricsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.ResourceTimestampDTO;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.ScoreDTO;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.StudentMetricsDTO;
@@ -36,11 +33,8 @@ public class MetricsService {
 
     private final ExerciseMetricsRepository exerciseMetricsRepository;
 
-    private final LectureUnitMetricsRepository lectureUnitMetricsRepository;
-
-    public MetricsService(ExerciseMetricsRepository exerciseMetricsRepository, LectureUnitMetricsRepository lectureUnitMetricsRepository) {
+    public MetricsService(ExerciseMetricsRepository exerciseMetricsRepository) {
         this.exerciseMetricsRepository = exerciseMetricsRepository;
-        this.lectureUnitMetricsRepository = lectureUnitMetricsRepository;
     }
 
     /**
@@ -52,8 +46,7 @@ public class MetricsService {
      */
     public StudentMetricsDTO getStudentCourseMetrics(long userId, long courseId) {
         final var exerciseMetricsDTO = getStudentExerciseMetrics(userId, courseId);
-        final var lectureUnitMetricsDTO = getStudentLectureUnitMetrics(userId, courseId);
-        return new StudentMetricsDTO(exerciseMetricsDTO, lectureUnitMetricsDTO);
+        return new StudentMetricsDTO(exerciseMetricsDTO);
     }
 
     /**
@@ -82,31 +75,9 @@ public class MetricsService {
                 dto.timestamp());
         final var averageLatestSubmissionMap = latestSubmissions.stream().collect(groupingBy(ResourceTimestampDTO::id, averagingDouble(relativeTime)));
 
-        final var exerciseStart = exerciseMetricsRepository.findExerciseStartForUser(exerciseIds, userId);
-        final var exerciseStartMap = exerciseStart.stream().collect(toMap(ResourceTimestampDTO::id, ResourceTimestampDTO::timestamp));
-
         final var submissionTimestamps = exerciseMetricsRepository.findSubmissionTimestampsForUser(exerciseIds, userId);
         final var submissionTimestampMap = submissionTimestamps.stream().collect(groupingBy(SubmissionTimestampDTO::exerciseId, mapping(identity(), toSet())));
 
-        return new ExerciseStudentMetricsDTO(exerciseInfoMap, averageScoreMap, averageLatestSubmissionMap, latestSubmissionMap, exerciseStartMap, submissionTimestampMap);
-    }
-
-    /**
-     * Get the lecture unit metrics for a student in a course.
-     *
-     * @param userId   the id of the student
-     * @param courseId the id of the course
-     * @return the metrics for the student in the course
-     */
-    public LectureUnitStudentMetricsDTO getStudentLectureUnitMetrics(long userId, long courseId) {
-        final var lectureUnitInfo = lectureUnitMetricsRepository.findAllLectureUnitInformationByCourseId(courseId);
-
-        // generate map and remove lecture units that are not yet released
-        final Predicate<LectureUnitInformationDTO> released = lu -> lu.releaseDate().isBefore(ZonedDateTime.now());
-        final var lectureUnitInfoMap = lectureUnitInfo.stream().filter(released).collect(toMap(LectureUnitInformationDTO::id, identity()));
-
-        final var lectureUnitIds = lectureUnitInfoMap.keySet();
-
-        return new LectureUnitStudentMetricsDTO(lectureUnitInfoMap);
+        return new ExerciseStudentMetricsDTO(exerciseInfoMap, averageScoreMap, averageLatestSubmissionMap, latestSubmissionMap, submissionTimestampMap);
     }
 }

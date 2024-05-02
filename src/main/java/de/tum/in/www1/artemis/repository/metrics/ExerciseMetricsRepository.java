@@ -97,28 +97,6 @@ public interface ExerciseMetricsRepository extends JpaRepository<Exercise, Long>
     Set<ResourceTimestampDTO> findLatestSubmissions(@Param("exerciseIds") Set<Long> exerciseIds);
 
     /**
-     * Get the timestamps when the user started participating in the exercise.
-     *
-     * @param exerciseIds the ids of the exercises
-     * @param userId      the id of the user
-     * @return the start time of the exercises for the user
-     */
-    @Query("""
-            SELECT new de.tum.in.www1.artemis.web.rest.dto.metrics.ResourceTimestampDTO(se.resourceId, se.timestamp)
-            FROM  ScienceEvent se
-            WHERE se.resourceId IN :exerciseIds
-                AND se.timestamp = (
-                    SELECT MIN(se2.timestamp)
-                    FROM ScienceEvent se2
-                        LEFT JOIN User u ON se.identity = u.login
-                    WHERE se2.resourceId = se.resourceId
-                        AND se2.type = de.tum.in.www1.artemis.domain.science.ScienceEventType.EXERCISE__OPEN
-                        AND u.id = :userId
-                )
-            """)
-    Set<ResourceTimestampDTO> findExerciseStartForUser(@Param("exerciseIds") Set<Long> exerciseIds, @Param("userId") long userId);
-
-    /**
      * Get the submission timestamps for a user in a set of exercises.
      *
      * @param exerciseIds the ids of the exercises
