@@ -439,6 +439,28 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         }
     }
 
+    public Optional<File> exportStudentRepository(long exerciseId, ProgrammingExerciseStudentParticipation participation, List<String> exportErrors) {
+        var exerciseOrEmpty = loadExerciseForRepoExport(exerciseId, exportErrors);
+        if (exerciseOrEmpty.isEmpty()) {
+            return Optional.empty();
+        }
+        var programmingExercise = exerciseOrEmpty.get();
+        var blankExportOptions = new RepositoryExportOptionsDTO();
+        Path outputDirectory = fileService.getTemporaryUniquePathWithoutPathCreation(repoDownloadClonePath, 5);
+        try {
+            Path zipFile = createZipForRepositoryWithParticipation(programmingExercise, participation, blankExportOptions, outputDirectory, outputDirectory);
+            if (zipFile != null) {
+                return Optional.of(zipFile.toFile());
+            }
+        }
+        catch (IOException e) {
+            String error = "Failed to export the student repository of programming exercise " + exerciseId + " and participation " + participation.getId();
+            log.error(error);
+            exportErrors.add(error);
+        }
+        return Optional.empty();
+    }
+
     private Optional<ProgrammingExercise> loadExerciseForRepoExport(long exerciseId, List<String> exportErrors) {
         var exerciseOrEmpty = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(exerciseId);
         if (exerciseOrEmpty.isEmpty()) {

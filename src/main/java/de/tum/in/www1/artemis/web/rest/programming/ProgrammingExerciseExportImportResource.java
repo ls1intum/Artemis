@@ -527,13 +527,18 @@ public class ProgrammingExerciseExportImportResource {
     public ResponseEntity<Resource> exportUserRepository(@PathVariable long exerciseId, @PathVariable long participationId) throws IOException {
         var programmingExercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndLegalSubmissionsElseThrow(exerciseId);
         var studentParticipation = programmingExercise.getStudentParticipations().stream().filter(p -> p.getId().equals(participationId))
-                .map(p -> (ProgrammingExerciseStudentParticipation) p).findFirst().orElseThrow(); // TODO throw a reasonable exception
+                .map(p -> (ProgrammingExerciseStudentParticipation) p).findFirst()
+                .orElseThrow(() -> new EntityNotFoundException("No student participation with id " + participationId + " was found for programming exercise " + exerciseId));
         // TODO: exam exercise? access to participation?
         if (!authCheckService.isOwnerOfParticipation(studentParticipation)) {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
         }
-        // TODO: should we exclude the .git folder? it might have been relevant for solutions to do so, but for a user repo?
-        // also, we probably don't want to reuse this feature. it's a lot more powerful than what we need for this endpoint
-        return provideZipForParticipations(List.of(studentParticipation), programmingExercise, new RepositoryExportOptionsDTO());
+        List<String> exportErrors = new ArrayList<>();
+        long start = System.nanoTime();
+        Optional<File> zipFile = programmingExerciseExportService.exportStudentRepository(exerciseId, studentParticipation, exportErrors);
+        if (zipFile.isEmpty()) {
+            throw new InternalServerErrorException("Could not export the user repository of participation " + participationId + ". Logged errors: " + exportErrors);
+        }
+        return returnZipFileForRepositoryExport(zipFile, RepositoryType.USER.getName(), programmingExercise, start);
     }
 }
