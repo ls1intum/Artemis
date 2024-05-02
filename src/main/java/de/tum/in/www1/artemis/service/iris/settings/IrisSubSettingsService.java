@@ -20,9 +20,9 @@ import de.tum.in.www1.artemis.domain.iris.settings.IrisSettings;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSettingsType;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettings;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.dto.iris.IrisCombinedChatSubSettingsDTO;
-import de.tum.in.www1.artemis.service.dto.iris.IrisCombinedCompetencyGenerationSubSettingsDTO;
-import de.tum.in.www1.artemis.service.dto.iris.IrisCombinedHestiaSubSettingsDTO;
+import de.tum.in.www1.artemis.service.iris.dto.IrisCombinedChatSubSettingsDTO;
+import de.tum.in.www1.artemis.service.iris.dto.IrisCombinedCompetencyGenerationSubSettingsDTO;
+import de.tum.in.www1.artemis.service.iris.dto.IrisCombinedHestiaSubSettingsDTO;
 
 /**
  * Service for handling {@link IrisSubSettings} objects.
