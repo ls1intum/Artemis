@@ -7,10 +7,10 @@ import { CompetencyTaxonomy } from 'app/entities/competency.model';
 import { Observable } from 'rxjs';
 
 @Component({
-    selector: 'jhi-standardized-competency-detail',
-    templateUrl: './standardized-competency-detail.component.html',
+    selector: 'jhi-standardized-competency-edit',
+    templateUrl: './standardized-competency-edit.component.html',
 })
-export class StandardizedCompetencyDetailComponent {
+export class StandardizedCompetencyEditComponent {
     // values for the knowledge area select
     @Input() knowledgeAreas: KnowledgeArea[] = [];
     @Input({ required: true }) set competency(competency: StandardizedCompetencyDTO) {
