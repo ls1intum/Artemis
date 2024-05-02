@@ -62,16 +62,6 @@ public class IrisExerciseSettings extends IrisSettings {
     }
 
     @Override
-    public IrisCodeEditorSubSettings getIrisCodeEditorSettings() {
-        return null;
-    }
-
-    @Override
-    public void setIrisCodeEditorSettings(IrisCodeEditorSubSettings irisCodeEditorSettings) {
-
-    }
-
-    @Override
     public IrisCompetencyGenerationSubSettings getIrisCompetencyGenerationSettings() {
         return null;
     }
