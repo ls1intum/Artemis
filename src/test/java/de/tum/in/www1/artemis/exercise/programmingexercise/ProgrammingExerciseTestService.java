@@ -1838,7 +1838,7 @@ public class ProgrammingExerciseTestService {
         // Mock error when exporting a participation
         doThrow(exceptionToThrow).when(gitService).getOrCheckoutRepository(eq(participation.getVcsRepositoryUri()), any(Path.class), anyBoolean());
 
-        course = courseRepository.findByIdWithExercisesAndLecturesElseThrow(course.getId());
+        course = courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(course.getId());
         List<String> errors = new ArrayList<>();
         var optionalExportedCourse = courseExamExportService.exportCourse(course, courseArchivesDirPath, errors);
         assertThat(optionalExportedCourse).isPresent();
