@@ -20,11 +20,11 @@ const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     styleUrls: ['../course-overview.scss'],
 })
 export class CourseLecturesComponent implements OnInit, OnDestroy {
-    private courseId: number;
     private paramSubscription: Subscription;
     private parentParamSubscription: Subscription;
     private courseUpdatesSubscription: Subscription;
     course?: Course;
+    courseId: number;
 
     lectureSelected: boolean = true;
     sidebarData: SidebarData;
@@ -93,7 +93,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     }
 
     getLastSelectedLecture(): string | null {
-        return sessionStorage.getItem('sidebar.lastSelectedItem.' + 'lecture');
+        return sessionStorage.getItem('sidebar.lastSelectedItem.lecture.byCourse.' + this.courseId);
     }
 
     ngOnDestroy(): void {

@@ -7,20 +7,21 @@ services:
         image: mcr.microsoft.com/playwright:v1.40.0-jammy
         pull_policy: if_not_present
         environment:
-            BASE_URL: "https://artemis-nginx"
-            ADMIN_USERNAME: "${bamboo_artemis_admin_username}"
-            ADMIN_PASSWORD: "${bamboo_artemis_admin_password}"
-            PLAYWRIGHT_USERNAME_TEMPLATE: "${bamboo_playwright_username_template}"
-            PLAYWRIGHT_PASSWORD_TEMPLATE: "${bamboo_playwright_password_template}"
-            ALLOW_GROUP_CUSTOMIZATION: "true"
-            STUDENT_GROUP_NAME: "artemis-e2etest-students"
-            TUTOR_GROUP_NAME: "artemis-e2etest-tutors"
-            EDITOR_GROUP_NAME: "artemis-e2etest-editors"
-            INSTRUCTOR_GROUP_NAME: "artemis-e2etest-instructors"
-            CREATE_USERS: "${bamboo_playwright_create_users}"
-            TEST_TIMEOUT_SECONDS: "${bamboo_test_timeout_seconds}"
-            TEST_RETRIES: "${bamboo_test_retries}"
-            TEST_WORKER_PROCESSES: "${bamboo_test_worker_processes}"
+            CI: 'true'
+            BASE_URL: 'https://artemis-nginx'
+            ADMIN_USERNAME: '${bamboo_artemis_admin_username}'
+            ADMIN_PASSWORD: '${bamboo_artemis_admin_password}'
+            PLAYWRIGHT_USERNAME_TEMPLATE: '${bamboo_playwright_username_template}'
+            PLAYWRIGHT_PASSWORD_TEMPLATE: '${bamboo_playwright_password_template}'
+            ALLOW_GROUP_CUSTOMIZATION: 'true'
+            STUDENT_GROUP_NAME: 'artemis-e2etest-students'
+            TUTOR_GROUP_NAME: 'artemis-e2etest-tutors'
+            EDITOR_GROUP_NAME: 'artemis-e2etest-editors'
+            INSTRUCTOR_GROUP_NAME: 'artemis-e2etest-instructors'
+            CREATE_USERS: '${bamboo_playwright_create_users}'
+            TEST_TIMEOUT_SECONDS: '${bamboo_test_timeout_seconds}'
+            TEST_RETRIES: '${bamboo_test_retries}'
+            TEST_WORKER_PROCESSES: '${bamboo_test_worker_processes}'
         command: sh -c "cd /app/artemis/src/test/playwright && chmod 777 /root && npm ci && npm run playwright:test"
         volumes:
             - ..:/app/artemis
@@ -32,5 +33,5 @@ services:
 
 networks:
     artemis:
-        driver: "bridge"
+        driver: 'bridge'
         name: artemis

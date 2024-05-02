@@ -23,8 +23,22 @@
     (useAsExampleSubmission)="useStudentSubmissionAsExampleSubmission()"
 >
     @if (submission) {
-        @if (hasAutomaticFeedback && isAssessor && !result?.completionDate) {
+        @if (hasAutomaticFeedback && isAssessor && !result?.completionDate && !isFeedbackSuggestionsEnabled) {
             <div class="alert alert-info" jhiTranslate="artemisApp.modelingAssessmentEditor.automaticAssessmentAvailable"></div>
+        }
+        @if (hasAutomaticFeedback && isAssessor && !result?.completionDate && isFeedbackSuggestionsEnabled) {
+            <div class="alert alert-info">
+                <span jhiTranslate="artemisApp.modelingAssessmentEditor.generativeAIAssessmentAvailable"></span>
+                <span style="float: right" [ngbTooltip]="'artemisApp.modelingAssessmentEditor.generativeAIAssessmentInfo' | artemisTranslate" tooltipClass="tooltip-wide">
+                    <fa-icon [icon]="faQuestionCircle" size="lg" />
+                </span>
+            </div>
+        }
+        @if (isLoading && isFeedbackSuggestionsEnabled) {
+            <div class="alert">
+                <fa-icon [icon]="faCircleNotch" size="lg" [spin]="true" class="me-2" />
+                <span jhiTranslate="artemisApp.modelingAssessmentEditor.automaticAssessmentLoading"></span>
+            </div>
         }
         <div class="editor-container flex-grow-1">
             @if (submission) {
@@ -52,9 +66,12 @@
         <div class="row mt-3">
             <jhi-unreferenced-feedback
                 [(feedbacks)]="unreferencedFeedback"
+                [feedbackSuggestions]="unreferencedFeedbackSuggestions"
                 (feedbacksChange)="validateFeedback()"
                 [readOnly]="readOnly"
                 [highlightDifferences]="highlightDifferences"
+                (onAcceptSuggestion)="removeSuggestion($event)"
+                (onDiscardSuggestion)="removeSuggestion($event)"
             />
             @if ((hasAutomaticFeedback || highlightMissingFeedback) && !result?.completionDate) {
                 <div class="col-md-6">
@@ -86,8 +103,22 @@
     }
 </jhi-assessment-layout>
 <ng-template #assessment>
-    @if (hasAutomaticFeedback && isAssessor && !result?.completionDate) {
+    @if (hasAutomaticFeedback && isAssessor && !result?.completionDate && !isFeedbackSuggestionsEnabled) {
         <div class="alert alert-info" jhiTranslate="artemisApp.modelingAssessmentEditor.automaticAssessmentAvailable"></div>
+    }
+    @if (hasAutomaticFeedback && isAssessor && !result?.completionDate && isFeedbackSuggestionsEnabled) {
+        <div class="alert alert-info">
+            <span jhiTranslate="artemisApp.modelingAssessmentEditor.generativeAIAssessmentAvailable"></span>
+            <span style="float: right" [ngbTooltip]="'artemisApp.modelingAssessmentEditor.generativeAIAssessmentInfo' | artemisTranslate" tooltipClass="tooltip-wide">
+                <fa-icon [icon]="faQuestionCircle" size="lg" />
+            </span>
+        </div>
+    }
+    @if (isLoading && isFeedbackSuggestionsEnabled) {
+        <div class="alert">
+            <fa-icon [icon]="faCircleNotch" size="lg" [spin]="true" class="me-2" />
+            <span jhiTranslate="artemisApp.modelingAssessmentEditor.automaticAssessmentLoading"></span>
+        </div>
     }
     <div class="editor-container flex-grow-1">
         @if (submission) {

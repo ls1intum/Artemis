@@ -13,5 +13,5 @@ import de.tum.in.www1.artemis.domain.competency.StandardizedCompetency;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record StandardizedCompetencyRequestDTO(@NotNull @Size(min = 1, max = StandardizedCompetency.MAX_TITLE_LENGTH) String title,
-        @Size(max = StandardizedCompetency.MAX_DESCRIPTION_LENGTH) String description, CompetencyTaxonomy taxonomy, String version, @NotNull Long knowledgeAreaId, Long sourceId) {
+        @Size(max = StandardizedCompetency.MAX_DESCRIPTION_LENGTH) String description, CompetencyTaxonomy taxonomy, @NotNull Long knowledgeAreaId, Long sourceId) {
 }

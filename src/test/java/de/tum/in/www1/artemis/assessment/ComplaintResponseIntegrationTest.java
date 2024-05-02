@@ -17,14 +17,27 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.course.CourseUtilService;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Complaint;
+import de.tum.in.www1.artemis.domain.ComplaintResponse;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ComplaintRepository;
+import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.dto.ComplaintAction;
+import de.tum.in.www1.artemis.service.dto.ComplaintResponseUpdateDTO;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
 class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -122,10 +135,13 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
 
     // === TESTING SECURITY ===
     private void testAllPreAuthorize() throws Exception {
-        request.postWithoutLocation("/api/complaint-responses/complaint/" + complaint.getId() + "/create-lock", null, HttpStatus.FORBIDDEN, null);
-        request.postWithoutLocation("/api/complaint-responses/complaint/" + complaint.getId() + "/refresh-lock", null, HttpStatus.FORBIDDEN, null);
-        request.delete("/api/complaint-responses/complaint/" + complaint.getId() + "/remove-lock", HttpStatus.FORBIDDEN);
-        request.put("/api/complaint-responses/complaint/" + complaint.getId() + "/resolve", new ComplaintResponse(), HttpStatus.FORBIDDEN);
+        request.postWithoutLocation("/api/complaints/" + complaint.getId() + "/response", null, HttpStatus.FORBIDDEN, null);
+        request.delete("/api/complaints/" + complaint.getId() + "/response", HttpStatus.FORBIDDEN);
+        ComplaintResponseUpdateDTO complaintResponseUpdateResolve = new ComplaintResponseUpdateDTO(null, null, ComplaintAction.RESOLVE_COMPLAINT);
+        ComplaintResponseUpdateDTO complaintResponseUpdateRefresh = new ComplaintResponseUpdateDTO(null, null, ComplaintAction.REFRESH_LOCK);
+
+        request.patch("/api/complaints/" + complaint.getId() + "/response", complaintResponseUpdateResolve, HttpStatus.FORBIDDEN);
+        request.patch("/api/complaints/" + complaint.getId() + "/response", complaintResponseUpdateRefresh, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -139,7 +155,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void createLock_noFailureCondition_shouldCreateEmptyComplaintResponse() throws Exception {
-        request.postWithoutLocation("/api/complaint-responses/complaint/" + complaint.getId() + "/create-lock", null, HttpStatus.CREATED, null);
+        request.postWithoutLocation("/api/complaints/" + complaint.getId() + "/response", null, HttpStatus.CREATED, null);
         Optional<ComplaintResponse> optionalComplaintResponse = complaintResponseRepository.findByComplaint_Id(complaint.getId());
         assertThat(optionalComplaintResponse).isPresent();
         ComplaintResponse complaintResponse = optionalComplaintResponse.get();
@@ -153,13 +169,15 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void createLock_sameAsAssessor_shouldThrowAccessForbiddenException() throws Exception {
-        request.postWithoutLocation("/api/complaint-responses/complaint/" + complaint.getId() + "/create-lock", null, HttpStatus.FORBIDDEN, null);
+        ComplaintResponseUpdateDTO complaintResponseUpdate = new ComplaintResponseUpdateDTO(null, null, ComplaintAction.RESOLVE_COMPLAINT);
+        request.patch("/api/complaints/" + complaint.getId() + "/response", complaintResponseUpdate, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void createLock_complaintDoesNotExistInDb_shouldThrowIllegalArgumentException() throws Exception {
-        request.postWithoutLocation("/api/complaint-responses/complaint/" + 0 + "/create-lock", null, HttpStatus.INTERNAL_SERVER_ERROR, null);
+        ComplaintResponseUpdateDTO complaintResponseUpdate = new ComplaintResponseUpdateDTO(null, null, ComplaintAction.RESOLVE_COMPLAINT);
+        request.patch("/api/complaints/" + 0 + "/response", complaintResponseUpdate, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test
@@ -167,7 +185,8 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     void createLock_alreadyResolved_shouldThrowIllegalArgumentException() throws Exception {
         complaint.setAccepted(true);
         complaint = complaintRepository.saveAndFlush(complaint);
-        request.postWithoutLocation("/api/complaint-responses/complaint/" + complaint.getId() + "/create-lock", null, HttpStatus.INTERNAL_SERVER_ERROR, null);
+        ComplaintResponseUpdateDTO complaintResponseUpdate = new ComplaintResponseUpdateDTO(null, null, ComplaintAction.RESOLVE_COMPLAINT);
+        request.patch("/api/complaints/" + complaint.getId() + "/response", complaintResponseUpdate, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test
@@ -176,7 +195,8 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
         ComplaintResponse complaintResponse = new ComplaintResponse();
         complaintResponse.setComplaint(complaint);
         complaintResponseRepository.saveAndFlush(complaintResponse);
-        request.postWithoutLocation("/api/complaint-responses/complaint/" + complaint.getId() + "/create-lock", null, HttpStatus.INTERNAL_SERVER_ERROR, null);
+        ComplaintResponseUpdateDTO complaintResponseUpdate = new ComplaintResponseUpdateDTO(null, null, ComplaintAction.RESOLVE_COMPLAINT);
+        request.patch("/api/complaints/" + complaint.getId() + "/response", complaintResponseUpdate, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     // === TESTING REFRESH LOCK ===
@@ -186,7 +206,9 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     void refreshLock_noFailureCondition_shouldRefreshLock() throws Exception {
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor2", true);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isFalse();
-        request.postWithoutLocation("/api/complaint-responses/complaint/" + complaint.getId() + "/refresh-lock", null, HttpStatus.CREATED, null);
+
+        ComplaintResponseUpdateDTO complaintResponseUpdate = new ComplaintResponseUpdateDTO(null, null, ComplaintAction.REFRESH_LOCK);
+        request.patch("/api/complaints/" + complaint.getId() + "/response", complaintResponseUpdate, HttpStatus.OK);
         Constants.COMPLAINT_LOCK_DURATION_IN_MINUTES = 5;
         assertThatLockWasReplaced(initialLockComplaintResponse, TEST_PREFIX + "tutor3");
     }
@@ -196,7 +218,8 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     void refreshLock_LockActiveBUTInstructor_shouldRefreshLock() throws Exception {
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor2", false);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isTrue();
-        request.postWithoutLocation("/api/complaint-responses/complaint/" + complaint.getId() + "/refresh-lock", null, HttpStatus.CREATED, null);
+        ComplaintResponseUpdateDTO complaintResponseUpdate = new ComplaintResponseUpdateDTO(null, null, ComplaintAction.REFRESH_LOCK);
+        request.patch("/api/complaints/" + complaint.getId() + "/response", complaintResponseUpdate, HttpStatus.OK);
         assertThatLockWasReplaced(initialLockComplaintResponse, TEST_PREFIX + "instructor1");
     }
 
@@ -205,7 +228,8 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     void refreshLock_LockActiveBUTInitialCreatorOfLock_shouldRefreshLock() throws Exception {
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor2", false);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isTrue();
-        request.postWithoutLocation("/api/complaint-responses/complaint/" + complaint.getId() + "/refresh-lock", null, HttpStatus.CREATED, null);
+        ComplaintResponseUpdateDTO complaintResponseUpdate = new ComplaintResponseUpdateDTO(null, null, ComplaintAction.REFRESH_LOCK);
+        request.patch("/api/complaints/" + complaint.getId() + "/response", complaintResponseUpdate, HttpStatus.OK);
         assertThatLockWasReplaced(initialLockComplaintResponse, TEST_PREFIX + "tutor2");
     }
 
@@ -227,7 +251,9 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     void refreshLock_LockStillActive_shouldThrowComplaintResponseLockedException() throws Exception {
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor2", false);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isTrue();
-        request.postWithoutLocation("/api/complaint-responses/complaint/" + complaint.getId() + "/refresh-lock", null, HttpStatus.BAD_REQUEST, null);
+
+        ComplaintResponseUpdateDTO complaintResponseUpdate = new ComplaintResponseUpdateDTO(null, null, ComplaintAction.REFRESH_LOCK);
+        request.patch("/api/complaints/" + complaint.getId() + "/response", complaintResponseUpdate, HttpStatus.BAD_REQUEST);
         // initial lock should still exist
         assertThat(complaintResponseRepository.existsById(initialLockComplaintResponse.getId())).isTrue();
     }
@@ -235,7 +261,8 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor3", roles = "TA")
     void refreshLock_noinitialLockComplaintResponseExists_shouldThrowIllegalArgumentException() throws Exception {
-        request.postWithoutLocation("/api/complaint-responses/complaint/" + complaint.getId() + "/refresh-lock", null, HttpStatus.INTERNAL_SERVER_ERROR, null);
+        ComplaintResponseUpdateDTO complaintResponseUpdate = new ComplaintResponseUpdateDTO(null, null, ComplaintAction.REFRESH_LOCK);
+        request.patch("/api/complaints/" + complaint.getId() + "/response", complaintResponseUpdate, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test
@@ -243,7 +270,8 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     void refreshLock_complaintDoesNotExist_shouldThrowIllegalArgumentException() throws Exception {
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor2", true);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isFalse();
-        request.postWithoutLocation("/api/complaint-responses/complaint/" + 0 + "/refresh-lock", null, HttpStatus.INTERNAL_SERVER_ERROR, null);
+        ComplaintResponseUpdateDTO complaintResponseUpdate = new ComplaintResponseUpdateDTO(null, null, ComplaintAction.REFRESH_LOCK);
+        request.patch("/api/complaints/" + 0 + "/response", complaintResponseUpdate, HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(complaintResponseRepository.existsById(initialLockComplaintResponse.getId())).isTrue();
     }
 
@@ -254,7 +282,8 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isFalse();
         complaint.setAccepted(true);
         complaint = complaintRepository.saveAndFlush(complaint);
-        request.postWithoutLocation("/api/complaint-responses/complaint/" + complaint.getId() + "/refresh-lock", null, HttpStatus.INTERNAL_SERVER_ERROR, null);
+        ComplaintResponseUpdateDTO complaintResponseUpdate = new ComplaintResponseUpdateDTO(null, null, ComplaintAction.REFRESH_LOCK);
+        request.patch("/api/complaints/" + complaint.getId() + "/response", complaintResponseUpdate, HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(complaintResponseRepository.existsById(initialLockComplaintResponse.getId())).isTrue();
     }
 
@@ -263,7 +292,8 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     void refreshLock_sameAsAssessor_shouldThrowAccessForbiddenException() throws Exception {
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor2", true);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isFalse();
-        request.postWithoutLocation("/api/complaint-responses/complaint/" + complaint.getId() + "/refresh-lock", null, HttpStatus.FORBIDDEN, null);
+        ComplaintResponseUpdateDTO complaintResponseUpdate = new ComplaintResponseUpdateDTO(null, null, ComplaintAction.REFRESH_LOCK);
+        request.patch("/api/complaints/" + complaint.getId() + "/response", complaintResponseUpdate, HttpStatus.FORBIDDEN);
         assertThat(complaintResponseRepository.existsById(initialLockComplaintResponse.getId())).isTrue();
     }
 
@@ -274,7 +304,8 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isFalse();
         initialLockComplaintResponse.setSubmittedTime(ZonedDateTime.now());
         complaintResponseRepository.saveAndFlush(initialLockComplaintResponse);
-        request.postWithoutLocation("/api/complaint-responses/complaint/" + complaint.getId() + "/refresh-lock", null, HttpStatus.INTERNAL_SERVER_ERROR, null);
+        ComplaintResponseUpdateDTO complaintResponseUpdate = new ComplaintResponseUpdateDTO(null, null, ComplaintAction.REFRESH_LOCK);
+        request.patch("/api/complaints/" + complaint.getId() + "/response", complaintResponseUpdate, HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(complaintResponseRepository.existsById(initialLockComplaintResponse.getId())).isTrue();
     }
 
@@ -285,7 +316,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     void removeLock_creatorAndLockActive_shouldRemoveLock() throws Exception {
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor2", false);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isTrue();
-        request.delete("/api/complaint-responses/complaint/" + complaint.getId() + "/remove-lock", HttpStatus.OK);
+        request.delete("/api/complaints/" + complaint.getId() + "/response", HttpStatus.OK);
         assertThat(complaintResponseRepository.existsById(initialLockComplaintResponse.getId())).isFalse();
     }
 
@@ -294,7 +325,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     void removeLock_creatorAndLockInactive_shouldRemoveLock() throws Exception {
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor2", true);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isFalse();
-        request.delete("/api/complaint-responses/complaint/" + complaint.getId() + "/remove-lock", HttpStatus.OK);
+        request.delete("/api/complaints/" + complaint.getId() + "/response", HttpStatus.OK);
         assertThat(complaintResponseRepository.existsById(initialLockComplaintResponse.getId())).isFalse();
     }
 
@@ -303,7 +334,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     void removeLock_notCreatorAndLockActive_shouldThrowComplaintResponseLockedException() throws Exception {
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor2", false);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isTrue();
-        request.delete("/api/complaint-responses/complaint/" + complaint.getId() + "/remove-lock", HttpStatus.BAD_REQUEST);
+        request.delete("/api/complaints/" + complaint.getId() + "/response", HttpStatus.BAD_REQUEST);
         assertThat(complaintResponseRepository.existsById(initialLockComplaintResponse.getId())).isTrue();
     }
 
@@ -312,7 +343,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     void removeLock_notCreatorAndLockNotActive_shouldRemoveLock() throws Exception {
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor2", true);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isFalse();
-        request.delete("/api/complaint-responses/complaint/" + complaint.getId() + "/remove-lock", HttpStatus.OK);
+        request.delete("/api/complaints/" + complaint.getId() + "/response", HttpStatus.OK);
         assertThat(complaintResponseRepository.existsById(initialLockComplaintResponse.getId())).isFalse();
     }
 
@@ -321,7 +352,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     void removeLock_ComplaintNotFoundInDatabase_shouldThrowIllegalArgumentException() throws Exception {
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor2", false);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isTrue();
-        request.delete("/api/complaint-responses/complaint/" + 0 + "/remove-lock", HttpStatus.INTERNAL_SERVER_ERROR);
+        request.delete("/api/complaints/" + 0 + "/response", HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(complaintResponseRepository.existsById(initialLockComplaintResponse.getId())).isTrue();
     }
 
@@ -332,14 +363,14 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isTrue();
         complaint.setAccepted(true);
         complaintRepository.saveAndFlush(complaint);
-        request.delete("/api/complaint-responses/complaint/" + complaint.getId() + "/remove-lock", HttpStatus.INTERNAL_SERVER_ERROR);
+        request.delete("/api/complaints/" + complaint.getId() + "/response", HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(complaintResponseRepository.existsById(initialLockComplaintResponse.getId())).isTrue();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void removeLock_noComplaintResponseExists_shouldThrowIllegalArgumentException() throws Exception {
-        request.delete("/api/complaint-responses/complaint/" + complaint.getId() + "/remove-lock", HttpStatus.INTERNAL_SERVER_ERROR);
+        request.delete("/api/complaints/" + complaint.getId() + "/response", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test
@@ -349,7 +380,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isTrue();
         initialLockComplaintResponse.setSubmittedTime(ZonedDateTime.now());
         complaintResponseRepository.saveAndFlush(initialLockComplaintResponse);
-        request.delete("/api/complaint-responses/complaint/" + complaint.getId() + "/remove-lock", HttpStatus.INTERNAL_SERVER_ERROR);
+        request.delete("/api/complaints/" + complaint.getId() + "/response", HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(complaintResponseRepository.existsById(initialLockComplaintResponse.getId())).isTrue();
     }
 
@@ -358,7 +389,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     void removeLock_IsAssessor_shouldThrowAccessForbiddenException() throws Exception {
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor1", false);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isTrue();
-        request.delete("/api/complaint-responses/complaint/" + complaint.getId() + "/remove-lock", HttpStatus.FORBIDDEN);
+        request.delete("/api/complaints/" + complaint.getId() + "/response", HttpStatus.FORBIDDEN);
         assertThat(complaintResponseRepository.existsById(initialLockComplaintResponse.getId())).isTrue();
     }
 
@@ -367,7 +398,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     void removeLock_asInstructor_shouldRemoveLock() throws Exception {
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor2", false);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isTrue();
-        request.delete("/api/complaint-responses/complaint/" + complaint.getId() + "/remove-lock", HttpStatus.OK);
+        request.delete("/api/complaints/" + complaint.getId() + "/response", HttpStatus.OK);
         assertThat(complaintResponseRepository.existsById(initialLockComplaintResponse.getId())).isFalse();
     }
 
@@ -379,10 +410,9 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor2", false);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isTrue();
 
-        initialLockComplaintResponse.setResponseText("Accepted");
-        initialLockComplaintResponse.getComplaint().setAccepted(true);
+        ComplaintResponseUpdateDTO initialLockComplaintResponseUpdated = new ComplaintResponseUpdateDTO("Accepted", true, ComplaintAction.RESOLVE_COMPLAINT);
 
-        request.put("/api/complaint-responses/complaint/" + complaint.getId() + "/resolve", initialLockComplaintResponse, HttpStatus.OK);
+        request.patch("/api/complaints/" + complaint.getId() + "/response", initialLockComplaintResponseUpdated, HttpStatus.OK);
         validateThatComplaintIsResolved(TEST_PREFIX + "tutor2");
     }
 
@@ -394,10 +424,9 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor1", false);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isTrue();
 
-        initialLockComplaintResponse.setResponseText("Accepted");
-        initialLockComplaintResponse.getComplaint().setAccepted(true);
+        ComplaintResponseUpdateDTO initialLockComplaintResponseUpdated = new ComplaintResponseUpdateDTO("Accepted", true, ComplaintAction.RESOLVE_COMPLAINT);
 
-        request.put("/api/complaint-responses/complaint/" + complaint.getId() + "/resolve", initialLockComplaintResponse, HttpStatus.OK);
+        request.patch("/api/complaints/" + complaint.getId() + "/response", initialLockComplaintResponseUpdated, HttpStatus.OK);
         validateThatComplaintIsResolved(TEST_PREFIX + "tutor1");
     }
 
@@ -410,8 +439,10 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
         initialLockComplaintResponse.setResponseText("Accepted");
         initialLockComplaintResponse.getComplaint().setAccepted(true);
         initialLockComplaintResponse.setId(0L);
+        long complaintId = 0L;
 
-        request.put("/api/complaint-responses/complaint/" + complaint.getId() + "/resolve", initialLockComplaintResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        ComplaintResponseUpdateDTO complaintResponseUpdate = new ComplaintResponseUpdateDTO("Accepted", true, ComplaintAction.RESOLVE_COMPLAINT);
+        request.patch("/api/complaints/" + complaintId + "/response", complaintResponseUpdate, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test
@@ -421,13 +452,11 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isTrue();
         initialLockComplaintResponse.setSubmittedTime(ZonedDateTime.now());
         initialLockComplaintResponse.setResponseText("NotEmpty");
-        initialLockComplaintResponse = complaintResponseRepository.saveAndFlush(initialLockComplaintResponse);
+        complaintResponseRepository.saveAndFlush(initialLockComplaintResponse);
 
-        ComplaintResponse complaintResponseToBeUsedInResolve = initialLockComplaintResponse;
-        complaintResponseToBeUsedInResolve.setResponseText("Accepted");
-        complaintResponseToBeUsedInResolve.getComplaint().setAccepted(true);
+        ComplaintResponseUpdateDTO initialLockComplaintResponseUpdated = new ComplaintResponseUpdateDTO("Accepted", true, ComplaintAction.RESOLVE_COMPLAINT);
 
-        request.put("/api/complaint-responses/complaint/" + complaint.getId() + "/resolve", complaintResponseToBeUsedInResolve, HttpStatus.INTERNAL_SERVER_ERROR);
+        request.patch("/api/complaints/" + complaint.getId() + "/response", initialLockComplaintResponseUpdated, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test
@@ -438,10 +467,9 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
         complaint.setAccepted(true);
         complaintRepository.saveAndFlush(complaint);
 
-        initialLockComplaintResponse.setResponseText("Accepted");
-        initialLockComplaintResponse.getComplaint().setAccepted(true);
+        ComplaintResponseUpdateDTO initialLockComplaintResponseUpdated = new ComplaintResponseUpdateDTO("Accepted", true, ComplaintAction.RESOLVE_COMPLAINT);
 
-        request.put("/api/complaint-responses/complaint/" + complaint.getId() + "/resolve", initialLockComplaintResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        request.patch("/api/complaints/" + complaint.getId() + "/response", initialLockComplaintResponseUpdated, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test
@@ -450,10 +478,9 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor2", false);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isTrue();
 
-        initialLockComplaintResponse.setResponseText("Accepted");
-        initialLockComplaintResponse.getComplaint().setAccepted(null);
+        ComplaintResponseUpdateDTO initialLockComplaintResponseUpdated = new ComplaintResponseUpdateDTO("Accepted", null, ComplaintAction.RESOLVE_COMPLAINT);
 
-        request.put("/api/complaint-responses/complaint/" + complaint.getId() + "/resolve", initialLockComplaintResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        request.patch("/api/complaints/" + complaint.getId() + "/response", initialLockComplaintResponseUpdated, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test
@@ -462,10 +489,9 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor2", true);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isFalse();
 
-        initialLockComplaintResponse.setResponseText("Accepted");
-        initialLockComplaintResponse.getComplaint().setAccepted(true);
+        ComplaintResponseUpdateDTO initialLockComplaintResponseUpdated = new ComplaintResponseUpdateDTO("Accepted", true, ComplaintAction.RESOLVE_COMPLAINT);
 
-        request.put("/api/complaint-responses/complaint/" + complaint.getId() + "/resolve", initialLockComplaintResponse, HttpStatus.FORBIDDEN);
+        request.patch("/api/complaints/" + complaint.getId() + "/response", initialLockComplaintResponseUpdated, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -476,10 +502,9 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor1", true);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isFalse();
 
-        initialLockComplaintResponse.setResponseText("Accepted");
-        initialLockComplaintResponse.getComplaint().setAccepted(true);
+        ComplaintResponseUpdateDTO initialLockComplaintResponseUpdated = new ComplaintResponseUpdateDTO("Accepted", true, ComplaintAction.RESOLVE_COMPLAINT);
 
-        request.put("/api/complaint-responses/complaint/" + complaint.getId() + "/resolve", initialLockComplaintResponse, HttpStatus.FORBIDDEN);
+        request.patch("/api/complaints/" + complaint.getId() + "/response", initialLockComplaintResponseUpdated, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -488,10 +513,9 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor2", false);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isTrue();
 
-        initialLockComplaintResponse.setResponseText("Accepted");
-        initialLockComplaintResponse.getComplaint().setAccepted(true);
+        ComplaintResponseUpdateDTO initialLockComplaintResponseUpdated = new ComplaintResponseUpdateDTO("Accepted", true, ComplaintAction.RESOLVE_COMPLAINT);
 
-        request.put("/api/complaint-responses/complaint/" + complaint.getId() + "/resolve", initialLockComplaintResponse, HttpStatus.BAD_REQUEST);
+        request.patch("/api/complaints/" + complaint.getId() + "/response", initialLockComplaintResponseUpdated, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -500,10 +524,9 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor2", false);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isTrue();
 
-        initialLockComplaintResponse.setResponseText("Accepted");
-        initialLockComplaintResponse.getComplaint().setAccepted(true);
+        ComplaintResponseUpdateDTO initialLockComplaintResponseUpdated = new ComplaintResponseUpdateDTO("Accepted", true, ComplaintAction.RESOLVE_COMPLAINT);
 
-        request.put("/api/complaint-responses/complaint/" + complaint.getId() + "/resolve", initialLockComplaintResponse, HttpStatus.OK);
+        request.patch("/api/complaints/" + complaint.getId() + "/response", initialLockComplaintResponseUpdated, HttpStatus.OK);
         validateThatComplaintIsResolved(TEST_PREFIX + "instructor1");
     }
 
@@ -513,10 +536,9 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor2", false);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isTrue();
 
-        initialLockComplaintResponse.setResponseText("Accepted");
-        initialLockComplaintResponse.getComplaint().setAccepted(true);
+        ComplaintResponseUpdateDTO initialLockComplaintResponseUpdated = new ComplaintResponseUpdateDTO("Accepted", true, ComplaintAction.RESOLVE_COMPLAINT);
 
-        request.put("/api/complaint-responses/complaint/" + complaint.getId() + "/resolve", initialLockComplaintResponse, HttpStatus.OK);
+        request.patch("/api/complaints/" + complaint.getId() + "/response", initialLockComplaintResponseUpdated, HttpStatus.OK);
         validateThatComplaintIsResolved(TEST_PREFIX + "tutor2");
     }
 
