@@ -44,6 +44,12 @@ public class PyrisStatusUpdateService {
         }
     }
 
+    /**
+     * Handles the status update of a lecture ingestion job and logs the results for now => will change later
+     *
+     * @param job          the job that is updated
+     * @param statusUpdate the status update
+     */
     public void handleStatusUpdate(PyrisJob job, PyrisTutorChatStatusUpdateDTO statusUpdate) {
         irisChatSessionService.handleStatusUpdate((TutorChatJob) job, statusUpdate);
         var isDone = statusUpdate.stages().stream().map(PyrisStageDTO::state)

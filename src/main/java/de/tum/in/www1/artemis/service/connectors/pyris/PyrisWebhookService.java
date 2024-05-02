@@ -90,8 +90,9 @@ public class PyrisWebhookService {
         var settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, List.of(), artemisBaseUrl);
         List<PyrisLectureUnitWebhookDTO> toUpdateAttachmentUnits = new ArrayList<>();
         for (AttachmentUnit attachmentUnit : attachmentUnits) {
-            if (attachmentUnit.getAttachment().getAttachmentType() == AttachmentType.FILE)
+            if (attachmentUnit.getAttachment().getAttachmentType() == AttachmentType.FILE) {
                 toUpdateAttachmentUnits.add(processAttachments(shouldUpdate, attachmentUnit));
+            }
         }
         if (!toUpdateAttachmentUnits.isEmpty()) {
             executionDTO = new PyrisWebhookLectureIngestionExecutionDTO(toUpdateAttachmentUnits, settingsDTO, List.of());

@@ -17,11 +17,15 @@ import de.tum.in.www1.artemis.service.connectors.pyris.dto.lectureIngestionWebho
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.tutorChat.PyrisTutorChatStatusUpdateDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.job.IngestionWebhookJob;
 import de.tum.in.www1.artemis.service.connectors.pyris.job.TutorChatJob;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
+/**
+ * REST controller for providing Pyris access to Artemis internal data
+ */
 @RestController
 @Profile("iris")
-@RequestMapping("api/public/pyris/")
+@RequestMapping("api/public/pyris/pipelines/")
 public class PyrisStatusUpdateResource {
 
     private final PyrisJobService pyrisJobService;
@@ -33,9 +37,19 @@ public class PyrisStatusUpdateResource {
         this.pyrisStatusUpdateService = pyrisStatusUpdateService;
     }
 
+    /**
+     * {@code POST /api/public/pyris/pipelines/tutor-chat/runs/{runId}/status} : Set the status of a tutor chat job.
+     *
+     * @param runId           the ID of the job
+     * @param statusUpdateDTO the status update
+     * @param request         the HTTP request
+     * @return a {@link ResponseEntity} with status {@code 200 (OK)}
+     * @throws ConflictException        if the run ID in the URL does not match the run ID in the request body
+     * @throws AccessForbiddenException if the token is invalid
+     */
     @PostMapping("tutor-chat/runs/{runId}/status")
     @EnforceNothing // We do token based authentication
-    public ResponseEntity<Void> setStatusOfIngestionJob(@PathVariable String runId, @RequestBody PyrisTutorChatStatusUpdateDTO statusUpdateDTO, HttpServletRequest request) {
+    public ResponseEntity<Void> setStatusOfJob(@PathVariable String runId, @RequestBody PyrisTutorChatStatusUpdateDTO statusUpdateDTO, HttpServletRequest request) {
         var job = pyrisJobService.getJobFromHeader(request);
         if (!job.getId().equals(runId)) {
             throw new ConflictException("Run ID in URL does not match run ID in request body", "Job", "runIdMismatch");
@@ -49,6 +63,16 @@ public class PyrisStatusUpdateResource {
         return ResponseEntity.ok().build();
     }
 
+    /**
+     * {@code POST /api/public/pyris/pipelines/tutor-chat/runs/{runId}/status} : Set the status of a tutor chat job.
+     *
+     * @param runId           the ID of the job
+     * @param statusUpdateDTO the status update
+     * @param request         the HTTP request
+     * @return a {@link ResponseEntity} with status {@code 200 (OK)}
+     * @throws ConflictException        if the run ID in the URL does not match the run ID in the request body
+     * @throws AccessForbiddenException if the token is invalid
+     */
     @PostMapping("webhooks/ingestion/runs/{runId}/status")
     @EnforceNothing
     public ResponseEntity<Void> setStatusOfTutorChatJob(@PathVariable String runId, @RequestBody PyrisLectureIngestionStatusUpdateDTO statusUpdateDTO, HttpServletRequest request) {
