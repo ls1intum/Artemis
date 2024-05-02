@@ -146,6 +146,7 @@ describe('PostComponent', () => {
     it('should have a course-wide context information shown as title prefix in course discussion overview', () => {
         metisServiceGetPageTypeStub.mockReturnValue(PageType.OVERVIEW);
         component.posting = metisPostTechSupport;
+        component.isCommunicationPage = true;
         component.ngOnInit();
         fixture.detectChanges();
         const context = getElement(fixture.debugElement, 'a.linked-context-information');
@@ -156,6 +157,7 @@ describe('PostComponent', () => {
     it('should have a conversation context information shown as title prefix in course discussion overview', () => {
         metisServiceGetPageTypeStub.mockReturnValue(PageType.OVERVIEW);
         component.posting = metisPostLectureUser1;
+        component.isCommunicationPage = true;
         component.ngOnInit();
         fixture.detectChanges();
         const contextLink = getElement(fixture.debugElement, 'a.linked-context-information');

@@ -62,7 +62,8 @@
             },
             "overview": {
                 "title": "Nachrichten",
-                "searchBarDefault": "Suche nach Nachrichten, verwende #, um eine bestimmte Nachricht zu suchen (z.B. #1)",
+                "searchBarDefault": "Suche nach Nachrichten in allen Kanälen",
+                "sortedByDate": "Sortiert nach Datum",
                 "postContextFilter": "Zeige Nachrichten in:",
                 "one_extra_context": "weiterer",
                 "multiple_extra_contexts": "weitere",
