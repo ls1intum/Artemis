@@ -265,7 +265,7 @@ public class CourseResource {
                         "restrictedAthenaModulesAccessCannotChange", true);
             }
             // instructors are not allowed to change the dashboard settings
-            if (existingCourse.getDashboardEnabled() != courseUpdate.getDashboardEnabled()) {
+            if (existingCourse.getStudentCourseAnalyticsDashboardEnabled() != courseUpdate.getStudentCourseAnalyticsDashboardEnabled()) {
                 throw new BadRequestAlertException("You are not allowed to change the dashboard settings of a course", Course.ENTITY_NAME, "dashboardSettingsCannotChange", true);
             }
         }

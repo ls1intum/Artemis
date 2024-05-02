@@ -10,7 +10,7 @@
     -->
     <changeSet id="20240428210130" author="kaancayli">
         <addColumn tableName="course">
-            <column defaultValueBoolean="false" name="dashboard_enabled" type="boolean">
+            <column defaultValueBoolean="false" name="student_course_analytics_dashboard_enabled" type="boolean">
                 <constraints nullable="false"/>
             </column>
         </addColumn>

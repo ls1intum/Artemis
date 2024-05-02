@@ -86,8 +86,8 @@
                 "tooltip": "Enables generation of individualized learning paths for students consisting of competencies and their linked learning materials."
             },
             "dashboard": {
-                "label": "Dashboard Enabled",
-                "tooltip": "Activates the dashboard for the course for students, tutors and instructors. The dashboard enables users to track their progress and performance in the course."
+                "label": "Student Course Analytics Dashboard Enabled",
+                "tooltip": "Activates the course analytics dashboard for the course for students, tutors and instructors. The dashboard enables users to track their progress and performance in the course."
             },
             "restrictedAthenaModulesAccess": {
                 "label": "Access to Restricted Athena Modules Enabled",
