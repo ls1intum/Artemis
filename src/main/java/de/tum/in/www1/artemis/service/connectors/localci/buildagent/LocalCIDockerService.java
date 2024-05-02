@@ -8,6 +8,7 @@ import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Executors;
@@ -201,7 +202,7 @@ public class LocalCIDockerService {
 
             // Check again if image was pulled in the meantime
             try {
-                CheckUsableDiskSpaceThenCleanUp();
+                checkUsableDiskSpaceThenCleanUp();
 
                 String msg = "~~~~~~~~~~~~~~~~~~~~ Inspecting docker image " + imageName + " again with a lock due to error " + e.getMessage() + " ~~~~~~~~~~~~~~~~~~~~";
                 log.info(msg);
@@ -255,34 +256,15 @@ public class LocalCIDockerService {
 
     @Scheduled(cron = "${artemis.continuous-integration.image-cleanup.cleanup-schedule-time:0 0 3 * * *}")
     public void deleteOldDockerImages() {
-
         if (!imageCleanupEnabled) {
             log.info("Docker image cleanup is disabled");
             return;
         }
 
+        Set<String> imageNames = getUnusedDockerImages();
+
         // Get map of docker images and their last build dates
         IMap<String, ZonedDateTime> dockerImageCleanupInfo = hazelcastInstance.getMap("dockerImageCleanupInfo");
-
-        // Get list of all running containers
-        List<Container> containers = dockerClient.listContainersCmd().exec();
-
-        // Create a set of image IDs of containers in use
-        Set<String> imageIdsInUse = containers.stream().map(Container::getImageId).collect(Collectors.toSet());
-
-        // Get list of all images
-        List<Image> allImages = dockerClient.listImagesCmd().exec();
-
-        // Filter out images that are in use
-        List<Image> unusedImages = allImages.stream().filter(image -> !imageIdsInUse.contains(image.getId())).toList();
-
-        Set<String> imageNames = new HashSet<>();
-        for (Image image : unusedImages) {
-            String[] imageRepoTags = image.getRepoTags();
-            if (imageRepoTags != null) {
-                Collections.addAll(imageNames, imageRepoTags);
-            }
-        }
 
         // Delete images that have not been used for more than imageExpiryDays days
         for (String dockerImage : dockerImageCleanupInfo.keySet()) {
@@ -306,24 +288,80 @@ public class LocalCIDockerService {
      */
 
     @Scheduled(fixedRateString = "${artemis.continuous-integration.image-cleanup.disk-space-check-interval-ms:3600000}")
-    public void CheckUsableDiskSpaceThenCleanUp() {
+    public void checkUsableDiskSpaceThenCleanUp() {
         if (imageCleanupEnabled) {
             try {
-                // Get the root partition.
-                File file = new File(Objects.requireNonNullElse(dockerClient.infoCmd().exec().getDockerRootDir(), "/"));
-                // Get the usable space in bytes.
-                long usableSpace = file.getUsableSpace();
                 // Get the threshold in bytes.
-                long threshold = imageCleanupDiskSpaceThresholdMb * 1024 * 1024L;
-                if (usableSpace < threshold) {
-                    // If the usable space is less than the threshold, delete old Docker images.
-                    log.info("Disk space is below the threshold of {} MB, starting Docker image cleanup", imageCleanupDiskSpaceThresholdMb);
-                    deleteOldDockerImages();
+                long bytesConversionFactor = 1024;
+                long threshold = imageCleanupDiskSpaceThresholdMb * bytesConversionFactor * bytesConversionFactor;
+
+                // Get the Docker root directory to check disk space.
+                File file = new File(Objects.requireNonNullElse(dockerClient.infoCmd().exec().getDockerRootDir(), "/"));
+                long usableSpace = file.getUsableSpace();
+
+                int maxAttempts = 5;
+                boolean continueCleanup = true;
+                while (usableSpace < threshold && maxAttempts > 0 && continueCleanup) {
+                    continueCleanup = deleteOldestDockerImage();
+                    usableSpace = file.getUsableSpace();
+                    maxAttempts--;
                 }
             }
             catch (Exception e) {
                 log.error("Error while checking disk space for Docker image cleanup", e);
             }
         }
+    }
+
+    private boolean deleteOldestDockerImage() {
+        // Get map of docker images and their last build dates
+        IMap<String, ZonedDateTime> dockerImageCleanupInfo = hazelcastInstance.getMap("dockerImageCleanupInfo");
+
+        // Get the oldest image
+        String oldestImage = dockerImageCleanupInfo.entrySet().stream().min(Map.Entry.comparingByValue()).map(Map.Entry::getKey).orElse(null);
+
+        if (oldestImage == null) {
+            return false;
+        }
+
+        // Get unused images
+        Set<String> unusedImages = getUnusedDockerImages();
+
+        // Check if the oldest image is unused
+        if (unusedImages.contains(oldestImage)) {
+            log.info("Deleting oldest docker image {}", oldestImage);
+            try {
+                dockerClient.removeImageCmd(oldestImage).exec();
+                return true;
+            }
+            catch (NotFoundException e) {
+                log.warn("Docker image {} not found during cleanup", oldestImage);
+            }
+        }
+
+        return false;
+    }
+
+    private Set<String> getUnusedDockerImages() {
+        // Get list of all running containers
+        List<Container> containers = dockerClient.listContainersCmd().exec();
+
+        // Create a set of image IDs of containers in use
+        Set<String> imageIdsInUse = containers.stream().map(Container::getImageId).collect(Collectors.toSet());
+
+        // Get list of all images
+        List<Image> allImages = dockerClient.listImagesCmd().exec();
+
+        // Filter out images that are in use
+        List<Image> unusedImages = allImages.stream().filter(image -> !imageIdsInUse.contains(image.getId())).toList();
+
+        Set<String> imageNames = new HashSet<>();
+        for (Image image : unusedImages) {
+            String[] imageRepoTags = image.getRepoTags();
+            if (imageRepoTags != null) {
+                Collections.addAll(imageNames, imageRepoTags);
+            }
+        }
+        return imageNames;
     }
 }
