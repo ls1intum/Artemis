@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.dto;
 
-import static de.tum.in.www1.artemis.config.Constants.*;
+import static de.tum.in.www1.artemis.config.Constants.USERNAME_MAX_LENGTH;
+import static de.tum.in.www1.artemis.config.Constants.USERNAME_MIN_LENGTH;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -8,14 +9,20 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 import org.hibernate.Hibernate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Authority;
+import de.tum.in.www1.artemis.domain.GuidedTourSetting;
+import de.tum.in.www1.artemis.domain.Organization;
+import de.tum.in.www1.artemis.domain.User;
 
 /**
  * A DTO representing a user, with his authorities.

@@ -3,7 +3,10 @@ package de.tum.in.www1.artemis.service.compass.umlmodel.deployment;
 import java.util.List;
 
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
-import de.tum.in.www1.artemis.service.compass.umlmodel.component.*;
+import de.tum.in.www1.artemis.service.compass.umlmodel.component.UMLComponent;
+import de.tum.in.www1.artemis.service.compass.umlmodel.component.UMLComponentDiagram;
+import de.tum.in.www1.artemis.service.compass.umlmodel.component.UMLComponentInterface;
+import de.tum.in.www1.artemis.service.compass.umlmodel.component.UMLComponentRelationship;
 
 public class UMLDeploymentDiagram extends UMLComponentDiagram {
 

@@ -1,9 +1,25 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.parsers.v2;
 
-import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.*;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.ELEMENT_ATTRIBUTES;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.ELEMENT_ID;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.ELEMENT_METHODS;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.ELEMENT_NAME;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.ELEMENT_OWNER;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.ELEMENT_TYPE;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.RELATIONSHIP_ENDPOINT_ID;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.RELATIONSHIP_MULTIPLICITY;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.RELATIONSHIP_ROLE;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.RELATIONSHIP_SOURCE;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.RELATIONSHIP_TARGET;
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.RELATIONSHIP_TYPE;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -15,7 +31,12 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
-import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.*;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLAttribute;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClass;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClassDiagram;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLMethod;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLPackage;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLRelationship;
 import de.tum.in.www1.artemis.service.compass.umlmodel.parsers.UMLModelParser;
 
 public class ClassDiagramParser {

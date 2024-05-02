@@ -1,4 +1,4 @@
-import { BASE_API, ExerciseType, PUT } from '../../constants';
+import { BASE_API, ExerciseType, PATCH, PUT } from '../../constants';
 
 /**
  * Parent class for all exercise assessment pages.
@@ -45,7 +45,7 @@ export abstract class AbstractExerciseAssessmentPage {
                 cy.intercept(PUT, `${BASE_API}/participations/*/submissions/*/text-assessment-after-complaint`).as('complaintAnswer');
                 break;
             case ExerciseType.MODELING:
-                cy.intercept(PUT, `${BASE_API}/complaint-responses/complaint/*/resolve`).as('complaintAnswer');
+                cy.intercept(PATCH, `${BASE_API}/complaints/*/response`).as('complaintAnswer');
                 break;
             case ExerciseType.FILE_UPLOAD:
                 cy.intercept(PUT, `${BASE_API}/file-upload-submissions/*/assessment-after-complaint`).as('complaintAnswer');

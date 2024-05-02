@@ -678,4 +678,14 @@ export class CourseManagementService {
         course?.exams?.forEach((exam) => this.entityTitleService.setTitle(EntityType.EXAM, [exam.id], exam.title));
         course?.organizations?.forEach((org) => this.entityTitleService.setTitle(EntityType.ORGANIZATION, [org.id], org.name));
     }
+
+    /**
+     * Get number of allowed complaints in this course.
+     * @param courseId
+     * @param teamMode If true, the number of allowed complaints for the user's team is returned
+     */
+    getNumberOfAllowedComplaintsInCourse(courseId: number, teamMode = false): Observable<number> {
+        // Note: 0 is the default value in case the server returns something that does not make sense
+        return this.http.get<number>(`${this.resourceUrl}/${courseId}/allowed-complaints?teamMode=${teamMode}`) ?? 0;
+    }
 }
