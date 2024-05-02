@@ -57,7 +57,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
         const lastSelectedLecture = this.getLastSelectedLecture();
         this.paramSubscription = this.route.params.subscribe((params) => {
             const lectureId = parseInt(params.lectureId, 10);
-            // If no exercise is selected navigate to the upcoming exercise
+            // If no lecture is selected navigate to the upcoming lecture
             if (!lectureId && lastSelectedLecture) {
                 this.router.navigate([lastSelectedLecture], { relativeTo: this.route, replaceUrl: true });
             } else if (!lectureId && upcomingLecture) {

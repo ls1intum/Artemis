@@ -34,6 +34,15 @@
             "general": {
                 "noDataFound": "No data found."
             },
+            "sidebar": {
+                "past": "Past",
+                "current": "Current",
+                "future": "Future",
+                "noDueDate": "No due date",
+                "noDate": "No date",
+                "all": "All Tutorial Groups",
+                "registered": "My Tutorial Groups"
+            },
             "menu": {
                 "exercises": "Exercises",
                 "statistics": "Statistics",

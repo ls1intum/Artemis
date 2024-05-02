@@ -1,7 +1,7 @@
 $search-height: 97px;
 $header-height: 68px;
 
-.scrollable-content {
+.scrollable-item-content {
     height: calc(100vh - var(--sidebar-footer-height-prod) - $header-height - $search-height);
     &.content-height-dev {
         height: calc(100vh - var(--sidebar-footer-height-dev) - $header-height - $search-height);
