@@ -21,7 +21,9 @@ export class RepositoryPage {
                 const commit = commits[index];
                 const commitRow = commitHistory.locator('tbody').locator('tr').nth(index);
                 await expect(commitRow.locator('td').getByText(commit.message)).toBeVisible();
+
                 if (commit.result) {
+                    // TODO: Wait for the build to finish with reloadUntilFound()
                     await expect(commitRow.locator('#result-score', { hasText: commit.result })).toBeVisible();
                 } else {
                     await expect(commitRow.locator('td', { hasText: 'No result' })).toBeVisible();

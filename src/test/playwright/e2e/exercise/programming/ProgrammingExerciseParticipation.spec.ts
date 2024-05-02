@@ -5,7 +5,7 @@ import javaAllSuccessfulSubmission from '../../../fixtures/exercise/programming/
 import javaBuildErrorSubmission from '../../../fixtures/exercise/programming/java/build_error/submission.json';
 import javaPartiallySuccessfulSubmission from '../../../fixtures/exercise/programming/java/partially_successful/submission.json';
 import pythonAllSuccessful from '../../../fixtures/exercise/programming/python/all_successful/submission.json';
-import { ProgrammingLanguage } from '../../../support/constants';
+import { ExerciseCommit, ProgrammingLanguage } from '../../../support/constants';
 import { test } from '../../../support/fixtures';
 import { ExerciseMode } from 'app/entities/exercise.model';
 import { Participation } from 'app/entities/participation/participation.model';
@@ -17,7 +17,7 @@ import { Fixtures } from '../../../fixtures/fixtures';
 import { createFileWithContent } from '../../../support/utils';
 import { ProgrammingExerciseSubmission } from '../../../support/pageobjects/exercises/programming/OnlineEditorPage';
 import cAllSuccessful from '../../../fixtures/exercise/programming/c/all_successful/submission.json';
-import { UserCredentials, admin, studentOne, studentThree, studentTwo, tutor } from '../../../support/users';
+import { UserCredentials, admin, instructor, studentOne, studentThree, studentTwo, tutor } from '../../../support/users';
 
 test.describe('Programming exercise participation', () => {
     let course: Course;
@@ -95,6 +95,13 @@ test.describe('Programming exercise participation', () => {
 
     test.describe('Programming exercise team participation', () => {
         let exercise: ProgrammingExercise;
+        let participation: Participation;
+
+        const submissions = [
+            { student: studentOne, submission: javaBuildErrorSubmission },
+            { student: studentTwo, submission: javaPartiallySuccessfulSubmission },
+            { student: studentThree, submission: javaAllSuccessfulSubmission },
+        ];
 
         test.beforeEach('Create team programming exercise', async ({ login, exerciseAPIRequests }) => {
             await login(admin);
@@ -118,22 +125,36 @@ test.describe('Programming exercise participation', () => {
         });
 
         test.beforeEach('Each team member makes a submission', async ({ login, exerciseAPIRequests }) => {
-            const submissions = [
-                { student: studentOne, submission: javaBuildErrorSubmission },
-                { student: studentTwo, submission: javaPartiallySuccessfulSubmission },
-                { student: studentThree, submission: javaAllSuccessfulSubmission },
-            ];
-
             for (const { student, submission } of submissions) {
                 await login(student);
                 const response = await exerciseAPIRequests.startExerciseParticipation(exercise.id!);
-                const participation: Participation = await response.json();
+                participation = await response.json();
                 for (const file of submission.files) {
                     const filename = `src/${submission.packageName.replace(/\./g, '/')}/${file.name}`;
                     await exerciseAPIRequests.createProgrammingExerciseFile(participation.id!, filename);
                 }
                 await exerciseAPIRequests.makeProgrammingExerciseSubmission(participation.id!, submission);
             }
+        });
+
+        test('Instructor checks the participation', async ({
+            login,
+            navigationBar,
+            courseManagement,
+            courseManagementExercises,
+            programmingExerciseRepository,
+            programmingExerciseParticipations,
+        }) => {
+            await login(instructor);
+            await navigationBar.openCourseManagement();
+            await courseManagement.openExercisesOfCourse(course.id!);
+            await courseManagementExercises.openExerciseParticipations(exercise.id!);
+            await programmingExerciseParticipations.openRepository(participation.id!);
+            await programmingExerciseRepository.openCommitHistory();
+
+            const commitMessage = 'Changes by Online Editor';
+            const commits: ExerciseCommit[] = submissions.map(({ submission }) => ({ message: commitMessage, result: submission.expectedResult }));
+            await programmingExerciseRepository.checkCommitHistory(commits);
         });
     });
 

@@ -60,6 +60,7 @@ import { ProgrammingExerciseOverviewPage } from './pageobjects/exercises/program
 import { RepositoryPage } from './pageobjects/exercises/programming/RepositoryPage';
 import { ExamGradingPage } from './pageobjects/exam/ExamGradingPage';
 import { ExamScoresPage } from './pageobjects/exam/ExamScoresPage';
+import { ProgrammingExerciseParticipationsPage } from './pageobjects/exercises/programming/ProgrammingExerciseParticipationsPage';
 
 /*
  * Define custom types for fixtures
@@ -110,6 +111,7 @@ export type ArtemisPageObjects = {
     programmingExerciseEditor: OnlineEditorPage;
     programmingExerciseFeedback: ProgrammingExerciseFeedbackPage;
     programmingExerciseOverview: ProgrammingExerciseOverviewPage;
+    programmingExerciseParticipations: ProgrammingExerciseParticipationsPage;
     programmingExerciseRepository: RepositoryPage;
     programmingExercisesScaConfig: CodeAnalysisGradingPage;
     programmingExerciseScaFeedback: ScaFeedbackModal;
@@ -271,14 +273,17 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     programmingExerciseCreation: async ({ page }, use) => {
         await use(new ProgrammingExerciseCreationPage(page));
     },
-    programmingExerciseEditor: async ({ page, courseList, courseOverview }, use) => {
-        await use(new OnlineEditorPage(page, courseList, courseOverview));
+    programmingExerciseEditor: async ({ page }, use) => {
+        await use(new OnlineEditorPage(page));
     },
     programmingExerciseFeedback: async ({ page }, use) => {
         await use(new ProgrammingExerciseFeedbackPage(page));
     },
     programmingExerciseOverview: async ({ page, courseList, courseOverview }, use) => {
         await use(new ProgrammingExerciseOverviewPage(page, courseList, courseOverview));
+    },
+    programmingExerciseParticipations: async ({ page }, use) => {
+        await use(new ProgrammingExerciseParticipationsPage(page));
     },
     programmingExerciseRepository: async ({ page }, use) => {
         await use(new RepositoryPage(page));

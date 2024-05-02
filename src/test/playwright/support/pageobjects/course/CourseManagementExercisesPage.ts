@@ -129,6 +129,10 @@ export class CourseManagementExercisesPage {
         await expect(exerciseElement).toBeVisible();
     }
 
+    async openExerciseParticipations(exerciseId: number) {
+        await this.getExercise(exerciseId).locator('.btn', { hasText: 'Participations' }).click();
+    }
+
     getModelingExerciseTitle(exerciseID: number) {
         return this.page.locator(`#exercise-card-${exerciseID}`).locator(`#modeling-exercise-${exerciseID}-title`);
     }
