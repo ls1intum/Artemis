@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.*;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.view.QuizView;
+import de.tum.in.www1.artemis.repository.converters.JpaConverterJson;
 
 /**
  * A SubmittedAnswer.
@@ -48,9 +49,9 @@ public abstract class SubmittedAnswer extends DomainObject {
     @JsonIgnore
     private AbstractQuizSubmission submission;
 
+    @Convert(converter = JpaConverterJson.class)
     @Column(name = "selection")
-    @JsonView(QuizView.Before.class)
-    private String selection;
+    private Object selection;
 
     public Double getScoreInPoints() {
         return scoreInPoints;
@@ -76,11 +77,11 @@ public abstract class SubmittedAnswer extends DomainObject {
         this.submission = quizSubmission;
     }
 
-    public String getSelection() {
+    public Object getSelection() {
         return selection;
     }
 
-    public void setSelection(String selection) {
+    public void setSelection(Object selection) {
         this.selection = selection;
     }
 
