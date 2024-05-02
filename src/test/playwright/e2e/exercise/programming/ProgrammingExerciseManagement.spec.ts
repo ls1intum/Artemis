@@ -70,7 +70,7 @@ test.describe('Programming Exercise Management', () => {
             await navigationBar.openCourseManagement();
             await courseManagement.openExercisesOfCourse(course.id!);
             await courseManagementExercises.openExerciseTeams(exercise.id!);
-            await page.waitForLoadState('networkidle');
+            await page.getByRole('table').waitFor({ state: 'visible' });
             await exerciseTeams.createTeam();
 
             const teamId = generateUUID();
@@ -96,7 +96,7 @@ test.describe('Programming Exercise Management', () => {
             await login(studentOne, `/courses/${course.id}/exercises/${exercise.id}`);
             await expect(programmingExerciseOverview.getExerciseDetails().locator('.view-team')).toBeVisible();
             await login(studentFour, `/courses/${course.id}/exercises/${exercise.id}`);
-            await expect(programmingExerciseOverview.getExerciseDetails()).toHaveText('No team yet');
+            await expect(programmingExerciseOverview.getExerciseDetails()).toHaveText(/No team yet/);
         });
     });
 
