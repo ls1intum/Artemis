@@ -11,7 +11,6 @@ import com.fasterxml.jackson.annotation.JsonView;
 import de.tum.in.www1.artemis.domain.enumeration.ScoringType;
 import de.tum.in.www1.artemis.domain.quiz.scoring.*;
 import de.tum.in.www1.artemis.domain.view.QuizView;
-import de.tum.in.www1.artemis.repository.converters.JpaConverterJson;
 
 /**
  * A MultipleChoiceQuestion.
@@ -21,9 +20,7 @@ import de.tum.in.www1.artemis.repository.converters.JpaConverterJson;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class MultipleChoiceQuestion extends QuizQuestion {
 
-    @Convert(converter = JpaConverterJson.class)
-    @Column(name = "content")
-    // @Transient
+    @Transient
     private List<AnswerOptionDTO> answerOptions = new ArrayList<>();
 
     @Column(name = "single_choice")
@@ -31,10 +28,11 @@ public class MultipleChoiceQuestion extends QuizQuestion {
     private boolean singleChoice = false;
 
     public List<AnswerOptionDTO> getAnswerOptions() {
-        return answerOptions;
+        return (List<AnswerOptionDTO>) this.getContent();
     }
 
     public void setAnswerOptions(List<AnswerOptionDTO> answerOptions) {
+        this.setContent(answerOptions);
         this.answerOptions = answerOptions;
     }
 

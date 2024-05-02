@@ -11,6 +11,7 @@ import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.enumeration.ScoringType;
 import de.tum.in.www1.artemis.domain.quiz.scoring.ScoringStrategy;
 import de.tum.in.www1.artemis.domain.view.QuizView;
+import de.tum.in.www1.artemis.repository.converters.JpaConverterJson;
 
 /**
  * A QuizQuestion.
@@ -68,6 +69,10 @@ public abstract class QuizQuestion extends DomainObject {
     @Column(name = "quiz_group_id")
     @JsonView(QuizView.Before.class)
     private Long quizGroupId;
+
+    @Convert(converter = JpaConverterJson.class)
+    @Column(name = "content")
+    private Object content;
 
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     @JoinColumn(unique = true)
@@ -181,6 +186,14 @@ public abstract class QuizQuestion extends DomainObject {
 
     public void setQuizGroupId(Long quizGroupId) {
         this.quizGroupId = quizGroupId;
+    }
+
+    public Object getContent() {
+        return content;
+    }
+
+    public void setContent(Object content) {
+        this.content = content;
     }
 
     @JsonProperty(value = "quizGroup", access = JsonProperty.Access.READ_ONLY)

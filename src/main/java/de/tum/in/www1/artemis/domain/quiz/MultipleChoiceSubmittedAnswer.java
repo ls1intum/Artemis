@@ -7,14 +7,9 @@ import java.util.stream.Collectors;
 
 import jakarta.persistence.*;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-
 /**
  * A MultipleChoiceSubmittedAnswer.
  */
-@Entity
-@DiscriminatorValue(value = "MC")
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class MultipleChoiceSubmittedAnswer extends SubmittedAnswer {
 
     @Transient
