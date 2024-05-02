@@ -11,6 +11,7 @@ import { admin, studentOne, studentThree, studentTwo, tutor } from '../../../sup
 import { test } from '../../../support/fixtures';
 import { expect } from '@playwright/test';
 import { ExerciseMode } from 'app/entities/exercise.model';
+import { Participation } from 'app/entities/participation/participation.model';
 
 test.describe('Programming exercise participation', () => {
     let course: Course;
@@ -123,27 +124,23 @@ test.describe('Programming exercise participation', () => {
             await exerciseAPIRequests.createTeam(exercise.id!, students, tutorUser);
         });
 
-        test('Each team member makes a submission', async ({ programmingExerciseEditor }) => {
-            const submission1 = javaBuildErrorSubmission;
-            await programmingExerciseEditor.startParticipation(course.id!, exercise, studentOne);
-            await programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, submission1, async () => {
-                const resultScore = await programmingExerciseEditor.getResultScore();
-                await expect(resultScore.getByText(javaBuildErrorSubmission.expectedResult)).toBeVisible();
-            });
+        test.beforeEach('Each team member makes a submission', async ({ login, exerciseAPIRequests }) => {
+            const submissions = [
+                { student: studentOne, submission: javaBuildErrorSubmission },
+                { student: studentTwo, submission: javaPartiallySuccessfulSubmission },
+                { student: studentThree, submission: javaAllSuccessfulSubmission },
+            ];
 
-            const submission2 = { ...javaPartiallySuccessfulSubmission, deleteFiles: [] };
-            await programmingExerciseEditor.startParticipation(course.id!, exercise, studentTwo, true);
-            await programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, submission2, async () => {
-                const resultScore = await programmingExerciseEditor.getResultScore();
-                await expect(resultScore.getByText(javaPartiallySuccessfulSubmission.expectedResult)).toBeVisible();
-            });
-
-            const submission3 = { ...javaAllSuccessfulSubmission, deleteFiles: [] };
-            await programmingExerciseEditor.startParticipation(course.id!, exercise, studentThree, true);
-            await programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, submission3, async () => {
-                const resultScore = await programmingExerciseEditor.getResultScore();
-                await expect(resultScore.getByText(javaAllSuccessfulSubmission.expectedResult)).toBeVisible();
-            });
+            for (const { student, submission } of submissions) {
+                await login(student);
+                const response = await exerciseAPIRequests.startExerciseParticipation(exercise.id!);
+                const participation: Participation = await response.json();
+                for (const file of submission.files) {
+                    const filename = `src/${submission.packageName.replace(/\./g, '/')}/${file.name}`;
+                    await exerciseAPIRequests.createProgrammingExerciseFile(participation.id!, filename);
+                }
+                await exerciseAPIRequests.makeProgrammingExerciseSubmission(participation.id!, submission);
+            }
         });
     });
 

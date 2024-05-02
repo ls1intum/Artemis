@@ -163,6 +163,10 @@ export class ExerciseAPIRequests {
         await this.page.request.put(`${BASE_API}/repository/${repositoryId}/files?commit=yes`, { data });
     }
 
+    async createProgrammingExerciseFile(repositoryId: number, filename: string) {
+        return await this.page.request.post(`${BASE_API}/repository/${repositoryId}/file?file=${filename}`);
+    }
+
     /**
      * Adds a text exercise to an exercise group in an exam or to a course.
      *
