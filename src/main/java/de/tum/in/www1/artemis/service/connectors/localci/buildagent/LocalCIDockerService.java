@@ -202,14 +202,14 @@ public class LocalCIDockerService {
 
             // Check again if image was pulled in the meantime
             try {
-                checkUsableDiskSpaceThenCleanUp();
-
                 String msg = "~~~~~~~~~~~~~~~~~~~~ Inspecting docker image " + imageName + " again with a lock due to error " + e.getMessage() + " ~~~~~~~~~~~~~~~~~~~~";
                 log.info(msg);
                 buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
                 dockerClient.inspectImageCmd(imageName).exec();
             }
             catch (NotFoundException | BadRequestException e2) {
+                checkUsableDiskSpaceThenCleanUp();
+
                 long start = System.nanoTime();
                 String msg = "~~~~~~~~~~~~~~~~~~~~ Pulling docker image " + imageName + " with a lock after error " + e.getMessage() + " ~~~~~~~~~~~~~~~~~~~~";
                 log.info(msg);
@@ -244,8 +244,7 @@ public class LocalCIDockerService {
      * The process involves:
      * - Checking if image cleanup is enabled; if disabled, the operation is aborted.
      * - Retrieving a map of Docker images and their last usage dates.
-     * - Listing all currently running containers to ensure their images are not deleted.
-     * - Identifying all Docker images that are not currently in use.
+     * - Getting a set of image names that are not associated with any running containers.
      * - Removing images that have exceeded the configured expiry days and are not associated with any running containers.
      * <p>
      * Exception handling includes catching NotFoundException for cases where images are already deleted or not found during the cleanup process.
@@ -283,11 +282,13 @@ public class LocalCIDockerService {
     }
 
     /**
-     * Periodically checks for available disk space and triggers the cleanup of old Docker images if the available space falls below a specified threshold.
+     * Checks for available disk space and triggers the cleanup of old Docker images if the available space falls below a specified threshold.
      * The threshold is configurable via the 'artemis.continuous-integration.image-cleanup.disk-space-threshold-mb' property in the application settings.
+     *
+     * @implNote We use the Docker root directory to check disk space availability. This is in case the Docker images are stored on a separate partition.
      */
 
-    @Scheduled(fixedRateString = "${artemis.continuous-integration.image-cleanup.disk-space-check-interval-ms:3600000}")
+    @Scheduled(fixedRateString = "${artemis.continuous-integration.image-cleanup.disk-space-check-interval-ms:3600000}", initialDelayString = "${artemis.continuous-integration.image-cleanup.disk-space-check-interval-ms:3600000}")
     public void checkUsableDiskSpaceThenCleanUp() {
         if (imageCleanupEnabled) {
             try {
@@ -312,6 +313,12 @@ public class LocalCIDockerService {
             }
         }
     }
+
+    /**
+     * Deletes the oldest Docker image used by this build agent that is not associated with any running containers.
+     *
+     * @return true if an image was deleted, false otherwise.
+     */
 
     private boolean deleteOldestDockerImage() {
         // Get map of docker images and their last build dates
@@ -342,6 +349,11 @@ public class LocalCIDockerService {
         return false;
     }
 
+    /**
+     * Gets a set of Docker image names that are not associated with any running containers.
+     *
+     * @return a set of image names that are not associated with any running containers.
+     */
     private Set<String> getUnusedDockerImages() {
         // Get list of all running containers
         List<Container> containers = dockerClient.listContainersCmd().exec();
