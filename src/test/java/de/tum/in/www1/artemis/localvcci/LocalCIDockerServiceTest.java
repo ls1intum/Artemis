@@ -12,7 +12,10 @@ import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.github.dockerjava.api.command.InfoCmd;
@@ -33,6 +36,7 @@ import de.tum.in.www1.artemis.service.connectors.localci.buildagent.LocalCIDocke
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildConfig;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
 
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class LocalCIDockerServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     @Autowired
@@ -50,6 +54,7 @@ class LocalCIDockerServiceTest extends AbstractSpringIntegrationLocalCILocalVCTe
     }
 
     @Test
+    @Order(2)
     void testDeleteOldDockerImages() {
         // Save build job with outdated image to database
         ZonedDateTime buildStartDate = ZonedDateTime.now().minusDays(3);
@@ -71,6 +76,7 @@ class LocalCIDockerServiceTest extends AbstractSpringIntegrationLocalCILocalVCTe
     }
 
     @Test
+    @Order(1)
     void testDeleteOldDockerImages_NoOutdatedImages() {
         // Save build job to database
         ZonedDateTime buildStartDate = ZonedDateTime.now();
@@ -103,23 +109,25 @@ class LocalCIDockerServiceTest extends AbstractSpringIntegrationLocalCILocalVCTe
     }
 
     @Test
-    void testPullDockerImage_NoDiskSpace() {
-        InspectImageCmd inspectImageCmd = mock(InspectImageCmd.class);
-        doReturn(inspectImageCmd).when(dockerClient).inspectImageCmd(anyString());
-        doThrow(new NotFoundException("")).when(inspectImageCmd).exec();
-        BuildConfig buildConfig = new BuildConfig("echo 'test'", "test-image-name", "test", "test", null, null, false, false, false, null);
-        var build = new LocalCIBuildJobQueueItem("1", "job1", "address1", 1, 1, 1, 1, 1, BuildStatus.SUCCESSFUL, null, null, buildConfig, null);
-
+    @Order(3)
+    void testCheckUsableDiskSpaceThenCleanUp() {
+        // Mock dockerClient.infoCmd().exec()
         InfoCmd infoCmd = mock(InfoCmd.class);
         Info info = mock(Info.class);
         doReturn(infoCmd).when(dockerClient).infoCmd();
         doReturn(info).when(infoCmd).exec();
         doReturn("/").when(info).getDockerRootDir();
 
-        localCIDockerService.pullDockerImage(build, new BuildLogsMap());
+        ZonedDateTime buildStartDate = ZonedDateTime.now();
 
-        // Verify that pullImageCmd() was called.
-        verify(info, times(1)).getDockerRootDir();
+        IMap<String, ZonedDateTime> dockerImageCleanupInfo = hazelcastInstance.getMap("dockerImageCleanupInfo");
+
+        dockerImageCleanupInfo.put("test-image-name", buildStartDate);
+
+        localCIDockerService.checkUsableDiskSpaceThenCleanUp();
+
+        // Verify that removeImageCmd() was called.
+        verify(dockerClient, times(2)).removeImageCmd("test-image-name");
     }
 
     @Test
