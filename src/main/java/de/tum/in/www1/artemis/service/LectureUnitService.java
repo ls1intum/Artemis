@@ -42,7 +42,7 @@ import de.tum.in.www1.artemis.service.connectors.pyris.PyrisWebhookService;
 @Service
 public class LectureUnitService {
 
-    private final PyrisWebhookService webhookService;
+    private final Optional<PyrisWebhookService> pyrisWebhookService;
 
     private final LectureUnitRepository lectureUnitRepository;
 
@@ -58,10 +58,10 @@ public class LectureUnitService {
 
     private final ExerciseRepository exerciseRepository;
 
-    public LectureUnitService(PyrisWebhookService webhookService, LectureUnitRepository lectureUnitRepository, LectureRepository lectureRepository,
+    public LectureUnitService(Optional<PyrisWebhookService> pyrisWebhookService, LectureUnitRepository lectureUnitRepository, LectureRepository lectureRepository,
             CompetencyRepository competencyRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository, FileService fileService, SlideRepository slideRepository,
             ExerciseRepository exerciseRepository) {
-        this.webhookService = webhookService;
+        this.pyrisWebhookService = pyrisWebhookService;
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
         this.competencyRepository = competencyRepository;
@@ -167,7 +167,7 @@ public class LectureUnitService {
                 for (Slide slide : slides) {
                     fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(URI.create(slide.getSlideImagePath())), 5);
                 }
-                webhookService.executeIngestionPipeline(false, List.of(attachmentUnit));
+                pyrisWebhookService.ifPresent(service -> service.executeIngestionPipeline(false, List.of(attachmentUnit)));
                 slideRepository.deleteAll(slides);
             }
         }

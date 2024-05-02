@@ -9,7 +9,6 @@ import java.util.Set;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderColumn;
@@ -54,7 +53,7 @@ public class Lecture extends DomainObject {
     @JsonIgnoreProperties(value = "lecture", allowSetters = true)
     private Set<Attachment> attachments = new HashSet<>();
 
-    @OneToMany(mappedBy = "lecture", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "lecture", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderColumn(name = "lecture_unit_order")
     @JsonIgnoreProperties("lecture")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)

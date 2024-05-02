@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.context.annotation.Profile;
@@ -28,7 +29,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 @Service
 public class AttachmentUnitService {
 
-    private final PyrisWebhookService webhookService;
+    private final Optional<PyrisWebhookService> pyrisWebhookService;
 
     private final AttachmentUnitRepository attachmentUnitRepository;
 
@@ -40,9 +41,9 @@ public class AttachmentUnitService {
 
     private final SlideRepository slideRepository;
 
-    public AttachmentUnitService(PyrisWebhookService webhookService, SlideRepository slideRepository, SlideSplitterService slideSplitterService,
+    public AttachmentUnitService(Optional<PyrisWebhookService> pyrisWebhookService, SlideRepository slideRepository, SlideSplitterService slideSplitterService,
             AttachmentUnitRepository attachmentUnitRepository, AttachmentRepository attachmentRepository, FileService fileService) {
-        this.webhookService = webhookService;
+        this.pyrisWebhookService = pyrisWebhookService;
         this.attachmentUnitRepository = attachmentUnitRepository;
         this.attachmentRepository = attachmentRepository;
         this.fileService = fileService;
@@ -76,7 +77,8 @@ public class AttachmentUnitService {
         savedAttachmentUnit.setAttachment(savedAttachment);
         evictCache(file, savedAttachmentUnit);
         if (savedAttachment.getAttachmentType() == AttachmentType.FILE) {
-            webhookService.executeIngestionPipeline(true, List.of(savedAttachmentUnit));
+            pyrisWebhookService.ifPresent(service -> service.executeIngestionPipeline(true, List.of(savedAttachmentUnit)));
+
         }
         return savedAttachmentUnit;
     }
@@ -125,7 +127,7 @@ public class AttachmentUnitService {
             if (Objects.equals(FilenameUtils.getExtension(updateFile.getOriginalFilename()), "pdf")) {
                 slideSplitterService.splitAttachmentUnitIntoSingleSlides(savedAttachmentUnit);
             }
-            webhookService.executeIngestionPipeline(true, List.of(savedAttachmentUnit));
+            pyrisWebhookService.ifPresent(service -> service.executeIngestionPipeline(true, List.of(savedAttachmentUnit)));
         }
 
         return savedAttachmentUnit;

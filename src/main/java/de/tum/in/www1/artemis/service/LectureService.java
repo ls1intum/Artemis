@@ -6,6 +6,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -32,7 +33,7 @@ import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 @Service
 public class LectureService {
 
-    private final PyrisWebhookService webhookService;
+    private final Optional<PyrisWebhookService> pyrisWebhookService;
 
     private final LectureRepository lectureRepository;
 
@@ -42,9 +43,9 @@ public class LectureService {
 
     private final ChannelService channelService;
 
-    public LectureService(PyrisWebhookService webhookService, LectureRepository lectureRepository, AuthorizationCheckService authCheckService, ChannelRepository channelRepository,
-            ChannelService channelService) {
-        this.webhookService = webhookService;
+    public LectureService(Optional<PyrisWebhookService> pyrisWebhookService, LectureRepository lectureRepository, AuthorizationCheckService authCheckService,
+            ChannelRepository channelRepository, ChannelService channelService) {
+        this.pyrisWebhookService = pyrisWebhookService;
         this.lectureRepository = lectureRepository;
         this.authCheckService = authCheckService;
         this.channelRepository = channelRepository;
@@ -139,9 +140,12 @@ public class LectureService {
      * @param lecture the lecture to be deleted
      */
     public void delete(Lecture lecture) {
-        List<AttachmentUnit> attachmentUnitList = lecture.getLectureUnits().stream().filter(lectureUnit -> lectureUnit.getType().equals("attachment"))
-                .map(lectureUnit -> (AttachmentUnit) lectureUnit).collect(Collectors.toCollection(ArrayList::new));
-        webhookService.executeIngestionPipeline(false, attachmentUnitList);
+        if (pyrisWebhookService.isPresent()) {
+            Lecture lectureWithAttachmentUnits = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture.getId());
+            List<AttachmentUnit> attachmentUnitList = lectureWithAttachmentUnits.getLectureUnits().stream().filter(lectureUnit -> lectureUnit.getType().equals("attachment"))
+                    .map(lectureUnit -> (AttachmentUnit) lectureUnit).collect(Collectors.toCollection(ArrayList::new));
+            pyrisWebhookService.get().executeIngestionPipeline(false, attachmentUnitList);
+        }
         Channel lectureChannel = channelRepository.findChannelByLectureId(lecture.getId());
         channelService.deleteChannel(lectureChannel);
         lectureRepository.deleteById(lecture.getId());

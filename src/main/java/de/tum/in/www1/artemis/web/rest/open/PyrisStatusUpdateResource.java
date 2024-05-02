@@ -13,9 +13,9 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
 import de.tum.in.www1.artemis.service.connectors.pyris.PyrisJobService;
 import de.tum.in.www1.artemis.service.connectors.pyris.PyrisStatusUpdateService;
-import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStatusUpdateDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.lectureIngestionWebhook.PyrisLectureIngestionStatusUpdateDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.tutorChat.PyrisTutorChatStatusUpdateDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.job.IngestionWebhookJob;
-import de.tum.in.www1.artemis.service.connectors.pyris.job.PyrisJob;
 import de.tum.in.www1.artemis.service.connectors.pyris.job.TutorChatJob;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
@@ -33,28 +33,36 @@ public class PyrisStatusUpdateResource {
         this.pyrisStatusUpdateService = pyrisStatusUpdateService;
     }
 
-    @PostMapping("pipelines/tutor-chat/runs/{runId}/status")
-    @EnforceNothing
-    public ResponseEntity<Void> setStatusOfTutorChatJob(@PathVariable String runId, @RequestBody PyrisStatusUpdateDTO statusUpdateDTO, HttpServletRequest request) {
-        return setStatusOfJob(runId, statusUpdateDTO, request, TutorChatJob.class);
-    }
-
-    @PostMapping("webhooks/ingestion/runs/{runId}/status")
-    @EnforceNothing
-    public ResponseEntity<Void> setStatusOfIngestionJob(@PathVariable String runId, @RequestBody PyrisStatusUpdateDTO statusUpdateDTO, HttpServletRequest request) {
-        return setStatusOfJob(runId, statusUpdateDTO, request, IngestionWebhookJob.class);
-    }
-
-    private <T extends PyrisJob> ResponseEntity<Void> setStatusOfJob(String runId, PyrisStatusUpdateDTO statusUpdateDTO, HttpServletRequest request, Class<T> jobClass) {
+    @PostMapping("tutor-chat/runs/{runId}/status")
+    @EnforceNothing // We do token based authentication
+    public ResponseEntity<Void> setStatusOfIngestionJob(@PathVariable String runId, @RequestBody PyrisTutorChatStatusUpdateDTO statusUpdateDTO, HttpServletRequest request) {
         var job = pyrisJobService.getJobFromHeader(request);
         if (!job.getId().equals(runId)) {
             throw new ConflictException("Run ID in URL does not match run ID in request body", "Job", "runIdMismatch");
         }
-        if (!jobClass.isInstance(job)) {
-            throw new ConflictException("Run ID is not of type " + jobClass.getSimpleName(), "Job", "invalidRunId");
+        if (!(job instanceof TutorChatJob tutorChatJob)) {
+            throw new ConflictException("Run ID is not a tutor chat job", "Job", "invalidRunId");
         }
 
-        pyrisStatusUpdateService.handleStatusUpdate(jobClass.cast(job), statusUpdateDTO);
+        pyrisStatusUpdateService.handleStatusUpdate(tutorChatJob, statusUpdateDTO);
+
         return ResponseEntity.ok().build();
     }
+
+    @PostMapping("webhooks/ingestion/runs/{runId}/status")
+    @EnforceNothing
+    public ResponseEntity<Void> setStatusOfTutorChatJob(@PathVariable String runId, @RequestBody PyrisLectureIngestionStatusUpdateDTO statusUpdateDTO, HttpServletRequest request) {
+        var job = pyrisJobService.getJobFromHeader(request);
+        if (!job.getId().equals(runId)) {
+            throw new ConflictException("Run ID in URL does not match run ID in request body", "Job", "runIdMismatch");
+        }
+        if (!(job instanceof IngestionWebhookJob ingestionWebhookJob)) {
+            throw new ConflictException("Run ID is not an ingestion job", "Job", "invalidRunId");
+        }
+
+        pyrisStatusUpdateService.handleStatusUpdate(ingestionWebhookJob, statusUpdateDTO);
+
+        return ResponseEntity.ok().build();
+    }
+
 }

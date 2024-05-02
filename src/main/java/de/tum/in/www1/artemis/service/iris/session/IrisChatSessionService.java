@@ -3,8 +3,6 @@ package de.tum.in.www1.artemis.service.iris.session;
 import java.util.Objects;
 import java.util.Optional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -24,7 +22,7 @@ import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.pyris.PyrisPipelineService;
-import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStatusUpdateDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.tutorChat.PyrisTutorChatStatusUpdateDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.job.TutorChatJob;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;
@@ -39,8 +37,6 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 @Service
 @Profile("iris")
 public class IrisChatSessionService implements IrisChatBasedFeatureInterface<IrisChatSession>, IrisRateLimitedFeatureInterface {
-
-    private static final Logger log = LoggerFactory.getLogger(IrisChatSessionService.class);
 
     private final IrisMessageService irisMessageService;
 
@@ -163,7 +159,7 @@ public class IrisChatSessionService implements IrisChatBasedFeatureInterface<Iri
      * @param job          The job that was executed
      * @param statusUpdate The status update of the job
      */
-    public void handleStatusUpdate(TutorChatJob job, PyrisStatusUpdateDTO statusUpdate) {
+    public void handleStatusUpdate(TutorChatJob job, PyrisTutorChatStatusUpdateDTO statusUpdate) {
         var session = (IrisChatSession) irisSessionRepository.findByIdWithMessagesAndContents(job.getSessionId());
         if (statusUpdate.result() != null) {
             var message = new IrisMessage();

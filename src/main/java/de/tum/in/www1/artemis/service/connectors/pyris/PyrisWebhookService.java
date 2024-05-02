@@ -42,7 +42,6 @@ public class PyrisWebhookService {
 
     private String attachmentToBase64(AttachmentUnit attachmentUnit) {
         Path path = FilePathService.actualPathForPublicPathOrThrow(URI.create(attachmentUnit.getAttachment().getLink()));
-        // Path path = Path.of(Optional.ofNullable(attachment).map(Attachment::getLink).orElse(""));
         try {
             byte[] fileBytes = Files.readAllBytes(path);
 
@@ -53,9 +52,9 @@ public class PyrisWebhookService {
         }
     }
 
-    private PyrisLectureUnitWebhookDTO processAttachments(Boolean toUpdate, AttachmentUnit attachmentUnit) {
+    private PyrisLectureUnitWebhookDTO processAttachments(Boolean shouldUpdate, AttachmentUnit attachmentUnit) {
         try {
-            if (toUpdate) {
+            if (shouldUpdate) {
                 int lectureUnitId = attachmentUnit.hashCode();
                 String lectureUnitName = attachmentUnit.getName();
                 int lectureId = attachmentUnit.getLecture().hashCode();
@@ -82,17 +81,17 @@ public class PyrisWebhookService {
     /**
      * Executes the tutor chat pipeline for the given session
      *
-     * @param toUpdate        True if the lecture is updated, False if the lecture is erased
+     * @param shouldUpdate    True if the lecture is updated, False if the lecture is erased
      * @param attachmentUnits The attachmentUnit that got Updated / erased
      */
-    public void executeIngestionPipeline(Boolean toUpdate, List<AttachmentUnit> attachmentUnits) {
+    public void executeIngestionPipeline(Boolean shouldUpdate, List<AttachmentUnit> attachmentUnits) {
         PyrisWebhookLectureIngestionExecutionDTO executionDTO;
         var jobToken = pyrisJobService.addJob(new IngestionWebhookJob());
         var settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, List.of(), artemisBaseUrl);
         List<PyrisLectureUnitWebhookDTO> toUpdateAttachmentUnits = new ArrayList<>();
         for (AttachmentUnit attachmentUnit : attachmentUnits) {
             if (attachmentUnit.getAttachment().getAttachmentType() == AttachmentType.FILE)
-                toUpdateAttachmentUnits.add(processAttachments(toUpdate, attachmentUnit));
+                toUpdateAttachmentUnits.add(processAttachments(shouldUpdate, attachmentUnit));
         }
         if (!toUpdateAttachmentUnits.isEmpty()) {
             executionDTO = new PyrisWebhookLectureIngestionExecutionDTO(toUpdateAttachmentUnits, settingsDTO, List.of());
