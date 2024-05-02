@@ -19,7 +19,6 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.iris.IrisTemplate;
 import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
-import de.tum.in.www1.artemis.domain.iris.session.IrisCodeEditorSession;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettings;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
@@ -75,7 +74,6 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
     protected void activateIrisGlobally() {
         var globalSettings = irisSettingsService.getGlobalSettings();
         activateSubSettings(globalSettings.getIrisChatSettings());
-        activateSubSettings(globalSettings.getIrisCodeEditorSettings());
         activateSubSettings(globalSettings.getIrisHestiaSettings());
         activateSubSettings(globalSettings.getIrisCompetencyGenerationSettings());
         irisSettingsRepository.save(globalSettings);
@@ -100,13 +98,6 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
         activateSubSettings(courseSettings.getIrisHestiaSettings());
         courseSettings.getIrisHestiaSettings().setTemplate(createDummyTemplate());
 
-        activateSubSettings(courseSettings.getIrisCodeEditorSettings());
-        courseSettings.getIrisCodeEditorSettings().setChatTemplate(createDummyTemplate());
-        courseSettings.getIrisCodeEditorSettings().setProblemStatementGenerationTemplate(createDummyTemplate());
-        courseSettings.getIrisCodeEditorSettings().setTemplateRepoGenerationTemplate(createDummyTemplate());
-        courseSettings.getIrisCodeEditorSettings().setSolutionRepoGenerationTemplate(createDummyTemplate());
-        courseSettings.getIrisCodeEditorSettings().setTestRepoGenerationTemplate(createDummyTemplate());
-
         activateSubSettings(courseSettings.getIrisCompetencyGenerationSettings());
         courseSettings.getIrisCompetencyGenerationSettings().setTemplate(createDummyTemplate());
 
@@ -122,22 +113,6 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
 
     protected IrisTemplate createDummyTemplate() {
         return new IrisTemplate("Hello World");
-    }
-
-    /**
-     * Verify that the given messages were sent through the websocket for the given code editor session,
-     * and that there were exactly `matchers.length` messages sent.
-     *
-     * @param session  The code editor session
-     * @param matchers Argument matchers which describe the messages that should have been sent
-     */
-    protected void verifyWebsocketActivityWasExactly(IrisCodeEditorSession session, ArgumentMatcher<?>... matchers) {
-        var userLogin = session.getUser().getLogin();
-        var topicSuffix = "code-editor-sessions/" + session.getId();
-        for (ArgumentMatcher<?> callDescriptor : matchers) {
-            verifyMessageWasSentOverWebsocket(userLogin, topicSuffix, callDescriptor);
-        }
-        verifyNumberOfCallsToWebsocket(userLogin, topicSuffix, matchers.length);
     }
 
     /**
