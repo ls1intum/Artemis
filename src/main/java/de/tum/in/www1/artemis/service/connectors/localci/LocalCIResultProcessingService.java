@@ -126,60 +126,47 @@ public class LocalCIResultProcessingService {
         SecurityUtils.setAuthorizationObject();
         Optional<Participation> participationOptional = participationRepository.findById(buildJob.participationId());
 
-        if (buildResult != null) {
-            Result result = null;
-            try {
-                if (participationOptional.isPresent()) {
-                    ProgrammingExerciseParticipation participation = (ProgrammingExerciseParticipation) participationOptional.get();
+        Result result = null;
+        try {
+            if (participationOptional.isPresent()) {
+                ProgrammingExerciseParticipation participation = (ProgrammingExerciseParticipation) participationOptional.get();
 
-                    // In case the participation does not contain the exercise, we have to load it from the database
-                    if (participation.getProgrammingExercise() == null) {
-                        participation.setProgrammingExercise(programmingExerciseRepository.findByParticipationIdOrElseThrow(participation.getId()));
-                    }
-                    result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult);
-
-                    if (result != null) {
-                        programmingMessagingService.notifyUserAboutNewResult(result, participation);
-                        addResultToBuildAgentsRecentBuildJobs(buildJob, result);
-                    }
-                    else {
-                        programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation,
-                                new BuildTriggerWebsocketError("Result could not be processed", participation.getId()));
-                    }
+                // In case the participation does not contain the exercise, we have to load it from the database
+                if (participation.getProgrammingExercise() == null) {
+                    participation.setProgrammingExercise(programmingExerciseRepository.findByParticipationIdOrElseThrow(participation.getId()));
                 }
-                else {
-                    log.warn("Participation with id {} has been deleted. Cancelling the processing of the build result.", buildJob.participationId());
-                }
-            }
-            finally {
-                // save build job to database
-                savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.SUCCESSFUL, result);
-            }
-        }
-        else {
-            if (ex.getCause() instanceof CancellationException && ex.getMessage().equals("Build job with id " + buildJob.id() + " was cancelled.")) {
-
-                if (participationOptional.isPresent()) {
-                    ProgrammingExerciseParticipation participation = (ProgrammingExerciseParticipation) participationOptional.get();
-                    programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation,
-                            new BuildTriggerWebsocketError("Build job was cancelled", participation.getId()));
-                }
-
-                savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.CANCELLED, null);
+                result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult);
             }
             else {
-                log.error("Error while processing build job: {}", buildJob, ex);
-
-                if (participationOptional.isPresent()) {
-                    ProgrammingExerciseParticipation participation = (ProgrammingExerciseParticipation) participationOptional.get();
-                    programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation,
-                            new BuildTriggerWebsocketError(ex.getMessage(), participation.getId()));
+                log.warn("Participation with id {} has been deleted. Cancelling the processing of the build result.", buildJob.participationId());
+            }
+        }
+        finally {
+            // save build job to database
+            if (ex != null) {
+                if (ex.getCause() instanceof CancellationException && ex.getMessage().equals("Build job with id " + buildJob.id() + " was cancelled.")) {
+                    savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.CANCELLED, result);
                 }
                 else {
-                    log.warn("Participation with id {} has been deleted. Cancelling the requeueing of the build job.", buildJob.participationId());
+                    log.error("Error while processing build job: {}", buildJob, ex);
+                    savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.FAILED, result);
                 }
+            }
+            else {
+                savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.SUCCESSFUL, result);
+            }
 
-                savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.FAILED, null);
+            if (participationOptional.isPresent()) {
+                ProgrammingExerciseParticipation participation = (ProgrammingExerciseParticipation) participationOptional.get();
+
+                if (result != null) {
+                    programmingMessagingService.notifyUserAboutNewResult(result, participation);
+                    addResultToBuildAgentsRecentBuildJobs(buildJob, result);
+                }
+                else {
+                    programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation,
+                            new BuildTriggerWebsocketError("Result could not be processed", participation.getId()));
+                }
             }
         }
 
@@ -196,7 +183,7 @@ public class LocalCIResultProcessingService {
         if (isSolutionBuildOfTestOrAuxPush(buildJob)) {
             log.debug("Triggering build of template repository for solution build with id {}", buildJob.id());
             try {
-                programmingTriggerService.triggerTemplateBuildAndNotifyUser(buildJob.exerciseId(), buildJob.buildConfig().commitHash(), SubmissionType.TEST,
+                programmingTriggerService.triggerTemplateBuildAndNotifyUser(buildJob.exerciseId(), buildJob.buildConfig().testCommitHash(), SubmissionType.TEST,
                         buildJob.repositoryInfo().triggeredByPushTo());
             }
             catch (EntityNotFoundException e) {

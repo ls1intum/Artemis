@@ -11,6 +11,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record BuildConfig(String buildScript, String dockerImage, String commitHash, String branch, ProgrammingLanguage programmingLanguage, ProjectType projectType,
-        boolean scaEnabled, boolean sequentialTestRunsEnabled, boolean testwiseCoverageEnabled, List<String> resultPaths) implements Serializable {
+public record BuildConfig(String buildScript, String dockerImage, String commitHashToBuild, String assignmentCommitHash, String testCommitHash, String branch,
+        ProgrammingLanguage programmingLanguage, ProjectType projectType, boolean scaEnabled, boolean sequentialTestRunsEnabled, boolean testwiseCoverageEnabled,
+        List<String> resultPaths) implements Serializable {
 }
