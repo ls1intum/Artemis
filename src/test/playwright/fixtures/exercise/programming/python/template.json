@@ -1,7 +1,7 @@
 {
     "allowComplaintsForAutomaticAssessments": false,
     "allowManualFeedbackRequests": false,
-    "allowOfflineIde": false,
+    "allowOfflineIde": true,
     "allowOnlineEditor": true,
     "assessmentDueDateError": false,
     "assessmentType": "AUTOMATIC",
