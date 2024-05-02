@@ -32,9 +32,11 @@ public record FinishedBuildJobDTO(String id, String name, String buildAgentAddre
             AssessmentType assessmentType, Integer testCaseCount, Integer passedTestCaseCount, Integer codeIssueCount) {
 
         public static ResultDTO of(Result result) {
+            SubmissionDTO submissionDTO = result.getSubmission() == null ? null : SubmissionDTO.of(result.getSubmission());
+
             return new ResultDTO(result.getId(), result.getCompletionDate(), result.isSuccessful(), result.getScore(), result.isRated(),
-                    ParticipationDTO.of(result.getParticipation()), SubmissionDTO.of(result.getSubmission()), result.getAssessmentType(), result.getTestCaseCount(),
-                    result.getPassedTestCaseCount(), result.getCodeIssueCount());
+                    ParticipationDTO.of(result.getParticipation()), submissionDTO, result.getAssessmentType(), result.getTestCaseCount(), result.getPassedTestCaseCount(),
+                    result.getCodeIssueCount());
         }
     }
 
