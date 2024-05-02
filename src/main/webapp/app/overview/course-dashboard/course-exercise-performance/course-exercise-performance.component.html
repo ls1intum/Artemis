@@ -1,0 +1,20 @@
+<div #containerRef class="col-md-9">
+    <ngx-charts-bar-vertical
+        [roundEdges]="false"
+        [view]="[containerRef.offsetWidth, 300]"
+        [results]="ngxData"
+        [scheme]="ngxColor"
+        [xAxis]="true"
+        [xAxisLabel]="'artemisApp.courseStudentDashboard.exercisePerformance.charts.xAxisLabel' | artemisTranslate"
+        [showYAxisLabel]="true"
+        [yAxis]="true"
+        [yAxisLabel]="'artemisApp.courseStudentDashboard.exercisePerformance.charts.yAxisLabel' | artemisTranslate"
+        [showXAxisLabel]="true"
+        [yAxisTicks]="[0, 25, 50, 75, 100]"
+        [showDataLabel]="false"
+        [animations]="false"
+        [yAxisTickFormatting]="formatYAxisTick"
+    >
+        <ng-template #tooltipTemplate let-model="model"> {{ model.name }}: {{ round(model.value, 1) }}% </ng-template>
+    </ngx-charts-bar-vertical>
+</div>

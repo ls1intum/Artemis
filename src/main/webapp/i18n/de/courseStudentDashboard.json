@@ -1,0 +1,12 @@
+{
+    "artemisApp": {
+        "courseStudentDashboard": {
+            "exercisePerformance": {
+                "charts": {
+                    "xAxisLabel": "Aufgaben",
+                    "yAxisLabel": "Korrektheit in %"
+                }
+            }
+        }
+    }
+}

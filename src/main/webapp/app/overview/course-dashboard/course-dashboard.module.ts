@@ -6,6 +6,12 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { RouterModule, Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { Authority } from 'app/shared/constants/authority.constants';
+import { CourseExercisePerformanceComponent } from 'app/overview/course-dashboard/course-exercise-performance/course-exercise-performance.component';
+import { CourseExerciseLatenessComponent } from 'app/overview/course-dashboard/course-exercise-lateness/course-exercise-lateness.component';
+import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
+import { BarChartModule } from '@swimlane/ngx-charts';
 
 const routes: Routes = [
     {
@@ -21,8 +27,17 @@ const routes: Routes = [
 ];
 
 @NgModule({
-    declarations: [CourseDashboardComponent],
+    declarations: [CourseDashboardComponent, CourseExercisePerformanceComponent, CourseExerciseLatenessComponent],
     exports: [CourseDashboardComponent],
-    imports: [CommonModule, RouterModule.forChild(routes), ArtemisSharedModule, FontAwesomeModule],
+    imports: [
+        CommonModule,
+        RouterModule.forChild(routes),
+        ArtemisSharedModule,
+        FontAwesomeModule,
+        ArtemisDataTableModule,
+        NgxDatatableModule,
+        ArtemisSharedComponentModule,
+        BarChartModule,
+    ],
 })
 export class CourseDashboardModule {}
