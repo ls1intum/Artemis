@@ -4,6 +4,7 @@
     <!-- TODO: recreate initial scheme after all changes have been applied -->
     <include file="classpath:config/liquibase/changelog/00000000000000_initial_schema.xml" relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20240331151800_cleanup.xml" relativeToChangelogFile="false"/>
+    <include file="classpath:config/liquibase/changelog/20240404040404_changelog.xml" relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20230628215302_changelog.xml" relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20240412170323_changelog.xml" relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20240418204415_changelog.xml" relativeToChangelogFile="false"/>
