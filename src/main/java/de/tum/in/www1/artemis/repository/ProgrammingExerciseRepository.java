@@ -34,6 +34,7 @@ import de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -761,7 +762,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             long participationId = participation.getId();
             Optional<ProgrammingExercise> optionalProgrammingExercise = switch (participation) {
                 case TemplateProgrammingExerciseParticipation ignored -> findByTemplateParticipationId(participationId);
-                case SolutionProgrammingExerciseParticipationRepository ignored -> findBySolutionParticipationId(participationId);
+                case SolutionProgrammingExerciseParticipation ignored -> findBySolutionParticipationId(participationId);
                 case ProgrammingExerciseStudentParticipation ignored -> findByStudentParticipationId(participationId);
                 default -> Optional.empty();
             };
