@@ -23,7 +23,7 @@ public class DockerConfig {
     private List<String> parameters;
 
     public String getImage() {
-        return image;
+        return image.trim();
     }
 
     public void setImage(String image) {
@@ -31,7 +31,7 @@ public class DockerConfig {
     }
 
     public String getTag() {
-        return tag;
+        return tag.trim();
     }
 
     public void setTag(String tag) {
@@ -62,12 +62,14 @@ public class DockerConfig {
      */
     @JsonIgnore
     public String getFullImageName() {
+        var image = getImage();
+        var tag = getTag();
         if (image == null) {
             return null;
         }
         if (tag == null) {
             if (!image.contains(":")) {
-                return image + ":" + "latest";
+                return getImage() + ":" + "latest";
             }
         }
         if (image.contains(":")) {

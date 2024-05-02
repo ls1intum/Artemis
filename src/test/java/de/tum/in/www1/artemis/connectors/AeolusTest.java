@@ -46,11 +46,11 @@ class AeolusTest {
         scriptAction.setParameters(Map.of("key", "value"));
         AeolusResult scriptResult = new AeolusResult("junit", "text.xml", "ignore", "junit", false);
         scriptAction.setResults(List.of(scriptResult));
-        assertThat(scriptAction.getResults().get(0).getName()).isEqualTo("junit");
-        assertThat(scriptAction.getResults().get(0).getPath()).isEqualTo("text.xml");
-        assertThat(scriptAction.getResults().get(0).getIgnore()).isEqualTo("ignore");
-        assertThat(scriptAction.getResults().get(0).getType()).isEqualTo("junit");
-        assertThat(scriptAction.getResults().get(0).isBefore()).isEqualTo(false);
+        assertThat(scriptAction.getResults().getFirst().getName()).isEqualTo("junit");
+        assertThat(scriptAction.getResults().getFirst().getPath()).isEqualTo("text.xml");
+        assertThat(scriptAction.getResults().getFirst().getIgnore()).isEqualTo("ignore");
+        assertThat(scriptAction.getResults().getFirst().getType()).isEqualTo("junit");
+        assertThat(scriptAction.getResults().getFirst().isBefore()).isEqualTo(false);
 
         PlatformAction platformAction = new PlatformAction();
         platformAction.setName("platformAction");
