@@ -289,9 +289,9 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     Optional<ProgrammingExercise> findByTemplateParticipationId(@Param("participationId") long participationId);
 
     @Query("""
-                    SELECT pe
-                    FROM ProgrammingExercise pe
-                    WHERE pe.solutionParticipation.id = :participationId
+            SELECT pe
+            FROM ProgrammingExercise pe
+            WHERE pe.solutionParticipation.id = :participationId
             """)
     Optional<ProgrammingExercise> findBySolutionParticipationId(@Param("participationId") long participationId);
 
