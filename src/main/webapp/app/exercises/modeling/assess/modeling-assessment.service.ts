@@ -8,6 +8,7 @@ import { map } from 'rxjs/operators';
 import { convertDateFromServer } from 'app/utils/date.utils';
 
 export type EntityResponseType = HttpResponse<Result>;
+type ModelingAssessmentDTO = { feedbacks: Feedback[]; assessmentNote?: string };
 
 @Injectable({ providedIn: 'root' })
 export class ModelingAssessmentService {
@@ -17,13 +18,14 @@ export class ModelingAssessmentService {
 
     constructor(private http: HttpClient) {}
 
-    saveAssessment(resultId: number, feedbacks: Feedback[], submissionId: number, submit = false): Observable<Result> {
+    saveAssessment(resultId: number, feedbacks: Feedback[], submissionId: number, assessmentNote?: string, submit = false): Observable<Result> {
         let params = new HttpParams();
         if (submit) {
             params = params.set('submit', 'true');
         }
+        const body: ModelingAssessmentDTO = { feedbacks, assessmentNote };
         const url = `${this.resourceUrl}/modeling-submissions/${submissionId}/result/${resultId}/assessment`;
-        return this.http.put<Result>(url, feedbacks, { params }).pipe(map((res: Result) => this.convertResult(res)));
+        return this.http.put<Result>(url, body, { params }).pipe(map((res: Result) => this.convertResult(res)));
     }
 
     saveExampleAssessment(feedbacks: Feedback[], exampleSubmissionId: number): Observable<Result> {
@@ -31,11 +33,12 @@ export class ModelingAssessmentService {
         return this.http.put<Result>(url, feedbacks).pipe(map((res) => this.convertResult(res)));
     }
 
-    updateAssessmentAfterComplaint(feedbacks: Feedback[], complaintResponse: ComplaintResponse, submissionId: number): Observable<EntityResponseType> {
+    updateAssessmentAfterComplaint(feedbacks: Feedback[], complaintResponse: ComplaintResponse, submissionId: number, assessmentNote?: string): Observable<EntityResponseType> {
         const url = `${this.resourceUrl}/modeling-submissions/${submissionId}/assessment-after-complaint`;
         const assessmentUpdate = {
             feedbacks,
             complaintResponse,
+            assessmentNote,
         };
         return this.http.put<Result>(url, assessmentUpdate, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertResultEntityResponseTypeFromServer(res)));
     }

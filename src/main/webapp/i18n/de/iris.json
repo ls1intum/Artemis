@@ -22,7 +22,6 @@
                 "subSettings": {
                     "chatSettings": "Chat Einstellungen",
                     "hestiaSettings": "Hestia Einstellungen",
-                    "codeEditorSettings": "Code Editor Einstellungen",
                     "competencyGenerationSettings": "Kompetenzgenerierung Einstellungen",
                     "enabled-disabled": "Aktiviert/Deaktiviert",
                     "models": {
@@ -44,20 +43,10 @@
                         "title": "Template",
                         "inherit": "Template erben"
                     },
-                    "codeEditor": {
-                        "templates": "Templates",
-                        "templatesInheritSwitch": "Templates erben",
-                        "chatTemplate": "Chat Template",
-                        "problemStatementTemplate": "Problem Statement Generations Template",
-                        "templateRepoTemplate": "Vorlagen Repository Generations Template",
-                        "solutionRepoTemplate": "Lösungs Repository Generations Template",
-                        "testRepoTemplate": "Test Repository Generations Template"
-                    },
                     "enabled": {
                         "on": "Aktiviert",
                         "off": "Deaktiviert",
                         "chat": "Iris Chat",
-                        "codeEditor": "Programmieraufgaben Erstellungs Chat",
                         "hestia": "Hestia Integration"
                     },
                     "disabled": {
@@ -76,8 +65,7 @@
                     "tooltip": "Wenn aktiviert, werden die spezifischen globalen Iris Einstellungen automatisch aktualisiert, wenn eine neue Version von Artemis neue Iris Einstellungen bereitstellt.",
                     "chatLabel": "Auto Update der Chat Einstellungen",
                     "hestiaLabel": "Auto Update der Hestia Einstellungen",
-                    "competencyGenerationLabel": "Auto Update der Kompetenzgenerierung Einstellungen",
-                    "codeEditorLabel": "Auto Update der Code Editor Einstellungen"
+                    "competencyGenerationLabel": "Auto Update der Kompetenzgenerierung Einstellungen"
                 }
             },
             "error": {

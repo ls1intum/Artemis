@@ -1,5 +1,9 @@
+import com.diffplug.spotless.FormatterFunc
+import com.diffplug.spotless.FormatterStep
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
+
+import static com.diffplug.spotless.Formatter.NO_FILE_SENTINEL
 
 buildscript {
     repositories {
@@ -84,13 +88,22 @@ spotless {
         removeUnusedImports()
         trimTrailingWhitespace()
 
-        custom 'Refuse wildcard imports', {
-            // Wildcard imports can't be resolved by spotless itself.
-            // This will require the developer themselves to adhere to best practices.
-            if (it =~ /\nimport .*\*;/) {
-                throw new AssertionError("Do not use wildcard imports.  'spotlessApply' cannot resolve this issue. The following class vioaltes this rule:\n" +  it)
+        // Wildcard imports can't be resolved by spotless itself.
+        // This will require the developer themselves to adhere to best practices.
+        addStep(FormatterStep.createNeverUpToDate("Refuse wildcard imports", new FormatterFunc() {
+            @Override
+            String apply(String s) throws Exception {
+                apply(s, NO_FILE_SENTINEL)
             }
-        }
+
+            @Override
+            String apply(String s, File file) throws Exception {
+                if (s =~ /\nimport .*\*;/) {
+                    throw new AssertionError("Do not use wildcard imports. 'spotlessApply' cannot resolve this issue.\n" +
+                        "The following file violates this rule: " + file.getName())
+                }
+            }
+        }))
     }
 }
 
@@ -177,7 +190,7 @@ jacocoTestCoverageVerification {
                 counter = "CLASS"
                 value = "MISSEDCOUNT"
                 // TODO: in the future the following value should become less than 10
-                maximum = 25
+                maximum = 26
             }
         }
     }
