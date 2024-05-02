@@ -56,8 +56,8 @@ export class Result implements BaseEntity {
     public static isAthenaAIResult(that: Result): boolean {
         return that.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
     }
-  
-   /**
+
+    /**
      * Checks whether the given result has an assessment note that is not empty.
      * @param that the result of which the presence of an assessment note is being checked
      *
