@@ -17,6 +17,8 @@ public class TextAssessmentDTO {
 
     private List<Feedback> feedbacks = new ArrayList<>();
 
+    private String assessmentNote;
+
     public TextAssessmentDTO() {
         // needed to make Jackson happy
     }
@@ -39,5 +41,13 @@ public class TextAssessmentDTO {
 
     public void setFeedbacks(List<Feedback> feedbacks) {
         this.feedbacks = feedbacks;
+    }
+
+    public String getAssessmentNote() {
+        return assessmentNote;
+    }
+
+    public void setAssessmentNote(String assessmentNote) {
+        this.assessmentNote = assessmentNote;
     }
 }
