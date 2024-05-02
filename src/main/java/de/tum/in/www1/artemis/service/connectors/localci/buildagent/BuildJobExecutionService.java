@@ -7,7 +7,6 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -75,9 +74,6 @@ public class BuildJobExecutionService {
     private final LocalCIDockerService localCIDockerService;
 
     private final BuildLogsMap buildLogsMap;
-
-    @Value("${artemis.version-control.url}")
-    private URL localVCBaseUrl;
 
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
