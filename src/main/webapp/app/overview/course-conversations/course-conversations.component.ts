@@ -1,13 +1,18 @@
-import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { Post } from 'app/entities/metis/post.model';
 import { ActivatedRoute, Router } from '@angular/router';
+import { FormBuilder, FormGroup } from '@angular/forms';
 import { Subject, take, takeUntil } from 'rxjs';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { Course } from 'app/entities/course.model';
-import { PageType } from 'app/shared/metis/metis.util';
+import { PageType, SortDirection } from 'app/shared/metis/metis.util';
+import { faFilter, faLongArrowAltDown, faLongArrowAltUp, faPlus, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { ButtonType } from 'app/shared/components/button.component';
+import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { CourseWideSearchComponent, CourseWideSearchConfig } from 'app/overview/course-conversations/course-wide-search/course-wide-search.component';
 
 @Component({
     selector: 'jhi-course-conversations',
@@ -29,12 +34,32 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     isCodeOfConductAccepted?: boolean;
     isCodeOfConductPresented: boolean = false;
 
+    @ViewChild(CourseWideSearchComponent)
+    courseWideSearch: CourseWideSearchComponent;
+
+    courseWideSearchConfig: CourseWideSearchConfig;
+    courseWideSearchTerm = '';
+    formGroup: FormGroup;
+    readonly documentationType: DocumentationType = 'Communications';
+    readonly ButtonType = ButtonType;
+    readonly SortDirection = SortDirection;
+    sortingOrder = SortDirection.ASCENDING;
+
+    // Icons
+    faPlus = faPlus;
+    faTimes = faTimes;
+    faFilter = faFilter;
+    faSearch = faSearch;
+    faLongArrowAltUp = faLongArrowAltUp;
+    faLongArrowAltDown = faLongArrowAltDown;
+
     // MetisConversationService is created in course overview, so we can use it here
     constructor(
         private router: Router,
         private activatedRoute: ActivatedRoute,
         private metisConversationService: MetisConversationService,
         private metisService: MetisService,
+        private formBuilder: FormBuilder,
     ) {}
 
     getAsChannel = getAsChannelDTO;
@@ -57,6 +82,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.metisConversationService.isServiceSetup$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((isServiceSetUp: boolean) => {
             if (isServiceSetUp) {
                 this.course = this.metisConversationService.course;
+                this.initializeCourseWideSearchConfig();
+                this.resetFormGroup();
                 this.setupMetis();
                 this.subscribeToMetis();
                 this.subscribeToQueryParameter();
@@ -136,5 +163,43 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         if (this.course) {
             this.metisConversationService.acceptCodeOfConduct(this.course);
         }
+    }
+
+    initializeCourseWideSearchConfig() {
+        this.courseWideSearchConfig = new CourseWideSearchConfig();
+        this.courseWideSearchConfig.searchTerm = '';
+        this.courseWideSearchConfig.filterToUnresolved = false;
+        this.courseWideSearchConfig.filterToOwn = false;
+        this.courseWideSearchConfig.filterToAnsweredOrReacted = false;
+        this.courseWideSearchConfig.sortingOrder = SortDirection.ASCENDING;
+    }
+
+    onSearch() {
+        this.activeConversation = undefined;
+        this.courseWideSearchConfig.searchTerm = this.courseWideSearchTerm;
+        this.courseWideSearch?.onSearch();
+    }
+
+    onSelectContext(): void {
+        this.courseWideSearchConfig.filterToUnresolved = this.formGroup.get('filterToUnresolved')?.value;
+        this.courseWideSearchConfig.filterToOwn = this.formGroup.get('filterToOwn')?.value;
+        this.courseWideSearchConfig.filterToAnsweredOrReacted = this.formGroup.get('filterToAnsweredOrReacted')?.value;
+        this.courseWideSearchConfig.sortingOrder = this.sortingOrder;
+        if (!this.activeConversation) {
+            this.onSearch();
+        }
+    }
+
+    onChangeSortDir(): void {
+        this.sortingOrder = this.sortingOrder === SortDirection.DESCENDING ? SortDirection.ASCENDING : SortDirection.DESCENDING;
+        this.onSelectContext();
+    }
+
+    resetFormGroup(): void {
+        this.formGroup = this.formBuilder.group({
+            filterToUnresolved: false,
+            filterToOwn: false,
+            filterToAnsweredOrReacted: false,
+        });
     }
 }
