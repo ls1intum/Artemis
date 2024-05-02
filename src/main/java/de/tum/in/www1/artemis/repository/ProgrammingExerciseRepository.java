@@ -748,17 +748,20 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     }
 
     /**
-     * Retrieve the programming exercise from a programming exercise participation. In case the programming exercise is null or not initialized,
-     * this method will load it properly from the database and connect it to the participation
+     * Retrieves the associated ProgrammingExercise for a given ProgrammingExerciseParticipation.
+     * If the ProgrammingExercise is not already loaded, it is fetched from the database and linked
+     * to the specified participation. This method handles different types of participation
+     * (template, solution, student) to optimize database queries and avoid performance bottlenecks.
      *
-     * @param participation the programming exercise participation for which the programming exercise should be found
-     * @return the programming exercise
+     * @param participation the programming exercise participation object; must not be null
+     * @return the linked ProgrammingExercise, or null if not found or the participation is not initialized
      */
     @Nullable
     default ProgrammingExercise getProgrammingExerciseFromParticipation(ProgrammingExerciseParticipation participation) {
         // Note: if this participation was retrieved as Participation (abstract super class) from the database, the programming exercise might not be correctly initialized
         if (participation.getProgrammingExercise() == null || !Hibernate.isInitialized(participation.getProgrammingExercise())) {
             // Find the programming exercise for the given participation
+            // NOTE: we use different methods to find the programming exercise based on the participation type on purpose to avoid slow database queries
             long participationId = participation.getId();
             Optional<ProgrammingExercise> optionalProgrammingExercise = switch (participation) {
                 case TemplateProgrammingExerciseParticipation ignored -> findByTemplateParticipationId(participationId);
