@@ -4,8 +4,8 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { admin, instructor, studentFour, studentOne, studentThree, studentTwo, tutor } from '../../../support/users';
 import { test } from '../../../support/fixtures';
 import { generateUUID } from '../../../support/utils';
-import { Exercise, ExerciseMode } from 'app/entities/exercise.model';
 import { expect } from '@playwright/test';
+import { Exercise, ExerciseMode } from '../../../support/constants';
 
 test.describe('Programming Exercise Management', () => {
     let course: Course;

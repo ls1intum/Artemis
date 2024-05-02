@@ -21,6 +21,8 @@ import {
     BASE_API,
     COURSE_BASE,
     EXERCISE_BASE,
+    Exercise,
+    ExerciseMode,
     ExerciseType,
     MODELING_EXERCISE_BASE,
     PROGRAMMING_EXERCISE_BASE,
@@ -35,7 +37,6 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { Participation } from 'app/entities/participation/participation.model';
-import { Exercise, ExerciseMode } from 'app/entities/exercise.model';
 import { Exam } from 'app/entities/exam.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { TeamAssignmentConfig } from 'app/entities/team-assignment-config.model';

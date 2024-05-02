@@ -82,3 +82,8 @@ export type Exercise = {
     additionalData?: AdditionalData;
     exerciseGroup?: ExerciseGroup;
 };
+
+export enum ExerciseMode {
+    INDIVIDUAL = 'INDIVIDUAL',
+    TEAM = 'TEAM',
+}
