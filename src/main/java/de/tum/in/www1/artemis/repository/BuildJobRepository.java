@@ -29,7 +29,7 @@ public interface BuildJobRepository extends JpaRepository<BuildJob, Long>, JpaSp
 
     Optional<BuildJob> findBuildJobByResult(Result result);
 
-    @EntityGraph(attributePaths = { "result", "result.feedbacks", "result.feedbacks.testCase", "result.participation", "result.submission" })
+    @EntityGraph(attributePaths = { "result", "result.feedbacks", "result.feedbacks.testCase", "result.participation", "result.submission", "result.participation.exercise" })
     Page<BuildJob> findAll(Pageable pageable);
 
     @Query("""
@@ -42,7 +42,7 @@ public interface BuildJobRepository extends JpaRepository<BuildJob, Long>, JpaSp
             """)
     Set<DockerImageBuild> findAllLastBuildDatesForDockerImages();
 
-    @EntityGraph(attributePaths = { "result", "result.feedbacks", "result.feedbacks.testCase", "result.participation", "result.submission" })
+    @EntityGraph(attributePaths = { "result", "result.feedbacks", "result.feedbacks.testCase", "result.participation", "result.submission", "result.participation.exercise" })
     Page<BuildJob> findAllByCourseId(long courseId, Pageable pageable);
 
     @Query("""
