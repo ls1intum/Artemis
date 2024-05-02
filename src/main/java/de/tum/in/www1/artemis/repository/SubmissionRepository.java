@@ -571,7 +571,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
                 JOIN p.submissions s
             WHERE p.exercise.exerciseGroup.exam.id = :examId
                 AND p.testRun IS FALSE
-                AND TYPE(s) != QuizSubmission
+                AND TYPE(s) in (TextSubmission, ModelingSubmission)
                 AND s.submitted IS NULL
                 AND s.submissionDate IS NULL
             """)

@@ -4,6 +4,11 @@ import { ExamChecklist } from 'app/entities/exam-checklist.model';
 import { faChartBar, faEye, faListAlt, faThList, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import { AlertService } from 'app/core/util/alert.service';
+import { HttpErrorResponse } from '@angular/common/http';
+import { onError } from 'app/shared/util/global.utils';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-exam-checklist',
@@ -22,6 +27,8 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
     hasOptionalExercises = false;
     countMandatoryExercises = 0;
     isTestExam: boolean;
+    isEvaluatingQuizExercises: boolean;
+    isAssessingUnsubmittedExams: boolean;
     existsUnfinishedAssessments: boolean = false;
     existsUnassessedQuizzes: boolean;
     existsUnsubmittedExercises: boolean;
@@ -42,6 +49,9 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
     constructor(
         private examChecklistService: ExamChecklistService,
         private websocketService: JhiWebsocketService,
+        private examManagementService: ExamManagementService,
+        private alertService: AlertService,
+        private artemisTranslatePipe: ArtemisTranslatePipe,
     ) {}
 
     ngOnInit() {
@@ -80,5 +90,64 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
         this.websocketService.unsubscribe(submittedTopic);
         const startedTopic = this.examChecklistService.getStartedTopic(this.exam);
         this.websocketService.unsubscribe(startedTopic);
+    }
+
+    /**
+     * Evaluates all the quiz exercises that belong to the exam
+     */
+    evaluateQuizExercises() {
+        this.isEvaluatingQuizExercises = true;
+        if (this.exam.course?.id !== undefined && this.exam.id !== undefined) {
+            this.examManagementService.evaluateQuizExercises(this.exam.course.id, this.exam.id).subscribe({
+                next: (res) => {
+                    this.alertService.success('artemisApp.studentExams.evaluateQuizExerciseSuccess', { number: res?.body });
+                    this.isEvaluatingQuizExercises = false;
+                },
+                error: (err: HttpErrorResponse) => {
+                    this.handleError('artemisApp.studentExams.evaluateQuizExerciseFailure', err);
+                    this.isEvaluatingQuizExercises = false;
+                },
+            });
+        } else {
+            throw new Error(`Cannot evaluate quiz exercises due to missing course or exam id.`);
+        }
+    }
+
+    assessUnsubmittedExamModelingAndTextParticipations() {
+        this.isAssessingUnsubmittedExams = true;
+        if (this.exam.course?.id !== undefined && this.exam.id !== undefined) {
+            this.examManagementService.assessUnsubmittedExamModelingAndTextParticipations(this.exam.course.id, this.exam.id).subscribe({
+                next: (res) => {
+                    this.alertService.success('artemisApp.studentExams.assessUnsubmittedStudentExamsSuccess', { number: res?.body });
+                    this.isAssessingUnsubmittedExams = false;
+                },
+                error: (err: HttpErrorResponse) => {
+                    this.handleError('artemisApp.studentExams.assessUnsubmittedStudentExamsFailure', err);
+                    this.isAssessingUnsubmittedExams = false;
+                },
+            });
+        } else {
+            throw new Error(`Cannot unsubmitted exercises due to missing course or exam id.`);
+        }
+    }
+
+    /**
+     * Shows the translated error message if an error key is available in the error response. Otherwise it defaults to the generic alert.
+     * @param translationString the string identifier in the translation service for the text. This is ignored if the response does not contain an error message or error key.
+     * @param err the error response
+     */
+    private handleError(translationString: string, err: HttpErrorResponse) {
+        let errorDetail;
+        if (err?.error && err.error.errorKey) {
+            errorDetail = this.artemisTranslatePipe.transform(err.error.errorKey);
+        } else {
+            errorDetail = err?.error?.message;
+        }
+        if (errorDetail) {
+            this.alertService.error(translationString, { message: errorDetail });
+        } else {
+            // Sometimes the response does not have an error field, so we default to generic error handling
+            onError(this.alertService, err);
+        }
     }
 }

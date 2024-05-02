@@ -508,14 +508,22 @@
                                                                     <span>{{ 'artemisApp.examManagement.checklist.textitems.checkUnassessedQuizzes' | artemisTranslate }}</span>
                                                                 </th>
                                                                 <th>
-                                                                    <jhi-checklist-check [checkAttribute]="!existsUnassessedQuizzes" />
+                                                                    @if (isEvaluatingQuizExercises) {
+                                                                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                                                    } @else {
+                                                                        <jhi-checklist-check [checkAttribute]="!existsUnassessedQuizzes" />
+                                                                    }
                                                                 </th>
                                                                 <th>
                                                                     <button
                                                                         id="evaluateQuizExercisesButton"
                                                                         class="btn btn-primary mt-1"
-                                                                        [disabled]="isLoading || !existsUnassessedQuizzes"
+                                                                        (click)="evaluateQuizExercises()"
+                                                                        [disabled]="isLoading || !existsUnassessedQuizzes || isEvaluatingQuizExercises"
                                                                     >
+                                                                        @if (isEvaluatingQuizExercises) {
+                                                                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                                                        }
                                                                         <span jhiTranslate="artemisApp.studentExams.evaluateQuizExercises"></span>
                                                                     </button>
                                                                 </th>
@@ -525,14 +533,22 @@
                                                                     <span>{{ 'artemisApp.examManagement.checklist.textitems.checkUnsubmittedExercises' | artemisTranslate }}</span>
                                                                 </th>
                                                                 <th>
-                                                                    <jhi-checklist-check [checkAttribute]="!existsUnsubmittedExercises" />
+                                                                    @if (isAssessingUnsubmittedExams) {
+                                                                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                                                    } @else {
+                                                                        <jhi-checklist-check [checkAttribute]="!existsUnsubmittedExercises" />
+                                                                    }
                                                                 </th>
                                                                 <th>
                                                                     <button
                                                                         class="btn btn-primary mt-1"
                                                                         id="assessUnsubmittedExamModelingAndTextParticipationsButton"
-                                                                        [disabled]="isLoading || !existsUnsubmittedExercises"
+                                                                        (click)="assessUnsubmittedExamModelingAndTextParticipations()"
+                                                                        [disabled]="isLoading || !existsUnsubmittedExercises || isAssessingUnsubmittedExams"
                                                                     >
+                                                                        @if (isAssessingUnsubmittedExams) {
+                                                                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                                                        }
                                                                         <span jhiTranslate="artemisApp.studentExams.assessUnsubmittedStudentExams"></span>
                                                                     </button>
                                                                 </th>
