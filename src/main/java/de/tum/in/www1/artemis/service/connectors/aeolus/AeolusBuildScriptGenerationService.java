@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis.service.connectors.aeolus;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.AeolusTarget;
 import de.tum.in.www1.artemis.service.ProfileService;
@@ -39,7 +41,7 @@ public class AeolusBuildScriptGenerationService extends BuildScriptGenerationSer
     }
 
     @Override
-    public String getScript(ProgrammingExercise programmingExercise) {
+    public String getScript(ProgrammingExercise programmingExercise) throws JsonProcessingException {
         if (!profileService.isLocalCiActive()) {
             return null;
         }
@@ -51,13 +53,6 @@ public class AeolusBuildScriptGenerationService extends BuildScriptGenerationSer
             windfile.setId("not-used");
             windfile.setDescription("not-used");
             windfile.setName("not-used");
-            var existingDockerConfig = windfile.getMetadata().getDocker();
-            // existingDockerConfig.image() trims potential white spaces in the docker image
-            DockerConfig newDockerConfig = new DockerConfig(existingDockerConfig.image(), existingDockerConfig.tag(), existingDockerConfig.volumes(),
-                    existingDockerConfig.parameters());
-            WindfileMetadata metadata = windfile.getMetadata();
-            metadata.setDocker(newDockerConfig);
-            windfile.setMetadata(metadata);
             return aeolusBuildPlanService.generateBuildScript(windfile, AeolusTarget.CLI);
         }
         return null;
