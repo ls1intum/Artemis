@@ -7,7 +7,7 @@ import java.io.Serializable;
  */
 public class AnswerOptionDTO implements Serializable {
 
-    private Long id = 1L;
+    private Long id;
 
     private String text;
 
