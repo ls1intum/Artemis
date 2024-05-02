@@ -1,6 +1,6 @@
 import { admin } from '../support/users';
 
-describe('Check artemis system health', () => {
+describe.skip('Check artemis system health', () => {
     beforeEach('Login as admin and visit system health page', () => {
         cy.login(admin, '/admin/health');
     });

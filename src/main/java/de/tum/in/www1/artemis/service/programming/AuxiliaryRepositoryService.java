@@ -65,7 +65,7 @@ public class AuxiliaryRepositoryService {
                 return true;
             }
             AuxiliaryRepository auxiliaryRepositoryBeforeUpdate = auxiliaryRepositoryRepository.findById(repo.getId())
-                    .orElseThrow(() -> new IllegalStateException("Edited an existing repository that is not in the data base!"));
+                    .orElseThrow(() -> new IllegalStateException("Edited an existing repository that is not in the database!"));
             return !repo.containsEqualStringValues(auxiliaryRepositoryBeforeUpdate);
         }).toList());
         validateAndUpdateExistingAuxiliaryRepositoriesOfProgrammingExercise(programmingExercise, newOrEditedAuxiliaryRepositories, updatedExercise);

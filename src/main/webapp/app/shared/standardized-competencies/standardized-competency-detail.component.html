@@ -1,0 +1,27 @@
+<div class="d-flex flex-column">
+    <div class="mb-2">
+        <div class="d-flex justify-content-between">
+            <h4 jhiTranslate="artemisApp.standardizedCompetency.details.title"></h4>
+            <button type="button" class="btn-close" (click)="close()"></button>
+        </div>
+    </div>
+    <div class="detail-body d-flex flex-column">
+        <div class="detail-row">
+            <h5 jhiTranslate="artemisApp.standardizedCompetency.model.title"></h5>
+            <p class="mb-0" id="competency-detail-title">{{ competency.title }}</p>
+        </div>
+        <div class="detail-row">
+            <h5 jhiTranslate="artemisApp.standardizedCompetency.model.description"></h5>
+            <p class="markdown-preview" [innerHTML]="competency.description ?? '&nbsp;' | htmlForMarkdown"></p>
+        </div>
+        <div class="detail-row">
+            <h5 jhiTranslate="artemisApp.standardizedCompetency.model.taxonomy"></h5>
+            <p class="mb-0" jhiTranslate="artemisApp.competency.taxonomies.{{ competency.taxonomy }}"></p>
+        </div>
+        <div class="detail-row">
+            <h5 jhiTranslate="artemisApp.standardizedCompetency.model.knowledgeArea"></h5>
+            <p class="mb-0" id="competency-detail-knowledge-area">{{ knowledgeAreaTitle }}</p>
+        </div>
+        <!-- TODO: add source handling in follow-up PR -->
+    </div>
+</div>
