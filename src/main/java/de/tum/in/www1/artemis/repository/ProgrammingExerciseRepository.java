@@ -31,7 +31,6 @@ import de.tum.in.www1.artemis.domain.Exercise_;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise_;
 import de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry;
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
@@ -238,16 +237,6 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @Query("""
             SELECT DISTINCT pe
             FROM ProgrammingExercise pe
-                LEFT JOIN FETCH pe.studentParticipations pep
-                LEFT JOIN FETCH pep.submissions s
-            WHERE s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL
-                OR s.type IS NULL
-            """)
-    List<ProgrammingExercise> findAllWithEagerParticipationsAndLegalSubmissions();
-
-    @Query("""
-            SELECT DISTINCT pe
-            FROM ProgrammingExercise pe
                 LEFT JOIN FETCH pe.templateParticipation
                 LEFT JOIN FETCH pe.solutionParticipation
             WHERE pe.id = :exerciseId
@@ -348,7 +337,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
                 LEFT JOIN FETCH pe.exerciseGroup eg
                 LEFT JOIN FETCH eg.exam e
             WHERE e.endDate > :dateTime
-             """)
+            """)
     List<ProgrammingExercise> findAllWithEagerExamByExamEndDateAfterDate(@Param("dateTime") ZonedDateTime dateTime);
 
     /**
@@ -521,20 +510,6 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             WHERE e.id = :exerciseId
             """)
     Optional<ProgrammingExercise> findByIdWithGradingCriteria(@Param("exerciseId") long exerciseId);
-
-    /**
-     * Finds all programming exercises with eager template participation and the given programming language.
-     *
-     * @param programmingLanguage the programming language of the exercises to find.
-     * @return a list of programming exercises with eager template participation.
-     */
-    @Query("""
-            SELECT DISTINCT pe
-            FROM ProgrammingExercise pe
-                LEFT JOIN FETCH pe.templateParticipation tp
-            WHERE pe.programmingLanguage = :programmingLanguage
-            """)
-    List<ProgrammingExercise> findAllByProgrammingLanguageWithTemplateParticipation(@Param("programmingLanguage") ProgrammingLanguage programmingLanguage);
 
     default ProgrammingExercise findByIdWithGradingCriteriaElseThrow(long exerciseId) {
         return findByIdWithGradingCriteria(exerciseId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise", exerciseId));
