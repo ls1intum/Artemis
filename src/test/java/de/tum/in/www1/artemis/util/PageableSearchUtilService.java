@@ -100,17 +100,29 @@ public class PageableSearchUtilService {
     }
 
     /**
-     * Generates a LinkedMultiValueMap from the given PageableSearchDTO. The map is used for REST calls and maps the parameters to the values.
+     * Converts a PageableSearchDTO into a LinkedMultiValueMap suitable for use with RESTful API calls.
+     * This conversion facilitates the transfer of search parameters and their values in a format
+     * that is acceptable for web requests.
      *
-     * @param search The PageableSearchDTO to use
-     * @return The generated LinkedMultiValueMap
+     * @param search The PageableSearchDTO containing search parameters and values
+     * @return A LinkedMultiValueMap with parameter names as keys and their corresponding values
      */
     public LinkedMultiValueMap<String, String> searchMapping(PageableSearchDTO<String> search) {
-        ObjectMapper mapper = new ObjectMapper();
-        Map<String, String> params = mapper.convertValue(search, new TypeReference<>() {
-        });
-        LinkedMultiValueMap<String, String> paramMap = new LinkedMultiValueMap<>();
-        params.forEach(paramMap::add);
-        return paramMap;
+        final ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            // Serialize the DTO into a JSON string and then deserialize it into a Map
+            final String json = objectMapper.writeValueAsString(search);
+            final Map<String, String> params = objectMapper.readValue(json, new TypeReference<>() {
+            });
+
+            // Populate a LinkedMultiValueMap from the Map, mapping parameter names to values
+            final LinkedMultiValueMap<String, String> paramMap = new LinkedMultiValueMap<>();
+            params.forEach(paramMap::add);
+            return paramMap;
+        }
+        catch (Exception e) {
+            // Handle exceptions by throwing a runtime exception with the error context
+            throw new RuntimeException("Failed to map JSON", e);
+        }
     }
 }
