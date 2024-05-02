@@ -20,6 +20,7 @@ import jakarta.persistence.Table;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -31,6 +32,9 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 @Table(name = "competency")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 public class Competency extends BaseCompetency {
+
+    @JsonIgnore
+    public static final int DEFAULT_MASTERY_THRESHOLD = 50;
 
     @Column(name = "soft_due_date")
     private ZonedDateTime softDueDate;
