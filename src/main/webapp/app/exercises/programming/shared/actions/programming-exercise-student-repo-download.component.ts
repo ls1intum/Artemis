@@ -7,10 +7,10 @@ import { AlertService } from 'app/core/util/alert.service';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
-    selector: 'jhi-programming-exercise-user-repo-download',
-    templateUrl: './programming-exercise-user-repo-download.component.html',
+    selector: 'jhi-programming-exercise-student-repo-download',
+    templateUrl: './programming-exercise-student-repo-download.component.html',
 })
-export class ProgrammingExerciseUserRepoDownloadComponent {
+export class ProgrammingExerciseStudentRepoDownloadComponent {
     ButtonType = ButtonType;
     ButtonSize = ButtonSize;
     readonly FeatureToggle = FeatureToggle;
