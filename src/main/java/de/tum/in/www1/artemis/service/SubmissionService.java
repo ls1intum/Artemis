@@ -20,6 +20,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.AssessmentNote;
 import de.tum.in.www1.artemis.domain.Complaint;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Feedback;
@@ -443,17 +444,26 @@ public class SubmissionService {
      * This method is used to create a new result, after a complaint has been accepted.
      * The new result contains the updated feedback of the result the complaint belongs to.
      *
-     * @param submission the submission where the original result and the result after the complaintResponse belong to
-     * @param oldResult  the original result, before the response
-     * @param feedbacks  the new feedbacks after the response
+     * @param submission         the submission where the original result and the result after the complaintResponse belong to
+     * @param oldResult          the original result, before the response
+     * @param feedbacks          the new feedbacks after the response
+     * @param assessmentNoteText the new text of the assessment note
      * @return the newly created result
      */
-    public Result createResultAfterComplaintResponse(Submission submission, Result oldResult, List<Feedback> feedbacks) {
+    public Result createResultAfterComplaintResponse(Submission submission, Result oldResult, List<Feedback> feedbacks, String assessmentNoteText) {
         Result newResult = new Result();
+        updateAssessmentNoteAfterComplaintResponse(newResult, assessmentNoteText, submission.getLatestResult().getAssessor());
         newResult.setParticipation(submission.getParticipation());
         copyFeedbackToResult(newResult, feedbacks);
         newResult = copyResultContentAndAddToSubmission(submission, newResult, oldResult);
         return newResult;
+    }
+
+    private void updateAssessmentNoteAfterComplaintResponse(Result newResult, String assessmentNoteText, User assessor) {
+        AssessmentNote newNote = new AssessmentNote();
+        newNote.setCreator(assessor);
+        newNote.setNote(assessmentNoteText);
+        newResult.setAssessmentNote(newNote);
     }
 
     /**

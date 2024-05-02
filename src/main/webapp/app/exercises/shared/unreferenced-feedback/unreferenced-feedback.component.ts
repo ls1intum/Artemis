@@ -25,6 +25,7 @@ export class UnreferencedFeedbackComponent {
     @Input() set feedbacks(feedbacks: Feedback[]) {
         this.unreferencedFeedback = [...feedbacks];
     }
+
     @Input() feedbackSuggestions: Feedback[] = [];
 
     @Output() feedbacksChange = new EventEmitter<Feedback[]>();
