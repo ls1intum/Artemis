@@ -21,8 +21,8 @@ public abstract class HttpStatusException extends AbstractThrowableProblem {
      * @param type
      * @param defaultMessage that will be displayed if the translation is not found in the client side i18n error.json files
      * @param status         of the http response (e.g. 400 BAD REQUEST)
-     * @param entityName     where the error occurred
-     * @param errorKey       which is the translation key in the client side i18n error.json files
+     * @param entityName     of the component where the error occurred
+     * @param errorKey       that matches a translation key in the client side i18n error.json files
      * @param parameters     contains additional information (e.g. the field 'skipAlert' to tell the client side alert service
      *                           interceptor that the error should not be handled by the interceptor - this is useful when the
      *                           component where the error occurred has information to display a more concrete error message)
