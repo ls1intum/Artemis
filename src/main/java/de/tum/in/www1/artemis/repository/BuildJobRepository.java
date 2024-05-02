@@ -29,7 +29,7 @@ public interface BuildJobRepository extends JpaRepository<BuildJob, Long>, JpaSp
 
     Optional<BuildJob> findBuildJobByResult(Result result);
 
-    @EntityGraph(attributePaths = { "result", "result.participation", "result.participation", "result.participation.exercise", "result.submission" })
+    @EntityGraph(attributePaths = { "result", "result.participation", "result.participation.exercise", "result.submission" })
     Page<BuildJob> findAll(Pageable pageable);
 
     @Query("""
