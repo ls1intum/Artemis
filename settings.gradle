@@ -11,3 +11,6 @@ pluginManagement {
 }
 
 rootProject.name = 'Artemis'
+
+
+include 'supporting_scripts:analysis-of-endpoint-connections'

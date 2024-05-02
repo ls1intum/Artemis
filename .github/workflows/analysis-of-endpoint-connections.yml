@@ -23,19 +23,18 @@ jobs:
         run: |
           git diff --name-only origin/${{ github.event.pull_request.base.ref }} HEAD > modified_files.txt
 
-      - name: Display modified files
-        run: |
-          echo "Modified files in this pull request:"
-          cat modified_files.txt
-
-      - name: Set up Python
-        uses: actions/setup-python@v3
+      - name: Set up JDK 21
+        uses: actions/setup-java@v2
         with:
-          python-version: '3.x'
+          java-version: '21'
+          distribution: 'adopt'
 
-      - name: Install dependencies
+      - name: Build analysis-of-endpoint-connections
         run: |
-          python -m pip install --upgrade pip
+          ./gradlew :supporting_scripts:analysis-of-endpoint-connections:build --warning-mode all
+          ./gradlew :supporting_scripts:analysis-of-endpoint-connections:shadowJar
+          java -jar supporting_scripts/analysis-of-endpoint-connections/build/libs/analysis-of-endpoint-connections-1.0-SNAPSHOT-all.jar $(cat modified_files.txt)
 
-      - name: identify server endpoints
-        run: python supporting_scripts/analysis-of-endpoint-connections/identify_server_endpoints.py $(cat modified_files.txt)
+      - name: run analysis-of-endpoint-connections
+        run: |
+          java -jar supporting_scripts/analysis-of-endpoint-connections/build/libs/analysis-of-endpoint-connections-1.0-SNAPSHOT-all.jar $(cat modified_files.txt)
