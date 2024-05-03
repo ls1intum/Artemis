@@ -28,7 +28,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.Gson;
 
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
@@ -166,8 +165,8 @@ public class AeolusBuildPlanService {
      * @param target   the target to generate the build script for jenkins or cli
      * @return the generated build script
      */
-    public String generateBuildScript(Windfile windfile, AeolusTarget target) {
-        String buildPlan = new Gson().toJson(windfile);
+    public String generateBuildScript(Windfile windfile, AeolusTarget target) throws JsonProcessingException {
+        String buildPlan = objectMapper.writeValueAsString(windfile);
         String requestUrl = aeolusUrl + "/generate/" + target.getName();
         UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl);
 

@@ -4,10 +4,13 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALCI;
 
+import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 import jakarta.annotation.Nullable;
 import jakarta.annotation.PreDestroy;
@@ -30,6 +33,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
+import org.springframework.scheduling.annotation.Scheduled;
 
 import com.hazelcast.config.Config;
 import com.hazelcast.config.EvictionConfig;
@@ -38,8 +42,10 @@ import com.hazelcast.config.MapConfig;
 import com.hazelcast.config.MaxSizePolicy;
 import com.hazelcast.config.QueueConfig;
 import com.hazelcast.config.SerializerConfig;
+import com.hazelcast.config.SplitBrainProtectionConfig;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.spi.properties.ClusterProperty;
 import com.hazelcast.spring.cache.HazelcastCacheManager;
 
 import de.tum.in.www1.artemis.service.HazelcastPathSerializer;
@@ -111,6 +117,47 @@ public class CacheConfiguration {
     }
 
     /**
+     * This scheduled task regularly checks if all members of the Hazelcast cluster are connected to each other.
+     * This is one countermeasure to a split cluster.
+     */
+    @Scheduled(fixedRate = 2, initialDelay = 1, timeUnit = TimeUnit.MINUTES)
+    public void connectToAllMembers() {
+        if (registration == null) {
+            return;
+        }
+        String serviceId = registration.getServiceId();
+        var hazelcastInstance = Hazelcast.getHazelcastInstanceByName(instanceName);
+        if (hazelcastInstance == null) {
+            log.warn("Hazelcast instance not found, cannot connect to cluster members");
+            return;
+        }
+
+        var hazelcastMemberAddresses = hazelcastInstance.getCluster().getMembers().stream().map(member -> {
+            try {
+                return member.getAddress().getInetAddress().getHostAddress();
+            }
+            catch (UnknownHostException e) {
+                return "unknown";
+            }
+        }).toList();
+
+        log.debug("Current Registry members: {}", discoveryClient.getInstances(serviceId).stream().map(ServiceInstance::getHost).toList());
+        log.debug("Current Hazelcast members: {}", hazelcastMemberAddresses);
+
+        for (ServiceInstance instance : discoveryClient.getInstances(serviceId)) {
+            var instanceHost = instance.getHost();
+            // Workaround for IPv6 addresses, as they are enclosed in brackets
+            var instanceHostClean = instanceHost.replace("[", "").replace("]", "");
+            if (hazelcastMemberAddresses.stream().noneMatch(member -> member.equals(instanceHostClean))) {
+                var clusterMemberPort = instance.getMetadata().getOrDefault("hazelcast.port", String.valueOf(hazelcastPort));
+                var clusterMemberAddress = instanceHost + ":" + clusterMemberPort;
+                log.info("Adding Hazelcast cluster member {}", clusterMemberAddress);
+                hazelcastInstance.getConfig().getNetworkConfig().getJoin().getTcpIpConfig().addMember(clusterMemberAddress);
+            }
+        }
+    }
+
+    /**
      * Setup the hazelcast instance based on the given jHipster properties and the enabled spring profiles.
      *
      * @param jHipsterProperties the jhipster properties
@@ -119,7 +166,7 @@ public class CacheConfiguration {
     @Bean
     public HazelcastInstance hazelcastInstance(JHipsterProperties jHipsterProperties) {
         log.debug("Configuring Hazelcast");
-        HazelcastInstance hazelCastInstance = Hazelcast.getHazelcastInstanceByName("Artemis");
+        HazelcastInstance hazelCastInstance = Hazelcast.getHazelcastInstanceByName(instanceName);
         if (hazelCastInstance != null) {
             log.debug("Hazelcast already initialized");
             return hazelCastInstance;
@@ -167,26 +214,42 @@ public class CacheConfiguration {
 
                 // In the local configuration, the hazelcast port is the http-port + the hazelcastPort as offset
                 config.getNetworkConfig().setPort(serverProperties.getPort() + hazelcastPort); // Own port
+                registration.getMetadata().put("hazelcast.port", String.valueOf(serverProperties.getPort() + hazelcastPort));
+
                 for (ServiceInstance instance : discoveryClient.getInstances(serviceId)) {
-                    String clusterMember = instance.getHost() + ":" + (instance.getPort() + hazelcastPort); // Address where the other instance is expected
-                    log.info("Adding Hazelcast (dev) cluster member {}", clusterMember);
-                    config.getNetworkConfig().getJoin().getTcpIpConfig().addMember(clusterMember);
+                    var clusterMemberPort = instance.getMetadata().getOrDefault("hazelcast.port", String.valueOf(serverProperties.getPort() + hazelcastPort));
+                    String clusterMemberAddress = instance.getHost() + ":" + clusterMemberPort; // Address where the other instance is expected
+                    log.info("Adding Hazelcast (dev) cluster member {}", clusterMemberAddress);
+                    config.getNetworkConfig().getJoin().getTcpIpConfig().addMember(clusterMemberAddress);
                 }
             }
             else { // Production configuration, one host per instance all using the configured port
                 config.setClusterName("prod");
                 config.setInstanceName(instanceName);
                 config.getNetworkConfig().setPort(hazelcastPort); // Own port
+                registration.getMetadata().put("hazelcast.port", String.valueOf(hazelcastPort));
+
                 for (ServiceInstance instance : discoveryClient.getInstances(serviceId)) {
-                    String clusterMember = instance.getHost() + ":" + hazelcastPort; // Address where the other instance is expected
-                    log.info("Adding Hazelcast (prod) cluster member {}", clusterMember);
-                    config.getNetworkConfig().getJoin().getTcpIpConfig().addMember(clusterMember);
+                    var clusterMemberPort = instance.getMetadata().getOrDefault("hazelcast.port", String.valueOf(hazelcastPort));
+                    String clusterMemberAddress = instance.getHost() + ":" + clusterMemberPort; // Address where the other instance is expected
+                    log.info("Adding Hazelcast (prod) cluster member {}", clusterMemberAddress);
+                    config.getNetworkConfig().getJoin().getTcpIpConfig().addMember(clusterMemberAddress);
                 }
             }
         }
         config.getMapConfigs().put("default", initializeDefaultMapConfig(jHipsterProperties));
         config.getMapConfigs().put("files", initializeFilesMapConfig(jHipsterProperties));
         config.getMapConfigs().put("de.tum.in.www1.artemis.domain.*", initializeDomainMapConfig(jHipsterProperties));
+
+        // Configure split brain protection if the cluster was split at some point
+        var splitBrainProtectionConfig = new SplitBrainProtectionConfig();
+        splitBrainProtectionConfig.setName("artemis-split-brain-protection");
+        splitBrainProtectionConfig.setEnabled(true);
+        splitBrainProtectionConfig.setMinimumClusterSize(2);
+        config.setSplitBrainProtectionConfigs(new ConcurrentHashMap<>());
+        config.addSplitBrainProtectionConfig(splitBrainProtectionConfig);
+        // Specify when the first run of the split brain protection should be executed (in seconds)
+        ClusterProperty.MERGE_FIRST_RUN_DELAY_SECONDS.setSystemProperty("120");
 
         // only add the queue config if the profile "localci" is active
         Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
