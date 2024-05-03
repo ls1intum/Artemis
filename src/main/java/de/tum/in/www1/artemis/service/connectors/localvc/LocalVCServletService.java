@@ -363,13 +363,19 @@ public class LocalVCServletService {
         RepositoryType repositoryType = getRepositoryType(repositoryTypeOrUserName, exercise);
 
         try {
-            if (commitHash == null) {
-                commitHash = getLatestCommitHash(repository);
-            }
-
-            if (repositoryType.equals(RepositoryType.TESTS) || repositoryType.equals(RepositoryType.AUXILIARY)) {
+            if (repositoryType.equals(RepositoryType.TESTS)) {
                 processNewPushToTestOrAuxRepository(exercise, commitHash, (SolutionProgrammingExerciseParticipation) participation, repositoryType);
                 return;
+            }
+
+            if (repositoryType.equals(RepositoryType.AUXILIARY)) {
+                // Don't provide a commit hash because we want the latest test repo commit to be used
+                processNewPushToTestOrAuxRepository(exercise, null, (SolutionProgrammingExerciseParticipation) participation, repositoryType);
+                return;
+            }
+
+            if (commitHash == null) {
+                commitHash = getLatestCommitHash(repository);
             }
 
             Commit commit = extractCommitInfo(commitHash, repository);
@@ -434,7 +440,7 @@ public class LocalVCServletService {
      * Build and test the solution repository to make sure all tests are still passing.
      *
      * @param exercise       the exercise for which the push was made.
-     * @param commitHash     the hash of the last commit to the test repository.
+     * @param commitHash     the hash of the commit used as the last commit to the test repository.
      * @param repositoryType type of repository that has been pushed to
      * @throws VersionControlException if something unexpected goes wrong when creating the submission or triggering the build.
      */

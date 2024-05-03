@@ -227,11 +227,11 @@
                                 <span>{{ value }}</span>
                             </ng-template>
                         </ngx-datatable-column>
-                        <ngx-datatable-column prop="buildConfig.commitHash" [minWidth]="100">
+                        <ngx-datatable-column prop="buildConfig.commitHashToBuild" [minWidth]="100">
                             <ng-template ngx-datatable-header-template>
-                                <span class="datatable-header-cell-wrapper" (click)="controls.onSort('buildConfig.commitHash')">
+                                <span class="datatable-header-cell-wrapper" (click)="controls.onSort('buildConfig.commitHashToBuild')">
                                     <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.commitHash"></span>
-                                    <fa-icon [icon]="controls.iconForSortPropField('buildConfig.commitHash')" />
+                                    <fa-icon [icon]="controls.iconForSortPropField('buildConfig.commitHashToBuild')" />
                                 </span>
                             </ng-template>
                             <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
