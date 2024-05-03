@@ -3,10 +3,10 @@ import { KnowledgeArea, StandardizedCompetencyDTO } from 'app/entities/competenc
 import { Observable } from 'rxjs';
 
 @Component({
-    selector: 'jhi-standardized-competency-detail',
+    selector: 'jhi-standardized-competency-edit',
     template: '',
 })
-export class StandardizedCompetencyDetailStubComponent {
+export class StandardizedCompetencyEditStubComponent {
     @Input() knowledgeAreas: KnowledgeArea[] = [];
     @Input() competency: StandardizedCompetencyDTO;
     @Input() isEditing = false;

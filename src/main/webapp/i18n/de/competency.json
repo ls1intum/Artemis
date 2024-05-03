@@ -44,13 +44,15 @@
             },
             "manageCompetencies": {
                 "title": "Kompetenzmanagement",
-                "import": "Kompetenzen importieren",
-                "importAll": "Alle Kompetenzen eines Kurses importieren",
-                "create": "Kompetenz erstellen",
-                "generate": "Kompetenzen generieren",
+                "importButton": "Kompetenzen importieren",
+                "importFromCoursesButton": "Kompetenzen aus anderen Kursen importieren",
+                "importAllButton": "Alle Kompetenzen eines Kurses importieren",
+                "importStandardizedButton": "Standardisierte Kompetenzen importieren",
+                "createButton": "Kompetenz erstellen",
+                "generateButton": "Kompetenzen generieren",
                 "empty": "Es existieren keine Kompetenzen für diesen Kurs",
                 "deleteRelationModalTitle": "Löschen bestätigen",
-                "deleteRelationModalText": "Bist du sicher, dass du die relation zwischen \"{{titleTail}}\" und \"{{titleHead}}\" löschen willst?"
+                "deleteRelationModalText": "Bist du sicher, dass du die Relation zwischen \"{{titleTail}}\" und \"{{titleHead}}\" löschen willst?"
             },
             "import": {
                 "title": "Kompetenzen importieren",

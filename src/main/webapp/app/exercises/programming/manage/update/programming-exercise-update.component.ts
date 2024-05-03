@@ -600,6 +600,11 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      * Saves the programming exercise with the provided input
      */
     saveExercise() {
+        // trim potential whitespaces that can lead to issues
+        if (this.programmingExercise.windFile?.metadata?.docker?.image) {
+            this.programmingExercise.windFile.metadata.docker.image = this.programmingExercise.windFile.metadata.docker.image.trim();
+        }
+
         if (this.programmingExercise.customizeBuildPlanWithAeolus) {
             this.programmingExercise.buildPlanConfiguration = this.aeolusService.serializeWindFile(this.programmingExercise.windFile!);
         } else {
