@@ -1,7 +1,10 @@
 package de.tum.in.www1.artemis;
 
+import static de.tum.in.www1.artemis.service.util.ZonedDateTimeUtil.toRelativeTime;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.Comparator;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -11,6 +14,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.ExerciseInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.StudentMetricsDTO;
 
@@ -30,7 +36,7 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @BeforeEach
     void setupTestScenario() {
-        userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
+        userUtilService.addUsers(TEST_PREFIX, 3, 1, 1, 1);
 
         course = courseUtilService.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, true);
 
@@ -68,19 +74,57 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         @Test
         @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
         void shouldReturnAverageScores() throws Exception {
-            // TODO: Implement the test
+            final var result = request.get("/api/metrics/course/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
+            assertThat(result).isNotNull();
+            assertThat(result.exerciseMetrics()).isNotNull();
+            final var averageScores = result.exerciseMetrics().averageScore();
+
+            final var exercises = exerciseRepository.findAllExercisesByCourseId(course.getId());
+
+            final var expectedMap = exercises.stream().map(Exercise::getId).collect(
+                    Collectors.toMap(Function.identity(), id -> resultRepository.findAllByParticipationExerciseId(id).stream().mapToDouble(Result::getScore).average().orElse(0)));
+
+            assertThat(averageScores).isEqualTo(expectedMap);
         }
 
         @Test
         @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
         void shouldReturnAverageLatestSubmission() throws Exception {
-            // TODO: Implement the test
+            final var result = request.get("/api/metrics/course/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
+            assertThat(result).isNotNull();
+            assertThat(result.exerciseMetrics()).isNotNull();
+            final var averageLatestSubmissions = result.exerciseMetrics().averageLatestSubmission();
+
+            final var exercises = exerciseRepository.findAllExercisesByCourseId(course.getId()).stream()
+                    .map(exercise -> exerciseRepository.findWithEagerStudentParticipationsStudentAndSubmissionsById(exercise.getId()).orElseThrow());
+
+            final var expectedMap = exercises.collect(Collectors.toMap(Exercise::getId, exercise -> {
+                var latestSubmissions = exercise.getStudentParticipations().stream()
+                        .map(participation -> participation.getSubmissions().stream().max(Comparator.comparing(Submission::getSubmissionDate)).orElseThrow());
+                return latestSubmissions.mapToDouble(submission -> toRelativeTime(exercise.getReleaseDate(), exercise.getDueDate(), submission.getSubmissionDate())).average()
+                        .orElseThrow();
+            }));
+
+            assertThat(averageLatestSubmissions).isEqualTo(expectedMap);
         }
 
         @Test
         @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
         void shouldReturnLatestSubmission() throws Exception {
-            // TODO: Implement the test
+            final var result = request.get("/api/metrics/course/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
+            assertThat(result).isNotNull();
+            assertThat(result.exerciseMetrics()).isNotNull();
+            final var averageLatestSubmissions = result.exerciseMetrics().latestSubmission();
+
+            final var exercises = exerciseRepository.findAllExercisesByCourseId(course.getId()).stream()
+                    .map(exercise -> exerciseRepository.findWithEagerStudentParticipationsStudentAndSubmissionsById(exercise.getId()).orElseThrow());
+
+            final var expectedMap = exercises.collect(Collectors.toMap(Exercise::getId, exercise -> exercise.getStudentParticipations().stream()
+                    .flatMap(participation -> participation.getSubmissions().stream()).map(Submission::getSubmissionDate).max(Comparator.naturalOrder()).orElseThrow()));
+
+            // isEqual is not possible due to the need of calling isEqual on the submission dates
+            assertThat(averageLatestSubmissions).hasSameSizeAs(expectedMap);
+            assertThat(averageLatestSubmissions).allSatisfy((id, latestSubmission) -> expectedMap.get(id).isEqual(latestSubmission));
         }
     }
 }
