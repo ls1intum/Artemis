@@ -14,7 +14,7 @@
                 "label": "Nutzer zum Importieren",
                 "tooltip": "Diese Nutzer werden importiert beim Klicken auf \"Importieren\".",
                 "importFailed": "Bitte versuche es nach dem reparieren der Datei erneut, die Datei konnte wegen folgendem Fehler nicht gelesen werden:",
-                "failedRows": "Die folgenden Reihen in ihrer CSV sind ungültig und müssen entweder den Login, eine Matrikelnummer oder eine E-Mail enthalten:",
+                "failedRows": "Die folgenden Reihen in deiner CSV sind ungültig und müssen entweder den Login, eine Matrikelnummer oder eine E-Mail enthalten:",
                 "noUsersFound": "Es wurden keine Benutzer zum Importieren gefunden"
             },
             "numberOfUsers": "Anzahl an Nutzern:",
