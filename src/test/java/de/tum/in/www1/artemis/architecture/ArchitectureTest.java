@@ -209,7 +209,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
         var gsonUsageRule = noClasses().should().accessClassesThat().resideInAnyPackage("com.google.gson..").because("we use an alternative JSON parsing library.");
         var result = gsonUsageRule.evaluate(allClasses);
         // TODO: reduce the following number to 0
-        assertThat(result.getFailureReport().getDetails()).hasSize(754);
+        assertThat(result.getFailureReport().getDetails()).hasSize(733);
     }
 
     /**
