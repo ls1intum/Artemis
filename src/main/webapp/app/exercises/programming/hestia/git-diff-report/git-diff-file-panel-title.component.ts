@@ -21,10 +21,13 @@ export class GitDiffFilePanelTitleComponent implements OnInit {
     title?: string;
     fileStatus: FileStatus = FileStatus.UNCHANGED;
 
+    // Expose to template
+    protected readonly FileStatus = FileStatus;
+
     ngOnInit(): void {
         if (this.filePath && this.previousFilePath) {
             if (this.filePath !== this.previousFilePath) {
-                this.title = `${this.previousFilePath} → ${this.filePath}}`;
+                this.title = `${this.previousFilePath} → ${this.filePath}`;
                 this.fileStatus = FileStatus.RENAMED;
             } else {
                 this.title = this.filePath;
@@ -38,6 +41,4 @@ export class GitDiffFilePanelTitleComponent implements OnInit {
             this.fileStatus = FileStatus.DELETED;
         }
     }
-
-    protected readonly FileStatus = FileStatus;
 }
