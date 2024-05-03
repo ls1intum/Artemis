@@ -4,6 +4,7 @@ import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Submission } from 'app/entities/submission.model';
 import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
+import { AssessmentNote } from 'app/entities/assessment-note.model';
 
 /**
  * The <jhi-assessment-layout> component provides the basic layout for an assessment page.
@@ -52,6 +53,12 @@ export class AssessmentLayoutComponent {
 
     get highlightDifferences() {
         return this._highlightDifferences;
+    }
+
+    setAssessmentNoteForResult(assessmentNote: AssessmentNote) {
+        if (this.result) {
+            this.result.assessmentNote = assessmentNote;
+        }
     }
 
     @Output() save = new EventEmitter<void>();
