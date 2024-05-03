@@ -98,6 +98,8 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
                 Map.of("testCommitHash", DUMMY_COMMIT_HASH), Map.of("testCommitHash", DUMMY_COMMIT_HASH));
         localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, LOCALCI_WORKING_DIRECTORY + "/testing-dir/assignment/.git/refs/heads/[^/]+",
                 Map.of("commitHash", commitHash), Map.of("commitHash", commitHash));
+
+        localVCLocalCITestService.mockInspectImage(dockerClient);
     }
 
     @AfterEach
