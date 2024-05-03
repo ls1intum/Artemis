@@ -3,6 +3,7 @@ package analysisOfEndpointConnections;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 import com.thoughtworks.qdox.JavaProjectBuilder;
@@ -46,7 +47,7 @@ public class AnalysisOfEndpointConnections {
                         System.out.println("Path: " + annotation.getProperty("value"));
                         System.out.println("Class: " + javaClass.getFullyQualifiedName());
                         System.out.println("Line: " + method.getLineNumber());
-                        var annotations = method.getAnnotations().stream()
+                        List<String> annotations = method.getAnnotations().stream()
                             .filter(a -> !a.equals(annotation))
                             .map(a -> a.getType().getName()).toList();
                         System.out.println("Other annotations: " + annotations);
