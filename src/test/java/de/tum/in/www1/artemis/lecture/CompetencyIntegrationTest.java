@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -402,7 +401,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
         void shouldReturnCompetenciesForStudentOfCourse() throws Exception {
             TextUnit unreleasedLectureUnit = new TextUnit();
             unreleasedLectureUnit.setName("TextUnitOfLectureOne");
-            unreleasedLectureUnit.setReleaseDate(ZonedDateTime.now().plus(5, ChronoUnit.DAYS));
+            unreleasedLectureUnit.setReleaseDate(ZonedDateTime.now().plusDays(5));
             unreleasedLectureUnit = textUnitRepository.save(unreleasedLectureUnit);
             lecture.addLectureUnit(unreleasedLectureUnit);
             lectureRepository.save(lecture);
