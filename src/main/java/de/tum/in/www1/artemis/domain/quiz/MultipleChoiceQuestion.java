@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
+import java.io.IOException;
 import java.util.*;
 
 import jakarta.persistence.*;
@@ -7,10 +8,14 @@ import jakarta.persistence.*;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.enumeration.ScoringType;
 import de.tum.in.www1.artemis.domain.quiz.scoring.*;
 import de.tum.in.www1.artemis.domain.view.QuizView;
+import de.tum.in.www1.artemis.repository.converters.ObjectListConverter;
 
 /**
  * A MultipleChoiceQuestion.
@@ -20,19 +25,19 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class MultipleChoiceQuestion extends QuizQuestion {
 
-    @Transient
-    private List<AnswerOptionDTO> answerOptions = new ArrayList<>();
-
     @Column(name = "single_choice")
     @JsonView(QuizView.Before.class)
     private boolean singleChoice = false;
+
+    @Convert(converter = ObjectListConverter.class)
+    @Column(name = "content")
+    private List<AnswerOptionDTO> answerOptions = new ArrayList<>();
 
     public List<AnswerOptionDTO> getAnswerOptions() {
         return answerOptions;
     }
 
     public void setAnswerOptions(List<AnswerOptionDTO> answerOptions) {
-        this.setContent(answerOptions);
         this.answerOptions = answerOptions;
     }
 
@@ -231,4 +236,39 @@ public class MultipleChoiceQuestion extends QuizQuestion {
         question.setId(getId());
         return question;
     }
+
+    // Override the getContent method to serialize answerOptions
+
+    public Object getContent() {
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            return mapper.writeValueAsString(answerOptions);
+        }
+        catch (JsonProcessingException e) {
+            // Handle exception
+            return null;
+        }
+    }
+
+    // Override the setContent method to deserialize answerOptions
+    public void setContent(Object content) {
+        if (content instanceof String) {
+            ObjectMapper mapper = new ObjectMapper();
+            try {
+                this.answerOptions = mapper.readValue((String) content, new TypeReference<List<AnswerOptionDTO>>() {
+                });
+            }
+            catch (IOException e) {
+                // Handle exception, possibly logging
+                this.answerOptions = new ArrayList<>();
+            }
+        }
+    }
+
+    // Ensure this method is also appropriately managing type conversion
+    @Override
+    public void updateSubclassField(Object object) {
+        setContent(object);
+    }
+
 }

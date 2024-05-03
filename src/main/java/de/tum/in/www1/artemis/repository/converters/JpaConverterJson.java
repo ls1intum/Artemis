@@ -1,45 +1,49 @@
 package de.tum.in.www1.artemis.repository.converters;
 
-import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
-
-import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import jakarta.persistence.AttributeConverter;
-import jakarta.persistence.Converter;
 
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-@Profile(PROFILE_CORE)
 @Component
-@Converter
-public class JpaConverterJson implements AttributeConverter<Object, String> {
+public class JpaConverterJson<T> implements AttributeConverter<List<T>, String> {
 
-    private final static ObjectMapper objectMapper = new ObjectMapper();
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    @Override
-    public String convertToDatabaseColumn(Object meta) {
-        try {
-            return objectMapper.writeValueAsString(meta);
-        }
-        catch (JsonProcessingException ex) {
-            return null;
-            // or throw an error
-        }
+    private Class<T> collectionType = null;
+
+    public JpaConverterJson() {
     }
 
+    public JpaConverterJson(Class<T> collectionType) {
+        this.collectionType = collectionType;
+    }
+
+    // Converts the Java object to a JSON String for storing in the database
     @Override
-    public Object convertToEntityAttribute(String dbData) {
+    public String convertToDatabaseColumn(List<T> attribute) {
         try {
-            return objectMapper.readValue(dbData, Object.class);
+            return objectMapper.writeValueAsString(attribute);
         }
-        catch (IOException ex) {
-            // logger.error("Unexpected IOEx decoding json from database: " + dbData);
+        catch (Exception ex) {
+            // Handle or throw an exception
             return null;
         }
     }
 
+    // Converts the JSON String back to the Java object
+    @Override
+    public List<T> convertToEntityAttribute(String dbData) {
+        try {
+            return objectMapper.readValue(dbData, objectMapper.getTypeFactory().constructCollectionType(ArrayList.class, collectionType));
+        }
+        catch (Exception ex) {
+            // Handle or throw an exception
+            return null;
+        }
+    }
 }
