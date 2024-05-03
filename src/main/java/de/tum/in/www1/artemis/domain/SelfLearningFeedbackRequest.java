@@ -54,7 +54,7 @@ public class SelfLearningFeedbackRequest extends DomainObject {
     private Result result;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JsonView(QuizView.Before.class)
+    @JsonIgnoreProperties({ "results", "participation" })
     private Submission submission;
 
     public Participation getParticipation() {

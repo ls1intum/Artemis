@@ -235,6 +235,11 @@ export class ParticipationService {
             if (participation.results) {
                 combinedParticipation.results = combinedParticipation.results ? combinedParticipation.results.concat(participation.results) : participation.results;
             }
+            if (participation.selfLearningFeedbackRequests) {
+                combinedParticipation.selfLearningFeedbackRequests = combinedParticipation.selfLearningFeedbackRequests
+                    ? combinedParticipation.selfLearningFeedbackRequests.concat(participation.selfLearningFeedbackRequests)
+                    : participation.selfLearningFeedbackRequests;
+            }
             if (participation.submissions) {
                 combinedParticipation.submissions = combinedParticipation.submissions
                     ? combinedParticipation.submissions.concat(participation.submissions)

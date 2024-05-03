@@ -173,7 +173,6 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
             automaticResult.setCompletionDate(ZonedDateTime.now());
             automaticResult.setSuccessful(true);
 
-            newRequest.setLinkedResult(automaticResult);
             this.resultService.storeFeedbackInResult(automaticResult, feedbacks, true);
             this.selfLearningFeedbackRequestRepository.save(newRequest);
 

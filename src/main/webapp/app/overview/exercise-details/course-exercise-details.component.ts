@@ -403,6 +403,7 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
 
     private updateStudentParticipations() {
         this.gradedStudentParticipation = this.participationService.getSpecificStudentParticipation(this.studentParticipations, false);
+        console.log(this.studentParticipations);
         this.practiceStudentParticipation = this.participationService.getSpecificStudentParticipation(this.studentParticipations, true);
     }
 
@@ -500,4 +501,6 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     changeExampleSolution() {
         this.exampleSolutionCollapsed = !this.exampleSolutionCollapsed;
     }
+
+    protected readonly Result = Result;
 }

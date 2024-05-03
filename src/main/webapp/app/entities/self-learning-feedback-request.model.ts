@@ -10,9 +10,9 @@ export class SelfLearningFeedbackRequest implements BaseEntity {
     public responseDateTime?: dayjs.Dayjs;
     public successful?: boolean;
 
-    public submission?: Submission;
-    public result?: Result;
     public participation?: Participation;
+    public result?: Result;
+    public submission?: Submission;
 
     public static isSelfLearningFeedbackRequest(obj: any): obj is SelfLearningFeedbackRequest {
         return obj instanceof SelfLearningFeedbackRequest;

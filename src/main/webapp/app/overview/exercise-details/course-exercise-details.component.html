@@ -130,21 +130,22 @@
                             </div>
                             <div class="row">
                                 <div class="col-12 col-md-12">
-                                    @for (result of sortedHistoryEntries; track result; let i = $index) {
+                                    @for (entry of sortedHistoryEntries; track entry; let i = $index) {
                                         <div>
                                             @if (
-                                                result.submission &&
-                                                result.submission.submissionDate &&
+                                                Result.isResult(entry) &&
+                                                entry.submission &&
+                                                entry.submission.submissionDate &&
                                                 (i === 0 ||
                                                     !sortedHistoryEntries[i - 1].submission ||
                                                     !sortedHistoryEntries[i - 1].submission?.submissionDate ||
-                                                    !dayjs(result.submission.submissionDate).isSame(sortedHistoryEntries[i - 1].submission?.submissionDate, 'day'))
+                                                    !dayjs(entry.submission.submissionDate).isSame(sortedHistoryEntries[i - 1].submission?.submissionDate, 'day'))
                                             ) {
                                                 <h4 class="mt-2">
-                                                    {{ result.submission.submissionDate | artemisDate: 'long-date' }}
+                                                    {{ entry.submission.submissionDate | artemisDate: 'long-date' }}
                                                 </h4>
                                             }
-                                            <jhi-result [result]="result" [showUngradedResults]="true" [showBadge]="true" [exercise]="exercise" />
+                                            <jhi-result [result]="entry" [showUngradedResults]="true" [showBadge]="true" [exercise]="exercise" />
                                         </div>
                                     }
                                     @if (!sortedHistoryEntries) {

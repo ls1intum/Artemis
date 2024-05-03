@@ -33,7 +33,7 @@ export class ResultHistoryComponent implements OnChanges {
         } else {
             this.displayedEntries = this.entries.slice(this.entries.length - MAX_RESULT_HISTORY_LENGTH);
 
-            const lastRatedResult = this.entries.filter((entry) => Result.isResult(entry) && entry.rated).last(); // as (Result | undefined);
+            const lastRatedResult = this.entries.filter((entry) => Result.isResult(entry) && entry.rated).last() as Result | undefined;
             const firstEntry = this.displayedEntries.first();
             if (Result.isResult(firstEntry)) {
                 if (!firstEntry.rated && lastRatedResult) {
