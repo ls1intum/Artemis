@@ -462,8 +462,10 @@
             "auxiliaryRepository": {
                 "error": "Es gibt ein Problem mit den Hilfs-Repositories!",
                 "addAuxiliaryRepository": "Hilfs-Repository anlegen",
+                "usageDescription": "Du kannst Hilfsrepositorys verwenden, um zusätzlichen Code bereitzustellen, den Studierende nicht sehen oder ändern können. Der zusätzliche Code wird während des Builds der Abgabe am angegebenen Checkout-Verzeichnis eingefügt.",
                 "repositoryName": "Name des Repositorys",
                 "checkoutDirectory": "Checkout-Verzeichnis",
+                "description": "Beschreibung",
                 "duplicateRepositoryNames": "Verschiedene Hilfs-Repositories dürfen nicht den gleichen Namen haben.",
                 "duplicateDirectoryNames": "Verschiedene Hilfs-Repositories dürfen nicht das gleiche Checkout-Verzeichnis haben.",
                 "warning": "Hilfs-Repositories können hinzugefügt, editiert und gelöscht werden. Diese Änderungen wirken sich allerdings nicht auf das VCS und CIS aus und müssen dort manuell durchgeführt werden.",

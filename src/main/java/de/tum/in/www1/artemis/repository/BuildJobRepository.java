@@ -7,7 +7,11 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -19,11 +23,14 @@ import de.tum.in.www1.artemis.service.connectors.localci.dto.ResultBuildJob;
 
 @Profile(PROFILE_CORE)
 @Repository
-public interface BuildJobRepository extends JpaRepository<BuildJob, Long> {
+public interface BuildJobRepository extends JpaRepository<BuildJob, Long>, JpaSpecificationExecutor<BuildJob> {
 
     Optional<BuildJob> findFirstByParticipationIdOrderByBuildStartDateDesc(Long participationId);
 
     Optional<BuildJob> findBuildJobByResult(Result result);
+
+    @EntityGraph(attributePaths = { "result", "result.participation", "result.participation.exercise", "result.submission" })
+    Page<BuildJob> findAll(Pageable pageable);
 
     @Query("""
             SELECT new de.tum.in.www1.artemis.service.connectors.localci.dto.DockerImageBuild(
@@ -34,6 +41,9 @@ public interface BuildJobRepository extends JpaRepository<BuildJob, Long> {
             GROUP BY b.dockerImage
             """)
     Set<DockerImageBuild> findAllLastBuildDatesForDockerImages();
+
+    @EntityGraph(attributePaths = { "result", "result.participation", "result.participation.exercise", "result.submission" })
+    Page<BuildJob> findAllByCourseId(long courseId, Pageable pageable);
 
     @Query("""
              SELECT new de.tum.in.www1.artemis.service.connectors.localci.dto.ResultBuildJob(

@@ -29,7 +29,7 @@
             }
             <!-- in the course discussion overview as well as in the preview mode during similarity check, the context (lecture, exercise, course-wide topic) is shown -->
             <!-- not shown in course messages page -->
-            @if (!isCourseMessagesPage && (pageType === PageType.OVERVIEW || previewMode)) {
+            @if (isCommunicationPage && (pageType === PageType.OVERVIEW || previewMode)) {
                 <span class="col-auto">
                     @if (contextInformation.routerLinkComponents) {
                         <a
@@ -38,7 +38,7 @@
                             [queryParams]="contextInformation.queryParams"
                             (click)="onNavigateToContext($event)"
                             routerLinkActive="active"
-                            >{{ contextInformation.displayName }}:</a
+                            >{{ contextInformation.displayName }}</a
                         >
                     }
                     @if (!contextInformation.routerLinkComponents) {
