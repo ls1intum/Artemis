@@ -97,6 +97,7 @@ public class PyrisWebhookService {
         if (!toUpdateAttachmentUnits.isEmpty()) {
             executionDTO = new PyrisWebhookLectureIngestionExecutionDTO(toUpdateAttachmentUnits, settingsDTO, List.of());
             pyrisConnectorService.executeWebhook("lectures", executionDTO);
+            log.info("Request to update the lecture unit: " + executionDTO.pyrisLectureUnitWebhookDTOS().get(0).lectureUnitName() + " sent successfully. ");
         }
     }
 }
