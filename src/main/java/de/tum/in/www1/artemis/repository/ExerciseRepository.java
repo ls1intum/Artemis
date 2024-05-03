@@ -70,7 +70,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             FROM Exercise e
             WHERE e.course.id = :courseId
             """)
-    Set<Exercise> findAllExercisesByCourseId(@Param("courseId") Long courseId);
+    Set<Exercise> findAllExercisesByCourseId(@Param("courseId") long courseId);
 
     @Query("""
             SELECT e

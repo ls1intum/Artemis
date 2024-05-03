@@ -30,16 +30,16 @@ public interface ExerciseMetricsRepository extends JpaRepository<Exercise, Long>
      * @return the exercise information for all exercises in the course
      */
     @Query("""
-            SELECT new de.tum.in.www1.artemis.web.rest.dto.metrics.ExerciseInformationDTO(e.id, e.shortName, e.title, e.startDate, e.dueDate)
+            SELECT new de.tum.in.www1.artemis.web.rest.dto.metrics.ExerciseInformationDTO(e.id, e.shortName, e.title, COALESCE(e.startDate, e.releaseDate), e.dueDate, e.class)
             FROM Exercise e
             WHERE e.course.id = :courseId
             """)
     Set<ExerciseInformationDTO> findAllExerciseInformationByCourseId(long courseId);
 
     @Query("""
-            SELECT new de.tum.in.www1.artemis.web.rest.dto.metrics.ScoreDTO(e.id, AVG(r.score))
+            SELECT new de.tum.in.www1.artemis.web.rest.dto.metrics.ScoreDTO(e.id, COALESCE(AVG(r.score), 0))
             FROM Exercise e
-                LEFT JOIN StudentParticipation p
+                LEFT JOIN StudentParticipation p ON e.id = p.exercise.id
                 LEFT JOIN p.submissions s
                 LEFT JOIN s.results r
             WHERE e.id IN :exerciseIds
@@ -58,7 +58,7 @@ public interface ExerciseMetricsRepository extends JpaRepository<Exercise, Long>
     @Query("""
             SELECT new de.tum.in.www1.artemis.web.rest.dto.metrics.ResourceTimestampDTO(e.id, s.submissionDate)
             FROM Submission s
-                LEFT JOIN StudentParticipation p
+                LEFT JOIN StudentParticipation p ON s.participation.id = p.id
                 LEFT JOIN p.exercise e
                 LEFT JOIN p.team t
                 LEFT JOIN t.students u
@@ -82,7 +82,7 @@ public interface ExerciseMetricsRepository extends JpaRepository<Exercise, Long>
     @Query("""
             SELECT new de.tum.in.www1.artemis.web.rest.dto.metrics.ResourceTimestampDTO(e.id, s.submissionDate)
             FROM Submission s
-                LEFT JOIN StudentParticipation p
+                LEFT JOIN StudentParticipation p ON s.participation.id = p.id
                 LEFT JOIN p.exercise e
                 LEFT JOIN p.team t
                 LEFT JOIN t.students u
@@ -106,7 +106,7 @@ public interface ExerciseMetricsRepository extends JpaRepository<Exercise, Long>
     @Query("""
             SELECT new de.tum.in.www1.artemis.web.rest.dto.metrics.SubmissionTimestampDTO(s.id, s.submissionDate, r.score)
             FROM Submission s
-                LEFT JOIN StudentParticipation p
+                LEFT JOIN StudentParticipation p ON s.participation.id = p.id
                 LEFT JOIN p.exercise e
                 LEFT JOIN p.team t
                 LEFT JOIN t.students u

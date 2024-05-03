@@ -612,7 +612,12 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      * @param login the login of the user to search
      * @return optional of the user id if it exists, empty otherwise
      */
-    Optional<Long> findIdByLogin(String login);
+    @Query("""
+            SELECT u.id
+            FROM User u
+            WHERE u.login = :login
+            """)
+    Optional<Long> findIdByLogin(@Param("login") String login);
 
     /**
      * Get the user id of the currently logged-in user
