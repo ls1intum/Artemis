@@ -48,23 +48,33 @@
                         }}
                     </button>
                     <div ngbDropdownMenu>
-                        <div #scrollableContent style="overflow-y: auto; height: 400px">
-                            @if (ltiConfiguredPlatforms.length > 0) {
-                                @for (platform of ltiConfiguredPlatforms; track platform) {
-                                    <button
-                                        type="button"
-                                        (click)="setPlatform(platform)"
-                                        [class.selected]="platform.id === onlineCourseConfiguration.ltiPlatformConfiguration?.id"
-                                        [ngbTooltip]="platform.customName"
-                                        ngbDropdownItem
-                                    >
-                                        {{ getLtiPlatform(platform) }}
-                                    </button>
-                                }
-                            }
-                            @if (loading) {
-                                <span>Loading more...</span>
-                            }
+                        @for (platform of ltiConfiguredPlatforms; track platform) {
+                            <button
+                                type="button"
+                                (click)="setPlatform(platform)"
+                                [class.selected]="platform.id === onlineCourseConfiguration.ltiPlatformConfiguration?.id"
+                                [ngbTooltip]="platform.customName"
+                                ngbDropdownItem
+                            >
+                                {{ getLtiPlatform(platform) }}
+                            </button>
+                        }
+                        <div>
+                            <div class="row justify-content-center">
+                                <jhi-item-count [params]="{ page: page, totalItems: totalItems, itemsPerPage: itemsPerPage }" />
+                            </div>
+                            <div class="row justify-content-center">
+                                <ngb-pagination
+                                    [collectionSize]="totalItems"
+                                    [(page)]="page"
+                                    [pageSize]="itemsPerPage"
+                                    [maxSize]="5"
+                                    [rotate]="true"
+                                    [boundaryLinks]="true"
+                                    (pageChange)="transition()"
+                                    [disabled]="false"
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>

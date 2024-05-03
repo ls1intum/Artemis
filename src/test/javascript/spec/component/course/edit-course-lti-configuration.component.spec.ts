@@ -138,22 +138,4 @@ describe('Edit Course LTI Configuration Component', () => {
         expect(navigateSpy).toHaveBeenCalledOnce();
         expect(navigateSpy).toHaveBeenCalledWith(['course-management', course.id!.toString(), 'lti-configuration']);
     });
-
-    it('should handle scroll to bottom and load more platforms', () => {
-        comp.totalItems = 3;
-        const platforms = [{ id: 1 }, { id: 2 }];
-        ltiConfigService.query.mockReturnValueOnce(
-            of(
-                new HttpResponse({
-                    body: platforms,
-                    headers: new HttpHeaders({ 'X-Total-Count': '2' }),
-                }),
-            ),
-        );
-
-        comp.loadMorePlatforms();
-
-        expect(comp.ltiConfiguredPlatforms).toHaveLength(2);
-        expect(ltiConfigService.query).toHaveBeenCalledOnce();
-    });
 });
