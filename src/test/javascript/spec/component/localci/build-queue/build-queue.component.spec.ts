@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { BuildQueueComponent } from 'app/localci/build-queue/build-queue.component';
@@ -10,6 +10,11 @@ import { AccountService } from 'app/core/auth/account.service';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { ArtemisTestModule } from '../../../test.module';
+import { FinishedBuildJob } from 'app/entities/build-job.model';
+import { TriggeredByPushTo } from 'app/entities/repository-info.model';
+import { waitForAsync } from '@angular/core/testing';
+import { HttpResponse } from '@angular/common/http';
+import { SortingOrder } from 'app/shared/table/pageable-table';
 
 describe('BuildQueueComponent', () => {
     let component: BuildQueueComponent;
@@ -27,6 +32,8 @@ describe('BuildQueueComponent', () => {
         cancelAllRunningBuildJobsInCourse: jest.fn(),
         cancelAllQueuedBuildJobs: jest.fn(),
         cancelAllRunningBuildJobs: jest.fn(),
+        getFinishedBuildJobsByCourseId: jest.fn(),
+        getFinishedBuildJobs: jest.fn(),
     };
 
     const accountServiceMock = { identity: jest.fn(), getAuthenticationState: jest.fn() };
@@ -180,6 +187,51 @@ describe('BuildQueueComponent', () => {
             },
         },
     ];
+    const mockFinishedJobs: FinishedBuildJob[] = [
+        {
+            id: '5',
+            name: 'Build Job 5',
+            buildAgentAddress: 'agent5',
+            participationId: 105,
+            courseId: 10,
+            exerciseId: 100,
+            retryCount: 0,
+            priority: 1,
+            repositoryName: 'repo5',
+            repositoryType: 'USER',
+            triggeredByPushTo: TriggeredByPushTo.USER,
+            buildStartDate: dayjs('2023-01-05'),
+            buildCompletionDate: dayjs('2023-01-05'),
+            buildDuration: undefined,
+            commitHash: 'abc127',
+        },
+        {
+            id: '6',
+            name: 'Build Job 6',
+            buildAgentAddress: 'agent6',
+            participationId: 106,
+            courseId: 10,
+            exerciseId: 100,
+            retryCount: 0,
+            priority: 0,
+            repositoryName: 'repo6',
+            repositoryType: 'USER',
+            triggeredByPushTo: TriggeredByPushTo.USER,
+            buildStartDate: dayjs('2023-01-06'),
+            buildCompletionDate: dayjs('2023-01-06'),
+            buildDuration: undefined,
+            commitHash: 'abc128',
+        },
+    ];
+
+    const mockFinishedJobsResponse: HttpResponse<FinishedBuildJob[]> = new HttpResponse({ body: mockFinishedJobs });
+
+    const request = {
+        page: 1,
+        pageSize: 50,
+        sortedColumn: 'build_completion_date',
+        sortingOrder: SortingOrder.DESCENDING,
+    };
 
     beforeEach(waitForAsync(() => {
         mockActivatedRoute = { params: of({ courseId: testCourseId }) };
@@ -213,13 +265,14 @@ describe('BuildQueueComponent', () => {
         expect(component).toBeTruthy();
     });
 
-    it('should call getQueuedBuildJobs and getRunningBuildJobs when no courseId is provided', () => {
+    it('should initialize all build job data', () => {
         // Mock ActivatedRoute to return an empty paramMap or a paramMap without 'courseId'
         mockActivatedRoute.paramMap = of(new Map([]));
 
         // Mock BuildQueueService to return mock data
         mockBuildQueueService.getQueuedBuildJobs.mockReturnValue(of(mockQueuedJobs));
         mockBuildQueueService.getRunningBuildJobs.mockReturnValue(of(mockRunningJobs));
+        mockBuildQueueService.getFinishedBuildJobs.mockReturnValue(of(mockFinishedJobsResponse));
 
         // Initialize the component
         component.ngOnInit();
@@ -227,14 +280,17 @@ describe('BuildQueueComponent', () => {
         // Expectations: The service methods for general build jobs are called
         expect(mockBuildQueueService.getQueuedBuildJobs).toHaveBeenCalled();
         expect(mockBuildQueueService.getRunningBuildJobs).toHaveBeenCalled();
+        expect(mockBuildQueueService.getFinishedBuildJobs).toHaveBeenCalled();
 
         // Expectations: The service methods for course-specific build jobs are not called
         expect(mockBuildQueueService.getQueuedBuildJobsByCourseId).not.toHaveBeenCalled();
         expect(mockBuildQueueService.getRunningBuildJobsByCourseId).not.toHaveBeenCalled();
+        expect(mockBuildQueueService.getFinishedBuildJobsByCourseId).not.toHaveBeenCalled();
 
         // Expectations: The component's properties are set with the mock data
         expect(component.queuedBuildJobs).toEqual(mockQueuedJobs);
         expect(component.runningBuildJobs).toEqual(mockRunningJobs);
+        expect(component.finishedBuildJobs).toEqual(mockFinishedJobs);
     });
 
     it('should initialize with course data', () => {
@@ -244,6 +300,7 @@ describe('BuildQueueComponent', () => {
         // Mock BuildQueueService to return mock data
         mockBuildQueueService.getQueuedBuildJobsByCourseId.mockReturnValue(of(mockQueuedJobs));
         mockBuildQueueService.getRunningBuildJobsByCourseId.mockReturnValue(of(mockRunningJobs));
+        mockBuildQueueService.getFinishedBuildJobsByCourseId.mockReturnValue(of(mockFinishedJobsResponse));
 
         // Initialize the component
         component.ngOnInit();
@@ -251,10 +308,12 @@ describe('BuildQueueComponent', () => {
         // Expectations: The service methods are called with the test course ID
         expect(mockBuildQueueService.getQueuedBuildJobsByCourseId).toHaveBeenCalledWith(testCourseId);
         expect(mockBuildQueueService.getRunningBuildJobsByCourseId).toHaveBeenCalledWith(testCourseId);
+        expect(mockBuildQueueService.getFinishedBuildJobsByCourseId).toHaveBeenCalledWith(testCourseId, request);
 
         // Expectations: The component's properties are set with the mock data
         expect(component.queuedBuildJobs).toEqual(mockQueuedJobs);
         expect(component.runningBuildJobs).toEqual(mockRunningJobs);
+        expect(component.finishedBuildJobs).toEqual(mockFinishedJobs);
     });
 
     it('should refresh data', () => {
@@ -368,5 +427,45 @@ describe('BuildQueueComponent', () => {
 
         // Expectations: The service method for canceling all running build jobs is called without a course ID
         expect(mockBuildQueueService.cancelAllRunningBuildJobs).toHaveBeenCalled();
+    });
+
+    it('should load finished build jobs on initialization', () => {
+        // Mock ActivatedRoute to return no course ID
+        mockActivatedRoute.paramMap = of(new Map([]));
+
+        mockBuildQueueService.getFinishedBuildJobs.mockReturnValue(of(mockFinishedJobsResponse));
+
+        component.ngOnInit();
+
+        expect(mockBuildQueueService.getFinishedBuildJobs).toHaveBeenCalledWith(request);
+        expect(component.finishedBuildJobs).toEqual(mockFinishedJobs);
+    });
+
+    it('should load finished build jobs for a specific course on initialization', () => {
+        // Mock ActivatedRoute to return no course ID
+        mockActivatedRoute.paramMap = of(new Map([['courseId', testCourseId.toString()]]));
+
+        mockBuildQueueService.getFinishedBuildJobsByCourseId.mockReturnValue(of(mockFinishedJobsResponse));
+
+        component.ngOnInit();
+
+        expect(mockBuildQueueService.getFinishedBuildJobsByCourseId).toHaveBeenCalledWith(testCourseId, request);
+        expect(component.finishedBuildJobs).toEqual(mockFinishedJobs);
+    });
+
+    it('should set build job duration', () => {
+        // Mock ActivatedRoute to return no course ID
+        mockActivatedRoute.paramMap = of(new Map([]));
+
+        mockBuildQueueService.getFinishedBuildJobs.mockReturnValue(of(mockFinishedJobs));
+
+        component.ngOnInit();
+
+        for (const finishedBuildJob of component.finishedBuildJobs) {
+            const { buildDuration, buildCompletionDate, buildStartDate } = finishedBuildJob;
+            if (buildDuration && buildCompletionDate && buildStartDate) {
+                expect(buildDuration).toEqual(buildCompletionDate.diff(buildStartDate, 'milliseconds') / 1000);
+            }
+        }
     });
 });

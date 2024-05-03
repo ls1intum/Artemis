@@ -128,7 +128,6 @@ test.describe('Exam management', () => {
             await examExerciseGroupCreation.typeTitle(groupName);
             await examExerciseGroupCreation.isMandatoryBoxShouldBeChecked();
             const group = await examExerciseGroupCreation.clickSave();
-            // groupCount++;
             await examExerciseGroups.shouldHaveTitle(group.id!, groupName);
             await examExerciseGroups.shouldShowNumberOfExerciseGroups(1);
         });

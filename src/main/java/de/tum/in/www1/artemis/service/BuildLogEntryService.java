@@ -166,7 +166,7 @@ public class BuildLogEntryService {
                 // Each of the following is prefixed by a 12 character hash, so the length is the length of the suffix + 12
                 || (log.endsWith(": Pulling fs layer") && log.length() == 30) || (log.endsWith(": Waiting") && log.length() == 21)
                 || (log.endsWith(": Verifying Checksum") && log.length() == 32) || (log.endsWith(": Download complete") && log.length() == 31)
-                || (log.endsWith(": Pull complete") && log.length() == 27);
+                || (log.endsWith(": Pull complete") && log.length() == 27) || log.startsWith("~~~~~~~~~~~~~~~~~~~~ Pull image progress:");
     }
 
     private static final Set<String> GIT_LOGS = Set.of("Checking out", "Switched to branch", ".git", "Fetching 'refs/heads", "Updating source code to revision",
