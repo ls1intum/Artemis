@@ -43,8 +43,11 @@ Create a file ``src/main/resources/config/application-local.yml`` with the follo
                use-external: false
            version-control:
                url: http://localhost:8080
-           # Only necessary on Windows:
            continuous-integration:
+               # Only necessary on ARM-based systems, the default is amd64 for Intel/AMD systems
+               # ARM-based systems include Apple M-series, Raspberry Pi, etc.
+               image-architecture: arm64
+               # Only necessary on Windows:
                docker-connection-uri: tcp://localhost:2375
 
 The values configured here are sufficient for a basic Artemis setup that allows for running programming exercises with Integrated Code Lifecycle.
@@ -69,7 +72,7 @@ The Local CI subsystem of the Integrated Code Lifecycle is used to automatically
        artemis:
            continuous-integration:
                 specify-concurrent-builds: true
-                // The number of concurrent builds that can be executed
+                # The number of concurrent builds that can be executed
                 concurrent-build-size: 2
 
 .. _Start Artemis:

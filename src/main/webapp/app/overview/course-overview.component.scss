@@ -10,7 +10,7 @@ $menu-width-open: 220px;
 
 // ng-deep needed to remove scrollbar from mat-sidebar
 ::ng-deep .mat-drawer-inner-container {
-    overflow-x: hidden !important;
+    overflow: hidden !important;
 }
 
 .sidebar-wrapper {
@@ -54,7 +54,7 @@ $menu-width-open: 220px;
         display: block;
         height: calc(100vh - var(--sidebar-footer-height-prod));
         width: calc(100vw - $menu-width-open);
-        overflow: auto;
+        overflow: hidden;
         margin-left: $menu-width-open !important;
         transition:
             width 0.2s ease-in-out,
@@ -226,5 +226,30 @@ jhi-secured-image {
     }
     &:focus {
         border-color: transparent;
+    }
+}
+
+.three-dots {
+    cursor: pointer;
+    &:hover {
+        color: var(--link-item-color);
+    }
+}
+
+.dropdown-li {
+    display: block;
+    text-decoration: none;
+}
+
+.dropdown-content {
+    overflow-y: auto;
+    position: absolute;
+    background-color: var(--dropdown-bg);
+    border: 1px solid var(--border-color);
+    z-index: 1000000;
+    border-radius: 4px;
+    &.fixedContentSize {
+        bottom: 0px;
+        max-height: 91px; // To avoid cut offs in the dropdown menu content
     }
 }

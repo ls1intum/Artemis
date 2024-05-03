@@ -31,8 +31,10 @@ import de.tum.in.www1.artemis.domain.Exercise_;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise_;
 import de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry;
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -235,16 +237,6 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @Query("""
             SELECT DISTINCT pe
             FROM ProgrammingExercise pe
-                LEFT JOIN FETCH pe.studentParticipations pep
-                LEFT JOIN FETCH pep.submissions s
-            WHERE s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL
-                OR s.type IS NULL
-            """)
-    List<ProgrammingExercise> findAllWithEagerParticipationsAndLegalSubmissions();
-
-    @Query("""
-            SELECT DISTINCT pe
-            FROM ProgrammingExercise pe
                 LEFT JOIN FETCH pe.templateParticipation
                 LEFT JOIN FETCH pe.solutionParticipation
             WHERE pe.id = :exerciseId
@@ -273,17 +265,24 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @Query("""
             SELECT pe
             FROM ProgrammingExercise pe
-                LEFT JOIN pe.studentParticipations pep
-            WHERE pep.id = :participationId
-                OR pe.templateParticipation.id = :participationId
-                OR pe.solutionParticipation.id = :participationId
+                LEFT JOIN pe.studentParticipations spep
+            WHERE spep.id = :participationId
             """)
-    Optional<ProgrammingExercise> findByParticipationId(@Param("participationId") long participationId);
+    Optional<ProgrammingExercise> findByStudentParticipationId(@Param("participationId") long participationId);
 
-    default ProgrammingExercise findByParticipationIdOrElseThrow(long participationId) throws EntityNotFoundException {
-        return findByParticipationId(participationId)
-                .orElseThrow(() -> new EntityNotFoundException("Programming exercise for participation with id " + participationId + " does not exist"));
-    }
+    @Query("""
+            SELECT pe
+            FROM ProgrammingExercise pe
+            WHERE pe.templateParticipation.id = :participationId
+            """)
+    Optional<ProgrammingExercise> findByTemplateParticipationId(@Param("participationId") long participationId);
+
+    @Query("""
+            SELECT pe
+            FROM ProgrammingExercise pe
+            WHERE pe.solutionParticipation.id = :participationId
+            """)
+    Optional<ProgrammingExercise> findBySolutionParticipationId(@Param("participationId") long participationId);
 
     @Query("""
             SELECT pe
@@ -338,7 +337,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
                 LEFT JOIN FETCH pe.exerciseGroup eg
                 LEFT JOIN FETCH eg.exam e
             WHERE e.endDate > :dateTime
-             """)
+            """)
     List<ProgrammingExercise> findAllWithEagerExamByExamEndDateAfterDate(@Param("dateTime") ZonedDateTime dateTime);
 
     /**
@@ -511,20 +510,6 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             WHERE e.id = :exerciseId
             """)
     Optional<ProgrammingExercise> findByIdWithGradingCriteria(@Param("exerciseId") long exerciseId);
-
-    /**
-     * Finds all programming exercises with eager template participation and the given programming language.
-     *
-     * @param programmingLanguage the programming language of the exercises to find.
-     * @return a list of programming exercises with eager template participation.
-     */
-    @Query("""
-            SELECT DISTINCT pe
-            FROM ProgrammingExercise pe
-                LEFT JOIN FETCH pe.templateParticipation tp
-            WHERE pe.programmingLanguage = :programmingLanguage
-            """)
-    List<ProgrammingExercise> findAllByProgrammingLanguageWithTemplateParticipation(@Param("programmingLanguage") ProgrammingLanguage programmingLanguage);
 
     default ProgrammingExercise findByIdWithGradingCriteriaElseThrow(long exerciseId) {
         return findByIdWithGradingCriteria(exerciseId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise", exerciseId));
@@ -738,24 +723,48 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     }
 
     /**
-     * Retrieve the programming exercise from a programming exercise participation. In case the programming exercise is null or not initialized,
-     * this method will load it properly from the database and connect it to the participation
+     * Retrieves the associated ProgrammingExercise for a given ProgrammingExerciseParticipation.
+     * If the ProgrammingExercise is not already loaded, it is fetched from the database and linked
+     * to the specified participation. This method handles different types of participation
+     * (template, solution, student) to optimize database queries and avoid performance bottlenecks.
      *
-     * @param participation the programming exercise participation for which the programming exercise should be found
-     * @return the programming exercise
+     * @param participation the programming exercise participation object; must not be null
+     * @return the linked ProgrammingExercise, or null if not found or the participation is not initialized
      */
     @Nullable
     default ProgrammingExercise getProgrammingExerciseFromParticipation(ProgrammingExerciseParticipation participation) {
         // Note: if this participation was retrieved as Participation (abstract super class) from the database, the programming exercise might not be correctly initialized
         if (participation.getProgrammingExercise() == null || !Hibernate.isInitialized(participation.getProgrammingExercise())) {
             // Find the programming exercise for the given participation
-            var optionalProgrammingExercise = findByParticipationId(participation.getId());
+            // NOTE: we use different methods to find the programming exercise based on the participation type on purpose to avoid slow database queries
+            long participationId = participation.getId();
+            Optional<ProgrammingExercise> optionalProgrammingExercise = switch (participation) {
+                case TemplateProgrammingExerciseParticipation ignored -> findByTemplateParticipationId(participationId);
+                case SolutionProgrammingExerciseParticipation ignored -> findBySolutionParticipationId(participationId);
+                case ProgrammingExerciseStudentParticipation ignored -> findByStudentParticipationId(participationId);
+                default -> Optional.empty();
+            };
             if (optionalProgrammingExercise.isEmpty()) {
                 return null;
             }
             participation.setProgrammingExercise(optionalProgrammingExercise.get());
         }
         return participation.getProgrammingExercise();
+    }
+
+    /**
+     * Retrieve the programming exercise from a programming exercise participation.
+     *
+     * @param participation The programming exercise participation for which to retrieve the programming exercise.
+     * @return The programming exercise of the provided participation.
+     */
+    @NotNull
+    default ProgrammingExercise getProgrammingExerciseFromParticipationElseThrow(ProgrammingExerciseParticipation participation) {
+        ProgrammingExercise programmingExercise = getProgrammingExerciseFromParticipation(participation);
+        if (programmingExercise == null) {
+            throw new EntityNotFoundException("No programming exercise found for the participation with id " + participation.getId());
+        }
+        return programmingExercise;
     }
 
     /**
