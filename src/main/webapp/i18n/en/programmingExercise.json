@@ -465,6 +465,7 @@
                 "usageDescription": "You can use auxiliary repositories to provide additional Code that students cannot see or modify. The additional Code is inserted at the specified Checkout Directory during the build of the submission.",
                 "repositoryName": "Repository Name",
                 "checkoutDirectory": "Checkout Directory",
+                "description": "Description",
                 "invalidRepositoryName": "A repository with that name already exists in this exercise!",
                 "duplicateRepositoryNames": "Multiple auxiliary repositories must not share the same name!",
                 "duplicateDirectoryNames": "Multiple auxiliary repositories must not share the same checkout directory!",
