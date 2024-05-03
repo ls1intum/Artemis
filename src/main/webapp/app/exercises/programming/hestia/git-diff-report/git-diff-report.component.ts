@@ -5,6 +5,7 @@ import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-git-diff-report',
+    styleUrls: ['./git-diff-report.component.scss'],
     templateUrl: './git-diff-report.component.html',
 })
 export class GitDiffReportComponent implements OnInit {
