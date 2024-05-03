@@ -34,6 +34,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.ModelAndView;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.GradingCriterion;
@@ -271,7 +273,7 @@ public class ProgrammingExerciseResource {
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<ProgrammingExercise> updateProgrammingExercise(@RequestBody ProgrammingExercise updatedProgrammingExercise,
-            @RequestParam(value = "notificationText", required = false) String notificationText) {
+            @RequestParam(value = "notificationText", required = false) String notificationText) throws JsonProcessingException {
         log.debug("REST request to update ProgrammingExercise : {}", updatedProgrammingExercise);
         if (updatedProgrammingExercise.getId() == null) {
             throw new BadRequestAlertException("Programming exercise cannot have an empty id when updating", ENTITY_NAME, "noProgrammingExerciseId");
@@ -708,8 +710,9 @@ public class ProgrammingExerciseResource {
     @PutMapping("programming-exercises/{exerciseId}/reset")
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<Void> reset(@PathVariable Long exerciseId, @RequestBody ProgrammingExerciseResetOptionsDTO programmingExerciseResetOptionsDTO) {
-        log.debug("REST request to reset ProgrammingExercise : {}", exerciseId);
+    public ResponseEntity<Void> reset(@PathVariable Long exerciseId, @RequestBody ProgrammingExerciseResetOptionsDTO programmingExerciseResetOptionsDTO)
+            throws JsonProcessingException {
+        log.debug("REST request to reset programming exercise {} with options {}", exerciseId, programmingExerciseResetOptionsDTO);
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(exerciseId);
         final var user = userRepository.getUserWithGroupsAndAuthorities();
 
@@ -747,7 +750,7 @@ public class ProgrammingExerciseResource {
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<ProgrammingExercise> reEvaluateAndUpdateProgrammingExercise(@PathVariable long exerciseId, @RequestBody ProgrammingExercise programmingExercise,
-            @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) {
+            @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) throws JsonProcessingException {
         log.debug("REST request to re-evaluate ProgrammingExercise : {}", programmingExercise);
         // check that the exercise exists for given id
         programmingExerciseRepository.findByIdElseThrow(exerciseId);

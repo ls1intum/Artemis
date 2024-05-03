@@ -224,7 +224,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             @RequestAttribute(required = false) RepositoryType repositoryType) {
         log.debug("REST request to files for domainId {} at commitId {}", participationId, commitId);
         var participation = getProgrammingExerciseParticipation(participationId);
-        var programmingExercise = programmingExerciseRepository.findByParticipationIdOrElseThrow(participationId);
+        var programmingExercise = programmingExerciseRepository.getProgrammingExerciseFromParticipationElseThrow(participation);
 
         repositoryAccessService.checkAccessRepositoryElseThrow(participation, userRepository.getUserWithGroupsAndAuthorities(), programmingExercise, RepositoryActionType.READ);
 
