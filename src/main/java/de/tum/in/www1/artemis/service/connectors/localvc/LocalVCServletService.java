@@ -363,9 +363,14 @@ public class LocalVCServletService {
         RepositoryType repositoryType = getRepositoryType(repositoryTypeOrUserName, exercise);
 
         try {
+            if (repositoryType.equals(RepositoryType.TESTS)) {
+                processNewPushToTestOrAuxRepository(exercise, commitHash, (SolutionProgrammingExerciseParticipation) participation, repositoryType);
+                return;
+            }
 
-            if (repositoryType.equals(RepositoryType.TESTS) || repositoryType.equals(RepositoryType.AUXILIARY)) {
-                processNewPushToTestOrAuxRepository(exercise, (SolutionProgrammingExerciseParticipation) participation, repositoryType);
+            if (repositoryType.equals(RepositoryType.AUXILIARY)) {
+                // Don't provide a commit hash because we want the latest test repo commit to be used
+                processNewPushToTestOrAuxRepository(exercise, null, (SolutionProgrammingExerciseParticipation) participation, repositoryType);
                 return;
             }
 
@@ -431,17 +436,18 @@ public class LocalVCServletService {
     }
 
     /**
-     * Process a new push to the test repository based on the latest commit to the test repository.
+     * Process a new push to the test repository.
      * Build and test the solution repository to make sure all tests are still passing.
      *
      * @param exercise       the exercise for which the push was made.
+     * @param commitHash     the hash of the commit used as the last commit to the test repository.
      * @param repositoryType type of repository that has been pushed to
      * @throws VersionControlException if something unexpected goes wrong when creating the submission or triggering the build.
      */
-    private void processNewPushToTestOrAuxRepository(ProgrammingExercise exercise, SolutionProgrammingExerciseParticipation solutionParticipation, RepositoryType repositoryType)
-            throws VersionControlException {
+    private void processNewPushToTestOrAuxRepository(ProgrammingExercise exercise, String commitHash, SolutionProgrammingExerciseParticipation solutionParticipation,
+            RepositoryType repositoryType) throws VersionControlException {
         // Create a new submission for the solution repository.
-        ProgrammingSubmission submission = getProgrammingSubmission(exercise);
+        ProgrammingSubmission submission = getProgrammingSubmission(exercise, commitHash);
 
         programmingMessagingService.notifyUserAboutSubmission(submission, exercise.getId());
 
@@ -457,13 +463,13 @@ public class LocalVCServletService {
 
         // Trigger the build for the solution repository.
         // The template repository will be built, once the result for the solution repository is available. See LocalCIResultProcessingService.
-        ciTriggerService.triggerBuild(solutionParticipation, null, repositoryType);
+        ciTriggerService.triggerBuild(solutionParticipation, commitHash, repositoryType);
     }
 
-    private ProgrammingSubmission getProgrammingSubmission(ProgrammingExercise exercise) {
+    private ProgrammingSubmission getProgrammingSubmission(ProgrammingExercise exercise, String commitHash) {
         ProgrammingSubmission submission;
         try {
-            submission = programmingSubmissionService.createSolutionParticipationSubmissionWithTypeTest(exercise.getId(), null);
+            submission = programmingSubmissionService.createSolutionParticipationSubmissionWithTypeTest(exercise.getId(), commitHash);
         }
         catch (EntityNotFoundException | IllegalStateException e) {
             throw new VersionControlException("Could not create submission for solution participation", e);
