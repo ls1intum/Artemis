@@ -11,7 +11,7 @@ import { CourseExerciseLatenessComponent } from 'app/overview/course-dashboard/c
 import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
-import { BarChartModule } from '@swimlane/ngx-charts';
+import { LineChartModule } from '@swimlane/ngx-charts';
 
 const routes: Routes = [
     {
@@ -37,7 +37,7 @@ const routes: Routes = [
         ArtemisDataTableModule,
         NgxDatatableModule,
         ArtemisSharedComponentModule,
-        BarChartModule,
+        LineChartModule,
     ],
 })
 export class CourseDashboardModule {}

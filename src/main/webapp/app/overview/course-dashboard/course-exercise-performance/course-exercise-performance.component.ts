@@ -1,17 +1,15 @@
-import { Component, Input, OnChanges, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { GraphColors } from 'app/entities/statistics.model';
-import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
+import { NgxChartsMultiSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { round } from 'app/shared/util/utils';
 
 export interface ExercisePerformance {
     exerciseId: number;
     title: string;
-    shortName?: string;
-    dueDate: string;
+    endDate: string;
     maxPoints: number;
-    releaseDate: string;
     studentPoints: number;
     courseAveragePoints: number;
 }
@@ -21,62 +19,58 @@ export interface ExercisePerformance {
     templateUrl: './course-exercise-performance.component.html',
     styleUrl: './course-exercise-performance.component.scss',
 })
-export class CourseExercisePerformanceComponent implements OnInit, OnChanges {
+export class CourseExercisePerformanceComponent implements OnInit {
     @Input() exercisePerformances: ExercisePerformance[] = [];
 
-    ngxData: NgxChartsSingleSeriesDataEntry[] = [];
+    yourScoreLabel: string;
+    averageScoreLabel: string;
+    ngxData: NgxChartsMultiSeriesDataEntry[];
     ngxColor: Color = {
-        name: 'Exercise Performance',
+        name: 'Performance in Exercises',
         selectable: true,
         group: ScaleType.Ordinal,
-        domain: [GraphColors.DARK_BLUE],
+        domain: [GraphColors.BLUE, GraphColors.YELLOW],
     };
 
-    constructor(private translateService: TranslateService) {}
+    readonly round = round;
+    readonly Math = Math;
+
+    constructor(private translateService: TranslateService) {
+        this.translateService.onLangChange.subscribe(() => {
+            this.setupChart();
+        });
+    }
 
     ngOnInit(): void {
-        this.createChart();
-    }
-
-    ngOnChanges() {
-        this.createChart();
-    }
-
-    formatYAxisTick(value: number): string {
-        return `${value}%`;
+        this.setupChart();
     }
 
     /**
      * Sets up the chart for given exercise performances
      */
-    private createChart(): void {
-        this.setupChartColoring();
-        this.ngxData = this.exercisePerformances.map((performance) => {
-            return {
-                name: performance.shortName || `${performance.exerciseId}`,
-                value: (performance.studentPoints / performance.maxPoints) * 100,
-            };
-        });
-    }
+    private setupChart(): void {
+        this.yourScoreLabel = this.translateService.instant('artemisApp.courseStudentDashboard.exercisePerformance.yourScoreLabel');
+        this.averageScoreLabel = this.translateService.instant('artemisApp.courseStudentDashboard.exercisePerformance.averageScoreLabel');
 
-    /**
-     * Sets up the bar coloring
-     * If exercise is 100% correct, the bar is green
-     * If exercise is above 1/3 correct, the bar is yellow
-     * Otherwise the bar is red
-     */
-    private setupChartColoring(): void {
-        this.ngxColor.domain = [];
-        for (const performance of this.exercisePerformances) {
-            if (performance.studentPoints === performance.maxPoints) {
-                this.ngxColor.domain.push(GraphColors.GREEN);
-            } else if (performance.studentPoints / performance.maxPoints > 0.25) {
-                this.ngxColor.domain.push(GraphColors.YELLOW);
-            } else {
-                this.ngxColor.domain.push(GraphColors.RED);
-            }
-        }
+        this.ngxData = [
+            {
+                name: this.yourScoreLabel,
+                series: this.exercisePerformances.map((performance) => {
+                    return {
+                        name: performance.title,
+                        value: (performance.studentPoints / performance.maxPoints) * 100,
+                    };
+                }),
+            },
+            {
+                name: this.averageScoreLabel,
+                series: this.exercisePerformances.map((performance) => {
+                    return {
+                        name: performance.title,
+                        value: (performance.courseAveragePoints / performance.maxPoints) * 100,
+                    };
+                }),
+            },
+        ];
     }
-
-    protected readonly round = round;
 }

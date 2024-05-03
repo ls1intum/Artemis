@@ -2,10 +2,16 @@
     "artemisApp": {
         "courseStudentDashboard": {
             "exercisePerformance": {
-                "charts": {
-                    "xAxisLabel": "Aufgaben",
-                    "yAxisLabel": "Korrektheit in %"
-                }
+                "title": "Leistungen in den Übungen",
+                "yourScoreLabel": "Dein Ergebnis",
+                "averageScoreLabel": "Durchschnittsergebnis",
+                "yAxisLabel": "Ergebnis (%)"
+            },
+            "exerciseLateness": {
+                "title": "Leistungen in den Übungen",
+                "yourTimingLabel": "Deine Zeit",
+                "averageTimingLabel": "Durchschnittszeit",
+                "yAxisLabel": "Verbleibende Zeit (%)"
             }
         }
     }
