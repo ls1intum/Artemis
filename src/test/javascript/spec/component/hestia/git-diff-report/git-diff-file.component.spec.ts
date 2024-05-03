@@ -49,8 +49,8 @@ describe('GitDiffFileComponent', () => {
     ])('should infer file paths from the diff entries', (entry) => {
         comp.diffEntries = [entry];
         fixture.detectChanges();
-        expect(comp.filePath).toBe(entry.filePath);
-        expect(comp.previousFilePath).toBe(entry.previousFilePath);
+        expect(comp.modifiedFilePath).toBe(entry.filePath);
+        expect(comp.originalFilePath).toBe(entry.previousFilePath);
     });
 
     it('should initialize the content of the diff editor', () => {
@@ -59,8 +59,8 @@ describe('GitDiffFileComponent', () => {
         const modifiedContent = 'some changed file content';
         const setFileContentsStub = jest.spyOn(comp.monacoDiffEditor, 'setFileContents').mockImplementation();
         const diffEntry = getDiffEntryWithPaths(fileName, fileName);
-        comp.templateFileContent = originalContent;
-        comp.solutionFileContent = modifiedContent;
+        comp.originalFileContent = originalContent;
+        comp.modifiedFileContent = modifiedContent;
         comp.diffEntries = [diffEntry];
         fixture.detectChanges();
         expect(setFileContentsStub).toHaveBeenCalledExactlyOnceWith(originalContent, fileName, modifiedContent, fileName);

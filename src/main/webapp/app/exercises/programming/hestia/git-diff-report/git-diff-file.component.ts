@@ -18,10 +18,10 @@ export class GitDiffFileComponent implements OnInit {
     diffEntries: ProgrammingExerciseGitDiffEntry[];
 
     @Input()
-    templateFileContent: string | undefined;
+    originalFileContent?: string;
 
     @Input()
-    solutionFileContent: string | undefined;
+    modifiedFileContent?: string;
 
     @Input()
     numberOfContextLines = 3;
@@ -29,25 +29,25 @@ export class GitDiffFileComponent implements OnInit {
     @Output()
     onDiffReady = new EventEmitter<boolean>();
 
-    previousFilePath: string | undefined;
-    filePath: string | undefined;
+    originalFilePath?: string;
+    modifiedFilePath?: string;
 
     ngOnInit(): void {
         this.determineFilePaths();
         this.monacoDiffEditor.setUnchangedRegionHidingEnabled(!this.diffForTemplateAndSolution);
-        this.monacoDiffEditor.setFileContents(this.templateFileContent, this.previousFilePath, this.solutionFileContent, this.filePath);
+        this.monacoDiffEditor.setFileContents(this.originalFileContent, this.originalFilePath, this.modifiedFileContent, this.modifiedFilePath);
     }
 
     /**
      * Determines the previous and current file path of the current file
      */
     private determineFilePaths() {
-        this.filePath = this.diffEntries
+        this.modifiedFilePath = this.diffEntries
             .map((entry) => entry.filePath)
             .filter((filePath) => filePath)
             .first();
 
-        this.previousFilePath = this.diffEntries
+        this.originalFilePath = this.diffEntries
             .map((entry) => entry.previousFilePath)
             .filter((filePath) => filePath)
             .first();
