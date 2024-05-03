@@ -431,6 +431,83 @@ describe('BuildQueueService', () => {
         expect(errorOccurred).toBeTrue();
     }));
 
+    it('should return all finished build jobs', () => {
+        const expectedResponse = [elem1];
+
+        service.getFinishedBuildJobs().subscribe((data) => {
+            expect(data).toEqual(expectedResponse);
+        });
+
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/finished-jobs`);
+        expect(req.request.method).toBe('GET');
+        req.flush(expectedResponse);
+    });
+
+    it('should handle errors when getting all finished build jobs', fakeAsync(() => {
+        let errorOccurred = false;
+
+        service.getFinishedBuildJobs().subscribe({
+            error: (err) => {
+                expect(err.message).toBe(
+                    'Failed to get all finished build jobs\nHttp failure response for ' + service.adminResourceUrl + '/finished-jobs: 500 Internal Server Error',
+                );
+                errorOccurred = true;
+            },
+        });
+
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/finished-jobs`);
+        expect(req.request.method).toBe('GET');
+
+        req.flush(null, { status: 500, statusText: 'Internal Server Error' });
+
+        tick();
+
+        expect(errorOccurred).toBeTrue();
+    }));
+
+    it('should return all finished build jobs for a specific course', () => {
+        const courseId = 1;
+        const expectedResponse = [elem1];
+
+        service.getFinishedBuildJobsByCourseId(courseId).subscribe((data) => {
+            expect(data).toEqual(expectedResponse);
+        });
+
+        const req = httpMock.expectOne(`${service.resourceUrl}/courses/${courseId}/finished-jobs`);
+        expect(req.request.method).toBe('GET');
+        req.flush(expectedResponse);
+    });
+
+    it('should handle errors when getting all finished build jobs for a specific course', fakeAsync(() => {
+        const courseId = 1;
+
+        let errorOccurred = false;
+
+        service.getFinishedBuildJobsByCourseId(courseId).subscribe({
+            error: (err) => {
+                expect(err.message).toBe(
+                    'Failed to get all finished build jobs in course ' +
+                        courseId +
+                        '\nHttp failure response for ' +
+                        service.resourceUrl +
+                        '/courses/' +
+                        courseId +
+                        '/finished-jobs: 500 Internal Server Error',
+                );
+                errorOccurred = true;
+            },
+        });
+
+        const req = httpMock.expectOne(`${service.resourceUrl}/courses/${courseId}/finished-jobs`);
+        expect(req.request.method).toBe('GET');
+
+        req.flush(null, { status: 500, statusText: 'Internal Server Error' });
+
+        tick();
+
+        expect(errorOccurred).toBeTrue();
+    }));
+
     afterEach(() => {
         httpMock.verify(); // Verify that there are no outstanding requests.
     });
