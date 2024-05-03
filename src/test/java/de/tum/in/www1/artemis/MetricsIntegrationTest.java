@@ -64,5 +64,23 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             assertThat(exerciseInformation.values()).containsExactlyInAnyOrderElementsOf(expectedDTOs);
             assertThat(exerciseInformation).allSatisfy((id, dto) -> assertThat(id).isEqualTo(dto.id()));
         }
+
+        @Test
+        @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+        void shouldReturnAverageScores() throws Exception {
+            // TODO: Implement the test
+        }
+
+        @Test
+        @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+        void shouldReturnAverageLatestSubmission() throws Exception {
+            // TODO: Implement the test
+        }
+
+        @Test
+        @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+        void shouldReturnLatestSubmission() throws Exception {
+            // TODO: Implement the test
+        }
     }
 }
