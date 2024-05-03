@@ -45,13 +45,13 @@ describe('TutorialGroupSessionRowComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should display session canceled label when sessions are cancelled', () => {
+    it('should display session canceled button when sessions are cancelled', () => {
         component.session = { ...session, status: TutorialGroupSessionStatus.CANCELLED };
         component.ngOnChanges();
         fixture.detectChanges();
 
-        const cancelButton = fixture.debugElement.query(By.css('button.btn-outline-danger'));
-        expect(cancelButton).not.toBeNull();
+        const sessionCanceledButton = fixture.debugElement.query(By.css('button.btn-outline-danger'));
+        expect(sessionCanceledButton).not.toBeNull();
     });
 
     it('should save attendance count when input is changed', fakeAsync(() => {
