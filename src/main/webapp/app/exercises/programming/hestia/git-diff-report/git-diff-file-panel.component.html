@@ -1,26 +1,7 @@
 <div ngbAccordion [destroyOnHide]="false" class="git-diff-file-panel">
     <div ngbAccordionItem #fileDiffPanel="ngbAccordionItem" [collapsed]="false">
         <div ngbAccordionHeader class="d-flex align-items-center justify-content-between">
-            <div class="my-2 ps-1">
-                @if (filePath && previousFilePath) {
-                    @if (filePath !== previousFilePath) {
-                        <div class="file-path-with-badge">
-                            {{ previousFilePath }} → {{ filePath }}
-                            <span jhiTranslate="artemisApp.programmingExercise.diffReport.fileChange.renamed" class="badge bg-warning"></span>
-                        </div>
-                    } @else {
-                        <div class="file-path-with-badge">{{ filePath }}</div>
-                    }
-                } @else if (!filePath) {
-                    <div class="file-path-with-badge">
-                        {{ previousFilePath }} <span class="badge bg-danger" jhiTranslate="artemisApp.programmingExercise.diffReport.fileChange.deleted"></span>
-                    </div>
-                } @else {
-                    <div class="file-path-with-badge">
-                        {{ filePath }} <span class="badge bg-success" jhiTranslate="artemisApp.programmingExercise.diffReport.fileChange.created"></span>
-                    </div>
-                }
-            </div>
+            <jhi-git-diff-file-panel-title [filePath]="filePath" [previousFilePath]="previousFilePath" />
             <div>
                 <jhi-git-diff-line-stat
                     [addedLineCount]="addedLineCount"
