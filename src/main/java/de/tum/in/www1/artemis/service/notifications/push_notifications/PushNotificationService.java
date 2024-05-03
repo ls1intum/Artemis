@@ -13,7 +13,11 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
+import jakarta.validation.constraints.NotNull;
+
+import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
@@ -30,7 +34,8 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
-import com.google.gson.Gson;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.User;
@@ -50,6 +55,8 @@ public abstract class PushNotificationService implements InstantNotificationServ
 
     private static final SecureRandom random = new SecureRandom();
 
+    protected final ObjectMapper mapper = new ObjectMapper();
+
     private static final Cipher cipher;
 
     static {
@@ -62,8 +69,6 @@ public abstract class PushNotificationService implements InstantNotificationServ
     }
 
     private static final Logger log = LoggerFactory.getLogger(PushNotificationService.class);
-
-    private static final Gson gson = new Gson();
 
     private final RestTemplate restTemplate;
 
@@ -149,23 +154,29 @@ public abstract class PushNotificationService implements InstantNotificationServ
         }
 
         final String date = Instant.now().toString();
-        final String payload = gson.toJson(
-                new PushNotificationData(notification.getTransientPlaceholderValuesAsArray(), notification.getTarget(), type.name(), date, Constants.PUSH_NOTIFICATION_VERSION));
+        var notificationData = new PushNotificationData(notification.getTransientPlaceholderValuesAsArray(), notification.getTarget(), type.name(), date,
+                Constants.PUSH_NOTIFICATION_VERSION);
 
-        final byte[] initializationVector = new byte[16];
+        try {
+            final String payload = mapper.writeValueAsString(notificationData);
+            final byte[] initializationVector = new byte[16];
 
-        List<RelayNotificationRequest> notificationRequests = userDeviceConfigurations.stream().flatMap(deviceConfiguration -> {
-            random.nextBytes(initializationVector);
+            List<RelayNotificationRequest> notificationRequests = userDeviceConfigurations.stream().flatMap(deviceConfiguration -> {
+                random.nextBytes(initializationVector);
 
-            SecretKey key = new SecretKeySpec(deviceConfiguration.getSecretKey(), "AES");
+                SecretKey key = new SecretKeySpec(deviceConfiguration.getSecretKey(), "AES");
 
-            String ivAsString = Base64.getEncoder().encodeToString(initializationVector);
-            Optional<String> payloadCiphertext = encrypt(payload, key, initializationVector);
+                String ivAsString = Base64.getEncoder().encodeToString(initializationVector);
+                Optional<String> payloadCiphertext = encrypt(payload, key, initializationVector);
 
-            return payloadCiphertext.stream().map(s -> new RelayNotificationRequest(ivAsString, s, deviceConfiguration.getToken()));
-        }).toList();
+                return payloadCiphertext.stream().map(s -> new RelayNotificationRequest(ivAsString, s, deviceConfiguration.getToken()));
+            }).toList();
 
-        sendNotificationRequestsToEndpoint(notificationRequests, relayServerBaseUrl.get());
+            sendNotificationRequestsToEndpoint(notificationRequests, relayServerBaseUrl.get());
+        }
+        catch (JsonProcessingException e) {
+            log.error("Error creating push notification payload!", e);
+        }
     }
 
     protected abstract PushNotificationDeviceConfigurationRepository getRepository();
@@ -189,13 +200,13 @@ public abstract class PushNotificationService implements InstantNotificationServ
      * @param initializationVector the initialization vector needed for CBC
      * @return the ciphertext
      */
-    private static Optional<String> encrypt(String payload, SecretKey key, byte[] initializationVector) {
+    private static Optional<String> encrypt(@NotNull String payload, SecretKey key, byte[] initializationVector) {
         try {
             cipher.init(Cipher.ENCRYPT_MODE, key, new IvParameterSpec(initializationVector));
 
             return Optional.of(Base64.getEncoder().encodeToString(cipher.doFinal(payload.getBytes(StandardCharsets.UTF_8))));
         }
-        catch (InvalidKeyException | InvalidAlgorithmParameterException | javax.crypto.IllegalBlockSizeException | javax.crypto.BadPaddingException e) {
+        catch (InvalidKeyException | InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException e) {
             log.error("Error encrypting push notification payload!", e);
             return Optional.empty();
         }

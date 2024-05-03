@@ -8,50 +8,17 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * Represents a Docker configuration that can be defined in a {@link Windfile}
- * TODO: convert to Record
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class DockerConfig {
+public record DockerConfig(String image, String tag, List<String> volumes, List<String> parameters) {
 
-    private String image;
-
-    private String tag;
-
-    private List<String> volumes;
-
-    private List<String> parameters;
-
-    public String getImage() {
-        return image;
+    public String image() {
+        return image != null ? image.trim() : null;
     }
 
-    public void setImage(String image) {
-        this.image = image;
-    }
-
-    public String getTag() {
-        return tag;
-    }
-
-    public void setTag(String tag) {
-        this.tag = tag;
-    }
-
-    public List<String> getVolumes() {
-        return volumes;
-    }
-
-    public void setVolumes(List<String> volumes) {
-        this.volumes = volumes;
-    }
-
-    public List<String> getParameters() {
-        return parameters;
-    }
-
-    public void setParameters(List<String> parameters) {
-        this.parameters = parameters;
+    public String tag() {
+        return tag != null ? tag.trim() : null;
     }
 
     /**
@@ -62,6 +29,8 @@ public class DockerConfig {
      */
     @JsonIgnore
     public String getFullImageName() {
+        var image = image();
+        var tag = tag();
         if (image == null) {
             return null;
         }
