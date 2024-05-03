@@ -23,6 +23,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.in.www1.artemis.competency.CompetencyProgressUtilService;
 import de.tum.in.www1.artemis.competency.CompetencyUtilService;
+import de.tum.in.www1.artemis.competency.StandardizedCompetencyUtilService;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.DomainObject;
@@ -66,6 +67,7 @@ import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.PageableSearchUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseCompetencyProgressDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyImportResponseDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyRelationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyWithTailRelationDTO;
 
@@ -133,6 +135,9 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
     @Autowired
     private LectureUtilService lectureUtilService;
 
+    @Autowired
+    private StandardizedCompetencyUtilService standardizedCompetencyUtilService;
+
     private Course course;
 
     private Course course2;
@@ -152,7 +157,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
         participantScoreScheduleService.activate();
 
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
-        userUtilService.addUsers(TEST_PREFIX, 2, 1, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
 
         // Add users that are not in the course
         userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
@@ -283,6 +288,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
         private void testAllPreAuthorizeEditor() throws Exception {
             request.get("/api/competencies/for-import", HttpStatus.FORBIDDEN, SearchResultPageDTO.class);
             request.post("/api/courses/" + course.getId() + "/competencies/import/bulk", Collections.emptyList(), HttpStatus.FORBIDDEN);
+            request.post("/api/courses/" + course.getId() + "/competencies/import-standardized", Collections.emptyList(), HttpStatus.FORBIDDEN);
         }
 
         private void testAllPreAuthorizeInstructor() throws Exception {
@@ -966,6 +972,45 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void shouldReturnBadRequestForImportFromSameCourse() throws Exception {
             request.post("/api/courses/" + course.getId() + "/competencies/import-all/" + course.getId(), null, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @Nested
+    class ImportStandardizedCompetencies {
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+        void shouldImportCompetencies() throws Exception {
+            var knowledgeArea = standardizedCompetencyUtilService.saveKnowledgeArea("KnowledgeArea 1", "KA1", "", null);
+            var competency1 = standardizedCompetencyUtilService.saveStandardizedCompetency("Competency1", "description 1", CompetencyTaxonomy.ANALYZE, "1.3.1", knowledgeArea,
+                    null);
+            var competency2 = standardizedCompetencyUtilService.saveStandardizedCompetency("Competency2", "description 2", CompetencyTaxonomy.CREATE, "1.0.0", knowledgeArea, null);
+
+            var idList = List.of(competency1.getId(), competency2.getId());
+
+            var actualCompetencies = request.postListWithResponseBody("/api/courses/" + course.getId() + "/competencies/import-standardized", idList,
+                    CompetencyImportResponseDTO.class, HttpStatus.CREATED);
+
+            assertThat(actualCompetencies).hasSize(2);
+            var actualCompetency1 = actualCompetencies.getFirst();
+            var actualCompetency2 = actualCompetencies.get(1);
+            if (!competency1.getId().equals(actualCompetency1.linkedStandardizedCompetencyId())) {
+                var tempCompetency = actualCompetency1;
+                actualCompetency1 = actualCompetency2;
+                actualCompetency2 = tempCompetency;
+            }
+
+            assertThat(actualCompetency1).usingRecursiveComparison().comparingOnlyFields("title", "description", "taxonomy").isEqualTo(competency1);
+            assertThat(actualCompetency1.linkedStandardizedCompetencyId()).isEqualTo(competency1.getId());
+            assertThat(actualCompetency2).usingRecursiveComparison().comparingOnlyFields("title", "description", "taxonomy").isEqualTo(competency2);
+            assertThat(actualCompetency2.linkedStandardizedCompetencyId()).isEqualTo(competency2.getId());
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+        void shouldReturnNotFoundForNotExistingIds() throws Exception {
+            var idList = List.of(-1000, -1001);
+            request.post("/api/courses/" + course.getId() + "/competencies/import-standardized", idList, HttpStatus.NOT_FOUND);
         }
     }
 

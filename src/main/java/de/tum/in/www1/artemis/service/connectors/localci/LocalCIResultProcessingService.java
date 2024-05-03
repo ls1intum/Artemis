@@ -134,7 +134,7 @@ public class LocalCIResultProcessingService {
 
                     // In case the participation does not contain the exercise, we have to load it from the database
                     if (participation.getProgrammingExercise() == null) {
-                        participation.setProgrammingExercise(programmingExerciseRepository.findByParticipationIdOrElseThrow(participation.getId()));
+                        participation.setProgrammingExercise(programmingExerciseRepository.getProgrammingExerciseFromParticipationElseThrow(participation));
                     }
                     result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult);
 

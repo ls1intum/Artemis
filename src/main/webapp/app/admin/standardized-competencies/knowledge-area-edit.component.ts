@@ -6,10 +6,10 @@ import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms'
 import { Observable } from 'rxjs';
 
 @Component({
-    selector: 'jhi-knowledge-area-detail',
-    templateUrl: './knowledge-area-detail.component.html',
+    selector: 'jhi-knowledge-area-edit',
+    templateUrl: './knowledge-area-edit.component.html',
 })
-export class KnowledgeAreaDetailComponent {
+export class KnowledgeAreaEditComponent {
     // values for the knowledge area select
     @Input() knowledgeAreas: KnowledgeArea[] = [];
     @Input({ required: true }) set knowledgeArea(knowledgeArea: KnowledgeAreaDTO) {
