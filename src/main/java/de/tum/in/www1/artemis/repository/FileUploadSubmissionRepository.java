@@ -39,14 +39,14 @@ public interface FileUploadSubmissionRepository extends JpaRepository<FileUpload
     Optional<FileUploadSubmission> findByIdWithEagerResultAndAssessorAndFeedback(@Param("submissionId") long submissionId);
 
     /**
-     * Load the file upload submission with the given id together with its result, the feedback list of the result, the assessor of the result, its participation and all results of
-     * the participation.
+     * Load the file upload submission with the given id together with its result, the feedback list of the result, the assessor of the result, the assessment note of the result,
+     * its participation and all results of the participation.
      *
      * @param submissionId the id of the file upload submission that should be loaded from the database
      * @return the file upload submission with its result, the feedback list of the result, the assessor of the result, its participation and all results of the participation
      */
-    @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.assessor", "participation", "participation.results" })
-    Optional<FileUploadSubmission> findWithResultsFeedbacksAssessorAndParticipationResultsById(long submissionId);
+    @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.assessor", "results.assessmentNote", "participation", "participation.results" })
+    Optional<FileUploadSubmission> findWithResultsFeedbacksAssessorAssessmentNoteAndParticipationResultsById(long submissionId);
 
     @Query("""
             SELECT submission
@@ -74,14 +74,16 @@ public interface FileUploadSubmissionRepository extends JpaRepository<FileUpload
 
     /**
      * Get the file upload submission with the given id from the database. The submission is loaded together with its result, the feedback of the result, the assessor of the
-     * result, its participation and all results of the participation. Throws an EntityNotFoundException if no submission could be found for the given id.
+     * result, the assessment note of the result, its participation and all results of the participation. Throws an EntityNotFoundException if no submission could be found for the
+     * given id.
      *
      * @param submissionId the id of the submission that should be loaded from the database
      * @return the file upload submission with the given id
      */
     @NotNull
-    default FileUploadSubmission findByIdWithEagerResultAndFeedbackAndAssessorAndParticipationResultsElseThrow(long submissionId) {
-        return findWithResultsFeedbacksAssessorAndParticipationResultsById(submissionId).orElseThrow(() -> new EntityNotFoundException("File Upload Submission", submissionId));
+    default FileUploadSubmission findByIdWithEagerResultAndFeedbackAndAssessorAndAssessmentNoteAndParticipationResultsElseThrow(long submissionId) {
+        return findWithResultsFeedbacksAssessorAssessmentNoteAndParticipationResultsById(submissionId)
+                .orElseThrow(() -> new EntityNotFoundException("File Upload Submission", submissionId));
     }
 
     /**

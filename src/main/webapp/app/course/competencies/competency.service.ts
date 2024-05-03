@@ -1,7 +1,15 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Competency, CompetencyProgress, CompetencyRelation, CompetencyRelationDTO, CompetencyWithTailRelationDTO, CourseCompetencyProgress } from 'app/entities/competency.model';
+import {
+    Competency,
+    CompetencyImportResponseDTO,
+    CompetencyProgress,
+    CompetencyRelation,
+    CompetencyRelationDTO,
+    CompetencyWithTailRelationDTO,
+    CourseCompetencyProgress,
+} from 'app/entities/competency.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { map, tap } from 'rxjs/operators';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
@@ -100,6 +108,12 @@ export class CompetencyService {
         const params = new HttpParams().set('importRelations', importRelations);
         return this.httpClient.post<Array<CompetencyWithTailRelationDTO>>(`${this.resourceURL}/courses/${courseId}/competencies/import-all/${sourceCourseId}`, null, {
             params: params,
+            observe: 'response',
+        });
+    }
+
+    importStandardizedCompetencies(competencyIdsToImport: number[], courseId: number) {
+        return this.httpClient.post<Array<CompetencyImportResponseDTO>>(`${this.resourceURL}/courses/${courseId}/competencies/import-standardized`, competencyIdsToImport, {
             observe: 'response',
         });
     }

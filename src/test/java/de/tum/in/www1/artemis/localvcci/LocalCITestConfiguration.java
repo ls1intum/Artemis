@@ -64,6 +64,7 @@ public class LocalCITestConfiguration {
         // Mock PullImageCmd
         PullImageCmd pullImageCmd = mock(PullImageCmd.class);
         doReturn(pullImageCmd).when(dockerClient).pullImageCmd(anyString());
+        doReturn(pullImageCmd).when(pullImageCmd).withPlatform(anyString());
         LocalCIDockerService.MyPullImageResultCallback callback1 = mock(LocalCIDockerService.MyPullImageResultCallback.class);
         doReturn(callback1).when(pullImageCmd).exec(any(LocalCIDockerService.MyPullImageResultCallback.class));
         doReturn(null).when(callback1).awaitCompletion();
