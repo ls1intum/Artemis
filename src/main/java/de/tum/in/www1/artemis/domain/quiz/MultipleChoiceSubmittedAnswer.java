@@ -8,8 +8,6 @@ import java.util.stream.Collectors;
 import jakarta.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * A MultipleChoiceSubmittedAnswer.
@@ -23,9 +21,7 @@ public class MultipleChoiceSubmittedAnswer extends SubmittedAnswer {
     private Set<AnswerOptionDTO> selectedOptions = new HashSet<>();
 
     public Set<AnswerOptionDTO> getSelectedOptions() {
-        ObjectMapper mapper = new ObjectMapper();
-        return mapper.convertValue(this.getSelection(), new TypeReference<>() {
-        });
+        return this.selectedOptions;
     }
 
     public void addSelectedOptions(AnswerOptionDTO answerOption) {
