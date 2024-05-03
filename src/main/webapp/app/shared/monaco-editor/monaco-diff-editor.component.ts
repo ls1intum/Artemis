@@ -4,6 +4,7 @@ import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import * as monaco from 'monaco-editor';
 import { Subscription } from 'rxjs';
 
+export type MonacoEditorDiffText = { original: string; modified: string };
 @Component({
     selector: 'jhi-monaco-diff-editor',
     template: '',
@@ -61,6 +62,15 @@ export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
         this.themeSubscription = this.themeService.getCurrentThemeObservable().subscribe((theme) => this.changeTheme(theme));
     }
 
+    ngOnDestroy(): void {
+        this.themeSubscription?.unsubscribe();
+        this.resizeObserver?.disconnect();
+        this.listeners.forEach((listener) => {
+            listener.dispose();
+        });
+        this._editor.dispose();
+    }
+
     /**
      * Sets up a listener that responds to changes in the diff. It will signal via {@link onReadyForDisplayChange} that
      * the component is ready to display the diff.
@@ -112,15 +122,6 @@ export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
      */
     layout(): void {
         this._editor.layout();
-    }
-
-    ngOnDestroy(): void {
-        this.themeSubscription?.unsubscribe();
-        this.resizeObserver?.disconnect();
-        this.listeners.forEach((listener) => {
-            listener.dispose();
-        });
-        this._editor.dispose();
     }
 
     /**
@@ -176,7 +177,6 @@ export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
 
     /**
      * Returns the content height of the larger of the two editors in this view.
-     * @private
      */
     getMaximumContentHeight(): number {
         return Math.max(this.getContentHeightOfEditor(this._editor.getOriginalEditor()), this.getContentHeightOfEditor(this._editor.getModifiedEditor()));
@@ -185,9 +185,17 @@ export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
     /**
      * Returns the content height of the provided editor.
      * @param editor The editor whose content height should be retrieved.
-     * @private
      */
-    private getContentHeightOfEditor(editor: monaco.editor.ICodeEditor): number {
+    getContentHeightOfEditor(editor: monaco.editor.ICodeEditor): number {
         return editor.getContentHeight();
+    }
+
+    /**
+     * Returns the text (original and modified) currently stored in the editor.
+     */
+    getText(): MonacoEditorDiffText {
+        const original = this._editor.getOriginalEditor().getValue();
+        const modified = this._editor.getModifiedEditor().getValue();
+        return { original, modified };
     }
 }

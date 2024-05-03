@@ -46,14 +46,14 @@ describe('GitDiffFileComponent', () => {
         getDiffEntryWithPaths('old file', 'renamed file'),
         getDiffEntryWithPaths('deleted file', undefined),
         getDiffEntryWithPaths(undefined, 'created file'),
-    ])('should correctly infer file paths from the diff entries', (entry) => {
+    ])('should infer file paths from the diff entries', (entry) => {
         comp.diffEntries = [entry];
         fixture.detectChanges();
         expect(comp.filePath).toBe(entry.filePath);
         expect(comp.previousFilePath).toBe(entry.previousFilePath);
     });
 
-    it('should correctly initialize the content of the diff editor', () => {
+    it('should initialize the content of the diff editor', () => {
         const fileName = 'some-changed-file.java';
         const originalContent = 'some file content';
         const modifiedContent = 'some changed file content';
