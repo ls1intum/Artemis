@@ -23,6 +23,7 @@ import { ExerciseImportTabsComponent } from 'app/exercises/shared/import/exercis
 import { ExerciseImportFromFileComponent } from 'app/exercises/shared/import/from-file/exercise-import-from-file.component';
 import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exercise-import-wrapper/exercise-import-wrapper.component';
 import { ConfirmAutofocusButtonComponent } from 'app/shared/components/confirm-autofocus-button.component';
+import { ExamLiveAnnouncementCreateButtonComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-announcement-dialog/exam-live-announcement-create-button.component';
 
 @NgModule({
     imports: [ArtemisSharedModule, ArtemisCoursesRoutingModule, FeatureToggleModule, ClipboardModule],
@@ -47,6 +48,7 @@ import { ConfirmAutofocusButtonComponent } from 'app/shared/components/confirm-a
         ExerciseImportTabsComponent,
         ExerciseImportFromFileComponent,
         ExerciseImportWrapperComponent,
+        ExamLiveAnnouncementCreateButtonComponent,
     ],
     exports: [
         ButtonComponent,
@@ -69,6 +71,7 @@ import { ConfirmAutofocusButtonComponent } from 'app/shared/components/confirm-a
         ExerciseImportFromFileComponent,
         ExerciseImportWrapperComponent,
         ConfirmAutofocusModalComponent,
+        ExamLiveAnnouncementCreateButtonComponent,
     ],
 })
 export class ArtemisSharedComponentModule {}
