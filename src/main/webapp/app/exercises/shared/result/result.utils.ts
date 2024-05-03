@@ -17,6 +17,7 @@ import { Participation, ParticipationType } from 'app/entities/participation/par
 import dayjs from 'dayjs/esm';
 import { ResultWithPointsPerGradingCriterion } from 'app/entities/result-with-points-per-grading-criterion.model';
 import { TestCaseResult } from 'app/entities/test-case-result.model';
+import { SelfLearningFeedbackRequest } from 'app/entities/self-learning-feedback-request.model';
 
 /**
  * Enumeration object representing the possible options that
@@ -29,22 +30,7 @@ export enum ResultTemplateStatus {
      */
     IS_BUILDING = 'IS_BUILDING',
     /**
-     * An automatic feedback suggestion is currently being generated and should be available soon.
-     * This is currently only relevant for programming exercises.
-     */
-    IS_GENERATING_FEEDBACK = 'IS_GENERATING_FEEDBACK',
-    /**
-     * An automatic feedback suggestion has failed.
-     * This is currently only relevant for programming exercises.
-     */
-    FEEDBACK_GENERATION_FAILED = 'FEEDBACK_GENERATION_FAILED',
-    /**
-     * The generation of an automatic feedback suggestion was in progress, but did not return a result.
-     * This is currently only relevant for programming exercises.
-     */
-    FEEDBACK_GENERATION_TIMED_OUT = 'FEEDBACK_GENERATION_TIMED_OUT',
-    /**
-     * A regular, finished result is available.
+     * A regular, finished result or a feedback request is available.
      * Can be rated (counts toward the score) or not rated (after the due date for practice).
      */
     HAS_RESULT = 'HAS_RESULT',
@@ -118,20 +104,8 @@ export const getUnreferencedFeedback = (feedbacks: Feedback[] | undefined): Feed
     return feedbacks ? feedbacks.filter((feedbackElement) => !feedbackElement.reference && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED) : undefined;
 };
 
-export function isAIResultAndFailed(result: Result | undefined) {
-    return result && Result.isAthenaAIResult(result) && result.successful === false;
-}
-
-export function isAIResultAndTimedOut(result: Result | undefined) {
-    return result && Result.isAthenaAIResult(result) && result.successful === undefined && result.completionDate && dayjs().isAfter(result.completionDate);
-}
-
-export function isAIResultAndProcessed(result: Result | undefined) {
-    return result && Result.isAthenaAIResult(result) && result.successful === true;
-}
-
-export function isAIResultAndIsBeingProcessed(result: Result | undefined) {
-    return result && Result.isAthenaAIResult(result) && result.successful === undefined && result.completionDate && dayjs().isSameOrBefore(result.completionDate);
+export function isAthenaResultAndProcessed(result: SelfLearningFeedbackRequest | undefined) {
+    return result && Result.isAthenaAIResult(result);
 }
 
 export const evaluateTemplateStatus = (
@@ -199,14 +173,6 @@ export const evaluateTemplateStatus = (
     if (isProgrammingOrQuiz(participation)) {
         if (isBuilding) {
             return ResultTemplateStatus.IS_BUILDING;
-        } else if (isAIResultAndIsBeingProcessed(result)) {
-            return ResultTemplateStatus.IS_GENERATING_FEEDBACK;
-        } else if (isAIResultAndProcessed(result)) {
-            return ResultTemplateStatus.HAS_RESULT;
-        } else if (isAIResultAndFailed(result)) {
-            return ResultTemplateStatus.FEEDBACK_GENERATION_FAILED;
-        } else if (isAIResultAndTimedOut(result)) {
-            return ResultTemplateStatus.FEEDBACK_GENERATION_TIMED_OUT;
         } else if (initializedResultWithScore(result)) {
             return ResultTemplateStatus.HAS_RESULT;
         } else {
@@ -247,14 +213,6 @@ export const getTextColorClass = (result: Result | undefined, templateStatus: Re
         return 'result-late';
     }
 
-    if (isBuildFailedAndResultIsAutomatic(result) || isAIResultAndFailed(result)) {
-        return 'text-danger';
-    }
-
-    if (resultIsPreliminary(result) || isAIResultAndIsBeingProcessed(result) || isAIResultAndTimedOut(result)) {
-        return 'text-secondary';
-    }
-
     if (result?.score === undefined) {
         return result?.successful ? 'text-success' : 'text-danger';
     }
@@ -283,11 +241,11 @@ export const getResultIconClass = (result: Result | undefined, templateStatus: R
         return faQuestionCircle;
     }
 
-    if (isBuildFailedAndResultIsAutomatic(result) || isAIResultAndFailed(result)) {
+    if (isBuildFailedAndResultIsAutomatic(result)) {
         return faTimesCircle;
     }
 
-    if (resultIsPreliminary(result) || isAIResultAndTimedOut(result) || isAIResultAndIsBeingProcessed(result)) {
+    if (resultIsPreliminary(result)) {
         return faQuestionCircle;
     }
 

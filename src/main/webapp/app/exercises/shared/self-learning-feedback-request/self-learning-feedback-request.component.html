@@ -1,0 +1,11 @@
+<ng-container id="self-learning-feedback">
+    @if (!this.selfLearningFeedbackRequest.successful) {
+        <span>failed</span>
+    }
+    @if (!this.selfLearningFeedbackRequest.responseDateTime) {
+        <span>building</span>
+    }
+    @if (this.timedOut) {
+        <span>timed out</span>
+    }
+</ng-container>

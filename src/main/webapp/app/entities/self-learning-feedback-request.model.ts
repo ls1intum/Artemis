@@ -14,7 +14,7 @@ export class SelfLearningFeedbackRequest implements BaseEntity {
     public result?: Result;
     public participation?: Participation;
 
-    public static SelfLearningFeedbackRequest(obj: any): obj is Result {
-        return obj.type === 'Result';
+    public static isSelfLearningFeedbackRequest(obj: any): obj is SelfLearningFeedbackRequest {
+        return obj instanceof SelfLearningFeedbackRequest;
     }
 }

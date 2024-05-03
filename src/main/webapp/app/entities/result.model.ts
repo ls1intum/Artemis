@@ -56,6 +56,6 @@ export class Result implements BaseEntity {
     }
 
     public static isResult(obj: any): obj is Result {
-        return obj.type === 'Result';
+        return obj instanceof Result;
     }
 }

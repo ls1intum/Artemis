@@ -18,26 +18,32 @@ export class ResultHistoryComponent implements OnChanges {
     readonly evaluateTemplateStatus = evaluateTemplateStatus;
     readonly MissingResultInfo = MissingResultInformation;
 
-    @Input() results: (Result | SelfLearningFeedbackRequest)[];
+    @Input() entries: (Result | SelfLearningFeedbackRequest)[];
     @Input() exercise: Exercise;
 
     showPreviousDivider = false;
-    displayedResults: Result[];
+    displayedEntries: (Result | SelfLearningFeedbackRequest)[];
     movedLastRatedResult: boolean;
 
     ngOnChanges(): void {
-        this.showPreviousDivider = this.results.length > MAX_RESULT_HISTORY_LENGTH;
+        this.showPreviousDivider = this.entries.length > MAX_RESULT_HISTORY_LENGTH;
 
-        if (this.results.length <= MAX_RESULT_HISTORY_LENGTH) {
-            this.displayedResults = this.results;
+        if (this.entries.length <= MAX_RESULT_HISTORY_LENGTH) {
+            this.displayedEntries = this.entries;
         } else {
-            this.displayedResults = this.results.slice(this.results.length - MAX_RESULT_HISTORY_LENGTH);
+            this.displayedEntries = this.entries.slice(this.entries.length - MAX_RESULT_HISTORY_LENGTH);
 
-            const lastRatedResult = this.results.filter((entry) => entry instanceof Result && entry.rated).last();
-            if (!this.displayedResults.first()?.rated && lastRatedResult) {
-                this.displayedResults[0] = lastRatedResult;
-                this.movedLastRatedResult = true;
+            const lastRatedResult = this.entries.filter((entry) => Result.isResult(entry) && entry.rated).last(); // as (Result | undefined);
+            const firstEntry = this.displayedEntries.first();
+            if (Result.isResult(firstEntry)) {
+                if (!firstEntry.rated && lastRatedResult) {
+                    this.displayedEntries[0] = lastRatedResult;
+                    this.movedLastRatedResult = true;
+                }
             }
         }
     }
+
+    protected readonly Result = Result;
+    protected readonly SelfLearningFeedbackRequest = SelfLearningFeedbackRequest;
 }

@@ -281,8 +281,14 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     sortHistoryEntries() {
         if (this.studentParticipations?.length) {
             this.studentParticipations.forEach((participation) => participation.results?.sort(this.resultSortFunction));
-            const sortedResults = this.studentParticipations.flatMap((participation) => participation.results ?? []).sort(this.resultSortFunction);
-            const sortedSelfLearningRequests = this.studentParticipations.flatMap((participation) => participation.results ?? []).sort(this.selfLearningFeedbackSortFunction);
+            const sortedResults = this.studentParticipations
+                .flatMap((participation) => participation.results ?? [])
+                .map((result) => Object.assign(new Result(), result))
+                .sort(this.resultSortFunction);
+            const sortedSelfLearningRequests = this.studentParticipations
+                .flatMap((participation) => participation.selfLearningFeedbackRequests ?? [])
+                .map((selfLearningFeedbackRequest) => Object.assign(new SelfLearningFeedbackRequest(), selfLearningFeedbackRequest))
+                .sort(this.selfLearningFeedbackSortFunction);
             this.sortedHistoryEntries = this.mergeAndSortHistoryLists(sortedResults, sortedSelfLearningRequests);
         }
     }
