@@ -540,7 +540,7 @@ public class ProgrammingExerciseExportImportResource {
      */
     @GetMapping("programming-exercises/{exerciseId}/export-student-repository/{participationId}")
     @EnforceAtLeastStudent
-    public ResponseEntity<Resource> exportUserRepository(@PathVariable long exerciseId, @PathVariable long participationId) throws IOException {
+    public ResponseEntity<Resource> exportStudentRepository(@PathVariable long exerciseId, @PathVariable long participationId) throws IOException {
         var programmingExercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndLegalSubmissionsElseThrow(exerciseId);
         var studentParticipation = programmingExercise.getStudentParticipations().stream().filter(p -> p.getId().equals(participationId))
                 .map(p -> (ProgrammingExerciseStudentParticipation) p).findFirst()
@@ -553,7 +553,7 @@ public class ProgrammingExerciseExportImportResource {
         long start = System.nanoTime();
         Optional<File> zipFile = programmingExerciseExportService.exportStudentRepository(exerciseId, studentParticipation, exportErrors);
         if (zipFile.isEmpty()) {
-            throw new InternalServerErrorException("Could not export the user repository of participation " + participationId + ". Logged errors: " + exportErrors);
+            throw new InternalServerErrorException("Could not export the student repository of participation " + participationId + ". Logged errors: " + exportErrors);
         }
         return returnZipFileForRepositoryExport(zipFile, RepositoryType.USER.getName(), programmingExercise, start);
     }
