@@ -678,9 +678,9 @@
                     "assessmentCheckType": "Check Typ",
                     "assessmentStatus": "Status",
                     "assessmentAction": "Aktion",
-                    "checkUnfinishedAssessments": "Unvollendete Beurteilungen",
-                    "checkUnassessedQuizzes": "Unbewertete Quizübungen",
-                    "checkUnsubmittedExercises": "Nicht eingereichte Übungen"
+                    "checkUnfinishedAssessments": "Unvollständige Bewertungen",
+                    "checkUnassessedQuizzes": "Unbewertete Quizaufgaben",
+                    "checkUnsubmittedExercises": "Nicht eingereichte Aufgaben"
                 }
             },
             "editWorkingTime": {
