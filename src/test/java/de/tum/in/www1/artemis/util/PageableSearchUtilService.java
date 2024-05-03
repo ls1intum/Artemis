@@ -136,7 +136,6 @@ public class PageableSearchUtilService {
             return paramMap;
         }
         catch (Exception e) {
-            // Handle exceptions by throwing a runtime exception with the error context
             throw new RuntimeException("Failed to map JSON", e);
         }
     }
