@@ -98,9 +98,6 @@ class LtiDeepLinkingServiceTest {
     void testEmptyReturnUrlBuildLtiDeepLinkResponse() throws JsonProcessingException, MalformedURLException {
         createMockOidcIdToken();
         when(tokenRetriever.createDeepLinkingJWT(anyString(), anyMap())).thenReturn("test_jwt");
-        Map<String, Object> deepLinkingSettingsAsMap = new ObjectMapper().readValue(deepLinkingSettingsAsJsonString, new TypeReference<Map<String, Object>>() {
-        });
-
         ObjectMapper mapper = new ObjectMapper();
         String deepLinkingSettingsAsJsonString = """
                 {
