@@ -9,6 +9,8 @@ import java.util.regex.Pattern;
 
 import org.springframework.http.ResponseEntity;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
@@ -49,7 +51,7 @@ public interface ContinuousIntegrationService {
      *
      * @param exercise for which the build plans should be recreated
      */
-    void recreateBuildPlansForExercise(ProgrammingExercise exercise);
+    void recreateBuildPlansForExercise(ProgrammingExercise exercise) throws JsonProcessingException;
 
     /**
      * Clones an existing build plan. Illegal characters in the plan key, or name will be replaced.
