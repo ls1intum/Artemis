@@ -4,7 +4,14 @@ import { GitDiffFileComponent } from 'app/exercises/programming/hestia/git-diff-
 import { MonacoEditorModule } from 'app/shared/monaco-editor/monaco-editor.module';
 import { MockResizeObserver } from '../../../helpers/mocks/service/mock-resize-observer';
 
-describe('ProgrammingExerciseGitDiffEntry Component', () => {
+function getDiffEntryWithPaths(previousFilePath?: string, filePath?: string) {
+    return {
+        previousFilePath,
+        filePath,
+    };
+}
+
+describe('GitDiffFileComponent', () => {
     let comp: GitDiffFileComponent;
     let fixture: ComponentFixture<GitDiffFileComponent>;
 
@@ -26,10 +33,36 @@ describe('ProgrammingExerciseGitDiffEntry Component', () => {
         jest.restoreAllMocks();
     });
 
-    it('should initialize', () => {
+    it.each([true, false])('should hide unchanged regions only outside of the diff between template and solution', (diffBetweenTemplateAndSolution) => {
+        const setUnchangedRegionHidingEnabledSpy = jest.spyOn(comp.monacoDiffEditor, 'setUnchangedRegionHidingEnabled');
         comp.diffEntries = [];
+        comp.diffForTemplateAndSolution = diffBetweenTemplateAndSolution;
         fixture.detectChanges();
-        expect(comp).toBeDefined();
-        // TODO write actual tests or delete this file
+        expect(setUnchangedRegionHidingEnabledSpy).toHaveBeenCalledExactlyOnceWith(!diffBetweenTemplateAndSolution);
+    });
+
+    it.each([
+        getDiffEntryWithPaths('same file', 'same file'),
+        getDiffEntryWithPaths('old file', 'renamed file'),
+        getDiffEntryWithPaths('deleted file', undefined),
+        getDiffEntryWithPaths(undefined, 'created file'),
+    ])('should correctly infer file paths from the diff entries', (entry) => {
+        comp.diffEntries = [entry];
+        fixture.detectChanges();
+        expect(comp.filePath).toBe(entry.filePath);
+        expect(comp.previousFilePath).toBe(entry.previousFilePath);
+    });
+
+    it('should correctly initialize the content of the diff editor', () => {
+        const fileName = 'some-changed-file.java';
+        const originalContent = 'some file content';
+        const modifiedContent = 'some changed file content';
+        const setFileContentsStub = jest.spyOn(comp.monacoDiffEditor, 'setFileContents').mockImplementation();
+        const diffEntry = getDiffEntryWithPaths(fileName, fileName);
+        comp.templateFileContent = originalContent;
+        comp.solutionFileContent = modifiedContent;
+        comp.diffEntries = [diffEntry];
+        fixture.detectChanges();
+        expect(setFileContentsStub).toHaveBeenCalledExactlyOnceWith(originalContent, fileName, modifiedContent, fileName);
     });
 });
