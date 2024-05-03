@@ -271,7 +271,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
         localVCLocalCITestService.commitFile(auxiliaryRepository.localRepoFile.toPath(), auxiliaryRepository.localGit);
 
-        doReturn(ObjectId.fromString(DUMMY_COMMIT_HASH)).when(gitService).getLastCommitHash(eq(programmingExercise.getVcsTestRepositoryUri()));
+        doReturn(ObjectId.fromString(DUMMY_COMMIT_HASH_VALID)).when(gitService).getLastCommitHash(eq(programmingExercise.getVcsTestRepositoryUri()));
 
         // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns the XMLs containing the test results.
         // Mock the results for the solution repository build and for the template repository build that will both be triggered as a result of updating the tests.
@@ -283,8 +283,8 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         localVCLocalCITestService.testPushSuccessful(auxiliaryRepository.localGit, instructor1Login, projectKey1, auxiliaryRepositorySlug);
 
         // Solution submissions created as a result from a push to the auxiliary repository should contain the last commit of the test repository.
-        localVCLocalCITestService.testLatestSubmission(solutionParticipation.getId(), DUMMY_COMMIT_HASH, 13, false);
-        localVCLocalCITestService.testLatestSubmission(templateParticipation.getId(), DUMMY_COMMIT_HASH, 0, false);
+        localVCLocalCITestService.testLatestSubmission(solutionParticipation.getId(), DUMMY_COMMIT_HASH_VALID, 13, false);
+        localVCLocalCITestService.testLatestSubmission(templateParticipation.getId(), DUMMY_COMMIT_HASH_VALID, 0, false);
 
         await().until(() -> {
             Optional<BuildJob> buildJobOptional = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(templateParticipation.getId());
