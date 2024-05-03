@@ -54,30 +54,6 @@ class LtiDeepLinkingServiceTest {
 
     private OidcIdToken oidcIdToken;
 
-    private final String deepLinkingSettingsAsJsonString = """
-            {
-              "deep_link_return_url": "",
-              "accept_types": [
-                "link",
-                "file",
-                "html",
-                "ltiResourceLink",
-                "image"
-              ],
-              "accept_media_types": "image/*,text/html",
-              "accept_presentation_document_targets": [
-                "iframe",
-                "window",
-                "embed"
-              ],
-              "accept_multiple": true,
-              "auto_create": true,
-              "title": "This is the default title",
-              "text": "This is the default text",
-              "data": "csrftoken:c7fbba78-7b75-46e3-9201-11e6d5f36f53"
-            }
-            """;
-
     @BeforeEach
     void setUp() {
         closeable = MockitoAnnotations.openMocks(this);
@@ -125,6 +101,32 @@ class LtiDeepLinkingServiceTest {
         Map<String, Object> deepLinkingSettingsAsMap = new ObjectMapper().readValue(deepLinkingSettingsAsJsonString, new TypeReference<Map<String, Object>>() {
         });
 
+        ObjectMapper mapper = new ObjectMapper();
+        String deepLinkingSettingsAsJsonString = """
+                {
+                  "deep_link_return_url": "",
+                  "accept_types": [
+                    "link",
+                    "file",
+                    "html",
+                    "ltiResourceLink",
+                    "image"
+                  ],
+                  "accept_media_types": "image/*,text/html",
+                  "accept_presentation_document_targets": [
+                    "iframe",
+                    "window",
+                    "embed"
+                  ],
+                  "accept_multiple": true,
+                  "auto_create": true,
+                  "title": "This is the default title",
+                  "text": "This is the default text",
+                  "data": "csrftoken:c7fbba78-7b75-46e3-9201-11e6d5f36f53"
+                }
+                """;
+        Map<String, Object> deepLinkingSettingsAsMap = mapper.readValue(deepLinkingSettingsAsJsonString, new TypeReference<>() {
+        });
         when(oidcIdToken.getClaim(de.tum.in.www1.artemis.domain.lti.Claims.DEEP_LINKING_SETTINGS)).thenReturn(deepLinkingSettingsAsMap);
 
         DeepLinkCourseExercises result = createTestExercisesForDeepLinking();

@@ -10,7 +10,6 @@ import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-ac
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import { CourseExamArchiveButtonComponent } from 'app/shared/components/course-exam-archive-button/course-exam-archive-button.component';
 import { NotReleasedTagComponent } from 'app/shared/components/not-released-tag.component';
-import { HelpIconComponentWithoutTranslationComponent } from 'app/shared/components/help-icon-without-translation.component';
 import { OpenCodeEditorButtonComponent } from 'app/shared/components/open-code-editor-button/open-code-editor-button.component';
 import { ArtemisCoursesRoutingModule } from 'app/overview/courses-routing.module';
 import { CopyIconButtonComponent } from 'app/shared/components/copy-icon-button/copy-icon-button.component';
@@ -30,7 +29,6 @@ import { ConfirmAutofocusButtonComponent } from 'app/shared/components/confirm-a
     declarations: [
         ButtonComponent,
         HelpIconComponent,
-        HelpIconComponentWithoutTranslationComponent,
         ConfirmAutofocusButtonComponent,
         ConfirmAutofocusModalComponent,
         ChecklistCheckComponent,
@@ -53,7 +51,6 @@ import { ConfirmAutofocusButtonComponent } from 'app/shared/components/confirm-a
     exports: [
         ButtonComponent,
         HelpIconComponent,
-        HelpIconComponentWithoutTranslationComponent,
         ConfirmAutofocusButtonComponent,
         CloneRepoButtonComponent,
         ChecklistCheckComponent,

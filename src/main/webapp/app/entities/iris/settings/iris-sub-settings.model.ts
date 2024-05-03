@@ -4,7 +4,6 @@ import { IrisTemplate } from 'app/entities/iris/settings/iris-template';
 export enum IrisSubSettingsType {
     CHAT = 'chat',
     HESTIA = 'hestia',
-    CODE_EDITOR = 'code-editor',
     COMPETENCY_GENERATION = 'competency-generation',
 }
 
@@ -26,15 +25,6 @@ export class IrisChatSubSettings extends IrisSubSettings {
 export class IrisHestiaSubSettings extends IrisSubSettings {
     type = IrisSubSettingsType.HESTIA;
     template?: IrisTemplate;
-}
-
-export class IrisCodeEditorSubSettings extends IrisSubSettings {
-    type = IrisSubSettingsType.CODE_EDITOR;
-    chatTemplate?: IrisTemplate;
-    problemStatementGenerationTemplate?: IrisTemplate;
-    templateRepoGenerationTemplate?: IrisTemplate;
-    solutionRepoGenerationTemplate?: IrisTemplate;
-    testRepoGenerationTemplate?: IrisTemplate;
 }
 
 export class IrisCompetencyGenerationSubSettings extends IrisSubSettings {
