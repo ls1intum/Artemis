@@ -38,6 +38,8 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -73,6 +75,8 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.web.rest.errors.HttpStatusException;
+import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -176,7 +180,7 @@ public class ProgrammingExerciseExportImportResource {
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<ProgrammingExercise> importProgrammingExercise(@PathVariable long sourceExerciseId, @RequestBody ProgrammingExercise newExercise,
-            @RequestParam(defaultValue = "false") boolean recreateBuildPlans, @RequestParam(defaultValue = "false") boolean updateTemplate) {
+            @RequestParam(defaultValue = "false") boolean recreateBuildPlans, @RequestParam(defaultValue = "false") boolean updateTemplate) throws JsonProcessingException {
         if (sourceExerciseId < 0) {
             throw new BadRequestAlertException("Invalid source id when importing programming exercises", ENTITY_NAME, "invalidSourceExerciseId");
         }
@@ -236,7 +240,7 @@ public class ProgrammingExerciseExportImportResource {
         }
 
         try {
-            var importedProgrammingExercise = programmingExerciseImportService.importProgrammingExercise(originalProgrammingExercise, newExercise, updateTemplate,
+            ProgrammingExercise importedProgrammingExercise = programmingExerciseImportService.importProgrammingExercise(originalProgrammingExercise, newExercise, updateTemplate,
                     recreateBuildPlans);
 
             // remove certain properties which are not relevant for the client to keep the response small
@@ -251,10 +255,15 @@ public class ProgrammingExerciseExportImportResource {
                     .body(importedProgrammingExercise);
 
         }
-        catch (Exception ex) {
-            log.error(ex.getMessage(), ex);
-            return ResponseEntity.internalServerError()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "importExerciseTriggerPlanFail", "Unable to import programming exercise")).build();
+        catch (Exception exception) {
+            log.error(exception.getMessage(), exception);
+
+            boolean isExceptionWithTranslationKeys = exception instanceof HttpStatusException;
+            if (isExceptionWithTranslationKeys) {
+                throw exception;
+            }
+
+            throw new InternalServerErrorAlertException("Unable to import programming exercise: " + exception.getMessage(), ENTITY_NAME, "unableToImportProgrammingExercise");
         }
     }
 

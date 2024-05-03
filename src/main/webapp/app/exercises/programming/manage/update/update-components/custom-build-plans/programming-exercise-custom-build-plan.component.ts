@@ -149,6 +149,6 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
         if (!this.programmingExercise.windFile || !this.programmingExercise.windFile.metadata.docker) {
             return;
         }
-        this.programmingExercise.windFile.metadata.docker.image = dockerImage;
+        this.programmingExercise.windFile.metadata.docker.image = dockerImage.trim();
     }
 }

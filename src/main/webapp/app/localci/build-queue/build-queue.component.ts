@@ -1,11 +1,17 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { BuildJob } from 'app/entities/build-job.model';
-import { faTimes } from '@fortawesome/free-solid-svg-icons';
+import { BuildJob, FinishedBuildJob } from 'app/entities/build-job.model';
+import { faCircleCheck, faExclamationCircle, faExclamationTriangle, faSort, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { BuildQueueService } from 'app/localci/build-queue/build-queue.service';
 import { take } from 'rxjs/operators';
 import { TriggeredByPushTo } from 'app/entities/repository-info.model';
+import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
+import { SortingOrder } from 'app/shared/table/pageable-table';
+import { onError } from 'app/shared/util/global.utils';
+import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
+import { AlertService } from 'app/core/util/alert.service';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-build-queue',
@@ -14,28 +20,36 @@ import { TriggeredByPushTo } from 'app/entities/repository-info.model';
 })
 export class BuildQueueComponent implements OnInit, OnDestroy {
     protected readonly TriggeredByPushTo = TriggeredByPushTo;
+
     queuedBuildJobs: BuildJob[] = [];
     runningBuildJobs: BuildJob[] = [];
+    finishedBuildJobs: FinishedBuildJob[] = [];
     courseChannels: string[] = [];
 
     //icons
-    faTimes = faTimes;
+    readonly faTimes = faTimes;
+    readonly faSort = faSort;
+    readonly faCircleCheck = faCircleCheck;
+    readonly faExclamationCircle = faExclamationCircle;
+    readonly faExclamationTriangle = faExclamationTriangle;
+    readonly faSync = faSync;
 
-    runningJobsSorts = [{ prop: 'buildStartDate', dir: 'asc' }];
-
-    queuedJobsSorts = [
-        { prop: 'priority', dir: 'asc' },
-        { prop: 'submissionDate', dir: 'asc' },
-    ];
+    totalItems = 0;
+    itemsPerPage = ITEMS_PER_PAGE;
+    page = 1;
+    predicate = 'build_completion_date';
+    ascending = false;
 
     constructor(
         private route: ActivatedRoute,
         private websocketService: JhiWebsocketService,
         private buildQueueService: BuildQueueService,
+        private alertService: AlertService,
     ) {}
 
     ngOnInit() {
-        this.load();
+        this.loadQueue();
+        this.loadFinishedBuildJobs();
         this.initWebsocketSubscription();
     }
 
@@ -85,7 +99,7 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
      * This ensures that the table is filled with data when the page is loaded or refreshed otherwise the user needs to
      * wait until the websocket subscription receives the data.
      */
-    load() {
+    loadQueue() {
         this.route.paramMap.pipe(take(1)).subscribe((params) => {
             const courseId = Number(params.get('courseId'));
             if (courseId) {
@@ -147,5 +161,102 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
                 this.buildQueueService.cancelAllRunningBuildJobs().subscribe();
             }
         });
+    }
+
+    /**
+     * Load the finished build jobs from the server
+     */
+    loadFinishedBuildJobs() {
+        this.route.paramMap.pipe(take(1)).subscribe((params) => {
+            const courseId = Number(params.get('courseId'));
+            if (courseId) {
+                this.buildQueueService
+                    .getFinishedBuildJobsByCourseId(courseId, {
+                        page: this.page,
+                        pageSize: this.itemsPerPage,
+                        sortingOrder: this.ascending ? SortingOrder.ASCENDING : SortingOrder.DESCENDING,
+                        sortedColumn: this.predicate,
+                    })
+                    .subscribe({
+                        next: (res: HttpResponse<FinishedBuildJob[]>) => {
+                            this.onSuccess(res.body || [], res.headers);
+                        },
+                        error: (res: HttpErrorResponse) => {
+                            onError(this.alertService, res);
+                        },
+                    });
+            } else {
+                this.buildQueueService
+                    .getFinishedBuildJobs({
+                        page: this.page,
+                        pageSize: this.itemsPerPage,
+                        sortingOrder: this.ascending ? SortingOrder.ASCENDING : SortingOrder.DESCENDING,
+                        sortedColumn: this.predicate,
+                    })
+                    .subscribe({
+                        next: (res: HttpResponse<FinishedBuildJob[]>) => {
+                            this.onSuccess(res.body || [], res.headers);
+                        },
+                        error: (res: HttpErrorResponse) => {
+                            onError(this.alertService, res);
+                        },
+                    });
+            }
+        });
+    }
+
+    /**
+     * Callback function when the finished build jobs are successfully loaded
+     * @param finishedBuildJobs The list of finished build jobs
+     * @param headers The headers of the response
+     * @private
+     */
+    private onSuccess(finishedBuildJobs: FinishedBuildJob[], headers: HttpHeaders) {
+        this.totalItems = Number(headers.get('X-Total-Count'));
+        this.finishedBuildJobs = finishedBuildJobs;
+        this.setFinishedBuildJobsDuration();
+    }
+
+    /**
+     * View the build logs of a specific build job
+     * @param resultId The id of the build job
+     */
+    viewBuildLogs(resultId: number): void {
+        const url = `/api/build-log/${resultId}`;
+        window.open(url, '_blank');
+    }
+
+    /**
+     * Set the duration of the finished build jobs
+     */
+    setFinishedBuildJobsDuration() {
+        if (this.finishedBuildJobs) {
+            for (const buildJob of this.finishedBuildJobs) {
+                if (buildJob.buildStartDate && buildJob.buildCompletionDate) {
+                    const start = dayjs(buildJob.buildStartDate);
+                    const end = dayjs(buildJob.buildCompletionDate);
+                    buildJob.buildDuration = end.diff(start, 'milliseconds') / 1000;
+                }
+            }
+        }
+    }
+
+    /**
+     * Callback function when the user navigates through the page results
+     *
+     * @param pageNumber The current page number
+     */
+    onPageChange(pageNumber: number) {
+        if (pageNumber) {
+            this.page = pageNumber;
+            this.loadFinishedBuildJobs();
+        }
+    }
+
+    /**
+     * Callback function to refresh the finished build jobs
+     */
+    refresh() {
+        this.loadFinishedBuildJobs();
     }
 }
