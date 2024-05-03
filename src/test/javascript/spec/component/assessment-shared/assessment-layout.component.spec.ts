@@ -15,6 +15,7 @@ import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/tex
 import { ActivatedRoute } from '@angular/router';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { AssessmentNoteComponent } from 'app/assessment/assessment-note/assessment-note.component';
 
 describe('AssessmentLayoutComponent', () => {
     let component: AssessmentLayoutComponent;
@@ -26,6 +27,7 @@ describe('AssessmentLayoutComponent', () => {
             declarations: [
                 AssessmentLayoutComponent,
                 AssessmentHeaderComponent,
+                AssessmentNoteComponent,
                 MockComponent(ComplaintsForTutorComponent),
                 MockComponent(AssessmentComplaintAlertComponent),
                 MockComponent(AssessmentWarningComponent),
@@ -56,6 +58,11 @@ describe('AssessmentLayoutComponent', () => {
     it('should include jhi-assessment-complaint-alert', () => {
         const assessmentComplaintAlertComponent = fixture.debugElement.query(By.directive(AssessmentComplaintAlertComponent));
         expect(assessmentComplaintAlertComponent).toBeTruthy();
+    });
+
+    it('should include jhi-assessment-note', () => {
+        const assessmentNoteComponent = fixture.debugElement.query(By.directive(AssessmentNoteComponent));
+        expect(assessmentNoteComponent).not.toBeNull();
     });
 
     it('should include jhi-complaints-for-tutor-form', () => {

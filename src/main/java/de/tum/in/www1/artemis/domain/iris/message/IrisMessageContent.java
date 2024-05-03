@@ -28,7 +28,6 @@ import de.tum.in.www1.artemis.domain.DomainObject;
 // @formatter:off
 @JsonSubTypes({
         @JsonSubTypes.Type(value = IrisTextMessageContent.class, name = "text"),
-        @JsonSubTypes.Type(value = IrisExercisePlan.class, name = "exercise_plan"),
         @JsonSubTypes.Type(value = IrisJsonMessageContent.class, name = "json"),
 })
 // @formatter:on

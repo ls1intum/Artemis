@@ -418,9 +418,10 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
                 LEFT JOIN FETCH r.feedbacks f
                 LEFT JOIN FETCH f.testCase
                 LEFT JOIN FETCH r.assessor
+                LEFT JOIN FETCH r.assessmentNote
             WHERE submission.id = :submissionId
             """)
-    Optional<Submission> findWithEagerResultAndFeedbackById(@Param("submissionId") long submissionId);
+    Optional<Submission> findWithEagerResultAndFeedbackAndAssessmentNoteById(@Param("submissionId") long submissionId);
 
     @Query("""
             SELECT DISTINCT submission
@@ -429,12 +430,13 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
                 LEFT JOIN FETCH r.feedbacks f
                 LEFT JOIN FETCH f.testCase
                 LEFT JOIN FETCH r.assessor
+                LEFT JOIN FETCH r.assessmentNote
                 LEFT JOIN FETCH submission.participation p
                 LEFT JOIN FETCH p.team t
                 LEFT JOIN FETCH t.students
             WHERE submission.id = :submissionId
             """)
-    Optional<Submission> findWithEagerResultAndFeedbackAndTeamStudentsById(@Param("submissionId") long submissionId);
+    Optional<Submission> findWithEagerResultAndFeedbackAndAssessmentNoteAndTeamStudentsById(@Param("submissionId") long submissionId);
 
     /**
      * Initializes a new text, modeling or file upload submission (depending on the type of the given exercise), connects it with the given participation and stores it in the
@@ -485,14 +487,16 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     }
 
     /**
-     * Get the submission with the given id from the database. The submission is loaded together with its result, the feedback of the result and the assessor of the result.
+     * Get the submission with the given id from the database. The submission is loaded together with its result, the feedback of the result, the assessor of the
+     * result and the assessment note of the result.
      *
      * @param submissionId the id of the submission that should be loaded from the database
      * @return the submission with the given id
      * @throws EntityNotFoundException if no submission could be found for the given id
      */
-    default Submission findOneWithEagerResultAndFeedback(long submissionId) {
-        return findWithEagerResultAndFeedbackById(submissionId).orElseThrow(() -> new EntityNotFoundException("Submission with id \"" + submissionId + "\" does not exist"));
+    default Submission findOneWithEagerResultAndFeedbackAndAssessmentNote(long submissionId) {
+        return this.findWithEagerResultAndFeedbackAndAssessmentNoteById(submissionId)
+                .orElseThrow(() -> new EntityNotFoundException("Submission with id \"" + submissionId + "\" does not exist"));
     }
 
     /**
@@ -503,8 +507,8 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @return the submission with the given id
      * @throws EntityNotFoundException if no submission could be found for the given id
      */
-    default Submission findOneWithEagerResultAndFeedbackAndTeamStudents(long submissionId) {
-        return findWithEagerResultAndFeedbackAndTeamStudentsById(submissionId)
+    default Submission findOneWithEagerResultAndFeedbackAndAssessmentNoteAndTeamStudents(long submissionId) {
+        return findWithEagerResultAndFeedbackAndAssessmentNoteAndTeamStudentsById(submissionId)
                 .orElseThrow(() -> new EntityNotFoundException("Submission with id \"" + submissionId + "\" does not exist"));
     }
 
