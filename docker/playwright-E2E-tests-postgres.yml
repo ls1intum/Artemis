@@ -31,10 +31,10 @@ services:
         volumes:
             - ./nginx/artemis-nginx-cypress.conf:/etc/nginx/conf.d/artemis-nginx-cypress.conf:ro
         ports:
-            - "80:80"
-            - "443:443"
+            - '80:80'
+            - '443:443'
             # see comments in artemis/config/cypress.env why this port is necessary
-            - "54321:54321"
+            - '54321:54321'
 
     artemis-playwright:
         extends:
@@ -44,7 +44,7 @@ services:
             artemis-app:
                 condition: service_healthy
         environment:
-            PLAYWRIGHT_DB_TYPE: "Postgres"
+            PLAYWRIGHT_DB_TYPE: 'Postgres'
         command: >
             sh -c '
             chmod 777 /root &&
@@ -56,7 +56,7 @@ services:
 
 networks:
     artemis:
-        driver: "bridge"
+        driver: 'bridge'
         name: artemis
 volumes:
     artemis-postgres-data:

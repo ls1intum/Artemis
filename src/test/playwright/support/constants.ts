@@ -82,3 +82,9 @@ export type Exercise = {
     additionalData?: AdditionalData;
     exerciseGroup?: ExerciseGroup;
 };
+
+// Exercise commit entity displayed in commit history
+export type ExerciseCommit = {
+    message: string;
+    result?: string;
+};
