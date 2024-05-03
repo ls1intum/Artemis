@@ -8,8 +8,7 @@ import pythonAllSuccessful from '../../../fixtures/exercise/programming/python/a
 import { ExerciseCommit, ProgrammingLanguage } from '../../../support/constants';
 import { test } from '../../../support/fixtures';
 import { ExerciseMode } from 'app/entities/exercise.model';
-import { Participation } from 'app/entities/participation/participation.model';
-import { expect } from '@playwright/test';
+import { Page, expect } from '@playwright/test';
 import { gitClient } from '../../../support/pageobjects/exercises/programming/GitClient';
 import * as fs from 'fs/promises';
 import { SimpleGit } from 'simple-git';
@@ -18,6 +17,8 @@ import { createFileWithContent } from '../../../support/utils';
 import { ProgrammingExerciseSubmission } from '../../../support/pageobjects/exercises/programming/OnlineEditorPage';
 import cAllSuccessful from '../../../fixtures/exercise/programming/c/all_successful/submission.json';
 import { UserCredentials, admin, instructor, studentOne, studentThree, studentTwo, tutor } from '../../../support/users';
+import { Team } from 'app/entities/team.model';
+import { ProgrammingExerciseOverviewPage } from '../../../support/pageobjects/exercises/programming/ProgrammingExerciseOverviewPage';
 
 test.describe('Programming exercise participation', () => {
     let course: Course;
@@ -51,7 +52,7 @@ test.describe('Programming exercise participation', () => {
         },
     ];
 
-    for (const { description, programmingLanguage, submission } of testCases) {
+    for (const { description, programmingLanguage, submission, commitMessage } of testCases) {
         // Skip C tests within Jenkins used by the Postgres setup, since C is currently not supported there
         // See https://github.com/ls1intum/Artemis/issues/6994
         if (programmingLanguage !== ProgrammingLanguage.C || process.env.PLAYWRIGHT_DB_TYPE !== 'Postgres') {
@@ -73,21 +74,7 @@ test.describe('Programming exercise participation', () => {
                 });
 
                 test('Makes a submission using git', async ({ page, programmingExerciseOverview }) => {
-                    await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
-                    let repoUrl = await programmingExerciseOverview.getRepoUrl();
-                    if (process.env.CI === 'true') {
-                        repoUrl = repoUrl.replace('localhost', 'artemis-app');
-                    }
-                    repoUrl = repoUrl.replace(studentOne.username!, `${studentOne.username!}:${studentOne.password!}`);
-                    const urlParts = repoUrl.split('/');
-                    const repoName = urlParts[urlParts.length - 1];
-                    const exerciseRepo = await gitClient.cloneRepo(repoUrl, repoName);
-                    const commitMessage = 'Implemented all tasks';
-                    await makeGitSubmission(exerciseRepo, repoName, studentOne, submission, commitMessage);
-                    await fs.rmdir(`./test-exercise-repos/${repoName}`, { recursive: true });
-                    await page.goto(`courses/${course.id}/exercises/${exercise.id!}`);
-                    const resultScore = await programmingExerciseOverview.getResultScore();
-                    await expect(resultScore.getByText(submission.expectedResult)).toBeVisible();
+                    await makeGitExerciseSubmission(page, programmingExerciseOverview, course, exercise, studentOne, submission, commitMessage);
                 });
             });
         }
@@ -95,12 +82,13 @@ test.describe('Programming exercise participation', () => {
 
     test.describe('Programming exercise team participation', () => {
         let exercise: ProgrammingExercise;
-        let participation: Participation;
+        let participation: any;
+        let team: Team;
 
         const submissions = [
-            { student: studentOne, submission: javaBuildErrorSubmission },
-            { student: studentTwo, submission: javaPartiallySuccessfulSubmission },
-            { student: studentThree, submission: javaAllSuccessfulSubmission },
+            { student: studentOne, submission: javaBuildErrorSubmission, commitMessage: 'Initial commit' },
+            { student: studentTwo, submission: javaPartiallySuccessfulSubmission, commitMessage: 'Initial implementation' },
+            { student: studentThree, submission: javaAllSuccessfulSubmission, commitMessage: 'Implemented all tasks' },
         ];
 
         test.beforeEach('Create team programming exercise', async ({ login, exerciseAPIRequests }) => {
@@ -116,45 +104,62 @@ test.describe('Programming exercise participation', () => {
 
         test.beforeEach('Create an exercise team', async ({ login, userManagementAPIRequests, exerciseAPIRequests }) => {
             await login(admin);
-            const studentOneUser = await (await userManagementAPIRequests.getUser(studentOne.username)).json();
-            const studentTwoUser = await (await userManagementAPIRequests.getUser(studentTwo.username)).json();
-            const studentThreeUser = await (await userManagementAPIRequests.getUser(studentThree.username)).json();
+            const students = await Promise.all(
+                [studentOne, studentTwo, studentThree].map(async (student) => {
+                    const response = await userManagementAPIRequests.getUser(student.username);
+                    return response.json();
+                }),
+            );
             const tutorUser = await (await userManagementAPIRequests.getUser(tutor.username)).json();
-            const students = [studentOneUser, studentTwoUser, studentThreeUser];
-            await exerciseAPIRequests.createTeam(exercise.id!, students, tutorUser);
+            const response = await exerciseAPIRequests.createTeam(exercise.id!, students, tutorUser);
+            team = await response.json();
         });
 
-        test.beforeEach('Each team member makes a submission', async ({ login, exerciseAPIRequests }) => {
-            for (const { student, submission } of submissions) {
-                await login(student);
-                const response = await exerciseAPIRequests.startExerciseParticipation(exercise.id!);
-                participation = await response.json();
-                for (const file of submission.files) {
-                    const filename = `src/${submission.packageName.replace(/\./g, '/')}/${file.name}`;
-                    await exerciseAPIRequests.createProgrammingExerciseFile(participation.id!, filename);
-                }
-                await exerciseAPIRequests.makeProgrammingExerciseSubmission(participation.id!, submission);
+        test('Team members make git submissions', async ({ page, programmingExerciseOverview }) => {
+            // TODO: Only first student needs to start participation
+            for (const { student, submission, commitMessage } of submissions) {
+                await makeGitExerciseSubmission(page, programmingExerciseOverview, course, exercise, student, submission, commitMessage);
             }
         });
 
-        test('Instructor checks the participation', async ({
-            login,
-            navigationBar,
-            courseManagement,
-            courseManagementExercises,
-            programmingExerciseRepository,
-            programmingExerciseParticipations,
-        }) => {
-            await login(instructor);
-            await navigationBar.openCourseManagement();
-            await courseManagement.openExercisesOfCourse(course.id!);
-            await courseManagementExercises.openExerciseParticipations(exercise.id!);
-            await programmingExerciseParticipations.openRepository(participation.id!);
-            await programmingExerciseRepository.openCommitHistory();
+        test.describe('Check team participation', () => {
+            test.beforeEach('Each team member makes a submission', async ({ login, exerciseAPIRequests }) => {
+                for (const { student, submission } of submissions) {
+                    await login(student);
+                    const response = await exerciseAPIRequests.startExerciseParticipation(exercise.id!);
+                    participation = await response.json();
+                    for (const file of submission.files) {
+                        const filename = `src/${submission.packageName.replace(/\./g, '/')}/${file.name}`;
+                        await exerciseAPIRequests.createProgrammingExerciseFile(participation.id!, filename);
+                    }
+                    await exerciseAPIRequests.makeProgrammingExerciseSubmission(participation.id!, submission);
+                }
+            });
 
-            const commitMessage = 'Changes by Online Editor';
-            const commits: ExerciseCommit[] = submissions.map(({ submission }) => ({ message: commitMessage, result: submission.expectedResult }));
-            await programmingExerciseRepository.checkCommitHistory(commits);
+            test('Instructor checks the participation', async ({
+                login,
+                navigationBar,
+                courseManagement,
+                courseManagementExercises,
+                programmingExerciseRepository,
+                programmingExerciseParticipations,
+            }) => {
+                await login(instructor);
+                await navigationBar.openCourseManagement();
+                await courseManagement.openExercisesOfCourse(course.id!);
+                await courseManagementExercises.openExerciseParticipations(exercise.id!);
+                await programmingExerciseParticipations.getParticipation(participation.id!).waitFor({ state: 'visible' });
+                await programmingExerciseParticipations.checkParticipationTeam(participation.id!, team.name!);
+                const studentUsernames = submissions.map(({ student }) => student.username!);
+                await programmingExerciseParticipations.checkParticipationBuildPlan(participation);
+                await programmingExerciseParticipations.checkParticationStudents(participation.id!, studentUsernames);
+
+                await programmingExerciseParticipations.openRepository(participation.id!);
+                await programmingExerciseRepository.openCommitHistory();
+                const commitMessage = 'Changes by Online Editor';
+                const commits: ExerciseCommit[] = submissions.map(({ submission }) => ({ message: commitMessage, result: submission.expectedResult }));
+                await programmingExerciseRepository.checkCommitHistory(commits);
+            });
         });
     });
 
@@ -162,6 +167,31 @@ test.describe('Programming exercise participation', () => {
         await courseManagementAPIRequests.deleteCourse(course, admin);
     });
 });
+
+async function makeGitExerciseSubmission(
+    page: Page,
+    programmingExerciseOverview: ProgrammingExerciseOverviewPage,
+    course: Course,
+    exercise: ProgrammingExercise,
+    student: UserCredentials,
+    submission: any,
+    commitMessage: string,
+) {
+    await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, student);
+    let repoUrl = await programmingExerciseOverview.getRepoUrl();
+    if (process.env.CI === 'true') {
+        repoUrl = repoUrl.replace('localhost', 'artemis-app');
+    }
+    repoUrl = repoUrl.replace(student.username!, `${student.username!}:${student.password!}`);
+    const urlParts = repoUrl.split('/');
+    const repoName = urlParts[urlParts.length - 1];
+    const exerciseRepo = await gitClient.cloneRepo(repoUrl, repoName);
+    await pushGitSubmissionFiles(exerciseRepo, repoName, student, submission, commitMessage);
+    await fs.rmdir(`./test-exercise-repos/${repoName}`, { recursive: true });
+    await page.goto(`courses/${course.id}/exercises/${exercise.id!}`);
+    const resultScore = await programmingExerciseOverview.getResultScore();
+    await expect(resultScore.getByText(submission.expectedResult)).toBeVisible();
+}
 
 /**
  * Helper function to make a submission to a git repository.
@@ -172,7 +202,7 @@ test.describe('Programming exercise participation', () => {
  * @param commitMessage - The commit message for the submission.
  * @param deleteFiles - Whether to delete files from the repository directory before making the submission.
  */
-async function makeGitSubmission(
+async function pushGitSubmissionFiles(
     exerciseRepo: SimpleGit,
     exerciseRepoName: string,
     user: UserCredentials,
