@@ -18,6 +18,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
+import com.google.common.base.Strings;
+
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.Competency;
@@ -134,10 +136,10 @@ public class CompetencyService {
      */
     public SearchResultPageDTO<Competency> getOnPageWithSizeForImport(final CompetencyPageableSearchDTO search, final User user) {
         final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.COMPETENCY);
-        final String title = search.getTitle().isBlank() ? null : search.getTitle();
-        final String description = search.getDescription().isBlank() ? null : search.getDescription();
-        final String courseTitle = search.getCourseTitle().isBlank() ? null : search.getCourseTitle();
-        final String semester = search.getSemester().isBlank() ? null : search.getSemester();
+        final String title = Strings.isNullOrEmpty(search.getTitle()) ? null : search.getTitle();
+        final String description = Strings.isNullOrEmpty(search.getDescription()) ? null : search.getDescription();
+        final String courseTitle = Strings.isNullOrEmpty(search.getCourseTitle()) ? null : search.getCourseTitle();
+        final String semester = Strings.isNullOrEmpty(search.getSemester()) ? null : search.getSemester();
 
         final Page<Competency> competencyPage;
         if (authCheckService.isAdmin(user)) {

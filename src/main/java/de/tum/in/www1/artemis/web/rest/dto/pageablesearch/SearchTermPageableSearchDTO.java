@@ -13,6 +13,7 @@ import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
  * @param <T> The type of the column for which the result should be sorted by
  * @see SearchResultPageDTO
  */
+// TODO: convert to Record, use composition for common attributes
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class SearchTermPageableSearchDTO<T> extends PageableSearchDTO<T> {
 
