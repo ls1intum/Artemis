@@ -59,7 +59,7 @@ describe('BuildQueueComponent', () => {
             },
             buildConfig: {
                 dockerImage: 'someImage',
-                commitHash: 'abc123',
+                commitHashToBuild: 'abc123',
                 branch: 'main',
                 programmingLanguage: 'Java',
                 projectType: 'Maven',
@@ -95,7 +95,7 @@ describe('BuildQueueComponent', () => {
             },
             buildConfig: {
                 dockerImage: 'someImage',
-                commitHash: 'abc125',
+                commitHashToBuild: 'abc125',
                 branch: 'main',
                 programmingLanguage: 'Java',
                 projectType: 'Maven',
@@ -133,7 +133,7 @@ describe('BuildQueueComponent', () => {
             },
             buildConfig: {
                 dockerImage: 'someImage',
-                commitHash: 'abc124',
+                commitHashToBuild: 'abc124',
                 branch: 'main',
                 programmingLanguage: 'Java',
                 projectType: 'Maven',
@@ -169,7 +169,7 @@ describe('BuildQueueComponent', () => {
             },
             buildConfig: {
                 dockerImage: 'someImage',
-                commitHash: 'abc126',
+                commitHashToBuild: 'abc126',
                 branch: 'main',
                 programmingLanguage: 'Java',
                 projectType: 'Maven',
