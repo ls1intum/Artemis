@@ -121,7 +121,6 @@ public class LectureResource {
 
         Lecture savedLecture = lectureRepository.save(lecture);
         channelService.createLectureChannel(savedLecture, Optional.ofNullable(lecture.getChannelName()));
-        helpExecuteIngestionPipeline(savedLecture);
         return ResponseEntity.created(new URI("/api/lectures/" + savedLecture.getId())).body(savedLecture);
     }
 
@@ -262,7 +261,9 @@ public class LectureResource {
 
         final var savedLecture = lectureImportService.importLecture(sourceLecture, destinationCourse);
         channelService.createLectureChannel(savedLecture, Optional.empty());
-        helpExecuteIngestionPipeline(savedLecture);
+        List<AttachmentUnit> attachmentUnitList = savedLecture.getLectureUnits().stream().filter(lectureUnit -> lectureUnit.getType().equals("attachment"))
+                .map(lectureUnit -> (AttachmentUnit) lectureUnit).collect(Collectors.toCollection(ArrayList::new));
+        pyrisWebhookService.ifPresent(service -> service.executeIngestionPipeline(true, attachmentUnitList));
         return ResponseEntity.created(new URI("/api/lectures/" + savedLecture.getId())).body(savedLecture);
     }
 
@@ -386,11 +387,5 @@ public class LectureResource {
         log.debug("REST request to delete Lecture : {}", lectureId);
         lectureService.delete(lecture);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, lectureId.toString())).build();
-    }
-
-    private void helpExecuteIngestionPipeline(Lecture lecture) {
-        List<AttachmentUnit> attachmentUnitList = lecture.getLectureUnits().stream().filter(lectureUnit -> lectureUnit.getType().equals("attachment"))
-                .map(lectureUnit -> (AttachmentUnit) lectureUnit).collect(Collectors.toCollection(ArrayList::new));
-        pyrisWebhookService.ifPresent(service -> service.executeIngestionPipeline(true, attachmentUnitList));
     }
 }
