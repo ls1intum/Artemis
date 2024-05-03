@@ -7,7 +7,7 @@
         'border-danger': sidebarItem?.difficulty === DifficultyLevel.HARD,
         'border-module': !sidebarItem?.difficulty
     }"
-    [routerLink]="itemSelected ? ['../' + sidebarItem?.id] : ['./' + sidebarItem?.id]"
+    [routerLink]="itemSelected ? '../' + sidebarItem?.id : './' + sidebarItem?.id"
     (click)="emitStoreLastSelectedItem(sidebarItem.id); forceReload()"
     [routerLinkActive]="'bg-selected border-selected'"
 >
