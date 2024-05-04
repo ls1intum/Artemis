@@ -311,7 +311,11 @@ public class SharedQueueProcessingService {
             List<BuildLogEntry> buildLogs = buildLogsMap.getBuildLogs(buildJob.id());
             buildLogsMap.removeBuildLogs(buildJob.id());
 
-            ResultQueueItem resultQueueItem = new ResultQueueItem(null, job, buildLogs, ex);
+            LocalCIBuildResult failedResult = new LocalCIBuildResult(buildJob.buildConfig().branch(), buildJob.buildConfig().assignmentCommitHash(),
+                    buildJob.buildConfig().testCommitHash(), false);
+            failedResult.setBuildLogEntries(buildLogs);
+
+            ResultQueueItem resultQueueItem = new ResultQueueItem(failedResult, job, buildLogs, ex);
             resultQueue.add(resultQueueItem);
 
             processingJobs.remove(buildJob.id());

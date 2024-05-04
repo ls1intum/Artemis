@@ -144,6 +144,9 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationLo
         programmingExercise.setAssessmentType(assessmentType);
         programmingExerciseRepository.save(programmingExercise);
 
+        String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
+        doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(any());
+
         var result = ProgrammingExerciseFactory.generateTestResultDTO(null, "SOLUTION", null, programmingExercise.getProgrammingLanguage(), false,
                 List.of("test1", "test2", "test3"), Collections.emptyList(), null, null, null);
         feedbackCreationService.generateTestCasesFromBuildResult(result, programmingExercise);
