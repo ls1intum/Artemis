@@ -133,7 +133,6 @@
                                     @for (entry of sortedHistoryEntries; track entry; let i = $index) {
                                         <div>
                                             @if (
-                                                Result.isResult(entry) &&
                                                 entry.submission &&
                                                 entry.submission.submissionDate &&
                                                 (i === 0 ||
@@ -145,7 +144,12 @@
                                                     {{ entry.submission.submissionDate | artemisDate: 'long-date' }}
                                                 </h4>
                                             }
-                                            <jhi-result [result]="entry" [showUngradedResults]="true" [showBadge]="true" [exercise]="exercise" />
+                                            @if (Result.isResult(entry)) {
+                                                <jhi-result [result]="entry" [showUngradedResults]="true" [showBadge]="true" [exercise]="exercise" />
+                                            }
+                                            @if (SelfLearningFeedbackRequest.isSelfLearningFeedbackRequest(entry)) {
+                                                <jhi-self-learning-feedback [selfLearningFeedbackRequest]="entry" />
+                                            }
                                         </div>
                                     }
                                     @if (!sortedHistoryEntries) {

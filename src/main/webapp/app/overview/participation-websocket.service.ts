@@ -103,7 +103,6 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * @param selfLearnigFeedback
      */
     private notifySelfLearningFeedbackSubscribers = (selfLearnigFeedback: SelfLearningFeedbackRequest) => {
-        console.log(selfLearnigFeedback);
         selfLearnigFeedback.requestDateTime = convertDateFromServer(selfLearnigFeedback.requestDateTime);
         selfLearnigFeedback.responseDateTime = convertDateFromServer(selfLearnigFeedback.responseDateTime);
         const selfLearnigFeedbackObservable = this.selfLearningFeedbackObservables.get(selfLearnigFeedback.participation!.id!);
