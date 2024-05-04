@@ -9,7 +9,6 @@ import { AlertService } from 'app/core/util/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 
@@ -20,7 +19,6 @@ import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.s
 export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
     @Input() exam: Exam;
     @Input() getExamRoutesByIdentifier: any;
-    course: Course | undefined;
 
     examChecklist: ExamChecklist;
     isLoading = false;
@@ -71,15 +69,14 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
     }
 
     ngOnChanges() {
-        this.course = this.exam.course;
         this.isTestExam = this.exam.testExam!;
         this.pointsExercisesEqual = this.examChecklistService.checkPointsExercisesEqual(this.exam);
         this.totalPoints = this.examChecklistService.checkTotalPointsMandatory(this.pointsExercisesEqual, this.exam);
         this.allGroupsContainExercise = this.examChecklistService.checkEachGroupContainsExercise(this.exam);
         this.countMandatoryExercises = this.exam.exerciseGroups?.filter((group) => group.isMandatory)?.length ?? 0;
         this.hasOptionalExercises = this.countMandatoryExercises < (this.exam.exerciseGroups?.length ?? 0);
-        if (this.course && this.course.id && this.exam && this.exam.id) {
-            this.studentExamService.getLongestWorkingTimeForExam(this.course.id, this.exam.id).subscribe((res) => {
+        if (this.exam?.id) {
+            this.studentExamService.getLongestWorkingTimeForExam(this.exam.id).subscribe((res) => {
                 this.longestWorkingTime = res;
                 this.calculateIsExamOver();
             });
