@@ -92,9 +92,9 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
                     const lastAssessmentFinished = this.examChecklist.numberOfTotalExamAssessmentsFinishedByCorrectionRound.last();
                     this.existsUnfinishedAssessments = lastAssessmentFinished !== this.examChecklist.numberOfTotalParticipationsForAssessment;
                 }
-                this.existsUnassessedQuizzes = this.examChecklist.existsUnassessedQuizzes;
-                this.existsUnsubmittedExercises = this.examChecklist.existsUnsubmittedExercises;
             }
+            this.existsUnassessedQuizzes = this.examChecklist.existsUnassessedQuizzes;
+            this.existsUnsubmittedExercises = this.examChecklist.existsUnsubmittedExercises;
         });
     }
 
@@ -114,6 +114,7 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
             this.examManagementService.evaluateQuizExercises(this.exam.course.id, this.exam.id).subscribe({
                 next: (res) => {
                     this.alertService.success('artemisApp.studentExams.evaluateQuizExerciseSuccess', { number: res?.body });
+                    this.existsUnassessedQuizzes = false;
                     this.isEvaluatingQuizExercises = false;
                 },
                 error: (err: HttpErrorResponse) => {
@@ -135,6 +136,7 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
             this.examManagementService.assessUnsubmittedExamModelingAndTextParticipations(this.exam.course.id, this.exam.id).subscribe({
                 next: (res) => {
                     this.alertService.success('artemisApp.studentExams.assessUnsubmittedStudentExamsSuccess', { number: res?.body });
+                    this.existsUnsubmittedExercises = false;
                     this.isAssessingUnsubmittedExams = false;
                 },
                 error: (err: HttpErrorResponse) => {

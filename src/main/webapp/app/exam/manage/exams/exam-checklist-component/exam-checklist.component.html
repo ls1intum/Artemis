@@ -489,14 +489,14 @@
                                                                     <span>{{ 'artemisApp.examManagement.checklist.textitems.checkUnfinishedAssessments' | artemisTranslate }}</span>
                                                                 </th>
                                                                 <th>
-                                                                    <jhi-checklist-check [checkAttribute]="!existsUnfinishedAssessments" />
+                                                                    <jhi-checklist-check [checkAttribute]="isExamOver && !existsUnfinishedAssessments" />
                                                                 </th>
                                                                 <th>
                                                                     <button
                                                                         [routerLink]="getExamRoutesByIdentifier('assessment-dashboard')"
                                                                         class="btn btn-primary"
                                                                         id="tutor-exam-dashboard-button_table_assessment_check"
-                                                                        [disabled]="isLoading || !existsUnfinishedAssessments"
+                                                                        [disabled]="isLoading || (isExamOver && !existsUnfinishedAssessments)"
                                                                     >
                                                                         <fa-icon [icon]="faThList" />
                                                                         <span>{{ 'artemisApp.examManagement.assessmentDashboard' | artemisTranslate }}</span>
@@ -511,7 +511,7 @@
                                                                     @if (isEvaluatingQuizExercises) {
                                                                         <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                                                                     } @else {
-                                                                        <jhi-checklist-check [checkAttribute]="!existsUnassessedQuizzes" />
+                                                                        <jhi-checklist-check [checkAttribute]="isExamOver && !existsUnassessedQuizzes" />
                                                                     }
                                                                 </th>
                                                                 <th>
@@ -519,7 +519,7 @@
                                                                         id="evaluateQuizExercisesButton"
                                                                         class="btn btn-primary mt-1"
                                                                         (click)="evaluateQuizExercises()"
-                                                                        [disabled]="isLoading || !existsUnassessedQuizzes || isEvaluatingQuizExercises"
+                                                                        [disabled]="isLoading || (isExamOver && (!existsUnassessedQuizzes || isEvaluatingQuizExercises))"
                                                                     >
                                                                         @if (isEvaluatingQuizExercises) {
                                                                             <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
@@ -536,7 +536,7 @@
                                                                     @if (isAssessingUnsubmittedExams) {
                                                                         <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                                                                     } @else {
-                                                                        <jhi-checklist-check [checkAttribute]="!existsUnsubmittedExercises" />
+                                                                        <jhi-checklist-check [checkAttribute]="isExamOver && !existsUnsubmittedExercises" />
                                                                     }
                                                                 </th>
                                                                 <th>
@@ -544,7 +544,7 @@
                                                                         class="btn btn-primary mt-1"
                                                                         id="assessUnsubmittedExamModelingAndTextParticipationsButton"
                                                                         (click)="assessUnsubmittedExamModelingAndTextParticipations()"
-                                                                        [disabled]="isLoading || !existsUnsubmittedExercises || isAssessingUnsubmittedExams"
+                                                                        [disabled]="isLoading || (isExamOver && (!existsUnsubmittedExercises || isAssessingUnsubmittedExams))"
                                                                     >
                                                                         @if (isAssessingUnsubmittedExams) {
                                                                             <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
