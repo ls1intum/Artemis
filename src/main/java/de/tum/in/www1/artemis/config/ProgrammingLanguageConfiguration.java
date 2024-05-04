@@ -181,10 +181,10 @@ public class ProgrammingLanguageConfiguration {
         final ProjectType configuredProjectType = projectType.map(this::getConfiguredProjectType).orElse(DEFAULT_PROJECT_TYPE);
 
         if (languageImages.containsKey(configuredProjectType)) {
-            return languageImages.get(configuredProjectType);
+            return languageImages.get(configuredProjectType).trim();
         }
         else {
-            return languageImages.get(DEFAULT_PROJECT_TYPE);
+            return languageImages.get(DEFAULT_PROJECT_TYPE).trim();
         }
     }
 

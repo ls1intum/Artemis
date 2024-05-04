@@ -2,8 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
-import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -20,7 +18,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.AssessmentUpdate;
-import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.FileUploadExercise;
 import de.tum.in.www1.artemis.domain.FileUploadSubmission;
 import de.tum.in.www1.artemis.domain.Result;
@@ -39,6 +36,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.web.rest.dto.FileUploadAssessmentDTO;
 
 /**
  * REST controller for managing FileUploadAssessment.
@@ -79,20 +77,20 @@ public class FileUploadAssessmentResource extends AssessmentResource {
     /**
      * PUT file-upload-submissions/:submissionId/feedback : save or submit manual assessment for file upload exercise. See {@link AssessmentResource#saveAssessment}.
      *
-     * @param submissionId the id of the submission that should be sent to the client
-     * @param submit       defines if assessment is submitted or saved
-     * @param feedbacks    list of feedbacks to be saved to the database
+     * @param submissionId         the id of the submission that should be sent to the client
+     * @param submit               defines if assessment is submitted or saved
+     * @param fileUploadAssessment the assessment containing both feedback and the assessment note, if it exists
      * @return the result saved to the database
      */
     @ResponseStatus(HttpStatus.OK)
     @PutMapping("file-upload-submissions/{submissionId}/feedback")
     @EnforceAtLeastTutor
     public ResponseEntity<Result> saveFileUploadAssessment(@PathVariable Long submissionId, @RequestParam(value = "submit", defaultValue = "false") boolean submit,
-            @RequestBody List<Feedback> feedbacks) {
-        Submission submission = submissionRepository.findOneWithEagerResultAndFeedback(submissionId);
+            @RequestBody FileUploadAssessmentDTO fileUploadAssessment) {
+        Submission submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submissionId);
         // if a result exists, we want to override it, otherwise create a new one
         var resultId = submission.getLatestResult() != null ? submission.getLatestResult().getId() : null;
-        return super.saveAssessment(submission, submit, feedbacks, resultId);
+        return super.saveAssessment(submission, submit, fileUploadAssessment.feedbacks(), resultId, fileUploadAssessment.assessmentNote());
     }
 
     /**
