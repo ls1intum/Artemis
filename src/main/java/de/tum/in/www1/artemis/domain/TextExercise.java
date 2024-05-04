@@ -2,7 +2,10 @@ package de.tum.in.www1.artemis.domain;
 
 import static de.tum.in.www1.artemis.domain.enumeration.ExerciseType.TEXT;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+import jakarta.persistence.SecondaryTable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 

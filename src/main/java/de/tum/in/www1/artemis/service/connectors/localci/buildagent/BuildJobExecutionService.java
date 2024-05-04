@@ -7,7 +7,6 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -36,7 +35,8 @@ import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
 
 import de.tum.in.www1.artemis.config.localvcci.LocalCIConfiguration;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Repository;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.exception.LocalCIException;
@@ -75,9 +75,6 @@ public class BuildJobExecutionService {
 
     private final BuildLogsMap buildLogsMap;
 
-    @Value("${artemis.version-control.url}")
-    private URL localVCBaseUrl;
-
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
 
@@ -91,16 +88,23 @@ public class BuildJobExecutionService {
     }
 
     /**
-     * Prepare the paths to the assignment and test repositories, the branch to check out, the volume configuration for the Docker container, and the container configuration,
-     * and then call to
-     * execute the
-     * job.
+     * Orchestrates the execution of a build job in a Docker container. This method handles the preparation and configuration of the container,
+     * including cloning the necessary repositories, checking out the appropriate branches, and preparing the environment for the build.
+     * The method concludes by executing the build script within the Docker environment and parsing the results.
+     * <p>
+     * Key Steps:
+     * 1. Pulls the required Docker image if not already available.
+     * 2. Retrieves commit hashes for assignment and test repositories.
+     * 3. Clones the repositories for assignment, tests, solution (if applicable), and any auxiliary repositories into the container.
+     * 4. Configures the Docker container with the necessary environment and volume settings.
+     * 5. Delegates to the 'runScriptAndParseResults' method to execute the build script and process the results.
+     * <p>
+     * If any step fails, an exception is thrown and the container cleanup is initiated.
      *
-     * @param buildJob      The build job object containing necessary information to execute the build job.
-     * @param containerName The name of the Docker container that will be used to run the build job.
-     *                          It needs to be prepared beforehand to stop and remove the container if something goes wrong here.
-     * @return The build result.
-     * @throws LocalCIException If some error occurs while preparing or running the build job.
+     * @param buildJob      The build job object containing details necessary for executing the build.
+     * @param containerName The name of the Docker container that will be prepared and used for the build job.
+     * @return The result of the build job as a {@link LocalCIBuildResult}.
+     * @throws LocalCIException If any error occurs during the preparation or execution of the build job.
      */
     public LocalCIBuildResult runBuildJob(LocalCIBuildJobQueueItem buildJob, String containerName) {
 
@@ -122,11 +126,11 @@ public class BuildJobExecutionService {
                 || buildJob.repositoryInfo().triggeredByPushTo() == RepositoryType.AUXILIARY;
 
         // get the local repository paths for assignment, tests, auxiliary and solution
-        LocalVCRepositoryUri assignmentRepoUri = new LocalVCRepositoryUri(buildJob.repositoryInfo().assignmentRepositoryUri(), localVCBaseUrl);
-        LocalVCRepositoryUri testsRepoUri = new LocalVCRepositoryUri(buildJob.repositoryInfo().testRepositoryUri(), localVCBaseUrl);
+        LocalVCRepositoryUri assignmentRepoUri = new LocalVCRepositoryUri(buildJob.repositoryInfo().assignmentRepositoryUri());
+        LocalVCRepositoryUri testsRepoUri = new LocalVCRepositoryUri(buildJob.repositoryInfo().testRepositoryUri());
 
         // retrieve last commit hash from repositories
-        String assignmentCommitHash = buildJob.buildConfig().commitHash();
+        String assignmentCommitHash = buildJob.buildConfig().assignmentCommitHash();
         if (assignmentCommitHash == null) {
             try {
                 assignmentCommitHash = gitService.getLastCommitHash(assignmentRepoUri).getName();
@@ -137,14 +141,16 @@ public class BuildJobExecutionService {
                 throw new LocalCIException(msg, e);
             }
         }
-        String testCommitHash;
-        try {
-            testCommitHash = gitService.getLastCommitHash(testsRepoUri).getName();
-        }
-        catch (EntityNotFoundException e) {
-            msg = "Could not find last commit hash for test repository " + testsRepoUri.repositorySlug();
-            buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
-            throw new LocalCIException(msg, e);
+        String testCommitHash = buildJob.buildConfig().testCommitHash();
+        if (testCommitHash == null) {
+            try {
+                testCommitHash = gitService.getLastCommitHash(testsRepoUri).getName();
+            }
+            catch (EntityNotFoundException e) {
+                msg = "Could not find last commit hash for test repository " + testsRepoUri.repositorySlug();
+                buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
+                throw new LocalCIException(msg, e);
+            }
         }
 
         Path assignmentRepositoryPath;
@@ -153,7 +159,7 @@ public class BuildJobExecutionService {
          * If this build job is triggered by a push to the test repository, the commit hash reflects changes to the test repository.
          * Thus, we do not checkout the commit hash of the test repository in the assignment repository.
          */
-        if (buildJob.buildConfig().commitHash() != null && !isPushToTestOrAuxRepository) {
+        if (buildJob.buildConfig().assignmentCommitHash() != null && !isPushToTestOrAuxRepository) {
             // Clone the assignment repository into a temporary directory with the name of the commit hash and then checkout the commit hash.
             assignmentRepositoryPath = cloneRepository(assignmentRepoUri, assignmentCommitHash, true, buildJob.id());
         }
@@ -167,7 +173,7 @@ public class BuildJobExecutionService {
         LocalVCRepositoryUri solutionRepoUri = null;
         Path solutionRepositoryPath = null;
         if (buildJob.repositoryInfo().solutionRepositoryUri() != null) {
-            solutionRepoUri = new LocalVCRepositoryUri(buildJob.repositoryInfo().solutionRepositoryUri(), localVCBaseUrl);
+            solutionRepoUri = new LocalVCRepositoryUri(buildJob.repositoryInfo().solutionRepositoryUri());
             // In case we have the same repository for assignment and solution, we can use the same path
             if (Objects.equals(solutionRepoUri.repositorySlug(), assignmentRepoUri.repositorySlug())) {
                 solutionRepositoryPath = assignmentRepositoryPath;
@@ -183,7 +189,7 @@ public class BuildJobExecutionService {
 
         int index = 0;
         for (String auxiliaryRepositoryUri : auxiliaryRepositoryUriList) {
-            auxiliaryRepositoriesUris[index] = new LocalVCRepositoryUri(auxiliaryRepositoryUri, localVCBaseUrl);
+            auxiliaryRepositoriesUris[index] = new LocalVCRepositoryUri(auxiliaryRepositoryUri);
             auxiliaryRepositoriesPaths[index] = cloneRepository(auxiliaryRepositoriesUris[index], assignmentCommitHash, false, buildJob.id());
             index++;
         }
@@ -195,14 +201,34 @@ public class BuildJobExecutionService {
     }
 
     /**
-     * Runs the build job. This includes creating and starting a Docker container, executing the build script, and processing the build result.
+     * Executes a build job within a Docker container by running a designated build script and processing the results.
+     * The method manages the entire lifecycle of the container used for the build, from starting it, populating it with necessary repositories,
+     * running the build script, to finally stopping the container and cleaning up resources.
+     * <p>
+     * The method handles:
+     * - Container preparation and initialization.
+     * - Repository setup within the container for assignment, tests, solutions, and auxiliary content.
+     * - Execution of the build script and capturing its results.
+     * - Retrieval and parsing of the build results stored in a specified format (e.g., tar files).
+     * - Handling exceptions that occur during the build process, including not finding expected results, and managing filesystem cleanups.
      *
-     * @param containerName The name of the container that should be used for the build job. This is used to remove the container and is also accessible from outside build job
-     *                          running in its own thread.
-     * @param containerId   The id of the container that should be used for the build job.
-     * @return The build result.
-     * @throws LocalCIException if something went wrong while running the build job.
+     * @param buildJob                   The build job queue item containing details needed for the build process.
+     * @param containerName              The name of the Docker container, used for logging and management purposes.
+     * @param containerId                The identifier of the Docker container used for the build job.
+     * @param assignmentRepositoryUri    URI for the assignment repository.
+     * @param testRepositoryUri          URI for the test repository.
+     * @param solutionRepositoryUri      Optional URI for the solution repository.
+     * @param auxiliaryRepositoriesUris  Array of URIs for any auxiliary repositories needed for the build.
+     * @param assignmentRepositoryPath   Local file system path to the assignment repository.
+     * @param testsRepositoryPath        Local file system path to the test repository.
+     * @param solutionRepositoryPath     Optional local file system path to the solution repository.
+     * @param auxiliaryRepositoriesPaths Array of paths for the auxiliary repositories.
+     * @param assignmentRepoCommitHash   Commit hash for the assignment repository used to fetch the specific state of the repository.
+     * @param testRepoCommitHash         Commit hash for the test repository used similarly.
+     * @return A {@link LocalCIBuildResult} object representing the outcome of the build job.
+     * @throws LocalCIException If errors occur during the build process or if the test results cannot be parsed successfully.
      */
+    // TODO: This method has too many params, we should reduce the number an rather pass an object (record)
     private LocalCIBuildResult runScriptAndParseResults(LocalCIBuildJobQueueItem buildJob, String containerName, String containerId, VcsRepositoryUri assignmentRepositoryUri,
             VcsRepositoryUri testRepositoryUri, VcsRepositoryUri solutionRepositoryUri, VcsRepositoryUri[] auxiliaryRepositoriesUris, Path assignmentRepositoryPath,
             Path testsRepositoryPath, Path solutionRepositoryPath, Path[] auxiliaryRepositoriesPaths, String assignmentRepoCommitHash, String testRepoCommitHash) {
@@ -211,12 +237,12 @@ public class BuildJobExecutionService {
 
         buildJobContainerService.startContainer(containerId);
 
-        String msg = "Started container " + containerName + " for build job " + buildJob.id();
+        String msg = "~~~~~~~~~~~~~~~~~~~~ Started container " + containerName + " for build job " + buildJob.id() + " ~~~~~~~~~~~~~~~~~~~~";
         buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
 
         log.info(msg, containerName);
 
-        msg = "Populating build job container with repositories and build script";
+        msg = "~~~~~~~~~~~~~~~~~~~~ Populating build job container with repositories and build script ~~~~~~~~~~~~~~~~~~~~";
         buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
         log.debug(msg);
         buildJobContainerService.populateBuildJobContainer(containerId, assignmentRepositoryPath, testsRepositoryPath, solutionRepositoryPath, auxiliaryRepositoriesPaths,

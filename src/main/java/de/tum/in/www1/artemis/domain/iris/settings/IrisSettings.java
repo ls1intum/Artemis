@@ -1,6 +1,11 @@
 package de.tum.in.www1.artemis.domain.iris.settings;
 
-import jakarta.persistence.*;
+import jakarta.persistence.DiscriminatorColumn;
+import jakarta.persistence.DiscriminatorType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Inheritance;
+import jakarta.persistence.InheritanceType;
+import jakarta.persistence.Table;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -43,10 +48,6 @@ public abstract class IrisSettings extends DomainObject {
     public abstract IrisHestiaSubSettings getIrisHestiaSettings();
 
     public abstract void setIrisHestiaSettings(IrisHestiaSubSettings irisHestiaSettings);
-
-    public abstract IrisCodeEditorSubSettings getIrisCodeEditorSettings();
-
-    public abstract void setIrisCodeEditorSettings(IrisCodeEditorSubSettings irisCodeEditorSettings);
 
     public abstract IrisCompetencyGenerationSubSettings getIrisCompetencyGenerationSettings();
 

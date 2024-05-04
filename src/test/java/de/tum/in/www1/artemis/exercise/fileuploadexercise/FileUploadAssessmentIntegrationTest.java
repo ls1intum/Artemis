@@ -1,7 +1,11 @@
 package de.tum.in.www1.artemis.exercise.fileuploadexercise;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.isA;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.notNull;
+import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -9,7 +13,11 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.assertj.core.data.Offset;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,8 +28,20 @@ import org.springframework.util.LinkedMultiValueMap;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.assessment.ComplaintUtilService;
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.AssessmentUpdate;
+import de.tum.in.www1.artemis.domain.Complaint;
+import de.tum.in.www1.artemis.domain.ComplaintResponse;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.FileUploadExercise;
+import de.tum.in.www1.artemis.domain.FileUploadSubmission;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
+import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -30,8 +50,15 @@ import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ComplaintRepository;
+import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.FileUploadExerciseRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
+import de.tum.in.www1.artemis.web.rest.dto.FileUploadAssessmentDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ResultDTO;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -108,9 +135,9 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationIndep
         var params = new LinkedMultiValueMap<String, String>();
         params.add("submit", "true");
         List<Feedback> feedbacks = exerciseWithSGI();
+        FileUploadAssessmentDTO body = new FileUploadAssessmentDTO(feedbacks, "text");
 
-        Result result = request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/feedback", feedbacks, Result.class, HttpStatus.OK,
-                params);
+        Result result = request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/feedback", body, Result.class, HttpStatus.OK, params);
 
         assertThat(result).as("submitted result found").isNotNull();
         assertThat(result.isRated()).isTrue();
@@ -118,6 +145,8 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(result.getFeedbacks()).hasSize(4);
         assertThat(result.getFeedbacks().get(0).getCredits()).isEqualTo(feedbacks.get(0).getCredits());
         assertThat(result.getFeedbacks().get(1).getCredits()).isEqualTo(feedbacks.get(1).getCredits());
+        assertThat(result.getAssessmentNote().getNote()).isEqualTo("text");
+        assertThat(result.getAssessor()).isEqualTo(result.getAssessmentNote().getCreator());
 
         Course course = request.get("/api/courses/" + afterReleaseFileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-assessment-dashboard", HttpStatus.OK,
                 Course.class);
@@ -156,8 +185,8 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationIndep
         var params = new LinkedMultiValueMap<String, String>();
         params.add("submit", "true");
         feedbacks.add(new Feedback().credits(pointsAwarded).type(FeedbackType.MANUAL_UNREFERENCED).detailText("gj"));
-        Result response = request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/feedback", feedbacks, Result.class, HttpStatus.OK,
-                params);
+        FileUploadAssessmentDTO body = new FileUploadAssessmentDTO(feedbacks, "text");
+        Result response = request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/feedback", body, Result.class, HttpStatus.OK, params);
         assertThat(response.getScore()).isEqualTo(expectedScore);
     }
 
@@ -174,14 +203,15 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationIndep
         // Check that result is over 100% -> 105
         feedbacks.add(new Feedback().credits(80.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 1"));
         feedbacks.add(new Feedback().credits(25.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 2"));
-        Result response = request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/feedback", feedbacks, Result.class, HttpStatus.OK,
-                params);
+        FileUploadAssessmentDTO body = new FileUploadAssessmentDTO(feedbacks, "text");
+        Result response = request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/feedback", body, Result.class, HttpStatus.OK, params);
 
         assertThat(response.getScore()).isEqualTo(105);
 
         // Check that result is capped to maximum of maxScore + bonus points -> 110
         feedbacks.add(new Feedback().credits(25.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 3"));
-        response = request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/feedback", feedbacks, Result.class, HttpStatus.OK, params);
+        body = new FileUploadAssessmentDTO(feedbacks, "text");
+        response = request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/feedback", body, Result.class, HttpStatus.OK, params);
         Double offsetByTenThousandth = 0.0001;
         assertThat(response.getScore()).isEqualTo(110, Offset.offset(offsetByTenThousandth));
     }
@@ -219,7 +249,8 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationIndep
         FileUploadSubmission fileUploadSubmission = ParticipationFactory.generateFileUploadSubmission(true);
         fileUploadSubmission = fileUploadExerciseUtilService.addFileUploadSubmission(afterReleaseFileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1");
 
-        Result result = request.putWithResponseBody(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/feedback", new ArrayList<String>(), Result.class, HttpStatus.OK);
+        FileUploadAssessmentDTO body = new FileUploadAssessmentDTO(new ArrayList<>(), "text");
+        Result result = request.putWithResponseBody(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/feedback", body, Result.class, HttpStatus.OK);
 
         assertThat(result).as("saved result found").isNotNull();
         assertThat(result.isRated()).isNull();
@@ -235,9 +266,9 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationIndep
         var params = new LinkedMultiValueMap<String, String>();
         params.add("submit", "true");
         List<Feedback> feedbacks = ParticipationFactory.generateFeedback();
+        FileUploadAssessmentDTO body = new FileUploadAssessmentDTO(feedbacks, "text");
 
-        Result result = request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/feedback", feedbacks, Result.class, HttpStatus.OK,
-                params);
+        Result result = request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/feedback", body, Result.class, HttpStatus.OK, params);
 
         assertThat(result).as("submitted result found").isNotNull();
         assertThat(result.isRated()).isTrue();
@@ -354,7 +385,8 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationIndep
         var params = new LinkedMultiValueMap<String, String>();
         params.add("submit", submit);
         List<Feedback> feedbacks = ParticipationFactory.generateFeedback();
-        request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/feedback", feedbacks, Result.class, httpStatus, params);
+        FileUploadAssessmentDTO body = new FileUploadAssessmentDTO(feedbacks, "text");
+        request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/feedback", body, Result.class, httpStatus, params);
     }
 
     private void cancelAssessment(HttpStatus expectedStatus) throws Exception {
@@ -462,10 +494,11 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationIndep
         // assess submission and submit
         List<Feedback> feedbacks = ParticipationFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here"))
                 .collect(Collectors.toCollection(ArrayList::new));
+        FileUploadAssessmentDTO body = new FileUploadAssessmentDTO(feedbacks, "text");
         params = new LinkedMultiValueMap<>();
         params.add("submit", "true");
-        final Result firstSubmittedManualResult = request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + submissionWithoutFirstAssessment.getId() + "/feedback",
-                feedbacks, Result.class, HttpStatus.OK, params);
+        final Result firstSubmittedManualResult = request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + submissionWithoutFirstAssessment.getId() + "/feedback", body,
+                Result.class, HttpStatus.OK, params);
 
         // make sure that new result correctly appears after the assessment for first correction round
         assessedSubmissionList = request.getList("/api/exercises/" + exercise.getId() + "/file-upload-submissions", HttpStatus.OK, FileUploadSubmission.class,
@@ -537,8 +570,9 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationIndep
         feedbacks = ParticipationFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here")).collect(Collectors.toCollection(ArrayList::new));
         params = new LinkedMultiValueMap<>();
         params.add("submit", "true");
-        final var secondSubmittedManualResult = request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + submissionWithoutFirstAssessment.getId() + "/feedback",
-                feedbacks, Result.class, HttpStatus.OK, params);
+        body = new FileUploadAssessmentDTO(feedbacks, "text");
+        final var secondSubmittedManualResult = request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + submissionWithoutFirstAssessment.getId() + "/feedback", body,
+                Result.class, HttpStatus.OK, params);
 
         assertThat(secondSubmittedManualResult).isNotNull();
 
@@ -582,7 +616,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationIndep
         Result lastResult = submission.getLatestResult();
         request.delete("/api/participations/" + submission.getParticipation().getId() + "/file-upload-submissions/" + submission.getId() + "/results/" + firstResult.getId(),
                 HttpStatus.OK);
-        submission = submissionRepository.findOneWithEagerResultAndFeedback(submission.getId());
+        submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId());
         assertThat(submission.getResults()).hasSize(2);
         assertThat(submission.getResults().get(1)).isEqualTo(lastResult);
     }
@@ -606,7 +640,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationIndep
         request.delete(
                 "/api/participations/" + submission1.getParticipation().getId() + "/file-upload-submissions/" + submission1.getId() + "/results/" + resultOfOtherSubmission.getId(),
                 HttpStatus.BAD_REQUEST);
-        submission1 = submissionRepository.findOneWithEagerResultAndFeedback(submission1.getId());
+        submission1 = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission1.getId());
         assertThat(submission1.getResults()).hasSize(3);
         assertThat(submission1.getResults().get(2)).isEqualTo(lastResult);
     }
@@ -627,7 +661,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationIndep
         Result lastResult = submission.getLatestResult();
         request.delete("/api/participations/" + submission.getParticipation().getId() + "/file-upload-submissions/" + submission.getId() + "/results/" + lastResult.getId(),
                 HttpStatus.BAD_REQUEST);
-        submission = submissionRepository.findOneWithEagerResultAndFeedback(submission.getId());
+        submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId());
         assertThat(submission.getResults()).hasSize(2);
         assertThat(submission.getResults().get(1)).isEqualTo(lastResult);
     }

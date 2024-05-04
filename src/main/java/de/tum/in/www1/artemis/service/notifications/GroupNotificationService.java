@@ -1,20 +1,41 @@
 package de.tum.in.www1.artemis.service.notifications;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
-import static de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType.*;
-import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
+import static de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType.EDITOR;
+import static de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType.INSTRUCTOR;
+import static de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType.STUDENT;
+import static de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType.TA;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.ATTACHMENT_CHANGE;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.DUPLICATE_TEST_CASE;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.EXERCISE_PRACTICE;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.EXERCISE_RELEASED;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.EXERCISE_UPDATED;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.ILLEGAL_SUBMISSION;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.NEW_ANNOUNCEMENT_POST;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.NEW_MANUAL_FEEDBACK_REQUEST;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.PROGRAMMING_BUILD_RUN_UPDATE;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.PROGRAMMING_REPOSITORY_LOCKS;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.PROGRAMMING_TEST_CASES_CHANGED;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.QUIZ_EXERCISE_STARTED;
 import static de.tum.in.www1.artemis.domain.notification.GroupNotificationFactory.createAnnouncementNotification;
 import static de.tum.in.www1.artemis.domain.notification.GroupNotificationFactory.createNotification;
 import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Attachment;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
