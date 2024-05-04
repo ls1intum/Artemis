@@ -9,6 +9,10 @@ import { AlertService } from 'app/core/util/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { Course } from 'app/entities/course.model';
+import dayjs from 'dayjs/esm';
+import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
+import { StudentExam } from 'app/entities/student-exam.model';
 
 @Component({
     selector: 'jhi-exam-checklist',
@@ -17,6 +21,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
     @Input() exam: Exam;
     @Input() getExamRoutesByIdentifier: any;
+    course: Course | undefined;
 
     examChecklist: ExamChecklist;
     isLoading = false;
@@ -30,8 +35,11 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
     isEvaluatingQuizExercises: boolean;
     isAssessingUnsubmittedExams: boolean;
     existsUnfinishedAssessments: boolean = false;
-    existsUnassessedQuizzes: boolean;
-    existsUnsubmittedExercises: boolean;
+    existsUnassessedQuizzes: boolean = false;
+    existsUnsubmittedExercises: boolean = false;
+    isExamOver = false;
+    longestWorkingTime?: number;
+    studentExams: StudentExam[];
 
     numberOfSubmitted = 0;
     numberOfStarted = 0;
@@ -52,6 +60,7 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
         private examManagementService: ExamManagementService,
         private alertService: AlertService,
         private artemisTranslatePipe: ArtemisTranslatePipe,
+        private studentExamService: StudentExamService,
     ) {}
 
     ngOnInit() {
@@ -64,24 +73,33 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
     }
 
     ngOnChanges() {
+        this.course = this.exam.course;
         this.isTestExam = this.exam.testExam!;
         this.pointsExercisesEqual = this.examChecklistService.checkPointsExercisesEqual(this.exam);
         this.totalPoints = this.examChecklistService.checkTotalPointsMandatory(this.pointsExercisesEqual, this.exam);
         this.allGroupsContainExercise = this.examChecklistService.checkEachGroupContainsExercise(this.exam);
         this.countMandatoryExercises = this.exam.exerciseGroups?.filter((group) => group.isMandatory)?.length ?? 0;
         this.hasOptionalExercises = this.countMandatoryExercises < (this.exam.exerciseGroups?.length ?? 0);
+        if (this.course && this.course.id && this.exam && this.exam.id) {
+            this.studentExamService.getLongestWorkingTimeForExam(this.course.id, this.exam.id).subscribe((res) => {
+                this.longestWorkingTime = res;
+                this.calculateIsExamOver();
+            });
+        }
         this.examChecklistService.getExamStatistics(this.exam).subscribe((examStats) => {
             this.examChecklist = examStats;
             this.allExamsGenerated =
                 !!this.exam.numberOfExamUsers && this.exam.numberOfExamUsers > 0 && this.examChecklistService.checkAllExamsGenerated(this.exam, this.examChecklist);
             this.numberOfStarted = this.examChecklist.numberOfExamsStarted;
             this.numberOfSubmitted = this.examChecklist.numberOfExamsSubmitted;
-            if (this.examChecklist.numberOfTotalExamAssessmentsFinishedByCorrectionRound) {
-                const lastAssessmentFinished = this.examChecklist.numberOfTotalExamAssessmentsFinishedByCorrectionRound.last();
-                this.existsUnfinishedAssessments = lastAssessmentFinished !== this.examChecklist.numberOfTotalParticipationsForAssessment;
+            if (this.isExamOver) {
+                if (this.examChecklist.numberOfTotalExamAssessmentsFinishedByCorrectionRound) {
+                    const lastAssessmentFinished = this.examChecklist.numberOfTotalExamAssessmentsFinishedByCorrectionRound.last();
+                    this.existsUnfinishedAssessments = lastAssessmentFinished !== this.examChecklist.numberOfTotalParticipationsForAssessment;
+                }
+                this.existsUnassessedQuizzes = this.examChecklist.existsUnassessedQuizzes;
+                this.existsUnsubmittedExercises = this.examChecklist.existsUnsubmittedExercises;
             }
-            this.existsUnassessedQuizzes = this.examChecklist.existsUnassessedQuizzes;
-            this.existsUnsubmittedExercises = this.examChecklist.existsUnsubmittedExercises;
         });
     }
 
@@ -148,6 +166,17 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
         } else {
             // Sometimes the response does not have an error field, so we default to generic error handling
             onError(this.alertService, err);
+        }
+    }
+
+    calculateIsExamOver() {
+        if (this.longestWorkingTime && this.exam) {
+            const startDate = dayjs(this.exam.startDate);
+            let endDate = startDate.add(this.longestWorkingTime, 'seconds');
+            if (this.exam.gracePeriod) {
+                endDate = endDate.add(this.exam.gracePeriod!, 'seconds');
+            }
+            this.isExamOver = endDate.isBefore(dayjs());
         }
     }
 }

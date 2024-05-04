@@ -890,4 +890,10 @@ public class StudentExamResource {
 
         return ResponseEntity.ok(studentExamRepository.save(studentExam));
     }
+
+    @GetMapping("courses/{courseId}/exams/{examId}/longest-working-time")
+    public ResponseEntity<Integer> getLongestWorkingTimeForExam(@PathVariable Long courseId, @PathVariable Long examId) {
+        Integer longestWorkingTime = studentExamRepository.findLongestWorkingTimeForExam(courseId, examId);
+        return ResponseEntity.ok().body(longestWorkingTime);
+    }
 }
