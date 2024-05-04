@@ -12,7 +12,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
-import { StudentExam } from 'app/entities/student-exam.model';
 
 @Component({
     selector: 'jhi-exam-checklist',
@@ -39,7 +38,6 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
     existsUnsubmittedExercises: boolean = false;
     isExamOver = false;
     longestWorkingTime?: number;
-    studentExams: StudentExam[];
 
     numberOfSubmitted = 0;
     numberOfStarted = 0;
@@ -131,6 +129,9 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Evaluates all the unsubmitted Text and Modelling submissions to 0
+     */
     assessUnsubmittedExamModelingAndTextParticipations() {
         this.isAssessingUnsubmittedExams = true;
         if (this.exam.course?.id !== undefined && this.exam.id !== undefined) {

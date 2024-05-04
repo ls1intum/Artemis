@@ -1260,7 +1260,6 @@ public class ExamService {
 
         List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getExamLeaderboard(course, exam);
         stats.setTutorLeaderboardEntries(leaderboardEntries);
-
         return stats;
     }
 

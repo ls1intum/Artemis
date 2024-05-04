@@ -556,6 +556,12 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
         return findById(submissionId).orElseThrow(() -> new EntityNotFoundException("Submission", submissionId));
     }
 
+    /**
+     * Gets all unassessed Quiz Submissions for the given exam
+     *
+     * @param examId the ID of the exam
+     * @return boolean indicating if there are unassessed Quiz Submission
+     */
     @Query("""
                 SELECT COUNT(p.exercise) > 0
                 FROM StudentParticipation p
@@ -569,6 +575,12 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
             """)
     boolean existsUnassessedQuizzesByExamId(@Param("examId") long examId);
 
+    /**
+     * Gets all ubsimitted Text and Modelling Submissions for the given exam
+     *
+     * @param examId the ID of the exam
+     * @return boolean indicating if there are ubsimitted Text and Modelling Submissions
+     */
     @Query("""
             SELECT COUNT(p.exercise) > 0
             FROM StudentParticipation p
