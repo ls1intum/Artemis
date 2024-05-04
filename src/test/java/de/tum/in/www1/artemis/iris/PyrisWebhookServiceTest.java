@@ -10,55 +10,62 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 
 import de.tum.in.www1.artemis.domain.Attachment;
 import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.service.connectors.pyris.PyrisJobService;
 import de.tum.in.www1.artemis.service.connectors.pyris.PyrisWebhookService;
+import de.tum.in.www1.artemis.service.connectors.pyris.job.IngestionWebhookJob;
 
+@SpringBootTest
 class PyrisWebhookServiceTest extends AbstractIrisIntegrationTest {
-
-    @Autowired
-    private PyrisWebhookService pyrisWebhookService;
 
     @Autowired
     private PyrisJobService pyrisJobService;
 
+    @Autowired
+    private PyrisWebhookService pyrisWebhookService;
+
     @BeforeEach
     void setup() {
-        when(pyrisJobService.addJob(any())).thenReturn("dummyJobToken");
+        when(pyrisJobService.addJob(any(IngestionWebhookJob.class))).thenReturn("dummyJobToken");
     }
 
     @Test
     void testExecuteIngestionPipelineWithAttachments() {
         // Given
-        List<AttachmentUnit> attachmentUnits = List.of(createAttachmentUnit("PDF Attachment", AttachmentType.FILE));
+        List<AttachmentUnit> attachmentUnits = List.of(createAttachmentUnit("PDF Attachment", AttachmentType.FILE), createAttachmentUnit("Video Attachment", AttachmentType.URL) // This
+        // should
+        // be
+        // ignored
+        );
 
         // When
         pyrisWebhookService.executeIngestionPipeline(true, attachmentUnits);
 
-        // Verify that job is added since we cannot directly test executeWebhook
-        verify(pyrisJobService).addJob(any());
+        // Then
+        verify(pyrisJobService).addJob(any(IngestionWebhookJob.class));
     }
 
     @Test
-    void testExecuteIngestionPipelineWithoutAttachments() {
+    void testExecuteIngestionPipelineWithoutFileAttachments() {
         // Given
         List<AttachmentUnit> attachmentUnits = List.of(createAttachmentUnit("Video Attachment", AttachmentType.URL));
 
         // When
         pyrisWebhookService.executeIngestionPipeline(true, attachmentUnits);
 
-        // As there are no FILE type attachments, no jobs should be added
-        verify(pyrisJobService, never()).addJob(any());
+        // Then
+        verify(pyrisJobService, never()).addJob(any(IngestionWebhookJob.class)); // No job should be added
     }
 
     private AttachmentUnit createAttachmentUnit(String attachmentName, AttachmentType type) {
-        AttachmentUnit attachmentUnit = new AttachmentUnit();
         Attachment attachment = new Attachment();
         attachment.setAttachmentType(type);
         attachment.setLink("http://example.com/" + attachmentName);
+        AttachmentUnit attachmentUnit = new AttachmentUnit();
         attachmentUnit.setAttachment(attachment);
         return attachmentUnit;
     }
