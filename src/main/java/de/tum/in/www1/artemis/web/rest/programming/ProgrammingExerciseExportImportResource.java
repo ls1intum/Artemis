@@ -540,6 +540,7 @@ public class ProgrammingExerciseExportImportResource {
      */
     @GetMapping("programming-exercises/{exerciseId}/export-student-repository/{participationId}")
     @EnforceAtLeastStudent
+    @FeatureToggle({ Feature.ProgrammingExercises, Feature.Exports })
     public ResponseEntity<Resource> exportStudentRepository(@PathVariable long exerciseId, @PathVariable long participationId) throws IOException {
         var programmingExercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndLegalSubmissionsElseThrow(exerciseId);
         var studentParticipation = programmingExercise.getStudentParticipations().stream().filter(p -> p.getId().equals(participationId))
