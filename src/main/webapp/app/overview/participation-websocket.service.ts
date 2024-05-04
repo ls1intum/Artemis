@@ -145,6 +145,11 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
                 ...cachedParticipation,
                 selfLearningFeedbackRequests: updatedselfLearnigFeedbacks,
             } as StudentParticipation);
+
+            if (selfLearnigFeedback.result) {
+                this.notifyResultSubscribers(selfLearnigFeedback.result);
+            }
+
             return of(this.cachedParticipations.get(selfLearnigFeedback.participation!.id!));
         }
         return of();

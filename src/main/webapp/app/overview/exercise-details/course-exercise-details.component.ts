@@ -73,6 +73,8 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
 
     readonly isCommunicationEnabled = isCommunicationEnabled;
     readonly isMessagingEnabled = isMessagingEnabled;
+    readonly Result = Result;
+    readonly SelfLearningFeedbackRequest = SelfLearningFeedbackRequest;
 
     public learningPathMode = false;
     private currentUser: User;
@@ -500,7 +502,4 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     changeExampleSolution() {
         this.exampleSolutionCollapsed = !this.exampleSolutionCollapsed;
     }
-
-    protected readonly Result = Result;
-    protected readonly SelfLearningFeedbackRequest = SelfLearningFeedbackRequest;
 }

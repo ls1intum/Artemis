@@ -147,7 +147,7 @@
                                             @if (Result.isResult(entry)) {
                                                 <jhi-result [result]="entry" [showUngradedResults]="true" [showBadge]="true" [exercise]="exercise" />
                                             }
-                                            @if (SelfLearningFeedbackRequest.isSelfLearningFeedbackRequest(entry)) {
+                                            @if (SelfLearningFeedbackRequest.isSelfLearningFeedbackRequest(entry) && !SelfLearningFeedbackRequest.isCompletedAndSuccessful(entry)) {
                                                 <jhi-self-learning-feedback [selfLearningFeedbackRequest]="entry" />
                                             }
                                         </div>

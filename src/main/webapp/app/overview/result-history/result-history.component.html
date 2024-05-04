@@ -22,8 +22,11 @@
                         [showIcon]="false"
                     />
                 }
-                @if (SelfLearningFeedbackRequest.isSelfLearningFeedbackRequest(entry)) {
-                    <jhi-self-learning-feedback [selfLearningFeedbackRequest]="entry" />
+                @if (SelfLearningFeedbackRequest.isSelfLearningFeedbackRequest(entry) && !SelfLearningFeedbackRequest.isCompletedAndSuccessful(entry)) {
+                    <div class="result-score-icon" [ngClass]="getSelfLearningFeedbackTextColorClass(entry)">
+                        <fa-icon [icon]="getSelfLearningIconClass(entry)" size="xl" />
+                    </div>
+                    <jhi-self-learning-feedback class="result-score-info text-center" [selfLearningFeedbackRequest]="entry" [showIcon]="false" />
                 }
             </div>
             <div class="result-divider" [ngStyle]="i === 0 && movedLastRatedResult ? { 'border-top': '1px dashed' } : {}"></div>

@@ -3,6 +3,7 @@ import { Result } from 'app/entities/result.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { MissingResultInformation, evaluateTemplateStatus, getResultIconClass, getTextColorClass } from 'app/exercises/shared/result/result.utils';
 import { SelfLearningFeedbackRequest } from 'app/entities/self-learning-feedback-request.model';
+import { getSelfLearningFeedbackTextColorClass, getSelfLearningIconClass } from 'app/exercises/shared/self-learning-feedback-request/self-learning-feedback-request.utils';
 
 export const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -46,4 +47,6 @@ export class ResultHistoryComponent implements OnChanges {
 
     protected readonly Result = Result;
     protected readonly SelfLearningFeedbackRequest = SelfLearningFeedbackRequest;
+    protected readonly getSelfLearningIconClass = getSelfLearningIconClass;
+    protected readonly getSelfLearningFeedbackTextColorClass = getSelfLearningFeedbackTextColorClass;
 }

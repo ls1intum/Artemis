@@ -17,4 +17,16 @@ export class SelfLearningFeedbackRequest implements BaseEntity {
     public static isSelfLearningFeedbackRequest(obj: any): obj is SelfLearningFeedbackRequest {
         return obj instanceof SelfLearningFeedbackRequest;
     }
+
+    public static isNotCompletedAndNotFailed(selfLearningFeedbackRequest: SelfLearningFeedbackRequest): boolean {
+        return selfLearningFeedbackRequest.requestDateTime !== undefined && selfLearningFeedbackRequest.successful === undefined;
+    }
+
+    public static isFailed(selfLearningFeedbackRequest: SelfLearningFeedbackRequest): boolean {
+        return selfLearningFeedbackRequest.requestDateTime !== undefined && selfLearningFeedbackRequest.successful === false;
+    }
+
+    public static isCompletedAndSuccessful(selfLearningFeedbackRequest: SelfLearningFeedbackRequest): boolean {
+        return selfLearningFeedbackRequest.result !== undefined;
+    }
 }

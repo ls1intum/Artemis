@@ -1,37 +1,50 @@
-import { Component, Input } from '@angular/core';
-import { Participation } from 'app/entities/participation/participation.model';
-import { faCheckCircle, faCircleNotch, faExclamationCircle, faExclamationTriangle, faFile, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
+import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { faQuestionCircle, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { SelfLearningFeedbackRequest } from 'app/entities/self-learning-feedback-request.model';
-import { MissingResultInformation, evaluateTemplateStatus, getResultIconClass, getTextColorClass } from 'app/exercises/shared/result/result.utils';
+import dayjs from 'dayjs/esm';
+import { getSelfLearningFeedbackTextColorClass, getSelfLearningIconClass } from 'app/exercises/shared/self-learning-feedback-request/self-learning-feedback-request.utils';
 
 @Component({
     selector: 'jhi-self-learning-feedback',
     templateUrl: './self-learning-feedback-request.component.html',
     styleUrls: ['./self-learning-feedback-request.component.scss'],
 })
-
 /**
  * When using the result component make sure that the reference to the participation input is changed if the result changes
  * e.g. by using Object.assign to trigger ngOnChanges which makes sure that the result is updated
  */
-export class SelfLearningFeedbackRequestComponent {
-    @Input() participation: Participation;
+export class SelfLearningFeedbackRequestComponent implements OnInit, OnDestroy {
     @Input() selfLearningFeedbackRequest: SelfLearningFeedbackRequest;
+    @Input() showIcon = true;
 
     timedOut: boolean = false;
 
+    private resultUpdateSubscription?: ReturnType<typeof setTimeout>;
+
     // Icons
-    readonly faCircleNotch = faCircleNotch;
-    readonly faFile = faFile;
-    readonly faExclamationCircle = faExclamationCircle;
-    readonly faExclamationTriangle = faExclamationTriangle;
     readonly faTimesCircle = faTimesCircle;
-    readonly faCheckCircle = faCheckCircle;
+    readonly faQuestionCircle = faQuestionCircle;
+
+    protected readonly getSelfLearningFeedbackTextColorClass = getSelfLearningFeedbackTextColorClass;
+    protected readonly getSelfLearningIconClass = getSelfLearningIconClass;
 
     constructor() {}
 
-    protected readonly getResultIconClass = getResultIconClass;
-    protected readonly getTextColorClass = getTextColorClass;
-    protected readonly MissingResultInfo = MissingResultInformation;
-    protected readonly evaluateTemplateStatus = evaluateTemplateStatus;
+    ngOnInit() {
+        if (!this.selfLearningFeedbackRequest.responseDateTime && this.selfLearningFeedbackRequest.successful === undefined) {
+            const dueTime = -dayjs().diff(this.selfLearningFeedbackRequest.requestDateTime, 'milliseconds');
+            this.resultUpdateSubscription = setTimeout(() => {
+                this.timedOut = true;
+                if (this.resultUpdateSubscription) {
+                    clearTimeout(this.resultUpdateSubscription);
+                }
+            }, dueTime);
+        }
+    }
+
+    ngOnDestroy() {
+        if (this.resultUpdateSubscription) {
+            clearTimeout(this.resultUpdateSubscription);
+        }
+    }
 }

@@ -1,25 +1,44 @@
 <ng-container id="self-learning-feedback">
     @if (this.selfLearningFeedbackRequest.successful === false) {
-        <fa-icon class="text-danger result-score-icon" [icon]="faTimesCircle" size="xl" />
+        @if (showIcon) {
+            <fa-icon
+                class="result-score-icon"
+                [class]="getSelfLearningFeedbackTextColorClass(selfLearningFeedbackRequest)"
+                [icon]="getSelfLearningIconClass(selfLearningFeedbackRequest)"
+                size="lg"
+            />
+        }
         <span class="text-danger guided-tour result" id="self-learning-feedback-failed">
             <span [ngbTooltip]="'artemisApp.result.resultString.automaticAIFeedbackFailedTooltip' | artemisTranslate">
                 {{ 'artemisApp.result.resultString.automaticAIFeedbackFailed' | artemisTranslate }}
             </span>
         </span>
     }
-    @if (!this.selfLearningFeedbackRequest.responseDateTime) {
-        <fa-icon class="text-danger result-score-icon" [icon]="faTimesCircle" size="xl" />
-        <span class="text-danger guided-tour result" id="self-learning-feedback-loading">
+    @if (this.selfLearningFeedbackRequest.responseDateTime !== undefined) {
+        @if (showIcon) {
+            <fa-icon
+                class="result-score-icon"
+                [class]="getSelfLearningFeedbackTextColorClass(selfLearningFeedbackRequest)"
+                [icon]="getSelfLearningIconClass(selfLearningFeedbackRequest)"
+                size="lg"
+            />
+        }
+        <span class="text-secondary guided-tour result" id="self-learning-feedback-loading">
             <span [ngbTooltip]="'artemisApp.result.resultString.automaticAIFeedbackInProgressTooltip' | artemisTranslate">
                 {{ 'artemisApp.result.resultString.automaticAIFeedbackInProgress' | artemisTranslate }}
             </span>
         </span>
     }
     @if (this.timedOut) {
-        <div class="text-danger result-score-icon">
-            <fa-icon [icon]="faTimesCircle" size="xl" />
-        </div>
-        <span class="text-danger guided-tour result" id="self-learning-feedback-timed-out">
+        @if (showIcon) {
+            <fa-icon
+                class="result-score-icon"
+                [class]="getSelfLearningFeedbackTextColorClass(selfLearningFeedbackRequest)"
+                [icon]="getSelfLearningIconClass(selfLearningFeedbackRequest)"
+                size="lg"
+            />
+        }
+        <span class="text-secondary guided-tour result" id="self-learning-feedback-timed-out">
             <span [ngbTooltip]="'artemisApp.result.resultString.automaticAIFeedbackTimedOutTooltip' | artemisTranslate">
                 {{ 'artemisApp.result.resultString.automaticAIFeedbackTimedOut' | artemisTranslate }}
             </span>

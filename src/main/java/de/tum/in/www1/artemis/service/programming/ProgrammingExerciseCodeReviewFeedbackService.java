@@ -174,16 +174,18 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
             automaticResult.setSuccessful(true);
 
             this.resultService.storeFeedbackInResult(automaticResult, feedbacks, true);
-            this.selfLearningFeedbackRequestRepository.save(newRequest);
+
+            newRequest.setSuccessful(true);
+            newRequest.setResult(automaticResult);
+            newRequest = this.selfLearningFeedbackRequestRepository.save(newRequest);
 
             this.programmingMessagingService.notifyUserAboutNewRequest(newRequest, participation);
         }
         catch (Exception e) {
             log.error("Could not generate feedback", e);
-            // automaticResult.setSuccessful(false);
-            // automaticResult.setCompletionDate(ZonedDateTime.now());
-            // this.resultRepository.save(automaticResult);
-            // this.programmingMessagingService.notifyUserAboutNewResult(automaticResult, participation);
+            newRequest.setSuccessful(false);
+            newRequest = this.selfLearningFeedbackRequestRepository.save(newRequest);
+            this.programmingMessagingService.notifyUserAboutNewRequest(newRequest, participation);
         }
         finally {
             unlockRepository(participation, programmingExercise);

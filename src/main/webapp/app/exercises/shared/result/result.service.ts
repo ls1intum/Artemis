@@ -122,10 +122,10 @@ export class ResultService implements IResultService {
      */
     private getResultStringProgrammingExercise(result: Result, exercise: ProgrammingExercise, relativeScore: number, points: number, short: boolean | undefined): string {
         let buildAndTestMessage: string;
-        if (result.submission && (result.submission as ProgrammingSubmission).buildFailed) {
-            buildAndTestMessage = this.translateService.instant('artemisApp.result.resultString.buildFailed');
-        } else if (isAthenaResultAndProcessed(result)) {
+        if (isAthenaResultAndProcessed(result)) {
             buildAndTestMessage = this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackSuccessful');
+        } else if (result.submission && (result.submission as ProgrammingSubmission).buildFailed) {
+            buildAndTestMessage = this.translateService.instant('artemisApp.result.resultString.buildFailed');
         } else if (!result.testCaseCount) {
             buildAndTestMessage = this.translateService.instant('artemisApp.result.resultString.buildSuccessfulNoTests');
         } else {

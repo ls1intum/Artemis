@@ -85,7 +85,7 @@ public class SelfLearningFeedbackRequest extends DomainObject {
         return result;
     }
 
-    public void setLinkedResult(Result result) {
+    public void setResult(Result result) {
         this.result = result;
     }
 
@@ -95,6 +95,14 @@ public class SelfLearningFeedbackRequest extends DomainObject {
 
     public void setSubmission(Submission submission) {
         this.submission = submission;
+    }
+
+    public Boolean isSuccessful() {
+        return successful;
+    }
+
+    public void setSuccessful(Boolean successful) {
+        this.successful = successful;
     }
 
     @Transient
