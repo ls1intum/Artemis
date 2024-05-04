@@ -80,13 +80,17 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     private setCourse(course?: Course) {
         this.course = course;
         this.onCourseLoad();
-        // Note: this component is only shown if there are at least 1 competencies or at least 1 prerequisites, so if they do not exist, we load the data from the server
+        // Note: this component is only shown if there are at least 1 competency or at least 1 prerequisite, so if they do not exist, we load the data from the server
         if (this.course && ((this.course.competencies && this.course.competencies.length > 0) || (this.course.prerequisites && this.course.prerequisites.length > 0))) {
             this.competencies = this.course.competencies || [];
             this.prerequisites = this.course.prerequisites || [];
         } else {
             this.loadCompetencies();
         }
+    }
+
+    get competency() {
+        return this.competencies[0]!;
     }
 
     protected readonly FeatureToggle = FeatureToggle;
