@@ -43,7 +43,7 @@ export enum DetailType {
     selector: 'jhi-detail-overview-list',
     templateUrl: './detail-overview-list.component.html',
     styleUrls: ['./detail-overview-list.component.scss'],
-    encapsulation: ViewEncapsulation.None, // TODO check if necessary
+    encapsulation: ViewEncapsulation.None,
 })
 export class DetailOverviewListComponent implements OnInit, OnDestroy {
     protected readonly isEmpty = isEmpty;
