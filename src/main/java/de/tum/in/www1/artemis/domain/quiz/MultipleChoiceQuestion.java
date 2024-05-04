@@ -31,6 +31,10 @@ public class MultipleChoiceQuestion extends QuizQuestion {
     @JsonView(QuizView.Before.class)
     private boolean singleChoice = false;
 
+    @Column(name = "content")
+    @JdbcTypeCode(SqlTypes.JSON)
+    private List<AnswerOptionDTO> answerOptionDTOs = new ArrayList<>();
+
     public List<AnswerOption> getAnswerOptions() {
         return answerOptions;
     }
