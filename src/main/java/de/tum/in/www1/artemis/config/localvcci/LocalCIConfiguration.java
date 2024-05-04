@@ -116,7 +116,7 @@ public class LocalCIConfiguration {
             throw new RejectedExecutionException("Task " + runnable.toString() + " rejected from " + executor.toString());
         };
 
-        log.info("Using ExecutorService with thread pool size {}.", threadPoolSize);
+        log.debug("Using ExecutorService with thread pool size {}.", threadPoolSize);
         return new ThreadPoolExecutor(threadPoolSize, threadPoolSize, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(1), customThreadFactory, customRejectedExecutionHandler);
     }
 
