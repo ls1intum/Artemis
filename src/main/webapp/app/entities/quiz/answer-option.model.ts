@@ -8,6 +8,7 @@ export class AnswerOption implements BaseEntity, CanBecomeInvalid, ExerciseHintE
     public hint?: string;
     public explanation?: string;
     public isCorrect?: boolean;
+    public question?: MultipleChoiceQuestion;
     public invalid = false; // default value
 
     constructor() {

@@ -1,21 +1,19 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.io.IOException;
 import java.util.*;
 
 import jakarta.persistence.*;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.enumeration.ScoringType;
 import de.tum.in.www1.artemis.domain.quiz.scoring.*;
 import de.tum.in.www1.artemis.domain.view.QuizView;
-import de.tum.in.www1.artemis.repository.converters.ObjectListConverter;
 
 /**
  * A MultipleChoiceQuestion.
@@ -25,19 +23,19 @@ import de.tum.in.www1.artemis.repository.converters.ObjectListConverter;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class MultipleChoiceQuestion extends QuizQuestion {
 
+    @Column(name = "content")
+    @JdbcTypeCode(SqlTypes.JSON)
+    private List<AnswerOption> answerOptions = new ArrayList<>();
+
     @Column(name = "single_choice")
     @JsonView(QuizView.Before.class)
     private boolean singleChoice = false;
 
-    @Convert(converter = ObjectListConverter.class)
-    @Column(name = "content")
-    private List<AnswerOptionDTO> answerOptions = new ArrayList<>();
-
-    public List<AnswerOptionDTO> getAnswerOptions() {
+    public List<AnswerOption> getAnswerOptions() {
         return answerOptions;
     }
 
-    public void setAnswerOptions(List<AnswerOptionDTO> answerOptions) {
+    public void setAnswerOptions(List<AnswerOption> answerOptions) {
         this.answerOptions = answerOptions;
     }
 
@@ -55,11 +53,11 @@ public class MultipleChoiceQuestion extends QuizQuestion {
      * @param answerOptionId the ID of the answerOption, which should be found
      * @return the answerOption with the given ID, or null if the answerOption is not contained in this question
      */
-    public AnswerOptionDTO findAnswerOptionById(Long answerOptionId) {
+    public AnswerOption findAnswerOptionById(Long answerOptionId) {
 
         if (answerOptionId != null) {
             // iterate through all answers of this quiz
-            for (AnswerOptionDTO answer : answerOptions) {
+            for (AnswerOption answer : answerOptions) {
                 // return answer if the IDs are equal
                 if (answer.getId().equals(answerOptionId)) {
                     return answer;
@@ -88,13 +86,13 @@ public class MultipleChoiceQuestion extends QuizQuestion {
     private void undoUnallowedAnswerChanges(MultipleChoiceQuestion originalQuestion) {
 
         // find added Answers, which are not allowed to be added
-        Set<AnswerOptionDTO> notAllowedAddedAnswers = new HashSet<>();
+        Set<AnswerOption> notAllowedAddedAnswers = new HashSet<>();
         // check every answer of the question
-        for (AnswerOptionDTO answer : this.getAnswerOptions()) {
+        for (AnswerOption answer : this.getAnswerOptions()) {
             // check if the answer were already in the originalQuizExercise -> if not it's an added answer
             if (originalQuestion.getAnswerOptions().contains(answer)) {
                 // find original answer
-                AnswerOptionDTO originalAnswer = originalQuestion.findAnswerOptionById(answer.getId());
+                AnswerOption originalAnswer = originalQuestion.findAnswerOptionById(answer.getId());
                 // correct invalid = null to invalid = false
                 if (answer.isInvalid() == null) {
                     answer.setInvalid(false);
@@ -141,11 +139,11 @@ public class MultipleChoiceQuestion extends QuizQuestion {
         boolean updateNecessary = false;
 
         // check every answer of the question
-        for (AnswerOptionDTO answer : this.getAnswerOptions()) {
+        for (AnswerOption answer : this.getAnswerOptions()) {
             // check if the answer were already in the originalQuizExercise
             if (originalQuestion.getAnswerOptions().contains(answer)) {
                 // find original answer
-                AnswerOptionDTO originalAnswer = originalQuestion.findAnswerOptionById(answer.getId());
+                AnswerOption originalAnswer = originalQuestion.findAnswerOptionById(answer.getId());
 
                 // check if an answer is set invalid or if the correctness has changed
                 // if true an update of the Statistics and Results is necessary
@@ -168,7 +166,7 @@ public class MultipleChoiceQuestion extends QuizQuestion {
     @Override
     public void filterForStudentsDuringQuiz() {
         super.filterForStudentsDuringQuiz();
-        for (AnswerOptionDTO answerOption : getAnswerOptions()) {
+        for (AnswerOption answerOption : getAnswerOptions()) {
             answerOption.setIsCorrect(null);
             answerOption.setExplanation(null);
         }
@@ -177,7 +175,7 @@ public class MultipleChoiceQuestion extends QuizQuestion {
     @Override
     public void filterForStatisticWebsocket() {
         super.filterForStatisticWebsocket();
-        for (AnswerOptionDTO answerOption : getAnswerOptions()) {
+        for (AnswerOption answerOption : getAnswerOptions()) {
             answerOption.setIsCorrect(null);
             answerOption.setExplanation(null);
         }
@@ -199,7 +197,7 @@ public class MultipleChoiceQuestion extends QuizQuestion {
 
         // check answer options
         if (getAnswerOptions() != null) {
-            for (AnswerOptionDTO answerOption : getAnswerOptions()) {
+            for (AnswerOption answerOption : getAnswerOptions()) {
                 if (answerOption.isIsCorrect()) {
                     correctAnswerCount++;
                 }
@@ -236,39 +234,4 @@ public class MultipleChoiceQuestion extends QuizQuestion {
         question.setId(getId());
         return question;
     }
-
-    // Override the getContent method to serialize answerOptions
-
-    public Object getContent() {
-        ObjectMapper mapper = new ObjectMapper();
-        try {
-            return mapper.writeValueAsString(answerOptions);
-        }
-        catch (JsonProcessingException e) {
-            // Handle exception
-            return null;
-        }
-    }
-
-    // Override the setContent method to deserialize answerOptions
-    public void setContent(Object content) {
-        if (content instanceof String) {
-            ObjectMapper mapper = new ObjectMapper();
-            try {
-                this.answerOptions = mapper.readValue((String) content, new TypeReference<List<AnswerOptionDTO>>() {
-                });
-            }
-            catch (IOException e) {
-                // Handle exception, possibly logging
-                this.answerOptions = new ArrayList<>();
-            }
-        }
-    }
-
-    // Ensure this method is also appropriately managing type conversion
-    @Override
-    public void updateSubclassField(Object object) {
-        setContent(object);
-    }
-
 }

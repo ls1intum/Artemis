@@ -91,7 +91,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
-import de.tum.in.www1.artemis.domain.quiz.AnswerOptionDTO;
+import de.tum.in.www1.artemis.domain.quiz.AnswerOption;
 import de.tum.in.www1.artemis.domain.quiz.DragAndDropMapping;
 import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestion;
 import de.tum.in.www1.artemis.domain.quiz.DragAndDropSubmittedAnswer;
@@ -604,7 +604,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         for (QuizQuestion question : quizExercise.getQuizQuestions()) {
             if (question instanceof MultipleChoiceQuestion) {
                 assertThat(((MultipleChoiceQuestion) question).getAnswerOptions()).hasSize(2);
-                for (AnswerOptionDTO answerOption : ((MultipleChoiceQuestion) question).getAnswerOptions()) {
+                for (AnswerOption answerOption : ((MultipleChoiceQuestion) question).getAnswerOptions()) {
                     assertThat(answerOption.getExplanation()).isNull();
                     assertThat(answerOption.isIsCorrect()).isNull();
                 }
@@ -2969,7 +2969,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
             ShortAnswerSubmittedText changedText = getChangedShortAnswerSubmittedText(text, spotIndex);
 
             final List<Integer> selectedOptionIndices = List.of(0, 1);
-            List<AnswerOptionDTO> changedAnswerOptions = getChangedAnswerOptions(selectedOptionIndices);
+            List<AnswerOption> changedAnswerOptions = getChangedAnswerOptions(selectedOptionIndices);
 
             request.put("/api/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
 
@@ -3120,7 +3120,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         void testChangedAndNotSubmittedMultipleChoiceQuestionSubmission() throws Exception {
             // Given
             final List<Integer> selectedOptionIndices = List.of(1);
-            List<AnswerOptionDTO> changedAnswerOptions = getChangedAnswerOptions(selectedOptionIndices);
+            List<AnswerOption> changedAnswerOptions = getChangedAnswerOptions(selectedOptionIndices);
 
             // When
             request.postWithoutResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", studentExamForConduction, HttpStatus.OK);
@@ -3174,8 +3174,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
             return changedText;
         }
 
-        private List<AnswerOptionDTO> getChangedAnswerOptions(List<Integer> selectedOptionIndices) {
-            List<AnswerOptionDTO> answerOptions = multipleChoiceQuestion.getAnswerOptions();
+        private List<AnswerOption> getChangedAnswerOptions(List<Integer> selectedOptionIndices) {
+            List<AnswerOption> answerOptions = multipleChoiceQuestion.getAnswerOptions();
 
             MultipleChoiceSubmittedAnswer changedAnswer = new MultipleChoiceSubmittedAnswer();
             selectedOptionIndices.forEach(selectedOptionIndex -> changedAnswer.addSelectedOptions(answerOptions.get(selectedOptionIndex)));
@@ -3202,11 +3202,11 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
             assertThat(answerAfterSubmission.getSubmittedTexts().iterator().next()).usingComparator(saMappingComparator).isEqualTo(changedText);
         }
 
-        private void verifyMultipleChoiceSubmission(List<AnswerOptionDTO> changedAnswerOption, QuizSubmission submissionAfterExamSubmission) {
+        private void verifyMultipleChoiceSubmission(List<AnswerOption> changedAnswerOption, QuizSubmission submissionAfterExamSubmission) {
             MultipleChoiceSubmittedAnswer answerAfterSubmission = (MultipleChoiceSubmittedAnswer) submissionAfterExamSubmission
                     .getSubmittedAnswerForQuestion(multipleChoiceQuestion);
 
-            assertThat(answerAfterSubmission.toSelectedIds()).containsAll(changedAnswerOption.stream().map(AnswerOptionDTO::getId).collect(Collectors.toSet()));
+            assertThat(answerAfterSubmission.toSelectedIds()).containsAll(changedAnswerOption.stream().map(AnswerOption::getId).collect(Collectors.toSet()));
         }
     }
 }

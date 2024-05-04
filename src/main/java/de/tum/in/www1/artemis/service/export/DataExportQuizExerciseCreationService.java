@@ -208,7 +208,7 @@ public class DataExportQuizExerciseCreationService {
      * @param stringBuilder                 the string builder user to create the txt file content
      * @param answerOption                  the answer option for which the explanation should be added
      */
-    private void addExplanationToAnswerOptionWithoutResult(MultipleChoiceSubmittedAnswer multipleChoiceSubmittedAnswer, StringBuilder stringBuilder, AnswerOptionDTO answerOption) {
+    private void addExplanationToAnswerOptionWithoutResult(MultipleChoiceSubmittedAnswer multipleChoiceSubmittedAnswer, StringBuilder stringBuilder, AnswerOption answerOption) {
         if (answerOption.isInvalid()) {
             stringBuilder.append("Invalid answer option: ");
         }
@@ -229,7 +229,7 @@ public class DataExportQuizExerciseCreationService {
      * @param stringBuilder                 the string builder user to create the txt file content
      * @param answerOption                  the answer option for which the explanation should be added
      */
-    private void addExplanationToAnswerOptionWithResult(MultipleChoiceSubmittedAnswer multipleChoiceSubmittedAnswer, StringBuilder stringBuilder, AnswerOptionDTO answerOption) {
+    private void addExplanationToAnswerOptionWithResult(MultipleChoiceSubmittedAnswer multipleChoiceSubmittedAnswer, StringBuilder stringBuilder, AnswerOption answerOption) {
         if (answerOption.isInvalid()) {
             stringBuilder.append("Invalid answer option: ");
         }

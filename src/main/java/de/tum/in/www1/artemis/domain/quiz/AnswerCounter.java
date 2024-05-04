@@ -17,8 +17,9 @@ public class AnswerCounter extends QuizStatisticCounter {
     @JsonIgnore
     private MultipleChoiceQuestionStatistic multipleChoiceQuestionStatistic;
 
-    @Transient
-    private AnswerOptionDTO answer;
+    @OneToOne(cascade = { CascadeType.PERSIST })
+    @JoinColumn(unique = true)
+    private AnswerOption answer;
 
     public MultipleChoiceQuestionStatistic getMultipleChoiceQuestionStatistic() {
         return multipleChoiceQuestionStatistic;

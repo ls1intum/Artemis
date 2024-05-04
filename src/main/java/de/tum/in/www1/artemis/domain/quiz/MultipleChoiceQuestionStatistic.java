@@ -40,7 +40,7 @@ public class MultipleChoiceQuestionStatistic extends QuizQuestionStatistic {
      *
      * @param answer the answer object which will be added to the MultipleChoiceStatistic
      */
-    public void addAnswerOption(AnswerOptionDTO answer) {
+    public void addAnswerOption(AnswerOption answer) {
         if (answer == null) {
             return;
         }

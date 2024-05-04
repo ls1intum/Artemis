@@ -7,7 +7,14 @@ import java.util.stream.Collectors;
 
 import jakarta.persistence.*;
 
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonView;
+
+import de.tum.in.www1.artemis.domain.DomainObject;
+import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**
  * A MultipleChoiceSubmittedAnswer.
@@ -17,19 +24,21 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class MultipleChoiceSubmittedAnswer extends SubmittedAnswer {
 
-    @Transient
-    private Set<AnswerOptionDTO> selectedOptions = new HashSet<>();
+    @ManyToMany(fetch = FetchType.EAGER)
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JoinTable(name = "multiple_choice_submitted_answer_selected_options", joinColumns = @JoinColumn(name = "multiple_choice_submitted_answers_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "selected_options_id", referencedColumnName = "id"))
+    @JsonView(QuizView.Before.class)
+    private Set<AnswerOption> selectedOptions = new HashSet<>();
 
-    public Set<AnswerOptionDTO> getSelectedOptions() {
-        return this.selectedOptions;
+    public Set<AnswerOption> getSelectedOptions() {
+        return selectedOptions;
     }
 
-    public void addSelectedOptions(AnswerOptionDTO answerOption) {
+    public void addSelectedOptions(AnswerOption answerOption) {
         this.selectedOptions.add(answerOption);
     }
 
-    public void setSelectedOptions(Set<AnswerOptionDTO> answerOptions) {
-        this.setSelection(answerOptions);
+    public void setSelectedOptions(Set<AnswerOption> answerOptions) {
         this.selectedOptions = answerOptions;
     }
 
@@ -39,9 +48,9 @@ public class MultipleChoiceSubmittedAnswer extends SubmittedAnswer {
      * @param answerOption the answer option to check for
      * @return true if the answer option is selected, false otherwise
      */
-    public boolean isSelected(AnswerOptionDTO answerOption) {
+    public boolean isSelected(AnswerOption answerOption) {
         // search for this answer option in the selected answer options
-        for (AnswerOptionDTO selectedOption : getSelectedOptions()) {
+        for (AnswerOption selectedOption : getSelectedOptions()) {
             if (Objects.equals(selectedOption.getId(), answerOption.getId())) {
                 // this answer option is selected => we can stop searching
                 return true;
@@ -60,8 +69,8 @@ public class MultipleChoiceSubmittedAnswer extends SubmittedAnswer {
 
         if (question != null) {
             // Check if an answerOption was deleted and delete reference to in selectedOptions
-            Set<AnswerOptionDTO> selectedOptionsToDelete = new HashSet<>();
-            for (AnswerOptionDTO answerOption : this.getSelectedOptions()) {
+            Set<AnswerOption> selectedOptionsToDelete = new HashSet<>();
+            for (AnswerOption answerOption : this.getSelectedOptions()) {
                 if (!question.getAnswerOptions().contains(answerOption)) {
                     selectedOptionsToDelete.add(answerOption);
                 }
@@ -96,6 +105,6 @@ public class MultipleChoiceSubmittedAnswer extends SubmittedAnswer {
     }
 
     public Set<Long> toSelectedIds() {
-        return getSelectedOptions().stream().map(AnswerOptionDTO::getId).collect(Collectors.toSet());
+        return getSelectedOptions().stream().map(DomainObject::getId).collect(Collectors.toSet());
     }
 }

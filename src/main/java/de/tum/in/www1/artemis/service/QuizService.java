@@ -81,18 +81,11 @@ public abstract class QuizService<T extends QuizConfiguration> {
      */
     private void fixReferenceMultipleChoice(MultipleChoiceQuestion multipleChoiceQuestion) {
         MultipleChoiceQuestionStatistic multipleChoiceQuestionStatistic = (MultipleChoiceQuestionStatistic) multipleChoiceQuestion.getQuizQuestionStatistic();
-        for (AnswerOptionDTO answerOption : multipleChoiceQuestion.getAnswerOptions()) {
+        fixComponentReference(multipleChoiceQuestion, multipleChoiceQuestion.getAnswerOptions(), answerOption -> {
             multipleChoiceQuestionStatistic.addAnswerOption(answerOption);
-        }
-        Set<AnswerCounter> toDelete = new HashSet<>();
-        for (AnswerCounter statisticComponent : multipleChoiceQuestionStatistic.getAnswerCounters()) {
-            if (statisticComponent.getId() != null) {
-                if (!(multipleChoiceQuestion.getAnswerOptions().contains(statisticComponent.getAnswer()))) {
-                    toDelete.add(statisticComponent);
-                }
-            }
-        }
-        multipleChoiceQuestionStatistic.getAnswerCounters().removeAll(toDelete);
+            return null;
+        });
+        removeCounters(multipleChoiceQuestion.getAnswerOptions(), multipleChoiceQuestionStatistic.getAnswerCounters());
     }
 
     /**
