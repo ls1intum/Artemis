@@ -1,6 +1,6 @@
 export class BuildConfig {
     public dockerImage?: string;
-    public commitHash?: string;
+    public commitHashToBuild?: string;
     public branch?: string;
     public programmingLanguage?: string;
     public projectType?: string;

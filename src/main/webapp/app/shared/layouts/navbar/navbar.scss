@@ -102,21 +102,21 @@ a:not(.btn):hover {
         flex: 1;
         align-items: center;
         flex-wrap: nowrap;
-        gap: 10px;
-        height: 50px;
+        gap: 0.5rem;
+        height: 2rem;
 
         .navbar-brand {
             display: flex;
-            gap: 10px;
-            padding: 10px 15px;
+            gap: 0.5rem;
+            padding: 0.75rem 0;
             align-items: center;
             margin-right: 0;
             height: 100%;
 
             img {
-                height: 30px;
+                height: 1.5rem;
                 vertical-align: middle;
-                margin-right: 10px;
+                margin-right: 0.5rem;
             }
 
             .navbar-version {
