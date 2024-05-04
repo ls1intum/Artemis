@@ -241,6 +241,8 @@ describe('CourseOverviewComponent', () => {
         const notifyAboutCourseAccessStub = jest.spyOn(courseAccessStorageService, 'onCourseAccessed');
         const getSidebarItems = jest.spyOn(component, 'getSidebarItems');
         const getCourseActionItems = jest.spyOn(component, 'getCourseActionItems');
+        const getUpdateVisibility = jest.spyOn(component, 'updateVisibility');
+        const getUpdateMenuPosition = jest.spyOn(component, 'updateMenuPosition');
         findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
         getCourseStub.mockReturnValue(course1);
 
@@ -252,6 +254,8 @@ describe('CourseOverviewComponent', () => {
         expect(getSidebarItems).toHaveBeenCalledOnce();
         expect(getCourseActionItems).toHaveBeenCalledOnce();
         expect(notifyAboutCourseAccessStub).toHaveBeenCalledExactlyOnceWith(course1.id);
+        expect(getUpdateVisibility).toHaveBeenCalledOnce();
+        expect(getUpdateMenuPosition).toHaveBeenCalledOnce();
     });
 
     it('should create sidebar items with default items', () => {
@@ -593,5 +597,54 @@ describe('CourseOverviewComponent', () => {
         const actionItem = fixture.nativeElement.querySelector('.nav-link-sidebar');
         actionItem.click();
         expect(component.courseActionItemClick).toHaveBeenCalledWith(component.courseActionItems[0]);
+    });
+
+    it('should call updateVisibility and updateMenuPosition after window resizement', async () => {
+        const getUpdateVisibility = jest.spyOn(component, 'updateVisibility');
+        const getUpdateMenuPosition = jest.spyOn(component, 'updateMenuPosition');
+
+        await component.ngOnInit();
+        window.dispatchEvent(new Event('resize'));
+
+        expect(getUpdateVisibility).toHaveBeenCalled();
+        expect(getUpdateMenuPosition).toHaveBeenCalled();
+    });
+
+    it('should toggle dropdownOpen when toggleDropdown is called', () => {
+        component.toggleDropdown();
+        expect(component.dropdownOpen).toBeTrue();
+
+        component.toggleDropdown();
+        expect(component.dropdownOpen).toBeFalse();
+    });
+
+    it('should display and hide content of dropdown when dropdownOpen changes', () => {
+        component.dropdownOpen = true;
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('.dropdown-content').hidden).toBeFalse();
+
+        component.dropdownOpen = false;
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('.dropdown-content').hidden).toBeTrue();
+    });
+
+    it('should display more icon and label if at least one item gets hidden in the sidebar', () => {
+        component.anyItemHidden = true;
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('.three-dots').hidden).toBeFalse();
+
+        component.anyItemHidden = false;
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('.three-dots').hidden).toBeTrue();
+    });
+
+    it('should change dropdownOpen when clicking on More', () => {
+        component.dropdownOpen = false;
+        fixture.detectChanges();
+
+        const clickOnMoreItem = fixture.nativeElement.querySelector('.three-dots');
+        clickOnMoreItem.click();
+
+        expect(component.dropdownOpen).toBeTrue();
     });
 });

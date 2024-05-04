@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
@@ -14,12 +14,14 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { faBook, faExclamationTriangle, faEye, faFileExport, faFileSignature, faPencilAlt, faSignal, faTable, faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
+import { PROFILE_LOCALVC } from 'app/app.constants';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 @Component({
     selector: 'jhi-exam-exercise-row-buttons',
     templateUrl: './exam-exercise-row-buttons.component.html',
 })
-export class ExamExerciseRowButtonsComponent {
+export class ExamExerciseRowButtonsComponent implements OnInit {
     @Input() course: Course;
     @Input() exercise: Exercise;
     @Input() exam: Exam;
@@ -44,6 +46,8 @@ export class ExamExerciseRowButtonsComponent {
     faFileSignature = faFileSignature;
     farListAlt = faListAlt;
 
+    localVCEnabled = false;
+
     constructor(
         private textExerciseService: TextExerciseService,
         private fileUploadExerciseService: FileUploadExerciseService,
@@ -51,7 +55,14 @@ export class ExamExerciseRowButtonsComponent {
         private modelingExerciseService: ModelingExerciseService,
         private quizExerciseService: QuizExerciseService,
         private eventManager: EventManager,
+        private profileService: ProfileService,
     ) {}
+
+    ngOnInit(): void {
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
+        });
+    }
 
     /**
      * Checks whether the exam is over using the latestIndividualEndDate

@@ -145,7 +145,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * On init set up the route param subscription.
      * Will load the participation according to participation id with the latest result and result details.
      */
-    ngOnInit(): void {
+    async ngOnInit(): Promise<void> {
         // Used to check if the assessor is the current user
         this.accountService.identity().then((user) => {
             this.userId = user!.id!;
@@ -173,19 +173,8 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             submissionObservable
                 .pipe(
                     tap({
-                        next: (submission?: ProgrammingSubmission) => {
-                            if (!submission) {
-                                // there are no unassessed submissions
-                                this.submission = submission;
-                                return;
-                            }
-
-                            this.handleReceivedSubmission(submission);
-                            if (submissionId === 'new') {
-                                // Update the url with the new id, without reloading the page, to make the history consistent
-                                const newUrl = window.location.hash.replace('#', '').replace('new', `${this.submission!.id}`);
-                                this.location.go(newUrl);
-                            }
+                        next: async (submission?: ProgrammingSubmission) => {
+                            await this.onSubmissionReceived(submissionId, submission);
                         },
                         error: (error: HttpErrorResponse) => {
                             this.handleErrorResponse(error);
@@ -227,6 +216,23 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     ngOnDestroy() {
         if (this.paramSub) {
             this.paramSub.unsubscribe();
+        }
+    }
+
+    private async onSubmissionReceived(submissionId: string, submission?: ProgrammingSubmission) {
+        if (!submission) {
+            // there are no unassessed submissions
+            this.submission = submission;
+            return;
+        }
+
+        // validate feedback here already so that overrides are possible for assessment note changes
+        // without touching the feedbacks
+        await this.handleReceivedSubmission(submission).then(() => this.validateFeedback());
+        if (submissionId === 'new') {
+            // Update the url with the new id, without reloading the page, to make the history consistent
+            const newUrl = window.location.hash.replace('#', '').replace('new', `${this.submission!.id}`);
+            this.location.go(newUrl);
         }
     }
 
@@ -371,7 +377,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         }
         this.submitBusy = true;
         this.handleSaveOrSubmit(true, 'artemisApp.textAssessment.submitSuccessful');
-        this.assessmentsAreValid = false;
     }
 
     /**
@@ -467,24 +472,26 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         }
 
         this.setFeedbacksForManualResult();
-        this.manualResultService.updateAfterComplaint(this.manualResult!.feedbacks!, assessmentAfterComplaint.complaintResponse, this.submission!.id!).subscribe({
-            next: (result: Result) => {
-                assessmentAfterComplaint.onSuccess();
-                this.participation.results![0] = this.manualResult = result;
-                this.alertService.closeAll();
-                this.alertService.success('artemisApp.assessment.messages.updateAfterComplaintSuccessful');
-            },
-            error: (httpErrorResponse: HttpErrorResponse) => {
-                assessmentAfterComplaint.onError();
-                this.alertService.closeAll();
-                const error = httpErrorResponse.error;
-                if (error && error.errorKey && error.errorKey === 'complaintLock') {
-                    this.alertService.error(error.message, error.params);
-                } else {
-                    this.onError('artemisApp.assessment.messages.updateAfterComplaintFailed');
-                }
-            },
-        });
+        this.manualResultService
+            .updateAfterComplaint(this.manualResult!.feedbacks!, assessmentAfterComplaint.complaintResponse, this.submission!.id!, this.manualResult!.assessmentNote?.note)
+            .subscribe({
+                next: (result: Result) => {
+                    assessmentAfterComplaint.onSuccess();
+                    this.participation.results![0] = this.manualResult = result;
+                    this.alertService.closeAll();
+                    this.alertService.success('artemisApp.assessment.messages.updateAfterComplaintSuccessful');
+                },
+                error: (httpErrorResponse: HttpErrorResponse) => {
+                    assessmentAfterComplaint.onError();
+                    this.alertService.closeAll();
+                    const error = httpErrorResponse.error;
+                    if (error && error.errorKey && error.errorKey === 'complaintLock') {
+                        this.alertService.error(error.message, error.params);
+                    } else {
+                        this.onError('artemisApp.assessment.messages.updateAfterComplaintFailed');
+                    }
+                },
+            });
     }
 
     /**

@@ -1,6 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { NestedTreeControl } from '@angular/cdk/tree';
-import { MatTreeNestedDataSource } from '@angular/material/tree';
+import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { faChevronRight, faDownLeftAndUpRightToCenter, faEye, faFileImport, faPlus, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
 import {
     KnowledgeAreaDTO,
@@ -11,22 +9,24 @@ import {
 } from 'app/entities/competency/standardized-competency.model';
 import { onError } from 'app/shared/util/global.utils';
 import { AdminStandardizedCompetencyService } from 'app/admin/standardized-competencies/admin-standardized-competency.service';
-import { StandardizedCompetencyService } from 'app/admin/standardized-competencies/standardized-competency.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
-import { Subject, debounceTime, map } from 'rxjs';
+import { Subject, map } from 'rxjs';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 import { getIcon } from 'app/entities/competency.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { TranslateService } from '@ngx-translate/core';
+import { StandardizedCompetencyFilterPageComponent } from 'app/shared/standardized-competencies/standardized-competency-filter-page.component';
+import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
+import { StandardizedCompetencyService } from 'app/shared/standardized-competencies/standardized-competency.service';
 
 @Component({
     selector: 'jhi-standardized-competency-management',
     templateUrl: './standardized-competency-management.component.html',
     styleUrls: ['standardized-competency-management.component.scss'],
 })
-export class StandardizedCompetencyManagementComponent implements OnInit, OnDestroy {
+export class StandardizedCompetencyManagementComponent extends StandardizedCompetencyFilterPageComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     protected isLoading = false;
     // true if a competency is getting edited in the detail component
     protected isEditing = false;
@@ -34,21 +34,7 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
     protected selectedCompetency?: StandardizedCompetencyDTO;
     // the knowledge area displayed in the detail component
     protected selectedKnowledgeArea?: KnowledgeAreaDTO;
-    protected knowledgeAreaFilter?: KnowledgeAreaDTO;
-    protected competencyTitleFilter?: string;
-    protected titleFilterSubject = new Subject<void>();
 
-    protected knowledgeAreasForSelect: KnowledgeAreaDTO[] = [];
-    /**
-     * A map of id -> KnowledgeAreaForTree. Contains all knowledge areas of the tree structure.
-     * <p>
-     * <b>Make sure not to remove any or to replace them with copies!</b>
-     */
-    private knowledgeAreaMap = new Map<number, KnowledgeAreaForTree>();
-
-    // data and control for the tree structure
-    protected dataSource = new MatTreeNestedDataSource<KnowledgeAreaForTree>();
-    protected treeControl = new NestedTreeControl<KnowledgeAreaForTree>((node) => node.children);
     // observable for the error button
     private dialogErrorSource = new Subject<string>();
     protected dialogError = this.dialogErrorSource.asObservable();
@@ -71,7 +57,9 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
         private alertService: AlertService,
         private modalService: NgbModal,
         private translateService: TranslateService,
-    ) {}
+    ) {
+        super();
+    }
 
     ngOnInit() {
         this.isLoading = true;
@@ -91,74 +79,10 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });
-        this.titleFilterSubject.pipe(debounceTime(500)).subscribe(() => this.filterByCompetencyTitle());
     }
 
     ngOnDestroy(): void {
         this.dialogErrorSource.unsubscribe();
-        this.titleFilterSubject.unsubscribe();
-    }
-
-    // filter functions
-
-    /**
-     * Filters out all knowledge areas except for the one specified in the {@link knowledgeAreaFilter} and its direct ancestors.
-     * If the filter is empty, all knowledge areas are shown again
-     */
-    filterByKnowledgeArea() {
-        const filteredKnowledgeArea = this.getKnowledgeAreaByIdIfExists(this.knowledgeAreaFilter?.id);
-        if (!filteredKnowledgeArea) {
-            this.setVisibilityOfAllKnowledgeAreas(true);
-        } else {
-            this.setVisibilityOfAllKnowledgeAreas(false);
-            this.setVisibilityOfSelfAndDescendants(filteredKnowledgeArea, true);
-            this.setVisibleAndExpandSelfAndAncestors(filteredKnowledgeArea);
-        }
-    }
-
-    /**
-     * Filters standardized competencies to only display the ones with titles containing the {@link competencyTitleFilter}.
-     * Expands all knowledge areas containing matches (and their direct ancestors) to display these matches.
-     * If the filter is empty all competencies are shown again.
-     */
-    filterByCompetencyTitle() {
-        const trimmedFilter = this.competencyTitleFilter?.trim();
-
-        if (!trimmedFilter) {
-            this.setVisibilityOfAllCompetencies(true);
-        } else {
-            this.treeControl.collapseAll();
-            this.dataSource.data.forEach((knowledgeArea) => this.filterCompetenciesForSelfAndChildren(knowledgeArea, trimmedFilter));
-        }
-    }
-
-    /**
-     * Recursively filters standardized competencies of a knowledge area and its descendants. Only competencies with titles matching the given filter are kept visible.
-     * If the knowledge area or one of its descendants contains a match, expands itself.
-     *
-     * @param knowledgeArea the knowledge area to filter
-     * @param filter the filter string. **It is expected to be not empty!**
-     * @private
-     */
-    private filterCompetenciesForSelfAndChildren(knowledgeArea: KnowledgeAreaForTree, filter: string) {
-        let hasMatch = false;
-        for (const competency of knowledgeArea.competencies ?? []) {
-            if (this.competencyMatchesFilter(competency, filter)) {
-                hasMatch = true;
-                competency.isVisible = true;
-            } else {
-                competency.isVisible = false;
-            }
-        }
-        for (const child of knowledgeArea.children ?? []) {
-            if (this.filterCompetenciesForSelfAndChildren(child, filter)) {
-                hasMatch = true;
-            }
-        }
-        if (hasMatch) {
-            this.treeControl.expand(knowledgeArea);
-        }
-        return hasMatch;
     }
 
     // methods handling the knowledge area detail component
@@ -401,7 +325,7 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
         }
         // filter again if the knowledge area was moved.
         if (previousParent?.id !== parent?.id && this.knowledgeAreaFilter) {
-            this.filterByKnowledgeArea();
+            this.filterByKnowledgeArea(this.knowledgeAreaFilter);
         }
     }
 
@@ -479,39 +403,6 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
         }
     }
 
-    // functions to initialize data structures
-
-    /**
-     * Recursively adds a knowledge area and its descendants to the {@link knowledgeAreaMap}
-     *
-     * @param knowledgeArea the knowledge area to add
-     * @private
-     */
-    private addSelfAndDescendantsToMap(knowledgeArea: KnowledgeAreaForTree) {
-        if (knowledgeArea.id !== undefined) {
-            this.knowledgeAreaMap.set(knowledgeArea.id, knowledgeArea);
-        }
-        for (const child of knowledgeArea.children ?? []) {
-            this.addSelfAndDescendantsToMap(child);
-        }
-    }
-
-    /**
-     * Recursively adds a knowledge area and its descendants to the {@link knowledgeAreasForSelect} array
-     *
-     * @param knowledgeArea
-     * @private
-     */
-    private addSelfAndDescendantsToSelectArray(knowledgeArea: KnowledgeAreaForTree) {
-        this.knowledgeAreasForSelect.push({
-            id: knowledgeArea.id,
-            title: '\xa0'.repeat(knowledgeArea.level * 2) + knowledgeArea.title,
-        });
-        for (const child of knowledgeArea.children ?? []) {
-            this.addSelfAndDescendantsToSelectArray(child);
-        }
-    }
-
     // utility functions
 
     private openCancelModal(title: string, entityType: 'standardizedCompetency' | 'knowledgeArea', callback: () => void) {
@@ -526,13 +417,6 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
         const _data = this.dataSource.data;
         this.dataSource.data = [];
         this.dataSource.data = _data;
-    }
-
-    private getKnowledgeAreaByIdIfExists(id: number | undefined) {
-        if (id === undefined) {
-            return undefined;
-        }
-        return this.knowledgeAreaMap.get(id);
     }
 
     private isAncestorOf(ancestor: KnowledgeAreaDTO, knowledgeArea: KnowledgeAreaDTO): boolean {
@@ -594,46 +478,6 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
         return array;
     }
 
-    // utility functions to set the visibility of tree objects
-
-    /**
-     * Recursively sets visible and expands a knowledge area aswell as all its ancestors.
-     * This guarantees that it shows up as expanded in the tree structure, even when it is nested.
-     *
-     * @param knowledgeArea the knowledge area to set visible
-     * @private
-     */
-    private setVisibleAndExpandSelfAndAncestors(knowledgeArea: KnowledgeAreaForTree) {
-        knowledgeArea.isVisible = true;
-        this.treeControl.expand(knowledgeArea);
-        const parent = this.getKnowledgeAreaByIdIfExists(knowledgeArea.parentId);
-        if (parent) {
-            this.setVisibleAndExpandSelfAndAncestors(parent);
-        }
-    }
-
-    /**
-     * Recursively sets visibility of a knowledge area as well as all its descendants.
-     *
-     * @param knowledgeArea the knowledge area to set visible
-     * @param isVisible if the knowledge areas should be set visible
-     * @private
-     */
-    private setVisibilityOfSelfAndDescendants(knowledgeArea: KnowledgeAreaForTree, isVisible: boolean) {
-        knowledgeArea.isVisible = true;
-        knowledgeArea.children?.forEach((knowledgeArea) => this.setVisibilityOfSelfAndDescendants(knowledgeArea, isVisible));
-    }
-
-    private setVisibilityOfAllKnowledgeAreas(isVisible: boolean) {
-        this.knowledgeAreaMap.forEach((knowledgeArea) => (knowledgeArea.isVisible = isVisible));
-    }
-
-    private setVisibilityOfAllCompetencies(isVisible: boolean) {
-        for (const knowledgeArea of this.knowledgeAreaMap.values()) {
-            knowledgeArea.competencies?.forEach((competency) => (competency.isVisible = isVisible));
-        }
-    }
-
     /**
      * Checks if a competency should be visible, i.e. if its title contains the {@link competencyTitleFilter}
      *
@@ -646,24 +490,6 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
             return true;
         }
         return this.competencyMatchesFilter(competency, trimmedFilter);
-    }
-
-    /**
-     * Checks if the title of a competency matches a filter.
-     *
-     * @param competency the competency to check
-     * @param filter the filter string **It is expected to be not empty!**
-     * @private
-     */
-    private competencyMatchesFilter(competency: StandardizedCompetencyDTO, filter: string) {
-        if (!competency.title) {
-            return false;
-        }
-
-        const titleLower = competency.title.toLowerCase();
-        const filterLower = filter.toLowerCase();
-
-        return titleLower.includes(filterLower);
     }
 
     // utility functions to handle the detail component
@@ -712,6 +538,29 @@ export class StandardizedCompetencyManagementComponent implements OnInit, OnDest
             this.isEditing = isEditing;
             this.selectedCompetency = competency;
             this.selectedKnowledgeArea = knowledgeArea;
+        }
+    }
+
+    // Functions that handle unsaved changes
+
+    /**
+     * Only allow to leave page after submitting or if no pending changes exist
+     */
+    canDeactivate() {
+        return !this.isEditing;
+    }
+
+    get canDeactivateWarning(): string {
+        return this.translateService.instant('pendingChanges');
+    }
+
+    /**
+     * Displays the alert for confirming refreshing or closing the page if there are unsaved changes
+     */
+    @HostListener('window:beforeunload', ['$event'])
+    unloadNotification(event: any) {
+        if (!this.canDeactivate()) {
+            event.returnValue = this.canDeactivateWarning;
         }
     }
 }

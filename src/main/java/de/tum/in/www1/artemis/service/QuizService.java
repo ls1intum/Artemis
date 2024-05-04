@@ -2,13 +2,29 @@ package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.quiz.*;
+import de.tum.in.www1.artemis.domain.quiz.DragAndDropMapping;
+import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestion;
+import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestionStatistic;
+import de.tum.in.www1.artemis.domain.quiz.MultipleChoiceQuestion;
+import de.tum.in.www1.artemis.domain.quiz.MultipleChoiceQuestionStatistic;
+import de.tum.in.www1.artemis.domain.quiz.QuizConfiguration;
+import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
+import de.tum.in.www1.artemis.domain.quiz.QuizQuestionComponent;
+import de.tum.in.www1.artemis.domain.quiz.QuizQuestionStatistic;
+import de.tum.in.www1.artemis.domain.quiz.QuizQuestionStatisticComponent;
+import de.tum.in.www1.artemis.domain.quiz.ShortAnswerMapping;
+import de.tum.in.www1.artemis.domain.quiz.ShortAnswerQuestion;
+import de.tum.in.www1.artemis.domain.quiz.ShortAnswerQuestionStatistic;
 import de.tum.in.www1.artemis.repository.DragAndDropMappingRepository;
 import de.tum.in.www1.artemis.repository.ShortAnswerMappingRepository;
 

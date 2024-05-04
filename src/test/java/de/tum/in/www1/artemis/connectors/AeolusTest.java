@@ -22,20 +22,11 @@ class AeolusTest {
 
     @BeforeEach
     void setup() {
+        DockerConfig dockerConfig = new DockerConfig("image", "tag", List.of("host:container"), List.of("--param1", "--param2"));
+        WindfileMetadata metadata = new WindfileMetadata("name", "id", "description", "author", "gitCredentials", dockerConfig, null, null);
+
         windfile = new Windfile();
-        WindfileMetadata metadata = new WindfileMetadata();
-        metadata.setAuthor("author");
         windfile.setApi("v0.0.1");
-        metadata.setId("id");
-        metadata.setDescription("description");
-        DockerConfig dockerConfig = new DockerConfig();
-        dockerConfig.setImage("image");
-        dockerConfig.setVolumes(List.of("host:container"));
-        dockerConfig.setParameters(List.of("--param1", "--param2"));
-        dockerConfig.setTag("tag");
-        metadata.setDocker(dockerConfig);
-        metadata.setName("name");
-        metadata.setGitCredentials("gitCredentials");
         windfile.setMetadata(metadata);
 
         ScriptAction scriptAction = new ScriptAction();
@@ -46,11 +37,11 @@ class AeolusTest {
         scriptAction.setParameters(Map.of("key", "value"));
         AeolusResult scriptResult = new AeolusResult("junit", "text.xml", "ignore", "junit", false);
         scriptAction.setResults(List.of(scriptResult));
-        assertThat(scriptAction.getResults().get(0).getName()).isEqualTo("junit");
-        assertThat(scriptAction.getResults().get(0).getPath()).isEqualTo("text.xml");
-        assertThat(scriptAction.getResults().get(0).getIgnore()).isEqualTo("ignore");
-        assertThat(scriptAction.getResults().get(0).getType()).isEqualTo("junit");
-        assertThat(scriptAction.getResults().get(0).isBefore()).isEqualTo(false);
+        assertThat(scriptAction.getResults().getFirst().name()).isEqualTo("junit");
+        assertThat(scriptAction.getResults().getFirst().path()).isEqualTo("text.xml");
+        assertThat(scriptAction.getResults().getFirst().ignore()).isEqualTo("ignore");
+        assertThat(scriptAction.getResults().getFirst().type()).isEqualTo("junit");
+        assertThat(scriptAction.getResults().getFirst().before()).isEqualTo(false);
 
         PlatformAction platformAction = new PlatformAction();
         platformAction.setName("platformAction");
@@ -59,18 +50,13 @@ class AeolusTest {
         platformAction.setPlatform("jenkins");
         platformAction.setPlatform("jenkins");
         platformAction.setKind("junit");
-        AeolusResult result = new AeolusResult();
-        result.setName("name");
-        result.setPath("path");
-        result.setIgnore("ignore");
-        result.setType("type");
-        result.setBefore(true);
+        AeolusResult result = new AeolusResult("name", "path", "ignore", "type", true);
         platformAction.setResults(List.of(result));
-        assertThat(platformAction.getResults().get(0).getName()).isEqualTo("name");
-        assertThat(platformAction.getResults().get(0).getPath()).isEqualTo("path");
-        assertThat(platformAction.getResults().get(0).getIgnore()).isEqualTo("ignore");
-        assertThat(platformAction.getResults().get(0).getType()).isEqualTo("type");
-        assertThat(platformAction.getResults().get(0).isBefore()).isEqualTo(true);
+        assertThat(platformAction.getResults().getFirst().name()).isEqualTo("name");
+        assertThat(platformAction.getResults().getFirst().path()).isEqualTo("path");
+        assertThat(platformAction.getResults().getFirst().ignore()).isEqualTo("ignore");
+        assertThat(platformAction.getResults().getFirst().type()).isEqualTo("type");
+        assertThat(platformAction.getResults().getFirst().before()).isEqualTo(true);
 
         windfile.setActions(List.of(scriptAction, platformAction));
     }
@@ -79,33 +65,31 @@ class AeolusTest {
     void testGetResults() {
         var results = windfile.getResults();
         assertThat(results.size()).isEqualTo(2);
-        assertThat(results.get(0).getName()).isEqualTo("junit");
-        assertThat(results.get(0).getPath()).isEqualTo("text.xml");
-        assertThat(results.get(0).getIgnore()).isEqualTo("ignore");
-        assertThat(results.get(0).getType()).isEqualTo("junit");
-        assertThat(results.get(0).isBefore()).isEqualTo(false);
-        assertThat(results.get(1).getName()).isEqualTo("name");
-        assertThat(results.get(1).getPath()).isEqualTo("path");
-        assertThat(results.get(1).getIgnore()).isEqualTo("ignore");
-        assertThat(results.get(1).getType()).isEqualTo("type");
-        assertThat(results.get(1).isBefore()).isEqualTo(true);
+        assertThat(results.getFirst().name()).isEqualTo("junit");
+        assertThat(results.getFirst().path()).isEqualTo("text.xml");
+        assertThat(results.getFirst().ignore()).isEqualTo("ignore");
+        assertThat(results.getFirst().type()).isEqualTo("junit");
+        assertThat(results.getFirst().before()).isEqualTo(false);
+        assertThat(results.get(1).name()).isEqualTo("name");
+        assertThat(results.get(1).path()).isEqualTo("path");
+        assertThat(results.get(1).ignore()).isEqualTo("ignore");
+        assertThat(results.get(1).type()).isEqualTo("type");
+        assertThat(results.get(1).before()).isEqualTo(true);
     }
 
     @Test
     void testWindfileGetterAndSetter() {
         assertThat(windfile.getApi()).isEqualTo("v0.0.1");
-        assertThat(windfile.getMetadata().getAuthor()).isEqualTo("author");
-        assertThat(windfile.getMetadata().getId()).isEqualTo("id");
-        assertThat(windfile.getMetadata().getDescription()).isEqualTo("description");
-        assertThat(windfile.getMetadata().getDocker().getImage()).isEqualTo("image");
-        assertThat(windfile.getMetadata().getDocker().getVolumes()).isEqualTo(List.of("host:container"));
-        assertThat(windfile.getMetadata().getDocker().getParameters()).isEqualTo(List.of("--param1", "--param2"));
-        assertThat(windfile.getMetadata().getDocker().getTag()).isEqualTo("tag");
-        assertThat(windfile.getMetadata().getName()).isEqualTo("name");
-        assertThat(windfile.getMetadata().getGitCredentials()).isEqualTo("gitCredentials");
-        assertThat(windfile.getActions().get(0).getName()).isEqualTo("scriptAction");
-        assertThat(windfile.getActions().get(0).isRunAlways()).isEqualTo(true);
-        ScriptAction scriptAction = (ScriptAction) windfile.getActions().get(0);
+        assertThat(windfile.getMetadata().author()).isEqualTo("author");
+        assertThat(windfile.getMetadata().id()).isEqualTo("id");
+        assertThat(windfile.getMetadata().description()).isEqualTo("description");
+        DockerConfig dockerConfig = new DockerConfig("image", "tag", List.of("host:container"), List.of("--param1", "--param2"));
+        assertThat(windfile.getMetadata().docker()).isEqualTo(dockerConfig);
+        assertThat(windfile.getMetadata().name()).isEqualTo("name");
+        assertThat(windfile.getMetadata().gitCredentials()).isEqualTo("gitCredentials");
+        assertThat(windfile.getActions().getFirst().getName()).isEqualTo("scriptAction");
+        assertThat(windfile.getActions().getFirst().isRunAlways()).isEqualTo(true);
+        ScriptAction scriptAction = (ScriptAction) windfile.getActions().getFirst();
         assertThat(scriptAction.getScript()).isEqualTo("script");
         assertThat(scriptAction.getEnvironment()).isEqualTo(Map.of("key", "value"));
         assertThat(scriptAction.getParameters()).isEqualTo(Map.of("key", "value"));
@@ -125,62 +109,35 @@ class AeolusTest {
         windfile.setMetadata(null);
         AeolusRepository aeolusRepository = new AeolusRepository("url", "branch", "path");
         windfile.setPreProcessingMetadata("id", "name", "gitCredentials", "resultHook", "description", Map.of("key", aeolusRepository), "resultHookCredentials");
-        assertThat(windfile.getMetadata().getId()).isEqualTo("id");
-        assertThat(windfile.getMetadata().getDescription()).isEqualTo("description");
-        assertThat(windfile.getMetadata().getName()).isEqualTo("name");
+        assertThat(windfile.getMetadata().id()).isEqualTo("id");
+        assertThat(windfile.getMetadata().description()).isEqualTo("description");
+        assertThat(windfile.getMetadata().name()).isEqualTo("name");
         assertThat(windfile.getRepositories().get("key")).isEqualTo(aeolusRepository);
-        assertThat(windfile.getMetadata().getGitCredentials()).isEqualTo("gitCredentials");
-        assertThat(windfile.getMetadata().getResultHook()).isEqualTo("resultHook");
-        assertThat(windfile.getMetadata().getResultHookCredentials()).isEqualTo("resultHookCredentials");
-    }
-
-    @Test
-    void testSettersWithMetadata() {
-        windfile.setMetadata(null);
-        windfile.setApi("v0.0.1");
-        assertThat(windfile.getApi()).isEqualTo("v0.0.1");
-        windfile.setId("newId");
-        assertThat(windfile.getMetadata().getId()).isEqualTo("newId");
-        windfile.setDescription("newDescription");
-        assertThat(windfile.getMetadata().getDescription()).isEqualTo("newDescription");
-        windfile.setName("newName");
-        assertThat(windfile.getMetadata().getName()).isEqualTo("newName");
-        windfile.setMetadata(null);
-        windfile.setResultHook("newResultHook");
-        assertThat(windfile.getMetadata().getResultHook()).isEqualTo("newResultHook");
-        windfile.setGitCredentials("newGitCredentials");
-        assertThat(windfile.getMetadata().getGitCredentials()).isEqualTo("newGitCredentials");
+        assertThat(windfile.getMetadata().gitCredentials()).isEqualTo("gitCredentials");
+        assertThat(windfile.getMetadata().resultHook()).isEqualTo("resultHook");
+        assertThat(windfile.getMetadata().resultHookCredentials()).isEqualTo("resultHookCredentials");
     }
 
     @Test
     void testAeolusRepository() {
         AeolusRepository aeolusRepository = new AeolusRepository("oldurl", "oldbranch", "oldPath");
-        assertThat(aeolusRepository.getBranch()).isEqualTo("oldbranch");
-        assertThat(aeolusRepository.getPath()).isEqualTo("oldPath");
-        assertThat(aeolusRepository.getUrl()).isEqualTo("oldurl");
-        aeolusRepository.setBranch("branch");
-        assertThat(aeolusRepository.getBranch()).isEqualTo("branch");
-        aeolusRepository.setUrl("url");
-        assertThat(aeolusRepository.getUrl()).isEqualTo("url");
-        aeolusRepository.setPath("path");
-        assertThat(aeolusRepository.getPath()).isEqualTo("path");
+        assertThat(aeolusRepository.branch()).isEqualTo("oldbranch");
+        assertThat(aeolusRepository.path()).isEqualTo("oldPath");
+        assertThat(aeolusRepository.url()).isEqualTo("oldurl");
     }
 
     @Test
     void testImageTagCombinations() {
-        DockerConfig dockerConfig = new DockerConfig();
-        dockerConfig.setImage("image");
-        dockerConfig.setTag("tag");
+        DockerConfig dockerConfig = new DockerConfig("image", "tag", null, null);
         assertThat(dockerConfig.getFullImageName()).isEqualTo("image:tag");
 
-        dockerConfig.setTag(null);
+        dockerConfig = new DockerConfig("image", null, null, null);
         assertThat(dockerConfig.getFullImageName()).isEqualTo("image:latest");
 
-        dockerConfig.setImage("image:tag");
-        dockerConfig.setTag("notshown");
+        dockerConfig = new DockerConfig("image:tag", "notshown", null, null);
         assertThat(dockerConfig.getFullImageName()).isEqualTo("image:tag");
 
-        dockerConfig.setImage(null);
+        dockerConfig = new DockerConfig(null, null, null, null);
         assertThat(dockerConfig.getFullImageName()).isNull();
     }
 }
