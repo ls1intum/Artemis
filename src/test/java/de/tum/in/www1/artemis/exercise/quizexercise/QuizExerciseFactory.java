@@ -204,8 +204,8 @@ public class QuizExerciseFactory {
     public static MultipleChoiceQuestion createMultipleChoiceQuestion() {
         MultipleChoiceQuestion mc = (MultipleChoiceQuestion) new MultipleChoiceQuestion().title("MC").score(4).text("Q1");
         mc.setScoringType(ScoringType.ALL_OR_NOTHING);
-        mc.getAnswerOptions().add(new AnswerOptionDTO().text("A").hint("H1").explanation("E1").isCorrect(true));
-        mc.getAnswerOptions().add(new AnswerOptionDTO().text("B").hint("H2").explanation("E2").isCorrect(false));
+        mc.getAnswerOptions().add(new AnswerOption().text("A").hint("H1").explanation("E1").isCorrect(true));
+        mc.getAnswerOptions().add(new AnswerOption().text("B").hint("H2").explanation("E2").isCorrect(false));
         mc.setExplanation("Explanation");
 
         mc.copyQuestionId();
@@ -499,11 +499,11 @@ public class QuizExerciseFactory {
     public static MultipleChoiceQuestion createMultipleChoiceQuestionWithAllTypesOfAnswerOptions() {
         MultipleChoiceQuestion mc = (MultipleChoiceQuestion) new MultipleChoiceQuestion().title("MC").score(4).text("Q1");
         mc.setScoringType(ScoringType.ALL_OR_NOTHING);
-        mc.getAnswerOptions().add(new AnswerOptionDTO().text("A").hint("H1").explanation("E1").isCorrect(true));
-        mc.getAnswerOptions().add(new AnswerOptionDTO().text("B").hint("H2").explanation("E2").isCorrect(false));
-        mc.getAnswerOptions().add(new AnswerOptionDTO().text("C").hint("H3").explanation("E3").isInvalid(true).isCorrect(false));
-        mc.getAnswerOptions().add(new AnswerOptionDTO().text("D").hint("H4").explanation("E4").isCorrect(true));
-        mc.getAnswerOptions().add(new AnswerOptionDTO().text("E").hint("H5").explanation("E5").isCorrect(false));
+        mc.getAnswerOptions().add(new AnswerOption().text("A").hint("H1").explanation("E1").isCorrect(true));
+        mc.getAnswerOptions().add(new AnswerOption().text("B").hint("H2").explanation("E2").isCorrect(false));
+        mc.getAnswerOptions().add(new AnswerOption().text("C").hint("H3").explanation("E3").isInvalid(true).isCorrect(false));
+        mc.getAnswerOptions().add(new AnswerOption().text("D").hint("H4").explanation("E4").isCorrect(true));
+        mc.getAnswerOptions().add(new AnswerOption().text("E").hint("H5").explanation("E5").isCorrect(false));
         return mc;
     }
 

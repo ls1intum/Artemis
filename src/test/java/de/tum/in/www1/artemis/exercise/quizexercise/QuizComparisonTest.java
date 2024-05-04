@@ -156,10 +156,10 @@ class QuizComparisonTest {
             var submittedAnswer2 = QuizExerciseFactory.generateSubmittedAnswerFor(question, true);
 
             if (submittedAnswer2 instanceof MultipleChoiceSubmittedAnswer changedSubmittedAnswer) {
-                Set<AnswerOptionDTO> answerOptions = changedSubmittedAnswer.getSelectedOptions();
+                Set<AnswerOption> answerOptions = changedSubmittedAnswer.getSelectedOptions();
                 assertThat(answerOptions.size()).isEqualTo(1);
 
-                Set<AnswerOptionDTO> notSelectedOption = ((MultipleChoiceQuestion) question).getAnswerOptions().stream().filter(option -> !option.isIsCorrect())
+                Set<AnswerOption> notSelectedOption = ((MultipleChoiceQuestion) question).getAnswerOptions().stream().filter(option -> !option.isIsCorrect())
                         .collect(Collectors.toSet());
 
                 // set the unselected option
@@ -276,10 +276,10 @@ class QuizComparisonTest {
             var submittedAnswer2 = QuizExerciseFactory.generateSubmittedAnswerFor(question, true);
 
             if (submittedAnswer2 instanceof MultipleChoiceSubmittedAnswer changedSubmittedAnswer && submittedAnswer1 instanceof MultipleChoiceSubmittedAnswer originalAnswer) {
-                Set<AnswerOptionDTO> answerOptions = changedSubmittedAnswer.getSelectedOptions();
+                Set<AnswerOption> answerOptions = changedSubmittedAnswer.getSelectedOptions();
                 assertThat(answerOptions.size()).isEqualTo(1);
 
-                Set<AnswerOptionDTO> notSelectedOption = ((MultipleChoiceQuestion) question).getAnswerOptions().stream().filter(option -> !option.isIsCorrect())
+                Set<AnswerOption> notSelectedOption = ((MultipleChoiceQuestion) question).getAnswerOptions().stream().filter(option -> !option.isIsCorrect())
                         .collect(Collectors.toSet());
                 // add the not selected option
                 notSelectedOption.forEach(changedSubmittedAnswer::addSelectedOptions);
@@ -378,7 +378,7 @@ class QuizComparisonTest {
             var submittedAnswer2 = QuizExerciseFactory.generateSubmittedAnswerFor(question, true);
 
             if (submittedAnswer2 instanceof MultipleChoiceSubmittedAnswer submittedAnswer) {
-                Set<AnswerOptionDTO> answerOptions = submittedAnswer.getSelectedOptions();
+                Set<AnswerOption> answerOptions = submittedAnswer.getSelectedOptions();
                 assertThat(answerOptions.size()).isEqualTo(1);
 
                 // remove all selected options

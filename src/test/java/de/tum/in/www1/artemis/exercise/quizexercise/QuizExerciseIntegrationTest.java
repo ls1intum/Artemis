@@ -493,7 +493,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
         mc.getAnswerOptions().remove(0);
-        mc.getAnswerOptions().add(new AnswerOptionDTO().text("C").hint("H3").explanation("E3").isCorrect(true));
+        mc.getAnswerOptions().add(new AnswerOption().text("C").hint("H3").explanation("E3").isCorrect(true));
 
         QuizExercise updatedQuizExercise = updateQuizExerciseWithFiles(quizExercise, List.of(), HttpStatus.BAD_REQUEST);
         assertThat(updatedQuizExercise).isNull();
@@ -1670,7 +1670,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
                 assertThat(multipleChoiceQuestion.getText()).as("Multiple choice question text is correct").isEqualTo("Q1");
                 assertThat(multipleChoiceQuestion.getPoints()).as("Multiple choice question score is correct").isEqualTo(4);
 
-                List<AnswerOptionDTO> answerOptions = multipleChoiceQuestion.getAnswerOptions();
+                List<AnswerOption> answerOptions = multipleChoiceQuestion.getAnswerOptions();
                 assertThat(answerOptions.get(0).getText()).as("Text for answer option is correct").isEqualTo("A");
                 assertThat(answerOptions.get(0).getHint()).as("Hint for answer option is correct").isEqualTo("H1");
                 assertThat(answerOptions.get(0).getExplanation()).as("Explanation for answer option is correct").isEqualTo("E1");
@@ -1760,7 +1760,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
                 assertThat(multipleChoiceQuestion.getText()).as("Multiple choice question text is correct").isEqualTo("Q1");
                 assertThat(multipleChoiceQuestion.getPoints()).as("Multiple choice question score is correct").isEqualTo(4);
 
-                List<AnswerOptionDTO> answerOptions = multipleChoiceQuestion.getAnswerOptions();
+                List<AnswerOption> answerOptions = multipleChoiceQuestion.getAnswerOptions();
                 assertThat(answerOptions.get(0).getText()).as("Text for answer option is correct").isEqualTo("B");
                 assertThat(answerOptions.get(0).getHint()).as("Hint for answer option is correct").isEqualTo("H2");
                 assertThat(answerOptions.get(0).getExplanation()).as("Explanation for answer option is correct").isEqualTo("E2");
@@ -1823,8 +1823,8 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     private void updateMultipleChoice(QuizExercise quizExercise) {
         MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
         mc.getAnswerOptions().remove(0);
-        mc.getAnswerOptions().add(new AnswerOptionDTO().text("C").hint("H3").explanation("E3").isCorrect(true));
-        mc.getAnswerOptions().add(new AnswerOptionDTO().text("D").hint("H4").explanation("E4").isCorrect(true));
+        mc.getAnswerOptions().add(new AnswerOption().text("C").hint("H3").explanation("E3").isCorrect(true));
+        mc.getAnswerOptions().add(new AnswerOption().text("D").hint("H4").explanation("E4").isCorrect(true));
 
         DragAndDropQuestion dnd = (DragAndDropQuestion) quizExercise.getQuizQuestions().get(1);
         dnd.getDropLocations().remove(0);
@@ -1843,8 +1843,8 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         MultipleChoiceQuestion question = (MultipleChoiceQuestion) new MultipleChoiceQuestion().title("MC").score(4).text("Q1");
 
         question.setScoringType(ScoringType.ALL_OR_NOTHING);
-        question.getAnswerOptions().add(new AnswerOptionDTO().text("A").hint("H1").explanation("E1").isCorrect(true));
-        question.getAnswerOptions().add(new AnswerOptionDTO().text("B").hint("H2").explanation("E2").isCorrect(false));
+        question.getAnswerOptions().add(new AnswerOption().text("A").hint("H1").explanation("E1").isCorrect(true));
+        question.getAnswerOptions().add(new AnswerOption().text("B").hint("H2").explanation("E2").isCorrect(false));
         question.setExplanation("Explanation");
         question.copyQuestionId();
 
