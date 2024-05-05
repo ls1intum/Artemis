@@ -14,7 +14,6 @@ import { of } from 'rxjs';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
 import { ExamEditWorkingTimeComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-edit-workingtime-dialog/exam-edit-working-time.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 function getExerciseGroups(equalPoints: boolean) {
     const dueDateStatArray = [{ inTime: 0, late: 0, total: 0 }];
@@ -65,12 +64,10 @@ describe('ExamChecklistComponent', () => {
                 ExamChecklistExerciseGroupTableComponent,
                 ProgressBarComponent,
                 ExamEditWorkingTimeComponent,
-                MockPipe(ArtemisTranslatePipe),
             ],
             providers: [
                 { provide: ExamChecklistService, useClass: MockExamChecklistService },
                 { provide: JhiWebsocketService, useClass: MockWebsocketService },
-                { provide: ArtemisTranslatePipe, useClass: ArtemisTranslatePipe },
             ],
         })
             .compileComponents()

@@ -7,10 +7,9 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
-import { onError } from 'app/shared/util/global.utils';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
+import { Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-exam-checklist',
@@ -50,12 +49,14 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
     faThList = faThList;
     faChartBar = faChartBar;
 
+    private dialogErrorSource = new Subject<string>();
+    dialogError$ = this.dialogErrorSource.asObservable();
+
     constructor(
         private examChecklistService: ExamChecklistService,
         private websocketService: JhiWebsocketService,
         private examManagementService: ExamManagementService,
         private alertService: AlertService,
-        private artemisTranslatePipe: ArtemisTranslatePipe,
         private studentExamService: StudentExamService,
     ) {}
 
@@ -66,6 +67,12 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
         const startedTopic = this.examChecklistService.getStartedTopic(this.exam);
         this.websocketService.subscribe(startedTopic);
         this.websocketService.receive(startedTopic).subscribe(() => (this.numberOfStarted += 1));
+        if (this.exam?.id) {
+            this.studentExamService.getLongestWorkingTimeForExam(this.exam.id).subscribe((res) => {
+                this.longestWorkingTime = res;
+                this.calculateIsExamOver();
+            });
+        }
     }
 
     ngOnChanges() {
@@ -75,12 +82,6 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
         this.allGroupsContainExercise = this.examChecklistService.checkEachGroupContainsExercise(this.exam);
         this.countMandatoryExercises = this.exam.exerciseGroups?.filter((group) => group.isMandatory)?.length ?? 0;
         this.hasOptionalExercises = this.countMandatoryExercises < (this.exam.exerciseGroups?.length ?? 0);
-        if (this.exam?.id) {
-            this.studentExamService.getLongestWorkingTimeForExam(this.exam.id).subscribe((res) => {
-                this.longestWorkingTime = res;
-                this.calculateIsExamOver();
-            });
-        }
         this.examChecklistService.getExamStatistics(this.exam).subscribe((examStats) => {
             this.examChecklist = examStats;
             this.allExamsGenerated =
@@ -117,13 +118,14 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
                     this.existsUnassessedQuizzes = false;
                     this.isEvaluatingQuizExercises = false;
                 },
-                error: (err: HttpErrorResponse) => {
-                    this.handleError('artemisApp.studentExams.evaluateQuizExerciseFailure', err);
+                error: (error: HttpErrorResponse) => {
+                    this.dialogErrorSource.next(error.message);
+                    this.alertService.error('artemisApp.studentExams.evaluateQuizExerciseFailure');
                     this.isEvaluatingQuizExercises = false;
                 },
             });
         } else {
-            throw new Error(`Cannot evaluate quiz exercises due to missing course or exam id.`);
+            this.alertService.error('artemisApp.studentExams.evaluateQuizExerciseIdFailure');
         }
     }
 
@@ -139,33 +141,14 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
                     this.existsUnsubmittedExercises = false;
                     this.isAssessingUnsubmittedExams = false;
                 },
-                error: (err: HttpErrorResponse) => {
-                    this.handleError('artemisApp.studentExams.assessUnsubmittedStudentExamsFailure', err);
+                error: (error: HttpErrorResponse) => {
+                    this.dialogErrorSource.next(error.message);
+                    this.alertService.error('artemisApp.studentExams.assessUnsubmittedStudentExamsFailure');
                     this.isAssessingUnsubmittedExams = false;
                 },
             });
         } else {
-            throw new Error(`Cannot unsubmitted exercises due to missing course or exam id.`);
-        }
-    }
-
-    /**
-     * Shows the translated error message if an error key is available in the error response. Otherwise it defaults to the generic alert.
-     * @param translationString the string identifier in the translation service for the text. This is ignored if the response does not contain an error message or error key.
-     * @param err the error response
-     */
-    private handleError(translationString: string, err: HttpErrorResponse) {
-        let errorDetail;
-        if (err?.error && err.error.errorKey) {
-            errorDetail = this.artemisTranslatePipe.transform(err.error.errorKey);
-        } else {
-            errorDetail = err?.error?.message;
-        }
-        if (errorDetail) {
-            this.alertService.error(translationString, { message: errorDetail });
-        } else {
-            // Sometimes the response does not have an error field, so we default to generic error handling
-            onError(this.alertService, err);
+            this.alertService.error('artemisApp.studentExams.assessUnsubmittedStudentExamsFailure');
         }
     }
 
