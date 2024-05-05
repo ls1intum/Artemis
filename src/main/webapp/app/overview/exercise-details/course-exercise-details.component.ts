@@ -204,6 +204,7 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
 
     loadExercise() {
         this.exercise = undefined;
+        this.irisSettings = undefined;
         this.studentParticipations = this.participationWebsocketService.getParticipationsForExercise(this.exerciseId);
         this.updateStudentParticipations();
         this.resultWithComplaint = getFirstResultWithComplaintFromResults(this.gradedStudentParticipation?.results);
@@ -361,6 +362,8 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
                 }
             }
         }
+
+        this.participationUpdateListener?.unsubscribe();
         this.participationUpdateListener = this.participationWebsocketService.subscribeForParticipationChanges().subscribe((changedParticipation: StudentParticipation) => {
             if (changedParticipation && this.exercise && changedParticipation.exercise?.id === this.exercise.id) {
                 // Notify student about late submission result

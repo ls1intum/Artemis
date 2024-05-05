@@ -191,6 +191,19 @@ describe('CodeEditorMonacoComponent', () => {
         expect(comp.fileSession).toEqual({ [fileToLoad.fileName]: { code: fileToLoad.fileContent, loadingError: false, cursor: { row: 0, column: 0 } } });
     });
 
+    it('should not load binaries into the editor', async () => {
+        const changeModelSpy = jest.spyOn(comp.editor, 'changeModel');
+        const fileName = 'file-to-load';
+        comp.fileSession = {
+            [fileName]: { code: '\0\0\0\0 (binary content)', loadingError: false, cursor: { row: 0, column: 0 } },
+        };
+        fixture.detectChanges();
+        comp.selectedFile = fileName;
+        await comp.selectFileInEditor(fileName);
+        expect(changeModelSpy).not.toHaveBeenCalled();
+        expect(comp.binaryFileSelected).toBeTrue();
+    });
+
     it.each([
         [new ConnectionError(), 'loadingFailedInternetDisconnected'],
         [new Error(), 'loadingFailed'],

@@ -34,7 +34,10 @@ import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusResult;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.*;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildConfig;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.JobTimingInfo;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.RepositoryInfo;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
 
@@ -140,7 +143,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
     private List<String> getTestResultPaths(Windfile windfile) throws IllegalArgumentException {
         List<String> testResultPaths = new ArrayList<>();
         for (AeolusResult testResultPath : windfile.getResults()) {
-            testResultPaths.add(LOCALCI_WORKING_DIRECTORY + "/testing-dir/" + testResultPath.getPath());
+            testResultPaths.add(LOCALCI_WORKING_DIRECTORY + "/testing-dir/" + testResultPath.path());
         }
         return testResultPaths;
     }
@@ -228,7 +231,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         String dockerImage;
         try {
             windfile = programmingExercise.getWindfile();
-            dockerImage = windfile.getMetadata().getDocker().getFullImageName();
+            dockerImage = windfile.getMetadata().docker().getFullImageName();
         }
         catch (NullPointerException e) {
             log.warn("Could not retrieve windfile for programming exercise {}. Using default windfile instead.", programmingExercise.getId());

@@ -77,7 +77,7 @@ Instructors can still use those templates to generate programming exercises and 
   Static Code Analysis for ``C`` exercises is only supported for ``LocalCI`` at the moment.
 
 .. note::
-  Testwise Coverage Analysis is only supported for ``Bamboo`` and exercises with regular test runs at the moment.
+  Testwise Coverage Analysis is currently not supported, but will be again supported in future versions.
 
 .. note::
   Instructors are still able to extend the generated programming exercises with additional features that are not available in one specific template.

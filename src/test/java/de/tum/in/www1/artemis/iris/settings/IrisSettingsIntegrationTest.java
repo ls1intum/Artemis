@@ -13,7 +13,12 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.iris.settings.*;
+import de.tum.in.www1.artemis.domain.iris.settings.IrisChatSubSettings;
+import de.tum.in.www1.artemis.domain.iris.settings.IrisCompetencyGenerationSubSettings;
+import de.tum.in.www1.artemis.domain.iris.settings.IrisCourseSettings;
+import de.tum.in.www1.artemis.domain.iris.settings.IrisExerciseSettings;
+import de.tum.in.www1.artemis.domain.iris.settings.IrisHestiaSubSettings;
+import de.tum.in.www1.artemis.domain.iris.settings.IrisSettings;
 import de.tum.in.www1.artemis.iris.AbstractIrisIntegrationTest;
 import de.tum.in.www1.artemis.repository.iris.IrisSettingsRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSubSettingsRepository;
@@ -66,8 +71,8 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
         var loadedSettings2 = request.get("/api/courses/" + course.getId() + "/iris-settings", HttpStatus.OK, IrisCombinedSettingsDTO.class);
 
         assertThat(loadedSettings1).isNotNull().usingRecursiveComparison()
-                .ignoringFields("id", "course", "irisChatSettings.id", "irisHestiaSettings.id", "irisCodeEditorSettings.id", "irisCompetencyGenerationSettings.id")
-                .ignoringExpectedNullFields().isEqualTo(loadedSettings2);
+                .ignoringFields("id", "course", "irisChatSettings.id", "irisHestiaSettings.id", "irisCompetencyGenerationSettings.id").ignoringExpectedNullFields()
+                .isEqualTo(loadedSettings2);
         assertThat(loadedSettings1).isNotNull().usingRecursiveComparison().ignoringFields("course")
                 .isEqualTo(irisSettingsRepository.findCourseSettings(course.getId()).orElseThrow());
     }

@@ -13,7 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.google.gson.Gson;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.in.www1.artemis.domain.Course;
@@ -71,10 +71,12 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         exercise.setBuildScript(script);
         exercise.setBuildPlanConfiguration(null);
         continuousIntegrationService.recreateBuildPlansForExercise(exercise);
-        script = buildScriptProviderService.getScriptFor(exercise.getProgrammingLanguage(), Optional.of(exercise.getProjectType()), exercise.isStaticCodeAnalysisEnabled(),
+        script = buildScriptProviderService.getScriptFor(exercise.getProgrammingLanguage(), Optional.ofNullable(exercise.getProjectType()), exercise.isStaticCodeAnalysisEnabled(),
                 exercise.hasSequentialTestRuns(), exercise.isTestwiseCoverageEnabled());
         Windfile windfile = aeolusTemplateService.getDefaultWindfileFor(exercise);
-        assertThat(exercise.getBuildPlanConfiguration()).isEqualTo(new Gson().toJson(windfile));
+        String actualBuildConfig = exercise.getBuildPlanConfiguration();
+        String expectedBuildConfig = new ObjectMapper().writeValueAsString(windfile);
+        assertThat(actualBuildConfig).isEqualTo(expectedBuildConfig);
         assertThat(exercise.getBuildScript()).isEqualTo(script);
         // test that the method does not throw an exception when the exercise is null
         continuousIntegrationService.recreateBuildPlansForExercise(null);

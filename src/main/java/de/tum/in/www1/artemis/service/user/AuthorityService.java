@@ -2,7 +2,10 @@ package de.tum.in.www1.artemis.service.user;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.domain.Authority.ADMIN_AUTHORITY;
-import static de.tum.in.www1.artemis.security.Role.*;
+import static de.tum.in.www1.artemis.security.Role.EDITOR;
+import static de.tum.in.www1.artemis.security.Role.INSTRUCTOR;
+import static de.tum.in.www1.artemis.security.Role.STUDENT;
+import static de.tum.in.www1.artemis.security.Role.TEACHING_ASSISTANT;
 
 import java.util.HashSet;
 import java.util.Optional;

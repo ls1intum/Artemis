@@ -373,15 +373,21 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                             showOpenLink: !this.localVCEnabled,
                         },
                     },
-                {
+                !this.localVCEnabled && {
                     type: DetailType.Link,
                     title: 'artemisApp.programmingExercise.templateBuildPlanId',
-                    data: { href: !this.localVCEnabled && exercise.templateParticipation?.buildPlanUrl, text: exercise.templateParticipation?.buildPlanId },
+                    data: {
+                        href: exercise.templateParticipation?.buildPlanUrl,
+                        text: exercise.templateParticipation?.buildPlanId,
+                    },
                 },
-                {
+                !this.localVCEnabled && {
                     type: DetailType.Link,
                     title: 'artemisApp.programmingExercise.solutionBuildPlanId',
-                    data: { href: !this.localVCEnabled && exercise.solutionParticipation?.buildPlanUrl, text: exercise.solutionParticipation?.buildPlanId },
+                    data: {
+                        href: exercise.solutionParticipation?.buildPlanUrl,
+                        text: exercise.solutionParticipation?.buildPlanId,
+                    },
                 },
                 {
                     type: DetailType.ProgrammingTestStatus,
