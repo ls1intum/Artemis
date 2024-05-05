@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.security.OAuth2JWKSService;
 import de.tum.in.www1.artemis.security.jwt.JWTCookieService;
 import de.tum.in.www1.artemis.web.rest.GitDiffReportParserService;
 import de.tum.in.www1.artemis.web.websocket.ResultWebsocketService;
+import de.tum.in.www1.artemis.web.websocket.SelfLearningFeedbackWebsocketService;
 import de.tum.in.www1.artemis.web.websocket.localci.LocalCIWebsocketMessagingService;
 
 class ServiceArchitectureTest extends AbstractArchitectureTest {
@@ -33,7 +34,7 @@ class ServiceArchitectureTest extends AbstractArchitectureTest {
     void shouldBeInServicePackage() {
         ArchRule rule = classes().that().areAnnotatedWith(Service.class).should().resideInAPackage("..service..").because("services should be in the package 'service'.");
         final var exceptions = new Class[] { MigrationService.class, SecurityMetersService.class, DomainUserDetailsService.class, OAuth2JWKSService.class, JWTCookieService.class,
-                GitDiffReportParserService.class, ResultWebsocketService.class, LocalCIWebsocketMessagingService.class };
+                GitDiffReportParserService.class, ResultWebsocketService.class, LocalCIWebsocketMessagingService.class, SelfLearningFeedbackWebsocketService.class };
         final var classes = classesExcept(productionClasses, exceptions);
         rule.check(classes);
     }

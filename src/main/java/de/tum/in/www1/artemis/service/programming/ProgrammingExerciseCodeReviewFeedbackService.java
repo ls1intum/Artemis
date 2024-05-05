@@ -114,7 +114,8 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
         log.debug("Using athena to generate feedback request: {}", programmingExercise.getId());
 
         // athena takes over the control here
-        var submissionOptional = programmingExerciseParticipationService.findProgrammingExerciseParticipationWithLatestSubmission(participation.getId()).findLatestSubmission();
+        var submissionOptional = programmingExerciseParticipationService.findProgrammingExerciseParticipationWithLatestSubmissionAndResult(participation.getId())
+                .findLatestSubmission();
         if (submissionOptional.isEmpty()) {
             throw new BadRequestAlertException("No legal submissions found", "submission", "noSubmission");
         }
@@ -171,6 +172,7 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
 
             newRequest.setSuccessful(true);
             newRequest.setResult(automaticResult);
+            newRequest.setResponseDateTime(ZonedDateTime.now());
             newRequest = this.selfLearningFeedbackRequestRepository.save(newRequest);
 
             this.programmingMessagingService.notifyUserAboutNewRequest(newRequest, participation);

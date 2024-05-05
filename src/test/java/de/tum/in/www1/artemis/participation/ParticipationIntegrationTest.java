@@ -23,7 +23,6 @@ import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Isolated;
@@ -49,6 +48,7 @@ import de.tum.in.www1.artemis.domain.FileUploadExercise;
 import de.tum.in.www1.artemis.domain.GradingScale;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.SelfLearningFeedbackRequest;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.TextExercise;
@@ -165,7 +165,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     private ExamRepository examRepository;
 
     @Captor
-    private ArgumentCaptor<Result> resultCaptor;
+    private ArgumentCaptor<SelfLearningFeedbackRequest> selfLearningFeedbackRequestArgumentCaptor;
 
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
@@ -525,7 +525,6 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     }
 
     @Test
-    @Disabled
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void requestFeedbackScoreNotFull() throws Exception {
         var participation = ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, programmingExercise,
@@ -543,8 +542,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         result.setCompletionDate(ZonedDateTime.now());
         resultRepository.save(result);
 
-        request.putWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/request-feedback", null, ProgrammingExerciseStudentParticipation.class,
-                HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/request-feedback", null, ProgrammingExerciseStudentParticipation.class, HttpStatus.OK);
         localRepo.resetLocalRepo();
     }
 
@@ -609,14 +607,14 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         request.putWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/request-feedback", null, ProgrammingExerciseStudentParticipation.class, HttpStatus.OK);
 
-        verify(programmingMessagingService, timeout(2000).times(2)).notifyUserAboutNewResult(resultCaptor.capture(), any());
+        verify(programmingMessagingService, timeout(2000).times(2)).notifyUserAboutNewRequest(selfLearningFeedbackRequestArgumentCaptor.capture(), any());
 
-        Result invokedResult = resultCaptor.getAllValues().get(0);
-        assertThat(invokedResult).isNotNull();
-        assertThat(invokedResult.getId()).isNotNull();
-        assertThat(invokedResult.isSuccessful()).isTrue();
-        assertThat(invokedResult.isAthenaAutomatic()).isTrue();
-        assertThat(invokedResult.getFeedbacks()).hasSize(1);
+        SelfLearningFeedbackRequest invokedObject = selfLearningFeedbackRequestArgumentCaptor.getAllValues().get(0);
+        assertThat(invokedObject).isNotNull();
+        assertThat(invokedObject.getId()).isNotNull();
+        assertThat(invokedObject.isSuccessful()).isTrue();
+        assertThat(invokedObject.getResponseDateTime()).isNotNull();
+        assertThat(invokedObject.getResult()).isNotNull();
 
         localRepo.resetLocalRepo();
     }
@@ -655,14 +653,14 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         request.putWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/request-feedback", null, ProgrammingExerciseStudentParticipation.class, HttpStatus.OK);
 
-        verify(programmingMessagingService, timeout(2000).times(2)).notifyUserAboutNewResult(resultCaptor.capture(), any());
+        verify(programmingMessagingService, timeout(2000).times(2)).notifyUserAboutNewRequest(selfLearningFeedbackRequestArgumentCaptor.capture(), any());
 
-        Result invokedResult = resultCaptor.getAllValues().get(0);
-        assertThat(invokedResult).isNotNull();
-        assertThat(invokedResult.getId()).isNotNull();
-        assertThat(invokedResult.isSuccessful()).isFalse();
-        assertThat(invokedResult.isAthenaAutomatic()).isTrue();
-        assertThat(invokedResult.getFeedbacks()).hasSize(0);
+        SelfLearningFeedbackRequest invokedObject = selfLearningFeedbackRequestArgumentCaptor.getAllValues().get(0);
+        assertThat(invokedObject).isNotNull();
+        assertThat(invokedObject.getId()).isNotNull();
+        assertThat(invokedObject.isSuccessful()).isFalse();
+        assertThat(invokedObject.getResponseDateTime()).isNull();
+        assertThat(invokedObject.getResult()).isNull();
 
         localRepo.resetLocalRepo();
     }

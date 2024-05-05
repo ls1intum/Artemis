@@ -128,6 +128,6 @@ public class ResultWebsocketService {
     }
 
     private static String getNonPersonalExerciseResultDestination(String exerciseId) {
-        return EXERCISE_TOPIC_ROOT + exerciseId + "/newParticipationInfo";
+        return EXERCISE_TOPIC_ROOT + exerciseId + "/newResults";
     }
 }

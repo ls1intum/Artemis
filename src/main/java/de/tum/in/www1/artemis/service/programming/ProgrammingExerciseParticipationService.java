@@ -211,22 +211,6 @@ public class ProgrammingExerciseParticipationService {
     }
 
     /**
-     * Try to find a programming exercise participation for the given id.
-     * It contains the last submission which might be illegal!
-     *
-     * @param participationId ProgrammingExerciseParticipation id
-     * @return the casted participation
-     * @throws EntityNotFoundException if the participation with the given id does not exist or is not a programming exercise participation.
-     */
-    public ProgrammingExerciseParticipation findProgrammingExerciseParticipationWithLatestSubmission(Long participationId) throws EntityNotFoundException {
-        Optional<Participation> participation = participationRepository.findByIdWithLatestSubmission(participationId);
-        if (participation.isEmpty() || !(participation.get() instanceof ProgrammingExerciseParticipation)) {
-            throw new EntityNotFoundException("No programming exercise participation found with id " + participationId);
-        }
-        return (ProgrammingExerciseParticipation) participation.get();
-    }
-
-    /**
      * Setup the initial solution participation for an exercise. Creates the new participation entity and sets
      * the correct build plan ID and repository URI. Saves the participation after all values have been set.
      *
