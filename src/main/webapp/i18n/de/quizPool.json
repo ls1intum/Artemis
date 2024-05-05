@@ -6,9 +6,9 @@
             "groupName": "Gruppenname",
             "addGroup": "Gruppe hinzufügen",
             "delete": {
-                "question": "Möchten Sie die Quizgruppe <strong>{{ title }}</strong> wirklich löschen? Alle zugewiesenen Fragen werden nicht zugeordnet."
+                "question": "Möchtest du die Quizgruppe <strong>{{ title }}</strong> wirklich löschen? Alle zugewiesenen Fragen werden nicht zugeordnet."
             },
-            "dragExplanation": "Ziehen Sie die Frage unten, um sie einer Gruppe zuzuordnen.",
+            "dragExplanation": "Ziehe die unten stehende Frage, um sie einer Gruppe zuzuordnen.",
             "groupExplanation": "Fragen in der gleichen Gruppe werden für jeden Schüler nach dem Zufallsprinzip ausgewählt. Fragen, die nicht in einer Gruppe sind, werden allen Schülern zugewiesen.",
             "updated": "Quiz Pool aktualisiert mit ID {{ param }}",
             "invalidReasons": {
