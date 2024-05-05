@@ -567,7 +567,7 @@ export class ProgrammingExerciseService {
      */
     getDiffReportForCommits(
         exerciseId: number,
-        participationId: number,
+        participationId: number | undefined,
         olderCommitHash: string,
         newerCommitHash: string,
         repositoryType?: string,
@@ -576,9 +576,12 @@ export class ProgrammingExerciseService {
         if (repositoryType !== undefined) {
             params['repositoryType'] = repositoryType;
         }
+        if (participationId !== undefined && !isNaN(participationId)) {
+            params['participationId'] = participationId;
+        }
 
         return this.http
-            .get<ProgrammingExerciseGitDiffReport>(`${this.resourceUrl}/${exerciseId}/participation/${participationId}/commits/${olderCommitHash}/diff-report/${newerCommitHash}`, {
+            .get<ProgrammingExerciseGitDiffReport>(`${this.resourceUrl}/${exerciseId}/commits/${olderCommitHash}/diff-report/${newerCommitHash}`, {
                 observe: 'response',
                 params: params,
             })

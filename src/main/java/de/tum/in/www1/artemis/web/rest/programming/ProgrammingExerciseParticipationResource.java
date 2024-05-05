@@ -331,11 +331,11 @@ public class ProgrammingExerciseParticipationResource {
         var participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
         ProgrammingExercise exercise = programmingExerciseRepository.getProgrammingExerciseFromParticipationElseThrow(participation);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
-        return new ModelAndView("forward:/api/repository/" + participation.getId() + "/files-content/" + commitId);
+        return new ModelAndView("forward:/api/repository-files-content/" + commitId).addObject("participationId", participationId);
     }
 
     /**
-     * GET /programming-exercise/{exerciseId}/participation/{participationId}/files-content-commit-details/{commitId} : Get the content of the files of a programming exercise
+     * GET /programming-exercise/{exerciseId}/files-content-commit-details/{commitId} : Get the content of the files of a programming exercise
      * This method is specifically for the commit details view, where not only Instructors and Admins should have access to the files content as in
      * redirectGetParticipationRepositoryFiles but also students and tutors that have access to the participation.
      *
@@ -345,22 +345,36 @@ public class ProgrammingExerciseParticipationResource {
      * @param repositoryType  the type of the repository for which to retrieve the files content
      * @return a redirect to the endpoint returning the files with content
      */
-    @GetMapping("programming-exercise/{exerciseId}/participation/{participationId}/files-content-commit-details/{commitId}")
+    @GetMapping("programming-exercise/{exerciseId}/files-content-commit-details/{commitId}")
     @EnforceAtLeastStudent
-    public ModelAndView redirectGetParticipationRepositoryFilesForCommitsDetailsView(@PathVariable long exerciseId, @PathVariable long participationId,
+    public ModelAndView redirectGetParticipationRepositoryFilesForCommitsDetailsView(@PathVariable long exerciseId, @RequestParam(required = false) Long participationId,
             @PathVariable String commitId, @RequestParam(required = false) RepositoryType repositoryType) {
-        Participation participation = participationRepository.findByIdElseThrow(participationId);
-        if (!participation.getExercise().getId().equals(exerciseId)) {
-            throw new ConflictException("A git diff report entry can only be retrieved if the participation's exercise id matches with the exercise id", ENTITY_NAME,
-                    "exerciseIdsMismatch");
+
+        if (participationId != null) {
+            Participation participation = participationRepository.findByIdElseThrow(participationId);
+            if (!participation.getExercise().getId().equals(exerciseId)) {
+                throw new ConflictException("A git diff report entry can only be retrieved if the participation's exercise id matches with the exercise id", ENTITY_NAME,
+                        "exerciseIdsMismatch");
+            }
+            if (!(participation instanceof ProgrammingExerciseParticipation)) {
+                throw new ConflictException("A git diff report entry can only be retrieved for programming exercise participations", ENTITY_NAME,
+                        "notProgrammingExerciseParticipation");
+            }
+            participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+            // we only forward the repository type for the test repository, as the test repository is the only one that needs to be treated differently
+            return new ModelAndView("forward:/api/repository-files-content/" + commitId).addObject("participationId", participationId);
+
         }
-        if (!(participation instanceof ProgrammingExerciseParticipation)) {
-            throw new ConflictException("A git diff report entry can only be retrieved for programming exercise participations", ENTITY_NAME,
-                    "notProgrammingExerciseParticipation");
+        else if (repositoryType != null) {
+            ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(exerciseId);
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
+            var participation = repositoryType == RepositoryType.TEMPLATE ? programmingExercise.getTemplateParticipation() : programmingExercise.getSolutionParticipation();
+            return new ModelAndView("forward:/api/repository-files-content/" + commitId).addObject("repositoryType", repositoryType).addObject("participationId",
+                    participation.getId());
         }
-        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
-        // we only forward the repository type for the test repository, as the test repository is the only one that needs to be treated differently
-        return new ModelAndView("forward:/api/repository/" + participation.getId() + "/files-content/" + commitId).addObject("repositoryType", repositoryType);
+        else {
+            throw new BadRequestAlertException("Either participationId or repositoryType must be provided", ENTITY_NAME, "missingParameters");
+        }
     }
 
     /**

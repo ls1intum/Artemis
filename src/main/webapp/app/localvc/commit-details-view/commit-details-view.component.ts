@@ -15,7 +15,7 @@ import { catchError, map, tap } from 'rxjs/operators';
 export class CommitDetailsViewComponent implements OnDestroy, OnInit {
     report: ProgrammingExerciseGitDiffReport;
     exerciseId: number;
-    participationId: number;
+    participationId?: number;
     commitHash: string;
     isTemplate = false;
 
@@ -26,7 +26,7 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
     commits: CommitInfo[] = [];
     currentCommit: CommitInfo;
     previousCommit: CommitInfo;
-    repositoryType: string;
+    repositoryType?: string;
 
     repoFilesSubscription: Subscription;
     participationRepoFilesAtLeftCommitSubscription: Subscription;
@@ -58,9 +58,9 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
     ngOnInit(): void {
         this.paramSub = this.route.params.subscribe((params) => {
             this.exerciseId = Number(params['exerciseId']);
-            this.participationId = Number(params['participationId']);
+            this.participationId = isNaN(Number(params['participationId'])) ? undefined : Number(params['participationId']);
             this.commitHash = params['commitHash'];
-            this.repositoryType = params['repositoryType'];
+            this.repositoryType = params['repositoryType'] || undefined;
             this.retrieveAndHandleCommits();
         });
     }
@@ -72,8 +72,17 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
      * @private
      */
     private retrieveAndHandleCommits() {
-        this.programmingExerciseParticipationService
-            .retrieveCommitHistoryForParticipation(this.participationId)
+        let commitInfoSubscription;
+        if (this.repositoryType) {
+            commitInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitHistoryForTemplateSolutionOrTests(this.exerciseId, this.repositoryType);
+        } else if (this.participationId) {
+            commitInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitHistoryForParticipation(this.participationId);
+        }
+        if (!commitInfoSubscription) {
+            return;
+        }
+
+        commitInfoSubscription
             .pipe(
                 map((commits) => commits.sort((a, b) => (dayjs(b.timestamp).isAfter(dayjs(a.timestamp)) ? 1 : -1))),
                 tap((sortedCommits) => {

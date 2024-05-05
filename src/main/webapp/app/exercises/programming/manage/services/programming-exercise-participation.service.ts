@@ -117,7 +117,7 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
      */
     getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView(
         exerciseId: number,
-        participationId: number,
+        participationId: number | undefined,
         commitId: string,
         repositoryType?: string,
     ): Observable<Map<string, string> | undefined> {
@@ -125,7 +125,10 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
         if (repositoryType !== undefined) {
             params['repositoryType'] = repositoryType;
         }
-        return this.http.get(`${this.resourceUrl}${exerciseId}/participation/${participationId}/files-content-commit-details/${commitId}`, { params: params }).pipe(
+        if (participationId !== undefined && !isNaN(participationId)) {
+            params['participationId'] = participationId;
+        }
+        return this.http.get(`${this.resourceUrl}${exerciseId}/files-content-commit-details/${commitId}`, { params: params }).pipe(
             map((res: HttpResponse<any>) => {
                 // this mapping is required because otherwise the HttpResponse object would be parsed
                 // to an arbitrary object (and not a map)

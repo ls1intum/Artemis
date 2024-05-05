@@ -130,42 +130,6 @@ describe('CommitDetailsViewComponent', () => {
         expect(component).toBeTruthy();
     });
 
-    it('should load student participation', () => {
-        setupComponent();
-        activatedRoute.setParameters({ participationId: 2, commitHash: 'commit2', exerciseId: 1 });
-
-        // Trigger ngOnInit
-        component.ngOnInit();
-
-        // Expectations
-        expect(component.participation).toEqual(mockParticipation);
-
-        // Trigger ngOnDestroy
-        component.ngOnDestroy();
-
-        // Expect subscription to be unsubscribed
-        expect(component.paramSub?.closed).toBeTrue();
-    });
-
-    it('should load template participation', () => {
-        setupComponent();
-        activatedRoute.setParameters({ participationId: 2, commitHash: 'templateCommit2', exerciseId: 1, repositoryType: 'TEMPLATE' });
-
-        // Trigger ngOnInit
-        component.ngOnInit();
-
-        // Expectations
-        expect(component.participation).toEqual(mockExerciseWithTemplateAndSolution.templateParticipation);
-        expect(component.exercise).toEqual(mockExerciseWithTemplateAndSolution);
-        expect(component.participationId).toEqual(mockExerciseWithTemplateAndSolution.templateParticipation?.id);
-
-        // Trigger ngOnDestroy
-        component.ngOnDestroy();
-
-        // Expect subscription to be unsubscribed
-        expect(component.paramSub?.closed).toBeTrue();
-    });
-
     it('should handle commits for student participation', () => {
         setupComponent();
         activatedRoute.setParameters({ participationId: 2, commitHash: 'commit2', exerciseId: 1 });
