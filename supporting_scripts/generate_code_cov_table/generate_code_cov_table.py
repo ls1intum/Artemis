@@ -299,7 +299,7 @@ def main(argv):
         result += f"#### Server\n\n{server_table}\n\n"
 
     logging.info("Info: ✅ ❌ in Confirmation (assert/expect) have to be adjusted manually, also delete trivial files!")
-    logging.info("")  # newline
+    logging.info("")
 
     if args.print_results:
         print(result)
