@@ -576,10 +576,10 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     boolean existsUnassessedQuizzesByExamId(@Param("examId") long examId);
 
     /**
-     * Gets all ubsimitted Text and Modelling Submissions for the given exam
+     * Checks if unsubmitted text and modeling submissions exist for the exam with the given id
      *
      * @param examId the ID of the exam
-     * @return boolean indicating if there are ubsimitted Text and Modelling Submissions
+     * @return boolean indicating if there are unsubmitted text and modelling submissions
      */
     @Query("""
             SELECT COUNT(p.exercise) > 0

@@ -476,9 +476,9 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
     List<StudentExam> findAllWithEagerExercisesById(@Param("ids") List<Long> ids);
 
     /**
-     * Gets number longest working time of the exam given the course id and and exam id
+     * Gets the longest working time of the exam with the given id
      *
-     * @param examId the id of the student exam
+     * @param examId the id of the exam
      * @return number longest working time of the exam
      */
     @Query("""
