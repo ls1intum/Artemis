@@ -357,7 +357,7 @@ public class MetricsBean {
 
         cachedActiveUserNames = statisticsRepository.getActiveUserNames(ZonedDateTime.now().minusDays(14), ZonedDateTime.now());
 
-        log.info("calculateCachedActiveUserLogins took {}ms", System.currentTimeMillis() - startDate);
+        log.debug("calculateCachedActiveUserLogins took {}ms", System.currentTimeMillis() - startDate);
     }
 
     /**
@@ -399,7 +399,7 @@ public class MetricsBean {
         updateMultiGaugeIntegerForMinuteRanges(releaseExamGauge, examRepository::countExamsWithStartDateBetween);
         updateMultiGaugeIntegerForMinuteRanges(releaseExamStudentMultiplierGauge, examRepository::countExamUsersInExamsWithStartDateBetween);
 
-        log.info("recalculateMetrics took {}ms", System.currentTimeMillis() - startDate);
+        log.debug("recalculateMetrics took {}ms", System.currentTimeMillis() - startDate);
     }
 
     @FunctionalInterface
@@ -546,7 +546,7 @@ public class MetricsBean {
         activeExamsGauge.set(examRepository.countAllActiveExams(now));
         examsGauge.set((int) examRepository.count());
 
-        log.info("updatePublicArtemisMetrics took {}ms", System.currentTimeMillis() - startDate);
+        log.debug("updatePublicArtemisMetrics took {}ms", System.currentTimeMillis() - startDate);
     }
 
     private void updateActiveUserMultiGauge(ZonedDateTime now) {
