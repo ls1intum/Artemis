@@ -99,7 +99,7 @@ describe('CodeEditorBuildOutputComponent', () => {
                 codeEditorBuildLogService = TestBed.inject(CodeEditorBuildLogService);
                 participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
                 resultService = TestBed.inject(ResultService);
-                subscribeForLatestResultOfParticipationStub = jest.spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation');
+                subscribeForLatestResultOfParticipationStub = jest.spyOn(participationWebsocketService, 'subscribeForLatestResultsOfParticipation');
                 getBuildLogsStub = jest.spyOn(codeEditorBuildLogService, 'getBuildLogs');
                 getFeedbackDetailsForResultStub = jest.spyOn(resultService, 'getFeedbackDetailsForResult');
                 jest.spyOn(TestBed.inject(CodeEditorSubmissionService), 'getBuildingState').mockReturnValue(of());

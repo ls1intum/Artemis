@@ -169,7 +169,7 @@ describe('CodeEditorContainerIntegration', () => {
                 checkIfRepositoryIsCleanStub = jest.spyOn(codeEditorRepositoryService, 'getStatus');
                 getRepositoryContentStub = jest.spyOn(codeEditorRepositoryFileService, 'getRepositoryContent');
                 subscribeForLatestResultOfParticipationStub = jest
-                    .spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation')
+                    .spyOn(participationWebsocketService, 'subscribeForLatestResultsOfParticipation')
                     .mockReturnValue(subscribeForLatestResultOfParticipationSubject);
                 getFeedbackDetailsForResultStub = jest.spyOn(resultService, 'getFeedbackDetailsForResult');
                 getBuildLogsStub = jest.spyOn(buildLogService, 'getBuildLogs');

@@ -189,7 +189,7 @@ describe('CodeEditorInstructorIntegration', () => {
 
                 checkIfRepositoryIsCleanStub = jest.spyOn(codeEditorRepositoryService, 'getStatus');
                 getRepositoryContentStub = jest.spyOn(codeEditorRepositoryFileService, 'getRepositoryContent');
-                subscribeForLatestResultOfParticipationStub = jest.spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation');
+                subscribeForLatestResultOfParticipationStub = jest.spyOn(participationWebsocketService, 'subscribeForLatestResultsOfParticipation');
                 getFeedbackDetailsForResultStub = jest.spyOn(resultService, 'getFeedbackDetailsForResult');
                 getLatestResultWithFeedbacksStub = jest
                     .spyOn(programmingExerciseParticipationService, 'getLatestResultWithFeedback')

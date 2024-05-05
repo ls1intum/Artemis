@@ -97,7 +97,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 modalService = debugElement.injector.get(NgbModal);
                 themeService = debugElement.injector.get(ThemeService);
 
-                subscribeForLatestResultOfParticipationStub = jest.spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation');
+                subscribeForLatestResultOfParticipationStub = jest.spyOn(participationWebsocketService, 'subscribeForLatestResultsOfParticipation');
                 openModalStub = jest.spyOn(modalService, 'open');
                 getFileStub = jest.spyOn(repositoryFileService, 'get');
                 getLatestResultWithFeedbacks = jest.spyOn(programmingExerciseParticipationService, 'getLatestResultWithFeedback');

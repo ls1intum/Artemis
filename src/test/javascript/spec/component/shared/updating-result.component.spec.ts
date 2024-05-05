@@ -62,7 +62,7 @@ describe('UpdatingResultComponent', () => {
 
                 subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | undefined>(undefined);
                 subscribeForLatestResultOfParticipationStub = jest
-                    .spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation')
+                    .spyOn(participationWebsocketService, 'subscribeForLatestResultsOfParticipation')
                     .mockReturnValue(subscribeForLatestResultOfParticipationSubject);
 
                 const programmingSubmissionStateObj = { participationId: 1, submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION };

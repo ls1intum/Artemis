@@ -40,7 +40,7 @@ describe('ProgrammingExerciseInstructorStatusComponent', () => {
 
                 participationWebsocketService = fixture.debugElement.injector.get(ParticipationWebsocketService);
 
-                subscribeForLatestResultStub = jest.spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation');
+                subscribeForLatestResultStub = jest.spyOn(participationWebsocketService, 'subscribeForLatestResultsOfParticipation');
                 latestResultSubject = new Subject();
                 subscribeForLatestResultStub.mockReturnValue(latestResultSubject);
             });

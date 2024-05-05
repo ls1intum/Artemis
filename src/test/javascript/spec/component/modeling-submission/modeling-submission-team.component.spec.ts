@@ -315,7 +315,7 @@ describe('ModelingSubmissionComponent', () => {
         newResult.feedbacks = [unreferencedFeedback];
         const subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | undefined>(newResult);
         const subscribeForLatestResultOfParticipationStub = jest
-            .spyOn(participationWebSocketService, 'subscribeForLatestResultOfParticipation')
+            .spyOn(participationWebSocketService, 'subscribeForLatestResultsOfParticipation')
             .mockReturnValue(subscribeForLatestResultOfParticipationSubject);
         fixture.detectChanges();
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledOnce();

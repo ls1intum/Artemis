@@ -77,7 +77,7 @@ describe('ProgrammingSubmissionService', () => {
                 wsReceiveStub = jest.spyOn(websocketService, 'receive').mockReturnValue(wsSubmissionSubject);
                 wsLatestResultSubject = new Subject<Result | undefined>();
                 participationWsLatestResultStub = jest
-                    .spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation')
+                    .spyOn(participationWebsocketService, 'subscribeForLatestResultsOfParticipation')
                     .mockReturnValue(wsLatestResultSubject as any);
                 getLatestResultStub = jest.spyOn(participationService, 'getLatestResultWithFeedback');
                 notifyAllResultSubscribersStub = jest.spyOn(participationWebsocketService, 'notifyAllResultSubscribers');

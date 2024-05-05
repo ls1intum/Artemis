@@ -74,7 +74,7 @@ describe('OrionBuildAndTestService', () => {
         onTestResultSpy = jest.spyOn(orionConnectorService, 'onTestResult');
         onBuildFailedSpy = jest.spyOn(orionConnectorService, 'onBuildFailed');
         buildLogsStub = jest.spyOn(buildLogService, 'getBuildLogs');
-        participationSubscriptionStub = jest.spyOn(participationService, 'subscribeForLatestResultOfParticipation');
+        participationSubscriptionStub = jest.spyOn(participationService, 'subscribeForLatestResultsOfParticipation');
     });
 
     afterEach(() => {
