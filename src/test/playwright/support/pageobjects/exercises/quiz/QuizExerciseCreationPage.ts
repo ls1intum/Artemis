@@ -1,7 +1,7 @@
 import { Page } from '@playwright/test';
-import { clearTextField, enterDate } from '../../../utils';
+import { clearTextField, drag, enterDate } from '../../../utils';
 import { Dayjs } from 'dayjs';
-import { BASE_API, QUIZ_EXERCISE_BASE } from '../../../constants';
+import { QUIZ_EXERCISE_BASE } from '../../../constants';
 import { Fixtures } from '../../../../fixtures/fixtures';
 
 export class QuizExerciseCreationPage {
@@ -60,7 +60,7 @@ export class QuizExerciseCreationPage {
         await this.createDragAndDropItem('Rick Astley');
         const dragLocator = this.page.locator('#drag-item-0');
         const dropLocator = this.page.locator('#drop-location');
-        await dragLocator.dragTo(dropLocator);
+        await drag(this.page, dragLocator, dropLocator);
 
         const fileContent = await Fixtures.get('exercise/quiz/drag_and_drop/question.txt');
         const textInputField = this.page.locator('.ace_text-input');
@@ -77,12 +77,9 @@ export class QuizExerciseCreationPage {
 
     async uploadDragAndDropBackground() {
         const fileChooserPromise = this.page.waitForEvent('filechooser');
-        // Use a regular expression to match the numeric course ID
-        const fileUploadPromise = this.page.waitForResponse(`${BASE_API}/fileUpload*`);
         await this.page.locator('#background-file-input-button').click();
         const fileChooser = await fileChooserPromise;
         await fileChooser.setFiles('../cypress/fixtures/exercise/quiz/drag_and_drop/background.jpg');
-        await fileUploadPromise;
     }
 
     async saveQuiz() {
