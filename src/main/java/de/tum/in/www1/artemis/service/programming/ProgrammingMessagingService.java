@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.domain.BuildRunState;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.SelfLearningFeedbackRequest;
 import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
