@@ -190,14 +190,11 @@
                             </span>
                         </ng-template>
                         <ng-template ngx-datatable-cell-template let-value="value">
-                            <span class="w-100 text-center">
-                                <fa-icon
-                                    *ngIf="value.results?.[0]?.assessmentNote?.note"
-                                    [ngbPopover]="(value.results?.[0]?.assessmentNote)!.note"
-                                    [triggers]="'hover'"
-                                    [icon]="faComment"
-                                ></fa-icon>
-                            </span>
+                            @if (value.results?.[0]?.assessmentNote?.note) {
+                                <span class="w-100 text-center">
+                                    <fa-icon [ngbPopover]="(value.results?.[0]?.assessmentNote)!.note" [triggers]="'hover'" [icon]="faComment" />
+                                </span>
+                            }
                         </ng-template>
                     </ngx-datatable-column>
                     <ngx-datatable-column prop="" [sortable]="true" [minWidth]="100" [width]="110">
