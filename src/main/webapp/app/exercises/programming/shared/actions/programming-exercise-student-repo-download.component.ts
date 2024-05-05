@@ -39,7 +39,7 @@ export class ProgrammingExerciseStudentRepoDownloadComponent {
         if (this.exerciseId && this.participationId) {
             this.programmingExerciseService.exportStudentRepository(this.exerciseId, this.participationId).subscribe((response) => {
                 downloadZipFileFromResponse(response);
-                this.alertService.success('artemisApp.programmingExercise.export.successMessageRepos');
+                this.alertService.success('artemisApp.programmingExercise.export.successMessageRepo');
             });
         }
     }
