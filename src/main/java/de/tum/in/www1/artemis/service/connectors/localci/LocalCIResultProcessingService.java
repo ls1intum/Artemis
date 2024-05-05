@@ -138,6 +138,29 @@ public class LocalCIResultProcessingService {
                     }
                     result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult);
 
+                }
+                else {
+                    log.warn("Participation with id {} has been deleted. Cancelling the processing of the build result.", buildJob.participationId());
+                }
+            }
+            finally {
+                // save build job to database
+                if (ex != null) {
+                    if (ex.getCause() instanceof CancellationException && ex.getMessage().equals("Build job with id " + buildJob.id() + " was cancelled.")) {
+                        savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.CANCELLED, result);
+                    }
+                    else {
+                        log.error("Error while processing build job: {}", buildJob, ex);
+                        savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.FAILED, result);
+                    }
+                }
+                else {
+                    savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.SUCCESSFUL, result);
+                }
+
+                if (participationOptional.isPresent()) {
+                    ProgrammingExerciseParticipation participation = (ProgrammingExerciseParticipation) participationOptional.get();
+
                     if (result != null) {
                         programmingMessagingService.notifyUserAboutNewResult(result, participation);
                         addResultToBuildAgentsRecentBuildJobs(buildJob, result);
@@ -147,63 +170,31 @@ public class LocalCIResultProcessingService {
                                 new BuildTriggerWebsocketError("Result could not be processed", participation.getId()));
                     }
                 }
-                else {
-                    log.warn("Participation with id {} has been deleted. Cancelling the processing of the build result.", buildJob.participationId());
-                }
             }
-            finally {
-                // save build job to database
-                savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.SUCCESSFUL, result);
-            }
-        }
-        else {
-            if (ex.getCause() instanceof CancellationException && ex.getMessage().equals("Build job with id " + buildJob.id() + " was cancelled.")) {
 
-                if (participationOptional.isPresent()) {
-                    ProgrammingExerciseParticipation participation = (ProgrammingExerciseParticipation) participationOptional.get();
-                    programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation,
-                            new BuildTriggerWebsocketError("Build job was cancelled", participation.getId()));
-                }
-
-                savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.CANCELLED, null);
-            }
-            else {
-                log.error("Error while processing build job: {}", buildJob, ex);
-
-                if (participationOptional.isPresent()) {
-                    ProgrammingExerciseParticipation participation = (ProgrammingExerciseParticipation) participationOptional.get();
-                    programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation,
-                            new BuildTriggerWebsocketError(ex.getMessage(), participation.getId()));
+            if (!buildLogs.isEmpty()) {
+                if (savedBuildJob != null) {
+                    buildLogEntryService.saveBuildLogsToFile(buildLogs, savedBuildJob.getBuildJobId());
                 }
                 else {
-                    log.warn("Participation with id {} has been deleted. Cancelling the requeueing of the build job.", buildJob.participationId());
+                    log.warn("Couldn't save build logs as build job {} was not saved", buildJob.id());
                 }
+            }
 
-                savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.FAILED, null);
-            }
-        }
-
-        if (!buildLogs.isEmpty()) {
-            if (savedBuildJob != null) {
-                buildLogEntryService.saveBuildLogsToFile(buildLogs, savedBuildJob.getBuildJobId());
-            }
-            else {
-                log.warn("Couldn't save build logs as build job {} was not saved", buildJob.id());
-            }
-        }
-
-        // If the build job is a solution build of a test or auxiliary push, we need to trigger the build of the corresponding template repository
-        if (isSolutionBuildOfTestOrAuxPush(buildJob)) {
-            log.debug("Triggering build of template repository for solution build with id {}", buildJob.id());
-            try {
-                programmingTriggerService.triggerTemplateBuildAndNotifyUser(buildJob.exerciseId(), buildJob.buildConfig().commitHash(), SubmissionType.TEST,
-                        buildJob.repositoryInfo().triggeredByPushTo());
-            }
-            catch (EntityNotFoundException e) {
-                // Something went wrong while retrieving the template participation.
-                // At this point, programmingMessagingService.notifyUserAboutSubmissionError() does not work, because the template participation is not available.
-                // The instructor will see in the UI that no build of the template repository was conducted and will receive an error message when triggering the build manually.
-                log.error("Something went wrong while triggering the template build for exercise {} after the solution build was finished.", buildJob.exerciseId(), e);
+            // If the build job is a solution build of a test or auxiliary push, we need to trigger the build of the corresponding template repository
+            if (isSolutionBuildOfTestOrAuxPush(buildJob)) {
+                log.debug("Triggering build of template repository for solution build with id {}", buildJob.id());
+                try {
+                    programmingTriggerService.triggerTemplateBuildAndNotifyUser(buildJob.exerciseId(), buildJob.buildConfig().testCommitHash(), SubmissionType.TEST,
+                            buildJob.repositoryInfo().triggeredByPushTo());
+                }
+                catch (EntityNotFoundException e) {
+                    // Something went wrong while retrieving the template participation.
+                    // At this point, programmingMessagingService.notifyUserAboutSubmissionError() does not work, because the template participation is not available.
+                    // The instructor will see in the UI that no build of the template repository was conducted and will receive an error message when triggering the build
+                    // manually.
+                    log.error("Something went wrong while triggering the template build for exercise {} after the solution build was finished.", buildJob.exerciseId(), e);
+                }
             }
         }
     }

@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 
 import java.io.IOException;
@@ -20,6 +21,7 @@ import javax.naming.InvalidNameException;
 import javax.naming.ldap.LdapName;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -267,13 +269,9 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         // Instructors should be able to fetch and push.
         localVCLocalCITestService.testFetchSuccessful(auxiliaryRepository.localGit, instructor1Login, projectKey1, auxiliaryRepositorySlug);
 
-        String commitHash = localVCLocalCITestService.commitFile(auxiliaryRepository.localRepoFile.toPath(), auxiliaryRepository.localGit);
+        localVCLocalCITestService.commitFile(auxiliaryRepository.localRepoFile.toPath(), auxiliaryRepository.localGit);
 
-        // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns the commitHash of the tests repository for both the solution and the template repository.
-        // Note: The stub needs to receive the same object twice. Usually, specifying one doReturn() is enough to make the stub return the same object on every subsequent call.
-        // However, in this case we have it return an InputStream, which will be consumed after returning it the first time, so we need to create two separate ones.
-        localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, LOCALCI_WORKING_DIRECTORY + "/testing-dir/.git/refs/heads/[^/]+",
-                Map.of("testCommitHash", commitHash), Map.of("testCommitHash", commitHash));
+        doReturn(ObjectId.fromString(DUMMY_COMMIT_HASH_VALID)).when(gitService).getLastCommitHash(eq(programmingExercise.getVcsTestRepositoryUri()));
 
         // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns the XMLs containing the test results.
         // Mock the results for the solution repository build and for the template repository build that will both be triggered as a result of updating the tests.
@@ -284,9 +282,9 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
         localVCLocalCITestService.testPushSuccessful(auxiliaryRepository.localGit, instructor1Login, projectKey1, auxiliaryRepositorySlug);
 
-        // Solution submissions created as a result from a push to the auxiliary repository should contain the last commit of the tests repository.
-        localVCLocalCITestService.testLatestSubmission(solutionParticipation.getId(), commitHash, 13, false);
-        localVCLocalCITestService.testLatestSubmission(templateParticipation.getId(), commitHash, 0, false);
+        // Solution submissions created as a result from a push to the auxiliary repository should contain the last commit of the test repository.
+        localVCLocalCITestService.testLatestSubmission(solutionParticipation.getId(), DUMMY_COMMIT_HASH_VALID, 13, false);
+        localVCLocalCITestService.testLatestSubmission(templateParticipation.getId(), DUMMY_COMMIT_HASH_VALID, 0, false);
 
         await().until(() -> {
             Optional<BuildJob> buildJobOptional = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(templateParticipation.getId());
