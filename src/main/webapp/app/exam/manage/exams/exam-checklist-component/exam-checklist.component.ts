@@ -9,7 +9,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
-import { Subject } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-exam-checklist',
@@ -18,6 +18,7 @@ import { Subject } from 'rxjs';
 export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
     @Input() exam: Exam;
     @Input() getExamRoutesByIdentifier: any;
+    private longestWorkingTimeSub: Subscription | null = null;
 
     examChecklist: ExamChecklist;
     isLoading = false;
@@ -68,7 +69,7 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
         this.websocketService.subscribe(startedTopic);
         this.websocketService.receive(startedTopic).subscribe(() => (this.numberOfStarted += 1));
         if (this.exam?.id) {
-            this.studentExamService.getLongestWorkingTimeForExam(this.exam.id).subscribe((res) => {
+            this.longestWorkingTimeSub = this.studentExamService.getLongestWorkingTimeForExam(this.exam.id).subscribe((res) => {
                 this.longestWorkingTime = res;
                 this.calculateIsExamOver();
             });
@@ -104,6 +105,9 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
         this.websocketService.unsubscribe(submittedTopic);
         const startedTopic = this.examChecklistService.getStartedTopic(this.exam);
         this.websocketService.unsubscribe(startedTopic);
+        if (this.longestWorkingTimeSub) {
+            this.longestWorkingTimeSub.unsubscribe();
+        }
     }
 
     /**
