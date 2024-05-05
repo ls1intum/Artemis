@@ -124,7 +124,7 @@ def get_coverage_artifact_for_key(artifacts, key):
     if len(matching_artifacts) == 1:
         return matching_artifacts[0]['archive_download_url']
     else:
-        logging.error("Expected exactly one artifact, found {}. Key: {}".format(len(matching_artifacts), key))
+        logging.error("Expected exactly one artifact, found {} for key: {}".format(len(matching_artifacts), key))
         return None
 
 
@@ -200,20 +200,23 @@ def get_server_line_coverage(server_coverage_zip_bytes, file_name, change_type):
     package = preliminary_path.replace("/", ".")
     report_name = f"{package}/{class_name}"
 
-    path = f"{preliminary_path}/{report_name}"
-    file_content = get_html_content(server_coverage_zip_bytes, path)
-    logging.debug(f"Opening {path}")
-
+    file_content = get_html_content(server_coverage_zip_bytes, report_name)
     line_coverage = None
-    soup = BeautifulSoup(file_content, "html.parser")
-    tfoot = soup.find("tfoot")
-    if tfoot:
-        ctr2_tds = tfoot.find_all("td", class_="ctr2")
-        if ctr2_tds and len(ctr2_tds) > 0:
-            line_coverage = ctr2_tds[0].text.strip()
-    logging.debug(f"Coverage for {file_name} -> line coverage: {line_coverage}")
+    if file_content:
+        logging.debug(f"Opening {report_name}")
 
-    return file_name, 'url', f"not found ({change_type})" if line_coverage is None else line_coverage
+        soup = BeautifulSoup(file_content, "html.parser")
+        tfoot = soup.find("tfoot")
+        if tfoot:
+            ctr2_tds = tfoot.find_all("td", class_="ctr2")
+            if ctr2_tds and len(ctr2_tds) > 0:
+                line_coverage = ctr2_tds[0].text.strip()
+        logging.debug(f"Coverage for {file_name} -> line coverage: {line_coverage}")
+
+    if line_coverage:
+        return file_name, line_coverage
+    else:
+        return file_name, f"not found ({change_type})"
 
 
 def coverage_to_table(covs):
