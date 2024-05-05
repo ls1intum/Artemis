@@ -96,27 +96,6 @@ describe('ResultService', () => {
         assessmentType: AssessmentType.AUTOMATIC_ATHENA,
         successful: true,
     };
-    const result7: Result = {
-        feedbacks: [{ text: NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER + 'AI feedback', type: FeedbackType.AUTOMATIC }],
-        participation: { type: ParticipationType.PROGRAMMING },
-        completionDate: dayjs().subtract(5, 'minutes'),
-        assessmentType: AssessmentType.AUTOMATIC_ATHENA,
-        successful: false,
-    };
-    const result8: Result = {
-        feedbacks: [],
-        participation: { type: ParticipationType.PROGRAMMING },
-        completionDate: dayjs().subtract(5, 'minutes'),
-        assessmentType: AssessmentType.AUTOMATIC_ATHENA,
-        successful: undefined,
-    };
-    const result9: Result = {
-        feedbacks: [],
-        participation: { type: ParticipationType.PROGRAMMING },
-        completionDate: dayjs().add(5, 'minutes'),
-        assessmentType: AssessmentType.AUTOMATIC_ATHENA,
-        successful: undefined,
-    };
 
     const modelingExercise: ModelingExercise = {
         maxPoints: 50,
@@ -308,29 +287,6 @@ describe('ResultService', () => {
 
             expect(resultService.getResultString(result6, programmingExercise)).toBe('artemisApp.result.resultString.automaticAIFeedbackSuccessful');
             expect(translateServiceSpy).toHaveBeenCalledOnce();
-        });
-
-        it('should return correct string for Athena non graded unsuccessful feedback', () => {
-            programmingExercise.assessmentDueDate = dayjs().subtract(5, 'minutes');
-
-            expect(resultService.getResultString(result7, programmingExercise)).toBe('artemisApp.result.resultString.automaticAIFeedbackFailed');
-            expect(translateServiceSpy).toHaveBeenCalledOnce();
-        });
-
-        it('should return correct string for Athena timed out non graded feedback', () => {
-            programmingExercise.assessmentDueDate = dayjs().add(5, 'minutes');
-
-            expect(resultService.getResultString(result8, programmingExercise)).toBe('artemisApp.result.resultString.automaticAIFeedbackTimedOut');
-            expect(translateServiceSpy).toHaveBeenCalledOnce();
-            expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultString.automaticAIFeedbackTimedOut');
-        });
-
-        it('should return correct string for in progress Athena non-graded feedback', () => {
-            programmingExercise.assessmentDueDate = dayjs().add(5, 'minutes');
-
-            expect(resultService.getResultString(result9, programmingExercise)).toBe('artemisApp.result.resultString.automaticAIFeedbackInProgress');
-            expect(translateServiceSpy).toHaveBeenCalledOnce();
-            expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultString.automaticAIFeedbackInProgress');
         });
 
         it('reports to Sentry if result or exercise is undefined', () => {

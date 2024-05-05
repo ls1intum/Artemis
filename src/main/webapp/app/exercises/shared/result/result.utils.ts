@@ -213,6 +213,14 @@ export const getTextColorClass = (result: Result | undefined, templateStatus: Re
         return 'result-late';
     }
 
+    if (isBuildFailedAndResultIsAutomatic(result)) {
+        return 'text-danger';
+    }
+
+    if (resultIsPreliminary(result)) {
+        return 'text-secondary';
+    }
+
     if (result?.score === undefined) {
         return result?.successful ? 'text-success' : 'text-danger';
     }
