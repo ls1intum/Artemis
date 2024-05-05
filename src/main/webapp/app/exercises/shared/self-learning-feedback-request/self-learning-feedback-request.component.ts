@@ -32,11 +32,14 @@ export class SelfLearningFeedbackRequestComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         if (!this.selfLearningFeedbackRequest.responseDateTime && this.selfLearningFeedbackRequest.successful === undefined) {
-            const dueTime = -dayjs().diff(this.selfLearningFeedbackRequest.requestDateTime, 'milliseconds');
+            const dueTime = dayjs(this.selfLearningFeedbackRequest.requestDateTime).add(5, 'minutes').diff(dayjs(), 'milliseconds');
+
             this.resultUpdateSubscription = setTimeout(() => {
                 this.timedOut = true;
+
                 if (this.resultUpdateSubscription) {
                     clearTimeout(this.resultUpdateSubscription);
+                    this.resultUpdateSubscription = undefined;
                 }
             }, dueTime);
         }
