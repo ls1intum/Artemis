@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
@@ -43,6 +44,7 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
 import de.tum.in.www1.artemis.web.rest.dto.CommitInfoDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Profile(PROFILE_CORE)
@@ -117,6 +119,7 @@ public class ProgrammingExerciseParticipationResource {
         ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository.findByIdWithAllResultsAndRelatedSubmissions(participationId)
                 .orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
 
+        // TODO: improve access checks to avoid fetching the user multiple times
         hasAccessToParticipationElseThrow(participation);
 
         // hide details that should not be shown to the students
@@ -276,7 +279,8 @@ public class ProgrammingExerciseParticipationResource {
     public ResponseEntity<List<CommitInfoDTO>> getCommitHistoryForParticipationRepo(@PathVariable long participationId) {
         ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
-        return ResponseEntity.ok(programmingExerciseParticipationService.getCommitInfos(participation));
+        var commitInfo = programmingExerciseParticipationService.getCommitInfos(participation);
+        return ResponseEntity.ok(commitInfo);
     }
 
     /**
@@ -344,25 +348,18 @@ public class ProgrammingExerciseParticipationResource {
     @GetMapping("programming-exercise/{exerciseId}/participation/{participationId}/files-content-commit-details/{commitId}")
     @EnforceAtLeastStudent
     public ModelAndView redirectGetParticipationRepositoryFilesForCommitsDetailsView(@PathVariable long exerciseId, @PathVariable long participationId,
-            @PathVariable String commitId, @RequestParam RepositoryType repositoryType) {
-        if (repositoryType == null) {
-            throw new BadRequestAlertException("Invalid repository type", ENTITY_NAME, "invalidRepositoryType");
+            @PathVariable String commitId, @RequestParam(required = false) RepositoryType repositoryType) {
+        Participation participation = participationRepository.findByIdElseThrow(participationId);
+        if (!participation.getExercise().getId().equals(exerciseId)) {
+            throw new ConflictException("A git diff report entry can only be retrieved if the participation's exercise id matches with the exercise id", ENTITY_NAME,
+                    "exerciseIdsMismatch");
         }
-        ProgrammingExerciseParticipation participation;
-        if (repositoryType.equals(RepositoryType.USER)) {
-            participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
-        }
-        else {
-            if (repositoryType.equals(RepositoryType.TEMPLATE)) {
-                participation = programmingExerciseParticipationService.findTemplateParticipationByProgrammingExerciseId(exerciseId);
-            }
-            else {
-                // if the repository is TESTS we also want to get the solution participation check to see if the user
-                // has access to the participation, as the TESTS repository doesn't have a participation
-                participation = programmingExerciseParticipationService.findSolutionParticipationByProgrammingExerciseId(exerciseId);
-            }
+        if (!(participation instanceof ProgrammingExerciseParticipation)) {
+            throw new ConflictException("A git diff report entry can only be retrieved for programming exercise participations", ENTITY_NAME,
+                    "notProgrammingExerciseParticipation");
         }
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+        // we only forward the repository type for the test repository, as the test repository is the only one that needs to be treated differently
         return new ModelAndView("forward:/api/repository/" + participation.getId() + "/files-content/" + commitId).addObject("repositoryType", repositoryType);
     }
 

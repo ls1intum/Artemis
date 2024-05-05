@@ -3,14 +3,10 @@ import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programmin
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { Subscription } from 'rxjs';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ActivatedRoute } from '@angular/router';
 import { CommitInfo } from 'app/entities/programming-submission.model';
 import dayjs from 'dayjs/esm';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { tap } from 'rxjs/operators';
-import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
-import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 
 @Component({
     selector: 'jhi-commit-details-view',
@@ -30,9 +26,7 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
     commits: CommitInfo[] = [];
     currentCommit: CommitInfo;
     previousCommit: CommitInfo;
-    participation: TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation | ProgrammingExerciseStudentParticipation;
     repositoryType: string;
-    exercise: ProgrammingExercise;
 
     repoFilesSubscription: Subscription;
     participationRepoFilesAtLeftCommitSubscription: Subscription;
@@ -67,30 +61,10 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
             this.participationId = Number(params['participationId']);
             this.commitHash = params['commitHash'];
             this.repositoryType = params['repositoryType'];
-            this.fetchParticipation();
+            this.retrieveAndHandleCommits();
         });
     }
 
-    /**
-     * Fetches the participation based on the repository type and sets the participation and participation id.
-     * @private
-     */
-    private fetchParticipation() {
-        if (this.repositoryType) {
-            this.participationSub = this.programmingExerciseService.findWithTemplateAndSolutionParticipation(this.exerciseId, true).subscribe((exerciseRes) => {
-                this.exercise = exerciseRes.body!;
-                this.participation = this.repositoryType === 'SOLUTION' ? this.exercise.solutionParticipation! : this.exercise.templateParticipation!;
-                this.participationId = this.participation.id!;
-                this.retrieveAndHandleCommits();
-            });
-        } else {
-            this.participationSub = this.programmingExerciseParticipationService.getStudentParticipationWithAllResults(this.participationId).subscribe((participation) => {
-                this.repositoryType = 'USER';
-                this.participation = participation;
-                this.retrieveAndHandleCommits();
-            });
-        }
-    }
     /**
      * Retrieves the commits for the participation and sets the current and previous commit.
      * If there is no previous commit, the template commit is chosen.
@@ -98,13 +72,7 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
      * @private
      */
     private retrieveAndHandleCommits() {
-        let retrieveCommitHistory;
-
-        if (this.repositoryType === 'USER') {
-            retrieveCommitHistory = this.programmingExerciseParticipationService.retrieveCommitHistoryForParticipation(this.participationId);
-        } else {
-            retrieveCommitHistory = this.programmingExerciseParticipationService.retrieveCommitHistoryForTemplateSolutionOrTests(this.exerciseId, this.repositoryType);
-        }
+        const retrieveCommitHistory = this.programmingExerciseParticipationService.retrieveCommitHistoryForParticipation(this.participationId);
 
         this.commitsInfoSubscription = retrieveCommitHistory
             .pipe(
@@ -152,7 +120,6 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
      */
     private handleNewReport(report: ProgrammingExerciseGitDiffReport) {
         this.report = report;
-        this.report.programmingExercise = this.participation.exercise as ProgrammingExercise;
         this.report.leftCommitHash = this.previousCommit.hash;
         this.report.rightCommitHash = this.currentCommit.hash;
         this.report.participationIdForLeftCommit = this.participationId;

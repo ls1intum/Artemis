@@ -229,6 +229,8 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         repositoryAccessService.checkAccessRepositoryElseThrow(participation, userRepository.getUserWithGroupsAndAuthorities(), programmingExercise, RepositoryActionType.READ);
 
         return executeAndCheckForExceptions(() -> {
+            // TODO: move this logic into a service and distinguish: if LocalVC is active, we can directly access the files in the bare repository, otherwise we need to clone, pull
+            // and checkout the repository
             Repository repository;
             // if the repository type is tests, we need to check out the tests repository
             if (repositoryType != null && repositoryType.equals(RepositoryType.TESTS)) {
