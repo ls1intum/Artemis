@@ -33,8 +33,6 @@ jobs:
         run: |
           ./gradlew :supporting_scripts:analysis-of-endpoint-connections:build --warning-mode all
           ./gradlew :supporting_scripts:analysis-of-endpoint-connections:shadowJar
-          java -jar supporting_scripts/analysis-of-endpoint-connections/build/libs/analysis-of-endpoint-connections-1.0-SNAPSHOT-all.jar $(cat modified_files.txt)
 
       - name: run analysis-of-endpoint-connections
-        run: |
-          java -jar supporting_scripts/analysis-of-endpoint-connections/build/libs/analysis-of-endpoint-connections-1.0-SNAPSHOT-all.jar $(cat modified_files.txt)
+        run: java -jar supporting_scripts/analysis-of-endpoint-connections/build/libs/analysis-of-endpoint-connections-1.0-SNAPSHOT-all.jar $(cat modified_files.txt)
