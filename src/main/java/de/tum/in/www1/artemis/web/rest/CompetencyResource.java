@@ -385,7 +385,7 @@ public class CompetencyResource {
      * @return the ResponseEntity with status 201 (Created) and with body containing the imported competencies
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("/courses/{courseId}/competencies/import-standardized")
+    @PostMapping("courses/{courseId}/competencies/import-standardized")
     @EnforceAtLeastEditorInCourse
     public ResponseEntity<List<CompetencyImportResponseDTO>> importStandardizedCompetencies(@PathVariable long courseId, @RequestBody List<Long> competencyIdsToImport)
             throws URISyntaxException {
