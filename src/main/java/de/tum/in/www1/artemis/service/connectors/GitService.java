@@ -1131,17 +1131,7 @@ public class GitService {
             studentGit.branchDelete().setBranchNames(copyBranchName).setForce(true).call();
 
             // Delete all remotes
-            for (RemoteConfig remote : studentGit.remoteList().call()) {
-                studentGit.remoteRemove().setRemoteName(remote.getName()).call();
-                // Manually delete remote tracking branches since JGit apparently fails to do so
-                for (Ref ref : studentGit.getRepository().getRefDatabase().getRefs()) {
-                    if (ref.getName().startsWith("refs/remotes/" + remote.getName())) {
-                        RefUpdate update = studentGit.getRepository().updateRef(ref.getName());
-                        update.setForceUpdate(true);
-                        update.delete();
-                    }
-                }
-            }
+            this.removeRemotes(studentGit);
 
             // Delete .git/logs/ folder to delete git reflogs
             Path logsPath = Path.of(repository.getDirectory().getPath(), "logs");
@@ -1157,6 +1147,38 @@ public class GitService {
         finally {
             // if repo is not closed, it causes weird IO issues when trying to delete the repo again
             // java.io.IOException: Unable to delete file: ...\.git\objects\pack\...
+            repository.close();
+        }
+    }
+
+    private void removeRemotes(Git repository) throws IOException, GitAPIException {
+        // Delete all remotes
+        for (RemoteConfig remote : repository.remoteList().call()) {
+            repository.remoteRemove().setRemoteName(remote.getName()).call();
+            // Manually delete remote tracking branches since JGit apparently fails to do so
+            for (Ref ref : repository.getRepository().getRefDatabase().getRefs()) {
+                if (ref.getName().startsWith("refs/remotes/" + remote.getName())) {
+                    RefUpdate update = repository.getRepository().updateRef(ref.getName());
+                    update.setForceUpdate(true);
+                    update.delete();
+                }
+            }
+        }
+    }
+
+    /**
+     * Removes all remotes from a given repository.
+     *
+     * @param repository The repository whose remotes to delete.
+     */
+    public void removeRemotesFromRepository(Repository repository) {
+        try (Git gitRepo = new Git(repository)) {
+            this.removeRemotes(gitRepo);
+        }
+        catch (EntityNotFoundException | GitAPIException | JGitInternalException | IOException ex) {
+            log.warn("Cannot remove the remotes of the repo {} due to the following exception: {}", repository.getLocalPath(), ex.getMessage());
+        }
+        finally {
             repository.close();
         }
     }
