@@ -8,13 +8,13 @@
             "csvExampleText": "Beispiel für eine gültige CSV Datei:",
             "csvFile": {
                 "label": ".csv Datei auswählen",
-                "tooltip": "Bitte wähle die .csv Datei mit den Nutzern zum Import aus. Pro Eintrag muss entweder die 'LOGIN', 'REGISTRATION_NUMBER' oder 'E-MAIL' Spalte ausgefüllt sein. Folgendes Format muss dabei beachtet werden: Login, Matrikelnummer, E-Mail, Vorname, Nachname. Sie müssen diese in der obersten Spalte angeben!"
+                "tooltip": "Bitte wähle die .csv Datei mit den Nutzern zum Import aus. Pro Eintrag muss entweder die 'LOGIN', 'REGISTRATION_NUMBER' oder 'E-MAIL' Spalte ausgefüllt sein. Folgendes Format muss dabei beachtet werden: Login, Matrikelnummer, E-Mail, Vorname, Nachname. Du musst diese in der obersten Spalte angeben!"
             },
             "usersForImport": {
                 "label": "Nutzer zum Importieren",
                 "tooltip": "Diese Nutzer werden importiert beim Klicken auf \"Importieren\".",
-                "importFailed": "Bitte versuchen sie es nach dem reparieren der Datei erneut, die Datei konnte wegen folgendem Fehler nicht gelesen werden:",
-                "failedRows": "Die folgenden Reihen in ihrer CSV sind ungültig und müssen entweder den Login, eine Matrikelnummer oder eine E-Mail enthalten:",
+                "importFailed": "Bitte versuche es nach dem reparieren der Datei erneut, die Datei konnte wegen folgendem Fehler nicht gelesen werden:",
+                "failedRows": "Die folgenden Reihen in deiner CSV sind ungültig und müssen entweder den Login, eine Matrikelnummer oder eine E-Mail enthalten:",
                 "noUsersFound": "Es wurden keine Benutzer zum Importieren gefunden"
             },
             "numberOfUsers": "Anzahl an Nutzern:",
