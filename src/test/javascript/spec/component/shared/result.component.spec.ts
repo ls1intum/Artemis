@@ -323,48 +323,15 @@ describe('ResultComponent', () => {
 
             expect(comp.result).toBeUndefined();
         });
-    });
 
-    describe('ResultComponent - Feedback Generation', () => {
-        beforeEach(() => {
-            jest.useFakeTimers();
-            comp.result = { ...mockResult, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: undefined, completionDate: dayjs().add(1, 'minute') };
-            comp.exercise = mockExercise;
-            comp.participation = mockParticipation;
-        });
+        it('should use special handling if result is an automatic Athena result', () => {
+            comp.result = { ...mockResult, score: 90, assessmentType: AssessmentType.AUTOMATIC_ATHENA };
+            jest.spyOn(Result, 'isAthenaAIResult').mockReturnValue(true);
 
-        afterEach(() => {
-            jest.clearAllTimers();
-        });
-
-        it('should call evaluate again after the specified due time', () => {
-            comp.result = { ...comp.result, completionDate: dayjs().add(2, 'seconds') };
-            comp.templateStatus = ResultTemplateStatus.IS_GENERATING_FEEDBACK;
             comp.evaluate();
 
-            comp.result.completionDate = dayjs().subtract(2, 'seconds');
-            jest.runOnlyPendingTimers();
-
-            expect(comp.templateStatus).not.toEqual(ResultTemplateStatus.IS_GENERATING_FEEDBACK);
+            expect(comp.templateStatus).toEqual(ResultTemplateStatus.HAS_RESULT);
+            expect(comp.resultTooltip).toContain('artemisApp.result.resultString.automaticAIFeedbackSuccessfulTooltip');
         });
-
-        it('should clear the timeout if the component is destroyed before the feedback generation is complete', () => {
-            comp.templateStatus = ResultTemplateStatus.IS_GENERATING_FEEDBACK;
-            comp.evaluate();
-            expect(jest.getTimerCount()).toBe(1);
-
-            comp.ngOnDestroy();
-            expect(jest.getTimerCount()).toBe(0);
-        });
-    });
-
-    it('should use special handling if result is an automatic AI result', () => {
-        comp.result = { ...mockResult, score: 90, assessmentType: AssessmentType.AUTOMATIC_ATHENA };
-        jest.spyOn(Result, 'isAthenaAIResult').mockReturnValue(true);
-
-        comp.evaluate();
-
-        expect(comp.templateStatus).toEqual(ResultTemplateStatus.HAS_RESULT);
-        expect(comp.resultTooltip).toContain('artemisApp.result.resultString.automaticAIFeedbackSuccessfulTooltip');
     });
 });

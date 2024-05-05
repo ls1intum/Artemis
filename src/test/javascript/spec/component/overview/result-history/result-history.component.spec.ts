@@ -3,6 +3,7 @@ import { ResultHistoryComponent } from 'app/overview/result-history/result-histo
 import { MockPipe } from 'ng-mocks';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTestModule } from '../../../test.module';
+import { Result } from 'app/entities/result.model';
 
 describe('ResultHistoryComponent', () => {
     let component: ResultHistoryComponent;
@@ -25,72 +26,37 @@ describe('ResultHistoryComponent', () => {
     });
 
     it('should initialize with same rated results', () => {
-        component.results = [
-            { rated: true, id: 1 },
-            { rated: true, id: 2 },
-            { rated: true, id: 3 },
-        ];
+        component.entries = [createResult(1, true), createResult(2, true), createResult(3, true)];
         component.ngOnChanges();
-        expect(component.displayedResults).toEqual([
-            { rated: true, id: 1 },
-            { rated: true, id: 2 },
-            { rated: true, id: 3 },
-        ]);
+        expect(component.displayedEntries).toEqual([createResult(1, true), createResult(2, true), createResult(3, true)]);
         expect(component.showPreviousDivider).toBeFalse();
         expect(component.movedLastRatedResult).toBeFalsy();
 
-        component.results = [
-            { rated: false, id: 1 },
-            { rated: false, id: 2 },
-            { rated: false, id: 3 },
-            { rated: false, id: 4 },
-            { rated: false, id: 5 },
-            { rated: false, id: 6 },
-        ];
+        component.entries = [createResult(1, false), createResult(2, false), createResult(3, false), createResult(4, false), createResult(5, false), createResult(6, false)];
         component.ngOnChanges();
-        expect(component.displayedResults).toEqual([
-            { rated: false, id: 2 },
-            { rated: false, id: 3 },
-            { rated: false, id: 4 },
-            { rated: false, id: 5 },
-            { rated: false, id: 6 },
-        ]);
+        expect(component.displayedEntries).toEqual([createResult(2, false), createResult(3, false), createResult(4, false), createResult(5, false), createResult(6, false)]);
         expect(component.showPreviousDivider).toBeTrue();
         expect(component.movedLastRatedResult).toBeFalsy();
     });
 
     it('should initialize with mixed rated results', () => {
-        component.results = [
-            { rated: true, id: 1 },
-            { rated: false, id: 2 },
-            { rated: false, id: 3 },
-        ];
+        component.entries = [createResult(1, true), createResult(2, false), createResult(3, false)];
         component.ngOnChanges();
-        expect(component.displayedResults).toEqual([
-            { rated: true, id: 1 },
-            { rated: false, id: 2 },
-            { rated: false, id: 3 },
-        ]);
+        expect(component.displayedEntries).toEqual([createResult(1, true), createResult(2, false), createResult(3, false)]);
         expect(component.showPreviousDivider).toBeFalse();
         expect(component.movedLastRatedResult).toBeFalsy();
 
-        component.results = [
-            { rated: true, id: 1 },
-            { rated: false, id: 2 },
-            { rated: false, id: 3 },
-            { rated: false, id: 4 },
-            { rated: false, id: 5 },
-            { rated: false, id: 6 },
-        ];
+        component.entries = [createResult(1, true), createResult(2, false), createResult(3, false), createResult(4, false), createResult(5, false), createResult(6, false)];
         component.ngOnChanges();
-        expect(component.displayedResults).toEqual([
-            { rated: true, id: 1 },
-            { rated: false, id: 3 },
-            { rated: false, id: 4 },
-            { rated: false, id: 5 },
-            { rated: false, id: 6 },
-        ]);
+        expect(component.displayedEntries).toEqual([createResult(1, true), createResult(3, false), createResult(4, false), createResult(5, false), createResult(6, false)]);
         expect(component.showPreviousDivider).toBeTrue();
         expect(component.movedLastRatedResult).toBeTrue();
     });
+
+    function createResult(id: number, rated: boolean): Result {
+        const res = new Result();
+        res.id = id;
+        res.rated = rated;
+        return res;
+    }
 });
