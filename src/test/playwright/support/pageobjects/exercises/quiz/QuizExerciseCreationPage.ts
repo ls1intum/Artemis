@@ -1,7 +1,7 @@
 import { Page } from '@playwright/test';
 import { clearTextField, enterDate } from '../../../utils';
 import { Dayjs } from 'dayjs';
-import { QUIZ_EXERCISE_BASE } from '../../../constants';
+import { BASE_API, QUIZ_EXERCISE_BASE } from '../../../constants';
 import { Fixtures } from '../../../../fixtures/fixtures';
 
 export class QuizExerciseCreationPage {
@@ -78,9 +78,11 @@ export class QuizExerciseCreationPage {
     async uploadDragAndDropBackground() {
         const fileChooserPromise = this.page.waitForEvent('filechooser');
         // Use a regular expression to match the numeric course ID
+        const fileUploadPromise = this.page.waitForResponse(`${BASE_API}/fileUpload*`);
         await this.page.locator('#background-file-input-button').click();
         const fileChooser = await fileChooserPromise;
         await fileChooser.setFiles('../cypress/fixtures/exercise/quiz/drag_and_drop/background.jpg');
+        await fileUploadPromise;
     }
 
     async saveQuiz() {
