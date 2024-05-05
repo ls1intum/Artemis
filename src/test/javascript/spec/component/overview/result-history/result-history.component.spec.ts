@@ -5,6 +5,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTestModule } from '../../../test.module';
 import { Result } from 'app/entities/result.model';
 import { SelfLearningFeedbackRequest } from 'app/entities/self-learning-feedback-request.model';
+import dayjs from 'dayjs/esm';
 
 describe('ResultHistoryComponent', () => {
     let component: ResultHistoryComponent;
@@ -85,7 +86,7 @@ describe('ResultHistoryComponent', () => {
     function createSelfLearningFeedbackRequests(id: number): SelfLearningFeedbackRequest {
         const request = new SelfLearningFeedbackRequest();
         request.id = id;
-        request.requestDateTime = '2024-05-05T13:50:59.540Z';
+        request.requestDateTime = dayjs('2024-05-05T13:50:59.540Z');
         request.result = undefined;
         return request;
     }
