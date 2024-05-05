@@ -38,14 +38,26 @@ def download_and_extract_zip(url, headers):
     if url is None:
         return None
     try:
-        response = requests.get(url, headers=headers)
+        response = requests.get(url, headers=headers, stream=True)
         response.raise_for_status()
 
-        try:
-            zip_test = zipfile.ZipFile(BytesIO(response.content))
-            zip_test.close()
+        total_size = int(response.headers.get('content-length', 0))
+        chunk_size = 1024
 
-            return BytesIO(response.content)
+        data_stream = BytesIO()
+
+        with tqdm(total=total_size, unit='B', unit_scale=True, desc="Downloading ZIP") as progress_bar:
+            for chunk in response.iter_content(chunk_size=chunk_size):
+                data_stream.write(chunk)
+                progress_bar.update(len(chunk))
+
+        data_stream.seek(0)
+
+        try:
+            zip_test = zipfile.ZipFile(data_stream)
+            zip_test.close()
+            data_stream.seek(0)
+            return data_stream
         except zipfile.BadZipFile:
             logging.error("The downloaded content is not a valid ZIP file.")
             return None
@@ -87,8 +99,7 @@ def get_artifacts_of_the_last_completed_run(headers, branch, run_id):
                 logging.error("No run found with the specified ID.")
                 sys.exit(1)
             elif len(filtered_runs) > 1:
-                logging.error("Multiple runs found with the same ID. ID should be unique.")
-                sys.exit(1)
+                logging.error("Multiple runs found with the same ID. Using the first one.")
             artifacts_url = filtered_runs[0]['artifacts_url']
 
         response = requests.get(artifacts_url, headers=headers)
@@ -113,7 +124,7 @@ def get_coverage_artifact_for_key(artifacts, key):
     if len(matching_artifacts) == 1:
         return matching_artifacts[0]['archive_download_url']
     else:
-        logging.error("Expected exactly one artifact, found {}. Key: {}".format(len(matching_artifacts), key))
+        logging.error("Expected exactly one artifact, found {} for key: {}".format(len(matching_artifacts), key))
         return None
 
 
@@ -189,20 +200,23 @@ def get_server_line_coverage(server_coverage_zip_bytes, file_name, change_type):
     package = preliminary_path.replace("/", ".")
     report_name = f"{package}/{class_name}"
 
-    path = f"{preliminary_path}/{report_name}"
-    file_content = get_html_content(server_coverage_zip_bytes, path)
-    logging.debug(f"Opening {path}")
-
+    file_content = get_html_content(server_coverage_zip_bytes, report_name)
     line_coverage = None
-    soup = BeautifulSoup(file_content, "html.parser")
-    tfoot = soup.find("tfoot")
-    if tfoot:
-        ctr2_tds = tfoot.find_all("td", class_="ctr2")
-        if ctr2_tds and len(ctr2_tds) > 0:
-            line_coverage = ctr2_tds[0].text.strip()
-    logging.debug(f"Coverage for {file_name} -> line coverage: {line_coverage}")
+    if file_content:
+        logging.debug(f"Opening {report_name}")
 
-    return file_name, 'url', f"not found ({change_type})" if line_coverage is None else line_coverage
+        soup = BeautifulSoup(file_content, "html.parser")
+        tfoot = soup.find("tfoot")
+        if tfoot:
+            ctr2_tds = tfoot.find_all("td", class_="ctr2")
+            if ctr2_tds and len(ctr2_tds) > 0:
+                line_coverage = ctr2_tds[0].text.strip()
+        logging.debug(f"Coverage for {file_name} -> line coverage: {line_coverage}")
+
+    if line_coverage:
+        return file_name, line_coverage
+    else:
+        return file_name, f"not found ({change_type})"
 
 
 def coverage_to_table(covs):
@@ -274,10 +288,8 @@ def main(argv):
 
     artifacts = get_artifacts_of_the_last_completed_run(headers, args.branch_name, args.build_id)
 
-    client_coverage_zip_bytes = download_and_extract_zip(get_coverage_artifact_for_key(artifacts, client_tests_key),
-                                                         headers)
-    server_coverage_zip_bytes = download_and_extract_zip(get_coverage_artifact_for_key(artifacts, server_tests_key),
-                                                         headers)
+    client_coverage_zip_bytes = download_and_extract_zip(get_coverage_artifact_for_key(artifacts, client_tests_key), headers)
+    server_coverage_zip_bytes = download_and_extract_zip(get_coverage_artifact_for_key(artifacts, server_tests_key), headers)
 
     client_cov = [
         get_client_line_coverage(client_coverage_zip_bytes, file_name, change_type)
