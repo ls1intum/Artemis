@@ -7,7 +7,6 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -36,7 +35,8 @@ import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
 
 import de.tum.in.www1.artemis.config.localvcci.LocalCIConfiguration;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Repository;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.exception.LocalCIException;
@@ -74,9 +74,6 @@ public class BuildJobExecutionService {
     private final LocalCIDockerService localCIDockerService;
 
     private final BuildLogsMap buildLogsMap;
-
-    @Value("${artemis.version-control.url}")
-    private URL localVCBaseUrl;
 
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
@@ -133,7 +130,7 @@ public class BuildJobExecutionService {
         LocalVCRepositoryUri testsRepoUri = new LocalVCRepositoryUri(buildJob.repositoryInfo().testRepositoryUri());
 
         // retrieve last commit hash from repositories
-        String assignmentCommitHash = buildJob.buildConfig().commitHash();
+        String assignmentCommitHash = buildJob.buildConfig().assignmentCommitHash();
         if (assignmentCommitHash == null) {
             try {
                 assignmentCommitHash = gitService.getLastCommitHash(assignmentRepoUri).getName();
@@ -144,14 +141,16 @@ public class BuildJobExecutionService {
                 throw new LocalCIException(msg, e);
             }
         }
-        String testCommitHash;
-        try {
-            testCommitHash = gitService.getLastCommitHash(testsRepoUri).getName();
-        }
-        catch (EntityNotFoundException e) {
-            msg = "Could not find last commit hash for test repository " + testsRepoUri.repositorySlug();
-            buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
-            throw new LocalCIException(msg, e);
+        String testCommitHash = buildJob.buildConfig().testCommitHash();
+        if (testCommitHash == null) {
+            try {
+                testCommitHash = gitService.getLastCommitHash(testsRepoUri).getName();
+            }
+            catch (EntityNotFoundException e) {
+                msg = "Could not find last commit hash for test repository " + testsRepoUri.repositorySlug();
+                buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
+                throw new LocalCIException(msg, e);
+            }
         }
 
         Path assignmentRepositoryPath;
@@ -160,7 +159,7 @@ public class BuildJobExecutionService {
          * If this build job is triggered by a push to the test repository, the commit hash reflects changes to the test repository.
          * Thus, we do not checkout the commit hash of the test repository in the assignment repository.
          */
-        if (buildJob.buildConfig().commitHash() != null && !isPushToTestOrAuxRepository) {
+        if (buildJob.buildConfig().assignmentCommitHash() != null && !isPushToTestOrAuxRepository) {
             // Clone the assignment repository into a temporary directory with the name of the commit hash and then checkout the commit hash.
             assignmentRepositoryPath = cloneRepository(assignmentRepoUri, assignmentCommitHash, true, buildJob.id());
         }

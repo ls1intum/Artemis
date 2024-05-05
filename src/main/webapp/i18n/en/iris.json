@@ -22,7 +22,6 @@
                 "subSettings": {
                     "chatSettings": "Chat Settings",
                     "hestiaSettings": "Hestia Settings",
-                    "codeEditorSettings": "Code Editor Settings",
                     "competencyGenerationSettings": "Competency Generation Settings",
                     "enabled-disabled": "Enabled/Disabled",
                     "models": {
@@ -44,20 +43,10 @@
                         "title": "Template",
                         "inherit": "Inherit Template"
                     },
-                    "codeEditor": {
-                        "templates": "Templates",
-                        "templatesInheritSwitch": "Inherit Templates",
-                        "chatTemplate": "Chat Template",
-                        "problemStatementTemplate": "Problem Statement Generation Template",
-                        "templateRepoTemplate": "Template Repository Generation Template",
-                        "solutionRepoTemplate": "Solution Repository Generation Template",
-                        "testRepoTemplate": "Test Repository Generation Template"
-                    },
                     "enabled": {
                         "on": "Enabled",
                         "off": "Disabled",
                         "chat": "Iris Chat",
-                        "codeEditor": "Programming Exercise Creation Chat",
                         "hestia": "Hestia Integration"
                     },
                     "disabled": {
@@ -76,8 +65,7 @@
                     "tooltip": "If enabled, the specific global Iris settings will be automatically updated when a new release of Artemis provides new Iris settings.",
                     "chatLabel": "Auto Update Chat Settings",
                     "hestiaLabel": "Auto Update Hestia Settings",
-                    "competencyGenerationLabel": "Auto Update Competency Generation Settings",
-                    "codeEditorLabel": "Auto Update Code Editor Settings"
+                    "competencyGenerationLabel": "Auto Update Competency Generation Settings"
                 }
             },
             "error": {

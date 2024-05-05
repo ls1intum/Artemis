@@ -7,7 +7,6 @@ import { of } from 'rxjs';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { IrisChatSubSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-chat-sub-settings-update/iris-chat-sub-settings-update.component';
 import { IrisHestiaSubSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-hestia-sub-settings-update/iris-hestia-sub-settings-update.component';
-import { IrisCodeEditorSubSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-code-editor-sub-settings-update/iris-code-editor-sub-settings-update.component';
 import { IrisCommonSubSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-common-sub-settings-update/iris-common-sub-settings-update.component';
 import { IrisGlobalAutoupdateSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-global-autoupdate-settings-update/iris-global-autoupdate-settings-update.component';
 import { mockModels, mockSettings } from './mock-settings';
@@ -34,7 +33,6 @@ describe('IrisGlobalSettingsUpdateComponent Component', () => {
                 MockComponent(IrisCommonSubSettingsUpdateComponent),
                 MockComponent(IrisChatSubSettingsUpdateComponent),
                 MockComponent(IrisHestiaSubSettingsUpdateComponent),
-                MockComponent(IrisCodeEditorSubSettingsUpdateComponent),
                 MockComponent(IrisCompetencyGenerationSubSettingsUpdateComponent),
                 MockComponent(IrisGlobalAutoupdateSettingsUpdateComponent),
                 MockComponent(ButtonComponent),
@@ -66,10 +64,9 @@ describe('IrisGlobalSettingsUpdateComponent Component', () => {
         expect(getModelsSpy).toHaveBeenCalledOnce();
 
         expect(fixture.debugElement.query(By.directive(IrisGlobalAutoupdateSettingsUpdateComponent))).toBeTruthy();
-        expect(fixture.debugElement.queryAll(By.directive(IrisCommonSubSettingsUpdateComponent))).toHaveLength(4);
+        expect(fixture.debugElement.queryAll(By.directive(IrisCommonSubSettingsUpdateComponent))).toHaveLength(3);
         expect(fixture.debugElement.query(By.directive(IrisChatSubSettingsUpdateComponent))).toBeTruthy();
         expect(fixture.debugElement.query(By.directive(IrisHestiaSubSettingsUpdateComponent))).toBeTruthy();
-        expect(fixture.debugElement.query(By.directive(IrisCodeEditorSubSettingsUpdateComponent))).toBeTruthy();
         expect(fixture.debugElement.query(By.directive(IrisCompetencyGenerationSubSettingsUpdateComponent))).toBeTruthy();
     });
 

@@ -1,6 +1,14 @@
 package de.tum.in.www1.artemis.domain;
 
-import static de.tum.in.www1.artemis.domain.ObjectMethodTestExclusions.*;
+import static de.tum.in.www1.artemis.domain.ObjectMethodTestExclusions.ALL_TESTS;
+import static de.tum.in.www1.artemis.domain.ObjectMethodTestExclusions.ENUM_TOSTRING_NAME_EQUALITY;
+import static de.tum.in.www1.artemis.domain.ObjectMethodTestExclusions.ID_EQUALS;
+import static de.tum.in.www1.artemis.domain.ObjectMethodTestExclusions.ID_GET_AND_SET;
+import static de.tum.in.www1.artemis.domain.ObjectMethodTestExclusions.ID_HASHCODE;
+import static de.tum.in.www1.artemis.domain.ObjectMethodTestExclusions.ID_RELATED_TESTS;
+import static de.tum.in.www1.artemis.domain.ObjectMethodTestExclusions.INSTANCE_TESTS;
+import static de.tum.in.www1.artemis.domain.ObjectMethodTestExclusions.isClassExcludedFrom;
+import static de.tum.in.www1.artemis.domain.ObjectMethodTestExclusions.isClassNotExcludedFrom;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.AssertionsForClassTypes.fail;
@@ -8,7 +16,10 @@ import static org.junit.jupiter.api.DynamicContainer.dynamicContainer;
 import static org.junit.jupiter.api.DynamicTest.dynamicTest;
 
 import java.lang.reflect.Constructor;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.DynamicNode;
