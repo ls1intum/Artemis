@@ -38,14 +38,26 @@ def download_and_extract_zip(url, headers):
     if url is None:
         return None
     try:
-        response = requests.get(url, headers=headers)
+        response = requests.get(url, headers=headers, stream=True)
         response.raise_for_status()
 
-        try:
-            zip_test = zipfile.ZipFile(BytesIO(response.content))
-            zip_test.close()
+        total_size = int(response.headers.get('content-length', 0))
+        chunk_size = 1024
 
-            return BytesIO(response.content)
+        data_stream = BytesIO()
+
+        with tqdm(total=total_size, unit='B', unit_scale=True, desc="Downloading ZIP") as progress_bar:
+            for chunk in response.iter_content(chunk_size=chunk_size):
+                data_stream.write(chunk)
+                progress_bar.update(len(chunk))
+
+        data_stream.seek(0)
+
+        try:
+            zip_test = zipfile.ZipFile(data_stream)
+            zip_test.close()
+            data_stream.seek(0)
+            return data_stream
         except zipfile.BadZipFile:
             logging.error("The downloaded content is not a valid ZIP file.")
             return None
@@ -87,8 +99,7 @@ def get_artifacts_of_the_last_completed_run(headers, branch, run_id):
                 logging.error("No run found with the specified ID.")
                 sys.exit(1)
             elif len(filtered_runs) > 1:
-                logging.error("Multiple runs found with the same ID. ID should be unique.")
-                sys.exit(1)
+                logging.error("Multiple runs found with the same ID. Using the first one.")
             artifacts_url = filtered_runs[0]['artifacts_url']
 
         response = requests.get(artifacts_url, headers=headers)
@@ -274,10 +285,8 @@ def main(argv):
 
     artifacts = get_artifacts_of_the_last_completed_run(headers, args.branch_name, args.build_id)
 
-    client_coverage_zip_bytes = download_and_extract_zip(get_coverage_artifact_for_key(artifacts, client_tests_key),
-                                                         headers)
-    server_coverage_zip_bytes = download_and_extract_zip(get_coverage_artifact_for_key(artifacts, server_tests_key),
-                                                         headers)
+    client_coverage_zip_bytes = download_and_extract_zip(get_coverage_artifact_for_key(artifacts, client_tests_key), headers)
+    server_coverage_zip_bytes = download_and_extract_zip(get_coverage_artifact_for_key(artifacts, server_tests_key), headers)
 
     client_cov = [
         get_client_line_coverage(client_coverage_zip_bytes, file_name, change_type)
@@ -299,7 +308,7 @@ def main(argv):
         result += f"#### Server\n\n{server_table}\n\n"
 
     logging.info("Info: ✅ ❌ in Confirmation (assert/expect) have to be adjusted manually, also delete trivial files!")
-    logging.info("")
+    logging.info("")  # newline
 
     if args.print_results:
         print(result)
