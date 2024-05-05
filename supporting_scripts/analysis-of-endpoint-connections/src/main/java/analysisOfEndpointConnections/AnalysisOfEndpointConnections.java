@@ -24,6 +24,15 @@ public class AnalysisOfEndpointConnections {
     }
 
     private static void analyzeServerEndpoints(String[] filePaths) {
+        final List<String> httpMethodFullNames = List.of(
+            "org.springframework.web.bind.annotation.GetMapping",
+            "org.springframework.web.bind.annotation.PostMapping",
+            "org.springframework.web.bind.annotation.PutMapping",
+            "org.springframework.web.bind.annotation.DeleteMapping",
+            "org.springframework.web.bind.annotation.PatchMapping"
+        );
+        final String requestMappingFullName = "org.springframework.web.bind.annotation.RequestMapping";
+
         JavaProjectBuilder builder = new JavaProjectBuilder();
         for (String filePath : filePaths) {
             builder.addSourceTree(new File(filePath));
@@ -32,9 +41,7 @@ public class AnalysisOfEndpointConnections {
         Collection<JavaClass> classes = builder.getClasses();
         for (JavaClass javaClass : classes) {
             Optional<JavaAnnotation> requestMappingOptional = javaClass.getAnnotations().stream()
-                .filter(annotation ->
-                    annotation.getType().getFullyQualifiedName().startsWith("org.springframework.web.bind.annotation")
-                    && annotation.getType().getName().equals("RequestMapping"))
+                .filter(annotation -> annotation.getType().getFullyQualifiedName().equals(requestMappingFullName))
                 .findFirst();
             for (JavaMethod method : javaClass.getMethods()) {
                 for (JavaAnnotation annotation : method.getAnnotations()) {
