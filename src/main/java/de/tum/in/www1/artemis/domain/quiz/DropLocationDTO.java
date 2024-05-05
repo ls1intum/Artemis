@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
 import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * A DropLocation.
@@ -18,6 +20,8 @@ public class DropLocationDTO implements Serializable {
     private Double height;
 
     private Boolean invalid = false;
+
+    private Set<DragAndDropMapping> mappings = new HashSet<>();
 
     public Long getId() {
         return id;

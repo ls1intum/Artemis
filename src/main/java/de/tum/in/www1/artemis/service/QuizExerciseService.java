@@ -410,6 +410,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         // make sure the pointers in the statistics are correct
         quizExercise.recalculatePointCounters();
 
+        quizExercise.getQuizQuestions().forEach(quizQuestion -> quizQuestion.setExercise(quizExercise));
+
         QuizExercise savedQuizExercise = super.save(quizExercise);
 
         if (savedQuizExercise.isCourseExercise()) {

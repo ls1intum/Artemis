@@ -4,6 +4,8 @@ import java.util.*;
 
 import jakarta.persistence.*;
 
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -23,16 +25,19 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class MultipleChoiceQuestion extends QuizQuestion {
 
-    @Column(name = "content")
-    @JdbcTypeCode(SqlTypes.JSON)
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @JoinColumn(name = "question_id")
+    @OrderColumn
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JsonView(QuizView.Before.class)
     private List<AnswerOption> answerOptions = new ArrayList<>();
 
     @Column(name = "single_choice")
     @JsonView(QuizView.Before.class)
     private boolean singleChoice = false;
 
-    @Column(name = "content")
     @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "content", columnDefinition = "json")
     private List<AnswerOptionDTO> answerOptionDTOs = new ArrayList<>();
 
     public List<AnswerOption> getAnswerOptions() {
@@ -40,6 +45,7 @@ public class MultipleChoiceQuestion extends QuizQuestion {
     }
 
     public void setAnswerOptions(List<AnswerOption> answerOptions) {
+        setAnswerOptionDTOs(answerOptions.stream().map(AnswerOptionDTO::convertToAnswerOptionDTO).toList());
         this.answerOptions = answerOptions;
     }
 
@@ -237,5 +243,13 @@ public class MultipleChoiceQuestion extends QuizQuestion {
         var question = new MultipleChoiceQuestion();
         question.setId(getId());
         return question;
+    }
+
+    public List<AnswerOptionDTO> getAnswerOptionDTOs() {
+        return answerOptionDTOs;
+    }
+
+    public void setAnswerOptionDTOs(List<AnswerOptionDTO> answerOptionDTOs) {
+        this.answerOptionDTOs = answerOptionDTOs;
     }
 }

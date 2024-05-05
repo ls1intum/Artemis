@@ -92,9 +92,20 @@ public class AnswerOptionDTO implements Serializable {
         this.invalid = invalid;
     }
 
+    public static AnswerOptionDTO convertToAnswerOptionDTO(AnswerOption answerOption) {
+        AnswerOptionDTO answerOptionDTO = new AnswerOptionDTO();
+        answerOptionDTO.setHint(answerOption.getHint());
+        answerOptionDTO.setExplanation(answerOption.getExplanation());
+        answerOptionDTO.setInvalid(answerOption.isInvalid());
+        answerOptionDTO.setText(answerOption.getText());
+        answerOptionDTO.setIsCorrect(answerOption.isIsCorrect());
+        return answerOptionDTO;
+    }
+
     @Override
     public String toString() {
-        return "AnswerOption{" + "id=" + getId() + ", text='" + getText() + "'" + ", hint='" + getHint() + "'" + ", explanation='" + getExplanation() + "'" + ", isCorrect='"
-                + isIsCorrect() + "'" + ", invalid='" + isInvalid() + "'" + "}";
+        return "AnswerOptionDTO{" + "id=" + getId() + ", text='" + getText() + "'" + ", hint='" + "'" + ", explanation='" + "'" + ", isCorrect='" + isIsCorrect() + "'"
+                + ", invalid='" + isInvalid() + "'" + "}";
     }
+
 }

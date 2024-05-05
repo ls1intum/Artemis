@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.domain.quiz;
 
 import java.io.Serializable;
 import java.net.URI;
+import java.util.HashSet;
+import java.util.Set;
 
 import jakarta.persistence.PostPersist;
 import jakarta.persistence.PostRemove;
@@ -33,6 +35,8 @@ public class DragItemDTO implements Serializable {
     private String text;
 
     private Boolean invalid = false;
+
+    private Set<DragAndDropMapping> mappings = new HashSet<>();
 
     public Long getId() {
         return id;

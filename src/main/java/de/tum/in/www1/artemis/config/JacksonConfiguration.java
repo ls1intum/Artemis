@@ -36,9 +36,7 @@ public class JacksonConfiguration {
      */
     @Bean
     public Hibernate6Module hibernate6Module() {
-        Hibernate6Module module = new Hibernate6Module();
-        module.disable(Hibernate6Module.Feature.USE_TRANSIENT_ANNOTATION);
-        return module;
+        return new Hibernate6Module();
     }
 
     /*
