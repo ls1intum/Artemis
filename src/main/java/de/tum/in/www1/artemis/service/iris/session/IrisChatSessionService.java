@@ -213,8 +213,8 @@ public class IrisChatSessionService implements IrisChatBasedFeatureInterface<Iri
         final List<BuildLogEntry> buildLog = latestSubmission.map(ProgrammingSubmission::getBuildLogEntries).orElse(List.of());
         final Repository templateRepository = templateRepository(exercise);
         final Optional<Repository> studentRepository = studentRepository(latestSubmission);
-        final Map<String, String> templateRepositoryContents = repositoryService.getFilesWithContent(templateRepository);
-        final Map<String, String> studentRepositoryContents = studentRepository.map(repositoryService::getFilesWithContent).orElse(Map.of());
+        final Map<String, String> templateRepositoryContents = repositoryService.getFilesContentFromWorkingCopy(templateRepository);
+        final Map<String, String> studentRepositoryContents = studentRepository.map(repositoryService::getFilesContentFromWorkingCopy).orElse(Map.of());
         final String gitDiff = studentRepository.map(repo -> getGitDiff(templateRepository, repo)).orElse("");
 
         return new IrisChatRequestDTO(exercise, course, latestSubmission, buildFailed, buildLog, session, gitDiff, templateRepositoryContents, studentRepositoryContents);

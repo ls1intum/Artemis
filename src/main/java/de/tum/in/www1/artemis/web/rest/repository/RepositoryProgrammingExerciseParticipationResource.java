@@ -2,12 +2,7 @@ package de.tum.in.www1.artemis.web.rest.repository;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -20,11 +15,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.eclipse.jgit.api.errors.CheckoutConflictException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
-import org.eclipse.jgit.lib.ObjectId;
-import org.eclipse.jgit.revwalk.RevCommit;
-import org.eclipse.jgit.revwalk.RevTree;
-import org.eclipse.jgit.revwalk.RevWalk;
-import org.eclipse.jgit.treewalk.TreeWalk;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -241,40 +231,12 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         repositoryAccessService.checkAccessRepositoryElseThrow(participation, userRepository.getUserWithGroupsAndAuthorities(), programmingExercise, RepositoryActionType.READ);
 
         return executeAndCheckForExceptions(() -> {
-            // TODO: move this logic into a LocalVCRepositoryService that offers the same methods as RepositoryService, but is implemented differently using the same API
             if (profileService.isLocalVcsActive()) {
                 log.info("Using local VCS for getting files at commit {} for participation {}", commitId, participationId);
                 // operate directly on the bare repository
                 var repoUri = Objects.equals(repositoryType, RepositoryType.TESTS) ? programmingExercise.getVcsTestRepositoryUri() : getRepositoryUri(participationId);
                 Repository repository = gitService.getBareRepository(repoUri);
-
-                RevWalk revWalk = new RevWalk(repository);
-                RevCommit commit = revWalk.parseCommit(repository.resolve(commitId));
-                RevTree tree = commit.getTree();
-                // Initialize your map to store file paths and their contents
-                Map<String, String> filesWithContent = new HashMap<>();
-
-                TreeWalk treeWalk = new TreeWalk(repository);
-                treeWalk.addTree(tree);
-                treeWalk.setRecursive(true);
-                while (treeWalk.next()) {
-                    String path = treeWalk.getPathString();
-                    ObjectId objectId = treeWalk.getObjectId(0);
-
-                    // Open the object stream to read the file content
-                    try (InputStream inputStream = repository.open(objectId).openStream();
-                            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
-                        StringBuilder stringBuilder = new StringBuilder();
-                        String line;
-                        while ((line = reader.readLine()) != null) {
-                            stringBuilder.append(line).append("\n");  // Append newline preserved from original file
-                        }
-
-                        // Put the path and corresponding file content into the map
-                        filesWithContent.put(path, stringBuilder.toString());
-                    }
-                }
-                revWalk.close();
+                Map<String, String> filesWithContent = repositoryService.getFilesContentFromBareRepository(repository, commitId);
                 return new ResponseEntity<>(filesWithContent, HttpStatus.OK);
             }
             else {
@@ -286,7 +248,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
                 else {
                     repository = gitService.checkoutRepositoryAtCommit(getRepositoryUri(participationId), commitId, true);
                 }
-                Map<String, String> filesWithContent = repositoryService.getFilesWithContent(repository);
+                Map<String, String> filesWithContent = repositoryService.getFilesContentFromWorkingCopy(repository);
                 gitService.switchBackToDefaultBranchHead(repository);
                 return new ResponseEntity<>(filesWithContent, HttpStatus.OK);
             }
@@ -353,7 +315,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     public ResponseEntity<Map<String, String>> getFilesWithContent(@PathVariable Long participationId) {
         return super.executeAndCheckForExceptions(() -> {
             Repository repository = getRepository(participationId, RepositoryActionType.READ, true);
-            var filesWithContent = super.repositoryService.getFilesWithContent(repository);
+            var filesWithContent = super.repositoryService.getFilesContentFromWorkingCopy(repository);
             return new ResponseEntity<>(filesWithContent, HttpStatus.OK);
         });
     }

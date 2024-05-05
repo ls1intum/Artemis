@@ -192,7 +192,7 @@ public class BehavioralTestCaseService {
             gitService.resetToOriginHead(solutionRepo);
             gitService.pullIgnoreConflicts(solutionRepo);
 
-            return repositoryService.getFilesWithContent(solutionRepo);
+            return repositoryService.getFilesContentFromWorkingCopy(solutionRepo);
         }
         catch (GitAPIException e) {
             throw new BehavioralSolutionEntryGenerationException("Error while reading solution repository", e);

@@ -19,6 +19,11 @@ import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.text.StringEscapeUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevTree;
+import org.eclipse.jgit.revwalk.RevWalk;
+import org.eclipse.jgit.treewalk.TreeWalk;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -73,12 +78,15 @@ public class RepositoryService {
     }
 
     /**
-     * Get all files/folders with content from repository.
+     * Retrieves a mapping of file paths to their contents within a specified repository.
+     * This method filters out all non-file type entries and reads the content of each file.
+     * Note: If an I/O error occurs reading any file, this exception is caught internally and logged.
      *
-     * @param repository in which the requested files are located
-     * @return Files with code or an exception is thrown
+     * @param repository The repository from which files are to be fetched.
+     * @return A {@link Map} where each key is a file path (as a {@link String}) and each value is the content of the file (also as a {@link String}).
+     *         The map includes only those files that could successfully have their contents read; files that cause an IOException are logged but not included.
      */
-    public Map<String, String> getFilesWithContent(Repository repository) {
+    public Map<String, String> getFilesContentFromWorkingCopy(Repository repository) {
         var files = gitService.listFilesAndFolders(repository).entrySet().stream().filter(entry -> entry.getValue() == FileType.FILE).map(Map.Entry::getKey).toList();
         Map<String, String> fileListWithContent = new HashMap<>();
 
@@ -91,6 +99,48 @@ public class RepositoryService {
             }
         });
         return fileListWithContent;
+    }
+
+    /**
+     * Retrieves a mapping of file paths to their content for a specific commit in a bare Git repository.
+     * This method extracts file content by traversing the repository's tree from the specified commit.
+     * It is primarily designed to read text files, converting the binary content to a UTF-8 string.
+     * Usage of this method with binary files may lead to data corruption or misrepresentation as
+     * binary data does not convert cleanly into UTF-8 strings.
+     *
+     * @param repository The repository from which file contents are to be retrieved. Must be a bare repository.
+     * @param commitId   The commit identifier from which to extract file contents.
+     * @return A {@link Map} where each key is a file path and each value is the content of the file as a {@link String}.
+     *         The content is encoded in UTF-8 and may not represent binary data accurately.
+     * @throws IOException If an I/O error occurs during the file content retrieval process, including issues with
+     *                         opening and reading the file stream.
+     */
+    public Map<String, String> getFilesContentFromBareRepository(Repository repository, String commitId) throws IOException {
+        RevWalk revWalk = new RevWalk(repository);
+        RevCommit commit = revWalk.parseCommit(repository.resolve(commitId));
+        RevTree tree = commit.getTree();
+        // Initialize your map to store file paths and their contents
+        Map<String, String> filesWithContent = new HashMap<>();
+
+        TreeWalk treeWalk = new TreeWalk(repository);
+        treeWalk.addTree(tree);
+        treeWalk.setRecursive(true);
+        while (treeWalk.next()) {
+            String path = treeWalk.getPathString();
+            ObjectId objectId = treeWalk.getObjectId(0);
+
+            // TODO: this might not work for binary files
+            // Open the object stream to read the file content
+            try (InputStream inputStream = repository.open(objectId).openStream()) {
+                byte[] bytes = inputStream.readAllBytes(); // Read all bytes at once
+                String content = new String(bytes, StandardCharsets.UTF_8); // Convert bytes to string with UTF-8 encoding
+
+                // Put the path and corresponding file content into the map
+                filesWithContent.put(path, content);
+            }
+        }
+        revWalk.close();
+        return filesWithContent;
     }
 
     /**

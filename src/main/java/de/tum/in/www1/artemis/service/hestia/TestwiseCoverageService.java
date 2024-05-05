@@ -225,7 +225,7 @@ public class TestwiseCoverageService {
             var solutionRepo = gitService.getOrCheckoutRepository(solutionParticipation.getVcsRepositoryUri(), true);
             gitService.resetToOriginHead(solutionRepo);
             gitService.pullIgnoreConflicts(solutionRepo);
-            var solutionFiles = repositoryService.getFilesWithContent(solutionRepo);
+            var solutionFiles = repositoryService.getFilesContentFromWorkingCopy(solutionRepo);
             var result = new HashMap<String, Integer>();
             solutionFiles.forEach((filePath, value) -> {
                 // do not count lines for non-java/kotlin files

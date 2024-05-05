@@ -1243,12 +1243,20 @@ public class GitService {
     }
 
     /**
-     * List all files and folders in the repository
+     * Lists all files and directories within the given repository, excluding symbolic links.
+     * This method utilizes caching to avoid repeated scanning of the repository. If the repository's content is
+     * already cached, it returns the cached content. Otherwise, it performs a scan, filters out symbolic links,
+     * and caches the result for future use.
+     * <p>
+     * Note: This method does not handle changes to the repository content between invocations. If files change
+     * after the initial caching, the cache does not automatically refresh, which may lead to stale data.
      *
-     * @param repo Local Repository Object.
-     * @return Collection of File objects
+     * @param repo The repository to scan for files and directories.
+     * @return A {@link Map} where each key is a {@link File} object representing a file or directory, and each value is
+     *         the corresponding {@link FileType} (FILE or FOLDER). The map excludes symbolic links.
      */
     public Map<File, FileType> listFilesAndFolders(Repository repo) {
+        // TODO: what happens if the files change in between? maybe this caching mechanism is not really needed?
         // Check if list of files is already cached
         if (repo.getContent() == null) {
             FileAndDirectoryFilter filter = new FileAndDirectoryFilter();
