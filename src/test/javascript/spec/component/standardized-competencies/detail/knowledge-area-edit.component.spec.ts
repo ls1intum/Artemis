@@ -1,36 +1,34 @@
-import { ArtemisTestModule } from '../../test.module';
+import { ArtemisTestModule } from '../../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
-import { StandardizedCompetencyDetailComponent } from 'app/admin/standardized-competencies/standardized-competency-detail.component';
+import { KnowledgeAreaEditComponent } from 'app/admin/standardized-competencies/knowledge-area-edit.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
-import { CompetencyTaxonomy } from 'app/entities/competency.model';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { TaxonomySelectComponent } from 'app/course/competencies/taxonomy-select/taxonomy-select.component';
-import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslatePipeMock } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { NgbTooltipMocksModule } from '../../helpers/mocks/directive/ngbTooltipMocks.module';
+import { NgbTooltipMocksModule } from '../../../helpers/mocks/directive/ngbTooltipMocks.module';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { KnowledgeAreaDTO, StandardizedCompetencyDTO } from 'app/entities/competency/standardized-competency.model';
+import { KnowledgeAreaDTO } from 'app/entities/competency/standardized-competency.model';
+import { By } from '@angular/platform-browser';
 
-describe('StandardizedCompetencyDetailComponent', () => {
-    let componentFixture: ComponentFixture<StandardizedCompetencyDetailComponent>;
-    let component: StandardizedCompetencyDetailComponent;
-    const defaultCompetency: StandardizedCompetencyDTO = {
+describe('KnowledgeAreaEditComponent', () => {
+    let componentFixture: ComponentFixture<KnowledgeAreaEditComponent>;
+    let component: KnowledgeAreaEditComponent;
+    const defaultKnowledgeArea: KnowledgeAreaDTO = {
         id: 1,
         title: 'title',
+        shortTitle: 'title',
         description: 'description',
-        taxonomy: CompetencyTaxonomy.ANALYZE,
-        knowledgeAreaId: 1,
-        sourceId: 1,
-        version: '1.0.0',
+        parentId: 1,
     };
     const newValues = {
         title: 'new title',
+        shortTitle: 'new title',
         description: 'new description',
-        taxonomy: CompetencyTaxonomy.APPLY,
-        knowledgeAreaId: 2,
+        parentId: 2,
     };
 
     const defaultKnowledgeAreas: KnowledgeAreaDTO[] = [
@@ -42,7 +40,7 @@ describe('StandardizedCompetencyDetailComponent', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, ReactiveFormsModule, NgbTooltipMocksModule],
             declarations: [
-                StandardizedCompetencyDetailComponent,
+                KnowledgeAreaEditComponent,
                 MockComponent(ButtonComponent),
                 TranslatePipeMock,
                 MockPipe(HtmlForMarkdownPipe),
@@ -55,9 +53,9 @@ describe('StandardizedCompetencyDetailComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                componentFixture = TestBed.createComponent(StandardizedCompetencyDetailComponent);
+                componentFixture = TestBed.createComponent(KnowledgeAreaEditComponent);
                 component = componentFixture.componentInstance;
-                component.competency = defaultCompetency;
+                component.knowledgeArea = defaultKnowledgeArea;
                 component.knowledgeAreas = defaultKnowledgeAreas;
             });
     });
@@ -66,14 +64,9 @@ describe('StandardizedCompetencyDetailComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should initialize', () => {
+    it('should set form values to knowledgeArea', () => {
         componentFixture.detectChanges();
-        expect(component).toBeDefined();
-    });
-
-    it('should set form values to competency', () => {
-        componentFixture.detectChanges();
-        compareFormValues(component.form.getRawValue(), defaultCompetency);
+        compareFormValues(component.form.getRawValue(), defaultKnowledgeArea);
     });
 
     it('should disable/enable when setting edit mode', () => {
@@ -92,22 +85,22 @@ describe('StandardizedCompetencyDetailComponent', () => {
 
         component.save();
 
-        expect(saveSpy).toHaveBeenCalledWith({ ...defaultCompetency, ...newValues });
+        expect(saveSpy).toHaveBeenCalledWith({ ...defaultKnowledgeArea, ...newValues });
         expect(component.isEditing).toBeFalse();
     });
 
-    it.each<[StandardizedCompetencyDTO, boolean]>([
-        [defaultCompetency, false],
-        [{ title: 'new competency' } as StandardizedCompetencyDTO, true],
-    ])('should cancel and close', (competency, shouldClose) => {
-        component.competency = competency;
+    it.each<[KnowledgeAreaDTO, boolean]>([
+        [defaultKnowledgeArea, false],
+        [{ title: 'new knowledgeArea', shortTitle: 'new ka' } as KnowledgeAreaDTO, true],
+    ])('should cancel and close', (knowledgeArea, shouldClose) => {
+        component.knowledgeArea = knowledgeArea;
         component.isEditing = true;
         component.form.setValue(newValues);
         const closeSpy = jest.spyOn(component.onClose, 'emit');
 
         component.cancel();
 
-        compareFormValues(component.form.getRawValue(), competency);
+        compareFormValues(component.form.getRawValue(), knowledgeArea);
         expect(component.isEditing).toBeFalse();
         shouldClose ? expect(closeSpy).toHaveBeenCalled() : expect(closeSpy).not.toHaveBeenCalled();
     });
@@ -126,16 +119,57 @@ describe('StandardizedCompetencyDetailComponent', () => {
         expect(closeSpy).toHaveBeenCalled();
     });
 
+    it('should open new knowledge area', () => {
+        const openSpy = jest.spyOn(component.onOpenNewKnowledgeArea, 'emit');
+        component.openNewKnowledgeArea();
+
+        expect(openSpy).toHaveBeenCalled();
+    });
+
+    it('should open new competency', () => {
+        const openSpy = jest.spyOn(component.onOpenNewCompetency, 'emit');
+        component.openNewCompetency();
+
+        expect(openSpy).toHaveBeenCalled();
+    });
+
     it('should update description', () => {
         component.updateDescriptionControl('new description');
 
         expect(component.form.controls.description.getRawValue()).toBe('new description');
     });
 
-    function compareFormValues(formValues: any, competency: StandardizedCompetencyDTO) {
+    it.each<[number, boolean]>([
+        [1, true],
+        [2, true],
+        [3, false],
+    ])('should not allow circular dependencies', (newParentId, isInvalid) => {
+        component.isEditing = true;
+        //only the knowledge area 3 is ok because it is not a descendant of knowledge area 1
+        component.knowledgeArea = {
+            id: 1,
+            title: 'KA1',
+            shortTitle: 'title',
+            children: [{ id: 2 }],
+            parentId: 99,
+        };
+        component.knowledgeAreas = [{ id: 1 }, { id: 2 }, { id: 3 }];
+        componentFixture.detectChanges();
+        expect(component.form.controls.parentId.invalid).toBeFalse();
+
+        const select = componentFixture.debugElement.query(By.css('#knowledge-area-select')).nativeElement;
+        select.value = select.options[newParentId].value;
+        select.dispatchEvent(new Event('change'));
+        componentFixture.detectChanges();
+
+        expect(component.form.controls.parentId.value).toEqual(newParentId);
+        expect(component.form.controls.parentId.invalid).toEqual(isInvalid);
+    });
+
+    function compareFormValues(formValues: any, knowledgeArea: KnowledgeAreaDTO) {
         for (const key in formValues) {
             //needed to ensure null becomes undefined
-            expect(formValues[key] ?? undefined).toEqual(competency[key]);
+            expect(formValues[key] ?? undefined).toEqual(knowledgeArea[key]);
         }
     }
 });
