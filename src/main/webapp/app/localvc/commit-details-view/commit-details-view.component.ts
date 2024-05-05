@@ -2,11 +2,11 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
-import { Subscription } from 'rxjs';
+import { Subscription, throwError } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { CommitInfo } from 'app/entities/programming-submission.model';
 import dayjs from 'dayjs/esm';
-import { tap } from 'rxjs/operators';
+import { catchError, map, tap } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-commit-details-view',
@@ -72,32 +72,27 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
      * @private
      */
     private retrieveAndHandleCommits() {
-        const retrieveCommitHistory = this.programmingExerciseParticipationService.retrieveCommitHistoryForParticipation(this.participationId);
-
-        this.commitsInfoSubscription = retrieveCommitHistory
+        this.programmingExerciseParticipationService
+            .retrieveCommitHistoryForParticipation(this.participationId)
             .pipe(
-                tap((commits) => {
-                    this.commits = commits.sort((a, b) => (dayjs(b.timestamp!).isAfter(dayjs(a.timestamp!)) ? 1 : -1));
-                    for (let i = 0; i < this.commits.length; i++) {
-                        const commit = this.commits[i];
-                        if (commit.hash === this.commitHash) {
-                            this.currentCommit = commit;
-                            if (i < this.commits.length - 1) {
-                                this.previousCommit = this.commits[i + 1];
-                            } else {
-                                // choose template commit
-                                this.isTemplate = true;
-                                this.previousCommit = this.commits[this.commits.length - 1];
-                            }
-                            break;
-                        }
+                map((commits) => commits.sort((a, b) => (dayjs(b.timestamp).isAfter(dayjs(a.timestamp)) ? 1 : -1))),
+                tap((sortedCommits) => {
+                    this.commits = sortedCommits;
+                    const foundIndex = this.commits.findIndex((commit) => commit.hash === this.commitHash);
+                    if (foundIndex !== -1) {
+                        this.currentCommit = this.commits[foundIndex];
+                        this.previousCommit = foundIndex < this.commits.length - 1 ? this.commits[foundIndex + 1] : this.commits[this.commits.length - 1];
+                        this.isTemplate = foundIndex === this.commits.length - 1;
                     }
+                }),
+                catchError((error) => {
+                    console.error('Error retrieving or handling commits:', error);
+                    return throwError(() => new Error('Error processing commits'));
                 }),
             )
             .subscribe({
-                next: () => {
-                    this.getDiffReport();
-                },
+                next: () => this.getDiffReport(),
+                error: (err) => console.error('An error occurred:', err),
             });
     }
 
