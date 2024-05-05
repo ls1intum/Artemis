@@ -101,11 +101,11 @@ export class ExamManagementPage {
         await expect(this.page.locator('#student-exam .datatable-body-row', { hasText: username }).locator('.submitted')).toHaveText('Yes');
     }
 
-    async checkQuizSubmission(courseID: number, examID: number, username: string, score: string) {
+    async checkQuizSubmission(courseID: number, examID: number, username: string, score1: string) {
         await this.page.goto(`/course-management/${courseID}/exams/${examID}/student-exams`);
         await this.page.locator('#student-exam .datatable-body-row', { hasText: username }).locator('.view-submission').click();
         await this.page.locator('.summery').click();
-        await expect(this.page.locator('#exercise-result-score')).toHaveText(score);
+        await expect(this.page.locator('#exercise-result-score')).toHaveText(score1, { useInnerText: true });
     }
 
     async clickEdit() {
