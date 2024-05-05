@@ -34,7 +34,8 @@ export class GitDiffReportComponent implements OnInit {
     addedLineCount: number;
     removedLineCount: number;
     diffsReadyByPath: { [path: string]: boolean } = {};
-    allDiffsReady: boolean = false;
+    allDiffsReady = false;
+    nothingToDisplay = false;
 
     faSpinner = faSpinner;
 
@@ -100,6 +101,7 @@ export class GitDiffReportComponent implements OnInit {
                 this.diffsReadyByPath[path] = false;
             }
         });
+        this.nothingToDisplay = Object.keys(this.diffsReadyByPath).length === 0;
     }
 
     /**

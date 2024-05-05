@@ -68,8 +68,10 @@
         </div>
     }
 </div>
-@if (!allDiffsReady) {
-    <div class="loading-spinner">
+@if (nothingToDisplay) {
+    <div class="diff-placeholder text-secondary mt-3" jhiTranslate="artemisApp.repository.commitHistory.commitDetails.empty"></div>
+} @else if (!allDiffsReady) {
+    <div class="diff-placeholder">
         <fa-icon [icon]="faSpinner" [spin]="true" />
     </div>
 }
