@@ -7,12 +7,12 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
-import jakarta.annotation.PostConstruct;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
@@ -49,10 +49,15 @@ public class WeeklyEmailSummaryScheduleService {
         this.emailSummaryService.setScheduleInterval(weekly);
     }
 
+    @EventListener(ApplicationReadyEvent.class)
+    public void applicationReady() {
+        // schedule the task 35s after the application has started to avoid delaying the start of the application
+        scheduler.schedule(this::scheduleEmailSummariesOnStartUp, Instant.now().plusSeconds(35));
+    }
+
     /**
      * Prepare summary scheduling after server start up
      */
-    @PostConstruct
     public void scheduleEmailSummariesOnStartUp() {
         try {
             if (profileService.isDevActive()) {
