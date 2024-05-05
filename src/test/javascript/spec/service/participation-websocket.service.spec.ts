@@ -8,6 +8,7 @@ import { ParticipationService } from 'app/exercises/shared/participation/partici
 import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.service';
 import { MockParticipationService } from '../helpers/mocks/service/mock-participation.service';
 import { SelfLearningFeedbackRequest } from 'app/entities/self-learning-feedback-request.model';
+import dayjs from 'dayjs/esm';
 
 describe('ParticipationWebsocketService', () => {
     let websocketService: JhiWebsocketService;
@@ -29,8 +30,10 @@ describe('ParticipationWebsocketService', () => {
     const participation = { id: 1, exercise: { id: exerciseId1 } } as Participation;
     const currentResult = { id: 10, participation } as Result;
     participation.results = [currentResult];
+    participation.selfLearningFeedbackRequests = [];
     const newRatedResult = { id: 11, rated: true, participation } as Result;
     const newUnratedResult = { id: 12, rated: false, participation } as Result;
+    const newSelfLearningFeedbackRequest = { id: 11, requestDateTime: dayjs(), participation } as SelfLearningFeedbackRequest;
 
     const participationPersonalTopicPrefix = `/user/topic`;
     const participationPersonalResultTopic = `/user/topic/newResults`;
@@ -90,7 +93,7 @@ describe('ParticipationWebsocketService', () => {
         jest.restoreAllMocks();
     });
 
-    it('should setup a result subscriptions with the websocket service on subscribeForLatestResult for instructors', () => {
+    it('should setup subscriptions with the websocket service on subscribeForLatestResult for instructors', () => {
         participationWebsocketService.subscribeForLatestResultsOfParticipation(participation.id!, false, exerciseId2);
         expect(subscribeSpy).toHaveBeenCalledTimes(2);
         expect(subscribeSpy).toHaveBeenCalledWith(participationInstructorResultTopic);
@@ -109,7 +112,7 @@ describe('ParticipationWebsocketService', () => {
         expect(participationWebsocketService.participationObservable).toBeUndefined();
     });
 
-    it('should setup a result subscriptions with the websocket service on subscribeForLatestResult for students', () => {
+    it('should setup subscriptions with the websocket service on subscribeForLatestResult for students', () => {
         participationWebsocketService.subscribeForLatestResultsOfParticipation(participation.id!, true);
         expect(subscribeSpy).toHaveBeenCalledTimes(2);
         expect(subscribeSpy).toHaveBeenCalledWith(participationPersonalResultTopic);
@@ -272,5 +275,66 @@ describe('ParticipationWebsocketService', () => {
         participationWebsocketService.addParticipation(participation);
 
         expect(participationWebsocketService.getParticipationsForExercise(participation.exercise!.id!)).toEqual([participation]);
+    });
+
+    // self learning feedback section
+
+    it('should emit participation update with new self learning feedback request when new request arrives through websocket', () => {
+        participationWebsocketService.subscribeForLatestResultsOfParticipation(participation.id!, true);
+        participationWebsocketService.addParticipation(participation);
+        participationWebsocketService.subscribeForParticipationChanges();
+        const selfLearningFeedbackObservable = new BehaviorSubject(undefined);
+        const selfLearningFeedbackSpy = jest.spyOn(selfLearningFeedbackObservable, 'next');
+        participationWebsocketService.selfLearningFeedbackObservables.set(participation.id!, selfLearningFeedbackObservable);
+        const participationObservable = new BehaviorSubject(undefined);
+        const participationSpy = jest.spyOn(participationObservable, 'next');
+        participationWebsocketService.participationObservable = participationObservable;
+
+        // Emit new selfLearningFeedback from websocket
+        receiveSelfLearningFeedbackForParticipationSubject.next(newSelfLearningFeedbackRequest);
+
+        expect(selfLearningFeedbackSpy).toHaveBeenCalledOnce();
+        expect(selfLearningFeedbackSpy).toHaveBeenCalledWith(newSelfLearningFeedbackRequest);
+        expect(participationSpy).toHaveBeenCalledOnce();
+        expect(participationSpy).toHaveBeenCalledWith({
+            ...participation,
+            selfLearningFeedbackRequests: [...participation.selfLearningFeedbackRequests!, newSelfLearningFeedbackRequest],
+        });
+        expect(participationWebsocketService.cachedParticipations.get(participation.id!)).toEqual({
+            ...participation,
+            selfLearningFeedbackRequests: [...participation.selfLearningFeedbackRequests!, newSelfLearningFeedbackRequest],
+        });
+    });
+
+    it('should attach the self learning feedback to right participation if multiple participations are cached', () => {
+        participationWebsocketService.subscribeForLatestResultsOfParticipation(participation.id!, true); // to open the websocket connection
+        participationWebsocketService.subscribeForLatestResultsOfParticipation(participation2.id!, true); // same here
+        participationWebsocketService.addParticipation(participation);
+        participationWebsocketService.addParticipation(participation2);
+        participationWebsocketService.subscribeForParticipationChanges();
+        const selfLearningFeedbackObservable = new BehaviorSubject(undefined);
+        const selfLearningFeedbackSpy = jest.spyOn(selfLearningFeedbackObservable, 'next');
+        participationWebsocketService.selfLearningFeedbackObservables.set(participation.id!, selfLearningFeedbackObservable);
+        const participationObservable = new BehaviorSubject(undefined);
+        const participationSpy = jest.spyOn(participationObservable, 'next');
+        participationWebsocketService.participationObservable = participationObservable;
+
+        // Emit new self learning feedback request from websocket
+        receiveSelfLearningFeedbackForParticipationSubject.next(newSelfLearningFeedbackRequest);
+
+        expect(participationWebsocketService.cachedParticipations.size).toBe(2);
+        expect(participationWebsocketService.cachedParticipations.get(participation.id!)).toEqual({
+            ...participation,
+            selfLearningFeedbackRequests: [...participation.selfLearningFeedbackRequests!, newSelfLearningFeedbackRequest],
+        });
+        expect(participationWebsocketService.cachedParticipations.get(participation2.id!)).toEqual(participation2);
+
+        expect(selfLearningFeedbackSpy).toHaveBeenCalledOnce();
+        expect(selfLearningFeedbackSpy).toHaveBeenCalledWith(newSelfLearningFeedbackRequest);
+        expect(participationSpy).toHaveBeenCalledOnce();
+        expect(participationSpy).toHaveBeenCalledWith({
+            ...participation,
+            selfLearningFeedbackRequests: [...participation.selfLearningFeedbackRequests!, newSelfLearningFeedbackRequest],
+        });
     });
 });
