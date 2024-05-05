@@ -114,15 +114,13 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
         log.debug("Using athena to generate feedback request: {}", programmingExercise.getId());
 
         // athena takes over the control here
-        var submissionOptional = programmingExerciseParticipationService.findProgrammingExerciseParticipationWithLatestSubmissionAndResult(participation.getId())
-                .findLatestSubmission();
+        var submissionOptional = programmingExerciseParticipationService.findProgrammingExerciseParticipationWithLatestSubmission(participation.getId()).findLatestSubmission();
         if (submissionOptional.isEmpty()) {
             throw new BadRequestAlertException("No legal submissions found", "submission", "noSubmission");
         }
         var submission = submissionOptional.get();
 
         // save self learning feedback request and transmit it over websockets to notify the client about the status
-
         var newRequest = new SelfLearningFeedbackRequest();
         newRequest.setParticipation(participation);
         newRequest.setSubmission(submission);
@@ -130,10 +128,8 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
         newRequest = this.selfLearningFeedbackRequestRepository.save(newRequest);
 
         try {
-
             setIndividualDueDateAndLockRepository(participation, programmingExercise, false);
             this.programmingMessagingService.notifyUserAboutNewRequest(newRequest, participation);
-            // now the client should be able to see new result
 
             log.debug("Submission id: {}", submission.getId());
 
@@ -169,9 +165,7 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
             var automaticResult = this.submissionService.saveNewEmptyResult(submission);
             automaticResult.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
             automaticResult.setRated(false);
-            automaticResult.setScore(100.0);
             automaticResult.setCompletionDate(ZonedDateTime.now());
-            automaticResult.setSuccessful(true);
 
             this.resultService.storeFeedbackInResult(automaticResult, feedbacks, true);
 

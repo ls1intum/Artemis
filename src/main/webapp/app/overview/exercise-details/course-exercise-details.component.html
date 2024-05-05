@@ -132,16 +132,9 @@
                                 <div class="col-12 col-md-12">
                                     @for (entry of sortedHistoryEntries; track entry; let i = $index) {
                                         <div>
-                                            @if (
-                                                entry.submission &&
-                                                entry.submission.submissionDate &&
-                                                (i === 0 ||
-                                                    !sortedHistoryEntries[i - 1].submission ||
-                                                    !sortedHistoryEntries[i - 1].submission?.submissionDate ||
-                                                    !dayjs(entry.submission.submissionDate).isSame(sortedHistoryEntries[i - 1].submission?.submissionDate, 'day'))
-                                            ) {
+                                            @if (datesDiffer(entry, i)) {
                                                 <h4 class="mt-2">
-                                                    {{ entry.submission.submissionDate | artemisDate: 'long-date' }}
+                                                    {{ Result.isResult(entry) ? entry.submission?.submissionDate : (entry.requestDateTime | artemisDate: 'long-date') }}
                                                 </h4>
                                             }
                                             @if (Result.isResult(entry)) {

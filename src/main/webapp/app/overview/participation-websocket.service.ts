@@ -15,7 +15,7 @@ import { convertDateFromServer } from 'app/utils/date.utils';
 
 const PERSONAL_PARTICIPATION_TOPIC_PREFIX = `/user/topic`;
 const RESULTS_SUFFIX = `/newResults`;
-const SELF_LEARNING_FEEDBACK_SUFFIX = `/newSelfLearningFeedback`;
+const SELF_LEARNING_FEEDBACK_SUFFIX = `/newSelfLearningFeedbacks`;
 
 const EXERCISE_PARTICIPATION_TOPIC_PREFIX = (exerciseId: number) => `/topic/exercise/${exerciseId}`;
 
@@ -132,25 +132,25 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
 
     /**
      * Update a cachedParticipation with the given self-learning-feedback, meaning that the new information will be added to it.
-     * @param selfLearnigFeedback
+     * @param selfLearningFeedback
      */
-    private addSelfLearningFeedbackToParticipation = (selfLearnigFeedback: SelfLearningFeedbackRequest) => {
-        const cachedParticipation = this.cachedParticipations.get(selfLearnigFeedback.participation!.id!);
+    private addSelfLearningFeedbackToParticipation = (selfLearningFeedback: SelfLearningFeedbackRequest) => {
+        const cachedParticipation = this.cachedParticipations.get(selfLearningFeedback.participation!.id!);
         if (cachedParticipation) {
             // update the results with the new received one by filtering the old result
-            const updatedselfLearnigFeedbacks = [...(cachedParticipation.results || [])].filter((r) => r.id !== selfLearnigFeedback.id);
-            updatedselfLearnigFeedbacks.push(selfLearnigFeedback);
+            const updatedSelfLearnigFeedbacks = [...(cachedParticipation.selfLearningFeedbackRequests || [])].filter((s) => s.id !== selfLearningFeedback.id);
+            updatedSelfLearnigFeedbacks.push(selfLearningFeedback);
             // create a clone
-            this.cachedParticipations.set(selfLearnigFeedback.participation!.id!, {
+            this.cachedParticipations.set(selfLearningFeedback.participation!.id!, {
                 ...cachedParticipation,
-                selfLearningFeedbackRequests: updatedselfLearnigFeedbacks,
+                selfLearningFeedbackRequests: updatedSelfLearnigFeedbacks,
             } as StudentParticipation);
 
-            if (selfLearnigFeedback.result) {
-                this.notifyResultSubscribers(selfLearnigFeedback.result);
+            if (selfLearningFeedback.result) {
+                this.notifyResultSubscribers(selfLearningFeedback.result);
             }
 
-            return of(this.cachedParticipations.get(selfLearnigFeedback.participation!.id!));
+            return of(this.cachedParticipations.get(selfLearningFeedback.participation!.id!));
         }
         return of();
     };

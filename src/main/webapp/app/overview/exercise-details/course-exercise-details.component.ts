@@ -51,6 +51,7 @@ import { ScienceService } from 'app/shared/science/science.service';
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { SelfLearningFeedbackRequest } from 'app/entities/self-learning-feedback-request.model';
+import { isAthenaResultAndProcessed } from 'app/exercises/shared/result/result.utils';
 
 @Component({
     selector: 'jhi-course-exercise-details',
@@ -75,6 +76,7 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     readonly isMessagingEnabled = isMessagingEnabled;
     readonly Result = Result;
     readonly SelfLearningFeedbackRequest = SelfLearningFeedbackRequest;
+    readonly isAthenaResultAndProcessed = isAthenaResultAndProcessed;
 
     public learningPathMode = false;
     private currentUser: User;
@@ -501,5 +503,18 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
      */
     changeExampleSolution() {
         this.exampleSolutionCollapsed = !this.exampleSolutionCollapsed;
+    }
+
+    datesDiffer(current: SelfLearningFeedbackRequest | Result, i: number): boolean {
+        if (i === 0) {
+            return true; // always print the date if this is the first submission
+        }
+        const previous = this.sortedHistoryEntries[i - 1];
+        const currentDate = Result.isResult(current) ? current.submission?.submissionDate : current.requestDateTime;
+        const prevDate = Result.isResult(previous) ? previous.submission?.submissionDate : previous.requestDateTime;
+        if (!currentDate || !prevDate) {
+            return false; // cannot determine if at least one is undefined
+        }
+        return !dayjs(currentDate).isSame(prevDate, 'day');
     }
 }

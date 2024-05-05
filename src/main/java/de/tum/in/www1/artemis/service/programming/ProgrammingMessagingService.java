@@ -17,6 +17,7 @@ import de.tum.in.www1.artemis.service.connectors.lti.LtiNewResultService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionDTO;
 import de.tum.in.www1.artemis.web.websocket.ResultWebsocketService;
+import de.tum.in.www1.artemis.web.websocket.SelfLearningFeedbackWebsocketService;
 import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWebsocketError;
 
 @Profile(PROFILE_CORE)
@@ -35,13 +36,17 @@ public class ProgrammingMessagingService {
 
     private final TeamRepository teamRepository;
 
+    private final SelfLearningFeedbackWebsocketService selfLearningFeedbackWebsocketService;
+
     public ProgrammingMessagingService(GroupNotificationService groupNotificationService, WebsocketMessagingService websocketMessagingService,
-            ResultWebsocketService resultWebsocketService, Optional<LtiNewResultService> ltiNewResultService, TeamRepository teamRepository) {
+            ResultWebsocketService resultWebsocketService, Optional<LtiNewResultService> ltiNewResultService, TeamRepository teamRepository,
+            SelfLearningFeedbackWebsocketService selfLearningFeedbackWebsocketService) {
         this.groupNotificationService = groupNotificationService;
         this.websocketMessagingService = websocketMessagingService;
         this.resultWebsocketService = resultWebsocketService;
         this.ltiNewResultService = ltiNewResultService;
         this.teamRepository = teamRepository;
+        this.selfLearningFeedbackWebsocketService = selfLearningFeedbackWebsocketService;
     }
 
     public void notifyInstructorAboutStartedExerciseBuildRun(ProgrammingExercise programmingExercise) {
@@ -161,10 +166,9 @@ public class ProgrammingMessagingService {
     }
 
     public void notifyUserAboutNewRequest(SelfLearningFeedbackRequest request, ProgrammingExerciseParticipation participation) {
-        // log.debug("Send result to client over websocket. Result: {}, Submission: {}, Participation: {}", result, result.getSubmission(), result.getParticipation());
-        // notify user via websocket
+        log.debug("Send self-learning-feedback request to client over websocket. Request: {}, Submission: {}, Participation: {}", request, request.getSubmission(),
+                request.getParticipation());
 
-        resultWebsocketService.broadcastNewSelfLearningRequest((StudentParticipation) participation, request);
-        // resultWebsocketService.broadcastNewResult((Participation) participation, result);
+        selfLearningFeedbackWebsocketService.broadcastNewSelfLearningRequest((StudentParticipation) participation, request);
     }
 }

@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.SelfLearningFeedbackRequest;
 import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -130,16 +129,5 @@ public class ResultWebsocketService {
 
     private static String getNonPersonalExerciseResultDestination(String exerciseId) {
         return EXERCISE_TOPIC_ROOT + exerciseId + "/newParticipationInfo";
-    }
-
-    public void broadcastNewSelfLearningRequest(StudentParticipation studentParticipation, SelfLearningFeedbackRequest selfLearningFeedbackRequest) {
-        final Exercise exercise = studentParticipation.getExercise();
-        if (exercise.isExamExercise() || ZonedDateTime.now().isAfter(exercise.getDueDate()))
-            return;
-
-        var students = studentParticipation.getStudents();
-
-        students.stream().filter(student -> !authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student))
-                .forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), NEW_SELF_LEARNING_FEEDBACK, selfLearningFeedbackRequest));
     }
 }
