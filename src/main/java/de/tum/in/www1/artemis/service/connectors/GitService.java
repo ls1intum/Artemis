@@ -1131,7 +1131,7 @@ public class GitService {
             studentGit.branchDelete().setBranchNames(copyBranchName).setForce(true).call();
 
             // Delete all remotes
-            this.removeRemotes(studentGit);
+            this.removeRemotes(studentGit, true);
 
             // Delete .git/logs/ folder to delete git reflogs
             Path logsPath = Path.of(repository.getDirectory().getPath(), "logs");
@@ -1151,9 +1151,12 @@ public class GitService {
         }
     }
 
-    private void removeRemotes(Git repository) throws IOException, GitAPIException {
+    private void removeRemotes(Git repository, boolean deleteOrigin) throws IOException, GitAPIException {
         // Delete all remotes
         for (RemoteConfig remote : repository.remoteList().call()) {
+            if (!deleteOrigin && remote.getName().equals("origin")) {
+                continue;
+            }
             repository.remoteRemove().setRemoteName(remote.getName()).call();
             // Manually delete remote tracking branches since JGit apparently fails to do so
             for (Ref ref : repository.getRepository().getRefDatabase().getRefs()) {
@@ -1171,15 +1174,34 @@ public class GitService {
      *
      * @param repository The repository whose remotes to delete.
      */
-    public void removeRemotesFromRepository(Repository repository) {
-        try (Git gitRepo = new Git(repository)) {
-            this.removeRemotes(gitRepo);
+    public void removeRemotesFromRepository(Repository repository, boolean deleteOrigin) {
+        try (repository; Git gitRepo = new Git(repository)) {
+            this.removeRemotes(gitRepo, deleteOrigin);
         }
         catch (EntityNotFoundException | GitAPIException | JGitInternalException | IOException ex) {
             log.warn("Cannot remove the remotes of the repo {} due to the following exception: {}", repository.getLocalPath(), ex.getMessage());
         }
-        finally {
-            repository.close();
+    }
+
+    /**
+     *
+     * @param repository The repository to which the remote should be added.
+     * @param remoteUri  The URI to use as the origin remote.
+     */
+    public void setRemoteOrigin(String username, Repository repository, VcsRepositoryUri remoteUri) {
+        try (repository; Git gitRepo = new Git(repository)) {
+            URI remoteUriE = remoteUri.getURI();
+            URI uriWithUsername = new URI(remoteUriE.getScheme(), username, remoteUriE.getHost(), remoteUriE.getPort(), remoteUriE.getPath(), remoteUriE.getQuery(),
+                    remoteUriE.getFragment());
+            if (gitRepo.remoteList().call().stream().anyMatch(r -> r.getName().equals("origin"))) {
+                gitRepo.remoteSetUrl().setRemoteName("origin").setRemoteUri(new URIish(uriWithUsername.toString())).call();
+            }
+            else {
+                log.warn("Cannot set the origin: {} has no origin remote.", repository.getLocalPath());
+            }
+        }
+        catch (GitAPIException | URISyntaxException e) {
+            log.warn("Cannot set origin of repository {} due to an exception: {}", repository.getLocalPath(), e.getMessage());
         }
     }
 
