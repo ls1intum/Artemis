@@ -117,6 +117,9 @@ public class GitService {
 
     private final ProfileService profileService;
 
+    @Value("${artemis.version-control.local-vcs-repo-path}")
+    private String localVCBasePath;
+
     @Value("${artemis.version-control.url}")
     private URL gitUrl;
 
@@ -150,7 +153,11 @@ public class GitService {
     @Value("${artemis.git.email}")
     private String artemisGitEmail;
 
+    // TODO: clean up properly in multi node environments
     private final Map<Path, Repository> cachedRepositories = new ConcurrentHashMap<>();
+
+    // TODO: clean up when exercise or participation is deleted
+    private final Map<Path, Repository> cachedBareRepositories = new ConcurrentHashMap<>();
 
     private final Map<Path, Path> cloneInProgressOperations = new ConcurrentHashMap<>();
 
@@ -513,6 +520,7 @@ public class GitService {
      */
     public Repository getOrCheckoutRepository(VcsRepositoryUri sourceRepoUri, VcsRepositoryUri targetRepoUri, Path localPath, boolean pullOnGet, String defaultBranch)
             throws GitAPIException, GitException, InvalidPathException {
+        log.info("Execute the get or checkout operation");
         // First try to just retrieve the git repository from our server, as it might already be checked out.
         // If the sourceRepoUri differs from the targetRepoUri, we attempt to clone the source repo into the target directory
         Repository repository = getExistingCheckedOutRepositoryByLocalPath(localPath, targetRepoUri, defaultBranch);
@@ -543,7 +551,7 @@ public class GitService {
             // Clone repository.
             try {
                 var gitUriAsString = getGitUriAsString(sourceRepoUri);
-                log.debug("Cloning from {} to {}", gitUriAsString, localPath);
+                log.info("Cloning from {} to {}", gitUriAsString, localPath);
                 cloneInProgressOperations.put(localPath, localPath);
                 // make sure the directory to copy into is empty
                 FileUtils.deleteDirectory(localPath.toFile());
@@ -677,17 +685,7 @@ public class GitService {
                 return cachedRepository;
             }
             // Else try to retrieve the git repository from our server. It could e.g. be the case that the folder is there, but there is no .git folder in it!
-
-            // Open the repository from the filesystem
-            final Path gitPath = localPath.resolve(".git");
-            FileRepositoryBuilder builder = new FileRepositoryBuilder();
-            builder.setGitDir(gitPath.toFile()).setInitialBranch(defaultBranch).readEnvironment().findGitDir().setup(); // scan environment GIT_* variables
-
-            Repository repository = createRepository(localPath, remoteRepositoryUri, defaultBranch, builder);
-
-            RefUpdate refUpdate = repository.getRefDatabase().newUpdate(Constants.HEAD, false);
-            refUpdate.setForceUpdate(true);
-            refUpdate.link("refs/heads/" + defaultBranch);
+            Repository repository = linkRepositoryForExistingGit(localPath, remoteRepositoryUri, defaultBranch, false);
 
             // Cache the JGit repository object for later use: avoids the expensive re-opening of local repositories
             cachedRepositories.put(localPath, repository);
@@ -700,37 +698,69 @@ public class GitService {
     }
 
     /**
-     * Creates a new Repository with the given parameters and saves the Repository's StoredConfig.
+     * Creates a JGit repository instance using the provided local path and remote repository URI with specific configurations.
+     * This method sets up the repository to avoid auto garbage collection and disables the use of symbolic links to enhance security.
+     * It also makes sure that the default branch and HEAD are correctly configured.
+     * Works for both, local checkout repositories and bare repositories (without working directory).
      *
-     * @param localPath           The local path of the repository.
-     * @param remoteRepositoryUri The remote repository uri for the git repository.
-     * @param defaultBranch       The default branch of the repository.
-     * @param builder             The FileRepositoryBuilder.
-     * @return The created Repository.
-     * @throws IOException if the configuration file cannot be accessed.
+     * @param localPath           The path to the local repository directory, not null.
+     * @param remoteRepositoryUri The URI of the remote repository, not null.
+     * @param defaultBranch       The name of the default branch to be checked out, not null.
+     * @return The configured Repository instance.
+     * @throws IOException             If an I/O error occurs during repository initialization or configuration.
+     * @throws InvalidRefNameException If the provided default branch name is invalid.
+     *
+     *                                     <p>
+     *                                     The method disables automatic garbage collection of the repository to prevent potential issues with file deletion
+     *                                     as discussed in multiple resources. It also avoids the use of symbolic links for security reasons,
+     *                                     following best practices against remote code execution vulnerabilities.
+     *                                     </p>
+     *
+     *                                     <p>
+     *                                     References:
+     *                                     <ul>
+     *                                     <li>https://stackoverflow.com/questions/45266021/java-jgit-files-delete-fails-to-delete-a-file-but-file-delete-succeeds</li>
+     *                                     <li>https://git-scm.com/docs/git-gc</li>
+     *                                     <li>https://www.eclipse.org/lists/jgit-dev/msg03734.html</li>
+     *                                     </ul>
+     *                                     </p>
      */
     @NotNull
-    private static Repository createRepository(Path localPath, VcsRepositoryUri remoteRepositoryUri, String defaultBranch, FileRepositoryBuilder builder) throws IOException {
+    private static Repository linkRepositoryForExistingGit(Path localPath, VcsRepositoryUri remoteRepositoryUri, String defaultBranch, boolean isBare)
+            throws IOException, InvalidRefNameException {
         // Create the JGit repository object
-        Repository repository = new Repository(builder, localPath, remoteRepositoryUri);
-        // disable auto garbage collection because it can lead to problems (especially with deleting local repositories)
-        // see https://stackoverflow.com/questions/45266021/java-jgit-files-delete-fails-to-delete-a-file-but-file-delete-succeeds
-        // and https://git-scm.com/docs/git-gc for an explanation of the parameter
-        // and https://www.eclipse.org/lists/jgit-dev/msg03734.html
-        StoredConfig gitRepoConfig = repository.getConfig();
-        gitRepoConfig.setInt(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTO, 0);
-        gitRepoConfig.setBoolean(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTODETACH, false);
-        gitRepoConfig.setInt(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTOPACKLIMIT, 0);
-        gitRepoConfig.setBoolean(ConfigConstants.CONFIG_RECEIVE_SECTION, null, ConfigConstants.CONFIG_KEY_AUTOGC, false);
 
-        // disable symlinks to avoid security issues such as remote code execution
-        gitRepoConfig.setBoolean(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_SYMLINKS, false);
-        gitRepoConfig.setBoolean(ConfigConstants.CONFIG_COMMIT_SECTION, null, ConfigConstants.CONFIG_KEY_GPGSIGN, false);
-        gitRepoConfig.setString(ConfigConstants.CONFIG_BRANCH_SECTION, defaultBranch, ConfigConstants.CONFIG_REMOTE_SECTION, REMOTE_NAME);
-        gitRepoConfig.setString(ConfigConstants.CONFIG_BRANCH_SECTION, defaultBranch, ConfigConstants.CONFIG_MERGE_SECTION, "refs/heads/" + defaultBranch);
+        // Open the repository from the filesystem
+        FileRepositoryBuilder builder = new FileRepositoryBuilder();
 
-        gitRepoConfig.save();
-        return repository;
+        if (isBare) {
+            builder.setBare();
+        }
+        // bare repositories use a different path than checked out ones
+        builder.setGitDir(isBare ? localPath.toFile() : localPath.resolve(".git").toFile()).setInitialBranch(defaultBranch).setMustExist(true).readEnvironment().findGitDir()
+                .setup(); // scan environment GIT_* variables
+
+        try (Repository repository = new Repository(builder, localPath, remoteRepositoryUri)) {
+            // disable auto garbage collection because it can lead to problems (especially with deleting local repositories)
+            // see https://stackoverflow.com/questions/45266021/java-jgit-files-delete-fails-to-delete-a-file-but-file-delete-succeeds
+            // and https://git-scm.com/docs/git-gc for an explanation of the parameter
+            // and https://www.eclipse.org/lists/jgit-dev/msg03734.html
+            StoredConfig gitRepoConfig = repository.getConfig();
+            gitRepoConfig.setInt(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTO, 0);
+            gitRepoConfig.setBoolean(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTODETACH, false);
+            gitRepoConfig.setInt(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTOPACKLIMIT, 0);
+            gitRepoConfig.setBoolean(ConfigConstants.CONFIG_RECEIVE_SECTION, null, ConfigConstants.CONFIG_KEY_AUTOGC, false);
+
+            // disable symlinks to avoid security issues such as remote code execution
+            gitRepoConfig.setBoolean(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_SYMLINKS, false);
+            gitRepoConfig.setBoolean(ConfigConstants.CONFIG_COMMIT_SECTION, null, ConfigConstants.CONFIG_KEY_GPGSIGN, false);
+            gitRepoConfig.setString(ConfigConstants.CONFIG_BRANCH_SECTION, defaultBranch, ConfigConstants.CONFIG_REMOTE_SECTION, REMOTE_NAME);
+            gitRepoConfig.setString(ConfigConstants.CONFIG_BRANCH_SECTION, defaultBranch, ConfigConstants.CONFIG_MERGE_SECTION, "refs/heads/" + defaultBranch);
+
+            gitRepoConfig.save();
+
+            return repository;
+        }
     }
 
     /**
@@ -905,7 +935,7 @@ public class GitService {
         try (Git git = new Git(repo)) {
             // flush cache of files
             repo.setContent(null);
-            log.debug("Pull {}", repo.getLocalPath());
+            log.info("Pull {}", repo.getLocalPath());
             setRemoteUrl(repo);
             return pullCommand(git).call();
         }
@@ -1158,6 +1188,42 @@ public class GitService {
             // if repo is not closed, it causes weird IO issues when trying to delete the repo again
             // java.io.IOException: Unable to delete file: ...\.git\objects\pack\...
             repository.close();
+        }
+    }
+
+    /**
+     * Retrieves a bare JGit repository based on a remote repository URI. This method is functional only when LocalVC is active.
+     * It translates a remote repository URI into a local repository path, attempting to create a repository at this location.
+     *
+     * @param repositoryUri The URI of the remote VCS repository, not null.
+     * @return The initialized bare Repository instance.
+     * @throws GitException If the repository cannot be created due to I/O errors or invalid reference names.
+     *
+     *                          <p>
+     *                          This method delegates the creation of the repository to {@code linkRepositoryForExistingGit}, which sets up the repository
+     *                          without a working directory (bare repository). It handles exceptions related to repository creation by throwing
+     *                          a {@code GitException}, providing a more specific error context.
+     *                          </p>
+     *
+     *                          <p>
+     *                          Note: This method requires that LocalVC is actively managing the local version control environment to operate correctly.
+     *                          </p>
+     */
+    public Repository getBareRepository(VcsRepositoryUri repositoryUri) {
+        var localRepoUri = new LocalVCRepositoryUri(repositoryUri.toString());
+        var localPath = localRepoUri.getLocalRepositoryPath(localVCBasePath);
+        try {
+            // Check if the repository is already cached in the server's session.
+            Repository cachedRepository = cachedBareRepositories.get(localPath);
+            if (cachedRepository != null) {
+                return cachedRepository;
+            }
+            var repository = linkRepositoryForExistingGit(localPath, repositoryUri, defaultBranch, true);
+            cachedBareRepositories.put(localPath, repository);
+            return repository;
+        }
+        catch (IOException | InvalidRefNameException e) {
+            throw new GitException("Could not create the bare repository", e);
         }
     }
 
@@ -1469,17 +1535,31 @@ public class GitService {
     public List<CommitInfoDTO> getCommitInfos(VcsRepositoryUri vcsRepositoryUri) throws GitAPIException {
         List<CommitInfoDTO> commitInfos = new ArrayList<>();
 
-        try (var repo = getOrCheckoutRepository(vcsRepositoryUri, true); var git = new Git(repo)) {
-            var commits = git.log().call();
-            commits.forEach(commit -> {
-                var commitInfo = CommitInfoDTO.of(commit);
-                commitInfos.add(commitInfo);
-            });
+        if (profileService.isLocalVcsActive()) {
+            log.info("Using local VCS for getting commit info on repo {}", vcsRepositoryUri);
+            try (var repo = getBareRepository(vcsRepositoryUri); var git = new Git(repo)) {
+                getCommitInfo(git, commitInfos);
+            }
         }
+        else {
+            try (var repo = getOrCheckoutRepository(vcsRepositoryUri, true); var git = new Git(repo)) {
+                getCommitInfo(git, commitInfos);
+            }
+        }
+
         return commitInfos;
+    }
+
+    private void getCommitInfo(Git git, List<CommitInfoDTO> commitInfos) throws GitAPIException {
+        Iterable<RevCommit> commits = git.log().call();
+        commits.forEach(commit -> {
+            var commitInfo = CommitInfoDTO.of(commit);
+            commitInfos.add(commitInfo);
+        });
     }
 
     public void clearCachedRepositories() {
         cachedRepositories.clear();
+        cachedBareRepositories.clear();
     }
 }

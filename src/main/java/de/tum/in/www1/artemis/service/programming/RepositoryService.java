@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service;
+package de.tum.in.www1.artemis.service.programming;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
@@ -34,6 +34,7 @@ import de.tum.in.www1.artemis.domain.FileType;
 import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
+import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 

@@ -30,9 +30,9 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.hestia.CoverageFileReportRepository;
 import de.tum.in.www1.artemis.repository.hestia.CoverageReportRepository;
 import de.tum.in.www1.artemis.repository.hestia.TestwiseCoverageReportEntryRepository;
-import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.TestwiseCoverageReportDTO;
+import de.tum.in.www1.artemis.service.programming.RepositoryService;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 /**

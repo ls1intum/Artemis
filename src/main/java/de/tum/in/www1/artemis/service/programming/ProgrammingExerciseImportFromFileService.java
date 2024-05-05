@@ -36,7 +36,6 @@ import de.tum.in.www1.artemis.repository.BuildPlanRepository;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ProfileService;
-import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
 import de.tum.in.www1.artemis.service.ZipFileService;
 import de.tum.in.www1.artemis.service.connectors.GitService;

@@ -37,7 +37,6 @@ import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipatio
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.iris.IrisConnectorService;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
@@ -45,6 +44,7 @@ import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;
 import de.tum.in.www1.artemis.service.iris.exception.IrisNoResponseException;
 import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
 import de.tum.in.www1.artemis.service.iris.websocket.IrisChatWebsocketService;
+import de.tum.in.www1.artemis.service.programming.RepositoryService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
