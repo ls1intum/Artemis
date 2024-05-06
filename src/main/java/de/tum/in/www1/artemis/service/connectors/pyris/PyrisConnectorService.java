@@ -21,11 +21,12 @@ import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisModelDTO;
 import de.tum.in.www1.artemis.service.iris.exception.IrisException;
 import de.tum.in.www1.artemis.service.iris.exception.IrisForbiddenException;
 import de.tum.in.www1.artemis.service.iris.exception.IrisInternalPyrisErrorException;
+import de.tum.in.www1.artemis.web.rest.open.PublicPyrisStatusUpdateResource;
 
 /**
  * This service connects to the Python implementation of Iris (called Pyris).
  * Pyris is responsible for executing the pipelines using (MM)LLMs and other tools asynchronously.
- * Status updates are sent to Artemis via {@link de.tum.in.www1.artemis.web.rest.open.PyrisStatusUpdateResource}
+ * Status updates are sent to Artemis via {@link PublicPyrisStatusUpdateResource}
  */
 @Service
 @Profile("iris")

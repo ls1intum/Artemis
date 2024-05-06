@@ -19,24 +19,27 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
 /**
- * REST controller for providing Pyris access to Artemis internal data
+ * REST controller for providing Pyris access to Artemis internal data and status updates.
+ * All endpoints in this controller use custom token based authentication.
+ * See {@link PyrisJobService#getAndAuthenticateJobFromHeaderElseThrow(HttpServletRequest)} for more information.
  */
 @RestController
 @Profile("iris")
 @RequestMapping("api/public/pyris/pipelines/")
-public class PyrisStatusUpdateResource {
+public class PublicPyrisStatusUpdateResource {
 
     private final PyrisJobService pyrisJobService;
 
     private final PyrisStatusUpdateService pyrisStatusUpdateService;
 
-    public PyrisStatusUpdateResource(PyrisJobService pyrisJobService, PyrisStatusUpdateService pyrisStatusUpdateService) {
+    public PublicPyrisStatusUpdateResource(PyrisJobService pyrisJobService, PyrisStatusUpdateService pyrisStatusUpdateService) {
         this.pyrisJobService = pyrisJobService;
         this.pyrisStatusUpdateService = pyrisStatusUpdateService;
     }
 
     /**
      * {@code POST /api/public/pyris/pipelines/tutor-chat/runs/{runId}/status} : Set the status of a tutor chat job.
+     * Uses custom token based authentication.
      *
      * @param runId           the ID of the job
      * @param statusUpdateDTO the status update
@@ -46,9 +49,9 @@ public class PyrisStatusUpdateResource {
      * @return a {@link ResponseEntity} with status {@code 200 (OK)}
      */
     @PostMapping("tutor-chat/runs/{runId}/status")
-    @EnforceNothing // We do token based authentication
+    @EnforceNothing
     public ResponseEntity<Void> setStatusOfJob(@PathVariable String runId, @RequestBody PyrisTutorChatStatusUpdateDTO statusUpdateDTO, HttpServletRequest request) {
-        var job = pyrisJobService.getJobFromHeader(request);
+        var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request);
         if (!job.getId().equals(runId)) {
             throw new ConflictException("Run ID in URL does not match run ID in request body", "Job", "runIdMismatch");
         }
