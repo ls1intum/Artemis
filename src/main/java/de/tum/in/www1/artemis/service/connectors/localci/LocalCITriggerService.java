@@ -37,7 +37,8 @@ import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildConfig;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.JobTimingInfo;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobItem;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobItemReference;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.RepositoryInfo;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
@@ -69,9 +70,11 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private final GitService gitService;
 
-    private IQueue<LocalCIBuildJobQueueItem> queue;
+    private IQueue<LocalCIBuildJobItemReference> queue;
 
     private IMap<String, ZonedDateTime> dockerImageCleanupInfo;
+
+    private IMap<Long, LocalCIBuildJobItem> buildJobItemMap;
 
     public LocalCITriggerService(HazelcastInstance hazelcastInstance, AeolusTemplateService aeolusTemplateService,
             ProgrammingLanguageConfiguration programmingLanguageConfiguration, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
@@ -92,6 +95,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
     @PostConstruct
     public void init() {
         this.queue = this.hazelcastInstance.getQueue("buildJobQueue");
+        this.buildJobItemMap = this.hazelcastInstance.getMap("buildJobItemMap");
         this.dockerImageCleanupInfo = this.hazelcastInstance.getMap("dockerImageCleanupInfo");
     }
 
@@ -153,10 +157,13 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         BuildConfig buildConfig = getBuildConfig(participation, commitHashToBuild, assignmentCommitHash, testCommitHash);
 
-        LocalCIBuildJobQueueItem buildJobQueueItem = new LocalCIBuildJobQueueItem(buildJobId, participation.getBuildPlanId(), null, participation.getId(), courseId,
+        LocalCIBuildJobItem buildJobQueueItem = new LocalCIBuildJobItem(buildJobId, participation.getBuildPlanId(), null, participation.getId(), courseId,
                 programmingExercise.getId(), 0, priority, null, repositoryInfo, jobTimingInfo, buildConfig, null);
 
-        queue.add(buildJobQueueItem);
+        LocalCIBuildJobItemReference buildJobItemReference = new LocalCIBuildJobItemReference(participation.getId(), courseId, priority, jobTimingInfo.submissionDate());
+
+        queue.add(buildJobItemReference);
+        buildJobItemMap.put(participation.getId(), buildJobQueueItem);
 
         dockerImageCleanupInfo.put(buildConfig.dockerImage(), jobTimingInfo.submissionDate());
     }

@@ -30,7 +30,7 @@ import de.tum.in.www1.artemis.repository.BuildJobRepository;
 import de.tum.in.www1.artemis.service.connectors.localci.buildagent.BuildLogsMap;
 import de.tum.in.www1.artemis.service.connectors.localci.buildagent.LocalCIDockerService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildConfig;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobItem;
 
 class LocalCIDockerServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
@@ -93,7 +93,7 @@ class LocalCIDockerServiceTest extends AbstractSpringIntegrationLocalCILocalVCTe
         doReturn(inspectImageCmd).when(dockerClient).inspectImageCmd(anyString());
         doThrow(new NotFoundException("")).when(inspectImageCmd).exec();
         BuildConfig buildConfig = new BuildConfig("echo 'test'", "test-image-name", "test", "test", "test", "test", null, null, false, false, false, null);
-        var build = new LocalCIBuildJobQueueItem("1", "job1", "address1", 1, 1, 1, 1, 1, BuildStatus.SUCCESSFUL, null, null, buildConfig, null);
+        var build = new LocalCIBuildJobItem("1", "job1", "address1", 1, 1, 1, 1, 1, BuildStatus.SUCCESSFUL, null, null, buildConfig, null);
         // Pull image
         try {
             localCIDockerService.pullDockerImage(build, new BuildLogsMap());
