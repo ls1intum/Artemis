@@ -85,6 +85,8 @@ export class CourseUpdateComponent implements OnInit {
     readonly COMPLAINT_RESPONSE_TEXT_LIMIT = 65535;
     readonly COMPLAINT_TEXT_LIMIT = 65535;
 
+    readonly COURSE_TITLE_LIMIT = 255;
+
     constructor(
         private eventManager: EventManager,
         private courseManagementService: CourseManagementService,
@@ -163,7 +165,7 @@ export class CourseUpdateComponent implements OnInit {
             {
                 id: new FormControl(this.course.id),
                 title: new FormControl(this.course.title, {
-                    validators: [Validators.required, Validators.maxLength(255)],
+                    validators: [Validators.required, Validators.maxLength(this.COURSE_TITLE_LIMIT)],
                     updateOn: 'blur',
                 }),
                 shortName: new FormControl(
