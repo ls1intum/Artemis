@@ -94,7 +94,6 @@ describe('ExamDetailComponent', () => {
                 MockDirective(FeatureToggleLinkDirective),
                 ExamEditWorkingTimeComponent,
                 MockComponent(ExamLiveAnnouncementCreateButtonComponent),
-                MockPipe(ArtemisTranslatePipe),
             ],
             providers: [
                 {
@@ -118,7 +117,6 @@ describe('ExamDetailComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
                 MockProvider(ArtemisDurationFromSecondsPipe),
-                { provide: ArtemisTranslatePipe, useClass: ArtemisTranslatePipe },
             ],
             schemas: [],
         })
