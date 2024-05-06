@@ -46,7 +46,7 @@ export class QuizExerciseCreationPage {
         await this.page.locator('#drag-and-drop-question-title').fill(title);
 
         await this.uploadDragAndDropBackground();
-        const element = await this.page.$('.background-area');
+        const element = await this.page.locator('.background-area');
         const boundingBox = await element?.boundingBox();
 
         expect(boundingBox, { message: 'Could not get bounding box of element' }).not.toBeNull();
