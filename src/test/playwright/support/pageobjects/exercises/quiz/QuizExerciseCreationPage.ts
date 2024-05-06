@@ -79,7 +79,7 @@ export class QuizExerciseCreationPage {
         const fileChooserPromise = this.page.waitForEvent('filechooser');
         await this.page.locator('#background-file-input-button').click();
         const fileChooser = await fileChooserPromise;
-        await fileChooser.setFiles('../cypress/fixtures/exercise/quiz/drag_and_drop/background.jpg');
+        await fileChooser.setFiles('./fixtures/exercise/quiz/drag_and_drop/background.jpg');
     }
 
     async saveQuiz() {
