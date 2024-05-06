@@ -12,8 +12,6 @@ import { CompetencyTaxonomy, CompetencyValidators, DEFAULT_MASTERY_THRESHOLD } f
 import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 
-export const competencyRegex = new RegExp('^[a-zA-Z0-9- ]+$');
-
 /**
  * Async Validator to make sure that a competency title is unique within a course
  */
@@ -172,7 +170,7 @@ export class CompetencyFormComponent implements OnInit, OnChanges {
         this.form = this.fb.nonNullable.group({
             title: [
                 undefined as string | undefined,
-                [Validators.required, Validators.maxLength(255), Validators.pattern(competencyRegex)],
+                [Validators.required, Validators.maxLength(255)],
                 [this.titleUniqueValidator(this.competencyService, this.courseId, initialTitle)],
             ],
             description: [undefined as string | undefined, [Validators.maxLength(10000)]],

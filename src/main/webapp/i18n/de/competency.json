@@ -119,7 +119,6 @@
                 "titleRequiredValidationError": "Eine Kompetenz braucht einen Titel",
                 "titleMaxLengthValidationError": "Der Titel einer Kompetenz ist auf maximal {{max}} Symbole beschränkt",
                 "titleUniqueValidationError": "Es gibt bereits eine Kompetenz mit diesem Titel in dem Kurs",
-                "titlePatternValidationError": "Titel dürfen nur Buchstaben, Zahlen, Leerzeichen und Bindestriche enthalten.",
                 "descriptionPlaceholder": "Was sollen die Studierenden lernen? Beispiel: \"Du kannst den Unterschied zwischen Rekursion und Schleifen erklären.\"",
                 "descriptionMaxLengthValidationError": "Die Beschreibung der Kompetenz ist auf maximal {{max}} Symbole beschränkt",
                 "softDueDate": "Empfohlenes Fertigstellungsdatum",
