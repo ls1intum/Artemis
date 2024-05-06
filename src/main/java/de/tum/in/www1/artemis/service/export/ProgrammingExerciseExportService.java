@@ -68,7 +68,6 @@ import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
 import de.tum.in.www1.artemis.repository.BuildPlanRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ProfileService;
@@ -110,8 +109,6 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
 
     private final ProfileService profileService;
 
-    private final UserRepository userRepository;
-
     public static final String EXPORTED_EXERCISE_DETAILS_FILE_PREFIX = "Exercise-Details";
 
     public static final String EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX = "Problem-Statement";
@@ -121,7 +118,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
     public ProgrammingExerciseExportService(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
             StudentParticipationRepository studentParticipationRepository, FileService fileService, GitService gitService, ZipFileService zipFileService,
             MappingJackson2HttpMessageConverter springMvcJacksonConverter, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, BuildPlanRepository buildPlanRepository,
-            ProfileService profileService, UserRepository userRepository) {
+            ProfileService profileService) {
         // Programming exercises do not have a submission export service
         super(fileService, springMvcJacksonConverter, null);
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -133,7 +130,6 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.buildPlanRepository = buildPlanRepository;
         this.profileService = profileService;
-        this.userRepository = userRepository;
     }
 
     /**
@@ -752,9 +748,8 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
             }
 
             if (!repositoryExportOptions.isAnonymizeRepository() && profileService.isLocalVcsActive()) {
-                log.debug("LocalVC is active. Removing remotes from participation {}", participation);
-                gitService.removeRemotesFromRepository(repository, false);
-                gitService.setRemoteOrigin(userRepository.getUser().getLogin(), repository, participation.getVcsRepositoryUri());
+                log.debug("LocalCI is active. Removing remotes from participation {}", participation);
+                gitService.removeRemotesFromRepository(repository);
             }
 
             if (repositoryExportOptions.isNormalizeCodeStyle()) {
