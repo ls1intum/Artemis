@@ -84,13 +84,13 @@ public class LocalCIDockerService {
 
     @EventListener(ApplicationReadyEvent.class)
     public void applicationReady() {
-        // Schedule the cleanup of stranded build containers once 10 seconds after the application has started and then every containerCleanupScheduleHour hours
+        // Schedule the cleanup of dangling build containers once 10 seconds after the application has started and then every containerCleanupScheduleHour hours
         ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
         scheduledExecutorService.scheduleAtFixedRate(this::cleanUpContainers, 10, containerCleanupScheduleMinutes * 60L, TimeUnit.SECONDS);
     }
 
     /**
-     * Cleans up stranded build containers from the system. This method differentiates between the initial cleanup
+     * Cleans up dangling build containers from the system. This method differentiates between the initial cleanup
      * and subsequent cleanups to handle containers differently based on their age and status.
      * <p>
      * For the initial cleanup, it removes all containers that match the build container prefix, assuming these containers
@@ -101,19 +101,19 @@ public class LocalCIDockerService {
      * - Logging the start of the cleanup process.
      * - Determining whether it's the initial or a subsequent cleanup.
      * - Listing all containers, filtering them based on name prefix and, for subsequent cleanups, their age.
-     * - Forcibly removing the identified stranded containers.
+     * - Forcibly removing the identified dangling containers.
      * - Logging the results and completion of the cleanup process.
      *
      * @implNote The method uses Docker commands to list and remove containers. It handles state changes using a flag
      *           (`isFirstCleanup`) to toggle the cleanup logic between the initial and subsequent runs.
      */
     public void cleanUpContainers() {
-        List<Container> buildContainers;
-        log.info("Start cleanup stranded build containers");
+        List<Container> danglingBuildContainers;
+        log.debug("Start cleanup dangling build containers");
         if (isFirstCleanup) {
-            // Cleanup all stranded build containers after the application has started
+            // Cleanup all dangling build containers after the application has started
             try {
-                buildContainers = dockerClient.listContainersCmd().withShowAll(true).exec().stream()
+                danglingBuildContainers = dockerClient.listContainersCmd().withShowAll(true).exec().stream()
                         .filter(container -> container.getNames()[0].startsWith("/" + buildContainerPrefix)).toList();
             }
             finally {
@@ -121,20 +121,23 @@ public class LocalCIDockerService {
             }
         }
         else {
-            // Cleanup all containers that are older than 5 minutes for all subsequent cleanups
+            // Cleanup all containers that are older than 5 minutes (or ageThreshold) for all subsequent cleanups
             // Get current time in seconds
             long now = Instant.now().getEpochSecond();
 
             // Threshold for "stuck" containers in seconds
             long ageThreshold = containerExpiryMinutes * 60L;
 
-            buildContainers = dockerClient.listContainersCmd().withShowAll(true).exec().stream().filter(container -> container.getNames()[0].startsWith("/" + buildContainerPrefix))
-                    .filter(container -> (now - container.getCreated()) > ageThreshold).toList();
+            danglingBuildContainers = dockerClient.listContainersCmd().withShowAll(true).exec().stream()
+                    .filter(container -> container.getNames()[0].startsWith("/" + buildContainerPrefix)).filter(container -> (now - container.getCreated()) > ageThreshold)
+                    .toList();
         }
 
-        log.info("Found {} stranded build containers", buildContainers.size());
-        buildContainers.forEach(container -> dockerClient.removeContainerCmd(container.getId()).withForce(true).exec());
-        log.info("Cleanup stranded build containers done");
+        if (!danglingBuildContainers.isEmpty()) {
+            log.info("Found {} dangling build containers", danglingBuildContainers.size());
+            danglingBuildContainers.forEach(container -> dockerClient.removeContainerCmd(container.getId()).withForce(true).exec());
+        }
+        log.debug("Cleanup dangling build containers done");
     }
 
     /**
