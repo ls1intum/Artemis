@@ -68,6 +68,7 @@ export enum ProgrammingLanguage {
     SWIFT = 'SWIFT',
     OCAML = 'OCAML',
     EMPTY = 'EMPTY',
+    RUST = 'RUST',
 }
 
 export enum ProjectType {

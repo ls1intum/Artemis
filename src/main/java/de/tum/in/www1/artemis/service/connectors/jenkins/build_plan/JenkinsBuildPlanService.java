@@ -181,6 +181,7 @@ public class JenkinsBuildPlanService {
             case VHDL -> throw new UnsupportedOperationException("VHDL templates are not available for Jenkins.");
             case ASSEMBLER -> throw new UnsupportedOperationException("Assembler templates are not available for Jenkins.");
             case OCAML -> throw new UnsupportedOperationException("OCaml templates are not available for Jenkins.");
+            case RUST -> throw new UnsupportedOperationException("Rust templates are not available for Jenkins.");
         };
     }
 

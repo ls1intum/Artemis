@@ -6,6 +6,7 @@ import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.HASK
 import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.JAVA;
 import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.KOTLIN;
 import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.PYTHON;
+import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.RUST;
 import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.SWIFT;
 import static de.tum.in.www1.artemis.domain.enumeration.ProjectType.FACT;
 import static de.tum.in.www1.artemis.domain.enumeration.ProjectType.GCC;
@@ -39,5 +40,6 @@ public class JenkinsProgrammingLanguageFeatureService extends ProgrammingLanguag
         programmingLanguageFeatures.put(SWIFT, new ProgrammingLanguageFeature(SWIFT, false, true, true, true, false, List.of(PLAIN), false, false));
         programmingLanguageFeatures.put(C, new ProgrammingLanguageFeature(C, false, false, true, false, false, List.of(FACT, GCC), false, false));
         programmingLanguageFeatures.put(HASKELL, new ProgrammingLanguageFeature(HASKELL, false, false, false, false, true, List.of(), false, false));
+        programmingLanguageFeatures.put(RUST, new ProgrammingLanguageFeature(RUST, false, false, false, false, false, List.of(), false, false));
     }
 }
