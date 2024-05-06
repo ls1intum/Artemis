@@ -9,6 +9,13 @@ import { StudentExam } from 'app/entities/student-exam.model';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { faAngleDown, faAngleUp, faListAlt } from '@fortawesome/free-solid-svg-icons';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { AccordionGroupForExams, SidebarCardElement, SidebarData } from 'app/types/sidebar';
+import { CourseOverviewService } from '../course-overview.service';
+
+const DEFAULT_UNIT_GROUPS: AccordionGroupForExams = {
+    real: { entityData: [] },
+    test: { entityData: [] },
+};
 
 @Component({
     selector: 'jhi-course-exams',
@@ -31,26 +38,36 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     faAngleDown = faAngleDown;
     faListAlt = faListAlt;
 
+    examSelected: boolean = true; // change to true
+    accordionExamGroups: AccordionGroupForExams = DEFAULT_UNIT_GROUPS;
+    sidebarData: SidebarData;
+    sidebarExams: SidebarCardElement[] = [];
+    isCollapsed: boolean = false;
+
     constructor(
         private route: ActivatedRoute,
         private courseStorageService: CourseStorageService,
         private serverDateService: ArtemisServerDateService,
         private examParticipationService: ExamParticipationService,
+        private courseOverviewService: CourseOverviewService,
     ) {}
 
     /**
      * subscribe to changes in the course and fetch course by the path parameter
      */
     ngOnInit(): void {
+        this.isCollapsed = this.courseOverviewService.getSidebarCollapseStateFromStorage('exam');
         this.paramSubscription = this.route.parent!.parent!.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId'], 10);
         });
 
         this.course = this.courseStorageService.getCourse(this.courseId);
+        //this.prepareSidebarData();
 
         this.courseUpdatesSubscription = this.courseStorageService.subscribeToCourseUpdates(this.courseId).subscribe((course: Course) => {
             this.course = course;
             this.updateExams();
+            //this.prepareSidebarData();
         });
 
         this.studentExamTestExamUpdateSubscription = this.examParticipationService
@@ -139,4 +156,30 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
         }
         return 0;
     }
+
+    toggleSidebar() {
+        this.isCollapsed = !this.isCollapsed;
+        this.courseOverviewService.setSidebarCollapseState('exam', this.isCollapsed);
+    }
+
+    // For the content of the sidebar
+    // updateSidebarData() {
+    //     this.sidebarData = {
+    //         groupByCategory: true,
+    //         sidebarType: 'exercise',
+    //         storageId: 'exercise',
+    //         groupedData: this.accordionExerciseGroups,
+    //         ungroupedData: this.sidebarExercises,
+    //     };
+    // }
+
+    // prepareSidebarData() {
+    //     if (!this.course?.exercises) {
+    //         return;
+    //     }
+    //     this.sortedExercises = this.courseOverviewService.sortExercises(this.course.exercises);
+    //     this.sidebarExercises = this.courseOverviewService.mapExercisesToSidebarCardElements(this.sortedExercises);
+    //     this.accordionExerciseGroups = this.courseOverviewService.groupExercisesByDueDate(this.sortedExercises);
+    //     this.updateSidebarData();
+    // }
 }

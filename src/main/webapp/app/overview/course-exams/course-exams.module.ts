@@ -8,9 +8,10 @@ import { RouterModule } from '@angular/router';
 import { NgModule } from '@angular/core';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { ArtemisSidebarModule } from 'app/shared/sidebar/sidebar.module';
 
 @NgModule({
-    imports: [RouterModule.forChild(routes), ArtemisSharedModule, ArtemisSharedCommonModule, ArtemisSharedComponentModule, ArtemisExamSharedModule],
+    imports: [RouterModule.forChild(routes), ArtemisSharedModule, ArtemisSharedCommonModule, ArtemisSharedComponentModule, ArtemisExamSharedModule, ArtemisSidebarModule],
     declarations: [CourseExamsComponent, CourseExamDetailComponent, CourseExamAttemptReviewDetailComponent],
     exports: [CourseExamsComponent],
 })
