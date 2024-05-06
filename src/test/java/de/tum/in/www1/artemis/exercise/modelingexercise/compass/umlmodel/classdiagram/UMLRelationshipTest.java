@@ -1,9 +1,15 @@
 package de.tum.in.www1.artemis.exercise.modelingexercise.compass.umlmodel.classdiagram;
 
-import static de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLRelationship.UMLRelationshipType.*;
-import static de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration.*;
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLRelationship.UMLRelationshipType.CLASS_BIDIRECTIONAL;
+import static de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLRelationship.UMLRelationshipType.CLASS_UNIDIRECTIONAL;
+import static de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration.RELATION_ELEMENT_WEIGHT;
+import static de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration.RELATION_MULTIPLICITY_WEIGHT;
+import static de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration.RELATION_ROLE_WEIGHT;
+import static de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration.RELATION_TYPE_WEIGHT;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.offset;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

@@ -2,9 +2,29 @@
     "artemisApp": {
         "standardizedCompetency": {
             "title": "Standardisierte Kompetenzen",
+            "model": {
+                "title": "Titel",
+                "description": "Beschreibung",
+                "taxonomy": "Taxonomie",
+                "knowledgeArea": "Wissensgebiet",
+                "version": "Version"
+            },
+            "details": {
+                "title": "Standardisierte Kompetenz (Details)",
+                "titleCreate": "Standardisierte Kompetenz Erstellen",
+                "titleEdit": "Standardisierte Kompetenz Bearbeiten",
+                "error": {
+                    "titleRequired": "Eine standardisierte Kompetenz muss einen Titel haben",
+                    "titleMaxLength": "Der Titel einer standardisierten Kompetenz darf maximal {{max}} Zeichen lang sein",
+                    "descriptionMaxLength": "Die Beschreibung einer standardisierten Kompetenz darf maximal {{max}} Zeichen lang sein",
+                    "knowledgeAreaRequired": "Eine standardisierte Kompetenz muss ein Wissensgebiet haben"
+                }
+            },
             "manage": {
                 "title": "Standardisierte Kompetenzen Verwalten",
                 "filter": "Kompetenzen Filtern",
+                "empty": "Es existieren keine Wissensgebiete oder standardisierten Kompetenzen. Du kannst ein neues Wissensgebiet mit dem \"+\" Button erstellen.",
+                "importButton": "Standardisierte Kompetenzen importieren",
                 "expandButtonTooltip": "Alle Wissensgebiete ausklappen",
                 "collapseButtonTooltip": "Alle Wissensgebiete einklappen",
                 "updateTreeError": "Bei der Aktualisierung des Wissensbereichsbaums ist ein Fehler aufgetreten. Bitte lade die Seite neu",
@@ -20,29 +40,41 @@
                     "create": "Erfolgreich die standardisierte Kompetenz <strong>{{title}}</strong> erstellt",
                     "update": "Erfolgreich die standardisierte Kompetenz <strong>{{title}}</strong> aktualisiert",
                     "delete": "Erfolgreich die standardisierte Kompetenz <strong>{{title}}</strong> gelöscht"
+                },
+                "import": {
+                    "title": "Standardisierte Kompetenzen Importieren",
+                    "count": "{{competencies}} standardisierte Kompetenzen und {{knowledgeAreas}} Wissensgebiete aus der Datei gelesen",
+                    "preview": {
+                        "title": "Vorschau des Imports",
+                        "empty": "Keine Objekte für die Vorschau vorhanden. Bitte wähle eine Datei mit gültigen Objekten aus."
+                    },
+                    "format": {
+                        "title": "Benötigtes Dateiformat",
+                        "text1": "Standardisierte Kompetenzen können aus einer .json-Datei in Artemis hinein importiert werden. Nachdem du eine Datei ausgewählt hast, kannst du noch überprüfen, ob die Wissensgebiete und Kompetenzen korrekt ausgelesen wurden.",
+                        "text2": "Die .json-Datei muss ein Objekt mit den Schlüsseln <code>knowledgeAreas</code> und <code>sources</code> enthalten. Ersteres enthält alle zu importierenden Wissensgebiete und standardisierten Kompetenzen, letzteres alle Quellen der importierten Kompetenzen.",
+                        "text3": "Beispiel für eine gültige Importdatei ( bis auf die Kommentare):"
+                    },
+                    "error": {
+                        "fileCount": "Bitte lade nur eine Datei hoch",
+                        "fileTooBig": "Die Datei ist zu groß. Bitte lade eine Datei mit maximal 20 MB hoch",
+                        "fileExtension": "Falscher Dateityp. Bitte lade eine .json Datei hoch",
+                        "fileSyntax": "Die Datei kann nicht verarbeitet werden. Bitte lade eine Datei mit gültiger .json-Syntax hoch",
+                        "fileStructure": "Die Datei kann nicht verarbeitet werden. Bitte überprüfe, ob die erforderliche Dateistruktur eingehalten wird"
+                    },
+                    "success": "Erfolgreich alle standardisierte Kompetenzen und Wissensgebiete importiert"
                 }
             },
-            "model": {
-                "title": "Titel",
-                "description": "Beschreibung",
-                "taxonomy": "Taxonomie",
-                "knowledgeArea": "Wissensgebiet",
-                "version": "Version"
-            },
-            "details": {
-                "title": "Standardisierte Kompetenz",
-                "titleCreate": "Standardisierte Kompetenz Erstellen",
-                "titleEdit": "Standardisierte Kompetenz Bearbeiten",
-                "error": {
-                    "titleRequired": "Eine standardisierte Kompetenz muss einen Titel haben",
-                    "titleMaxLength": "Der Titel einer standardisierten Kompetenz darf maximal {{max}} Zeichen lang sein",
-                    "descriptionMaxLength": "Die Beschreibung einer standardisierten Kompetenz darf maximal {{max}} Zeichen lang sein",
-                    "knowledgeAreaRequired": "Eine standardisierte Kompetenz muss ein Wissensgebiet haben"
-                }
+            "courseImport": {
+                "title": "Standardisierte Kompetenzen Importieren",
+                "empty": "Es existieren keine standardisierten Kompetenzen",
+                "success": "Erfolgreich {{count}} standardisierte Kompetenzen importiert",
+                "selectedTitle": "Ausgewählte Kompetenzen",
+                "selectedEmpty": "Keine standardisierten Kompetenzen zum Import ausgewählt",
+                "selectedCompetencies": "{{count}} standardisierte Kompetenzen zum Import ausgewählt"
             }
         },
         "knowledgeArea": {
-            "empty": "Dieses Wissensgebiet hat noch keinen Inhalt",
+            "empty": "Dieses Wissensgebiet hat keinen Inhalt",
             "model": {
                 "title": "Titel",
                 "description": "Beschreibung",
@@ -67,7 +99,7 @@
                 }
             },
             "details": {
-                "title": "Wissensgebiet",
+                "title": "Wissensgebiet (Details)",
                 "titleCreate": "Wissensgebiet Erstellen",
                 "titleEdit": "Wissensgebiet Bearbeiten",
                 "createKnowledgeAreaButton": "Wissensgebiet hinzufügen",

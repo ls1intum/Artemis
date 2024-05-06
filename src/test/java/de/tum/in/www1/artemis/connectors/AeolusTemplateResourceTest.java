@@ -155,8 +155,8 @@ class AeolusTemplateResourceTest extends AbstractSpringIntegrationLocalCILocalVC
 
     void assertWindfileIsCorrect(Windfile windfile, long expectedScriptActions) {
         assertThat(windfile.getApi()).isEqualTo("v0.0.1");
-        assertThat(windfile.getMetadata().getGitCredentials()).isNull();
-        assertThat(windfile.getMetadata().getDocker()).isNotNull();
+        assertThat(windfile.getMetadata().gitCredentials()).isNull();
+        assertThat(windfile.getMetadata().docker()).isNotNull();
         assertThat(windfile.getScriptActions().size()).isEqualTo(expectedScriptActions);
     }
 }

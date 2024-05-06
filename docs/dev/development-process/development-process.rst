@@ -33,8 +33,8 @@ Step 1: Append Feature Proposal Template to Feature Request on GitHub
 ---------------------------------------------------------------------
 The Feature Proposal Template outlines the structure of the feature proposal and provides a guideline for the development team to follow.
 
-We have written a Github Action that automatically attaches the feature proposal template to the issue description of an issue when someone is assigned.
-As a developer who is responsible for the implementation of a feature request, you do not have to do any than register as an assignee in the issue.
+We have developed a GitHub Action that automatically appends the feature proposal template to the issue description once the issue is tagged with 'needs-feature-proposal.' Additionally, when someone is assigned to such an issue, an instructional comment is automatically added.
+This comment reminds the assignee to fill out the feature proposal and provides a link to the relevant documentation for further guidance.
 
 .. note::
       The GitHub Action will be skipped for issues that are labeled with "bug".
@@ -110,7 +110,6 @@ After the feature implementation is complete, the developer is required to creat
 The subsequent sections provide guidance on the naming conventions and outline the necessary steps for creating and merging a pull request.
 
 .. _pr_naming_conventions:
-
 Naming Conventions for GitHub Pull Requests
 -------------------------------------------
 

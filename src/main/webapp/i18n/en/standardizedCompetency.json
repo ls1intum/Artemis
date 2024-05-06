@@ -2,26 +2,6 @@
     "artemisApp": {
         "standardizedCompetency": {
             "title": "Standardized Competencies",
-            "manage": {
-                "title": "Standardized Competency Management",
-                "filter": "Filter competencies",
-                "expandButtonTooltip": "Expand all knowledge areas",
-                "collapseButtonTooltip": "Collapse all knowledge areas",
-                "updateTreeError": "Something went wrong while updating the knowledge area tree. Please reload the page.",
-                "deleteModal": {
-                    "question": "Do you really want to delete the standardized competency <strong>{{title}}</strong>? You can not undo this action!",
-                    "typeNameToConfirm": "Please enter the name of the standardized competency for confirmation."
-                },
-                "cancelModal": {
-                    "title": "Warning: Unsaved Changes",
-                    "text": "Are you sure you want to cancel editing the standardized competency <strong>{{title}}</strong>? Press Cancel to go back, or Confirm to proceed."
-                },
-                "successAlerts": {
-                    "create": "Successfully created standardized competency <strong>{{title}}</strong>",
-                    "update": "Successfully updated standardized competency <strong>{{title}}</strong>",
-                    "delete": "Successfully deleted standardized competency <strong>{{title}}</strong>"
-                }
-            },
             "model": {
                 "title": "Title",
                 "description": "Description",
@@ -39,10 +19,62 @@
                     "descriptionMaxLength": "The description of a standardized competency is limited to {{max}} characters",
                     "knowledgeAreaRequired": "A standardized competency needs to have a knowledge area"
                 }
+            },
+            "manage": {
+                "title": "Standardized Competency Management",
+                "filter": "Filter competencies",
+                "empty": "No knowledge areas or standardized competencies exist. You can create a new knowledge area with the \"+\" button.",
+                "importButton": "Import standardized competencies",
+                "expandButtonTooltip": "Expand all knowledge areas",
+                "collapseButtonTooltip": "Collapse all knowledge areas",
+                "updateTreeError": "Something went wrong while updating the knowledge area tree. Please reload the page.",
+                "deleteModal": {
+                    "question": "Do you really want to delete the standardized competency <strong>{{title}}</strong>? You can not undo this action!",
+                    "typeNameToConfirm": "Please enter the name of the standardized competency for confirmation."
+                },
+                "cancelModal": {
+                    "title": "Warning: Unsaved Changes",
+                    "text": "Are you sure you want to cancel editing the standardized competency <strong>{{title}}</strong>? Press Cancel to go back, or Confirm to proceed."
+                },
+                "successAlerts": {
+                    "create": "Successfully created standardized competency <strong>{{title}}</strong>",
+                    "update": "Successfully updated standardized competency <strong>{{title}}</strong>",
+                    "delete": "Successfully deleted standardized competency <strong>{{title}}</strong>"
+                },
+                "import": {
+                    "title": "Import Standardized Competencies",
+                    "preview": {
+                        "title": "Import Preview",
+                        "empty": "No objects available for the preview. Please select a file with valid objects."
+                    },
+                    "format": {
+                        "title": "Required File Format",
+                        "text1": "Standardized competencies can be imported from a .json file into Artemis. After selecting a file, you can then verify that the knowledge areas and competencies were read correctly.",
+                        "text2": "The .json file must contain an object with the keys <code>knowledgeAreas</code> and <code>sources</code>. The former contains all knowledge areas and standardized competencies to import and the latter contains all source details of the competencies imported.",
+                        "text3": "Example of a valid import file (except for the comments):"
+                    },
+                    "count": "Read {{competencies}} competencies and {{knowledgeAreas}} knowledge areas from the file",
+                    "error": {
+                        "fileCount": "Please only upload one file",
+                        "fileTooBig": "The file is too big. The maximum file size is 20 MB",
+                        "fileExtension": "Unsupported file extension. Please upload a .json file",
+                        "fileSyntax": "Unable to parse file. Please upload a file with valid .json syntax",
+                        "fileStructure": "Unable to parse file. Please verify it follows the required file structure"
+                    },
+                    "success": "Successfully imported all knowledge areas and standardized competencies"
+                }
+            },
+            "courseImport": {
+                "title": "Import Standardized Competencies",
+                "empty": "No knowledge areas or standardized competencies exist.",
+                "success": "Successfully imported {{count}} standardized competencies",
+                "selectedTitle": "Selected Competencies",
+                "selectedEmpty": "No standardized competencies selected for import",
+                "selectedCompetencies": "{{count}} standardized competencies selected for import"
             }
         },
         "knowledgeArea": {
-            "empty": "This knowledge area has no content yet",
+            "empty": "This knowledge area has no content",
             "model": {
                 "title": "Title",
                 "shortTitle": "Short title",

@@ -1,9 +1,10 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
 import { faChevronRight, faFilter, faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Params } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Subscription, distinctUntilChanged } from 'rxjs';
 import { ProfileService } from '../layouts/profiles/profile.service';
 import { SidebarData } from 'app/types/sidebar';
+import { SidebarEventService } from './sidebar-event.service';
 
 @Component({
     selector: 'jhi-sidebar',
@@ -13,6 +14,8 @@ import { SidebarData } from 'app/types/sidebar';
 export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     @Input() searchFieldEnabled: boolean = true;
     @Input() sidebarData: SidebarData;
+    @Input() courseId?: number;
+    @Input() itemSelected?: boolean;
 
     searchValue = '';
     isCollapsed: boolean = false;
@@ -21,6 +24,7 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
 
     paramSubscription?: Subscription;
     profileSubscription?: Subscription;
+    sidebarEventSubscription?: Subscription;
     routeParams: Params;
     isProduction = true;
     isTestServer = false;
@@ -33,6 +37,7 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     constructor(
         private route: ActivatedRoute,
         private profileService: ProfileService,
+        private sidebarEventService: SidebarEventService,
     ) {}
 
     ngOnInit(): void {
@@ -40,6 +45,16 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
             this.isProduction = profileInfo?.inProduction;
             this.isTestServer = profileInfo?.testServer ?? false;
         });
+        this.sidebarEventSubscription = this.sidebarEventService
+            .sidebarCardEventListener()
+            .pipe(
+                distinctUntilChanged(), // This ensures the function is only called when the actual value changes
+            )
+            .subscribe((itemId) => {
+                if (itemId) {
+                    this.storeLastSelectedItem(itemId);
+                }
+            });
     }
 
     ngOnChanges() {
@@ -52,8 +67,14 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
         this.searchValue = searchValue;
     }
 
+    storeLastSelectedItem(itemId: number | string) {
+        sessionStorage.setItem('sidebar.lastSelectedItem.' + this.sidebarData.storageId + '.byCourse.' + this.courseId, JSON.stringify(itemId));
+    }
+
     ngOnDestroy() {
         this.paramSubscription?.unsubscribe();
         this.profileSubscription?.unsubscribe();
+        this.sidebarEventSubscription?.unsubscribe();
+        this.sidebarEventService.emitResetValue();
     }
 }
