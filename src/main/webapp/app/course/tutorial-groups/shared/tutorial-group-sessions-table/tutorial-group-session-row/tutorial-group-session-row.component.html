@@ -1,8 +1,8 @@
 <ng-container>
     @if (showIdColumn) {
-        <td [class.table-danger]="isCancelled">{{ session.id }}</td>
+        <td>{{ session.id }}</td>
     }
-    <td [class.table-danger]="isCancelled">
+    <td>
         <span>
             {{ session.start | artemisDate: 'short-date' : false : timeZone! : true }}
             {{ session.start | artemisDate: 'time' : false : timeZone! }} -
@@ -25,14 +25,14 @@
             </button>
         }
     </td>
-    <td [class.table-danger]="isCancelled">
+    <td>
         <button type="button" class="btn btn-outline-info" placement="top" [ngbPopover]="session.location" [animation]="false" [autoClose]="'outside'">
             <span class="d-inline-block text-truncate" style="max-width: 150px">
                 {{ session.location }}
             </span>
         </button>
     </td>
-    <td [class.table-danger]="isCancelled" class="attendance-column">
+    <td class="attendance-column">
         @if (!isReadOnly) {
             <div class="input-group">
                 <input
@@ -65,7 +65,7 @@
         }
     </td>
     @if (tutorialGroup.tutorialGroupSchedule) {
-        <td [class.table-danger]="isCancelled">
+        <td>
             @if (!hasSchedule) {
                 <div class="alert alert-info" role="alert">
                     {{ 'artemisApp.pages.tutorialGroupSessionManagement.differsFromSchedule' | artemisTranslate }}
@@ -74,7 +74,7 @@
         </td>
     }
     @if (extraColumn) {
-        <td [class.table-danger]="isCancelled">
+        <td>
             <div class="extra-buttons">
                 <ng-template [ngTemplateOutlet]="extraColumn" [ngTemplateOutletContext]="{ $implicit: session }" />
             </div>

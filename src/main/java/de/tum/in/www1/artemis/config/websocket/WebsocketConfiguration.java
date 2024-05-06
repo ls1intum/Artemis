@@ -126,7 +126,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         // If tcpClient is null, there is no valid address specified in the config. This could be due to a development setup or a mistake in the config.
         TcpOperations<byte[]> tcpClient = createTcpClient();
         if (tcpClient != null) {
-            log.info("Enabling StompBrokerRelay for WebSocket messages using {}", String.join(", ", brokerAddresses));
+            log.debug("Enabling StompBrokerRelay for WebSocket messages using {}", String.join(", ", brokerAddresses));
             config
                     // Enable the relay for "/topic"
                     .enableStompBrokerRelay("/topic")
@@ -142,7 +142,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                     .setTcpClient(tcpClient);
         }
         else {
-            log.info("Did NOT enable StompBrokerRelay for WebSocket messages");
+            log.debug("Did NOT enable StompBrokerRelay for WebSocket messages");
             config.enableSimpleBroker("/topic").setHeartbeatValue(new long[] { 10000, 20000 }).setTaskScheduler(messageBrokerTaskScheduler);
         }
     }
