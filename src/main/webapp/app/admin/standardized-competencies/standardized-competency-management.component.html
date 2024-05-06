@@ -10,29 +10,14 @@
             </a>
         </div>
     </div>
-    <div class="card mb-3">
-        <div class="card-header">
-            <h5 class="mb-0" jhiTranslate="artemisApp.standardizedCompetency.manage.filter"></h5>
-        </div>
-        <div class="card-body row pb-0">
-            <div class="form-group col">
-                <label for="title-filter" jhiTranslate="artemisApp.standardizedCompetency.model.title"> </label>
-                <input id="title-filter" class="form-control" [(ngModel)]="competencyTitleFilter" (input)="titleFilterSubject.next()" />
-            </div>
-            <div class="form-group col">
-                <label for="knowledge-area-filter" jhiTranslate="artemisApp.standardizedCompetency.model.knowledgeArea"></label>
-                <select [(ngModel)]="knowledgeAreaFilter" (ngModelChange)="filterByKnowledgeArea()" class="form-select" id="knowledge-area-filter">
-                    <option [ngValue]="undefined"></option>
-                    @for (knowledgeArea of knowledgeAreasForSelect; track knowledgeArea.id) {
-                        <option [ngValue]="knowledgeArea">
-                            {{ knowledgeArea.title }}
-                        </option>
-                    }
-                </select>
-            </div>
-        </div>
-    </div>
-    <div class="d-flex flex-wrap align-items-center mb-2">
+    <jhi-standardized-competency-filter
+        [knowledgeAreasForSelect]="knowledgeAreasForSelect"
+        [knowledgeAreaFilter]="knowledgeAreaFilter"
+        [competencyTitleFilter]="competencyTitleFilter"
+        (knowledgeAreaFilterChange)="filterByKnowledgeArea($event)"
+        (competencyTitleFilterChange)="filterByCompetencyTitle($event)"
+    />
+    <div class="d-flex flex-wrap align-items-center mt-3 mb-2">
         <h3 class="me-3 mb-0" jhiTranslate="artemisApp.standardizedCompetency.title"></h3>
         <jhi-button
             class="me-3"
@@ -50,58 +35,68 @@
         />
         <jhi-button [btnSize]="ButtonSize.SMALL" [icon]="faMaximize" (onClick)="treeControl.expandAll()" tooltip="artemisApp.standardizedCompetency.manage.expandButtonTooltip" />
     </div>
-    <div class="d-flex">
-        <jhi-knowledge-area-tree class="d-flex flex-grow-1 h-100 w-50" [dataSource]="dataSource" [treeControl]="treeControl">
-            <ng-template let-knowledgeArea="knowledgeArea" #knowledgeAreaTemplate>
-                <div class="d-flex align-items-center">
-                    <fa-icon
-                        class="clickable"
-                        size="sm"
-                        [icon]="faEye"
-                        [fixedWidth]="true"
-                        (click)="selectKnowledgeArea(knowledgeArea)"
-                        [ngbTooltip]="'artemisApp.knowledgeArea.manage.detailsTooltip' | artemisTranslate"
+    @if (dataSource.data?.length) {
+        <div class="d-flex">
+            <jhi-knowledge-area-tree class="d-flex flex-grow-1 h-100 w-50" [dataSource]="dataSource" [treeControl]="treeControl">
+                <ng-template let-knowledgeArea="knowledgeArea" #knowledgeAreaTemplate>
+                    <div class="d-flex align-items-center">
+                        <fa-icon
+                            class="clickable"
+                            size="sm"
+                            [icon]="faEye"
+                            [fixedWidth]="true"
+                            (click)="selectKnowledgeArea(knowledgeArea)"
+                            [ngbTooltip]="'artemisApp.knowledgeArea.manage.detailsTooltip' | artemisTranslate"
+                        />
+                    </div>
+                </ng-template>
+                <ng-template let-competency="competency" #competencyTemplate>
+                    <div class="d-flex align-items-center clickable" (click)="selectCompetency(competency)">
+                        <fa-icon
+                            class="me-2"
+                            [icon]="getIcon(competency.taxonomy)"
+                            [ngbTooltip]="'artemisApp.competency.taxonomies.' + (competency.taxonomy ?? 'none') | artemisTranslate"
+                            [fixedWidth]="true"
+                        />
+                        <h6 class="mb-0">{{ competency.title }}</h6>
+                    </div>
+                </ng-template>
+            </jhi-knowledge-area-tree>
+            @if (selectedCompetency) {
+                <div class="card light-background d-flex flex-grow-1 w-100 h-100 p-3 ms-1">
+                    <jhi-standardized-competency-edit
+                        [competency]="selectedCompetency"
+                        [knowledgeAreas]="knowledgeAreasForSelect"
+                        [(isEditing)]="isEditing"
+                        (onSave)="saveCompetency($event)"
+                        (onDelete)="deleteCompetency($event)"
+                        (onClose)="closeCompetency()"
+                        [dialogError]="dialogError"
                     />
                 </div>
-            </ng-template>
-            <ng-template let-competency="competency" #competencyTemplate>
-                <div class="d-flex align-items-center clickable" (click)="selectCompetency(competency)">
-                    <fa-icon
-                        class="me-2"
-                        [icon]="getIcon(competency.taxonomy)"
-                        [ngbTooltip]="'artemisApp.competency.taxonomies.' + (competency.taxonomy ?? 'none') | artemisTranslate"
-                        [fixedWidth]="true"
+            } @else if (selectedKnowledgeArea) {
+                <div class="card light-background d-flex flex-grow-1 w-100 h-100 p-3 ms-1">
+                    <jhi-knowledge-area-edit
+                        [knowledgeArea]="selectedKnowledgeArea"
+                        [knowledgeAreas]="knowledgeAreasForSelect"
+                        [(isEditing)]="isEditing"
+                        (onSave)="saveKnowledgeArea($event)"
+                        (onDelete)="deleteKnowledgeArea($event)"
+                        (onOpenNewCompetency)="openNewCompetency($event)"
+                        (onOpenNewKnowledgeArea)="openNewKnowledgeArea($event)"
+                        (onClose)="closeKnowledgeArea()"
+                        [dialogError]="dialogError"
                     />
-                    <h6 class="mb-0">{{ competency.title }}</h6>
                 </div>
-            </ng-template>
-        </jhi-knowledge-area-tree>
-        @if (selectedCompetency) {
-            <div class="card light-background d-flex flex-grow-1 w-100 h-100 p-3 ms-1">
-                <jhi-standardized-competency-detail
-                    [competency]="selectedCompetency"
-                    [knowledgeAreas]="knowledgeAreasForSelect"
-                    [(isEditing)]="isEditing"
-                    (onSave)="saveCompetency($event)"
-                    (onDelete)="deleteCompetency($event)"
-                    (onClose)="closeCompetency()"
-                    [dialogError]="dialogError"
-                />
+            }
+        </div>
+    } @else if (isLoading) {
+        <div class="d-flex justify-content-center">
+            <div class="spinner-border" role="status">
+                <span class="sr-only" jhiTranslate="loading"></span>
             </div>
-        } @else if (selectedKnowledgeArea) {
-            <div class="card light-background d-flex flex-grow-1 w-100 h-100 p-3 ms-1">
-                <jhi-knowledge-area-detail
-                    [knowledgeArea]="selectedKnowledgeArea"
-                    [knowledgeAreas]="knowledgeAreasForSelect"
-                    [(isEditing)]="isEditing"
-                    (onSave)="saveKnowledgeArea($event)"
-                    (onDelete)="deleteKnowledgeArea($event)"
-                    (onOpenNewCompetency)="openNewCompetency($event)"
-                    (onOpenNewKnowledgeArea)="openNewKnowledgeArea($event)"
-                    (onClose)="closeKnowledgeArea()"
-                    [dialogError]="dialogError"
-                />
-            </div>
-        }
-    </div>
+        </div>
+    } @else {
+        <span jhiTranslate="artemisApp.standardizedCompetency.manage.empty"></span>
+    }
 </div>

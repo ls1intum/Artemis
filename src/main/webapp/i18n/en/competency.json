@@ -44,10 +44,12 @@
             },
             "manageCompetencies": {
                 "title": "Competency Management",
-                "import": "Import competencies",
-                "importAll": "Import all competencies of a course",
-                "create": "Create competency",
-                "generate": "Generate Competencies",
+                "importButton": "Import competencies",
+                "importFromCoursesButton": "Import competencies from other courses",
+                "importAllButton": "Import all competencies of a course",
+                "importStandardizedButton": "Import standardized competencies",
+                "createButton": "Create competency",
+                "generateButton": "Generate Competencies",
                 "empty": "No competencies exist for this course",
                 "deleteRelationModalTitle": "Confirm Delete",
                 "deleteRelationModalText": "Are you sure you want to delete the relation between \"{{titleTail}}\" and \"{{titleHead}}\"?"

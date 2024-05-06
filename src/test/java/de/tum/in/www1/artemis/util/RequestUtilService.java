@@ -359,7 +359,7 @@ public class RequestUtilService {
         return postWithResponseBody(path, body, true, responseType, expectedStatus, null, null);
     }
 
-    public <T, R> String postWithResponseBodyString(String path, T body, HttpStatus expectedStatus) throws Exception {
+    public <T> String postWithResponseBodyString(String path, T body, HttpStatus expectedStatus) throws Exception {
         return postWithResponseBodyString(path, body, expectedStatus, null, null, new LinkedMultiValueMap<>());
     }
 
@@ -751,7 +751,7 @@ public class RequestUtilService {
     }
 
     /**
-     * The Security Context gets cleared by {@link org.springframework.security.web.context.SecurityContextPersistenceFilter} after a REST call.
+     * The Security Context gets cleared after a REST call.
      * To prevent issues with further queries and rest calls in a test we restore the security context from the test security context holder
      */
     public void restoreSecurityContext() {
@@ -784,7 +784,7 @@ public class RequestUtilService {
     private static void verifyExpectedResponseHeaders(Map<String, String> expectedResponseHeaders, MvcResult res) {
         if (expectedResponseHeaders != null) {
             for (Map.Entry<String, String> responseHeader : expectedResponseHeaders.entrySet()) {
-                assertThat(res.getResponse().getHeaderValues(responseHeader.getKey()).get(0)).isEqualTo(responseHeader.getValue());
+                assertThat(res.getResponse().getHeaderValues(responseHeader.getKey()).getFirst()).isEqualTo(responseHeader.getValue());
             }
         }
     }

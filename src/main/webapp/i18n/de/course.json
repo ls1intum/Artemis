@@ -1,7 +1,7 @@
 {
     "artemisApp": {
         "course": {
-            "searchForCourse": "Suchen Sie nach einem Kurs",
+            "searchForCourse": "Suche nach einem Kurs",
             "home": {
                 "title": "Kurse",
                 "createLabel": "Kurs erstellen",

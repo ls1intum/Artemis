@@ -90,6 +90,9 @@
         "systemNotificationNeedsBothDates": "Both notification date and expiration date must be set.",
         "systemNotificationNeedsNotificationBeforeExpiration": "The expiration date must be after the notification date.",
         "ltiNotSupported": "LTI is not supported on this Artemis instance",
-        "exportFailed": "Exercise export failed"
+        "exportFailed": "Exercise export failed",
+        "unableToImportProgrammingExercise": "Unable to import programming exercise.",
+        "titleAlreadyExists": "A programming exercise with the same title already exists. Please choose a different title.",
+        "shortnameAlreadyExists": "A programming exercise with the same short name already exists. Please choose a different short name."
     }
 }
