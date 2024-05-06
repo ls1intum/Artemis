@@ -159,7 +159,7 @@ Best Practices
 
 .. _ordered:
 
-  * **Ordered Collection without duplicates **: When you want to order the collection of objects of the relationship, while having no duplicates use a ``TreeSet``. A ``TreeSet`` is a sorted set, which means that the elements are ordered using their natural ordering or by a comparator provided at set creation time. E.g.:
+  * **Ordered Collection without duplicates**: When you want to order the collection of objects of the relationship, while having no duplicates use a ``TreeSet``. A ``TreeSet`` is a sorted set, which means that the elements are ordered using their natural ordering or by a comparator provided at set creation time. E.g.:
 
        .. code-block:: java
 
