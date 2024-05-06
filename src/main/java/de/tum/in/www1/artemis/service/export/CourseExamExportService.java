@@ -416,8 +416,6 @@ public class CourseExamExportService {
                         // Download the repositories' template, solution, tests and students' repositories
                         programmingExerciseExportService.exportProgrammingExerciseForArchival(programmingExercise, exportErrors, Optional.of(exerciseExportDir), reportData)
                                 .ifPresent(exportedExercises::add);
-
-                    // Export the other exercises types
                     case FileUploadExercise fileUploadExercise -> exportedExercises.add(fileUploadExerciseWithSubmissionsExportService
                             .exportFileUploadExerciseWithSubmissions(fileUploadExercise, submissionsExportOptions, exerciseExportDir, exportErrors, reportData));
                     case TextExercise textExercise -> exportedExercises.add(textExerciseWithSubmissionsExportService.exportTextExerciseWithSubmissions(textExercise,
@@ -427,7 +425,8 @@ public class CourseExamExportService {
                     case QuizExercise quizExercise ->
                         exportedExercises.add(quizExerciseWithSubmissionsExportService.exportExerciseWithSubmissions(quizExercise, exerciseExportDir, exportErrors, reportData));
                     default -> {
-                        // Exercise is not supported so skip
+                        logMessageAndAppendToList("Failed to export exercise '" + exercise.getTitle() + "' (id: " + exercise.getId() + "): Exercise type not supported for export",
+                                exportErrors, null);
                     }
                 }
             }
