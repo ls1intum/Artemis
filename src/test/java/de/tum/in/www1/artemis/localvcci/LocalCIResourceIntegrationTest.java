@@ -33,6 +33,7 @@ import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildConfig;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.JobTimingInfo;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildAgentInformation;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobItem;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobItemReference;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.RepositoryInfo;
 import de.tum.in.www1.artemis.service.dto.FinishedBuildJobDTO;
 import de.tum.in.www1.artemis.util.PageableSearchUtilService;
@@ -59,7 +60,9 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
     @Autowired
     private BuildLogEntryService buildLogEntryService;
 
-    protected IQueue<LocalCIBuildJobItem> queuedJobs;
+    protected IQueue<LocalCIBuildJobItemReference> queuedJobs;
+
+    protected IMap<Long, LocalCIBuildJobItem> buildJobItemMap;
 
     protected IMap<Long, LocalCIBuildJobItem> processingJobs;
 
@@ -102,6 +105,7 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
 
         queuedJobs = hazelcastInstance.getQueue("buildJobQueue");
         processingJobs = hazelcastInstance.getMap("processingJobs");
+        buildJobItemMap = this.hazelcastInstance.getMap("buildJobItemMap");
         buildAgentInformation = hazelcastInstance.getMap("buildAgentInformation");
 
         processingJobs.put(1L, job1);
@@ -114,6 +118,7 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
     void clearDataStructures() {
         sharedQueueProcessingService.init();
         queuedJobs.clear();
+        buildJobItemMap.clear();
         processingJobs.clear();
         buildAgentInformation.clear();
     }
@@ -124,7 +129,9 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
         var retrievedJobs = request.get("/api/admin/queued-jobs", HttpStatus.OK, List.class);
         assertThat(retrievedJobs).isEmpty();
         // Adding a lot of jobs as they get processed very quickly due to mocking
-        queuedJobs.addAll(List.of(job1, job2));
+        queuedJobs.addAll(List.of(new LocalCIBuildJobItemReference(job1), new LocalCIBuildJobItemReference(job2)));
+        buildJobItemMap.put(job1.participationId(), job1);
+        buildJobItemMap.put(job2.participationId(), job2);
         var retrievedJobs1 = request.get("/api/admin/queued-jobs", HttpStatus.OK, List.class);
         assertThat(retrievedJobs1).hasSize(2);
     }
@@ -148,7 +155,9 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
         var retrievedJobs = request.get("/api/courses/" + course.getId() + "/queued-jobs", HttpStatus.OK, List.class);
         assertThat(retrievedJobs).isEmpty();
         // Adding a lot of jobs as they get processed very quickly due to mocking
-        queuedJobs.addAll(List.of(job1, job2));
+        queuedJobs.addAll(List.of(new LocalCIBuildJobItemReference(job1), new LocalCIBuildJobItemReference(job2)));
+        buildJobItemMap.put(job1.participationId(), job1);
+        buildJobItemMap.put(job2.participationId(), job2);
         var retrievedJobs1 = request.get("/api/courses/" + course.getId() + "/queued-jobs", HttpStatus.OK, List.class);
         assertThat(retrievedJobs1).hasSize(2);
     }
