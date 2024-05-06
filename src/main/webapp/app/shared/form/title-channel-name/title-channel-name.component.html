@@ -7,7 +7,7 @@
             #field_title="ngModel"
             required
             [minlength]="minTitleLength"
-            [pattern]="titlePattern"
+            [pattern]="'^[a-zA-Z0-9- ]+$'"
             type="text"
             class="form-control"
             name="title"

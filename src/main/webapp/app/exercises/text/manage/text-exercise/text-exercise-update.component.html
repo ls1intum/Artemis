@@ -12,14 +12,7 @@
     <jhi-form-status-bar [formStatusSections]="formSectionStatus" />
     <div>
         <h3 jhiTranslate="artemisApp.exercise.sections.general" id="artemisApp.exercise.sections.general"></h3>
-        <jhi-exercise-title-channel-name
-            [titlePattern]="'^[a-zA-Z0-9- ]+$'"
-            [exercise]="textExercise"
-            [course]="textExercise.course"
-            [minTitleLength]="3"
-            [isImport]="isImport"
-            [isExamMode]="isExamMode"
-        />
+        <jhi-exercise-title-channel-name [exercise]="textExercise" [course]="textExercise.course" [minTitleLength]="3" [isImport]="isImport" [isExamMode]="isExamMode" />
         @if (!isExamMode) {
             <div class="form-group position-relative">
                 <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories"></label>
