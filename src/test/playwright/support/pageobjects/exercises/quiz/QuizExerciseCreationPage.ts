@@ -49,9 +49,7 @@ export class QuizExerciseCreationPage {
         const element = await this.page.$('.background-area');
         const boundingBox = await element?.boundingBox();
 
-        if (!boundingBox) {
-            throw new Error('Could not get bounding box of element');
-        }
+        expect(boundingBox, { message: 'Could not get bounding box of element' }).not.toBeNull();
         await this.page.mouse.move(boundingBox.x + 800, boundingBox.y + 10);
         await this.page.mouse.down();
         await this.page.mouse.move(boundingBox.x + 1000, boundingBox.y + 150);
