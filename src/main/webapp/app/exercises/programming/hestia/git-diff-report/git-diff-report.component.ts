@@ -27,8 +27,6 @@ export class GitDiffReportComponent implements OnInit {
 
     rightCommit: string | undefined;
 
-    // TODO: Make this configurable by the user
-    numberOfContextLines = 3;
     entries: ProgrammingExerciseGitDiffEntry[];
     entriesByPath: Map<string, ProgrammingExerciseGitDiffEntry[]>;
     addedLineCount: number;

@@ -23,9 +23,6 @@ export class GitDiffFileComponent implements OnInit {
     @Input()
     modifiedFileContent?: string;
 
-    @Input()
-    numberOfContextLines = 3;
-
     @Output()
     onDiffReady = new EventEmitter<boolean>();
 

@@ -15,8 +15,6 @@ export class GitDiffFilePanelComponent implements OnInit {
 
     @Input() solutionFileContent: string | undefined;
 
-    @Input() numberOfContextLines = 3;
-
     @Input() diffForTemplateAndSolution = true;
 
     @Output() onDiffReady = new EventEmitter<boolean>();

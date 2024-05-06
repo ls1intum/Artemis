@@ -61,7 +61,6 @@
                     [diffEntries]="entriesByPath.get(filePath) ?? []"
                     [templateFileContent]="templateFileContentByPath.get(filePath)"
                     [solutionFileContent]="solutionFileContentByPath.get(filePath)"
-                    [numberOfContextLines]="numberOfContextLines"
                     (onDiffReady)="onDiffReady(filePath, $event)"
                 />
             }
