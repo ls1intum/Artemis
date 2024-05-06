@@ -12,6 +12,17 @@ import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageDTO;
 import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;
 import de.tum.in.www1.artemis.service.iris.exception.IrisException;
 
+/**
+ * A DTO for sending status updates of Iris to the client via the websocket
+ *
+ * @param type                the type of the message
+ * @param message             an IrisMessage instance if the type is MESSAGE
+ * @param errorMessage        the error message if the type is ERROR
+ * @param errorTranslationKey the translation key for the error message if the type is ERROR
+ * @param translationParams   the translation parameters for the error message if the type is ERROR
+ * @param rateLimitInfo       the rate limit information
+ * @param stages              the stages of the Pyris pipeline
+ */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record IrisWebsocketDTO(IrisWebsocketMessageType type, IrisMessage message, String errorMessage, String errorTranslationKey, Map<String, Object> translationParams,
         IrisRateLimitService.IrisRateLimitInformation rateLimitInfo, List<PyrisStageDTO> stages) {
