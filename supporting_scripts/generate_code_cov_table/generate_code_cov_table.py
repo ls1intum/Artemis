@@ -41,7 +41,7 @@ def download_and_extract_zip(url, headers, key):
         response = requests.get(url, headers=headers, stream=True)
         response.raise_for_status()
         total_size = int(response.headers.get('content-length', 0))
-    except requests.RequestException as e:
+    except requests.RequestException:
         logging.error(f"Failed to process ZIP file from {url}. The content might not be a valid ZIP format or is corrupted.")
         return None
 
