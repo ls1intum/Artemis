@@ -162,7 +162,10 @@ export class CourseUpdateComponent implements OnInit {
         this.courseForm = new FormGroup(
             {
                 id: new FormControl(this.course.id),
-                title: new FormControl(this.course.title, [Validators.required]),
+                title: new FormControl(this.course.title, {
+                    validators: [Validators.required, Validators.maxLength(255)],
+                    updateOn: 'blur',
+                }),
                 shortName: new FormControl(
                     { value: this.course.shortName, disabled: !!this.course.id },
                     {
