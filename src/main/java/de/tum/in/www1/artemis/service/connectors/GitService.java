@@ -912,8 +912,6 @@ public class GitService {
      */
     public void pullIgnoreConflicts(Repository repo) {
         try (Git git = new Git(repo)) {
-            // flush cache of files
-            repo.setContent(null);
             log.debug("Pull ignore conflicts {}", repo.getLocalPath());
             setRemoteUrl(repo);
             pullCommand(git).call();
@@ -933,8 +931,6 @@ public class GitService {
      */
     public PullResult pull(Repository repo) throws GitAPIException {
         try (Git git = new Git(repo)) {
-            // flush cache of files
-            repo.setContent(null);
             log.info("Pull {}", repo.getLocalPath());
             setRemoteUrl(repo);
             return pullCommand(git).call();
@@ -1086,9 +1082,6 @@ public class GitService {
                 log.debug("Cannot find a commit in the template repo for: {}", repository.getLocalPath());
                 return;
             }
-
-            // flush cache of files
-            repository.setContent(null);
 
             // checkout own local "diff" branch to keep main as is
             if (!overwriteMain) {
@@ -1256,32 +1249,24 @@ public class GitService {
      *         the corresponding {@link FileType} (FILE or FOLDER). The map excludes symbolic links.
      */
     public Map<File, FileType> listFilesAndFolders(Repository repo) {
-        // TODO: what happens if the files change in between? maybe this caching mechanism is not really needed?
-        // Check if list of files is already cached
-        if (repo.getContent() == null) {
-            FileAndDirectoryFilter filter = new FileAndDirectoryFilter();
+        FileAndDirectoryFilter filter = new FileAndDirectoryFilter();
 
-            Iterator<java.io.File> itr = FileUtils.iterateFilesAndDirs(repo.getLocalPath().toFile(), filter, filter);
-            Map<File, FileType> files = new HashMap<>();
+        Iterator<java.io.File> itr = FileUtils.iterateFilesAndDirs(repo.getLocalPath().toFile(), filter, filter);
+        Map<File, FileType> files = new HashMap<>();
 
-            while (itr.hasNext()) {
-                File nextFile = new File(itr.next(), repo);
-                Path nextPath = nextFile.toPath();
+        while (itr.hasNext()) {
+            File nextFile = new File(itr.next(), repo);
+            Path nextPath = nextFile.toPath();
 
-                // filter out symlinks
-                if (Files.isSymbolicLink(nextPath)) {
-                    log.warn("Found a symlink {} in the git repository {}. Do not allow access!", nextPath, repo);
-                    continue;
-                }
-
-                files.put(nextFile, nextFile.isFile() ? FileType.FILE : FileType.FOLDER);
+            // filter out symlinks
+            if (Files.isSymbolicLink(nextPath)) {
+                log.warn("Found a symlink {} in the git repository {}. Do not allow access!", nextPath, repo);
+                continue;
             }
 
-            // Cache the list of files
-            // Avoid expensive rescanning
-            repo.setContent(files);
+            files.put(nextFile, nextFile.isFile() ? FileType.FILE : FileType.FOLDER);
         }
-        return repo.getContent();
+        return files;
     }
 
     /**
@@ -1390,7 +1375,6 @@ public class GitService {
         // java.io.IOException: Unable to delete file: ...\.git\objects\pack\...
         repository.closeBeforeDelete();
         FileUtils.deleteDirectory(repoPath.toFile());
-        repository.setContent(null);
         log.debug("Deleted Repository at {}", repoPath);
     }
 

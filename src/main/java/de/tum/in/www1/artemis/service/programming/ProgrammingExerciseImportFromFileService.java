@@ -213,7 +213,6 @@ public class ProgrammingExerciseImportFromFileService {
         try (var files = Files.walk(repository.getLocalPath())) {
             files.filter(file -> "gradlew".equals(file.getFileName().toString())).forEach(file -> file.toFile().setExecutable(true));
         }
-        repository.setContent(null);
     }
 
     private ProgrammingExercise getProgrammingExerciseFromDetailsFile(Path extractedZipPath) throws IOException {

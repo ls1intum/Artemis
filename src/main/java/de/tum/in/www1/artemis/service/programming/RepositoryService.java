@@ -159,8 +159,6 @@ public class RepositoryService {
                 }
             });
         }
-        // invalidate cache
-        repository.setContent(null);
     }
 
     /**
@@ -255,7 +253,6 @@ public class RepositoryService {
         Path safePath = checkIfPathIsValidAndExistanceAndReturnSafePath(repository, filePath, false);
         File file = checkIfPathAndFileAreValidAndReturnSafeFile(repository, safePath);
         FileUtils.copyToFile(inputStream, file);
-        repository.setContent(null); // invalidate cache
     }
 
     /**
@@ -273,7 +270,6 @@ public class RepositoryService {
         // We need to add an empty keep file so that the folder can be added to the git repository
         File keep = new File(repository.getLocalPath().resolve(safePath).resolve(".keep"), repository);
         FileUtils.copyToFile(inputStream, keep);
-        repository.setContent(null); // invalidate cache
     }
 
     /**
@@ -363,8 +359,6 @@ public class RepositoryService {
         if (!isRenamed) {
             throw new IllegalArgumentException("Existing path is not valid");
         }
-
-        repository.setContent(null); // invalidate cache
     }
 
     /**
@@ -392,7 +386,6 @@ public class RepositoryService {
         else {
             FileUtils.deleteDirectory(file.get());
         }
-        repository.setContent(null); // invalidate cache
     }
 
     /**
