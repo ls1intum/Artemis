@@ -83,6 +83,12 @@ export type Exercise = {
     exerciseGroup?: ExerciseGroup;
 };
 
+// ExerciseMode
+export enum ExerciseMode {
+    INDIVIDUAL = 'INDIVIDUAL',
+    TEAM = 'TEAM',
+}
+
 // Exercise commit entity displayed in commit history
 export type ExerciseCommit = {
     message: string;
