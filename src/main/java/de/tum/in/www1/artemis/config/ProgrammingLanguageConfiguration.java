@@ -49,7 +49,7 @@ public class ProgrammingLanguageConfiguration {
         final var languageSpecificBuildImages = loadImages(buildImages);
         checkImageForAllProgrammingLanguagesDefined(languageSpecificBuildImages);
         images = languageSpecificBuildImages;
-        log.info("Loaded Docker image configuration: {}", images);
+        log.debug("Loaded Docker image configuration: {}", images);
     }
 
     /**
@@ -77,7 +77,7 @@ public class ProgrammingLanguageConfiguration {
      * @param dockerFlags key value pairs of run arguments
      */
     public void setDefaultDockerFlags(final List<DockerFlag> dockerFlags) {
-        log.info("Set Docker flags to {}", dockerFlags);
+        log.debug("Set Docker flags to {}", dockerFlags);
         this.defaultDockerFlags = dockerFlags;
     }
 

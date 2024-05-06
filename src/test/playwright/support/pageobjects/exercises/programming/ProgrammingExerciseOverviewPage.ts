@@ -46,4 +46,11 @@ export class ProgrammingExerciseOverviewPage {
         await this.page.locator('a', { hasText: 'Open repository' }).click();
         return await repositoryPage;
     }
+
+    /**
+     * Retrieves the Locator for the exercise details bar.
+     */
+    getExerciseDetails() {
+        return this.page.locator('.tab-bar-exercise-details');
+    }
 }
