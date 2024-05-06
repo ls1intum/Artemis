@@ -20,7 +20,7 @@ const DEFAULT_UNIT_GROUPS: AccordionGroupForExams = {
 @Component({
     selector: 'jhi-course-exams',
     templateUrl: './course-exams.component.html',
-    styleUrls: ['./course-exams.component.scss'],
+    styleUrls: ['./course-exams.component.scss', '../course-overview.scss'],
 })
 export class CourseExamsComponent implements OnInit, OnDestroy {
     courseId: number;
@@ -38,7 +38,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     faAngleDown = faAngleDown;
     faListAlt = faListAlt;
 
-    examSelected: boolean = true; // change to true
+    examSelected: boolean = false; // change to true
     accordionExamGroups: AccordionGroupForExams = DEFAULT_UNIT_GROUPS;
     sidebarData: SidebarData;
     sidebarExams: SidebarCardElement[] = [];
@@ -57,7 +57,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
      */
     ngOnInit(): void {
         this.isCollapsed = this.courseOverviewService.getSidebarCollapseStateFromStorage('exam');
-        this.paramSubscription = this.route.parent!.parent!.params.subscribe((params) => {
+        this.paramSubscription = this.route.parent!.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId'], 10);
         });
 

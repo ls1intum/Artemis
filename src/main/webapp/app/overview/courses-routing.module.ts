@@ -6,6 +6,7 @@ import { NgModule } from '@angular/core';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { CourseExercisesComponent } from 'app/overview/course-exercises/course-exercises.component';
 import { CourseOverviewComponent } from './course-overview.component';
+import { CourseExamsComponent } from './course-exams/course-exams.component';
 
 const routes: Routes = [
     {
@@ -130,11 +131,24 @@ const routes: Routes = [
             },
             {
                 path: 'exams',
-                loadChildren: () => import('./course-exams/course-exams.module').then((m) => m.CourseExamsModule),
+                component: CourseExamsComponent,
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.exams',
+                    hasSidebar: true,
                 },
+                canActivate: [UserRouteAccessService],
+            },
+            {
+                path: 'exams/:examId',
+                component: CourseExamsComponent,
+                data: {
+                    authorities: [Authority.USER],
+                    pageTitle: 'overview.exams',
+                    hasSidebar: true,
+                },
+                canActivate: [UserRouteAccessService],
+                loadChildren: () => import('./course-exams/course-exams.module').then((m) => m.CourseExamsModule),
             },
             {
                 path: 'plagiarism-cases',
