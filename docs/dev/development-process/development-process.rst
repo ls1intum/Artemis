@@ -10,9 +10,9 @@ Development Process
 
 1. Submit a Feature Request
 ===========================
-The initial step in our development process involves the creation of a feature request, which is accomplished through the submission of a GitHub Issue. 
-This action can be performed by any stakeholder, including developers, users, or maintainers. 
-The feature request should include a detailed description of the desired functionality, as well as any relevant information that may be useful to the development team. 
+The initial step in our development process involves the creation of a feature request, which is accomplished through the submission of a GitHub Issue.
+This action can be performed by any stakeholder, including developers, users, or maintainers.
+The feature request should include a detailed description of the desired functionality, as well as any relevant information that may be useful to the development team.
 This information should include the rationale for the feature, the expected benefits, and any potential risks or challenges that may be associated with the implementation of the feature.
 
 2. Evaluate Feature Request
@@ -33,8 +33,8 @@ Step 1: Append Feature Proposal Template to Feature Request on GitHub
 ---------------------------------------------------------------------
 The Feature Proposal Template outlines the structure of the feature proposal and provides a guideline for the development team to follow.
 
-We have written a Github Action that automatically attaches the feature proposal template to the issue description of an issue when someone is assigned.
-As a developer who is responsible for the implementation of a feature request, you do not have to do any than register as an assignee in the issue. 
+We have developed a GitHub Action that automatically appends the feature proposal template to the issue description once the issue is tagged with 'needs-feature-proposal.' Additionally, when someone is assigned to such an issue, an instructional comment is automatically added.
+This comment reminds the assignee to fill out the feature proposal and provides a link to the relevant documentation for further guidance.
 
 .. note::
       The GitHub Action will be skipped for issues that are labeled with "bug".
@@ -46,32 +46,32 @@ As a developer who is responsible for the implementation of a feature request, y
 
 Step 2: Requirements Engineering
 --------------------------------
-In this section, the foundation for the feature's development is laid by meticulously defining both functional and non-functional requirements. 
-Functional requirements detail what the feature will do, covering specific behaviors or functions. 
-Non-functional requirements, on the other hand, address the feature's operation, such as performance, usability, reliability, and security specifications. 
+In this section, the foundation for the feature's development is laid by meticulously defining both functional and non-functional requirements.
+Functional requirements detail what the feature will do, covering specific behaviors or functions.
+Non-functional requirements, on the other hand, address the feature's operation, such as performance, usability, reliability, and security specifications.
 
 In the Feature Proposal Template, you can find examples for structuring such functional and non-functional requirements
 
 Step 3: Analysis
 ----------------
-Within the analysis section, the emphasis is on understanding and documenting the feature's intended behavior and interactions within the system. 
-This includes creating an Analysis Object Model, which represents the static structure of the system using class diagrams to identify key entities and their relationships. 
-Additionally, dynamic aspects of the feature are explored through Activity Diagrams (for workflow representation), State Chart Diagrams (to model the feature's states and transitions), and Communication Diagrams (illustrating how objects interact to achieve the feature's functionality). 
+Within the analysis section, the emphasis is on understanding and documenting the feature's intended behavior and interactions within the system.
+This includes creating an Analysis Object Model, which represents the static structure of the system using class diagrams to identify key entities and their relationships.
+Additionally, dynamic aspects of the feature are explored through Activity Diagrams (for workflow representation), State Chart Diagrams (to model the feature's states and transitions), and Communication Diagrams (illustrating how objects interact to achieve the feature's functionality).
 These models serve as a blueprint for the development and ensure a shared understanding among all people working on Artemis.
 
 Step 4: System Architecture
 ---------------------------
-In this step, the high-level structure of the system supporting the feature is outlined, focusing on analyzing the system components relevant to the implementation of the feature, 
-subsystem decomposition, interfaces, persistent data management and security aspects. 
-The subsystem decomposition process is used to identify the main components of the system and define their responsibilities, which facilitates modular development and maintenance. 
-It is important to define the interfaces between these subsystems to ensure seamless interaction and integration. 
-In addition, the development of a comprehensive data model is important for a clear understanding of how data is securely stored, retrieved and managed within the system, taking into account both logical and physical data perspectives. 
+In this step, the high-level structure of the system supporting the feature is outlined, focusing on analyzing the system components relevant to the implementation of the feature,
+subsystem decomposition, interfaces, persistent data management and security aspects.
+The subsystem decomposition process is used to identify the main components of the system and define their responsibilities, which facilitates modular development and maintenance.
+It is important to define the interfaces between these subsystems to ensure seamless interaction and integration.
+In addition, the development of a comprehensive data model is important for a clear understanding of how data is securely stored, retrieved and managed within the system, taking into account both logical and physical data perspectives.
 Security aspects, especially access control mechanisms, are considered to ensure data integrity and privacy.
 
 Step 5: UI/UX Design
 --------------------
 If the proposed feature requires a change to the software's user interface, this section should include a detailed description of the proposed changes, as well as a mockup that illustrates the new user interface.
-The mockup should be created using Figma in conjunction with the Artemis Design System and should be added to the feature proposal as a screenshot. 
+The mockup should be created using Figma in conjunction with the Artemis Design System and should be added to the feature proposal as a screenshot.
 Furthermore it is important to include a description of the user flow that references the dynamic model created in the analysis section.
 
 .. figure:: ./uiux_workflow.png
@@ -90,7 +90,7 @@ Furthermore it is important to include a description of the user flow that refer
 
 4. Implement the Feature
 ========================
-In this step, the development team converts the detailed plans and designs outlined in the functional proposal into working code. 
+In this step, the development team converts the detailed plans and designs outlined in the functional proposal into working code.
 This step requires careful adherence to the previously defined requirements and system architecture to ensure that the function fits seamlessly into the existing system and fulfills the specified functional and performance criteria.
 
 .. note::
@@ -98,7 +98,7 @@ This step requires careful adherence to the previously defined requirements and 
 
 5. Create a Pull Request
 ========================
-After the feature implementation is complete, the developer is required to create a pull request for integrating the feature into the develop branch. 
+After the feature implementation is complete, the developer is required to create a pull request for integrating the feature into the develop branch.
 The subsequent sections provide guidance on the naming conventions and outline the necessary steps for creating and merging a pull request.
 
 Naming Conventions for GitHub Pull Requests
