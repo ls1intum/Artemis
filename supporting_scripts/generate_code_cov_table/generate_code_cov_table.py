@@ -40,29 +40,25 @@ def download_and_extract_zip(url, headers, key):
     try:
         response = requests.get(url, headers=headers, stream=True)
         response.raise_for_status()
-
         total_size = int(response.headers.get('content-length', 0))
+    except requests.RequestException as e:
+        logging.error(f"Failed to process ZIP file from {url}. The content might not be a valid ZIP format or is corrupted.")
+        return None
+
+    try:
         chunk_size = 1024
-
         data_stream = BytesIO()
-
-        with tqdm(total=total_size, unit='B', unit_scale=True, desc="Downloading ZIP for " + key) as progress_bar:
+        with tqdm(total=total_size, unit='B', unit_scale=True, desc="Downloading ZIP for: " + key) as progress_bar:
             for chunk in response.iter_content(chunk_size=chunk_size):
                 data_stream.write(chunk)
                 progress_bar.update(len(chunk))
-
         data_stream.seek(0)
-
-        try:
-            zip_test = zipfile.ZipFile(data_stream)
-            zip_test.close()
-            data_stream.seek(0)
-            return data_stream
-        except zipfile.BadZipFile:
-            logging.error("The downloaded content is not a valid ZIP file.")
-            return None
-    except requests.RequestException as e:
-        logging.error(f"Failed to download the file: {e}")
+        zip_test = zipfile.ZipFile(data_stream)
+        zip_test.close()
+        data_stream.seek(0)
+        return data_stream
+    except zipfile.BadZipFile:
+        logging.error("The downloaded content is not a valid ZIP file.")
         return None
 
 
