@@ -121,7 +121,7 @@ public class AdminCourseResource {
         }
 
         if (course.getTitle().length() > MAX_TITLE_LENGTH) {
-            throw new BadRequestAlertException("The course title is too long", Course.ENTITY_NAME, "titleTooLong");
+            throw new BadRequestAlertException("The course title is too long", Course.ENTITY_NAME, "courseTitleTooLong");
         }
 
         course.validateShortName();

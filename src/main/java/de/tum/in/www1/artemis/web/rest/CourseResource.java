@@ -286,7 +286,7 @@ public class CourseResource {
         courseUpdate.setOnlineCourseConfiguration(existingCourse.getOnlineCourseConfiguration());
 
         if (courseUpdate.getTitle().length() > MAX_TITLE_LENGTH) {
-            throw new BadRequestAlertException("The course title is too long", Course.ENTITY_NAME, "titleTooLong");
+            throw new BadRequestAlertException("The course title is too long", Course.ENTITY_NAME, "courseTitleTooLong");
         }
 
         courseUpdate.validateEnrollmentConfirmationMessage();
