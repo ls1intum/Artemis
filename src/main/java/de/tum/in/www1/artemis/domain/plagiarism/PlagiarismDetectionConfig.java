@@ -20,7 +20,19 @@ import de.tum.in.www1.artemis.domain.DomainObject;
 @Table(name = "plagiarism_detection_config")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class PlagiarismDetectionConfig extends DomainObject implements Cloneable {
+public class PlagiarismDetectionConfig extends DomainObject {
+
+    public PlagiarismDetectionConfig() {
+    }
+
+    public PlagiarismDetectionConfig(PlagiarismDetectionConfig inputConfig) {
+        this.continuousPlagiarismControlEnabled = inputConfig.continuousPlagiarismControlEnabled;
+        this.continuousPlagiarismControlPostDueDateChecksEnabled = inputConfig.continuousPlagiarismControlPostDueDateChecksEnabled;
+        this.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod = inputConfig.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod;
+        this.similarityThreshold = inputConfig.similarityThreshold;
+        this.minimumScore = inputConfig.minimumScore;
+        this.minimumSize = inputConfig.minimumSize;
+    }
 
     @Column(name = "continuous_plagiarism_control_enabled")
     private boolean continuousPlagiarismControlEnabled = false;
@@ -113,20 +125,6 @@ public class PlagiarismDetectionConfig extends DomainObject implements Cloneable
         config.setMinimumScore(0);
         config.setMinimumSize(50);
         return config;
-    }
-
-    /**
-     * Clones this instance
-     *
-     * @return a clone of this instance or null on failure
-     */
-    public PlagiarismDetectionConfig clone() {
-        try {
-            return (PlagiarismDetectionConfig) super.clone();
-        }
-        catch (CloneNotSupportedException e) {
-            return null;
-        }
     }
 
     @Override
