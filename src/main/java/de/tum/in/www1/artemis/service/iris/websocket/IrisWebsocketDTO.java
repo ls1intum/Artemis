@@ -27,6 +27,16 @@ import de.tum.in.www1.artemis.service.iris.exception.IrisException;
 public record IrisWebsocketDTO(IrisWebsocketMessageType type, IrisMessage message, String errorMessage, String errorTranslationKey, Map<String, Object> translationParams,
         IrisRateLimitService.IrisRateLimitInformation rateLimitInfo, List<PyrisStageDTO> stages) {
 
+    /**
+     * Creates a new IrisWebsocketDTO instance with the given parameters
+     * Takes care of setting the type correctly and also extracts the error message and translation key from the throwable (if present)
+     *
+     * @param message       the IrisMessage (optional)
+     * @param throwable     the Throwable (optional)
+     * @param rateLimitInfo the rate limit information
+     * @param stages        the stages of the Pyris pipeline
+     * @return the created IrisWebsocketDTO instance
+     */
     public static IrisWebsocketDTO create(IrisMessage message, Throwable throwable, IrisRateLimitService.IrisRateLimitInformation rateLimitInfo, List<PyrisStageDTO> stages) {
         IrisWebsocketMessageType type;
         if (message != null) {
