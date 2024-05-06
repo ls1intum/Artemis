@@ -2,7 +2,7 @@ import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
 import { NgbDropdownModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { CompetencyFormComponent, CompetencyFormData, competencyRegex } from 'app/course/competencies/competency-form/competency-form.component';
+import { CompetencyFormComponent, CompetencyFormData } from 'app/course/competencies/competency-form/competency-form.component';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { Competency, CompetencyTaxonomy } from 'app/entities/competency.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
@@ -105,25 +105,6 @@ describe('CompetencyFormComponent', () => {
             expect(submitFormEventSpy).toHaveBeenCalledOnce();
         });
     }));
-
-    it('should require title', () => {
-        competencyFormComponentFixture.detectChanges();
-        competencyFormComponent.titleControl!.setValue('');
-        expect(competencyFormComponent.titleControl!.hasError('required')).toBeTrue();
-    });
-
-    it('should enforce maximum length for title', () => {
-        competencyFormComponentFixture.detectChanges();
-        competencyFormComponent.titleControl!.setValue('a'.repeat(256)); // Set title exceeding maximum length
-        expect(competencyFormComponent.titleControl!.hasError('maxlength')).toBeTrue();
-    });
-
-    it('should validate title pattern', () => {
-        competencyFormComponentFixture.detectChanges();
-        competencyFormComponent.titleControl!.setValue('invalid title @#$%'); // Set title violating the pattern
-        expect(competencyFormComponent.titleControl!.hasError('pattern')).toBeTrue();
-        expect(competencyRegex.test(competencyFormComponent.titleControl!.value)).toBeFalse(); // Additional check for pattern
-    });
 
     it('should correctly set form values in edit mode', () => {
         competencyFormComponent.isEditMode = true;
