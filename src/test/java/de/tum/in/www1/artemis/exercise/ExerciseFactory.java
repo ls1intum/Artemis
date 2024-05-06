@@ -7,6 +7,7 @@ import java.util.UUID;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.FileUploadExercise;
 import de.tum.in.www1.artemis.domain.GradingCriterion;
 import de.tum.in.www1.artemis.domain.GradingInstruction;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
@@ -45,7 +46,9 @@ public class ExerciseFactory {
         exercise.setPresentationScoreEnabled(course.getPresentationScore() != 0);
         exercise.setCourse(course);
         exercise.setExerciseGroup(null);
-        exercise.setPlagiarismDetectionConfig(new PlagiarismDetectionConfig());
+        if (!(exercise instanceof QuizExercise) && !(exercise instanceof FileUploadExercise)) {
+            exercise.setPlagiarismDetectionConfig(new PlagiarismDetectionConfig());
+        }
         return exercise;
     }
 
@@ -71,7 +74,9 @@ public class ExerciseFactory {
         exercise.getCategories().add("Category");
         exercise.setExerciseGroup(exerciseGroup);
         exercise.setCourse(null);
-        exercise.setPlagiarismDetectionConfig(new PlagiarismDetectionConfig());
+        if (!(exercise instanceof QuizExercise) && !(exercise instanceof FileUploadExercise)) {
+            exercise.setPlagiarismDetectionConfig(new PlagiarismDetectionConfig());
+        }
         if (!(exercise instanceof QuizExercise)) {
             exercise.setGradingInstructions("Grading instructions");
             exercise.setGradingCriteria(Set.of(new GradingCriterion()));

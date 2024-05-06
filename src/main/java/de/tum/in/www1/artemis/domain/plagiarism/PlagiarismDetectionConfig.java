@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.domain.DomainObject;
 @Table(name = "plagiarism_detection_config")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class PlagiarismDetectionConfig extends DomainObject {
+public class PlagiarismDetectionConfig extends DomainObject implements Cloneable {
 
     @Column(name = "continuous_plagiarism_control_enabled")
     private boolean continuousPlagiarismControlEnabled = false;
@@ -113,6 +113,20 @@ public class PlagiarismDetectionConfig extends DomainObject {
         config.setMinimumScore(0);
         config.setMinimumSize(50);
         return config;
+    }
+
+    /**
+     * Clones this instance
+     *
+     * @return a clone of this instance or null on failure
+     */
+    public PlagiarismDetectionConfig clone() {
+        try {
+            return (PlagiarismDetectionConfig) super.clone();
+        }
+        catch (CloneNotSupportedException e) {
+            return null;
+        }
     }
 
     @Override

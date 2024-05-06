@@ -61,6 +61,13 @@ public abstract class ExerciseImportService {
         newExercise.setDifficulty(importedExercise.getDifficulty());
         newExercise.setGradingInstructions(importedExercise.getGradingInstructions());
         newExercise.setGradingCriteria(importedExercise.copyGradingCriteria(gradingInstructionCopyTracker));
+
+        if (importedExercise.getPlagiarismDetectionConfig() != null) {
+            var plagiarismDetectionConfig = importedExercise.getPlagiarismDetectionConfig().clone();
+            plagiarismDetectionConfig.setId(null);
+            newExercise.setPlagiarismDetectionConfig(plagiarismDetectionConfig);
+        }
+
         if (newExercise.getExerciseGroup() != null) {
             newExercise.setMode(ExerciseMode.INDIVIDUAL);
         }
