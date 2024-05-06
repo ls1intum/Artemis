@@ -161,10 +161,6 @@
             "editor": "Editor",
             "instructor": "Instructor",
             "form": {
-                "titleInput": {
-                    "requiredValidationError": "Title is required!",
-                    "regexValidationError": "Titles can only contain letters, numbers, spaces and dashes."
-                },
                 "shortname": {
                     "minlength": "Short Name must contain at least 3 characters.",
                     "forbidden": "Short Name must start with a letter and cannot contain special characters."

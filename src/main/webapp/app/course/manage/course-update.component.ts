@@ -33,8 +33,6 @@ import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-moda
 import { scrollToTopOfPage } from 'app/shared/util/utils';
 
 const DEFAULT_CUSTOM_GROUP_NAME = 'artemis-dev';
-export const courseTitleRegex = new RegExp('^[a-zA-Z0-9- ]+$');
-
 
 @Component({
     selector: 'jhi-course-update',
@@ -164,7 +162,7 @@ export class CourseUpdateComponent implements OnInit {
         this.courseForm = new FormGroup(
             {
                 id: new FormControl(this.course.id),
-                title: new FormControl(this.course.title, [Validators.required, Validators.pattern(courseTitleRegex)]),
+                title: new FormControl(this.course.title, [Validators.required]),
                 shortName: new FormControl(
                     { value: this.course.shortName, disabled: !!this.course.id },
                     {
@@ -260,10 +258,6 @@ export class CourseUpdateComponent implements OnInit {
 
     get timeZoneChanged() {
         return this.course?.id && this.originalTimeZone && this.originalTimeZone !== this.courseForm.value.timeZone;
-    }
-
-    get titleControl() {
-        return this.courseForm.get('title');
     }
 
     /**
