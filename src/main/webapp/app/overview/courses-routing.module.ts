@@ -49,6 +49,54 @@ const routes: Routes = [
                 canActivate: [UserRouteAccessService],
             },
             {
+                path: 'text-exercises/:exerciseId',
+                data: {
+                    authorities: [Authority.USER],
+                    pageTitle: 'overview.textExercise',
+                },
+                loadChildren: () => import('../exercises/text/participate/text-participation.module').then((m) => m.ArtemisTextParticipationModule),
+            },
+            {
+                path: 'programming-exercises/:exerciseId/code-editor',
+                data: {
+                    authorities: [Authority.USER],
+                    pageTitle: 'overview.programmingExercise',
+                },
+                loadChildren: () => import('../exercises/programming/participate/programming-participation.module').then((m) => m.ArtemisProgrammingParticipationModule),
+            },
+            {
+                path: 'exercises/:exerciseId/repository',
+                data: {
+                    authorities: [Authority.USER],
+                    pageTitle: 'overview.repository',
+                },
+                loadChildren: () => import('../exercises/programming/participate/programming-repository.module').then((m) => m.ArtemisProgrammingRepositoryModule),
+            },
+            {
+                path: 'modeling-exercises/:exerciseId',
+                data: {
+                    authorities: [Authority.USER],
+                    pageTitle: 'overview.modelingExercise',
+                },
+                loadChildren: () => import('../exercises/modeling/participate/modeling-participation.module').then((m) => m.ArtemisModelingParticipationModule),
+            },
+            {
+                path: 'quiz-exercises/:exerciseId',
+                data: {
+                    authorities: [Authority.USER],
+                    pageTitle: 'overview.quizExercise',
+                },
+                loadChildren: () => import('../exercises/quiz/participate/quiz-participation.module').then((m) => m.ArtemisQuizParticipationModule),
+            },
+            {
+                path: 'file-upload-exercises/:exerciseId',
+                data: {
+                    authorities: [Authority.USER],
+                    pageTitle: 'overview.fileUploadExercise',
+                },
+                loadChildren: () => import('../exercises/file-upload/participate/file-upload-participation.module').then((m) => m.ArtemisFileUploadParticipationModule),
+            },
+            {
                 path: 'exercises/:exerciseId',
                 component: CourseExercisesComponent,
                 data: {
@@ -91,11 +139,20 @@ const routes: Routes = [
             },
             {
                 path: 'competencies',
-                loadChildren: () => import('./course-competencies/course-competencies.module').then((m) => m.CourseCompetenciesModule),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.competencies',
                 },
+                children: [
+                    {
+                        path: '',
+                        loadChildren: () => import('./course-competencies/course-competencies.module').then((m) => m.CourseCompetenciesModule),
+                    },
+                    {
+                        path: ':competencyId',
+                        loadChildren: () => import('../overview/course-competencies/course-competencies-details.module').then((m) => m.ArtemisCourseCompetenciesDetailsModule),
+                    },
+                ],
             },
             {
                 path: 'learning-path',
@@ -157,6 +214,14 @@ const routes: Routes = [
                     authorities: [Authority.USER],
                     pageTitle: 'overview.plagiarismCases',
                 },
+            },
+            {
+                path: 'grading-system',
+                data: {
+                    authorities: [Authority.USER],
+                    pageTitle: 'overview.gradingSystem',
+                },
+                loadChildren: () => import('../grading-system/grading-system.module').then((m) => m.GradingSystemModule),
             },
             {
                 path: '',

@@ -32,10 +32,6 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                     path: 'about',
                     loadChildren: () => import('./core/about-us/artemis-about-us.module').then((module) => module.ArtemisAboutUsModule),
                 },
-                {
-                    path: 'courses/:courseId/competencies/:competencyId',
-                    loadChildren: () => import('./overview/course-competencies/course-competencies-details.module').then((m) => m.ArtemisCourseCompetenciesDetailsModule),
-                },
                 // ===== TEAM ====
                 {
                     path: 'course-management/:courseId/exercises/:exerciseId/teams',
@@ -67,35 +63,7 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                     loadChildren: () =>
                         import('./exercises/programming/manage/programming-exercise-management-routing.module').then((m) => m.ArtemisProgrammingExerciseManagementRoutingModule),
                 },
-                // ===== COURSES =====
-                {
-                    path: 'courses/:courseId/programming-exercises/:exerciseId/code-editor',
-                    loadChildren: () => import('./exercises/programming/participate/programming-participation.module').then((m) => m.ArtemisProgrammingParticipationModule),
-                },
-                {
-                    path: 'courses/:courseId/exercises/:exerciseId/repository',
-                    loadChildren: () => import('./exercises/programming/participate/programming-repository.module').then((m) => m.ArtemisProgrammingRepositoryModule),
-                },
-                {
-                    path: 'courses/:courseId/modeling-exercises/:exerciseId',
-                    loadChildren: () => import('./exercises/modeling/participate/modeling-participation.module').then((m) => m.ArtemisModelingParticipationModule),
-                },
-                {
-                    path: 'courses/:courseId/quiz-exercises/:exerciseId',
-                    loadChildren: () => import('./exercises/quiz/participate/quiz-participation.module').then((m) => m.ArtemisQuizParticipationModule),
-                },
-                {
-                    path: 'courses/:courseId/text-exercises/:exerciseId',
-                    loadChildren: () => import('./exercises/text/participate/text-participation.module').then((m) => m.ArtemisTextParticipationModule),
-                },
-                {
-                    path: 'courses/:courseId/file-upload-exercises/:exerciseId',
-                    loadChildren: () => import('./exercises/file-upload/participate/file-upload-participation.module').then((m) => m.ArtemisFileUploadParticipationModule),
-                },
-                {
-                    path: 'courses/:courseId/grading-system',
-                    loadChildren: () => import('./grading-system/grading-system.module').then((m) => m.GradingSystemModule),
-                },
+
                 // ===== EXAM =====
                 {
                     path: 'courses/:courseId/exams/:examId',

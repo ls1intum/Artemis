@@ -1,11 +1,11 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Competency } from 'app/entities/competency.model';
-import { forkJoin } from 'rxjs';
+import { Subscription, forkJoin } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
@@ -15,7 +15,7 @@ import { CourseStorageService } from 'app/course/manage/course-storage.service';
     templateUrl: './course-competencies.component.html',
     styleUrls: ['../course-overview.scss'],
 })
-export class CourseCompetenciesComponent implements OnInit {
+export class CourseCompetenciesComponent implements OnInit, OnDestroy {
     @Input()
     courseId: number;
 
@@ -23,6 +23,7 @@ export class CourseCompetenciesComponent implements OnInit {
     course?: Course;
     competencies: Competency[] = [];
     prerequisites: Competency[] = [];
+    parentParamSubscription: Subscription;
 
     isCollapsed = true;
     faAngleDown = faAngleDown;
@@ -36,9 +37,13 @@ export class CourseCompetenciesComponent implements OnInit {
     ) {}
 
     ngOnInit(): void {
-        this.activatedRoute.parent?.parent?.params.subscribe((params) => {
-            this.courseId = parseInt(params['courseId'], 10);
-        });
+        const courseIdParams$ = this.activatedRoute.parent?.parent?.parent?.params;
+        if (courseIdParams$) {
+            this.parentParamSubscription = courseIdParams$.subscribe((params) => {
+                console.log(params);
+                this.courseId = parseInt(params.courseId, 10);
+            });
+        }
 
         this.setCourse(this.courseStorageService.getCourse(this.courseId));
     }
@@ -98,5 +103,9 @@ export class CourseCompetenciesComponent implements OnInit {
      */
     identify(index: number, competency: Competency) {
         return `${index}-${competency.id}`;
+    }
+
+    ngOnDestroy(): void {
+        this.parentParamSubscription?.unsubscribe();
     }
 }

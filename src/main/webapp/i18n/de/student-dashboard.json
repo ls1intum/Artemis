@@ -48,6 +48,12 @@
             },
             "menu": {
                 "exercises": "Aufgaben",
+                "textExercise": "Text Aufgabe",
+                "fileUploadExercise": "File Upload Aufgabe",
+                "programmingExercise": "Programming Aufgabe",
+                "modelingExercise": "Modeling Aufgabe",
+                "quizExercise": "Quiz Aufgabe",
+                "repository": "Repository",
                 "statistics": "Statistiken",
                 "lectures": "Vorlesungen",
                 "competencies": "Kompetenzen",
@@ -58,7 +64,8 @@
                 "testExam": "Testklausur",
                 "communication": "Kommunikation",
                 "messages": "Nachrichten",
-                "plagiarismCases": "Plagiatsfälle"
+                "plagiarismCases": "Plagiatsfälle",
+                "gradingSystem": "Notenschlüssel"
             },
             "exerciseList": {
                 "filter": "Filter ({{ num }})",

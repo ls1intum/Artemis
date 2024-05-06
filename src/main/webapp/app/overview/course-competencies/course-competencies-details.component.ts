@@ -1,5 +1,5 @@
 import dayjs from 'dayjs/esm';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Competency, CompetencyProgress, getIcon } from 'app/entities/competency.model';
 import { CompetencyService } from 'app/course/competencies/competency.service';
@@ -11,18 +11,20 @@ import { LectureUnitCompletionEvent } from 'app/overview/course-lectures/course-
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { faPencilAlt } from '@fortawesome/free-solid-svg-icons';
+import { Subscription, combineLatest } from 'rxjs';
 
 @Component({
     selector: 'jhi-course-competencies-details',
     templateUrl: './course-competencies-details.component.html',
     styleUrls: ['../course-overview.scss'],
 })
-export class CourseCompetenciesDetailsComponent implements OnInit {
+export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
     competencyId?: number;
     courseId?: number;
     isLoading = false;
     competency: Competency;
     showFireworks = false;
+    paramsSubscription: Subscription;
 
     readonly LectureUnitType = LectureUnitType;
 
@@ -37,13 +39,17 @@ export class CourseCompetenciesDetailsComponent implements OnInit {
     ) {}
 
     ngOnInit(): void {
-        this.activatedRoute.params.subscribe((params) => {
-            this.competencyId = +params['competencyId'];
-            this.courseId = +params['courseId'];
-            if (this.competencyId && this.courseId) {
-                this.loadData();
-            }
-        });
+        const courseIdParams$ = this.activatedRoute.parent?.parent?.parent?.params;
+        const competencyIdParams$ = this.activatedRoute.params;
+        if (courseIdParams$) {
+            this.paramsSubscription = combineLatest([courseIdParams$, competencyIdParams$]).subscribe(([courseIdParams, competencyIdParams]) => {
+                this.competencyId = parseInt(competencyIdParams.competencyId, 10);
+                this.courseId = parseInt(courseIdParams.courseId, 10);
+                if (this.competencyId && this.courseId) {
+                    this.loadData();
+                }
+            });
+        }
     }
 
     private loadData() {
@@ -126,5 +132,9 @@ export class CourseCompetenciesDetailsComponent implements OnInit {
 
     get softDueDatePassed(): boolean {
         return dayjs().isAfter(this.competency.softDueDate);
+    }
+
+    ngOnDestroy(): void {
+        this.paramsSubscription?.unsubscribe();
     }
 }
