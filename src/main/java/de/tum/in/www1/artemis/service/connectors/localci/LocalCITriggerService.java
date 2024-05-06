@@ -160,7 +160,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         LocalCIBuildJobItem buildJobQueueItem = new LocalCIBuildJobItem(buildJobId, participation.getBuildPlanId(), null, participation.getId(), courseId,
                 programmingExercise.getId(), 0, priority, null, repositoryInfo, jobTimingInfo, buildConfig, null);
 
-        LocalCIBuildJobItemReference buildJobItemReference = new LocalCIBuildJobItemReference(participation.getId(), courseId, priority, jobTimingInfo.submissionDate());
+        LocalCIBuildJobItemReference buildJobItemReference = new LocalCIBuildJobItemReference(buildJobQueueItem);
 
         queue.add(buildJobItemReference);
         buildJobItemMap.put(participation.getId(), buildJobQueueItem);

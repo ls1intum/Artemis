@@ -37,6 +37,7 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.JobTimingInfo;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildAgentInformation;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobItem;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobItemReference;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.ResultQueueItem;
 
@@ -64,7 +65,9 @@ public class SharedQueueProcessingService {
      */
     private FencedLock sharedLock;
 
-    private IQueue<LocalCIBuildJobItem> queue;
+    private IQueue<LocalCIBuildJobItemReference> queue;
+
+    private IMap<Long, LocalCIBuildJobItem> buildJobItemMap;
 
     private IQueue<ResultQueueItem> resultQueue;
 
@@ -99,6 +102,7 @@ public class SharedQueueProcessingService {
         this.processingJobs = this.hazelcastInstance.getMap("processingJobs");
         this.sharedLock = this.hazelcastInstance.getCPSubsystem().getLock("buildJobQueueLock");
         this.queue = this.hazelcastInstance.getQueue("buildJobQueue");
+        this.buildJobItemMap = this.hazelcastInstance.getMap("buildJobItemIMap");
         this.resultQueue = this.hazelcastInstance.getQueue("buildResultQueue");
         this.listenerId = this.queue.addItemListener(new SharedQueueProcessingService.QueuedBuildJobItemListener(), true);
     }
@@ -170,7 +174,12 @@ public class SharedQueueProcessingService {
             finally {
                 sharedLock.unlock();
             }
-            processBuild(buildJob);
+            if (buildJob != null) {
+                processBuild(buildJob);
+            }
+            else {
+                checkAvailabilityAndProcessNextBuild();
+            }
         }
         finally {
             instanceLock.unlock();
@@ -178,8 +187,13 @@ public class SharedQueueProcessingService {
     }
 
     private LocalCIBuildJobItem addToProcessingJobs() {
-        LocalCIBuildJobItem buildJob = queue.poll();
-        if (buildJob != null) {
+        LocalCIBuildJobItemReference buildJobReference = queue.poll();
+        if (buildJobReference != null) {
+            LocalCIBuildJobItem buildJob = buildJobItemMap.remove(buildJobReference.participationId());
+            if (buildJob == null) {
+                return null;
+            }
+
             String hazelcastMemberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
 
             LocalCIBuildJobItem processingJob = new LocalCIBuildJobItem(buildJob, hazelcastMemberAddress);
@@ -336,16 +350,16 @@ public class SharedQueueProcessingService {
         return localProcessingJobs.get() < localCIBuildExecutorService.getMaximumPoolSize();
     }
 
-    public class QueuedBuildJobItemListener implements ItemListener<LocalCIBuildJobItem> {
+    public class QueuedBuildJobItemListener implements ItemListener<LocalCIBuildJobItemReference> {
 
         @Override
-        public void itemAdded(ItemEvent<LocalCIBuildJobItem> event) {
+        public void itemAdded(ItemEvent<LocalCIBuildJobItemReference> event) {
             log.debug("CIBuildJobQueueItem added to queue: {}", event.getItem());
             checkAvailabilityAndProcessNextBuild();
         }
 
         @Override
-        public void itemRemoved(ItemEvent<LocalCIBuildJobItem> event) {
+        public void itemRemoved(ItemEvent<LocalCIBuildJobItemReference> event) {
             log.debug("CIBuildJobQueueItem removed from queue: {}", event.getItem());
         }
     }

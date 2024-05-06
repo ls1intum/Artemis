@@ -18,6 +18,7 @@ import com.hazelcast.map.listener.EntryUpdatedListener;
 
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildAgentInformation;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobItem;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobItemReference;
 import de.tum.in.www1.artemis.web.websocket.localci.LocalCIWebsocketMessagingService;
 
 /**
@@ -57,7 +58,7 @@ public class LocalCIQueueWebsocketService {
      */
     @PostConstruct
     public void init() {
-        IQueue<LocalCIBuildJobItem> queue = hazelcastInstance.getQueue("buildJobQueue");
+        IQueue<LocalCIBuildJobItemReference> queue = hazelcastInstance.getQueue("buildJobQueue");
         IMap<Long, LocalCIBuildJobItem> processingJobs = hazelcastInstance.getMap("processingJobs");
         IMap<String, LocalCIBuildAgentInformation> buildAgentInformation = hazelcastInstance.getMap("buildAgentInformation");
         queue.addItemListener(new QueuedBuildJobItemListener(), true);
@@ -79,15 +80,15 @@ public class LocalCIQueueWebsocketService {
         localCIWebsocketMessagingService.sendBuildAgentInformation(sharedQueueManagementService.getBuildAgentInformation());
     }
 
-    private class QueuedBuildJobItemListener implements ItemListener<LocalCIBuildJobItem> {
+    private class QueuedBuildJobItemListener implements ItemListener<LocalCIBuildJobItemReference> {
 
         @Override
-        public void itemAdded(ItemEvent<LocalCIBuildJobItem> event) {
+        public void itemAdded(ItemEvent<LocalCIBuildJobItemReference> event) {
             sendQueuedJobsOverWebsocket(event.getItem().courseId());
         }
 
         @Override
-        public void itemRemoved(ItemEvent<LocalCIBuildJobItem> event) {
+        public void itemRemoved(ItemEvent<LocalCIBuildJobItemReference> event) {
             sendQueuedJobsOverWebsocket(event.getItem().courseId());
         }
     }
