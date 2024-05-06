@@ -1,8 +1,8 @@
 .competency-accordion-header {
-    background-color: #f7f7f7;
+    background-color: #e9ecef;
     color: #333;
     cursor: pointer;
-    padding: 18px;
+    padding: 10px;
     width: 100%;
     border: none;
     text-align: left;
@@ -15,9 +15,14 @@
     background-color: #ddd;
 }
 
+.competency-accordion-ring {
+    width: 95px;
+}
+
 .competency-accordion-body {
     padding: 0 18px;
-    background-color: white;
+    background-color: #e9ecef;
+    color: #333;
     overflow: hidden;
     transition: max-height 0.2s ease-out;
     max-height: 0;
@@ -25,5 +30,6 @@
 
 /* A specific class to control the open state */
 .competency-accordion-open {
-    max-height: 200px;
+    height: min-content;
+    padding: 30px 18px;
 }

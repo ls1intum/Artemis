@@ -28,6 +28,8 @@ import { CompetencyRelationGraphComponent } from 'app/course/competencies/compet
 import { CompetencyAccordionComponent } from 'app/course/competencies/competency-accordion/competency-accordion.component';
 import { CourseImportStandardizedCompetenciesComponent } from 'app/course/competencies/import-standardized-competencies/course-import-standardized-competencies.component';
 import { ArtemisStandardizedCompetencyModule } from 'app/shared/standardized-competencies/standardized-competency.module';
+import { CompetencyAccordionComponent } from 'app/course/competencies/competency-accordion/competency-accordion.component';
+import { CompetencyMasteryRatingComponent } from 'app/course/competencies/competency-accordion/competency-mastery-rating/competency-mastery-rating.component';
 
 @NgModule({
     imports: [
@@ -55,6 +57,7 @@ import { ArtemisStandardizedCompetencyModule } from 'app/shared/standardized-com
         CourseDescriptionFormComponent,
         CompetencyManagementComponent,
         CompetencyCardComponent,
+        CompetencyMasteryRatingComponent,
         CompetencyAccordionComponent,
         CompetenciesPopoverComponent,
         PrerequisiteImportComponent,

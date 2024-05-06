@@ -1,0 +1,21 @@
+<div [ngClass]="{ 'progress-bar-container': true, small: size === 'small', medium: size === 'medium', large: size === 'large', inline: inline }">
+    @if (title) {
+        <div class="title row justify-content-center align-items-center mb-2">
+            @if (icon) {
+                <div class="col-auto d-md-block">
+                    <fa-icon [icon]="icon" />
+                </div>
+            }
+            <div class="col-auto">
+                {{ title }}
+            </div>
+        </div>
+    }
+    <div class="progress-background" [style.background-color]="backgroundColor">
+        <div class="progress" [style.width]="percentage + '%'" [style.background-color]="progressColor">
+            @if (showLabel) {
+                <span>{{ currentValue }} / {{ maxValue }}</span>
+            }
+        </div>
+    </div>
+</div>

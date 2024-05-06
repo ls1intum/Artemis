@@ -6,5 +6,9 @@
         - Right part: Statistics and competencies.
     -->
     <h1 [style]="{ 'text-align': 'center' }">Work in progress</h1>
-    <!-- <jhi-competency-accordion /> -->
+
+    <h2>Competencies</h2>
+    @for (competency of competencies; track competency.id) {
+        <jhi-competency-accordion [courseId]="courseId" [competency]="competency" />
+    }
 </div>
