@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
-public class CourseExamExportServiceTest extends AbstractSpringIntegrationIndependentTest {
+class CourseExamExportServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "exam_export";
 
@@ -50,7 +50,7 @@ public class CourseExamExportServiceTest extends AbstractSpringIntegrationIndepe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    public void testExportCourseExams() throws IOException {
+    void testExportCourseExams() throws IOException {
         var course = courseUtilService.createCourseWithExamExercisesAndSubmissions(TEST_PREFIX);
         var exam = examRepository.findByCourseId(course.getId()).stream().findFirst().orElseThrow();
         List<String> exportErrors = new ArrayList<>();
@@ -61,7 +61,7 @@ public class CourseExamExportServiceTest extends AbstractSpringIntegrationIndepe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    public void testExportCourse() throws IOException {
+    void testExportCourse() throws IOException {
         var course = courseUtilService.createCourseWithExamExercisesAndSubmissions(TEST_PREFIX);
         var courseWithExercises = courseUtilService.addCourseWithExercisesAndSubmissions(TEST_PREFIX, "", 5, 5, 4, 2, true, 1, "");
         var exercises = courseWithExercises.getExercises();
