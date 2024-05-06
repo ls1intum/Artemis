@@ -33,14 +33,6 @@ describe('GitDiffFileComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it.each([true, false])('should hide unchanged regions only outside of the diff between template and solution', (diffBetweenTemplateAndSolution) => {
-        const setUnchangedRegionHidingEnabledSpy = jest.spyOn(comp.monacoDiffEditor, 'setUnchangedRegionHidingEnabled');
-        comp.diffEntries = [];
-        comp.diffForTemplateAndSolution = diffBetweenTemplateAndSolution;
-        fixture.detectChanges();
-        expect(setUnchangedRegionHidingEnabledSpy).toHaveBeenCalledExactlyOnceWith(!diffBetweenTemplateAndSolution);
-    });
-
     it.each([
         getDiffEntryWithPaths('same file', 'same file'),
         getDiffEntryWithPaths('old file', 'renamed file'),

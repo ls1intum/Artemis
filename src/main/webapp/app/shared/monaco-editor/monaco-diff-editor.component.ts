@@ -47,6 +47,9 @@ export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
                 handleMouseWheel: true,
                 alwaysConsumeMouseWheel: false,
             },
+            hideUnchangedRegions: {
+                enabled: true,
+            },
             fontSize: 12,
         });
         renderer.appendChild(elementRef.nativeElement, this.monacoDiffEditorContainerElement);
@@ -160,19 +163,6 @@ export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
         };
 
         this._editor.setModel(newModel);
-    }
-
-    /**
-     * Changes whether unchanged regions should be hidden. Note that this setting must be active before the model is changed.
-     * Otherwise, it will have no effect.
-     * @param enabled Whether to hide unchanged regions in the editor.
-     */
-    setUnchangedRegionHidingEnabled(enabled: boolean): void {
-        this._editor.updateOptions({
-            hideUnchangedRegions: {
-                enabled,
-            },
-        });
     }
 
     /**
