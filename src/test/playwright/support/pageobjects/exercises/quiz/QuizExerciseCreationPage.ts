@@ -1,4 +1,4 @@
-import { Page } from '@playwright/test';
+import { Page, expect } from '@playwright/test';
 import { clearTextField, drag, enterDate } from '../../../utils';
 import { Dayjs } from 'dayjs';
 import { QUIZ_EXERCISE_BASE } from '../../../constants';
@@ -46,7 +46,7 @@ export class QuizExerciseCreationPage {
         await this.page.locator('#drag-and-drop-question-title').fill(title);
 
         await this.uploadDragAndDropBackground();
-        const element = await this.page.locator('.background-area');
+        const element = this.page.locator('.background-area');
         const boundingBox = await element?.boundingBox();
 
         expect(boundingBox, { message: 'Could not get bounding box of element' }).not.toBeNull();
