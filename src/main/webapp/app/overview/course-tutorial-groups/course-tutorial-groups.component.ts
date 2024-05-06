@@ -16,10 +16,9 @@ import { AccordionGroups, SidebarCardElement, SidebarData, TutorialGroupCategory
 import { CourseOverviewService } from '../course-overview.service';
 import { cloneDeep } from 'lodash-es';
 
-type filter = 'all' | 'registered';
-
 const TUTORIAL_UNIT_GROUPS: AccordionGroups = {
     registered: { entityData: [] },
+    further: { entityData: [] },
     all: { entityData: [] },
 };
 
@@ -38,7 +37,6 @@ export class CourseTutorialGroupsComponent implements OnInit, OnDestroy {
     isLoading = false;
     tutorialGroupFreeDays: TutorialGroupFreePeriod[] = [];
     isCollapsed: boolean = false;
-    selectedFilter: filter = 'registered';
 
     tutorialGroupSelected: boolean = true;
     sidebarData: SidebarData;
@@ -130,9 +128,14 @@ export class CourseTutorialGroupsComponent implements OnInit, OnDestroy {
         const groupedTutorialGroupGroups = cloneDeep(TUTORIAL_UNIT_GROUPS) as AccordionGroups;
         let tutorialGroupCategory: TutorialGroupCategory;
 
+        const hasUserAtLeastOneTutorialGroup = this.tutorialGroups.some((tutorialGroup) => tutorialGroup.isUserRegistered || tutorialGroup.isUserTutor);
         this.tutorialGroups.forEach((tutorialGroup) => {
             const tutorialGroupCardItem = this.courseOverviewService.mapTutorialGroupToSidebarCardElement(tutorialGroup);
-            tutorialGroupCategory = tutorialGroup.isUserTutor || tutorialGroup.isUserRegistered ? 'registered' : 'all';
+            if (!hasUserAtLeastOneTutorialGroup) {
+                tutorialGroupCategory = 'all';
+            } else {
+                tutorialGroupCategory = tutorialGroup.isUserTutor || tutorialGroup.isUserRegistered ? 'registered' : 'further';
+            }
             groupedTutorialGroupGroups[tutorialGroupCategory].entityData.push(tutorialGroupCardItem);
         });
         return groupedTutorialGroupGroups;

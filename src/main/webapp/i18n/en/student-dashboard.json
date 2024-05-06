@@ -40,8 +40,9 @@
                 "future": "Future",
                 "noDueDate": "No due date",
                 "noDate": "No date",
-                "all": "Further Tutorial Groups",
-                "registered": "My Tutorial Groups"
+                "all": "Tutorial Groups",
+                "registered": "My Tutorial Groups",
+                "further": "Further Tutorial Groups"
             },
             "menu": {
                 "exercises": "Exercises",

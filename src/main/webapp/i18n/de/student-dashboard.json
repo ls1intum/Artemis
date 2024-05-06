@@ -40,8 +40,9 @@
                 "future": "Zukünftig",
                 "noDueDate": "Unbefristet",
                 "noDate": "Ohne Datum",
-                "all": "Weitere Übungsgruppen",
-                "registered": "Meine Übungsgruppen"
+                "all": "Übungsgruppen",
+                "registered": "Meine Übungsgruppen",
+                "further": "Weitere Übungsgruppen"
             },
             "menu": {
                 "exercises": "Aufgaben",
