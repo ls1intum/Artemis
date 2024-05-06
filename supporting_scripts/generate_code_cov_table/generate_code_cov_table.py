@@ -34,7 +34,7 @@ def environ_or_required(key, required=True):
     )
 
 
-def download_and_extract_zip(url, headers):
+def download_and_extract_zip(url, headers, key):
     if url is None:
         return None
     try:
@@ -46,7 +46,7 @@ def download_and_extract_zip(url, headers):
 
         data_stream = BytesIO()
 
-        with tqdm(total=total_size, unit='B', unit_scale=True, desc="Downloading ZIP") as progress_bar:
+        with tqdm(total=total_size, unit='B', unit_scale=True, desc="Downloading ZIP for " + key) as progress_bar:
             for chunk in response.iter_content(chunk_size=chunk_size):
                 data_stream.write(chunk)
                 progress_bar.update(len(chunk))
@@ -181,18 +181,23 @@ def filter_file_changes(file_changes):
 
 
 def get_client_line_coverage(client_coverage_zip_bytes, file_name, change_type):
-    logging.debug(f"Opening {file_name}")
+    file_content = get_html_content(client_coverage_zip_bytes, file_name)
 
     line_coverage = None
-    file_content = get_html_content(client_coverage_zip_bytes, file_name)
-    soup = BeautifulSoup(file_content, "html.parser")
-    coverage_divs = soup.find_all("div", {"class": "fl pad1y space-right2"})
-    if len(coverage_divs) >= 4:
-        line_coverage_strong = coverage_divs[3].find("span", {"class": "strong"})
-        line_coverage = line_coverage_strong.text.strip()
-    logging.debug(f"Coverage for {file_name} -> line coverage: {line_coverage}")
+    if file_content:
+        logging.debug(f"Opening {file_content}")
 
-    return file_name, 'url', f"not found ({change_type})" if line_coverage is None else line_coverage
+        soup = BeautifulSoup(file_content, "html.parser")
+        coverage_divs = soup.find_all("div", {"class": "fl pad1y space-right2"})
+        if len(coverage_divs) >= 4:
+            line_coverage_strong = coverage_divs[3].find("span", {"class": "strong"})
+            line_coverage = line_coverage_strong.text.strip()
+            logging.debug(f"Coverage for {file_name} -> line coverage: {line_coverage}")
+
+    if line_coverage:
+        return file_name, line_coverage
+    else:
+        return file_name, f"not found ({change_type})"
 
 
 def get_server_line_coverage(server_coverage_zip_bytes, file_name, change_type):
@@ -288,8 +293,8 @@ def main(argv):
 
     artifacts = get_artifacts_of_the_last_completed_run(headers, args.branch_name, args.build_id)
 
-    client_coverage_zip_bytes = download_and_extract_zip(get_coverage_artifact_for_key(artifacts, client_tests_key), headers)
-    server_coverage_zip_bytes = download_and_extract_zip(get_coverage_artifact_for_key(artifacts, server_tests_key), headers)
+    client_coverage_zip_bytes = download_and_extract_zip(get_coverage_artifact_for_key(artifacts, client_tests_key), headers, client_tests_key)
+    server_coverage_zip_bytes = download_and_extract_zip(get_coverage_artifact_for_key(artifacts, server_tests_key), headers, server_tests_key)
 
     client_cov = [
         get_client_line_coverage(client_coverage_zip_bytes, file_name, change_type)
@@ -311,6 +316,7 @@ def main(argv):
         result += f"#### Server\n\n{server_table}\n\n"
 
     logging.info("Info: ✅ ❌ in Confirmation (assert/expect) have to be adjusted manually, also delete trivial files!")
+    logging.info("")  # newline
 
     if args.print_results:
         print(result)
