@@ -26,7 +26,6 @@
                     [hideTitleLabel]="true"
                     [hideChannelName]="hideChannelNameInput"
                     [initChannelName]="isImport || exam.id === undefined"
-                    [titlePattern]="'^[a-zA-Z0-9- ]+$'"
                 />
                 @if (!isNonEmptyTitle) {
                     <span class="invalid-feedback"> {{ 'artemisApp.exam.validation.titleNonEmptyValidation' | artemisTranslate }}</span>
