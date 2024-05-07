@@ -42,7 +42,7 @@ import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageStat
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.tutorChat.PyrisTutorChatStatusUpdateDTO;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.session.IrisChatSessionService;
-import de.tum.in.www1.artemis.service.iris.websocket.IrisChatWebsocketService;
+import de.tum.in.www1.artemis.service.iris.websocket.IrisWebsocketDTO;
 import de.tum.in.www1.artemis.util.IrisUtilTestService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
@@ -335,13 +335,13 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
             @Override
             public boolean matches(Object argument) {
-                if (!(argument instanceof IrisChatWebsocketService.IrisWebsocketDTO websocketDTO)) {
+                if (!(argument instanceof IrisWebsocketDTO websocketDTO)) {
                     return false;
                 }
-                if (websocketDTO.getType() != IrisChatWebsocketService.IrisWebsocketDTO.IrisWebsocketMessageType.MESSAGE) {
+                if (websocketDTO.type() != IrisWebsocketDTO.IrisWebsocketMessageType.MESSAGE) {
                     return false;
                 }
-                return Objects.equals(websocketDTO.getMessage().getContent().stream().map(IrisMessageContent::getContentAsString).toList(),
+                return Objects.equals(websocketDTO.message().getContent().stream().map(IrisMessageContent::getContentAsString).toList(),
                         content.stream().map(IrisMessageContent::getContentAsString).toList());
             }
 
@@ -357,19 +357,19 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
             @Override
             public boolean matches(Object argument) {
-                if (!(argument instanceof IrisChatWebsocketService.IrisWebsocketDTO websocketDTO)) {
+                if (!(argument instanceof IrisWebsocketDTO websocketDTO)) {
                     return false;
                 }
-                if (websocketDTO.getType() != IrisChatWebsocketService.IrisWebsocketDTO.IrisWebsocketMessageType.STATUS) {
+                if (websocketDTO.type() != IrisWebsocketDTO.IrisWebsocketMessageType.STATUS) {
                     return false;
                 }
-                if (websocketDTO.getStages() == null) {
+                if (websocketDTO.stages() == null) {
                     return stageStates == null;
                 }
-                if (websocketDTO.getStages().size() != stageStates.length) {
+                if (websocketDTO.stages().size() != stageStates.length) {
                     return false;
                 }
-                return websocketDTO.getStages().stream().map(PyrisStageDTO::state).toList().equals(List.of(stageStates));
+                return websocketDTO.stages().stream().map(PyrisStageDTO::state).toList().equals(List.of(stageStates));
             }
 
             @Override
@@ -384,10 +384,10 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
             @Override
             public boolean matches(Object argument) {
-                if (!(argument instanceof IrisChatWebsocketService.IrisWebsocketDTO websocketDTO)) {
+                if (!(argument instanceof IrisWebsocketDTO websocketDTO)) {
                     return false;
                 }
-                return websocketDTO.getType() == IrisChatWebsocketService.IrisWebsocketDTO.IrisWebsocketMessageType.ERROR;
+                return websocketDTO.type() == IrisWebsocketDTO.IrisWebsocketMessageType.ERROR;
             }
 
             @Override

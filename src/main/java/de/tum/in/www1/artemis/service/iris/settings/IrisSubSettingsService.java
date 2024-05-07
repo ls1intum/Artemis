@@ -5,6 +5,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.function.Function;
 
@@ -155,7 +156,7 @@ public class IrisSubSettingsService {
      * @param updatedAllowedModels The allowed models of the updated settings.
      * @return The filtered allowed models.
      */
-    private Set<String> selectAllowedModels(Set<String> allowedModels, Set<String> updatedAllowedModels) {
+    private SortedSet<String> selectAllowedModels(SortedSet<String> allowedModels, SortedSet<String> updatedAllowedModels) {
         return authCheckService.isAdmin() ? updatedAllowedModels : allowedModels;
     }
 

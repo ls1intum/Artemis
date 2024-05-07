@@ -48,10 +48,11 @@ public class PyrisDTOService {
     }
 
     /**
-     * Convert a ProgrammingExercise to a PyrisProgrammingExerciseDTO
+     * Helper method to convert a ProgrammingExercise to a PyrisProgrammingExerciseDTO.
+     * This notably includes fetching the contents of the template, solution and test repositories, if they exist.
      *
-     * @param exercise the exercise
-     * @return the PyrisProgrammingExerciseDTO
+     * @param exercise the programming exercise to convert
+     * @return the converted PyrisProgrammingExerciseDTO
      */
     public PyrisProgrammingExerciseDTO toPyrisDTO(ProgrammingExercise exercise) {
         var templateRepositoryContents = getRepository(exercise.getTemplateParticipation()).map(repositoryService::getFilesWithContent).orElse(Map.of());
@@ -70,10 +71,11 @@ public class PyrisDTOService {
     }
 
     /**
-     * Convert a ProgrammingSubmission to a PyrisSubmissionDTO
+     * Helper method to convert a ProgrammingSubmission to a PyrisSubmissionDTO.
+     * This notably includes fetching the contents of the student repository, if it exists.
      *
-     * @param submission the submission
-     * @return the PyrisSubmissionDTO
+     * @param submission the students submission
+     * @return the converted PyrisSubmissionDTO
      */
     public PyrisSubmissionDTO toPyrisDTO(ProgrammingSubmission submission) {
         var buildLogEntries = submission.getBuildLogEntries().stream().map(buildLogEntry -> new PyrisBuildLogEntryDTO(toInstant(buildLogEntry.getTime()), buildLogEntry.getLog()))
@@ -85,10 +87,11 @@ public class PyrisDTOService {
     }
 
     /**
-     * Convert a list of IrisMessage to a list of PyrisMessageDTO
+     * Helper method to convert a list of IrisMessages to a list of PyrisMessageDTOs.
+     * This needs separate handling for the different types of message content.
      *
-     * @param messages the messages
-     * @return the PyrisMessageDTOs
+     * @param messages the messages with contents to convert
+     * @return the converted list of PyrisMessageDTOs
      */
     public List<PyrisMessageDTO> toPyrisDTO(List<IrisMessage> messages) {
         return messages.stream().map(message -> {
@@ -143,7 +146,9 @@ public class PyrisDTOService {
     }
 
     /**
-     * Helper method to get & checkout the repository for a participation
+     * Helper method to get & checkout the repository for a participation.
+     * This is an exception safe way to fetch the repository, as it will return an empty optional if the repository could not be fetched.
+     * This is useful, as the Pyris call should not fail if the repository is not available.
      *
      * @param participation the participation
      * @return the repository or empty if it could not be fetched
