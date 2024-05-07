@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Exercise, getIcon } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
+import { Exam } from 'app/entities/exam.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
@@ -79,12 +80,30 @@ export class CourseOverviewService {
         return groupedLectureGroups;
     }
 
+    groupExamsByRealOrTest(realExams: Exam[], testExams: Exam[]): AccordionGroups {
+        const groupedExamGroups = cloneDeep(DEFAULT_UNIT_GROUPS) as AccordionGroups;
+
+        for (const realExam of realExams) {
+            const examCardItem = this.mapExamToSidebarCardElement(realExam);
+            groupedExamGroups['real'].entityData.push(examCardItem);
+        }
+        for (const testExam of testExams) {
+            const examCardItem = this.mapExamToSidebarCardElement(testExam);
+            groupedExamGroups['test'].entityData.push(examCardItem);
+        }
+
+        return groupedExamGroups;
+    }
+
     mapLecturesToSidebarCardElements(lectures: Lecture[]) {
         return lectures.map((lecture) => this.mapLectureToSidebarCardElement(lecture));
     }
 
     mapExercisesToSidebarCardElements(exercises: Exercise[]) {
         return exercises.map((exercise) => this.mapExerciseToSidebarCardElement(exercise));
+    }
+    mapExamsToSidebarCardElements(exams: Exam[]) {
+        return exams.map((exam) => this.mapExamToSidebarCardElement(exam));
     }
 
     mapLectureToSidebarCardElement(lecture: Lecture): SidebarCardElement {
@@ -109,6 +128,15 @@ export class CourseOverviewService {
                 : undefined,
         };
         return exerciseCardItem;
+    }
+
+    mapExamToSidebarCardElement(exam: Exam): SidebarCardElement {
+        const examCardItem: SidebarCardElement = {
+            title: exam.title ?? '',
+            id: exam.id ?? '',
+            subtitleLeft: exam.startDate?.format('MMM DD, YYYY') ?? 'No date associated',
+        };
+        return examCardItem;
     }
 
     sortLectures(lectures: Lecture[]): Lecture[] {
@@ -136,7 +164,7 @@ export class CourseOverviewService {
         return exercise.studentParticipations?.length ? exercise.studentParticipations[0] : undefined;
     }
 
-    sortByTitle(a: Exercise | Lecture, b: Exercise | Lecture): number {
+    sortByTitle(a: Exercise | Lecture | Exam, b: Exercise | Lecture | Exam): number {
         return a.title && b.title ? a.title.localeCompare(b.title) : 0;
     }
 

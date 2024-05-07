@@ -9,10 +9,10 @@ import { StudentExam } from 'app/entities/student-exam.model';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { faAngleDown, faAngleUp, faListAlt } from '@fortawesome/free-solid-svg-icons';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { AccordionGroupForExams, SidebarCardElement, SidebarData } from 'app/types/sidebar';
+import { AccordionGroups, SidebarCardElement, SidebarData } from 'app/types/sidebar';
 import { CourseOverviewService } from '../course-overview.service';
 
-const DEFAULT_UNIT_GROUPS: AccordionGroupForExams = {
+const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     real: { entityData: [] },
     test: { entityData: [] },
 };
@@ -38,8 +38,10 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     faAngleDown = faAngleDown;
     faListAlt = faListAlt;
 
-    examSelected: boolean = false; // change to true
-    accordionExamGroups: AccordionGroupForExams = DEFAULT_UNIT_GROUPS;
+    sortedRealExams?: Exam[];
+    sortedTestExams?: Exam[];
+    examSelected: boolean = true; // change to true
+    accordionExamGroups: AccordionGroups = DEFAULT_UNIT_GROUPS;
     sidebarData: SidebarData;
     sidebarExams: SidebarCardElement[] = [];
     isCollapsed: boolean = false;
@@ -62,12 +64,12 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
         });
 
         this.course = this.courseStorageService.getCourse(this.courseId);
-        //this.prepareSidebarData();
+        this.prepareSidebarData();
 
         this.courseUpdatesSubscription = this.courseStorageService.subscribeToCourseUpdates(this.courseId).subscribe((course: Course) => {
             this.course = course;
             this.updateExams();
-            //this.prepareSidebarData();
+            this.prepareSidebarData();
         });
 
         this.studentExamTestExamUpdateSubscription = this.examParticipationService
@@ -162,24 +164,27 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
         this.courseOverviewService.setSidebarCollapseState('exam', this.isCollapsed);
     }
 
-    // For the content of the sidebar
-    // updateSidebarData() {
-    //     this.sidebarData = {
-    //         groupByCategory: true,
-    //         sidebarType: 'exercise',
-    //         storageId: 'exercise',
-    //         groupedData: this.accordionExerciseGroups,
-    //         ungroupedData: this.sidebarExercises,
-    //     };
-    // }
+    updateSidebarData() {
+        this.sidebarData = {
+            groupByCategory: true,
+            sidebarType: 'exam',
+            storageId: 'exam',
+            groupedData: this.accordionExamGroups,
+            ungroupedData: this.sidebarExams,
+        };
+    }
 
-    // prepareSidebarData() {
-    //     if (!this.course?.exercises) {
-    //         return;
-    //     }
-    //     this.sortedExercises = this.courseOverviewService.sortExercises(this.course.exercises);
-    //     this.sidebarExercises = this.courseOverviewService.mapExercisesToSidebarCardElements(this.sortedExercises);
-    //     this.accordionExerciseGroups = this.courseOverviewService.groupExercisesByDueDate(this.sortedExercises);
-    //     this.updateSidebarData();
-    // }
+    prepareSidebarData() {
+        if (!this.course?.exams) {
+            return;
+        }
+        this.sortedRealExams = this.realExamsOfCourse.sort((a, b) => this.sortExamsByStartDate(a, b));
+        this.sortedTestExams = this.testExamsOfCourse.sort((a, b) => this.sortExamsByStartDate(a, b));
+
+        const sidebarRealExams = this.courseOverviewService.mapExamsToSidebarCardElements(this.sortedRealExams);
+        const sidebarTestExams = this.courseOverviewService.mapExamsToSidebarCardElements(this.sortedTestExams);
+        this.sidebarExams = [...sidebarRealExams, ...sidebarTestExams];
+        this.accordionExamGroups = this.courseOverviewService.groupExamsByRealOrTest(this.sortedRealExams, this.sortedTestExams);
+        this.updateSidebarData();
+    }
 }

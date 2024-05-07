@@ -5,8 +5,7 @@ export type TimeGroupCategory = 'past' | 'current' | 'future' | 'noDate';
 export type ExamGroupCategory = 'real' | 'test';
 export type SidebarTypes = 'exercise' | 'exam' | 'default';
 
-export type AccordionGroups = Record<TimeGroupCategory, { entityData: SidebarCardElement[] }>;
-export type AccordionGroupForExams = Record<ExamGroupCategory, { entityData: SidebarCardElement[] }>;
+export type AccordionGroups = Record<TimeGroupCategory | ExamGroupCategory | string, { entityData: SidebarCardElement[] }>;
 export type ExerciseCollapseState = Record<TimeGroupCategory, boolean>;
 
 export interface SidebarData {
