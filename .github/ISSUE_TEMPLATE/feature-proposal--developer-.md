@@ -61,5 +61,5 @@ assignees: ''
 > Potential topics to discuss here include: WebSockets, testing strategies.
 
 ## UI/UX Design
-> Describe the user flow (references to dynamic model). 
-> Screenshots of the final UI mockup
+> Screenshots of the final UI mockups (mandatory): Please include screenshots to provide a clear and persistent visual reference of the design. 
+> Link to the design mockup (optional): Additionally, you may include a link to the live design mockup (e.g., Figma, Sketch) for a more interactive view. Note that this link is supplementary and should not replace the required screenshots.
