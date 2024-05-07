@@ -1,30 +1,28 @@
 import { ComponentFixture, TestBed, async } from '@angular/core/testing';
-
-import { SidebarCardComponent } from 'app/shared/sidebar/sidebar-card/sidebar-card.component';
+import { SidebarCardLargeComponent } from 'app/shared/sidebar/sidebar-card-large/sidebar-card-large.component';
 import { SidebarCardItemComponent } from 'app/shared/sidebar/sidebar-card-item/sidebar-card-item.component';
 import { ArtemisTestModule } from '../../../test.module';
 import { MockModule } from 'ng-mocks';
 import { Router, RouterModule } from '@angular/router';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
-import { DifficultyLevel } from 'app/entities/exercise.model';
 
-describe('SidebarCardComponent', () => {
-    let component: SidebarCardComponent;
-    let fixture: ComponentFixture<SidebarCardComponent>;
+describe('SidebarCardLargeComponent', () => {
+    let component: SidebarCardLargeComponent;
+    let fixture: ComponentFixture<SidebarCardLargeComponent>;
     let router: MockRouter;
 
     beforeEach(async(() => {
         router = new MockRouter();
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockModule(RouterModule)],
-            declarations: [SidebarCardComponent, SidebarCardItemComponent, MockRouterLinkDirective],
+            declarations: [SidebarCardLargeComponent, SidebarCardItemComponent, MockRouterLinkDirective],
             providers: [{ provide: Router, useValue: router }],
         }).compileComponents();
     }));
 
     beforeEach(() => {
-        fixture = TestBed.createComponent(SidebarCardComponent);
+        fixture = TestBed.createComponent(SidebarCardLargeComponent);
         component = fixture.componentInstance;
         component.sidebarItem = {
             title: 'testTitle',
@@ -36,27 +34,6 @@ describe('SidebarCardComponent', () => {
 
     it('should create', () => {
         expect(component).toBeTruthy();
-    });
-
-    it('should have success border class for easy difficulty', () => {
-        (component.sidebarItem.difficulty = DifficultyLevel.EASY), fixture.detectChanges();
-        const element: HTMLElement = fixture.nativeElement.querySelector('#test-sidebar-card');
-        const classes = element.className;
-        expect(classes).toContain('border-success');
-    });
-
-    it('should have success border class for medium difficulty', () => {
-        (component.sidebarItem.difficulty = DifficultyLevel.MEDIUM), fixture.detectChanges();
-        const element: HTMLElement = fixture.nativeElement.querySelector('#test-sidebar-card');
-        const classes = element.className;
-        expect(classes).toContain('border-warning');
-    });
-
-    it('should have success border class for hard difficulty', () => {
-        (component.sidebarItem.difficulty = DifficultyLevel.HARD), fixture.detectChanges();
-        const element: HTMLElement = fixture.nativeElement.querySelector('#test-sidebar-card');
-        const classes = element.className;
-        expect(classes).toContain('border-danger');
     });
 
     it('should store route on click', () => {

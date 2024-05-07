@@ -74,4 +74,26 @@ export class SidebarAccordionComponent implements OnChanges, OnInit {
         this.collapseState[groupCategoryKey] = !this.collapseState[groupCategoryKey];
         sessionStorage.setItem('sidebar.accordion.collapseState.' + this.storageId + '.byCourse.' + this.courseId, JSON.stringify(this.collapseState));
     }
+
+    getSize() {
+        const size = {
+            ['exercise']: 'M',
+            ['default']: 'M',
+            ['conversation']: 'S',
+        };
+        return this.sidebarType ? size[this.sidebarType] : 'M';
+    }
+
+    getIcon(groupCategoryKey: string) {
+        const icons = {
+            ['generalChannels']: faComments,
+            ['exerciseChannels']: faList,
+            ['examChannels']: faGraduationCap,
+            ['groupChats']: faComments,
+            ['directMessages']: faComments,
+            ['favouriteChannels']: faHeart,
+            ['lectureChannels']: faFile,
+        };
+        return icons[groupCategoryKey];
+    }
 }

@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../../test.module';
 import { SidebarAccordionComponent } from 'app/shared/sidebar/sidebar-accordion/sidebar-accordion.component';
-import { SidebarCardComponent } from 'app/shared/sidebar/sidebar-card/sidebar-card.component';
+import { SidebarCardMediumComponent } from 'app/shared/sidebar/sidebar-card-medium/sidebar-card-medium.component';
 import { SidebarCardItemComponent } from 'app/shared/sidebar/sidebar-card-item/sidebar-card-item.component';
 import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
@@ -20,7 +20,14 @@ describe('SidebarAccordionComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockModule(NgbTooltipModule), MockModule(NgbCollapseModule), MockModule(RouterModule)],
-            declarations: [SidebarAccordionComponent, SidebarCardComponent, SidebarCardItemComponent, SearchFilterPipe, SearchFilterComponent, MockPipe(ArtemisTranslatePipe)],
+            declarations: [
+                SidebarAccordionComponent,
+                SidebarCardMediumComponent,
+                SidebarCardItemComponent,
+                SearchFilterPipe,
+                SearchFilterComponent,
+                MockPipe(ArtemisTranslatePipe),
+            ],
         }).compileComponents();
     });
 

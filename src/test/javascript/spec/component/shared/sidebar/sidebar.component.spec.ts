@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, async } from '@angular/core/testing';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
-import { SidebarCardComponent } from 'app/shared/sidebar/sidebar-card/sidebar-card.component';
+import { SidebarCardMediumComponent } from 'app/shared/sidebar/sidebar-card-medium/sidebar-card-medium.component';
 import { SidebarCardItemComponent } from 'app/shared/sidebar/sidebar-card-item/sidebar-card-item.component';
 import { ArtemisTestModule } from '../../../test.module';
 import { DebugElement } from '@angular/core';
@@ -24,7 +24,7 @@ describe('SidebarComponent', () => {
             imports: [ArtemisTestModule, MockModule(FormsModule), MockModule(ReactiveFormsModule), MockModule(RouterModule)],
             declarations: [
                 SidebarComponent,
-                SidebarCardComponent,
+                SidebarCardMediumComponent,
                 SidebarCardItemComponent,
                 SearchFilterPipe,
                 SearchFilterComponent,
