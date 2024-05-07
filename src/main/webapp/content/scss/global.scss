@@ -1029,3 +1029,24 @@ body.transparent-background {
     max-width: 600px !important;
     width: 600px !important;
 }
+
+/* Course Overview Content Pages with Sidebar */
+.module-bg {
+    background-color: var(--module-bg);
+}
+
+.scrollable-content {
+    height: calc(100vh - var(--sidebar-footer-height-prod) - var(--header-height));
+    overflow-y: auto;
+
+    &.content-height-dev {
+        height: calc(100vh - var(--sidebar-footer-height-dev) - var(--header-height));
+    }
+    @media (max-width: 768px) {
+        height: calc(100vh - var(--sidebar-footer-height-prod) - var(--header-height)) !important;
+    }
+}
+
+.sidebar-collapsed {
+    display: none;
+}
