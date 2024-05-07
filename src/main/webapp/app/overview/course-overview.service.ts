@@ -35,6 +35,13 @@ export class CourseOverviewService {
         }
     }
 
+    getUpcomingExam(exams: Exam[] | undefined): Exam | undefined {
+        if (exams && exams.length) {
+            const upcomingExam = exams?.reduce((a, b) => ((a?.startDate?.valueOf() ?? 0) > (b?.startDate?.valueOf() ?? 0) ? a : b));
+            return upcomingExam;
+        }
+    }
+
     getCorrespondingGroupByDate(date: dayjs.Dayjs | undefined): TimeGroupCategory {
         if (!date) {
             return 'noDate';

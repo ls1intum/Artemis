@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Course } from 'app/entities/course.model';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { Exam } from 'app/entities/exam.model';
 import dayjs from 'dayjs/esm';
@@ -42,7 +42,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
 
     sortedRealExams?: Exam[];
     sortedTestExams?: Exam[];
-    examSelected: boolean = true; // change to true
+    examSelected: boolean = true;
     accordionExamGroups: AccordionGroups = DEFAULT_UNIT_GROUPS;
     sidebarData: SidebarData;
     sidebarExams: SidebarCardElement[] = [];
@@ -54,6 +54,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
         private serverDateService: ArtemisServerDateService,
         private examParticipationService: ExamParticipationService,
         private courseOverviewService: CourseOverviewService,
+        private router: Router,
     ) {}
 
     /**
@@ -64,16 +65,14 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
         this.parentParamSubscription = this.route.parent!.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId'], 10);
         });
-        console.log('Real Exam length ' + this.realExamsOfCourse.length);
-        console.log('Test Exam length ' + this.testExamsOfCourse.length);
 
         this.course = this.courseStorageService.getCourse(this.courseId);
-        //this.prepareSidebarData();
+        this.prepareSidebarData();
 
         this.courseUpdatesSubscription = this.courseStorageService.subscribeToCourseUpdates(this.courseId).subscribe((course: Course) => {
             this.course = course;
             this.updateExams();
-            //this.prepareSidebarData();
+            this.prepareSidebarData();
         });
 
         this.studentExamTestExamUpdateSubscription = this.examParticipationService
@@ -86,13 +85,22 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
             // The Map is ued to store the boolean value, if the attempt-List for one Exam has been expanded or collapsed
             this.expandAttemptsMap = new Map(this.course.exams.filter((exam) => exam.testExam && this.isVisible(exam)).map((exam) => [exam.id!, false]));
             this.updateExams();
+            this.prepareSidebarData();
         }
+
+        const upcomingExam = this.courseOverviewService.getUpcomingExam([...this.realExamsOfCourse, ...this.testExamsOfCourse]);
+        const lastSelectedExam = this.getLastSelectedExam();
         this.paramSubscription = this.route.params.subscribe((params) => {
-            const examId = parseInt(params['examId'], 10);
-            console.log('Exam ID: ' + examId);
-            this.examSelected = examId ? true : false;
+            const examId = parseInt(params.examId, 10);
+            // If no exam is selected, navigate to the lastSelectedExam or upcoming exam
+            if (!examId && lastSelectedExam) {
+                this.router.navigate([lastSelectedExam], { relativeTo: this.route, replaceUrl: true });
+            } else if (!examId && upcomingExam) {
+                this.router.navigate([upcomingExam.id], { relativeTo: this.route, replaceUrl: true });
+            } else {
+                this.examSelected = examId ? true : false;
+            }
         });
-        this.prepareSidebarData();
     }
 
     private updateExams(): void {
@@ -185,6 +193,10 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
         }
 
         return groupedExamGroups;
+    }
+
+    getLastSelectedExam(): string | null {
+        return sessionStorage.getItem('sidebar.lastSelectedItem.exam.byCourse.' + this.courseId);
     }
 
     toggleSidebar() {

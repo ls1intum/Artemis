@@ -148,7 +148,7 @@ const routes: Routes = [
                     hasSidebar: true,
                 },
                 canActivate: [UserRouteAccessService],
-                loadChildren: () => import('./course-exams/course-exams.module').then((m) => m.CourseExamsModule),
+                loadChildren: () => import('../exam/participate/exam-participation.module').then((m) => m.ArtemisExamParticipationModule),
             },
             {
                 path: 'plagiarism-cases',

@@ -43,7 +43,7 @@ type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 @Component({
     selector: 'jhi-exam-participation',
     templateUrl: './exam-participation.component.html',
-    styleUrls: ['./exam-participation.scss'],
+    styleUrls: ['./exam-participation.scss', '../../overview/course-overview.scss'],
 })
 export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     @ViewChildren(ExamSubmissionComponent)
@@ -153,8 +153,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * loads the exam from the server and initializes the view
      */
     ngOnInit(): void {
-        this.route.params.subscribe((params) => {
+        this.route.parent?.parent?.parent?.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId'], 10);
+        });
+        this.route.params.subscribe((params) => {
             this.examId = parseInt(params['examId'], 10);
             this.testRunId = parseInt(params['testRunId'], 10);
             // As a student can have multiple test exams, the studentExamId is passed as a parameter.
