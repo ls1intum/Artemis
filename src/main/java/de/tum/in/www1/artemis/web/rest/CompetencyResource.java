@@ -49,6 +49,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExerciseService;
+import de.tum.in.www1.artemis.service.LearningObjectService;
 import de.tum.in.www1.artemis.service.LectureUnitService;
 import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.competency.CompetencyRelationService;
@@ -103,11 +104,13 @@ public class CompetencyResource {
 
     private final CompetencyRelationService competencyRelationService;
 
+    private final LearningObjectService learningObjectService;
+
     public CompetencyResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             CompetencyRepository competencyRepository, CompetencyRelationRepository competencyRelationRepository, CompetencyService competencyService,
             CompetencyProgressRepository competencyProgressRepository, CompetencyProgressService competencyProgressService, ExerciseService exerciseService,
             LectureUnitService lectureUnitService, CompetencyRelationService competencyRelationService,
-            Optional<IrisCompetencyGenerationSessionService> irisCompetencyGenerationSessionService) {
+            Optional<IrisCompetencyGenerationSessionService> irisCompetencyGenerationSessionService, LearningObjectService learningObjectService) {
         this.courseRepository = courseRepository;
         this.competencyRelationRepository = competencyRelationRepository;
         this.authorizationCheckService = authorizationCheckService;
@@ -120,6 +123,7 @@ public class CompetencyResource {
         this.lectureUnitService = lectureUnitService;
         this.competencyRelationService = competencyRelationService;
         this.irisCompetencyGenerationSessionService = irisCompetencyGenerationSessionService;
+        this.learningObjectService = learningObjectService;
     }
 
     /**
@@ -176,6 +180,37 @@ public class CompetencyResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         final var competencies = competencyService.findCompetenciesWithProgressForUserByCourseId(courseId, user.getId());
+        return ResponseEntity.ok(competencies);
+    }
+
+    /**
+     * GET /courses/:courseId/competencies/student-analytics-dashboard : gets all the competencies of
+     * a course with relevant info for the student dashboard
+     *
+     * @param courseId the id of the course for which the competencies should be fetched
+     * @return the ResponseEntity with status 200 (OK) and with body the found competencies with exercises and lecture units
+     */
+    @GetMapping("courses/{courseId}/competencies/student-analytics-dashboard")
+    @EnforceAtLeastStudent
+    public ResponseEntity<List<Competency>> getCompetenciesWithDetailsForDashboard(@PathVariable long courseId) {
+        log.debug("REST request to get competencies for course student dashboard with id: {}", courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+        final var competencies = competencyService.findCompetenciesWithExercisesAndLectureUnitsAndProgressForUserByCourseId(courseId, user.getId());
+
+        for (Competency competency : competencies) {
+            // Filter lecture units
+            competency.setLectureUnits(competency.getLectureUnits().stream().filter(lectureUnit -> authorizationCheckService.isAllowedToSeeLectureUnit(lectureUnit, user))
+                    .peek(lectureUnit -> lectureUnit.setCompleted(lectureUnit.isCompletedFor(user))).collect(Collectors.toSet()));
+
+            // Load exercises with information needed for the dashboard
+            Set<Exercise> exercisesUserIsAllowedToSee = exerciseService.filterOutExercisesThatUserShouldNotSee(competency.getExercises(), user);
+            Set<Exercise> exercisesWithAllInformationNeeded = exerciseService.loadExercisesWithInformationForDashboard(exercisesUserIsAllowedToSee.stream()
+                    .peek(exercise -> exercise.setCompleted(learningObjectService.isCompletedByUser(exercise, user))).map(Exercise::getId).collect(Collectors.toSet()), user);
+            competency.setExercises(exercisesWithAllInformationNeeded);
+        }
+
         return ResponseEntity.ok(competencies);
     }
 

@@ -1,7 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { Subscription, forkJoin } from 'rxjs';
-import { Exercise } from 'app/entities/exercise.model';
+import { Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { Competency } from 'app/entities/competency.model';
@@ -21,11 +20,11 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     isLoading = false;
 
     public competencies: Competency[] = [];
-    private prerequisites: Competency[] = [];
+    private subscriptions: Subscription[] = [];
 
     private paramSubscription?: Subscription;
     private courseUpdatesSubscription?: Subscription;
-    private courseExercises: Exercise[] = [];
+
     public course?: Course;
     public data: any;
 
@@ -47,14 +46,10 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
         });
     }
 
-    private onCourseLoad(): void {
-        if (this.course?.exercises) {
-            this.courseExercises = this.course.exercises;
-        }
-    }
     ngOnDestroy(): void {
         this.paramSubscription?.unsubscribe();
         this.courseUpdatesSubscription?.unsubscribe();
+        this.subscriptions.forEach((subscription) => subscription.unsubscribe());
     }
 
     /**
@@ -62,35 +57,28 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
      */
     loadCompetencies() {
         this.isLoading = true;
-        forkJoin([this.competencyService.getAllForCourse(this.courseId), this.competencyService.getAllPrerequisitesForCourse(this.courseId)]).subscribe({
-            next: ([competencies, prerequisites]) => {
-                this.competencies = competencies.body!;
-                this.prerequisites = prerequisites.body!;
-                // Also update the course, so we do not need to fetch again next time
-                if (this.course) {
-                    this.course.competencies = this.competencies;
-                    this.course.prerequisites = this.prerequisites;
-                }
-                this.isLoading = false;
-            },
-            error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
-        });
+        this.subscriptions.push(
+            this.competencyService.getAllForCourseStudentDashboard(this.courseId).subscribe({
+                next: (response) => {
+                    this.competencies = response.body!;
+                    this.isLoading = false;
+                },
+                error: (error: HttpErrorResponse) => {
+                    onError(this.alertService, error);
+                    this.isLoading = false;
+                },
+            }),
+        );
     }
 
     private setCourse(course?: Course) {
         this.course = course;
-        this.onCourseLoad();
-        // Note: this component is only shown if there are at least 1 competency or at least 1 prerequisite, so if they do not exist, we load the data from the server
+        // Note: this component is only shown if there is at least 1 competency or at least 1 prerequisite, so if they do not exist, we load the data from the server
         if (this.course && ((this.course.competencies && this.course.competencies.length > 0) || (this.course.prerequisites && this.course.prerequisites.length > 0))) {
             this.competencies = this.course.competencies || [];
-            this.prerequisites = this.course.prerequisites || [];
         } else {
             this.loadCompetencies();
         }
-    }
-
-    get competency() {
-        return this.competencies[0]!;
     }
 
     protected readonly FeatureToggle = FeatureToggle;

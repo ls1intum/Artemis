@@ -193,6 +193,16 @@ public class ExerciseService {
     }
 
     /**
+     * Gets the exercise that belong to any of the competency in the given set
+     *
+     * @param competencyIds the set of competency ids
+     * @return the exercises that belong to any of the competencies in the given set
+     */
+    public Set<Exercise> findExercisesByCompetencyIds(Set<Long> competencyIds) {
+        return exerciseRepository.findExercisesByCompetencyIds(competencyIds);
+    }
+
+    /**
      * Given an exercise exerciseId, it creates an object node with numberOfSubmissions, totalNumberOfAssessments, numberOfComplaints and numberOfMoreFeedbackRequests, that are
      * used by both stats for assessment dashboard and for instructor dashboard
      * TODO: refactor and improve this method

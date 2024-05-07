@@ -99,6 +99,15 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long>, J
     Set<Competency> findPrerequisitesByCourseId(@Param("courseId") long courseId);
 
     @Query("""
+            SELECT c
+            FROM Competency c
+            LEFT JOIN FETCH c.lectureUnits lu
+            LEFT JOIN FETCH c.exercises
+            WHERE c.course.id = :courseId
+            """)
+    List<Competency> findAllWithLectureUnitsAndExercisesByCourseId(@Param("courseId") Long courseId);
+
+    @Query("""
             SELECT COUNT(*)
             FROM Competency pr
                 LEFT JOIN pr.consecutiveCourses c
