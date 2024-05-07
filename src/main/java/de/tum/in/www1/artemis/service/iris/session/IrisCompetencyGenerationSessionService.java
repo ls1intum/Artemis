@@ -1,7 +1,8 @@
 package de.tum.in.www1.artemis.service.iris.session;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import org.slf4j.Logger;
@@ -15,10 +16,15 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.CompetencyTaxonomy;
-import de.tum.in.www1.artemis.domain.iris.message.*;
+import de.tum.in.www1.artemis.domain.iris.message.IrisJsonMessageContent;
+import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
+import de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender;
+import de.tum.in.www1.artemis.domain.iris.message.IrisTextMessageContent;
 import de.tum.in.www1.artemis.domain.iris.session.IrisCompetencyGenerationSession;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettingsType;
-import de.tum.in.www1.artemis.repository.iris.*;
+import de.tum.in.www1.artemis.repository.iris.IrisCompetencyGenerationSessionRepository;
+import de.tum.in.www1.artemis.repository.iris.IrisMessageRepository;
+import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.iris.IrisConnectorService;

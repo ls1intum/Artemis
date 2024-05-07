@@ -30,6 +30,9 @@ import { FileService } from 'app/shared/http/file.service';
 import { onError } from 'app/shared/util/global.utils';
 import { getSemesters } from 'app/utils/semester-utils';
 import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal.component';
+import { scrollToTopOfPage } from 'app/shared/util/utils';
+
+const DEFAULT_CUSTOM_GROUP_NAME = 'artemis-dev';
 
 @Component({
     selector: 'jhi-course-update',
@@ -72,6 +75,7 @@ export class CourseUpdateComponent implements OnInit {
     messagingEnabled = true;
     ltiEnabled = false;
     isAthenaEnabled = false;
+    tutorialGroupsFeatureActivated = false;
 
     readonly semesters = getSemesters();
 
@@ -80,7 +84,8 @@ export class CourseUpdateComponent implements OnInit {
     // Currently set to 65535 as this is the limit of TEXT
     readonly COMPLAINT_RESPONSE_TEXT_LIMIT = 65535;
     readonly COMPLAINT_TEXT_LIMIT = 65535;
-    tutorialGroupsFeatureActivated = false;
+
+    readonly COURSE_TITLE_LIMIT = 255;
 
     constructor(
         private eventManager: EventManager,
@@ -132,24 +137,20 @@ export class CourseUpdateComponent implements OnInit {
 
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
-                if (profileInfo.inProduction) {
-                    // in production mode, the groups should not be customized by default when creating a course
-                    // when editing a course, only admins can customize groups automatically
-                    this.customizeGroupNames = !!this.course.id;
-                } else {
-                    // developers typically want to customize the groups, therefore this is prefilled
+                if (!profileInfo.inProduction) {
+                    // developers may want to customize the groups
                     this.customizeGroupNames = true;
                     if (!this.course.studentGroupName) {
-                        this.course.studentGroupName = 'artemis-dev';
+                        this.course.studentGroupName = DEFAULT_CUSTOM_GROUP_NAME;
                     }
                     if (!this.course.teachingAssistantGroupName) {
-                        this.course.teachingAssistantGroupName = 'artemis-dev';
+                        this.course.teachingAssistantGroupName = DEFAULT_CUSTOM_GROUP_NAME;
                     }
                     if (!this.course.editorGroupName) {
-                        this.course.editorGroupName = 'artemis-dev';
+                        this.course.editorGroupName = DEFAULT_CUSTOM_GROUP_NAME;
                     }
                     if (!this.course.instructorGroupName) {
-                        this.course.instructorGroupName = 'artemis-dev';
+                        this.course.instructorGroupName = DEFAULT_CUSTOM_GROUP_NAME;
                     }
                 }
                 this.ltiEnabled = profileInfo.activeProfiles.includes(PROFILE_LTI);
@@ -163,7 +164,10 @@ export class CourseUpdateComponent implements OnInit {
         this.courseForm = new FormGroup(
             {
                 id: new FormControl(this.course.id),
-                title: new FormControl(this.course.title, [Validators.required]),
+                title: new FormControl(this.course.title, {
+                    validators: [Validators.required, Validators.maxLength(this.COURSE_TITLE_LIMIT)],
+                    updateOn: 'blur',
+                }),
                 shortName: new FormControl(
                     { value: this.course.shortName, disabled: !!this.course.id },
                     {
@@ -214,10 +218,10 @@ export class CourseUpdateComponent implements OnInit {
                     validators: [Validators.required, Validators.min(0)],
                 }),
                 restrictedAthenaModulesAccess: new FormControl(this.course.restrictedAthenaModulesAccess),
-                registrationEnabled: new FormControl(this.course.enrollmentEnabled),
+                enrollmentEnabled: new FormControl(this.course.enrollmentEnabled),
                 enrollmentStartDate: new FormControl(this.course.enrollmentStartDate),
                 enrollmentEndDate: new FormControl(this.course.enrollmentEndDate),
-                registrationConfirmationMessage: new FormControl(this.course.enrollmentConfirmationMessage, {
+                enrollmentConfirmationMessage: new FormControl(this.course.enrollmentConfirmationMessage, {
                     validators: [Validators.maxLength(2000)],
                 }),
                 unenrollmentEnabled: new FormControl(this.course.unenrollmentEnabled),
@@ -298,12 +302,8 @@ export class CourseUpdateComponent implements OnInit {
             course['courseInformationSharingConfiguration'] = CourseInformationSharingConfiguration.DISABLED;
         }
 
-        // TODO: this has to be removed once the refactoring from course 'registration' to 'enrollment' is complete
-        course['enrollmentEnabled'] = course['registrationEnabled'];
-        delete course['registrationEnabled'];
-        if (course['enrollmentEnabled'] == true) {
-            course['enrollmentConfirmationMessage'] = course['registrationConfirmationMessage'];
-            delete course['registrationConfirmationMessage'];
+        if (!course.enrollmentEnabled) {
+            course.enrollmentConfirmationMessage = undefined;
         }
 
         if (this.course.id !== undefined) {
@@ -346,6 +346,7 @@ export class CourseUpdateComponent implements OnInit {
         }
 
         this.router.navigate(['course-management', updatedCourse?.id?.toString()]);
+        scrollToTopOfPage();
     }
 
     /**
@@ -396,18 +397,18 @@ export class CourseUpdateComponent implements OnInit {
     changeOnlineCourse() {
         this.course.onlineCourse = !this.course.onlineCourse;
         if (this.course.onlineCourse) {
-            // registration enabled cannot be activated if online course is active
-            this.courseForm.controls['registrationEnabled'].setValue(false);
+            // enrollment enabled cannot be activated if online course is active
+            this.courseForm.controls['enrollmentEnabled'].setValue(false);
         }
         this.courseForm.controls['onlineCourse'].setValue(this.course.onlineCourse);
     }
     /**
-     * Enable or disable student course registration
+     * Enable or disable student course enrollment
      */
-    changeRegistrationEnabled() {
+    changeEnrollmentEnabled() {
         this.course.enrollmentEnabled = !this.course.enrollmentEnabled;
         if (this.course.enrollmentEnabled) {
-            // online course cannot be activated if registration enabled is set
+            // online course cannot be activated if enrollment enabled is set
             this.courseForm.controls['onlineCourse'].setValue(false);
             if (!this.course.enrollmentStartDate || !this.course.enrollmentEndDate) {
                 this.course.enrollmentStartDate = this.course.startDate;
@@ -420,7 +421,7 @@ export class CourseUpdateComponent implements OnInit {
                 this.changeUnenrollmentEnabled();
             }
         }
-        this.courseForm.controls['registrationEnabled'].setValue(this.course.enrollmentEnabled);
+        this.courseForm.controls['enrollmentEnabled'].setValue(this.course.enrollmentEnabled);
     }
 
     /**
@@ -475,17 +476,34 @@ export class CourseUpdateComponent implements OnInit {
     changeCustomizeGroupNames() {
         if (!this.customizeGroupNames) {
             this.customizeGroupNames = true;
-            this.courseForm.controls['studentGroupName'].setValue('artemis-dev');
-            this.courseForm.controls['teachingAssistantGroupName'].setValue('artemis-dev');
-            this.courseForm.controls['editorGroupName'].setValue('artemis-dev');
-            this.courseForm.controls['instructorGroupName'].setValue('artemis-dev');
+            this.setGroupNameValuesInCourseForm(
+                this.course.studentGroupName ?? DEFAULT_CUSTOM_GROUP_NAME,
+                this.course.teachingAssistantGroupName ?? DEFAULT_CUSTOM_GROUP_NAME,
+                this.course.editorGroupName ?? DEFAULT_CUSTOM_GROUP_NAME,
+                this.course.instructorGroupName ?? DEFAULT_CUSTOM_GROUP_NAME,
+            );
         } else {
             this.customizeGroupNames = false;
-            this.courseForm.controls['studentGroupName'].setValue(undefined);
-            this.courseForm.controls['teachingAssistantGroupName'].setValue(undefined);
-            this.courseForm.controls['editorGroupName'].setValue(undefined);
-            this.courseForm.controls['instructorGroupName'].setValue(undefined);
+            if (!this.course.id) {
+                // Creating: clear the values so groups are no longer customized
+                this.setGroupNameValuesInCourseForm(undefined, undefined, undefined, undefined);
+            } else {
+                // Editing: restore the old values -> no change.
+                this.setGroupNameValuesInCourseForm(
+                    this.course.studentGroupName,
+                    this.course.teachingAssistantGroupName,
+                    this.course.editorGroupName,
+                    this.course.instructorGroupName,
+                );
+            }
         }
+    }
+
+    private setGroupNameValuesInCourseForm(studentGroupName?: string, teachingAssistantGroupName?: string, editorGroupName?: string, instructorGroupName?: string) {
+        this.courseForm.controls['studentGroupName'].setValue(studentGroupName);
+        this.courseForm.controls['teachingAssistantGroupName'].setValue(teachingAssistantGroupName);
+        this.courseForm.controls['editorGroupName'].setValue(editorGroupName);
+        this.courseForm.controls['instructorGroupName'].setValue(instructorGroupName);
     }
 
     /**
@@ -525,11 +543,11 @@ export class CourseUpdateComponent implements OnInit {
     }
 
     /**
-     * Updates registrationConfirmationMessage on markdown change
-     * @param message new registrationConfirmationMessage
+     * Updates enrollmentConfirmationMessage on markdown change
+     * @param message new enrollmentConfirmationMessage
      */
-    updateRegistrationConfirmationMessage(message: string) {
-        this.courseForm.controls['registrationConfirmationMessage'].setValue(message);
+    updateEnrollmentConfirmationMessage(message: string) {
+        this.courseForm.controls['enrollmentConfirmationMessage'].setValue(message);
     }
 
     /**
@@ -633,7 +651,7 @@ export class CourseUpdateComponent implements OnInit {
 
 const CourseValidator: ValidatorFn = (formGroup: FormGroup) => {
     const onlineCourse = formGroup.controls['onlineCourse'].value;
-    const registrationEnabled = formGroup.controls['registrationEnabled'].value;
+    const enrollmentEnabled = formGroup.controls['enrollmentEnabled'].value;
     // it cannot be the case that both values are true
-    return onlineCourse != undefined && registrationEnabled != undefined && !(onlineCourse && registrationEnabled) ? null : { range: true };
+    return onlineCourse != undefined && enrollmentEnabled != undefined && !(onlineCourse && enrollmentEnabled) ? null : { range: true };
 };

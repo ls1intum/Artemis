@@ -55,6 +55,16 @@ public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO imple
         this.staticCodeAnalysisReports = staticCodeAnalysisReports;
     }
 
+    public LocalCIBuildResult(String assignmentRepoBranchName, String assignmentRepoCommitHash, String testsRepoCommitHash, boolean isBuildSuccessful) {
+        this.assignmentRepoBranchName = assignmentRepoBranchName;
+        this.assignmentRepoCommitHash = assignmentRepoCommitHash;
+        this.testsRepoCommitHash = testsRepoCommitHash;
+        this.isBuildSuccessful = isBuildSuccessful;
+        this.buildRunDate = ZonedDateTime.now();
+        this.jobs = new ArrayList<>();
+        this.staticCodeAnalysisReports = new ArrayList<>();
+    }
+
     @Override
     public ZonedDateTime getBuildRunDate() {
         return buildRunDate;

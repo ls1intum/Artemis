@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.exercise.programmingexercise;
 
-import static de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingSubmissionConstants.*;
+import static de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingSubmissionConstants.GITLAB_PUSH_EVENT_REQUEST;
+import static de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingSubmissionConstants.GITLAB_PUSH_EVENT_REQUEST_WITHOUT_COMMIT;
+import static de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingSubmissionConstants.GITLAB_PUSH_EVENT_REQUEST_WRONG_COMMIT_ORDER;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;

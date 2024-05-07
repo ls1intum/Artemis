@@ -1,5 +1,9 @@
+import com.diffplug.spotless.FormatterFunc
+import com.diffplug.spotless.FormatterStep
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
+
+import static com.diffplug.spotless.Formatter.NO_FILE_SENTINEL
 
 buildscript {
     repositories {
@@ -22,13 +26,13 @@ plugins {
     // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
     id "com.github.ben-manes.versions" version "0.51.0"
     id "com.github.andygoossens.modernizer" version "${modernizer_plugin_version}"
-    id "com.gorylenko.gradle-git-properties" version "2.4.1"
+    id "com.gorylenko.gradle-git-properties" version "2.4.2"
     id "org.owasp.dependencycheck" version "9.1.0"
     id "com.adarshr.test-logger" version "4.0.0"
 }
 
 group = "de.tum.in.www1.artemis"
-version = "7.0.2"
+version = "7.0.4"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -83,6 +87,23 @@ spotless {
 
         removeUnusedImports()
         trimTrailingWhitespace()
+
+        // Wildcard imports can't be resolved by spotless itself.
+        // This will require the developer themselves to adhere to best practices.
+        addStep(FormatterStep.createNeverUpToDate("Refuse wildcard imports", new FormatterFunc() {
+            @Override
+            String apply(String s) throws Exception {
+                apply(s, NO_FILE_SENTINEL)
+            }
+
+            @Override
+            String apply(String s, File file) throws Exception {
+                if (s =~ /\nimport .*\*;/) {
+                    throw new AssertionError("Do not use wildcard imports. 'spotlessApply' cannot resolve this issue.\n" +
+                        "The following file violates this rule: " + file.getName())
+                }
+            }
+        }))
     }
 }
 
@@ -126,7 +147,7 @@ tasks.register("testReport", TestReport) {
 }
 
 jacoco {
-    toolVersion = "0.8.11"
+    toolVersion = "0.8.12"
 }
 
 jar {
@@ -162,13 +183,14 @@ jacocoTestCoverageVerification {
             limit {
                 counter = "INSTRUCTION"
                 value = "COVEREDRATIO"
-                minimum = 0.88
+                // TODO: in the future the following value should become higher than 0.92
+                minimum = 0.899
             }
             limit {
                 counter = "CLASS"
                 value = "MISSEDCOUNT"
                 // TODO: in the future the following value should become less than 10
-                maximum = 34
+                maximum = 26
             }
         }
     }
@@ -270,16 +292,19 @@ dependencies {
     // NOTE: the following six dependencies use the newer versions explicitly to avoid other dependencies to use older versions
     implementation "ch.qos.logback:logback-classic:${logback_version}"
     implementation "ch.qos.logback:logback-core:${logback_version}"
+    // required by eureka client
     implementation "com.thoughtworks.xstream:xstream:1.4.20"
+    // required by JPlag
     implementation "xerces:xercesImpl:2.12.2"
+    // required by JPlag
     implementation "xalan:xalan:2.7.3"
+    // required by JPlag
     implementation "xalan:serializer:2.7.3"
-
-    // NOTE: use the latest 2.x version to avoid security vulnerabilities, upgrade to 4.x not possible yet
-    implementation "org.apache.santuario:xmlsec:2.3.4"
+    // required by Saml2
+    implementation "org.apache.santuario:xmlsec:4.0.2"
 
     implementation "org.jsoup:jsoup:1.17.2"
-    implementation "commons-codec:commons-codec:1.16.1"   // needed for spring security saml2
+    implementation "commons-codec:commons-codec:1.17.0"   // needed for spring security saml2
 
     implementation "org.springdoc:springdoc-openapi-ui:1.8.0"
     implementation "com.vdurmont:semver4j:3.1.0"
@@ -373,7 +398,6 @@ dependencies {
     implementation "org.opensaml:opensaml-saml-impl:${opensaml_version}"
     implementation "org.opensaml:opensaml-saml-api:${opensaml_version}"
 
-    implementation "org.xmlbeam:xmlprojector:1.4.24"
     implementation "io.jsonwebtoken:jjwt-api:${jwt_version}"
     runtimeOnly "io.jsonwebtoken:jjwt-impl:${jwt_version}"
     runtimeOnly "io.jsonwebtoken:jjwt-jackson:${jwt_version}"
@@ -385,7 +409,7 @@ dependencies {
         exclude module: "mapstruct"
     }
     implementation "io.springfox:springfox-bean-validators:3.0.0"
-    implementation "com.mysql:mysql-connector-j:8.3.0"
+    implementation "com.mysql:mysql-connector-j:8.4.0"
     implementation "org.postgresql:postgresql:42.7.3"
     implementation "com.h2database:h2:2.2.224"
 
@@ -402,7 +426,7 @@ dependencies {
     implementation "net.lingala.zip4j:zip4j:2.11.5"
     implementation "org.jgrapht:jgrapht-core:1.5.2"
     // use newest version of guava to avoid security issues through outdated dependencies
-    implementation "com.google.guava:guava:33.1.0-jre"
+    implementation "com.google.guava:guava:33.2.0-jre"
 
     // use newest version of gson to avoid security issues through outdated dependencies
     implementation "com.google.code.gson:gson:2.10.1"
@@ -435,7 +459,7 @@ dependencies {
     testImplementation "org.assertj:assertj-core:3.25.3"
     testImplementation "org.mockito:mockito-core:${mockito_version}"
     testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
-    testImplementation "io.github.classgraph:classgraph:4.8.170"
+    testImplementation "io.github.classgraph:classgraph:4.8.171"
     testImplementation "org.awaitility:awaitility:4.2.1"
     testImplementation "org.apache.maven.shared:maven-invoker:3.2.0"
     testImplementation "org.gradle:gradle-tooling-api:8.7"
@@ -451,7 +475,7 @@ dependencies {
     }
     testImplementation("net.bytebuddy:byte-buddy") {
         version {
-            strictly "1.14.13"
+            strictly "1.14.14"
         }
     }
     testImplementation "io.github.classgraph:classgraph:4.8.172"

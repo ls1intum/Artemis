@@ -15,14 +15,24 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.*;
+import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.in.www1.artemis.service.connectors.iris.dto.*;
-import de.tum.in.www1.artemis.service.iris.exception.*;
+import de.tum.in.www1.artemis.service.connectors.iris.dto.IrisMessageResponseV2DTO;
+import de.tum.in.www1.artemis.service.connectors.iris.dto.IrisModelDTO;
+import de.tum.in.www1.artemis.service.connectors.iris.dto.IrisRequestV2DTO;
+import de.tum.in.www1.artemis.service.iris.exception.IrisException;
+import de.tum.in.www1.artemis.service.iris.exception.IrisForbiddenException;
+import de.tum.in.www1.artemis.service.iris.exception.IrisInternalPyrisErrorException;
+import de.tum.in.www1.artemis.service.iris.exception.IrisInvalidTemplateException;
+import de.tum.in.www1.artemis.service.iris.exception.IrisModelNotAvailableException;
+import de.tum.in.www1.artemis.service.iris.exception.IrisNoResponseException;
+import de.tum.in.www1.artemis.service.iris.exception.IrisParseResponseException;
 
 /**
  * This service connects to the Python implementation of Iris (called Pyris) responsible for connecting to different

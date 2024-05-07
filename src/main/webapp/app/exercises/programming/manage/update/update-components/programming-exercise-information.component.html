@@ -65,7 +65,7 @@
                             [rowHeight]="'auto'"
                             [rows]="programmingExercise.auxiliaryRepositories"
                         >
-                            <ngx-datatable-column name="Repository Name" prop="repositoryName">
+                            <ngx-datatable-column [name]="'artemisApp.programmingExercise.auxiliaryRepository.repositoryName' | artemisTranslate" prop="repositoryName">
                                 <ng-template ngx-datatable-cell-template let-row="row">
                                     <jhi-table-editable-field
                                         [id]="row.id + '-repositoryName'"
@@ -77,7 +77,7 @@
                                     />
                                 </ng-template>
                             </ngx-datatable-column>
-                            <ngx-datatable-column name="Checkout Directory" prop="checkoutDirectory">
+                            <ngx-datatable-column [name]="'artemisApp.programmingExercise.auxiliaryRepository.checkoutDirectory' | artemisTranslate" prop="checkoutDirectory">
                                 <ng-template ngx-datatable-cell-template let-row="row">
                                     <jhi-table-editable-field
                                         [id]="row.id + '-checkoutDirectory'"
@@ -88,7 +88,7 @@
                                     />
                                 </ng-template>
                             </ngx-datatable-column>
-                            <ngx-datatable-column name="Description" prop="description">
+                            <ngx-datatable-column [name]="'artemisApp.programmingExercise.auxiliaryRepository.description' | artemisTranslate" prop="description">
                                 <ng-template ngx-datatable-cell-template let-row="row">
                                     <textarea class="form-control table-editable-field__input me-2" [id]="row.id + '-description'" [(ngModel)]="row.description" name="description">
                                     </textarea>
@@ -127,6 +127,7 @@
                         (onRefresh)="programmingExerciseCreationConfig.refreshAuxiliaryRepositoryChecks()"
                         class="ml-2"
                     />
+                    <jhi-help-icon text="artemisApp.programmingExercise.auxiliaryRepository.usageDescription" />
                 </div>
             }
         </div>

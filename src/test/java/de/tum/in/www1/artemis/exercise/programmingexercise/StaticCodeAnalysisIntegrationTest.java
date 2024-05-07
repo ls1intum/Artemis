@@ -1,12 +1,15 @@
 package de.tum.in.www1.artemis.exercise.programmingexercise;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
 
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -36,7 +39,6 @@ import de.tum.in.www1.artemis.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.web.rest.StaticCodeAnalysisResource;
 
 class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
@@ -92,7 +94,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationLocalCI
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetStaticCodeAnalysisCategories() throws Exception {
-        var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.CATEGORIES, programmingExerciseSCAEnabled);
+        var endpoint = parameterizeEndpoint("/api/programming-exercises/{exerciseId}/static-code-analysis-categories", programmingExerciseSCAEnabled);
         var categories = request.get(endpoint, HttpStatus.OK, new TypeReference<Set<StaticCodeAnalysisCategory>>() {
         });
         assertThat(programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories()).usingRecursiveFieldByFieldElementComparatorIgnoringFields("exercise")
@@ -126,14 +128,14 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationLocalCI
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void testGetStaticCodeAnalysisCategories_asStudent_forbidden() throws Exception {
-        var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.CATEGORIES, programmingExerciseSCAEnabled);
+        var endpoint = parameterizeEndpoint("/api/programming-exercises/{exerciseId}/static-code-analysis-categories", programmingExerciseSCAEnabled);
         request.getList(endpoint, HttpStatus.FORBIDDEN, StaticCodeAnalysisCategory.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "other-ta1", roles = "TA")
     void testGetStaticCodeAnalysisCategories_notAtLeastTAInCourse_forbidden() throws Exception {
-        var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.CATEGORIES, programmingExerciseSCAEnabled);
+        var endpoint = parameterizeEndpoint("/api/programming-exercises/{exerciseId}/static-code-analysis-categories", programmingExerciseSCAEnabled);
         userUtilService.addTeachingAssistant("other-tas", TEST_PREFIX + "other-ta");
         request.getList(endpoint, HttpStatus.FORBIDDEN, StaticCodeAnalysisCategory.class);
     }
@@ -141,7 +143,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationLocalCI
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetStaticCodeAnalysisCategories_staticCodeAnalysisNotEnabled_badRequest() throws Exception {
-        var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.CATEGORIES, programmingExercise);
+        var endpoint = parameterizeEndpoint("/api/programming-exercises/{exerciseId}/static-code-analysis-categories", programmingExercise);
         request.getList(endpoint, HttpStatus.BAD_REQUEST, StaticCodeAnalysisCategory.class);
     }
 
@@ -149,10 +151,13 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationLocalCI
     @EnumSource(value = ProgrammingLanguage.class, names = { "JAVA", "SWIFT", "C" })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateStaticCodeAnalysisCategories(ProgrammingLanguage programmingLanguage) throws Exception {
+        String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
+        doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(any());
+
         var programmingExSCAEnabled = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(programmingLanguage);
         ProgrammingExercise exerciseWithSolutionParticipation = programmingExerciseRepository
                 .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExSCAEnabled.getId()).orElseThrow();
-        var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.CATEGORIES, programmingExSCAEnabled);
+        var endpoint = parameterizeEndpoint("/api/programming-exercises/{exerciseId}/static-code-analysis-categories", programmingExSCAEnabled);
         // Change the first category
         var categoryIterator = programmingExSCAEnabled.getStaticCodeAnalysisCategories().iterator();
         var firstCategory = categoryIterator.next();
@@ -180,7 +185,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationLocalCI
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testResetCategories_staticCodeAnalysisNotEnabled_badRequest() throws Exception {
-        var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.RESET, programmingExercise);
+        var endpoint = parameterizeEndpoint("/api/programming-exercises/{exerciseId}/static-code-analysis-categories/reset", programmingExercise);
         request.patch(endpoint, "{}", HttpStatus.BAD_REQUEST);
     }
 
@@ -188,7 +193,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationLocalCI
     @WithMockUser(username = TEST_PREFIX + "other-instructor1", roles = "INSTRUCTOR")
     void testResetCategories_instructorInWrongCourse_forbidden() throws Exception {
         userUtilService.addInstructor("other-instructors", TEST_PREFIX + "other-instructor");
-        var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.RESET, programmingExerciseSCAEnabled);
+        var endpoint = parameterizeEndpoint("/api/programming-exercises/{exerciseId}/static-code-analysis-categories/reset", programmingExerciseSCAEnabled);
         request.patch(endpoint, "{}", HttpStatus.FORBIDDEN);
     }
 
@@ -196,6 +201,9 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationLocalCI
     @EnumSource(value = ProgrammingLanguage.class, names = { "JAVA", "SWIFT", "C" })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testResetCategories(ProgrammingLanguage programmingLanguage) throws Exception {
+        String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
+        doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(any());
+
         // Create a programming exercise with real categories
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(true, false, programmingLanguage);
         ProgrammingExercise exercise = programmingExerciseRepository
@@ -212,7 +220,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationLocalCI
         staticCodeAnalysisCategoryRepository.saveAll(alteredCategories);
 
         // Perform the request and assert that the original state was restored
-        final var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.RESET, exercise);
+        final var endpoint = parameterizeEndpoint("/api/programming-exercises/{exerciseId}/static-code-analysis-categories/reset", exercise);
         final var categoriesResponse = request.patchWithResponseBody(endpoint, "{}", new TypeReference<Set<StaticCodeAnalysisCategory>>() {
         }, HttpStatus.OK);
         final Set<StaticCodeAnalysisCategory> categoriesInDB = staticCodeAnalysisCategoryRepository.findByExerciseId(exercise.getId());
@@ -227,14 +235,14 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationLocalCI
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void testUpdateStaticCodeAnalysisCategories_asStudent_forbidden() throws Exception {
-        var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.CATEGORIES, programmingExerciseSCAEnabled);
+        var endpoint = parameterizeEndpoint("/api/programming-exercises/{exerciseId}/static-code-analysis-categories", programmingExerciseSCAEnabled);
         request.patch(endpoint, programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories(), HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "other-ta1", roles = "TA")
     void testUpdateStaticCodeAnalysisCategories_notAtLeastTAInCourse_forbidden() throws Exception {
-        var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.CATEGORIES, programmingExerciseSCAEnabled);
+        var endpoint = parameterizeEndpoint("/api/programming-exercises/{exerciseId}/static-code-analysis-categories", programmingExerciseSCAEnabled);
         userUtilService.addTeachingAssistant("other-tas", TEST_PREFIX + "other-ta");
         request.patch(endpoint, programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories(), HttpStatus.FORBIDDEN);
     }
@@ -242,14 +250,14 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationLocalCI
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateStaticCodeAnalysisCategories_staticCodeAnalysisNotEnabled_badRequest() throws Exception {
-        var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.CATEGORIES, programmingExercise);
+        var endpoint = parameterizeEndpoint("/api/programming-exercises/{exerciseId}/static-code-analysis-categories", programmingExercise);
         request.patch(endpoint, programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories(), HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateStaticCodeAnalysisCategories_categoryIdMissing_badRequest() throws Exception {
-        var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.CATEGORIES, programmingExerciseSCAEnabled);
+        var endpoint = parameterizeEndpoint("/api/programming-exercises/{exerciseId}/static-code-analysis-categories", programmingExerciseSCAEnabled);
         programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories().iterator().next().setId(null);
         request.patch(endpoint, programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories(), HttpStatus.BAD_REQUEST);
     }
@@ -257,7 +265,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationLocalCI
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateStaticCodeAnalysisCategories_penaltyNullOrNegative_badRequest() throws Exception {
-        var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.CATEGORIES, programmingExerciseSCAEnabled);
+        var endpoint = parameterizeEndpoint("/api/programming-exercises/{exerciseId}/static-code-analysis-categories", programmingExerciseSCAEnabled);
         programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories().iterator().next().setPenalty(null);
         request.patch(endpoint, programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories(), HttpStatus.BAD_REQUEST);
         programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories().iterator().next().setPenalty(-1D);
@@ -267,7 +275,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationLocalCI
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateStaticCodeAnalysisCategories_maxPenaltySmallerThanPenalty_badRequest() throws Exception {
-        var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.CATEGORIES, programmingExerciseSCAEnabled);
+        var endpoint = parameterizeEndpoint("/api/programming-exercises/{exerciseId}/static-code-analysis-categories", programmingExerciseSCAEnabled);
         var category = programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories().iterator().next();
         category.setMaxPenalty(3D);
         category.setPenalty(5D);
@@ -277,7 +285,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationLocalCI
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateStaticCodeAnalysisCategories_stateIsNull_badRequest() throws Exception {
-        var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.CATEGORIES, programmingExerciseSCAEnabled);
+        var endpoint = parameterizeEndpoint("/api/programming-exercises/{exerciseId}/static-code-analysis-categories", programmingExerciseSCAEnabled);
         programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories().iterator().next().setState(null);
         request.patch(endpoint, programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories(), HttpStatus.BAD_REQUEST);
     }
@@ -285,7 +293,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationLocalCI
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateStaticCodeAnalysisCategories_exerciseIdsDoNotMatch_conflict() throws Exception {
-        var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.CATEGORIES, programmingExerciseSCAEnabled);
+        var endpoint = parameterizeEndpoint("/api/programming-exercises/{exerciseId}/static-code-analysis-categories", programmingExerciseSCAEnabled);
         programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories().iterator().next().getExercise().setId(1234L);
         request.patch(endpoint, programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories(), HttpStatus.CONFLICT);
     }
@@ -324,6 +332,9 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationLocalCI
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testImportCategories() throws Exception {
+        String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
+        doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(any());
+
         ProgrammingExercise sourceExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, true);
         staticCodeAnalysisService.createDefaultCategories(sourceExercise);
 
@@ -339,7 +350,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationLocalCI
         ProgrammingExercise exerciseWithSolutionParticipation = programmingExerciseRepository
                 .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseSCAEnabled.getId()).orElseThrow();
 
-        var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.IMPORT, programmingExerciseSCAEnabled);
+        var endpoint = parameterizeEndpoint("/api/programming-exercises/{exerciseId}/static-code-analysis-categories/import", programmingExerciseSCAEnabled);
         var newCategories = request.patchWithResponseBodyList(endpoint + "?sourceExerciseId=" + sourceExercise.getId(), null, StaticCodeAnalysisCategory.class, HttpStatus.OK);
 
         assertThat(newCategories).hasSameSizeAs(categories).usingRecursiveFieldByFieldElementComparatorIgnoringFields("exercise", "id").containsAll(categories);
@@ -354,7 +365,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationLocalCI
     void testImportCategories_noSCASource() throws Exception {
         ProgrammingExercise sourceExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
 
-        var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.IMPORT, programmingExerciseSCAEnabled);
+        var endpoint = parameterizeEndpoint("/api/programming-exercises/{exerciseId}/static-code-analysis-categories/import", programmingExerciseSCAEnabled);
         request.patch(endpoint + "?sourceExerciseId=" + sourceExercise.getId(), null, HttpStatus.BAD_REQUEST);
     }
 
@@ -364,7 +375,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationLocalCI
         ProgrammingExercise sourceExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, true);
         ProgrammingExercise targetExerciseNoSCA = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, false);
 
-        var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.IMPORT, targetExerciseNoSCA);
+        var endpoint = parameterizeEndpoint("/api/programming-exercises/{exerciseId}/static-code-analysis-categories/import", targetExerciseNoSCA);
         request.patch(endpoint + "?sourceExerciseId=" + sourceExercise.getId(), null, HttpStatus.BAD_REQUEST);
     }
 
@@ -373,7 +384,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationLocalCI
     void testImportCategories_asTutor() throws Exception {
         ProgrammingExercise sourceExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
 
-        var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.IMPORT, programmingExerciseSCAEnabled);
+        var endpoint = parameterizeEndpoint("/api/programming-exercises/{exerciseId}/static-code-analysis-categories/import", programmingExerciseSCAEnabled);
         request.patch(endpoint + "?sourceExerciseId=" + sourceExercise.getId(), null, HttpStatus.FORBIDDEN);
     }
 
@@ -382,7 +393,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationLocalCI
     void testImportCategories_differentLanguages() throws Exception {
         ProgrammingExercise sourceExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, true, false, ProgrammingLanguage.SWIFT);
 
-        var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.IMPORT, programmingExerciseSCAEnabled);
+        var endpoint = parameterizeEndpoint("/api/programming-exercises/{exerciseId}/static-code-analysis-categories/import", programmingExerciseSCAEnabled);
         request.patch(endpoint + "?sourceExerciseId=" + sourceExercise.getId(), null, HttpStatus.CONFLICT);
     }
 
@@ -395,7 +406,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationLocalCI
         courseRepository.save(otherCourse);
         Exercise sourceExercise = otherCourse.getExercises().iterator().next();
 
-        var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.IMPORT, programmingExerciseSCAEnabled);
+        var endpoint = parameterizeEndpoint("/api/programming-exercises/{exerciseId}/static-code-analysis-categories/import", programmingExerciseSCAEnabled);
         request.patch(endpoint + "?sourceExerciseId=" + sourceExercise.getId(), null, HttpStatus.FORBIDDEN);
     }
 }

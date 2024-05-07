@@ -1,8 +1,13 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
 
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -12,7 +17,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.domain.enumeration.ScoringType;
-import de.tum.in.www1.artemis.domain.quiz.scoring.*;
+import de.tum.in.www1.artemis.domain.quiz.scoring.ScoringStrategy;
+import de.tum.in.www1.artemis.domain.quiz.scoring.ScoringStrategyMultipleChoiceAllOrNothing;
+import de.tum.in.www1.artemis.domain.quiz.scoring.ScoringStrategyMultipleChoiceProportionalWithPenalty;
+import de.tum.in.www1.artemis.domain.quiz.scoring.ScoringStrategyMultipleChoiceProportionalWithoutPenalty;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**

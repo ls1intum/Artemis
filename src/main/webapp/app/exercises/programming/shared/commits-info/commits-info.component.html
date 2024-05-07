@@ -22,7 +22,7 @@
                     <td>
                         @if (localVC) {
                             @if (isRepositoryView) {
-                                <a [href]="routerLink + '/' + commit.hash"> {{ commit.hash }} </a>
+                                <a [routerLink]="['./', commit.hash]"> {{ commit.hash }} </a>
                             } @else {
                                 <span>
                                     {{ commit.hash }}
