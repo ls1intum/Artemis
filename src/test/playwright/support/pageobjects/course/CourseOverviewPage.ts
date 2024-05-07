@@ -42,7 +42,7 @@ export class CourseOverviewPage {
      * @returns The Locator for the exercise card.
      */
     getExercise(exerciseName: string): Locator {
-        return this.page.locator('#test-sidebar-card').getByText(exerciseName);
+        return this.page.locator('#test-sidebar-card', { hasText: exerciseName });
     }
 
     /**
@@ -51,6 +51,15 @@ export class CourseOverviewPage {
      */
     getExercises(): Locator {
         return this.page.locator('#test-sidebar-card');
+    }
+
+    /**
+     * Opens an exercise given its name.
+     * @param exerciseName The title of the exercise to open.
+     */
+    async openExercise(exerciseName: string) {
+        await this.page.locator('jhi-course-exercise-details').waitFor({ state: 'visible' });
+        await this.getExercise(exerciseName).click();
     }
 
     /**

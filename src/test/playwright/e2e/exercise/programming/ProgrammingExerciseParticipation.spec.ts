@@ -74,6 +74,7 @@ test.describe('Programming exercise participation', () => {
                 });
 
                 test('Makes a submission using git', async ({ page, programmingExerciseOverview }) => {
+                    await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
                     await makeGitExerciseSubmission(page, programmingExerciseOverview, course, exercise, studentOne, submission, commitMessage);
                 });
             });
@@ -115,9 +116,24 @@ test.describe('Programming exercise participation', () => {
             team = await response.json();
         });
 
-        test('Team members make git submissions', async ({ page, programmingExerciseOverview }) => {
-            // TODO: Only first student needs to start participation
-            for (const { student, submission, commitMessage } of submissions) {
+        test('Team members make git submissions', async ({ login, page, courseList, courseOverview, programmingExerciseOverview }) => {
+            const firstSubmission = submissions[0];
+            await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, firstSubmission.student);
+            await makeGitExerciseSubmission(
+                page,
+                programmingExerciseOverview,
+                course,
+                exercise,
+                firstSubmission.student,
+                firstSubmission.submission,
+                firstSubmission.commitMessage,
+            );
+            for (let i = 1; i < submissions.length; i++) {
+                const { student, submission, commitMessage } = submissions[i];
+                await login(student, '/');
+                await page.waitForURL(/\/courses/);
+                await courseList.openCourse(course.id!);
+                await courseOverview.openExercise(exercise.title!);
                 await makeGitExerciseSubmission(page, programmingExerciseOverview, course, exercise, student, submission, commitMessage);
             }
         });
@@ -177,7 +193,6 @@ async function makeGitExerciseSubmission(
     submission: any,
     commitMessage: string,
 ) {
-    await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, student);
     let repoUrl = await programmingExerciseOverview.getRepoUrl();
     if (process.env.CI === 'true') {
         repoUrl = repoUrl.replace('localhost', 'artemis-app');
