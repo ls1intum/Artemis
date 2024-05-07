@@ -83,17 +83,4 @@ export class SidebarAccordionComponent implements OnChanges, OnInit {
         };
         return this.sidebarType ? size[this.sidebarType] : 'M';
     }
-
-    getIcon(groupCategoryKey: string) {
-        const icons = {
-            ['generalChannels']: faComments,
-            ['exerciseChannels']: faList,
-            ['examChannels']: faGraduationCap,
-            ['groupChats']: faComments,
-            ['directMessages']: faComments,
-            ['favouriteChannels']: faHeart,
-            ['lectureChannels']: faFile,
-        };
-        return icons[groupCategoryKey];
-    }
 }
