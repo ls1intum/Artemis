@@ -98,8 +98,7 @@ public class LtiService {
         }
 
         // 2. Case: Lookup user with the LTI email address and make sure it's not in use
-        final var usernameLookupByEmail = artemisAuthenticationProvider.getUsernameForEmail(email);
-        if (usernameLookupByEmail.isPresent()) {
+        if (artemisAuthenticationProvider.getUsernameForEmail(email).isPresent() || userRepository.findOneByEmailIgnoreCase(email).isPresent()) {
             throw new LtiEmailAlreadyInUseException();
         }
 
