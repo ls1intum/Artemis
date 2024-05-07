@@ -23,7 +23,7 @@ Once a feature request has been submitted, the maintainers will evaluate the req
 ===============================
 If the feature request is deemed feasible, the development team will create a feature proposal that extensively describes the proposed feature. This step will consist of the artifacts mentioned in the model "Create Feature Proposal" below:
 
-.. figure:: ./aremtis-feature-proposal-flow.png
+.. figure:: ./artemis-feature-proposal-flow.png
     :align: center
     :alt: Create a Feature Proposal - Activity Diagram
     :figclass: align-center
@@ -62,16 +62,16 @@ These models serve as a blueprint for the development and ensure a shared unders
 Step 4: System Architecture
 ---------------------------
 In this step, the high-level structure of the system supporting the feature is outlined, focusing on analyzing the system components relevant to the implementation of the feature,
-subsystem decomposition, interfaces, persistent data management and security aspects.
+subsystem decomposition, interfaces, persistent data management, and security aspects.
 The subsystem decomposition process is used to identify the main components of the system and define their responsibilities, which facilitates modular development and maintenance.
 It is important to define the interfaces between these subsystems to ensure seamless interaction and integration.
-In addition, the development of a comprehensive data model is important for a clear understanding of how data is securely stored, retrieved and managed within the system, taking into account both logical and physical data perspectives.
+In addition, the development of a comprehensive data model is important for a clear understanding of how data is securely stored, retrieved, and managed within the system, taking into account both logical and physical data perspectives.
 Security aspects, especially access control mechanisms, are considered to ensure data integrity and privacy.
 
 Step 5: UI/UX Design
 --------------------
 If the proposed feature requires a change to the software's user interface, this section should include a detailed description of the proposed changes, as well as a mockup that illustrates the new user interface.
-The mockup should be created using Figma in conjunction with the Artemis Design System and should be added to the feature proposal as a screenshot.
+The mockup should be created using Figma in conjunction with the [Artemis Design System](https://www.figma.com/files/team/1238833580691926997/Artemis) and should be added to the feature proposal as a screenshot.
 Furthermore it is important to include a description of the user flow that references the dynamic model created in the analysis section.
 
 .. figure:: ./uiux_workflow.png
@@ -115,9 +115,9 @@ Naming Conventions for GitHub Pull Requests
 
 1. The first term is a main feature of Artemis and should use code highlighting, e.g.  ``Programming exercises``:
 
-    1. Possible feature tags are: ``Programming Exercises``, ``Integrated Code Lifecycle``, ``Quiz Exercises``, ``Modeling Exercises``, ``Text Exercises``, ``File Upload Exercises``, ``Exam Mode``,
-       ``Grading``, ``Assessment``, ``Communication``, ``Notifications``, ``Team Exercises``, ``Lectures``, ``Integrated Markdown Editor``, ``Plagiarism Checks``, ``Learning Analytics``,
-       ``Adaptive Learning``, ``Learning Path``, ``Tutorial Groups``, ``Iris``, ``Scalability``, ``Usability``, ``Performance``, ``Intrastructure``, ``Mobile Apps``.
+    1. Possible feature tags are: ``Programming exercises``, ``Integrated code lifecycle``, ``Quiz exercises``, ``Modeling exercises``, ``Text exercises``, ``File upload exercises``, ``Exam mode``,
+       ``Grading``, ``Assessment``, ``Communication``, ``Notifications``, ``Team exercises``, ``Lectures``, ``Integrated markdown editor``, ``Plagiarism checks``, ``Learning analytics``,
+       ``Adaptive learning``, ``Learning path``, ``Tutorial groups``, ``Iris``, ``Scalability``, ``Usability``, ``Performance``, ``Infrastructure``, ``Mobile apps``.
     2. If the change is not visible to end users, or it is a pure development or test improvement, we use the term ``Development``:.
     3. Everything else belongs to the ``General`` category.
 
@@ -185,7 +185,7 @@ Steps to Create and Merge a Pull Request
 * Update your code where necessary.
 * Revert to draft if the changes will take a while during which review is not needed/possible.
 * Set back to ready for review afterwards.
-* After making revisions, re-request reviews through GitHub initially. If no response is received, then follow up with a targeted message on Slack to the relevant reviewers.
+* After making revisions, re-request reviews through GitHub initially. If you receive no response, then follow up with a targeted message on Slack to the relevant reviewers.
 * Comment on "inline comments" (e.g. "Done").
 * Once all changes are made, ensure that the feature-specific maintainer reviews and approves the changes.
 * After maintainer approval, an "Artemis Maintainer" reviews and finalizes the approval process.
