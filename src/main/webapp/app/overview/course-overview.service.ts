@@ -80,21 +80,6 @@ export class CourseOverviewService {
         return groupedLectureGroups;
     }
 
-    groupExamsByRealOrTest(realExams: Exam[], testExams: Exam[]): AccordionGroups {
-        const groupedExamGroups = cloneDeep(DEFAULT_UNIT_GROUPS) as AccordionGroups;
-
-        for (const realExam of realExams) {
-            const examCardItem = this.mapExamToSidebarCardElement(realExam);
-            groupedExamGroups['real'].entityData.push(examCardItem);
-        }
-        for (const testExam of testExams) {
-            const examCardItem = this.mapExamToSidebarCardElement(testExam);
-            groupedExamGroups['test'].entityData.push(examCardItem);
-        }
-
-        return groupedExamGroups;
-    }
-
     mapLecturesToSidebarCardElements(lectures: Lecture[]) {
         return lectures.map((lecture) => this.mapLectureToSidebarCardElement(lecture));
     }
@@ -134,7 +119,7 @@ export class CourseOverviewService {
         const examCardItem: SidebarCardElement = {
             title: exam.title ?? '',
             id: exam.id ?? '',
-            subtitleLeft: exam.startDate?.format('MMM DD, YYYY') ?? 'No date associated',
+            subtitleLeft: 'Test',
         };
         return examCardItem;
     }
