@@ -117,7 +117,7 @@ public class MultipleChoiceQuestion extends QuizQuestion {
     }
 
     /**
-     * check if an update of the Results and Statistics is necessary
+     * check if an update of the Results and Statistics is necessary.
      *
      * @param originalQuizQuestion the original QuizQuestion-object, which will be compared with this question
      * @return a boolean which is true if the answer-changes make an update necessary and false if not
