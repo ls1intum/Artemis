@@ -49,7 +49,7 @@ const routes: Routes = [
                 canActivate: [UserRouteAccessService],
             },
             {
-                path: 'text-exercises/:exerciseId',
+                path: 'exercises/text-exercises/:exerciseId',
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.textExercise',
@@ -57,7 +57,7 @@ const routes: Routes = [
                 loadChildren: () => import('../exercises/text/participate/text-participation.module').then((m) => m.ArtemisTextParticipationModule),
             },
             {
-                path: 'programming-exercises/:exerciseId/code-editor',
+                path: 'exercises/programming-exercises/:exerciseId/code-editor',
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.programmingExercise',
@@ -73,7 +73,7 @@ const routes: Routes = [
                 loadChildren: () => import('../exercises/programming/participate/programming-repository.module').then((m) => m.ArtemisProgrammingRepositoryModule),
             },
             {
-                path: 'modeling-exercises/:exerciseId',
+                path: 'exercises/modeling-exercises/:exerciseId',
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.modelingExercise',
@@ -81,7 +81,7 @@ const routes: Routes = [
                 loadChildren: () => import('../exercises/modeling/participate/modeling-participation.module').then((m) => m.ArtemisModelingParticipationModule),
             },
             {
-                path: 'quiz-exercises/:exerciseId',
+                path: 'exercises/quiz-exercises/:exerciseId',
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.quizExercise',
@@ -89,7 +89,7 @@ const routes: Routes = [
                 loadChildren: () => import('../exercises/quiz/participate/quiz-participation.module').then((m) => m.ArtemisQuizParticipationModule),
             },
             {
-                path: 'file-upload-exercises/:exerciseId',
+                path: 'exercises/file-upload-exercises/:exerciseId',
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.fileUploadExercise',
