@@ -60,6 +60,7 @@ import { ProgrammingExerciseOverviewPage } from './pageobjects/exercises/program
 import { RepositoryPage } from './pageobjects/exercises/programming/RepositoryPage';
 import { ExamGradingPage } from './pageobjects/exam/ExamGradingPage';
 import { ExamScoresPage } from './pageobjects/exam/ExamScoresPage';
+import { ExerciseTeamsPage } from './pageobjects/exercises/ExerciseTeamsPage';
 
 /*
  * Define custom types for fixtures
@@ -123,6 +124,7 @@ export type ArtemisPageObjects = {
     textExerciseExampleSubmissionCreation: TextExerciseExampleSubmissionCreationPage;
     textExerciseFeedback: TextExerciseFeedbackPage;
     exerciseResult: ExerciseResultPage;
+    exerciseTeams: ExerciseTeamsPage;
 };
 
 export type ArtemisRequests = {
@@ -271,8 +273,8 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     programmingExerciseCreation: async ({ page }, use) => {
         await use(new ProgrammingExerciseCreationPage(page));
     },
-    programmingExerciseEditor: async ({ page, courseList, courseOverview }, use) => {
-        await use(new OnlineEditorPage(page, courseList, courseOverview));
+    programmingExerciseEditor: async ({ page }, use) => {
+        await use(new OnlineEditorPage(page));
     },
     programmingExerciseFeedback: async ({ page }, use) => {
         await use(new ProgrammingExerciseFeedbackPage(page));
@@ -318,6 +320,9 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     },
     exerciseResult: async ({ page }, use) => {
         await use(new ExerciseResultPage(page));
+    },
+    exerciseTeams: async ({ page }, use) => {
+        await use(new ExerciseTeamsPage(page));
     },
     courseManagementAPIRequests: async ({ page }, use) => {
         await use(new CourseManagementAPIRequests(page));
