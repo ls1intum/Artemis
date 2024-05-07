@@ -25,6 +25,7 @@ import com.hazelcast.map.IMap;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.in.www1.artemis.domain.BuildJob;
 import de.tum.in.www1.artemis.domain.enumeration.BuildStatus;
+import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.repository.BuildJobRepository;
 import de.tum.in.www1.artemis.service.connectors.localci.buildagent.BuildLogsMap;
 import de.tum.in.www1.artemis.service.connectors.localci.buildagent.LocalCIDockerService;
@@ -94,7 +95,15 @@ class LocalCIDockerServiceTest extends AbstractSpringIntegrationLocalCILocalVCTe
         BuildConfig buildConfig = new BuildConfig("echo 'test'", "test-image-name", "test", "test", null, null, false, false, false, null);
         var build = new LocalCIBuildJobQueueItem("1", "job1", "address1", 1, 1, 1, 1, 1, BuildStatus.SUCCESSFUL, null, null, buildConfig, null);
         // Pull image
-        localCIDockerService.pullDockerImage(build, new BuildLogsMap());
+        try {
+            localCIDockerService.pullDockerImage(build, new BuildLogsMap());
+        }
+        catch (LocalCIException e) {
+            // Expected exception
+            if (!(e.getCause() instanceof NotFoundException)) {
+                throw e;
+            }
+        }
 
         // Verify that pullImageCmd() was called.
         verify(dockerClient, times(1)).pullImageCmd("test-image-name");

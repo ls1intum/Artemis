@@ -35,6 +35,7 @@ import {
     faComment,
     faComments,
     faDoorOpen,
+    faEllipsis,
     faEye,
     faFilePdf,
     faFlag,
@@ -78,6 +79,7 @@ interface SidebarItem {
     showInOrionWindow?: boolean;
     guidedTour?: boolean;
     featureToggle?: FeatureToggle;
+    hidden: boolean;
 }
 
 @Component({
@@ -109,6 +111,17 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     isNavbarCollapsed = false;
     isSidebarCollapsed = false;
     profileSubscription?: Subscription;
+
+    // Properties to track hidden items for dropdown menu
+    dropdownOpen: boolean = false;
+    anyItemHidden: boolean = false;
+    hiddenItems: SidebarItem[] = [];
+    thresholdsForEachSidebarItem: number[] = [];
+    dropdownOffset: number;
+    dropdownClickNumber: number = 0;
+    readonly WINDOW_OFFSET: number = 300;
+    readonly ITEM_HEIGHT: number = 38;
+    readonly BREADCRUMB_AND_NAVBAR_HEIGHT: number = 88;
 
     private conversationServiceInstantiated = false;
     private checkedForUnreadMessages = false;
@@ -153,6 +166,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     faListCheck = faListCheck;
     faDoorOpen = faDoorOpen;
     facSidebar = facSidebar;
+    faEllipsis = faEllipsis;
 
     FeatureToggle = FeatureToggle;
     CachingStrategy = CachingStrategy;
@@ -195,6 +209,70 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         await this.initAfterCourseLoad();
         this.sidebarItems = this.getSidebarItems();
         this.courseActionItems = this.getCourseActionItems();
+        this.updateVisibility(window.innerHeight);
+        this.updateMenuPosition();
+    }
+
+    /** Listen window resizement event by height */
+    @HostListener('window: resize', ['$event'])
+    onResize() {
+        this.dropdownOpen = false;
+        this.dropdownClickNumber = 0;
+        this.updateVisibility(window.innerHeight);
+        this.updateMenuPosition();
+    }
+
+    /** Listen click event whether on outside of the menu or one of the items in the menu to close the dropdown menu */
+    @HostListener('document: click', ['$event'])
+    onClickCloseDropdownMenu() {
+        if (this.dropdownOpen) {
+            this.dropdownClickNumber += 1;
+            if (this.dropdownClickNumber === 2) {
+                this.dropdownOpen = false;
+                this.dropdownClickNumber = 0;
+            }
+        }
+    }
+
+    /** Update sidebar item's hidden property based on the window height to display three-dots */
+    updateVisibility(height: number) {
+        let thresholdLevelForCurrentSidebar = this.calculateThreshold();
+        this.anyItemHidden = false;
+        this.hiddenItems = [];
+
+        for (let i = 0; i < this.sidebarItems.length - 1; i++) {
+            this.thresholdsForEachSidebarItem.unshift(thresholdLevelForCurrentSidebar);
+            thresholdLevelForCurrentSidebar -= this.ITEM_HEIGHT;
+        }
+        this.thresholdsForEachSidebarItem.unshift(0);
+
+        this.sidebarItems.forEach((item, index) => {
+            item.hidden = height <= this.thresholdsForEachSidebarItem[index];
+            if (item.hidden) {
+                this.anyItemHidden = true;
+                this.hiddenItems.push(item);
+            }
+        });
+    }
+
+    /** Calculate dropdown-menu position based on the number of entries in the sidebar */
+    updateMenuPosition() {
+        const leftSidebarItems: number = this.sidebarItems.length - this.hiddenItems.length;
+        this.dropdownOffset = leftSidebarItems * this.ITEM_HEIGHT + this.BREADCRUMB_AND_NAVBAR_HEIGHT;
+    }
+
+    /** Calculate threshold levels based on the number of entries in the sidebar */
+    calculateThreshold(): number {
+        const numberOfSidebarItems: number = this.sidebarItems.length;
+        return numberOfSidebarItems * this.ITEM_HEIGHT + this.WINDOW_OFFSET;
+    }
+
+    toggleDropdown() {
+        this.dropdownOpen = !this.dropdownOpen;
+        // Refresh click numbers after toggle
+        if (!this.dropdownOpen) {
+            this.dropdownClickNumber = 0;
+        }
     }
 
     getCourseActionItems(): CourseActionItem[] {
@@ -261,6 +339,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             translation: 'artemisApp.courseOverview.menu.lectures',
             hasInOrionProperty: true,
             showInOrionWindow: false,
+            hidden: false,
         };
         return lecturesItem;
     }
@@ -274,6 +353,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             translation: 'artemisApp.courseOverview.menu.exams',
             hasInOrionProperty: true,
             showInOrionWindow: false,
+            hidden: false,
         };
         return examsItem;
     }
@@ -286,6 +366,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             translation: 'artemisApp.courseOverview.menu.communication',
             hasInOrionProperty: true,
             showInOrionWindow: false,
+            hidden: false,
         };
         return communicationItem;
     }
@@ -298,6 +379,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             translation: 'artemisApp.courseOverview.menu.messages',
             hasInOrionProperty: true,
             showInOrionWindow: false,
+            hidden: false,
         };
         return messagesItem;
     }
@@ -311,6 +393,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             hasInOrionProperty: true,
             showInOrionWindow: false,
             featureToggle: FeatureToggle.TutorialGroups,
+            hidden: false,
         };
         return tutorialGroupsItem;
     }
@@ -323,6 +406,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             translation: 'artemisApp.courseOverview.menu.competencies',
             hasInOrionProperty: true,
             showInOrionWindow: false,
+            hidden: false,
         };
         return competenciesItem;
     }
@@ -336,6 +420,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             hasInOrionProperty: true,
             showInOrionWindow: false,
             featureToggle: FeatureToggle.LearningPaths,
+            hidden: false,
         };
         return learningPathItem;
     }
@@ -364,6 +449,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             icon: faListCheck,
             title: 'Exercises',
             translation: 'artemisApp.courseOverview.menu.exercises',
+            hidden: false,
         };
 
         const statisticsItem: SidebarItem = {
@@ -374,6 +460,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             hasInOrionProperty: true,
             showInOrionWindow: false,
             guidedTour: true,
+            hidden: false,
         };
 
         return items.concat([exercisesItem, statisticsItem]);

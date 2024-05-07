@@ -110,6 +110,8 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         doReturn(Optional.of(fakeUser)).when(ldapUserService).findByUsername(localVCBaseUsername);
 
         doReturn(true).when(ldapTemplate).compare(anyString(), anyString(), any());
+
+        localVCLocalCITestService.mockInspectImage(dockerClient);
     }
 
     @AfterEach

@@ -607,6 +607,30 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     }
 
     /**
+     * Finds user id by login
+     *
+     * @param login the login of the user to search
+     * @return optional of the user id if it exists, empty otherwise
+     */
+    @Query("""
+            SELECT u.id
+            FROM User u
+            WHERE u.login = :login
+            """)
+    Optional<Long> findIdByLogin(@Param("login") String login);
+
+    /**
+     * Get the user id of the currently logged-in user
+     *
+     * @return the user id of the currently logged-in user
+     */
+    default long getUserId() {
+        String currentUserLogin = getCurrentUserLogin();
+        Optional<Long> userId = findIdByLogin(currentUserLogin);
+        return userId.orElseThrow(() -> new EntityNotFoundException("User: " + currentUserLogin));
+    }
+
+    /**
      * Retrieve a user by its login, or else throw exception
      *
      * @param login the login of the user to search

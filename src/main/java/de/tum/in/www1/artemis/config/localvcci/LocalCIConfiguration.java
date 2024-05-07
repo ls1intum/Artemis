@@ -37,7 +37,7 @@ import de.tum.in.www1.artemis.exception.LocalCIException;
  * This includes a Docker client and an executor service that manages the queue of build jobs.
  */
 @Configuration
-@Profile({ "localci", PROFILE_BUILDAGENT })
+@Profile(PROFILE_BUILDAGENT)
 public class LocalCIConfiguration {
 
     private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;

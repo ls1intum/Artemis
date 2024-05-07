@@ -126,7 +126,7 @@ public class ExampleSubmissionService {
                 .forEach(gradingInstruction -> gradingInstructionCopyTracker.put(gradingInstruction.getId(), gradingInstruction));
 
         if (exercise instanceof ModelingExercise) {
-            ModelingSubmission modelingSubmission = (ModelingSubmission) submissionRepository.findOneWithEagerResultAndFeedback(submissionId);
+            ModelingSubmission modelingSubmission = (ModelingSubmission) submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submissionId);
             checkGivenExerciseIdSameForSubmissionParticipation(exercise.getId(), modelingSubmission.getParticipation().getExercise().getId());
             // example submission does not need participation
             modelingSubmission.setParticipation(null);

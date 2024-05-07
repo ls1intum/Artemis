@@ -30,6 +30,7 @@ import { FileService } from 'app/shared/http/file.service';
 import { onError } from 'app/shared/util/global.utils';
 import { getSemesters } from 'app/utils/semester-utils';
 import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal.component';
+import { scrollToTopOfPage } from 'app/shared/util/utils';
 
 const DEFAULT_CUSTOM_GROUP_NAME = 'artemis-dev';
 
@@ -341,6 +342,7 @@ export class CourseUpdateComponent implements OnInit {
         }
 
         this.router.navigate(['course-management', updatedCourse?.id?.toString()]);
+        scrollToTopOfPage();
     }
 
     /**
