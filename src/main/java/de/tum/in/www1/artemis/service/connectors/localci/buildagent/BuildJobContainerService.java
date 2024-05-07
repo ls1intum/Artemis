@@ -169,32 +169,26 @@ public class BuildJobContainerService {
      */
     public void stopContainer(String containerName) {
         // List all containers, including the non-running ones.
-        List<Container> containers = dockerClient.listContainersCmd().withShowAll(true).exec();
+        Container container = getContainerForName(containerName);
 
-        // Check if there's a container with the given name.
-        Optional<Container> containerOptional = containers.stream().filter(container -> container.getNames()[0].equals("/" + containerName)).findFirst();
-        if (containerOptional.isEmpty()) {
+        // Check if the container exists. Return if it does not.
+        if (container == null) {
             return;
         }
 
         // Check if the container is running. Return if it's not.
-        boolean isContainerRunning = "running".equals(containerOptional.get().getState());
+        boolean isContainerRunning = "running".equals(container.getState());
         if (!isContainerRunning) {
             return;
         }
 
         // Get the container ID.
-        String containerId = containerOptional.get().getId();
+        String containerId = container.getId();
 
         // Create a file "stop_container.txt" in the root directory of the container to indicate that the test results have been extracted or that the container should be stopped
         // for some other reason.
         // The container's main process is waiting for this file to appear and then stops the main process, thus stopping and removing the container.
         executeDockerCommandWithoutAwaitingResponse(containerId, "touch", LOCALCI_WORKING_DIRECTORY + "/stop_container.txt");
-
-        // If the container is still running, force kill it.
-        containers = dockerClient.listContainersCmd().withShowAll(true).exec();
-        containerOptional = containers.stream().filter(container -> container.getNames()[0].equals("/" + containerName)).findFirst();
-        containerOptional.ifPresent(container -> dockerClient.removeContainerCmd(container.getId()).withForce(true).exec());
     }
 
     /**
@@ -232,9 +226,9 @@ public class BuildJobContainerService {
      * @return The ID of the running container or null if no running container with the given name was found.
      */
     public String getIDOfRunningContainer(String containerName) {
-        List<Container> containers = dockerClient.listContainersCmd().withShowAll(true).exec();
-        Optional<Container> containerOptional = containers.stream().filter(container -> container.getNames()[0].equals("/" + containerName)).findFirst();
-        return containerOptional.map(Container::getId).orElse(null);
+        Container container = getContainerForName(containerName);
+        // Return id if container not null
+        return Optional.ofNullable(container).map(Container::getId).orElse(null);
     }
 
     /**
@@ -410,5 +404,10 @@ public class BuildJobContainerService {
         if (path == null || path.contains("..") || !path.matches("[a-zA-Z0-9_*./-]+")) {
             throw new LocalCIException("Invalid path: " + path);
         }
+    }
+
+    private Container getContainerForName(String containerName) {
+        List<Container> containers = dockerClient.listContainersCmd().withShowAll(true).exec();
+        return containers.stream().filter(container -> container.getNames()[0].equals("/" + containerName)).findFirst().orElse(null);
     }
 }
