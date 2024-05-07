@@ -1,48 +1,23 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Component, Input } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
-import { MockPipe, MockProvider } from 'ng-mocks';
+import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AlertService } from 'app/core/util/alert.service';
-import { ActivatedRoute, Params, Router, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule, convertToParamMap } from '@angular/router';
 import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleModels';
 import { CourseTutorialGroupsComponent } from 'app/overview/course-tutorial-groups/course-tutorial-groups.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { BehaviorSubject, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { Course } from 'app/entities/course.model';
-import { runOnPushChangeDetection } from '../../../helpers/on-push-change-detection.helper';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
-
-@Component({
-    selector: 'jhi-course-tutorial-groups-overview',
-    template: '<div id="tutorialGroupsOverview">Hello World :)</div>',
-})
-class MockCourseTutorialGroupsOverviewComponent {
-    @Input()
-    course: Course;
-    @Input()
-    tutorialGroups: TutorialGroup[] = [];
-    @Input()
-    configuration?: TutorialGroupsConfiguration;
-}
-
-@Component({
-    selector: 'jhi-course-tutorial-groups-registered',
-    template: '<div id="registeredTutorialGroups">Hello World ;)</div>',
-})
-class MockCourseTutorialGroupsRegisteredComponent {
-    @Input()
-    registeredTutorialGroups: TutorialGroup[] = [];
-    @Input()
-    course: Course;
-
-    @Input()
-    configuration?: TutorialGroupsConfiguration;
-}
+import { ArtemisTestModule } from '../../../test.module';
+import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
+import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
+import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 describe('CourseTutorialGroupsComponent', () => {
     let fixture: ComponentFixture<CourseTutorialGroupsComponent>;
@@ -50,18 +25,15 @@ describe('CourseTutorialGroupsComponent', () => {
 
     let tutorialGroupOne: TutorialGroup;
     let tutorialGroupTwo: TutorialGroup;
-    let tutorialGroupThree: TutorialGroup;
 
     const router = new MockRouter();
-
-    let queryParamsSubject: BehaviorSubject<Params>;
 
     beforeEach(() => {
         router.navigate.mockImplementation(() => Promise.resolve(true));
 
-        queryParamsSubject = new BehaviorSubject(convertToParamMap({}));
         TestBed.configureTestingModule({
-            declarations: [CourseTutorialGroupsComponent, MockCourseTutorialGroupsOverviewComponent, MockCourseTutorialGroupsRegisteredComponent, MockPipe(ArtemisTranslatePipe)],
+            imports: [ArtemisTestModule, RouterModule, MockModule(FormsModule), MockModule(ReactiveFormsModule)],
+            declarations: [CourseTutorialGroupsComponent, MockPipe(ArtemisTranslatePipe), SidebarComponent, SearchFilterComponent, MockPipe(SearchFilterPipe)],
             providers: [
                 MockProvider(TutorialGroupsService),
                 MockProvider(CourseStorageService),
@@ -72,15 +44,13 @@ describe('CourseTutorialGroupsComponent', () => {
                     provide: ActivatedRoute,
                     useValue: {
                         parent: {
-                            parent: {
-                                paramMap: new BehaviorSubject(
-                                    convertToParamMap({
-                                        courseId: 1,
-                                    }),
-                                ),
-                            },
+                            paramMap: new BehaviorSubject(
+                                convertToParamMap({
+                                    courseId: 1,
+                                }),
+                            ),
                         },
-                        queryParams: queryParamsSubject,
+                        params: of({ tutorialGroupId: 5 }),
                     },
                 },
             ],
@@ -89,9 +59,9 @@ describe('CourseTutorialGroupsComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(CourseTutorialGroupsComponent);
                 component = fixture.componentInstance;
+                component.sidebarData = { groupByCategory: true, sidebarType: 'default', storageId: 'tutorialGroup' };
                 tutorialGroupOne = generateExampleTutorialGroup({ id: 1, isUserTutor: true });
                 tutorialGroupTwo = generateExampleTutorialGroup({ id: 2, isUserRegistered: true });
-                tutorialGroupThree = generateExampleTutorialGroup({ id: 3 });
             });
     });
 
@@ -143,39 +113,5 @@ describe('CourseTutorialGroupsComponent', () => {
         expect(component.tutorialGroups).toEqual([tutorialGroupOne, tutorialGroupTwo]);
         expect(getAllOfCourseSpy).not.toHaveBeenCalled();
         expect(updateCourseSpy).not.toHaveBeenCalled();
-    });
-
-    it('should set the filter depending on the query param', () => {
-        fixture.detectChanges();
-        queryParamsSubject.next({ filter: 'all' });
-        expect(component.selectedFilter).toBe('all');
-        queryParamsSubject.next({ filter: 'registered' });
-        runOnPushChangeDetection(fixture);
-        expect(component.selectedFilter).toBe('registered');
-    });
-
-    it('should set the query params when a different filter is selected', () => {
-        fixture.detectChanges();
-        component.onFilterChange('all');
-        const activatedRoute = TestBed.inject(ActivatedRoute);
-        const navigateSpy = jest.spyOn(router, 'navigate');
-        expect(navigateSpy).toHaveBeenCalledWith([], {
-            relativeTo: activatedRoute,
-            queryParams: { filter: 'all' },
-            queryParamsHandling: 'merge',
-            replaceUrl: true,
-        });
-    });
-
-    it('should filter registered tutorial groups for student', () => {
-        component.tutorialGroups = [tutorialGroupOne, tutorialGroupTwo, tutorialGroupThree];
-        component.course = { id: 1, title: 'Test Course' } as Course;
-        expect(component.registeredTutorialGroups).toEqual([tutorialGroupTwo]);
-    });
-
-    it('should filter registered tutorial groups for tutor', () => {
-        component.tutorialGroups = [tutorialGroupOne, tutorialGroupTwo, tutorialGroupThree];
-        component.course = { id: 1, title: 'Test Course', isAtLeastTutor: true } as Course;
-        expect(component.registeredTutorialGroups).toEqual([tutorialGroupOne]);
     });
 });
