@@ -151,3 +151,20 @@ export async function newBrowserPage(browser: Browser) {
     const context = await browser.newContext();
     return await context.newPage();
 }
+
+/**
+ * Drags an element to a droppable element.
+ * @param page - Playwright Page instance used during the test.
+ * @param draggable - Locator of the element to be dragged.
+ * @param droppable - Locator of the element to be dropped on.
+ */
+export async function drag(page: Page, draggable: Locator, droppable: Locator) {
+    const box = (await droppable.boundingBox())!;
+    await draggable.hover();
+
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, {
+        steps: 5,
+    });
+    await page.mouse.up();
+}
