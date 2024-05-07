@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Transient;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 

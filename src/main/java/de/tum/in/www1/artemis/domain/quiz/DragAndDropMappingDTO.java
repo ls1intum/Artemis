@@ -2,8 +2,6 @@ package de.tum.in.www1.artemis.domain.quiz;
 
 import java.io.Serializable;
 
-import jakarta.persistence.*;
-
 /**
  * A DragAndDropMapping.
  */
