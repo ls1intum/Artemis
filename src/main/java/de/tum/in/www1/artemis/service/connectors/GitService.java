@@ -757,6 +757,10 @@ public class GitService {
             gitRepoConfig.setString(ConfigConstants.CONFIG_BRANCH_SECTION, defaultBranch, ConfigConstants.CONFIG_REMOTE_SECTION, REMOTE_NAME);
             gitRepoConfig.setString(ConfigConstants.CONFIG_BRANCH_SECTION, defaultBranch, ConfigConstants.CONFIG_MERGE_SECTION, "refs/heads/" + defaultBranch);
 
+            RefUpdate refUpdate = repository.getRefDatabase().newUpdate(Constants.HEAD, false);
+            refUpdate.setForceUpdate(true);
+            refUpdate.link("refs/heads/" + defaultBranch);
+
             gitRepoConfig.save();
 
             return repository;
