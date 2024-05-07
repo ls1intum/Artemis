@@ -5,15 +5,15 @@ import { TutorialGroupDetailStubComponent } from '../stubs/tutorial-group-detail
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleModels';
 import { HttpResponse } from '@angular/common/http';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { of } from 'rxjs';
-import { mockedActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
+import { ArtemisTestModule } from '../../../test.module';
 
 describe('CourseTutorialGroupDetailComponent', () => {
     let fixture: ComponentFixture<CourseTutorialGroupDetailComponent>;
@@ -25,18 +25,20 @@ describe('CourseTutorialGroupDetailComponent', () => {
     let findStub: jest.SpyInstance;
     let findByIdStub: jest.SpyInstance;
 
+    const parentParams = { courseId: 2 };
+    const parentRoute = { parent: { params: of(parentParams) } } as any as ActivatedRoute;
+    const route = { params: of({ tutorialGroupId: 1 }), parent: parentRoute } as any as ActivatedRoute;
+
     beforeEach(() => {
         TestBed.configureTestingModule({
+            imports: [ArtemisTestModule],
             declarations: [CourseTutorialGroupDetailComponent, TutorialGroupDetailStubComponent, LoadingIndicatorContainerStubComponent],
             providers: [
                 MockProvider(TutorialGroupsService),
                 MockProvider(CourseManagementService),
                 MockProvider(AlertService),
                 { provide: Router, useClass: MockRouter },
-                mockedActivatedRoute({
-                    courseId: 2,
-                    tutorialGroupId: 1,
-                }),
+                { provide: ActivatedRoute, useValue: route },
             ],
         })
             .compileComponents()
