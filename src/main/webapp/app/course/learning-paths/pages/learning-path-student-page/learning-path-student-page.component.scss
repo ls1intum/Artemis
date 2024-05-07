@@ -1,32 +1,8 @@
-.gradient-text {
-    background: linear-gradient(var(--gradient-deg, 0deg), var(--module-bg), var(--bs-body-color));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
+.learning-path-student-page {
+    height: calc(100vh - var(--sidebar-footer-height-dev) - 6.25rem);
 
-.progress {
-    margin-left: -1rem;
-    margin-right: -1rem;
-}
-
-.dropdown-toggle::after {
-    display: none;
-}
-
-.dropdown-menu {
-    width: 500px;
-}
-
-.accordion {
-    --bs-accordion-btn-bg: var(--module-bg);
-    --bs-accordion-color: var(--bs-body-color);
-    --bs-accordion-active-bg: var(--module-bg);
-    --bs-accordion-active-color: var(--bs-body-color);
-    --bs-accordion-bg: var(--module-bg);
-    --bs-accordion-btn-focus-box-shadow: none;
-    --bs-accordion-border-color: none;
-
-    .accordion-body {
-        background: var(--module-bg);
+    .learning-path-student-content {
+        height: calc(100vh - var(--sidebar-footer-height-dev) - 10.65rem);
+        overflow: scroll;
     }
 }

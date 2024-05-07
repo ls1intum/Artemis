@@ -5,6 +5,8 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import java.util.Comparator;
 import java.util.List;
 
+import jakarta.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -179,5 +181,13 @@ public class LectureUnitResource {
         LectureUnit lectureUnit = lectureUnitRepository.findById(lectureUnitId).orElseThrow();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, lectureUnit.getLecture().getCourse(), null);
         return ResponseEntity.ok(LectureUnitForLearningPathNodeDetailsDTO.of(lectureUnit));
+    }
+
+    @GetMapping("lecture-units/{lectureUnitId}")
+    public ResponseEntity<LectureUnit> getLectureUnitById(@PathVariable @Valid Long lectureUnitId) {
+        log.debug("REST request to get lecture unit with id: {}", lectureUnitId);
+        var lectureUnit = lectureUnitRepository.findById(lectureUnitId).orElseThrow();
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, lectureUnit.getLecture().getCourse(), null);
+        return ResponseEntity.ok(lectureUnit);
     }
 }

@@ -160,4 +160,8 @@ export class LectureUnitService {
             observe: 'response',
         });
     }
+
+    public getLectureUnitById(lectureUnitId: number): Observable<HttpResponse<LectureUnit>> {
+        return this.httpClient.get<LectureUnit>(`${this.resourceURL}/lecture-units/${lectureUnitId}`, { observe: 'response' });
+    }
 }

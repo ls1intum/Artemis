@@ -143,7 +143,7 @@ public class LearningPathRecommendationService {
             if (currentLearningObjectIndex == orderOfLearningObjects.size() - 1 && currentCompetencyIndex < orderOfCompetencies.size() - 1) {
                 var successorCompetency = recommendationState.competencyIdMap.get(orderOfCompetencies.get(currentCompetencyIndex + 1));
                 var successorOrderOfLearningObjects = getRecommendedOrderOfLearningObjects(learningPath, successorCompetency, recommendationState);
-                return successorOrderOfLearningObjects.getLast();
+                return successorOrderOfLearningObjects.getFirst();
             }
         }
         return null;

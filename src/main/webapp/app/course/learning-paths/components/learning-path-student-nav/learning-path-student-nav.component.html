@@ -1,0 +1,85 @@
+<div>
+    <div class="row justify-content-between">
+        <div class="col">
+            <div class="row justify-content-start align-items-center">
+                @if (predecessorLearningObject()) {
+                    <div class="col-md-auto">
+                        <button (click)="setRelativeLearningObject(predecessorLearningObject()!.id, predecessorLearningObject()!.type)" type="button" class="btn btn-secondary">
+                            Previous
+                        </button>
+                    </div>
+                    <span class="col-md-auto ms-3 gradient-text" style="--gradient-deg: 90deg">{{ predecessorLearningObject()!.name }}</span>
+                }
+            </div>
+        </div>
+        <div ngbDropdown class="col dropdown">
+            <div type="button" class="row justify-content-center align-items-center h-100" id="dropdownBasic1" ngbDropdownToggle>
+                <span class="col-md-auto fw-bold">
+                    @if (isLoading()) {
+                        Loading...
+                    } @else {
+                        {{ currentLearningObject()?.name }}
+                    }
+                </span>
+                <fa-icon [icon]="faChevronDown" class="col-md-auto ps-0" />
+            </div>
+            <div ngbDropdownMenu class="mt-3 col p-0" aria-labelledby="dropdownBasic1">
+                <div class="row justify-content-between align-items-center w-100 m-0 p-3">
+                    <span class="col-md-auto p-0 fw-bold">Course competencies</span>
+                    <div class="col-md-auto p-0">
+                        <button type="button" class="btn btn-outline-secondary">Dependency graph</button>
+                    </div>
+                </div>
+                <hr class="m-0" />
+                <div ngbAccordion class="accordion-flush">
+                    <div ngbAccordionItem>
+                        <h2 ngbAccordionHeader>
+                            <button ngbAccordionButton class="fw-bold p-3">Variablen und Funktionen (2/2)</button>
+                        </h2>
+                        <div ngbAccordionCollapse>
+                            <div ngbAccordionBody class="col">
+                                <div class="row px-3 py-2">
+                                    <span class="col-md-auto p-0">W02P02 - Kontrollstrukturen I</span>
+                                    <fa-icon [icon]="faCheckCircle" class="col-md-auto text-success" />
+                                </div>
+                                <div class="row px-3 py-2">
+                                    <span class="col-md-auto p-0">W02P02 - Kontrollstrukturen II</span>
+                                    <fa-icon [icon]="faCheckCircle" class="col-md-auto text-success" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div ngbAccordion class="accordion-flush">
+                    <div ngbAccordionItem>
+                        <h2 ngbAccordionHeader>
+                            <button ngbAccordionButton class="fw-bold p-3">Kontrollstrukturen (2/6)</button>
+                        </h2>
+                        <div ngbAccordionCollapse>
+                            <div ngbAccordionBody class="col">
+                                <div class="row px-3 py-2">
+                                    <span class="col-md-auto p-0">W02P02 - Kontrollstrukturen I</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="row justify-content-end align-items-center">
+                @if (successorLearningObject()) {
+                    <span class="col-md-auto me-3 gradient-text" style="--gradient-deg: -90deg">{{ successorLearningObject()!.name }}</span>
+                    <div class="col-md-auto">
+                        <button (click)="setRelativeLearningObject(successorLearningObject()!.id, successorLearningObject()!.type)" type="button" class="btn btn-primary">
+                            Next
+                        </button>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="progress my-3" role="progressbar" style="height: 2px">
+        <div class="progress-bar" [ngStyle]="{ width: learningPathProgress() + '%' }"></div>
+    </div>
+</div>

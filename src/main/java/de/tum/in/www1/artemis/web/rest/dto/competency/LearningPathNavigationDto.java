@@ -11,6 +11,7 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 public record LearningPathNavigationDto(LearningPathNavigationObjectDto predecessorLearningObject, LearningPathNavigationObjectDto currentLearningObject,
         LearningPathNavigationObjectDto successorLearningObject, int progress) {
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public record LearningPathNavigationObjectDto(Long id, boolean completed, String name, LearningObjectType type) {
 
         public static LearningPathNavigationObjectDto of(LearningObject learningObject, User user) {

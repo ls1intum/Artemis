@@ -18,7 +18,6 @@ const routes: Routes = [
         component: LearningPathStudentPageComponent,
         data: {
             authorities: [Authority.USER],
-            learningPathId: 5,
             pageTitle: 'overview.learningPath',
         },
         canActivate: [UserRouteAccessService],
@@ -47,6 +46,10 @@ const routes: Routes = [
                         loadChildren: () => import('app/overview/exercise-details/course-exercise-details.module').then((m) => m.CourseExerciseDetailsModule),
                     },
                 ],
+            },
+            {
+                path: 'exercises/:exerciseId',
+                loadChildren: () => import('app/overview/exercise-details/course-exercise-details.module').then((m) => m.CourseExerciseDetailsModule),
             },
         ],
     },

@@ -1,0 +1,21 @@
+@if (loading()) {
+    <span>Loading...</span>
+} @else if (lectureUnit()) {
+    @switch (lectureUnit()!.type) {
+        @case (LectureUnitType.VIDEO) {
+            <jhi-video-unit [videoUnit]="lectureUnit()!" />
+        }
+        @case (LectureUnitType.TEXT) {
+            <jhi-text-unit [textUnit]="lectureUnit()!" />
+        }
+        @case (LectureUnitType.ATTACHMENT) {
+            <jhi-attachment-unit [attachmentUnit]="lectureUnit()!" />
+        }
+        @case (LectureUnitType.EXERCISE) {
+            <jhi-exercise-unit [exerciseUnit]="lectureUnit()!" />
+        }
+        @case (LectureUnitType.ONLINE) {
+            <jhi-online-unit [onlineUnit]="lectureUnit()!" />
+        }
+    }
+}
