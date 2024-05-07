@@ -119,7 +119,7 @@ export class CourseOverviewService {
         const examCardItem: SidebarCardElement = {
             title: exam.title ?? '',
             id: exam.id ?? '',
-            subtitleLeft: 'Test',
+            subtitleLeft: exam.startDate ? dayjs(exam.startDate).format('MMM DD, YYYY') : 'No date associated',
         };
         return examCardItem;
     }
