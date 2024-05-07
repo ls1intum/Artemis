@@ -160,8 +160,8 @@ public class BuildJobContainerService {
     /**
      * Stops the container with the given name by creating a file "stop_container.txt" in its root directory.
      * The container must be created in such a way that it waits for this file to appear and then stops running, causing it to be removed at the same time.
-     * You could also use {@link DockerClient#stopContainerCmd(String)} to stop the container, but this takes significantly longer than using the approach with the file because of
-     * increased overhead for the stopContainerCmd() method.
+     * In case the container is not responding, we can force remove it using {@link DockerClient#removeContainerCmd(String)}.
+     * This takes significantly longer than using the approach with the file because of increased overhead for the removeContainerCmd() method.
      *
      * @param containerName The name of the container to stop. Cannot use the container ID, because this method might have to be called from the main thread (not the thread started
      *                          for the build job) where the container ID is not available.
@@ -189,6 +189,11 @@ public class BuildJobContainerService {
         // for some other reason.
         // The container's main process is waiting for this file to appear and then stops the main process, thus stopping and removing the container.
         executeDockerCommandWithoutAwaitingResponse(containerId, "touch", LOCALCI_WORKING_DIRECTORY + "/stop_container.txt");
+
+        // If the container is still running, force kill it.
+        containers = dockerClient.listContainersCmd().withShowAll(true).exec();
+        containerOptional = containers.stream().filter(container -> container.getNames()[0].equals("/" + containerName)).findFirst();
+        containerOptional.ifPresent(container -> dockerClient.removeContainerCmd(container.getId()).withForce(true).exec());
     }
 
     /**
