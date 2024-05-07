@@ -2,12 +2,12 @@ package de.tum.in.www1.artemis.repository.converters;
 
 import jakarta.persistence.Converter;
 
-import de.tum.in.www1.artemis.domain.quiz.AnswerOptionDTO;
+import de.tum.in.www1.artemis.domain.quiz.AnswerOption;
 
 @Converter
-public class ObjectListConverter extends JpaConverterJson<AnswerOptionDTO> {
+public class ObjectListConverter extends JpaConverterJson<AnswerOption> {
 
     public ObjectListConverter() {
-        super(AnswerOptionDTO.class);
+        super(AnswerOption.class);
     }
 }

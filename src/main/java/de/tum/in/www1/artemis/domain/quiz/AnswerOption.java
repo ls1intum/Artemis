@@ -1,49 +1,36 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import jakarta.persistence.*;
-
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonView;
-
-import de.tum.in.www1.artemis.domain.DomainObject;
-import de.tum.in.www1.artemis.domain.view.QuizView;
+import java.io.Serializable;
 
 /**
  * A AnswerOption.
  */
-@Entity
-@Table(name = "answer_option")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class AnswerOption extends DomainObject implements QuizQuestionComponent<MultipleChoiceQuestion> {
+public class AnswerOption implements QuizQuestionComponent<MultipleChoiceQuestion>, Serializable {
 
-    @Column(name = "text")
-    @JsonView(QuizView.Before.class)
+    private Long id;
+
     private String text;
 
-    @Column(name = "hint")
-    @JsonView(QuizView.Before.class)
     private String hint;
 
-    @Column(name = "explanation", length = 500)
-    @JsonView(QuizView.After.class)
     private String explanation;
 
-    @Column(name = "is_correct")
-    @JsonView(QuizView.After.class)
     private Boolean isCorrect;
 
-    @Column(name = "invalid")
-    @JsonView(QuizView.Before.class)
     private Boolean invalid = false;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JsonIgnore
-    private MultipleChoiceQuestion question;
+    public Long getId() {
+        return id;
+    }
+
+    @Override
+    public void setQuestion(MultipleChoiceQuestion quizQuestion) {
+
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     public String getText() {
         return text;
@@ -110,17 +97,20 @@ public class AnswerOption extends DomainObject implements QuizQuestionComponent<
         this.invalid = invalid;
     }
 
-    public MultipleChoiceQuestion getQuestion() {
-        return question;
-    }
-
-    public void setQuestion(MultipleChoiceQuestion multipleChoiceQuestion) {
-        this.question = multipleChoiceQuestion;
+    public static AnswerOption convertToAnswerOptionDTO(AnswerOption answerOption) {
+        AnswerOption answerOptionDTO = new AnswerOption();
+        answerOptionDTO.setHint(answerOption.getHint());
+        answerOptionDTO.setExplanation(answerOption.getExplanation());
+        answerOptionDTO.setInvalid(answerOption.isInvalid());
+        answerOptionDTO.setText(answerOption.getText());
+        answerOptionDTO.setIsCorrect(answerOption.isIsCorrect());
+        return answerOptionDTO;
     }
 
     @Override
     public String toString() {
-        return "AnswerOption{" + "id=" + getId() + ", text='" + getText() + "'" + ", hint='" + getHint() + "'" + ", explanation='" + getExplanation() + "'" + ", isCorrect='"
-                + isIsCorrect() + "'" + ", invalid='" + isInvalid() + "'" + "}";
+        return "AnswerOptionDTO{" + "id=" + getId() + ", text='" + getText() + "'" + ", hint='" + "'" + ", explanation='" + "'" + ", isCorrect='" + isIsCorrect() + "'"
+                + ", invalid='" + isInvalid() + "'" + "}";
     }
+
 }

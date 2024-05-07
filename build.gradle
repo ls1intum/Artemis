@@ -407,10 +407,6 @@ dependencies {
     // use newest version of gson to avoid security issues through outdated dependencies
     implementation "com.google.code.gson:gson:2.10.1"
 
-    // https://mvnrepository.com/artifact/io.hypersistence/hypersistence-utils-hibernate-63
-    implementation group: 'io.hypersistence', name: 'hypersistence-utils-hibernate-63', version: '3.7.5'
-
-
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
     annotationProcessor("org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}") {
         exclude group: "jakarta.ws.rs", module: "jsr311-api"

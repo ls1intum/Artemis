@@ -17,8 +17,11 @@ public class AnswerCounter extends QuizStatisticCounter implements QuizQuestionS
     @JsonIgnore
     private MultipleChoiceQuestionStatistic multipleChoiceQuestionStatistic;
 
-    @OneToOne(cascade = { CascadeType.PERSIST })
-    @JoinColumn(unique = true)
+    // @OneToOne(cascade = { CascadeType.PERSIST })
+    // @JoinColumn(unique = true)
+    // private AnswerOption answer;
+
+    @Transient
     private AnswerOption answer;
 
     public MultipleChoiceQuestionStatistic getMultipleChoiceQuestionStatistic() {
