@@ -28,9 +28,7 @@ export class SidebarCardMediumComponent {
 
     emitStoreLastSelectedItem(itemId: number | string) {
         this.sidebarEventService.emitSidebarCardEvent(itemId);
-        if (this.sidebarType !== 'conversation') {
-            this.forceReload();
-        }
+        this.forceReload();
     }
 
     forceReload(): void {
