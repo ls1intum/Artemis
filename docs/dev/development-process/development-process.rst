@@ -110,6 +110,7 @@ After the feature implementation is complete, the developer is required to creat
 The subsequent sections provide guidance on the naming conventions and outline the necessary steps for creating and merging a pull request.
 
 .. _pr_naming_conventions:
+
 Naming Conventions for GitHub Pull Requests
 -------------------------------------------
 
