@@ -33,6 +33,7 @@ import com.github.dockerjava.api.command.ExecCreateCmd;
 import com.github.dockerjava.api.command.ExecCreateCmdResponse;
 import com.github.dockerjava.api.exception.ConflictException;
 import com.github.dockerjava.api.exception.NotFoundException;
+import com.github.dockerjava.api.exception.NotModifiedException;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Frame;
 import com.github.dockerjava.api.model.HostConfig;
@@ -194,6 +195,45 @@ public class BuildJobContainerService {
         containers = dockerClient.listContainersCmd().withShowAll(true).exec();
         containerOptional = containers.stream().filter(container -> container.getNames()[0].equals("/" + containerName)).findFirst();
         containerOptional.ifPresent(container -> dockerClient.removeContainerCmd(container.getId()).withForce(true).exec());
+    }
+
+    /*
+     * Stops or kills a container in case a build job has failed or the container is unresponsive.
+     * Adding a file "stop_container.txt" like in {@link #stopContainer(String)} might not work for unresponsive containers, thus we use
+     * {@link DockerClient#stopContainerCmd(String)} and {@link DockerClient#killContainerCmd(String)} to stop or kill the container.
+     * @param containerId The ID of the container to stop or kill.
+     */
+    public void stopUnresponsiveContainer(String containerId) {
+        try {
+            // Attempt to stop the container. It should stop the container and auto-remove it.
+            // {@link DockerClient#stopContainerCmd(String)} first sends a SIGTERM command to the container to gracefully stop it,
+            // and if it does not stop within the timeout, it sends a SIGKILL command to kill the container.
+            dockerClient.stopContainerCmd(containerId).withTimeout(3).exec();
+        }
+        catch (NotFoundException | NotModifiedException e) {
+            log.debug("Container with id {} is already stopped: {}", containerId, e.getMessage());
+        }
+        catch (Exception e) {
+            // In case the stopContainerCmd fails, we try to forcefully kill the container
+            try {
+                dockerClient.killContainerCmd(containerId).exec();
+            }
+            catch (Exception killException) {
+                log.warn("Failed to kill container with id {}: {}", containerId, killException.getMessage());
+            }
+        }
+    }
+
+    /**
+     * Get the ID of a running container by its name.
+     *
+     * @param containerName The name of the container.
+     * @return The ID of the running container or null if no running container with the given name was found.
+     */
+    public String getIDOfRunningContainer(String containerName) {
+        List<Container> containers = dockerClient.listContainersCmd().withShowAll(true).exec();
+        Optional<Container> containerOptional = containers.stream().filter(container -> container.getNames()[0].equals("/" + containerName)).findFirst();
+        return containerOptional.map(Container::getId).orElse(null);
     }
 
     /**
