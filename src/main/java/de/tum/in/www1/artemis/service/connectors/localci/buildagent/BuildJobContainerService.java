@@ -197,10 +197,11 @@ public class BuildJobContainerService {
         containerOptional.ifPresent(container -> dockerClient.removeContainerCmd(container.getId()).withForce(true).exec());
     }
 
-    /*
+    /**
      * Stops or kills a container in case a build job has failed or the container is unresponsive.
      * Adding a file "stop_container.txt" like in {@link #stopContainer(String)} might not work for unresponsive containers, thus we use
      * {@link DockerClient#stopContainerCmd(String)} and {@link DockerClient#killContainerCmd(String)} to stop or kill the container.
+     *
      * @param containerId The ID of the container to stop or kill.
      */
     public void stopUnresponsiveContainer(String containerId) {
@@ -208,7 +209,7 @@ public class BuildJobContainerService {
             // Attempt to stop the container. It should stop the container and auto-remove it.
             // {@link DockerClient#stopContainerCmd(String)} first sends a SIGTERM command to the container to gracefully stop it,
             // and if it does not stop within the timeout, it sends a SIGKILL command to kill the container.
-            dockerClient.stopContainerCmd(containerId).withTimeout(3).exec();
+            dockerClient.stopContainerCmd(containerId).withTimeout(5).exec();
         }
         catch (NotFoundException | NotModifiedException e) {
             log.debug("Container with id {} is already stopped: {}", containerId, e.getMessage());
