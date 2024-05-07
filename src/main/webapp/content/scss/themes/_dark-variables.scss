@@ -127,9 +127,14 @@ $neutral-dark-l-20: lighten($neutral-dark, 20%);
 
 // Footer
 $footer-bg: $neutral-dark;
+$footer-height-dev: 3rem;
+$footer-height-prod: 2rem;
+$sidebar-footer-height-dev: 134px;
+$sidebar-footer-height-prod: 118px;
 
 //Module and Navigationbar
 $module-bg: $neutral-dark;
+$header-height: 68px;
 $course-image-bg: $body-bg;
 $link-item-bg: $gray-900;
 $sidebar-card-selected-bg: #353d47;

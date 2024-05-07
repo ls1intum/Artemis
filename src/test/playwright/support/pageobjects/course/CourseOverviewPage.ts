@@ -77,4 +77,11 @@ export class CourseOverviewPage {
     async openExam(examId: number): Promise<void> {
         await this.page.locator(`#exam-${examId} .clickable`).click();
     }
+
+    /**
+     * Opens the team info for the exercise.
+     */
+    async openTeam() {
+        await this.page.locator('.view-team').click();
+    }
 }
