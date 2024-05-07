@@ -102,7 +102,7 @@ public class SharedQueueProcessingService {
         this.processingJobs = this.hazelcastInstance.getMap("processingJobs");
         this.sharedLock = this.hazelcastInstance.getCPSubsystem().getLock("buildJobQueueLock");
         this.queue = this.hazelcastInstance.getQueue("buildJobQueue");
-        this.buildJobItemMap = this.hazelcastInstance.getMap("buildJobItemIMap");
+        this.buildJobItemMap = this.hazelcastInstance.getMap("buildJobItemMap");
         this.resultQueue = this.hazelcastInstance.getQueue("buildResultQueue");
         this.listenerId = this.queue.addItemListener(new SharedQueueProcessingService.QueuedBuildJobItemListener(), true);
     }
