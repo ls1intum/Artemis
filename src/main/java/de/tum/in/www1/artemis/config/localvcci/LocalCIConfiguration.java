@@ -3,7 +3,13 @@ package de.tum.in.www1.artemis.config.localvcci;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
 
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.RejectedExecutionHandler;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import javax.xml.stream.XMLInputFactory;
 
@@ -31,7 +37,7 @@ import de.tum.in.www1.artemis.exception.LocalCIException;
  * This includes a Docker client and an executor service that manages the queue of build jobs.
  */
 @Configuration
-@Profile({ "localci", PROFILE_BUILDAGENT })
+@Profile(PROFILE_BUILDAGENT)
 public class LocalCIConfiguration {
 
     private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
@@ -80,10 +86,32 @@ public class LocalCIConfiguration {
             }
         }
 
-        log.info("Using Build Job Container HostConfig with cpus {}, memory {}, memorySwap {}, pidsLimit {}.", cpuCount, memory, memorySwap, pidsLimit);
+        log.info("Using build job container docker host config with CPU(s): {}, memory: {}, memory swap: {}, pids limit: {}.", cpuCount, formatMemory(memory),
+                formatMemory(memorySwap), pidsLimit);
 
         return HostConfig.newHostConfig().withCpuQuota(cpuCount * cpuPeriod).withCpuPeriod(cpuPeriod).withMemory(memory).withMemorySwap(memorySwap).withPidsLimit(pidsLimit)
                 .withAutoRemove(true);
+    }
+
+    /**
+     * Converts bytes into a human-readable format (KB, MB, or GB).
+     *
+     * @param bytes The number of bytes.
+     * @return A string representing the memory size in KB, MB, or GB.
+     */
+    public static String formatMemory(long bytes) {
+        if (bytes < 1024) {
+            return bytes + " Bytes";
+        }
+        else if (bytes < 1024 * 1024) {
+            return (bytes / 1024) + " KB";
+        }
+        else if (bytes < 1024 * 1024 * 1024) {
+            return (bytes / (1024 * 1024)) + " MB";
+        }
+        else {
+            return String.format("%.1f GB", bytes / (1024.0 * 1024.0 * 1024.0));
+        }
     }
 
     /**
@@ -110,7 +138,7 @@ public class LocalCIConfiguration {
             throw new RejectedExecutionException("Task " + runnable.toString() + " rejected from " + executor.toString());
         };
 
-        log.info("Using ExecutorService with thread pool size {}.", threadPoolSize);
+        log.debug("Using ExecutorService with thread pool size {}.", threadPoolSize);
         return new ThreadPoolExecutor(threadPoolSize, threadPoolSize, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(1), customThreadFactory, customRejectedExecutionHandler);
     }
 
@@ -137,7 +165,7 @@ public class LocalCIConfiguration {
         DockerHttpClient httpClient = new ApacheDockerHttpClient.Builder().dockerHost(config.getDockerHost()).sslConfig(config.getSSLConfig()).build();
         DockerClient dockerClient = DockerClientImpl.getInstance(config, httpClient);
 
-        log.info("Docker client created with connection URI: {}", dockerConnectionUri);
+        log.debug("Docker client created with connection URI: {}", dockerConnectionUri);
 
         return dockerClient;
     }

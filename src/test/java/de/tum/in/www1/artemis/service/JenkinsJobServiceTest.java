@@ -3,7 +3,12 @@ package de.tum.in.www1.artemis.service;
 import static de.tum.in.www1.artemis.service.util.XmlFileUtils.getDocumentBuilderFactory;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIOException;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.same;
+import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
 

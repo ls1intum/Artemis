@@ -5,7 +5,11 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +19,13 @@ import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.in.www1.artemis.config.Constants;
@@ -26,7 +36,10 @@ import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.CourseService;
+import de.tum.in.www1.artemis.service.FilePathService;
+import de.tum.in.www1.artemis.service.FileService;
+import de.tum.in.www1.artemis.service.OnlineCourseConfigurationService;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -40,6 +53,8 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 public class AdminCourseResource {
 
     private static final Logger log = LoggerFactory.getLogger(AdminCourseResource.class);
+
+    private static final int MAX_TITLE_LENGTH = 255;
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -103,6 +118,10 @@ public class AdminCourseResource {
         log.debug("REST request to save Course : {}", course);
         if (course.getId() != null) {
             throw new BadRequestAlertException("A new course cannot already have an ID", Course.ENTITY_NAME, "idExists");
+        }
+
+        if (course.getTitle().length() > MAX_TITLE_LENGTH) {
+            throw new BadRequestAlertException("The course title is too long", Course.ENTITY_NAME, "courseTitleTooLong");
         }
 
         course.validateShortName();

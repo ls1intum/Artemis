@@ -64,5 +64,5 @@ actions:
     runAlways: false
     results:
       - name: junit_test-reports/tests-results.xml
-        path: test-reports/tests-results.xml
+        path: 'test-reports/*.xml'
         type: junit

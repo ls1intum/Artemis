@@ -2,7 +2,14 @@ package de.tum.in.www1.artemis.service.hestia;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;

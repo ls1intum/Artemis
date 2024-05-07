@@ -2,7 +2,14 @@ package de.tum.in.www1.artemis.domain;
 
 import java.time.ZonedDateTime;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -85,7 +92,7 @@ public class BuildJob extends DomainObject {
         this.buildCompletionDate = queueItem.jobTimingInfo().buildCompletionDate();
         this.repositoryType = queueItem.repositoryInfo().repositoryType();
         this.repositoryName = queueItem.repositoryInfo().repositoryName();
-        this.commitHash = queueItem.buildConfig().commitHash();
+        this.commitHash = queueItem.buildConfig().commitHashToBuild();
         this.retryCount = queueItem.retryCount();
         this.priority = queueItem.priority();
         this.triggeredByPushTo = queueItem.repositoryInfo().triggeredByPushTo();

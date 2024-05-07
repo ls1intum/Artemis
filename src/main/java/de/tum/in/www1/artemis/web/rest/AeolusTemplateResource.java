@@ -6,8 +6,15 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.*;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -25,7 +32,7 @@ import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
  */
 @Profile("aeolus | localci")
 @RestController
-@RequestMapping("api/aeolus")
+@RequestMapping("api/aeolus/")
 public class AeolusTemplateResource {
 
     private static final Logger log = LoggerFactory.getLogger(AeolusTemplateResource.class);
@@ -57,7 +64,7 @@ public class AeolusTemplateResource {
      * @param testCoverage   Whether the test coverage template should be used
      * @return The requested file, or 404 if the file doesn't exist
      */
-    @GetMapping({ "/templates/{language}/{projectType}", "/templates/{language}" })
+    @GetMapping({ "templates/{language}/{projectType}", "/templates/{language}" })
     @EnforceAtLeastEditor
     public ResponseEntity<String> getAeolusTemplate(@PathVariable ProgrammingLanguage language, @PathVariable Optional<ProjectType> projectType,
             @RequestParam(value = "staticAnalysis", defaultValue = "false") boolean staticAnalysis,
@@ -84,7 +91,7 @@ public class AeolusTemplateResource {
      * @param testCoverage   Whether the test coverage template should be used
      * @return The requested file, or 404 if the file doesn't exist
      */
-    @GetMapping({ "/templateScripts/{language}/{projectType}", "/templateScripts/{language}" })
+    @GetMapping({ "templateScripts/{language}/{projectType}", "/templateScripts/{language}" })
     @EnforceAtLeastEditor
     public ResponseEntity<String> getAeolusTemplateScript(@PathVariable ProgrammingLanguage language, @PathVariable Optional<ProjectType> projectType,
             @RequestParam(value = "staticAnalysis", defaultValue = "false") boolean staticAnalysis,
