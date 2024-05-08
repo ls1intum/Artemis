@@ -424,7 +424,9 @@
                 "complaintOnAutomaticAssessmentTooltip": "Students can complain after receiving an automatic assessment. Which will be evaluated by a tutor afterwards.",
                 "exampleSolutionPublicationDateTooltip": "The date when the Solution Repository becomes available to download for students. Leave blank to disable.",
                 "releaseTestsWithExampleSolution": "Include tests into example solution",
-                "releaseTestsWithExampleSolutionTooltip": "In addition to the example solution the automatic tests can be published after the due date."
+                "releaseTestsWithExampleSolutionTooltip": "In addition to the example solution the automatic tests can be published after the due date.",
+                "setTestCaseVisibilityToAfterReleaseDateOfResults": "Set all tests to visibility after exam end date",
+                "setTestCaseVisibilityToAfterReleaseDateOfResultsTooltip": "During the exam students will only see if their code compiles. Details about the test results wil not be displayed before the Release Date of Results."
             },
             "repositoryIsLocked": {
                 "title": "Your repository is locked.",

@@ -143,6 +143,20 @@
                 <input
                     type="checkbox"
                     class="form-check-input"
+                    name="setTestCaseVisibilityToAfterReleaseDateOfResults"
+                    [checked]="setTestCaseVisibilityToAfterReleaseDateOfResults"
+                    id="setTestCaseVisibilityToAfterReleaseDateOfResults-checkbox"
+                    (change)="setTestCaseVisibilityToAfterReleaseDateOfResults = !setTestCaseVisibilityToAfterReleaseDateOfResults"
+                />
+                <label class="form-control-label" for="setTestCaseVisibilityToAfterReleaseDateOfResults-checkbox">{{
+                    'artemisApp.programmingExercise.timeline.setTestCaseVisibilityToAfterReleaseDateOfResults' | artemisTranslate
+                }}</label>
+                <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.setTestCaseVisibilityToAfterReleaseDateOfResultsTooltip'" />
+            </div>
+            <div class="form-check">
+                <input
+                    type="checkbox"
+                    class="form-check-input"
                     name="allowManualFeedbackRequests"
                     [checked]="exercise.allowManualFeedbackRequests"
                     [disabled]="exercise.assessmentType !== assessmentType.SEMI_AUTOMATIC"

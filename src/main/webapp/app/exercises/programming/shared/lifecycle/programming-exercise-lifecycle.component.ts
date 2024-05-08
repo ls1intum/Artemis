@@ -40,6 +40,8 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
 
     isAthenaEnabled$: Observable<boolean> | undefined;
 
+    setTestCaseVisibilityToAfterReleaseDateOfResults: boolean = false;
+
     constructor(
         private translateService: TranslateService,
         private exerciseService: ExerciseService,
