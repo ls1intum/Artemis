@@ -106,15 +106,18 @@ export class CourseOverviewService {
         };
         return lectureCardItem;
     }
+
     mapTutorialGroupToSidebarCardElement(tutorialGroup: TutorialGroup): SidebarCardElement {
         const tutorialGroupCardItem: SidebarCardElement = {
             title: tutorialGroup.title ?? '',
             id: tutorialGroup.id ?? '',
+            size: 'M',
             subtitleLeft: tutorialGroup.language,
             subtitleRight: tutorialGroup.nextSession?.start?.format('MMM DD, YYYY') ? 'Next: ' + tutorialGroup.nextSession?.start?.format('MMM DD, YYYY') : 'No upcoming session',
         };
         return tutorialGroupCardItem;
     }
+
     mapExerciseToSidebarCardElement(exercise: Exercise): SidebarCardElement {
         const exerciseCardItem: SidebarCardElement = {
             title: exercise.title ?? '',
