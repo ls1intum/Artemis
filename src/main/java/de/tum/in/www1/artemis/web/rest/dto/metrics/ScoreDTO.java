@@ -6,5 +6,5 @@ package de.tum.in.www1.artemis.web.rest.dto.metrics;
  * @param exerciseId the id of the exercise
  * @param score      the score of the exercise
  */
-public record ScoreDTO(long exerciseId, double score) {
+public record ScoreDTO(long exerciseId, Double score) {
 }
