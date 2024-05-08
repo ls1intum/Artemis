@@ -68,7 +68,7 @@ test.describe('Quiz Exercise Participation', () => {
         });
     });
 
-    test.describe.skip('DnD Quiz participation', () => {
+    test.describe('DnD Quiz participation', () => {
         test.beforeEach('Create DND quiz', async ({ login, courseManagementExercises, exerciseAPIRequests, quizExerciseCreation }) => {
             await login(admin, '/course-management/' + course.id + '/exercises');
             await courseManagementExercises.createQuizExercise();
