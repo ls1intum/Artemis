@@ -103,9 +103,9 @@ export class CourseOverviewService {
             subtitleLeft: exercise.dueDate?.format('MMM DD, YYYY') ?? 'No due date',
             type: exercise.type,
             icon: getIcon(exercise.type),
+            size: 'M',
             difficulty: exercise.difficulty,
             exercise: exercise,
-            size: 'M',
             studentParticipation: exercise?.studentParticipations?.length
                 ? this.participationService.getSpecificStudentParticipation(exercise.studentParticipations, false)
                 : undefined,
