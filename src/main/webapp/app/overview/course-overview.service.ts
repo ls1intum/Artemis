@@ -92,6 +92,7 @@ export class CourseOverviewService {
             title: lecture.title ?? '',
             id: lecture.id ?? '',
             subtitleLeft: lecture.startDate?.format('MMM DD, YYYY') ?? 'No date associated',
+            size: 'M',
         };
         return lectureCardItem;
     }
@@ -104,6 +105,7 @@ export class CourseOverviewService {
             icon: getIcon(exercise.type),
             difficulty: exercise.difficulty,
             exercise: exercise,
+            size: 'M',
             studentParticipation: exercise?.studentParticipations?.length
                 ? this.participationService.getSpecificStudentParticipation(exercise.studentParticipations, false)
                 : undefined,

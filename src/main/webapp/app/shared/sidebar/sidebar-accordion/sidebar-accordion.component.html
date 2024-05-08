@@ -18,7 +18,7 @@
             @for (sidebarItem of groupedData[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue; let last = $last; track sidebarItem) {
                 <div [ngClass]="{ 'mb-2': !last }">
                     <!-- loading sidebarCard with help of a directive depending on its size input-->
-                    <div jhiSidebarCard [size]="getSize()" [itemSelected]="itemSelected" [sidebarType]="sidebarType" [sidebarItem]="sidebarItem"></div>
+                    <div jhiSidebarCard [size]="sidebarItem.size" [itemSelected]="itemSelected" [sidebarType]="sidebarType" [sidebarItem]="sidebarItem"></div>
                 </div>
             }
         </div>
