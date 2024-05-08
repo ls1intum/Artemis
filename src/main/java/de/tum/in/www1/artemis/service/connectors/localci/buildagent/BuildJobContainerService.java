@@ -33,6 +33,7 @@ import com.github.dockerjava.api.command.ExecCreateCmd;
 import com.github.dockerjava.api.command.ExecCreateCmdResponse;
 import com.github.dockerjava.api.exception.ConflictException;
 import com.github.dockerjava.api.exception.NotFoundException;
+import com.github.dockerjava.api.exception.NotModifiedException;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Frame;
 import com.github.dockerjava.api.model.HostConfig;
@@ -160,35 +161,74 @@ public class BuildJobContainerService {
     /**
      * Stops the container with the given name by creating a file "stop_container.txt" in its root directory.
      * The container must be created in such a way that it waits for this file to appear and then stops running, causing it to be removed at the same time.
-     * You could also use {@link DockerClient#stopContainerCmd(String)} to stop the container, but this takes significantly longer than using the approach with the file because of
-     * increased overhead for the stopContainerCmd() method.
+     * In case the container is not responding, we can force remove it using {@link DockerClient#removeContainerCmd(String)}.
+     * This takes significantly longer than using the approach with the file because of increased overhead for the removeContainerCmd() method.
      *
      * @param containerName The name of the container to stop. Cannot use the container ID, because this method might have to be called from the main thread (not the thread started
      *                          for the build job) where the container ID is not available.
      */
     public void stopContainer(String containerName) {
         // List all containers, including the non-running ones.
-        List<Container> containers = dockerClient.listContainersCmd().withShowAll(true).exec();
+        Container container = getContainerForName(containerName);
 
-        // Check if there's a container with the given name.
-        Optional<Container> containerOptional = containers.stream().filter(container -> container.getNames()[0].equals("/" + containerName)).findFirst();
-        if (containerOptional.isEmpty()) {
+        // Check if the container exists. Return if it does not.
+        if (container == null) {
             return;
         }
 
         // Check if the container is running. Return if it's not.
-        boolean isContainerRunning = "running".equals(containerOptional.get().getState());
+        boolean isContainerRunning = "running".equals(container.getState());
         if (!isContainerRunning) {
             return;
         }
 
         // Get the container ID.
-        String containerId = containerOptional.get().getId();
+        String containerId = container.getId();
 
         // Create a file "stop_container.txt" in the root directory of the container to indicate that the test results have been extracted or that the container should be stopped
         // for some other reason.
         // The container's main process is waiting for this file to appear and then stops the main process, thus stopping and removing the container.
         executeDockerCommandWithoutAwaitingResponse(containerId, "touch", LOCALCI_WORKING_DIRECTORY + "/stop_container.txt");
+    }
+
+    /**
+     * Stops or kills a container in case a build job has failed or the container is unresponsive.
+     * Adding a file "stop_container.txt" like in {@link #stopContainer(String)} might not work for unresponsive containers, thus we use
+     * {@link DockerClient#stopContainerCmd(String)} and {@link DockerClient#killContainerCmd(String)} to stop or kill the container.
+     *
+     * @param containerId The ID of the container to stop or kill.
+     */
+    public void stopUnresponsiveContainer(String containerId) {
+        try {
+            // Attempt to stop the container. It should stop the container and auto-remove it.
+            // {@link DockerClient#stopContainerCmd(String)} first sends a SIGTERM command to the container to gracefully stop it,
+            // and if it does not stop within the timeout, it sends a SIGKILL command to kill the container.
+            dockerClient.stopContainerCmd(containerId).withTimeout(5).exec();
+        }
+        catch (NotFoundException | NotModifiedException e) {
+            log.debug("Container with id {} is already stopped: {}", containerId, e.getMessage());
+        }
+        catch (Exception e) {
+            // In case the stopContainerCmd fails, we try to forcefully kill the container
+            try {
+                dockerClient.killContainerCmd(containerId).exec();
+            }
+            catch (Exception killException) {
+                log.warn("Failed to kill container with id {}: {}", containerId, killException.getMessage());
+            }
+        }
+    }
+
+    /**
+     * Get the ID of a running container by its name.
+     *
+     * @param containerName The name of the container.
+     * @return The ID of the running container or null if no running container with the given name was found.
+     */
+    public String getIDOfRunningContainer(String containerName) {
+        Container container = getContainerForName(containerName);
+        // Return id if container not null
+        return Optional.ofNullable(container).map(Container::getId).orElse(null);
     }
 
     /**
@@ -364,5 +404,10 @@ public class BuildJobContainerService {
         if (path == null || path.contains("..") || !path.matches("[a-zA-Z0-9_*./-]+")) {
             throw new LocalCIException("Invalid path: " + path);
         }
+    }
+
+    private Container getContainerForName(String containerName) {
+        List<Container> containers = dockerClient.listContainersCmd().withShowAll(true).exec();
+        return containers.stream().filter(container -> container.getNames()[0].equals("/" + containerName)).findFirst().orElse(null);
     }
 }

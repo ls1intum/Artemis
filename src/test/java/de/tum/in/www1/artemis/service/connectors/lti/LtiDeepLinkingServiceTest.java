@@ -7,6 +7,11 @@ import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
@@ -66,7 +71,7 @@ class LtiDeepLinkingServiceTest {
     }
 
     @Test
-    void testPerformDeepLinking() {
+    void testPerformDeepLinking() throws MalformedURLException {
         createMockOidcIdToken();
         when(tokenRetriever.createDeepLinkingJWT(anyString(), anyMap())).thenReturn("test_jwt");
 
@@ -78,7 +83,7 @@ class LtiDeepLinkingServiceTest {
     }
 
     @Test
-    void testEmptyJwtBuildLtiDeepLinkResponse() {
+    void testEmptyJwtBuildLtiDeepLinkResponse() throws MalformedURLException {
         createMockOidcIdToken();
         when(tokenRetriever.createDeepLinkingJWT(anyString(), anyMap())).thenReturn(null);
 
@@ -90,7 +95,7 @@ class LtiDeepLinkingServiceTest {
     }
 
     @Test
-    void testEmptyReturnUrlBuildLtiDeepLinkResponse() throws JsonProcessingException {
+    void testEmptyReturnUrlBuildLtiDeepLinkResponse() throws JsonProcessingException, MalformedURLException {
         createMockOidcIdToken();
         when(tokenRetriever.createDeepLinkingJWT(anyString(), anyMap())).thenReturn("test_jwt");
         ObjectMapper mapper = new ObjectMapper();
@@ -129,7 +134,7 @@ class LtiDeepLinkingServiceTest {
     }
 
     @Test
-    void testEmptyDeploymentIdBuildLtiDeepLinkResponse() {
+    void testEmptyDeploymentIdBuildLtiDeepLinkResponse() throws MalformedURLException {
         createMockOidcIdToken();
         when(tokenRetriever.createDeepLinkingJWT(anyString(), anyMap())).thenReturn("test_jwt");
         when(oidcIdToken.getClaim(de.tum.in.www1.artemis.domain.lti.Claims.LTI_DEPLOYMENT_ID)).thenReturn(null);
@@ -140,17 +145,22 @@ class LtiDeepLinkingServiceTest {
                 .withMessage("Missing claim: " + Claims.LTI_DEPLOYMENT_ID);
     }
 
-    private void createMockOidcIdToken() {
+    private void createMockOidcIdToken() throws MalformedURLException {
         Map<String, Object> mockSettings = new TreeMap<>();
         mockSettings.put("deep_link_return_url", "test_return_url");
         when(oidcIdToken.getClaim(Claims.DEEP_LINKING_SETTINGS)).thenReturn(mockSettings);
-
         when(oidcIdToken.getClaim("iss")).thenReturn("http://artemis.com");
         when(oidcIdToken.getClaim("aud")).thenReturn("http://moodle.com");
         when(oidcIdToken.getClaim("exp")).thenReturn("12345");
         when(oidcIdToken.getClaim("iat")).thenReturn("test");
         when(oidcIdToken.getClaim("nonce")).thenReturn("1234-34535-abcbcbd");
+        when(oidcIdToken.getIssuer()).thenReturn(new URL("http://artemis.com"));
+        when(oidcIdToken.getAudience()).thenReturn(Arrays.asList("http://moodle.com"));
+        when(oidcIdToken.getExpiresAt()).thenReturn(Instant.now().plus(2, ChronoUnit.HOURS));
+        when(oidcIdToken.getIssuedAt()).thenReturn(Instant.now());
+        when(oidcIdToken.getNonce()).thenReturn("1234-34535-abcbcbd");
         when(oidcIdToken.getClaim(Claims.LTI_DEPLOYMENT_ID)).thenReturn("1");
+        when(oidcIdToken.getClaimAsString(Claims.LTI_DEPLOYMENT_ID)).thenReturn("1");
     }
 
     private Exercise createMockExercise(long exerciseId, long courseId) {

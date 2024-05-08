@@ -1,10 +1,12 @@
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { DifficultyLevel, Exercise } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+
 export type TimeGroupCategory = 'past' | 'current' | 'future' | 'noDate';
+export type TutorialGroupCategory = 'all' | 'registered' | 'further';
 export type SidebarTypes = 'exercise' | 'default';
 
-export type AccordionGroups = Record<TimeGroupCategory, { entityData: SidebarCardElement[] }>;
+export type AccordionGroups = Record<TimeGroupCategory | TutorialGroupCategory | string, { entityData: SidebarCardElement[] }>;
 export type ExerciseCollapseState = Record<TimeGroupCategory, boolean>;
 
 export interface SidebarData {
