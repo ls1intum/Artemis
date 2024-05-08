@@ -299,7 +299,7 @@ public class LocalCIDockerService {
             File dockerRootDirectory = new File(Objects.requireNonNullElse(dockerClient.infoCmd().exec().getDockerRootDir(), "/"));
             long usableSpace = dockerRootDirectory.getUsableSpace();
 
-            long threshold = convertMbToBytes(imageCleanupDiskSpaceThresholdMb);
+            long threshold = convertMegabytesToBytes(imageCleanupDiskSpaceThresholdMb);
 
             if (usableSpace >= threshold) {
                 return;
@@ -373,7 +373,7 @@ public class LocalCIDockerService {
         return imageNames;
     }
 
-    private long convertMbToBytes(int mb) {
+    private long convertMegabytesToBytes(int mb) {
         long byteConversionRate = 1024L;
         return mb * byteConversionRate * byteConversionRate;
     }
