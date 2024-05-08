@@ -18,6 +18,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { GitDiffReportComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { HttpResponse } from '@angular/common/http';
+
 describe('CommitDetailsViewComponent', () => {
     let component: CommitDetailsViewComponent;
     let fixture: ComponentFixture<CommitDetailsViewComponent>;
@@ -146,7 +147,6 @@ describe('CommitDetailsViewComponent', () => {
 
         // Expect subscription to be unsubscribed
         expect(component.paramSub?.closed).toBeTrue();
-        expect(component.commitsInfoSubscription?.closed).toBeTrue();
     });
 
     it('should handle commits for template participation', () => {
@@ -165,7 +165,6 @@ describe('CommitDetailsViewComponent', () => {
 
         // Expect subscription to be unsubscribed
         expect(component.paramSub?.closed).toBeTrue();
-        expect(component.commitsInfoSubscription?.closed).toBeTrue();
     });
 
     it('should handle new report for commit with template', () => {
@@ -182,7 +181,6 @@ describe('CommitDetailsViewComponent', () => {
 
         // Expect subscription to be unsubscribed
         expect(component.paramSub?.closed).toBeTrue();
-        expect(component.commitsInfoSubscription?.closed).toBeTrue();
         expect(component.repoFilesSubscription?.closed).toBeTrue();
     });
 
@@ -203,7 +201,6 @@ describe('CommitDetailsViewComponent', () => {
 
         // Expect subscription to be unsubscribed
         expect(component.paramSub?.closed).toBeTrue();
-        expect(component.commitsInfoSubscription?.closed).toBeTrue();
         expect(component.repoFilesSubscription?.closed).toBeTrue();
     });
 
@@ -222,7 +219,6 @@ describe('CommitDetailsViewComponent', () => {
 
         // Expect subscription to be unsubscribed
         expect(component.paramSub?.closed).toBeTrue();
-        expect(component.commitsInfoSubscription?.closed).toBeTrue();
         expect(component.repoFilesSubscription?.closed).toBeTrue();
     });
 
@@ -242,7 +238,6 @@ describe('CommitDetailsViewComponent', () => {
 
         // Expect subscription to be unsubscribed
         expect(component.paramSub?.closed).toBeTrue();
-        expect(component.commitsInfoSubscription?.closed).toBeTrue();
         expect(component.repoFilesSubscription?.closed).toBeTrue();
         expect(component.participationRepoFilesAtLeftCommitSubscription?.closed).toBeTrue();
         expect(component.participationRepoFilesAtRightCommitSubscription?.closed).toBeTrue();
@@ -271,7 +266,6 @@ describe('CommitDetailsViewComponent', () => {
 
         // Expect subscription to be unsubscribed
         expect(component.paramSub?.closed).toBeTrue();
-        expect(component.commitsInfoSubscription?.closed).toBeTrue();
         expect(component.repoFilesSubscription?.closed).toBeTrue();
         expect(component.participationRepoFilesAtLeftCommitSubscription?.closed).toBeTrue();
         expect(component.participationRepoFilesAtRightCommitSubscription?.closed).toBeTrue();
@@ -310,7 +304,6 @@ describe('CommitDetailsViewComponent', () => {
 
         // Expect subscription to be unsubscribed
         expect(component.paramSub?.closed).toBeTrue();
-        expect(component.commitsInfoSubscription?.closed).toBeTrue();
         expect(component.repoFilesSubscription?.closed).toBeTrue();
         expect(component.participationRepoFilesAtLeftCommitSubscription?.closed).toBeTrue();
         expect(component.participationRepoFilesAtRightCommitSubscription?.closed).toBeTrue();

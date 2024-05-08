@@ -22,7 +22,6 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
     errorWhileFetchingRepos = false;
     leftCommitFileContentByPath: Map<string, string>;
     rightCommitFileContentByPath: Map<string, string>;
-    commitsInfoSubscription: Subscription;
     commits: CommitInfo[] = [];
     currentCommit: CommitInfo;
     previousCommit: CommitInfo;
@@ -46,7 +45,6 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
         this.participationRepoFilesAtLeftCommitSubscription?.unsubscribe();
         this.participationRepoFilesAtRightCommitSubscription?.unsubscribe();
         this.paramSub?.unsubscribe();
-        this.commitsInfoSubscription?.unsubscribe();
         this.participationSub?.unsubscribe();
     }
 
