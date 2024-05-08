@@ -90,7 +90,21 @@ public class RepositoryService {
         return fileList;
     }
 
-    // TODO: docs and cleanup
+    /**
+     * Retrieves the content of files at a specific commit in a given repository.
+     * You must specify either repository type TESTS or a participation id for all other repository types.
+     * If the local VCS is active, it logs an info message and operates directly on the bare repository.
+     * If the repository type is TESTS, it checks out the tests repository, otherwise it checks out the repository at the commit.
+     * After getting the files content, it switches back to the default branch head if necessary.
+     *
+     * @param programmingExercise The programming exercise which contains the VCS repository.
+     * @param commitId            The commit identifier from which to extract file contents.
+     * @param repositoryType      The type of the repository (e.g., TESTS, TEMPLATE, etc.).
+     * @param participationId     The id of the participation related to the repository.
+     * @return A map where each key is a file path and each value is the content of the file as a String.
+     * @throws IOException     If an I/O error occurs during the file content retrieval process.
+     * @throws GitAPIException If an error occurs while interacting with the Git repository.
+     */
     public Map<String, String> getFilesContentAtCommit(ProgrammingExercise programmingExercise, String commitId, RepositoryType repositoryType, Long participationId)
             throws IOException, GitAPIException {
         if (!Objects.equals(repositoryType, RepositoryType.TESTS) && participationId == null) {
