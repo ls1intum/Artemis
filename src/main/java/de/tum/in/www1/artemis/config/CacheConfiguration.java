@@ -188,7 +188,7 @@ public class CacheConfiguration {
         config.getSerializationConfig().addSerializerConfig(createPathSerializerConfig());
 
         if (registration == null) {
-            log.warn("No discovery service is set up, Hazelcast cannot create a cluster.");
+            log.info("No discovery service is set up, Hazelcast cannot create a cluster.");
             hazelcastBindOnlyOnInterface("127.0.0.1", config);
         }
         else {
@@ -270,7 +270,7 @@ public class CacheConfiguration {
 
     private void configureQueueCluster(Config config, JHipsterProperties jHipsterProperties) {
         // Queue specific configurations
-        log.info("Configure Build Job Queue synchronization in Hazelcast for Local CI");
+        log.debug("Configure Build Job Queue synchronization in Hazelcast for Local CI");
         QueueConfig queueConfig = new QueueConfig("buildJobQueue");
         queueConfig.setBackupCount(jHipsterProperties.getCache().getHazelcast().getBackupCount());
         queueConfig.setPriorityComparatorClassName("de.tum.in.www1.artemis.service.connectors.localci.LocalCIPriorityQueueComparator");
@@ -279,7 +279,7 @@ public class CacheConfiguration {
 
     private void hazelcastBindOnlyOnInterface(String hazelcastInterface, Config config) {
         // Hazelcast should bind to the interface and use it as local and public address
-        log.info("Binding Hazelcast to interface {}", hazelcastInterface);
+        log.debug("Binding Hazelcast to interface {}", hazelcastInterface);
         System.setProperty("hazelcast.local.localAddress", hazelcastInterface);
         System.setProperty("hazelcast.local.publicAddress", hazelcastInterface);
         config.getNetworkConfig().getInterfaces().setEnabled(true).setInterfaces(Collections.singleton(hazelcastInterface));

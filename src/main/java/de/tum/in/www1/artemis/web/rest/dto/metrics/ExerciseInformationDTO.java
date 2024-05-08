@@ -34,6 +34,7 @@ public record ExerciseInformationDTO(long id, String shortName, String title, Zo
         }
 
         if (other instanceof ExerciseInformationDTO otherDTO) {
+            // Compare all fields for equality, for dates the isEqual method is used to compare the date and time
             return id == otherDTO.id && shortName.equals(otherDTO.shortName) && title.equals(otherDTO.title) && start.isEqual(otherDTO.start) && due.isEqual(otherDTO.due)
                     && type.equals(otherDTO.type);
         }

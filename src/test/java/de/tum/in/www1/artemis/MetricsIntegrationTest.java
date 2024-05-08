@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis;
 
 import static de.tum.in.www1.artemis.service.util.ZonedDateTimeUtil.toRelativeTime;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 import java.util.Comparator;
 import java.util.function.Function;
@@ -10,6 +11,7 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -17,12 +19,20 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.repository.ParticipantScoreRepository;
+import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.ExerciseInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.StudentMetricsDTO;
 
 class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "metricsintegration";
+
+    @Autowired
+    private ParticipantScoreScheduleService participantScoreScheduleService;
+
+    @Autowired
+    private ParticipantScoreRepository participantScoreRepository;
 
     private Course course;
 
@@ -41,6 +51,8 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         course = courseUtilService.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, true);
 
         userUtilService.createAndSaveUser(TEST_PREFIX + "user1337");
+
+        participantScoreScheduleService.activate();
     }
 
     @Nested
@@ -74,6 +86,7 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         @Test
         @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
         void shouldReturnAverageScores() throws Exception {
+            await().until(() -> !participantScoreRepository.findAllByCourseId(course.getId()).isEmpty());
             final var result = request.get("/api/metrics/course/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
             assertThat(result).isNotNull();
             assertThat(result.exerciseMetrics()).isNotNull();
