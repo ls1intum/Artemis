@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { Subscription } from 'rxjs';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { Competency } from 'app/entities/competency.model';
 import { onError } from 'app/shared/util/global.utils';
@@ -35,6 +35,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
         private courseStorageService: CourseStorageService,
         private alertService: AlertService,
         private route: ActivatedRoute,
+        private router: Router,
         private competencyService: CompetencyService,
     ) {}
 
@@ -86,6 +87,13 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     handleToggle(event: ICompetencyAccordionToggleEvent) {
         this.openedAccordionIndex = event.opened ? event.index : null;
     }
+    get learningPathsEnabled() {
+        return this.course?.learningPathsEnabled || false;
+    }
 
     protected readonly FeatureToggle = FeatureToggle;
+
+    navigateToLearningPaths() {
+        this.router.navigate(['courses', this.courseId, 'learning-path']);
+    }
 }

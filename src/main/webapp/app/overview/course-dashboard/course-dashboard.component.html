@@ -19,4 +19,9 @@
             }
         </div>
     </div>
+    @if (learningPathsEnabled) {
+        <div class="competency-accordion-container row justify-content-center w-100" [jhiFeatureToggleHide]="FeatureToggle.LearningPaths">
+            <button class="btn btn-primary mt-2" (click)="navigateToLearningPaths()">Show Learning Path</button>
+        </div>
+    }
 </div>

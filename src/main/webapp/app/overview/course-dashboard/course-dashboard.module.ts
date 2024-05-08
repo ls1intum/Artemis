@@ -7,6 +7,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
+import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 
 const routes: Routes = [
     {
@@ -24,6 +25,6 @@ const routes: Routes = [
 @NgModule({
     declarations: [CourseDashboardComponent],
     exports: [CourseDashboardComponent],
-    imports: [CommonModule, RouterModule.forChild(routes), ArtemisSharedModule, FontAwesomeModule, ArtemisCompetenciesModule],
+    imports: [CommonModule, RouterModule.forChild(routes), ArtemisSharedModule, FontAwesomeModule, ArtemisCompetenciesModule, FeatureToggleModule],
 })
 export class CourseDashboardModule {}
