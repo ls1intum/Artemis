@@ -14,7 +14,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.service.connectors.iris.IrisConnectorException;
 import de.tum.in.www1.artemis.service.connectors.iris.IrisConnectorService;
-import de.tum.in.www1.artemis.service.iris.exception.*;
+import de.tum.in.www1.artemis.service.iris.exception.IrisForbiddenException;
+import de.tum.in.www1.artemis.service.iris.exception.IrisInternalPyrisErrorException;
+import de.tum.in.www1.artemis.service.iris.exception.IrisInvalidTemplateException;
+import de.tum.in.www1.artemis.service.iris.exception.IrisModelNotAvailableException;
 
 class IrisConnectorServiceTest extends AbstractIrisIntegrationTest {
 

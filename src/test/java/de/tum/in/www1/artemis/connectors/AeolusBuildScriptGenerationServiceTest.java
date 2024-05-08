@@ -77,10 +77,7 @@ class AeolusBuildScriptGenerationServiceTest extends AbstractSpringIntegrationLo
     private Windfile getWindfile() {
         Windfile windfile = new Windfile();
         windfile.setApi("v0.0.1");
-        windfile.setMetadata(new WindfileMetadata());
-        windfile.getMetadata().setName("test");
-        windfile.getMetadata().setDescription("test");
-        windfile.getMetadata().setId("test");
+        windfile.setMetadata(new WindfileMetadata("test", "test", "test", null, null, null, null, null));
         return windfile;
     }
 

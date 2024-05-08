@@ -131,7 +131,7 @@ describe('Exam assessment', () => {
         });
     });
 
-    describe('Quiz exercise assessment', () => {
+    describe.only('Quiz exercise assessment', () => {
         let resultDate: Dayjs;
 
         before('Prepare exam', () => {

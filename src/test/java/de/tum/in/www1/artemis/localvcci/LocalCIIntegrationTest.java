@@ -7,7 +7,13 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyBoolean;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -15,8 +21,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
+import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,7 +51,6 @@ import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.enumeration.BuildStatus;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
-import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.BuildJobRepository;
@@ -49,7 +59,6 @@ import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.ResultBuildJob;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCServletService;
 import de.tum.in.www1.artemis.util.LocalRepository;
-import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWebsocketError;
 
 class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
@@ -88,6 +97,8 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
                 Map.of("testCommitHash", DUMMY_COMMIT_HASH), Map.of("testCommitHash", DUMMY_COMMIT_HASH));
         localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, LOCALCI_WORKING_DIRECTORY + "/testing-dir/assignment/.git/refs/heads/[^/]+",
                 Map.of("commitHash", commitHash), Map.of("commitHash", commitHash));
+
+        localVCLocalCITestService.mockInspectImage(dockerClient);
     }
 
     @AfterEach
@@ -127,7 +138,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         assertThat(buildJob.getCourseId()).isEqualTo(course.getId());
         assertThat(buildJob.getExerciseId()).isEqualTo(programmingExercise.getId());
         assertThat(buildJob.getParticipationId()).isEqualTo(studentParticipation.getId());
-        assertThat(buildJob.getDockerImage()).isEqualTo(programmingExercise.getWindfile().getMetadata().getDocker().getFullImageName());
+        assertThat(buildJob.getDockerImage()).isEqualTo(programmingExercise.getWindfile().getMetadata().docker().getFullImageName());
         assertThat(buildJob.getRepositoryName()).isEqualTo(assignmentRepositorySlug);
         assertThat(buildJob.getBuildAgentAddress()).isNotEmpty();
         assertThat(buildJob.getPriority()).isEqualTo(2);
@@ -260,6 +271,9 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testIOExceptionWhenParsingTestResults() {
+        String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
+        doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(any());
+
         ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
         // Return an InputStream from dockerClient.copyArchiveFromContainerCmd().exec() such that repositoryTarInputStream.getNextTarEntry() throws an IOException.
@@ -276,11 +290,10 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
         localVCServletService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
 
-        await().untilAsserted(() -> verify(programmingMessagingService).notifyUserAboutSubmissionError(Mockito.eq(studentParticipation), any()));
+        await().untilAsserted(() -> verify(programmingMessagingService).notifyUserAboutNewResult(any(), Mockito.eq(studentParticipation)));
 
         // Should notify the user.
-        verifyUserNotification(studentParticipation,
-                "java.util.concurrent.ExecutionException: de.tum.in.www1.artemis.exception.LocalCIException: Error while parsing test results");
+        verifyUserNotification(studentParticipation);
     }
 
     @Test
@@ -406,13 +419,10 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         }
     }
 
-    private void verifyUserNotification(Participation participation, String errorMessage) {
-        BuildTriggerWebsocketError expectedError = new BuildTriggerWebsocketError(errorMessage, participation.getId());
-        await().untilAsserted(
-                () -> verify(programmingMessagingService).notifyUserAboutSubmissionError(Mockito.eq(participation), argThat((BuildTriggerWebsocketError actualError) -> {
-                    assertThat(actualError.getError()).isEqualTo(expectedError.getError());
-                    assertThat(actualError.getParticipationId()).isEqualTo(expectedError.getParticipationId());
-                    return true;
-                })));
+    private void verifyUserNotification(ProgrammingExerciseStudentParticipation participation) {
+        await().untilAsserted(() -> verify(programmingMessagingService).notifyUserAboutNewResult(argThat((Result result) -> {
+            assertThat(result.isSuccessful()).isFalse();
+            return true;
+        }), Mockito.eq(participation)));
     }
 }

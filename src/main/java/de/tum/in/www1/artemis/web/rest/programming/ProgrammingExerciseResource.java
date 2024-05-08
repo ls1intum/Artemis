@@ -1,26 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.programming;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
-import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.AUXILIARY_REPOSITORY;
-import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.BUILD_LOG_STATISTICS;
-import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.COMBINE_COMMITS;
-import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.GENERATE_TESTS;
-import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.GET_FOR_COURSE;
-import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.PROBLEM;
-import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.PROGRAMMING_EXERCISE;
-import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.PROGRAMMING_EXERCISES;
-import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.PROGRAMMING_EXERCISE_WITH_PARTICIPATIONS;
-import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.PROGRAMMING_EXERCISE_WITH_TEMPLATE_AND_SOLUTION_PARTICIPATION;
-import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.REEVALUATE_EXERCISE;
-import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.RESET;
-import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.ROOT;
-import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.SETUP;
-import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.SOLUTION_REPOSITORY_FILES_WITH_CONTENT;
-import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.SOLUTION_REPOSITORY_FILE_NAMES;
-import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.TASKS;
-import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.TEMPLATE_REPOSITORY_FILES_WITH_CONTENT;
-import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.TEST_CASE_STATE;
-import static de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEndpoints.TIMELINE;
 
 import java.io.IOException;
 import java.net.URI;
@@ -53,6 +33,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.ModelAndView;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.Course;
@@ -114,7 +96,7 @@ import de.tum.in.www1.artemis.web.websocket.dto.ProgrammingExerciseTestCaseState
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping(ROOT)
+@RequestMapping("api/")
 public class ProgrammingExerciseResource {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseResource.class);
@@ -245,7 +227,7 @@ public class ProgrammingExerciseResource {
      * @param programmingExercise the programmingExercise to set up
      * @return the ResponseEntity with status 201 (Created) and with body the new programmingExercise, or with status 400 (Bad Request) if the parameters are invalid
      */
-    @PostMapping(SETUP)
+    @PostMapping("programming-exercises/setup")
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<ProgrammingExercise> createProgrammingExercise(@RequestBody ProgrammingExercise programmingExercise) {
@@ -287,11 +269,11 @@ public class ProgrammingExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the updated ProgrammingExercise, or with status 400 (Bad Request) if the updated ProgrammingExercise
      *         is not valid, or with status 500 (Internal Server Error) if the updated ProgrammingExercise couldn't be saved to the database
      */
-    @PutMapping(PROGRAMMING_EXERCISES)
+    @PutMapping("programming-exercises")
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<ProgrammingExercise> updateProgrammingExercise(@RequestBody ProgrammingExercise updatedProgrammingExercise,
-            @RequestParam(value = "notificationText", required = false) String notificationText) {
+            @RequestParam(value = "notificationText", required = false) String notificationText) throws JsonProcessingException {
         log.debug("REST request to update ProgrammingExercise : {}", updatedProgrammingExercise);
         if (updatedProgrammingExercise.getId() == null) {
             throw new BadRequestAlertException("Programming exercise cannot have an empty id when updating", ENTITY_NAME, "noProgrammingExerciseId");
@@ -372,7 +354,7 @@ public class ProgrammingExerciseResource {
      * @return the ResponseEntity with status 200 (OK) with the updated ProgrammingExercise, or with status 403 (Forbidden)
      *         if the user is not allowed to update the exercise or with 404 (Not Found) if the updated ProgrammingExercise couldn't be found in the database
      */
-    @PutMapping(TIMELINE)
+    @PutMapping("programming-exercises/timeline")
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<ProgrammingExercise> updateProgrammingExerciseTimeline(@RequestBody ProgrammingExercise updatedProgrammingExercise,
@@ -396,7 +378,7 @@ public class ProgrammingExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the updated problemStatement, with status 404 if the programmingExercise could not be found, or with 403 if the
      *         user does not have permissions to access the programming exercise.
      */
-    @PatchMapping(PROBLEM)
+    @PatchMapping("programming-exercises/{exerciseId}/problem-statement")
     @EnforceAtLeastEditor
     public ResponseEntity<ProgrammingExercise> updateProblemStatement(@PathVariable long exerciseId, @RequestBody String updatedProblemStatement,
             @RequestParam(value = "notificationText", required = false) String notificationText) {
@@ -419,7 +401,7 @@ public class ProgrammingExerciseResource {
      * @param courseId of the course for which the exercise should be fetched
      * @return the ResponseEntity with status 200 (OK) and the list of programmingExercises in body
      */
-    @GetMapping(GET_FOR_COURSE)
+    @GetMapping("courses/{courseId}/programming-exercises")
     @EnforceAtLeastTutor
     public ResponseEntity<List<ProgrammingExercise>> getProgrammingExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all ProgrammingExercises for the course with id : {}", courseId);
@@ -451,7 +433,7 @@ public class ProgrammingExerciseResource {
      * @param withPlagiarismDetectionConfig boolean flag whether to include the plagiarism detection config of the exercise
      * @return the ResponseEntity with status 200 (OK) and with body the programmingExercise, or with status 404 (Not Found)
      */
-    @GetMapping(PROGRAMMING_EXERCISE)
+    @GetMapping("programming-exercises/{exerciseId}")
     @EnforceAtLeastTutor
     public ResponseEntity<ProgrammingExercise> getProgrammingExercise(@PathVariable long exerciseId, @RequestParam(defaultValue = "false") boolean withPlagiarismDetectionConfig) {
         log.debug("REST request to get ProgrammingExercise : {}", exerciseId);
@@ -486,7 +468,7 @@ public class ProgrammingExerciseResource {
      * @param exerciseId the id of the programmingExercise to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the programmingExercise, or with status 404 (Not Found)
      */
-    @GetMapping(PROGRAMMING_EXERCISE_WITH_PARTICIPATIONS)
+    @GetMapping("programming-exercises/{exerciseId}/with-participations")
     @EnforceAtLeastEditor
     public ResponseEntity<ProgrammingExercise> getProgrammingExerciseWithSetupParticipations(@PathVariable long exerciseId) {
         log.debug("REST request to get ProgrammingExercise : {}", exerciseId);
@@ -510,7 +492,7 @@ public class ProgrammingExerciseResource {
      * @param withGradingCriteria   also get the grading criteria for the exercise
      * @return the ResponseEntity with status 200 (OK) and the programming exercise with template and solution participation, or with status 404 (Not Found)
      */
-    @GetMapping(PROGRAMMING_EXERCISE_WITH_TEMPLATE_AND_SOLUTION_PARTICIPATION)
+    @GetMapping("programming-exercises/{exerciseId}/with-template-and-solution-participation")
     @EnforceAtLeastTutor
     public ResponseEntity<ProgrammingExercise> getProgrammingExerciseWithTemplateAndSolutionParticipation(@PathVariable long exerciseId,
             @RequestParam(defaultValue = "false") boolean withSubmissionResults, @RequestParam(defaultValue = "false") boolean withGradingCriteria) {
@@ -554,7 +536,7 @@ public class ProgrammingExerciseResource {
      * @param deleteBaseReposBuildPlans    the ResponseEntity with status 200 (OK)
      * @return the ResponseEntity with status 200 (OK) when programming exercise has been successfully deleted or with status 404 (Not Found)
      */
-    @DeleteMapping(PROGRAMMING_EXERCISE)
+    @DeleteMapping("programming-exercises/{exerciseId}")
     @EnforceAtLeastInstructor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> deleteProgrammingExercise(@PathVariable long exerciseId, @RequestParam(defaultValue = "false") boolean deleteStudentReposBuildPlans,
@@ -577,7 +559,7 @@ public class ProgrammingExerciseResource {
      *         403 (Forbidden) if the user is not admin and course instructor or
      *         500 (Internal Server Error)
      */
-    @PutMapping(value = COMBINE_COMMITS, produces = MediaType.TEXT_PLAIN_VALUE)
+    @PutMapping(value = "programming-exercises/{exerciseId}/combine-template-commits", produces = MediaType.TEXT_PLAIN_VALUE)
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> combineTemplateRepositoryCommits(@PathVariable long exerciseId) {
@@ -600,7 +582,7 @@ public class ProgrammingExerciseResource {
      * @param exerciseId The ID of the programming exercise for which the structure oracle should get generated
      * @return The ResponseEntity with status 201 (Created) or with status 400 (Bad Request) if the parameters are invalid
      */
-    @PutMapping(value = GENERATE_TESTS, produces = MediaType.TEXT_PLAIN_VALUE)
+    @PutMapping(value = "programming-exercises/{exerciseId}/generate-tests", produces = MediaType.TEXT_PLAIN_VALUE)
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<String> generateStructureOracleForExercise(@PathVariable long exerciseId) {
@@ -649,7 +631,7 @@ public class ProgrammingExerciseResource {
      * @param exerciseId the id of a ProgrammingExercise
      * @return the ResponseEntity with status 200 (OK) and ProgrammingExerciseTestCaseStateDTO. Returns 404 (notFound) if the exercise does not exist.
      */
-    @GetMapping(TEST_CASE_STATE)
+    @GetMapping("programming-exercises/{exerciseId}/test-case-state")
     @EnforceAtLeastTutor
     public ResponseEntity<ProgrammingExerciseTestCaseStateDTO> hasAtLeastOneStudentResult(@PathVariable long exerciseId) {
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(exerciseId);
@@ -669,7 +651,7 @@ public class ProgrammingExerciseResource {
      * @param isExamFilter   Whether to search in the groups for exercises
      * @return The desired page, sorted and matching the given query
      */
-    @GetMapping(PROGRAMMING_EXERCISES)
+    @GetMapping("programming-exercises")
     @EnforceAtLeastEditor
     public ResponseEntity<SearchResultPageDTO<ProgrammingExercise>> getAllExercisesOnPage(SearchTermPageableSearchDTO<String> search,
             @RequestParam(defaultValue = "true") boolean isCourseFilter, @RequestParam(defaultValue = "true") boolean isExamFilter) {
@@ -687,7 +669,7 @@ public class ProgrammingExerciseResource {
      * @param programmingLanguage Filters for only exercises with this language
      * @return The desired page, sorted and matching the given query
      */
-    @GetMapping(PROGRAMMING_EXERCISES + "/with-sca")
+    @GetMapping("/programming-exercises/with-sca")
     @EnforceAtLeastEditor
     public ResponseEntity<SearchResultPageDTO<ProgrammingExercise>> getAllExercisesWithSCAOnPage(SearchTermPageableSearchDTO<String> search,
             @RequestParam(defaultValue = "true") boolean isCourseFilter, @RequestParam(defaultValue = "true") boolean isExamFilter,
@@ -703,7 +685,7 @@ public class ProgrammingExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and the list of auxiliary repositories for the
      *         given programming exercise. 404 when the programming exercise was not found.
      */
-    @GetMapping(AUXILIARY_REPOSITORY)
+    @GetMapping("programming-exercises/{exerciseId}/auxiliary-repository")
     @EnforceAtLeastTutor
     public ResponseEntity<List<AuxiliaryRepository>> getAuxiliaryRepositories(@PathVariable Long exerciseId) {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithAuxiliaryRepositoriesElseThrow(exerciseId);
@@ -725,11 +707,12 @@ public class ProgrammingExerciseResource {
      * @param programmingExerciseResetOptionsDTO - Data Transfer Object specifying which operations to perform during the exercise reset.
      * @return ResponseEntity<Void> - The ResponseEntity with status 200 (OK) if the reset was successful.
      */
-    @PutMapping(RESET)
+    @PutMapping("programming-exercises/{exerciseId}/reset")
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<Void> reset(@PathVariable Long exerciseId, @RequestBody ProgrammingExerciseResetOptionsDTO programmingExerciseResetOptionsDTO) {
-        log.debug("REST request to reset ProgrammingExercise : {}", exerciseId);
+    public ResponseEntity<Void> reset(@PathVariable Long exerciseId, @RequestBody ProgrammingExerciseResetOptionsDTO programmingExerciseResetOptionsDTO)
+            throws JsonProcessingException {
+        log.debug("REST request to reset programming exercise {} with options {}", exerciseId, programmingExerciseResetOptionsDTO);
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(exerciseId);
         final var user = userRepository.getUserWithGroupsAndAuthorities();
 
@@ -763,11 +746,11 @@ public class ProgrammingExerciseResource {
      *         ProgrammingExercise
      *         couldn't be updated
      */
-    @PutMapping(REEVALUATE_EXERCISE)
+    @PutMapping("programming-exercises/{exerciseId}/re-evaluate")
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<ProgrammingExercise> reEvaluateAndUpdateProgrammingExercise(@PathVariable long exerciseId, @RequestBody ProgrammingExercise programmingExercise,
-            @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) {
+            @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) throws JsonProcessingException {
         log.debug("REST request to re-evaluate ProgrammingExercise : {}", programmingExercise);
         // check that the exercise exists for given id
         programmingExerciseRepository.findByIdElseThrow(exerciseId);
@@ -791,7 +774,7 @@ public class ProgrammingExerciseResource {
      * @return the {@link ResponseEntity} with status {@code 204},
      *         or with status {@code 400 (Bad Request) if the exerciseId is not valid}.
      */
-    @DeleteMapping(TASKS)
+    @DeleteMapping("programming-exercises/{exerciseId}/tasks")
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> deleteTaskWithSolutionEntries(@PathVariable Long exerciseId) {
@@ -813,7 +796,7 @@ public class ProgrammingExerciseResource {
      * @param exerciseId the exercise for which the solution repository files should be retrieved
      * @return a redirect to the endpoint returning the files with content
      */
-    @GetMapping(SOLUTION_REPOSITORY_FILES_WITH_CONTENT)
+    @GetMapping("programming-exercises/{exerciseId}/solution-files-content")
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ModelAndView redirectGetSolutionRepositoryFiles(@PathVariable Long exerciseId) {
@@ -836,7 +819,7 @@ public class ProgrammingExerciseResource {
      * @param exerciseId the exercise for which the template repository files should be retrieved
      * @return a redirect to the endpoint returning the files with content
      */
-    @GetMapping(TEMPLATE_REPOSITORY_FILES_WITH_CONTENT)
+    @GetMapping("programming-exercises/{exerciseId}/template-files-content")
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ModelAndView redirectGetTemplateRepositoryFiles(@PathVariable Long exerciseId) {
@@ -859,7 +842,7 @@ public class ProgrammingExerciseResource {
      * @param exerciseId the exercise for which the solution repository files should be retrieved
      * @return a redirect to the endpoint returning the files with content
      */
-    @GetMapping(SOLUTION_REPOSITORY_FILE_NAMES)
+    @GetMapping("programming-exercises/{exerciseId}/file-names")
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ModelAndView redirectGetSolutionRepositoryFilesWithoutContent(@PathVariable Long exerciseId) {
@@ -880,7 +863,7 @@ public class ProgrammingExerciseResource {
      * @param exerciseId the exercise for which the build log statistics should be retrieved
      * @return a DTO containing the average build log statistics
      */
-    @GetMapping(BUILD_LOG_STATISTICS)
+    @GetMapping("programming-exercises/{exerciseId}/build-log-statistics")
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<BuildLogStatisticsDTO> getBuildLogStatistics(@PathVariable Long exerciseId) {

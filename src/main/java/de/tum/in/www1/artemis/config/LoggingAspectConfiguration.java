@@ -3,7 +3,10 @@ package de.tum.in.www1.artemis.config;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
-import org.springframework.context.annotation.*;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.EnableAspectJAutoProxy;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 
 import de.tum.in.www1.artemis.aop.logging.LoggingAspect;

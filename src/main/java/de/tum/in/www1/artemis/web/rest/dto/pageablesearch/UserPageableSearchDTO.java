@@ -5,6 +5,7 @@ import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+// TODO: convert to Record, use composition for common attributes
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class UserPageableSearchDTO extends SearchTermPageableSearchDTO<String> {
 

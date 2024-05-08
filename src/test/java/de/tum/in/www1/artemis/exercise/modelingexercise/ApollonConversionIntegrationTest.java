@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.exercise.modelingexercise;
 
-import static de.tum.in.www1.artemis.config.Constants.APOLLON_CONVERSION_API_PATH;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.ByteArrayInputStream;
@@ -69,7 +68,7 @@ class ApollonConversionIntegrationTest extends AbstractSpringIntegrationIndepend
         final var requestBody = new ApollonModelDTO();
         requestBody.setModel(model);
 
-        String response = request.postWithResponseBodyString(APOLLON_CONVERSION_API_PATH, requestBody, HttpStatus.OK);
+        String response = request.postWithResponseBodyString("/api/apollon/convert-to-pdf", requestBody, HttpStatus.OK);
         assertThat(response).isEqualTo(mockPdf);
     }
 }

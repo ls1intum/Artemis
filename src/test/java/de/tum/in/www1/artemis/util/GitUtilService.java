@@ -2,7 +2,10 @@ package de.tum.in.www1.artemis.util;
 
 import static org.assertj.core.api.Fail.fail;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;

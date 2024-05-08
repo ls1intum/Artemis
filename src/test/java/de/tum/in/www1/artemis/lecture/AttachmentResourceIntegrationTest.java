@@ -19,10 +19,15 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Attachment;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.AttachmentRepository;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
 class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationIndependentTest {

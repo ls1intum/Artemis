@@ -25,8 +25,17 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.Competency;
-import de.tum.in.www1.artemis.domain.lecture.*;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
+import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
+import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
+import de.tum.in.www1.artemis.domain.lecture.LectureUnitCompletion;
+import de.tum.in.www1.artemis.domain.lecture.Slide;
+import de.tum.in.www1.artemis.repository.CompetencyRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.LectureRepository;
+import de.tum.in.www1.artemis.repository.LectureUnitCompletionRepository;
+import de.tum.in.www1.artemis.repository.LectureUnitRepository;
+import de.tum.in.www1.artemis.repository.SlideRepository;
 
 @Profile(PROFILE_CORE)
 @Service

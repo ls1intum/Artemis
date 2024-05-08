@@ -70,7 +70,7 @@ public class ProgrammingExerciseTestCaseResource {
      * @param exerciseId of the exercise.
      * @return the found test cases or an empty list if no test cases were found.
      */
-    @GetMapping(Endpoints.TEST_CASES)
+    @GetMapping("programming-exercises/{exerciseId}/test-cases")
     @EnforceAtLeastTutor
     public ResponseEntity<Set<ProgrammingExerciseTestCase>> getTestCases(@PathVariable Long exerciseId) {
         log.debug("REST request to get test cases for programming exercise {}", exerciseId);
@@ -90,7 +90,7 @@ public class ProgrammingExerciseTestCaseResource {
      * @param testCaseProgrammingExerciseTestCaseDTOS of the test cases to update the weights and visibility of.
      * @return the set of test cases for the given programming exercise.
      */
-    @PatchMapping(Endpoints.UPDATE_TEST_CASES)
+    @PatchMapping("programming-exercises/{exerciseId}/update-test-cases")
     @EnforceAtLeastEditor
     public ResponseEntity<Set<ProgrammingExerciseTestCase>> updateTestCases(@PathVariable Long exerciseId,
             @RequestBody Set<ProgrammingExerciseTestCaseDTO> testCaseProgrammingExerciseTestCaseDTOS) {
@@ -118,7 +118,7 @@ public class ProgrammingExerciseTestCaseResource {
      * @param exerciseId the id of the exercise to reset the test case weights of.
      * @return the updated set of test cases for the programming exercise.
      */
-    @PatchMapping(Endpoints.RESET)
+    @PatchMapping("programming-exercises/{exerciseId}/test-cases/reset")
     @EnforceAtLeastEditor
     public ResponseEntity<List<ProgrammingExerciseTestCase>> resetTestCases(@PathVariable Long exerciseId) {
         log.debug("REST request to reset the test case weights of exercise {}", exerciseId);
@@ -130,19 +130,5 @@ public class ProgrammingExerciseTestCaseResource {
 
         List<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseService.reset(programmingExercise);
         return ResponseEntity.ok(testCases);
-    }
-
-    public static final class Endpoints {
-
-        private static final String PROGRAMMING_EXERCISE = "/programming-exercises/{exerciseId}";
-
-        public static final String TEST_CASES = PROGRAMMING_EXERCISE + "/test-cases";
-
-        public static final String UPDATE_TEST_CASES = PROGRAMMING_EXERCISE + "/update-test-cases";
-
-        public static final String RESET = PROGRAMMING_EXERCISE + "/test-cases/reset";
-
-        private Endpoints() {
-        }
     }
 }
