@@ -138,8 +138,7 @@
                 <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.complaintOnAutomaticAssessmentTooltip'" />
             </div>
         }
-        @if (isExamMode) {
-            <!--            TODO only display this option during the initial import-->
+        @if (isExamMode && isImport) {
             <div class="form-check">
                 <input
                     type="checkbox"

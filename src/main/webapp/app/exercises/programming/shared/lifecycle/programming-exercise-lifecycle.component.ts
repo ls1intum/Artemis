@@ -10,6 +10,8 @@ import { Observable, Subject, Subscription } from 'rxjs';
 import { AthenaService } from 'app/assessment/athena.service';
 import { ProgrammingExerciseTestScheduleDatePickerComponent } from 'app/exercises/programming/shared/lifecycle/programming-exercise-test-schedule-date-picker.component';
 import { every } from 'lodash-es';
+import { ActivatedRoute } from '@angular/router';
+import { tap } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-programming-exercise-lifecycle',
@@ -41,11 +43,14 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
     isAthenaEnabled$: Observable<boolean> | undefined;
 
     setTestCaseVisibilityToAfterReleaseDateOfResults: boolean = false;
+    isImport: boolean = false;
+    private urlSubscription: Subscription;
 
     constructor(
         private translateService: TranslateService,
         private exerciseService: ExerciseService,
         private athenaService: AthenaService,
+        private activatedRoute: ActivatedRoute,
     ) {}
 
     /**
@@ -56,6 +61,23 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
             this.exercise.assessmentType = AssessmentType.AUTOMATIC;
         }
         this.isAthenaEnabled$ = this.athenaService.isEnabled();
+
+        this.updateIsImportBasedOnUrl();
+    }
+
+    private updateIsImportBasedOnUrl() {
+        let isImportFromExistingExercise = false;
+        let isImportFromFile = false;
+        this.urlSubscription = this.activatedRoute.url
+            .pipe(
+                tap((segments) => {
+                    isImportFromExistingExercise = segments.some((segment) => segment.path === 'import');
+                    isImportFromFile = segments.some((segment) => segment.path === 'import-from-file');
+                }),
+            )
+            .subscribe(() => {
+                this.isImport = isImportFromExistingExercise || isImportFromFile;
+            });
     }
 
     ngAfterViewInit() {
@@ -80,6 +102,9 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
     ngOnDestroy() {
         this.datePickerChildrenSubscription?.unsubscribe();
         this.unsubscribeDateFieldSubscriptions();
+        if (this.urlSubscription) {
+            this.urlSubscription.unsubscribe();
+        }
     }
 
     calculateFormStatus() {
