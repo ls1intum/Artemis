@@ -47,7 +47,7 @@ public class TitleCacheEvictionService implements PostUpdateEventListener, PostD
         var eventListenerRegistry = entityManagerFactory.unwrap(SessionFactoryImpl.class).getServiceRegistry().getService(EventListenerRegistry.class);
         eventListenerRegistry.appendListeners(EventType.POST_UPDATE, this);
         eventListenerRegistry.appendListeners(EventType.POST_DELETE, this);
-        log.info("Registered Hibernate listeners");
+        log.debug("Registered Hibernate listeners");
     }
 
     @Override
