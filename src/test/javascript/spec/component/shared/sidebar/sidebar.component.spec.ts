@@ -51,8 +51,8 @@ describe('SidebarComponent', () => {
         component.sidebarData = {
             groupByCategory: true,
             ungroupedData: [
-                { title: 'Item 1', type: 'Type A', id: 1 },
-                { title: 'Item 2', type: 'Type B', id: 2 },
+                { title: 'Item 1', type: 'Type A', id: 1, size: 'M' },
+                { title: 'Item 2', type: 'Type B', id: 2, size: 'M' },
             ],
         };
         component.searchValue = 'Item 1';

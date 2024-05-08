@@ -40,16 +40,16 @@ describe('SidebarAccordionComponent', () => {
 
         component.groupedData = {
             current: {
-                entityData: [{ title: 'Title 1', type: 'Type A', id: 1 }],
+                entityData: [{ title: 'Title 1', type: 'Type A', id: 1, size: 'M' }],
             },
             past: {
-                entityData: [{ title: 'Title 2', type: 'Type B', id: 2 }],
+                entityData: [{ title: 'Title 2', type: 'Type B', id: 2, size: 'M' }],
             },
             future: {
-                entityData: [{ title: 'Title 3', type: 'Type C', id: 3 }],
+                entityData: [{ title: 'Title 3', type: 'Type C', id: 3, size: 'M' }],
             },
             noDate: {
-                entityData: [{ title: 'Title 4', type: 'Type D', id: 4 }],
+                entityData: [{ title: 'Title 4', type: 'Type D', id: 4, size: 'M' }],
             },
         };
         component.routeParams = { exerciseId: 3 };

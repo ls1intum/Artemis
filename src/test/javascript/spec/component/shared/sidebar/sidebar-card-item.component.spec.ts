@@ -28,8 +28,8 @@ describe('SidebarCardItemComponent', () => {
         const testItem = {
             title: 'testTitle',
             id: 'testId',
-            difficulty: DifficultyLevel.EASY,
             size: 'M',
+            difficulty: DifficultyLevel.EASY,
         };
         component.sidebarItem = testItem;
         fixture.detectChanges();

@@ -27,6 +27,7 @@ describe('SidebarCardSmallComponent', () => {
         component.sidebarItem = {
             title: 'testTitle',
             id: 'testId',
+            size: 'S',
         };
         component.itemSelected = true;
         fixture.detectChanges();
