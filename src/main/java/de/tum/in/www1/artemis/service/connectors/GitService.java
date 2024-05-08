@@ -117,7 +117,7 @@ public class GitService {
 
     private final ProfileService profileService;
 
-    @Value("${artemis.version-control.local-vcs-repo-path}:#{null}")
+    @Value("${artemis.version-control.local-vcs-repo-path:#{null}}")
     private String localVCBasePath;
 
     @Value("${artemis.version-control.url}")
