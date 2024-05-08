@@ -4,16 +4,20 @@ import static de.tum.in.www1.artemis.service.util.ZonedDateTimeUtil.toRelativeTi
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
+import java.time.Instant;
 import java.util.Comparator;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -46,13 +50,21 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @BeforeEach
     void setupTestScenario() {
+        // Prevents the ParticipantScoreScheduleService from scheduling tasks related to prior results
+        ReflectionTestUtils.setField(participantScoreScheduleService, "lastScheduledRun", Optional.of(Instant.now()));
+        ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 100;
+        participantScoreScheduleService.activate();
+
         userUtilService.addUsers(TEST_PREFIX, 3, 1, 1, 1);
 
         course = courseUtilService.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, true);
 
         userUtilService.createAndSaveUser(TEST_PREFIX + "user1337");
+    }
 
-        participantScoreScheduleService.activate();
+    @AfterEach
+    void cleanup() {
+        ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 500;
     }
 
     @Nested
@@ -86,7 +98,10 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         @Test
         @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
         void shouldReturnAverageScores() throws Exception {
-            await().until(() -> !participantScoreRepository.findAllByCourseId(course.getId()).isEmpty());
+            // Wait for the scheduler to execute its task
+            participantScoreScheduleService.executeScheduledTasks();
+            await().until(() -> participantScoreScheduleService.isIdle());
+
             final var result = request.get("/api/metrics/course/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
             assertThat(result).isNotNull();
             assertThat(result.exerciseMetrics()).isNotNull();
