@@ -200,6 +200,7 @@ public class HestiaUtilTestService {
         }
         participationRepo.localGit.add().addFilepattern(".").call();
         GitService.commit(participationRepo.localGit).setMessage("commit").call();
+        participationRepo.localGit.push().call();
         var commits = participationRepo.localGit.log().call();
         var commitsList = StreamSupport.stream(commits.spliterator(), false).toList();
 
@@ -218,6 +219,7 @@ public class HestiaUtilTestService {
                 anyBoolean());
 
         var participation = participationUtilService.addStudentParticipationForProgrammingExerciseForLocalRepo(exercise, login, participationRepo.localRepoFile.toURI());
+        doReturn(gitService.linkRepositoryForExistingGit(participationRepo.originRepoFile.toPath(), null, "main", true)).when(gitService).getBareRepository(any());
         var submission = ParticipationFactory.generateProgrammingSubmission(true, commitsList.get(0).getId().getName(), SubmissionType.MANUAL);
         participation = programmingExerciseStudentParticipationRepository
                 .findWithSubmissionsByExerciseIdAndParticipationIds(exercise.getId(), Collections.singletonList(participation.getId())).get(0);

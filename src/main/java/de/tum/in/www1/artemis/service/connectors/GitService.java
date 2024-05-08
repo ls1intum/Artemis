@@ -726,7 +726,7 @@ public class GitService {
      *                                     </p>
      */
     @NotNull
-    private static Repository linkRepositoryForExistingGit(Path localPath, VcsRepositoryUri remoteRepositoryUri, String defaultBranch, boolean isBare)
+    public Repository linkRepositoryForExistingGit(Path localPath, VcsRepositoryUri remoteRepositoryUri, String defaultBranch, boolean isBare)
             throws IOException, InvalidRefNameException {
         // Create the JGit repository object
 
