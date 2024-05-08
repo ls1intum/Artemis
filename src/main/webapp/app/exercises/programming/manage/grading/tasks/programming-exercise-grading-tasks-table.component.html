@@ -94,17 +94,8 @@
             type="button"
             class="task__row__cell sort__button"
             [ngbTooltip]="
-                this.isExamExercise
-                    ? ('artemisApp.programmingExercise.configureGrading.help.visibilityExam'
-                      | artemisTranslate
-                          : {
-                                afterReleaseDateOfResults: 'artemisApp.programmingExerciseTestCase.visibility.AfterReleaseDateOfResults' | artemisTranslate
-                            })
-                    : ('artemisApp.programmingExercise.configureGrading.help.visibility'
-                      | artemisTranslate
-                          : {
-                                afterDueDate: 'artemisApp.programmingExerciseTestCase.visibility.AfterDueDate' | artemisTranslate
-                            })
+                (this.isExamExercise ? 'artemisApp.programmingExercise.configureGrading.help.visibilityExam' : 'artemisApp.programmingExercise.configureGrading.help.visibility')
+                    | artemisTranslate
             "
             placement="bottom auto"
             (click)="changeSort('visibility')"
