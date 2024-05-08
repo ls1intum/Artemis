@@ -26,7 +26,7 @@
             }
             <div class="test-schedule-date px-1">
                 <div class="test-schedule-date-title test-schedule-date-title-small-button">
-                    <span jhiTranslate="artemisApp.programmingExercise.timeline.automaticTests"></span>
+                    <span>{{ 'artemisApp.programmingExercise.timeline.automaticTests' | artemisTranslate }}</span>
                     <jhi-help-icon text="artemisApp.programmingExercise.timeline.automaticTestsMandatoryTooltip" />
                 </div>
                 <div class="btn btn-light scheduled-test btn-lifecycle" [class.btn-lifecycle--disabled]="readOnly">
@@ -62,7 +62,7 @@
                 <div>
                     <div class="test-schedule-date px-1">
                         <div class="test-schedule-date-title test-schedule-date-title-small-button">
-                            <span jhiTranslate="artemisApp.programmingExercise.timeline.assessmentType"></span>
+                            <span>{{ 'artemisApp.programmingExercise.timeline.assessmentType' | artemisTranslate }}</span>
                             <jhi-help-icon
                                 [text]="
                                     'artemisApp.programmingExercise.timeline.' +
@@ -117,7 +117,7 @@
         </div>
     </div>
     @if (!readOnly) {
-        <h6 jhiTranslate="artemisApp.assessment.assessment"></h6>
+        <h6>{{ 'artemisApp.assessment.assessment' | artemisTranslate }}</h6>
         @if (isExamMode || exercise.course?.complaintsEnabled) {
             <div class="form-check">
                 <input
@@ -133,8 +133,8 @@
                     [ngStyle]="exercise.assessmentType !== assessmentType.AUTOMATIC || (!isExamMode && !exercise.dueDate) ? { color: 'grey' } : {}"
                     class="form-control-label"
                     for="allowComplaintsForAutomaticAssessment"
-                    jhiTranslate="artemisApp.programmingExercise.timeline.complaintOnAutomaticAssessment"
-                ></label>
+                    >{{ 'artemisApp.programmingExercise.timeline.complaintOnAutomaticAssessment' | artemisTranslate }}</label
+                >
                 <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.complaintOnAutomaticAssessmentTooltip'" />
             </div>
         }
@@ -167,8 +167,8 @@
                     [ngStyle]="exercise.assessmentType !== assessmentType.SEMI_AUTOMATIC ? { color: 'grey' } : {}"
                     class="form-control-label"
                     for="allowManualFeedbackRequests"
-                    jhiTranslate="artemisApp.programmingExercise.timeline.manualFeedbackRequests"
-                ></label>
+                    >{{ 'artemisApp.programmingExercise.timeline.manualFeedbackRequests' | artemisTranslate }}</label
+                >
                 <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.manualFeedbackRequestsTooltip'" />
             </div>
         }
@@ -182,7 +182,7 @@
                 [(ngModel)]="exercise.showTestNamesToStudents"
                 checked
             />
-            <label class="form-control-label" for="field_showTestNamesToStudents" jhiTranslate="artemisApp.programmingExercise.showTestNamesToStudents"></label>
+            <label class="form-control-label" for="field_showTestNamesToStudents">{{ 'artemisApp.programmingExercise.showTestNamesToStudents' | artemisTranslate }}</label>
             <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.showTestNamesToStudentsTooltip'" />
         </div>
         <div class="form-check">
@@ -199,8 +199,9 @@
                 [ngStyle]="!exercise.exampleSolutionPublicationDate && !exercise.exerciseGroup?.exam?.exampleSolutionPublicationDate ? { color: 'grey' } : {}"
                 class="form-control-label"
                 for="releaseTestsWithExampleSolution"
-                jhiTranslate="artemisApp.programmingExercise.timeline.releaseTestsWithExampleSolution"
-            ></label>
+            >
+                {{ 'artemisApp.programmingExercise.timeline.releaseTestsWithExampleSolution' | artemisTranslate }}
+            </label>
             <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.releaseTestsWithExampleSolutionTooltip'" />
         </div>
         @if (!isExamMode) {
