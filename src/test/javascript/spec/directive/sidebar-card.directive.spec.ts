@@ -4,7 +4,6 @@ import { MockComponent } from 'ng-mocks';
 import { ActivatedRoute, Params, Router, convertToParamMap } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
 import { SidebarCardDirective } from 'app/shared/sidebar/sidebar-card.directive';
-import { SidebarCardElement, SidebarTypes } from 'app/types/sidebar';
 import { MockRouter } from '../helpers/mocks/mock-router';
 import { SidebarCardSmallComponent } from 'app/shared/sidebar/sidebar-card-small/sidebar-card-small.component';
 import { SidebarCardMediumComponent } from 'app/shared/sidebar/sidebar-card-medium/sidebar-card-medium.component';
@@ -16,9 +15,6 @@ import { SidebarCardLargeComponent } from 'app/shared/sidebar/sidebar-card-large
 class TestHostComponent {
     @ViewChild(SidebarCardDirective) directive: SidebarCardDirective;
     size: string;
-    sidebarItem: SidebarCardElement;
-    sidebarType?: SidebarTypes;
-    itemSelected?: boolean;
 }
 
 describe('SidebarCardDirective', () => {
@@ -45,7 +41,7 @@ describe('SidebarCardDirective', () => {
                             parent: {
                                 paramMap: new BehaviorSubject(
                                     convertToParamMap({
-                                        courseId: 1,
+                                        courseId: 5,
                                     }),
                                 ),
                             },
@@ -72,12 +68,35 @@ describe('SidebarCardDirective', () => {
         expect(component.directive).toBeDefined();
     });
 
+    it('directive and viewContainerRef should be defined', () => {
+        expect(component.directive).toBeDefined();
+        expect(component.directive.viewContainerRef).toBeDefined();
+    });
+
     it('should create SidebarCardSmallComponent when size is "S"', () => {
         const createComponentSpy = jest.spyOn(component.directive.viewContainerRef, 'createComponent');
-
         component.size = 'S';
         fixture.detectChanges();
+        component.directive.ngOnInit();
 
         expect(createComponentSpy).toHaveBeenCalledWith(SidebarCardSmallComponent);
+    });
+
+    it('should create SidebarCardSmallComponent when size is "M"', () => {
+        const createComponentSpy = jest.spyOn(component.directive.viewContainerRef, 'createComponent');
+        component.size = 'M';
+        fixture.detectChanges();
+        component.directive.ngOnInit();
+
+        expect(createComponentSpy).toHaveBeenCalledWith(SidebarCardMediumComponent);
+    });
+
+    it('should create SidebarCardSmallComponent when size is "L"', () => {
+        const createComponentSpy = jest.spyOn(component.directive.viewContainerRef, 'createComponent');
+        component.size = 'L';
+        fixture.detectChanges();
+        component.directive.ngOnInit();
+
+        expect(createComponentSpy).toHaveBeenCalledWith(SidebarCardLargeComponent);
     });
 });
