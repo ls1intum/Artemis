@@ -127,13 +127,15 @@ export class ExamParticipation {
         await expect(this.page.locator('#exam-title')).toContainText(title);
     }
 
-    async getResultScore() {
-        await Commands.reloadUntilFound(this.page, '#exercise-result-score');
-        return this.page.locator('#exercise-result-score');
+    async getResultScore(exerciseID?: number) {
+        const parentComponent = exerciseID ? getExercise(this.page, exerciseID) : this.page;
+        const resultScoreLocator = parentComponent.locator('#exercise-result-score');
+        await Commands.reloadUntilFound(this.page, resultScoreLocator);
+        return resultScoreLocator;
     }
 
-    async checkResultScore(scoreText: string) {
-        const scoreElement = await this.getResultScore();
+    async checkResultScore(scoreText: string, exerciseID?: number) {
+        const scoreElement = await this.getResultScore(exerciseID);
         await expect(scoreElement.getByText(new RegExp(scoreText))).toBeVisible();
     }
 
