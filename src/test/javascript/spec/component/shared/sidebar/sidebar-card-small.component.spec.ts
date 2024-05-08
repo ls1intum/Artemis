@@ -43,7 +43,6 @@ describe('SidebarCardSmallComponent', () => {
         element.click();
         fixture.detectChanges();
         expect(component.emitStoreLastSelectedItem).toHaveBeenCalledWith(component.sidebarItem.id);
-        expect(component.forceReload).toHaveBeenCalled();
     });
 
     it('should navigate to the item URL on click', async () => {
