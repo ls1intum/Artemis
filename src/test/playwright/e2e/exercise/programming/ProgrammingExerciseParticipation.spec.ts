@@ -134,6 +134,7 @@ test.describe('Programming exercise participation', () => {
                 await page.waitForURL(/\/courses/);
                 await courseList.openCourse(course.id!);
                 await courseOverview.openExercise(exercise.title!);
+                submission.deleteFiles = [];
                 await makeGitExerciseSubmission(page, programmingExerciseOverview, course, exercise, student, submission, commitMessage);
             }
         });
