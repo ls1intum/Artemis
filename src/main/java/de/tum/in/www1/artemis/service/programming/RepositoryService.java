@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -36,10 +37,16 @@ import org.springframework.util.FileSystemUtils;
 
 import de.tum.in.www1.artemis.domain.File;
 import de.tum.in.www1.artemis.domain.FileType;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.service.FileService;
+import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 
@@ -52,10 +59,16 @@ public class RepositoryService {
 
     private final GitService gitService;
 
+    private final ProfileService profileService;
+
+    private final ParticipationRepository participationRepository;
+
     private static final Logger log = LoggerFactory.getLogger(RepositoryService.class);
 
-    public RepositoryService(GitService gitService) {
+    public RepositoryService(GitService gitService, ProfileService profileService, ParticipationRepository participationRepository) {
         this.gitService = gitService;
+        this.profileService = profileService;
+        this.participationRepository = participationRepository;
     }
 
     /**
@@ -75,6 +88,48 @@ public class RepositoryService {
         }
 
         return fileList;
+    }
+
+    // TODO: docs and cleanup
+    public Map<String, String> getFilesContentAtCommit(ProgrammingExercise programmingExercise, String commitId, RepositoryType repositoryType, Long participationId)
+            throws IOException, GitAPIException {
+        if (!Objects.equals(repositoryType, RepositoryType.TESTS) && participationId == null) {
+            throw new IllegalArgumentException("The participation id must be provided for all repository types except TESTS."); // TODO: docs
+        }
+        if (profileService.isLocalVcsActive()) {
+            log.info("Using local VCS for getting files at commit {} for participation {}", commitId, participationId);
+            // operate directly on the bare repository
+            var repoUri = Objects.equals(repositoryType, RepositoryType.TESTS) ? programmingExercise.getVcsTestRepositoryUri() : getRepositoryUri(participationId);
+            Repository repository = gitService.getBareRepository(repoUri);
+            return getFilesContentFromBareRepository(repository, commitId);
+        }
+        else {
+            Repository repository;
+            // if the repository type is tests, we need to check out the tests repository
+            if (repositoryType != null && repositoryType.equals(RepositoryType.TESTS)) {
+                repository = gitService.checkoutRepositoryAtCommit(programmingExercise.getVcsTestRepositoryUri(), commitId, true);
+            }
+            else {
+                repository = gitService.checkoutRepositoryAtCommit(getRepositoryUri(participationId), commitId, true);
+            }
+            Map<String, String> filesWithContent = getFilesContentFromWorkingCopy(repository);
+            gitService.switchBackToDefaultBranchHead(repository);
+            return filesWithContent;
+        }
+    }
+
+    // TODO these methods are duplicated
+    VcsRepositoryUri getRepositoryUri(Long participationId) throws IllegalArgumentException {
+        return getProgrammingExerciseParticipation(participationId).getVcsRepositoryUri();
+    }
+
+    private ProgrammingExerciseParticipation getProgrammingExerciseParticipation(long participationId) {
+        Participation participation = participationRepository.findByIdElseThrow(participationId);
+
+        if (!(participation instanceof ProgrammingExerciseParticipation)) {
+            throw new IllegalArgumentException();
+        }
+        return (ProgrammingExerciseParticipation) participation;
     }
 
     /**
