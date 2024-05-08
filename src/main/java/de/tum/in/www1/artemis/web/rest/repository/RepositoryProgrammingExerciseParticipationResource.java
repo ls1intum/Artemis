@@ -24,7 +24,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -223,36 +222,14 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      */
     @GetMapping(value = "/repository-files-content/{commitId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastStudent
-    public ResponseEntity<Map<String, String>> getFilesAtCommit(@RequestAttribute(required = false) Long participationId, @PathVariable String commitId,
-            @RequestAttribute(required = false) RepositoryType repositoryType) {
+    public ResponseEntity<Map<String, String>> getFilesAtCommit(@RequestParam(required = false) Long participationId, @PathVariable String commitId,
+            @RequestParam(required = false) RepositoryType repositoryType) {
         log.debug("REST request to files for domainId {} at commitId {}", participationId, commitId);
         var participation = getProgrammingExerciseParticipation(participationId);
         var programmingExercise = programmingExerciseRepository.getProgrammingExerciseFromParticipationElseThrow(participation);
         repositoryAccessService.checkAccessRepositoryElseThrow(participation, userRepository.getUserWithGroupsAndAuthorities(), programmingExercise, RepositoryActionType.READ);
 
-        return executeAndCheckForExceptions(() -> {
-            if (profileService.isLocalVcsActive()) {
-                log.info("Using local VCS for getting files at commit {} for participation {}", commitId, participationId);
-                // operate directly on the bare repository
-                var repoUri = Objects.equals(repositoryType, RepositoryType.TESTS) ? programmingExercise.getVcsTestRepositoryUri() : getRepositoryUri(participationId);
-                Repository repository = gitService.getBareRepository(repoUri);
-                Map<String, String> filesWithContent = repositoryService.getFilesContentFromBareRepository(repository, commitId);
-                return new ResponseEntity<>(filesWithContent, HttpStatus.OK);
-            }
-            else {
-                Repository repository;
-                // if the repository type is tests, we need to check out the tests repository
-                if (repositoryType != null && repositoryType.equals(RepositoryType.TESTS)) {
-                    repository = gitService.checkoutRepositoryAtCommit(programmingExercise.getVcsTestRepositoryUri(), commitId, true);
-                }
-                else {
-                    repository = gitService.checkoutRepositoryAtCommit(getRepositoryUri(participationId), commitId, true);
-                }
-                Map<String, String> filesWithContent = repositoryService.getFilesContentFromWorkingCopy(repository);
-                gitService.switchBackToDefaultBranchHead(repository);
-                return new ResponseEntity<>(filesWithContent, HttpStatus.OK);
-            }
-        });
+        return executeAndCheckForExceptions(() -> ResponseEntity.ok(repositoryService.getFilesContentAtCommit(programmingExercise, commitId, repositoryType, participationId)));
     }
 
     /**

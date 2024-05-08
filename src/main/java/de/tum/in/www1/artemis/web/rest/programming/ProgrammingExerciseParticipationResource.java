@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.ModelAndView;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
@@ -41,6 +40,7 @@ import de.tum.in.www1.artemis.service.ParticipationAuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
+import de.tum.in.www1.artemis.service.programming.RepositoryService;
 import de.tum.in.www1.artemis.web.rest.dto.CommitInfoDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -72,10 +72,12 @@ public class ProgrammingExerciseParticipationResource {
 
     private final ResultService resultService;
 
+    private final RepositoryService repositoryService;
+
     public ProgrammingExerciseParticipationResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ResultRepository resultRepository,
             ParticipationRepository participationRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             ProgrammingSubmissionService submissionService, ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
-            ResultService resultService, ParticipationAuthorizationCheckService participationAuthCheckService) {
+            ResultService resultService, ParticipationAuthorizationCheckService participationAuthCheckService, RepositoryService repositoryService) {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -85,6 +87,7 @@ public class ProgrammingExerciseParticipationResource {
         this.authCheckService = authCheckService;
         this.resultService = resultService;
         this.participationAuthCheckService = participationAuthCheckService;
+        this.repositoryService = repositoryService;
     }
 
     /**
@@ -323,33 +326,34 @@ public class ProgrammingExerciseParticipationResource {
      *
      * @param participationId the id of the participation for which to retrieve the files content
      * @param commitId        the id of the commit for which to retrieve the files content
-     * @return a redirect to the endpoint returning the files with content
+     * @return The files of repository along with their content
      */
     @GetMapping("programming-exercise-participations/{participationId}/files-content/{commitId}")
     @EnforceAtLeastInstructor
-    public ModelAndView redirectGetParticipationRepositoryFiles(@PathVariable long participationId, @PathVariable String commitId) {
+    public ResponseEntity<Map<String, String>> getParticipationRepositoryFiles(@PathVariable long participationId, @PathVariable String commitId)
+            throws GitAPIException, IOException {
         var participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
         ProgrammingExercise exercise = programmingExerciseRepository.getProgrammingExerciseFromParticipationElseThrow(participation);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
-        return new ModelAndView("forward:/api/repository-files-content/" + commitId).addObject("participationId", participationId);
+        return ResponseEntity.ok(repositoryService.getFilesContentAtCommit(exercise, commitId, null, participationId));
     }
 
     /**
      * GET /programming-exercise/{exerciseId}/files-content-commit-details/{commitId} : Get the content of the files of a programming exercise
      * This method is specifically for the commit details view, where not only Instructors and Admins should have access to the files content as in
-     * redirectGetParticipationRepositoryFiles but also students and tutors that have access to the participation.
+     * getParticipationRepositoryFiles but also students and tutors that have access to the participation.
      *
      * @param exerciseId      the id of the exercise for which to retrieve the files content
      * @param participationId the id of the participation for which to retrieve the files content
      * @param commitId        the id of the commit for which to retrieve the files content
      * @param repositoryType  the type of the repository for which to retrieve the files content
-     * @return a redirect to the endpoint returning the files with content
+     * @return The files of the repository along with their content
      */
     @GetMapping("programming-exercise/{exerciseId}/files-content-commit-details/{commitId}")
     @EnforceAtLeastStudent
-    public ModelAndView redirectGetParticipationRepositoryFilesForCommitsDetailsView(@PathVariable long exerciseId, @RequestParam(required = false) Long participationId,
-            @PathVariable String commitId, @RequestParam(required = false) RepositoryType repositoryType) {
-
+    public ResponseEntity<Map<String, String>> getParticipationRepositoryFilesForCommitsDetailsView(@PathVariable long exerciseId,
+            @RequestParam(required = false) Long participationId, @PathVariable String commitId, @RequestParam(required = false) RepositoryType repositoryType)
+            throws GitAPIException, IOException {
         if (participationId != null) {
             Participation participation = participationRepository.findByIdElseThrow(participationId);
             if (!participation.getExercise().getId().equals(exerciseId)) {
@@ -360,17 +364,16 @@ public class ProgrammingExerciseParticipationResource {
                 throw new ConflictException("A git diff report entry can only be retrieved for programming exercise participations", ENTITY_NAME,
                         "notProgrammingExerciseParticipation");
             }
+            ProgrammingExercise programmingExercise = programmingExerciseRepository.getProgrammingExerciseFromParticipation((ProgrammingExerciseParticipation) participation);
             participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
             // we only forward the repository type for the test repository, as the test repository is the only one that needs to be treated differently
-            return new ModelAndView("forward:/api/repository-files-content/" + commitId).addObject("participationId", participationId);
-
+            return ResponseEntity.ok(repositoryService.getFilesContentAtCommit(programmingExercise, commitId, null, participationId));
         }
         else if (repositoryType != null) {
             ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(exerciseId);
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
             var participation = repositoryType == RepositoryType.TEMPLATE ? programmingExercise.getTemplateParticipation() : programmingExercise.getSolutionParticipation();
-            return new ModelAndView("forward:/api/repository-files-content/" + commitId).addObject("repositoryType", repositoryType).addObject("participationId",
-                    participation.getId());
+            return ResponseEntity.ok(repositoryService.getFilesContentAtCommit(programmingExercise, commitId, repositoryType, participation.getId()));
         }
         else {
             throw new BadRequestAlertException("Either participationId or repositoryType must be provided", ENTITY_NAME, "missingParameters");
