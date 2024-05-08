@@ -151,7 +151,8 @@ test.describe('Programming exercise participation', () => {
             await page.waitForURL(/\/courses/);
             await courseList.openCourse(course.id!);
             await courseOverview.openExercise(exercise.title!);
-            await expect(programmingExerciseOverview.getExerciseDetails()).toHaveText('No team yet');
+            await expect(programmingExerciseOverview.getExerciseDetails().getByText('No team yet')).toBeVisible();
+            await expect(courseOverview.getStartExerciseButton(exercise.id!)).not.toBeVisible();
             await expect(programmingExerciseOverview.getCloneRepositoryButton()).not.toBeVisible();
         });
 
@@ -167,16 +168,16 @@ test.describe('Programming exercise participation', () => {
             await login(admin);
             const response = await userManagementAPIRequests.getUser(studentFour.username);
             const studentFourUser = await response.json();
-            await exerciseAPIRequests.createTeam(exercise.id!, studentFourUser, tutorUser);
+            await exerciseAPIRequests.createTeam(exercise.id!, [studentFourUser], tutorUser);
 
             await login(studentFour, '/');
             await page.waitForURL(/\/courses/);
             await courseList.openCourse(course.id!);
             await courseOverview.openExercise(exercise.title!);
             await expect(programmingExerciseOverview.getCloneRepositoryButton()).not.toBeVisible();
-            await expect(programmingExerciseOverview.getExerciseDetails()).toHaveText('Not yet started');
-            await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentFour);
-            await expect(programmingExerciseOverview.getExerciseDetails()).toHaveText('No graded result');
+            await expect(programmingExerciseOverview.getExerciseDetails().getByText('Not yet started')).toBeVisible();
+            await courseOverview.startExercise(exercise.id!);
+            await expect(programmingExerciseOverview.getExerciseDetails().getByText('No graded result')).toBeVisible();
         });
 
         test.describe('Check team participation', () => {
