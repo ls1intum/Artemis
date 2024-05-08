@@ -45,6 +45,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
@@ -168,10 +169,11 @@ public class ProgrammingExerciseExportImportResource {
      * a new id. For a concrete list of what gets copied and what not have a look
      * at {@link ProgrammingExerciseImportService#importProgrammingExercise(ProgrammingExercise, ProgrammingExercise, boolean, boolean)}
      *
-     * @param sourceExerciseId   The ID of the original exercise which should get imported
-     * @param newExercise        The new exercise containing values that should get overwritten in the imported exercise, s.a. the title or difficulty
-     * @param recreateBuildPlans Option determining whether the build plans should be copied or re-created from scratch
-     * @param updateTemplate     Option determining whether the template files should be updated with the most recent template version
+     * @param sourceExerciseId                                 The ID of the original exercise which should get imported
+     * @param newExercise                                      The new exercise containing values that should get overwritten in the imported exercise, s.a. the title or difficulty
+     * @param recreateBuildPlans                               Option determining whether the build plans should be copied or re-created from scratch
+     * @param updateTemplate                                   Option determining whether the template files should be updated with the most recent template version
+     * @param setTestCaseVisibilityToAfterReleaseDateOfResults Option determining whether the test case visibility should be set to {@link Visibility#AFTER_DUE_DATE}
      * @return The imported exercise (200), a not found error (404) if the template does not exist, or a forbidden error
      *         (403) if the user is not at least an instructor in the target course.
      * @see ProgrammingExerciseImportService#importProgrammingExercise(ProgrammingExercise, ProgrammingExercise, boolean, boolean)
@@ -180,7 +182,8 @@ public class ProgrammingExerciseExportImportResource {
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<ProgrammingExercise> importProgrammingExercise(@PathVariable long sourceExerciseId, @RequestBody ProgrammingExercise newExercise,
-            @RequestParam(defaultValue = "false") boolean recreateBuildPlans, @RequestParam(defaultValue = "false") boolean updateTemplate) throws JsonProcessingException {
+            @RequestParam(defaultValue = "false") boolean recreateBuildPlans, @RequestParam(defaultValue = "false") boolean updateTemplate,
+            @RequestParam(defaultValue = "false") boolean setTestCaseVisibilityToAfterReleaseDateOfResults) throws JsonProcessingException {
         if (sourceExerciseId < 0) {
             throw new BadRequestAlertException("Invalid source id when importing programming exercises", ENTITY_NAME, "invalidSourceExerciseId");
         }
