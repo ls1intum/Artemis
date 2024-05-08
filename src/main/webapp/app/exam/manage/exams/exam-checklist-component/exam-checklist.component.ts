@@ -31,9 +31,9 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
     isTestExam: boolean;
     isEvaluatingQuizExercises: boolean;
     isAssessingUnsubmittedExams: boolean;
-    existsUnfinishedAssessments: boolean = false;
-    existsUnassessedQuizzes: boolean = false;
-    existsUnsubmittedExercises: boolean = false;
+    existsUnfinishedAssessments = false;
+    existsUnassessedQuizzes = false;
+    existsUnsubmittedExercises = false;
     isExamOver = false;
     longestWorkingTime?: number;
 
@@ -90,7 +90,7 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
             this.numberOfStarted = this.examChecklist.numberOfExamsStarted;
             this.numberOfSubmitted = this.examChecklist.numberOfExamsSubmitted;
             if (this.isExamOver) {
-                if (this.examChecklist.numberOfTotalExamAssessmentsFinishedByCorrectionRound) {
+                if (this.examChecklist.numberOfTotalExamAssessmentsFinishedByCorrectionRound !== undefined) {
                     const lastAssessmentFinished = this.examChecklist.numberOfTotalExamAssessmentsFinishedByCorrectionRound.last();
                     this.existsUnfinishedAssessments = lastAssessmentFinished !== this.examChecklist.numberOfTotalParticipationsForAssessment;
                 }
@@ -115,7 +115,7 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
      */
     evaluateQuizExercises() {
         this.isEvaluatingQuizExercises = true;
-        if (this.exam.course?.id !== undefined && this.exam.id !== undefined) {
+        if (this.exam.course?.id && this.exam.id) {
             this.examManagementService.evaluateQuizExercises(this.exam.course.id, this.exam.id).subscribe({
                 next: (res) => {
                     this.alertService.success('artemisApp.studentExams.evaluateQuizExerciseSuccess', { number: res?.body });
@@ -129,7 +129,7 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
                 },
             });
         } else {
-            this.alertService.error('artemisApp.studentExams.evaluateQuizExerciseIdFailure');
+            console.error('Error: Quiz exercises could not be evaluated due to missing course ID or exam ID');
         }
     }
 
@@ -138,7 +138,7 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
      */
     assessUnsubmittedExamModelingAndTextParticipations() {
         this.isAssessingUnsubmittedExams = true;
-        if (this.exam.course?.id !== undefined && this.exam.id !== undefined) {
+        if (this.exam.course?.id && this.exam.id) {
             this.examManagementService.assessUnsubmittedExamModelingAndTextParticipations(this.exam.course.id, this.exam.id).subscribe({
                 next: (res) => {
                     this.alertService.success('artemisApp.studentExams.assessUnsubmittedStudentExamsSuccess', { number: res?.body });
@@ -152,7 +152,7 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
                 },
             });
         } else {
-            this.alertService.error('artemisApp.studentExams.assessUnsubmittedStudentExamsFailure');
+            console.error('Error: Quiz exercises could not be evaluated due to missing course ID or exam ID');
         }
     }
 

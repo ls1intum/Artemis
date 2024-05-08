@@ -389,7 +389,6 @@
             "studentExamStatusTestExam": "Student exams are automatically created once a student requests to start a test exam",
             "evaluateQuizExerciseSuccess": "{{number}} quiz exercises successfully evaluated!",
             "evaluateQuizExerciseFailure": "There was an error during the evaluation of the quiz exercises:\n {{message}}",
-            "evaluateQuizExerciseIdFailure": "Quiz exercises could not be evaluated due to missing course ID or exam ID.",
             "assessUnsubmittedStudentExamsSuccess": "Reviewed all student exams and assessed the unsubmitted or empty modeling and text exercises with 0 points.",
             "assessUnsubmittedStudentExamsFailure": "The exam is not over yet for all students",
             "assessUnsubmittedStudentExamsIdFailure": "Unsubmitted exams could not be evaluated due to a missing course ID or exam ID",

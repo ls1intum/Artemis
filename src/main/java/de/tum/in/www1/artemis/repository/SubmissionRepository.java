@@ -588,7 +588,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
             WHERE p.exercise.exerciseGroup.exam.id = :examId
                 AND p.testRun IS FALSE
                 AND TYPE(s) IN (TextSubmission, ModelingSubmission)
-                AND s.submitted IS NULL
+                AND (s.submitted IS NULL OR s.submitted IS FALSE)
                 AND s.submissionDate IS NULL
             """)
     boolean existsUnsubmittedExercisesByExamId(@Param("examId") long examId);
