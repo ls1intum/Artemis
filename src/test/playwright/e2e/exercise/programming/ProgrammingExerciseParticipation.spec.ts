@@ -5,9 +5,8 @@ import javaAllSuccessfulSubmission from '../../../fixtures/exercise/programming/
 import javaBuildErrorSubmission from '../../../fixtures/exercise/programming/java/build_error/submission.json';
 import javaPartiallySuccessfulSubmission from '../../../fixtures/exercise/programming/java/partially_successful/submission.json';
 import pythonAllSuccessful from '../../../fixtures/exercise/programming/python/all_successful/submission.json';
-import { ExerciseCommit, ProgrammingLanguage } from '../../../support/constants';
+import { ExerciseCommit, ExerciseMode, ProgrammingLanguage } from '../../../support/constants';
 import { test } from '../../../support/fixtures';
-import { ExerciseMode } from 'app/entities/exercise.model';
 import { Page, expect } from '@playwright/test';
 import { gitClient } from '../../../support/pageobjects/exercises/programming/GitClient';
 import * as fs from 'fs/promises';
