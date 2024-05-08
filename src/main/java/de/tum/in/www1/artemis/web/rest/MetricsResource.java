@@ -41,7 +41,7 @@ public class MetricsResource {
     @GetMapping("course/{courseId}/student")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<StudentMetricsDTO> getCourseMetricsForUser(@PathVariable long courseId) {
-        final var userId = userRepository.getUserId(); // won't throw exception since EnforceRoleInResource checks existence of user
+        final var userId = userRepository.getUserIdElseThrow(); // won't throw exception since EnforceRoleInResource checks existence of user
         log.debug("REST request to get the metrics for the user with id {} in the course with id {}", userId, courseId);
         final var studentMetrics = metricsService.getStudentCourseMetrics(userId, courseId);
         return ResponseEntity.ok(studentMetrics);
