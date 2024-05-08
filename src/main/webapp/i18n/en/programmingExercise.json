@@ -426,7 +426,7 @@
                 "releaseTestsWithExampleSolution": "Include tests into example solution",
                 "releaseTestsWithExampleSolutionTooltip": "In addition to the example solution the automatic tests can be published after the due date.",
                 "setTestCaseVisibilityToAfterReleaseDateOfResults": "Set test case visibility to After Release Date of Results",
-                "setTestCaseVisibilityToAfterReleaseDateOfResultsTooltip": "During the exam students will only see if their code compiles. Details about the test results wil not be displayed before the Release Date of Results."
+                "setTestCaseVisibilityToAfterReleaseDateOfResultsTooltip": "During the exam students will only see if their code compiles. Details about the test results will be displayed after the Release Date of Results."
             },
             "repositoryIsLocked": {
                 "title": "Your repository is locked.",
