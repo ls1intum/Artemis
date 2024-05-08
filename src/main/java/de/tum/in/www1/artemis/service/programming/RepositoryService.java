@@ -42,7 +42,6 @@ import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
-import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.service.FileService;
@@ -92,58 +91,41 @@ public class RepositoryService {
 
     /**
      * Retrieves the content of files at a specific commit in a given repository.
-     * You must specify either repository type TESTS or a participation id for all other repository types.
-     * If the local VCS is active, it logs an info message and operates directly on the bare repository.
-     * If the repository type is TESTS, it checks out the tests repository, otherwise it checks out the repository at the commit.
-     * After getting the files content, it switches back to the default branch head if necessary.
      *
-     * @param programmingExercise The programming exercise which contains the VCS repository.
+     * @param programmingExercise The programming exercise which contains the VCS repository. This is used to determine the repository URI for TESTS repositories.
      * @param commitId            The commit identifier from which to extract file contents.
-     * @param repositoryType      The type of the repository (e.g., TESTS, TEMPLATE, etc.).
-     * @param participationId     The id of the participation related to the repository.
-     * @return A map where each key is a file path and each value is the content of the file as a String.
-     * @throws IOException     If an I/O error occurs during the file content retrieval process.
-     * @throws GitAPIException If an error occurs while interacting with the Git repository.
+     * @param repositoryType      The type of the repository (e.g., TESTS, TEMPLATE, etc.). Relevant for participations of type TESTS.
+     * @param participation       The participation related to the repository.
+     * @return A map where each key is a file path and each value is the content of the file as a String. This represents the state of the repository at the given commit.
+     * @throws IOException     If an I/O error occurs during the file content retrieval process. This could be due to issues with file access, network problems, etc.
+     * @throws GitAPIException If an error occurs while interacting with the Git repository. This could be due to issues with repository access, invalid commit ids, etc.
      */
-    public Map<String, String> getFilesContentAtCommit(ProgrammingExercise programmingExercise, String commitId, RepositoryType repositoryType, Long participationId)
-            throws IOException, GitAPIException {
-        if (!Objects.equals(repositoryType, RepositoryType.TESTS) && participationId == null) {
-            throw new IllegalArgumentException("The participation id must be provided for all repository types except TESTS."); // TODO: docs
-        }
+    public Map<String, String> getFilesContentAtCommit(ProgrammingExercise programmingExercise, String commitId, RepositoryType repositoryType,
+            ProgrammingExerciseParticipation participation) throws IOException, GitAPIException {
+        // Check if local VCS is active
         if (profileService.isLocalVcsActive()) {
-            log.info("Using local VCS for getting files at commit {} for participation {}", commitId, participationId);
-            // operate directly on the bare repository
-            var repoUri = Objects.equals(repositoryType, RepositoryType.TESTS) ? programmingExercise.getVcsTestRepositoryUri() : getRepositoryUri(participationId);
+            log.info("Using local VCS for getting files at commit {} for participation {}", commitId, participation.getId());
+            // If local VCS is active, operate directly on the bare repository
+            var repoUri = Objects.equals(repositoryType, RepositoryType.TESTS) ? programmingExercise.getVcsTestRepositoryUri() : participation.getVcsRepositoryUri();
             Repository repository = gitService.getBareRepository(repoUri);
             return getFilesContentFromBareRepository(repository, commitId);
         }
         else {
             Repository repository;
-            // if the repository type is tests, we need to check out the tests repository
+            // If the repository type is tests, check out the tests repository
             if (repositoryType != null && repositoryType.equals(RepositoryType.TESTS)) {
                 repository = gitService.checkoutRepositoryAtCommit(programmingExercise.getVcsTestRepositoryUri(), commitId, true);
             }
             else {
-                repository = gitService.checkoutRepositoryAtCommit(getRepositoryUri(participationId), commitId, true);
+                // For other repository types, check out the repository at the commit
+                repository = gitService.checkoutRepositoryAtCommit(participation.getVcsRepositoryUri(), commitId, true);
             }
+            // Get the files content from the working copy of the repository
             Map<String, String> filesWithContent = getFilesContentFromWorkingCopy(repository);
+            // Switch back to the default branch head
             gitService.switchBackToDefaultBranchHead(repository);
             return filesWithContent;
         }
-    }
-
-    // TODO these methods are duplicated
-    VcsRepositoryUri getRepositoryUri(Long participationId) throws IllegalArgumentException {
-        return getProgrammingExerciseParticipation(participationId).getVcsRepositoryUri();
-    }
-
-    private ProgrammingExerciseParticipation getProgrammingExerciseParticipation(long participationId) {
-        Participation participation = participationRepository.findByIdElseThrow(participationId);
-
-        if (!(participation instanceof ProgrammingExerciseParticipation)) {
-            throw new IllegalArgumentException();
-        }
-        return (ProgrammingExerciseParticipation) participation;
     }
 
     /**

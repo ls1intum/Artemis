@@ -335,7 +335,7 @@ public class ProgrammingExerciseParticipationResource {
         var participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
         ProgrammingExercise exercise = programmingExerciseRepository.getProgrammingExerciseFromParticipationElseThrow(participation);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
-        return ResponseEntity.ok(repositoryService.getFilesContentAtCommit(exercise, commitId, null, participationId));
+        return ResponseEntity.ok(repositoryService.getFilesContentAtCommit(exercise, commitId, null, participation));
     }
 
     /**
@@ -360,20 +360,22 @@ public class ProgrammingExerciseParticipationResource {
                 throw new ConflictException("A git diff report entry can only be retrieved if the participation's exercise id matches with the exercise id", ENTITY_NAME,
                         "exerciseIdsMismatch");
             }
-            if (!(participation instanceof ProgrammingExerciseParticipation)) {
+            if (participation instanceof ProgrammingExerciseParticipation programmingExerciseParticipation) {
+                ProgrammingExercise programmingExercise = programmingExerciseRepository.getProgrammingExerciseFromParticipation(programmingExerciseParticipation);
+                participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+                // we only forward the repository type for the test repository, as the test repository is the only one that needs to be treated differently
+                return ResponseEntity.ok(repositoryService.getFilesContentAtCommit(programmingExercise, commitId, null, programmingExerciseParticipation));
+            }
+            else {
                 throw new ConflictException("A git diff report entry can only be retrieved for programming exercise participations", ENTITY_NAME,
                         "notProgrammingExerciseParticipation");
             }
-            ProgrammingExercise programmingExercise = programmingExerciseRepository.getProgrammingExerciseFromParticipation((ProgrammingExerciseParticipation) participation);
-            participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
-            // we only forward the repository type for the test repository, as the test repository is the only one that needs to be treated differently
-            return ResponseEntity.ok(repositoryService.getFilesContentAtCommit(programmingExercise, commitId, null, participationId));
         }
         else if (repositoryType != null) {
             ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(exerciseId);
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
             var participation = repositoryType == RepositoryType.TEMPLATE ? programmingExercise.getTemplateParticipation() : programmingExercise.getSolutionParticipation();
-            return ResponseEntity.ok(repositoryService.getFilesContentAtCommit(programmingExercise, commitId, repositoryType, participation.getId()));
+            return ResponseEntity.ok(repositoryService.getFilesContentAtCommit(programmingExercise, commitId, repositoryType, participation));
         }
         else {
             throw new BadRequestAlertException("Either participationId or repositoryType must be provided", ENTITY_NAME, "missingParameters");
