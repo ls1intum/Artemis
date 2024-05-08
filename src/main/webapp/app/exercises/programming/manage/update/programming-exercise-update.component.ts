@@ -648,6 +648,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             });
         }
         if (this.isImportFromFile) {
+            // TODO this might need to be adjusted
             this.subscribeToSaveResponse(this.programmingExerciseService.importFromFile(this.programmingExercise, this.courseId));
         } else if (this.isImportFromExistingExercise) {
             this.subscribeToSaveResponse(this.programmingExerciseService.importExercise(this.programmingExercise, this.importOptions));
