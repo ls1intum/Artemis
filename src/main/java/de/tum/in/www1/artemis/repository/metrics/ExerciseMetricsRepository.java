@@ -37,7 +37,7 @@ public interface ExerciseMetricsRepository extends JpaRepository<Exercise, Long>
     Set<ExerciseInformationDTO> findAllExerciseInformationByCourseId(long courseId);
 
     @Query("""
-            SELECT new de.tum.in.www1.artemis.web.rest.dto.metrics.ScoreDTO(p.exercise.id, AVG(p.lastScore))
+            SELECT new de.tum.in.www1.artemis.web.rest.dto.metrics.ScoreDTO(p.exercise.id, AVG(COALESCE(p.lastScore, 0)))
             FROM ParticipantScore p
             WHERE p.exercise.id IN :exerciseIds
             GROUP BY p.exercise.id
