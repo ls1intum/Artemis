@@ -425,7 +425,7 @@
                 "exampleSolutionPublicationDateTooltip": "The date when the Solution Repository becomes available to download for students. Leave blank to disable.",
                 "releaseTestsWithExampleSolution": "Include tests into example solution",
                 "releaseTestsWithExampleSolutionTooltip": "In addition to the example solution the automatic tests can be published after the due date.",
-                "setTestCaseVisibilityToAfterReleaseDateOfResults": "Set all tests to visibility after exam end date",
+                "setTestCaseVisibilityToAfterReleaseDateOfResults": "Set test case visibility to After Release Date of Results",
                 "setTestCaseVisibilityToAfterReleaseDateOfResultsTooltip": "During the exam students will only see if their code compiles. Details about the test results wil not be displayed before the Release Date of Results."
             },
             "repositoryIsLocked": {
