@@ -24,6 +24,6 @@ public class ZonedDateTimeUtil {
      * @return the relative time of the target ZonedDateTime object compared to the origin and unit ZonedDateTime objects
      */
     public static double toRelativeTime(@NotNull ZonedDateTime origin, @NotNull ZonedDateTime unit, @NotNull ZonedDateTime target) {
-        return 100.0 * target.toEpochSecond() / (unit.toEpochSecond() - origin.toEpochSecond());
+        return 100.0 * (target.toEpochSecond() - origin.toEpochSecond()) / (unit.toEpochSecond() - origin.toEpochSecond());
     }
 }
