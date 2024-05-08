@@ -9,10 +9,12 @@ import { CompetencyService } from 'app/course/competencies/competency.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { ICompetencyAccordionToggleEvent } from 'app/shared/competency/interfaces/competency-accordion-toggle-event.interface';
 
 @Component({
     selector: 'jhi-course-dashboard',
     templateUrl: './course-dashboard.component.html',
+    styleUrls: ['./course-dashboard.component.scss'],
 })
 export class CourseDashboardComponent implements OnInit, OnDestroy {
     courseId: number;
@@ -20,6 +22,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     isLoading = false;
 
     public competencies: Competency[] = [];
+    public openedAccordionIndex: number | null = null;
     private subscriptions: Subscription[] = [];
 
     private paramSubscription?: Subscription;
@@ -79,6 +82,9 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
         } else {
             this.loadCompetencies();
         }
+    }
+    handleToggle(event: ICompetencyAccordionToggleEvent) {
+        this.openedAccordionIndex = event.opened ? event.index : null;
     }
 
     protected readonly FeatureToggle = FeatureToggle;

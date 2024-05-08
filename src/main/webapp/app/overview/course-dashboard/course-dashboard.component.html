@@ -1,14 +1,22 @@
-<div class="row justify-content-center m-4">
+<div class="col-sm col align-items-center">
     <!--
-    Currently work in progress.
-    TODO: A page with two columns.
-        - Left part: Iris Course Chat
-        - Right part: Statistics and competencies.
-    -->
-    <h1 [style]="{ 'text-align': 'center' }">Work in progress</h1>
+        Currently work in progress.
+        TODO: A page with two columns.
+            - Left part: Iris Course Chat
+            - Right part: Statistics and competencies.
+     -->
+    <div class="row justify-content-center w-100">
+        <h1 [style]="{ 'text-align': 'center' }">Work in progress</h1>
+    </div>
 
-    <h2>Competencies</h2>
-    @for (competency of competencies; track competency.id) {
-        <jhi-competency-accordion [courseId]="courseId" [competency]="competency" />
-    }
+    <div class="competency-accordion-container row justify-content-center w-100">
+        <div class="competency-accordion-header">
+            <h2>Competencies</h2>
+        </div>
+        <div class="competency-accordion-body" [ngClass]="this.openedAccordionIndex !== null ? 'competency-accordion-body-open' : 'competency-accordion-body-collapsed'">
+            @for (competency of competencies; track competency.id; let i = $index) {
+                <jhi-competency-accordion [course]="course" [competency]="competency" [index]="i" [openedIndex]="openedAccordionIndex" (accordionToggle)="handleToggle($event)" />
+            }
+        </div>
+    </div>
 </div>

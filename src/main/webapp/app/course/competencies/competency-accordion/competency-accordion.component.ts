@@ -1,35 +1,51 @@
-import { Component, Input, OnInit } from '@angular/core';
+import dayjs from 'dayjs/esm';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { faFilePdf, faList } from '@fortawesome/free-solid-svg-icons';
 import { Competency, CompetencyProgress, getConfidence, getIcon, getMastery, getProgress } from 'app/entities/competency.model';
+import { Exercise } from 'app/entities/exercise.model';
+import { Course } from 'app/entities/course.model';
+import { Router } from '@angular/router';
+import { ICompetencyAccordionToggleEvent } from 'app/shared/competency/interfaces/competency-accordion-toggle-event.interface';
 
 @Component({
     selector: 'jhi-competency-accordion',
     templateUrl: './competency-accordion.component.html',
     styleUrl: './competency-accordion.component.scss',
 })
-export class CompetencyAccordionComponent {
+export class CompetencyAccordionComponent implements OnChanges {
     @Input()
-    courseId?: number;
+    course?: Course;
     @Input()
     competency: Competency;
+    @Input()
+    index: number;
+    @Input()
+    openedIndex: number | null = null;
+
+    @Output()
+    accordionToggle = new EventEmitter<ICompetencyAccordionToggleEvent>();
 
     faList = faList;
     faPdf = faFilePdf;
 
     open = false;
-    rated = false;
-    masteryRating = 0;
-    ratingAvailable = false;
+    remainingExercises: Exercise[] = [];
 
     getIcon = getIcon;
     getProgress = getProgress;
     getConfidence = getConfidence;
     getMastery = getMastery;
 
-    constructor() {}
+    constructor(private router: Router) {}
 
+    ngOnChanges(changes: SimpleChanges) {
+        if (changes.openedIndex && this.index !== this.openedIndex) {
+            this.open = false;
+        }
+    }
     toggle() {
         this.open = !this.open;
+        this.accordionToggle.emit({ opened: this.open, index: this.index });
     }
 
     getUserProgress(): CompetencyProgress {
@@ -53,7 +69,7 @@ export class CompetencyAccordionComponent {
 
     get exercisesProgress() {
         if (this.competency.exercises?.length) {
-            const completedExercises = 0; // this.competency.exercises.filter(exercise => exercise.completed).length;
+            const completedExercises = this.competency.exercises.filter((exercise) => exercise.completed).length;
             return Math.round((completedExercises / this.competency.exercises.length) * 100);
         }
         return 0;
@@ -74,8 +90,37 @@ export class CompetencyAccordionComponent {
         } as CompetencyProgress;
     }
 
-    onRatingUpdated(rating: number) {
-        this.masteryRating = rating;
-        this.rated = true;
+    getNextExercise() {
+        if (this.competency && this.competency.exercises && this.competency.exercises?.length !== 0) {
+            this.remainingExercises = this.competency.exercises?.filter((exercise) => exercise && !exercise.completed && !this.isExerciseDueDayPassed(exercise));
+            if (this.remainingExercises.length && this.remainingExercises.first()) {
+                const exercise = this.remainingExercises.first();
+                if (exercise?.dueDate) {
+                    exercise.dueDate = dayjs(exercise.dueDate);
+                }
+                return exercise;
+            }
+            return null;
+        }
+        return null;
+    }
+    get competencySoftDueDayPassed() {
+        return this.competency?.softDueDate && dayjs().isAfter(this.competency.softDueDate);
+    }
+
+    isExerciseDueDayPassed(exercise: Exercise): boolean {
+        if (!exercise.dueDate) {
+            return false;
+        }
+        return exercise.dueDate && dayjs().isAfter(exercise.dueDate);
+    }
+
+    get nextExercise() {
+        return this.getNextExercise();
+    }
+
+    navigateToCompetencyDetailPage(event: Event) {
+        event.stopPropagation();
+        this.router.navigate(['/courses', this.course!.id, 'competencies', this.competency.id]);
     }
 }

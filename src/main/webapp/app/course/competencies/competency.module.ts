@@ -30,6 +30,8 @@ import { CourseImportStandardizedCompetenciesComponent } from 'app/course/compet
 import { ArtemisStandardizedCompetencyModule } from 'app/shared/standardized-competencies/standardized-competency.module';
 import { CompetencyAccordionComponent } from 'app/course/competencies/competency-accordion/competency-accordion.component';
 import { CompetencyMasteryRatingComponent } from 'app/course/competencies/competency-accordion/competency-mastery-rating/competency-mastery-rating.component';
+import { ArtemisCourseExerciseRowModule } from 'app/overview/course-exercises/course-exercise-row.module';
+import { ArtemisLectureUnitsModule } from 'app/overview/course-lectures/lecture-units.module';
 
 @NgModule({
     imports: [
@@ -44,6 +46,8 @@ import { CompetencyMasteryRatingComponent } from 'app/course/competencies/compet
         ArtemisMarkdownModule,
         IrisModule,
         ArtemisStandardizedCompetencyModule,
+        ArtemisCourseExerciseRowModule,
+        ArtemisLectureUnitsModule,
     ],
     declarations: [
         CompetencyFormComponent,

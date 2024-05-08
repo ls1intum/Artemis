@@ -124,6 +124,7 @@ export abstract class Exercise implements BaseEntity {
     public averageRating?: number;
     public numberOfRatings?: number;
     public channelName?: string;
+    public completed?: boolean;
 
     // helper attributes
     public secondCorrectionEnabled = false;

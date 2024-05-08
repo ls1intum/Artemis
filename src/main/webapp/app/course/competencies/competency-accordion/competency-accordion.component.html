@@ -1,10 +1,10 @@
 <div>
     <button
         [id]="'competency-accordion-' + competency.id"
-        class="competency-accordion-header row align-items-center justify-content-between mt-2 position-relative"
+        class="competency-accordion-header row align-items-center justify-content-between mt-2 position-relative flex-wrap"
         (click)="toggle()"
     >
-        <div class="col-auto d-md-block">
+        <div class="col-auto d-md-block my-2">
             <h3 class="fw-medium">
                 <fa-icon [icon]="getIcon(competency.taxonomy)" />
             </h3>
@@ -13,13 +13,13 @@
             <h3>{{ competency.title }}</h3>
         </div>
         @if (!open) {
-            <div class="col-sm col py-2" style="max-width: 200px">
+            <div class="col-sm col py-2" style="max-width: 200px" [class.header-tooltip-open]="open">
                 <div class="row mb-2">
                     <div class="col-auto d-md-block">
                         <fa-icon [icon]="faList" />
                     </div>
                     <div class="col">
-                        <jhi-progress-bar [size]="'small'" [maxValue]="100" [currentValue]="60" [inline]="true" />
+                        <jhi-progress-bar [size]="'small'" [maxValue]="100" [currentValue]="exercisesProgress" [inline]="true" />
                     </div>
                 </div>
                 <div class="row align-items-center justify-content-center">
@@ -27,54 +27,36 @@
                         <fa-icon [icon]="faPdf" />
                     </div>
                     <div class="col">
-                        <jhi-progress-bar [size]="'small'" [maxValue]="100" [currentValue]="20" [inline]="true" />
+                        <jhi-progress-bar [size]="'small'" [maxValue]="100" [currentValue]="lectureUnitsProgress" [inline]="true" />
                     </div>
                 </div>
             </div>
             <div class="col-sm col text-end py-1 px-2 justify-content-center align-items-center" style="max-width: 75px">
-                <jhi-competency-rings [confidence]="this.confidence" [progress]="this.progress" [mastery]="this.mastery" [hideTooltip]="true" />
+                <jhi-competency-rings [confidence]="this.confidence" [progress]="this.progress" [mastery]="this.mastery" [hideTooltip]="true" [playAnimation]="false" />
             </div>
         } @else {
-            <div class="col-sm col py-2" style="max-width: 275px">
-                <button class="btn btn-primary">View Lectures</button>
-                <button class="btn btn-primary">View Exercises</button>
+            <div class="col-sm col py-2" style="max-width: 275px" [class.header-tooltip-closed]="!open">
+                <button (click)="navigateToCompetencyDetailPage($event)" class="btn btn-primary w-100 my-2">View Lectures and Exercises</button>
             </div>
         }
     </button>
-    <div [class.competency-accordion-open]="open" class="competency-accordion-body row align-items-center justify-content-center">
-        <div class="col-sm col">
-            <div class="row mb-2 align-items-center justify-content-center">
-                <div class="col">
-                    <jhi-progress-bar [maxValue]="100" [currentValue]="60" [icon]="faList" [title]="'Exercises'" />
-                </div>
+    <div [class.competency-accordion-body-open]="open" [class.competency-accordion-body-closed]="!open" class="competency-accordion-body">
+        <div class="row align-items-center justify-content-center">
+            <div class="col-sm">
+                <jhi-progress-bar [maxValue]="100" [currentValue]="exercisesProgress" [icon]="faList" [title]="'Exercises'" />
             </div>
-            <div class="row align-items-center justify-content-center">
-                <div class="col">
-                    <jhi-progress-bar [maxValue]="100" [currentValue]="20" [icon]="faPdf" [title]="'Lectures'" />
-                </div>
+            <div class="col-sm py-2">
+                <jhi-progress-bar [maxValue]="100" [currentValue]="lectureUnitsProgress" [icon]="faPdf" [title]="'Lectures'" />
             </div>
         </div>
-        <div class="col-sm col py-2">
-            <div class="row align-items-center justify-content-center">
-                <p style="text-align: center; margin-bottom: 5px"><b>Rate yourself</b></p>
-                <p style="text-align: center; margin-bottom: 5px">To what extent have you mastered this competency?</p>
-                <p style="text-align: center; font-size: 12px" class="mb-2">
-                    Choose on a scale from <i><b>Low</b></i> to <i><b>High</b></i
-                    >.
-                </p>
-                <div style="width: auto">
-                    <jhi-competency-mastery-rating [rating]="masteryRating" (ratingUpdated)="onRatingUpdated($event)" />
+        <!-- Add your new row here -->
+        @if (nextExercise) {
+            <div class="row align-items-center justify-content-center mt-2">
+                <div class="col">
+                    <h5><b>Next exercise</b></h5>
+                    <jhi-course-exercise-row [exercise]="nextExercise" [course]="competency!.course!" />
                 </div>
             </div>
-            @if (rated) {
-                <div class="row align-items-center justify-content-center">
-                    <span class="col-auto my-2">Artemis</span>
-                    <div style="width: 250px">
-                        <jhi-progress-bar [maxValue]="100" [currentValue]="50" [progressColor]="'#5555FF'" [inline]="true" />
-                    </div>
-                    <span class="col-auto my-2">50%</span>
-                </div>
-            }
-        </div>
+        }
     </div>
 </div>
