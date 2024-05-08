@@ -706,6 +706,7 @@ public class GitService {
      * @param localPath           The path to the local repository directory, not null.
      * @param remoteRepositoryUri The URI of the remote repository, not null.
      * @param defaultBranch       The name of the default branch to be checked out, not null.
+     * @param isBare              Whether the repository is a bare repository (without working directory)
      * @return The configured Repository instance.
      * @throws IOException             If an I/O error occurs during repository initialization or configuration.
      * @throws InvalidRefNameException If the provided default branch name is invalid.
