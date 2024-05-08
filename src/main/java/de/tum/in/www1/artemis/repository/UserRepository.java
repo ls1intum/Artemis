@@ -624,7 +624,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      *
      * @return the user id of the currently logged-in user
      */
-    default long getUserId() {
+    default long getUserIdElseThrow() {
         String currentUserLogin = getCurrentUserLogin();
         Optional<Long> userId = findIdByLogin(currentUserLogin);
         return userId.orElseThrow(() -> new EntityNotFoundException("User: " + currentUserLogin));
