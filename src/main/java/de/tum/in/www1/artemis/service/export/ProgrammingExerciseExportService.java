@@ -746,9 +746,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
                 log.debug("Anonymizing commits for participation {}", participation);
                 gitService.anonymizeStudentCommits(repository, programmingExercise);
             }
-
-            if (!repositoryExportOptions.isAnonymizeRepository() && profileService.isLocalVcsActive()) {
-                log.debug("LocalCI is active. Removing remotes from participation {}", participation);
+            else {
                 gitService.removeRemotesFromRepository(repository);
             }
 
