@@ -197,7 +197,7 @@ public class ProgrammingExerciseExportImportResource {
         newExercise.validateManualFeedbackSettings();
         validateStaticCodeAnalysisSettings(newExercise);
 
-        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        final User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(newExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 
