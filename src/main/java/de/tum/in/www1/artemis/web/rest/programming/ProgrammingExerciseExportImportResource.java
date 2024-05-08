@@ -244,7 +244,7 @@ public class ProgrammingExerciseExportImportResource {
 
         try {
             ProgrammingExercise importedProgrammingExercise = programmingExerciseImportService.importProgrammingExercise(originalProgrammingExercise, newExercise, updateTemplate,
-                    recreateBuildPlans);
+                    recreateBuildPlans, setTestCaseVisibilityToAfterReleaseDateOfResults);
 
             // remove certain properties which are not relevant for the client to keep the response small
             importedProgrammingExercise.setTestCases(null);
