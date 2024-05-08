@@ -104,6 +104,7 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long>, J
             LEFT JOIN FETCH c.lectureUnits lu
             LEFT JOIN FETCH c.exercises
             WHERE c.course.id = :courseId
+            ORDER BY c.softDueDate ASC, c.id ASC
             """)
     List<Competency> findAllWithLectureUnitsAndExercisesByCourseId(@Param("courseId") Long courseId);
 
