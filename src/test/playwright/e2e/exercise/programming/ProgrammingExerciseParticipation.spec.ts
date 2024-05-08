@@ -16,7 +16,7 @@ import { Fixtures } from '../../../fixtures/fixtures';
 import { createFileWithContent } from '../../../support/utils';
 import { ProgrammingExerciseSubmission } from '../../../support/pageobjects/exercises/programming/OnlineEditorPage';
 import cAllSuccessful from '../../../fixtures/exercise/programming/c/all_successful/submission.json';
-import { UserCredentials, admin, instructor, studentOne, studentThree, studentTwo, tutor } from '../../../support/users';
+import { UserCredentials, admin, instructor, studentFour, studentOne, studentThree, studentTwo, tutor } from '../../../support/users';
 import { Team } from 'app/entities/team.model';
 import { ProgrammingExerciseOverviewPage } from '../../../support/pageobjects/exercises/programming/ProgrammingExerciseOverviewPage';
 
@@ -81,10 +81,11 @@ test.describe('Programming exercise participation', () => {
         }
     }
 
-    test.describe('Programming exercise team participation', () => {
+    test.describe.serial('Programming exercise team participation', () => {
         let exercise: ProgrammingExercise;
         let participation: any;
         let team: Team;
+        let tutorUser: any;
 
         const submissions = [
             { student: studentOne, submission: javaBuildErrorSubmission, commitMessage: 'Initial commit' },
@@ -111,7 +112,7 @@ test.describe('Programming exercise participation', () => {
                     return response.json();
                 }),
             );
-            const tutorUser = await (await userManagementAPIRequests.getUser(tutor.username)).json();
+            tutorUser = await (await userManagementAPIRequests.getUser(tutor.username)).json();
             const response = await exerciseAPIRequests.createTeam(exercise.id!, students, tutorUser);
             team = await response.json();
         });
@@ -128,6 +129,7 @@ test.describe('Programming exercise participation', () => {
                 firstSubmission.submission,
                 firstSubmission.commitMessage,
             );
+
             for (let i = 1; i < submissions.length; i++) {
                 const { student, submission, commitMessage } = submissions[i];
                 await login(student, '/');
@@ -137,6 +139,45 @@ test.describe('Programming exercise participation', () => {
                 submission.deleteFiles = [];
                 await makeGitExerciseSubmission(page, programmingExerciseOverview, course, exercise, student, submission, commitMessage);
             }
+
+            await login(studentFour, '/');
+            await page.waitForURL(/\/courses/);
+            await courseList.openCourse(course.id!);
+            await courseOverview.openExercise(exercise.title!);
+            await expect(programmingExerciseOverview.getCloneRepositoryButton()).not.toBeVisible();
+        });
+
+        test('Students without a team can not participate in the exercise', async ({ login, page, courseList, courseOverview, programmingExerciseOverview }) => {
+            await login(studentFour, '/');
+            await page.waitForURL(/\/courses/);
+            await courseList.openCourse(course.id!);
+            await courseOverview.openExercise(exercise.title!);
+            await expect(programmingExerciseOverview.getExerciseDetails()).toHaveText('No team yet');
+            await expect(programmingExerciseOverview.getCloneRepositoryButton()).not.toBeVisible();
+        });
+
+        test('Students of other teams have their own submission', async ({
+            login,
+            userManagementAPIRequests,
+            exerciseAPIRequests,
+            page,
+            courseList,
+            courseOverview,
+            programmingExerciseOverview,
+        }) => {
+            await login(admin);
+            const response = await userManagementAPIRequests.getUser(studentFour.username);
+            const studentFourUser = await response.json();
+            await exerciseAPIRequests.createTeam(exercise.id!, studentFourUser, tutorUser);
+
+            await login(studentFour, '/');
+            await page.waitForURL(/\/courses/);
+            await courseList.openCourse(course.id!);
+            await courseOverview.openExercise(exercise.title!);
+            await expect(programmingExerciseOverview.getCloneRepositoryButton()).not.toBeVisible();
+            await expect(programmingExerciseOverview.getExerciseDetails()).toHaveText('Not yet started');
+            await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentFour);
+            await expect(programmingExerciseOverview.getExerciseDetails()).toHaveText('No graded result');
         });
 
         test.describe('Check team participation', () => {
