@@ -143,12 +143,12 @@
                 <input
                     type="checkbox"
                     class="form-check-input"
-                    name="setTestCaseVisibilityToAfterReleaseDateOfResults"
-                    [checked]="importOptions.setTestCaseVisibilityToAfterReleaseDateOfResults"
-                    id="setTestCaseVisibilityToAfterReleaseDateOfResults-checkbox"
-                    (change)="importOptions.setTestCaseVisibilityToAfterReleaseDateOfResults = !importOptions.setTestCaseVisibilityToAfterReleaseDateOfResults"
+                    name="setTestCaseVisibilityToAfterDueDate"
+                    [checked]="importOptions.setTestCaseVisibilityToAfterDueDate"
+                    id="setTestCaseVisibilityToAfterDueDate-checkbox"
+                    (change)="importOptions.setTestCaseVisibilityToAfterDueDate = !importOptions.setTestCaseVisibilityToAfterDueDate"
                 />
-                <label class="form-control-label" for="setTestCaseVisibilityToAfterReleaseDateOfResults-checkbox">{{
+                <label class="form-control-label" for="setTestCaseVisibilityToAfterDueDate-checkbox">{{
                     'artemisApp.programmingExercise.timeline.setTestCaseVisibilityToAfterReleaseDateOfResults' | artemisTranslate
                 }}</label>
                 <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.setTestCaseVisibilityToAfterReleaseDateOfResultsTooltip'" />

@@ -42,12 +42,12 @@ import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiari
 /**
  * - {@link ImportOptions.recreateBuildPlans} Option determining whether the build plans should be recreated or copied from the imported exercise
  * - {@link ImportOptions.updateTemplate} Option determining whether the template files in the repositories should be updated
- * - {@link ImportOptions.setTestCaseVisibilityToAfterReleaseDateOfResults} Option determining whether the test cases should be hidden until the release date of the results
+ * - {@link ImportOptions.setTestCaseVisibilityToAfterDueDate} Option determining whether the test cases should be hidden until the release date of the results
  */
 export interface ImportOptions {
     recreateBuildPlans: boolean;
     updateTemplate: boolean;
-    setTestCaseVisibilityToAfterReleaseDateOfResults: boolean;
+    setTestCaseVisibilityToAfterDueDate: boolean;
 }
 
 @Component({
@@ -153,7 +153,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     public readonly importOptions: ImportOptions = {
         recreateBuildPlans: false,
         updateTemplate: false,
-        setTestCaseVisibilityToAfterReleaseDateOfResults: false,
+        setTestCaseVisibilityToAfterDueDate: false,
     };
     public originalStaticCodeAnalysisEnabled: boolean | undefined;
 
@@ -1103,7 +1103,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             recreateBuildPlans: this.importOptions.recreateBuildPlans,
             onRecreateBuildPlanOrUpdateTemplateChange: this.onRecreateBuildPlanOrUpdateTemplateChange,
             updateTemplate: this.importOptions.updateTemplate,
-            setTestCaseVisibilityToAfterReleaseDateOfResults: this.importOptions.setTestCaseVisibilityToAfterReleaseDateOfResults,
+            setTestCaseVisibilityToAfterDueDate: this.importOptions.setTestCaseVisibilityToAfterDueDate,
             recreateBuildPlanOrUpdateTemplateChange: this.onRecreateBuildPlanOrUpdateTemplateChange,
             buildPlanLoaded: this.buildPlanLoaded,
         };
