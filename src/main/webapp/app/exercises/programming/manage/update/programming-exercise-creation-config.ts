@@ -48,6 +48,7 @@ export type ProgrammingExerciseCreationConfig = {
     recreateBuildPlans: boolean;
     onRecreateBuildPlanOrUpdateTemplateChange: () => void;
     updateTemplate: boolean;
+    setTestCaseVisibilityToAfterReleaseDateOfResults: boolean;
     recreateBuildPlanOrUpdateTemplateChange: () => void; // default false
     isExamMode: boolean;
     isEdit: boolean;

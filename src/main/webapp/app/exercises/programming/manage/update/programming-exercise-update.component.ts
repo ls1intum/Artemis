@@ -39,6 +39,11 @@ import { ProgrammingExerciseLanguageComponent } from 'app/exercises/programming/
 import { ProgrammingExerciseGradingComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-grading.component';
 import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.component';
 
+/**
+ * - {@link ImportOptions.recreateBuildPlans} Option determining whether the build plans should be recreated or copied from the imported exercise
+ * - {@link ImportOptions.updateTemplate} Option determining whether the template files in the repositories should be updated
+ * - {@link ImportOptions.setTestCaseVisibilityToAfterReleaseDateOfResults} Option determining whether the test cases should be hidden until the release date of the results
+ */
 export interface ImportOptions {
     recreateBuildPlans: boolean;
     updateTemplate: boolean;
@@ -645,9 +650,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         if (this.isImportFromFile) {
             this.subscribeToSaveResponse(this.programmingExerciseService.importFromFile(this.programmingExercise, this.courseId));
         } else if (this.isImportFromExistingExercise) {
-            this.subscribeToSaveResponse(
-                this.programmingExerciseService.importExercise(this.programmingExercise, this.importOptions.recreateBuildPlans, this.importOptions.updateTemplate),
-            );
+            this.subscribeToSaveResponse(this.programmingExerciseService.importExercise(this.programmingExercise, this.importOptions));
         } else if (this.programmingExercise.id !== undefined) {
             const requestOptions = {} as any;
             if (this.notificationText) {
@@ -1099,6 +1102,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             recreateBuildPlans: this.importOptions.recreateBuildPlans,
             onRecreateBuildPlanOrUpdateTemplateChange: this.onRecreateBuildPlanOrUpdateTemplateChange,
             updateTemplate: this.importOptions.updateTemplate,
+            setTestCaseVisibilityToAfterReleaseDateOfResults: this.importOptions.setTestCaseVisibilityToAfterReleaseDateOfResults,
             recreateBuildPlanOrUpdateTemplateChange: this.onRecreateBuildPlanOrUpdateTemplateChange,
             buildPlanLoaded: this.buildPlanLoaded,
         };
