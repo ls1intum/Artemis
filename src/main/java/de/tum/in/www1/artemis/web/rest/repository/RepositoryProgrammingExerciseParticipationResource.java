@@ -87,8 +87,6 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     private final RepositoryParticipationService repositoryParticipationService;
 
-    private final ProfileService profileService;
-
     public RepositoryProgrammingExerciseParticipationResource(ProfileService profileService, UserRepository userRepository, AuthorizationCheckService authCheckService,
             ParticipationAuthorizationCheckService participationAuthCheckService, GitService gitService, Optional<VersionControlService> versionControlService,
             RepositoryService repositoryService, ProgrammingExerciseParticipationService participationService, ProgrammingExerciseRepository programmingExerciseRepository,
@@ -104,7 +102,6 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         this.participationRepository = participationRepository;
         this.submissionPolicyRepository = submissionPolicyRepository;
         this.repositoryParticipationService = repositoryParticipationService;
-        this.profileService = profileService1;
     }
 
     /**
