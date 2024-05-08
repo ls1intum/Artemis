@@ -41,7 +41,7 @@ test.describe('Quiz Exercise Management', () => {
             await expect(page.getByText(title)).toBeVisible();
         });
 
-        test.skip('Creates a Quiz with Drag and Drop', async ({ page, quizExerciseCreation }) => {
+        test('Creates a Quiz with Drag and Drop', async ({ page, quizExerciseCreation }) => {
             const quizQuestionTitle = 'Quiz Question';
             await quizExerciseCreation.addDragAndDropQuestion(quizQuestionTitle);
             const response = await quizExerciseCreation.saveQuiz();

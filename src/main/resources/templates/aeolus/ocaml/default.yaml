@@ -12,6 +12,6 @@ actions:
     runAlways: true
     results:
       - name: junit
-        path: test-reports/results.xml
+        path: 'test-reports/*.xml'
         type: junit
         before: true
