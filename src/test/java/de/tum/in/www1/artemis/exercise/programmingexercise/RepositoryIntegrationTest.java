@@ -201,7 +201,8 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTe
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(1));
         programmingExerciseRepository.save(programmingExercise);
 
-        studentRepository.configureRepos("studentLocalRepo", "studentOriginRepo");
+        // Instantiate the remote repository as non-bare so its files can be manipulated
+        studentRepository.configureRepos("studentLocalRepo", "studentOriginRepo", false);
 
         // add file to the repository folder
         studentFilePath = Path.of(studentRepository.localRepoFile + "/" + currentLocalFileName);

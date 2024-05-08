@@ -44,15 +44,31 @@ public class LocalRepository {
         return Git.init().setDirectory(filePath).setInitialBranch(defaultBranch).setBare(bare).call();
     }
 
-    public void configureRepos(String localRepoFileName, String originRepoFileName) throws Exception {
-
+    /**
+     * Configures the local and origin repositories, instantiating the origin repository as a bare repository if specified. The default branch name will be set accordingly.
+     *
+     * @param localRepoFileName  The name of the directory in which the local repository will be created
+     * @param originRepoFileName The name of the directory in which the origin repository will be created
+     * @param originIsBare       Whether the origin repository should be bare or not. Set this to false only if you need to create files in the origin repository.
+     */
+    public void configureRepos(String localRepoFileName, String originRepoFileName, boolean originIsBare) throws Exception {
         this.localRepoFile = Files.createTempDirectory(localRepoFileName).toFile();
         this.localGit = initialize(localRepoFile, defaultBranch, false);
 
         this.originRepoFile = Files.createTempDirectory(originRepoFileName).toFile();
-        this.originGit = initialize(originRepoFile, defaultBranch, true);
+        this.originGit = initialize(originRepoFile, defaultBranch, originIsBare);
 
         this.localGit.remoteAdd().setName("origin").setUri(new URIish(String.valueOf(this.originRepoFile))).call();
+    }
+
+    /**
+     * Configures the local repository and the origin repository, instantiating the origin repository as a bare repository and setting the default branch name accordingly.
+     *
+     * @param localRepoFileName  The name of the directory in which the local repository will be created
+     * @param originRepoFileName The name of the directory in which the origin repository will be created
+     */
+    public void configureRepos(String localRepoFileName, String originRepoFileName) throws Exception {
+        this.configureRepos(localRepoFileName, originRepoFileName, true);
     }
 
     /**
