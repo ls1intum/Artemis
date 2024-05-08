@@ -40,17 +40,17 @@ public class LocalRepository {
         this.defaultBranch = defaultBranch;
     }
 
-    public static Git initialize(File filePath, String defaultBranch) throws GitAPIException {
-        return Git.init().setDirectory(filePath).setInitialBranch(defaultBranch).call();
+    public static Git initialize(File filePath, String defaultBranch, boolean bare) throws GitAPIException {
+        return Git.init().setDirectory(filePath).setInitialBranch(defaultBranch).setBare(bare).call();
     }
 
     public void configureRepos(String localRepoFileName, String originRepoFileName) throws Exception {
 
         this.localRepoFile = Files.createTempDirectory(localRepoFileName).toFile();
-        this.localGit = initialize(localRepoFile, defaultBranch);
+        this.localGit = initialize(localRepoFile, defaultBranch, false);
 
         this.originRepoFile = Files.createTempDirectory(originRepoFileName).toFile();
-        this.originGit = initialize(originRepoFile, defaultBranch);
+        this.originGit = initialize(originRepoFile, defaultBranch, true);
 
         this.localGit.remoteAdd().setName("origin").setUri(new URIish(String.valueOf(this.originRepoFile))).call();
     }
@@ -68,11 +68,11 @@ public class LocalRepository {
 
         Path localRepoPath = Files.createTempDirectory(localRepoFileName);
         this.localRepoFile = localRepoPath.toFile();
-        this.localGit = initialize(localRepoFile, defaultBranch);
+        this.localGit = initialize(localRepoFile, defaultBranch, false);
 
         this.originRepoFile = originRepositoryFolder.toFile();
         // Create a bare remote repository.
-        this.originGit = Git.init().setDirectory(originRepositoryFolder.toFile()).setBare(true).call();
+        this.originGit = initialize(originRepoFile, defaultBranch, true);
 
         this.localGit.remoteAdd().setName("origin").setUri(new URIish(String.valueOf(this.originRepoFile))).call();
 
