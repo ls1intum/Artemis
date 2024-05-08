@@ -138,15 +138,15 @@
                 <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.complaintOnAutomaticAssessmentTooltip'" />
             </div>
         }
-        @if (isExamMode && isImport) {
+        @if (isExamMode && isImport && importOptions) {
             <div class="form-check">
                 <input
                     type="checkbox"
                     class="form-check-input"
                     name="setTestCaseVisibilityToAfterReleaseDateOfResults"
-                    [checked]="setTestCaseVisibilityToAfterReleaseDateOfResults"
+                    [checked]="importOptions.setTestCaseVisibilityToAfterReleaseDateOfResults"
                     id="setTestCaseVisibilityToAfterReleaseDateOfResults-checkbox"
-                    (change)="setTestCaseVisibilityToAfterReleaseDateOfResults = !setTestCaseVisibilityToAfterReleaseDateOfResults"
+                    (change)="importOptions.setTestCaseVisibilityToAfterReleaseDateOfResults = !importOptions.setTestCaseVisibilityToAfterReleaseDateOfResults"
                 />
                 <label class="form-control-label" for="setTestCaseVisibilityToAfterReleaseDateOfResults-checkbox">{{
                     'artemisApp.programmingExercise.timeline.setTestCaseVisibilityToAfterReleaseDateOfResults' | artemisTranslate

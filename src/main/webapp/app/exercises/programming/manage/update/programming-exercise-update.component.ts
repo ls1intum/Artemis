@@ -42,6 +42,7 @@ import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiari
 export interface ImportOptions {
     recreateBuildPlans: boolean;
     updateTemplate: boolean;
+    setTestCaseVisibilityToAfterReleaseDateOfResults: boolean;
 }
 
 @Component({
@@ -147,6 +148,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     public readonly importOptions: ImportOptions = {
         recreateBuildPlans: false,
         updateTemplate: false,
+        setTestCaseVisibilityToAfterReleaseDateOfResults: false,
     };
     public originalStaticCodeAnalysisEnabled: boolean | undefined;
 

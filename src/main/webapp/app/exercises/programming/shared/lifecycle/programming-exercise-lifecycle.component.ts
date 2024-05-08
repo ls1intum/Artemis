@@ -12,6 +12,7 @@ import { ProgrammingExerciseTestScheduleDatePickerComponent } from 'app/exercise
 import { every } from 'lodash-es';
 import { ActivatedRoute } from '@angular/router';
 import { tap } from 'rxjs/operators';
+import { ImportOptions } from 'app/exercises/programming/manage/update/programming-exercise-update.component';
 
 @Component({
     selector: 'jhi-programming-exercise-lifecycle',
@@ -22,6 +23,7 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
     @Input() exercise: ProgrammingExercise;
     @Input() isExamMode: boolean;
     @Input() readOnly: boolean;
+    @Input() importOptions: ImportOptions | undefined;
 
     @ViewChildren(ProgrammingExerciseTestScheduleDatePickerComponent) datePickerComponents: QueryList<ProgrammingExerciseTestScheduleDatePickerComponent>;
 
@@ -42,7 +44,6 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
 
     isAthenaEnabled$: Observable<boolean> | undefined;
 
-    setTestCaseVisibilityToAfterReleaseDateOfResults: boolean = false;
     isImport: boolean = false;
     private urlSubscription: Subscription;
 
