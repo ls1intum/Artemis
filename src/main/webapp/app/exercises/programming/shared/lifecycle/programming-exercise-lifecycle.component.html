@@ -138,7 +138,7 @@
                 <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.complaintOnAutomaticAssessmentTooltip'" />
             </div>
         }
-        @if (!isExamMode) {
+        @if (isExamMode) {
             <div class="form-check">
                 <input
                     type="checkbox"
@@ -153,6 +153,8 @@
                 }}</label>
                 <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.setTestCaseVisibilityToAfterReleaseDateOfResultsTooltip'" />
             </div>
+        }
+        @if (!isExamMode) {
             <div class="form-check">
                 <input
                     type="checkbox"
