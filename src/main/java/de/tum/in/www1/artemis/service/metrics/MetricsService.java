@@ -5,9 +5,7 @@ import static de.tum.in.www1.artemis.service.util.ZonedDateTimeUtil.toRelativeTi
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.averagingDouble;
 import static java.util.stream.Collectors.groupingBy;
-import static java.util.stream.Collectors.mapping;
 import static java.util.stream.Collectors.toMap;
-import static java.util.stream.Collectors.toSet;
 
 import java.time.ZonedDateTime;
 import java.util.function.Predicate;
@@ -22,7 +20,6 @@ import de.tum.in.www1.artemis.web.rest.dto.metrics.ExerciseStudentMetricsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.ResourceTimestampDTO;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.ScoreDTO;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.StudentMetricsDTO;
-import de.tum.in.www1.artemis.web.rest.dto.metrics.SubmissionTimestampDTO;
 
 /**
  * Service class to access metrics regarding students' learning progress.
@@ -67,17 +64,14 @@ public class MetricsService {
         final var averageScore = exerciseMetricsRepository.findAverageScore(exerciseIds);
         final var averageScoreMap = averageScore.stream().collect(toMap(ScoreDTO::exerciseId, ScoreDTO::score));
 
-        final var latestSubmissionOfUser = exerciseMetricsRepository.findLatestSubmissionDatesForUser(exerciseIds, userId);
-        final var latestSubmissionMap = latestSubmissionOfUser.stream().collect(toMap(ResourceTimestampDTO::id, ResourceTimestampDTO::timestamp));
-
         final var latestSubmissions = exerciseMetricsRepository.findLatestSubmissionDates(exerciseIds);
         final ToDoubleFunction<ResourceTimestampDTO> relativeTime = dto -> toRelativeTime(exerciseInfoMap.get(dto.id()).start(), exerciseInfoMap.get(dto.id()).due(),
                 dto.timestamp());
         final var averageLatestSubmissionMap = latestSubmissions.stream().collect(groupingBy(ResourceTimestampDTO::id, averagingDouble(relativeTime)));
 
-        final var submissionTimestamps = exerciseMetricsRepository.findSubmissionTimestampsForUser(exerciseIds, userId);
-        final var submissionTimestampMap = submissionTimestamps.stream().collect(groupingBy(SubmissionTimestampDTO::exerciseId, mapping(identity(), toSet())));
+        final var latestSubmissionOfUser = exerciseMetricsRepository.findLatestSubmissionDatesForUser(exerciseIds, userId);
+        final var latestSubmissionMap = latestSubmissionOfUser.stream().collect(toMap(ResourceTimestampDTO::id, relativeTime::applyAsDouble));
 
-        return new ExerciseStudentMetricsDTO(exerciseInfoMap, averageScoreMap, averageLatestSubmissionMap, latestSubmissionMap, submissionTimestampMap);
+        return new ExerciseStudentMetricsDTO(exerciseInfoMap, averageScoreMap, averageLatestSubmissionMap, latestSubmissionMap);
     }
 }

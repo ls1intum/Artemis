@@ -7,6 +7,7 @@ import static org.awaitility.Awaitility.await;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -24,6 +25,7 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.repository.ParticipantScoreRepository;
+import de.tum.in.www1.artemis.repository.metrics.ExerciseMetricsRepository;
 import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.ExerciseInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.StudentMetricsDTO;
@@ -37,6 +39,9 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private ParticipantScoreRepository participantScoreRepository;
+
+    @Autowired
+    private ExerciseMetricsRepository repository;
 
     private Course course;
 
@@ -102,6 +107,11 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             participantScoreScheduleService.executeScheduledTasks();
             await().until(() -> participantScoreScheduleService.isIdle());
 
+            assertThat(participantScoreRepository.findAll()).isNotEmpty(); // FUCk
+
+            final var avgScore = repository.findAverageScore(Set.of(1L, 2L, 3L, 4L, 5L));
+            assertThat(avgScore).isNotEmpty();
+
             final var result = request.get("/api/metrics/course/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
             assertThat(result).isNotNull();
             assertThat(result.exerciseMetrics()).isNotNull();
@@ -142,17 +152,18 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             final var result = request.get("/api/metrics/course/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
             assertThat(result).isNotNull();
             assertThat(result.exerciseMetrics()).isNotNull();
-            final var averageLatestSubmissions = result.exerciseMetrics().latestSubmission();
+            final var latestSubmissions = result.exerciseMetrics().latestSubmission();
 
             final var exercises = exerciseRepository.findAllExercisesByCourseId(course.getId()).stream()
                     .map(exercise -> exerciseRepository.findWithEagerStudentParticipationsStudentAndSubmissionsById(exercise.getId()).orElseThrow());
 
-            final var expectedMap = exercises.collect(Collectors.toMap(Exercise::getId, exercise -> exercise.getStudentParticipations().stream()
-                    .flatMap(participation -> participation.getSubmissions().stream()).map(Submission::getSubmissionDate).max(Comparator.naturalOrder()).orElseThrow()));
+            final var expectedMap = exercises.collect(Collectors.toMap(Exercise::getId, exercise -> {
+                final var absoluteTime = exercise.getStudentParticipations().stream().flatMap(participation -> participation.getSubmissions().stream())
+                        .map(Submission::getSubmissionDate).max(Comparator.naturalOrder()).orElseThrow();
+                return toRelativeTime(exercise.getReleaseDate(), exercise.getDueDate(), absoluteTime);
+            }));
 
-            // isEqual is not possible due to the need of calling isEqual on the submission dates
-            assertThat(averageLatestSubmissions).hasSameSizeAs(expectedMap);
-            assertThat(averageLatestSubmissions).allSatisfy((id, latestSubmission) -> expectedMap.get(id).isEqual(latestSubmission));
+            assertThat(latestSubmissions).isEqualTo(expectedMap);
         }
     }
 }
