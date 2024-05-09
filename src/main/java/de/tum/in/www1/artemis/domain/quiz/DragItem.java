@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.domain.quiz;
 
 import java.io.Serializable;
 import java.net.URI;
+import java.util.Objects;
 
 import jakarta.persistence.PostPersist;
 import jakarta.persistence.PostRemove;
@@ -113,6 +114,26 @@ public class DragItem implements QuizQuestionComponent<DragAndDropQuestion>, Ser
     @Override
     public String toString() {
         return "DragItem{" + "id=" + getId() + ", pictureFilePath='" + getPictureFilePath() + "'" + ", text='" + getText() + "'" + ", invalid='" + isInvalid() + "'" + "}";
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        DragItem dragItem = (DragItem) obj;
+        if (dragItem.getId() == null || getId() == null) {
+            return false;
+        }
+        return Objects.equals(getId(), dragItem.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(getId());
     }
 
 }

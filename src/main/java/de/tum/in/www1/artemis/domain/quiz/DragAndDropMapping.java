@@ -1,17 +1,14 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
+import java.io.Serializable;
 import java.util.Objects;
 
-import jakarta.persistence.FetchType;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Transient;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * A DragAndDropMapping.
  */
-public class DragAndDropMapping implements QuizQuestionComponent<DragAndDropQuestion> {
+public class DragAndDropMapping implements QuizQuestionComponent<DragAndDropQuestion>, Serializable {
 
     private Long id;
 
@@ -27,8 +24,6 @@ public class DragAndDropMapping implements QuizQuestionComponent<DragAndDropQues
     @Transient
     private DropLocation dropLocation;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JsonIgnore
     private DragAndDropSubmittedAnswer submittedAnswer;
 
     @Override
@@ -117,11 +112,11 @@ public class DragAndDropMapping implements QuizQuestionComponent<DragAndDropQues
         if (obj == null || getClass() != obj.getClass()) {
             return false;
         }
-        DragAndDropMapping domainObject = (DragAndDropMapping) obj;
-        if (domainObject.getId() == null || getId() == null) {
+        DragAndDropMapping dragAndDropMapping = (DragAndDropMapping) obj;
+        if (dragAndDropMapping.getId() == null || getId() == null) {
             return false;
         }
-        return Objects.equals(getId(), domainObject.getId());
+        return Objects.equals(getId(), dragAndDropMapping.getId());
     }
 
     @Override

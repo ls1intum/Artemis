@@ -25,13 +25,10 @@ import de.tum.in.www1.artemis.domain.quiz.QuizQuestionStatisticComponent;
 import de.tum.in.www1.artemis.domain.quiz.ShortAnswerMapping;
 import de.tum.in.www1.artemis.domain.quiz.ShortAnswerQuestion;
 import de.tum.in.www1.artemis.domain.quiz.ShortAnswerQuestionStatistic;
-import de.tum.in.www1.artemis.repository.DragAndDropMappingRepository;
 
 @Profile(PROFILE_CORE)
 @Service
 public abstract class QuizService<T extends QuizConfiguration> {
-
-    private final DragAndDropMappingRepository dragAndDropMappingRepository;
 
     /**
      * Save the given QuizConfiguration to the database according to the implementor.
@@ -40,10 +37,6 @@ public abstract class QuizService<T extends QuizConfiguration> {
      * @return the saved QuizConfiguration
      */
     protected abstract T saveAndFlush(T quizConfiguration);
-
-    protected QuizService(DragAndDropMappingRepository dragAndDropMappingRepository) {
-        this.dragAndDropMappingRepository = dragAndDropMappingRepository;
-    }
 
     /**
      * Save the given QuizConfiguration
@@ -63,6 +56,7 @@ public abstract class QuizService<T extends QuizConfiguration> {
             }
             else if (quizQuestion instanceof DragAndDropQuestion dragAndDropQuestion) {
                 fixReferenceDragAndDrop(dragAndDropQuestion);
+                restoreCorrectMappingsFromIndicesDragAndDrop(dragAndDropQuestion);
             }
             else if (quizQuestion instanceof ShortAnswerQuestion shortAnswerQuestion) {
                 fixReferenceShortAnswer(shortAnswerQuestion);
@@ -70,17 +64,7 @@ public abstract class QuizService<T extends QuizConfiguration> {
             }
         }
 
-        T savedQuizConfiguration = saveAndFlush(quizConfiguration);
-
-        // fix references in all drag and drop questions and short answer questions (step 2/2)
-        for (QuizQuestion quizQuestion : savedQuizConfiguration.getQuizQuestions()) {
-            if (quizQuestion instanceof DragAndDropQuestion dragAndDropQuestion) {
-                // restore references from index after save
-                restoreCorrectMappingsFromIndicesDragAndDrop(dragAndDropQuestion);
-            }
-        }
-
-        return savedQuizConfiguration;
+        return saveAndFlush(quizConfiguration);
     }
 
     /**
@@ -268,10 +252,6 @@ public abstract class QuizService<T extends QuizConfiguration> {
             mapping.setDragItem(dragAndDropQuestion.getDragItems().get(mapping.getDragItemIndex()));
             // drop location
             mapping.setDropLocation(dragAndDropQuestion.getDropLocations().get(mapping.getDropLocationIndex()));
-            // set question
-            mapping.setQuestion(dragAndDropQuestion);
-            // save mapping
-            dragAndDropMappingRepository.save(mapping);
         }
     }
 

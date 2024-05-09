@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
 import java.io.Serializable;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -116,4 +117,25 @@ public class DropLocation implements QuizQuestionComponent<DragAndDropQuestion>,
         return "DropLocation{" + "id=" + getId() + ", posX='" + getPosX() + "'" + ", posY='" + getPosY() + "'" + ", width='" + getWidth() + "'" + ", height='" + getHeight() + "'"
                 + ", invalid='" + isInvalid() + "'" + "}";
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        DropLocation dropLocation = (DropLocation) obj;
+        if (dropLocation.getId() == null || getId() == null) {
+            return false;
+        }
+        return Objects.equals(getId(), dropLocation.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(getId());
+    }
+
 }

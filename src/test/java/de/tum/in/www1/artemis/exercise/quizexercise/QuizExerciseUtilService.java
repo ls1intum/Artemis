@@ -41,7 +41,6 @@ import de.tum.in.www1.artemis.domain.quiz.ShortAnswerSubmittedText;
 import de.tum.in.www1.artemis.exam.ExamFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.DragAndDropMappingRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.QuizBatchRepository;
@@ -96,9 +95,6 @@ public class QuizExerciseUtilService {
 
     @Autowired
     private SubmittedAnswerRepository submittedAnswerRepository;
-
-    @Autowired
-    private DragAndDropMappingRepository dragAndDropMappingRepository;
 
     @Autowired
     private QuizQuestionRepository quizQuestionRepository;
@@ -380,9 +376,6 @@ public class QuizExerciseUtilService {
         dragAndDropMapping.setQuestion(null);
         incorrectDragAndDropMapping.setQuestion(null);
         mappingWithImage.setQuestion(null);
-        dragAndDropMapping = dragAndDropMappingRepository.save(dragAndDropMapping);
-        incorrectDragAndDropMapping = dragAndDropMappingRepository.save(incorrectDragAndDropMapping);
-        mappingWithImage = dragAndDropMappingRepository.save(mappingWithImage);
         dragAndDropMapping.setQuestion(dragAndDropQuestion);
         incorrectDragAndDropMapping.setQuestion(dragAndDropQuestion);
         mappingWithImage.setQuestion(dragAndDropQuestion);

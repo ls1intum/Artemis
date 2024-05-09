@@ -4,21 +4,13 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToMany;
-
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
+import jakarta.persistence.Transient;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.domain.quiz.compare.DnDMapping;
-import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**
  * A DragAndDropSubmittedAnswer.
@@ -28,11 +20,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class DragAndDropSubmittedAnswer extends SubmittedAnswer {
 
-    // NOTE: this relation cannot be bidirectional, because it would otherwise be ManyToMany
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
-    @JoinColumn(name = "submitted_answer_id")
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonView(QuizView.Before.class)
+    @Transient
     private Set<DragAndDropMapping> mappings = new HashSet<>();
 
     public Set<DragAndDropMapping> getMappings() {

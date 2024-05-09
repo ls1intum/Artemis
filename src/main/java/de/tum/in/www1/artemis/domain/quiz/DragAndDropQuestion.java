@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Set;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.PostLoad;
@@ -19,15 +20,12 @@ import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Transient;
 
 import org.apache.commons.lang3.StringUtils;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -38,6 +36,7 @@ import de.tum.in.www1.artemis.domain.quiz.scoring.ScoringStrategyDragAndDropProp
 import de.tum.in.www1.artemis.domain.quiz.scoring.ScoringStrategyDragAndDropProportionalWithoutPenalty;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.exception.FilePathParsingException;
+import de.tum.in.www1.artemis.repository.converters.JpaConverterJsonObject;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
 
@@ -50,6 +49,8 @@ import de.tum.in.www1.artemis.service.FileService;
 public class DragAndDropQuestion extends QuizQuestion {
 
     private static final Logger log = LoggerFactory.getLogger(DragAndDropQuestion.class);
+
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     @Transient
     private final transient FileService fileService = new FileService();
@@ -67,7 +68,7 @@ public class DragAndDropQuestion extends QuizQuestion {
     @Transient
     private List<DragAndDropMapping> correctMappings = new ArrayList<>();
 
-    @JdbcTypeCode(SqlTypes.JSON)
+    @Convert(converter = JpaConverterJsonObject.class)
     @Column(name = "content", columnDefinition = "json")
     private Map<String, Object> content = new HashMap<>();
 
@@ -473,44 +474,27 @@ public class DragAndDropQuestion extends QuizQuestion {
                 List<List<DragAndDropMapping>> mappings = new ArrayList<>();
                 mappings.add(this.correctMappings);
                 content.put("DragAndDropMapping", mappings);
-
-                ObjectMapper objectMapper = new ObjectMapper();
-                try {
-                    String a = objectMapper.writeValueAsString(content.get("DragAndDropMapping"));
-                    List<List<DragAndDropMapping>> mappingsx = objectMapper.readValue(a, new TypeReference<>() {
-                    });
-                    String b = "C";
-                }
-                catch (JsonProcessingException e) {
-                    throw new RuntimeException(e);
-                }
             }
         }
     }
 
     @PostLoad
     public void loadContent() {
-        ObjectMapper mapper = new ObjectMapper();
         if (content != null) {
-            try {
-                if (content.containsKey("DropLocation")) {
-                    List<List<DropLocation>> dropLocations = mapper.convertValue(content.get("DropLocation"), new TypeReference<>() {
-                    });
-                    setDropLocations(dropLocations.getFirst());
-                }
-                if (content.containsKey("DragItem")) {
-                    List<List<DragItem>> dragItems = mapper.convertValue(content.get("DragItem"), new TypeReference<>() {
-                    });
-                    setDragItems(dragItems.getFirst());
-                }
-                if (content.containsKey("DragAndDropMapping")) {
-                    List<List<DragAndDropMapping>> mappings = mapper.convertValue(content.get("DragAndDropMapping"), new TypeReference<>() {
-                    });
-                    setCorrectMappings(mappings.getFirst());
-                }
+            if (content.containsKey("DropLocation")) {
+                List<List<DropLocation>> dropLocations = mapper.convertValue(content.get("DropLocation"), new TypeReference<>() {
+                });
+                setDropLocations(dropLocations.getFirst());
             }
-            catch (Exception e) {
-                content = new HashMap<>();
+            if (content.containsKey("DragItem")) {
+                List<List<DragItem>> dragItems = mapper.convertValue(content.get("DragItem"), new TypeReference<>() {
+                });
+                setDragItems(dragItems.getFirst());
+            }
+            if (content.containsKey("DragAndDropMapping")) {
+                List<List<DragAndDropMapping>> mappings = mapper.convertValue(content.get("DragAndDropMapping"), new TypeReference<>() {
+                });
+                setCorrectMappings(mappings.getFirst());
             }
         }
     }
