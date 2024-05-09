@@ -1,11 +1,9 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToOne;
+import jakarta.persistence.Transient;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -22,8 +20,7 @@ public class DropLocationCounter extends QuizStatisticCounter implements QuizQue
     @JsonIgnore
     private DragAndDropQuestionStatistic dragAndDropQuestionStatistic;
 
-    @OneToOne(cascade = { CascadeType.PERSIST })
-    @JoinColumn(unique = true)
+    @Transient
     private DropLocation dropLocation;
 
     public DragAndDropQuestionStatistic getDragAndDropQuestionStatistic() {

@@ -82,7 +82,7 @@ public class DragAndDropQuestionStatistic extends QuizQuestionStatistic {
             if (ddSubmittedAnswer.getMappings() != null) {
                 // change rated dropLocationCounter if dropLocation is correct
                 for (DropLocationCounter dropLocationCounter : dropLocationCounters) {
-                    if (dropLocationCounter.getDropLocation().isDropLocationCorrect(ddSubmittedAnswer)) {
+                    if (((DragAndDropQuestion) getQuizQuestion()).isDropLocationCorrect(ddSubmittedAnswer, dropLocationCounter.getDropLocation())) {
                         dropLocationCounter.setRatedCounter(dropLocationCounter.getRatedCounter() + change);
                     }
                 }
@@ -100,7 +100,7 @@ public class DragAndDropQuestionStatistic extends QuizQuestionStatistic {
             if (ddSubmittedAnswer.getMappings() != null) {
                 // change unrated dropLocationCounter if dropLocation is correct
                 for (DropLocationCounter dropLocationCounter : dropLocationCounters) {
-                    if (dropLocationCounter.getDropLocation().isDropLocationCorrect(ddSubmittedAnswer)) {
+                    if (((DragAndDropQuestion) getQuizQuestion()).isDropLocationCorrect(ddSubmittedAnswer, dropLocationCounter.getDropLocation())) {
                         dropLocationCounter.setUnRatedCounter(dropLocationCounter.getUnRatedCounter() + change);
                     }
                 }

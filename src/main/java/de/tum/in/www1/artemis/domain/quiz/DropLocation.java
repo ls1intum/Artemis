@@ -1,64 +1,38 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.util.HashSet;
+import java.io.Serializable;
 import java.util.Set;
-
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
-
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonView;
-
-import de.tum.in.www1.artemis.domain.TempIdObject;
-import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**
  * A DropLocation.
  */
-@Entity
-@Table(name = "drop_location")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class DropLocation extends TempIdObject implements QuizQuestionComponent<DragAndDropQuestion> {
+public class DropLocation implements QuizQuestionComponent<DragAndDropQuestion>, Serializable {
 
-    @Column(name = "pos_x")
-    @JsonView(QuizView.Before.class)
+    private Long id;
+
     private Double posX;
 
-    @Column(name = "pos_y")
-    @JsonView(QuizView.Before.class)
     private Double posY;
 
-    @Column(name = "width")
-    @JsonView(QuizView.Before.class)
     private Double width;
 
-    @Column(name = "height")
-    @JsonView(QuizView.Before.class)
     private Double height;
 
-    @Column(name = "invalid")
-    @JsonView(QuizView.Before.class)
     private Boolean invalid = false;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JsonIgnore
-    private DragAndDropQuestion question;
+    @Override
+    public Long getId() {
+        return id;
+    }
 
-    // NOTE: without cascade and orphanRemoval, deletion of quizzes might not work properly, so we reference mappings here, even if we do not use them
-    @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "dropLocation")
-    @JsonIgnore
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    private Set<DragAndDropMapping> mappings = new HashSet<>();
+    @Override
+    public void setQuestion(DragAndDropQuestion quizQuestion) {
+
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     public Double getPosX() {
         return posX;
@@ -112,16 +86,8 @@ public class DropLocation extends TempIdObject implements QuizQuestionComponent<
         this.height = height;
     }
 
-    public DragAndDropQuestion getQuestion() {
-        return question;
-    }
-
     public Boolean isInvalid() {
         return invalid != null && invalid;
-    }
-
-    public void setQuestion(DragAndDropQuestion dragAndDropQuestion) {
-        this.question = dragAndDropQuestion;
     }
 
     public void setInvalid(Boolean invalid) {
@@ -134,7 +100,7 @@ public class DropLocation extends TempIdObject implements QuizQuestionComponent<
      * @param dndAnswer Answer from the student with the List of submittedMappings from the Result
      * @return if the drop location is correct
      */
-    public boolean isDropLocationCorrect(DragAndDropSubmittedAnswer dndAnswer) {
+    public boolean isDropLocationCorrect(DragAndDropSubmittedAnswer dndAnswer, DragAndDropQuestion question) {
 
         Set<DragItem> correctDragItems = question.getCorrectDragItemsForDropLocation(this);
         DragItem selectedDragItem = dndAnswer.getSelectedDragItemForDropLocation(this);

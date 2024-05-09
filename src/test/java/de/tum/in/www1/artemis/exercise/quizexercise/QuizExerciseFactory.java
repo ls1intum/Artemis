@@ -149,13 +149,9 @@ public class QuizExerciseFactory {
         dnd.setScoringType(ScoringType.PROPORTIONAL_WITH_PENALTY);
 
         var dropLocation1 = new DropLocation().posX(10d).posY(10d).height(10d).width(10d);
-        dropLocation1.setTempID(generateTempId());
         var dropLocation2 = new DropLocation().posX(20d).posY(20d).height(10d).width(10d);
-        dropLocation2.setTempID(generateTempId());
         var dropLocation3 = new DropLocation().posX(30d).posY(30d).height(10d).width(10d);
-        dropLocation3.setTempID(generateTempId());
         var dropLocation4 = new DropLocation().posX(40d).posY(40d).height(10d).width(10d);
-        dropLocation4.setTempID(generateTempId());
         dnd.addDropLocation(dropLocation1);
         // also invoke remove once
         dnd.removeDropLocation(dropLocation1);
@@ -440,16 +436,11 @@ public class QuizExerciseFactory {
         dnd.setScoringType(ScoringType.PROPORTIONAL_WITH_PENALTY);
 
         var dropLocation1 = new DropLocation().posX(10d).posY(10d).height(10d).width(10d);
-        dropLocation1.setTempID(generateTempId());
         var dropLocation2 = new DropLocation().posX(20d).posY(20d).height(10d).width(10d);
-        dropLocation2.setTempID(generateTempId());
         var dropLocation3 = new DropLocation().posX(30d).posY(30d).height(10d).width(10d);
         dropLocation3.setInvalid(true);
-        dropLocation3.setTempID(generateTempId());
         var dropLocation4 = new DropLocation().posX(40d).posY(40d).height(10d).width(10d);
-        dropLocation4.setTempID(generateTempId());
         var dropLocation5 = new DropLocation().posX(50d).posY(50d).height(10d).width(10d);
-        dropLocation5.setTempID(generateTempId());
         dnd.addDropLocation(dropLocation1);
         // also invoke remove once
         dnd.removeDropLocation(dropLocation1);

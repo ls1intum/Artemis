@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 import jakarta.persistence.Transient;
 
@@ -9,7 +10,7 @@ import jakarta.persistence.Transient;
  */
 public class ShortAnswerMapping implements QuizQuestionComponent<ShortAnswerQuestion>, Serializable {
 
-    private Long id;
+    private Long id = 1L;
 
     private Integer shortAnswerSpotIndex;
 
@@ -90,5 +91,25 @@ public class ShortAnswerMapping implements QuizQuestionComponent<ShortAnswerQues
     @Override
     public void setQuestion(ShortAnswerQuestion quizQuestion) {
 
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        ShortAnswerMapping shortAnswerMapping = (ShortAnswerMapping) obj;
+        if (shortAnswerMapping.getId() == null || getId() == null) {
+            return false;
+        }
+        return Objects.equals(getId(), shortAnswerMapping.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(getId());
     }
 }

@@ -5,6 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -41,8 +42,7 @@ public class DragAndDropMapping extends DomainObject implements QuizQuestionComp
     @JsonView(QuizView.Before.class)
     private DragItem dragItem;
 
-    @ManyToOne
-    @JsonView(QuizView.Before.class)
+    @Transient
     private DropLocation dropLocation;
 
     @ManyToOne(fetch = FetchType.LAZY)

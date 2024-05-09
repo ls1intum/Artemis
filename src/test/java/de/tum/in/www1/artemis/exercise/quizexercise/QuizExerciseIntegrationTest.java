@@ -1726,22 +1726,18 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
                 assertThat(dropLocations.get(0).getPosY()).as("Pos Y for drop location is correct").isEqualTo(10);
                 assertThat(dropLocations.get(0).getWidth()).as("Width for drop location is correct").isEqualTo(10);
                 assertThat(dropLocations.get(0).getHeight()).as("Height for drop location is correct").isEqualTo(10);
-                assertThat(dropLocations.get(0).getQuestion()).isNotNull();
                 assertThat(dropLocations.get(1).getPosX()).as("Pos X for drop location is correct").isEqualTo(20);
                 assertThat(dropLocations.get(1).getPosY()).as("Pos Y for drop location is correct").isEqualTo(20);
                 assertThat(dropLocations.get(1).getWidth()).as("Width for drop location is correct").isEqualTo(10);
                 assertThat(dropLocations.get(1).getHeight()).as("Height for drop location is correct").isEqualTo(10);
-                assertThat(dropLocations.get(1).getQuestion()).isNotNull();
                 assertThat(dropLocations.get(2).getPosX()).as("Pos X for drop location is correct").isEqualTo(30);
                 assertThat(dropLocations.get(2).getPosY()).as("Pos Y for drop location is correct").isEqualTo(30);
                 assertThat(dropLocations.get(2).getWidth()).as("Width for drop location is correct").isEqualTo(10);
                 assertThat(dropLocations.get(2).getHeight()).as("Height for drop location is correct").isEqualTo(10);
-                assertThat(dropLocations.get(2).getQuestion()).isNotNull();
                 assertThat(dropLocations.get(3).getPosX()).as("Pos X for drop location is correct").isEqualTo(40);
                 assertThat(dropLocations.get(3).getPosY()).as("Pos Y for drop location is correct").isEqualTo(40);
                 assertThat(dropLocations.get(3).getWidth()).as("Width for drop location is correct").isEqualTo(10);
                 assertThat(dropLocations.get(3).getHeight()).as("Height for drop location is correct").isEqualTo(10);
-                assertThat(dropLocations.get(3).getQuestion()).isNotNull();
 
                 List<DragItem> dragItems = dragAndDropQuestion.getDragItems();
                 assertThat(dragItems.get(0).getText()).as("Text for drag item is correct").isEqualTo("D1");

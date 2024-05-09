@@ -21,6 +21,7 @@ import org.hibernate.type.SqlTypes;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -400,6 +401,18 @@ public class ShortAnswerQuestion extends QuizQuestion {
                 List<List<ShortAnswerMapping>> mappings = new ArrayList<>();
                 mappings.add(this.correctMappings);
                 content.put("ShortAnswerMapping", mappings);
+
+                ObjectMapper objectMapper = new ObjectMapper();
+                try {
+                    String a = objectMapper.writeValueAsString(content.get("ShortAnswerMapping"));
+                    List<List<ShortAnswerMapping>> mappingsx = objectMapper.readValue(a, new TypeReference<>() {
+                    });
+                    String b = "C";
+                }
+                catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
+
             }
         }
     }
