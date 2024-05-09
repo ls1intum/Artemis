@@ -1,5 +1,6 @@
-import { of } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { LtiPlatformConfiguration } from 'app/admin/lti-configuration/lti-configuration.model';
+import { HttpResponse } from '@angular/common/http';
 
 export class MockLtiConfigurationService {
     private dummyLtiPlatforms: LtiPlatformConfiguration[] = [
@@ -25,8 +26,13 @@ export class MockLtiConfigurationService {
         },
     ];
 
-    public findAll() {
-        return of(this.dummyLtiPlatforms);
+    public query(req: any): Observable<HttpResponse<LtiPlatformConfiguration[]>> {
+        return of(
+            new HttpResponse({
+                body: this.dummyLtiPlatforms,
+                status: 200, // Assuming a successful response
+            }),
+        );
     }
 
     public updateLtiPlatformConfiguration(config: LtiPlatformConfiguration) {
