@@ -25,6 +25,7 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
 
     PROGRAMMING = ExerciseType.PROGRAMMING;
     protected readonly FeatureToggle = FeatureToggle;
+    protected readonly ButtonSize = ButtonSize;
 
     readonly getCourseFromExercise = getCourseFromExercise;
 
@@ -172,6 +173,4 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
             }),
         );
     }
-
-    protected readonly ButtonSize = ButtonSize;
 }
