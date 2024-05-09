@@ -31,13 +31,6 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class MultipleChoiceQuestion extends QuizQuestion {
 
-    // @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
-    // @JoinColumn(name = "question_id")
-    // @OrderColumn
-    // @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    // @JsonView(QuizView.Before.class)
-    // private List<AnswerOption> answerOptions = new ArrayList<>();
-
     @Column(name = "single_choice")
     @JsonView(QuizView.Before.class)
     private boolean singleChoice = false;
@@ -125,7 +118,7 @@ public class MultipleChoiceQuestion extends QuizQuestion {
     }
 
     /**
-     * check if an update of the Results and Statistics is necessary.
+     * check if an update of the Results and Statistics is necessary
      *
      * @param originalQuizQuestion the original QuizQuestion-object, which will be compared with this question
      * @return a boolean which is true if the answer-changes make an update necessary and false if not
