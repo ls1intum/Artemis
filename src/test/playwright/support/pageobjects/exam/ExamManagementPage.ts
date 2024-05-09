@@ -1,4 +1,5 @@
 import { Page, expect } from '@playwright/test';
+import { Dayjs } from 'dayjs';
 
 /**
  * A class which encapsulates UI selectors and actions for the exam management page.
@@ -106,6 +107,28 @@ export class ExamManagementPage {
         await this.page.locator('#student-exam .datatable-body-row', { hasText: username }).locator('.view-submission').click();
         await this.page.locator('.summery').click();
         await expect(this.page.locator('#exercise-result-score')).toHaveText(score);
+    }
+
+    async openAnnouncementPopup() {
+        await this.page.locator('#announcement-create-button').click();
+    }
+
+    async typeAnnouncementMessage(message: string) {
+        await this.page.locator('.ace_text-input').fill(message);
+    }
+
+    async verifyAnnouncementContent(announcementTime: Dayjs, message: string, authorUsername: string) {
+        const announcementPopup = this.page.locator('.modal-content');
+        const timeFormat = 'MMM D, YYYY HH:mm';
+        const announcementTimeFormatted = announcementTime.format(timeFormat);
+        const announcementTimeAfterMinute = announcementTime.add(1, 'minute').format(timeFormat);
+        await expect(announcementPopup.locator('.date').getByText(new RegExp(`(${announcementTimeFormatted}|${announcementTimeAfterMinute})`))).toBeVisible();
+        await expect(announcementPopup.locator('.content').getByText(message)).toBeVisible();
+        await expect(announcementPopup.locator('.author').getByText(authorUsername)).toBeVisible();
+    }
+
+    async sendAnnouncement() {
+        await this.page.locator('button', { hasText: 'Send Announcement' }).click();
     }
 
     async clickEdit() {

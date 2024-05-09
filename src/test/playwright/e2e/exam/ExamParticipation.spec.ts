@@ -1,12 +1,15 @@
 import { test } from '../../support/fixtures';
 import { Course } from 'app/entities/course.model';
 import { Exercise, ExerciseType } from '../../support/constants';
-import { admin, instructor, studentFour, studentThree, studentTwo, tutor, users } from '../../support/users';
+import { admin, instructor, studentFour, studentOne, studentThree, studentTwo, tutor, users } from '../../support/users';
 import { generateUUID } from '../../support/utils';
 import javaAllSuccessfulSubmission from '../../fixtures/exercise/programming/java/all_successful/submission.json';
-import dayjs from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
 import { Exam } from 'app/entities/exam.model';
 import { expect } from '@playwright/test';
+import { ExamStartEndPage } from '../../support/pageobjects/exam/ExamStartEndPage';
+import { ExamManagementPage } from '../../support/pageobjects/exam/ExamManagementPage';
+import { Commands } from '../../support/commands';
 
 // Common primitives
 const textFixture = 'loremIpsum.txt';
@@ -285,6 +288,67 @@ test.describe('Exam participation', () => {
 
             await login(instructor);
             await examManagement.verifySubmitted(course.id!, exam.id!, studentFourName);
+        });
+    });
+
+    test.describe('Exam announcements', () => {
+        let exam: Exam;
+        let endDate: Dayjs;
+        const students = [studentOne, studentTwo];
+
+        test.beforeEach('Create exam', async ({ login, examAPIRequests, examExerciseGroupCreation }) => {
+            await login(admin);
+            endDate = dayjs().add(1, 'day');
+            const examConfig = {
+                course,
+                title: 'exam' + generateUUID(),
+                visibleDate: dayjs().subtract(3, 'minutes'),
+                startDate: dayjs().subtract(2, 'minutes'),
+                endDate: endDate,
+                examMaxPoints: 10,
+                numberOfExercisesInExam: 1,
+            };
+            exam = await examAPIRequests.createExam(examConfig);
+            const exercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture });
+            exerciseArray.push(exercise);
+            for (const student of students) {
+                await examAPIRequests.registerStudentForExam(exam, student);
+            }
+
+            await examAPIRequests.generateMissingIndividualExams(exam);
+            await examAPIRequests.prepareExerciseStartForExam(exam);
+        });
+
+        test('Instructor sends an announcement and all participants receive it', async ({ browser, login, navigationBar, courseManagement, examManagement }) => {
+            await login(instructor);
+            await navigationBar.openCourseManagement();
+            await courseManagement.openExamsOfCourse(course.id!);
+            await examManagement.openExam(exam.id!);
+
+            const studentPages = [];
+
+            for (const student of [studentOne, studentTwo]) {
+                const studentContext = await browser.newContext();
+                const studentPage = await studentContext.newPage();
+                studentPages.push(studentPage);
+
+                await Commands.login(studentPage, student);
+                await studentPage.goto(`/courses/${course.id!}/exams/${exam.id!}`);
+                const examStartEnd = new ExamStartEndPage(studentPage);
+                await examStartEnd.startExam(false);
+            }
+
+            const announcement = 'Important announcement!';
+            await examManagement.openAnnouncementPopup();
+            const announcementTypingTime = dayjs();
+            await examManagement.typeAnnouncementMessage(announcement);
+            await examManagement.verifyAnnouncementContent(announcementTypingTime, announcement, instructor.username);
+            await examManagement.sendAnnouncement();
+
+            for (const studentPage of studentPages) {
+                const examManagement = new ExamManagementPage(studentPage);
+                await examManagement.verifyAnnouncementContent(announcementTypingTime, announcement, instructor.username);
+            }
         });
     });
 
