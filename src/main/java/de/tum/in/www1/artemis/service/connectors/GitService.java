@@ -1151,6 +1151,14 @@ public class GitService {
         }
     }
 
+    /**
+     * Removes all remote configurations from the given Git repository.
+     * This includes both the remote configurations and the remote tracking branches.
+     *
+     * @param repository The Git repository from which to remove the remotes.
+     * @throws IOException     If an I/O error occurs when accessing the repository.
+     * @throws GitAPIException If an error occurs in the JGit library while removing the remotes.
+     */
     private void removeRemotes(Git repository) throws IOException, GitAPIException {
         // Delete all remotes
         for (RemoteConfig remote : repository.remoteList().call()) {
