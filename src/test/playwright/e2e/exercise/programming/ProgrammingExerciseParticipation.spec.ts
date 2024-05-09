@@ -146,7 +146,7 @@ test.describe('Programming exercise participation', () => {
             await expect(programmingExerciseOverview.getCloneRepositoryButton()).not.toBeVisible();
         });
 
-        test('Students without a team can not participate in the exercise', async ({ login, page, courseList, courseOverview, programmingExerciseOverview }) => {
+        test('Students without a team can not participate in the team exercise', async ({ login, page, courseList, courseOverview, programmingExerciseOverview }) => {
             await login(studentFour, '/');
             await page.waitForURL(/\/courses/);
             await courseList.openCourse(course.id!);
