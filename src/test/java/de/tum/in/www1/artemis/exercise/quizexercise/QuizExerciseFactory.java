@@ -116,9 +116,7 @@ public class QuizExerciseFactory {
         sa.getSpots().add(shortAnswerSpot2);
 
         var shortAnswerSolution1 = new ShortAnswerSolution().text("is");
-        shortAnswerSolution1.setTempID(generateTempId());
         var shortAnswerSolution2 = new ShortAnswerSolution().text("long");
-        shortAnswerSolution2.setTempID(generateTempId());
         sa.addSolution(shortAnswerSolution1);
         // also invoke remove once
         sa.removeSolution(shortAnswerSolution1);
@@ -129,7 +127,6 @@ public class QuizExerciseFactory {
 
         var mapping2 = new ShortAnswerMapping().spot(sa.getSpots().get(1)).solution(sa.getSolutions().get(1));
         sa.addCorrectMapping(mapping1);
-        assertThat(sa).isEqualTo(mapping1.getQuestion());
         sa.removeCorrectMapping(mapping1);
         sa.addCorrectMapping(mapping1);
         sa.addCorrectMapping(mapping2);

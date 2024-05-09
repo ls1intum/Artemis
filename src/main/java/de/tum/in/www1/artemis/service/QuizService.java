@@ -26,15 +26,12 @@ import de.tum.in.www1.artemis.domain.quiz.ShortAnswerMapping;
 import de.tum.in.www1.artemis.domain.quiz.ShortAnswerQuestion;
 import de.tum.in.www1.artemis.domain.quiz.ShortAnswerQuestionStatistic;
 import de.tum.in.www1.artemis.repository.DragAndDropMappingRepository;
-import de.tum.in.www1.artemis.repository.ShortAnswerMappingRepository;
 
 @Profile(PROFILE_CORE)
 @Service
 public abstract class QuizService<T extends QuizConfiguration> {
 
     private final DragAndDropMappingRepository dragAndDropMappingRepository;
-
-    private final ShortAnswerMappingRepository shortAnswerMappingRepository;
 
     /**
      * Save the given QuizConfiguration to the database according to the implementor.
@@ -44,9 +41,8 @@ public abstract class QuizService<T extends QuizConfiguration> {
      */
     protected abstract T saveAndFlush(T quizConfiguration);
 
-    protected QuizService(DragAndDropMappingRepository dragAndDropMappingRepository, ShortAnswerMappingRepository shortAnswerMappingRepository) {
+    protected QuizService(DragAndDropMappingRepository dragAndDropMappingRepository) {
         this.dragAndDropMappingRepository = dragAndDropMappingRepository;
-        this.shortAnswerMappingRepository = shortAnswerMappingRepository;
     }
 
     /**
@@ -70,6 +66,7 @@ public abstract class QuizService<T extends QuizConfiguration> {
             }
             else if (quizQuestion instanceof ShortAnswerQuestion shortAnswerQuestion) {
                 fixReferenceShortAnswer(shortAnswerQuestion);
+                restoreCorrectMappingsFromIndicesShortAnswer(shortAnswerQuestion);
             }
         }
 
@@ -80,10 +77,6 @@ public abstract class QuizService<T extends QuizConfiguration> {
             if (quizQuestion instanceof DragAndDropQuestion dragAndDropQuestion) {
                 // restore references from index after save
                 restoreCorrectMappingsFromIndicesDragAndDrop(dragAndDropQuestion);
-            }
-            else if (quizQuestion instanceof ShortAnswerQuestion shortAnswerQuestion) {
-                // restore references from index after save
-                restoreCorrectMappingsFromIndicesShortAnswer(shortAnswerQuestion);
             }
         }
 
@@ -293,10 +286,6 @@ public abstract class QuizService<T extends QuizConfiguration> {
             mapping.setSolution(shortAnswerQuestion.getSolutions().get(mapping.getShortAnswerSolutionIndex()));
             // spot
             mapping.setSpot(shortAnswerQuestion.getSpots().get(mapping.getShortAnswerSpotIndex()));
-            // set question
-            mapping.setQuestion(shortAnswerQuestion);
-            // save mapping
-            shortAnswerMappingRepository.save(mapping);
         }
     }
 }

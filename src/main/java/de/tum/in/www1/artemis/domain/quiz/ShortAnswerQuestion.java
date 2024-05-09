@@ -7,21 +7,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.OrderColumn;
 import jakarta.persistence.PostLoad;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Transient;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -48,22 +41,10 @@ public class ShortAnswerQuestion extends QuizQuestion {
     @Transient
     private List<ShortAnswerSpot> spots = new ArrayList<>();
 
-    // TODO: making this a bidirectional relation leads to weird Hibernate behavior with missing data when loading quiz questions, we should investigate this again in the future
-    // after 6.x upgrade
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
-    @JoinColumn(name = "question_id")
-    @OrderColumn
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonView(QuizView.Before.class)
+    @Transient
     private List<ShortAnswerSolution> solutions = new ArrayList<>();
 
-    // TODO: making this a bidirectional relation leads to weird Hibernate behavior with missing data when loading quiz questions, we should investigate this again in the future
-    // after 6.x upgrade
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
-    @JoinColumn(name = "question_id")
-    @OrderColumn
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonView(QuizView.After.class)
+    @Transient
     private List<ShortAnswerMapping> correctMappings = new ArrayList<>();
 
     @JdbcTypeCode(SqlTypes.JSON)
@@ -410,6 +391,16 @@ public class ShortAnswerQuestion extends QuizQuestion {
                 spots.add(this.spots);
                 content.put("ShortAnswerSpot", spots);
             }
+            if (solutions != null) {
+                List<List<ShortAnswerSolution>> solutions = new ArrayList<>();
+                solutions.add(this.solutions);
+                content.put("ShortAnswerSolution", solutions);
+            }
+            if (correctMappings != null) {
+                List<List<ShortAnswerMapping>> mappings = new ArrayList<>();
+                mappings.add(this.correctMappings);
+                content.put("ShortAnswerMapping", mappings);
+            }
         }
     }
 
@@ -422,6 +413,16 @@ public class ShortAnswerQuestion extends QuizQuestion {
                     List<List<ShortAnswerSpot>> spots = mapper.convertValue(content.get("ShortAnswerSpot"), new TypeReference<>() {
                     });
                     setSpots(spots.getFirst());
+                }
+                if (content.containsKey("ShortAnswerSolution")) {
+                    List<List<ShortAnswerSolution>> solutions = mapper.convertValue(content.get("ShortAnswerSolution"), new TypeReference<>() {
+                    });
+                    setSolutions(solutions.getFirst());
+                }
+                if (content.containsKey("ShortAnswerMapping")) {
+                    List<List<ShortAnswerMapping>> mappings = mapper.convertValue(content.get("ShortAnswerMapping"), new TypeReference<>() {
+                    });
+                    setCorrectMappings(mappings.getFirst());
                 }
             }
             catch (Exception e) {

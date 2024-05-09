@@ -26,7 +26,6 @@ import de.tum.in.www1.artemis.repository.DragAndDropMappingRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.QuizGroupRepository;
 import de.tum.in.www1.artemis.repository.QuizPoolRepository;
-import de.tum.in.www1.artemis.repository.ShortAnswerMappingRepository;
 import de.tum.in.www1.artemis.service.exam.ExamQuizQuestionsGenerator;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -48,9 +47,9 @@ public class QuizPoolService extends QuizService<QuizPool> implements ExamQuizQu
 
     private final ExamRepository examRepository;
 
-    public QuizPoolService(DragAndDropMappingRepository dragAndDropMappingRepository, ShortAnswerMappingRepository shortAnswerMappingRepository,
-            QuizPoolRepository quizPoolRepository, QuizGroupRepository quizGroupRepository, ExamRepository examRepository) {
-        super(dragAndDropMappingRepository, shortAnswerMappingRepository);
+    public QuizPoolService(DragAndDropMappingRepository dragAndDropMappingRepository, QuizPoolRepository quizPoolRepository, QuizGroupRepository quizGroupRepository,
+            ExamRepository examRepository) {
+        super(dragAndDropMappingRepository);
         this.quizPoolRepository = quizPoolRepository;
         this.quizGroupRepository = quizGroupRepository;
         this.examRepository = examRepository;
