@@ -1,11 +1,17 @@
 package de.tum.in.www1.artemis.service.notifications;
 
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.time.ZonedDateTime;
+import java.util.Set;
 
 import jakarta.mail.internet.MimeMessage;
 
@@ -13,11 +19,18 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.context.MessageSource;
+import org.springframework.mail.MailSendException;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.exception.ArtemisMailException;
+import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
+import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
+import de.tum.in.www1.artemis.domain.notification.GroupNotification;
+import de.tum.in.www1.artemis.domain.notification.NotificationConstants;
 import de.tum.in.www1.artemis.service.TimeService;
 import tech.jhipster.config.JHipsterProperties;
 
@@ -53,6 +66,8 @@ class MailServiceTest {
 
     private User student1;
 
+    private User student2;
+
     private String subject;
 
     private String content;
@@ -61,11 +76,17 @@ class MailServiceTest {
      * Prepares the needed values and objects for testing
      */
     @BeforeEach
-    void setUp() {
+    void setUp() throws MalformedURLException, URISyntaxException {
         student1 = new User();
+        student1.setLogin("student1");
         student1.setId(555L);
-        String EMAIL_ADDRESS_A = "benige8246@omibrown.com";
-        student1.setEmail(EMAIL_ADDRESS_A);
+        student1.setEmail("benige8246@omibrown.com");
+        student1.setLangKey("de");
+
+        student2 = new User();
+        student2.setLogin("student2");
+        student2.setId(556L);
+        student2.setEmail("bege123@abc.com");
 
         subject = "subject";
         content = "content";
@@ -82,7 +103,14 @@ class MailServiceTest {
         jHipsterProperties = mock(JHipsterProperties.class);
         when(jHipsterProperties.getMail()).thenReturn(mail);
 
+        messageSource = mock(MessageSource.class);
+        when(messageSource.getMessage(any(String.class), any(), any())).thenReturn("test");
+
+        templateEngine = mock(SpringTemplateEngine.class);
+        when(templateEngine.process(any(String.class), any())).thenReturn("test");
+
         mailService = new MailService(jHipsterProperties, javaMailSender, messageSource, templateEngine, timeService);
+        ReflectionTestUtils.setField(mailService, "artemisServerUrl", new URI("http://localhost:8080").toURL());
     }
 
     /**
@@ -95,11 +123,34 @@ class MailServiceTest {
     }
 
     /**
-     * When the javaMailSender returns an exception, that exception should be caught and an ArtemisMailException should be thrown instead.
+     * When the javaMailSender returns an exception, that exception should be caught and should not be thrown instead.
      */
     @Test
-    void testThrowException() {
-        doThrow(new org.springframework.mail.MailSendException("Some error occurred")).when(javaMailSender).send(any(MimeMessage.class));
-        assertThatExceptionOfType(ArtemisMailException.class).isThrownBy(() -> mailService.sendEmail(student1, subject, content, false, true));
+    void testNoMailSendExceptionThrown() {
+        doThrow(new MailSendException("Some error occurred during mail send")).when(javaMailSender).send(any(MimeMessage.class));
+        assertThatNoException().isThrownBy(() -> mailService.sendEmail(student1, subject, content, false, true));
+    }
+
+    /**
+     * When the javaMailSender returns an exception, that exception should be caught and should not be thrown instead.
+     */
+    @Test
+    void testNoExceptionThrown() {
+        doThrow(new RuntimeException("Some random error occurred")).when(javaMailSender).send(any(MimeMessage.class));
+        var notification = new GroupNotification(null, NotificationConstants.NEW_ANNOUNCEMENT_POST_TITLE, NotificationConstants.NEW_ANNOUNCEMENT_POST_TEXT, false, new String[0],
+                student1, GroupNotificationType.STUDENT);
+        Post post = new Post();
+        post.setAuthor(student1);
+        post.setCreationDate(ZonedDateTime.now());
+        post.setVisibleForStudents(true);
+        post.setContent("hi test");
+        post.setTitle("announcement");
+
+        Course course = new Course();
+        course.setId(141L);
+        Channel channel = new Channel();
+        channel.setCourse(course);
+        post.setConversation(channel);
+        assertThatNoException().isThrownBy(() -> mailService.sendNotification(notification, Set.of(student1, student2), post));
     }
 }

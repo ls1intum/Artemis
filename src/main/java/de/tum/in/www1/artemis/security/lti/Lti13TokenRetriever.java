@@ -24,7 +24,8 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
-import com.google.gson.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
@@ -87,9 +88,9 @@ public class Lti13TokenRetriever {
             if (exchange.getBody() == null) {
                 return null;
             }
-            return JsonParser.parseString(exchange.getBody()).getAsJsonObject().get("access_token").getAsString();
+            return new ObjectMapper().readTree(exchange.getBody()).get("access_token").asText();
         }
-        catch (HttpClientErrorException e) {
+        catch (HttpClientErrorException | JsonProcessingException e) {
             log.error("Could not retrieve access token for client {}: {}", clientRegistration.getClientId(), e.getMessage());
             return null;
         }

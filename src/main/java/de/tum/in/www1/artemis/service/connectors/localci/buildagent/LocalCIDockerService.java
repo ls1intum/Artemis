@@ -53,6 +53,8 @@ public class LocalCIDockerService {
 
     private final HazelcastInstance hazelcastInstance;
 
+    private final BuildJobContainerService buildJobContainerService;
+
     private boolean isFirstCleanup = true;
 
     @Value("${artemis.continuous-integration.image-cleanup.enabled:false}")
@@ -77,9 +79,10 @@ public class LocalCIDockerService {
     @Value("${artemis.continuous-integration.image-architecture:amd64}")
     private String imageArchitecture;
 
-    public LocalCIDockerService(DockerClient dockerClient, HazelcastInstance hazelcastInstance) {
+    public LocalCIDockerService(DockerClient dockerClient, HazelcastInstance hazelcastInstance, BuildJobContainerService buildJobContainerService) {
         this.dockerClient = dockerClient;
         this.hazelcastInstance = hazelcastInstance;
+        this.buildJobContainerService = buildJobContainerService;
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -135,7 +138,7 @@ public class LocalCIDockerService {
 
         if (!danglingBuildContainers.isEmpty()) {
             log.info("Found {} dangling build containers", danglingBuildContainers.size());
-            danglingBuildContainers.forEach(container -> dockerClient.removeContainerCmd(container.getId()).withForce(true).exec());
+            danglingBuildContainers.forEach(container -> buildJobContainerService.stopUnresponsiveContainer(container.getId()));
         }
         log.debug("Cleanup dangling build containers done");
     }

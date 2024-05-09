@@ -296,7 +296,7 @@ test.afterAll('Delete course', async ({ browser }) => {
     await courseManagementAPIRequests.deleteCourse(course, admin);
 });
 
-async function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType: ExerciseType, page: Page): Promise<Exam> {
+export async function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType: ExerciseType, page: Page): Promise<Exam> {
     const examAPIRequests = new ExamAPIRequests(page);
     const exerciseAPIRequests = new ExerciseAPIRequests(page);
     const examExerciseGroupCreation = new ExamExerciseGroupCreationPage(page, examAPIRequests, exerciseAPIRequests);

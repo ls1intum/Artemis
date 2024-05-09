@@ -59,10 +59,10 @@ public class LtiDeepLinkingService {
      */
     public String performDeepLinking(OidcIdToken ltiIdToken, String clientRegistrationId, Long courseId, Set<Long> exerciseIds) {
         // Initialize DeepLinkingResponse
-        Lti13DeepLinkingResponse lti13DeepLinkingResponse = new Lti13DeepLinkingResponse(ltiIdToken, clientRegistrationId);
+        Lti13DeepLinkingResponse lti13DeepLinkingResponse = Lti13DeepLinkingResponse.from(ltiIdToken, clientRegistrationId);
         // Fill selected exercise link into content items
         ArrayList<Map<String, Object>> contentItems = this.populateContentItems(String.valueOf(courseId), exerciseIds);
-        lti13DeepLinkingResponse.setContentItems(contentItems);
+        lti13DeepLinkingResponse = lti13DeepLinkingResponse.setContentItems(contentItems);
 
         // Prepare return url with jwt and id parameters
         return this.buildLtiDeepLinkResponse(clientRegistrationId, lti13DeepLinkingResponse);
@@ -77,13 +77,13 @@ public class LtiDeepLinkingService {
         UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromUriString(this.artemisServerUrl + "/lti/select-content");
 
         String jwt = tokenRetriever.createDeepLinkingJWT(clientRegistrationId, lti13DeepLinkingResponse.getClaims());
-        String returnUrl = lti13DeepLinkingResponse.getReturnUrl();
+        String returnUrl = lti13DeepLinkingResponse.returnUrl();
 
         // Validate properties are set to create a response
-        validateDeepLinkingResponseSettings(returnUrl, jwt, lti13DeepLinkingResponse.getDeploymentId());
+        validateDeepLinkingResponseSettings(returnUrl, jwt, lti13DeepLinkingResponse.deploymentId());
 
         uriComponentsBuilder.queryParam("jwt", jwt);
-        uriComponentsBuilder.queryParam("id", lti13DeepLinkingResponse.getDeploymentId());
+        uriComponentsBuilder.queryParam("id", lti13DeepLinkingResponse.deploymentId());
         uriComponentsBuilder.queryParam("deepLinkUri", UriComponent.encode(returnUrl, UriComponent.Type.QUERY_PARAM));
 
         return uriComponentsBuilder.build().toUriString();
