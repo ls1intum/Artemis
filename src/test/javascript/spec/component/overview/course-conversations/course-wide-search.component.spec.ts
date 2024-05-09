@@ -37,7 +37,6 @@ class InfiniteScrollStubDirective {
     @Input() alwaysCallback = false;
     @Input() fromRoot = false;
 }
-
 describe('CourseWideSearchComponent', () => {
     let component: CourseWideSearchComponent;
     let fixture: ComponentFixture<CourseWideSearchComponent>;

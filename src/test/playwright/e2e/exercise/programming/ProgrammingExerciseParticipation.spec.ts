@@ -27,12 +27,7 @@ test.describe('Programming exercise participation', () => {
     });
 
     const testCases = [
-        {
-            description: 'Makes a failing Java submission',
-            programmingLanguage: ProgrammingLanguage.JAVA,
-            submission: javaBuildErrorSubmission,
-            commitMessage: 'Initial commit',
-        },
+        { description: 'Makes a failing Java submission', programmingLanguage: ProgrammingLanguage.JAVA, submission: javaBuildErrorSubmission, commitMessage: 'Initial commit' },
         {
             description: 'Makes a partially successful Java submission',
             programmingLanguage: ProgrammingLanguage.JAVA,
@@ -45,12 +40,7 @@ test.describe('Programming exercise participation', () => {
             submission: javaAllSuccessfulSubmission,
             commitMessage: 'Implemented all tasks',
         },
-        {
-            description: 'Makes a successful C submission',
-            programmingLanguage: ProgrammingLanguage.C,
-            submission: cAllSuccessful,
-            commitMessage: 'Implemented all tasks',
-        },
+        { description: 'Makes a successful C submission', programmingLanguage: ProgrammingLanguage.C, submission: cAllSuccessful, commitMessage: 'Implemented all tasks' },
         {
             description: 'Makes a successful Python submission',
             programmingLanguage: ProgrammingLanguage.PYTHON,

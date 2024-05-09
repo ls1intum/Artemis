@@ -50,7 +50,6 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.in.www1.artemis.security.Role;
@@ -62,6 +61,7 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ConsistencyCheckService;
 import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.service.SubmissionPolicyService;
+import de.tum.in.www1.artemis.service.connectors.athena.AthenaModuleService;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
 import de.tum.in.www1.artemis.service.export.ProgrammingExerciseExportService;
 import de.tum.in.www1.artemis.service.feature.Feature;
@@ -123,7 +123,7 @@ public class ProgrammingExerciseExportImportResource {
 
     private final ConsistencyCheckService consistencyCheckService;
 
-    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+    private final Optional<AthenaModuleService> athenaModuleService;
 
     public ProgrammingExerciseExportImportResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository,
             AuthorizationCheckService authCheckService, CourseService courseService, ProgrammingExerciseImportService programmingExerciseImportService,
@@ -131,7 +131,7 @@ public class ProgrammingExerciseExportImportResource {
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, SubmissionPolicyService submissionPolicyService,
             ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ExamAccessService examAccessService, CourseRepository courseRepository,
             ProgrammingExerciseImportFromFileService programmingExerciseImportFromFileService, ConsistencyCheckService consistencyCheckService,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
+            Optional<AthenaModuleService> athenaModuleService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -146,7 +146,7 @@ public class ProgrammingExerciseExportImportResource {
         this.courseRepository = courseRepository;
         this.programmingExerciseImportFromFileService = programmingExerciseImportFromFileService;
         this.consistencyCheckService = consistencyCheckService;
-        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
+        this.athenaModuleService = athenaModuleService;
     }
 
     /**
@@ -229,6 +229,15 @@ public class ProgrammingExerciseExportImportResource {
         // Check if the user has the rights to access the original programming exercise
         Course originalCourse = courseService.retrieveCourseOverExerciseGroupOrCourseId(originalProgrammingExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, originalCourse, user);
+
+        // Athena: Check that only allowed athena modules are used, if not we catch the exception and disable feedback suggestions for the imported exercise
+        // If Athena is disabled and the service is not present, we also disable feedback suggestions
+        try {
+            athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(newExercise, course, ENTITY_NAME), () -> newExercise.setFeedbackSuggestionModule(null));
+        }
+        catch (BadRequestAlertException e) {
+            newExercise.setFeedbackSuggestionModule(null);
+        }
 
         try {
             ProgrammingExercise importedProgrammingExercise = programmingExerciseImportService.importProgrammingExercise(originalProgrammingExercise, newExercise, updateTemplate,

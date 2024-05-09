@@ -141,7 +141,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 LEFT JOIN FETCH s.results
                 LEFT JOIN FETCH r.feedbacks
                 LEFT JOIN FETCH r.assessor
-            LEFT JOIN FETCH r.assessmentNote
+                LEFT JOIN FETCH r.assessmentNote
                 LEFT JOIN FETCH r.participation p
                 LEFT JOIN FETCH p.team t
                 LEFT JOIN FETCH t.students

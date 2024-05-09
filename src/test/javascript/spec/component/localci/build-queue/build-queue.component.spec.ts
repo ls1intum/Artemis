@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { BuildQueueComponent } from 'app/localci/build-queue/build-queue.component';
@@ -12,6 +12,7 @@ import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { ArtemisTestModule } from '../../../test.module';
 import { FinishedBuildJob } from 'app/entities/build-job.model';
 import { TriggeredByPushTo } from 'app/entities/repository-info.model';
+import { waitForAsync } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { SortingOrder } from 'app/shared/table/pageable-table';
 

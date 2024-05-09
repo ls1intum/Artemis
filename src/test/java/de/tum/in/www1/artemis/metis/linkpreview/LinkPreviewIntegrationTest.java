@@ -45,12 +45,6 @@ class LinkPreviewIntegrationTest extends AbstractSpringIntegrationIndependentTes
         userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
     }
 
-    private static Stream<Arguments> provideUrls() {
-        return Stream.of(Arguments.of("https://github.com/ls1intum/Artemis/pull/6615", new File(MOCK_FILE_PATH_PREFIX + "github_pull_request_6615.txt")),
-                Arguments.of("https://github.com/ls1intum/Artemis/pull/6618", new File(MOCK_FILE_PATH_PREFIX + "github_pull_request_6618.txt")),
-                Arguments.of("https://github.com/", new File(MOCK_FILE_PATH_PREFIX + "github_home.txt")), Arguments.of(GOOGLE_URL, new File(MOCK_FILE_PATH_PREFIX + "google.txt")));
-    }
-
     @ParameterizedTest
     @MethodSource("provideUrls")
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
@@ -87,5 +81,11 @@ class LinkPreviewIntegrationTest extends AbstractSpringIntegrationIndependentTes
                 assertThat(Objects.requireNonNull(cacheManager.getCache("linkPreview")).get(url)).isNotNull();
             }
         }
+    }
+
+    private static Stream<Arguments> provideUrls() {
+        return Stream.of(Arguments.of("https://github.com/ls1intum/Artemis/pull/6615", new File(MOCK_FILE_PATH_PREFIX + "github_pull_request_6615.txt")),
+                Arguments.of("https://github.com/ls1intum/Artemis/pull/6618", new File(MOCK_FILE_PATH_PREFIX + "github_pull_request_6618.txt")),
+                Arguments.of("https://github.com/", new File(MOCK_FILE_PATH_PREFIX + "github_home.txt")), Arguments.of(GOOGLE_URL, new File(MOCK_FILE_PATH_PREFIX + "google.txt")));
     }
 }

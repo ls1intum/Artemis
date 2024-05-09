@@ -392,7 +392,7 @@
 <div>
     <div style="display: flex; align-items: center">
         <h3 id="build-queue-finished-heading" jhiTranslate="artemisApp.buildQueue.finishedBuildJobs" style="margin-right: 20px"></h3>
-        <button (click)="refresh()" class="btn btn-primary">
+        <button class="btn btn-primary" (click)="refresh()">
             <fa-icon [icon]="faSync" />
             <span jhiTranslate="metrics.refresh.button"></span>
         </button>
@@ -609,8 +609,8 @@
                         </ng-template>
                         <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
                             <span>
-                                <strong jhiTranslate="artemisApp.buildQueue.buildJob.start"></strong> {{ row.buildStartDate | artemisDate: 'long' : true }} ,<br />
-                                <strong jhiTranslate="artemisApp.buildQueue.buildJob.completion"></strong> {{ row.buildCompletionDate | artemisDate: 'long' : true }} ,<br />
+                                <strong jhiTranslate="artemisApp.buildQueue.buildJob.start"></strong> {{ row.buildStartDate | artemisDate: 'long' : true }},<br />
+                                <strong jhiTranslate="artemisApp.buildQueue.buildJob.completion"></strong> {{ row.buildCompletionDate | artemisDate: 'long' : true }},<br />
                                 <strong jhiTranslate="artemisApp.buildQueue.buildJob.duration"></strong> {{ value | artemisDurationFromSeconds: false }}
                             </span>
                         </ng-template>

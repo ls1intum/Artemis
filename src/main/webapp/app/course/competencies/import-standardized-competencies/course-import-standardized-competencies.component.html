@@ -1,22 +1,22 @@
 <div class="container">
     <h2 jhiTranslate="artemisApp.standardizedCompetency.courseImport.title"></h2>
     <jhi-standardized-competency-filter
-        (competencyTitleFilterChange)="filterByCompetencyTitle($event)"
-        (knowledgeAreaFilterChange)="filterByKnowledgeArea($event)"
-        [competencyTitleFilter]="competencyTitleFilter"
-        [knowledgeAreaFilter]="knowledgeAreaFilter"
         [knowledgeAreasForSelect]="knowledgeAreasForSelect"
+        [knowledgeAreaFilter]="knowledgeAreaFilter"
+        [competencyTitleFilter]="competencyTitleFilter"
+        (knowledgeAreaFilterChange)="filterByKnowledgeArea($event)"
+        (competencyTitleFilterChange)="filterByCompetencyTitle($event)"
     />
     <div class="d-flex flex-wrap align-items-center mt-3 mb-2">
         <h3 class="me-3 mb-0" jhiTranslate="artemisApp.standardizedCompetency.title"></h3>
         <jhi-button
-            (onClick)="treeControl.collapseAll()"
+            class="me-1"
             [btnSize]="ButtonSize.SMALL"
             [icon]="faMinimize"
-            class="me-1"
+            (onClick)="treeControl.collapseAll()"
             tooltip="artemisApp.standardizedCompetency.manage.collapseButtonTooltip"
         />
-        <jhi-button (onClick)="treeControl.expandAll()" [btnSize]="ButtonSize.SMALL" [icon]="faMaximize" tooltip="artemisApp.standardizedCompetency.manage.expandButtonTooltip" />
+        <jhi-button [btnSize]="ButtonSize.SMALL" [icon]="faMaximize" (onClick)="treeControl.expandAll()" tooltip="artemisApp.standardizedCompetency.manage.expandButtonTooltip" />
     </div>
     @if (dataSource.data.length) {
         <div class="d-flex">
@@ -98,13 +98,13 @@
         @if (selectedCompetencies.length) {
             <div class="mb-1" jhiTranslate="artemisApp.standardizedCompetency.courseImport.selectedCompetencies" [translateValues]="{ count: selectedCompetencies.length }"></div>
         }
-        <jhi-button (onClick)="cancel()" [btnType]="ButtonType.SECONDARY" [icon]="faBan" [title]="'entity.action.cancel'" />
+        <jhi-button [btnType]="ButtonType.SECONDARY" [title]="'entity.action.cancel'" [icon]="faBan" (onClick)="cancel()" />
         <jhi-button
-            (onClick)="importCompetencies()"
             [disabled]="!this.selectedCompetencies.length"
-            [icon]="faFileImport"
             [isLoading]="isLoading"
+            [icon]="faFileImport"
             [title]="'entity.action.to-import'"
+            (onClick)="importCompetencies()"
         />
     </div>
 </div>

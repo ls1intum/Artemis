@@ -17,7 +17,7 @@
                     {{ 'artemisApp.competency.manageCompetencies.importButton' | artemisTranslate }}
                 </button>
                 <div ngbDropdownMenu aria-labelledby="importDropdown">
-                    <button (click)="openImportAllModal()" class="btn" id="competencyImportAllButton" ngbDropdownItem>
+                    <button class="btn" id="competencyImportAllButton" (click)="openImportAllModal()" ngbDropdownItem>
                         <fa-icon [icon]="faFileImport" />
                         <span>{{ 'artemisApp.competency.manageCompetencies.importAllButton' | artemisTranslate }}</span>
                     </button>

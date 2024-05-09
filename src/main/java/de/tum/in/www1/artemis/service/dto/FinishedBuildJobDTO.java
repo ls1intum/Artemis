@@ -12,6 +12,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.BuildStatus;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.web.rest.dto.ParticipationDTO;
+import de.tum.in.www1.artemis.web.rest.dto.ResultDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionDTO;
 
 /**
@@ -22,6 +23,28 @@ import de.tum.in.www1.artemis.web.rest.dto.SubmissionDTO;
 public record FinishedBuildJobDTO(String id, String name, String buildAgentAddress, long participationId, long courseId, long exerciseId, BuildStatus status,
         RepositoryType repositoryType, String repositoryName, RepositoryType triggeredByPushTo, ZonedDateTime buildStartDate, ZonedDateTime buildCompletionDate, String commitHash,
         ResultDTO submissionResult) {
+
+    /**
+     * A DTO representing a result
+     */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record ResultDTO(Long id, ZonedDateTime completionDate, Boolean successful, Double score, Boolean rated, ParticipationDTO participation, SubmissionDTO submission,
+            AssessmentType assessmentType, Integer testCaseCount, Integer passedTestCaseCount, Integer codeIssueCount) {
+
+        /**
+         * Converts a Result into a ResultDTO
+         *
+         * @param result to convert
+         * @return the converted DTO
+         */
+        public static ResultDTO of(Result result) {
+            SubmissionDTO submissionDTO = result.getSubmission() == null ? null : SubmissionDTO.of(result.getSubmission());
+
+            return new ResultDTO(result.getId(), result.getCompletionDate(), result.isSuccessful(), result.getScore(), result.isRated(),
+                    ParticipationDTO.of(result.getParticipation()), submissionDTO, result.getAssessmentType(), result.getTestCaseCount(), result.getPassedTestCaseCount(),
+                    result.getCodeIssueCount());
+        }
+    }
 
     /**
      * Converts a Page of BuildJobs into a Page of FinishedBuildJobDTOs
@@ -45,27 +68,5 @@ public record FinishedBuildJobDTO(String id, String name, String buildAgentAddre
         return new FinishedBuildJobDTO(buildJob.getBuildJobId(), buildJob.getName(), buildJob.getBuildAgentAddress(), buildJob.getParticipationId(), buildJob.getCourseId(),
                 buildJob.getExerciseId(), buildJob.getBuildStatus(), buildJob.getRepositoryType(), buildJob.getRepositoryName(), buildJob.getRepositoryType(),
                 buildJob.getBuildStartDate(), buildJob.getBuildCompletionDate(), buildJob.getCommitHash(), resultDTO);
-    }
-
-    /**
-     * A DTO representing a result
-     */
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record ResultDTO(Long id, ZonedDateTime completionDate, Boolean successful, Double score, Boolean rated, ParticipationDTO participation, SubmissionDTO submission,
-            AssessmentType assessmentType, Integer testCaseCount, Integer passedTestCaseCount, Integer codeIssueCount) {
-
-        /**
-         * Converts a Result into a ResultDTO
-         *
-         * @param result to convert
-         * @return the converted DTO
-         */
-        public static ResultDTO of(Result result) {
-            SubmissionDTO submissionDTO = result.getSubmission() == null ? null : SubmissionDTO.of(result.getSubmission());
-
-            return new ResultDTO(result.getId(), result.getCompletionDate(), result.isSuccessful(), result.getScore(), result.isRated(),
-                    ParticipationDTO.of(result.getParticipation()), submissionDTO, result.getAssessmentType(), result.getTestCaseCount(), result.getPassedTestCaseCount(),
-                    result.getCodeIssueCount());
-        }
     }
 }

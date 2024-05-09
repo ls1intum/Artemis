@@ -19,6 +19,10 @@ import de.tum.in.www1.artemis.service.connectors.pyris.dto.tutorChat.PyrisTutorC
 import de.tum.in.www1.artemis.service.connectors.pyris.job.TutorChatJob;
 import de.tum.in.www1.artemis.service.iris.websocket.IrisChatWebsocketService;
 
+/**
+ * Service responsible for executing the various Pyris pipelines in a type-safe manner.
+ * Uses {@link PyrisConnectorService} to execute the pipelines and {@link PyrisJobService} to manage the jobs.
+ */
 @Service
 @Profile("iris")
 public class PyrisPipelineService {
@@ -43,11 +47,12 @@ public class PyrisPipelineService {
     }
 
     /**
-     * Executes the tutor chat pipeline for the given session
+     * Execute the tutor chat pipeline for the given exercise and session.
+     * This method will create a new job, setup the DTOs and execution settings, and then execute the pipeline.
      *
-     * @param variant          the variant of the pipeline
-     * @param latestSubmission the latest submission of the user
-     * @param exercise         the exercise the user is working on
+     * @param variant          the variant of the pipeline to execute
+     * @param latestSubmission the latest submission for the exercise
+     * @param exercise         the programming exercise
      * @param session          the chat session
      */
     public void executeTutorChatPipeline(String variant, Optional<ProgrammingSubmission> latestSubmission, ProgrammingExercise exercise, IrisChatSession session) {

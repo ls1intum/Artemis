@@ -27,12 +27,12 @@
             }
             <!-- list of messages -->
             <div
-                #container
-                (scrolledUp)="fetchNextPage()"
-                [scrollWindow]="false"
-                class="{{ totalNumberOfPosts !== 0 ? 'posting-infinite-scroll-container' : '' }}"
                 id="scrollableDiv"
+                #container
+                class="{{ totalNumberOfPosts !== 0 ? 'posting-infinite-scroll-container' : '' }}"
                 infinite-scroll
+                [scrollWindow]="false"
+                (scrolledUp)="fetchNextPage()"
             >
                 <!-- list of all top level posts -->
                 <!-- answers are opened in the thread sidebar -->

@@ -42,31 +42,31 @@ public class AssessmentNote extends DomainObject {
     @Column(name = "note")
     private String note;
 
-    public String getNote() {
-        return this.note;
+    public void setCreator(final User user) {
+        this.creator = user;
     }
 
     public void setNote(final String note) {
         this.note = note;
     }
 
-    public User getCreator() {
-        return this.creator;
+    public String getNote() {
+        return this.note;
     }
 
-    public void setCreator(final User user) {
-        this.creator = user;
+    public User getCreator() {
+        return this.creator;
     }
 
     public Instant getCreatedDate() {
         return this.createdDate;
     }
 
-    public Instant getLastModifiedDate() {
-        return this.lastModifiedDate;
-    }
-
     public void setLastModifiedDate(Instant lastModifiedDate) {
         this.lastModifiedDate = lastModifiedDate;
+    }
+
+    public Instant getLastModifiedDate() {
+        return this.lastModifiedDate;
     }
 }

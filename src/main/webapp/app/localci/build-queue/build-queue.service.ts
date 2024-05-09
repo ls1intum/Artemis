@@ -1,9 +1,11 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
 import { catchError } from 'rxjs/operators';
+import { throwError } from 'rxjs';
 import { BuildJob, FinishedBuildJob } from 'app/entities/build-job.model';
 import { createRequestOption } from 'app/shared/util/request.util';
+import { HttpResponse } from '@angular/common/http';
 
 @Injectable({ providedIn: 'root' })
 export class BuildQueueService {
@@ -128,16 +130,11 @@ export class BuildQueueService {
      */
     getFinishedBuildJobs(req?: any): Observable<HttpResponse<FinishedBuildJob[]>> {
         const options = createRequestOption(req);
-        return this.http
-            .get<FinishedBuildJob[]>(`${this.adminResourceUrl}/finished-jobs`, {
-                params: options,
-                observe: 'response',
-            })
-            .pipe(
-                catchError((err) => {
-                    return throwError(() => new Error(`Failed to get all finished build jobs\n${err.message}`));
-                }),
-            );
+        return this.http.get<FinishedBuildJob[]>(`${this.adminResourceUrl}/finished-jobs`, { params: options, observe: 'response' }).pipe(
+            catchError((err) => {
+                return throwError(() => new Error(`Failed to get all finished build jobs\n${err.message}`));
+            }),
+        );
     }
 
     /**
@@ -147,15 +144,10 @@ export class BuildQueueService {
      */
     getFinishedBuildJobsByCourseId(courseId: number, req?: any): Observable<HttpResponse<FinishedBuildJob[]>> {
         const options = createRequestOption(req);
-        return this.http
-            .get<FinishedBuildJob[]>(`${this.resourceUrl}/courses/${courseId}/finished-jobs`, {
-                params: options,
-                observe: 'response',
-            })
-            .pipe(
-                catchError((err) => {
-                    return throwError(() => new Error(`Failed to get all finished build jobs in course ${courseId}\n${err.message}`));
-                }),
-            );
+        return this.http.get<FinishedBuildJob[]>(`${this.resourceUrl}/courses/${courseId}/finished-jobs`, { params: options, observe: 'response' }).pipe(
+            catchError((err) => {
+                return throwError(() => new Error(`Failed to get all finished build jobs in course ${courseId}\n${err.message}`));
+            }),
+        );
     }
 }

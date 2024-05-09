@@ -28,7 +28,7 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.in.www1.artemis.service.connectors.pyris.dto.IrisErrorResponseDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisErrorResponseDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisHealthStatusDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisModelDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.tutorChat.PyrisTutorChatPipelineExecutionDTO;
@@ -103,7 +103,7 @@ public class IrisRequestMockProvider {
     }
 
     private void mockMessageError(URL requestUrl, int status) throws JsonProcessingException {
-        var json = Map.of("detail", new IrisErrorResponseDTO("Test error"));
+        var json = Map.of("detail", new PyrisErrorResponseDTO("Test error"));
         // @formatter:off
         mockServer.expect(ExpectedCount.once(), requestTo(requestUrl.toString()))
                 .andExpect(method(HttpMethod.POST))

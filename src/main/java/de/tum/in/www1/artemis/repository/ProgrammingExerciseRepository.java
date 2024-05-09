@@ -263,8 +263,8 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     Optional<ProgrammingExercise> findWithAllParticipationsById(long exerciseId);
 
     @Query("""
-                SELECT pe
-                FROM ProgrammingExercise pe
+            SELECT pe
+            FROM ProgrammingExercise pe
                 LEFT JOIN pe.studentParticipations spep
             WHERE spep.id = :participationId
             """)
@@ -281,7 +281,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             SELECT pe
             FROM ProgrammingExercise pe
             WHERE pe.solutionParticipation.id = :participationId
-                """)
+            """)
     Optional<ProgrammingExercise> findBySolutionParticipationId(@Param("participationId") long participationId);
 
     @Query("""
@@ -332,11 +332,11 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * @return List<ProgrammingExercise> (can be empty)
      */
     @Query("""
-                SELECT pe
-                FROM ProgrammingExercise pe
-                    LEFT JOIN FETCH pe.exerciseGroup eg
-                    LEFT JOIN FETCH eg.exam e
-                WHERE e.endDate > :dateTime
+            SELECT pe
+            FROM ProgrammingExercise pe
+                LEFT JOIN FETCH pe.exerciseGroup eg
+                LEFT JOIN FETCH eg.exam e
+            WHERE e.endDate > :dateTime
             """)
     List<ProgrammingExercise> findAllWithEagerExamByExamEndDateAfterDate(@Param("dateTime") ZonedDateTime dateTime);
 

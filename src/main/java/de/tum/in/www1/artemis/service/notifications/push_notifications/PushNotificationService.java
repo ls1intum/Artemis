@@ -129,39 +129,6 @@ public abstract class PushNotificationService implements InstantNotificationServ
     }
 
     /**
-     * Perform symmetric AES encryption.
-     *
-     * @param payload              the text to encrypt
-     * @param key                  the secret key to encrypt with
-     * @param initializationVector the initialization vector needed for CBC
-     * @return the ciphertext
-     */
-    private static Optional<String> encrypt(@NotNull String payload, SecretKey key, byte[] initializationVector) {
-        try {
-            cipher.init(Cipher.ENCRYPT_MODE, key, new IvParameterSpec(initializationVector));
-
-            return Optional.of(Base64.getEncoder().encodeToString(cipher.doFinal(payload.getBytes(StandardCharsets.UTF_8))));
-        }
-        catch (InvalidKeyException | InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException e) {
-            log.error("Error encrypting push notification payload!", e);
-            return Optional.empty();
-        }
-    }
-
-    protected abstract PushNotificationDeviceConfigurationRepository getRepository();
-
-    abstract PushNotificationDeviceType getDeviceType();
-
-    abstract Optional<String> getRelayBaseUrl();
-
-    abstract String getRelayPath();
-
-    abstract void sendSpecificNotificationRequestsToEndpoint(List<RelayNotificationRequest> requests, String relayServerBaseUrl);
-
-    record PushNotificationData(String[] notificationPlaceholders, String target, String type, String date, int version) {
-    }
-
-    /**
      * Handles the finding of deviceConfigurations for all given users.
      * Constructs the payload to be sent and encrypts it with an AES256 encryption.
      * Sends the requests to the Hermes relay service with a fire and forget mechanism.
@@ -209,6 +176,39 @@ public abstract class PushNotificationService implements InstantNotificationServ
         }
         catch (JsonProcessingException e) {
             log.error("Error creating push notification payload!", e);
+        }
+    }
+
+    protected abstract PushNotificationDeviceConfigurationRepository getRepository();
+
+    abstract PushNotificationDeviceType getDeviceType();
+
+    abstract Optional<String> getRelayBaseUrl();
+
+    abstract String getRelayPath();
+
+    abstract void sendSpecificNotificationRequestsToEndpoint(List<RelayNotificationRequest> requests, String relayServerBaseUrl);
+
+    record PushNotificationData(String[] notificationPlaceholders, String target, String type, String date, int version) {
+    }
+
+    /**
+     * Perform symmetric AES encryption.
+     *
+     * @param payload              the text to encrypt
+     * @param key                  the secret key to encrypt with
+     * @param initializationVector the initialization vector needed for CBC
+     * @return the ciphertext
+     */
+    private static Optional<String> encrypt(@NotNull String payload, SecretKey key, byte[] initializationVector) {
+        try {
+            cipher.init(Cipher.ENCRYPT_MODE, key, new IvParameterSpec(initializationVector));
+
+            return Optional.of(Base64.getEncoder().encodeToString(cipher.doFinal(payload.getBytes(StandardCharsets.UTF_8))));
+        }
+        catch (InvalidKeyException | InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException e) {
+            log.error("Error encrypting push notification payload!", e);
+            return Optional.empty();
         }
     }
 }

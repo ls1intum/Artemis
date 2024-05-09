@@ -18,15 +18,15 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisModelDTO;
-import de.tum.in.www1.artemis.service.connectors.pyris.dto.lectureIngestionWebhook.PyrisWebhookLectureIngestionExecutionDTO;
 import de.tum.in.www1.artemis.service.iris.exception.IrisException;
 import de.tum.in.www1.artemis.service.iris.exception.IrisForbiddenException;
 import de.tum.in.www1.artemis.service.iris.exception.IrisInternalPyrisErrorException;
+import de.tum.in.www1.artemis.web.rest.open.PublicPyrisStatusUpdateResource;
 
 /**
  * This service connects to the Python implementation of Iris (called Pyris).
  * Pyris is responsible for executing the pipelines using (MM)LLMs and other tools asynchronously.
- * Status updates are sent to Artemis via {@link de.tum.in.www1.artemis.web.rest.open.PyrisStatusUpdateResource}
+ * Status updates are sent to Artemis via {@link PublicPyrisStatusUpdateResource}
  */
 @Service
 @Profile("iris")
@@ -75,20 +75,6 @@ public class PyrisConnectorService {
         }
         catch (RestClientException | IllegalArgumentException e) {
             log.error("Failed to send request to Pyris", e);
-            throw new PyrisConnectorException("Could not fetch response from Iris");
-        }
-    }
-
-    void executeWebhook(String variant, PyrisWebhookLectureIngestionExecutionDTO executionDTO) {
-        var endpoint = "/api/v1/webhooks/" + variant;
-        try {
-            restTemplate.postForEntity(pyrisUrl + endpoint, objectMapper.valueToTree(executionDTO), Void.class);
-        }
-        catch (HttpStatusCodeException e) {
-            throw toIrisException(e);
-        }
-        catch (RestClientException | IllegalArgumentException e) {
-            log.error("Failed to send lectures to Pyris", e);
             throw new PyrisConnectorException("Could not fetch response from Iris");
         }
     }

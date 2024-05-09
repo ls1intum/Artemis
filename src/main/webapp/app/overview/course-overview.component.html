@@ -40,12 +40,12 @@
                                 </li>
                             }
                             <li class="nav-item">
-                                <div (click)="toggleDropdown()" [hidden]="!anyItemHidden" class="three-dots nav-link px-3">
+                                <div [hidden]="!anyItemHidden" class="three-dots nav-link px-3" (click)="toggleDropdown()">
                                     <fa-icon [fixedWidth]="true" [icon]="faEllipsis" class="ms-2 me-3" />
                                     <span
-                                        [jhiTranslate]="'artemisApp.courseOverview.menu.more'"
-                                        [ngClass]="{ 'auto-collapse': !isNavbarCollapsed, 'sidebar-collapsed': isNavbarCollapsed }"
                                         class="more"
+                                        [ngClass]="{ 'auto-collapse': !isNavbarCollapsed, 'sidebar-collapsed': isNavbarCollapsed }"
+                                        [jhiTranslate]="'artemisApp.courseOverview.menu.more'"
                                     ></span>
                                 </div>
                             </li>
@@ -85,7 +85,7 @@
                 </div>
             </mat-sidenav>
             <mat-sidenav-content [ngClass]="{ 'sidenav-height-dev': !isProduction || isTestServer }">
-                <div [hidden]="!dropdownOpen" [ngClass]="{ fixedContentSize: hiddenItems.length >= 3 }" [style.top.px]="dropdownOffset" class="dropdown-content">
+                <div class="dropdown-content" [hidden]="!dropdownOpen" [style.top.px]="dropdownOffset" [ngClass]="{ fixedContentSize: hiddenItems.length >= 3 }">
                     @for (hiddenItem of hiddenItems; track hiddenItem) {
                         <li class="dropdown-li">
                             @if (hiddenItem.hasInOrionProperty && hiddenItem.showInOrionWindow !== undefined) {
@@ -173,31 +173,31 @@
     }
 </ng-template>
 
-<ng-template #navItemOrionFilter let-extraPadding="extraPadding" let-iconTextTemplate="iconTextTemplate" let-sidebarItem>
+<ng-template #navItemOrionFilter let-sidebarItem let-iconTextTemplate="iconTextTemplate" let-extraPadding="extraPadding">
     <a
+        class="nav-link nav-link-sidebar px-3"
         [id]="sidebarItem.testId ?? ''"
-        [jhiFeatureToggleHide]="sidebarItem.featureToggle"
         [ngClass]="{
             'guided-tour': sidebarItem.guidedTour,
             newMessage: !messagesRouteLoaded && hasUnreadMessages && sidebarItem.title === 'Messages',
             collapsed: isNavbarCollapsed,
             'py-1': extraPadding
         }"
-        [routerLink]="sidebarItem.routerLink"
-        [showInOrionWindow]="sidebarItem.showInOrionWindow"
-        [title]="sidebarItem.title"
-        class="nav-link nav-link-sidebar px-3"
         jhiOrionFilter
+        [showInOrionWindow]="sidebarItem.showInOrionWindow"
+        [routerLink]="sidebarItem.routerLink"
         routerLinkActive="active"
+        [jhiFeatureToggleHide]="sidebarItem.featureToggle"
+        [title]="sidebarItem.title"
     >
         <ng-template *ngTemplateOutlet="iconTextTemplate; context: { $implicit: sidebarItem }" />
     </a>
 </ng-template>
 
-<ng-template #navItem let-extraPadding="extraPadding" let-iconTextTemplate="iconTextTemplate" let-sidebarItem>
+<ng-template #navItem let-sidebarItem let-iconTextTemplate="iconTextTemplate" let-extraPadding="extraPadding">
     <a
+        class="nav-link nav-link-sidebar px-3"
         [id]="sidebarItem.testId ?? ''"
-        [jhiFeatureToggleHide]="sidebarItem.featureToggle"
         [ngClass]="{
             'guided-tour': sidebarItem.guidedTour,
             newMessage: !messagesRouteLoaded && hasUnreadMessages && sidebarItem.title === 'Messages',
@@ -205,9 +205,9 @@
             'py-1': extraPadding
         }"
         [routerLink]="sidebarItem.routerLink"
-        [title]="sidebarItem.title"
-        class="nav-link nav-link-sidebar px-3"
         routerLinkActive="active"
+        [jhiFeatureToggleHide]="sidebarItem.featureToggle"
+        [title]="sidebarItem.title"
     >
         <ng-template *ngTemplateOutlet="iconTextTemplate; context: { $implicit: sidebarItem }" />
     </a>

@@ -11,11 +11,11 @@
         </div>
     </div>
     <jhi-standardized-competency-filter
-        (competencyTitleFilterChange)="filterByCompetencyTitle($event)"
-        (knowledgeAreaFilterChange)="filterByKnowledgeArea($event)"
-        [competencyTitleFilter]="competencyTitleFilter"
-        [knowledgeAreaFilter]="knowledgeAreaFilter"
         [knowledgeAreasForSelect]="knowledgeAreasForSelect"
+        [knowledgeAreaFilter]="knowledgeAreaFilter"
+        [competencyTitleFilter]="competencyTitleFilter"
+        (knowledgeAreaFilterChange)="filterByKnowledgeArea($event)"
+        (competencyTitleFilterChange)="filterByCompetencyTitle($event)"
     />
     <div class="d-flex flex-wrap align-items-center mt-3 mb-2">
         <h3 class="me-3 mb-0" jhiTranslate="artemisApp.standardizedCompetency.title"></h3>

@@ -1,16 +1,16 @@
 <jhi-loading-indicator-container [isLoading]="isLoading">
-    <div [hidden]="!isCodeOfConductAccepted" class="input-group">
+    <div class="input-group" [hidden]="!isCodeOfConductAccepted">
         <!-- search bar -->
         <input
-            (keyup.enter)="onSearch()"
+            name="searchText"
+            id="search"
             [(ngModel)]="courseWideSearchTerm"
             class="form-control"
-            id="search"
-            name="searchText"
+            (keyup.enter)="onSearch()"
             placeholder="{{ 'artemisApp.metis.overview.searchBarDefault' | artemisTranslate }}"
         />
-        <jhi-button (onClick)="courseWideSearchTerm = ''" [btnType]="ButtonType.SECONDARY" [icon]="faTimes" />
-        <jhi-button (onClick)="onSearch()" [icon]="faSearch" class="ms-1" id="search-submit" />
+        <jhi-button [btnType]="ButtonType.SECONDARY" [icon]="faTimes" (onClick)="courseWideSearchTerm = ''" />
+        <jhi-button id="search-submit" class="ms-1" [icon]="faSearch" (onClick)="onSearch()" />
         <jhi-documentation-button [type]="documentationType" class="information-button" />
     </div>
     @if (formGroup && isCodeOfConductAccepted) {

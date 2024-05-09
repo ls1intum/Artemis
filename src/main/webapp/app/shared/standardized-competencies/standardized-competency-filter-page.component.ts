@@ -71,65 +71,6 @@ export abstract class StandardizedCompetencyFilterPageComponent {
     }
 
     /**
-     * Checks if the title of a competency matches a filter.
-     *
-     * @param competency the competency to check
-     * @param filter the filter string **It is expected to be not empty!**
-     * @private
-     */
-    protected competencyMatchesFilter(competency: StandardizedCompetencyDTO, filter: string) {
-        if (!competency.title) {
-            return false;
-        }
-
-        const titleLower = competency.title.toLowerCase();
-        const filterLower = filter.toLowerCase();
-
-        return titleLower.includes(filterLower);
-    }
-
-    // Utility functions
-    protected getKnowledgeAreaByIdIfExists(id: number | undefined) {
-        if (id === undefined) {
-            return undefined;
-        }
-        return this.knowledgeAreaMap.get(id);
-    }
-
-    // utility functions to set the visibility of tree objects
-
-    /**
-     * Recursively adds a knowledge area and its descendants to the {@link knowledgeAreaMap}
-     *
-     * @param knowledgeArea the knowledge area to add
-     * @private
-     */
-    protected addSelfAndDescendantsToMap(knowledgeArea: KnowledgeAreaForTree) {
-        if (knowledgeArea.id !== undefined) {
-            this.knowledgeAreaMap.set(knowledgeArea.id, knowledgeArea);
-        }
-        for (const child of knowledgeArea.children ?? []) {
-            this.addSelfAndDescendantsToMap(child);
-        }
-    }
-
-    /**
-     * Recursively adds a knowledge area and its descendants to the {@link knowledgeAreasForSelect} array
-     *
-     * @param knowledgeArea
-     * @private
-     */
-    protected addSelfAndDescendantsToSelectArray(knowledgeArea: KnowledgeAreaForTree) {
-        this.knowledgeAreasForSelect.push({
-            id: knowledgeArea.id,
-            title: '\xa0'.repeat(knowledgeArea.level * 2) + knowledgeArea.title,
-        });
-        for (const child of knowledgeArea.children ?? []) {
-            this.addSelfAndDescendantsToSelectArray(child);
-        }
-    }
-
-    /**
      * Recursively filters standardized competencies of a knowledge area and its descendants. Only competencies with titles matching the given filter are kept visible.
      * If the knowledge area or one of its descendants contains a match, expands itself.
      *
@@ -159,6 +100,26 @@ export abstract class StandardizedCompetencyFilterPageComponent {
     }
 
     /**
+     * Checks if the title of a competency matches a filter.
+     *
+     * @param competency the competency to check
+     * @param filter the filter string **It is expected to be not empty!**
+     * @private
+     */
+    protected competencyMatchesFilter(competency: StandardizedCompetencyDTO, filter: string) {
+        if (!competency.title) {
+            return false;
+        }
+
+        const titleLower = competency.title.toLowerCase();
+        const filterLower = filter.toLowerCase();
+
+        return titleLower.includes(filterLower);
+    }
+
+    // utility functions to set the visibility of tree objects
+
+    /**
      * Recursively sets visible and expands a knowledge area aswell as all its ancestors.
      * This guarantees that it shows up as expanded in the tree structure, even when it is nested.
      *
@@ -186,8 +147,6 @@ export abstract class StandardizedCompetencyFilterPageComponent {
         knowledgeArea.children?.forEach((knowledgeArea) => this.setVisibilityOfSelfAndDescendants(knowledgeArea, isVisible));
     }
 
-    // Functions to initialize data structures
-
     private setVisibilityOfAllKnowledgeAreas(isVisible: boolean) {
         this.knowledgeAreaMap.forEach((knowledgeArea) => (knowledgeArea.isVisible = isVisible));
     }
@@ -195,6 +154,47 @@ export abstract class StandardizedCompetencyFilterPageComponent {
     private setVisibilityOfAllCompetencies(isVisible: boolean) {
         for (const knowledgeArea of this.knowledgeAreaMap.values()) {
             knowledgeArea.competencies?.forEach((competency) => (competency.isVisible = isVisible));
+        }
+    }
+
+    // Utility functions
+    protected getKnowledgeAreaByIdIfExists(id: number | undefined) {
+        if (id === undefined) {
+            return undefined;
+        }
+        return this.knowledgeAreaMap.get(id);
+    }
+
+    // Functions to initialize data structures
+
+    /**
+     * Recursively adds a knowledge area and its descendants to the {@link knowledgeAreaMap}
+     *
+     * @param knowledgeArea the knowledge area to add
+     * @private
+     */
+    protected addSelfAndDescendantsToMap(knowledgeArea: KnowledgeAreaForTree) {
+        if (knowledgeArea.id !== undefined) {
+            this.knowledgeAreaMap.set(knowledgeArea.id, knowledgeArea);
+        }
+        for (const child of knowledgeArea.children ?? []) {
+            this.addSelfAndDescendantsToMap(child);
+        }
+    }
+
+    /**
+     * Recursively adds a knowledge area and its descendants to the {@link knowledgeAreasForSelect} array
+     *
+     * @param knowledgeArea
+     * @private
+     */
+    protected addSelfAndDescendantsToSelectArray(knowledgeArea: KnowledgeAreaForTree) {
+        this.knowledgeAreasForSelect.push({
+            id: knowledgeArea.id,
+            title: '\xa0'.repeat(knowledgeArea.level * 2) + knowledgeArea.title,
+        });
+        for (const child of knowledgeArea.children ?? []) {
+            this.addSelfAndDescendantsToSelectArray(child);
         }
     }
 }

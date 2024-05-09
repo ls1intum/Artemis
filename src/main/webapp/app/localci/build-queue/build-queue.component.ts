@@ -206,6 +206,18 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * Callback function when the finished build jobs are successfully loaded
+     * @param finishedBuildJobs The list of finished build jobs
+     * @param headers The headers of the response
+     * @private
+     */
+    private onSuccess(finishedBuildJobs: FinishedBuildJob[], headers: HttpHeaders) {
+        this.totalItems = Number(headers.get('X-Total-Count'));
+        this.finishedBuildJobs = finishedBuildJobs;
+        this.setFinishedBuildJobsDuration();
+    }
+
+    /**
      * View the build logs of a specific build job
      * @param resultId The id of the build job
      */
@@ -246,17 +258,5 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
      */
     refresh() {
         this.loadFinishedBuildJobs();
-    }
-
-    /**
-     * Callback function when the finished build jobs are successfully loaded
-     * @param finishedBuildJobs The list of finished build jobs
-     * @param headers The headers of the response
-     * @private
-     */
-    private onSuccess(finishedBuildJobs: FinishedBuildJob[], headers: HttpHeaders) {
-        this.totalItems = Number(headers.get('X-Total-Count'));
-        this.finishedBuildJobs = finishedBuildJobs;
-        this.setFinishedBuildJobsDuration();
     }
 }

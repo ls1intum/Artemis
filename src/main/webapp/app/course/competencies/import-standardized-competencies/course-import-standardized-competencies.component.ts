@@ -32,8 +32,10 @@ interface KnowledgeAreaForImport extends KnowledgeAreaForTree {
 export class CourseImportStandardizedCompetenciesComponent extends StandardizedCompetencyFilterPageComponent implements OnInit, ComponentCanDeactivate {
     protected selectedCompetencies: StandardizedCompetencyForImport[] = [];
     protected selectedCompetency?: StandardizedCompetencyForImport;
+    private courseId: number;
     protected isLoading = false;
     protected isSubmitted = false;
+
     // constants
     protected readonly getIcon = getIcon;
     protected readonly ButtonType = ButtonType;
@@ -45,7 +47,6 @@ export class CourseImportStandardizedCompetenciesComponent extends StandardizedC
     protected readonly faMaximize = faUpRightAndDownLeftFromCenter;
     protected readonly faTrash = faTrash;
     protected readonly faSort = faSort;
-    private courseId: number;
 
     constructor(
         private router: Router,
@@ -57,10 +58,6 @@ export class CourseImportStandardizedCompetenciesComponent extends StandardizedC
         private sortService: SortService,
     ) {
         super();
-    }
-
-    get canDeactivateWarning(): string {
-        return this.translateService.instant('pendingChanges');
     }
 
     ngOnInit(): void {
@@ -82,32 +79,6 @@ export class CourseImportStandardizedCompetenciesComponent extends StandardizedC
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });
         this.courseId = Number(this.activatedRoute.snapshot.paramMap.get('courseId'));
-    }
-
-    /**
-     * Callback that sorts the selected competencies
-     *
-     * @param sort the search object with the updated search predicate and sorting direction
-     */
-    sortSelected(sort: { predicate: string; ascending: boolean }) {
-        this.selectedCompetencies = this.sortService.sortByProperty(this.selectedCompetencies, sort.predicate, sort.ascending);
-    }
-
-    /**
-     * Only allow to leave page after submitting or if no pending changes exist
-     */
-    canDeactivate() {
-        return this.isSubmitted || (!this.isLoading && this.selectedCompetencies.length === 0);
-    }
-
-    /**
-     * Displays the alert for confirming refreshing or closing the page if there are unsaved changes
-     */
-    @HostListener('window:beforeunload', ['$event'])
-    unloadNotification(event: any) {
-        if (!this.canDeactivate()) {
-            event.returnValue = this.canDeactivateWarning;
-        }
     }
 
     protected openCompetencyDetails(competency: StandardizedCompetencyForImport) {
@@ -160,27 +131,46 @@ export class CourseImportStandardizedCompetenciesComponent extends StandardizedC
         this.router.navigate(['../'], { relativeTo: this.activatedRoute });
     }
 
+    /**
+     * Callback that sorts the selected competencies
+     *
+     * @param sort the search object with the updated search predicate and sorting direction
+     */
+    sortSelected(sort: { predicate: string; ascending: boolean }) {
+        this.selectedCompetencies = this.sortService.sortByProperty(this.selectedCompetencies, sort.predicate, sort.ascending);
+    }
+
+    /**
+     * Only allow to leave page after submitting or if no pending changes exist
+     */
+    canDeactivate() {
+        return this.isSubmitted || (!this.isLoading && this.selectedCompetencies.length === 0);
+    }
+
+    get canDeactivateWarning(): string {
+        return this.translateService.instant('pendingChanges');
+    }
+
+    /**
+     * Displays the alert for confirming refreshing or closing the page if there are unsaved changes
+     */
+    @HostListener('window:beforeunload', ['$event'])
+    unloadNotification(event: any) {
+        if (!this.canDeactivate()) {
+            event.returnValue = this.canDeactivateWarning;
+        }
+    }
+
     private convertToKnowledgeAreaForImport(knowledgeAreaDTO: KnowledgeAreaDTO, isVisible = true, level = 0, selected = false): KnowledgeAreaForImport {
         const children = knowledgeAreaDTO.children?.map((child) => this.convertToKnowledgeAreaForImport(child, isVisible, level + 1));
         const competencies = knowledgeAreaDTO.competencies?.map((competency) =>
             this.convertToStandardizedCompetencyForImport(competency, knowledgeAreaDTO.title, isVisible, selected),
         );
-        return {
-            ...knowledgeAreaDTO,
-            children: children,
-            competencies: competencies,
-            level: level,
-            isVisible: isVisible,
-        };
+        return { ...knowledgeAreaDTO, children: children, competencies: competencies, level: level, isVisible: isVisible };
     }
 
     private convertToStandardizedCompetencyForImport(competencyDTO: StandardizedCompetencyDTO, knowledgeAreaTitle?: string, isVisible = true, selected = false) {
-        const competencyForTree: StandardizedCompetencyForImport = {
-            ...competencyDTO,
-            isVisible: isVisible,
-            knowledgeAreaTitle: knowledgeAreaTitle,
-            selected: selected,
-        };
+        const competencyForTree: StandardizedCompetencyForImport = { ...competencyDTO, isVisible: isVisible, knowledgeAreaTitle: knowledgeAreaTitle, selected: selected };
         return competencyForTree;
     }
 }

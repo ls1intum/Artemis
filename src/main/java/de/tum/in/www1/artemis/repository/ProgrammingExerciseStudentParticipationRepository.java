@@ -51,14 +51,14 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
             @Param("dateTime") ZonedDateTime dateTime);
 
     @Query("""
-                SELECT DISTINCT p
-                FROM ProgrammingExerciseStudentParticipation p
-                    LEFT JOIN FETCH p.results pr
-                    LEFT JOIN FETCH p.submissions
-                WHERE p.id = :participationId AND ((pr.assessmentType = 'AUTOMATIC'
-                            OR (pr.completionDate IS NOT NULL
-                                AND (p.exercise.assessmentDueDate IS NULL
-                                    OR p.exercise.assessmentDueDate < :#{#dateTime}))) OR pr.id IS NULL)
+            SELECT DISTINCT p
+            FROM ProgrammingExerciseStudentParticipation p
+                LEFT JOIN FETCH p.results pr
+                LEFT JOIN FETCH p.submissions
+            WHERE p.id = :participationId AND ((pr.assessmentType = 'AUTOMATIC'
+                        OR (pr.completionDate IS NOT NULL
+                            AND (p.exercise.assessmentDueDate IS NULL
+                                OR p.exercise.assessmentDueDate < :#{#dateTime}))) OR pr.id IS NULL)
             """)
     Optional<ProgrammingExerciseStudentParticipation> findByIdWithAllResultsAndRelatedSubmissions(@Param("participationId") long participationId,
             @Param("dateTime") ZonedDateTime dateTime);

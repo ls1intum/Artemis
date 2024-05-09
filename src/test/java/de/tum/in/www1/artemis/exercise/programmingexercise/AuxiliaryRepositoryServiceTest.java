@@ -25,10 +25,6 @@ class AuxiliaryRepositoryServiceTest extends AbstractSpringIntegrationIndependen
 
     private static final String TEST_INVALID_DESCRIPTION_LENGTH_STRING = "a".repeat(AuxiliaryRepository.MAX_DESCRIPTION_LENGTH + 1);
 
-    private static ProgrammingExercise programmingExerciseBeforeUpdate;
-
-    private static ProgrammingExercise updatedProgrammingExercise;
-
     @Autowired
     private AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
@@ -44,19 +40,9 @@ class AuxiliaryRepositoryServiceTest extends AbstractSpringIntegrationIndependen
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private static AuxiliaryRepository createAuxiliaryRepository(String name, String checkoutDirectory, String description, String repositoryUri, ProgrammingExercise exercise,
-            Long id) {
-        AuxiliaryRepository auxiliaryRepository = new AuxiliaryRepository();
-        auxiliaryRepository.setName(name);
-        auxiliaryRepository.setDescription(description);
-        auxiliaryRepository.setCheckoutDirectory(checkoutDirectory);
-        auxiliaryRepository.setRepositoryUri(repositoryUri);
-        auxiliaryRepository.setExercise(exercise);
-        if (id != null) {
-            auxiliaryRepository.setId(id);
-        }
-        return auxiliaryRepository;
-    }
+    private static ProgrammingExercise programmingExerciseBeforeUpdate;
+
+    private static ProgrammingExercise updatedProgrammingExercise;
 
     @BeforeEach
     void setUp() {
@@ -218,6 +204,20 @@ class AuxiliaryRepositoryServiceTest extends AbstractSpringIntegrationIndependen
 
     private AuxiliaryRepository createAuxiliaryRepository(String name, String checkoutDirectory, String repositoryUri, ProgrammingExercise exercise, Long id) {
         return createAuxiliaryRepository(name, checkoutDirectory, "test", repositoryUri, exercise, id);
+    }
+
+    private static AuxiliaryRepository createAuxiliaryRepository(String name, String checkoutDirectory, String description, String repositoryUri, ProgrammingExercise exercise,
+            Long id) {
+        AuxiliaryRepository auxiliaryRepository = new AuxiliaryRepository();
+        auxiliaryRepository.setName(name);
+        auxiliaryRepository.setDescription(description);
+        auxiliaryRepository.setCheckoutDirectory(checkoutDirectory);
+        auxiliaryRepository.setRepositoryUri(repositoryUri);
+        auxiliaryRepository.setExercise(exercise);
+        if (id != null) {
+            auxiliaryRepository.setId(id);
+        }
+        return auxiliaryRepository;
     }
 
 }

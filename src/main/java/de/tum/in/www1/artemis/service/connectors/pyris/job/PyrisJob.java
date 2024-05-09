@@ -6,6 +6,11 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 
+/**
+ * This abstract class represents a single job that is executed by the Pyris system.
+ * This is used to reference the details of a job when Pyris sends a status update.
+ * As it is stored within Hazelcast, it must be serializable.
+ */
 public abstract class PyrisJob implements Serializable {
 
     protected String id;
