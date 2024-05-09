@@ -6,7 +6,15 @@ import { MockProvider } from 'ng-mocks';
 import { take } from 'rxjs/operators';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import { CompetencyService } from 'app/course/competencies/competency.service';
-import { Competency, CompetencyProgress, CompetencyRelation, CompetencyRelationType, CompetencyWithTailRelationDTO, CourseCompetencyProgress } from 'app/entities/competency.model';
+import {
+    Competency,
+    CompetencyImportResponseDTO,
+    CompetencyProgress,
+    CompetencyRelation,
+    CompetencyRelationType,
+    CompetencyWithTailRelationDTO,
+    CourseCompetencyProgress,
+} from 'app/entities/competency.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { CompetencyPageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
@@ -30,6 +38,8 @@ describe('CompetencyService', () => {
     let resultImportBulk: HttpResponse<CompetencyWithTailRelationDTO[]>;
     let resultGetRelations: HttpResponse<CompetencyRelation[]>;
     let resultGetForImport: SearchResult<Competency>;
+    let resultImportStandardized: HttpResponse<CompetencyImportResponseDTO[]>;
+    let resultImport: HttpResponse<Competency>;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -280,6 +290,41 @@ describe('CompetencyService', () => {
         tick();
 
         expect(resultImportBulk.body).toEqual(expected);
+    }));
+
+    it('should import standardized competencies', fakeAsync(() => {
+        const returnedFromService: CompetencyImportResponseDTO[] = [
+            { id: 1, title: 'standardizedCompetency1' },
+            { id: 2, title: 'standardizedCompetency2' },
+        ];
+        const expected = [...returnedFromService];
+
+        competencyService
+            .importStandardizedCompetencies([11, 12], 2)
+            .pipe(take(1))
+            .subscribe((resp) => (resultImportStandardized = resp));
+
+        const req = httpTestingController.expectOne({ method: 'POST' });
+        req.flush(returnedFromService);
+        tick();
+
+        expect(resultImportStandardized.body).toEqual(expected);
+    }));
+
+    it('should import competency', fakeAsync(() => {
+        const returnedFromService = defaultCompetencies[0];
+        const expected = { ...returnedFromService };
+
+        competencyService
+            .import(expected, 2)
+            .pipe(take(1))
+            .subscribe((resp) => (resultImport = resp));
+
+        const req = httpTestingController.expectOne({ method: 'POST' });
+        req.flush(returnedFromService);
+        tick();
+
+        expect(resultImport.body).toEqual(expected);
     }));
 
     it('should get competency relations', fakeAsync(() => {

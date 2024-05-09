@@ -24,6 +24,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.command.InspectImageResponse;
 import com.github.dockerjava.api.command.PullImageResultCallback;
 import com.github.dockerjava.api.exception.BadRequestException;
 import com.github.dockerjava.api.exception.NotFoundException;
@@ -70,6 +71,11 @@ public class LocalCIDockerService {
     // With the default value, the cleanup is triggered every 60 minutes
     @Value("${artemis.continuous-integration.container-cleanup.cleanup-schedule-minutes:60}")
     private int containerCleanupScheduleMinutes;
+
+    // The image architecture that is supported by the build agent
+    // amd64 is the default value, as this is the architecture of Intel and AMD CPUs, which most systems still use
+    @Value("${artemis.continuous-integration.image-architecture:amd64}")
+    private String imageArchitecture;
 
     public LocalCIDockerService(DockerClient dockerClient, HazelcastInstance hazelcastInstance) {
         this.dockerClient = dockerClient;
@@ -187,7 +193,8 @@ public class LocalCIDockerService {
             String msg = "~~~~~~~~~~~~~~~~~~~~ Inspecting docker image " + imageName + " ~~~~~~~~~~~~~~~~~~~~";
             log.info(msg);
             buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
-            dockerClient.inspectImageCmd(imageName).exec();
+            var inspectImageResponse = dockerClient.inspectImageCmd(imageName).exec();
+            checkImageArchitecture(imageName, inspectImageResponse, buildJob, buildLogsMap);
         }
         catch (NotFoundException | BadRequestException e) {
             lock.lock();
@@ -197,7 +204,8 @@ public class LocalCIDockerService {
                 String msg = "~~~~~~~~~~~~~~~~~~~~ Inspecting docker image " + imageName + " again with a lock due to error " + e.getMessage() + " ~~~~~~~~~~~~~~~~~~~~";
                 log.info(msg);
                 buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
-                dockerClient.inspectImageCmd(imageName).exec();
+                var inspectImageResponse = dockerClient.inspectImageCmd(imageName).exec();
+                checkImageArchitecture(imageName, inspectImageResponse, buildJob, buildLogsMap);
             }
             catch (NotFoundException | BadRequestException e2) {
                 long start = System.nanoTime();
@@ -206,10 +214,14 @@ public class LocalCIDockerService {
                 buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
 
                 try {
-                    // only pull the image if the inspect command failed
-                    var command = dockerClient.pullImageCmd(imageName);
+                    // Only pull the image if the inspect command failed
+                    var command = dockerClient.pullImageCmd(imageName).withPlatform(imageArchitecture);
                     var exec = command.exec(new MyPullImageResultCallback(buildJob.id(), buildLogsMap));
                     exec.awaitCompletion();
+
+                    // Check if the image is compatible with the current architecture
+                    var inspectImageResponse = dockerClient.inspectImageCmd(imageName).exec();
+                    checkImageArchitecture(imageName, inspectImageResponse, buildJob, buildLogsMap);
                 }
                 catch (InterruptedException ie) {
                     throw new LocalCIException("Interrupted while pulling docker image " + imageName, ie);
@@ -224,6 +236,24 @@ public class LocalCIDockerService {
             finally {
                 lock.unlock();
             }
+        }
+    }
+
+    /**
+     * Checks if the architecture of the Docker image is compatible with the current system.
+     *
+     * @param imageName            the name of the Docker image
+     * @param inspectImageResponse the response from the inspect image command
+     * @param buildJob             the build job that includes the configuration with the name of the Docker image
+     * @param buildLogsMap         a map for appending log entries related to the build process
+     */
+    private void checkImageArchitecture(String imageName, InspectImageResponse inspectImageResponse, LocalCIBuildJobQueueItem buildJob, BuildLogsMap buildLogsMap) {
+        if (!imageArchitecture.equals(inspectImageResponse.getArch())) {
+            var msg = "Docker image " + imageName + " is not compatible with the current architecture. Needed 'linux/" + imageArchitecture + "', but got '"
+                    + inspectImageResponse.getArch() + "'";
+            log.error(msg);
+            buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
+            throw new LocalCIException(msg);
         }
     }
 

@@ -22,8 +22,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -47,30 +48,6 @@ class LtiDeepLinkingServiceTest {
     private AutoCloseable closeable;
 
     private OidcIdToken oidcIdToken;
-
-    private final String deepLinkingSettingsAsJsonString = """
-            {
-              "deep_link_return_url": "",
-              "accept_types": [
-                "link",
-                "file",
-                "html",
-                "ltiResourceLink",
-                "image"
-              ],
-              "accept_media_types": "image/*,text/html",
-              "accept_presentation_document_targets": [
-                "iframe",
-                "window",
-                "embed"
-              ],
-              "accept_multiple": true,
-              "auto_create": true,
-              "title": "This is the default title",
-              "text": "This is the default text",
-              "data": "csrftoken:c7fbba78-7b75-46e3-9201-11e6d5f36f53"
-            }
-            """;
 
     @BeforeEach
     void setUp() {
@@ -113,11 +90,35 @@ class LtiDeepLinkingServiceTest {
     }
 
     @Test
-    void testEmptyReturnUrlBuildLtiDeepLinkResponse() {
+    void testEmptyReturnUrlBuildLtiDeepLinkResponse() throws JsonProcessingException {
         createMockOidcIdToken();
         when(tokenRetriever.createDeepLinkingJWT(anyString(), anyMap())).thenReturn("test_jwt");
-        var deepLinkingSettingsAsMap = new Gson().fromJson(deepLinkingSettingsAsJsonString, new TypeToken<Map<String, Object>>() {
-        }.getType());
+        ObjectMapper mapper = new ObjectMapper();
+        String deepLinkingSettingsAsJsonString = """
+                {
+                  "deep_link_return_url": "",
+                  "accept_types": [
+                    "link",
+                    "file",
+                    "html",
+                    "ltiResourceLink",
+                    "image"
+                  ],
+                  "accept_media_types": "image/*,text/html",
+                  "accept_presentation_document_targets": [
+                    "iframe",
+                    "window",
+                    "embed"
+                  ],
+                  "accept_multiple": true,
+                  "auto_create": true,
+                  "title": "This is the default title",
+                  "text": "This is the default text",
+                  "data": "csrftoken:c7fbba78-7b75-46e3-9201-11e6d5f36f53"
+                }
+                """;
+        Map<String, Object> deepLinkingSettingsAsMap = mapper.readValue(deepLinkingSettingsAsJsonString, new TypeReference<>() {
+        });
         when(oidcIdToken.getClaim(de.tum.in.www1.artemis.domain.lti.Claims.DEEP_LINKING_SETTINGS)).thenReturn(deepLinkingSettingsAsMap);
 
         DeepLinkCourseExercises result = createTestExercisesForDeepLinking();

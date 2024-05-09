@@ -12,7 +12,6 @@ import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
 import { Detail } from 'app/detail-overview-list/detail.model';
 import { UMLModel } from '@ls1intum/apollon';
-import { Router } from '@angular/router';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Subscription } from 'rxjs';
 import { PROFILE_LOCALVC } from 'app/app.constants';
@@ -67,7 +66,6 @@ export class DetailOverviewListComponent implements OnInit, OnDestroy {
     faArrowUpRightFromSquare = faArrowUpRightFromSquare;
     faCodeBranch = faCodeBranch;
 
-    routerLink: string;
     profileSub: Subscription;
     isLocalVC = false;
 
@@ -75,12 +73,10 @@ export class DetailOverviewListComponent implements OnInit, OnDestroy {
         private modalService: NgbModal,
         private modelingExerciseService: ModelingExerciseService,
         private alertService: AlertService,
-        private router: Router,
         private profileService: ProfileService,
     ) {}
 
     ngOnInit() {
-        this.routerLink = this.router.url;
         this.headlines = this.sections.map((section) => {
             return {
                 id: section.headline.replaceAll('.', '-'),

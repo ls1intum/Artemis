@@ -29,7 +29,7 @@ public class PyrisStatusUpdateService {
     }
 
     /**
-     * Handles the status update of a tutor chat job and forwards it to {@link IrisChatSessionService#handleStatusUpdate(TutorChatJob, PyrisTutorChatStatusUpdateDTO)}
+     * Handles the status update of a lecture ingestion job and logs the results for now => will change later
      *
      * @param job          the job that is updated
      * @param statusUpdate the status update
@@ -45,7 +45,7 @@ public class PyrisStatusUpdateService {
     }
 
     /**
-     * Handles the status update of a lecture ingestion job and logs the results for now => will change later
+     * Handles the status update of a tutor chat job and forwards it to {@link IrisChatSessionService#handleStatusUpdate(TutorChatJob, PyrisTutorChatStatusUpdateDTO)}
      *
      * @param job          the job that is updated
      * @param statusUpdate the status update

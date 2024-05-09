@@ -8,7 +8,7 @@ import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import { TranslateService } from '@ngx-translate/core';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { intersection } from 'lodash-es';
-import { CompetencyTaxonomy, CompetencyValidators } from 'app/entities/competency.model';
+import { CompetencyTaxonomy, CompetencyValidators, DEFAULT_MASTERY_THRESHOLD } from 'app/entities/competency.model';
 import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 
@@ -102,8 +102,11 @@ export class CompetencyFormComponent implements OnInit, OnChanges {
     selectedLectureUnitsInTable: LectureUnit[] = [];
     suggestedTaxonomies: string[] = [];
 
+    // Icons
     faTimes = faTimes;
     faQuestionCircle = faQuestionCircle;
+    // Constants
+    protected readonly DEFAULT_MASTERY_THRESHOLD = DEFAULT_MASTERY_THRESHOLD;
 
     constructor(
         private fb: FormBuilder,

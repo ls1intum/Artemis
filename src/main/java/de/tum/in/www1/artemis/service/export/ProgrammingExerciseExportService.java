@@ -557,13 +557,6 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         }
     }
 
-    public Optional<File> exportStudentRepositoryToZipFile(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation) throws IOException {
-        Path outputDir = fileService.getTemporaryUniquePathWithoutPathCreation(repoDownloadClonePath, 10);
-        Path zippedRepo;
-        zippedRepo = createZipForRepositoryWithParticipation(programmingExercise, participation, new RepositoryExportOptionsDTO(), outputDir, outputDir);
-        return Optional.ofNullable(zippedRepo).map(Path::toFile);
-    }
-
     /**
      * Zip the participations of programming exercises of a requested list of students separately.
      *

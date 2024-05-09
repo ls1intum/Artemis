@@ -392,7 +392,7 @@ public class ParticipationResource {
         var participationResults = studentParticipation.getResults();
         participationResults.forEach(participationResult -> {
             participationResult.setAssessmentType(AssessmentType.AUTOMATIC);
-            participationResult.setAssessor(null);
+            participationResult.filterSensitiveInformation();
             participationResult.setRated(false);
         });
         resultRepository.saveAll(participationResults);

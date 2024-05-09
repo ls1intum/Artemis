@@ -19,7 +19,6 @@ import de.tum.in.www1.artemis.service.connectors.pyris.PyrisConnectorService;
 import de.tum.in.www1.artemis.service.connectors.pyris.PyrisPipelineService;
 import de.tum.in.www1.artemis.service.iris.exception.IrisForbiddenException;
 import de.tum.in.www1.artemis.service.iris.exception.IrisInternalPyrisErrorException;
-import de.tum.in.www1.artemis.service.iris.exception.IrisInvalidTemplateException;
 import de.tum.in.www1.artemis.service.iris.session.IrisChatSessionService;
 import de.tum.in.www1.artemis.util.IrisUtilTestService;
 import de.tum.in.www1.artemis.util.LocalRepository;
@@ -46,7 +45,7 @@ class PyrisConnectorServiceTest extends AbstractIrisIntegrationTest {
     private static Stream<Arguments> irisExceptions() {
         // @formatter:off
         return Stream.of(
-                Arguments.of(400, IrisInvalidTemplateException.class),
+                Arguments.of(400, IrisInternalPyrisErrorException.class),
                 Arguments.of(401, IrisForbiddenException.class),
                 Arguments.of(403, IrisForbiddenException.class),
                 Arguments.of(404, IrisInternalPyrisErrorException.class), // TODO: Change with more specific exception
