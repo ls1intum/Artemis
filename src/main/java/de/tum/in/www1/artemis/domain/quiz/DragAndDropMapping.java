@@ -38,8 +38,7 @@ public class DragAndDropMapping extends DomainObject implements QuizQuestionComp
     @JsonView(QuizView.Before.class)
     private Boolean invalid = false;
 
-    @ManyToOne
-    @JsonView(QuizView.Before.class)
+    @Transient
     private DragItem dragItem;
 
     @Transient

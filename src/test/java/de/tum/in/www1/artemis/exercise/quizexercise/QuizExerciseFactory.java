@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.exercise.quizexercise;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 import java.io.IOException;
@@ -161,15 +160,10 @@ public class QuizExerciseFactory {
         dnd.addDropLocation(dropLocation4);
 
         var dragItem1 = new DragItem().text("D1");
-        dragItem1.setTempID(generateTempId());
         var dragItem2 = new DragItem().pictureFilePath("dragItemImage2.png");
-        dragItem2.setTempID(generateTempId());
         var dragItem3 = new DragItem().text("D3");
-        dragItem3.setTempID(generateTempId());
         var dragItem4 = new DragItem().pictureFilePath("dragItemImage4.png");
-        dragItem4.setTempID(generateTempId());
         dnd.addDragItem(dragItem1);
-        assertThat(dragItem1.getQuestion()).isEqualTo(dnd);
         // also invoke remove once
         dnd.removeDragItem(dragItem1);
         dnd.addDragItem(dragItem1);
@@ -451,13 +445,9 @@ public class QuizExerciseFactory {
         dnd.addDropLocation(dropLocation5);
 
         var dragItem1 = new DragItem().text("D1");
-        dragItem1.setTempID(generateTempId());
         var dragItem2 = new DragItem().text("D2");
-        dragItem2.setTempID(generateTempId());
         var dragItem3 = new DragItem().text("D3");
-        dragItem3.setTempID(generateTempId());
         var dragItem4 = new DragItem().text("invalid drag item");
-        dragItem4.setTempID(generateTempId());
         try {
             FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/attachment/placeholder.jpg"),
                     FilePathService.getDragItemFilePath().resolve("10").resolve("drag_item.jpg").toFile());
@@ -468,7 +458,6 @@ public class QuizExerciseFactory {
         var dragItem5 = new DragItem().pictureFilePath("/api/files/drag-and-drop/drag-items/10/drag_item.jpg");
         dragItem4.setInvalid(true);
         dnd.addDragItem(dragItem1);
-        assertThat(dragItem1.getQuestion()).isEqualTo(dnd);
         // also invoke remove once
         dnd.removeDragItem(dragItem1);
         dnd.addDragItem(dragItem1);

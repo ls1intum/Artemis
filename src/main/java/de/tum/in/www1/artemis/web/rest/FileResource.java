@@ -53,11 +53,9 @@ import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.lecture.Slide;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestion;
-import de.tum.in.www1.artemis.domain.quiz.DragItem;
 import de.tum.in.www1.artemis.repository.AttachmentRepository;
 import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.DragItemRepository;
 import de.tum.in.www1.artemis.repository.ExamUserRepository;
 import de.tum.in.www1.artemis.repository.FileUploadSubmissionRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
@@ -113,8 +111,6 @@ public class FileResource {
 
     private final QuizQuestionRepository quizQuestionRepository;
 
-    private final DragItemRepository dragItemRepository;
-
     private final CourseRepository courseRepository;
 
     private final LectureUnitService lectureUnitService;
@@ -122,7 +118,7 @@ public class FileResource {
     public FileResource(SlideRepository slideRepository, AuthorizationCheckService authorizationCheckService, FileService fileService, ResourceLoaderService resourceLoaderService,
             LectureRepository lectureRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository, AttachmentRepository attachmentRepository,
             AttachmentUnitRepository attachmentUnitRepository, AuthorizationCheckService authCheckService, UserRepository userRepository, ExamUserRepository examUserRepository,
-            QuizQuestionRepository quizQuestionRepository, DragItemRepository dragItemRepository, CourseRepository courseRepository, LectureUnitService lectureUnitService) {
+            QuizQuestionRepository quizQuestionRepository, CourseRepository courseRepository, LectureUnitService lectureUnitService) {
         this.fileService = fileService;
         this.resourceLoaderService = resourceLoaderService;
         this.lectureRepository = lectureRepository;
@@ -135,7 +131,6 @@ public class FileResource {
         this.examUserRepository = examUserRepository;
         this.slideRepository = slideRepository;
         this.quizQuestionRepository = quizQuestionRepository;
-        this.dragItemRepository = dragItemRepository;
         this.courseRepository = courseRepository;
         this.lectureUnitService = lectureUnitService;
     }
@@ -241,7 +236,6 @@ public class FileResource {
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getDragItemFile(@PathVariable Long dragItemId) {
         log.debug("REST request to get file for drag item : {}", dragItemId);
-        DragItem dragItem = dragItemRepository.findByIdElseThrow(dragItemId);
         Course course = dragItem.getQuestion().getExercise().getCourseViaExerciseGroupOrCourseMember();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
         if (dragItem.getPictureFilePath() == null) {
