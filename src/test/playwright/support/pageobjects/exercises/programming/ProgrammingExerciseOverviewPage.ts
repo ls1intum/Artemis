@@ -29,14 +29,14 @@ export class ProgrammingExerciseOverviewPage {
     }
 
     async openCodeEditor(exerciseId: number) {
-        await Commands.reloadUntilFound(this.page, '#open-exercise-' + exerciseId);
+        await Commands.reloadUntilFound(this.page, this.page.locator(`#open-exercise-${exerciseId}`));
         await this.courseOverview.openRunningProgrammingExercise(exerciseId);
     }
 
     async getRepoUrl() {
-        const cloneRepoSelector = '.clone-repository';
-        await Commands.reloadUntilFound(this.page, cloneRepoSelector);
-        await this.page.locator(cloneRepoSelector).click();
+        const cloneRepoLocator = this.page.locator('.clone-repository');
+        await Commands.reloadUntilFound(this.page, cloneRepoLocator);
+        await cloneRepoLocator.click();
         await this.page.locator('.popover-body').waitFor({ state: 'visible' });
         return await this.page.locator('.clone-url').innerText();
     }
