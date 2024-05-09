@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { Exercise, getIcon } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { AccordionGroups, SidebarCardElement, TimeGroupCategory } from 'app/types/sidebar';
@@ -21,6 +22,12 @@ const DEFAULT_UNIT_GROUPS: AccordionGroups = {
 export class CourseOverviewService {
     constructor(private participationService: ParticipationService) {}
 
+    getUpcomingTutorialGroup(tutorialGroups: TutorialGroup[] | undefined): TutorialGroup | undefined {
+        if (tutorialGroups && tutorialGroups.length) {
+            const upcomingTutorialGroup = tutorialGroups?.reduce((a, b) => ((a?.nextSession?.start?.valueOf() ?? 0) > (b?.nextSession?.start?.valueOf() ?? 0) ? a : b));
+            return upcomingTutorialGroup;
+        }
+    }
     getUpcomingLecture(lectures: Lecture[] | undefined): Lecture | undefined {
         if (lectures && lectures.length) {
             const upcomingLecture = lectures?.reduce((a, b) => ((a?.startDate?.valueOf() ?? 0) > (b?.startDate?.valueOf() ?? 0) ? a : b));
@@ -82,6 +89,9 @@ export class CourseOverviewService {
     mapLecturesToSidebarCardElements(lectures: Lecture[]) {
         return lectures.map((lecture) => this.mapLectureToSidebarCardElement(lecture));
     }
+    mapTutorialGroupsToSidebarCardElements(tutorialGroups: Lecture[]) {
+        return tutorialGroups.map((tutorialGroup) => this.mapTutorialGroupToSidebarCardElement(tutorialGroup));
+    }
 
     mapExercisesToSidebarCardElements(exercises: Exercise[]) {
         return exercises.map((exercise) => this.mapExerciseToSidebarCardElement(exercise));
@@ -94,6 +104,15 @@ export class CourseOverviewService {
             subtitleLeft: lecture.startDate?.format('MMM DD, YYYY') ?? 'No date associated',
         };
         return lectureCardItem;
+    }
+    mapTutorialGroupToSidebarCardElement(tutorialGroup: TutorialGroup): SidebarCardElement {
+        const tutorialGroupCardItem: SidebarCardElement = {
+            title: tutorialGroup.title ?? '',
+            id: tutorialGroup.id ?? '',
+            subtitleLeft: tutorialGroup.language,
+            subtitleRight: tutorialGroup.nextSession?.start?.format('MMM DD, YYYY') ? 'Next: ' + tutorialGroup.nextSession?.start?.format('MMM DD, YYYY') : 'No upcoming session',
+        };
+        return tutorialGroupCardItem;
     }
     mapExerciseToSidebarCardElement(exercise: Exercise): SidebarCardElement {
         const exerciseCardItem: SidebarCardElement = {
