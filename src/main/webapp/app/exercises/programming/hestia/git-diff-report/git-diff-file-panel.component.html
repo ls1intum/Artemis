@@ -21,6 +21,7 @@
         <div ngbAccordionCollapse>
             <div ngbAccordionBody>
                 <jhi-git-diff-file
+                    [allowSplitView]="allowSplitView"
                     [diffForTemplateAndSolution]="diffForTemplateAndSolution"
                     [diffEntries]="diffEntries"
                     [originalFileContent]="templateFileContent"

@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, OnDestroy, OnInit, Output, Renderer2, ViewEncapsulation } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, Renderer2, ViewEncapsulation } from '@angular/core';
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
 
 import * as monaco from 'monaco-editor';
@@ -17,6 +17,13 @@ export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
     themeSubscription?: Subscription;
     listeners: monaco.IDisposable[] = [];
     resizeObserver?: ResizeObserver;
+
+    @Input()
+    set allowSplitView(value: boolean) {
+        this._editor.updateOptions({
+            renderSideBySide: value,
+        });
+    }
 
     @Output()
     onReadyForDisplayChange = new EventEmitter<boolean>();

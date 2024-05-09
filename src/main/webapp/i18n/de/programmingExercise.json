@@ -539,6 +539,11 @@
             "diffReport": {
                 "button": "Anzeigen",
                 "tooltip": "Zeigt den detaillierten Git-Diff zwischen den Template- und Lösungs-Repositories.",
+                "splitView": {
+                    "enable": "Getrennte Ansicht aktivieren",
+                    "disable": "Getrennte Ansicht deaktivieren",
+                    "tooltip": "In der getrennten Ansicht werden beide Versionen jeder geänderten Datei nebeneinander angezeigt. Beachte, dass die getrennte Ansicht nur dann angezeigt wird, wenn dein Browserfenster breit genug ist."
+                },
                 "tooltipBetweenSubmissions": "Zeigt den detaillierten Git-Diff zwischen der aktuellen und der vorherigen Abgabe.",
                 "title": "Template-Lösungs-Diff",
                 "titleForSubmissions": "Abgaben-Diff",

@@ -17,6 +17,8 @@ export class GitDiffFilePanelComponent implements OnInit {
 
     @Input() diffForTemplateAndSolution = true;
 
+    @Input() allowSplitView = true;
+
     @Output() onDiffReady = new EventEmitter<boolean>();
 
     previousFilePath: string | undefined;

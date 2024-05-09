@@ -23,6 +23,9 @@ export class GitDiffFileComponent implements OnInit {
     @Input()
     modifiedFileContent?: string;
 
+    @Input()
+    allowSplitView = true;
+
     @Output()
     onDiffReady = new EventEmitter<boolean>();
 

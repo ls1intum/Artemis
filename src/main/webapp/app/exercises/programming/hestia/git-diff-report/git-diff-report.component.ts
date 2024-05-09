@@ -1,7 +1,8 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 import { ProgrammingExerciseGitDiffEntry } from 'app/entities/hestia/programming-exercise-git-diff-entry.model';
-import { faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faSpinner, faTableColumns } from '@fortawesome/free-solid-svg-icons';
+import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 
 @Component({
     selector: 'jhi-git-diff-report',
@@ -33,8 +34,14 @@ export class GitDiffReportComponent implements OnInit {
     diffsReadyByPath: { [path: string]: boolean } = {};
     allDiffsReady = false;
     nothingToDisplay = false;
+    allowSplitView = true;
 
     faSpinner = faSpinner;
+    faTableColumns = faTableColumns;
+
+    // Expose to template
+    protected readonly ButtonSize = ButtonSize;
+    protected readonly ButtonType = ButtonType;
 
     constructor() {}
 

@@ -541,6 +541,11 @@
             "diffReport": {
                 "button": "Show",
                 "tooltip": "Shows the detailed git-diff between the template and solution repositories.",
+                "splitView": {
+                    "enable": "Enable split view",
+                    "disable": "Disable split view",
+                    "tooltip": "In the split view, both versions of each changed file are displayed next to each other. Note that the split view will only be shown if your browser window is wide enough."
+                },
                 "tooltipBetweenSubmissions": "Shows the detailed git-diff between the current and previous submission.",
                 "title": "Template-Solution-Diff",
                 "titleForSubmissions": "Submission-Diff",
