@@ -2,31 +2,45 @@ package de.tum.in.www1.artemis.service.competency;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import jakarta.validation.constraints.NotNull;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
 import de.tum.in.www1.artemis.domain.competency.RelationType;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.domain.competency.StandardizedCompetency;
+import de.tum.in.www1.artemis.repository.CompetencyProgressRepository;
+import de.tum.in.www1.artemis.repository.CompetencyRelationRepository;
+import de.tum.in.www1.artemis.repository.CompetencyRepository;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.LectureUnitCompletionRepository;
+import de.tum.in.www1.artemis.repository.competency.StandardizedCompetencyRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.LectureUnitService;
 import de.tum.in.www1.artemis.service.learningpath.LearningPathService;
-import de.tum.in.www1.artemis.web.rest.dto.*;
+import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyRelationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyWithTailRelationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.CompetencyPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 
 /**
@@ -56,9 +70,14 @@ public class CompetencyService {
 
     private final LectureUnitCompletionRepository lectureUnitCompletionRepository;
 
+    private final StandardizedCompetencyRepository standardizedCompetencyRepository;
+
+    private final CourseRepository courseRepository;
+
     public CompetencyService(CompetencyRepository competencyRepository, AuthorizationCheckService authCheckService, CompetencyRelationRepository competencyRelationRepository,
             LearningPathService learningPathService, CompetencyProgressService competencyProgressService, LectureUnitService lectureUnitService, ExerciseService exerciseService,
-            CompetencyProgressRepository competencyProgressRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository) {
+            CompetencyProgressRepository competencyProgressRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
+            StandardizedCompetencyRepository standardizedCompetencyRepository, CourseRepository courseRepository) {
         this.competencyRepository = competencyRepository;
         this.authCheckService = authCheckService;
         this.competencyRelationRepository = competencyRelationRepository;
@@ -68,6 +87,8 @@ public class CompetencyService {
         this.exerciseService = exerciseService;
         this.competencyProgressRepository = competencyProgressRepository;
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
+        this.standardizedCompetencyRepository = standardizedCompetencyRepository;
+        this.courseRepository = courseRepository;
     }
 
     /**
@@ -114,10 +135,10 @@ public class CompetencyService {
      */
     public SearchResultPageDTO<Competency> getOnPageWithSizeForImport(final CompetencyPageableSearchDTO search, final User user) {
         final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.COMPETENCY);
-        final String title = search.getTitle().isBlank() ? null : search.getTitle();
-        final String description = search.getDescription().isBlank() ? null : search.getDescription();
-        final String courseTitle = search.getCourseTitle().isBlank() ? null : search.getCourseTitle();
-        final String semester = search.getSemester().isBlank() ? null : search.getSemester();
+        final String title = StringUtils.isEmpty(search.getTitle()) ? null : search.getTitle();
+        final String description = StringUtils.isEmpty(search.getDescription()) ? null : search.getDescription();
+        final String courseTitle = StringUtils.isEmpty(search.getCourseTitle()) ? null : search.getCourseTitle();
+        final String semester = StringUtils.isEmpty(search.getSemester()) ? null : search.getSemester();
 
         final Page<Competency> competencyPage;
         if (authCheckService.isAdmin(user)) {
@@ -168,6 +189,44 @@ public class CompetencyService {
             }
         }
         return idToImportedCompetency.values().stream().toList();
+    }
+
+    /**
+     * Imports the standardized competencies with the given ids as competencies into a course
+     *
+     * @param competencyIdsToImport the ids of the standardized competencies to import
+     * @param courseId              the id of the course to import into
+     * @return the list of imported competencies
+     */
+    public List<Competency> importStandardizedCompetencies(List<Long> competencyIdsToImport, long courseId) {
+        var course = courseRepository.findByIdElseThrow(courseId);
+        List<StandardizedCompetency> standardizedCompetencies = standardizedCompetencyRepository.findAllById(competencyIdsToImport);
+
+        if (standardizedCompetencies.size() != competencyIdsToImport.size()) {
+            throw new EntityNotFoundException("Could not find all standardized competencies to import in the database!");
+        }
+
+        List<Competency> competenciesToCreate = new ArrayList<>();
+
+        for (var standardizedCompetency : standardizedCompetencies) {
+            var competency = new Competency();
+            competency.setTitle(standardizedCompetency.getTitle());
+            competency.setDescription(standardizedCompetency.getDescription());
+            competency.setTaxonomy(standardizedCompetency.getTaxonomy());
+            competency.setMasteryThreshold(Competency.DEFAULT_MASTERY_THRESHOLD);
+            competency.setLinkedStandardizedCompetency(standardizedCompetency);
+            competency.setCourse(course);
+
+            competenciesToCreate.add(competency);
+        }
+
+        var importedCompetencies = competencyRepository.saveAll(competenciesToCreate);
+
+        if (course.getLearningPathsEnabled()) {
+            learningPathService.linkCompetenciesToLearningPathsOfCourse(importedCompetencies, course.getId());
+        }
+
+        return importedCompetencies;
     }
 
     /**

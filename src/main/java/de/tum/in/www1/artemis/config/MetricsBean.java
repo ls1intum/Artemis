@@ -17,7 +17,10 @@ import jakarta.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.actuate.health.*;
+import org.springframework.boot.actuate.health.Health;
+import org.springframework.boot.actuate.health.HealthContributor;
+import org.springframework.boot.actuate.health.HealthIndicator;
+import org.springframework.boot.actuate.health.NamedContributor;
 import org.springframework.cloud.client.discovery.health.DiscoveryCompositeHealthContributor;
 import org.springframework.context.annotation.Profile;
 import org.springframework.messaging.simp.user.SimpUserRegistry;
@@ -354,7 +357,7 @@ public class MetricsBean {
 
         cachedActiveUserNames = statisticsRepository.getActiveUserNames(ZonedDateTime.now().minusDays(14), ZonedDateTime.now());
 
-        log.info("calculateCachedActiveUserLogins took {}ms", System.currentTimeMillis() - startDate);
+        log.debug("calculateCachedActiveUserLogins took {}ms", System.currentTimeMillis() - startDate);
     }
 
     /**
@@ -396,7 +399,7 @@ public class MetricsBean {
         updateMultiGaugeIntegerForMinuteRanges(releaseExamGauge, examRepository::countExamsWithStartDateBetween);
         updateMultiGaugeIntegerForMinuteRanges(releaseExamStudentMultiplierGauge, examRepository::countExamUsersInExamsWithStartDateBetween);
 
-        log.info("recalculateMetrics took {}ms", System.currentTimeMillis() - startDate);
+        log.debug("recalculateMetrics took {}ms", System.currentTimeMillis() - startDate);
     }
 
     @FunctionalInterface
@@ -543,7 +546,7 @@ public class MetricsBean {
         activeExamsGauge.set(examRepository.countAllActiveExams(now));
         examsGauge.set((int) examRepository.count());
 
-        log.info("updatePublicArtemisMetrics took {}ms", System.currentTimeMillis() - startDate);
+        log.debug("updatePublicArtemisMetrics took {}ms", System.currentTimeMillis() - startDate);
     }
 
     private void updateActiveUserMultiGauge(ZonedDateTime now) {

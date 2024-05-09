@@ -2,7 +2,9 @@ package de.tum.in.www1.artemis.domain.notification;
 
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.TUTORIAL_GROUP_DELETED;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.TUTORIAL_GROUP_UPDATED;
-import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.*;
+import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.TUTORIAL_GROUP_DELETED_TEXT;
+import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.TUTORIAL_GROUP_UPDATED_TEXT;
+import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.findCorrespondingNotificationTitleOrThrow;
 import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.createTutorialGroupTarget;
 
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;

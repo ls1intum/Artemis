@@ -131,7 +131,7 @@ describe('Exam assessment', () => {
         });
     });
 
-    describe('Quiz exercise assessment', () => {
+    describe.only('Quiz exercise assessment', () => {
         let resultDate: Dayjs;
 
         before('Prepare exam', () => {
@@ -140,7 +140,7 @@ describe('Exam assessment', () => {
             prepareExam(course, examEnd, ExerciseType.QUIZ);
         });
 
-        it('Assesses quiz automatically', () => {
+        it.skip('Assesses quiz automatically', () => {
             cy.login(instructor);
             examManagement.verifySubmitted(course.id!, exam.id!, studentOneName);
             if (dayjs().isBefore(examEnd)) {

@@ -20,6 +20,7 @@ import java.util.stream.Stream;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Precision;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,10 +30,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
-import com.google.common.base.Strings;
-
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.BuildLogEntry;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Feedback;
@@ -162,7 +160,9 @@ public class ProgrammingExerciseGradingService {
         try {
             ContinuousIntegrationResultService ciResultService = continuousIntegrationResultService.orElseThrow();
             var buildResult = ciResultService.convertBuildResult(requestBody);
+
             checkCorrectBranchElseThrow(participation, buildResult);
+            checkHasCommitHashElseThrow(buildResult);
 
             ProgrammingExercise exercise = participation.getProgrammingExercise();
 
@@ -204,7 +204,7 @@ public class ProgrammingExerciseGradingService {
             newResult.setSubmission(latestSubmission);
             newResult.setRatedIfNotAfterDueDate();
             // NOTE: the result is not saved yet, but is connected to the submission, the submission is not completely saved yet
-            return processNewProgrammingExerciseResult(participation, newResult, buildResult.extractBuildLogs());
+            return processNewProgrammingExerciseResult(participation, newResult);
         }
         catch (ContinuousIntegrationException ex) {
             log.error("Result for participation {} could not be created", participation.getId(), ex);
@@ -229,13 +229,25 @@ public class ProgrammingExerciseGradingService {
             if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
                 participationDefaultBranch = versionControlService.orElseThrow().getOrRetrieveBranchOfStudentParticipation(studentParticipation);
             }
-            if (Strings.isNullOrEmpty(participationDefaultBranch)) {
+            if (StringUtils.isEmpty(participationDefaultBranch)) {
                 participationDefaultBranch = versionControlService.orElseThrow().getOrRetrieveBranchOfExercise(participation.getProgrammingExercise());
             }
 
             if (!Objects.equals(branchName, participationDefaultBranch)) {
                 throw new IllegalArgumentException("Result was produced for a different branch than the default branch");
             }
+        }
+    }
+
+    /**
+     * Build notifications need to provide an assignment commit hash to find the related submission.
+     * If the information is missing, the result will not be processed further.
+     *
+     * @param buildResult The build result received from the CI system.
+     */
+    private void checkHasCommitHashElseThrow(final AbstractBuildResultNotificationDTO buildResult) {
+        if (StringUtils.isEmpty(buildResult.getCommitHash(SubmissionType.MANUAL))) {
+            throw new IllegalArgumentException("The provided result does not specify the assignment commit hash. The result will not get processed.");
         }
     }
 
@@ -293,7 +305,7 @@ public class ProgrammingExerciseGradingService {
      * @param newResult     that contains the build result with its feedbacks.
      * @return the result after processing and persisting.
      */
-    private Result processNewProgrammingExerciseResult(final ProgrammingExerciseParticipation participation, final Result newResult, final List<BuildLogEntry> buildLogs) {
+    private Result processNewProgrammingExerciseResult(final ProgrammingExerciseParticipation participation, final Result newResult) {
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
         boolean isSolutionParticipation = participation instanceof SolutionProgrammingExerciseParticipation;
         boolean isTemplateParticipation = participation instanceof TemplateProgrammingExerciseParticipation;
@@ -322,12 +334,7 @@ public class ProgrammingExerciseGradingService {
                 // Adding back dropped submission
                 updatedLatestSemiAutomaticResult.setSubmission(programmingSubmission);
                 programmingSubmissionRepository.save(programmingSubmission);
-                Result result = resultRepository.save(updatedLatestSemiAutomaticResult);
-
-                // Save the build logs to the file system
-                if (buildLogs != null && !buildLogs.isEmpty()) {
-                    buildLogService.saveBuildLogsToFile(buildLogs, result.getId().toString());
-                }
+                resultRepository.save(updatedLatestSemiAutomaticResult);
 
                 return updatedLatestSemiAutomaticResult;
             }
@@ -345,10 +352,6 @@ public class ProgrammingExerciseGradingService {
         processedResult.setParticipation((Participation) participation);
         programmingSubmission.addResult(processedResult);
         programmingSubmissionRepository.save(programmingSubmission);
-
-        if (buildLogs != null && !buildLogs.isEmpty()) {
-            buildLogService.saveBuildLogsToFile(buildLogs, processedResult.getId().toString());
-        }
 
         return processedResult;
     }
