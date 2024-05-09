@@ -62,6 +62,10 @@ export interface SidebarCardElement {
      */
     type?: string;
     /**
+     * Sets the size of SidebarCards
+     */
+    size: 'S' | 'M' | 'L' | string;
+    /**
      * Set for Exercises, shows the colored border on the left side
      */
     difficulty?: DifficultyLevel;

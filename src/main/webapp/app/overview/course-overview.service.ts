@@ -113,6 +113,7 @@ export class CourseOverviewService {
             title: lecture.title ?? '',
             id: lecture.id ?? '',
             subtitleLeft: lecture.startDate?.format('MMM DD, YYYY') ?? 'No date associated',
+            size: 'M',
         };
         return lectureCardItem;
     }
@@ -120,6 +121,7 @@ export class CourseOverviewService {
         const tutorialGroupCardItem: SidebarCardElement = {
             title: tutorialGroup.title ?? '',
             id: tutorialGroup.id ?? '',
+            size: 'M',
             subtitleLeft: tutorialGroup.language,
             subtitleRight: tutorialGroup.nextSession?.start?.format('MMM DD, YYYY') ? 'Next: ' + tutorialGroup.nextSession?.start?.format('MMM DD, YYYY') : 'No upcoming session',
         };
@@ -137,6 +139,7 @@ export class CourseOverviewService {
             studentParticipation: exercise?.studentParticipations?.length
                 ? this.participationService.getSpecificStudentParticipation(exercise.studentParticipations, false)
                 : undefined,
+            size: 'M',
         };
         return exerciseCardItem;
     }
@@ -146,6 +149,7 @@ export class CourseOverviewService {
             title: exam.title ?? '',
             id: exam.id ?? '',
             subtitleLeft: exam.startDate ? dayjs(exam.startDate).format('MMM DD, YYYY') : 'No date associated',
+            size: 'M',
         };
         return examCardItem;
     }

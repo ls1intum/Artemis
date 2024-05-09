@@ -5,11 +5,11 @@ import { Subscription } from 'rxjs';
 import { SidebarEventService } from '../sidebar-event.service';
 import { ActivatedRoute, Router } from '@angular/router';
 @Component({
-    selector: 'jhi-sidebar-card',
-    templateUrl: './sidebar-card.component.html',
-    styleUrls: ['./sidebar-card.component.scss'],
+    selector: 'jhi-small-sidebar-card',
+    templateUrl: './sidebar-card-small.component.html',
+    styleUrls: ['./sidebar-card-small.component.scss'],
 })
-export class SidebarCardComponent {
+export class SidebarCardSmallComponent {
     DifficultyLevel = DifficultyLevel;
     @Input() sidebarItem: SidebarCardElement;
     @Input() sidebarType?: SidebarTypes;

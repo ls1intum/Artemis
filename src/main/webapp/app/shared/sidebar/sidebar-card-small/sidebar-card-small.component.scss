@@ -1,0 +1,22 @@
+.bg-module {
+    background-color: var(--module-bg);
+}
+
+.border-module {
+    border-color: var(--module-bg) !important;
+}
+
+.bg-selected {
+    background-color: var(--sidebar-card-selected-bg);
+
+    &.border-module {
+        border-color: var(--sidebar-card-selected-bg) !important;
+    }
+}
+
+.padding-small {
+    padding-bottom: 0.1rem;
+    padding-top: 0.5rem;
+    padding-left: 0.25rem;
+    padding-right: 0.25rem;
+}
