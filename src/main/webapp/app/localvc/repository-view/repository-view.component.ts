@@ -81,11 +81,10 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
             this.participationCouldNotBeFetched = false;
             const exerciseId = Number(params['exerciseId']);
             const participationId = Number(params['participationId']);
-            if (participationId) {
-                this.repositoryType = 'USER';
+            this.repositoryType = participationId ? 'USER' : params['repositoryType'];
+            if (this.repositoryType === 'USER') {
                 this.loadStudentParticipation(participationId);
             } else {
-                this.repositoryType = params['repositoryType'];
                 this.loadDifferentParticipation(this.repositoryType, exerciseId);
             }
         });
@@ -95,10 +94,10 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
      * Load the template, solution or test participation. Set the domain and repositoryUri accordingly.
      * If the participation can't be fetched, set the error state. The test repository does not have a participation.
      * Only the domain is set.
-     * @param repositoryType
-     * @param exerciseId
+     * @param repositoryType The instructor repository type.
+     * @param exerciseId The id of the exercise
      */
-    private loadDifferentParticipation(repositoryType: string, exerciseId: number) {
+    private loadDifferentParticipation(repositoryType: ProgrammingExerciseInstructorRepositoryType, exerciseId: number) {
         this.differentParticipationSub = this.programmingExerciseService
             .findWithTemplateAndSolutionParticipationAndLatestResults(exerciseId)
             .pipe(
