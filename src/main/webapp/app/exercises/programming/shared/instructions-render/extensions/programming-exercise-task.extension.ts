@@ -1,4 +1,4 @@
-import { EmbeddedViewRef, Injectable, Injector, ViewContainerRef } from '@angular/core';
+import { ApplicationRef, EnvironmentInjector, Injectable, ViewContainerRef, createComponent } from '@angular/core';
 import { Exercise } from 'app/entities/exercise.model';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -35,13 +35,15 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
 
     private testsForTaskSubject = new Subject<TaskArrayWithExercise>();
     private injectableElementsFoundSubject = new Subject<() => void>();
+    private testsForTask: TaskArray;
 
     // unique index, even if multiple tasks are shown from different problem statements on the same page (in different tabs)
     private taskIndex = 0;
 
     constructor(
         private programmingExerciseInstructionService: ProgrammingExerciseInstructionService,
-        private injector: Injector,
+        private appRef: ApplicationRef,
+        private injector: EnvironmentInjector,
     ) {}
 
     /**
@@ -80,30 +82,52 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
     }
 
     /**
-     * For each task provided, inject a ProgrammingExerciseInstructionTaskStatusComponent into the container div.
-     * @param tasks to inject into the html.
+     * For each task, inject a ProgrammingExerciseInstructionTaskStatusComponent into the container div.
      */
-    private injectTasks = (tasks: TaskArray) => {
-        tasks.forEach(({ id, taskName, testIds }) => {
+    private injectTasksIntoDocument = () => {
+        this.testsForTask.forEach(({ id, taskName, testIds }) => {
             const taskHtmlContainers = document.getElementsByClassName(`pe-task-${id}`);
 
-            // The same task could appear multiple times in the instructions (edge case).
             for (let i = 0; i < taskHtmlContainers.length; i++) {
-                // TODO: Replace this workaround with official Angular API replacement for ComponentFactoryResolver once available
-                // See https://github.com/angular/angular/issues/45263#issuecomment-1082530357
-                const componentRef = this.viewContainerRef.createComponent(ProgrammingExerciseInstructionTaskStatusComponent, { injector: this.injector });
-                componentRef.instance.exercise = this.exercise;
-                componentRef.instance.taskName = taskName;
-                componentRef.instance.latestResult = this.latestResult;
-                componentRef.instance.testIds = testIds;
-                // wait for init and render to complete
-                componentRef.changeDetectorRef.detectChanges();
-                const domElem = (componentRef.hostView as EmbeddedViewRef<any>).rootNodes[0] as HTMLElement;
                 const taskHtmlContainer = taskHtmlContainers[i];
-                taskHtmlContainer.replaceChildren(domElem);
+                this.createTaskComponent(taskHtmlContainer, taskName, testIds);
             }
         });
     };
+
+    /**
+     * For each task, inject a ProgrammingExerciseInstructionTaskStatusComponent into the container div.
+     * This method injects the tasks into HTML which is needed for the HTML diff function
+     * instead of injecting them directly into the document
+     */
+    public injectTasksIntoHTML(html: string): string {
+        const container = document.createElement('div');
+        container.innerHTML = html;
+
+        this.testsForTask.forEach(({ id, taskName, testIds }) => {
+            const taskHtmlContainers = container.getElementsByClassName(`pe-task-${id}`);
+
+            // The same task could appear multiple times in the instructions (edge case).
+            for (let i = 0; i < taskHtmlContainers.length; i++) {
+                const taskHtmlContainer = taskHtmlContainers[i];
+                this.createTaskComponent(taskHtmlContainer, taskName, testIds);
+            }
+        });
+        return container.innerHTML;
+    }
+
+    private createTaskComponent(taskHtmlContainer: Element, taskName: string, testIds: number[]) {
+        const componentRef = createComponent(ProgrammingExerciseInstructionTaskStatusComponent, {
+            hostElement: taskHtmlContainer,
+            environmentInjector: this.injector,
+        });
+        componentRef.instance.exercise = this.exercise;
+        componentRef.instance.taskName = taskName;
+        componentRef.instance.latestResult = this.latestResult;
+        componentRef.instance.testIds = testIds;
+        this.appRef.attachView(componentRef.hostView);
+        componentRef.changeDetectorRef.detectChanges();
+    }
 
     /**
      * Creates and returns an extension to current exercise.
@@ -115,18 +139,18 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
         const extension: ShowdownExtension = {
             type: 'lang',
             filter: (problemStatement: string) => {
-                const tasks = Array.from(problemStatement.matchAll(taskRegex));
-                if (tasks) {
-                    return this.createTasks(problemStatement, tasks);
-                }
-                return problemStatement;
+                return this.createTasks(problemStatement);
             },
         };
         return extension;
     }
 
-    private createTasks(problemStatement: string, tasks: RegExpMatchArray[]): string {
-        const testsForTask: TaskArray = tasks
+    public createTasks(problemStatement: string): string {
+        const tasks = Array.from(problemStatement.matchAll(taskRegex));
+        if (!tasks) {
+            return problemStatement;
+        }
+        this.testsForTask = tasks
             // check that all groups (full match, name, tests) are present
             .filter((testMatch) => testMatch?.length === 3)
             .map((testMatch: RegExpMatchArray | null) => {
@@ -141,14 +165,14 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
             });
         const tasksWithParticipationId: TaskArrayWithExercise = {
             exerciseId: this.exercise.id!,
-            tasks: testsForTask,
+            tasks: this.testsForTask,
         };
         this.testsForTaskSubject.next(tasksWithParticipationId);
-        // Emit new found elements that need to be injected into html after it is rendered.
+        // Emit new-found elements that need to be injected into html after it is rendered.
         this.injectableElementsFoundSubject.next(() => {
-            this.injectTasks(testsForTask);
+            this.injectTasksIntoDocument();
         });
-        return testsForTask.reduce(
+        return this.testsForTask.reduce(
             (acc: string, { completeString: task, id }): string =>
                 // Insert anchor divs into the text so that injectable elements can be inserted into them.
                 // Without class="d-flex" the injected components height would be 0.

@@ -14,6 +14,7 @@ export class ExamExerciseUpdateHighlighterComponent implements OnInit, OnDestroy
     themeSubscription: Subscription;
     previousProblemStatementUpdate?: string;
     updatedProblemStatementWithHighlightedDifferences: string;
+    outdatedProblemStatement: string;
     updatedProblemStatement: string;
     showHighlightedDifferences = true;
     isHidden = false;
@@ -64,8 +65,15 @@ export class ExamExerciseUpdateHighlighterComponent implements OnInit, OnDestroy
      */
     updateExerciseProblemStatementById(exerciseId: number, updatedProblemStatement: string) {
         if (updatedProblemStatement != undefined && exerciseId === this.exercise.id) {
+            this.outdatedProblemStatement = this.exercise.problemStatement!;
             this.updatedProblemStatement = updatedProblemStatement;
-            this.exercise.problemStatement = this.highlightProblemStatementDifferences();
+            this.previousProblemStatementUpdate = this.updatedProblemStatement;
+            this.showHighlightedDifferences = true;
+            // Highlighting of the changes in the problem statement of a programming exercise id handled
+            // in ProgrammingExerciseInstructionComponent
+            if (this.exercise.type !== ExerciseType.PROGRAMMING) {
+                this.exercise.problemStatement = this.highlightProblemStatementDifferences();
+            }
         }
         this.problemStatementUpdateEvent.emit(this.exercise.problemStatement);
     }
@@ -77,9 +85,6 @@ export class ExamExerciseUpdateHighlighterComponent implements OnInit, OnDestroy
         if (!this.updatedProblemStatement) {
             return;
         }
-
-        this.showHighlightedDifferences = true;
-
         // creates the diffMatchPatch library object to be able to modify strings
         const dmp = new DiffMatchPatch();
         let outdatedProblemStatement: string;
@@ -92,51 +97,13 @@ export class ExamExerciseUpdateHighlighterComponent implements OnInit, OnDestroy
             outdatedProblemStatement = this.previousProblemStatementUpdate;
         }
 
-        this.previousProblemStatementUpdate = this.updatedProblemStatement;
-        let removedDiagrams: string[] = [];
-        let diff: Diff[];
-        if (this.exercise.type === ExerciseType.PROGRAMMING) {
-            const updatedProblemStatementAndRemovedDiagrams = this.removeAnyPlantUmlDiagramsInProblemStatement(this.updatedProblemStatement);
-            const outdatedProblemStatementAndRemovedDiagrams = this.removeAnyPlantUmlDiagramsInProblemStatement(outdatedProblemStatement);
-            const updatedProblemStatementWithoutDiagrams = updatedProblemStatementAndRemovedDiagrams.problemStatementWithoutPlantUmlDiagrams;
-            const outdatedProblemStatementWithoutDiagrams = outdatedProblemStatementAndRemovedDiagrams.problemStatementWithoutPlantUmlDiagrams;
-            removedDiagrams = updatedProblemStatementAndRemovedDiagrams.removedDiagrams;
-            diff = dmp.diff_main(outdatedProblemStatementWithoutDiagrams!, updatedProblemStatementWithoutDiagrams);
-        } else {
-            diff = dmp.diff_main(outdatedProblemStatement!, this.updatedProblemStatement);
-        }
+        const diff = dmp.diff_main(outdatedProblemStatement!, this.updatedProblemStatement);
+
         // finds the initial difference then cleans the text with added html & css elements
         dmp.diff_cleanupEfficiency(diff);
         this.updatedProblemStatementWithHighlightedDifferences = this.diffPrettyHtml(diff);
 
-        if (this.exercise.type === ExerciseType.PROGRAMMING) {
-            this.addPlantUmlToProblemStatementWithDiffHighlightAgain(removedDiagrams);
-        }
         return this.updatedProblemStatementWithHighlightedDifferences;
-    }
-
-    private addPlantUmlToProblemStatementWithDiffHighlightAgain(removedDiagrams: string[]) {
-        removedDiagrams.forEach((text) => {
-            this.updatedProblemStatementWithHighlightedDifferences = this.updatedProblemStatementWithHighlightedDifferences.replace('@startuml', '@startuml\n' + text + '\n');
-        });
-    }
-
-    private removeAnyPlantUmlDiagramsInProblemStatement(problemStatement: string): {
-        problemStatementWithoutPlantUmlDiagrams: string;
-        removedDiagrams: string[];
-    } {
-        // Regular expression to match content between @startuml and @enduml
-        const plantUmlSequenceRegex = /@startuml([\s\S]*?)@enduml/g;
-        const removedDiagrams: string[] = [];
-        const problemStatementWithoutPlantUmlDiagrams = problemStatement.replace(plantUmlSequenceRegex, (match, content) => {
-            removedDiagrams.push(content);
-            // we have to keep the markers, otherwise we cannot add the diagrams back later
-            return '@startuml\n@enduml';
-        });
-        return {
-            problemStatementWithoutPlantUmlDiagrams,
-            removedDiagrams,
-        };
     }
 
     /**
@@ -157,7 +124,7 @@ export class ExamExerciseUpdateHighlighterComponent implements OnInit, OnDestroy
             const text = diffs[index][1]; // Text of change.
             switch (op) {
                 case DiffOperation.DIFF_INSERT:
-                    html[index] = '<ins class="bg-success" ">' + text + '</ins>';
+                    html[index] = '<ins class="bg-success">' + text + '</ins>';
                     break;
                 case DiffOperation.DIFF_DELETE:
                     html[index] = '<del class="bg-danger">' + text + '</del>';

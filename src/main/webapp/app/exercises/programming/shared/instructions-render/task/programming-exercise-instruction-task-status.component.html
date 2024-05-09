@@ -9,7 +9,7 @@
         <fa-icon [icon]="faQuestionCircle" size="lg" class="test-icon text-secondary" />
     }
     @if (taskName) {
-        <span class="task-name">{{ taskName }}</span>
+        <span class="task-name" [innerHTML]="taskName | safeHtml"></span>
     }
     @if (latestResult && latestResult.feedbacks && latestResult.feedbacks.length && testIds.length) {
         <span

@@ -1,5 +1,5 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewContainerRef } from '@angular/core';
-import { SafeHtml } from '@angular/platform-browser';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild, ViewContainerRef } from '@angular/core';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ThemeService } from 'app/core/theme/theme.service';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
@@ -22,6 +22,9 @@ import { Result } from 'app/entities/result.model';
 import { findLatestResult } from 'app/shared/util/utils';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { hasParticipationChanged } from 'app/exercises/shared/participation/participation.utils';
+import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/participate/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
+import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
+import diff from 'html-diff-ts';
 
 @Component({
     selector: 'jhi-programming-exercise-instructions',
@@ -36,6 +39,8 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     // If there are no instructions available (neither in the exercise problemStatement nor the legacy README.md) emits an event
     @Output()
     public onNoInstructionsAvailable = new EventEmitter();
+
+    @ViewChild(ExamExerciseUpdateHighlighterComponent) examExerciseUpdateHighlighterComponent: ExamExerciseUpdateHighlighterComponent;
 
     public problemStatement: string;
     public participationSubscription?: Subscription;
@@ -83,6 +88,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private programmingExerciseGradingService: ProgrammingExerciseGradingService,
         themeService: ThemeService,
+        private sanitizer: DomSanitizer,
     ) {
         this.programmingExerciseTaskWrapper.viewContainerRef = this.viewContainerRef;
         this.themeChangeSubscription = themeService.getCurrentThemeObservable().subscribe(() => {
@@ -228,15 +234,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         this.latestResult = this.latestResult;
 
         this.injectableContentForMarkdownCallbacks = [];
-        this.renderedMarkdown = this.markdownService.safeHtmlForMarkdown(this.problemStatement, this.markdownExtensions);
-        // Wait a tick for the template to render before injecting the content.
-        setTimeout(
-            () =>
-                this.injectableContentForMarkdownCallbacks.forEach((callback) => {
-                    callback();
-                }),
-            0,
-        );
+        this.renderMarkdown();
     }
 
     renderUpdatedProblemStatement() {
@@ -308,6 +306,39 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                 catchError(() => of(undefined)),
                 // Old readme files contain chars instead of our domain command tags - replace them when loading the file
                 map((fileObj) => fileObj && fileObj.fileContent.replace(new RegExp(/✅/, 'g'), '[task]')),
+            );
+        }
+    }
+
+    private renderMarkdown(): void {
+        // Highlight differences between previous and current markdown
+        if (
+            this.examExerciseUpdateHighlighterComponent?.showHighlightedDifferences &&
+            this.examExerciseUpdateHighlighterComponent.outdatedProblemStatement &&
+            this.examExerciseUpdateHighlighterComponent.updatedProblemStatement
+        ) {
+            let outdatedMarkdown = htmlForMarkdown(this.examExerciseUpdateHighlighterComponent.outdatedProblemStatement, this.markdownExtensions);
+            outdatedMarkdown = this.programmingExerciseTaskWrapper.injectTasksIntoHTML(outdatedMarkdown);
+            let updatedMarkdown = htmlForMarkdown(this.examExerciseUpdateHighlighterComponent.updatedProblemStatement, this.markdownExtensions);
+            updatedMarkdown = this.programmingExerciseTaskWrapper.injectTasksIntoHTML(updatedMarkdown);
+            const diffedMarkdown = diff(outdatedMarkdown, updatedMarkdown);
+            this.renderedMarkdown = this.sanitizer.bypassSecurityTrustHtml(diffedMarkdown);
+            // Differences between UMLs are ignored, and we only inject the current one
+            setTimeout(() => {
+                const injectUML = this.injectableContentForMarkdownCallbacks[this.injectableContentForMarkdownCallbacks.length - 1];
+                if (injectUML) {
+                    injectUML();
+                }
+            }, 0);
+        } else {
+            this.injectableContentForMarkdownCallbacks = [];
+            this.renderedMarkdown = this.markdownService.safeHtmlForMarkdown(this.problemStatement, this.markdownExtensions);
+            setTimeout(
+                () =>
+                    this.injectableContentForMarkdownCallbacks.forEach((callback) => {
+                        callback();
+                    }),
+                0,
             );
         }
     }
