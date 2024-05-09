@@ -131,6 +131,8 @@ public class CourseResource {
 
     private static final Logger log = LoggerFactory.getLogger(CourseResource.class);
 
+    private static final int MAX_TITLE_LENGTH = 255;
+
     private final UserRepository userRepository;
 
     private final CourseService courseService;
@@ -282,6 +284,10 @@ public class CourseResource {
         courseUpdate.setPrerequisites(existingCourse.getPrerequisites());
         courseUpdate.setTutorialGroupsConfiguration(existingCourse.getTutorialGroupsConfiguration());
         courseUpdate.setOnlineCourseConfiguration(existingCourse.getOnlineCourseConfiguration());
+
+        if (courseUpdate.getTitle().length() > MAX_TITLE_LENGTH) {
+            throw new BadRequestAlertException("The course title is too long", Course.ENTITY_NAME, "courseTitleTooLong");
+        }
 
         courseUpdate.validateEnrollmentConfirmationMessage();
         courseUpdate.validateComplaintsAndRequestMoreFeedbackConfig();

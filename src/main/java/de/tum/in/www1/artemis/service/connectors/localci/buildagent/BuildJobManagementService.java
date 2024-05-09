@@ -213,7 +213,10 @@ public class BuildJobManagementService {
         buildLogsMap.appendBuildLogEntry(buildJobId, new BuildLogEntry(ZonedDateTime.now(), msg + "\n" + stackTrace));
         log.error(msg);
 
-        buildJobContainerService.stopContainer(containerName);
+        String containerId = buildJobContainerService.getIDOfRunningContainer(containerName);
+        if (containerId != null) {
+            buildJobContainerService.stopUnresponsiveContainer(containerId);
+        }
     }
 
     /**
