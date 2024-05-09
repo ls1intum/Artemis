@@ -8,6 +8,7 @@ import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programmin
 import { ProgrammingExerciseGitDiffEntry } from 'app/entities/hestia/programming-exercise-git-diff-entry.model';
 import { NgbTooltipMocksModule } from '../../../helpers/mocks/directive/ngbTooltipMocks.module';
 import { GitDiffFilePanelComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-file-panel.component';
+import { ButtonComponent } from 'app/shared/components/button.component';
 
 describe('ProgrammingExerciseGitDiffReport Component', () => {
     let comp: GitDiffReportComponent;
@@ -16,7 +17,13 @@ describe('ProgrammingExerciseGitDiffReport Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, NgbTooltipMocksModule],
-            declarations: [GitDiffReportComponent, MockPipe(ArtemisTranslatePipe), MockComponent(GitDiffFilePanelComponent), MockComponent(GitDiffLineStatComponent)],
+            declarations: [
+                GitDiffReportComponent,
+                MockComponent(ButtonComponent),
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(GitDiffFilePanelComponent),
+                MockComponent(GitDiffLineStatComponent),
+            ],
             providers: [],
         }).compileComponents();
         fixture = TestBed.createComponent(GitDiffReportComponent);
