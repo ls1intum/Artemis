@@ -1,12 +1,15 @@
 package de.tum.in.www1.artemis.exercise.programmingexercise;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
 
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -148,6 +151,9 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationLocalCI
     @EnumSource(value = ProgrammingLanguage.class, names = { "JAVA", "SWIFT", "C" })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateStaticCodeAnalysisCategories(ProgrammingLanguage programmingLanguage) throws Exception {
+        String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
+        doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(any());
+
         var programmingExSCAEnabled = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(programmingLanguage);
         ProgrammingExercise exerciseWithSolutionParticipation = programmingExerciseRepository
                 .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExSCAEnabled.getId()).orElseThrow();
@@ -195,6 +201,9 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationLocalCI
     @EnumSource(value = ProgrammingLanguage.class, names = { "JAVA", "SWIFT", "C" })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testResetCategories(ProgrammingLanguage programmingLanguage) throws Exception {
+        String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
+        doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(any());
+
         // Create a programming exercise with real categories
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(true, false, programmingLanguage);
         ProgrammingExercise exercise = programmingExerciseRepository
@@ -323,6 +332,9 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationLocalCI
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testImportCategories() throws Exception {
+        String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
+        doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(any());
+
         ProgrammingExercise sourceExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, true);
         staticCodeAnalysisService.createDefaultCategories(sourceExercise);
 

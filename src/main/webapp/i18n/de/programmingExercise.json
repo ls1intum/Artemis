@@ -42,7 +42,7 @@
                 "deleteParticipationsSubmissionsAndResults": "Lösche Teilnahmen, Abgaben und Ergebnisse der Studierenden (in Artemis).",
                 "artefactsWarning": "Das Löschen von Teilnahmen, Abgaben und Ergebnissen von Studierenden, ohne dabei die zugehörigen Repositories und Build-Pläne zu entfernen, kann zu nicht gelöschten Artefakten auf {{ vcPlatform }} und {{ ciPlatform }} führen. Bitte überprüfe sorgfältig, ob dies die gewünschte Aktion ist, bevor du den Vorgang fortsetzt.",
                 "recreateBuildPlans": "Erstelle Build Pläne der Aufgabe (BASE und SOLUTION) erneut und überschreibe frühere Änderungen.",
-                "question": "<strong>Warnung:</strong> Diese Aktion kann <strong>NICHT</strong> rückgängig gemacht werden!<br>Um Ihre Auswahl zu bestätigen, gebe bitte den Namen der Übung ein: <strong>{{ title }}</strong>",
+                "question": "<strong>Warnung:</strong> Diese Aktion kann <strong>NICHT</strong> rückgängig gemacht werden!<br>Um deine Auswahl zu bestätigen, gebe bitte den Namen der Übung ein: <strong>{{ title }}</strong>",
                 "successMessage": "Das Zurücksetzen war erfolgreich.",
                 "errorMessage": "Das Zurücksetzen war nicht erfolgreich."
             },
@@ -462,8 +462,10 @@
             "auxiliaryRepository": {
                 "error": "Es gibt ein Problem mit den Hilfs-Repositories!",
                 "addAuxiliaryRepository": "Hilfs-Repository anlegen",
+                "usageDescription": "Du kannst Hilfsrepositorys verwenden, um zusätzlichen Code bereitzustellen, den Studierende nicht sehen oder ändern können. Der zusätzliche Code wird während des Builds der Abgabe am angegebenen Checkout-Verzeichnis eingefügt.",
                 "repositoryName": "Name des Repositorys",
                 "checkoutDirectory": "Checkout-Verzeichnis",
+                "description": "Beschreibung",
                 "duplicateRepositoryNames": "Verschiedene Hilfs-Repositories dürfen nicht den gleichen Namen haben.",
                 "duplicateDirectoryNames": "Verschiedene Hilfs-Repositories dürfen nicht das gleiche Checkout-Verzeichnis haben.",
                 "warning": "Hilfs-Repositories können hinzugefügt, editiert und gelöscht werden. Diese Änderungen wirken sich allerdings nicht auf das VCS und CIS aus und müssen dort manuell durchgeführt werden.",

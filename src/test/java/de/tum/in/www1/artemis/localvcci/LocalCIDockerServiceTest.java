@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import com.github.dockerjava.api.command.InspectImageCmd;
 import com.github.dockerjava.api.command.ListContainersCmd;
+import com.github.dockerjava.api.command.StopContainerCmd;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Container;
 import com.hazelcast.core.HazelcastInstance;
@@ -25,6 +26,7 @@ import com.hazelcast.map.IMap;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.in.www1.artemis.domain.BuildJob;
 import de.tum.in.www1.artemis.domain.enumeration.BuildStatus;
+import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.repository.BuildJobRepository;
 import de.tum.in.www1.artemis.service.connectors.localci.buildagent.BuildLogsMap;
 import de.tum.in.www1.artemis.service.connectors.localci.buildagent.LocalCIDockerService;
@@ -91,10 +93,18 @@ class LocalCIDockerServiceTest extends AbstractSpringIntegrationLocalCILocalVCTe
         InspectImageCmd inspectImageCmd = mock(InspectImageCmd.class);
         doReturn(inspectImageCmd).when(dockerClient).inspectImageCmd(anyString());
         doThrow(new NotFoundException("")).when(inspectImageCmd).exec();
-        BuildConfig buildConfig = new BuildConfig("echo 'test'", "test-image-name", "test", "test", null, null, false, false, false, null);
+        BuildConfig buildConfig = new BuildConfig("echo 'test'", "test-image-name", "test", "test", "test", "test", null, null, false, false, false, null);
         var build = new LocalCIBuildJobQueueItem("1", "job1", "address1", 1, 1, 1, 1, 1, BuildStatus.SUCCESSFUL, null, null, buildConfig, null);
         // Pull image
-        localCIDockerService.pullDockerImage(build, new BuildLogsMap());
+        try {
+            localCIDockerService.pullDockerImage(build, new BuildLogsMap());
+        }
+        catch (LocalCIException e) {
+            // Expected exception
+            if (!(e.getCause() instanceof NotFoundException)) {
+                throw e;
+            }
+        }
 
         // Verify that pullImageCmd() was called.
         verify(dockerClient, times(1)).pullImageCmd("test-image-name");
@@ -118,7 +128,7 @@ class LocalCIDockerServiceTest extends AbstractSpringIntegrationLocalCILocalVCTe
         localCIDockerService.cleanUpContainers();
 
         // Verify that removeContainerCmd() was called
-        verify(dockerClient, times(1)).removeContainerCmd(anyString());
+        verify(dockerClient, times(1)).stopContainerCmd(anyString());
 
         // Mock container creation time to be younger than 5 minutes
         doReturn(Instant.now().getEpochSecond()).when(mockContainer).getCreated();
@@ -126,6 +136,19 @@ class LocalCIDockerServiceTest extends AbstractSpringIntegrationLocalCILocalVCTe
         localCIDockerService.cleanUpContainers();
 
         // Verify that removeContainerCmd() was not called a second time
-        verify(dockerClient, times(1)).removeContainerCmd(anyString());
+        verify(dockerClient, times(1)).stopContainerCmd(anyString());
+
+        // Mock container creation time to be older than 5 minutes
+        doReturn(Instant.now().getEpochSecond() - (6 * 60)).when(mockContainer).getCreated();
+
+        // Mock exception when stopping container
+        StopContainerCmd stopContainerCmd = mock(StopContainerCmd.class);
+        doReturn(stopContainerCmd).when(dockerClient).stopContainerCmd(anyString());
+        doThrow(new RuntimeException("Container stopping failed")).when(stopContainerCmd).exec();
+
+        localCIDockerService.cleanUpContainers();
+
+        // Verify that killContainerCmd() was called
+        verify(dockerClient, times(1)).killContainerCmd(anyString());
     }
 }

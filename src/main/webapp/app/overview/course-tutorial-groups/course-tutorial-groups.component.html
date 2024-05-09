@@ -1,45 +1,17 @@
-<ng-template #controls>
-    <div class="btn-group" role="group">
-        <input
-            type="radio"
-            class="btn-check"
-            name="filter"
-            id="registered-filter"
-            autocomplete="off"
-            [value]="'registered'"
-            [ngModel]="selectedFilter"
-            (ngModelChange)="onFilterChange($event)"
-        />
-        <label class="btn btn-outline-secondary" for="registered-filter">{{ 'artemisApp.pages.courseTutorialGroups.registeredFilter' | artemisTranslate }}</label>
-        <input
-            type="radio"
-            class="btn-check"
-            name="filter"
-            id="all-filter"
-            autocomplete="off"
-            [value]="'all'"
-            [ngModel]="selectedFilter"
-            (ngModelChange)="onFilterChange($event)"
-        />
-        <label class="btn btn-outline-secondary" for="all-filter">{{ 'artemisApp.pages.courseTutorialGroups.allFilter' | artemisTranslate }}</label>
-    </div>
-</ng-template>
-<div class="my-2">
-    <div class="row">
-        <div class="col-12" [ngClass]="{ 'col-xl-8': tutorialGroupFreeDays && tutorialGroupFreeDays.length > 0 }">
-            @switch (selectedFilter) {
-                @case ('all') {
-                    <jhi-course-tutorial-groups-overview [tutorialGroups]="tutorialGroups" [course]="course" [configuration]="configuration" />
-                }
-                @case ('registered') {
-                    <jhi-course-tutorial-groups-registered [registeredTutorialGroups]="registeredTutorialGroups" [course]="course" [configuration]="configuration" />
-                }
-            }
+<div class="d-flex justify-content-between gap-3">
+    @if (course) {
+        <div [ngClass]="{ 'sidebar-collapsed': isCollapsed }">
+            <jhi-sidebar [itemSelected]="tutorialGroupSelected" [courseId]="courseId" [sidebarData]="sidebarData" />
         </div>
-        @if (tutorialGroupFreeDays && tutorialGroupFreeDays.length > 0) {
-            <div class="col-12 col-xl-4">
-                <jhi-tutorial-group-free-days-overview [tutorialGroupFreeDays]="tutorialGroupFreeDays" />
+
+        @if (tutorialGroupSelected) {
+            <div class="vw-100 module-bg rounded-3">
+                <router-outlet />
+            </div>
+        } @else {
+            <div class="vw-100 module-bg rounded-3 px-3 d-flex justify-content-between">
+                <div class="col-12 text-center my-auto">Please Select a Tutorial Group.</div>
             </div>
         }
-    </div>
+    }
 </div>
