@@ -1,41 +1,24 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
+import java.util.Objects;
+
 import jakarta.persistence.FetchType;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonView;
-
-import de.tum.in.www1.artemis.domain.DomainObject;
-import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**
  * A DragAndDropMapping.
  */
-@Entity
-@Table(name = "drag_and_drop_mapping")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class DragAndDropMapping extends DomainObject implements QuizQuestionComponent<DragAndDropQuestion> {
+public class DragAndDropMapping implements QuizQuestionComponent<DragAndDropQuestion> {
 
-    @Column(name = "drag_item_index")
-    @JsonView(QuizView.Before.class)
+    private Long id;
+
     private Integer dragItemIndex;
 
-    @Column(name = "drop_location_index")
-    @JsonView(QuizView.Before.class)
     private Integer dropLocationIndex;
 
-    @Column(name = "invalid")
-    @JsonView(QuizView.Before.class)
     private Boolean invalid = false;
 
     @Transient
@@ -48,9 +31,14 @@ public class DragAndDropMapping extends DomainObject implements QuizQuestionComp
     @JsonIgnore
     private DragAndDropSubmittedAnswer submittedAnswer;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JsonIgnore
-    private DragAndDropQuestion question;
+    @Override
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     public Integer getDragItemIndex() {
         return dragItemIndex;
@@ -110,17 +98,34 @@ public class DragAndDropMapping extends DomainObject implements QuizQuestionComp
         this.submittedAnswer = dragAndDropSubmittedAnswer;
     }
 
-    public DragAndDropQuestion getQuestion() {
-        return question;
-    }
-
-    public void setQuestion(DragAndDropQuestion dragAndDropQuestion) {
-        this.question = dragAndDropQuestion;
-    }
-
     @Override
     public String toString() {
         return "DragAndDropMapping{" + "id=" + getId() + ", dragItemIndex='" + getDragItemIndex() + "'" + ", dropLocationIndex='" + getDropLocationIndex() + "'" + ", invalid='"
                 + isInvalid() + "'" + "}";
+    }
+
+    @Override
+    public void setQuestion(DragAndDropQuestion quizQuestion) {
+
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        DragAndDropMapping domainObject = (DragAndDropMapping) obj;
+        if (domainObject.getId() == null || getId() == null) {
+            return false;
+        }
+        return Objects.equals(getId(), domainObject.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(getId());
     }
 }

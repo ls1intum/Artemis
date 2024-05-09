@@ -8,14 +8,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.OrderColumn;
 import jakarta.persistence.PostLoad;
 import jakarta.persistence.PostPersist;
 import jakarta.persistence.PostRemove;
@@ -24,8 +19,6 @@ import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Transient;
 
 import org.apache.commons.lang3.StringUtils;
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import org.slf4j.Logger;
@@ -34,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -70,13 +64,7 @@ public class DragAndDropQuestion extends QuizQuestion {
     @Transient
     private List<DragItem> dragItems = new ArrayList<>();
 
-    // TODO: making this a bidirectional relation leads to weird Hibernate behavior with missing data when loading quiz questions, we should investigate this again in the future
-    // after 6.x upgrade
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
-    @JoinColumn(name = "question_id")
-    @OrderColumn
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonView(QuizView.After.class)
+    @Transient
     private List<DragAndDropMapping> correctMappings = new ArrayList<>();
 
     @JdbcTypeCode(SqlTypes.JSON)
@@ -476,26 +464,27 @@ public class DragAndDropQuestion extends QuizQuestion {
                 dropLocations.add(this.dropLocations);
                 content.put("DropLocation", dropLocations);
             }
-            // if (solutions != null) {
-            // List<List<ShortAnswerSolution>> solutions = new ArrayList<>();
-            // solutions.add(this.solutions);
-            // content.put("ShortAnswerSolution", solutions);
-            // }
-            // if (correctMappings != null) {
-            // List<List<ShortAnswerMapping>> mappings = new ArrayList<>();
-            // mappings.add(this.correctMappings);
-            // content.put("ShortAnswerMapping", mappings);
-            //
-            // ObjectMapper objectMapper = new ObjectMapper();
-            // try {
-            // String a = objectMapper.writeValueAsString(content.get("ShortAnswerMapping"));
-            // List<List<ShortAnswerMapping>> mappingsx = objectMapper.readValue(a, new TypeReference<>() {
-            // });
-            // String b = "C";
-            // } catch (JsonProcessingException e) {
-            // throw new RuntimeException(e);
-            // }
-            // }
+            if (dragItems != null) {
+                List<List<DragItem>> dragItems = new ArrayList<>();
+                dragItems.add(this.dragItems);
+                content.put("DragItem", dragItems);
+            }
+            if (correctMappings != null) {
+                List<List<DragAndDropMapping>> mappings = new ArrayList<>();
+                mappings.add(this.correctMappings);
+                content.put("DragAndDropMapping", mappings);
+
+                ObjectMapper objectMapper = new ObjectMapper();
+                try {
+                    String a = objectMapper.writeValueAsString(content.get("DragAndDropMapping"));
+                    List<List<DragAndDropMapping>> mappingsx = objectMapper.readValue(a, new TypeReference<>() {
+                    });
+                    String b = "C";
+                }
+                catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
+            }
         }
     }
 
@@ -509,16 +498,16 @@ public class DragAndDropQuestion extends QuizQuestion {
                     });
                     setDropLocations(dropLocations.getFirst());
                 }
-                // if (content.containsKey("ShortAnswerSolution")) {
-                // List<List<ShortAnswerSolution>> solutions = mapper.convertValue(content.get("ShortAnswerSolution"), new TypeReference<>() {
-                // });
-                // setSolutions(solutions.getFirst());
-                // }
-                // if (content.containsKey("ShortAnswerMapping")) {
-                // List<List<ShortAnswerMapping>> mappings = mapper.convertValue(content.get("ShortAnswerMapping"), new TypeReference<>() {
-                // });
-                // setCorrectMappings(mappings.getFirst());
-                // }
+                if (content.containsKey("DragItem")) {
+                    List<List<DragItem>> dragItems = mapper.convertValue(content.get("DragItem"), new TypeReference<>() {
+                    });
+                    setDragItems(dragItems.getFirst());
+                }
+                if (content.containsKey("DragAndDropMapping")) {
+                    List<List<DragAndDropMapping>> mappings = mapper.convertValue(content.get("DragAndDropMapping"), new TypeReference<>() {
+                    });
+                    setCorrectMappings(mappings.getFirst());
+                }
             }
             catch (Exception e) {
                 content = new HashMap<>();

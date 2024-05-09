@@ -8,7 +8,7 @@ import java.util.Set;
  */
 public class DropLocation implements QuizQuestionComponent<DragAndDropQuestion>, Serializable {
 
-    private Long id;
+    private Long id = 1L;
 
     private Double posX;
 

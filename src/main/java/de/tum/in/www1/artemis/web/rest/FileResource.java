@@ -232,17 +232,17 @@ public class FileResource {
      * @param dragItemId ID of the drag item, the file belongs to
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
-    @GetMapping("files/drag-and-drop/drag-items/{dragItemId}/*")
-    @EnforceAtLeastStudent
-    public ResponseEntity<byte[]> getDragItemFile(@PathVariable Long dragItemId) {
-        log.debug("REST request to get file for drag item : {}", dragItemId);
-        Course course = dragItem.getQuestion().getExercise().getCourseViaExerciseGroupOrCourseMember();
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
-        if (dragItem.getPictureFilePath() == null) {
-            throw new EntityNotFoundException("Drag item " + dragItemId + " has no picture file");
-        }
-        return responseEntityForFilePath(getActualPathFromPublicPathString(dragItem.getPictureFilePath()));
-    }
+    // @GetMapping("files/drag-and-drop/drag-items/{dragItemId}/*")
+    // @EnforceAtLeastStudent
+    // public ResponseEntity<byte[]> getDragItemFile(@PathVariable Long dragItemId) {
+    // log.debug("REST request to get file for drag item : {}", dragItemId);
+    // Course course = dragItem.getQuestion().getExercise().getCourseViaExerciseGroupOrCourseMember();
+    // authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+    // if (dragItem.getPictureFilePath() == null) {
+    // throw new EntityNotFoundException("Drag item " + dragItemId + " has no picture file");
+    // }
+    // return responseEntityForFilePath(getActualPathFromPublicPathString(dragItem.getPictureFilePath()));
+    // }
 
     /**
      * GET /files/file-upload/submission/:submissionId/:filename : Get the file upload exercise submission file

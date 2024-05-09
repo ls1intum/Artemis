@@ -25,7 +25,7 @@ public class DragItem implements QuizQuestionComponent<DragAndDropQuestion>, Ser
     @Transient
     private final transient FileService fileService = new FileService();
 
-    private Long id;
+    private Long id = 1L;
 
     private String pictureFilePath;
 
