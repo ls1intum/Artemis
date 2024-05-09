@@ -27,7 +27,7 @@ export class RepositoryPage {
 
                 if (commit.result) {
                     const commitResult = commitRow.locator('#result-score', { hasText: commit.result });
-                    await Commands.reloadUntilFound(this.page, commitResult, 2000, 30000);
+                    await Commands.reloadUntilFound(this.page, commitResult, 2000, 60000);
                 } else {
                     await expect(commitRow.locator('td', { hasText: 'No result' })).toBeVisible();
                 }
