@@ -1,7 +1,7 @@
-import { Component, Signal, WritableSignal, inject, signal } from '@angular/core';
+import { Component, Signal, computed, inject, viewChild } from '@angular/core';
 import { LearningPathService } from 'app/course/learning-paths/learning-path.service';
-import { LearningObjectType, LearningPathNavigationObjectDto } from 'app/entities/competency/learning-path.model';
-import { Observable, catchError, map, of, shareReplay, startWith, switchMap } from 'rxjs';
+import { LearningObjectType } from 'app/entities/competency/learning-path.model';
+import { Observable, catchError, map, of, switchMap } from 'rxjs';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse } from '@angular/common/http';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
@@ -23,28 +23,30 @@ import { LearningPathExerciseComponent } from 'app/course/learning-paths/compone
 export class LearningPathStudentPageComponent {
     protected readonly LearningObjectType = LearningObjectType;
 
-    private readonly learningPathService: LearningPathService = inject(LearningPathService);
-    private readonly alertService: AlertService = inject(AlertService);
-    private readonly activatedRoute: ActivatedRoute = inject(ActivatedRoute);
+    private readonly learningPathService = inject(LearningPathService);
+    private readonly alertService = inject(AlertService);
+    private readonly activatedRoute = inject(ActivatedRoute);
 
-    public readonly courseId: Signal<number> = toSignal(this.activatedRoute.parent!.parent!.params.pipe(map((params) => params.courseId)));
+    private readonly navigation = viewChild(LearningPathStudentNavComponent);
 
-    private readonly data$: Observable<LoadedValue<number>> = toObservable(this.courseId).pipe(
-        switchMap((courseId) => this.learningPathService.getLearningPathId(courseId)),
+    readonly courseId: Signal<number> = toSignal(this.activatedRoute.parent!.parent!.params.pipe(map((params) => params.courseId)));
+
+    private readonly learningPathIdData$: Observable<LoadedValue<number>> = toObservable(this.courseId).pipe(
+        switchMap((courseId) => this.learningPathService.getLearningPathId(courseId!)),
         map((response) => ({ isLoading: false, value: response.body })),
         catchError((error: HttpErrorResponse) => {
             onError(this.alertService, error);
             return of({ isLoading: false, error: error });
         }),
-        startWith({ isLoading: true }),
-        shareReplay(1),
     );
 
-    public readonly learningPathId: Signal<number | undefined> = toSignal(this.data$.pipe(map((loadedValue) => loadedValue.value)));
+    private readonly learningPathIdData: Signal<LoadedValue<number>> = toSignal(this.learningPathIdData$, { initialValue: { isLoading: true } });
 
-    public readonly currentLearningObject: WritableSignal<LearningPathNavigationObjectDto | undefined> = signal(undefined);
+    readonly learningPathId = computed(() => this.learningPathIdData().value);
 
-    public onCurrentLearningObjectChange(learningObject: LearningPathNavigationObjectDto | undefined) {
-        this.currentLearningObject.set(learningObject);
+    readonly currentLearningObject = computed(() => this.navigation()?.currentLearningObject());
+
+    setCurrentLearningObjectCompletion(completed: boolean) {
+        this.navigation()?.setCurrentLearningObjectCompletion(completed);
     }
 }

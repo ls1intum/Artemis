@@ -3,19 +3,19 @@
 } @else if (lectureUnit()) {
     @switch (lectureUnit()!.type) {
         @case (LectureUnitType.VIDEO) {
-            <jhi-video-unit [videoUnit]="lectureUnit()!" />
+            <jhi-video-unit [videoUnit]="lectureUnit()!" (onCompletion)="setLearningObjectCompletion($event.completed)" />
         }
         @case (LectureUnitType.TEXT) {
-            <jhi-text-unit [textUnit]="lectureUnit()!" />
+            <jhi-text-unit [textUnit]="lectureUnit()!" (onCompletion)="setLearningObjectCompletion($event.completed)" />
         }
         @case (LectureUnitType.ATTACHMENT) {
-            <jhi-attachment-unit [attachmentUnit]="lectureUnit()!" />
+            <jhi-attachment-unit [attachmentUnit]="lectureUnit()!" (onCompletion)="setLearningObjectCompletion($event.completed)" />
         }
         @case (LectureUnitType.EXERCISE) {
             <jhi-exercise-unit [exerciseUnit]="lectureUnit()!" />
         }
         @case (LectureUnitType.ONLINE) {
-            <jhi-online-unit [onlineUnit]="lectureUnit()!" />
+            <jhi-online-unit [onlineUnit]="lectureUnit()!" (onCompletion)="setLearningObjectCompletion($event.completed)" />
         }
     }
 }

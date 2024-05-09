@@ -4,9 +4,7 @@
             <div class="row justify-content-start align-items-center">
                 @if (predecessorLearningObject()) {
                     <div class="col-md-auto">
-                        <button (click)="setRelativeLearningObject(predecessorLearningObject()!.id, predecessorLearningObject()!.type)" type="button" class="btn btn-secondary">
-                            Previous
-                        </button>
+                        <button (click)="selectLearningObject(predecessorLearningObject()!)" type="button" class="btn btn-secondary">Previous</button>
                     </div>
                     <span class="col-md-auto ms-3 gradient-text" style="--gradient-deg: 90deg">{{ predecessorLearningObject()!.name }}</span>
                 }
@@ -71,7 +69,7 @@
                 @if (successorLearningObject()) {
                     <span class="col-md-auto me-3 gradient-text" style="--gradient-deg: -90deg">{{ successorLearningObject()!.name }}</span>
                     <div class="col-md-auto">
-                        <button (click)="setRelativeLearningObject(successorLearningObject()!.id, successorLearningObject()!.type)" type="button" class="btn btn-primary">
+                        <button (click)="selectLearningObject(successorLearningObject()!)" [disabled]="!isCurrentLearningObjectCompleted()" type="button" class="btn btn-primary">
                             Next
                         </button>
                     </div>
