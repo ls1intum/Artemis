@@ -5,6 +5,7 @@ import { ProgrammingExerciseService } from 'app/exercises/programming/manage/ser
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
 import { AlertService } from 'app/core/util/alert.service';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
+import { take } from 'rxjs';
 
 @Component({
     selector: 'jhi-programming-exercise-student-repo-download',
@@ -37,10 +38,13 @@ export class ProgrammingExerciseStudentRepoDownloadComponent {
 
     exportRepository() {
         if (this.exerciseId && this.participationId) {
-            this.programmingExerciseService.exportStudentRepository(this.exerciseId, this.participationId).subscribe((response) => {
-                downloadZipFileFromResponse(response);
-                this.alertService.success('artemisApp.programmingExercise.export.successMessageRepo');
-            });
+            this.programmingExerciseService
+                .exportStudentRepository(this.exerciseId, this.participationId)
+                .pipe(take(1))
+                .subscribe((response) => {
+                    downloadZipFileFromResponse(response);
+                    this.alertService.success('artemisApp.programmingExercise.export.successMessageRepo');
+                });
         }
     }
 }
