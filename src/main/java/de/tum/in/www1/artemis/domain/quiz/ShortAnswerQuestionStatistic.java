@@ -117,7 +117,7 @@ public class ShortAnswerQuestionStatistic extends QuizQuestionStatistic {
             for (ShortAnswerSpotCounter spotCounter : shortAnswerSpotCounters) {
                 ShortAnswerSpot spot = spotCounter.getSpot();
                 ShortAnswerSubmittedText shortAnswerSubmittedText = shortAnswerSubmittedAnswer.getSubmittedTextForSpot(spot);
-                Set<ShortAnswerSolution> shortAnswerSolutions = spotCounter.getSpot().getQuestion().getCorrectSolutionForSpot(spot);
+                Set<ShortAnswerSolution> shortAnswerSolutions = ((ShortAnswerQuestion) shortAnswerSubmittedAnswer.getQuizQuestion()).getCorrectSolutionForSpot(spot);
 
                 if (shortAnswerSubmittedText == null) {
                     continue;

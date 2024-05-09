@@ -1,8 +1,10 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import jakarta.persistence.CascadeType;
@@ -13,13 +15,21 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderColumn;
+import jakarta.persistence.PostLoad;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Transient;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.quiz.scoring.ScoringStrategy;
 import de.tum.in.www1.artemis.domain.quiz.scoring.ScoringStrategyShortAnswerAllOrNothing;
@@ -35,13 +45,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ShortAnswerQuestion extends QuizQuestion {
 
-    // TODO: making this a bidirectional relation leads to weird Hibernate behavior with missing data when loading quiz questions, we should investigate this again in the future
-    // after 6.x upgrade
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
-    @JoinColumn(name = "question_id")
-    @OrderColumn
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonView(QuizView.Before.class)
+    @Transient
     private List<ShortAnswerSpot> spots = new ArrayList<>();
 
     // TODO: making this a bidirectional relation leads to weird Hibernate behavior with missing data when loading quiz questions, we should investigate this again in the future
@@ -61,6 +65,10 @@ public class ShortAnswerQuestion extends QuizQuestion {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonView(QuizView.After.class)
     private List<ShortAnswerMapping> correctMappings = new ArrayList<>();
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "content", columnDefinition = "json")
+    private Map<String, Object> content = new HashMap<>();
 
     @Column(name = "similarity_value")
     @JsonView(QuizView.Before.class)
@@ -134,6 +142,14 @@ public class ShortAnswerQuestion extends QuizQuestion {
         this.matchLetterCase = matchLetterCase;
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
+
+    public Map<String, Object> getContent() {
+        return content;
+    }
+
+    public void setContent(Map<String, Object> content) {
+        this.content = content;
+    }
 
     @Override
     public Boolean isValid() {
@@ -383,5 +399,34 @@ public class ShortAnswerQuestion extends QuizQuestion {
         var question = new ShortAnswerQuestion();
         question.setId(getId());
         return question;
+    }
+
+    @PrePersist
+    @PreUpdate
+    public void updateContent() {
+        if (content != null) {
+            if (spots != null) {
+                List<List<ShortAnswerSpot>> spots = new ArrayList<>();
+                spots.add(this.spots);
+                content.put("ShortAnswerSpot", spots);
+            }
+        }
+    }
+
+    @PostLoad
+    public void loadContent() {
+        ObjectMapper mapper = new ObjectMapper();
+        if (content != null) {
+            try {
+                if (content.containsKey("ShortAnswerSpot")) {
+                    List<List<ShortAnswerSpot>> spots = mapper.convertValue(content.get("ShortAnswerSpot"), new TypeReference<>() {
+                    });
+                    setSpots(spots.getFirst());
+                }
+            }
+            catch (Exception e) {
+                content = new HashMap<>();
+            }
+        }
     }
 }

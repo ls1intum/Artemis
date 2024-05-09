@@ -97,16 +97,6 @@ public class AnswerOption implements QuizQuestionComponent<MultipleChoiceQuestio
         this.invalid = invalid;
     }
 
-    public static AnswerOption convertToAnswerOptionDTO(AnswerOption answerOption) {
-        AnswerOption answerOptionDTO = new AnswerOption();
-        answerOptionDTO.setHint(answerOption.getHint());
-        answerOptionDTO.setExplanation(answerOption.getExplanation());
-        answerOptionDTO.setInvalid(answerOption.isInvalid());
-        answerOptionDTO.setText(answerOption.getText());
-        answerOptionDTO.setIsCorrect(answerOption.isIsCorrect());
-        return answerOptionDTO;
-    }
-
     @Override
     public String toString() {
         return "AnswerOptionDTO{" + "id=" + getId() + ", text='" + getText() + "'" + ", hint='" + "'" + ", explanation='" + "'" + ", isCorrect='" + isIsCorrect() + "'"

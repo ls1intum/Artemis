@@ -111,9 +111,7 @@ public class QuizExerciseFactory {
         sa.setSimilarityValue(100);
 
         var shortAnswerSpot1 = new ShortAnswerSpot().spotNr(0).width(1);
-        shortAnswerSpot1.setTempID(generateTempId());
         var shortAnswerSpot2 = new ShortAnswerSpot().spotNr(2).width(2);
-        shortAnswerSpot2.setTempID(generateTempId());
         sa.getSpots().add(shortAnswerSpot1);
         sa.getSpots().add(shortAnswerSpot2);
 

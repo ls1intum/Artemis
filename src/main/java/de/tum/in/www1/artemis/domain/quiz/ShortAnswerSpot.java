@@ -1,56 +1,27 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.util.HashSet;
-import java.util.Set;
-
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
-
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonView;
-
-import de.tum.in.www1.artemis.domain.TempIdObject;
-import de.tum.in.www1.artemis.domain.view.QuizView;
+import java.io.Serializable;
 
 /**
  * A ShortAnswerSpot.
  */
-@Entity
-@Table(name = "short_answer_spot")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class ShortAnswerSpot extends TempIdObject implements QuizQuestionComponent<ShortAnswerQuestion> {
+public class ShortAnswerSpot implements QuizQuestionComponent<ShortAnswerQuestion>, Serializable {
 
-    @Column(name = "spotNr")
-    @JsonView(QuizView.Before.class)
+    private Long id;
+
     private Integer spotNr;
 
-    @Column(name = "width")
-    @JsonView(QuizView.Before.class)
     private Integer width;
 
-    @Column(name = "invalid")
-    @JsonView(QuizView.Before.class)
     private Boolean invalid;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JsonIgnore
-    private ShortAnswerQuestion question;
+    public Long getId() {
+        return id;
+    }
 
-    // NOTE: without cascade and orphanRemoval, deletion of quizzes might not work properly, so we reference mappings here, even if we do not use them
-    @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "spot")
-    @JsonIgnore
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    private Set<ShortAnswerMapping> mappings = new HashSet<>();
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     public Integer getSpotNr() {
         return spotNr;
@@ -86,16 +57,13 @@ public class ShortAnswerSpot extends TempIdObject implements QuizQuestionCompone
         this.invalid = invalid;
     }
 
-    public ShortAnswerQuestion getQuestion() {
-        return question;
-    }
-
-    public void setQuestion(ShortAnswerQuestion shortAnswerQuestion) {
-        this.question = shortAnswerQuestion;
-    }
-
     @Override
     public String toString() {
         return "ShortAnswerSpot{" + "id=" + getId() + ", width=" + getWidth() + ", spotNr=" + getSpotNr() + ", invalid='" + isInvalid() + "'" + "}";
+    }
+
+    @Override
+    public void setQuestion(ShortAnswerQuestion quizQuestion) {
+
     }
 }
