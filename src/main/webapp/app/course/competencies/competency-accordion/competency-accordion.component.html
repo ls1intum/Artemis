@@ -19,7 +19,7 @@
                         <fa-icon [icon]="faList" />
                     </div>
                     <div class="col">
-                        <jhi-progress-bar [size]="'small'" [maxValue]="100" [currentValue]="exercisesProgress" [inline]="true" />
+                        <jhi-student-analytics-dashboard-progress-bar [size]="'small'" [maxValue]="100" [currentValue]="exercisesProgress" [inline]="true" />
                     </div>
                 </div>
                 <div class="row align-items-center justify-content-center">
@@ -27,7 +27,7 @@
                         <fa-icon [icon]="faPdf" />
                     </div>
                     <div class="col">
-                        <jhi-progress-bar [size]="'small'" [maxValue]="100" [currentValue]="lectureUnitsProgress" [inline]="true" />
+                        <jhi-student-analytics-dashboard-progress-bar [size]="'small'" [maxValue]="100" [currentValue]="lectureUnitsProgress" [inline]="true" />
                     </div>
                 </div>
             </div>
@@ -43,10 +43,10 @@
     <div [class.competency-accordion-body-open]="open" [class.competency-accordion-body-closed]="!open" class="competency-accordion-body">
         <div class="row align-items-center justify-content-center">
             <div class="col-sm">
-                <jhi-progress-bar [maxValue]="100" [currentValue]="exercisesProgress" [icon]="faList" [title]="'Exercises'" />
+                <jhi-student-analytics-dashboard-progress-bar [maxValue]="100" [currentValue]="exercisesProgress" [icon]="faList" [title]="'Exercises'" />
             </div>
             <div class="col-sm py-2">
-                <jhi-progress-bar [maxValue]="100" [currentValue]="lectureUnitsProgress" [icon]="faPdf" [title]="'Lectures'" />
+                <jhi-student-analytics-dashboard-progress-bar [maxValue]="100" [currentValue]="lectureUnitsProgress" [icon]="faPdf" [title]="'Lectures'" />
             </div>
         </div>
         <!-- Add your new row here -->

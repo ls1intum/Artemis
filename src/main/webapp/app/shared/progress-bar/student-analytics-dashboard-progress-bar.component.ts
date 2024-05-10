@@ -2,11 +2,11 @@ import { Component, Input } from '@angular/core';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 
 @Component({
-    selector: 'jhi-progress-bar',
-    templateUrl: './progress-bar.component.html',
-    styleUrl: './progress-bar.component.scss',
+    selector: 'jhi-student-analytics-dashboard-progress-bar',
+    templateUrl: './student-analytics-dashboard-progress-bar.component.html',
+    styleUrl: './student-analytics-dashboard-progress-bar.component.scss',
 })
-export class ProgressBarComponent {
+export class StudentAnalyticsDashboardProgressBarComponent {
     @Input() size: 'small' | 'medium' | 'large' = 'medium';
     @Input() maxValue: number = 100;
     @Input() icon: IconDefinition | null = null;

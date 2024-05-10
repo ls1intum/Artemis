@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ProgressBarComponent } from 'src/main/webapp/app/shared/progress-bar/progress-bar.component';
+import { StudentAnalyticsDashboardProgressBarComponent } from 'app/shared/progress-bar/student-analytics-dashboard-progress-bar.component';
 import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
 import { faList } from '@fortawesome/free-solid-svg-icons';
@@ -7,18 +7,18 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { MockModule } from 'ng-mocks';
 
 describe('ProgressBarComponent', () => {
-    let component: ProgressBarComponent;
-    let fixture: ComponentFixture<ProgressBarComponent>;
+    let component: StudentAnalyticsDashboardProgressBarComponent;
+    let fixture: ComponentFixture<StudentAnalyticsDashboardProgressBarComponent>;
     let debugElement: DebugElement;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [MockModule(FontAwesomeModule)],
-            declarations: [ProgressBarComponent],
+            declarations: [StudentAnalyticsDashboardProgressBarComponent],
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(ProgressBarComponent);
+                fixture = TestBed.createComponent(StudentAnalyticsDashboardProgressBarComponent);
                 component = fixture.componentInstance;
                 debugElement = fixture.debugElement;
                 fixture.detectChanges();

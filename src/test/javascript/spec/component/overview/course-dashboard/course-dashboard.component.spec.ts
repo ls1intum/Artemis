@@ -22,7 +22,7 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { Course } from 'app/entities/course.model';
 import { CompetencyAccordionComponent } from 'app/course/competencies/competency-accordion/competency-accordion.component';
-import { ProgressBarComponent } from 'app/shared/progress-bar/progress-bar.component';
+import { StudentAnalyticsDashboardProgressBarComponent } from 'app/shared/progress-bar/student-analytics-dashboard-progress-bar.component';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { CompetencyRingsComponent } from 'app/course/competencies/competency-rings/competency-rings.component';
 
@@ -50,7 +50,7 @@ describe('CourseDashboardComponent', () => {
                 MockPipe(ArtemisTimeAgoPipe),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
-                MockComponent(ProgressBarComponent),
+                MockComponent(StudentAnalyticsDashboardProgressBarComponent),
                 MockComponent(CourseExerciseRowComponent),
                 MockComponent(SidePanelComponent),
                 MockDirective(TranslateDirective),

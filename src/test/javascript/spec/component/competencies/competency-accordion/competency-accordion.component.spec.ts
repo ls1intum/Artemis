@@ -10,7 +10,7 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ProgressBarComponent } from 'app/shared/progress-bar/progress-bar.component';
+import { StudentAnalyticsDashboardProgressBarComponent } from 'app/shared/progress-bar/student-analytics-dashboard-progress-bar.component';
 import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
 import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -35,7 +35,7 @@ describe('CompetencyAccordionComponent', () => {
                 MockPipe(ArtemisTimeAgoPipe),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
-                MockComponent(ProgressBarComponent),
+                MockComponent(StudentAnalyticsDashboardProgressBarComponent),
                 MockComponent(CourseExerciseRowComponent),
                 MockComponent(SidePanelComponent),
                 MockDirective(TranslateDirective),
