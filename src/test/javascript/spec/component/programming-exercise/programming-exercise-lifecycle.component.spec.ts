@@ -1,7 +1,7 @@
 import dayjs from 'dayjs/esm';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective } from 'ng-mocks';
 import { ProgrammingExerciseLifecycleComponent } from 'app/exercises/programming/shared/lifecycle/programming-exercise-lifecycle.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -14,7 +14,6 @@ import { expectElementToBeDisabled, expectElementToBeEnabled } from '../../helpe
 import { Course } from 'app/entities/course.model';
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercises/shared/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import { Subject, of } from 'rxjs';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ActivatedRoute, UrlSegment } from '@angular/router';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 
@@ -37,7 +36,6 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
                 MockComponent(HelpIconComponent),
                 MockComponent(ExerciseFeedbackSuggestionOptionsComponent),
                 MockDirective(NgModel),
-                MockPipe(ArtemisTranslatePipe),
                 TranslatePipeMock,
             ],
             providers: [
