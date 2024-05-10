@@ -34,7 +34,9 @@ import de.tum.in.www1.artemis.service.connectors.localci.dto.JobTimingInfo;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildAgentInformation;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.RepositoryInfo;
+import de.tum.in.www1.artemis.service.dto.FinishedBuildJobDTO;
 import de.tum.in.www1.artemis.util.PageableSearchUtilService;
+import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.PageableSearchDTO;
 
 class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
@@ -204,9 +206,54 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCancelBuildJobForCourse() throws Exception {
+        LocalCIBuildJobQueueItem buildJob = processingJobs.get(1L);
+        request.delete("/api/courses/" + course.getId() + "/cancel-job/" + buildJob.id(), HttpStatus.NO_CONTENT);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCancelAllQueuedBuildJobsForCourse() throws Exception {
+        request.delete("/api/courses/" + course.getId() + "/cancel-all-queued-jobs", HttpStatus.NO_CONTENT);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCancelAllRunningBuildJobsForCourse() throws Exception {
+        request.delete("/api/courses/" + course.getId() + "/cancel-all-running-jobs", HttpStatus.NO_CONTENT);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testCancelAllRunningBuildJobsForAgent() throws Exception {
         request.delete("/api/admin/cancel-all-running-jobs-for-agent?agentName=" + agent1.name(), HttpStatus.NO_CONTENT);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testGetFinishedBuildJobs_returnsJobs() throws Exception {
+        buildJobRepository.deleteAll();
+        buildJobRepository.save(finishedJob1);
+        buildJobRepository.save(finishedJob2);
+        PageableSearchDTO<String> pageableSearchDTO = pageableSearchUtilService.configureFinishedJobsSearchDTO();
+        var result = request.getList("/api/admin/finished-jobs", HttpStatus.OK, FinishedBuildJobDTO.class, pageableSearchUtilService.searchMapping(pageableSearchDTO));
+        assertThat(result).hasSize(2);
+        assertThat(result.get(0).id()).isEqualTo(finishedJob1.getBuildJobId());
+        assertThat(result.get(1).id()).isEqualTo(finishedJob2.getBuildJobId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetFinishedBuildJobsForCourse_returnsJobs() throws Exception {
+        buildJobRepository.deleteAll();
+        buildJobRepository.save(finishedJob1);
+        buildJobRepository.save(finishedJob2);
+        PageableSearchDTO<String> pageableSearchDTO = pageableSearchUtilService.configureFinishedJobsSearchDTO();
+        var result = request.getList("/api/courses/" + course.getId() + "/finished-jobs", HttpStatus.OK, FinishedBuildJobDTO.class,
+                pageableSearchUtilService.searchMapping(pageableSearchDTO));
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().id()).isEqualTo(finishedJob1.getBuildJobId());
     }
 
     @Test
