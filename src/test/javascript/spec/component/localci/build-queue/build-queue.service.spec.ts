@@ -53,7 +53,7 @@ describe('BuildQueueService', () => {
         jobTimingInfo.buildCompletionDate = dayjs('2023-01-02');
 
         buildConfig.dockerImage = 'image1';
-        buildConfig.commitHash = 'hash1';
+        buildConfig.commitHashToBuild = 'hash1';
         buildConfig.branch = 'branch1';
         buildConfig.programmingLanguage = 'lang1';
         buildConfig.projectType = 'type1';

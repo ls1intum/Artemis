@@ -192,4 +192,9 @@ export class ExamAPIRequests {
         };
         await this.page.request.post(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/grading-scale`, { data });
     }
+
+    async getGradeSummary(exam: Exam) {
+        const response = await this.page.request.get(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/student-exams/grade-summary`);
+        return await response.json();
+    }
 }
