@@ -86,7 +86,7 @@ export function determineExamStatus(exam: Exam): ExamStatus {
     } else if (exam.startDate && exam.endDate && now.isAfter(exam.startDate) && now.isBefore(exam.endDate)) {
         return ExamStatus.ONGOING;
     }
-    return ExamStatus.NOT_STARTED; // Default case if dates are not properly set
+    return ExamStatus.ONGOING; // Default case if dates are not properly set
 }
 
 /**
@@ -127,8 +127,8 @@ export function getColorForIcon(exam: Exam): string {
     const status = determineExamStatus(exam);
     const statusColors = {
         [ExamStatus.NOT_STARTED]: 'var(--bs-body-color)',
-        [ExamStatus.ONGOING]: 'var(--green)',
-        [ExamStatus.FINISHED]: 'var(--red)',
+        [ExamStatus.ONGOING]: 'var(--red)',
+        [ExamStatus.FINISHED]: 'var(--green)',
     };
 
     return statusColors[status];
