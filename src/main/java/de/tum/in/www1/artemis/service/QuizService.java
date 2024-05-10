@@ -253,6 +253,9 @@ public abstract class QuizService<T extends QuizConfiguration> {
             // drop location
             mapping.setDropLocation(dragAndDropQuestion.getDropLocations().get(mapping.getDropLocationIndex()));
         }
+        dragAndDropQuestion.getContent().setDragItems(dragAndDropQuestion.getDragItems());
+        dragAndDropQuestion.getContent().setDropLocations(dragAndDropQuestion.getDropLocations());
+        dragAndDropQuestion.getContent().setCorrectMappings(dragAndDropQuestion.getCorrectMappings());
     }
 
     /**
@@ -267,5 +270,8 @@ public abstract class QuizService<T extends QuizConfiguration> {
             // spot
             mapping.setSpot(shortAnswerQuestion.getSpots().get(mapping.getShortAnswerSpotIndex()));
         }
+        shortAnswerQuestion.getContent().setSolutions(shortAnswerQuestion.getSolutions());
+        shortAnswerQuestion.getContent().setSpots(shortAnswerQuestion.getSpots());
+        shortAnswerQuestion.getContent().setCorrectMappings(shortAnswerQuestion.getCorrectMappings());
     }
 }

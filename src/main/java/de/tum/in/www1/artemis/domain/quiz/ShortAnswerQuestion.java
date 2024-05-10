@@ -1,33 +1,28 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.PostLoad;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Transient;
+
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.quiz.scoring.ScoringStrategy;
 import de.tum.in.www1.artemis.domain.quiz.scoring.ScoringStrategyShortAnswerAllOrNothing;
 import de.tum.in.www1.artemis.domain.quiz.scoring.ScoringStrategyShortAnswerProportionalWithPenalty;
 import de.tum.in.www1.artemis.domain.quiz.scoring.ScoringStrategyShortAnswerProportionalWithoutPenalty;
 import de.tum.in.www1.artemis.domain.view.QuizView;
-import de.tum.in.www1.artemis.repository.converters.JpaConverterJsonObject;
 
 /**
  * A ShortAnswerQuestion.
@@ -36,8 +31,6 @@ import de.tum.in.www1.artemis.repository.converters.JpaConverterJsonObject;
 @DiscriminatorValue(value = "SA")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ShortAnswerQuestion extends QuizQuestion {
-
-    private static final ObjectMapper mapper = new ObjectMapper();
 
     @Transient
     private List<ShortAnswerSpot> spots = new ArrayList<>();
@@ -48,9 +41,9 @@ public class ShortAnswerQuestion extends QuizQuestion {
     @Transient
     private List<ShortAnswerMapping> correctMappings = new ArrayList<>();
 
-    @Convert(converter = JpaConverterJsonObject.class)
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "content", columnDefinition = "json")
-    private Map<String, Object> content = new HashMap<>();
+    private ShortAnswerDAO content = new ShortAnswerDAO();
 
     @Column(name = "similarity_value")
     @JsonView(QuizView.Before.class)
@@ -125,11 +118,11 @@ public class ShortAnswerQuestion extends QuizQuestion {
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
-    public Map<String, Object> getContent() {
+    public ShortAnswerDAO getContent() {
         return content;
     }
 
-    public void setContent(Map<String, Object> content) {
+    public void setContent(ShortAnswerDAO content) {
         this.content = content;
     }
 
@@ -383,46 +376,12 @@ public class ShortAnswerQuestion extends QuizQuestion {
         return question;
     }
 
-    @PrePersist
-    @PreUpdate
-    public void updateContent() {
-        if (content != null) {
-            if (spots != null) {
-                List<List<ShortAnswerSpot>> spots = new ArrayList<>();
-                spots.add(this.spots);
-                content.put("ShortAnswerSpot", spots);
-            }
-            if (solutions != null) {
-                List<List<ShortAnswerSolution>> solutions = new ArrayList<>();
-                solutions.add(this.solutions);
-                content.put("ShortAnswerSolution", solutions);
-            }
-            if (correctMappings != null) {
-                List<List<ShortAnswerMapping>> mappings = new ArrayList<>();
-                mappings.add(this.correctMappings);
-                content.put("ShortAnswerMapping", mappings);
-            }
-        }
-    }
-
     @PostLoad
     public void loadContent() {
         if (content != null) {
-            if (content.containsKey("ShortAnswerSpot")) {
-                List<List<ShortAnswerSpot>> spots = mapper.convertValue(content.get("ShortAnswerSpot"), new TypeReference<>() {
-                });
-                setSpots(spots.getFirst());
-            }
-            if (content.containsKey("ShortAnswerSolution")) {
-                List<List<ShortAnswerSolution>> solutions = mapper.convertValue(content.get("ShortAnswerSolution"), new TypeReference<>() {
-                });
-                setSolutions(solutions.getFirst());
-            }
-            if (content.containsKey("ShortAnswerMapping")) {
-                List<List<ShortAnswerMapping>> mappings = mapper.convertValue(content.get("ShortAnswerMapping"), new TypeReference<>() {
-                });
-                setCorrectMappings(mappings.getFirst());
-            }
+            setSpots(content.getSpots());
+            setSolutions(content.getSolutions());
+            setCorrectMappings(content.getCorrectMappings());
         }
     }
 }

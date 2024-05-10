@@ -3,8 +3,6 @@ package de.tum.in.www1.artemis.domain.quiz;
 import java.io.Serializable;
 import java.util.Objects;
 
-import jakarta.persistence.Transient;
-
 /**
  * A ShortAnswerMapping.
  */
@@ -18,10 +16,8 @@ public class ShortAnswerMapping implements QuizQuestionComponent<ShortAnswerQues
 
     private Boolean invalid;
 
-    @Transient
     private ShortAnswerSolution solution;
 
-    @Transient
     private ShortAnswerSpot spot;
 
     public Long getId() {

@@ -2,32 +2,27 @@ package de.tum.in.www1.artemis.domain.quiz;
 
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.PostLoad;
 import jakarta.persistence.PostPersist;
 import jakarta.persistence.PostRemove;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Transient;
 
 import org.apache.commons.lang3.StringUtils;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.quiz.scoring.ScoringStrategy;
@@ -36,7 +31,6 @@ import de.tum.in.www1.artemis.domain.quiz.scoring.ScoringStrategyDragAndDropProp
 import de.tum.in.www1.artemis.domain.quiz.scoring.ScoringStrategyDragAndDropProportionalWithoutPenalty;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.exception.FilePathParsingException;
-import de.tum.in.www1.artemis.repository.converters.JpaConverterJsonObject;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
 
@@ -50,14 +44,8 @@ public class DragAndDropQuestion extends QuizQuestion {
 
     private static final Logger log = LoggerFactory.getLogger(DragAndDropQuestion.class);
 
-    private static final ObjectMapper mapper = new ObjectMapper();
-
     @Transient
     private final transient FileService fileService = new FileService();
-
-    @Column(name = "background_file_path")
-    @JsonView(QuizView.Before.class)
-    private String backgroundFilePath;
 
     @Transient
     private List<DropLocation> dropLocations = new ArrayList<>();
@@ -68,9 +56,13 @@ public class DragAndDropQuestion extends QuizQuestion {
     @Transient
     private List<DragAndDropMapping> correctMappings = new ArrayList<>();
 
-    @Convert(converter = JpaConverterJsonObject.class)
+    @Column(name = "background_file_path")
+    @JsonView(QuizView.Before.class)
+    private String backgroundFilePath;
+
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "content", columnDefinition = "json")
-    private Map<String, Object> content = new HashMap<>();
+    private DragAndDropDAO content = new DragAndDropDAO();
 
     public String getBackgroundFilePath() {
         return backgroundFilePath;
@@ -82,6 +74,34 @@ public class DragAndDropQuestion extends QuizQuestion {
 
     public List<DropLocation> getDropLocations() {
         return dropLocations;
+    }
+
+    public void setDropLocations(List<DropLocation> dropLocations) {
+        this.dropLocations = dropLocations;
+    }
+
+    public List<DragItem> getDragItems() {
+        return dragItems;
+    }
+
+    public void setDragItems(List<DragItem> dragItems) {
+        this.dragItems = dragItems;
+    }
+
+    public List<DragAndDropMapping> getCorrectMappings() {
+        return correctMappings;
+    }
+
+    public void setCorrectMappings(List<DragAndDropMapping> dragAndDropMappings) {
+        this.correctMappings = dragAndDropMappings;
+    }
+
+    public DragAndDropDAO getContent() {
+        return content;
+    }
+
+    public void setContent(DragAndDropDAO content) {
+        this.content = content;
     }
 
     public DragAndDropQuestion addDropLocation(DropLocation dropLocation) {
@@ -96,17 +116,8 @@ public class DragAndDropQuestion extends QuizQuestion {
         return this;
     }
 
-    public void setDropLocations(List<DropLocation> dropLocations) {
-        this.dropLocations = dropLocations;
-    }
-
-    public List<DragItem> getDragItems() {
-        return dragItems;
-    }
-
     public DragAndDropQuestion addDragItem(DragItem dragItem) {
         this.dragItems.add(dragItem);
-        dragItem.setQuestion(this);
         return this;
     }
 
@@ -114,14 +125,6 @@ public class DragAndDropQuestion extends QuizQuestion {
         this.dragItems.remove(dragItem);
         dragItem.setQuestion(null);
         return this;
-    }
-
-    public void setDragItems(List<DragItem> dragItems) {
-        this.dragItems = dragItems;
-    }
-
-    public List<DragAndDropMapping> getCorrectMappings() {
-        return correctMappings;
     }
 
     public DragAndDropQuestion addCorrectMapping(DragAndDropMapping dragAndDropMapping) {
@@ -134,10 +137,6 @@ public class DragAndDropQuestion extends QuizQuestion {
         this.correctMappings.remove(dragAndDropMapping);
         dragAndDropMapping.setQuestion(null);
         return this;
-    }
-
-    public void setCorrectMappings(List<DragAndDropMapping> dragAndDropMappings) {
-        this.correctMappings = dragAndDropMappings;
     }
 
     @Override
@@ -456,47 +455,12 @@ public class DragAndDropQuestion extends QuizQuestion {
         return question;
     }
 
-    @PrePersist
-    @PreUpdate
-    public void updateContent() {
-        if (content != null) {
-            if (dropLocations != null) {
-                List<List<DropLocation>> dropLocations = new ArrayList<>();
-                dropLocations.add(this.dropLocations);
-                content.put("DropLocation", dropLocations);
-            }
-            if (dragItems != null) {
-                List<List<DragItem>> dragItems = new ArrayList<>();
-                dragItems.add(this.dragItems);
-                content.put("DragItem", dragItems);
-            }
-            if (correctMappings != null) {
-                List<List<DragAndDropMapping>> mappings = new ArrayList<>();
-                mappings.add(this.correctMappings);
-                content.put("DragAndDropMapping", mappings);
-            }
-        }
-    }
-
     @PostLoad
     public void loadContent() {
         if (content != null) {
-            if (content.containsKey("DropLocation")) {
-                List<List<DropLocation>> dropLocations = mapper.convertValue(content.get("DropLocation"), new TypeReference<>() {
-                });
-                setDropLocations(dropLocations.getFirst());
-            }
-            if (content.containsKey("DragItem")) {
-                List<List<DragItem>> dragItems = mapper.convertValue(content.get("DragItem"), new TypeReference<>() {
-                });
-                setDragItems(dragItems.getFirst());
-            }
-            if (content.containsKey("DragAndDropMapping")) {
-                List<List<DragAndDropMapping>> mappings = mapper.convertValue(content.get("DragAndDropMapping"), new TypeReference<>() {
-                });
-                setCorrectMappings(mappings.getFirst());
-            }
+            setDropLocations(content.getDropLocations());
+            setDragItems(content.getDragItems());
+            setCorrectMappings(content.getCorrectMappings());
         }
     }
-
 }

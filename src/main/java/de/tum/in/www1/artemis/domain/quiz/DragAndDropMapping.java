@@ -3,14 +3,12 @@ package de.tum.in.www1.artemis.domain.quiz;
 import java.io.Serializable;
 import java.util.Objects;
 
-import jakarta.persistence.Transient;
-
 /**
  * A DragAndDropMapping.
  */
 public class DragAndDropMapping implements QuizQuestionComponent<DragAndDropQuestion>, Serializable {
 
-    private Long id;
+    private Long id = 1L;
 
     private Integer dragItemIndex;
 
@@ -18,10 +16,8 @@ public class DragAndDropMapping implements QuizQuestionComponent<DragAndDropQues
 
     private Boolean invalid = false;
 
-    @Transient
     private DragItem dragItem;
 
-    @Transient
     private DropLocation dropLocation;
 
     private DragAndDropSubmittedAnswer submittedAnswer;
