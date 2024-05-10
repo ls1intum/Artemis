@@ -1,28 +1,44 @@
 <div>
-    <h4>{{ 'artemisApp.courseStudentDashboard.exercisePerformance.title' | artemisTranslate }}</h4>
+    <div class="d-flex flex-wrap justify-content-between align-items-baseline gap-2">
+        <h4>{{ 'artemisApp.courseStudentDashboard.exercisePerformance.title' | artemisTranslate }}</h4>
+        <!-- Legend-->
+        <div class="d-flex gap-3">
+            <div class="d-flex align-items-center gap-1">
+                <span class="tooltip-label-color" [style.background-color]="ngxColor.domain[0]"></span>
+                {{ 'artemisApp.courseStudentDashboard.exercisePerformance.yourScoreLabel' | artemisTranslate }}
+            </div>
+            <div class="d-flex align-items-center gap-1">
+                <span class="tooltip-label-color" [style.background-color]="ngxColor.domain[1]"></span>
+                {{ 'artemisApp.courseStudentDashboard.exercisePerformance.averageScoreLabel' | artemisTranslate }}
+            </div>
+        </div>
+    </div>
     <div #containerRef class="mt-2 justify-content-center">
         <ngx-charts-line-chart
             [view]="[containerRef.offsetWidth, 200]"
             [results]="ngxData"
             [scheme]="ngxColor"
-            [legend]="true"
-            [legendTitle]="''"
-            [xAxis]="false"
-            [autoScale]="true"
+            [legend]="false"
+            [maxXAxisTickLength]="6"
+            [xAxis]="true"
+            [xAxisLabel]="'artemisApp.courseStudentDashboard.exercisePerformance.xAxisLabel' | artemisTranslate"
+            [showXAxisLabel]="true"
             [yAxis]="true"
             [yAxisLabel]="'artemisApp.courseStudentDashboard.exercisePerformance.yAxisLabel' | artemisTranslate"
             [showYAxisLabel]="true"
+            [yScaleMin]="0"
+            [yScaleMax]="yScaleMax"
         >
             <ng-template #tooltipTemplate let-model="model">
                 <div class="d-flex flex-column align-items-start py-2">
-                    <b class="mb-1">{{ model.name }}</b>
+                    <b class="mb-1">{{ model.extra.title }}</b>
                     {{ model.series }}: {{ round(model.value, 1) }}%
                 </div>
             </ng-template>
             <ng-template #seriesTooltipTemplate let-model="model">
                 @if (!model.isEmpty) {
                     <div class="d-flex flex-column align-items-start py-2">
-                        <b class="mb-1">{{ model[0].name }}</b>
+                        <b class="mb-1">{{ model[0].extra.title }}</b>
                         @for (entry of model; track entry) {
                             <div class="d-flex align-items-center gap-1">
                                 <span class="tooltip-label-color" [style.background-color]="entry.color"></span>

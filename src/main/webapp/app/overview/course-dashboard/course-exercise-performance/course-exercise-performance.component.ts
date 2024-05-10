@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { GraphColors } from 'app/entities/statistics.model';
@@ -8,10 +8,9 @@ import { round } from 'app/shared/util/utils';
 export interface ExercisePerformance {
     exerciseId: number;
     title: string;
-    endDate: string;
-    maxPoints: number;
-    studentPoints: number;
-    courseAveragePoints: number;
+    shortName?: string;
+    score: number;
+    averageScore: number;
 }
 
 @Component({
@@ -19,8 +18,8 @@ export interface ExercisePerformance {
     templateUrl: './course-exercise-performance.component.html',
     styleUrl: './course-exercise-performance.component.scss',
 })
-export class CourseExercisePerformanceComponent implements OnInit {
-    @Input() exercisePerformances: ExercisePerformance[] = [];
+export class CourseExercisePerformanceComponent implements OnInit, OnChanges {
+    @Input() exercisePerformance: ExercisePerformance[] = [];
 
     yourScoreLabel: string;
     averageScoreLabel: string;
@@ -31,6 +30,7 @@ export class CourseExercisePerformanceComponent implements OnInit {
         group: ScaleType.Ordinal,
         domain: [GraphColors.BLUE, GraphColors.YELLOW],
     };
+    yScaleMax = 100;
 
     readonly round = round;
     readonly Math = Math;
@@ -45,6 +45,10 @@ export class CourseExercisePerformanceComponent implements OnInit {
         this.setupChart();
     }
 
+    ngOnChanges(): void {
+        this.setupChart();
+    }
+
     /**
      * Sets up the chart for given exercise performances
      */
@@ -55,22 +59,31 @@ export class CourseExercisePerformanceComponent implements OnInit {
         this.ngxData = [
             {
                 name: this.yourScoreLabel,
-                series: this.exercisePerformances.map((performance) => {
+                series: this.exercisePerformance.map((performance) => {
                     return {
-                        name: performance.title,
-                        value: (performance.studentPoints / performance.maxPoints) * 100,
+                        name: performance.shortName?.toUpperCase() || performance.title,
+                        value: performance.score,
+                        extra: {
+                            title: performance.title,
+                        },
                     };
                 }),
             },
             {
                 name: this.averageScoreLabel,
-                series: this.exercisePerformances.map((performance) => {
+                series: this.exercisePerformance.map((performance) => {
                     return {
-                        name: performance.title,
-                        value: (performance.courseAveragePoints / performance.maxPoints) * 100,
+                        name: performance.shortName?.toUpperCase() || performance.title,
+                        value: performance.averageScore,
+                        extra: {
+                            title: performance.title,
+                        },
                     };
                 }),
             },
         ];
+
+        const maxScore = Math.max(...this.exercisePerformance.flatMap((performance) => [performance.score, performance.averageScore]));
+        this.yScaleMax = Math.max(100, Math.ceil(maxScore / 10) * 10);
     }
 }

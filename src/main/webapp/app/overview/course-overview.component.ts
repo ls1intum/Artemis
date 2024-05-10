@@ -435,6 +435,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             hasInOrionProperty: false,
             showInOrionWindow: false,
             featureToggle: FeatureToggle.StudentCourseAnalyticsDashboard,
+            hidden: false,
         };
         return dashboardItem;
     }

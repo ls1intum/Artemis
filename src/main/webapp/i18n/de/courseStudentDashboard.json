@@ -5,13 +5,15 @@
                 "title": "Leistungen in den Übungen",
                 "yourScoreLabel": "Dein Ergebnis",
                 "averageScoreLabel": "Durchschnittsergebnis",
+                "xAxisLabel": "Aufgaben",
                 "yAxisLabel": "Ergebnis (%)"
             },
             "exerciseLateness": {
-                "title": "Leistungen in den Übungen",
-                "yourTimingLabel": "Deine Zeit",
-                "averageTimingLabel": "Durchschnittszeit",
-                "yAxisLabel": "Verbleibende Zeit (%)"
+                "title": "Fristeinhaltung bei den Übungen",
+                "yourLatenessLabel": "Deine Fristeinhaltung",
+                "averageLatenessLabel": "Durchschnittliche Fristeinhaltung",
+                "xAxisLabel": "Aufgaben",
+                "yAxisLabel": "Relative Fristeinhaltung (%)"
             }
         }
     }

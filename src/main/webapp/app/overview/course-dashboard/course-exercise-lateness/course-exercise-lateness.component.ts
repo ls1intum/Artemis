@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { GraphColors } from 'app/entities/statistics.model';
@@ -8,10 +8,9 @@ import { round } from 'app/shared/util/utils';
 export interface ExerciseLateness {
     exerciseId: number;
     title: string;
-    startDate: string;
-    endDate: string;
-    studentCompletionDate: string;
-    courseAverageCompletionDate: string;
+    shortName?: string;
+    relativeLatestSubmission: number;
+    relativeAverageLatestSubmission: number;
 }
 
 @Component({
@@ -19,11 +18,11 @@ export interface ExerciseLateness {
     templateUrl: './course-exercise-lateness.component.html',
     styleUrl: './course-exercise-lateness.component.scss',
 })
-export class CourseExerciseLatenessComponent implements OnInit {
+export class CourseExerciseLatenessComponent implements OnInit, OnChanges {
     @Input() exerciseLateness: ExerciseLateness[] = [];
 
-    yourTimingLabel: string;
-    averageTimingLabel: string;
+    yourLatenessLabel: string;
+    averageLatenessLabel: string;
     ngxData: NgxChartsMultiSeriesDataEntry[];
     ngxColor: Color = {
         name: 'Performance in Exercises',
@@ -31,6 +30,7 @@ export class CourseExerciseLatenessComponent implements OnInit {
         group: ScaleType.Ordinal,
         domain: [GraphColors.BLUE, GraphColors.YELLOW],
     };
+    yScaleMax = 100;
 
     readonly round = round;
     readonly Math = Math;
@@ -45,46 +45,45 @@ export class CourseExerciseLatenessComponent implements OnInit {
         this.setupChart();
     }
 
+    ngOnChanges(): void {
+        this.setupChart();
+    }
+
     /**
      * Sets up the chart for given exercise lateness
      */
     private setupChart(): void {
-        this.yourTimingLabel = this.translateService.instant('artemisApp.courseStudentDashboard.exerciseLateness.yourTimingLabel');
-        this.averageTimingLabel = this.translateService.instant('artemisApp.courseStudentDashboard.exerciseLateness.averageTimingLabel');
+        this.yourLatenessLabel = this.translateService.instant('artemisApp.courseStudentDashboard.exerciseLateness.yourLatenessLabel');
+        this.averageLatenessLabel = this.translateService.instant('artemisApp.courseStudentDashboard.exerciseLateness.averageLatenessLabel');
 
         this.ngxData = [
             {
-                name: this.yourTimingLabel,
+                name: this.yourLatenessLabel,
                 series: this.exerciseLateness.map((lateness) => {
-                    const completionTime = new Date(lateness.studentCompletionDate).getTime();
-                    const startTime = new Date(lateness.startDate).getTime();
-                    const endTime = new Date(lateness.endDate).getTime();
-
-                    // Log if out of bounds
-                    if (completionTime < startTime) {
-                        console.log('Completion time is before start time');
-                    } else if (completionTime > endTime) {
-                        console.log('Completion time is after end time');
-                    }
-
                     return {
-                        name: lateness.title,
-                        value: ((endTime - Math.min(completionTime, endTime)) / (endTime - startTime)) * 100,
+                        name: lateness.shortName?.toUpperCase() || lateness.title,
+                        value: lateness.relativeLatestSubmission,
+                        extra: {
+                            title: lateness.title,
+                        },
                     };
                 }),
             },
             {
-                name: this.averageTimingLabel,
+                name: this.averageLatenessLabel,
                 series: this.exerciseLateness.map((lateness) => {
-                    const avgCompletionTime = new Date(lateness.courseAverageCompletionDate).getTime();
-                    const startTime = new Date(lateness.startDate).getTime();
-                    const endTime = new Date(lateness.endDate).getTime();
                     return {
-                        name: lateness.title,
-                        value: ((endTime - Math.min(avgCompletionTime, endTime)) / (endTime - startTime)) * 100,
+                        name: lateness.shortName?.toUpperCase() || lateness.title,
+                        value: lateness.relativeAverageLatestSubmission,
+                        extra: {
+                            title: lateness.title,
+                        },
                     };
                 }),
             },
         ];
+
+        const maxRelativeTime = Math.max(...this.exerciseLateness.flatMap((lateness) => [lateness.relativeLatestSubmission, lateness.relativeAverageLatestSubmission]));
+        this.yScaleMax = Math.max(100, Math.ceil(maxRelativeTime / 10) * 10);
     }
 }
