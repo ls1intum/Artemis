@@ -63,6 +63,7 @@ export class ExamExerciseUpdateHighlighterComponent implements OnInit, OnDestroy
         if (updatedProblemStatement != undefined && exerciseId === this.exercise.id) {
             this.outdatedProblemStatement = this.exercise.problemStatement!;
             this.updatedProblemStatement = updatedProblemStatement;
+            this.exercise.problemStatement = updatedProblemStatement;
             this.showHighlightedDifferences = true;
             // Highlighting of the changes in the problem statement of a programming exercise id handled
             // in ProgrammingExerciseInstructionComponent

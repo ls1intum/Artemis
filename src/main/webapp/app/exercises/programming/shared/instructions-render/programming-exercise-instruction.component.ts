@@ -238,7 +238,6 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     }
 
     renderUpdatedProblemStatement() {
-        this.problemStatement = this.exercise.problemStatement!;
         this.updateMarkdown();
     }
 
@@ -332,7 +331,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             }, 0);
         } else {
             this.injectableContentForMarkdownCallbacks = [];
-            this.renderedMarkdown = this.markdownService.safeHtmlForMarkdown(this.problemStatement, this.markdownExtensions);
+            this.renderedMarkdown = this.markdownService.safeHtmlForMarkdown(this.exercise.problemStatement, this.markdownExtensions);
             setTimeout(
                 () =>
                     this.injectableContentForMarkdownCallbacks.forEach((callback) => {
