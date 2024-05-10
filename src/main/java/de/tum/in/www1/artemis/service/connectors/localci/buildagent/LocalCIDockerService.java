@@ -112,7 +112,7 @@ public class LocalCIDockerService {
      */
     public void cleanUpContainers() {
         List<Container> danglingBuildContainers;
-        log.debug("Start cleanup dangling build containers");
+        log.info("Start cleanup dangling build containers");
         if (isFirstCleanup) {
             // Cleanup all dangling build containers after the application has started
             try {

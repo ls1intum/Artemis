@@ -227,10 +227,15 @@ export class ExerciseAPIRequests {
      * @param exerciseId - The ID of the text exercise for which the submission is made.
      * @param text - The text content of the submission.
      */
-    async makeTextExerciseSubmission(exerciseId: number, text: string) {
-        await this.page.request.put(`${EXERCISE_BASE}/${exerciseId}/text-submissions`, {
-            data: { submissionExerciseType: 'text', text },
-        });
+    async makeTextExerciseSubmission(exerciseId: number, text: string, createNewSubmission = true) {
+        const url = `${EXERCISE_BASE}/${exerciseId}/text-submissions`;
+        const data = { submissionExerciseType: 'text', text };
+
+        if (createNewSubmission) {
+            await this.page.request.post(url, { data });
+        } else {
+            await this.page.request.put(url, { data });
+        }
     }
 
     /**
