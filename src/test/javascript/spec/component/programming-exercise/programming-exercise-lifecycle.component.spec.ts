@@ -1,20 +1,21 @@
 import dayjs from 'dayjs/esm';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
-import { MockComponent, MockDirective } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ProgrammingExerciseLifecycleComponent } from 'app/exercises/programming/shared/lifecycle/programming-exercise-lifecycle.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseTestScheduleDatePickerComponent } from 'app/exercises/programming/shared/lifecycle/programming-exercise-test-schedule-date-picker.component';
 import { NgModel } from '@angular/forms';
-import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { QueryList, SimpleChange } from '@angular/core';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
 import { expectElementToBeDisabled, expectElementToBeEnabled } from '../../helpers/utils/general.utils';
 import { Course } from 'app/entities/course.model';
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercises/shared/feedback-suggestion/exercise-feedback-suggestion-options.component';
-import { Subject } from 'rxjs';
+import { Subject, of } from 'rxjs';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ActivatedRoute, UrlSegment } from '@angular/router';
 
 describe('ProgrammingExerciseLifecycleComponent', () => {
     let comp: ProgrammingExerciseLifecycleComponent;
@@ -35,7 +36,15 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
                 MockComponent(HelpIconComponent),
                 MockComponent(ExerciseFeedbackSuggestionOptionsComponent),
                 MockDirective(NgModel),
-                TranslatePipeMock,
+                MockPipe(ArtemisTranslatePipe),
+            ],
+            providers: [
+                {
+                    provide: ActivatedRoute,
+                    useValue: {
+                        url: of([{ path: 'programming-exercises' }] as UrlSegment[]),
+                    },
+                },
             ],
         })
             .compileComponents()
