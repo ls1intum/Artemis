@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.domain.iris.settings;
 
-import java.util.Set;
+import java.util.SortedSet;
 import java.util.TreeSet;
 
 import jakarta.annotation.Nullable;
@@ -52,7 +52,7 @@ public abstract class IrisSubSettings extends DomainObject {
 
     @Column(name = "allowed_models")
     @Convert(converter = IrisModelListConverter.class)
-    private Set<String> allowedModels = new TreeSet<>();
+    private SortedSet<String> allowedModels = new TreeSet<>();
 
     @Nullable
     @Column(name = "preferred_model")
@@ -66,11 +66,11 @@ public abstract class IrisSubSettings extends DomainObject {
         this.enabled = enabled;
     }
 
-    public Set<String> getAllowedModels() {
+    public SortedSet<String> getAllowedModels() {
         return allowedModels;
     }
 
-    public void setAllowedModels(Set<String> allowedModels) {
+    public void setAllowedModels(SortedSet<String> allowedModels) {
         this.allowedModels = allowedModels;
     }
 
