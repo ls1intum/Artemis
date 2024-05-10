@@ -18,6 +18,9 @@ export class ProgressBarComponent {
     @Input() title: string = '';
 
     get percentage(): number {
-        return (this.currentValue / this.maxValue) * 100;
+        if (this.maxValue === 0) {
+            return 0;
+        }
+        return Math.min((this.currentValue / this.maxValue) * 100, 100);
     }
 }
