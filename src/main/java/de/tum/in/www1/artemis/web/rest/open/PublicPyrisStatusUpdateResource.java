@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.open;
 
+import java.util.Objects;
+
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.context.annotation.Profile;
@@ -52,7 +54,7 @@ public class PublicPyrisStatusUpdateResource {
     @EnforceNothing
     public ResponseEntity<Void> setStatusOfJob(@PathVariable String runId, @RequestBody PyrisTutorChatStatusUpdateDTO statusUpdateDTO, HttpServletRequest request) {
         var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request);
-        if (!job.getId().equals(runId)) {
+        if (!Objects.equals(job.jobId(), runId)) {
             throw new ConflictException("Run ID in URL does not match run ID in request body", "Job", "runIdMismatch");
         }
         if (!(job instanceof TutorChatJob tutorChatJob)) {

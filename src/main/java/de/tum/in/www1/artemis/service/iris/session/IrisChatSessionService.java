@@ -164,7 +164,7 @@ public class IrisChatSessionService implements IrisChatBasedFeatureInterface<Iri
      * @param statusUpdate The status update of the job
      */
     public void handleStatusUpdate(TutorChatJob job, PyrisTutorChatStatusUpdateDTO statusUpdate) {
-        var session = (IrisChatSession) irisSessionRepository.findByIdWithMessagesAndContents(job.getSessionId());
+        var session = (IrisChatSession) irisSessionRepository.findByIdWithMessagesAndContents(job.sessionId());
         if (statusUpdate.result() != null) {
             var message = new IrisMessage();
             message.addContent(new IrisTextMessageContent(statusUpdate.result()));

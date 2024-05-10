@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
+import jakarta.annotation.Nullable;
+
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -115,7 +117,8 @@ public class PyrisDTOService {
      * @param zonedDateTime the ZonedDateTime to convert
      * @return the Instant or null if the input was null
      */
-    private Instant toInstant(ZonedDateTime zonedDateTime) {
+    @Nullable
+    private Instant toInstant(@Nullable ZonedDateTime zonedDateTime) {
         if (zonedDateTime == null) {
             return null;
         }

@@ -43,7 +43,7 @@ public class IrisChatWebsocketService extends IrisWebsocketService {
         var session = irisMessage.getSession();
         var user = checkSessionTypeAndGetUser(session);
         var rateLimitInfo = rateLimitService.getRateLimitInformation(user);
-        super.send(user, WEBSOCKET_TOPIC_SESSION_TYPE, session.getId(), IrisWebsocketDTO.create(irisMessage, null, rateLimitInfo, stages));
+        super.send(user, WEBSOCKET_TOPIC_SESSION_TYPE, session.getId(), new IrisWebsocketDTO(irisMessage, null, rateLimitInfo, stages));
     }
 
     /**
@@ -56,11 +56,11 @@ public class IrisChatWebsocketService extends IrisWebsocketService {
     public void sendException(IrisSession session, Throwable throwable, List<PyrisStageDTO> stages) {
         User user = checkSessionTypeAndGetUser(session);
         var rateLimitInfo = rateLimitService.getRateLimitInformation(user);
-        super.send(user, WEBSOCKET_TOPIC_SESSION_TYPE, session.getId(), IrisWebsocketDTO.create(null, throwable, rateLimitInfo, stages));
+        super.send(user, WEBSOCKET_TOPIC_SESSION_TYPE, session.getId(), new IrisWebsocketDTO(null, throwable, rateLimitInfo, stages));
     }
 
     public void sendStatusUpdate(IrisSession session, List<PyrisStageDTO> stages) {
         var user = checkSessionTypeAndGetUser(session);
-        super.send(user, WEBSOCKET_TOPIC_SESSION_TYPE, session.getId(), IrisWebsocketDTO.create(null, null, rateLimitService.getRateLimitInformation(user), stages));
+        super.send(user, WEBSOCKET_TOPIC_SESSION_TYPE, session.getId(), new IrisWebsocketDTO(null, null, rateLimitService.getRateLimitInformation(user), stages));
     }
 }

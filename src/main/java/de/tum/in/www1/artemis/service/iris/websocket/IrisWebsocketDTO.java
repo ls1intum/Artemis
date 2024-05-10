@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import jakarta.annotation.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
@@ -35,24 +37,37 @@ public record IrisWebsocketDTO(IrisWebsocketMessageType type, IrisMessage messag
      * @param throwable     the Throwable (optional)
      * @param rateLimitInfo the rate limit information
      * @param stages        the stages of the Pyris pipeline
-     * @return the created IrisWebsocketDTO instance
      */
-    public static IrisWebsocketDTO create(IrisMessage message, Throwable throwable, IrisRateLimitService.IrisRateLimitInformation rateLimitInfo, List<PyrisStageDTO> stages) {
-        IrisWebsocketMessageType type;
+    public IrisWebsocketDTO(@Nullable IrisMessage message, @Nullable Throwable throwable, IrisRateLimitService.IrisRateLimitInformation rateLimitInfo, List<PyrisStageDTO> stages) {
+        this(determineType(message, throwable), message, throwable == null ? null : throwable.getMessage(),
+                throwable instanceof IrisException irisException ? irisException.getTranslationKey() : null,
+                throwable instanceof IrisException irisException ? irisException.getTranslationParams() : null, rateLimitInfo, stages);
+    }
+
+    /**
+     * Determines the type of WebSocket message based on the presence of a message or throwable.
+     * <p>
+     * This method categorizes the WebSocket message type as follows:
+     * <ul>
+     * <li>{@link IrisWebsocketMessageType#MESSAGE} if the {@code message} parameter is not null.</li>
+     * <li>{@link IrisWebsocketMessageType#ERROR} if the {@code message} is null and {@code throwable} is not null.</li>
+     * <li>{@link IrisWebsocketMessageType#STATUS} if both {@code message} and {@code throwable} are null.</li>
+     * </ul>
+     *
+     * @param message   The message associated with the WebSocket, which may be null.
+     * @param throwable The throwable associated with the WebSocket, which may also be null.
+     * @return The {@link IrisWebsocketMessageType} indicating the type of the message based on the given parameters.
+     */
+    private static IrisWebsocketMessageType determineType(@Nullable IrisMessage message, @Nullable Throwable throwable) {
         if (message != null) {
-            type = IrisWebsocketMessageType.MESSAGE;
+            return IrisWebsocketMessageType.MESSAGE;
         }
         else if (throwable != null) {
-            type = IrisWebsocketMessageType.ERROR;
+            return IrisWebsocketMessageType.ERROR;
         }
         else {
-            type = IrisWebsocketMessageType.STATUS;
+            return IrisWebsocketMessageType.STATUS;
         }
-        var errorMessage = throwable == null ? null : throwable.getMessage();
-        var errorTranslationKey = throwable == null ? null : throwable instanceof IrisException irisException ? irisException.getTranslationKey() : null;
-        var translationParams = throwable == null ? null : throwable instanceof IrisException irisException ? irisException.getTranslationParams() : null;
-
-        return new IrisWebsocketDTO(type, message, errorMessage, errorTranslationKey, translationParams, rateLimitInfo, stages);
     }
 
     @Override
