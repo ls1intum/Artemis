@@ -12,7 +12,6 @@ import { ProgrammingExerciseTestScheduleDatePickerComponent } from 'app/exercise
 import { every } from 'lodash-es';
 import { ActivatedRoute } from '@angular/router';
 import { tap } from 'rxjs/operators';
-import { ImportOptions } from 'app/exercises/programming/manage/update/programming-exercise-update.component';
 
 @Component({
     selector: 'jhi-programming-exercise-lifecycle',
@@ -25,11 +24,11 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
     @Input() readOnly: boolean;
     // @Input() importOptions: ImportOptions | undefined;
 
-    importOptions: ImportOptions = {
-        recreateBuildPlans: false,
-        updateTemplate: false,
-        setTestCaseVisibilityToAfterDueDate: false,
-    };
+    // importOptions: ImportOptions = {
+    //     recreateBuildPlans: false,
+    //     updateTemplate: false,
+    //     setTestCaseVisibilityToAfterDueDate: false,
+    // };
 
     @ViewChildren(ProgrammingExerciseTestScheduleDatePickerComponent) datePickerComponents: QueryList<ProgrammingExerciseTestScheduleDatePickerComponent>;
 

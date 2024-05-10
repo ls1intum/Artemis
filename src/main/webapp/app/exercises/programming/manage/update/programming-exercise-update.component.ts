@@ -47,7 +47,7 @@ import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiari
 export interface ImportOptions {
     recreateBuildPlans: boolean;
     updateTemplate: boolean;
-    setTestCaseVisibilityToAfterDueDate: boolean;
+    // setTestCaseVisibilityToAfterDueDate: boolean;
 }
 
 @Component({
@@ -153,7 +153,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     public readonly importOptions: ImportOptions = {
         recreateBuildPlans: false,
         updateTemplate: false,
-        setTestCaseVisibilityToAfterDueDate: false,
+        // setTestCaseVisibilityToAfterDueDate: false,
     };
     public originalStaticCodeAnalysisEnabled: boolean | undefined;
 
@@ -1103,7 +1103,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             recreateBuildPlans: this.importOptions.recreateBuildPlans,
             onRecreateBuildPlanOrUpdateTemplateChange: this.onRecreateBuildPlanOrUpdateTemplateChange,
             updateTemplate: this.importOptions.updateTemplate,
-            setTestCaseVisibilityToAfterDueDate: this.importOptions.setTestCaseVisibilityToAfterDueDate,
+            // setTestCaseVisibilityToAfterDueDate: this.importOptions.setTestCaseVisibilityToAfterDueDate,
             recreateBuildPlanOrUpdateTemplateChange: this.onRecreateBuildPlanOrUpdateTemplateChange,
             buildPlanLoaded: this.buildPlanLoaded,
         };
