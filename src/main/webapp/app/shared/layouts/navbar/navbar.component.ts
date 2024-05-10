@@ -31,6 +31,7 @@ import {
     faBell,
     faBook,
     faBookOpen,
+    faChevronRight,
     faCog,
     faEye,
     faFlag,
@@ -126,6 +127,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     faSignOutAlt = faSignOutAlt;
     faGears = faGears;
     faPuzzlePiece = faPuzzlePiece;
+    faChevronRight = faChevronRight;
 
     private standardizedCompetencySubscription: Subscription;
     private authStateSubscription: Subscription;
@@ -373,6 +375,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         commit_details: 'artemisApp.repository.commitHistory.commitDetails.title',
         repository: 'artemisApp.repository.title',
         standardized_competencies: 'artemisApp.standardizedCompetency.manage.title',
+        import_standardized: 'artemisApp.standardizedCompetency.courseImport.title',
     };
 
     studentPathBreadcrumbTranslations = {

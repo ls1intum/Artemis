@@ -16,14 +16,22 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipantSettingsView;
-import de.tum.in.www1.artemis.domain.metis.conversation.*;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
+import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
+import de.tum.in.www1.artemis.domain.metis.conversation.ConversationSummary;
+import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
+import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
 import de.tum.in.www1.artemis.service.dto.UserPublicInfoDTO;
 import de.tum.in.www1.artemis.service.metis.conversation.auth.ChannelAuthorizationService;
-import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.*;
+import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
+import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ConversationDTO;
+import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ConversationUserDTO;
+import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.GroupChatDTO;
+import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.OneToOneChatDTO;
 
 @Profile(PROFILE_CORE)
 @Service

@@ -33,6 +33,7 @@
         [isTutorAssessment]="isTutorAssessment"
         [highlightFileChanges]="highlightFileChanges"
         [fileBadges]="fileBadges"
+        [allowHiddenFiles]="allowHiddenFiles"
         [(selectedFile)]="selectedFile"
         [(commitState)]="commitState"
         (onFileChange)="onFileChange($event)"
@@ -63,18 +64,24 @@
             />
         } @else {
             <jhi-code-editor-monaco
-                #codeEditorMonaco
                 [commitState]="commitState"
                 [editorState]="editorState"
                 [course]="course"
                 [feedbacks]="participation?.results?.[0]?.feedbacks ?? []"
+                [feedbackSuggestions]="feedbackSuggestions"
+                [readOnlyManualFeedback]="readOnlyManualFeedback"
                 [disableActions]="!editable"
                 [isTutorAssessment]="isTutorAssessment"
+                [highlightDifferences]="highlightDifferences"
                 [selectedFile]="selectedFile"
                 [buildAnnotations]="annotations"
                 [sessionId]="participation?.id ?? 'test'"
                 (onFileContentChange)="onFileContentChange($event)"
+                (onUpdateFeedback)="onUpdateFeedback.emit($event)"
+                (onAcceptSuggestion)="onAcceptSuggestion.emit($event)"
+                (onDiscardSuggestion)="onDiscardSuggestion.emit($event)"
                 (onError)="onError($event)"
+                (onFileLoad)="fileLoad($event)"
             />
         }
     </ng-container>

@@ -24,13 +24,11 @@
                 <span class="exercise-title">{{ exercise?.exerciseGroup?.title ?? '-' }}</span>
                 <!-- prettier-ignore -->
                 <span>&nbsp;[{{ exercise?.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}@if (exercise.bonusPoints) {
-          <span
-          >, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span>
-          }]
-          @if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
-            <jhi-included-in-score-badge
-            [includedInOverallScore]="exercise.includedInOverallScore" />
-          }</span>
+                    <span>, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span>
+                }]
+                @if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
+                    <jhi-included-in-score-badge [includedInOverallScore]="exercise.includedInOverallScore"/>
+                }</span>
             </div>
             <div submissionPolicy class="mt-3">
                 <jhi-programming-submission-policy-status [exercise]="exercise" [submissionCount]="submissionCount" />

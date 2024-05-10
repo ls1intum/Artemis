@@ -2,7 +2,11 @@ package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -11,7 +15,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.config.StaticCodeAnalysisConfigurer;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.StaticCodeAnalysisCategory;
+import de.tum.in.www1.artemis.domain.StaticCodeAnalysisDefaultCategory;
 import de.tum.in.www1.artemis.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.in.www1.artemis.service.programming.ProgrammingTriggerService;
 
@@ -46,17 +52,9 @@ public class StaticCodeAnalysisService {
         }
 
         // Create new static code analysis using the default configuration as a template
-        List<StaticCodeAnalysisCategory> newCategories = new ArrayList<>();
-        for (var defaultCategory : defaultConfiguration) {
-            StaticCodeAnalysisCategory newCategory = new StaticCodeAnalysisCategory();
-            newCategory.setName(defaultCategory.name());
-            newCategory.setPenalty(defaultCategory.penalty());
-            newCategory.setMaxPenalty(defaultCategory.maxPenalty());
-            newCategory.setState(defaultCategory.state());
-            newCategory.setProgrammingExercise(programmingExercise);
-            newCategories.add(newCategory);
-        }
-        staticCodeAnalysisCategoryRepository.saveAll(newCategories);
+        List<StaticCodeAnalysisCategory> newCategoriesWithDefaultConfiguration = defaultConfiguration.stream()
+                .map(category -> category.toStaticCodeAnalysisCategory(programmingExercise)).toList();
+        staticCodeAnalysisCategoryRepository.saveAll(newCategoriesWithDefaultConfiguration);
     }
 
     /**

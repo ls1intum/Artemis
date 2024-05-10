@@ -49,7 +49,7 @@ describe('BuildAgentSummaryComponent', () => {
 
     const buildConfig: BuildConfig = {
         dockerImage: 'someImage',
-        commitHash: 'abc124',
+        commitHashToBuild: 'abc124',
         branch: 'main',
         programmingLanguage: 'Java',
         projectType: 'Maven',

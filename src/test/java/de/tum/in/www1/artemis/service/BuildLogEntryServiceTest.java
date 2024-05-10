@@ -21,6 +21,22 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 class BuildLogEntryServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String GRADLE_SCENARIO = """
+            ~~~~~~~~~~~~~~~~~~~~ Pull image progress: Downloading ~~~~~~~~~~~~~~~~~~~~
+            ~~~~~~~~~~~~~~~~~~~~ Pull image progress: Downloading ~~~~~~~~~~~~~~~~~~~~
+            ~~~~~~~~~~~~~~~~~~~~ Pull image progress: Downloading ~~~~~~~~~~~~~~~~~~~~
+            ~~~~~~~~~~~~~~~~~~~~ Pull image progress: Downloading ~~~~~~~~~~~~~~~~~~~~
+            ~~~~~~~~~~~~~~~~~~~~ Pull image progress: Downloading ~~~~~~~~~~~~~~~~~~~~
+            ~~~~~~~~~~~~~~~~~~~~ Pull image progress: Downloading ~~~~~~~~~~~~~~~~~~~~
+            ~~~~~~~~~~~~~~~~~~~~ Pull image progress: Downloading ~~~~~~~~~~~~~~~~~~~~
+            ~~~~~~~~~~~~~~~~~~~~ Pull image progress: Downloading ~~~~~~~~~~~~~~~~~~~~
+            ~~~~~~~~~~~~~~~~~~~~ Pull image progress: Downloading ~~~~~~~~~~~~~~~~~~~~
+            ~~~~~~~~~~~~~~~~~~~~ Pull image progress: Downloading ~~~~~~~~~~~~~~~~~~~~
+            ~~~~~~~~~~~~~~~~~~~~ Pull image progress: Downloading ~~~~~~~~~~~~~~~~~~~~
+            ~~~~~~~~~~~~~~~~~~~~ Pull image progress: Downloading ~~~~~~~~~~~~~~~~~~~~
+            ~~~~~~~~~~~~~~~~~~~~ Pull image progress: Downloading ~~~~~~~~~~~~~~~~~~~~
+            ~~~~~~~~~~~~~~~~~~~~ Pull image progress: Downloading ~~~~~~~~~~~~~~~~~~~~
+            ~~~~~~~~~~~~~~~~~~~~ Pull image progress: Downloading ~~~~~~~~~~~~~~~~~~~~
+            ~~~~~~~~~~~~~~~~~~~~ Pull image progress: Download complete ~~~~~~~~~~~~~~~~~~~~
             Build ABC23H01E01 - AB12345 - Default Job #5 (MY-JOB) started building on agent ls1Agent-test.artemistest.in.tum.de, jenkins version: 8.2.5
             Remote agent on host ls1Agent-test.artemistest.in.tum.de
             Build working directory is /opt/jenkinsagent/jenkins-agent-home/xml-data/build-dir/ABC23H01E01
