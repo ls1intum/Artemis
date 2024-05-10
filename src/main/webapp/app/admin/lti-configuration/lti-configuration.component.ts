@@ -1,14 +1,16 @@
 import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { faExclamationTriangle, faPencilAlt, faPlus, faSort, faTrash, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { LtiPlatformConfiguration } from 'app/admin/lti-configuration/lti-configuration.model';
 import { LtiConfigurationService } from 'app/admin/lti-configuration/lti-configuration.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { Subject } from 'rxjs';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { LTI_URLS } from 'app/admin/lti-configuration/lti-configuration.urls';
+import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
+import { combineLatest } from 'rxjs';
 
 @Component({
     selector: 'jhi-lti-configuration',
@@ -17,11 +19,15 @@ import { LTI_URLS } from 'app/admin/lti-configuration/lti-configuration.urls';
 export class LtiConfigurationComponent implements OnInit {
     course: Course;
     platforms: LtiPlatformConfiguration[];
-
+    ascending!: boolean;
     activeTab = 1;
-
     predicate = 'id';
     reverse = false;
+
+    // page information
+    page = 1;
+    itemsPerPage = ITEMS_PER_PAGE;
+    totalItems = 0;
 
     // Icons
     faSort = faSort;
@@ -39,16 +45,39 @@ export class LtiConfigurationComponent implements OnInit {
         private ltiConfigurationService: LtiConfigurationService,
         private sortService: SortService,
         private alertService: AlertService,
+        private activatedRoute: ActivatedRoute,
     ) {}
 
     /**
      * Gets the configuration for the course encoded in the route and fetches the exercises
      */
-    ngOnInit() {
-        this.ltiConfigurationService.findAll().subscribe((configuredLtiPlatforms) => {
-            if (configuredLtiPlatforms) {
-                this.platforms = configuredLtiPlatforms;
-            }
+    ngOnInit(): void {
+        combineLatest({ data: this.activatedRoute.data, params: this.activatedRoute.queryParamMap }).subscribe(({ data, params }) => {
+            const page = params.get('page');
+            this.page = page !== null ? +page : 1;
+            const sort = (params.get('sort') ?? data['defaultSort']).split(',');
+            this.predicate = sort[0];
+            this.ascending = sort[1] === 'asc';
+            this.loadData();
+        });
+    }
+
+    loadData(): void {
+        this.ltiConfigurationService
+            .query({
+                page: this.page - 1,
+                size: this.itemsPerPage,
+                sort: this.sort(),
+            })
+            .subscribe((res: HttpResponse<LtiPlatformConfiguration[]>) => this.onSuccess(res.body, res.headers));
+    }
+
+    transition(): void {
+        this.router.navigate(['/admin/lti-configuration'], {
+            queryParams: {
+                page: this.page,
+                sort: this.predicate + ',' + (this.ascending ? 'asc' : 'desc'),
+            },
         });
     }
 
@@ -119,5 +148,18 @@ export class LtiConfigurationComponent implements OnInit {
                 this.alertService.error('artemisApp.lti13.deletePlatformError');
             },
         });
+    }
+
+    private sort(): string[] {
+        const result = [this.predicate + ',' + (this.ascending ? 'asc' : 'desc')];
+        if (this.predicate !== 'id') {
+            result.push('id');
+        }
+        return result;
+    }
+
+    private onSuccess(platforms: LtiPlatformConfiguration[] | null, headers: HttpHeaders): void {
+        this.totalItems = Number(headers.get('X-Total-Count'));
+        this.platforms = platforms || [];
     }
 }
