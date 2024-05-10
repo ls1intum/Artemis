@@ -74,7 +74,6 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
 
     private updateIsImportBasedOnUrl() {
         let isImportFromExistingExercise = false;
-        const isImportFromFile = false;
         this.urlSubscription = this.activatedRoute.url
             .pipe(
                 tap((segments) => {
@@ -84,7 +83,7 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
                 }),
             )
             .subscribe(() => {
-                this.isImport = isImportFromExistingExercise || isImportFromFile;
+                this.isImport = isImportFromExistingExercise;
             });
     }
 
