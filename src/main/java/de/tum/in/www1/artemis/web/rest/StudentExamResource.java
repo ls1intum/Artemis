@@ -898,6 +898,7 @@ public class StudentExamResource {
      * @param examId the exam to which the student exams belong to
      * @return the longest working time of the exam (in seconds)
      */
+    @EnforceAtLeastInstructor
     @GetMapping("/exams/{examId}/longest-working-time")
     public ResponseEntity<Integer> getLongestWorkingTimeForExam(@PathVariable Long examId) {
         Integer longestWorkingTime = studentExamRepository.findLongestWorkingTimeForExam(examId);
