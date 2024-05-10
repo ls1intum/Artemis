@@ -6,7 +6,12 @@
     >
         <div class="col-auto d-md-block my-2">
             <h3 class="fw-medium">
-                <fa-icon [icon]="getIcon(competency.taxonomy)" />
+                <fa-icon
+                    [icon]="getIcon(competency.taxonomy)"
+                    [fixedWidth]="true"
+                    [ngbTooltip]="'artemisApp.competency.taxonomies.' + (competency.taxonomy ?? 'none') | artemisTranslate"
+                    container="body"
+                />
             </h3>
         </div>
         <div class="col-sm col py-2">
@@ -16,7 +21,7 @@
             <div class="col-sm col py-2" style="max-width: 200px" [class.header-tooltip-open]="open">
                 <div class="row mb-2">
                     <div class="col-auto d-md-block">
-                        <fa-icon [icon]="faList" />
+                        <fa-icon [icon]="faList" [ngbTooltip]="'artemisApp.competency.taxonomies.' + (competency.taxonomy ?? 'none') | artemisTranslate" />
                     </div>
                     <div class="col">
                         <jhi-student-analytics-dashboard-progress-bar [size]="'small'" [maxValue]="100" [currentValue]="exercisesProgress" [inline]="true" />
@@ -36,24 +41,37 @@
             </div>
         } @else {
             <div class="col-sm col py-2" style="max-width: 275px" [class.header-tooltip-closed]="!open">
-                <button (click)="navigateToCompetencyDetailPage($event)" class="btn btn-primary w-100 my-2">View Lectures and Exercises</button>
+                <button
+                    (click)="navigateToCompetencyDetailPage($event)"
+                    class="btn btn-primary w-100 my-2"
+                    jhiTranslate="artemisApp.studentAnalyticsDashboard.button.viewLecturesAndExercises"
+                ></button>
             </div>
         }
     </button>
     <div [class.competency-accordion-body-open]="open" [class.competency-accordion-body-closed]="!open" class="competency-accordion-body">
         <div class="row align-items-center justify-content-center">
             <div class="col-sm">
-                <jhi-student-analytics-dashboard-progress-bar [maxValue]="100" [currentValue]="exercisesProgress" [icon]="faList" [title]="'Exercises'" />
+                <jhi-student-analytics-dashboard-progress-bar
+                    [maxValue]="100"
+                    [currentValue]="exercisesProgress"
+                    [icon]="faList"
+                    [title]="'artemisApp.studentAnalyticsDashboard.competencyAccordion.exercises' | artemisTranslate"
+                />
             </div>
             <div class="col-sm py-2">
-                <jhi-student-analytics-dashboard-progress-bar [maxValue]="100" [currentValue]="lectureUnitsProgress" [icon]="faPdf" [title]="'Lectures'" />
+                <jhi-student-analytics-dashboard-progress-bar
+                    [maxValue]="100"
+                    [currentValue]="lectureUnitsProgress"
+                    [icon]="faPdf"
+                    [title]="'artemisApp.studentAnalyticsDashboard.competencyAccordion.lectures' | artemisTranslate"
+                />
             </div>
         </div>
-        <!-- Add your new row here -->
         @if (nextExercise) {
             <div class="row align-items-center justify-content-center mt-2">
                 <div class="col">
-                    <h5><b>Next exercise</b></h5>
+                    <h5><b jhiTranslate="artemisApp.studentAnalyticsDashboard.competencyAccordion.nextExercise.title"></b></h5>
                     <jhi-course-exercise-row [exercise]="nextExercise" [course]="competency!.course!" />
                 </div>
             </div>

@@ -9,26 +9,30 @@
         <h1 [style]="{ 'text-align': 'center' }">Work in progress</h1>
     </div>
 
-    <div class="competency-accordion-container row justify-content-center w-100">
-        <div class="competency-accordion-header">
-            <h2>Competencies</h2>
-        </div>
-        <div class="competency-accordion-body" [ngClass]="this.openedAccordionIndex !== null ? 'competency-accordion-body-open' : 'competency-accordion-body-collapsed'">
-            @for (competency of competencies; track competency.id; let i = $index) {
-                <jhi-competency-accordion
-                    #competencyAccordionElement
-                    [course]="course"
-                    [competency]="competency"
-                    [index]="i"
-                    [openedIndex]="openedAccordionIndex"
-                    (accordionToggle)="handleToggle($event)"
-                />
-            }
-        </div>
+    <div class="competency-accordion-container row justify-content-center align-items-center w-100">
+        @if (competencies.length > 0) {
+            <div class="competency-accordion-header">
+                <h2 jhiTranslate="artemisApp.studentAnalyticsDashboard.competencyAccordion.title"></h2>
+            </div>
+            <div class="competency-accordion-body" [ngClass]="this.openedAccordionIndex !== null ? 'competency-accordion-body-open' : 'competency-accordion-body-collapsed'">
+                @for (competency of competencies; track competency.id; let i = $index) {
+                    <jhi-competency-accordion
+                        #competencyAccordionElement
+                        [course]="course"
+                        [competency]="competency"
+                        [index]="i"
+                        [openedIndex]="openedAccordionIndex"
+                        (accordionToggle)="handleToggle($event)"
+                    />
+                }
+            </div>
+        } @else {
+            <h3 jhiTranslate="artemisApp.studentAnalyticsDashboard.competencyAccordion.noData"></h3>
+        }
     </div>
     @if (learningPathsEnabled) {
         <div class="competency-accordion-container row justify-content-center w-100" [jhiFeatureToggleHide]="FeatureToggle.LearningPaths">
-            <button class="btn btn-primary mt-2" (click)="navigateToLearningPaths()">Show Learning Path</button>
+            <button class="btn btn-primary mt-2" (click)="navigateToLearningPaths()" jhiTranslate="artemisApp.studentAnalyticsDashboard.button.showLearningPath"></button>
         </div>
     }
 </div>
