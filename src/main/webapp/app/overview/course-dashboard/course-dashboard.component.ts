@@ -14,6 +14,7 @@ import { CourseDashboardService } from 'app/overview/course-dashboard/course-das
 import { ExerciseMetrics } from 'app/entities/student-metrics.model';
 import { ExerciseLateness } from 'app/overview/course-dashboard/course-exercise-lateness/course-exercise-lateness.component';
 import { ExercisePerformance } from 'app/overview/course-dashboard/course-exercise-performance/course-exercise-performance.component';
+import { round } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-course-dashboard',
@@ -32,6 +33,9 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     private courseExercises: Exercise[] = [];
     public course?: Course;
     public data: any;
+
+    score: number = 30;
+    maxScore: number = 100;
 
     metricsSubscription?: Subscription;
 
@@ -163,4 +167,5 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     }
 
     protected readonly FeatureToggle = FeatureToggle;
+    protected readonly round = round;
 }

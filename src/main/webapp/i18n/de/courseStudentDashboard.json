@@ -1,6 +1,9 @@
 {
     "artemisApp": {
         "courseStudentDashboard": {
+            "overallPerformance": {
+                "title": "Gesamtleistung"
+            },
             "exercisePerformance": {
                 "title": "Leistungen in den Übungen",
                 "yourScoreLabel": "Dein Ergebnis",

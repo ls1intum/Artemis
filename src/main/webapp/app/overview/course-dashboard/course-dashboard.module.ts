@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { CourseDashboardComponent } from 'app/overview/course-dashboard/course-dashboard.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -32,6 +33,7 @@ const routes: Routes = [
     imports: [
         CommonModule,
         RouterModule.forChild(routes),
+        NgbModule,
         ArtemisSharedModule,
         FontAwesomeModule,
         ArtemisDataTableModule,
