@@ -23,7 +23,13 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
     @Input() exercise: ProgrammingExercise;
     @Input() isExamMode: boolean;
     @Input() readOnly: boolean;
-    @Input() importOptions: ImportOptions | undefined;
+    // @Input() importOptions: ImportOptions | undefined;
+
+    importOptions: ImportOptions = {
+        recreateBuildPlans: false,
+        updateTemplate: false,
+        setTestCaseVisibilityToAfterDueDate: false,
+    };
 
     @ViewChildren(ProgrammingExerciseTestScheduleDatePickerComponent) datePickerComponents: QueryList<ProgrammingExerciseTestScheduleDatePickerComponent>;
 

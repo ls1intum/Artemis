@@ -106,13 +106,7 @@
             <label jhiTranslate="artemisApp.programmingExercise.timeline.timelineLabel" for="timeline"></label>
             <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.timeline.timelineTooltip" />
         </div>
-        <jhi-programming-exercise-lifecycle
-            id="timeline"
-            [exercise]="programmingExercise"
-            [isExamMode]="programmingExerciseCreationConfig.isExamMode"
-            [readOnly]="false"
-            [importOptions]="importOptions"
-        />
+        <jhi-programming-exercise-lifecycle id="timeline" [exercise]="programmingExercise" [isExamMode]="programmingExerciseCreationConfig.isExamMode" [readOnly]="false" />
     </div>
     @if (programmingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC) {
         <div class="form-group">
