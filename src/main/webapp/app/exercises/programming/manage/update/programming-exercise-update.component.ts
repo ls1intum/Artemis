@@ -4,7 +4,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { Observable, Subject, Subscription } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { ProgrammingExercise, ProgrammingLanguage, ProjectType, resetProgrammingDates } from 'app/entities/programming-exercise.model';
+import { ImportOptions, ProgrammingExercise, ProgrammingLanguage, ProjectType, resetProgrammingDates } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from '../services/programming-exercise.service';
 import { FileService } from 'app/shared/http/file.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -38,17 +38,6 @@ import { ProgrammingExerciseDifficultyComponent } from 'app/exercises/programmin
 import { ProgrammingExerciseLanguageComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-language.component';
 import { ProgrammingExerciseGradingComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-grading.component';
 import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.component';
-
-/**
- * - {@link ImportOptions.recreateBuildPlans} Option determining whether the build plans should be recreated or copied from the imported exercise
- * - {@link ImportOptions.updateTemplate} Option determining whether the template files in the repositories should be updated
- * - {@link ImportOptions.setTestCaseVisibilityToAfterDueDate} Option determining whether the test cases should be hidden until the release date of the results
- */
-export interface ImportOptions {
-    recreateBuildPlans: boolean;
-    updateTemplate: boolean;
-    // setTestCaseVisibilityToAfterDueDate: boolean;
-}
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -153,7 +142,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     public readonly importOptions: ImportOptions = {
         recreateBuildPlans: false,
         updateTemplate: false,
-        // setTestCaseVisibilityToAfterDueDate: false,
+        setTestCaseVisibilityToAfterDueDate: false,
     };
     public originalStaticCodeAnalysisEnabled: boolean | undefined;
 

@@ -18,6 +18,7 @@
                 [isExamMode]="isExamMode"
                 [isImport]="isImportFromExistingExercise || isImportFromFile"
                 [isLocal]="isLocal"
+                [importOptions]="importOptions"
             />
             <hr class="mb-5" />
             <jhi-programming-exercise-difficulty
@@ -38,6 +39,7 @@
                 class="form-step"
                 [programmingExercise]="programmingExercise"
                 [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
+                [importOptions]="importOptions"
             />
             @if (!isExamMode) {
                 <jhi-exercise-update-plagiarism [exercise]="programmingExercise" />
