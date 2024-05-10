@@ -15,7 +15,14 @@
         </div>
         <div class="competency-accordion-body" [ngClass]="this.openedAccordionIndex !== null ? 'competency-accordion-body-open' : 'competency-accordion-body-collapsed'">
             @for (competency of competencies; track competency.id; let i = $index) {
-                <jhi-competency-accordion [course]="course" [competency]="competency" [index]="i" [openedIndex]="openedAccordionIndex" (accordionToggle)="handleToggle($event)" />
+                <jhi-competency-accordion
+                    #competencyAccordionElement
+                    [course]="course"
+                    [competency]="competency"
+                    [index]="i"
+                    [openedIndex]="openedAccordionIndex"
+                    (accordionToggle)="handleToggle($event)"
+                />
             }
         </div>
     </div>

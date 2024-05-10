@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { Subscription } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -10,6 +10,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ICompetencyAccordionToggleEvent } from 'app/shared/competency/interfaces/competency-accordion-toggle-event.interface';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-course-dashboard',
@@ -30,6 +31,8 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
 
     public course?: Course;
     public data: any;
+
+    @ViewChildren('competencyAccordionElement', { read: ElementRef }) competencyAccordions: QueryList<ElementRef>;
 
     constructor(
         private courseStorageService: CourseStorageService,
@@ -66,6 +69,11 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
                 next: (response) => {
                     this.competencies = response.body!;
                     this.isLoading = false;
+                    // scroll to the current competency
+                    const scrollIndex = this.currentCompetencyIndex !== -1 ? this.currentCompetencyIndex : 0;
+                    setTimeout(() => {
+                        this.scrollToAccordion(scrollIndex);
+                    }, 0);
                 },
                 error: (error: HttpErrorResponse) => {
                     onError(this.alertService, error);
@@ -73,6 +81,17 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
                 },
             }),
         );
+    }
+
+    get currentCompetencyIndex() {
+        return this.competencies.findIndex((competency) => dayjs().isBefore(competency.softDueDate));
+    }
+
+    private scrollToAccordion(index: number) {
+        const accordionsArray = this.competencyAccordions.toArray();
+        if (index !== -1 && accordionsArray[index]) {
+            accordionsArray[index].nativeElement.scrollIntoView({ behavior: 'smooth' });
+        }
     }
 
     private setCourse(course?: Course) {
