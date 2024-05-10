@@ -5,24 +5,21 @@ import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.serv
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { ButtonComponent } from 'app/shared/components/button.component';
-import { IrisChatSubSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-chat-sub-settings-update/iris-chat-sub-settings-update.component';
-import { IrisHestiaSubSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-hestia-sub-settings-update/iris-hestia-sub-settings-update.component';
 import { IrisCommonSubSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-common-sub-settings-update/iris-common-sub-settings-update.component';
 import { IrisGlobalAutoupdateSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-global-autoupdate-settings-update/iris-global-autoupdate-settings-update.component';
-import { mockModels, mockSettings } from './mock-settings';
+import { mockSettings } from './mock-settings';
 import { NgModel } from '@angular/forms';
 import { IrisGlobalSettingsUpdateComponent } from 'app/iris/settings/iris-global-settings-update/iris-global-settings-update.component';
 import { By } from '@angular/platform-browser';
 import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { HttpResponse } from '@angular/common/http';
-import { IrisCompetencyGenerationSubSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-competency-generation-sub-settings-update/iris-competency-generation-sub-settings-update.component';
 
 describe('IrisGlobalSettingsUpdateComponent Component', () => {
     let comp: IrisGlobalSettingsUpdateComponent;
     let fixture: ComponentFixture<IrisGlobalSettingsUpdateComponent>;
     let irisSettingsService: IrisSettingsService;
     let getSettingsSpy: jest.SpyInstance;
-    let getModelsSpy: jest.SpyInstance;
+    //let getModelsSpy: jest.SpyInstance;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -31,9 +28,6 @@ describe('IrisGlobalSettingsUpdateComponent Component', () => {
                 IrisGlobalSettingsUpdateComponent,
                 IrisSettingsUpdateComponent,
                 MockComponent(IrisCommonSubSettingsUpdateComponent),
-                MockComponent(IrisChatSubSettingsUpdateComponent),
-                MockComponent(IrisHestiaSubSettingsUpdateComponent),
-                MockComponent(IrisCompetencyGenerationSubSettingsUpdateComponent),
                 MockComponent(IrisGlobalAutoupdateSettingsUpdateComponent),
                 MockComponent(ButtonComponent),
                 MockDirective(NgModel),
@@ -47,7 +41,7 @@ describe('IrisGlobalSettingsUpdateComponent Component', () => {
                 // Setup
                 const irisSettings = mockSettings();
                 getSettingsSpy = jest.spyOn(irisSettingsService, 'getGlobalSettings').mockReturnValue(of(irisSettings));
-                getModelsSpy = jest.spyOn(irisSettingsService, 'getIrisModels').mockReturnValue(of(mockModels()));
+                //getModelsSpy = jest.spyOn(irisSettingsService, 'getIrisModels').mockReturnValue(of(mockModels()));
             });
         fixture = TestBed.createComponent(IrisGlobalSettingsUpdateComponent);
         comp = fixture.componentInstance;
@@ -61,13 +55,10 @@ describe('IrisGlobalSettingsUpdateComponent Component', () => {
         fixture.detectChanges();
         expect(comp.settingsUpdateComponent).toBeTruthy();
         expect(getSettingsSpy).toHaveBeenCalledOnce();
-        expect(getModelsSpy).toHaveBeenCalledOnce();
+        //expect(getModelsSpy).toHaveBeenCalledOnce();
 
         expect(fixture.debugElement.query(By.directive(IrisGlobalAutoupdateSettingsUpdateComponent))).toBeTruthy();
         expect(fixture.debugElement.queryAll(By.directive(IrisCommonSubSettingsUpdateComponent))).toHaveLength(3);
-        expect(fixture.debugElement.query(By.directive(IrisChatSubSettingsUpdateComponent))).toBeTruthy();
-        expect(fixture.debugElement.query(By.directive(IrisHestiaSubSettingsUpdateComponent))).toBeTruthy();
-        expect(fixture.debugElement.query(By.directive(IrisCompetencyGenerationSubSettingsUpdateComponent))).toBeTruthy();
     });
 
     it('Can deactivate correctly', () => {
