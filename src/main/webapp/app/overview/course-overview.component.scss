@@ -1,8 +1,10 @@
 $menu-width-closed: 64px;
 $menu-width-open: 220px;
+$padding: 1rem;
 
 .sidebar-container {
     width: $menu-width-open;
+    border-bottom: 1px solid var(--body-bg);
     &.collapsed {
         width: $menu-width-closed !important;
     }
@@ -25,26 +27,26 @@ $menu-width-open: 220px;
 }
 
 .mat-drawer-container {
-    height: calc(100vh - var(--sidebar-footer-height-prod));
+    height: calc(100vh - var(--sidebar-footer-height-prod) + $padding);
     &.sidenav-height-dev {
-        height: calc(100vh - var(--sidebar-footer-height-dev));
+        height: calc(100vh - var(--sidebar-footer-height-dev) + $padding);
     }
 
     @media (max-width: 768px) {
-        height: calc(100vh - var(--sidebar-footer-height-prod)) !important;
+        height: calc(100vh - var(--sidebar-footer-height-prod) + $padding) !important;
     }
 
     .mat-drawer {
         box-sizing: content-box;
         width: $menu-width-open;
         transition: width 0.2s ease-in-out !important;
-        height: calc(100vh - var(--sidebar-footer-height-prod));
+        height: calc(100vh - var(--sidebar-footer-height-prod) + $padding);
 
         &.sidenav-height-dev {
-            height: calc(100vh - var(--sidebar-footer-height-dev));
+            height: calc(100vh - var(--sidebar-footer-height-dev) + $padding);
         }
         @media (max-width: 768px) {
-            height: calc(100vh - var(--sidebar-footer-height-prod)) !important;
+            height: calc(100vh - var(--sidebar-footer-height-prod) + $padding) !important;
         }
     }
 

@@ -96,6 +96,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     ltiEnabled: boolean;
     standardizedCompetenciesEnabled = false;
     agentName?: string;
+    isStudentView: boolean;
 
     courseTitle?: string;
     exerciseTitle?: string;
@@ -204,6 +205,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
+        console.log('Navbar Init');
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
                 this.inProduction = profileInfo.inProduction;
@@ -243,7 +245,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
         });
 
         this.buildBreadcrumbs(this.router.url);
-        this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe((event: NavigationEnd) => this.buildBreadcrumbs(event.url));
+        this.isStudentView = this.router.url.startsWith('/courses');
+        this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe((event: NavigationEnd) => {
+            this.isStudentView = this.router.url.startsWith('/courses');
+
+            this.buildBreadcrumbs(event.url);
+        });
     }
 
     ngOnDestroy(): void {

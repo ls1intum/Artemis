@@ -135,7 +135,7 @@
         <ul class="navbar-nav ms-auto" [class.vertical]="isNavbarNavVertical">
             @if (currAccount && !isExamActive) {
                 <li class="nav-item" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
-                    <a class="guided-tour-overview nav-link" routerLink="/courses" (click)="collapseNavbar()" id="overview-menu">
+                    <a class="guided-tour-overview nav-link py-0" routerLink="/courses" (click)="collapseNavbar()" id="overview-menu">
                         <span>
                             <fa-icon [icon]="faThLarge" />
                             <span jhiTranslate="global.menu.overview"></span>
@@ -151,7 +151,7 @@
                 [routerLinkActiveOptions]="{ exact: true }"
             >
                 @if (!isExamActive) {
-                    <a class="guided-tour-course-admin nav-link" routerLink="/course-management" (click)="collapseNavbar()" id="course-admin-menu">
+                    <a class="guided-tour-course-admin nav-link py-0" routerLink="/course-management" (click)="collapseNavbar()" id="course-admin-menu">
                         <span>
                             <fa-icon [icon]="faThList" />
                             <span jhiTranslate="global.menu.course"></span>
@@ -168,7 +168,7 @@
                 [routerLinkActiveOptions]="{ exact: true }"
             >
                 @if (!isExamActive) {
-                    <a class="guided-tour-admin nav-link dropdown-toggle" ngbDropdownToggle id="admin-menu">
+                    <a class="guided-tour-admin nav-link dropdown-toggle py-0" ngbDropdownToggle id="admin-menu">
                         <span>
                             <fa-icon [icon]="faUserPlus" />
                             <span jhiTranslate="global.menu.admin.main"></span>
@@ -327,8 +327,8 @@
     </div>
 </nav>
 <jhi-system-notification />
-<div class="breadcrumb-container">
-    @if (!isExamActive && breadcrumbs && breadcrumbs.length > 0) {
+@if (!isExamActive && !isStudentView && breadcrumbs?.length) {
+    <div class="breadcrumb-container">
         <div>
             <ol class="breadcrumb">
                 @for (breadcrumb of breadcrumbs; track breadcrumb; let i = $index) {
@@ -372,6 +372,6 @@
                 }
             </ol>
         </div>
-    }
-</div>
+    </div>
+}
 <jhi-guided-tour />

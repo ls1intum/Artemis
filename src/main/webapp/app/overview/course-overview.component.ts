@@ -119,9 +119,9 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     thresholdsForEachSidebarItem: number[] = [];
     dropdownOffset: number;
     dropdownClickNumber: number = 0;
-    readonly WINDOW_OFFSET: number = 300;
+    readonly WINDOW_OFFSET: number = 236;
     readonly ITEM_HEIGHT: number = 38;
-    readonly BREADCRUMB_AND_NAVBAR_HEIGHT: number = 88;
+    readonly BREADCRUMB_AND_NAVBAR_HEIGHT: number = 56;
 
     private conversationServiceInstantiated = false;
     private checkedForUnreadMessages = false;

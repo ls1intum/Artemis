@@ -1036,14 +1036,14 @@ body.transparent-background {
 }
 
 .scrollable-content {
-    height: calc(100vh - var(--sidebar-footer-height-prod) - var(--header-height));
+    height: calc(100vh - var(--sidebar-footer-height-prod) - var(--header-height-student-view));
     overflow-y: auto;
 
     &.content-height-dev {
-        height: calc(100vh - var(--sidebar-footer-height-dev) - var(--header-height));
+        height: calc(100vh - var(--sidebar-footer-height-dev) - var(--header-height-student-view));
     }
     @media (max-width: 768px) {
-        height: calc(100vh - var(--sidebar-footer-height-prod) - var(--header-height)) !important;
+        height: calc(100vh - var(--sidebar-footer-height-prod) - var(--header-height-student-view)) !important;
     }
 }
 
