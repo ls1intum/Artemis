@@ -6,6 +6,9 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import java.util.Set;
+import java.util.TreeSet;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.mockito.ArgumentMatcher;
@@ -87,6 +90,7 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
     private void activateSubSettings(IrisSubSettings settings) {
         settings.setEnabled(true);
         settings.setPreferredModel(null);
+        settings.setAllowedModels(new TreeSet<>(Set.of("dummy")));
     }
 
     protected void activateIrisFor(Course course) {
