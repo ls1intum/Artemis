@@ -30,6 +30,7 @@ import java.util.Set;
 import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
@@ -252,7 +253,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         localVCLocalCITestService.testLatestSubmission(participation.getId(), commitHash, 1, false);
     }
 
-    @Test
+    @RepeatedTest(20)
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCannotFindResults() {
         ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
@@ -265,7 +266,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
         localVCServletService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
         // Should return a build result that indicates that the build failed.
-        localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), commitHash, 0, true, false, 0, 20);
+        localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), commitHash, 0, true, false, 0, 5);
     }
 
     @Test
