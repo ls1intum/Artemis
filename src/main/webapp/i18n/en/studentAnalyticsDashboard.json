@@ -9,7 +9,8 @@
                     "noData": "No exercises available for this competency."
                 },
                 "exercises": "Exercises",
-                "lectures": "Lectures"
+                "lectures": "Lectures",
+                "progress": "Progress: {{progress}}%"
             },
             "button": {
                 "showLearningPath": "Show Learning Path",

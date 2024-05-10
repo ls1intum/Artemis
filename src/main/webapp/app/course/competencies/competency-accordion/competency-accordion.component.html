@@ -21,7 +21,7 @@
             <div class="col-sm col py-2" style="max-width: 200px" [class.header-tooltip-open]="open">
                 <div class="row mb-2">
                     <div class="col-auto d-md-block">
-                        <fa-icon [icon]="faList" [ngbTooltip]="'artemisApp.competency.taxonomies.' + (competency.taxonomy ?? 'none') | artemisTranslate" />
+                        <fa-icon [icon]="faList" [ngbTooltip]="'artemisApp.studentAnalyticsDashboard.competencyAccordion.exercises' | artemisTranslate" />
                     </div>
                     <div class="col">
                         <jhi-student-analytics-dashboard-progress-bar [size]="'small'" [maxValue]="100" [currentValue]="exercisesProgress" [inline]="true" />
@@ -29,7 +29,7 @@
                 </div>
                 <div class="row align-items-center justify-content-center">
                     <div class="col-auto d-md-block">
-                        <fa-icon [icon]="faPdf" />
+                        <fa-icon [icon]="faPdf" [ngbTooltip]="'artemisApp.studentAnalyticsDashboard.competencyAccordion.lectures' | artemisTranslate" />
                     </div>
                     <div class="col">
                         <jhi-student-analytics-dashboard-progress-bar [size]="'small'" [maxValue]="100" [currentValue]="lectureUnitsProgress" [inline]="true" />

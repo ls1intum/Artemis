@@ -11,7 +11,11 @@
             </div>
         </div>
     }
-    <div class="progress-background" [style.background-color]="backgroundColor">
+    <div
+        class="progress-background"
+        [style.background-color]="backgroundColor"
+        [ngbTooltip]="'artemisApp.studentAnalyticsDashboard.competencyAccordion.progress' | artemisTranslate: { progress: percentage }"
+    >
         <div class="progress" [style.width]="percentage + '%'" [style.background-color]="progressColor">
             @if (showLabel) {
                 <span>{{ currentValue }} / {{ maxValue }}</span>

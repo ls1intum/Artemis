@@ -9,7 +9,8 @@
                     "noData": "Für diese Kompetenz sind keine Aufgaben verfügbar."
                 },
                 "exercises": "Aufgaben",
-                "lectures": "Vorlesungen"
+                "lectures": "Vorlesungen",
+                "progress": "Fortschritt: {{progress}}%"
             },
             "button": {
                 "showLearningPath": "Lernpfad anzeigen",
