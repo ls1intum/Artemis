@@ -14,7 +14,6 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.ExerciseInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.ResourceTimestampDTO;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.ScoreDTO;
-import de.tum.in.www1.artemis.web.rest.dto.metrics.SubmissionTimestampDTO;
 
 /**
  * Spring Data JPA repository to fetch exercise related metrics.
@@ -37,7 +36,7 @@ public interface ExerciseMetricsRepository extends JpaRepository<Exercise, Long>
     Set<ExerciseInformationDTO> findAllExerciseInformationByCourseId(long courseId);
 
     @Query("""
-            SELECT new de.tum.in.www1.artemis.web.rest.dto.metrics.ScoreDTO(p.exercise.id, AVG(p.lastScore))
+            SELECT new de.tum.in.www1.artemis.web.rest.dto.metrics.ScoreDTO(p.exercise.id, AVG(COALESCE(p.lastScore, 0)))
             FROM ParticipantScore p
             WHERE p.exercise.id IN :exerciseIds
             GROUP BY p.exercise.id
@@ -89,30 +88,4 @@ public interface ExerciseMetricsRepository extends JpaRepository<Exercise, Long>
                 )
             """)
     Set<ResourceTimestampDTO> findLatestSubmissionDates(@Param("exerciseIds") Set<Long> exerciseIds);
-
-    /**
-     * Get the submission timestamps for a user in a set of exercises.
-     *
-     * @param exerciseIds the ids of the exercises
-     * @param userId      the id of the user
-     * @return the submission timestamps for the user in the exercises
-     */
-    @Query("""
-            SELECT new de.tum.in.www1.artemis.web.rest.dto.metrics.SubmissionTimestampDTO(s.id, s.submissionDate, r.score)
-            FROM Submission s
-                LEFT JOIN StudentParticipation p ON s.participation.id = p.id
-                LEFT JOIN p.exercise e
-                LEFT JOIN p.team t
-                LEFT JOIN t.students u
-                LEFT JOIN s.results r
-            WHERE s.submitted = TRUE
-                AND e.id IN :exerciseIds
-                AND (p.student.id = :userId OR u.id = :userId)
-                AND r.score = (
-                    SELECT MAX(r2.score)
-                    FROM Result r2
-                    WHERE r2.submission.id = s.id
-                )
-            """)
-    Set<SubmissionTimestampDTO> findSubmissionTimestampsForUser(@Param("exerciseIds") Set<Long> exerciseIds, @Param("userId") long userId);
 }

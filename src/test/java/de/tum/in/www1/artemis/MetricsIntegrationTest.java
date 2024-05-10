@@ -4,22 +4,28 @@ import static de.tum.in.www1.artemis.service.util.ZonedDateTimeUtil.toRelativeTi
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
+import java.time.Instant;
 import java.util.Comparator;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.repository.ParticipantScoreRepository;
+import de.tum.in.www1.artemis.repository.metrics.ExerciseMetricsRepository;
 import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.ExerciseInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.StudentMetricsDTO;
@@ -34,6 +40,9 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Autowired
     private ParticipantScoreRepository participantScoreRepository;
 
+    @Autowired
+    private ExerciseMetricsRepository repository;
+
     private Course course;
 
     private static final String STUDENT_OF_COURSE = TEST_PREFIX + "student1";
@@ -46,13 +55,21 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @BeforeEach
     void setupTestScenario() {
+        // Prevents the ParticipantScoreScheduleService from scheduling tasks related to prior results
+        ReflectionTestUtils.setField(participantScoreScheduleService, "lastScheduledRun", Optional.of(Instant.now()));
+        ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 100;
+        participantScoreScheduleService.activate();
+
         userUtilService.addUsers(TEST_PREFIX, 3, 1, 1, 1);
 
         course = courseUtilService.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, true);
 
         userUtilService.createAndSaveUser(TEST_PREFIX + "user1337");
+    }
 
-        participantScoreScheduleService.activate();
+    @AfterEach
+    void cleanup() {
+        ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 500;
     }
 
     @Nested
@@ -86,7 +103,15 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         @Test
         @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
         void shouldReturnAverageScores() throws Exception {
-            await().until(() -> !participantScoreRepository.findAllByCourseId(course.getId()).isEmpty());
+            // Wait for the scheduler to execute its task
+            participantScoreScheduleService.executeScheduledTasks();
+            await().until(() -> participantScoreScheduleService.isIdle());
+
+            assertThat(participantScoreRepository.findAll()).isNotEmpty(); // FUCk
+
+            final var avgScore = repository.findAverageScore(Set.of(1L, 2L, 3L, 4L, 5L));
+            assertThat(avgScore).isNotEmpty();
+
             final var result = request.get("/api/metrics/course/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
             assertThat(result).isNotNull();
             assertThat(result.exerciseMetrics()).isNotNull();
@@ -127,17 +152,18 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             final var result = request.get("/api/metrics/course/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
             assertThat(result).isNotNull();
             assertThat(result.exerciseMetrics()).isNotNull();
-            final var averageLatestSubmissions = result.exerciseMetrics().latestSubmission();
+            final var latestSubmissions = result.exerciseMetrics().latestSubmission();
 
             final var exercises = exerciseRepository.findAllExercisesByCourseId(course.getId()).stream()
                     .map(exercise -> exerciseRepository.findWithEagerStudentParticipationsStudentAndSubmissionsById(exercise.getId()).orElseThrow());
 
-            final var expectedMap = exercises.collect(Collectors.toMap(Exercise::getId, exercise -> exercise.getStudentParticipations().stream()
-                    .flatMap(participation -> participation.getSubmissions().stream()).map(Submission::getSubmissionDate).max(Comparator.naturalOrder()).orElseThrow()));
+            final var expectedMap = exercises.collect(Collectors.toMap(Exercise::getId, exercise -> {
+                final var absoluteTime = exercise.getStudentParticipations().stream().flatMap(participation -> participation.getSubmissions().stream())
+                        .map(Submission::getSubmissionDate).max(Comparator.naturalOrder()).orElseThrow();
+                return toRelativeTime(exercise.getReleaseDate(), exercise.getDueDate(), absoluteTime);
+            }));
 
-            // isEqual is not possible due to the need of calling isEqual on the submission dates
-            assertThat(averageLatestSubmissions).hasSameSizeAs(expectedMap);
-            assertThat(averageLatestSubmissions).allSatisfy((id, latestSubmission) -> expectedMap.get(id).isEqual(latestSubmission));
+            assertThat(latestSubmissions).isEqualTo(expectedMap);
         }
     }
 }
