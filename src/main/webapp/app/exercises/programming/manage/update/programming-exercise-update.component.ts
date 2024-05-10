@@ -638,7 +638,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             });
         }
         if (this.isImportFromFile) {
-            // TODO this might need to be adjusted
             this.subscribeToSaveResponse(this.programmingExerciseService.importFromFile(this.programmingExercise, this.courseId));
         } else if (this.isImportFromExistingExercise) {
             this.subscribeToSaveResponse(this.programmingExerciseService.importExercise(this.programmingExercise, this.importOptions));
@@ -1093,7 +1092,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             recreateBuildPlans: this.importOptions.recreateBuildPlans,
             onRecreateBuildPlanOrUpdateTemplateChange: this.onRecreateBuildPlanOrUpdateTemplateChange,
             updateTemplate: this.importOptions.updateTemplate,
-            // setTestCaseVisibilityToAfterDueDate: this.importOptions.setTestCaseVisibilityToAfterDueDate,
             recreateBuildPlanOrUpdateTemplateChange: this.onRecreateBuildPlanOrUpdateTemplateChange,
             buildPlanLoaded: this.buildPlanLoaded,
         };
