@@ -83,6 +83,7 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
             ['exercise']: 'M',
             ['default']: 'M',
             ['conversation']: 'S',
+            ['exam']: 'L',
         };
         return this.sidebarData.sidebarType ? size[this.sidebarData.sidebarType] : 'M';
     }

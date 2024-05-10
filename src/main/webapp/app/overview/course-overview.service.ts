@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Exercise, getIcon } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
-import { Exam } from 'app/entities/exam.model';
+import { Exam, getColorForIcon, getIconForExam } from 'app/entities/exam.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
@@ -9,6 +9,7 @@ import { ParticipationService } from 'app/exercises/shared/participation/partici
 import { AccordionGroups, SidebarCardElement, TimeGroupCategory } from 'app/types/sidebar';
 import dayjs from 'dayjs/esm';
 import { cloneDeep } from 'lodash-es';
+import { faGraduationCap } from '@fortawesome/free-solid-svg-icons';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },
@@ -148,8 +149,14 @@ export class CourseOverviewService {
         const examCardItem: SidebarCardElement = {
             title: exam.title ?? '',
             id: exam.id ?? '',
-            subtitleLeft: exam.startDate ? dayjs(exam.startDate).format('MMM DD, YYYY') : 'No date associated',
-            size: 'M',
+            icon: faGraduationCap,
+            statusIcon: getIconForExam(exam),
+            subtitleLeft: exam.moduleNumber ?? 'CIT5230000',
+            startDateWithTime: exam.startDate ? dayjs(exam.startDate).format('MMM DD, YYYY - HH:mm') : 'No date associated',
+            workingTime: this.convertWorkingTimeToString(exam.workingTime ?? 0),
+            attainablePoints: exam.examMaxPoints ?? 0,
+            size: 'L',
+            statusIconColor: getColorForIcon(exam),
         };
         return examCardItem;
     }
@@ -190,5 +197,33 @@ export class CourseOverviewService {
 
     setSidebarCollapseState(storageId: string, isCollapsed: boolean) {
         localStorage.setItem('sidebar.collapseState.' + storageId, JSON.stringify(isCollapsed));
+    }
+
+    /**
+     * Converts workingTime property to a formatted string to be displayed in sidebar-cards
+     */
+    convertWorkingTimeToString(workingTime: number): string {
+        let workingTimeString = '';
+
+        if (workingTime) {
+            const hours = Math.floor(workingTime / 3600);
+            const minutes = Math.floor((workingTime % 3600) / 60);
+            const seconds = workingTime % 60;
+            if (hours > 0) {
+                workingTimeString += `${hours}h`;
+                if (minutes > 0) {
+                    workingTimeString += ` ${minutes} min`;
+                }
+            } else if (minutes > 0) {
+                workingTimeString += `${minutes} min`;
+                if (seconds > 0) {
+                    workingTimeString += ` ${seconds} sec`;
+                }
+            } else {
+                workingTimeString += `${seconds} sec`;
+            }
+        }
+
+        return workingTimeString;
     }
 }

@@ -77,4 +77,28 @@ export interface SidebarCardElement {
      * Set for Exercises. Will be removed after refactoring
      */
     exercise?: Exercise;
+
+    // TODO Extra Exam Part
+    /**
+     * This is a string which may define an icon for the status of the exam.
+     * It has to be a valid FontAwesome icon name and will be displayed in the
+     * 'regular' style.
+     */
+    statusIcon?: IconProp;
+    /**
+     * Set for Exam, identifies the color of the status icon
+     */
+    statusIconColor?: string;
+    /**
+     * Set for Exam, shows the start date and time
+     */
+    startDateWithTime?: string;
+    /**
+     * Set for Exam, shows the working time
+     */
+    workingTime?: string;
+    /**
+     * Set for exam, shows the maximum attainable Points
+     */
+    attainablePoints?: number;
 }
