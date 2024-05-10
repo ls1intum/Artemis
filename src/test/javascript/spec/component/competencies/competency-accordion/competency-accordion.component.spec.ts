@@ -70,7 +70,7 @@ describe('CompetencyAccordionComponent', () => {
     it('should render progress bar', () => {
         component.competency = { exercises: [{ completed: true }, { completed: false }] } as Competency;
         fixture.detectChanges();
-        const progressBarElement = fixture.debugElement.query(By.css('jhi-progress-bar'));
+        const progressBarElement = fixture.debugElement.query(By.css('jhi-student-analytics-dashboard-progress-bar'));
         expect(progressBarElement).toBeTruthy();
     });
 
@@ -92,14 +92,14 @@ describe('CompetencyAccordionComponent', () => {
     it('should render competency exercises progress bar', () => {
         component.competency = { exercises: [{ completed: true }, { completed: false }] } as Competency;
         fixture.detectChanges();
-        const progressBarElement = fixture.debugElement.query(By.css('jhi-progress-bar'));
+        const progressBarElement = fixture.debugElement.query(By.css('jhi-student-analytics-dashboard-progress-bar'));
         expect(progressBarElement).toBeTruthy();
     });
 
     it('should render competency lecture units progress bar', () => {
         component.competency = { lectureUnits: [{ completed: true }, { completed: false }] } as Competency;
         fixture.detectChanges();
-        const progressBarElement = fixture.debugElement.query(By.css('jhi-progress-bar'));
+        const progressBarElement = fixture.debugElement.query(By.css('jhi-student-analytics-dashboard-progress-bar'));
         expect(progressBarElement).toBeTruthy();
     });
 

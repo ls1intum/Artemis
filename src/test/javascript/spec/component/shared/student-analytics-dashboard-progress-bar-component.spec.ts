@@ -4,17 +4,20 @@ import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
 import { faList } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { MockModule } from 'ng-mocks';
+import { MockModule, MockPipe } from 'ng-mocks';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisTestModule } from '../../test.module';
 
-describe('ProgressBarComponent', () => {
+describe('StudentAnalyticsDashboardProgressBarComponent', () => {
     let component: StudentAnalyticsDashboardProgressBarComponent;
     let fixture: ComponentFixture<StudentAnalyticsDashboardProgressBarComponent>;
     let debugElement: DebugElement;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [MockModule(FontAwesomeModule)],
-            declarations: [StudentAnalyticsDashboardProgressBarComponent],
+            imports: [ArtemisTestModule, MockModule(FontAwesomeModule), MockModule(NgbTooltipModule)],
+            declarations: [StudentAnalyticsDashboardProgressBarComponent, MockPipe(ArtemisTranslatePipe)],
         })
             .compileComponents()
             .then(() => {
