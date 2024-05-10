@@ -26,7 +26,7 @@
         <h3 class="fw-medium" jhiTranslate="artemisApp.studentDashboard.title"></h3>
     </div>
 
-    @if (regularCourses.length && recentlyAccessedCourses.length) {
+    @if (regularCourses.length) {
         <div class="col-sm-auto d-flex">
             <a class="btn btn-primary" [routerLink]="['/courses/enroll']">{{ 'artemisApp.studentDashboard.enroll.title' | artemisTranslate }}</a>
         </div>
