@@ -82,11 +82,11 @@ export interface SidebarCardElement {
     /**
      * This is a string which may define an icon for the status of the exam.
      * It has to be a valid FontAwesome icon name and will be displayed in the
-     * 'regular' style.
+     * 'regular' style. Needed for future implementation
      */
     statusIcon?: IconProp;
     /**
-     * Set for Exam, identifies the color of the status icon
+     * Set for Exam, identifies the color of the status icon. Needed for future implementation
      */
     statusIconColor?: string;
     /**

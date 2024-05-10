@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Exercise, getIcon } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
-import { Exam, getColorForIcon, getIconForExam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
@@ -150,13 +150,11 @@ export class CourseOverviewService {
             title: exam.title ?? '',
             id: exam.id ?? '',
             icon: faGraduationCap,
-            statusIcon: getIconForExam(exam),
             subtitleLeft: exam.moduleNumber ?? 'CIT5230000',
             startDateWithTime: exam.startDate ? dayjs(exam.startDate).format('MMM DD, YYYY - HH:mm') : 'No date associated',
             workingTime: this.convertWorkingTimeToString(exam.workingTime ?? 0),
             attainablePoints: exam.examMaxPoints ?? 0,
             size: 'L',
-            statusIconColor: getColorForIcon(exam),
         };
         return examCardItem;
     }

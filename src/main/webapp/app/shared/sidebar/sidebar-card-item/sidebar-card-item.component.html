@@ -9,10 +9,6 @@
                     }
                     {{ sidebarItem.title }}
                 </span>
-                <!-- exam status icon -->
-                @if (sidebarItem.statusIcon) {
-                    <fa-icon [fixedWidth]="true" [ngStyle]="{ color: sidebarItem.statusIconColor }" [icon]="sidebarItem.statusIcon" />
-                }
             </div>
             <div class="d-flex justify-content-between mb-1 align-items-baseline">
                 <div class="me-2 text-truncate">
