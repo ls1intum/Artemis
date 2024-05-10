@@ -306,7 +306,7 @@ public class ProgrammingExerciseImportService {
                 testCase.setVisibility(Visibility.AFTER_DUE_DATE);
             }
             List<ProgrammingExerciseTestCase> updatedTestCases = programmingExerciseTestCaseRepository.saveAll(testCases);
-            newProgrammingExercise.setTestCases(Set.copyOf(updatedTestCases));
+            newProgrammingExercise.setTestCases(new HashSet<>(updatedTestCases));
         }
 
         // Update the template files
