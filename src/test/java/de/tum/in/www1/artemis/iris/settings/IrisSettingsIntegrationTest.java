@@ -87,7 +87,9 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
         request.get("/api/courses/" + course.getId() + "/raw-iris-settings", HttpStatus.FORBIDDEN, IrisSettings.class);
         var loadedSettings = request.get("/api/courses/" + course.getId() + "/iris-settings", HttpStatus.OK, IrisCombinedSettingsDTO.class);
 
-        assertThat(loadedSettings).isNotNull().usingRecursiveComparison().ignoringFields("id").isEqualTo(irisSettingsService.getCombinedIrisSettingsFor(course, true));
+        assertThat(loadedSettings).isNotNull().usingRecursiveComparison()
+                .ignoringCollectionOrderInFields("irisChatSettings.allowedModels", "irisCompetencyGenerationSettings.allowedModels", "irisHestiaSettings.allowedModels")
+                .ignoringFields("id").isEqualTo(irisSettingsService.getCombinedIrisSettingsFor(course, true));
     }
 
     @Test
@@ -218,7 +220,9 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
         request.get("/api/programming-exercises/" + programmingExercise.getId() + "/raw-iris-settings", HttpStatus.FORBIDDEN, IrisSettings.class);
         var loadedSettings = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/iris-settings", HttpStatus.OK, IrisCombinedSettingsDTO.class);
 
-        assertThat(loadedSettings).isNotNull().usingRecursiveComparison().ignoringFields("id").isEqualTo(irisSettingsService.getCombinedIrisSettingsFor(programmingExercise, true));
+        assertThat(loadedSettings).isNotNull().usingRecursiveComparison().ignoringFields("id")
+                .ignoringCollectionOrderInFields("irisChatSettings.allowedModels", "irisCompetencyGenerationSettings.allowedModels", "irisHestiaSettings.allowedModels")
+                .isEqualTo(irisSettingsService.getCombinedIrisSettingsFor(programmingExercise, true));
     }
 
     @Test
