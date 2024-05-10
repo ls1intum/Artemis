@@ -557,7 +557,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     }
 
     /**
-     * Gets all unassessed Quiz Submissions for the given exam
+     * GChecks if unassessed Quiz Submissions exist for the given exam
      *
      * @param examId the ID of the exam
      * @return boolean indicating if there are unassessed Quiz Submission
