@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -44,9 +45,11 @@ class GeneralInstantNotificationServiceTest {
 
     private Notification notification;
 
+    private AutoCloseable closeable;
+
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
         student1 = new User();
         student1.setId(1L);
         student1.setLogin("1");
@@ -61,6 +64,13 @@ class GeneralInstantNotificationServiceTest {
                 notificationSettingsService);
 
         when(notificationSettingsService.checkNotificationTypeForEmailSupport(any(NotificationType.class))).thenCallRealMethod();
+    }
+
+    @AfterEach
+    void tearDown() throws Exception {
+        if (closeable != null) {
+            closeable.close();
+        }
     }
 
     /**

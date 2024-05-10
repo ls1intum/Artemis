@@ -57,7 +57,7 @@ describe('ModelingEditorComponent', () => {
         fixture.detectChanges();
 
         // test
-        component.ngAfterViewInit();
+        await component.ngAfterViewInit();
         const editor: ApollonEditor = component['apollonEditor'] as ApollonEditor;
         // Check that editor exists
         expect(editor).toBeDefined();
@@ -81,7 +81,7 @@ describe('ModelingEditorComponent', () => {
         const model = classDiagram;
         component.umlModel = model;
         fixture.detectChanges();
-        component.ngAfterViewInit();
+        await component.ngAfterViewInit();
 
         const changedModel = cloneDeep(model) as any;
         changedModel.elements = {};

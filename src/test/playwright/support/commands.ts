@@ -1,6 +1,6 @@
 import { UserCredentials } from './users';
 import { BASE_API } from './constants';
-import { Page, expect } from '@playwright/test';
+import { Locator, Page, expect } from '@playwright/test';
 
 /**
  * A class that encapsulates static helper command methods.
@@ -48,18 +48,18 @@ export class Commands {
         await page.request.post(`${BASE_API}/public/logout`);
     };
 
-    static reloadUntilFound = async (page: Page, selector: string, interval = 2000, timeout = 20000) => {
+    static reloadUntilFound = async (page: Page, locator: Locator, interval = 2000, timeout = 20000) => {
         const startTime = Date.now();
 
         while (Date.now() - startTime < timeout) {
             try {
-                await page.waitForSelector(selector, { timeout: interval });
+                await locator.waitFor({ state: 'visible', timeout: interval });
                 return;
             } catch (error) {
                 await page.reload();
             }
         }
 
-        throw new Error(`Timed out finding an element matching the "${selector}" selector`);
+        throw new Error(`Timed out finding an element matching the "${locator}" locator`);
     };
 }
