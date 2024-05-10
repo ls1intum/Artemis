@@ -16,6 +16,7 @@ import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercises/shared
 import { Subject, of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ActivatedRoute, UrlSegment } from '@angular/router';
+import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 
 describe('ProgrammingExerciseLifecycleComponent', () => {
     let comp: ProgrammingExerciseLifecycleComponent;
@@ -37,6 +38,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
                 MockComponent(ExerciseFeedbackSuggestionOptionsComponent),
                 MockDirective(NgModel),
                 MockPipe(ArtemisTranslatePipe),
+                TranslatePipeMock,
             ],
             providers: [
                 {
