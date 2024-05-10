@@ -29,7 +29,7 @@ import { ComplaintService } from 'app/complaints/complaint.service';
 import { Complaint } from 'app/entities/complaint.model';
 import { SubmissionPolicy } from 'app/entities/submission-policy.model';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { faAngleDown, faAngleUp, faBook, faEye, faFileSignature, faListAlt, faSignal, faTable, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition, faAngleDown, faAngleUp, faBook, faEye, faFileSignature, faListAlt, faSignal, faTable, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
@@ -45,6 +45,11 @@ import { ScienceEventType } from 'app/shared/science/science.model';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { ChatServiceMode } from 'app/iris/iris-chat.service';
 
+interface InstructorActionItem {
+    routerLink: string;
+    icon?: IconDefinition;
+    translation: string;
+}
 @Component({
     selector: 'jhi-course-exercise-details',
     templateUrl: './course-exercise-details.component.html',
@@ -56,6 +61,7 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     readonly PlagiarismVerdict = PlagiarismVerdict;
     readonly QuizStatus = QuizStatus;
     readonly QUIZ_ENDED_STATUS: (QuizStatus | undefined)[] = [QuizStatus.CLOSED, QuizStatus.OPEN_FOR_PRACTICE];
+    readonly QUIZ_EDITABLE_STATUS: (QuizStatus | undefined)[] = [QuizStatus.VISIBLE, QuizStatus.INVISIBLE];
     readonly QUIZ = ExerciseType.QUIZ;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly MODELING = ExerciseType.MODELING;
@@ -100,6 +106,7 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     isProduction = true;
     isTestServer = false;
     isGeneratingFeedback: boolean = false;
+    instructorActionItems: InstructorActionItem[] = [];
 
     exampleSolutionInfo?: ExampleSolutionInfo;
 
@@ -165,21 +172,6 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
         });
     }
 
-    ngOnDestroy() {
-        if (this.participationUpdateListener) {
-            this.participationUpdateListener.unsubscribe();
-            if (this.studentParticipations) {
-                this.studentParticipations.forEach((participation) => {
-                    this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(participation.id!, this.exercise!);
-                });
-            }
-        }
-        this.teamAssignmentUpdateListener?.unsubscribe();
-        this.submissionSubscription?.unsubscribe();
-        this.paramsSubscription?.unsubscribe();
-        this.profileSubscription?.unsubscribe();
-    }
-
     loadExercise() {
         this.irisSettings = undefined;
         this.studentParticipations = this.participationWebsocketService.getParticipationsForExercise(this.exerciseId);
@@ -224,6 +216,8 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
         this.subscribeToTeamAssignmentUpdates();
 
         this.baseResource = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/`;
+
+        this.createInstructorActions();
     }
 
     /**
@@ -444,4 +438,137 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     }
 
     setIsGeneratingFeedback() {}
+
+    // INSTRUCTOR ACTIONS
+    createInstructorActions() {
+        if (this.exercise?.isAtLeastTutor) {
+            this.instructorActionItems = this.createTutorActions();
+        }
+        if (this.exercise?.isAtLeastEditor) {
+            const editorItems = this.createEditorActions();
+            editorItems.forEach((editorItem) => this.instructorActionItems.push(editorItem));
+        }
+        if (this.exercise?.isAtLeastInstructor && this.QUIZ_ENDED_STATUS.includes(this.quizExerciseStatus)) {
+            const reEvaluateItem: InstructorActionItem = this.getReEvaluateItem();
+            this.instructorActionItems.push(reEvaluateItem);
+        }
+    }
+    createTutorActions(): InstructorActionItem[] {
+        const instructorActionItems = this.getDefaultItems();
+        if (this.exercise?.type === ExerciseType.QUIZ) {
+            const quizItems: InstructorActionItem[] = this.getQuizItems();
+            quizItems.forEach((quizItem) => instructorActionItems.push(quizItem));
+        } else {
+            const participationsItem: InstructorActionItem = this.getParticipationItem();
+            instructorActionItems.push(participationsItem);
+        }
+        return instructorActionItems;
+    }
+
+    getDefaultItems(): InstructorActionItem[] {
+        const exercisesItem: InstructorActionItem = {
+            routerLink: `${this.baseResource}`,
+            icon: faEye,
+            translation: 'entity.action.view',
+        };
+
+        const statisticsItem: InstructorActionItem = {
+            routerLink: `${this.baseResource}scores`,
+            icon: faTable,
+            translation: 'entity.action.scores',
+        };
+
+        return [exercisesItem, statisticsItem];
+    }
+
+    getQuizItems(): InstructorActionItem[] {
+        const previewItem: InstructorActionItem = {
+            routerLink: `${this.baseResource}preview`,
+            icon: faEye,
+            translation: 'artemisApp.quizExercise.preview',
+        };
+        const solutionItem: InstructorActionItem = {
+            routerLink: `${this.baseResource}solution`,
+            icon: faEye,
+            translation: 'artemisApp.quizExercise.solution',
+        };
+
+        return [previewItem, solutionItem];
+    }
+
+    getParticipationItem(): InstructorActionItem {
+        return {
+            routerLink: `${this.baseResource}participations`,
+            icon: faListAlt,
+            translation: 'artemisApp.exercise.participations',
+        };
+    }
+
+    createEditorActions(): InstructorActionItem[] {
+        const editorItems: InstructorActionItem[] = [];
+        if (this.exercise?.type === ExerciseType.QUIZ) {
+            const statisticItem: InstructorActionItem = this.getStatisticItem('quiz-point-statistic');
+            editorItems.push(statisticItem);
+        }
+        if (this.exercise?.type === ExerciseType.MODELING) {
+            const statisticItem: InstructorActionItem = this.getStatisticItem('exercise-statistics');
+            editorItems.push(statisticItem);
+        }
+        if (this.exercise?.type === ExerciseType.PROGRAMMING) {
+            const gradingItem: InstructorActionItem = this.getGradingItem();
+            editorItems.push(gradingItem);
+        }
+        if (this.QUIZ_EDITABLE_STATUS.includes(this.quizExerciseStatus)) {
+            const quizEditItem: InstructorActionItem = this.getQuizEditItem();
+            editorItems.push(quizEditItem);
+        }
+        return editorItems;
+    }
+
+    getStatisticItem(routerLink: string): InstructorActionItem {
+        return {
+            routerLink: `${this.baseResource}${routerLink}`,
+            icon: faSignal,
+            translation: 'artemisApp.courseOverview.exerciseDetails.instructorActions.statistics',
+        };
+    }
+
+    getGradingItem(): InstructorActionItem {
+        return {
+            routerLink: `${this.baseResource}grading/test-cases`,
+            icon: faFileSignature,
+            translation: 'artemisApp.programmingExercise.configureGrading.shortTitle',
+        };
+    }
+
+    getQuizEditItem(): InstructorActionItem {
+        return {
+            routerLink: `${this.baseResource}edit`,
+            icon: faWrench,
+            translation: 'entity.action.edit',
+        };
+    }
+
+    getReEvaluateItem(): InstructorActionItem {
+        return {
+            routerLink: `${this.baseResource}re-evaluate`,
+            icon: faWrench,
+            translation: 'entity.action.re-evaluate',
+        };
+    }
+
+    ngOnDestroy() {
+        if (this.participationUpdateListener) {
+            this.participationUpdateListener.unsubscribe();
+            if (this.studentParticipations) {
+                this.studentParticipations.forEach((participation) => {
+                    this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(participation.id!, this.exercise!);
+                });
+            }
+        }
+        this.teamAssignmentUpdateListener?.unsubscribe();
+        this.submissionSubscription?.unsubscribe();
+        this.paramsSubscription?.unsubscribe();
+        this.profileSubscription?.unsubscribe();
+    }
 }

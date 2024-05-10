@@ -282,8 +282,8 @@
                 "problemStatement": "Problem statement:",
                 "noResults": "You have no results yet",
                 "instructorActions": {
-                    "title": "Instructor actions:",
-                    "titleTutor": "Tutor actions:",
+                    "title": "Instructor actions",
+                    "titleTutor": "Tutor actions",
                     "scores": "Scores",
                     "statistics": "Statistics"
                 },

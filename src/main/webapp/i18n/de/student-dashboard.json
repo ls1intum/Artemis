@@ -282,7 +282,7 @@
                 "problemStatement": "Problemstellung:",
                 "noResults": "Du hast noch keine Ergebnisse",
                 "instructorActions": {
-                    "title": "Aktionen für Lehrende:",
+                    "title": "Aktionen für Lehrende",
                     "titleTutor": "Aktionen für Tutor:innen",
                     "scores": "Ergebnisse",
                     "statistics": "Statistiken"
