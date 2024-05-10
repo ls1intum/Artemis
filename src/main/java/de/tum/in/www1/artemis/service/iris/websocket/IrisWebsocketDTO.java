@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.service.iris.websocket;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 import jakarta.annotation.Nullable;
 
@@ -73,17 +72,6 @@ public record IrisWebsocketDTO(IrisWebsocketMessageType type, IrisMessage messag
     @Override
     public Map<String, Object> translationParams() {
         return translationParams != null ? Collections.unmodifiableMap(translationParams) : null;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (o == null || getClass() != o.getClass())
-            return false;
-        IrisWebsocketDTO that = (IrisWebsocketDTO) o;
-        return Objects.equals(message, that.message) && Objects.equals(errorMessage, that.errorMessage) && Objects.equals(errorTranslationKey, that.errorTranslationKey)
-                && Objects.equals(stages, that.stages) && type == that.type && Objects.equals(translationParams, that.translationParams);
     }
 
     public enum IrisWebsocketMessageType {

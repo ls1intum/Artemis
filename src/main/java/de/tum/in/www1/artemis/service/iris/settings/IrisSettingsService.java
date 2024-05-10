@@ -484,9 +484,9 @@ public class IrisSettingsService {
      */
     private boolean isFeatureEnabledInSettings(IrisCombinedSettingsDTO settings, IrisSubSettingsType type) {
         return switch (type) {
-            case CHAT -> settings.irisChatSettings().isEnabled();
-            case HESTIA -> settings.irisHestiaSettings().isEnabled();
-            case COMPETENCY_GENERATION -> settings.irisCompetencyGenerationSettings().isEnabled();
+            case CHAT -> settings.irisChatSettings().enabled();
+            case HESTIA -> settings.irisHestiaSettings().enabled();
+            case COMPETENCY_GENERATION -> settings.irisCompetencyGenerationSettings().enabled();
         };
     }
 }
