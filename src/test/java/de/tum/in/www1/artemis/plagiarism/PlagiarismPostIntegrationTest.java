@@ -132,8 +132,7 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         Post notCreatedPost = request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.BAD_REQUEST);
 
         assertThat(notCreatedPost).isNull();
-        PostContextFilter postContextFilter = new PostContextFilter(courseId);
-        postContextFilter.setConversationId(exerciseChannel.getId());
+        PostContextFilter postContextFilter = new PostContextFilter(courseId, null, null, exerciseChannel.getId(), null, false, false, false, null, null);
         assertThat(postsBelongingToExercise).hasSameSizeAs(conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), 1));
 
         // conversation participants should not be notified

@@ -116,13 +116,13 @@ public class ConversationMessageResource {
         Page<Post> coursePosts;
 
         var requestingUser = userRepository.getUser();
-        var course = courseRepository.findByIdElseThrow(postContextFilter.getCourseId());
+        var course = courseRepository.findByIdElseThrow(postContextFilter.courseId());
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
 
-        if (postContextFilter.getConversationId() != null) {
+        if (postContextFilter.conversationId() != null) {
             coursePosts = conversationMessagingService.getMessages(pageable, postContextFilter, requestingUser);
         }
-        else if (postContextFilter.getCourseWideChannelIds() != null) {
+        else if (postContextFilter.courseWideChannelIds() != null) {
             coursePosts = conversationMessagingService.getCourseWideMessages(pageable, postContextFilter, requestingUser);
         }
         else {

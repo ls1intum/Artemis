@@ -64,11 +64,8 @@ class ApollonConversionIntegrationTest extends AbstractSpringIntegrationIndepend
         Mockito.when(mockResource.getInputStream()).thenReturn(inputStream);
         apollonRequestMockProvider.mockConvertModel(true, mockResource);
 
-        String model = "model";
-        final var requestBody = new ApollonModelDTO();
-        requestBody.setModel(model);
-
-        String response = request.postWithResponseBodyString("/api/apollon/convert-to-pdf", requestBody, HttpStatus.OK);
+        final var apollonModel = new ApollonModelDTO("model");
+        String response = request.postWithResponseBodyString("/api/apollon/convert-to-pdf", apollonModel, HttpStatus.OK);
         assertThat(response).isEqualTo(mockPdf);
     }
 }

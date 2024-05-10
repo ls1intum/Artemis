@@ -293,7 +293,7 @@ public class ConversationMessagingService extends PostingService {
      * @return page of posts that match the given context
      */
     public Page<Post> getMessages(Pageable pageable, @Valid PostContextFilter postContextFilter, User requestingUser) {
-        conversationService.isMemberOrCreateForCourseWideElseThrow(postContextFilter.getConversationId(), requestingUser, Optional.of(ZonedDateTime.now()));
+        conversationService.isMemberOrCreateForCourseWideElseThrow(postContextFilter.conversationId(), requestingUser, Optional.of(ZonedDateTime.now()));
 
         // The following query loads posts, answerPosts and reactions to avoid too many database calls (due to eager references)
         Page<Post> conversationPosts = conversationMessageRepository.findMessages(postContextFilter, pageable, requestingUser.getId());
@@ -301,7 +301,7 @@ public class ConversationMessagingService extends PostingService {
         setAuthorRoleOfPostings(conversationPosts.getContent());
 
         // invoke async due to db write access to avoid that the client has to wait
-        conversationParticipantRepository.updateLastReadAsync(requestingUser.getId(), postContextFilter.getConversationId(), ZonedDateTime.now());
+        conversationParticipantRepository.updateLastReadAsync(requestingUser.getId(), postContextFilter.conversationId(), ZonedDateTime.now());
 
         return conversationPosts;
     }

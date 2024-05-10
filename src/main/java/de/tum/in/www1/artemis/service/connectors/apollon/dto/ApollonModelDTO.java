@@ -2,15 +2,8 @@ package de.tum.in.www1.artemis.service.connectors.apollon.dto;
 
 import java.io.Serializable;
 
-public class ApollonModelDTO implements Serializable {
+import com.fasterxml.jackson.annotation.JsonInclude;
 
-    private String model;
-
-    public void setModel(String model) {
-        this.model = model;
-    }
-
-    public String getModel() {
-        return model;
-    }
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public record ApollonModelDTO(String model) implements Serializable {
 }

@@ -8,28 +8,8 @@ import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.domain.metis.PostSortCriterion;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class PostContextFilter {
-
-    @NotBlank
-    private Long courseId;
-
-    private long[] courseWideChannelIds;
-
-    private Long plagiarismCaseId;
-
-    private Long conversationId;
-
-    private String searchText;
-
-    private boolean filterToUnresolved = false;
-
-    private boolean filterToOwn = false;
-
-    private boolean filterToAnsweredOrReacted = false;
-
-    private PostSortCriterion postSortCriterion;
-
-    private SortingOrder sortingOrder;
+public record PostContextFilter(@NotBlank Long courseId, long[] courseWideChannelIds, Long plagiarismCaseId, Long conversationId, String searchText, boolean filterToUnresolved,
+        boolean filterToOwn, boolean filterToAnsweredOrReacted, PostSortCriterion postSortCriterion, SortingOrder sortingOrder) {
 
     /**
      * Constructor for PostContextFilter, which sets every member as null, except boolean members and courseId
@@ -37,86 +17,6 @@ public class PostContextFilter {
      * @param courseId id of the course that the posts belong to
      */
     public PostContextFilter(long courseId) {
-        this.courseId = courseId;
-    }
-
-    public Long getCourseId() {
-        return courseId;
-    }
-
-    public void setCourseId(Long courseId) {
-        this.courseId = courseId;
-    }
-
-    public long[] getCourseWideChannelIds() {
-        return courseWideChannelIds;
-    }
-
-    public void setCourseWideChannelIds(long[] courseWideChannelIds) {
-        this.courseWideChannelIds = courseWideChannelIds;
-    }
-
-    public Long getPlagiarismCaseId() {
-        return plagiarismCaseId;
-    }
-
-    public void setPlagiarismCaseId(Long plagiarismCaseId) {
-        this.plagiarismCaseId = plagiarismCaseId;
-    }
-
-    public Long getConversationId() {
-        return conversationId;
-    }
-
-    public void setConversationId(Long conversationId) {
-        this.conversationId = conversationId;
-    }
-
-    public String getSearchText() {
-        return searchText;
-    }
-
-    public void setSearchText(String searchText) {
-        this.searchText = searchText;
-    }
-
-    public boolean getFilterToUnresolved() {
-        return filterToUnresolved;
-    }
-
-    public void setFilterToUnresolved(boolean filterToUnresolved) {
-        this.filterToUnresolved = filterToUnresolved;
-    }
-
-    public boolean getFilterToOwn() {
-        return filterToOwn;
-    }
-
-    public void setFilterToOwn(boolean filterToOwn) {
-        this.filterToOwn = filterToOwn;
-    }
-
-    public boolean getFilterToAnsweredOrReacted() {
-        return filterToAnsweredOrReacted;
-    }
-
-    public void setFilterToAnsweredOrReacted(boolean filterToAnsweredOrReacted) {
-        this.filterToAnsweredOrReacted = filterToAnsweredOrReacted;
-    }
-
-    public PostSortCriterion getPostSortCriterion() {
-        return postSortCriterion;
-    }
-
-    public void setPostSortCriterion(PostSortCriterion postSortCriterion) {
-        this.postSortCriterion = postSortCriterion;
-    }
-
-    public SortingOrder getSortingOrder() {
-        return sortingOrder;
-    }
-
-    public void setSortingOrder(SortingOrder sortingOrder) {
-        this.sortingOrder = sortingOrder;
+        this(courseId, null, null, null, null, false, false, false, null, null);
     }
 }

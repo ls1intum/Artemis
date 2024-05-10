@@ -66,7 +66,7 @@ public class ExerciseScoresChartService {
                 exercises.stream().filter(exercise -> exercise.getMode().equals(ExerciseMode.TEAM)).collect(Collectors.toSet()));
         // Getting the average and max scores in the exercise
         Map<Long, ExerciseScoresAggregatedInformation> exerciseIdToAggregatedInformation = participantScoreRepository.getAggregatedExerciseScoresInformation(exercises).stream()
-                .collect(Collectors.toMap(ExerciseScoresAggregatedInformation::getExerciseId, exerciseScoresAggregatedInformation -> exerciseScoresAggregatedInformation));
+                .collect(Collectors.toMap(ExerciseScoresAggregatedInformation::exerciseId, exerciseScoresAggregatedInformation -> exerciseScoresAggregatedInformation));
 
         return exercises.stream()
                 .map(exercise -> createExerciseScoreDTO(exerciseIdToAggregatedInformation, individualExerciseIdToStudentScore, teamExerciseIdToTeamScore, exercise)).toList();
@@ -89,9 +89,9 @@ public class ExerciseScoresChartService {
         double averageScoreAchieved = 0D;
         double maxScoreAchieved = 0D;
 
-        if (aggregatedInformation != null && aggregatedInformation.getAverageScoreAchieved() != null && aggregatedInformation.getMaxScoreAchieved() != null) {
-            averageScoreAchieved = roundScoreSpecifiedByCourseSettings(aggregatedInformation.getAverageScoreAchieved(), exercise.getCourseViaExerciseGroupOrCourseMember());
-            maxScoreAchieved = roundScoreSpecifiedByCourseSettings(aggregatedInformation.getMaxScoreAchieved(), exercise.getCourseViaExerciseGroupOrCourseMember());
+        if (aggregatedInformation != null && aggregatedInformation.averageScoreAchieved() != null && aggregatedInformation.maxScoreAchieved() != null) {
+            averageScoreAchieved = roundScoreSpecifiedByCourseSettings(aggregatedInformation.averageScoreAchieved(), exercise.getCourseViaExerciseGroupOrCourseMember());
+            maxScoreAchieved = roundScoreSpecifiedByCourseSettings(aggregatedInformation.maxScoreAchieved(), exercise.getCourseViaExerciseGroupOrCourseMember());
         }
 
         ParticipantScore participantScore = exercise.getMode().equals(ExerciseMode.INDIVIDUAL) ? individualExerciseIdToStudentScore.get(exercise.getId())

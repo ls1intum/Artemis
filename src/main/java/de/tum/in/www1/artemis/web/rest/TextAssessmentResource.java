@@ -296,7 +296,7 @@ public class TextAssessmentResource extends AssessmentResource {
         TextExercise textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
         checkAuthorization(textExercise, user);
         Result result = textAssessmentService.updateAssessmentAfterComplaint(textSubmission.getLatestResult(), textExercise, assessmentUpdate);
-        saveTextBlocks(assessmentUpdate.getTextBlocks(), textSubmission, result.getFeedbacks());
+        saveTextBlocks(assessmentUpdate.textBlocks(), textSubmission, result.getFeedbacks());
 
         if (result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation && !authCheckService.isAtLeastInstructorForExercise(textExercise)) {
             ((StudentParticipation) result.getParticipation()).setParticipant(null);

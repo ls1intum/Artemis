@@ -146,7 +146,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 .filter(coursePost -> (coursePost.getConversation() instanceof Channel channel && channel.getExercise() != null)).toList();
 
         // filter existing posts with first exercise context
-        Channel exerciseChannel = ((Channel) existingExercisePosts.get(0).getConversation());
+        Channel exerciseChannel = ((Channel) existingExercisePosts.getFirst().getConversation());
         Exercise exercise = exerciseChannel.getExercise();
 
         course = exercise.getCourseViaExerciseGroupOrCourseMember();
@@ -171,8 +171,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(createdPost.getConversation().getId()).isNotNull();
         var requestingUser = userRepository.getUser();
 
-        PostContextFilter postContextFilter = new PostContextFilter(courseId);
-        postContextFilter.setConversationId(createdPost.getConversation().getId());
+        PostContextFilter postContextFilter = new PostContextFilter(courseId, null, null, createdPost.getConversation().getId(), null, false, false, false, null, null);
         assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId())).hasSize(1);
 
         // both conversation participants should be notified
@@ -336,15 +335,14 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         var student1 = userRepository.findOneWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student1").orElseThrow();
         var student2 = userRepository.findOneWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student2").orElseThrow();
         List<Post> posts = conversationUtilService.createPostsWithAnswersAndReactionsAndConversation(course, student1, student2, NUMBER_OF_POSTS, TEST_PREFIX);
-        long conversationId = posts.get(0).getConversation().getId();
+        long conversationId = posts.getFirst().getConversation().getId();
         for (Post post : posts) {
             assertThat(post.getConversation().getId()).isNotNull();
             assertThat(post.getConversation().getId()).isEqualTo(conversationId);
         }
         var requestingUser = userRepository.getUser();
 
-        PostContextFilter postContextFilter = new PostContextFilter(course.getId());
-        postContextFilter.setConversationId(posts.get(0).getConversation().getId());
+        PostContextFilter postContextFilter = new PostContextFilter(course.getId(), null, null, posts.getFirst().getConversation().getId(), null, false, false, false, null, null);
         if (pageSize == LOWER_PAGE_SIZE) {
             assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.ofSize(pageSize), requestingUser.getId())).hasSize(LOWER_PAGE_SIZE);
         }
@@ -364,8 +362,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Post postToSave = createPostWithOneToOneChat(TEST_PREFIX);
         var requestingUser = userRepository.getUser();
 
-        PostContextFilter postContextFilter = new PostContextFilter(courseId);
-        postContextFilter.setConversationId(postToSave.getConversation().getId());
+        PostContextFilter postContextFilter = new PostContextFilter(courseId, null, null, postToSave.getConversation().getId(), null, false, false, false, null, null);
         var numberOfPostsBefore = conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId()).getSize();
 
         Post notCreatedPost = request.postWithResponseBody("/api/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.BAD_REQUEST);
@@ -388,11 +385,10 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         Post postToSave = createPostWithOneToOneChat(TEST_PREFIX);
         // attempt to save new post under someone else's conversation
-        postToSave.setConversation(existingConversationMessages.get(0).getConversation());
+        postToSave.setConversation(existingConversationMessages.getFirst().getConversation());
         var requestingUser = userRepository.getUser();
 
-        PostContextFilter postContextFilter = new PostContextFilter(courseId);
-        postContextFilter.setConversationId(postToSave.getConversation().getId());
+        PostContextFilter postContextFilter = new PostContextFilter(courseId, null, null, postToSave.getConversation().getId(), null, false, false, false, null, null);
         var numberOfPostsBefore = conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId()).getSize();
 
         Post notCreatedPost = request.postWithResponseBody("/api/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.FORBIDDEN);
@@ -435,7 +431,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testGetConversationPost() throws Exception {
         // conversation set will fetch all posts of conversation if the user is involved
         var params = new LinkedMultiValueMap<String, String>();
-        Long conversationId = existingConversationMessages.get(0).getConversation().getId();
+        Long conversationId = existingConversationMessages.getFirst().getConversation().getId();
         params.add("conversationId", conversationId.toString());
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
@@ -463,7 +459,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // conversation set will fetch all posts of conversation if the user is involved
         var params = new LinkedMultiValueMap<String, String>();
         var courseWidePosts = existingConversationMessages.stream().filter(post -> post.getConversation() instanceof Channel channel && channel.getIsCourseWide()).toList();
-        var courseWideChannelId = courseWidePosts.get(0).getConversation().getId();
+        var courseWideChannelId = courseWidePosts.getFirst().getConversation().getId();
         params.add("courseWideChannelIds", courseWideChannelId.toString());
         params.add("filterToOwn", "true");
         params.add("size", "50");
@@ -529,7 +525,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // conversation set will fetch all posts of conversation if the user is involved
         var params = new LinkedMultiValueMap<String, String>();
         var courseWidePosts = existingConversationMessages.stream().filter(post -> post.getConversation() instanceof Channel channel && channel.getIsCourseWide()).toList();
-        var courseWideChannelId = courseWidePosts.get(0).getConversation().getId();
+        var courseWideChannelId = courseWidePosts.getFirst().getConversation().getId();
         params.add("courseWideChannelIds", courseWideChannelId.toString());
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
@@ -543,7 +539,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "tutor1")
     void testEditConversationPost() throws Exception {
         // conversation post of tutor1 must be only editable by them
-        Post conversationPostToUpdate = existingConversationMessages.get(0);
+        Post conversationPostToUpdate = existingConversationMessages.getFirst();
         conversationPostToUpdate.setContent("User changes one of their conversation posts");
 
         Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/messages/" + conversationPostToUpdate.getId(), conversationPostToUpdate, Post.class,
@@ -559,7 +555,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testPinPost_asTutor() throws Exception {
-        Post postToPin = existingConversationMessages.get(0);
+        Post postToPin = existingConversationMessages.getFirst();
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("displayPriority", DisplayPriority.PINNED.toString());
 
@@ -575,7 +571,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "tutor1")
     void testEditConversationPostWithUserMention(String userMention, boolean isUserMentionValid) throws Exception {
         // conversation post of tutor1 must be only editable by them
-        Post conversationPostToUpdate = existingConversationMessages.get(0);
+        Post conversationPostToUpdate = existingConversationMessages.getFirst();
         conversationPostToUpdate.setContent("User changes one of their conversation posts" + userMention);
 
         if (!isUserMentionValid) {
@@ -598,7 +594,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void testEditConversationPost_forbidden() throws Exception {
         // conversation post of tutor1 must not be editable by tutor2
-        Post conversationPostToUpdate = existingConversationMessages.get(0);
+        Post conversationPostToUpdate = existingConversationMessages.getFirst();
         conversationPostToUpdate.setContent("Tutor attempts to change some other user's conversation post");
 
         Post notUpdatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/messages/" + conversationPostToUpdate.getId(), conversationPostToUpdate, Post.class,
@@ -614,7 +610,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "tutor1")
     void testDeleteConversationPost() throws Exception {
         // conversation post of tutor1 must be deletable by them
-        Post conversationPostToDelete = existingConversationMessages.get(0);
+        Post conversationPostToDelete = existingConversationMessages.getFirst();
         request.delete("/api/courses/" + courseId + "/messages/" + conversationPostToDelete.getId(), HttpStatus.OK);
 
         assertThat(conversationMessageRepository.findById(conversationPostToDelete.getId())).isEmpty();
@@ -627,7 +623,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void testDeleteConversationPost_forbidden() throws Exception {
         // conversation post of user must not be deletable by tutors
-        Post conversationPostToDelete = existingConversationMessages.get(0);
+        Post conversationPostToDelete = existingConversationMessages.getFirst();
         request.delete("/api/courses/" + courseId + "/messages/" + conversationPostToDelete.getId(), HttpStatus.FORBIDDEN);
 
         assertThat(conversationMessageRepository.findById(conversationPostToDelete.getId())).isPresent();

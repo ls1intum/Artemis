@@ -104,7 +104,7 @@ public class PlagiarismPostResource {
     @EnforceAtLeastStudent
     public ResponseEntity<List<Post>> getPostsInCourse(PostContextFilter postContextFilter) {
         Page<Post> coursePosts;
-        if (postContextFilter.getPlagiarismCaseId() != null) {
+        if (postContextFilter.plagiarismCaseId() != null) {
             coursePosts = new PageImpl<>(plagiarismPostService.getAllPlagiarismCasePosts(postContextFilter));
         }
         else {

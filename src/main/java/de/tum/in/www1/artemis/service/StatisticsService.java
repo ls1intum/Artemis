@@ -197,7 +197,6 @@ public class StatisticsService {
      */
     public ExerciseManagementStatisticsDTO getExerciseStatistics(Exercise exercise) throws EntityNotFoundException {
         var course = courseRepository.findByIdElseThrow(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
-        var exerciseManagementStatisticsDTO = new ExerciseManagementStatisticsDTO();
 
         // number of students or teams and number of participations of students or teams
         long numberOfParticipationsOfStudentsOrTeams;
@@ -214,21 +213,15 @@ public class StatisticsService {
 
             numberOfStudentsOrTeams = userRepository.countUserInGroup(course.getStudentGroupName());
         }
-        exerciseManagementStatisticsDTO.setNumberOfParticipations(numberOfParticipationsOfStudentsOrTeams);
-        exerciseManagementStatisticsDTO.setNumberOfStudentsOrTeamsInCourse(numberOfStudentsOrTeams);
 
         // post stats
         long numberOfExercisePosts = statisticsRepository.getNumberOfExercisePosts(exercise.getId());
-        exerciseManagementStatisticsDTO.setNumberOfPosts(numberOfExercisePosts);
         long resolvedExercisePosts = statisticsRepository.getNumberOfResolvedExercisePosts(exercise.getId());
-        exerciseManagementStatisticsDTO.setNumberOfResolvedPosts(resolvedExercisePosts);
 
         // average score & max points
         Double maxPoints = exercise.getMaxPoints();
-        exerciseManagementStatisticsDTO.setMaxPointsOfExercise(Objects.requireNonNullElse(maxPoints, 0D));
         Double averageScore = participantScoreRepository.findAvgScore(Set.of(exercise));
         double averageScoreForExercise = averageScore != null ? roundScoreSpecifiedByCourseSettings(averageScore, course) : 0.0;
-        exerciseManagementStatisticsDTO.setAverageScoreOfExercise(averageScoreForExercise);
         List<ScoreDistribution> scores = participantScoreRepository.getScoreDistributionForExercise(exercise.getId());
         var scoreDistribution = new int[10];
         Arrays.fill(scoreDistribution, 0);
@@ -243,10 +236,8 @@ public class StatisticsService {
             }
         });
 
-        exerciseManagementStatisticsDTO.setScoreDistribution(scoreDistribution);
-        exerciseManagementStatisticsDTO.setNumberOfExerciseScores(scores.size());
-
-        return exerciseManagementStatisticsDTO;
+        return new ExerciseManagementStatisticsDTO(averageScoreForExercise, maxPoints, scoreDistribution, scores.size(), numberOfParticipationsOfStudentsOrTeams,
+                numberOfStudentsOrTeams, numberOfExercisePosts, resolvedExercisePosts);
     }
 
     /**
