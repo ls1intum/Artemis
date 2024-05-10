@@ -1093,6 +1093,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             onRecreateBuildPlanOrUpdateTemplateChange: this.onRecreateBuildPlanOrUpdateTemplateChange,
             updateTemplate: this.importOptions.updateTemplate,
             recreateBuildPlanOrUpdateTemplateChange: this.onRecreateBuildPlanOrUpdateTemplateChange,
+            setTestCaseVisibilityToAfterDueDate: this.importOptions.setTestCaseVisibilityToAfterDueDate,
             buildPlanLoaded: this.buildPlanLoaded,
         };
     }
