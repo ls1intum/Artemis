@@ -155,7 +155,7 @@
                 }
             },
             "addUsers": {
-                "addUsersToGroupChat": "Fügen Sie Nutzer:innen zum Gruppenchat hinzu",
+                "addUsersToGroupChat": "Füge Nutzer:innen zum Gruppenchat hinzu",
                 "addUsersToChannel": "Nutzer:innen hinzufügen zu:",
                 "addUsersForm": {
                     "addUsersButton": "Nutzer:in hinzufügen",

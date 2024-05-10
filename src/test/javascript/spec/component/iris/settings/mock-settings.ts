@@ -1,6 +1,6 @@
 import { IrisModel } from 'app/entities/iris/settings/iris-model';
 import { IrisTemplate } from 'app/entities/iris/settings/iris-template';
-import { IrisChatSubSettings, IrisCodeEditorSubSettings, IrisCompetencyGenerationSubSettings, IrisHestiaSubSettings } from 'app/entities/iris/settings/iris-sub-settings.model';
+import { IrisChatSubSettings, IrisCompetencyGenerationSubSettings, IrisHestiaSubSettings } from 'app/entities/iris/settings/iris-sub-settings.model';
 import { IrisGlobalSettings } from 'app/entities/iris/settings/iris-settings.model';
 
 export function mockSettings() {
@@ -15,9 +15,6 @@ export function mockSettings() {
     mockHestiaSettings.id = 2;
     mockHestiaSettings.template = mockTemplate;
     mockHestiaSettings.enabled = true;
-    const mockCodeEditorSettings = new IrisCodeEditorSubSettings();
-    mockCodeEditorSettings.id = 2;
-    mockCodeEditorSettings.enabled = false;
     const mockCompetencyGenerationSettings = new IrisCompetencyGenerationSubSettings();
     mockCompetencyGenerationSettings.id = 5;
     mockCompetencyGenerationSettings.enabled = false;
@@ -25,7 +22,6 @@ export function mockSettings() {
     irisSettings.id = 1;
     irisSettings.irisChatSettings = mockChatSettings;
     irisSettings.irisHestiaSettings = mockHestiaSettings;
-    irisSettings.irisCodeEditorSettings = mockCodeEditorSettings;
     irisSettings.irisCompetencyGenerationSettings = mockCompetencyGenerationSettings;
     return irisSettings;
 }

@@ -9,6 +9,7 @@ import java.util.Optional;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.AssessmentNote;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
@@ -90,6 +91,11 @@ public class ProgrammingAssessmentService extends AssessmentService {
         // make sure that the submission cannot be manipulated on the client side
         var submission = (ProgrammingSubmission) existingManualResult.getSubmission();
         ProgrammingExercise exercise = (ProgrammingExercise) participation.getExercise();
+        AssessmentNote assessmentNote = newManualResult.getAssessmentNote();
+        if (assessmentNote != null) {
+            assessmentNote.setCreator(assessor);
+            newManualResult.setAssessmentNote(assessmentNote);
+        }
 
         newManualResult.setSubmission(submission);
         newManualResult.setHasComplaint(existingManualResult.getHasComplaint().orElse(false));
@@ -102,7 +108,7 @@ public class ProgrammingAssessmentService extends AssessmentService {
         savedResult.setSubmission(submission);
 
         // Re-load result to fetch the test cases
-        newManualResult = resultRepository.findByIdWithEagerSubmissionAndFeedbackAndTestCasesElseThrow(newManualResult.getId());
+        newManualResult = resultRepository.findByIdWithEagerSubmissionAndFeedbackAndTestCasesAndAssessmentNoteElseThrow(newManualResult.getId());
 
         if (submit) {
             return submitManualAssessment(newManualResult, submission, participation, exercise);

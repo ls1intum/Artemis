@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationBuildPlanException;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
+import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsXmlConfigBuilder;
 import de.tum.in.www1.artemis.service.util.XmlFileUtils;
 
@@ -93,7 +94,7 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
     @Override
     public Document buildBasicConfig(final ProgrammingLanguage programmingLanguage, final Optional<ProjectType> projectType,
             final InternalVcsRepositoryURLs internalVcsRepositoryURLs, final boolean checkoutSolution, final String buildPlanUrl) {
-        final String jenkinsfile = getJenkinsfile(internalVcsRepositoryURLs, checkoutSolution, buildPlanUrl);
+        final String jenkinsfile = getJenkinsfile(internalVcsRepositoryURLs, programmingLanguage, checkoutSolution, buildPlanUrl);
 
         final Path configFilePath = Path.of("templates", "jenkins", "config.xml");
         final var configFileReplacements = Map.of(REPLACE_PIPELINE_SCRIPT, jenkinsfile, REPLACE_PUSH_TOKEN, pushToken);
@@ -101,9 +102,10 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         return XmlFileUtils.readXmlFile(xmlResource, configFileReplacements);
     }
 
-    private String getJenkinsfile(final InternalVcsRepositoryURLs internalVcsRepositoryURLs, final boolean checkoutSolution, final String buildPlanUrl) {
+    private String getJenkinsfile(final InternalVcsRepositoryURLs internalVcsRepositoryURLs, final ProgrammingLanguage programmingLanguage, final boolean checkoutSolution,
+            final String buildPlanUrl) {
         final String jenkinsfile = makeSafeForXml(loadJenkinsfile());
-        final var replacements = getReplacements(internalVcsRepositoryURLs, checkoutSolution, buildPlanUrl);
+        final var replacements = getReplacements(internalVcsRepositoryURLs, programmingLanguage, checkoutSolution, buildPlanUrl);
 
         return replacePipelineScriptParameters(jenkinsfile, replacements);
     }
@@ -134,16 +136,19 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         return result.replace("\\", "\\\\");
     }
 
-    private Map<String, String> getReplacements(final InternalVcsRepositoryURLs internalVcsRepositoryURLs, final boolean checkoutSolution, final String buildPlanUrl) {
+    private Map<String, String> getReplacements(final InternalVcsRepositoryURLs internalVcsRepositoryURLs, final ProgrammingLanguage programmingLanguage,
+            final boolean checkoutSolution, final String buildPlanUrl) {
         final Map<String, String> replacements = new HashMap<>();
 
         replacements.put(REPLACE_TEST_REPO, internalVcsRepositoryURLs.testRepositoryUri().getURI().toString());
         replacements.put(REPLACE_ASSIGNMENT_REPO, internalVcsRepositoryURLs.assignmentRepositoryUri().getURI().toString());
         replacements.put(REPLACE_SOLUTION_REPO, internalVcsRepositoryURLs.solutionRepositoryUri().getURI().toString());
         replacements.put(REPLACE_GIT_CREDENTIALS, gitCredentialsKey);
-        replacements.put(REPLACE_ASSIGNMENT_CHECKOUT_PATH, Constants.ASSIGNMENT_CHECKOUT_PATH);
-        replacements.put(REPLACE_TESTS_CHECKOUT_PATH, Constants.TESTS_CHECKOUT_PATH);
-        replacements.put(REPLACE_SOLUTION_CHECKOUT_PATH, Constants.SOLUTION_CHECKOUT_PATH);
+        replacements.put(REPLACE_ASSIGNMENT_CHECKOUT_PATH, ContinuousIntegrationService.RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage));
+        replacements.put(REPLACE_TESTS_CHECKOUT_PATH, ContinuousIntegrationService.RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage));
+        if (checkoutSolution) {
+            replacements.put(REPLACE_SOLUTION_CHECKOUT_PATH, ContinuousIntegrationService.RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(programmingLanguage));
+        }
         replacements.put(REPLACE_ARTEMIS_NOTIFICATION_URL, artemisNotificationUrl);
         replacements.put(REPLACE_NOTIFICATIONS_TOKEN, artemisAuthenticationTokenKey);
         replacements.put(REPLACE_JENKINS_TIMEOUT, buildTimeout);

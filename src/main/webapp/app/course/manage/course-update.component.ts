@@ -30,6 +30,7 @@ import { FileService } from 'app/shared/http/file.service';
 import { onError } from 'app/shared/util/global.utils';
 import { getSemesters } from 'app/utils/semester-utils';
 import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal.component';
+import { scrollToTopOfPage } from 'app/shared/util/utils';
 
 const DEFAULT_CUSTOM_GROUP_NAME = 'artemis-dev';
 
@@ -83,6 +84,8 @@ export class CourseUpdateComponent implements OnInit {
     // Currently set to 65535 as this is the limit of TEXT
     readonly COMPLAINT_RESPONSE_TEXT_LIMIT = 65535;
     readonly COMPLAINT_TEXT_LIMIT = 65535;
+
+    readonly COURSE_TITLE_LIMIT = 255;
 
     constructor(
         private eventManager: EventManager,
@@ -161,7 +164,10 @@ export class CourseUpdateComponent implements OnInit {
         this.courseForm = new FormGroup(
             {
                 id: new FormControl(this.course.id),
-                title: new FormControl(this.course.title, [Validators.required]),
+                title: new FormControl(this.course.title, {
+                    validators: [Validators.required, Validators.maxLength(this.COURSE_TITLE_LIMIT)],
+                    updateOn: 'blur',
+                }),
                 shortName: new FormControl(
                     { value: this.course.shortName, disabled: !!this.course.id },
                     {
@@ -341,6 +347,7 @@ export class CourseUpdateComponent implements OnInit {
         }
 
         this.router.navigate(['course-management', updatedCourse?.id?.toString()]);
+        scrollToTopOfPage();
     }
 
     /**

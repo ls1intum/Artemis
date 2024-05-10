@@ -193,7 +193,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         // load submission with results either by resultId or by correctionRound
         if (resultId != null) {
             // load the submission with additional needed properties by resultId
-            fileUploadSubmission = (FileUploadSubmission) submissionRepository.findOneWithEagerResultAndFeedback(submissionId);
+            fileUploadSubmission = (FileUploadSubmission) submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submissionId);
             // check if result with the requested id exists
             Result result = fileUploadSubmission.getManualResultsById(resultId);
             if (result == null) {

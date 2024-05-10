@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.domain.ExampleSubmission;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.GradingCriterion;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
@@ -311,7 +312,7 @@ public class ExerciseResource {
             participation.setResults(exercise.findResultsFilteredForStudents(participation));
             // By filtering the results available yet, they can become null for the exercise.
             if (participation.getResults() != null) {
-                participation.getResults().forEach(r -> r.setAssessor(null));
+                participation.getResults().forEach(Result::filterSensitiveInformation);
             }
             exercise.addParticipation(participation);
         }
