@@ -44,7 +44,10 @@
                 "registered": "Meine Übungsgruppen",
                 "further": "Weitere Übungsgruppen",
                 "real": "Klausuren",
-                "test": "Testklausuren"
+                "test": "Testklausuren",
+                "start": "Beginn",
+                "workingTime": "Bearbeitungszeit",
+                "attainablePoints": "Erreichbare Punkte"
             },
             "menu": {
                 "exercises": "Aufgaben",

@@ -17,18 +17,20 @@
             </div>
             <div class="d-flex flex-column align-items-baseline">
                 <small class="me-2 text-truncate fw-semibold small-title-color">
-                    {{ 'Start' }}
+                    {{ 'artemisApp.courseOverview.sidebar.start' | artemisTranslate }}
                 </small>
                 <small class="me-2 text-truncate fw-semibold">
                     @if (sidebarItem.startDateWithTime) {
-                        {{ sidebarItem.startDateWithTime }}
+                        {{ sidebarItem.startDateWithTime | artemisDate: 'long-date' }}
+                        -
+                        {{ sidebarItem.startDateWithTime | artemisDate: 'time' }}
                     }
                 </small>
             </div>
             <hr [ngStyle]="{ margin: '0.25rem 0' }" />
             <div class="d-flex flex-column align-items-baseline">
                 <small class="me-2 text-truncate fw-semibold small-title-color">
-                    {{ 'Working Time' }}
+                    {{ 'artemisApp.courseOverview.sidebar.workingTime' | artemisTranslate }}
                 </small>
                 <small class="me-2 text-truncate fw-semibold">
                     @if (sidebarItem.workingTime) {
@@ -39,7 +41,7 @@
             <hr [ngStyle]="{ margin: '0.25rem 0' }" />
             <div class="d-flex flex-column align-items-baseline">
                 <small class="me-2 text-truncate fw-semibold small-title-color">
-                    {{ 'Attainable Points' }}
+                    {{ 'artemisApp.courseOverview.sidebar.attainablePoints' | artemisTranslate }}
                 </small>
                 <small class="me-2 text-truncate fw-semibold">
                     @if (sidebarItem.attainablePoints) {

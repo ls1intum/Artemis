@@ -1,6 +1,7 @@
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { DifficultyLevel, Exercise } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import dayjs from 'dayjs/esm';
 
 export type TimeGroupCategory = 'past' | 'current' | 'future' | 'noDate';
 export type ExamGroupCategory = 'real' | 'test';
@@ -92,7 +93,7 @@ export interface SidebarCardElement {
     /**
      * Set for Exam, shows the start date and time
      */
-    startDateWithTime?: string;
+    startDateWithTime?: dayjs.Dayjs;
     /**
      * Set for Exam, shows the working time
      */

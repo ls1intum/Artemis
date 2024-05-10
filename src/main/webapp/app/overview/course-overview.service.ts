@@ -151,7 +151,7 @@ export class CourseOverviewService {
             id: exam.id ?? '',
             icon: faGraduationCap,
             subtitleLeft: exam.moduleNumber ?? 'CIT5230000',
-            startDateWithTime: exam.startDate ? dayjs(exam.startDate).format('MMM DD, YYYY - HH:mm') : 'No date associated',
+            startDateWithTime: exam.startDate,
             workingTime: this.convertWorkingTimeToString(exam.workingTime ?? 0),
             attainablePoints: exam.examMaxPoints ?? 0,
             size: 'L',

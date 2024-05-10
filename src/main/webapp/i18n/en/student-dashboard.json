@@ -44,7 +44,10 @@
                 "registered": "My Tutorial Groups",
                 "further": "Further Tutorial Groups",
                 "real": "Exams",
-                "test": "Test Exams"
+                "test": "Test Exams",
+                "start": "Start",
+                "workingTime": "Working Time",
+                "attainablePoints": "Attainable Points"
             },
             "menu": {
                 "exercises": "Exercises",
