@@ -29,10 +29,6 @@ export class ExamExerciseUpdateHighlighterComponent implements OnInit, OnDestroy
         this.subscriptionToLiveExamExerciseUpdates = this.examExerciseUpdateService.currentExerciseIdAndProblemStatement.subscribe((update) => {
             if (update) {
                 this.updateExerciseProblemStatementById(update.exerciseId, update.problemStatement);
-                this.isHidden = false;
-            } else {
-                // No update so hide the component
-                this.isHidden = true;
             }
         });
     }
@@ -73,6 +69,7 @@ export class ExamExerciseUpdateHighlighterComponent implements OnInit, OnDestroy
             if (this.exercise.type !== ExerciseType.PROGRAMMING) {
                 this.highlightProblemStatementDifferences();
             }
+            this.isHidden = false;
             this.problemStatementUpdateEvent.emit(this.updatedProblemStatementWithHighlightedDifferencesHTML);
         }
     }
@@ -81,10 +78,6 @@ export class ExamExerciseUpdateHighlighterComponent implements OnInit, OnDestroy
      * Computes the difference between the old and new (updated) problem statement and displays this difference.
      */
     highlightProblemStatementDifferences() {
-        if (!this.updatedProblemStatement) {
-            return;
-        }
-
         const outdatedProblemStatementHTML = htmlForMarkdown(this.outdatedProblemStatement);
         const updatedProblemStatementHTML = htmlForMarkdown(this.updatedProblemStatement);
         this.updatedProblemStatementHTML = updatedProblemStatementHTML;
