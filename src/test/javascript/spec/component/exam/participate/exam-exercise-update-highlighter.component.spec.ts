@@ -46,20 +46,20 @@ describe('ExamExerciseUpdateHighlighterComponent', () => {
 
     it('should highlight differences', () => {
         const result = component.exercise.problemStatement;
-        expect(result).toEqual(component.updatedProblemStatementWithHighlightedDifferences);
+        expect(result).toEqual(component.updatedProblemStatementWithHighlightedDifferencesHTML);
     });
 
     it('should display different problem statement after toggle method is called', () => {
         const mouseEvent = new MouseEvent('click');
         const stopPropagationSpy = jest.spyOn(mouseEvent, 'stopPropagation');
         const problemStatementBeforeClick = component.exercise.problemStatement;
-        expect(problemStatementBeforeClick).toEqual(component.updatedProblemStatementWithHighlightedDifferences);
+        expect(problemStatementBeforeClick).toEqual(component.updatedProblemStatementWithHighlightedDifferencesHTML);
 
         component.toggleHighlightedProblemStatement(mouseEvent);
 
         const problemStatementAfterClick = component.exercise.problemStatement;
         expect(problemStatementAfterClick).toEqual(updatedProblemStatement);
-        expect(problemStatementAfterClick).not.toEqual(component.updatedProblemStatementWithHighlightedDifferences);
+        expect(problemStatementAfterClick).not.toEqual(component.updatedProblemStatementWithHighlightedDifferencesHTML);
         expect(problemStatementAfterClick).not.toEqual(problemStatementBeforeClick);
         expect(stopPropagationSpy).toHaveBeenCalledOnce();
     });
@@ -91,7 +91,7 @@ describe('ExamExerciseUpdateHighlighterComponent', () => {
 
         it('should ignore plantuml diagrams in programming exercise problem statements for diff calculation', () => {
             const result = component.exercise.problemStatement;
-            expect(result).toEqual(component.updatedProblemStatementWithHighlightedDifferences);
+            expect(result).toEqual(component.updatedProblemStatementWithHighlightedDifferencesHTML);
             fixture.detectChanges();
         });
     });
