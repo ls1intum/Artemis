@@ -68,12 +68,13 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
 
     private updateIsImportBasedOnUrl() {
         let isImportFromExistingExercise = false;
-        let isImportFromFile = false;
+        const isImportFromFile = false;
         this.urlSubscription = this.activatedRoute.url
             .pipe(
                 tap((segments) => {
                     isImportFromExistingExercise = segments.some((segment) => segment.path === 'import');
-                    isImportFromFile = segments.some((segment) => segment.path === 'import-from-file');
+                    // currently not supported for imports from files, issue https://github.com/ls1intum/Artemis/issues/8562 should be fixed first
+                    // isImportFromFile = segments.some((segment) => segment.path === 'import-from-file');
                 }),
             )
             .subscribe(() => {
