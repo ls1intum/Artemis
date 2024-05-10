@@ -28,6 +28,7 @@ describe('SidebarCardItemComponent', () => {
         const testItem = {
             title: 'testTitle',
             id: 'testId',
+            size: 'M',
             difficulty: DifficultyLevel.EASY,
         };
         component.sidebarItem = testItem;
