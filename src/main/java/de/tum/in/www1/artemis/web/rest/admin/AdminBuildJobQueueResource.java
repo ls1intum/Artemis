@@ -136,7 +136,7 @@ public class AdminBuildJobQueueResource {
      * @param agentName the name of the agent
      * @return the ResponseEntity with the result of the cancellation
      */
-    @DeleteMapping("/cancel-all-running-jobs-for-agent")
+    @DeleteMapping("cancel-all-running-jobs-for-agent")
     @EnforceAdmin
     public ResponseEntity<Void> cancelAllRunningBuildJobsForAgent(@RequestParam String agentName) {
         log.debug("REST request to cancel all running build jobs for agent {}", agentName);

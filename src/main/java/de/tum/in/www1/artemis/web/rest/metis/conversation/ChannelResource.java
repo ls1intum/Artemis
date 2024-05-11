@@ -55,7 +55,7 @@ import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelIdAndNameD
 
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/courses")
+@RequestMapping("api/courses/")
 public class ChannelResource extends ConversationManagementResource {
 
     private static final Logger log = LoggerFactory.getLogger(ChannelResource.class);
