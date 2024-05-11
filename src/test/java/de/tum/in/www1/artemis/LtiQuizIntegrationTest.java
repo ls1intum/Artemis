@@ -110,7 +110,6 @@ class LtiQuizIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         quizSubmissionWebsocketService.saveSubmission(quizExercise.getId(), quizSubmission, () -> TEST_PREFIX + "student1");
 
         assertThat(submissionRepository.countByExerciseIdSubmitted(quizExercise.getId())).isZero();
-        quizScheduleService.processCachedQuizSubmissions();
 
         verifyNoInteractions(lti13Service);
 
@@ -119,8 +118,6 @@ class LtiQuizIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(quizExercise).isNotNull();
         quizExercise.setDueDate(ZonedDateTime.now());
         exerciseRepository.saveAndFlush(quizExercise);
-
-        quizScheduleService.processCachedQuizSubmissions();
 
         verify(lti13Service).onNewResult(any());
 

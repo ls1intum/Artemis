@@ -60,7 +60,6 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.domain.quiz.AbstractQuizSubmission;
 import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
@@ -93,7 +92,6 @@ import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.quiz.QuizBatchService;
 import de.tum.in.www1.artemis.service.quiz.QuizSubmissionService;
-import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
@@ -156,8 +154,6 @@ public class ParticipationResource {
 
     private final QuizBatchService quizBatchService;
 
-    private final QuizScheduleService quizScheduleService;
-
     private final SubmittedAnswerRepository submittedAnswerRepository;
 
     private final GroupNotificationService groupNotificationService;
@@ -174,8 +170,8 @@ public class ParticipationResource {
             GuidedTourConfiguration guidedTourConfiguration, TeamRepository teamRepository, FeatureToggleService featureToggleService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, SubmissionRepository submissionRepository,
             ResultRepository resultRepository, ExerciseDateService exerciseDateService, InstanceMessageSendService instanceMessageSendService, QuizBatchService quizBatchService,
-            QuizScheduleService quizScheduleService, SubmittedAnswerRepository submittedAnswerRepository, GroupNotificationService groupNotificationService,
-            QuizSubmissionService quizSubmissionService, GradingScaleService gradingScaleService) {
+            SubmittedAnswerRepository submittedAnswerRepository, GroupNotificationService groupNotificationService, QuizSubmissionService quizSubmissionService,
+            GradingScaleService gradingScaleService) {
         this.participationService = participationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -197,7 +193,6 @@ public class ParticipationResource {
         this.exerciseDateService = exerciseDateService;
         this.instanceMessageSendService = instanceMessageSendService;
         this.quizBatchService = quizBatchService;
-        this.quizScheduleService = quizScheduleService;
         this.submittedAnswerRepository = submittedAnswerRepository;
         this.groupNotificationService = groupNotificationService;
         this.quizSubmissionService = quizSubmissionService;
@@ -777,13 +772,6 @@ public class ParticipationResource {
     private MappingJacksonValue participationForQuizExercise(QuizExercise quizExercise, User user) {
         // 1st case the quiz has already ended
         if (quizExercise.isQuizEnded()) {
-            // When the quiz has ended, students reload the page (or navigate again into it), but the participation (+ submission + result) has not yet been stored in the database
-            // (because for 1500 students this can take up to 60s), we would get a lot of errors here -> wait until all submissions are process and available in the DB
-            // TODO: Handle this case here properly and show a message to the user: please wait while the quiz results are being processed (show a progress animation in the client)
-            // Edge case: if students got their participation via before all processing was done and the reload their results will be gone until processing is finished
-            if (!quizScheduleService.finishedProcessing(quizExercise.getId())) {
-                return null;
-            }
 
             // quiz has ended => get participation from database and add full quizExercise
             quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExercise.getId());
@@ -1008,23 +996,6 @@ public class ParticipationResource {
             return participation;
         }
 
-        // Look for Participation in ParticipationHashMap first
-        StudentParticipation participation = quizScheduleService.getParticipation(quizExercise.getId(), username);
-        if (participation != null) {
-            return participation;
-        }
-
-        // get submission from HashMap
-        AbstractQuizSubmission quizSubmission = quizScheduleService.getQuizSubmission(quizExercise.getId(), username);
-
-        // construct result
-        Result result = new Result().submission(quizSubmission);
-
-        // construct participation
-        participation = new StudentParticipation();
-        participation.setInitializationState(InitializationState.INITIALIZED);
-        participation.setExercise(quizExercise);
-        participation.addResult(result);
-        return participation;
+        return null;
     }
 }

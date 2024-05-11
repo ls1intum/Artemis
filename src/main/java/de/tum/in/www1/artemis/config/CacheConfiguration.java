@@ -49,7 +49,6 @@ import com.hazelcast.spi.properties.ClusterProperty;
 import com.hazelcast.spring.cache.HazelcastCacheManager;
 
 import de.tum.in.www1.artemis.service.HazelcastPathSerializer;
-import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import tech.jhipster.config.JHipsterProperties;
 import tech.jhipster.config.cache.PrefixedKeyGenerator;
 
@@ -264,7 +263,6 @@ public class CacheConfiguration {
             config.setLiteMember(true);
         }
 
-        QuizScheduleService.configureHazelcast(config);
         return Hazelcast.newHazelcastInstance(config);
     }
 

@@ -30,7 +30,6 @@ import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.AbstractQuizSubmissionService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.SubmissionVersionService;
-import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Profile(PROFILE_CORE)
@@ -45,19 +44,15 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
 
     private final QuizExerciseRepository quizExerciseRepository;
 
-    private final QuizScheduleService quizScheduleService;
-
     private final ParticipationService participationService;
 
     private final QuizBatchService quizBatchService;
 
-    public QuizSubmissionService(QuizSubmissionRepository quizSubmissionRepository, QuizScheduleService quizScheduleService, ResultRepository resultRepository,
-            SubmissionVersionService submissionVersionService, QuizExerciseRepository quizExerciseRepository, ParticipationService participationService,
-            QuizBatchService quizBatchService) {
+    public QuizSubmissionService(QuizSubmissionRepository quizSubmissionRepository, ResultRepository resultRepository, SubmissionVersionService submissionVersionService,
+            QuizExerciseRepository quizExerciseRepository, ParticipationService participationService, QuizBatchService quizBatchService) {
         super(submissionVersionService);
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.resultRepository = resultRepository;
-        this.quizScheduleService = quizScheduleService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.participationService = participationService;
         this.quizBatchService = quizBatchService;
@@ -106,7 +101,7 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         result.setParticipation(participation);
 
         // add result to statistics
-        quizScheduleService.addResultForStatisticUpdate(quizExercise.getId(), result);
+        // TODO: store the statistic directly in the database
         log.debug("submit practice quiz finished: {}", quizSubmission);
         return result;
     }
@@ -138,7 +133,7 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         quizSubmission.setSubmissionDate(ZonedDateTime.now());
 
         // save submission to HashMap
-        quizScheduleService.updateSubmission(exerciseId, userLogin, quizSubmission);
+        // TODO: store the submission directly in the database
 
         log.info("{} Saved quiz submission for user {} in quiz {} after {} µs ", logText, userLogin, exerciseId, (System.nanoTime() - start) / 1000);
         return quizSubmission;
@@ -149,20 +144,15 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
      */
     private void checkSubmissionForLiveModeOrThrow(Long exerciseId, String userLogin, String logText, long start) throws QuizSubmissionException {
         // check if submission is still allowed
-        QuizExercise quizExercise = quizScheduleService.getQuizExercise(exerciseId);
-        if (quizExercise == null) {
-            // Fallback solution
-            log.info("Quiz not in QuizScheduleService cache, fetching from DB");
-            quizExercise = quizExerciseRepository.findByIdElseThrow(exerciseId);
-            quizExercise.setQuizBatches(null);
-        }
+        var quizExercise = quizExerciseRepository.findByIdElseThrow(exerciseId);
+        quizExercise.setQuizBatches(null);
         log.debug("{}: Received quiz exercise for user {} in quiz {} in {} µs.", logText, userLogin, exerciseId, (System.nanoTime() - start) / 1000);
         if (!quizExercise.isQuizStarted() || quizExercise.isQuizEnded()) {
             throw new QuizSubmissionException("The quiz is not active");
         }
 
-        var cachedSubmission = quizScheduleService.getQuizSubmission(exerciseId, userLogin);
-        if (cachedSubmission.isSubmitted()) {
+        var submission = quizSubmissionRepository.findByExerciseIdAndStudentLogin(exerciseId, userLogin).orElseThrow();
+        if (submission.isSubmitted()) {
             // the old submission has not yet been processed, so don't allow a new one yet
             throw new QuizSubmissionException("You have already submitted the quiz");
         }
@@ -173,11 +163,6 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
                 throw new QuizSubmissionException("The quiz is not active");
             }
 
-            // in synchronized mode we cache the participation after we processed the submission, so we can check there if the submission was already processed
-            var cachedParticipation = quizScheduleService.getParticipation(exerciseId, userLogin);
-            if (cachedParticipation != null && cachedParticipation.getResults().stream().anyMatch(r -> r.getSubmission().isSubmitted())) {
-                throw new QuizSubmissionException("You have already submitted the quiz");
-            }
         }
         else {
             // in the other modes the resubmission checks are done at join time and the student-batch association is removed when processing a submission

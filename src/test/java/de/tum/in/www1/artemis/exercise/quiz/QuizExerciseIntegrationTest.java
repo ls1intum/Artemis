@@ -1055,7 +1055,6 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         batch.setPassword("1234");
 
         quizExerciseUtilService.setQuizBatchExerciseAndSave(batch, quizExercise);
-        quizScheduleService.joinQuizBatch(quizExercise, batch, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
 
         request.postWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/join", new QuizBatchJoinDTO("1234"), QuizBatch.class, HttpStatus.BAD_REQUEST);
     }
@@ -1616,9 +1615,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, true, ZonedDateTime.now());
         participationUtilService.addSubmission(quizExercise, quizSubmission, TEST_PREFIX + "student1");
 
-        quizScheduleService.updateSubmission(quizExercise.getId(), TEST_PREFIX + "student1", quizSubmission);
-
-        exerciseService.filterForCourseDashboard(quizExercise, Set.of(), TEST_PREFIX + "student1", true);
+        exerciseService.filterForCourseDashboard(quizExercise, Set.of(), true);
 
         assertThat(quizExercise.getStudentParticipations()).hasSize(1);
         assertThat(quizExercise.getStudentParticipations().stream().findFirst().get().getInitializationState()).isEqualTo(InitializationState.INITIALIZED);

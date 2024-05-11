@@ -38,10 +38,8 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
-import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.lti.LtiResourceLaunch;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.domain.quiz.AbstractQuizSubmission;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.scores.ParticipantScore;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
@@ -59,7 +57,6 @@ import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.quiz.QuizBatchService;
-import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewExerciseStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
@@ -77,8 +74,6 @@ public class ExerciseService {
     private static final Logger log = LoggerFactory.getLogger(ExerciseService.class);
 
     private final AuthorizationCheckService authCheckService;
-
-    private final QuizScheduleService quizScheduleService;
 
     private final ExerciseDateService exerciseDateService;
 
@@ -120,18 +115,17 @@ public class ExerciseService {
 
     private final ParticipantScoreService participantScoreService;
 
-    public ExerciseService(ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService, QuizScheduleService quizScheduleService,
-            AuditEventRepository auditEventRepository, TeamRepository teamRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            Lti13ResourceLaunchRepository lti13ResourceLaunchRepository, StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
-            SubmissionRepository submissionRepository, ParticipantScoreRepository participantScoreRepository, UserRepository userRepository,
-            ComplaintRepository complaintRepository, TutorLeaderboardService tutorLeaderboardService, ComplaintResponseRepository complaintResponseRepository,
-            GradingCriterionRepository gradingCriterionRepository, FeedbackRepository feedbackRepository, RatingService ratingService, ExerciseDateService exerciseDateService,
-            ExampleSubmissionRepository exampleSubmissionRepository, QuizBatchService quizBatchService, ParticipantScoreService participantScoreService) {
+    public ExerciseService(ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService, AuditEventRepository auditEventRepository,
+            TeamRepository teamRepository, ProgrammingExerciseRepository programmingExerciseRepository, Lti13ResourceLaunchRepository lti13ResourceLaunchRepository,
+            StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, SubmissionRepository submissionRepository,
+            ParticipantScoreRepository participantScoreRepository, UserRepository userRepository, ComplaintRepository complaintRepository,
+            TutorLeaderboardService tutorLeaderboardService, ComplaintResponseRepository complaintResponseRepository, GradingCriterionRepository gradingCriterionRepository,
+            FeedbackRepository feedbackRepository, RatingService ratingService, ExerciseDateService exerciseDateService, ExampleSubmissionRepository exampleSubmissionRepository,
+            QuizBatchService quizBatchService, ParticipantScoreService participantScoreService) {
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.authCheckService = authCheckService;
         this.auditEventRepository = auditEventRepository;
-        this.quizScheduleService = quizScheduleService;
         this.submissionRepository = submissionRepository;
         this.teamRepository = teamRepository;
         this.participantScoreRepository = participantScoreRepository;
@@ -305,7 +299,7 @@ public class ExerciseService {
         boolean isStudent = !authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
         for (Exercise exercise : exercises) {
             // add participation with submission and result to each exercise
-            filterForCourseDashboard(exercise, participationsOfUserInExercises, user.getLogin(), isStudent);
+            filterForCourseDashboard(exercise, participationsOfUserInExercises, isStudent);
             // remove sensitive information from the exercise for students
             if (isStudent) {
                 exercise.filterSensitiveInformation();
@@ -443,10 +437,9 @@ public class ExerciseService {
      *
      * @param exercise       the exercise that should be filtered (this deletes many field values of the passed exercise object)
      * @param participations the set of participations, wherein to search for the relevant participation
-     * @param username       used to get quiz submission for the user
      * @param isStudent      defines if the current user is a student
      */
-    public void filterForCourseDashboard(Exercise exercise, Set<StudentParticipation> participations, String username, boolean isStudent) {
+    public void filterForCourseDashboard(Exercise exercise, Set<StudentParticipation> participations, boolean isStudent) {
         // remove the unnecessary inner course attribute
         exercise.setCourse(null);
 
@@ -459,17 +452,6 @@ public class ExerciseService {
 
         // get user's participation for the exercise
         Set<StudentParticipation> relevantParticipations = participations != null ? exercise.findRelevantParticipation(participations) : Set.of();
-
-        // for quiz exercises also check SubmissionHashMap for submission by this user (active participation)
-        // if participation was not found in database
-        if (relevantParticipations.isEmpty() && exercise instanceof QuizExercise) {
-            AbstractQuizSubmission submission = quizScheduleService.getQuizSubmission(exercise.getId(), username);
-            if (submission.getSubmissionDate() != null) {
-                StudentParticipation quizParticipation = new StudentParticipation().exercise(exercise);
-                quizParticipation.setInitializationState(InitializationState.INITIALIZED);
-                relevantParticipations = Set.of(quizParticipation);
-            }
-        }
 
         // add relevant submission (relevancy depends on InitializationState) with its result to participation
         relevantParticipations.forEach(participation -> {

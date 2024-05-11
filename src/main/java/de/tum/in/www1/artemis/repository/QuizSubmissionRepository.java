@@ -63,4 +63,13 @@ public interface QuizSubmissionRepository extends JpaRepository<QuizSubmission, 
                 AND participation.student.login = :studentLogin
             """)
     Set<QuizSubmission> findAllByQuizBatchAndStudentLogin(@Param("quizBatchId") Long quizBatchId, @Param("studentLogin") String studentLogin);
+
+    @Query("""
+            SELECT submission
+            FROM QuizSubmission submission
+                LEFT JOIN TREAT(submission.participation AS StudentParticipation) participation
+            WHERE participation.exercise.id = :exerciseId
+                AND participation.student.login = :studentLogin
+            """)
+    Optional<QuizSubmission> findByExerciseIdAndStudentLogin(@Param("exerciseId") Long exerciseId, @Param("studentLogin") String studentLogin);
 }

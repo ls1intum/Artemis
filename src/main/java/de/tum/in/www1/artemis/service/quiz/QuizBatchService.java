@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.security.SecureRandom;
 import java.time.ZonedDateTime;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -23,7 +22,6 @@ import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.exception.QuizJoinException;
 import de.tum.in.www1.artemis.repository.QuizBatchRepository;
-import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -41,11 +39,8 @@ public class QuizBatchService {
 
     private final QuizBatchRepository quizBatchRepository;
 
-    private final QuizScheduleService quizScheduleService;
-
-    public QuizBatchService(QuizBatchRepository quizBatchRepository, QuizScheduleService quizScheduleService) {
+    public QuizBatchService(QuizBatchRepository quizBatchRepository) {
         this.quizBatchRepository = quizBatchRepository;
-        this.quizScheduleService = quizScheduleService;
     }
 
     /**
@@ -108,7 +103,7 @@ public class QuizBatchService {
             throw new QuizJoinException("quizBatchExpired", "Batch has expired");
         }
 
-        quizScheduleService.joinQuizBatch(quizExercise, quizBatch, user);
+        // TODO: join the batch in the database
         return quizBatch;
     }
 
@@ -187,19 +182,6 @@ public class QuizBatchService {
      * @return the batch that the user currently takes part in or empty
      */
     public Optional<QuizBatch> getQuizBatchForStudentByLogin(QuizExercise quizExercise, String login) {
-        var batchIdOptional = quizScheduleService.getQuizBatchForStudentByLogin(quizExercise, login);
-        if (batchIdOptional.isEmpty()) {
-            if (quizExercise.getQuizMode() == QuizMode.SYNCHRONIZED) {
-                return Optional.of(getOrCreateSynchronizedQuizBatch(quizExercise));
-            }
-            else {
-                return quizBatchRepository.findAllByQuizExerciseAndStudentLogin(quizExercise, login).stream().findFirst();
-            }
-        }
-        if (quizExercise.getQuizBatches() != null) {
-            final Long batchId = batchIdOptional.get();
-            return quizExercise.getQuizBatches().stream().filter(quizBatch -> Objects.equals(quizBatch.getId(), batchId)).findAny().or(() -> quizBatchRepository.findById(batchId));
-        }
-        return batchIdOptional.flatMap(quizBatchRepository::findById);
+        return quizBatchRepository.findAllByQuizExerciseAndStudentLogin(quizExercise, login).stream().findFirst();
     }
 }

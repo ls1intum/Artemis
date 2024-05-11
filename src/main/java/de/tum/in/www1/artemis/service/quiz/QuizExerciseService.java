@@ -52,7 +52,6 @@ import de.tum.in.www1.artemis.repository.ShortAnswerMappingRepository;
 import de.tum.in.www1.artemis.service.ExerciseSpecificationService;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
-import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -192,7 +191,6 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
         // in case the quiz has not yet started or the quiz is currently running, we have to clean up
         quizScheduleService.cancelScheduledQuizStart(savedQuizExercise.getId());
-        quizScheduleService.clearQuizData(savedQuizExercise.getId());
 
         // clean up the statistics
         quizStatisticService.recalculateStatistics(savedQuizExercise);
@@ -200,7 +198,6 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
     public void cancelScheduledQuiz(Long quizExerciseId) {
         quizScheduleService.cancelScheduledQuizStart(quizExerciseId);
-        quizScheduleService.clearQuizData(quizExerciseId);
     }
 
     /**

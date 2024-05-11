@@ -52,7 +52,7 @@ import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmittedAnswerRepository;
 import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.service.FilePathService;
-import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
+import de.tum.in.www1.artemis.service.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
 /**
@@ -432,6 +432,6 @@ public class QuizExerciseUtilService {
     public void joinQuizBatch(QuizExercise quizExercise, QuizBatch batch, String username) {
         var user = new User();
         user.setLogin(username);
-        quizScheduleService.joinQuizBatch(quizExercise, batch, user);
+        // TODO: join quiz batch in the database
     }
 }

@@ -139,7 +139,7 @@ class ExerciseTest extends AbstractSpringIntegrationIndependentTest {
         ratedResult.setCompletionDate(ZonedDateTime.now().minusHours(2));
 
         // only use the relevant participation
-        exerciseService.filterForCourseDashboard(exercise, Set.of(studentParticipationFinished), "student", true);
+        exerciseService.filterForCourseDashboard(exercise, Set.of(studentParticipationFinished), true);
         var submissions = exercise.getStudentParticipations().iterator().next().getSubmissions();
         // We should only get the one relevant submission to send to the client
         assertThat(submissions).hasSize(1);
@@ -150,7 +150,7 @@ class ExerciseTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     void filterForCourseDashboard_nullParticipations() {
-        exerciseService.filterForCourseDashboard(exercise, null, "student", true);
+        exerciseService.filterForCourseDashboard(exercise, null, true);
         assertThat(exercise.getStudentParticipations()).isEmpty();
     }
 
@@ -161,13 +161,13 @@ class ExerciseTest extends AbstractSpringIntegrationIndependentTest {
         studentParticipationUninitialized.setSubmissions(null);
         studentParticipationInitialized.setSubmissions(null);
 
-        exerciseService.filterForCourseDashboard(exercise, studentParticipations, "student", true);
+        exerciseService.filterForCourseDashboard(exercise, studentParticipations, true);
         assertThat(exercise.getStudentParticipations().iterator().next().getSubmissions()).isNull();
     }
 
     @Test
     void filterForCourseDashboard_emptyParticipations() {
-        exerciseService.filterForCourseDashboard(exercise, Set.of(), "student", true);
+        exerciseService.filterForCourseDashboard(exercise, Set.of(), true);
         assertThat(exercise.getStudentParticipations()).isEmpty();
     }
 
@@ -178,13 +178,13 @@ class ExerciseTest extends AbstractSpringIntegrationIndependentTest {
         studentParticipationUninitialized.setSubmissions(new HashSet<>());
         studentParticipationInitialized.setSubmissions(new HashSet<>());
 
-        exerciseService.filterForCourseDashboard(exercise, studentParticipations, "student", true);
+        exerciseService.filterForCourseDashboard(exercise, studentParticipations, true);
         assertThat(exercise.getStudentParticipations().iterator().next().getSubmissions()).isNull();
     }
 
     @Test
     void filterForCourseDashboard_submissionsWithRatedResultsOrder() {
-        exerciseService.filterForCourseDashboard(exercise, filterForCourseDashboard_prepareParticipations(), "student", true);
+        exerciseService.filterForCourseDashboard(exercise, filterForCourseDashboard_prepareParticipations(), true);
         assertThat(exercise.getStudentParticipations().iterator().next().getSubmissions()).isEqualTo(Set.of(submission3));
     }
 
@@ -194,7 +194,7 @@ class ExerciseTest extends AbstractSpringIntegrationIndependentTest {
         submission2.setResults(List.of(unratedResult));
         submission3.setResults(List.of(unratedResult));
 
-        exerciseService.filterForCourseDashboard(exercise, filterForCourseDashboard_prepareParticipations(), "student", true);
+        exerciseService.filterForCourseDashboard(exercise, filterForCourseDashboard_prepareParticipations(), true);
         assertThat(exercise.getStudentParticipations().iterator().next().getSubmissions()).isEqualTo(Set.of(submission3));
     }
 
@@ -204,7 +204,7 @@ class ExerciseTest extends AbstractSpringIntegrationIndependentTest {
         submission2.setResults(List.of());
         submission3.setResults(List.of());
 
-        exerciseService.filterForCourseDashboard(exercise, filterForCourseDashboard_prepareParticipations(), "student", true);
+        exerciseService.filterForCourseDashboard(exercise, filterForCourseDashboard_prepareParticipations(), true);
         assertThat(exercise.getStudentParticipations().iterator().next().getSubmissions()).isEqualTo(Set.of(submission3));
     }
 
@@ -218,7 +218,7 @@ class ExerciseTest extends AbstractSpringIntegrationIndependentTest {
         submission2.setId(21L);
         submission3.setId(15L);
 
-        exerciseService.filterForCourseDashboard(exercise, filterForCourseDashboard_prepareParticipations(), "student", true);
+        exerciseService.filterForCourseDashboard(exercise, filterForCourseDashboard_prepareParticipations(), true);
         assertThat(exercise.getStudentParticipations().iterator().next().getSubmissions()).isEqualTo(Set.of(submission1));
     }
 
@@ -228,7 +228,7 @@ class ExerciseTest extends AbstractSpringIntegrationIndependentTest {
         submission2.setResults(List.of());
         submission3.setResults(List.of(unratedResult));
 
-        exerciseService.filterForCourseDashboard(exercise, filterForCourseDashboard_prepareParticipations(), "student", true);
+        exerciseService.filterForCourseDashboard(exercise, filterForCourseDashboard_prepareParticipations(), true);
         assertThat(exercise.getStudentParticipations().iterator().next().getSubmissions()).isEqualTo(Set.of(submission1));
     }
 
