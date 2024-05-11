@@ -457,7 +457,7 @@ public class TutorialGroupService {
     private static Optional<User> getMatchingUser(Set<User> users, TutorialGroupRegistrationImportDTO registration) {
         return users.stream().filter(user -> {
             if (registration.student() == null) {
-                throw new IllegalStateException(); // should be the case as we filtered out all registrations without a student
+                return false;
             }
             boolean hasRegistrationNumber = StringUtils.hasText(registration.student().registrationNumber());
             boolean hasLogin = StringUtils.hasText(registration.student().login());
@@ -478,7 +478,7 @@ public class TutorialGroupService {
 
         for (var registration : registrations) {
             if (registration.student() == null) {
-                throw new IllegalStateException(); // should be the case as we filtered out all registrations without a student in the calling method
+                continue; // should not be the case as we filtered out all registrations without a student in the calling method
             }
             boolean hasRegistrationNumber = StringUtils.hasText(registration.student().registrationNumber());
             boolean hasLogin = StringUtils.hasText(registration.student().login());
