@@ -28,7 +28,7 @@
             "websocketBroker": "Websocket Broker (Server -> Broker)",
             "athena": "Athena",
             "apollon": "Apollon Conversion Server",
-            "iris": "Pyris Server"
+            "pyris": "Pyris"
         },
         "table": {
             "service": "Dienst Name",

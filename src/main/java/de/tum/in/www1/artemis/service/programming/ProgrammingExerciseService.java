@@ -35,8 +35,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.Gson;
 
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.Course;
@@ -430,7 +430,7 @@ public class ProgrammingExerciseService {
      * @param isImportedFromFile  defines if the programming exercise is imported from a file, if the
      *                                exercise is imported, the build plans will not be triggered to prevent erroneous builds
      */
-    public void setupBuildPlansForNewExercise(ProgrammingExercise programmingExercise, boolean isImportedFromFile) {
+    public void setupBuildPlansForNewExercise(ProgrammingExercise programmingExercise, boolean isImportedFromFile) throws JsonProcessingException {
         String projectKey = programmingExercise.getProjectKey();
         // Get URLs for repos
         var exerciseRepoUri = programmingExercise.getVcsTemplateRepositoryUri();
@@ -452,7 +452,7 @@ public class ProgrammingExerciseService {
         Windfile windfile = programmingExercise.getWindfile();
         if (windfile != null && buildScriptGenerationService.isPresent() && programmingExercise.getBuildScript() == null) {
             String script = buildScriptGenerationService.get().getScript(programmingExercise);
-            programmingExercise.setBuildPlanConfiguration(new Gson().toJson(windfile));
+            programmingExercise.setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(windfile));
             programmingExercise.setBuildScript(script);
             programmingExercise = programmingExerciseRepository.saveForCreation(programmingExercise);
         }
@@ -534,7 +534,7 @@ public class ProgrammingExerciseService {
      * @return the updates programming exercise from the database
      */
     public ProgrammingExercise updateProgrammingExercise(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise,
-            @Nullable String notificationText) {
+            @Nullable String notificationText) throws JsonProcessingException {
         setURLsForAuxiliaryRepositoriesOfExercise(updatedProgrammingExercise);
         connectAuxiliaryRepositoriesToExercise(updatedProgrammingExercise);
 
@@ -563,7 +563,7 @@ public class ProgrammingExerciseService {
      * @param programmingExerciseBeforeUpdate the original programming exercise with its old values
      * @param updatedProgrammingExercise      the changed programming exercise with its new values
      */
-    private void updateBuildPlanForExercise(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise) {
+    private void updateBuildPlanForExercise(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise) throws JsonProcessingException {
         if (continuousIntegrationService.isEmpty()
                 || Objects.equals(programmingExerciseBeforeUpdate.getBuildPlanConfiguration(), updatedProgrammingExercise.getBuildPlanConfiguration())) {
             return;

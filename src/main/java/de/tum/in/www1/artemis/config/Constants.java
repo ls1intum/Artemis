@@ -162,12 +162,6 @@ public final class Constants {
     // Also, the value on the client side must match this value.
     public static final int COMPLAINT_TEXT_LIMIT = 65535;
 
-    public static final String ASSIGNMENT_CHECKOUT_PATH = "assignment";
-
-    public static final String TESTS_CHECKOUT_PATH = "tests";
-
-    public static final String SOLUTION_CHECKOUT_PATH = "solution";
-
     public static final String SETUP_COMMIT_MESSAGE = "Setup";
 
     public static final String ENROLL_IN_COURSE = "ENROLL_IN_COURSE";

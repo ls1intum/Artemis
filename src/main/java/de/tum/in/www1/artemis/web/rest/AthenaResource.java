@@ -19,9 +19,12 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.exception.NetworkingException;
 import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
@@ -35,6 +38,7 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.athena.AthenaFeedbackSuggestionsService;
 import de.tum.in.www1.artemis.service.connectors.athena.AthenaModuleService;
 import de.tum.in.www1.artemis.service.connectors.athena.AthenaRepositoryExportService;
+import de.tum.in.www1.artemis.service.dto.athena.ModelingFeedbackDTO;
 import de.tum.in.www1.artemis.service.dto.athena.ProgrammingFeedbackDTO;
 import de.tum.in.www1.artemis.service.dto.athena.TextFeedbackDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -63,6 +67,10 @@ public class AthenaResource {
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
+    private final ModelingExerciseRepository modelingExerciseRepository;
+
+    private final ModelingSubmissionRepository modelingSubmissionRepository;
+
     private final AuthorizationCheckService authCheckService;
 
     private final AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService;
@@ -76,13 +84,16 @@ public class AthenaResource {
      */
     public AthenaResource(CourseRepository courseRepository, TextExerciseRepository textExerciseRepository, TextSubmissionRepository textSubmissionRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            AuthorizationCheckService authCheckService, AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService,
-            AthenaRepositoryExportService athenaRepositoryExportService, AthenaModuleService athenaModuleService) {
+            ModelingExerciseRepository modelingExerciseRepository, ModelingSubmissionRepository modelingSubmissionRepository, AuthorizationCheckService authCheckService,
+            AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService, AthenaRepositoryExportService athenaRepositoryExportService,
+            AthenaModuleService athenaModuleService) {
         this.courseRepository = courseRepository;
         this.textExerciseRepository = textExerciseRepository;
         this.textSubmissionRepository = textSubmissionRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
+        this.modelingExerciseRepository = modelingExerciseRepository;
+        this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.authCheckService = authCheckService;
         this.athenaFeedbackSuggestionsService = athenaFeedbackSuggestionsService;
         this.athenaRepositoryExportService = athenaRepositoryExportService;
@@ -122,6 +133,21 @@ public class AthenaResource {
         }
     }
 
+    private ResponseEntity<List<String>> getAvailableModules(long courseId, ExerciseType exerciseType) {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        log.debug("REST request to get available Athena modules for {} exercises in course {}", exerciseType.getExerciseTypeAsReadableString(), course.getTitle());
+
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
+
+        try {
+            List<String> modules = athenaModuleService.getAthenaModulesForCourse(course, exerciseType);
+            return ResponseEntity.ok(modules);
+        }
+        catch (NetworkingException e) {
+            throw new InternalServerErrorException("Could not fetch available Athena modules for " + exerciseType.getExerciseTypeAsReadableString() + " exercises");
+        }
+    }
+
     /**
      * GET athena/text-exercises/:exerciseId/submissions/:submissionId/feedback-suggestions : Get feedback suggestions from Athena for a text exercise
      *
@@ -151,27 +177,17 @@ public class AthenaResource {
     }
 
     /**
-     * GET athena/courses/{courseId}/programming-exercises/available-modules : Get all available Athena modules for a programming exercise in the course
+     * GET athena/modeling-exercises/:exerciseId/submissions/:submissionId/feedback-suggestions : Get feedback suggestions from Athena for a modeling exercise
      *
-     * @param courseId the id of the course the programming exercise belongs to
-     * @return 200 Ok if successful with the modules as body
+     * @param exerciseId   the id of the exercise the submission belongs to
+     * @param submissionId the id of the submission to get feedback suggestions for
+     * @return 200 Ok if successful with the corresponding result as body
      */
-    @GetMapping("athena/courses/{courseId}/programming-exercises/available-modules")
-    @EnforceAtLeastEditor
-    public ResponseEntity<List<String>> getAvailableModulesForProgrammingExercises(@PathVariable long courseId) {
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        log.debug("REST request to get available Athena modules for programming exercises in Course {}", course.getTitle());
-
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
-
-        try {
-            List<String> modules = athenaModuleService.getAthenaProgrammingModulesForCourse(course);
-            return ResponseEntity.ok(modules);
-        }
-        catch (NetworkingException e) {
-            throw new InternalServerErrorException("Could not fetch available Athena modules for programming exercises");
-        }
-
+    @GetMapping("athena/modeling-exercises/{exerciseId}/submissions/{submissionId}/feedback-suggestions")
+    @EnforceAtLeastTutor
+    public ResponseEntity<List<ModelingFeedbackDTO>> getModelingFeedbackSuggestions(@PathVariable long exerciseId, @PathVariable long submissionId) {
+        return getFeedbackSuggestions(exerciseId, submissionId, modelingExerciseRepository::findByIdElseThrow, modelingSubmissionRepository::findByIdElseThrow,
+                athenaFeedbackSuggestionsService::getModelingFeedbackSuggestions);
     }
 
     /**
@@ -183,19 +199,31 @@ public class AthenaResource {
     @GetMapping("athena/courses/{courseId}/text-exercises/available-modules")
     @EnforceAtLeastEditor
     public ResponseEntity<List<String>> getAvailableModulesForTextExercises(@PathVariable long courseId) {
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        log.debug("REST request to get available Athena modules for text exercises in Course {}", course.getTitle());
+        return this.getAvailableModules(courseId, ExerciseType.TEXT);
+    }
 
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
+    /**
+     * GET athena/courses/{courseId}/programming-exercises/available-modules : Get all available Athena modules for a programming exercise in the course
+     *
+     * @param courseId the id of the course the programming exercise belongs to
+     * @return 200 Ok if successful with the modules as body
+     */
+    @GetMapping("athena/courses/{courseId}/programming-exercises/available-modules")
+    @EnforceAtLeastEditor
+    public ResponseEntity<List<String>> getAvailableModulesForProgrammingExercises(@PathVariable long courseId) {
+        return this.getAvailableModules(courseId, ExerciseType.PROGRAMMING);
+    }
 
-        try {
-            List<String> modules = athenaModuleService.getAthenaTextModulesForCourse(course);
-            return ResponseEntity.ok(modules);
-        }
-        catch (NetworkingException e) {
-            throw new InternalServerErrorException("Could not fetch available Athena modules for programming exercises");
-        }
-
+    /**
+     * GET athena/courses/{courseId}/modeling-exercises/available-modules : Get all available Athena modules for a modeling exercise in the course
+     *
+     * @param courseId the id of the course the modeling exercise belongs to
+     * @return 200 Ok if successful with the modules as body
+     */
+    @GetMapping("athena/courses/{courseId}/modeling-exercises/available-modules")
+    @EnforceAtLeastEditor
+    public ResponseEntity<List<String>> getAvailableModulesForModelingExercises(@PathVariable long courseId) {
+        return this.getAvailableModules(courseId, ExerciseType.MODELING);
     }
 
     /**

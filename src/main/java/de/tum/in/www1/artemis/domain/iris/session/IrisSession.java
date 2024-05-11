@@ -40,7 +40,6 @@ import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 @JsonSubTypes({
     @JsonSubTypes.Type(value = IrisChatSession.class, name = "chat"),
     @JsonSubTypes.Type(value = IrisHestiaSession.class, name = "hestia"),
-    @JsonSubTypes.Type(value = IrisCodeEditorSession.class, name = "codeEditor")
 })
 // @formatter:on
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -54,10 +53,10 @@ public abstract class IrisSession extends DomainObject {
     @Column(name = "creation_date")
     private ZonedDateTime creationDate = ZonedDateTime.now();
 
+    // TODO: This is only used in the tests -> Remove
     public IrisMessage newMessage() {
         var message = new IrisMessage();
         message.setSession(this);
-        this.messages.add(message);
         return message;
     }
 

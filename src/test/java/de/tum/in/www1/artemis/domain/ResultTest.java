@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 
 class ResultTest extends AbstractSpringIntegrationIndependentTest {
@@ -155,5 +155,20 @@ class ResultTest extends AbstractSpringIntegrationIndependentTest {
         result.filterSensitiveFeedbacks(true);
 
         assertThat(result.getFeedbacks()).hasSize(2).allMatch(feedback -> feedback.getTestCase().getTestName() != null);
+    }
+
+    @Test
+    void filterSensitiveInformation() {
+        Result result = new Result();
+        result.setAssessor(new User());
+        result.setAssessmentNote(new AssessmentNote());
+
+        assertThat(result.getAssessor()).isNotNull();
+        assertThat(result.getAssessmentNote()).isNotNull();
+
+        result.filterSensitiveInformation();
+
+        assertThat(result.getAssessor()).isNull();
+        assertThat(result.getAssessmentNote()).isNull();
     }
 }

@@ -135,7 +135,7 @@ management:
         enable:
             http: true
             jvm: true
-            logback: false
+            logback: true
             process: true
             system: true
         distribution:

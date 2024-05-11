@@ -61,10 +61,12 @@ describe('SidebarCardComponent', () => {
 
     it('should store route on click', () => {
         jest.spyOn(component, 'emitStoreLastSelectedItem');
+        jest.spyOn(component, 'forceReload');
         const element: HTMLElement = fixture.nativeElement.querySelector('#test-sidebar-card');
         element.click();
         fixture.detectChanges();
         expect(component.emitStoreLastSelectedItem).toHaveBeenCalledWith(component.sidebarItem.id);
+        expect(component.forceReload).toHaveBeenCalled();
     });
 
     it('should navigate to the item URL on click', async () => {
