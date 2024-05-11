@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,9 +16,11 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
 class CourseExamExportServiceTest extends AbstractSpringIntegrationIndependentTest {
@@ -42,10 +45,13 @@ class CourseExamExportServiceTest extends AbstractSpringIntegrationIndependentTe
     @Autowired
     private ExerciseRepository exerciseRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
     @BeforeEach
     void setup() {
         // setup users
-        userUtilService.addUsers(TEST_PREFIX, 5, 5, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, 2, 3, 0, 1);
     }
 
     @Test
@@ -62,8 +68,13 @@ class CourseExamExportServiceTest extends AbstractSpringIntegrationIndependentTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExportCourse() throws IOException {
+        // Add tutor for complaint response
+        User tutor = userUtilService.createAndSaveUser(TEST_PREFIX + "tutor5");
+        tutor.setGroups(Set.of("tutor"));
+        userRepository.save(tutor);
+
         var course = courseUtilService.createCourseWithExamExercisesAndSubmissions(TEST_PREFIX);
-        var courseWithExercises = courseUtilService.addCourseWithExercisesAndSubmissions(TEST_PREFIX, "", 5, 5, 4, 2, true, 1, "");
+        var courseWithExercises = courseUtilService.addCourseWithExercisesAndSubmissions(TEST_PREFIX, "", 3, 2, 1, 1, true, 1, "");
         var exercises = courseWithExercises.getExercises();
         exercises.forEach(exercise -> {
             exercise.setCourse(course);

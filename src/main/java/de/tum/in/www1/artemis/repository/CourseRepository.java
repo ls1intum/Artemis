@@ -139,6 +139,12 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments" })
     Optional<Course> findWithEagerLecturesById(long courseId);
 
+    /**
+     * Returns an optional course by id with eagerly loaded exercises, plagiarism detection configuration, team assignment configuration, lectures and attachments.
+     *
+     * @param courseId The id of the course to find
+     * @return the populated course or an empty optional if no course was found
+     */
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "exercises.plagiarismDetectionConfig", "exercises.teamAssignmentConfig", "lectures", "lectures.attachments" })
     Optional<Course> findWithEagerExercisesAndExerciseDetailsAndLecturesById(long courseId);
 
@@ -438,6 +444,13 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
         }
     }
 
+    /**
+     * Returns a course by id with eagerly loaded exercises, plagiarism detection configuration, team assignment configuration, lectures and attachments.
+     *
+     * @param courseId The id of the course to find
+     * @return the populated course
+     * @throws EntityNotFoundException if no course was found
+     */
     @NotNull
     default Course findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(long courseId) {
         return findWithEagerExercisesAndExerciseDetailsAndLecturesById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
