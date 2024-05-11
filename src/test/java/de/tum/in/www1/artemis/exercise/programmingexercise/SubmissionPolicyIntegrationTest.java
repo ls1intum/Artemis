@@ -10,7 +10,6 @@ import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -35,6 +34,7 @@ import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.CommitDTO;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
@@ -401,8 +401,6 @@ class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationJenkinsGi
         POLICY_NULL, POLICY_ACTIVE, POLICY_INACTIVE
     }
 
-    // TODO enable this test (Issue - https://github.com/ls1intum/Artemis/issues/8296)
-    @Disabled
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(EnforcePolicyTestType.class)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
@@ -433,8 +431,6 @@ class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationJenkinsGi
         }
     }
 
-    // TODO enable this test (Issue - https://github.com/ls1intum/Artemis/issues/8296)
-    @Disabled
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(EnforcePolicyTestType.class)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
@@ -452,10 +448,15 @@ class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationJenkinsGi
         if (type == EnforcePolicyTestType.POLICY_ACTIVE) {
             mockGitlabRequests(participation);
         }
-        final var resultRequestBody = convertBuildResultToJsonObject(resultNotification);
+        var resultRequestBody = convertBuildResultToJsonObject(resultNotification);
         var result = gradingService.processNewProgrammingExerciseResult(participation, resultRequestBody);
         assertThat(result).isNotNull();
         assertThat(result.getScore()).isEqualTo(25);
+
+        // resultNotification with changed commit hash
+        var updatedResultNotification = ProgrammingExerciseFactory.generateTestResultDTO(null, repositoryName, null, programmingExercise.getProgrammingLanguage(), false,
+                List.of("test1", "test2", "test3"), Collections.emptyList(), null, List.of(new CommitDTO("commit1", "slug", defaultBranch)), null);
+        resultRequestBody = convertBuildResultToJsonObject(updatedResultNotification);
         result = gradingService.processNewProgrammingExerciseResult(participation, resultRequestBody);
         assertThat(result).isNotNull();
         if (type == EnforcePolicyTestType.POLICY_ACTIVE) {
@@ -466,6 +467,25 @@ class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationJenkinsGi
             assertThat(result.getScore()).isEqualTo(25);
             assertThat(result.getFeedbacks()).allMatch(feedback -> feedback.getText() == null);
         }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void test_getSameScoreForSameCommitHash() {
+        ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
+                TEST_PREFIX + "student1");
+        String repositoryName = programmingExercise.getProjectKey().toLowerCase() + "-" + TEST_PREFIX + "student1";
+        var resultNotification1 = ProgrammingExerciseFactory.generateTestResultDTO(null, repositoryName, null, programmingExercise.getProgrammingLanguage(), false,
+                List.of("test1"), List.of("test2", "test3"), null, List.of(new CommitDTO("commit1", "slug", defaultBranch)), null);
+        var resultNotification2 = ProgrammingExerciseFactory.generateTestResultDTO(null, repositoryName, null, programmingExercise.getProgrammingLanguage(), false,
+                List.of("test1"), List.of("test2", "test3"), null, List.of(new CommitDTO("commit1", "slug", defaultBranch)), null);
+        var resultRequestBody = convertBuildResultToJsonObject(resultNotification1);
+        var result1 = gradingService.processNewProgrammingExerciseResult(participation, resultRequestBody);
+        resultRequestBody = convertBuildResultToJsonObject(resultNotification2);
+        var result2 = gradingService.processNewProgrammingExerciseResult(participation, resultRequestBody);
+        assertThat(result1).isNotNull();
+        assertThat(result2).isNotNull();
+        assertThat(result1.getScore()).isEqualTo(result2.getScore());
     }
 
     @Test
