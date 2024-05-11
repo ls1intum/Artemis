@@ -9,9 +9,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
-import de.tum.in.www1.artemis.service.connectors.iris.IrisConnectorException;
-import de.tum.in.www1.artemis.service.connectors.iris.IrisConnectorService;
-import de.tum.in.www1.artemis.service.connectors.iris.dto.IrisModelDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.PyrisConnectorException;
+import de.tum.in.www1.artemis.service.connectors.pyris.PyrisConnectorService;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisModelDTO;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 /**
@@ -22,10 +22,10 @@ import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 @RequestMapping("api/")
 public class IrisModelsResource {
 
-    private final IrisConnectorService irisConnectorService;
+    private final PyrisConnectorService pyrisConnectorService;
 
-    public IrisModelsResource(IrisConnectorService irisConnectorService) {
-        this.irisConnectorService = irisConnectorService;
+    public IrisModelsResource(PyrisConnectorService pyrisConnectorService) {
+        this.pyrisConnectorService = pyrisConnectorService;
     }
 
     /**
@@ -35,12 +35,12 @@ public class IrisModelsResource {
      */
     @GetMapping("iris/models")
     @EnforceAtLeastEditor
-    public ResponseEntity<List<IrisModelDTO>> getAllModels() {
+    public ResponseEntity<List<PyrisModelDTO>> getAllModels() {
         try {
-            var models = irisConnectorService.getOfferedModels();
+            var models = pyrisConnectorService.getOfferedModels();
             return ResponseEntity.ok(models);
         }
-        catch (IrisConnectorException e) {
+        catch (PyrisConnectorException e) {
             throw new InternalServerErrorException("Could not fetch available Iris models");
         }
     }

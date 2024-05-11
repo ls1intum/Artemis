@@ -2,9 +2,28 @@
     "artemisApp": {
         "standardizedCompetency": {
             "title": "Standardisierte Kompetenzen",
+            "model": {
+                "title": "Titel",
+                "description": "Beschreibung",
+                "taxonomy": "Taxonomie",
+                "knowledgeArea": "Wissensgebiet",
+                "version": "Version"
+            },
+            "details": {
+                "title": "Standardisierte Kompetenz (Details)",
+                "titleCreate": "Standardisierte Kompetenz Erstellen",
+                "titleEdit": "Standardisierte Kompetenz Bearbeiten",
+                "error": {
+                    "titleRequired": "Eine standardisierte Kompetenz muss einen Titel haben",
+                    "titleMaxLength": "Der Titel einer standardisierten Kompetenz darf maximal {{max}} Zeichen lang sein",
+                    "descriptionMaxLength": "Die Beschreibung einer standardisierten Kompetenz darf maximal {{max}} Zeichen lang sein",
+                    "knowledgeAreaRequired": "Eine standardisierte Kompetenz muss ein Wissensgebiet haben"
+                }
+            },
             "manage": {
                 "title": "Standardisierte Kompetenzen Verwalten",
                 "filter": "Kompetenzen Filtern",
+                "empty": "Es existieren keine Wissensgebiete oder standardisierten Kompetenzen. Du kannst ein neues Wissensgebiet mit dem \"+\" Button erstellen.",
                 "importButton": "Standardisierte Kompetenzen importieren",
                 "expandButtonTooltip": "Alle Wissensgebiete ausklappen",
                 "collapseButtonTooltip": "Alle Wissensgebiete einklappen",
@@ -45,23 +64,13 @@
                     "success": "Erfolgreich alle standardisierte Kompetenzen und Wissensgebiete importiert"
                 }
             },
-            "model": {
-                "title": "Titel",
-                "description": "Beschreibung",
-                "taxonomy": "Taxonomie",
-                "knowledgeArea": "Wissensgebiet",
-                "version": "Version"
-            },
-            "details": {
-                "title": "Standardisierte Kompetenz",
-                "titleCreate": "Standardisierte Kompetenz Erstellen",
-                "titleEdit": "Standardisierte Kompetenz Bearbeiten",
-                "error": {
-                    "titleRequired": "Eine standardisierte Kompetenz muss einen Titel haben",
-                    "titleMaxLength": "Der Titel einer standardisierten Kompetenz darf maximal {{max}} Zeichen lang sein",
-                    "descriptionMaxLength": "Die Beschreibung einer standardisierten Kompetenz darf maximal {{max}} Zeichen lang sein",
-                    "knowledgeAreaRequired": "Eine standardisierte Kompetenz muss ein Wissensgebiet haben"
-                }
+            "courseImport": {
+                "title": "Standardisierte Kompetenzen Importieren",
+                "empty": "Es existieren keine standardisierten Kompetenzen",
+                "success": "Erfolgreich {{count}} standardisierte Kompetenzen importiert",
+                "selectedTitle": "Ausgewählte Kompetenzen",
+                "selectedEmpty": "Keine standardisierten Kompetenzen zum Import ausgewählt",
+                "selectedCompetencies": "{{count}} standardisierte Kompetenzen zum Import ausgewählt"
             }
         },
         "knowledgeArea": {
@@ -90,7 +99,7 @@
                 }
             },
             "details": {
-                "title": "Wissensgebiet",
+                "title": "Wissensgebiet (Details)",
                 "titleCreate": "Wissensgebiet Erstellen",
                 "titleEdit": "Wissensgebiet Bearbeiten",
                 "createKnowledgeAreaButton": "Wissensgebiet hinzufügen",

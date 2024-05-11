@@ -30,7 +30,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.modeling.ModelingExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
@@ -201,7 +201,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
         assertThat(complaintResponse.getComplaint().getParticipant()).isNull();
         Complaint storedComplaint = complaintRepo.findByResultId(modelingAssessment.getId()).orElseThrow();
         assertThat(storedComplaint.isAccepted()).as("complaint is not accepted").isFalse();
-        Result storedResult = resultRepo.findWithBidirectionalSubmissionAndFeedbackAndAssessorAndTeamStudentsByIdElseThrow(modelingAssessment.getId());
+        Result storedResult = resultRepo.findWithBidirectionalSubmissionAndFeedbackAndAssessorAndAssessmentNoteAndTeamStudentsByIdElseThrow(modelingAssessment.getId());
         participationUtilService.checkFeedbackCorrectlyStored(modelingAssessment.getFeedbacks(), storedResult.getFeedbacks(), FeedbackType.MANUAL);
         assertThat(storedResult.getSubmission()).isEqualTo(modelingAssessment.getSubmission());
         assertThat(storedResult.getAssessor()).isEqualTo(modelingAssessment.getAssessor());
@@ -248,7 +248,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
         modelingAssessment.setCompletionDate(ZonedDateTime.ofInstant(modelingAssessment.getCompletionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
         assertThat(resultOfComplaint.getAssessor()).isEqualTo(modelingAssessment.getAssessor());
         assertThat(resultOfComplaint).isEqualTo(modelingAssessment);
-        Submission submission = submissionRepository.findOneWithEagerResultAndFeedback(modelingAssessment.getSubmission().getId());
+        Submission submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(modelingAssessment.getSubmission().getId());
         assertThat(submission.getLatestResult()).isNotNull();
         assertThat(submission.getFirstResult()).isNotNull();
         participationUtilService.checkFeedbackCorrectlyStored(feedbacks, submission.getLatestResult().getFeedbacks(), FeedbackType.MANUAL);
