@@ -669,7 +669,7 @@ public class ProgrammingExerciseResource {
      * @param programmingLanguage Filters for only exercises with this language
      * @return The desired page, sorted and matching the given query
      */
-    @GetMapping("/programming-exercises/with-sca")
+    @GetMapping("programming-exercises/with-sca")
     @EnforceAtLeastEditor
     public ResponseEntity<SearchResultPageDTO<ProgrammingExercise>> getAllExercisesWithSCAOnPage(SearchTermPageableSearchDTO<String> search,
             @RequestParam(defaultValue = "true") boolean isCourseFilter, @RequestParam(defaultValue = "true") boolean isExamFilter,
