@@ -6,7 +6,7 @@ import { Exam } from 'app/entities/exam.model';
 import { ArtemisTestModule } from '../../../test.module';
 import dayjs from 'dayjs/esm';
 import { CourseExamDetailComponent } from 'app/overview/course-exams/course-exam-detail/course-exam-detail.component';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { Observable, of } from 'rxjs';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
@@ -14,6 +14,11 @@ import { StudentExam } from 'app/entities/student-exam.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CourseExamAttemptReviewDetailComponent } from 'app/overview/course-exams/course-exam-attempt-review-detail/course-exam-attempt-review-detail.component';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { SidebarComponent } from '../../../../../../main/webapp/app/shared/sidebar/sidebar.component';
+import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
+import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
+import { RouterTestingModule } from '@angular/router/testing';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 describe('CourseExamsComponent', () => {
     let component: CourseExamsComponent;
@@ -90,10 +95,26 @@ describe('CourseExamsComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [CourseExamsComponent, MockComponent(CourseExamDetailComponent), MockComponent(CourseExamAttemptReviewDetailComponent), MockPipe(ArtemisTranslatePipe)],
+            imports: [ArtemisTestModule, RouterTestingModule, MockModule(FormsModule), MockModule(ReactiveFormsModule)],
+            declarations: [
+                CourseExamsComponent,
+                SidebarComponent,
+                SearchFilterComponent,
+                MockComponent(CourseExamDetailComponent),
+                MockComponent(CourseExamAttemptReviewDetailComponent),
+                MockPipe(ArtemisTranslatePipe),
+                MockPipe(SearchFilterPipe),
+            ],
             providers: [
-                { provide: ActivatedRoute, useValue: { parent: { parent: { params: of(1) } } } },
+                {
+                    provide: ActivatedRoute,
+                    useValue: {
+                        parent: {
+                            params: of({ courseId: '1' }),
+                        },
+                        params: of({ examId: visibleRealExam1.id }),
+                    },
+                },
                 MockProvider(CourseStorageService),
                 MockProvider(ArtemisServerDateService),
                 MockProvider(ExamParticipationService),
