@@ -9,6 +9,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.PostLoad;
+import jakarta.persistence.PostUpdate;
 import jakarta.persistence.Transient;
 
 import org.hibernate.annotations.JdbcTypeCode;
@@ -377,6 +378,7 @@ public class ShortAnswerQuestion extends QuizQuestion {
     }
 
     @PostLoad
+    @PostUpdate
     public void loadContent() {
         if (content != null) {
             setSpots(content.getSpots());

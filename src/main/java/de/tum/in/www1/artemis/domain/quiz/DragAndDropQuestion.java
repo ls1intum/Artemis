@@ -12,6 +12,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.PostLoad;
 import jakarta.persistence.PostPersist;
 import jakarta.persistence.PostRemove;
+import jakarta.persistence.PostUpdate;
 import jakarta.persistence.Transient;
 
 import org.apache.commons.lang3.StringUtils;
@@ -105,14 +106,12 @@ public class DragAndDropQuestion extends QuizQuestion {
     }
 
     public DragAndDropQuestion addDropLocation(DropLocation dropLocation) {
-        this.dropLocations.add(dropLocation);
-        dropLocation.setQuestion(this);
+        this.content.getDropLocations().add(dropLocation);
         return this;
     }
 
     public DragAndDropQuestion removeDropLocation(DropLocation dropLocation) {
-        this.dropLocations.remove(dropLocation);
-        dropLocation.setQuestion(null);
+        this.content.getDropLocations().remove(dropLocation);
         return this;
     }
 
@@ -456,6 +455,7 @@ public class DragAndDropQuestion extends QuizQuestion {
     }
 
     @PostLoad
+    @PostUpdate
     public void loadContent() {
         if (content != null) {
             setDropLocations(content.getDropLocations());
