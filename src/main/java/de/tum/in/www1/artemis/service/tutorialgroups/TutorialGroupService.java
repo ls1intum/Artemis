@@ -499,7 +499,6 @@ public class TutorialGroupService {
 
     private Set<User> findUsersByLogins(Set<String> logins, String groupName) {
         return new HashSet<>(userRepository.findAllWithGroupsByIsDeletedIsFalseAndGroupsContainsAndLoginIn(groupName, logins));
-
     }
 
     /**
