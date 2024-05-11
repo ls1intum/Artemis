@@ -72,6 +72,22 @@ describe('ExamParticipationComponent', () => {
     let courseStorageService: CourseStorageService;
     let examManagementService: ExamManagementService;
 
+    function setupActivatedRouteMock() {
+        const activatedRouteMock = {
+            parent: {
+                parent: {
+                    parent: {
+                        params: of({}),
+                    },
+                    params: of({ courseId: '1' }), // Second deepest parent having courseId
+                },
+                params: of({}),
+            },
+            params: of({ examId: '2', testRunId: '3' }), // Direct route params
+        };
+        return activatedRouteMock;
+    }
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
@@ -97,9 +113,7 @@ describe('ExamParticipationComponent', () => {
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
                 {
                     provide: ActivatedRoute,
-                    useValue: {
-                        params: of({ courseId: '1', examId: '2', testRunId: '3' }),
-                    },
+                    useValue: setupActivatedRouteMock(),
                 },
                 { provide: ExamParticipationLiveEventsService, useClass: MockExamParticipationLiveEventsService },
                 MockProvider(ExamParticipationService),
