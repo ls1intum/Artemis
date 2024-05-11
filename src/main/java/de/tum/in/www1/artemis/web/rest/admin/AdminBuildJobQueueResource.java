@@ -80,11 +80,7 @@ public class AdminBuildJobQueueResource {
     public ResponseEntity<List<LocalCIBuildAgentInformation>> getBuildAgentSummary() {
         log.debug("REST request to get information on available build agents");
         // remove the recentBuildJobs from the response
-        List<LocalCIBuildAgentInformation> buildAgentSummary = localCIBuildJobQueueService.getBuildAgentInformation().stream()
-                .map(agent -> new LocalCIBuildAgentInformation(agent.name(), agent.maxNumberOfConcurrentBuildJobs(), agent.numberOfCurrentBuildJobs(), agent.runningBuildJobs(),
-                        agent.status(), null))
-                .toList();
-        // TODO: convert into a proper DTO and strip unnecessary information, e.g. build config, because it's not shown in the client and contains too much information
+        List<LocalCIBuildAgentInformation> buildAgentSummary = localCIBuildJobQueueService.getBuildAgentInformationWithoutRecentBuildJobs();
         return ResponseEntity.ok(buildAgentSummary);
     }
 

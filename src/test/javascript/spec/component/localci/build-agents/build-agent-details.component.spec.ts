@@ -139,10 +139,6 @@ describe('BuildAgentDetailsComponent', () => {
         jest.clearAllMocks();
     });
 
-    it('should create', () => {
-        expect(component).toBeTruthy();
-    });
-
     it('should load build agents on initialization', () => {
         mockBuildAgentsService.getBuildAgentDetails.mockReturnValue(of(mockBuildAgent));
         mockWebsocketService.receive.mockReturnValue(of(mockBuildAgent));

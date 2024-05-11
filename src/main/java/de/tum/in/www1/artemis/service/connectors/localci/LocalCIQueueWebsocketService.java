@@ -79,10 +79,7 @@ public class LocalCIQueueWebsocketService {
 
     private void sendBuildAgentSummaryOverWebsocket() {
         // remove the recentBuildJobs from the build agent information before sending it over the websocket
-        List<LocalCIBuildAgentInformation> buildAgentSummary = sharedQueueManagementService.getBuildAgentInformation().stream()
-                .map(agent -> new LocalCIBuildAgentInformation(agent.name(), agent.maxNumberOfConcurrentBuildJobs(), agent.numberOfCurrentBuildJobs(), agent.runningBuildJobs(),
-                        agent.status(), null))
-                .toList();
+        List<LocalCIBuildAgentInformation> buildAgentSummary = sharedQueueManagementService.getBuildAgentInformationWithoutRecentBuildJobs();
         localCIWebsocketMessagingService.sendBuildAgentSummary(buildAgentSummary);
     }
 
