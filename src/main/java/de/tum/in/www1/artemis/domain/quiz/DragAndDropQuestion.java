@@ -463,4 +463,21 @@ public class DragAndDropQuestion extends QuizQuestion {
             setCorrectMappings(content.getCorrectMappings());
         }
     }
+
+    // @PreUpdate
+    // public void onPreUpdate() {
+    // Long currentId = content.getDropLocations().stream()
+    // .filter(item1 -> item1.getId() != null)
+    // .mapToLong(DropLocation::getId)
+    // .max()
+    // .orElse(0L);
+    //
+    //
+    // for (DropLocation item : content.getDropLocations()) {
+    // if (item.getId() == null) {
+    // currentId = currentId + 1; // Increment using Long
+    // item.setId(currentId); // This assumes a setter setId(Long id) exists in Item class
+    // }
+    // }
+    // }
 }

@@ -2,14 +2,13 @@ package de.tum.in.www1.artemis.domain.quiz;
 
 import java.io.Serializable;
 import java.util.Objects;
-import java.util.Set;
 
 /**
  * A DropLocation.
  */
 public class DropLocation implements QuizQuestionComponent<DragAndDropQuestion>, Serializable {
 
-    private Long id = 1L;
+    private Long id = -1L;
 
     private Double posX;
 
@@ -93,23 +92,6 @@ public class DropLocation implements QuizQuestionComponent<DragAndDropQuestion>,
 
     public void setInvalid(Boolean invalid) {
         this.invalid = invalid;
-    }
-
-    /**
-     * check if the DropLocation is solved correctly
-     *
-     * @param dndAnswer Answer from the student with the List of submittedMappings from the Result
-     * @return if the drop location is correct
-     */
-    public boolean isDropLocationCorrect(DragAndDropSubmittedAnswer dndAnswer, DragAndDropQuestion question) {
-
-        Set<DragItem> correctDragItems = question.getCorrectDragItemsForDropLocation(this);
-        DragItem selectedDragItem = dndAnswer.getSelectedDragItemForDropLocation(this);
-
-        return ((correctDragItems.isEmpty() && selectedDragItem == null) || (selectedDragItem != null && correctDragItems.contains(selectedDragItem)));
-        // this drop location was meant to stay empty and user didn't drag anything onto it
-        // OR the user dragged one of the correct drag items onto this drop location
-        // => this is correct => Return true;
     }
 
     @Override

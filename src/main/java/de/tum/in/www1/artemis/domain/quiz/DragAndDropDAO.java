@@ -35,5 +35,4 @@ public class DragAndDropDAO implements Serializable {
     public void setCorrectMappings(List<DragAndDropMapping> dragAndDropMappings) {
         this.correctMappings = dragAndDropMappings;
     }
-
 }
