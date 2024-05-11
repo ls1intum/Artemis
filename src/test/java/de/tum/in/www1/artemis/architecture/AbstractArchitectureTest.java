@@ -4,6 +4,7 @@ import static com.tngtech.archunit.base.DescribedPredicate.equalTo;
 import static com.tngtech.archunit.base.DescribedPredicate.not;
 import static com.tngtech.archunit.base.DescribedPredicate.or;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.belongToAnyOf;
+import static com.tngtech.archunit.core.domain.properties.HasType.Predicates.rawType;
 import static com.tngtech.archunit.lang.SimpleConditionEvent.violated;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -22,6 +23,7 @@ import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.domain.JavaCodeUnit;
 import com.tngtech.archunit.core.domain.JavaMethod;
 import com.tngtech.archunit.core.domain.JavaParameter;
+import com.tngtech.archunit.core.domain.properties.HasAnnotations;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.lang.ArchCondition;
@@ -100,6 +102,10 @@ public abstract class AbstractArchitectureTest {
 
     protected DescribedPredicate<? super JavaCodeUnit> declaredClassSimpleName(String name) {
         return equalTo(name).as("Declared in class with simple name " + name).onResultOf(unit -> unit.getOwner().getSimpleName());
+    }
+
+    protected <T extends HasAnnotations<T>> JavaAnnotation<? extends T> findJavaAnnotation(T item, Class<?> annotationClass) {
+        return item.getAnnotations().stream().filter(rawType(annotationClass)).findAny().orElseThrow();
     }
 
     protected ArchCondition<JavaMethod> haveAllParametersAnnotatedWithUnless(DescribedPredicate<? super JavaAnnotation<?>> annotationPredicate,
