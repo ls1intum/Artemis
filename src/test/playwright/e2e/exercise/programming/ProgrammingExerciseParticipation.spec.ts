@@ -18,6 +18,7 @@ import cAllSuccessful from '../../../fixtures/exercise/programming/c/all_success
 import { UserCredentials, admin, instructor, studentFour, studentOne, studentThree, studentTwo, tutor } from '../../../support/users';
 import { Team } from 'app/entities/team.model';
 import { ProgrammingExerciseOverviewPage } from '../../../support/pageobjects/exercises/programming/ProgrammingExerciseOverviewPage';
+import { Participation } from 'app/entities/participation/participation.model';
 
 test.describe('Programming exercise participation', () => {
     let course: Course;
@@ -80,9 +81,9 @@ test.describe('Programming exercise participation', () => {
         }
     }
 
-    test.describe.serial('Programming exercise team participation', () => {
+    test.describe('Programming exercise team participation', () => {
         let exercise: ProgrammingExercise;
-        let participation: any;
+        let participation: Participation;
         let team: Team;
         let tutorUser: any;
 
@@ -210,7 +211,7 @@ test.describe('Programming exercise participation', () => {
                 await programmingExerciseParticipations.checkParticipationTeam(participation.id!, team.name!);
                 const studentUsernames = submissions.map(({ student }) => student.username!);
                 await programmingExerciseParticipations.checkParticipationBuildPlan(participation);
-                await programmingExerciseParticipations.checkParticationStudents(participation.id!, studentUsernames);
+                await programmingExerciseParticipations.checkParticipationStudents(participation.id!, studentUsernames);
 
                 await programmingExerciseParticipations.openRepository(participation.id!);
                 await programmingExerciseRepository.openCommitHistory();

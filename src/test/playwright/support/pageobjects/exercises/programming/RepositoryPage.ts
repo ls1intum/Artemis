@@ -5,6 +5,9 @@ import { Commands } from '../../../commands';
 export class RepositoryPage {
     private readonly page: Page;
 
+    private static readonly checkBuildResultInterval = 2000;
+    private static readonly checkBuildResultTimeout = 60000;
+
     constructor(page: Page) {
         this.page = page;
     }
@@ -20,14 +23,14 @@ export class RepositoryPage {
 
         if (commits) {
             const commitCount = commits.length;
-            for (let index = commitCount - 1; index > 0; index--) {
+            for (let index = commitCount - 1; index >= 0; index--) {
                 const commit = commits[index];
                 const commitRow = commitHistory.locator('tbody').locator('tr').nth(index);
                 await expect(commitRow.locator('td').getByText(commit.message)).toBeVisible();
 
                 if (commit.result) {
                     const commitResult = commitRow.locator('#result-score', { hasText: commit.result });
-                    await Commands.reloadUntilFound(this.page, commitResult, 2000, 60000);
+                    await Commands.reloadUntilFound(this.page, commitResult, RepositoryPage.checkBuildResultInterval, RepositoryPage.checkBuildResultTimeout);
                 } else {
                     await expect(commitRow.locator('td', { hasText: 'No result' })).toBeVisible();
                 }

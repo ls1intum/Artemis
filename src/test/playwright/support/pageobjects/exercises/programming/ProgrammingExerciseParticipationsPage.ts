@@ -27,7 +27,7 @@ export class ProgrammingExerciseParticipationsPage {
         await expect(this.getParticipation(participationId).filter({ hasText: teamName })).toBeVisible();
     }
 
-    async checkParticationStudents(participationId: number, studentUsernames: string[]) {
+    async checkParticipationStudents(participationId: number, studentUsernames: string[]) {
         const participation = this.getParticipation(participationId);
         for (const studentName of studentUsernames) {
             await expect(participation.locator('.student-group-item', { hasText: studentName })).toBeVisible();
