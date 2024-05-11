@@ -47,7 +47,7 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
 
     ngOnInit(): void {
         // show submission answers in UI
-        this.problemStatementHtml = htmlForMarkdown(this.exercise.problemStatement);
+        this.problemStatementHtml = htmlForMarkdown(this.exercise?.problemStatement);
         this.updateViewFromSubmission();
     }
 

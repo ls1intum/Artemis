@@ -71,7 +71,7 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
      */
     ngOnInit() {
         // show submission answers in UI
-        this.problemStatementHtml = htmlForMarkdown(this.exercise.problemStatement);
+        this.problemStatementHtml = htmlForMarkdown(this.exercise?.problemStatement);
         this.updateViewFromSubmission();
     }
 
