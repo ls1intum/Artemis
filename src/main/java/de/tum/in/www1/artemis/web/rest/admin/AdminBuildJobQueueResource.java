@@ -79,7 +79,6 @@ public class AdminBuildJobQueueResource {
     @EnforceAdmin
     public ResponseEntity<List<LocalCIBuildAgentInformation>> getBuildAgentSummary() {
         log.debug("REST request to get information on available build agents");
-        // remove the recentBuildJobs from the response
         List<LocalCIBuildAgentInformation> buildAgentSummary = localCIBuildJobQueueService.getBuildAgentInformationWithoutRecentBuildJobs();
         return ResponseEntity.ok(buildAgentSummary);
     }
