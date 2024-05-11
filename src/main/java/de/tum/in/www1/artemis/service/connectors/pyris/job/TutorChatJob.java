@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.pyris.job;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 
@@ -7,6 +9,7 @@ import de.tum.in.www1.artemis.domain.Exercise;
  * An implementation of a PyrisJob for tutor chat messages.
  * This job is used to reference the details of a tutor chat session when Pyris sends a status update.
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record TutorChatJob(String jobId, long courseId, long exerciseId, long sessionId) implements PyrisJob {
 
     @Override

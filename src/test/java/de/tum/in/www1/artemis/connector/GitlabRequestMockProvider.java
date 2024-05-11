@@ -355,10 +355,7 @@ public class GitlabRequestMockProvider {
             return user;
         }).when(userApi).createUser(any(), any(), anyBoolean());
 
-        var accessTokenResponseDTO = new GitLabPersonalAccessTokenResponseDTO();
-        accessTokenResponseDTO.setName("acccess-token-name");
-        accessTokenResponseDTO.setToken("acccess-token-value");
-        accessTokenResponseDTO.setUserId(userId);
+        var accessTokenResponseDTO = new GitLabPersonalAccessTokenResponseDTO("acccess-token-name", userId, null, null, "acccess-token-value");
         final var response = new ObjectMapper().writeValueAsString(accessTokenResponseDTO);
 
         mockServer.expect(requestTo(gitLabApi.getGitLabServerUrl() + "/api/v4/users/" + userId + "/personal_access_tokens")).andExpect(method(HttpMethod.POST))

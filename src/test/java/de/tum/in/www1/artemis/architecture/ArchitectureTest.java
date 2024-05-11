@@ -204,6 +204,18 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     @Test
+    void testDTOImplementations() {
+        var dtoRecordRule = classes().that().haveSimpleNameEndingWith("DTO").should().beRecords().andShould().beAnnotatedWith(JsonInclude.class)
+                // .andShould(useJsonIncludeNonEmpty())
+                .because("All DTOs should be records and annotated with @JsonInclude(JsonInclude.Include.NON_EMPTY)");
+        var result = dtoRecordRule.evaluate(allClasses);
+        // TODO: reduce the following number to 0
+        assertThat(result.getFailureReport().getDetails()).hasSize(58);
+
+        // TODO: make sure all classes in a package that ends to dto are also named DTO to be included in the rule above
+    }
+
+    @Test
     void testGsonExclusion() {
         // TODO: Replace all uses of gson with Jackson and check that gson is not used any more
         var gsonUsageRule = noClasses().should().accessClassesThat().resideInAnyPackage("com.google.gson..").because("we use an alternative JSON parsing library.");
@@ -294,9 +306,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
         @Override
         public void check(JavaClass item, ConditionEvents events) {
             item.getDirectDependenciesFromSelf().stream().map(Dependency::getTargetClass).filter(targetClass -> targetClass.isAnnotatedWith(RestController.class))
-                    .forEach(targetClass -> {
-                        events.add(violated(item, "%s imports the RestController %s".formatted(item.getName(), targetClass.getName())));
-                    });
+                    .forEach(targetClass -> events.add(violated(item, "%s imports the RestController %s".formatted(item.getName(), targetClass.getName()))));
         }
     };
 

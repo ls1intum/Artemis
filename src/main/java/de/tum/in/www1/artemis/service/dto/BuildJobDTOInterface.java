@@ -2,9 +2,12 @@ package de.tum.in.www1.artemis.service.dto;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 /**
  * Interface for DTOs that represent a build job.
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public interface BuildJobDTOInterface {
 
     /**

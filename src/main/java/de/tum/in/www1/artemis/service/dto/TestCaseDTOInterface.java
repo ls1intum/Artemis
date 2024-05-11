@@ -3,10 +3,12 @@ package de.tum.in.www1.artemis.service.dto;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * Interface for DTOs that represent a test case.
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public interface TestCaseDTOInterface {
 
     /**

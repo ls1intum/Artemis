@@ -7,45 +7,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class GitLabRepositoryDTO {
-
-    private String name;
-
-    private String url;
-
-    private String description;
-
-    private URL homepage;
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getUrl() {
-        return url;
-    }
-
-    public void setUrl(String url) {
-        this.url = url;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public URL getHomepage() {
-        return homepage;
-    }
-
-    public void setHomepage(URL homepage) {
-        this.homepage = homepage;
-    }
+public record GitLabRepositoryDTO(String name, String url, String description, URL homepage) {
 }
