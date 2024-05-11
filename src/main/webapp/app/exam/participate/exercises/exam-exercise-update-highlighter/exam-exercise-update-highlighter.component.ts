@@ -45,12 +45,14 @@ export class ExamExerciseUpdateHighlighterComponent implements OnInit, OnDestroy
     toggleHighlightedProblemStatement(event: MouseEvent): void {
         // prevents the jhi-resizeable-container from collapsing the right panel on a button click
         event.stopPropagation();
+        let problemStatementToEmit;
         if (this.showHighlightedDifferences) {
-            this.problemStatementUpdateEvent.emit(this.updatedProblemStatementHTML);
+            problemStatementToEmit = this.updatedProblemStatementHTML;
         } else {
-            this.problemStatementUpdateEvent.emit(this.updatedProblemStatementWithHighlightedDifferencesHTML);
+            problemStatementToEmit = this.updatedProblemStatementWithHighlightedDifferencesHTML;
         }
         this.showHighlightedDifferences = !this.showHighlightedDifferences;
+        this.problemStatementUpdateEvent.emit(problemStatementToEmit);
     }
 
     /**
