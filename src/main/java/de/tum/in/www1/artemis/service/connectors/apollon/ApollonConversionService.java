@@ -45,14 +45,15 @@ public class ApollonConversionService {
         try {
             var apollonModel = new ApollonModelDTO(model);
             var response = restTemplate.postForEntity(apollonConversionUrl + "/pdf", apollonModel, Resource.class);
-            assert response.getBody() != null;
-            return response.getBody().getInputStream();
+            if (response.getBody() != null) {
+                return response.getBody().getInputStream();
+            }
         }
         catch (HttpClientErrorException ex) {
             log.error("Error while calling Remote Service: {}", ex.getMessage());
         }
         catch (IOException ex) {
-            log.error(ex.getMessage());
+            log.error(ex.getMessage(), ex);
         }
         return null;
 
