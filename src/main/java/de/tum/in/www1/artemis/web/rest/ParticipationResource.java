@@ -84,8 +84,6 @@ import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.GradingScaleService;
 import de.tum.in.www1.artemis.service.ParticipationAuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.QuizBatchService;
-import de.tum.in.www1.artemis.service.QuizSubmissionService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
@@ -93,6 +91,8 @@ import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
+import de.tum.in.www1.artemis.service.quiz.QuizBatchService;
+import de.tum.in.www1.artemis.service.quiz.QuizSubmissionService;
 import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -392,7 +392,7 @@ public class ParticipationResource {
         var participationResults = studentParticipation.getResults();
         participationResults.forEach(participationResult -> {
             participationResult.setAssessmentType(AssessmentType.AUTOMATIC);
-            participationResult.setAssessor(null);
+            participationResult.filterSensitiveInformation();
             participationResult.setRated(false);
         });
         resultRepository.saveAll(participationResults);

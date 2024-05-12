@@ -5,6 +5,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.function.Function;
 
@@ -13,7 +14,6 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.iris.IrisTemplate;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisChatSubSettings;
-import de.tum.in.www1.artemis.domain.iris.settings.IrisCodeEditorSubSettings;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisCompetencyGenerationSubSettings;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisExerciseSettings;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisHestiaSubSettings;
@@ -21,10 +21,9 @@ import de.tum.in.www1.artemis.domain.iris.settings.IrisSettings;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSettingsType;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettings;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.dto.iris.IrisCombinedChatSubSettingsDTO;
-import de.tum.in.www1.artemis.service.dto.iris.IrisCombinedCodeEditorSubSettingsDTO;
-import de.tum.in.www1.artemis.service.dto.iris.IrisCombinedCompetencyGenerationSubSettingsDTO;
-import de.tum.in.www1.artemis.service.dto.iris.IrisCombinedHestiaSubSettingsDTO;
+import de.tum.in.www1.artemis.service.iris.dto.IrisCombinedChatSubSettingsDTO;
+import de.tum.in.www1.artemis.service.iris.dto.IrisCombinedCompetencyGenerationSubSettingsDTO;
+import de.tum.in.www1.artemis.service.iris.dto.IrisCombinedHestiaSubSettingsDTO;
 
 /**
  * Service for handling {@link IrisSubSettings} objects.
@@ -75,7 +74,7 @@ public class IrisSubSettingsService {
         }
         currentSettings.setAllowedModels(selectAllowedModels(currentSettings.getAllowedModels(), newSettings.getAllowedModels()));
         currentSettings.setPreferredModel(validatePreferredModel(currentSettings.getPreferredModel(), newSettings.getPreferredModel(), currentSettings.getAllowedModels(),
-                parentSettings != null ? parentSettings.getAllowedModels() : null));
+                parentSettings != null ? parentSettings.allowedModels() : null));
         currentSettings.setTemplate(newSettings.getTemplate());
         return currentSettings;
     }
@@ -109,46 +108,8 @@ public class IrisSubSettingsService {
         }
         currentSettings.setAllowedModels(selectAllowedModels(currentSettings.getAllowedModels(), newSettings.getAllowedModels()));
         currentSettings.setPreferredModel(validatePreferredModel(currentSettings.getPreferredModel(), newSettings.getPreferredModel(), currentSettings.getAllowedModels(),
-                parentSettings != null ? parentSettings.getAllowedModels() : null));
+                parentSettings != null ? parentSettings.allowedModels() : null));
         currentSettings.setTemplate(newSettings.getTemplate());
-        return currentSettings;
-    }
-
-    /**
-     * Updates a Code Editor sub settings object.
-     * If the new settings are null, the current settings will be deleted (except if the parent settings are null == if the settings are global).
-     * Special notes:
-     * - If the user is not an admin the allowed models will not be updated.
-     * - If the user is not an admin the preferred model will only be updated if it is included in the allowed models.
-     *
-     * @param currentSettings Current Code Editor sub settings.
-     * @param newSettings     Updated Code Editor sub settings.
-     * @param parentSettings  Parent Code Editor sub settings.
-     * @param settingsType    Type of the settings the sub settings belong to.
-     * @return Updated Code Editor sub settings.
-     */
-    public IrisCodeEditorSubSettings update(IrisCodeEditorSubSettings currentSettings, IrisCodeEditorSubSettings newSettings, IrisCombinedCodeEditorSubSettingsDTO parentSettings,
-            IrisSettingsType settingsType) {
-        if (newSettings == null) {
-            if (parentSettings == null) {
-                throw new IllegalArgumentException("Cannot delete the Code Editor settings");
-            }
-            return null;
-        }
-        if (currentSettings == null) {
-            currentSettings = new IrisCodeEditorSubSettings();
-        }
-        if (settingsType == IrisSettingsType.EXERCISE || authCheckService.isAdmin()) {
-            currentSettings.setEnabled(newSettings.isEnabled());
-        }
-        currentSettings.setAllowedModels(selectAllowedModels(currentSettings.getAllowedModels(), newSettings.getAllowedModels()));
-        currentSettings.setPreferredModel(validatePreferredModel(currentSettings.getPreferredModel(), newSettings.getPreferredModel(), currentSettings.getAllowedModels(),
-                parentSettings != null ? parentSettings.getAllowedModels() : null));
-        currentSettings.setChatTemplate(newSettings.getChatTemplate());
-        currentSettings.setProblemStatementGenerationTemplate(newSettings.getProblemStatementGenerationTemplate());
-        currentSettings.setTemplateRepoGenerationTemplate(newSettings.getTemplateRepoGenerationTemplate());
-        currentSettings.setSolutionRepoGenerationTemplate(newSettings.getSolutionRepoGenerationTemplate());
-        currentSettings.setTestRepoGenerationTemplate(newSettings.getTestRepoGenerationTemplate());
         return currentSettings;
     }
 
@@ -181,7 +142,7 @@ public class IrisSubSettingsService {
             currentSettings.setAllowedModels(selectAllowedModels(currentSettings.getAllowedModels(), newSettings.getAllowedModels()));
         }
         currentSettings.setPreferredModel(validatePreferredModel(currentSettings.getPreferredModel(), newSettings.getPreferredModel(), currentSettings.getAllowedModels(),
-                parentSettings != null ? parentSettings.getAllowedModels() : null));
+                parentSettings != null ? parentSettings.allowedModels() : null));
         currentSettings.setTemplate(newSettings.getTemplate());
         return currentSettings;
     }
@@ -195,7 +156,7 @@ public class IrisSubSettingsService {
      * @param updatedAllowedModels The allowed models of the updated settings.
      * @return The filtered allowed models.
      */
-    private Set<String> selectAllowedModels(Set<String> allowedModels, Set<String> updatedAllowedModels) {
+    private SortedSet<String> selectAllowedModels(SortedSet<String> allowedModels, SortedSet<String> updatedAllowedModels) {
         return authCheckService.isAdmin() ? updatedAllowedModels : allowedModels;
     }
 
@@ -233,15 +194,12 @@ public class IrisSubSettingsService {
      * @return Combined chat settings.
      */
     public IrisCombinedChatSubSettingsDTO combineChatSettings(ArrayList<IrisSettings> settingsList, boolean minimal) {
-        var combinedChatSettings = new IrisCombinedChatSubSettingsDTO();
-        combinedChatSettings.setEnabled(getCombinedEnabled(settingsList, IrisSettings::getIrisChatSettings));
-        combinedChatSettings.setRateLimit(getCombinedRateLimit(settingsList));
-        if (!minimal) {
-            combinedChatSettings.setAllowedModels(getCombinedAllowedModels(settingsList, IrisSettings::getIrisChatSettings));
-            combinedChatSettings.setPreferredModel(getCombinedPreferredModel(settingsList, IrisSettings::getIrisChatSettings));
-            combinedChatSettings.setTemplate(getCombinedTemplate(settingsList, IrisSettings::getIrisChatSettings, IrisChatSubSettings::getTemplate));
-        }
-        return combinedChatSettings;
+        var enabled = getCombinedEnabled(settingsList, IrisSettings::getIrisChatSettings);
+        var rateLimit = getCombinedRateLimit(settingsList);
+        var allowedModels = minimal ? getCombinedAllowedModels(settingsList, IrisSettings::getIrisChatSettings) : null;
+        var preferredModel = minimal ? getCombinedPreferredModel(settingsList, IrisSettings::getIrisChatSettings) : null;
+        var template = minimal ? getCombinedTemplate(settingsList, IrisSettings::getIrisChatSettings, IrisChatSubSettings::getTemplate) : null;
+        return new IrisCombinedChatSubSettingsDTO(enabled, rateLimit, null, allowedModels, preferredModel, template);
     }
 
     /**
@@ -255,45 +213,11 @@ public class IrisSubSettingsService {
      */
     public IrisCombinedHestiaSubSettingsDTO combineHestiaSettings(ArrayList<IrisSettings> settingsList, boolean minimal) {
         var actualSettingsList = settingsList.stream().filter(settings -> !(settings instanceof IrisExerciseSettings)).toList();
-        var combinedHestiaSettings = new IrisCombinedHestiaSubSettingsDTO();
-        combinedHestiaSettings.setEnabled(getCombinedEnabled(actualSettingsList, IrisSettings::getIrisHestiaSettings));
-        if (!minimal) {
-            combinedHestiaSettings.setAllowedModels(getCombinedAllowedModels(actualSettingsList, IrisSettings::getIrisHestiaSettings));
-            combinedHestiaSettings.setPreferredModel(getCombinedPreferredModel(actualSettingsList, IrisSettings::getIrisHestiaSettings));
-            combinedHestiaSettings.setTemplate(getCombinedTemplate(actualSettingsList, IrisSettings::getIrisHestiaSettings, IrisHestiaSubSettings::getTemplate));
-        }
-        return combinedHestiaSettings;
-    }
-
-    /**
-     * Combines the Code Editor settings of multiple {@link IrisSettings} objects.
-     * If minimal is true, the returned object will only contain the enabled field.
-     * The minimal version can safely be sent to students.
-     *
-     * @param settingsList List of {@link IrisSettings} objects to combine.
-     * @param minimal      Whether to return a minimal version of the combined settings.
-     * @return Combined Code Editor settings.
-     */
-    public IrisCombinedCodeEditorSubSettingsDTO combineCodeEditorSettings(ArrayList<IrisSettings> settingsList, boolean minimal) {
-        var actualSettingsList = settingsList.stream().filter(settings -> !(settings instanceof IrisExerciseSettings)).toList();
-        var combinedCodeEditorSettings = new IrisCombinedCodeEditorSubSettingsDTO();
-        combinedCodeEditorSettings.setEnabled(getCombinedEnabled(actualSettingsList, IrisSettings::getIrisCodeEditorSettings));
-        if (!minimal) {
-            combinedCodeEditorSettings.setAllowedModels(getCombinedAllowedModels(actualSettingsList, IrisSettings::getIrisCodeEditorSettings));
-            combinedCodeEditorSettings.setPreferredModel(getCombinedPreferredModel(actualSettingsList, IrisSettings::getIrisCodeEditorSettings));
-
-            combinedCodeEditorSettings
-                    .setChatTemplate(getCombinedTemplate(actualSettingsList, IrisSettings::getIrisCodeEditorSettings, IrisCodeEditorSubSettings::getChatTemplate));
-            combinedCodeEditorSettings.setProblemStatementGenerationTemplate(
-                    getCombinedTemplate(actualSettingsList, IrisSettings::getIrisCodeEditorSettings, IrisCodeEditorSubSettings::getProblemStatementGenerationTemplate));
-            combinedCodeEditorSettings.setTemplateRepoGenerationTemplate(
-                    getCombinedTemplate(actualSettingsList, IrisSettings::getIrisCodeEditorSettings, IrisCodeEditorSubSettings::getTemplateRepoGenerationTemplate));
-            combinedCodeEditorSettings.setSolutionRepoGenerationTemplate(
-                    getCombinedTemplate(actualSettingsList, IrisSettings::getIrisCodeEditorSettings, IrisCodeEditorSubSettings::getSolutionRepoGenerationTemplate));
-            combinedCodeEditorSettings.setTestRepoGenerationTemplate(
-                    getCombinedTemplate(actualSettingsList, IrisSettings::getIrisCodeEditorSettings, IrisCodeEditorSubSettings::getTestRepoGenerationTemplate));
-        }
-        return combinedCodeEditorSettings;
+        var enabled = getCombinedEnabled(actualSettingsList, IrisSettings::getIrisHestiaSettings);
+        var allowedModels = minimal ? getCombinedAllowedModels(actualSettingsList, IrisSettings::getIrisHestiaSettings) : null;
+        var preferredModel = minimal ? getCombinedPreferredModel(actualSettingsList, IrisSettings::getIrisHestiaSettings) : null;
+        var template = minimal ? getCombinedTemplate(actualSettingsList, IrisSettings::getIrisHestiaSettings, IrisHestiaSubSettings::getTemplate) : null;
+        return new IrisCombinedHestiaSubSettingsDTO(enabled, allowedModels, preferredModel, template);
     }
 
     /**
@@ -307,15 +231,12 @@ public class IrisSubSettingsService {
      */
     public IrisCombinedCompetencyGenerationSubSettingsDTO combineCompetencyGenerationSettings(ArrayList<IrisSettings> settingsList, boolean minimal) {
         var actualSettingsList = settingsList.stream().filter(settings -> !(settings instanceof IrisExerciseSettings)).toList();
-        var combinedCompetencyGenerationSettings = new IrisCombinedCompetencyGenerationSubSettingsDTO();
-        combinedCompetencyGenerationSettings.setEnabled(getCombinedEnabled(actualSettingsList, IrisSettings::getIrisCompetencyGenerationSettings));
-        if (!minimal) {
-            combinedCompetencyGenerationSettings.setAllowedModels(getCombinedAllowedModels(actualSettingsList, IrisSettings::getIrisCompetencyGenerationSettings));
-            combinedCompetencyGenerationSettings.setPreferredModel(getCombinedPreferredModel(actualSettingsList, IrisSettings::getIrisCompetencyGenerationSettings));
-            combinedCompetencyGenerationSettings
-                    .setTemplate(getCombinedTemplate(actualSettingsList, IrisSettings::getIrisCompetencyGenerationSettings, IrisCompetencyGenerationSubSettings::getTemplate));
-        }
-        return combinedCompetencyGenerationSettings;
+        var enabled = getCombinedEnabled(actualSettingsList, IrisSettings::getIrisCompetencyGenerationSettings);
+        var allowedModels = minimal ? getCombinedAllowedModels(actualSettingsList, IrisSettings::getIrisCompetencyGenerationSettings) : null;
+        var preferredModel = minimal ? getCombinedPreferredModel(actualSettingsList, IrisSettings::getIrisCompetencyGenerationSettings) : null;
+        var template = minimal ? getCombinedTemplate(actualSettingsList, IrisSettings::getIrisCompetencyGenerationSettings, IrisCompetencyGenerationSubSettings::getTemplate)
+                : null;
+        return new IrisCombinedCompetencyGenerationSubSettingsDTO(enabled, allowedModels, preferredModel, template);
     }
 
     /**

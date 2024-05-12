@@ -14,7 +14,7 @@
                 "pdfExampleText": "Beispiel für ein gültiges PDF-Dateiformat:",
                 "pdfFile": {
                     "label": ".pdf-Datei auswählen",
-                    "tooltip": "Bitte wählen Sie eine .pdf-Datei aus, die das Bild des registrierten Studenten und seine Matrikelnummer enthält."
+                    "tooltip": "Bitte wähle eine .pdf-Datei aus, die das Bild des registrierten Studenten und seine Matrikelnummer enthält."
                 },
                 "dialogTitle": "Bilder hochladen",
                 "allImagesSaved": "Alle Bilder wurden erfolgreich gespeichert.",
@@ -641,7 +641,7 @@
                     "resolveComplaints": "Beschwerden können im Bewertungs-Dashboard bearbeitet werden.",
                     "testRun": "Probiere verschiedene Kombinationen von Übungsvarianten aus Sicht der Studierenden aus.",
                     "exportResults": "Die Klausurergebnisse können in Form einer .csv Datei exportiert werden.",
-                    "editWorkingTime": "Bis zu einer Minute vor dem Ende der Prüfung können Sie deren Dauer verlängern.",
+                    "editWorkingTime": "Bis zu einer Minute vor dem Ende der Prüfung kannst du deren Dauer verlängern.",
                     "createAnnouncement": "Um wichtige Informationen an alle Studierenden, die gerade an der Klausur arbeiten, zu kommunizieren, kannst du eine Ankündigung machen. Sie wird sofort an alle Studierenden verteilt und angezeigt.",
                     "suspiciousBehavior": "Verdächtiges Verhalten und Plagiatsfälle können in diesem Dashboard eingesehen werden."
                 },
@@ -681,7 +681,7 @@
                 "title": "Prüfungszeit bearbeiten",
                 "label": "Änderung der Prüfungszeit",
                 "duration": "Die neue Dauer der Prüfung beträgt <strong>{{ duration }}</strong>.",
-                "question": "Die Prüfungszeit wird für alle Studierenden angepasst. Wollen Sie die Prüfungszeit für die Klausur <strong>{{ title }}</strong> wirklich ändern?",
+                "question": "Die Prüfungszeit wird für alle Studierenden angepasst. Willst du die Prüfungszeit für die Klausur <strong>{{ title }}</strong> wirklich ändern?",
                 "typeNameToConfirm": "Bitte gib den Namen der Klausur zur Bestätigung ein."
             },
             "announcementCreate": {

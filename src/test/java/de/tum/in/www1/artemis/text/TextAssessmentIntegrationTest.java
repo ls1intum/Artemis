@@ -62,10 +62,10 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseFactory;
-import de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
-import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.fileupload.FileUploadExerciseFactory;
+import de.tum.in.www1.artemis.exercise.fileupload.FileUploadExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.text.TextExerciseFactory;
+import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
@@ -1256,7 +1256,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         Result lastResult = submission.getLatestResult();
         request.delete("/api/participations/" + submission.getParticipation().getId() + "/text-submissions/" + submission.getId() + "/results/" + firstResult.getId(),
                 HttpStatus.OK);
-        submission = submissionRepository.findOneWithEagerResultAndFeedback(submission.getId());
+        submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId());
         assertThat(submission.getResults()).hasSize(1);
         assertThat(submission.getResults().get(0)).isEqualTo(lastResult);
     }

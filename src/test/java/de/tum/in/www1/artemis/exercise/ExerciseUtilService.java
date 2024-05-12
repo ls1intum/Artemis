@@ -39,10 +39,10 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
-import de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.fileupload.FileUploadExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.modeling.ModelingExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.post.ConversationFactory;
@@ -275,7 +275,7 @@ public class ExerciseUtilService {
         var participations = studentParticipationRepo.findByExerciseIdAndTestRunWithEagerSubmissionsResultAssessor(exercise.getId(), false);
         participations.forEach(participation -> {
             Submission submission = submissionRepository.findAllByParticipationId(participation.getId()).get(0);
-            submission = submissionRepository.findOneWithEagerResultAndFeedback(submission.getId());
+            submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId());
             participation = studentParticipationRepo.findWithEagerResultsById(participation.getId()).orElseThrow();
             Result result = participationUtilService.generateResult(submission, null);
             result.setAssessmentType(AssessmentType.AUTOMATIC);
@@ -296,7 +296,7 @@ public class ExerciseUtilService {
         var participations = studentParticipationRepo.findByExerciseIdAndTestRunWithEagerSubmissionsResultAssessor(exercise.getId(), false);
         participations.forEach(participation -> {
             Submission submission = submissionRepository.findAllByParticipationId(participation.getId()).get(0);
-            submission = submissionRepository.findOneWithEagerResultAndFeedback(submission.getId());
+            submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId());
             participation = studentParticipationRepo.findWithEagerResultsById(participation.getId()).orElseThrow();
             Result result = participationUtilService.generateResult(submission, assessor);
             submission.addResult(result);

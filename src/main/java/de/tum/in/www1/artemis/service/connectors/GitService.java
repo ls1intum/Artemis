@@ -168,10 +168,10 @@ public class GitService {
 
     public GitService(Environment environment, ProfileService profileService, ZipFileService zipFileService) {
         this.profileService = profileService;
-        log.info("file.encoding={}", System.getProperty("file.encoding"));
-        log.info("sun.jnu.encoding={}", System.getProperty("sun.jnu.encoding"));
-        log.info("Default Charset={}", Charset.defaultCharset());
-        log.info("Default Charset in Use={}", new OutputStreamWriter(new ByteArrayOutputStream()).getEncoding());
+        log.debug("file.encoding={}", Charset.defaultCharset().displayName());
+        log.debug("sun.jnu.encoding={}", System.getProperty("sun.jnu.encoding"));
+        log.debug("Default Charset={}", Charset.defaultCharset());
+        log.debug("Default Charset in Use={}", new OutputStreamWriter(new ByteArrayOutputStream()).getEncoding());
         this.environment = environment;
         this.zipFileService = zipFileService;
     }

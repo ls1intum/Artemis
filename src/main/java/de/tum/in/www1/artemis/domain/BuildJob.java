@@ -92,7 +92,7 @@ public class BuildJob extends DomainObject {
         this.buildCompletionDate = queueItem.jobTimingInfo().buildCompletionDate();
         this.repositoryType = queueItem.repositoryInfo().repositoryType();
         this.repositoryName = queueItem.repositoryInfo().repositoryName();
-        this.commitHash = queueItem.buildConfig().commitHash();
+        this.commitHash = queueItem.buildConfig().commitHashToBuild();
         this.retryCount = queueItem.retryCount();
         this.priority = queueItem.priority();
         this.triggeredByPushTo = queueItem.repositoryInfo().triggeredByPushTo();

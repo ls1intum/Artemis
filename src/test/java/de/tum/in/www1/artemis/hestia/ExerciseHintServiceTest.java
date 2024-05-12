@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.domain.hestia.ExerciseHintActivation;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
@@ -255,7 +255,7 @@ class ExerciseHintServiceTest extends AbstractSpringIntegrationIndependentTest {
         // create result with feedbacks with "null" for attribute "positive"
         addResultWithSuccessfulTestCases(exercise.getTestCases());
         var results = resultRepository.findAllByParticipationExerciseId(exercise.getId());
-        var optionalResult = resultRepository.findWithBidirectionalSubmissionAndFeedbackAndAssessorAndTeamStudentsById(results.iterator().next().getId());
+        var optionalResult = resultRepository.findWithBidirectionalSubmissionAndFeedbackAndAssessorAndAssessmentNoteAndTeamStudentsById(results.iterator().next().getId());
         assertThat(optionalResult).isPresent();
 
         var result = optionalResult.get();

@@ -1,53 +1,78 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { Course } from 'app/entities/course.model';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { finalize, forkJoin, switchMap, take } from 'rxjs';
+import { BehaviorSubject, Subscription, catchError, combineLatest, forkJoin, switchMap, tap } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 @Component({
     selector: 'jhi-course-tutorial-group-detail',
     templateUrl: './course-tutorial-group-detail.component.html',
     styleUrls: ['./course-tutorial-group-detail.component.scss'],
 })
-export class CourseTutorialGroupDetailComponent implements OnInit {
-    isLoading = false;
-    tutorialGroup: TutorialGroup;
-    course: Course;
+export class CourseTutorialGroupDetailComponent implements OnInit, OnDestroy {
+    isLoading$ = new BehaviorSubject<boolean>(false);
+    tutorialGroup?: TutorialGroup;
+    course?: Course;
+    private paramsSubscription: Subscription;
+    profileSubscription?: Subscription;
+    isProduction = true;
+    isTestServer = false;
 
     constructor(
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
+        private route: ActivatedRoute,
         private tutorialGroupService: TutorialGroupsService,
         private alertService: AlertService,
         private courseManagementService: CourseManagementService,
+        private profileService: ProfileService,
     ) {}
 
     ngOnInit(): void {
-        this.isLoading = true;
-        this.activatedRoute.paramMap
-            .pipe(
-                take(1),
-                switchMap((params) => {
-                    const tutorialGroupId = Number(params.get('tutorialGroupId'));
-                    const courseId = Number(params.get('courseId'));
-                    return forkJoin({
-                        courseResult: this.courseManagementService.find(courseId),
-                        tutorialGroupResult: this.tutorialGroupService.getOneOfCourse(courseId, tutorialGroupId),
-                    });
-                }),
-                finalize(() => (this.isLoading = false)),
-            )
-            .subscribe({
-                next: ({ courseResult, tutorialGroupResult }) => {
-                    this.tutorialGroup = tutorialGroupResult.body!;
-                    this.course = courseResult.body!;
-                },
-                error: (res: HttpErrorResponse) => onError(this.alertService, res),
-            });
+        const courseIdParams$ = this.route.parent?.parent?.params;
+        const tutorialGroupIdParams$ = this.route.params;
+        if (courseIdParams$) {
+            this.paramsSubscription = combineLatest([courseIdParams$, tutorialGroupIdParams$])
+                .pipe(
+                    switchMap(([courseIdParams, tutorialGroupIdParams]) => {
+                        this.isLoading$.next(true);
+                        const tutorialGroupId = parseInt(tutorialGroupIdParams.tutorialGroupId, 10);
+                        const courseId = parseInt(courseIdParams.courseId, 10);
+                        return forkJoin({
+                            courseResult: this.courseManagementService.find(courseId),
+                            tutorialGroupResult: this.tutorialGroupService.getOneOfCourse(courseId, tutorialGroupId),
+                        });
+                    }),
+                    tap({
+                        next: () => {
+                            this.isLoading$.next(false);
+                        },
+                    }),
+                    catchError((error: HttpErrorResponse) => {
+                        this.isLoading$.next(false);
+                        onError(this.alertService, error);
+                        throw error;
+                    }),
+                )
+                .subscribe({
+                    next: ({ courseResult, tutorialGroupResult }) => {
+                        this.tutorialGroup = tutorialGroupResult.body ?? undefined;
+                        this.course = courseResult.body ?? undefined;
+                    },
+                });
+        }
+        this.profileSubscription = this.profileService.getProfileInfo()?.subscribe((profileInfo) => {
+            this.isProduction = profileInfo?.inProduction;
+            this.isTestServer = profileInfo.testServer ?? false;
+        });
+    }
+
+    ngOnDestroy(): void {
+        this.paramsSubscription?.unsubscribe();
+        this.profileSubscription?.unsubscribe();
     }
 }
