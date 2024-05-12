@@ -19,14 +19,17 @@ export class MarkdownEditorMonacoComponent implements OnInit {
     _markdown?: string;
 
     @Input()
-    minHeightEditor = MarkdownEditorHeight.SMALL.valueOf();
+    minHeightEditor: number = MarkdownEditorHeight.SMALL.valueOf();
+
+    @Input()
+    growToFit = false;
 
     @Output()
     markdownChange = new EventEmitter<string>();
 
     ngOnInit(): void {
         this.monacoEditor.changeModel('markdown-content.md', this._markdown);
-        this.monacoEditor.layoutWithFixedSize(400, 400);
+        this.monacoEditor.layout();
     }
 
     onTextChanged(text: string): void {

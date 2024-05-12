@@ -22,7 +22,7 @@
         </jhi-markdown-editor>
     }
     @if (exercise) {
-        <jhi-markdown-editor-monaco [minHeightEditor]="500" [markdown]="exercise.problemStatement" (markdownChange)="updateProblemStatement($event)" />
+        <jhi-markdown-editor-monaco [style.flex-grow]="'1'" [minHeightEditor]="500" [markdown]="exercise.problemStatement" (markdownChange)="updateProblemStatement($event)" />
     }
     @if (editMode) {
         <button
