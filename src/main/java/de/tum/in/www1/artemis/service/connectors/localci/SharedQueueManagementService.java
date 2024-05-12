@@ -106,6 +106,11 @@ public class SharedQueueManagementService {
         return buildAgentInformation.values().stream().toList();
     }
 
+    public List<LocalCIBuildAgentInformation> getBuildAgentInformationWithoutRecentBuildJobs() {
+        return buildAgentInformation.values().stream().map(agent -> new LocalCIBuildAgentInformation(agent.name(), agent.maxNumberOfConcurrentBuildJobs(),
+                agent.numberOfCurrentBuildJobs(), agent.runningBuildJobs(), agent.status(), null)).toList();
+    }
+
     /**
      * Cancel a build job by removing it from the queue or stopping the build process.
      *

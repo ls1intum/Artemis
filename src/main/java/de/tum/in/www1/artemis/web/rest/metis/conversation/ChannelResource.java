@@ -281,9 +281,9 @@ public class ChannelResource extends ConversationManagementResource {
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         channelAuthorizationService.isAllowedToDeleteChannel(channel, requestingUser);
 
-        tutorialGroupChannelManagementService.getTutorialGroupBelongingToChannel(channel).ifPresentOrElse(tutorialGroup -> {
+        tutorialGroupChannelManagementService.getTutorialGroupBelongingToChannel(channel).ifPresent(tutorialGroup -> {
             throw new BadRequestAlertException("The channel belongs to tutorial group " + tutorialGroup.getTitle(), CHANNEL_ENTITY_NAME, "channel.tutorialGroup.mismatch");
-        }, Optional::empty);
+        });
 
         var usersToNotify = conversationParticipantRepository.findConversationParticipantsByConversationId(channel.getId()).stream().map(ConversationParticipant::getUser)
                 .collect(Collectors.toSet());
