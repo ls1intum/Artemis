@@ -22,6 +22,18 @@ import de.tum.in.www1.artemis.domain.DomainObject;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class PlagiarismDetectionConfig extends DomainObject {
 
+    public PlagiarismDetectionConfig() {
+    }
+
+    public PlagiarismDetectionConfig(PlagiarismDetectionConfig inputConfig) {
+        this.continuousPlagiarismControlEnabled = inputConfig.continuousPlagiarismControlEnabled;
+        this.continuousPlagiarismControlPostDueDateChecksEnabled = inputConfig.continuousPlagiarismControlPostDueDateChecksEnabled;
+        this.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod = inputConfig.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod;
+        this.similarityThreshold = inputConfig.similarityThreshold;
+        this.minimumScore = inputConfig.minimumScore;
+        this.minimumSize = inputConfig.minimumSize;
+    }
+
     @Column(name = "continuous_plagiarism_control_enabled")
     private boolean continuousPlagiarismControlEnabled = false;
 
