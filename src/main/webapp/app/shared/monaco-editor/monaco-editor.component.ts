@@ -28,7 +28,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     constructor(
         private themeService: ThemeService,
         elementRef: ElementRef,
-        renderer: Renderer2,
+        private renderer: Renderer2,
     ) {
         /*
          * The constructor injects the editor along with its container into the empty template of this component.
@@ -50,6 +50,15 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
 
     @Input()
     textChangedEmitDelay?: number;
+
+    @Input()
+    set shrinkToFit(value: boolean) {
+        if (value) {
+            this.renderer.addClass(this.monacoEditorContainerElement, 'monaco-shrink-to-fit');
+        } else {
+            this.renderer.removeClass(this.monacoEditorContainerElement, 'monaco-shrink-to-fit');
+        }
+    }
 
     @Input()
     set readOnly(value: boolean) {
