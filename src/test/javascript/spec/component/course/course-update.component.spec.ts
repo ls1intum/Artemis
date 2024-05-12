@@ -410,6 +410,8 @@ describe('Course Management Update Component', () => {
             });
             comp.updateCourseInformationSharingMessagingCodeOfConduct('# Code of Conduct');
             expect(comp.courseForm.controls['courseInformationSharingMessagingCodeOfConduct'].value).toBe('# Code of Conduct');
+            // Verify the form control is editable
+            expect(comp.courseForm.controls['courseInformationSharingMessagingCodeOfConduct'].enabled).toBeTrue();
         });
     });
 
