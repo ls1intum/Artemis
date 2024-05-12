@@ -118,7 +118,7 @@ public class ApollonDiagramResource {
      * @param diagramId the id of the diagram
      * @return the ResponseEntity with status 200 (OK) and with body the title of the diagram or 404 Not Found if no diagram with that id exists
      */
-    @GetMapping(value = "/apollon-diagrams/{diagramId}/title")
+    @GetMapping("apollon-diagrams/{diagramId}/title")
     @EnforceAtLeastStudent
     public ResponseEntity<String> getDiagramTitle(@PathVariable Long diagramId) {
         final var title = apollonDiagramRepository.getDiagramTitle(diagramId);
