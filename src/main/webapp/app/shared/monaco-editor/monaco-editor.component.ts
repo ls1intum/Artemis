@@ -115,7 +115,9 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     }
 
     setText(text: string): void {
-        this._editor.setValue(text);
+        if (this.getText() !== text) {
+            this._editor.setValue(text);
+        }
     }
 
     /**
