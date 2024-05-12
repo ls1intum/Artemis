@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.HashSet;
@@ -23,10 +24,12 @@ import org.hibernate.Hibernate;
 import org.hibernate.exception.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
 import com.hazelcast.config.Config;
@@ -97,10 +100,12 @@ public class QuizScheduleService {
 
     private final TeamRepository teamRepository;
 
+    private final TaskScheduler scheduler;
+
     public QuizScheduleService(WebsocketMessagingService websocketMessagingService, StudentParticipationRepository studentParticipationRepository, UserRepository userRepository,
-            QuizSubmissionRepository quizSubmissionRepository, HazelcastInstance hazelcastInstance, QuizExerciseRepository quizExerciseRepository,
-            QuizMessagingService quizMessagingService, QuizStatisticService quizStatisticService, Optional<LtiNewResultService> ltiNewResultService,
-            TeamRepository teamRepository) {
+            QuizSubmissionRepository quizSubmissionRepository, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, QuizExerciseRepository quizExerciseRepository,
+            QuizMessagingService quizMessagingService, QuizStatisticService quizStatisticService, Optional<LtiNewResultService> ltiNewResultService, TeamRepository teamRepository,
+            @Qualifier("taskScheduler") TaskScheduler scheduler) {
         this.websocketMessagingService = websocketMessagingService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.userRepository = userRepository;
@@ -111,6 +116,7 @@ public class QuizScheduleService {
         this.ltiNewResultService = ltiNewResultService;
         this.hazelcastInstance = hazelcastInstance;
         this.teamRepository = teamRepository;
+        this.scheduler = scheduler;
     }
 
     @PostConstruct
@@ -135,7 +141,7 @@ public class QuizScheduleService {
     public void applicationReady() {
         // activate Quiz Schedule Service
         SecurityUtils.setAuthorizationObject();
-        startSchedule(5 * 1000);                          // every 5 seconds
+        scheduler.schedule(() -> startSchedule(5 * 1000)/* every 5 seconds */, Instant.now().plusSeconds(25));
     }
 
     /**

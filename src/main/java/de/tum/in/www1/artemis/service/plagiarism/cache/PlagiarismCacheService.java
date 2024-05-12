@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import jakarta.annotation.PostConstruct;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -20,7 +21,7 @@ public class PlagiarismCacheService {
     // Every course in this set is currently doing a plagiarism check
     private ISet<Long> activePlagiarismChecksPerCourse;
 
-    public PlagiarismCacheService(HazelcastInstance hazelcastInstance) {
+    public PlagiarismCacheService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
         this.hazelcastInstance = hazelcastInstance;
     }
 
