@@ -5,6 +5,7 @@ import { admin } from '../../../support/users';
 import { generateUUID } from '../../../support/utils';
 import { test } from '../../../support/fixtures';
 import { expect } from '@playwright/test';
+import { promises as fs } from 'fs';
 
 test.describe('Quiz Exercise Management', () => {
     let course: Course;
@@ -40,7 +41,7 @@ test.describe('Quiz Exercise Management', () => {
             await expect(page.getByText(title)).toBeVisible();
         });
 
-        test.skip('Creates a Quiz with Drag and Drop', async ({ page, quizExerciseCreation }) => {
+        test('Creates a Quiz with Drag and Drop', async ({ page, quizExerciseCreation }) => {
             const quizQuestionTitle = 'Quiz Question';
             await quizExerciseCreation.addDragAndDropQuestion(quizQuestionTitle);
             const response = await quizExerciseCreation.saveQuiz();
@@ -64,6 +65,38 @@ test.describe('Quiz Exercise Management', () => {
             await courseManagement.openExercisesOfCourse(course.id!);
             await courseManagementExercises.deleteQuizExercise(quizExercise);
             await expect(courseManagementExercises.getExercise(quizExercise.id!)).not.toBeAttached();
+        });
+    });
+
+    test.describe('Quiz Exercise Export', () => {
+        let quizExercise: QuizExercise;
+
+        test.beforeEach('Create quiz exercise', async ({ login, exerciseAPIRequests }) => {
+            await login(admin);
+            quizExercise = await exerciseAPIRequests.createQuizExercise({ course }, [multipleChoiceTemplate]);
+        });
+
+        test('Export quiz exercise questions', async ({ page, login, navigationBar, courseManagement, courseManagementExercises }) => {
+            await login(admin, '/');
+            await navigationBar.openCourseManagement();
+            await courseManagement.openExercisesOfCourse(course.id!);
+            const downloadPromise = new Promise<void>((resolve, reject) => {
+                page.on('download', async (download) => {
+                    const fileName = download.suggestedFilename();
+                    expect(fileName).toBe(`${quizExercise.title}.json`);
+                    const filePath = await download.path();
+                    const fileContent = await fs.readFile(filePath, 'utf8');
+                    const exportedExercise = JSON.parse(fileContent);
+                    const exercise = [multipleChoiceTemplate];
+                    expect(exportedExercise).toMatchObject(exercise);
+                    resolve();
+                });
+
+                setTimeout(() => reject('Quiz questions export did not happen within the expected time frame'), 10000);
+            });
+
+            await courseManagementExercises.exportQuizExercise(quizExercise.id!);
+            await expect(downloadPromise).resolves.toBeUndefined();
         });
     });
 

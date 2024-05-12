@@ -3,7 +3,14 @@ package de.tum.in.www1.artemis.security.lti;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -29,6 +36,8 @@ import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
@@ -149,13 +158,13 @@ class Lti13TokenRetrieverTest {
     }
 
     @Test
-    void getToken() throws NoSuchAlgorithmException {
+    void getToken() throws NoSuchAlgorithmException, JsonProcessingException {
         JWK jwk = generateKey();
         when(oAuth2JWKSService.getJWK(any())).thenReturn(jwk);
 
         Map<String, String> map = new HashMap<>();
         map.put("access_token", "result");
-        ResponseEntity<String> responseEntity = ResponseEntity.of(Optional.of(map.toString()));
+        ResponseEntity<String> responseEntity = ResponseEntity.of(Optional.of(new ObjectMapper().writeValueAsString(map)));
         when(restTemplate.exchange(any(), eq(String.class))).thenReturn(responseEntity);
 
         String token = lti13TokenRetriever.getToken(clientRegistration, Scopes.AGS_SCORE);

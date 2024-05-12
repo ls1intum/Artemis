@@ -11,6 +11,8 @@ import jakarta.validation.constraints.NotNull;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.competency.KnowledgeArea;
@@ -38,4 +40,24 @@ public interface KnowledgeAreaRepository extends JpaRepository<KnowledgeArea, Lo
     default KnowledgeArea findByIdElseThrow(long knowledgeAreaId) throws EntityNotFoundException {
         return findById(knowledgeAreaId).orElseThrow(() -> new EntityNotFoundException("KnowledgeArea", knowledgeAreaId));
     }
+
+    // this method is needed as native MySQL queries do not get automatically cast to boolean
+    default boolean isDescendantOf(long descendantId, long parentId) {
+        return isDescendantOfAsLong(descendantId, parentId) > 0;
+    }
+
+    @Query(value = """
+            WITH RECURSIVE transitive_closure(id) AS
+            (
+                (SELECT knowledge_area.id FROM knowledge_area WHERE knowledge_area.id = :parentId)
+                UNION
+                (
+                    SELECT ka.id
+                    FROM knowledge_area AS ka
+                    JOIN transitive_closure AS tc ON ka.parent_id = tc.id
+                )
+            )
+            SELECT COUNT(*) FROM transitive_closure WHERE transitive_closure.id = :descendantId
+            """, nativeQuery = true)
+    long isDescendantOfAsLong(@Param("descendantId") long descendantId, @Param("parentId") long parentId);
 }

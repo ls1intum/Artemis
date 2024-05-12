@@ -5,6 +5,7 @@ import { Participation } from 'app/entities/participation/participation.model';
 import { Submission } from 'app/entities/submission.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
+import { AssessmentNote } from 'app/entities/assessment-note.model';
 
 export class Result implements BaseEntity {
     public id?: number;
@@ -20,10 +21,11 @@ export class Result implements BaseEntity {
     public rated?: boolean;
     public hasComplaint?: boolean;
     public exampleResult?: boolean;
+    public assessmentNote?: AssessmentNote;
     public testCaseCount?: number;
     public passedTestCaseCount?: number;
     public codeIssueCount?: number;
-    public logsAvailable?: boolean;
+    public buildJobId?: string;
 
     public submission?: Submission;
     public assessor?: User;
@@ -53,5 +55,15 @@ export class Result implements BaseEntity {
      */
     public static isAthenaAIResult(that: Result): boolean {
         return that.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
+    }
+
+    /**
+     * Checks whether the given result has an assessment note that is not empty.
+     * @param that the result of which the presence of an assessment note is being checked
+     *
+     * @return true if the assessment note exists and is not empty, false otherwise
+     */
+    public static hasNonEmptyAssessmentNote(that: Result | undefined): boolean {
+        return that ? !!that.assessmentNote?.note?.length : false;
     }
 }

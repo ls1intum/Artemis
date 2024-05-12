@@ -14,7 +14,7 @@ import {
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { filter, finalize, map, switchMap } from 'rxjs/operators';
 import { onError } from 'app/shared/util/global.utils';
-import { Subject, forkJoin } from 'rxjs';
+import { Subject, Subscription, forkJoin } from 'rxjs';
 import { faFileImport, faPencilAlt, faPlus, faRobot, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { PrerequisiteImportComponent } from 'app/course/competencies/competency-management/prerequisite-import.component';
@@ -23,6 +23,9 @@ import { CompetencyImportCourseComponent, ImportAllFromCourseResult } from 'app/
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { PROFILE_IRIS } from 'app/app.constants';
+import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
+import { TranslateService } from '@ngx-translate/core';
+import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 
 @Component({
     selector: 'jhi-competency-management',
@@ -34,6 +37,8 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     irisCompetencyGenerationEnabled = false;
     private dialogErrorSource = new Subject<string>();
     dialogError = this.dialogErrorSource.asObservable();
+    standardizedCompetenciesEnabled = false;
+    private standardizedCompetencySubscription: Subscription;
 
     competencies: Competency[] = [];
     prerequisites: Competency[] = [];
@@ -57,6 +62,8 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
         private modalService: NgbModal,
         private profileService: ProfileService,
         private irisSettingsService: IrisSettingsService,
+        private translateService: TranslateService,
+        private featureToggleService: FeatureToggleService,
     ) {}
 
     ngOnInit(): void {
@@ -67,10 +74,16 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
                 this.loadIrisEnabled();
             }
         });
+        this.standardizedCompetencySubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.StandardizedCompetencies).subscribe((isActive) => {
+            this.standardizedCompetenciesEnabled = isActive;
+        });
     }
 
     ngOnDestroy() {
         this.dialogErrorSource.unsubscribe();
+        if (this.standardizedCompetencySubscription) {
+            this.standardizedCompetencySubscription.unsubscribe();
+        }
     }
 
     /**
@@ -258,11 +271,32 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * Opens a confirmation dialog and if confirmed, deletes a competency relation with the given id
+     *
+     * @param relationId the given id
+     */
+    onRemoveRelation(relationId: number) {
+        const relation = this.relations.find((relation) => relation.id === relationId);
+        const headId = relation?.headCompetency?.id;
+        const tailId = relation?.tailCompetency?.id;
+        const titleHead = this.competencies.find((competency) => competency.id === headId)?.title ?? '';
+        const titleTail = this.competencies.find((competency) => competency.id === tailId)?.title ?? '';
+
+        const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'md' });
+        modalRef.componentInstance.title = 'artemisApp.competency.manageCompetencies.deleteRelationModalTitle';
+        modalRef.componentInstance.text = this.translateService.instant('artemisApp.competency.manageCompetencies.deleteRelationModalText', {
+            titleTail: titleTail,
+            titleHead: titleHead,
+        });
+        modalRef.result.then(() => this.removeRelation(relationId));
+    }
+
+    /**
      * deletes a competency relation with the given id
      *
      * @param relationId the given id
      */
-    removeRelation(relationId: number) {
+    private removeRelation(relationId: number) {
         this.competencyService.removeCompetencyRelation(relationId, this.courseId).subscribe({
             next: () => {
                 this.relations = this.relations.filter((relation) => relation.id !== relationId);

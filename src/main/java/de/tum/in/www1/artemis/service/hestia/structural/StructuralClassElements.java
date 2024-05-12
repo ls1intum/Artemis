@@ -11,7 +11,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * Used for the generation of solution entries for structural test cases
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-class StructuralClassElements {
+public class StructuralClassElements {
 
     @JsonProperty(value = "class", required = true)
     private StructuralClass structuralClass;

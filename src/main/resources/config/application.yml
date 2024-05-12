@@ -64,7 +64,7 @@ artemis:
                 java:
                     # possible overrides: maven, gradle
                     default: "ls1tum/artemis-maven-template:java17-20"
-                    maven_blackbox: "ghcr.io/uni-passau-artemis/artemis-dejagnu:21"
+                    maven_blackbox: "ghcr.io/uni-passau-artemis/artemis-dejagnu:22"
                 kotlin:
                     # possible overrides: maven, gradle
                     default: "ls1tum/artemis-maven-template:java17-20"
@@ -135,7 +135,7 @@ management:
         enable:
             http: true
             jvm: true
-            logback: false
+            logback: true
             process: true
             system: true
         distribution:

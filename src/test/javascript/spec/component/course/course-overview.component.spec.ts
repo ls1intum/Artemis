@@ -72,7 +72,12 @@ const exercise2: Exercise = {
     dueDate: dayjs().add(1, 'days'),
     secondCorrectionEnabled: true,
 };
-const quizExercise: QuizExercise = { id: 7, numberOfAssessmentsOfCorrectionRounds: [], studentAssignedTeamIdComputed: false, secondCorrectionEnabled: true };
+const quizExercise: QuizExercise = {
+    id: 7,
+    numberOfAssessmentsOfCorrectionRounds: [],
+    studentAssignedTeamIdComputed: false,
+    secondCorrectionEnabled: true,
+};
 
 const courseEmpty: Course = {};
 
@@ -138,7 +143,10 @@ describe('CourseOverviewComponent', () => {
 
     let metisConversationService: MetisConversationService;
 
-    const course = { id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING } as Course;
+    const course = {
+        id: 1,
+        courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING,
+    } as Course;
 
     beforeEach(fakeAsync(() => {
         route = {
@@ -203,7 +211,14 @@ describe('CourseOverviewComponent', () => {
                 jhiWebsocketServiceSubscribeSpy = jest.spyOn(jhiWebsocketService, 'subscribe');
                 jest.spyOn(teamService, 'teamAssignmentUpdates', 'get').mockResolvedValue(of(new TeamAssignmentPayload()));
                 // default for findOneForDashboardStub is to return the course
-                findOneForDashboardStub = jest.spyOn(courseService, 'findOneForDashboard').mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
+                findOneForDashboardStub = jest.spyOn(courseService, 'findOneForDashboard').mockReturnValue(
+                    of(
+                        new HttpResponse({
+                            body: course1,
+                            headers: new HttpHeaders(),
+                        }),
+                    ),
+                );
                 // default for findOneForRegistrationStub is to return the course as well
                 findOneForRegistrationStub = jest
                     .spyOn(courseService, 'findOneForRegistration')
@@ -226,6 +241,8 @@ describe('CourseOverviewComponent', () => {
         const notifyAboutCourseAccessStub = jest.spyOn(courseAccessStorageService, 'onCourseAccessed');
         const getSidebarItems = jest.spyOn(component, 'getSidebarItems');
         const getCourseActionItems = jest.spyOn(component, 'getCourseActionItems');
+        const getUpdateVisibility = jest.spyOn(component, 'updateVisibility');
+        const getUpdateMenuPosition = jest.spyOn(component, 'updateMenuPosition');
         findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
         getCourseStub.mockReturnValue(course1);
 
@@ -237,6 +254,8 @@ describe('CourseOverviewComponent', () => {
         expect(getSidebarItems).toHaveBeenCalledOnce();
         expect(getCourseActionItems).toHaveBeenCalledOnce();
         expect(notifyAboutCourseAccessStub).toHaveBeenCalledExactlyOnceWith(course1.id);
+        expect(getUpdateVisibility).toHaveBeenCalledOnce();
+        expect(getUpdateMenuPosition).toHaveBeenCalledOnce();
     });
 
     it('should create sidebar items with default items', () => {
@@ -347,7 +366,7 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('should show an alert when loading the course fails', async () => {
-        findOneForDashboardStub.mockReturnValue(throwError(new HttpResponse({ status: 404 })));
+        findOneForDashboardStub.mockReturnValue(throwError(() => new HttpResponse({ status: 404 })));
         const alertService = TestBed.inject(AlertService);
         const alertServiceSpy = jest.spyOn(alertService, 'addAlert');
 
@@ -364,7 +383,7 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('should return false for canRegisterForCourse if the server returns 403', fakeAsync(() => {
-        findOneForRegistrationStub.mockReturnValue(throwError(new HttpResponse({ status: 403 })));
+        findOneForRegistrationStub.mockReturnValue(throwError(() => new HttpResponse({ status: 403 })));
 
         // test that canRegisterForCourse subscribe gives false
         component.canRegisterForCourse().subscribe((canRegister) => {
@@ -376,7 +395,7 @@ describe('CourseOverviewComponent', () => {
     }));
 
     it('should throw for unexpected registration responses from the server', fakeAsync(() => {
-        findOneForRegistrationStub.mockReturnValue(throwError(new HttpResponse({ status: 404 })));
+        findOneForRegistrationStub.mockReturnValue(throwError(() => new HttpResponse({ status: 404 })));
 
         // test that canRegisterForCourse throws
         component.canRegisterForCourse().subscribe(
@@ -463,7 +482,15 @@ describe('CourseOverviewComponent', () => {
         const getCourseStub = jest.spyOn(courseStorageService, 'getCourse');
         const teamAssignmentUpdatesStub = jest.spyOn(teamService, 'teamAssignmentUpdates', 'get');
         getCourseStub.mockReturnValue(course2);
-        teamAssignmentUpdatesStub.mockReturnValue(Promise.resolve(of({ exerciseId: 6, teamId: 1, studentParticipations: [] })));
+        teamAssignmentUpdatesStub.mockReturnValue(
+            Promise.resolve(
+                of({
+                    exerciseId: 6,
+                    teamId: 1,
+                    studentParticipations: [],
+                }),
+            ),
+        );
         findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course2, headers: new HttpHeaders() })));
 
         component.ngOnInit();
@@ -570,5 +597,54 @@ describe('CourseOverviewComponent', () => {
         const actionItem = fixture.nativeElement.querySelector('.nav-link-sidebar');
         actionItem.click();
         expect(component.courseActionItemClick).toHaveBeenCalledWith(component.courseActionItems[0]);
+    });
+
+    it('should call updateVisibility and updateMenuPosition after window resizement', async () => {
+        const getUpdateVisibility = jest.spyOn(component, 'updateVisibility');
+        const getUpdateMenuPosition = jest.spyOn(component, 'updateMenuPosition');
+
+        await component.ngOnInit();
+        window.dispatchEvent(new Event('resize'));
+
+        expect(getUpdateVisibility).toHaveBeenCalled();
+        expect(getUpdateMenuPosition).toHaveBeenCalled();
+    });
+
+    it('should toggle dropdownOpen when toggleDropdown is called', () => {
+        component.toggleDropdown();
+        expect(component.dropdownOpen).toBeTrue();
+
+        component.toggleDropdown();
+        expect(component.dropdownOpen).toBeFalse();
+    });
+
+    it('should display and hide content of dropdown when dropdownOpen changes', () => {
+        component.dropdownOpen = true;
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('.dropdown-content').hidden).toBeFalse();
+
+        component.dropdownOpen = false;
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('.dropdown-content').hidden).toBeTrue();
+    });
+
+    it('should display more icon and label if at least one item gets hidden in the sidebar', () => {
+        component.anyItemHidden = true;
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('.three-dots').hidden).toBeFalse();
+
+        component.anyItemHidden = false;
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('.three-dots').hidden).toBeTrue();
+    });
+
+    it('should change dropdownOpen when clicking on More', () => {
+        component.dropdownOpen = false;
+        fixture.detectChanges();
+
+        const clickOnMoreItem = fixture.nativeElement.querySelector('.three-dots');
+        clickOnMoreItem.click();
+
+        expect(component.dropdownOpen).toBeTrue();
     });
 });

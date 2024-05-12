@@ -1,22 +1,58 @@
 <div class="card">
+    <div [hidden]="true">
+        <div #addFeedbackButton>
+            <div class="monaco-add-feedback-button">
+                <fa-icon [icon]="faPlusSquare" />
+            </div>
+        </div>
+    </div>
     <jhi-code-editor-header [showTabSizeSelector]="false" [filename]="selectedFile!" [isLoading]="isLoading" />
     <div class="card-body card-body-monaco">
         @if (selectedFile) {
             @for (feedback of filterFeedbackForSelectedFile(feedbacks); track feedback) {
+                <!-- actual, stored feedback -->
                 <jhi-code-editor-tutor-assessment-inline-feedback
                     class="monaco-hidden-element"
                     [selectedFile]="selectedFile"
                     [codeLine]="Feedback.getReferenceLine(feedback)!"
                     [feedback]="feedback"
-                    [readOnly]="true"
-                    [highlightDifferences]="false"
+                    [readOnly]="readOnlyManualFeedback"
+                    [highlightDifferences]="highlightDifferences"
                     [course]="course"
+                    (onUpdateFeedback)="updateFeedback($event)"
+                    (onDeleteFeedback)="deleteFeedback($event)"
+                    (onCancelFeedback)="cancelFeedback($event)"
+                />
+            }
+            <!-- new, unsaved feedback -->
+            @for (line of newFeedbackLines; track line) {
+                <jhi-code-editor-tutor-assessment-inline-feedback
+                    class="monaco-hidden-element"
+                    [selectedFile]="selectedFile"
+                    [codeLine]="line"
+                    [feedback]="undefined"
+                    [highlightDifferences]="highlightDifferences"
+                    [readOnly]="readOnlyManualFeedback"
+                    [course]="course"
+                    (onUpdateFeedback)="updateFeedback($event)"
+                    (onDeleteFeedback)="deleteFeedback($event)"
+                    (onCancelFeedback)="cancelFeedback($event)"
+                />
+            }
+            <!-- feedback suggestions -->
+            @for (suggestion of filterFeedbackForSelectedFile(feedbackSuggestions); track suggestion) {
+                <jhi-code-editor-tutor-assessment-inline-feedback-suggestion
+                    [codeLine]="Feedback.getReferenceLine(suggestion)!"
+                    [feedback]="suggestion"
+                    [course]="course"
+                    (onAcceptSuggestion)="acceptSuggestion($event)"
+                    (onDiscardSuggestion)="discardSuggestion($event)"
                 />
             }
         }
         <jhi-monaco-editor
             (textChanged)="onFileTextChanged($event)"
-            [hidden]="!selectedFile || isLoading"
+            [hidden]="!selectedFile || isLoading || binaryFileSelected"
             [readOnly]="editorLocked"
             [textChangedEmitDelay]="200"
             #editor
@@ -25,9 +61,9 @@
         />
 
         @if (!selectedFile && !isLoading) {
-            <p id="no-file-selected" class="code-editor-ace__content__no-selected text-center lead text-body-secondary pt-5" jhiTranslate="artemisApp.editor.selectFile">
-                Select a file to get started!.
-            </p>
+            <p id="no-file-selected" class="text-center lead text-body-secondary pt-5" jhiTranslate="artemisApp.editor.selectFile"></p>
+        } @else if (binaryFileSelected) {
+            <p id="binary-file-selected" class="text-center lead pt-5" jhiTranslate="artemisApp.editor.binaryFileSelected"></p>
         }
     </div>
 </div>

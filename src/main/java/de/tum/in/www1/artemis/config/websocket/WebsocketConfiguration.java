@@ -3,7 +3,9 @@ package de.tum.in.www1.artemis.config.websocket;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.web.websocket.ResultWebsocketService.getExerciseIdFromNonPersonalExerciseResultDestination;
 import static de.tum.in.www1.artemis.web.websocket.ResultWebsocketService.isNonPersonalExerciseResultDestination;
-import static de.tum.in.www1.artemis.web.websocket.localci.LocalCIWebsocketMessagingService.*;
+import static de.tum.in.www1.artemis.web.websocket.localci.LocalCIWebsocketMessagingService.isBuildAgentDestination;
+import static de.tum.in.www1.artemis.web.websocket.localci.LocalCIWebsocketMessagingService.isBuildQueueAdminDestination;
+import static de.tum.in.www1.artemis.web.websocket.localci.LocalCIWebsocketMessagingService.isBuildQueueCourseDestination;
 import static de.tum.in.www1.artemis.web.websocket.team.ParticipationTeamWebsocketService.getParticipationIdFromDestination;
 import static de.tum.in.www1.artemis.web.websocket.team.ParticipationTeamWebsocketService.isParticipationTeamDestination;
 
@@ -124,7 +126,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         // If tcpClient is null, there is no valid address specified in the config. This could be due to a development setup or a mistake in the config.
         TcpOperations<byte[]> tcpClient = createTcpClient();
         if (tcpClient != null) {
-            log.info("Enabling StompBrokerRelay for WebSocket messages using {}", String.join(", ", brokerAddresses));
+            log.debug("Enabling StompBrokerRelay for WebSocket messages using {}", String.join(", ", brokerAddresses));
             config
                     // Enable the relay for "/topic"
                     .enableStompBrokerRelay("/topic")
@@ -140,7 +142,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                     .setTcpClient(tcpClient);
         }
         else {
-            log.info("Did NOT enable StompBrokerRelay for WebSocket messages");
+            log.debug("Did NOT enable StompBrokerRelay for WebSocket messages");
             config.enableSimpleBroker("/topic").setHeartbeatValue(new long[] { 10000, 20000 }).setTaskScheduler(messageBrokerTaskScheduler);
         }
     }
@@ -149,8 +151,8 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
      * Create a TCP client that will connect to the broker defined in the config.
      * If multiple brokers are configured, the client will connect to the first one and fail over to the next one in case a broker goes down.
      * If the last broker goes down, the first one is retried.
-     * Also see https://github.com/spring-projects/spring-framework/issues/17057 and
-     * https://docs.spring.io/spring/docs/current/spring-framework-reference/web.html#websocket-stomp-handle-broker-relay-configure
+     * Also see <a href="https://github.com/spring-projects/spring-framework/issues/17057">...</a> and
+     * <a href="https://docs.spring.io/spring/docs/current/spring-framework-reference/web.html#websocket-stomp-handle-broker-relay-configure">...</a>
      *
      * @return a TCP client with a round-robin use
      */

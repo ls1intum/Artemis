@@ -131,7 +131,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @JsonIgnore
     public Result getLatestResult() {
         if (results != null && !results.isEmpty()) {
-            return results.get(results.size() - 1);
+            return results.getLast();
         }
         return null;
     }
@@ -234,7 +234,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @JsonIgnore
     public Result getFirstResult() {
         if (results != null && !results.isEmpty()) {
-            return results.get(0);
+            return results.getFirst();
         }
         return null;
     }
@@ -248,7 +248,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @JsonIgnore
     public Result getFirstManualResult() {
         if (results != null && !results.isEmpty()) {
-            return this.getManualResults().get(0);
+            return this.getManualResults().getFirst();
         }
         return null;
     }

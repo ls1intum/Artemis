@@ -3,12 +3,20 @@ package de.tum.in.www1.artemis.security.lti;
 import java.net.URI;
 import java.security.KeyPair;
 import java.time.Instant;
-import java.util.*;
+import java.util.Collections;
+import java.util.Date;
+import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.*;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.RequestEntity;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
@@ -16,7 +24,8 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
-import com.google.gson.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
@@ -79,9 +88,9 @@ public class Lti13TokenRetriever {
             if (exchange.getBody() == null) {
                 return null;
             }
-            return JsonParser.parseString(exchange.getBody()).getAsJsonObject().get("access_token").getAsString();
+            return new ObjectMapper().readTree(exchange.getBody()).get("access_token").asText();
         }
-        catch (HttpClientErrorException e) {
+        catch (HttpClientErrorException | JsonProcessingException e) {
             log.error("Could not retrieve access token for client {}: {}", clientRegistration.getClientId(), e.getMessage());
             return null;
         }
@@ -96,7 +105,6 @@ public class Lti13TokenRetriever {
      *                                 that the consuming service may require.
      * @return A serialized signed JWT as a String.
      * @throws IllegalArgumentException If no JWK could be retrieved for the provided client registration ID.
-     * @throws JOSEException            If there is an error creating the RSA key pair or signing the JWT.
      */
     public String createDeepLinkingJWT(String clientRegistrationId, Map<String, Object> customClaims) {
         JWK jwk = oAuth2JWKSService.getJWK(clientRegistrationId);

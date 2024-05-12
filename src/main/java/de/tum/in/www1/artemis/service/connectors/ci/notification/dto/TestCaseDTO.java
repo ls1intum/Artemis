@@ -6,7 +6,12 @@ import java.util.Optional;
 
 import org.springframework.util.ObjectUtils;
 
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.annotation.Nulls;
 
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.service.dto.TestCaseDTOInterface;
@@ -43,20 +48,20 @@ public record TestCaseDTO(String name, String classname, double time, @JsonPrope
         boolean hasSuccessInfos = !ObjectUtils.isEmpty(successInfos());
         boolean successful = isSuccessful();
 
-        if (successful && hasSuccessInfos && successInfos().get(0).getMostInformativeMessage() != null) {
-            return Optional.of(successInfos().get(0).getMostInformativeMessage());
+        if (successful && hasSuccessInfos && successInfos().getFirst().getMostInformativeMessage() != null) {
+            return Optional.of(successInfos().getFirst().getMostInformativeMessage());
         }
-        else if (hasErrors && errors().get(0).getMostInformativeMessage() != null) {
-            return Optional.of(errors().get(0).getMostInformativeMessage());
+        else if (hasErrors && errors().getFirst().getMostInformativeMessage() != null) {
+            return Optional.of(errors().getFirst().getMostInformativeMessage());
         }
-        else if (hasFailures && failures().get(0).getMostInformativeMessage() != null) {
-            return Optional.of(failures().get(0).getMostInformativeMessage());
+        else if (hasFailures && failures().getFirst().getMostInformativeMessage() != null) {
+            return Optional.of(failures().getFirst().getMostInformativeMessage());
         }
-        else if (hasErrors && errors().get(0).type() != null) {
-            return Optional.of(String.format("Unsuccessful due to an error of type: %s", errors().get(0).type()));
+        else if (hasErrors && errors().getFirst().type() != null) {
+            return Optional.of(String.format("Unsuccessful due to an error of type: %s", errors().getFirst().type()));
         }
-        else if (hasFailures && failures().get(0).type() != null) {
-            return Optional.of(String.format("Unsuccessful due to an error of type: %s", failures().get(0).type()));
+        else if (hasFailures && failures().getFirst().type() != null) {
+            return Optional.of(String.format("Unsuccessful due to an error of type: %s", failures().getFirst().type()));
         }
         else if (!successful) {
             // this is an edge case which typically does not happen

@@ -38,6 +38,7 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.BuildJobRepository;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
@@ -51,6 +52,7 @@ import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.ResultBuildJob;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiNewResultService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.websocket.ResultWebsocketService;
@@ -93,6 +95,8 @@ public class ResultService {
 
     private final LongFeedbackTextRepository longFeedbackTextRepository;
 
+    private final BuildJobRepository buildJobRepository;
+
     private final BuildLogEntryService buildLogEntryService;
 
     public ResultService(UserRepository userRepository, ResultRepository resultRepository, Optional<LtiNewResultService> ltiNewResultService,
@@ -102,7 +106,7 @@ public class ResultService {
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, StudentExamRepository studentExamRepository,
-            BuildLogEntryService buildLogEntryService) {
+            BuildJobRepository buildJobRepository, BuildLogEntryService buildLogEntryService) {
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
         this.ltiNewResultService = ltiNewResultService;
@@ -119,6 +123,7 @@ public class ResultService {
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.studentExamRepository = studentExamRepository;
+        this.buildJobRepository = buildJobRepository;
         this.buildLogEntryService = buildLogEntryService;
     }
 
@@ -358,7 +363,7 @@ public class ResultService {
                 .findWithResultsAndExerciseAndTeamStudentsByBuildPlanId(planKey);
         ProgrammingExerciseStudentParticipation participation = null;
         if (!participations.isEmpty()) {
-            participation = participations.get(0);
+            participation = participations.getFirst();
             if (participations.size() > 1) {
                 // in the rare case of multiple participations, take the latest one.
                 for (ProgrammingExerciseStudentParticipation otherParticipation : participations) {
@@ -435,19 +440,33 @@ public class ResultService {
     }
 
     /**
-     * Get a map of result ids to their availability of build log files.
+     * Get a map of result ids to the respective build job ids if build log files for this build job exist.
      *
      * @param results the results for which to check the availability of build logs
-     * @return a map of result ids to their availability of build log files
+     * @return a map of result ids to respective build job ids if the build log files exist, null otherwise
      */
-    public Map<Long, Boolean> getLogsAvailabilityForResults(List<Result> results) {
-        Map<Long, Boolean> logsAvailability = new HashMap<>();
-        for (Result result : results) {
-            if (buildLogEntryService.resultHasLogFile(result.getId().toString())) {
-                logsAvailability.put(result.getId(), true);
+    public Map<Long, String> getLogsAvailabilityForResults(List<Result> results) {
+
+        Map<Long, String> logsAvailability = new HashMap<>();
+
+        List<Long> resultIds = results.stream().map(Result::getId).toList();
+
+        Map<Long, String> resultBuildJobSet = buildJobRepository.findBuildJobIdsForResultIds(resultIds).stream()
+                .collect(Collectors.toMap(ResultBuildJob::resultId, ResultBuildJob::buildJobId, (existing, replacement) -> existing));
+
+        for (Long resultId : resultIds) {
+            String buildJobId = resultBuildJobSet.get(resultId);
+            if (buildJobId != null) {
+
+                if (buildLogEntryService.buildJobHasLogFile(buildJobId)) {
+                    logsAvailability.put(resultId, buildJobId);
+                }
+                else {
+                    logsAvailability.put(resultId, null);
+                }
             }
             else {
-                logsAvailability.put(result.getId(), false);
+                logsAvailability.put(resultId, null);
             }
         }
         return logsAvailability;

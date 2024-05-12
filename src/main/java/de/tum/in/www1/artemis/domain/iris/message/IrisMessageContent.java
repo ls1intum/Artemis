@@ -1,14 +1,21 @@
 package de.tum.in.www1.artemis.domain.iris.message;
 
 import jakarta.annotation.Nullable;
-import jakarta.persistence.*;
+import jakarta.persistence.DiscriminatorColumn;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Inheritance;
+import jakarta.persistence.InheritanceType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
 
@@ -21,7 +28,6 @@ import de.tum.in.www1.artemis.domain.DomainObject;
 // @formatter:off
 @JsonSubTypes({
         @JsonSubTypes.Type(value = IrisTextMessageContent.class, name = "text"),
-        @JsonSubTypes.Type(value = IrisExercisePlan.class, name = "exercise_plan"),
         @JsonSubTypes.Type(value = IrisJsonMessageContent.class, name = "json"),
 })
 // @formatter:on

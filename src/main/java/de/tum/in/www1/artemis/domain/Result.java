@@ -31,6 +31,7 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import jakarta.validation.constraints.NotNull;
 
+import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -122,6 +123,12 @@ public class Result extends DomainObject implements Comparable<Result> {
 
     @Column(name = "example_result")
     private Boolean exampleResult;
+
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    // OneToMany is required, otherwise the lazy loading does not work
+    // it will be ensured programmatically that only ever one note exists for every result object
+    @JoinColumn(name = "result_id", nullable = false)
+    private final List<AssessmentNote> assessmentNote = new ArrayList<>();
 
     // The following attributes are only used for Programming Exercises
     @Column(name = "test_case_count")
@@ -474,6 +481,34 @@ public class Result extends DomainObject implements Comparable<Result> {
         this.fileReportsByTestCaseName = fileReportsByTestCaseName;
     }
 
+    /**
+     * Checks the initialization status of the assessment note before returning. Only a single element is returned instead of the list,
+     * because it is modelled that way on the client-side. Jackson therefore needs a single object for the (de-)serialization.
+     *
+     * @return Null, if the field is uninitialized or the encapsulating arraylist is empty, or else, the assessment note.
+     */
+    public AssessmentNote getAssessmentNote() {
+        if (!Hibernate.isInitialized(assessmentNote) || assessmentNote.isEmpty()) {
+            return null;
+        }
+        else {
+            return assessmentNote.get(0);
+        }
+    }
+
+    /**
+     * Clears the list before adding a new assessment note. This ensures that it contains at most one element.
+     * When setting null, the list is just cleared, without adding anything afterward.
+     *
+     * @param assessmentNote The assessment note that is added to the list as its new sole element.
+     */
+    public void setAssessmentNote(AssessmentNote assessmentNote) {
+        this.assessmentNote.clear();
+        if (assessmentNote != null) {
+            this.assessmentNote.add(assessmentNote);
+        }
+    }
+
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     /**
@@ -491,13 +526,16 @@ public class Result extends DomainObject implements Comparable<Result> {
     }
 
     /**
-     * Removes the assessor from the result, can be invoked to make sure that sensitive information is not sent to the client. E.g. students should not see information about
-     * their assessor.
+     * Removes the assessor and the internal assessment note from the result, can be invoked to make sure that sensitive
+     * information is not sent to the client. E.g. students should not see information about their assessor.
      * <p>
      * Does not filter feedbacks.
      */
     public void filterSensitiveInformation() {
         setAssessor(null);
+        if (Hibernate.isInitialized(assessmentNote)) {
+            setAssessmentNote(null);
+        }
     }
 
     /**

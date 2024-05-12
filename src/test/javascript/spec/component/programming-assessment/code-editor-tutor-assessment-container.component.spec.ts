@@ -36,7 +36,6 @@ import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
-import { CodeEditorAceComponent } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 import { CodeEditorFileBrowserComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
 import { FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -61,7 +60,6 @@ import { CodeEditorStatusComponent } from 'app/exercises/programming/shared/code
 import { CodeEditorFileBrowserFolderComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-folder.component';
 import { CodeEditorFileBrowserFileComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-file.component';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
-import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
 import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
 import { TreeviewComponent } from 'app/exercises/programming/shared/code-editor/treeview/components/treeview/treeview.component';
 import { TreeviewItem } from 'app/exercises/programming/shared/code-editor/treeview/models/treeview-item';
@@ -72,6 +70,9 @@ import { MockAthenaService } from '../../helpers/mocks/service/mock-athena.servi
 import { AthenaService } from 'app/assessment/athena.service';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 import { EntityResponseType } from 'app/exercises/shared/result/result.service';
+import { CodeEditorMonacoComponent } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
+import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
+import dayjs from 'dayjs/esm';
 
 function addFeedbackAndValidateScore(comp: CodeEditorTutorAssessmentContainerComponent, pointsAwarded: number, scoreExpected: number) {
     comp.unreferencedFeedback.push({
@@ -193,9 +194,9 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 MockComponent(CodeEditorBuildOutputComponent),
                 MockComponent(CodeEditorGridComponent),
                 MockComponent(CodeEditorActionsComponent),
-                CodeEditorAceComponent,
                 MockComponent(CodeEditorTutorAssessmentInlineFeedbackComponent),
-                AceEditorComponent,
+                CodeEditorMonacoComponent,
+                MonacoEditorComponent,
                 MockComponent(CodeEditorInstructionsComponent),
                 MockComponent(ResultComponent),
                 MockComponent(IncludedInScoreBadgeComponent),
@@ -295,6 +296,20 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         });
         flush();
     }));
+
+    it('should be able to override directly after submitting', () => {
+        jest.spyOn(programmingAssessmentManualResultService, 'saveAssessment');
+
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        exercise.isAtLeastInstructor = true;
+        exercise.dueDate = dayjs();
+        comp.exercise = exercise;
+        comp.isAssessor = true;
+        comp.participation = participation;
+        comp.manualResult = result;
+        comp.submit();
+        expect(comp.canOverride).toBeTrue();
+    });
 
     it('should show unreferenced feedback suggestions', () => {
         comp.feedbackSuggestions = [{ reference: 'file:src/Test.java_line:1' }, { reference: 'file:src/Test.java_line:2' }, { reference: undefined }];
@@ -619,11 +634,11 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(browserComponent).toBeDefined();
         expect(browserComponent.filesTreeViewItem).toHaveLength(1);
 
-        const codeEditorAceComp = fixture.debugElement.query(By.directive(CodeEditorAceComponent)).componentInstance;
-        codeEditorAceComp.isLoading = false;
+        const codeEditorMonacoComp = fixture.debugElement.query(By.directive(CodeEditorMonacoComponent)).componentInstance;
+        codeEditorMonacoComp.isLoading = false;
         fixture.whenStable().then(() => {
             fixture.detectChanges();
-            expect(codeEditorAceComp.markerIds).toHaveLength(1);
+            expect(codeEditorMonacoComp.getLineHighlights()).toHaveLength(1);
         });
 
         getFilesWithContentStub.mockRestore();
@@ -684,6 +699,35 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
             }
         }),
     );
+
+    it('should validate assessments after submission is received during component init', async () => {
+        // make assessment valid
+        submission.results![0].feedbacks = [
+            {
+                detailText: 'text',
+                credits: 1,
+                type: FeedbackType.MANUAL_UNREFERENCED,
+            },
+        ];
+
+        await comp['onSubmissionReceived']('123', submission);
+        expect(comp.assessmentsAreValid).toBeTrue();
+    });
+
+    it('should not invalidate assessment after saving', async () => {
+        jest.spyOn(programmingAssessmentManualResultService, 'saveAssessment');
+
+        submission.results![0].feedbacks = [
+            {
+                detailText: 'text',
+                credits: 1,
+                type: FeedbackType.MANUAL_UNREFERENCED,
+            },
+        ];
+        await comp['onSubmissionReceived']('123', submission);
+        comp.save();
+        expect(comp.assessmentsAreValid).toBeTrue();
+    });
 
     it('should display error when complaint resolved but assessment invalid', () => {
         let onSuccessCalled = false;

@@ -4,7 +4,17 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorColumn;
+import jakarta.persistence.DiscriminatorType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Inheritance;
+import jakarta.persistence.InheritanceType;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderColumn;
+import jakarta.persistence.Table;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -30,7 +40,6 @@ import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 @JsonSubTypes({
     @JsonSubTypes.Type(value = IrisChatSession.class, name = "chat"),
     @JsonSubTypes.Type(value = IrisHestiaSession.class, name = "hestia"),
-    @JsonSubTypes.Type(value = IrisCodeEditorSession.class, name = "codeEditor")
 })
 // @formatter:on
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -44,10 +53,10 @@ public abstract class IrisSession extends DomainObject {
     @Column(name = "creation_date")
     private ZonedDateTime creationDate = ZonedDateTime.now();
 
+    // TODO: This is only used in the tests -> Remove
     public IrisMessage newMessage() {
         var message = new IrisMessage();
         message.setSession(this);
-        this.messages.add(message);
         return message;
     }
 

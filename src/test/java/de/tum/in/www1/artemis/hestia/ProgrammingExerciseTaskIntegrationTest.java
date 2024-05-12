@@ -2,7 +2,10 @@ package de.tum.in.www1.artemis.hestia;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -125,11 +128,21 @@ class ProgrammingExerciseTaskIntegrationTest extends AbstractSpringIntegrationIn
     void testTaskExtractionForProgrammingExercise() throws Exception {
         String taskName1 = "Implement Bubble Sort";
         String taskName2 = "Implement Policy and Context";
-        programmingExercise.setProblemStatement(
-                "# Sorting with the Strategy Pattern\n" + "\n" + "In this exercise, we want to implement sorting algorithms and choose them based on runtime specific variables.\n"
-                        + "\n" + "### Part 1: Sorting\n" + "\n" + "First, we need to implement two sorting algorithms, in this case `MergeSort` and `BubbleSort`.\n" + "\n"
-                        + "**You have the following tasks:**\n" + "\n" + "1. [task][" + taskName1 + "](testClass[BubbleSort])\n" + "Implement the class `BubbleSort`.\n"
-                        + "2. [task][" + taskName2 + "](testMethods[Context],testMethods[Policy])\n" + "Implement the classes `Context` and `Policy`. Make sure to follow..");
+        programmingExercise.setProblemStatement("""
+                # Sorting with the Strategy Pattern
+
+                In this exercise, we want to implement sorting algorithms and choose them based on runtime specific variables.
+
+                ### Part 1: Sorting
+
+                First, we need to implement two sorting algorithms, in this case `MergeSort` and `BubbleSort`.
+
+                **You have the following tasks:**
+
+                1. [task][%s](testClass[BubbleSort])
+                Implement the class `BubbleSort`.
+                2. [task][%s](testMethods[Context],testMethods[Policy])
+                Implement the classes `Context` and `Policy`. Make sure to follow..""".formatted(taskName1, taskName2));
         programmingExerciseRepository.save(programmingExercise);
         programmingExerciseTaskService.updateTasksFromProblemStatement(programmingExercise);
 
