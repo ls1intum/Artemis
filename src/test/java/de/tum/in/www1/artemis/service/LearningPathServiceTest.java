@@ -35,7 +35,7 @@ import de.tum.in.www1.artemis.domain.competency.LearningPath;
 import de.tum.in.www1.artemis.domain.competency.RelationType;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
-import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.lecture.LectureUtilService;
 import de.tum.in.www1.artemis.repository.CompetencyRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
