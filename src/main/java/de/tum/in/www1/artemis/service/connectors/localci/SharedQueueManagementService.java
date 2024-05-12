@@ -10,6 +10,7 @@ import jakarta.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -56,7 +57,7 @@ public class SharedQueueManagementService {
 
     private ITopic<String> canceledBuildJobsTopic;
 
-    public SharedQueueManagementService(BuildJobRepository buildJobRepository, HazelcastInstance hazelcastInstance) {
+    public SharedQueueManagementService(BuildJobRepository buildJobRepository, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
         this.buildJobRepository = buildJobRepository;
         this.hazelcastInstance = hazelcastInstance;
     }
@@ -104,6 +105,11 @@ public class SharedQueueManagementService {
 
     public List<LocalCIBuildAgentInformation> getBuildAgentInformation() {
         return buildAgentInformation.values().stream().toList();
+    }
+
+    public List<LocalCIBuildAgentInformation> getBuildAgentInformationWithoutRecentBuildJobs() {
+        return buildAgentInformation.values().stream().map(agent -> new LocalCIBuildAgentInformation(agent.name(), agent.maxNumberOfConcurrentBuildJobs(),
+                agent.numberOfCurrentBuildJobs(), agent.runningBuildJobs(), agent.status(), null)).toList();
     }
 
     /**
