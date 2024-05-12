@@ -7,7 +7,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -82,9 +81,8 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseRepositoryS
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.web.rest.dto.BuildLogStatisticsDTO;
-import de.tum.in.www1.artemis.web.rest.dto.CheckoutDirectoryInfo;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseResetOptionsDTO;
-import de.tum.in.www1.artemis.web.rest.dto.RepositoryCheckoutDirectoryDTO;
+import de.tum.in.www1.artemis.web.rest.dto.RepositoriesCheckoutDirectoryDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -886,29 +884,35 @@ public class ProgrammingExerciseResource {
     @GetMapping("programming-exercises/repository-checkout-directories")
     // @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<RepositoryCheckoutDirectoryDTO> getRepositoryCheckoutDirectories() {
+    public ResponseEntity<RepositoriesCheckoutDirectoryDTO> getRepositoryCheckoutDirectories(@RequestParam(value = "programmingLanguage") ProgrammingLanguage programmingLanguage) {
         log.debug("REST request to get checkout directories");
 
         String ROOT_DIRECTORY = "/";
 
-        RepositoryCheckoutDirectoryDTO repositoryCheckoutDirectories = new RepositoryCheckoutDirectoryDTO(new HashMap<>());
-
-        for (ProgrammingLanguage programmingLanguage : ProgrammingLanguage.values()) {
-
-            String exerciseCheckoutDirectory = ContinuousIntegrationService.RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage);
-            String testCheckoutDirectory = ContinuousIntegrationService.RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage);
-            String solutionCheckoutDirectory = ROOT_DIRECTORY;
-            try {
-                solutionCheckoutDirectory = ContinuousIntegrationService.RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(programmingLanguage);
-            }
-            catch (IllegalArgumentException exception) {
-                // assume that the checkout directory is the root directory if the solution repository does not exist
-            }
-
-            CheckoutDirectoryInfo checkoutDirectoryInfo = new CheckoutDirectoryInfo(exerciseCheckoutDirectory, solutionCheckoutDirectory, testCheckoutDirectory);
-            repositoryCheckoutDirectories.checkoutDirectories().put(programmingLanguage, checkoutDirectoryInfo);
+        String exerciseCheckoutDirectory = ContinuousIntegrationService.RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage);
+        String testCheckoutDirectory = ContinuousIntegrationService.RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage);
+        String solutionCheckoutDirectory = "";
+        try {
+            solutionCheckoutDirectory = ContinuousIntegrationService.RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(programmingLanguage);
+        }
+        catch (IllegalArgumentException exception) {
+            // assume that the checkout directory is the root directory if the solution repository does not exist
         }
 
-        return ResponseEntity.ok(repositoryCheckoutDirectories);
+        // TODO verify assumption
+        if (exerciseCheckoutDirectory.isEmpty()) {
+            exerciseCheckoutDirectory = ROOT_DIRECTORY;
+        }
+        if (solutionCheckoutDirectory.isEmpty()) {
+            solutionCheckoutDirectory = ROOT_DIRECTORY;
+        }
+        if (testCheckoutDirectory.isEmpty()) {
+            testCheckoutDirectory = ROOT_DIRECTORY;
+        }
+
+        RepositoriesCheckoutDirectoryDTO repositoriesCheckoutDirectoryDTO = new RepositoriesCheckoutDirectoryDTO(exerciseCheckoutDirectory, solutionCheckoutDirectory,
+                testCheckoutDirectory);
+
+        return ResponseEntity.ok(repositoriesCheckoutDirectoryDTO);
     }
 }
