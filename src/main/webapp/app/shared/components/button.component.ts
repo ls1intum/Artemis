@@ -17,6 +17,7 @@ export enum ButtonType {
     INFO = 'btn-info',
 
     PRIMARY_OUTLINE = 'btn-outline-primary',
+    SUCCESS_OUTLINE = 'btn-outline-success',
 }
 
 /**
