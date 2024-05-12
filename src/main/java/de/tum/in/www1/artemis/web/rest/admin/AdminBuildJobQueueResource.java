@@ -77,11 +77,25 @@ public class AdminBuildJobQueueResource {
      */
     @GetMapping("build-agents")
     @EnforceAdmin
-    public ResponseEntity<List<LocalCIBuildAgentInformation>> getBuildAgentInformation() {
+    public ResponseEntity<List<LocalCIBuildAgentInformation>> getBuildAgentSummary() {
         log.debug("REST request to get information on available build agents");
-        List<LocalCIBuildAgentInformation> buildAgentInfo = localCIBuildJobQueueService.getBuildAgentInformation();
-        // TODO: convert into a proper DTO and strip unnecessary information, e.g. build config, because it's not shown in the client and contains too much information
-        return ResponseEntity.ok(buildAgentInfo);
+        List<LocalCIBuildAgentInformation> buildAgentSummary = localCIBuildJobQueueService.getBuildAgentInformationWithoutRecentBuildJobs();
+        return ResponseEntity.ok(buildAgentSummary);
+    }
+
+    /**
+     * Returns detailed information on a specific build agent
+     *
+     * @param agentName the name of the agent
+     * @return the build agent information
+     */
+    @GetMapping("build-agent")
+    @EnforceAdmin
+    public ResponseEntity<LocalCIBuildAgentInformation> getBuildAgentDetails(@RequestParam String agentName) {
+        log.debug("REST request to get information on build agent {}", agentName);
+        LocalCIBuildAgentInformation buildAgentDetails = localCIBuildJobQueueService.getBuildAgentInformation().stream().filter(agent -> agent.name().equals(agentName)).findFirst()
+                .orElse(null);
+        return ResponseEntity.ok(buildAgentDetails);
     }
 
     /**
