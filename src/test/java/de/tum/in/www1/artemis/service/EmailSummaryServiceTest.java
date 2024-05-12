@@ -28,7 +28,7 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.NotificationSetting;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
-import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
+import de.tum.in.www1.artemis.exercise.text.TextExerciseFactory;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.NotificationSettingRepository;

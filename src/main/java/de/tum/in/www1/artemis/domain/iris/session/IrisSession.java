@@ -53,10 +53,10 @@ public abstract class IrisSession extends DomainObject {
     @Column(name = "creation_date")
     private ZonedDateTime creationDate = ZonedDateTime.now();
 
+    // TODO: This is only used in the tests -> Remove
     public IrisMessage newMessage() {
         var message = new IrisMessage();
         message.setSession(this);
-        this.messages.add(message);
         return message;
     }
 
