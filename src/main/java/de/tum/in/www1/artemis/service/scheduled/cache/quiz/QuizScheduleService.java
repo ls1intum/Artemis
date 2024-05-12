@@ -103,7 +103,7 @@ public class QuizScheduleService {
 
     private final TaskScheduler scheduler;
 
-    private static final int SCHEDULE_RATE_PERIOD_MS = 5000; // 5 seconds
+    private static final int SCHEDULE_RATE_PERIOD_SEC = 5;
 
     public QuizScheduleService(WebsocketMessagingService websocketMessagingService, StudentParticipationRepository studentParticipationRepository, UserRepository userRepository,
             QuizSubmissionRepository quizSubmissionRepository, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, QuizExerciseRepository quizExerciseRepository,
@@ -270,9 +270,9 @@ public class QuizScheduleService {
     private void startSchedule() {
         if (scheduledProcessQuizSubmissions.isNull()) {
             try {
-                var scheduledFuture = threadPoolTaskScheduler.scheduleAtFixedRate(new QuizProcessCacheTask(), 0, SCHEDULE_RATE_PERIOD_MS, TimeUnit.MILLISECONDS);
+                var scheduledFuture = threadPoolTaskScheduler.scheduleAtFixedRate(new QuizProcessCacheTask(), 0, SCHEDULE_RATE_PERIOD_SEC, TimeUnit.SECONDS);
                 scheduledProcessQuizSubmissions.set(scheduledFuture.getHandler());
-                log.debug("QuizScheduleService was started to run repeatedly with {} second delay.", SCHEDULE_RATE_PERIOD_MS / 1000.0);
+                log.debug("QuizScheduleService was started to run repeatedly with {} second delay.", SCHEDULE_RATE_PERIOD_SEC);
             }
             catch (@SuppressWarnings("unused") DuplicateTaskException e) {
                 log.warn("Quiz process cache task already registered");
