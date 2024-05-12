@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
+import static de.tum.in.www1.artemis.config.StartupDelayConfig.PROGRAMMING_EXERCISE_SCHEDULE_DELAY_SEC;
+
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -127,8 +129,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     @EventListener(ApplicationReadyEvent.class)
     public void applicationReady() {
-        // schedule the task 20s after the application has started to avoid delaying the start of the application
-        scheduler.schedule(this::scheduleRunningExercisesOnStartup, Instant.now().plusSeconds(20));
+        // schedule the task after the application has started to avoid delaying the start of the application
+        scheduler.schedule(this::scheduleRunningExercisesOnStartup, Instant.now().plusSeconds(PROGRAMMING_EXERCISE_SCHEDULE_DELAY_SEC));
     }
 
     @Override

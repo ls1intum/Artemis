@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
+import static de.tum.in.www1.artemis.config.StartupDelayConfig.NOTIFICATION_SCHEDULE_DELAY_SEC;
+
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Set;
@@ -52,8 +54,8 @@ public class NotificationScheduleService {
 
     @EventListener(ApplicationReadyEvent.class)
     public void applicationReady() {
-        // schedule the task 30s after the application has started to avoid delaying the start of the application
-        scheduler.schedule(this::scheduleRunningNotificationProcessesOnStartup, Instant.now().plusSeconds(30));
+        // schedule the task after the application has started to avoid delaying the start of the application
+        scheduler.schedule(this::scheduleRunningNotificationProcessesOnStartup, Instant.now().plusSeconds(NOTIFICATION_SCHEDULE_DELAY_SEC));
     }
 
     /**

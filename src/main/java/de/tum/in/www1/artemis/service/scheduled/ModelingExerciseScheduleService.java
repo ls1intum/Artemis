@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
 import static de.tum.in.www1.artemis.config.Constants.EXAM_END_WAIT_TIME_FOR_COMPASS_MINUTES;
+import static de.tum.in.www1.artemis.config.StartupDelayConfig.MODELING_EXERCISE_SCHEDULE_DELAY_SEC;
 import static java.time.Instant.now;
 
 import java.time.Instant;
@@ -62,8 +63,8 @@ public class ModelingExerciseScheduleService implements IExerciseScheduleService
 
     @EventListener(ApplicationReadyEvent.class)
     public void applicationReady() {
-        // schedule the task 25s after the application has started to avoid delaying the start of the application
-        scheduler.schedule(this::scheduleRunningExercisesOnStartup, Instant.now().plusSeconds(25));
+        // schedule the task after the application has started to avoid delaying the start of the application
+        scheduler.schedule(this::scheduleRunningExercisesOnStartup, Instant.now().plusSeconds(MODELING_EXERCISE_SCHEDULE_DELAY_SEC));
     }
 
     @Override

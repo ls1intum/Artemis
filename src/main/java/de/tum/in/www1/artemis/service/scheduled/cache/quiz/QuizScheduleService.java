@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.scheduled.cache.quiz;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.in.www1.artemis.config.StartupDelayConfig.QUIZ_EXERCISE_SCHEDULE_DELAY_SEC;
 import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
 
 import java.time.Duration;
@@ -102,6 +103,8 @@ public class QuizScheduleService {
 
     private final TaskScheduler scheduler;
 
+    private static final int SCHEDULE_RATE_PERIOD_MS = 5000; // 5 seconds
+
     public QuizScheduleService(WebsocketMessagingService websocketMessagingService, StudentParticipationRepository studentParticipationRepository, UserRepository userRepository,
             QuizSubmissionRepository quizSubmissionRepository, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, QuizExerciseRepository quizExerciseRepository,
             QuizMessagingService quizMessagingService, QuizStatisticService quizStatisticService, Optional<LtiNewResultService> ltiNewResultService, TeamRepository teamRepository,
@@ -141,7 +144,7 @@ public class QuizScheduleService {
     public void applicationReady() {
         // activate Quiz Schedule Service
         SecurityUtils.setAuthorizationObject();
-        scheduler.schedule(() -> startSchedule(5 * 1000)/* every 5 seconds */, Instant.now().plusSeconds(25));
+        scheduler.schedule(this::startSchedule, Instant.now().plusSeconds(QUIZ_EXERCISE_SCHEDULE_DELAY_SEC));
     }
 
     /**
@@ -263,14 +266,13 @@ public class QuizScheduleService {
     /**
      * Start scheduler of quiz schedule service
      *
-     * @param delayInMillis gap for which the QuizScheduleService should run repeatedly
      */
-    public void startSchedule(long delayInMillis) {
+    public void startSchedule() {
         if (scheduledProcessQuizSubmissions.isNull()) {
             try {
-                var scheduledFuture = threadPoolTaskScheduler.scheduleAtFixedRate(new QuizProcessCacheTask(), 0, delayInMillis, TimeUnit.MILLISECONDS);
+                var scheduledFuture = threadPoolTaskScheduler.scheduleAtFixedRate(new QuizProcessCacheTask(), 0, SCHEDULE_RATE_PERIOD_MS, TimeUnit.MILLISECONDS);
                 scheduledProcessQuizSubmissions.set(scheduledFuture.getHandler());
-                log.debug("QuizScheduleService was started to run repeatedly with {} second delay.", delayInMillis / 1000.0);
+                log.debug("QuizScheduleService was started to run repeatedly with {} second delay.", SCHEDULE_RATE_PERIOD_MS / 1000.0);
             }
             catch (@SuppressWarnings("unused") DuplicateTaskException e) {
                 log.warn("Quiz process cache task already registered");
