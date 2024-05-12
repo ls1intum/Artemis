@@ -462,7 +462,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
             }
         }
         catch (IOException e) {
-            String error = "Failed to export the student repository of programming exercise " + exerciseId + " and participation " + participation.getId();
+            String error = String.format("Failed to export the student repository of programming exercise %d and participation %d", exerciseId, participation.getId());
             log.error(error);
             exportErrors.add(error);
         }
