@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
+import static de.tum.in.www1.artemis.config.StartupDelayConfig.PARTICIPATION_SCORES_SCHEDULE_DELAY_SEC;
+
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -8,6 +10,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import jakarta.annotation.PostConstruct;
@@ -151,7 +154,8 @@ public class ParticipantScoreScheduleService {
      * We schedule all results that were created/updated since the last run of the cron job.
      * Additionally, we schedule all participant scores that are outdated/invalid.
      */
-    @Scheduled(cron = "0 * * * * *")
+    // TODO: could be converted to TaskScheduler, but tests depend on this implementation at the moment
+    @Scheduled(cron = "0 * * * * *", initialDelay = PARTICIPATION_SCORES_SCHEDULE_DELAY_SEC, timeUnit = TimeUnit.SECONDS)
     protected void scheduleTasks() {
         log.debug("Schedule tasks to process...");
         SecurityUtils.setAuthorizationObject();
