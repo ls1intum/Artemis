@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.archival.ArchivalReportEntry;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
@@ -37,7 +37,7 @@ public class ModelingExerciseWithSubmissionsExportService extends ExerciseWithSu
      * @param reportEntries report entries that are added during the export
      * @return the path to the exported modeling exercise
      */
-    public Path exportModelingExerciseWithSubmissions(Exercise exercise, SubmissionExportOptionsDTO optionsDTO, Path exportDir, List<String> exportErrors,
+    public Path exportModelingExerciseWithSubmissions(ModelingExercise exercise, SubmissionExportOptionsDTO optionsDTO, Path exportDir, List<String> exportErrors,
             List<ArchivalReportEntry> reportEntries) {
         return exportExerciseWithSubmissions(exercise, optionsDTO, exportDir, exportErrors, reportEntries);
     }

@@ -49,6 +49,7 @@ import com.hazelcast.spi.properties.ClusterProperty;
 import com.hazelcast.spring.cache.HazelcastCacheManager;
 
 import de.tum.in.www1.artemis.service.HazelcastPathSerializer;
+import de.tum.in.www1.artemis.service.connectors.localci.LocalCIPriorityQueueComparator;
 import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import tech.jhipster.config.JHipsterProperties;
 import tech.jhipster.config.cache.PrefixedKeyGenerator;
@@ -273,7 +274,7 @@ public class CacheConfiguration {
         log.debug("Configure Build Job Queue synchronization in Hazelcast for Local CI");
         QueueConfig queueConfig = new QueueConfig("buildJobQueue");
         queueConfig.setBackupCount(jHipsterProperties.getCache().getHazelcast().getBackupCount());
-        queueConfig.setPriorityComparatorClassName("de.tum.in.www1.artemis.service.connectors.localci.LocalCIPriorityQueueComparator");
+        queueConfig.setPriorityComparatorClassName(LocalCIPriorityQueueComparator.class.getName());
         config.addQueueConfig(queueConfig);
     }
 
