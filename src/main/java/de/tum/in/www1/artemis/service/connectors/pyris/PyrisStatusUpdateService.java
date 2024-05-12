@@ -34,7 +34,7 @@ public class PyrisStatusUpdateService {
         var isDone = statusUpdate.stages().stream().map(PyrisStageDTO::state)
                 .allMatch(state -> state == PyrisStageStateDTO.DONE || state == PyrisStageStateDTO.ERROR || state == PyrisStageStateDTO.SKIPPED);
         if (isDone) {
-            pyrisJobService.removeJob(job.getId());
+            pyrisJobService.removeJob(job.jobId());
         }
     }
 }

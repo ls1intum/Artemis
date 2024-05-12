@@ -106,7 +106,7 @@ public abstract class IrisExerciseChatBasedSessionResource<E extends Exercise, S
         PyrisHealthStatusDTO[] modelStatuses = (PyrisHealthStatusDTO[]) health.getDetails().get("modelStatuses");
         var specificModelStatus = false;
         if (modelStatuses != null) {
-            specificModelStatus = Arrays.stream(modelStatuses).filter(x -> x.model().equals(subSettingsFunction.apply(settings).getPreferredModel()))
+            specificModelStatus = Arrays.stream(modelStatuses).filter(x -> x.model().equals(subSettingsFunction.apply(settings).preferredModel()))
                     .anyMatch(x -> x.status() == PyrisHealthStatusDTO.ModelStatus.UP);
         }
 

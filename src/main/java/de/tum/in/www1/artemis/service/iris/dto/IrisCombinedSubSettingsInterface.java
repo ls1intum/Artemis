@@ -2,17 +2,15 @@ package de.tum.in.www1.artemis.service.iris.dto;
 
 import java.util.Set;
 
+import jakarta.annotation.Nullable;
+
 public interface IrisCombinedSubSettingsInterface {
 
-    boolean isEnabled();
+    boolean enabled();
 
-    void setEnabled(boolean enabled);
+    @Nullable
+    Set<String> allowedModels();
 
-    Set<String> getAllowedModels();
-
-    void setAllowedModels(Set<String> allowedModels);
-
-    String getPreferredModel();
-
-    void setPreferredModel(String preferredModel);
+    @Nullable
+    String preferredModel();
 }

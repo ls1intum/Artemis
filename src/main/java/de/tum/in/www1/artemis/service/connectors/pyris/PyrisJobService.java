@@ -13,6 +13,7 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
 import de.tum.in.www1.artemis.service.connectors.pyris.job.PyrisJob;
+import de.tum.in.www1.artemis.service.connectors.pyris.job.TutorChatJob;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 /**
@@ -53,15 +54,9 @@ public class PyrisJobService {
         jobMap = hazelcastInstance.getMap("pyris-job-map");
     }
 
-    /**
-     * Add a job to the job map.
-     *
-     * @param job the job
-     * @return the token
-     */
-    public String addJob(PyrisJob job) {
+    public String addJob(Long courseId, Long exerciseId, Long sessionId) {
         var token = generateJobIdToken();
-        job.setId(token);
+        var job = new TutorChatJob(token, courseId, exerciseId, sessionId);
         jobMap.put(token, job);
         return token;
     }
@@ -91,7 +86,7 @@ public class PyrisJobService {
      * 2. Retrieves the PyrisJob object associated with the provided token.
      * 3. Throws an AccessForbiddenException if the token is invalid or not provided.
      * <p>
-     * The token was previously generated via {@link #addJob(PyrisJob)}
+     * The token was previously generated via {@link #addJob(Long, Long, Long)}
      *
      * @param request the HttpServletRequest object representing the incoming request
      * @return the PyrisJob object associated with the token
