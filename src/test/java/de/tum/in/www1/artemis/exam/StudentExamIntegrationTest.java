@@ -2820,7 +2820,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         final int longestWorkingTime = studentExams.stream().mapToInt(StudentExam::getWorkingTime).max().orElse(0);
 
         // When
-        final int response = request.get("/api/exams/" + exam2.getId() + "/longest-working-time", HttpStatus.OK, Integer.class);
+        final int response = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/longest-working-time", HttpStatus.OK, Integer.class);
 
         // Then
         assertThat(response).isEqualTo(longestWorkingTime);

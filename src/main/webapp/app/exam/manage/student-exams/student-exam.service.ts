@@ -81,9 +81,10 @@ export class StudentExamService {
 
     /**
      * Get longest working time for the exam.
+     * @param courseId The course id.
      * @param examId The exam id.
      */
-    getLongestWorkingTimeForExam(examId: number): Observable<number> {
-        return this.http.get<number>(`api/exams/${examId}/longest-working-time`);
+    getLongestWorkingTimeForExam(courseId: number, examId: number): Observable<number> {
+        return this.http.get<number>(`${this.resourceUrl}/${courseId}/exams/${examId}/longest-working-time`);
     }
 }

@@ -478,7 +478,8 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
     /**
      * Gets the longest working time of the exam with the given id
      *
-     * @param examId the id of the exam
+     * @param courseId the id of the course
+     * @param examId   the id of the exam
      * @return number longest working time of the exam
      */
     @Query("""
@@ -486,6 +487,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
                 FROM StudentExam se
                 JOIN se.exam e
                 WHERE e.id = :examId
+                AND e.course.id = :courseId
             """)
-    Integer findLongestWorkingTimeForExam(@Param("examId") Long examId);
+    Integer findLongestWorkingTimeForExam(@Param("courseId") Long courseId, @Param("examId") Long examId);
 }

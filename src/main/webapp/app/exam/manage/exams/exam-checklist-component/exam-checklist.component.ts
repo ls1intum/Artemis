@@ -68,8 +68,8 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
         const startedTopic = this.examChecklistService.getStartedTopic(this.exam);
         this.websocketService.subscribe(startedTopic);
         this.websocketService.receive(startedTopic).subscribe(() => (this.numberOfStarted += 1));
-        if (this.exam?.id) {
-            this.longestWorkingTimeSub = this.studentExamService.getLongestWorkingTimeForExam(this.exam.id).subscribe((res) => {
+        if (this.exam?.course?.id && this.exam?.id) {
+            this.longestWorkingTimeSub = this.studentExamService.getLongestWorkingTimeForExam(this.exam.course.id, this.exam.id).subscribe((res) => {
                 this.longestWorkingTime = res;
                 this.calculateIsExamOver();
             });
