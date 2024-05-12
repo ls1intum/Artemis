@@ -37,7 +37,7 @@ public class PublicOAuth2JWKSResource {
      *
      * @return ResponseEntity containing the JWKS as a JSON string with status 200 (OK). If an error occurs, returns null.
      */
-    @GetMapping("/.well-known/jwks.json")
+    @GetMapping(".well-known/jwks.json")
     @EnforceNothing
     @ManualConfig
     public ResponseEntity<String> getJwkSet() {

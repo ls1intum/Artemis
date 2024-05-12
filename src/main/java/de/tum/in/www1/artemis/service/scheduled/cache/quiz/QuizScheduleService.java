@@ -58,10 +58,10 @@ import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.QuizMessagingService;
-import de.tum.in.www1.artemis.service.QuizStatisticService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiNewResultService;
+import de.tum.in.www1.artemis.service.quiz.QuizMessagingService;
+import de.tum.in.www1.artemis.service.quiz.QuizStatisticService;
 
 @Profile(PROFILE_CORE)
 @Service

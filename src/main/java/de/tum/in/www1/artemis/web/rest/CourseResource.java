@@ -879,7 +879,7 @@ public class CourseResource {
     @FeatureToggle(Feature.Exports)
     public ResponseEntity<Void> archiveCourse(@PathVariable Long courseId) {
         log.info("REST request to archive Course : {}", courseId);
-        final Course course = courseRepository.findByIdWithExercisesAndLecturesElseThrow(courseId);
+        final Course course = courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         // Archiving a course is only possible after the course is over
         if (now().isBefore(course.getEndDate())) {

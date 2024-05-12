@@ -2,6 +2,8 @@
     "artemisApp": {
         "buildAgents": {
             "title": "Build Agenten",
+            "summary": "Build Agenten Zusammenfassung",
+            "details": "Build Agenten Details",
             "name": "Name",
             "maxNumberOfConcurrentBuildJobs": "Maximale Anzahl an parallelen Build Jobs",
             "numberOfCurrentBuildJobs": "Anzahl aktueller Build Jobs",
@@ -9,7 +11,10 @@
             "status": "Status",
             "recentBuildJobs": "Letzte Build Jobs",
             "running": "Laufend",
-            "idle": "Inaktiv"
+            "idle": "Inaktiv",
+            "onlineAgents": "online Agent(en)",
+            "of": "von",
+            "buildJobsRunning": "Build Jobs laufen"
         }
     }
 }
