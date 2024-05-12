@@ -10,10 +10,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.validation.constraints.NotNull;
 
@@ -21,7 +19,9 @@ import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -122,16 +122,18 @@ public class ParticipantScoreScheduleService {
     /**
      * Schedule all outdated participant scores when the service is started.
      */
-    @PostConstruct
+    @EventListener(ApplicationReadyEvent.class)
     public void startup() {
-        isRunning.set(true);
-        try {
-            // this should never prevent the application start of Artemis
-            scheduleTasks();
-        }
-        catch (Exception ex) {
-            log.error("Cannot schedule participant score service", ex);
-        }
+        scheduler.schedule(() -> {
+            isRunning.set(true);
+            try {
+                // this should never prevent the application start of Artemis
+                scheduleTasks();
+            }
+            catch (Exception ex) {
+                log.error("Cannot schedule participant score service", ex);
+            }
+        }, Instant.now().plusSeconds(PARTICIPATION_SCORES_SCHEDULE_DELAY_SEC));
     }
 
     public void activate() {
@@ -154,8 +156,8 @@ public class ParticipantScoreScheduleService {
      * We schedule all results that were created/updated since the last run of the cron job.
      * Additionally, we schedule all participant scores that are outdated/invalid.
      */
-    // TODO: could be converted to TaskScheduler, but tests depend on this implementation at the moment
-    @Scheduled(cron = "0 * * * * *", initialDelay = PARTICIPATION_SCORES_SCHEDULE_DELAY_SEC, timeUnit = TimeUnit.SECONDS)
+    // TODO: could be converted to TaskScheduler, but tests depend on this implementation at the moment. See QuizScheduleService for reference
+    @Scheduled(cron = "0 * * * * *")
     protected void scheduleTasks() {
         log.debug("Schedule tasks to process...");
         SecurityUtils.setAuthorizationObject();
