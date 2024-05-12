@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 
 import com.github.dockerjava.api.command.InfoCmd;
 import com.github.dockerjava.api.command.InspectImageCmd;
@@ -48,6 +49,7 @@ class LocalCIDockerServiceTest extends AbstractSpringIntegrationLocalCILocalVCTe
     private BuildJobRepository buildJobRepository;
 
     @Autowired
+    @Qualifier("hazelcastInstance")
     private HazelcastInstance hazelcastInstance;
 
     @AfterEach

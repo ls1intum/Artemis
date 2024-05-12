@@ -18,6 +18,7 @@ import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.web.ServerProperties;
 import org.springframework.boot.info.BuildProperties;
@@ -112,7 +113,7 @@ public class CacheConfiguration {
     }
 
     @Bean
-    public CacheManager cacheManager(HazelcastInstance hazelcastInstance) {
+    public CacheManager cacheManager(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
         log.debug("Starting HazelcastCacheManager");
         return new HazelcastCacheManager(hazelcastInstance);
     }
@@ -164,7 +165,7 @@ public class CacheConfiguration {
      * @param jHipsterProperties the jhipster properties
      * @return the created HazelcastInstance
      */
-    @Bean
+    @Bean(name = "hazelcastInstance")
     public HazelcastInstance hazelcastInstance(JHipsterProperties jHipsterProperties) {
         log.debug("Configuring Hazelcast");
         HazelcastInstance hazelCastInstance = Hazelcast.getHazelcastInstanceByName(instanceName);
