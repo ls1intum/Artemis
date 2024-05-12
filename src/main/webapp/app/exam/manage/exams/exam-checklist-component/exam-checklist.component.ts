@@ -10,6 +10,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { Subject, Subscription } from 'rxjs';
+import { captureException } from '@sentry/angular-ivy';
 
 @Component({
     selector: 'jhi-exam-checklist',
@@ -129,7 +130,7 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
                 },
             });
         } else {
-            console.error('Error: Quiz exercises could not be evaluated due to missing course ID or exam ID');
+            captureException(new Error(`Quiz exercises could not be evaluated due to missing course ID or exam ID`));
         }
     }
 
@@ -152,7 +153,7 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
                 },
             });
         } else {
-            console.error('Error: Quiz exercises could not be evaluated due to missing course ID or exam ID');
+            captureException(new Error(`Unsubmitted exercises could not be evaluated due to missing course ID or exam ID`));
         }
     }
 
