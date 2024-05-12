@@ -386,7 +386,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             final ProgrammingExercise exercise = participation.getProgrammingExercise();
             SecurityUtils.setAuthorizationObject();
             try {
-                log.debug("Invoking scheduled task for participation {} in programming exercise with id {}.", participation.getId(), exercise.getId());
+                log.info("Invoking scheduled task for participation {} in programming exercise with id {}.", participation.getId(), exercise.getId());
                 programmingTriggerService.triggerBuildForParticipations(List.of(participation));
             }
             catch (EntityNotFoundException ex) {
@@ -465,7 +465,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         return () -> {
             SecurityUtils.setAuthorizationObject();
             try {
-                log.debug("Invoking scheduled task programming exercise with id {}.", exercise.getId());
+                log.info("Invoking scheduled task programming exercise with id {}.", exercise.getId());
                 programmingTriggerService.triggerInstructorBuildForExercise(exercise.getId());
             }
             catch (EntityNotFoundException ex) {
@@ -951,7 +951,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     private CompletableFuture<List<ProgrammingExerciseStudentParticipation>> invokeOperationOnAllParticipationsThatSatisfy(Long programmingExerciseId,
             BiConsumer<ProgrammingExercise, ProgrammingExerciseStudentParticipation> operation, Predicate<ProgrammingExerciseStudentParticipation> condition,
             String operationName) {
-        log.debug("Invoking (scheduled) task '{}' for programming exercise with id {}.", operationName, programmingExerciseId);
+        log.info("Invoking (scheduled) task '{}' for programming exercise with id {}.", operationName, programmingExerciseId);
 
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsByIdElseThrow(programmingExerciseId);
         List<ProgrammingExerciseStudentParticipation> failedOperations = new ArrayList<>();
