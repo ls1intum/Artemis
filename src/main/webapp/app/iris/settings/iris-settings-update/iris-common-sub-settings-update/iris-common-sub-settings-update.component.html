@@ -24,7 +24,7 @@
             class="form-check-input"
             type="checkbox"
             id="inheritAllowedModelsSwitch{{ subSettings?.type ?? '' }}"
-            [disabled]="!isAdmin"
+            [disabled]="!isAdmin && false // TODO: Reimplement in the future"
             [(ngModel)]="inheritAllowedModels"
             (change)="onInheritAllowedModelsChange()"
         />
@@ -42,7 +42,7 @@
                 class="form-check-input"
                 type="checkbox"
                 id="{{ model.id }}{{ subSettings?.type ?? '' }}"
-                [disabled]="!isAdmin || inheritAllowedModels"
+                [disabled]="(!isAdmin || inheritAllowedModels) && false // TODO: Reimplement in the future"
                 [ngModel]="allowedIrisModels.includes(model)"
                 (ngModelChange)="onAllowedIrisModelsSelectionChange(model)"
             />
@@ -50,28 +50,5 @@
                 {{ model.name }}
             </label>
         </div>
-    }
-</div>
-<h5 class="mt-3"><span class="fw-bold" jhiTranslate="artemisApp.iris.settings.subSettings.models.preferredModel.title"></span>:</h5>
-<div class="d-flex align-items-center">
-    <div ngbDropdown class="d-inline-block">
-        <button class="btn btn-outline-primary w-100" id="dropdownBasic1" ngbDropdownToggle>
-            {{ getPreferredModelName() ?? ('artemisApp.iris.settings.subSettings.models.preferredModel.inherit' | artemisTranslate) }}
-        </button>
-        <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
-            @if (parentSubSettings) {
-                <button (click)="setModel(undefined)" [class.selected]="subSettings?.preferredModel === undefined" ngbDropdownItem>
-                    {{ 'artemisApp.iris.settings.subSettings.models.preferredModel.inherit' | artemisTranslate }}
-                </button>
-            }
-            @for (model of allowedIrisModels; track model) {
-                <button (click)="setModel(model)" [class.selected]="model.id === subSettings?.preferredModel" [ngbTooltip]="model.description" ngbDropdownItem>
-                    {{ model.name }}
-                </button>
-            }
-        </div>
-    </div>
-    @if (!subSettings?.preferredModel) {
-        <span class="ps-2 text-secondary">{{ getPreferredModelNameParent() }}</span>
     }
 </div>

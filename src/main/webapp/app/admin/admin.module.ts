@@ -33,7 +33,7 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { ReactiveFormsModule } from '@angular/forms';
 import { LtiConfigurationComponent } from 'app/admin/lti-configuration/lti-configuration.component';
 import { EditLtiConfigurationComponent } from 'app/admin/lti-configuration/edit-lti-configuration.component';
-import { BuildAgentsComponent } from 'app/localci/build-agents/build-agents.component';
+import { BuildAgentSummaryComponent } from 'app/localci/build-agents/build-agent-summary/build-agent-summary.component';
 import { StandardizedCompetencyEditComponent } from 'app/admin/standardized-competencies/standardized-competency-edit.component';
 import { StandardizedCompetencyManagementComponent } from 'app/admin/standardized-competencies/standardized-competency-management.component';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
@@ -41,6 +41,7 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
 import { UserImportModule } from 'app/shared/user-import/user-import.module';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
+import { BuildAgentDetailsComponent } from 'app/localci/build-agents/build-agent-details/build-agent-details/build-agent-details.component';
 import { KnowledgeAreaEditComponent } from 'app/admin/standardized-competencies/knowledge-area-edit.component';
 import { AdminImportStandardizedCompetenciesComponent } from 'app/admin/standardized-competencies/import/admin-import-standardized-competencies.component';
 import { ArtemisStandardizedCompetencyModule } from 'app/shared/standardized-competencies/standardized-competency.module';
@@ -90,7 +91,8 @@ const ENTITY_STATES = [...adminState];
         OrganizationManagementUpdateComponent,
         LtiConfigurationComponent,
         EditLtiConfigurationComponent,
-        BuildAgentsComponent,
+        BuildAgentSummaryComponent,
+        BuildAgentDetailsComponent,
         StandardizedCompetencyEditComponent,
         KnowledgeAreaEditComponent,
         StandardizedCompetencyManagementComponent,
