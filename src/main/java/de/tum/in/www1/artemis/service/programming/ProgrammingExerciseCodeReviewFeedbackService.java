@@ -11,6 +11,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -58,6 +59,10 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
     private final ProgrammingMessagingService programmingMessagingService;
+
+    // default value is 3 if the placeholder cannot be resolved
+    @Value("${artemis.athena.allowed-self-learning-feedback-attempts:3}")
+    private Integer allowedSelfLearningFeedbackAttempts;
 
     public ProgrammingExerciseCodeReviewFeedbackService(GroupNotificationService groupNotificationService,
             Optional<AthenaFeedbackSuggestionsService> athenaFeedbackSuggestionsService, SubmissionService submissionService, ResultService resultService,
@@ -229,10 +234,10 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
 
         long countOfSuccessfulRequests = athenaResults.stream().filter(result -> result.isSuccessful() == Boolean.TRUE).count();
 
-        if (countOfAthenaResultsInProcessOrSuccessful >= 3) {
+        if (countOfAthenaResultsInProcessOrSuccessful >= this.allowedSelfLearningFeedbackAttempts) {
             throw new BadRequestAlertException("Cannot send additional AI feedback requests now. Try again later!", "participation", "preconditions not met");
         }
-        if (countOfSuccessfulRequests >= 3) {
+        if (countOfSuccessfulRequests >= this.allowedSelfLearningFeedbackAttempts) {
             throw new BadRequestAlertException("Maximum number of AI feedback requests reached.", "participation", "preconditions not met");
         }
     }

@@ -1555,7 +1555,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void whenFeedbackRequestedAndRateLimitStillUnknownDueRequestsInProgress_thenFail() throws Exception {
+    void whenFeedbackRequestedAndRateLimitStillUnknownDueToRequestsInProgress_thenFail() throws Exception {
 
         programmingExercise.setDueDate(ZonedDateTime.now().plusDays(100));
         programmingExercise = exerciseRepo.save(programmingExercise);
