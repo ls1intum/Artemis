@@ -13,10 +13,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.in.www1.artemis.domain.PrivacyStatement;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 import de.tum.in.www1.artemis.service.LegalDocumentService;
+import de.tum.in.www1.artemis.web.rest.dto.PrivacyStatementDTO;
 
 /**
  * REST controller for editing the Privacy Statement as an admin.
@@ -41,7 +41,7 @@ public class AdminPrivacyStatementResource {
      */
     @EnforceAdmin
     @GetMapping("privacy-statement-for-update")
-    public ResponseEntity<PrivacyStatement> getPrivacyStatementForUpdate(@RequestParam("language") String language) {
+    public ResponseEntity<PrivacyStatementDTO> getPrivacyStatementForUpdate(@RequestParam("language") String language) {
         if (!Language.isValidShortName(language)) {
             throw new BadRequestException("Language not supported");
         }
@@ -56,7 +56,7 @@ public class AdminPrivacyStatementResource {
      */
     @EnforceAdmin
     @PutMapping("privacy-statement")
-    public ResponseEntity<PrivacyStatement> updatePrivacyStatement(@RequestBody PrivacyStatement privacyStatement) {
+    public ResponseEntity<PrivacyStatementDTO> updatePrivacyStatement(@RequestBody PrivacyStatementDTO privacyStatement) {
         return ResponseEntity.ok(legalDocumentService.updatePrivacyStatement(privacyStatement));
     }
 }

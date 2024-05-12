@@ -168,7 +168,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
         unsubmittedSubmission = generateUnsubmittedSubmission();
 
         Course course2 = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        textExercise = (TextExercise) new ArrayList<>(course2.getExercises()).get(0);
+        textExercise = (TextExercise) new ArrayList<>(course2.getExercises()).getFirst();
 
         // Add users that are not in the course
         userUtilService.createAndSaveUser(TEST_PREFIX + "student4");
@@ -770,7 +770,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
         exam.setPublishResultsDate(ZonedDateTime.now().plusHours(3));
 
         // creating exercise
-        ExerciseGroup exerciseGroup = exam.getExerciseGroups().get(0);
+        ExerciseGroup exerciseGroup = exam.getExerciseGroups().getFirst();
 
         ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ActivityDiagram, exerciseGroup);
         exerciseGroup.addExercise(modelingExercise);
@@ -794,7 +794,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
         exam.setEndDate(ZonedDateTime.now().minusHours(1));
         exam.setVisibleDate(ZonedDateTime.now().minusHours(3));
 
-        ExerciseGroup exerciseGroup = exam.getExerciseGroups().get(0);
+        ExerciseGroup exerciseGroup = exam.getExerciseGroups().getFirst();
         ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ActivityDiagram, exerciseGroup);
         exerciseGroup.addExercise(modelingExercise);
         exerciseGroupRepository.save(exerciseGroup);

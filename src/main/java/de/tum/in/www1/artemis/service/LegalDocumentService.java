@@ -15,11 +15,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.Imprint;
-import de.tum.in.www1.artemis.domain.LegalDocument;
-import de.tum.in.www1.artemis.domain.PrivacyStatement;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.enumeration.LegalDocumentType;
+import de.tum.in.www1.artemis.web.rest.dto.ImprintDTO;
+import de.tum.in.www1.artemis.web.rest.dto.LegalDocument;
+import de.tum.in.www1.artemis.web.rest.dto.PrivacyStatementDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
@@ -43,8 +43,8 @@ public class LegalDocumentService {
      * @param language the language of the privacy statement
      * @return the privacy statement that should be updated
      */
-    public PrivacyStatement getPrivacyStatementForUpdate(Language language) {
-        return (PrivacyStatement) getLegalDocumentForUpdate(language, LegalDocumentType.PRIVACY_STATEMENT);
+    public PrivacyStatementDTO getPrivacyStatementForUpdate(Language language) {
+        return (PrivacyStatementDTO) getLegalDocumentForUpdate(language, LegalDocumentType.PRIVACY_STATEMENT);
     }
 
     /**
@@ -53,8 +53,8 @@ public class LegalDocumentService {
      * @param language the language of the imprint
      * @return the imprint that should be updated
      */
-    public Imprint getImprintForUpdate(Language language) {
-        return (Imprint) getLegalDocumentForUpdate(language, LegalDocumentType.IMPRINT);
+    public ImprintDTO getImprintForUpdate(Language language) {
+        return (ImprintDTO) getLegalDocumentForUpdate(language, LegalDocumentType.IMPRINT);
     }
 
     /**
@@ -63,8 +63,8 @@ public class LegalDocumentService {
      * @param language the language of the imprint
      * @return the imprint to view
      */
-    public Imprint getImprint(Language language) {
-        return (Imprint) getLegalDocument(language, LegalDocumentType.IMPRINT);
+    public ImprintDTO getImprint(Language language) {
+        return (ImprintDTO) getLegalDocument(language, LegalDocumentType.IMPRINT);
     }
 
     /**
@@ -73,8 +73,8 @@ public class LegalDocumentService {
      * @param language the language of the privacy statement
      * @return the privacy statement to view
      */
-    public PrivacyStatement getPrivacyStatement(Language language) {
-        return (PrivacyStatement) getLegalDocument(language, LegalDocumentType.PRIVACY_STATEMENT);
+    public PrivacyStatementDTO getPrivacyStatement(Language language) {
+        return (PrivacyStatementDTO) getLegalDocument(language, LegalDocumentType.PRIVACY_STATEMENT);
     }
 
     /**
@@ -83,8 +83,8 @@ public class LegalDocumentService {
      * @param imprint the imprint to update with the new content
      * @return the updated imprint
      */
-    public Imprint updateImprint(Imprint imprint) {
-        return (Imprint) updateLegalDocument(imprint);
+    public ImprintDTO updateImprint(ImprintDTO imprint) {
+        return (ImprintDTO) updateLegalDocument(imprint);
     }
 
     /**
@@ -93,8 +93,8 @@ public class LegalDocumentService {
      * @param privacyStatement the privacy statement to update with the new content
      * @return the updated privacy statement
      */
-    public PrivacyStatement updatePrivacyStatement(PrivacyStatement privacyStatement) {
-        return (PrivacyStatement) updateLegalDocument(privacyStatement);
+    public PrivacyStatementDTO updatePrivacyStatement(PrivacyStatementDTO privacyStatement) {
+        return (PrivacyStatementDTO) updateLegalDocument(privacyStatement);
     }
 
     /**
@@ -108,8 +108,8 @@ public class LegalDocumentService {
     private LegalDocument getLegalDocumentForUpdate(Language language, LegalDocumentType type) {
         if (getLegalDocumentPathIfExists(language, type).isEmpty()) {
             return switch (type) {
-                case PRIVACY_STATEMENT -> new PrivacyStatement("", language);
-                case IMPRINT -> new Imprint("", language);
+                case PRIVACY_STATEMENT -> new PrivacyStatementDTO("", language);
+                case IMPRINT -> new ImprintDTO("", language);
             };
 
         }
@@ -145,27 +145,27 @@ public class LegalDocumentService {
             legalDocumentText = Files.readString(getLegalDocumentPath(language, type));
         }
         catch (IOException e) {
-            log.error("Could not read {} file for language {}:{}", type, language, e);
+            log.error("Could not read {} file for language {}:{}", type, language, e.getMessage(), e);
             throw new InternalServerErrorException("Could not read " + type + " file for language " + language);
         }
-        return type == LegalDocumentType.PRIVACY_STATEMENT ? new PrivacyStatement(legalDocumentText, language) : new Imprint(legalDocumentText, language);
+        return type == LegalDocumentType.PRIVACY_STATEMENT ? new PrivacyStatementDTO(legalDocumentText, language) : new ImprintDTO(legalDocumentText, language);
     }
 
     protected LegalDocument updateLegalDocument(LegalDocument legalDocument) {
-        if (legalDocument.getText().isBlank()) {
-            throw new BadRequestAlertException("Legal document text cannot be empty", legalDocument.getType().name(), "emptyLegalDocument");
+        if (legalDocument.text().isBlank()) {
+            throw new BadRequestAlertException("Legal document text cannot be empty", legalDocument.type().name(), "emptyLegalDocument");
         }
         try {
             // If the directory, doesn't exist, we need to create the directory first, otherwise writeString fails.
             if (!Files.exists(legalDocumentsBasePath)) {
                 Files.createDirectories(legalDocumentsBasePath);
             }
-            FileUtils.writeStringToFile(getLegalDocumentPath(legalDocument.getLanguage(), legalDocument.getType()).toFile(), legalDocument.getText(), StandardCharsets.UTF_8);
+            FileUtils.writeStringToFile(getLegalDocumentPath(legalDocument.language(), legalDocument.type()).toFile(), legalDocument.text(), StandardCharsets.UTF_8);
             return legalDocument;
         }
         catch (IOException e) {
-            log.error("Could not update {} file for language {}: {} ", legalDocument.getType(), legalDocument.getLanguage(), e);
-            throw new InternalServerErrorException("Could not update " + legalDocument.getType() + " file for language " + legalDocument.getLanguage());
+            log.error("Could not update {} file for language {}: {} ", legalDocument.type(), legalDocument.language(), e.getMessage(), e);
+            throw new InternalServerErrorException("Could not update " + legalDocument.type() + " file for language " + legalDocument.language());
         }
     }
 

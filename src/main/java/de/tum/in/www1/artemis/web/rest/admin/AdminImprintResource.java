@@ -13,10 +13,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.in.www1.artemis.domain.Imprint;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 import de.tum.in.www1.artemis.service.LegalDocumentService;
+import de.tum.in.www1.artemis.web.rest.dto.ImprintDTO;
 
 /**
  * REST controller for editing the imprint as an admin.
@@ -41,7 +41,7 @@ public class AdminImprintResource {
      */
     @GetMapping("imprint-for-update")
     @EnforceAdmin
-    public ResponseEntity<Imprint> getImprintForUpdate(@RequestParam("language") String language) {
+    public ResponseEntity<ImprintDTO> getImprintForUpdate(@RequestParam("language") String language) {
         if (!Language.isValidShortName(language)) {
             throw new BadRequestException("Language not supported");
         }
@@ -56,7 +56,7 @@ public class AdminImprintResource {
      */
     @PutMapping("imprint")
     @EnforceAdmin
-    public ResponseEntity<Imprint> updateImprint(@RequestBody Imprint imprint) {
+    public ResponseEntity<ImprintDTO> updateImprint(@RequestBody ImprintDTO imprint) {
         return ResponseEntity.ok(legalDocumentService.updateImprint(imprint));
     }
 }

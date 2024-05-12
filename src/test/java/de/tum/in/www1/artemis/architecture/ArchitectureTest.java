@@ -212,7 +212,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
         var result = gsonUsageRule.evaluate(allClasses);
         log.info("Current number of Gson usages: {}", result.getFailureReport().getDetails().size());
         // TODO: reduce the following number to 0
-        assertThat(result.getFailureReport().getDetails()).hasSizeLessThanOrEqualTo(748);
+        assertThat(result.getFailureReport().getDetails()).hasSizeLessThanOrEqualTo(664);
     }
 
     /**
@@ -297,9 +297,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
         @Override
         public void check(JavaClass item, ConditionEvents events) {
             item.getDirectDependenciesFromSelf().stream().map(Dependency::getTargetClass).filter(targetClass -> targetClass.isAnnotatedWith(RestController.class))
-                    .forEach(targetClass -> {
-                        events.add(violated(item, "%s imports the RestController %s".formatted(item.getName(), targetClass.getName())));
-                    });
+                    .forEach(targetClass -> events.add(violated(item, "%s imports the RestController %s".formatted(item.getName(), targetClass.getName()))));
         }
     };
 
