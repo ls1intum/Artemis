@@ -17,6 +17,7 @@ import { ProgrammingExerciseGradingService } from 'app/exercises/programming/man
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { Result } from 'app/entities/result.model';
 import { faCheckCircle, faCircleNotch, faExclamationTriangle, faGripLines, faSave } from '@fortawesome/free-solid-svg-icons';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 
 @Component({
     selector: 'jhi-programming-exercise-editable-instructions',
@@ -42,7 +43,8 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     testCaseSubscription: Subscription;
     forceRenderSubscription: Subscription;
 
-    @ViewChild(MarkdownEditorComponent, { static: false }) markdownEditor: MarkdownEditorComponent;
+    @ViewChild(MarkdownEditorComponent, { static: false }) markdownEditor?: MarkdownEditorComponent;
+    @ViewChild(MarkdownEditorMonacoComponent, { static: true }) markdownEditorMonaco?: MarkdownEditorMonacoComponent;
 
     @Input() showStatus = true;
     // If the programming exercise is being created, some features have to be disabled (saving the problemStatement & querying test cases).
@@ -235,11 +237,11 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     onAnalysisUpdate = (analysis: ProblemStatementAnalysis) => {
         const lineWarnings = this.mapAnalysisToWarnings(analysis);
 
-        this.markdownEditor.aceEditorContainer.getEditor().getSession().clearAnnotations();
+        this.markdownEditor?.aceEditorContainer?.getEditor().getSession().clearAnnotations();
         // We need to wait for the annotations to be removed before we can set the new annotations.
         // Otherwise changes in the editor will trigger the update of the existing annotations.
         setTimeout(() => {
-            this.markdownEditor.aceEditorContainer.getEditor().getSession().setAnnotations(lineWarnings);
+            this.markdownEditor?.aceEditorContainer?.getEditor().getSession().setAnnotations(lineWarnings);
         }, 0);
     };
 
