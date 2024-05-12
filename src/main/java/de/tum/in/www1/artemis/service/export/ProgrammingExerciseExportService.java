@@ -450,9 +450,6 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
     public Optional<File> exportStudentRepository(long exerciseId, ProgrammingExerciseStudentParticipation participation, List<String> exportErrors) {
         var exerciseOrEmpty = loadExerciseForRepoExport(exerciseId, exportErrors);
         if (exerciseOrEmpty.isEmpty()) {
-            var error = "Failed to export student repository because the exercise " + exerciseId + " does not exist.";
-            log.info(error);
-            exportErrors.add(error);
             return Optional.empty();
         }
         var programmingExercise = exerciseOrEmpty.get();
