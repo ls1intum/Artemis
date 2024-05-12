@@ -892,7 +892,7 @@ public class StudentExamResource {
     }
 
     /**
-     * GET exams/{examId}/longest-working-time : Returns the value of
+     * GET courses/{courseId}/exams/{examId}/longest-working-time : Returns the value of
      * the longest working time of the exam
      *
      * @param courseId the course to which the student exams belong to
@@ -903,8 +903,8 @@ public class StudentExamResource {
     @GetMapping("courses/{courseId}/exams/{examId}/longest-working-time")
     public ResponseEntity<Integer> getLongestWorkingTimeForExam(@PathVariable Long courseId, @PathVariable Long examId) {
 
-        Integer longestWorkingTime = studentExamRepository.findLongestWorkingTimeForExam(examId);
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
+        Integer longestWorkingTime = studentExamRepository.findLongestWorkingTimeForExam(examId);
         return ResponseEntity.ok().body(longestWorkingTime);
     }
 }
