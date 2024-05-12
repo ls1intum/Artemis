@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
 
@@ -7,8 +7,9 @@ import { MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor
     templateUrl: './markdown-editor-monaco.component.html',
     styleUrl: './markdown-editor-monaco.component.scss',
 })
-export class MarkdownEditorMonacoComponent implements OnInit {
+export class MarkdownEditorMonacoComponent implements OnInit, OnDestroy {
     @ViewChild(MonacoEditorComponent, { static: true }) monacoEditor: MonacoEditorComponent;
+    @ViewChild('wrapper', { static: true }) wrapper: ElementRef<HTMLDivElement>;
 
     @Input()
     set markdown(value: string | undefined) {
@@ -27,9 +28,19 @@ export class MarkdownEditorMonacoComponent implements OnInit {
     @Output()
     markdownChange = new EventEmitter<string>();
 
+    resizeObserver?: ResizeObserver;
+
     ngOnInit(): void {
         this.monacoEditor.changeModel('markdown-content.md', this._markdown);
-        this.monacoEditor.layout();
+        this.monacoEditor.layoutWithFixedSize(100, 400);
+        this.resizeObserver = new ResizeObserver(() => {
+            this.monacoEditor.layout();
+        });
+        this.resizeObserver.observe(this.wrapper.nativeElement);
+    }
+
+    ngOnDestroy(): void {
+        this.resizeObserver?.disconnect();
     }
 
     onTextChanged(text: string): void {
