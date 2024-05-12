@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
@@ -328,7 +329,7 @@ public class LocalCIDockerService {
      *           - We need to iterate over the map entries since don't remove the oldest image from the map.
      */
 
-    @Scheduled(fixedRateString = "${artemis.continuous-integration.image-cleanup.disk-space-check-interval-ms:3600000}", initialDelayString = "${artemis.continuous-integration.image-cleanup.disk-space-check-interval-ms:3600000}")
+    @Scheduled(fixedRateString = "${artemis.continuous-integration.image-cleanup.disk-space-check-interval-minutes:60}", initialDelayString = "${artemis.continuous-integration.image-cleanup.disk-space-check-interval-minutes:60}", timeUnit = TimeUnit.MINUTES)
     public void checkUsableDiskSpaceThenCleanUp() {
         if (!imageCleanupEnabled) {
             return;
