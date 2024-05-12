@@ -267,7 +267,7 @@ public class QuizScheduleService {
      * Start scheduler of quiz schedule service
      *
      */
-    public void startSchedule() {
+    private void startSchedule() {
         if (scheduledProcessQuizSubmissions.isNull()) {
             try {
                 var scheduledFuture = threadPoolTaskScheduler.scheduleAtFixedRate(new QuizProcessCacheTask(), 0, SCHEDULE_RATE_PERIOD_MS, TimeUnit.MILLISECONDS);

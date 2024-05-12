@@ -64,7 +64,7 @@ public class AthenaScheduleService {
     /**
      * Schedule Athena tasks for all exercises with future due dates on startup.
      */
-    public void scheduleRunningExercisesOnStartup() {
+    private void scheduleRunningExercisesOnStartup() {
         if (profileService.isDevActive()) {
             // only execute this on production server, i.e. when the prod profile is active
             // NOTE: if you want to test this locally, please comment it out, but do not commit the changes

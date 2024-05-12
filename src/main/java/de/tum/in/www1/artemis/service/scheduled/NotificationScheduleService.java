@@ -61,7 +61,7 @@ public class NotificationScheduleService {
     /**
      * Schedules ongoing notification processes shortly after server start up
      */
-    public void scheduleRunningNotificationProcessesOnStartup() {
+    private void scheduleRunningNotificationProcessesOnStartup() {
         try {
             if (profileService.isDevActive()) {
                 // only execute this on production server, i.e. when the prod profile is active
