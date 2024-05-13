@@ -74,6 +74,7 @@ The following screenshot illustrates the first section of the form. It consists 
 The following screenshot illustrates the second section of the form. It consists of:
 
 - **Enable automatic assessment suggestions**: When enabled, Artemis tries to automatically suggest assessments for diagram elements based on previously graded submissions for this exercise.
+- **Automatic assessment suggestions enabled**: When enabled, Artemis tries to automatically suggest assessments for diagram elements using the Athena service.
 - **Problem Statement**: The task description of the exercise as seen by students.
 - **Assessment Instructions**: Instructions for instructors while assessing the submission.
 
@@ -210,7 +211,85 @@ Once you're done assessing the solution, you can either:
 
 - Click on |exercise-dashboard-button| to navigate to exercise dashboard page.
 
+Automatic Assessment Suggestions
+--------------------------------
+If the checkbox ``Automatic assessment suggestions enabled`` is checked for a modeling exercise, Artemis generates
+assessment suggestions for submissions using the Athena Service. This section provides insights into how the
+suggestion generation works on a technical level and how exercises are set up best to receive the most accurate suggestions.
 
+.. note::
+   To learn how to set up an instance of the Athena Service and configure your Artemis installation accordingly, please consult the section :ref:`Athena Service <athena_service>`.
+
+Assessment Suggestion Retrieval
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+After clicking on |assess-submission| on one of the submission entries on the Submissions and Assessments Page,
+assessment suggestions are loaded automatically as indicated by the following loading indicator:
+
+.. figure:: modeling/assessment-suggestions-loading-indicator.png
+          :align: center
+          :scale: 40%
+
+Once assessment suggestions have been retrieved, a notice on top of the page indicates that the submission currently viewed
+contains assessment suggestions created via generative AI.
+
+.. figure:: modeling/assessment-suggestions-notice.png
+          :align: center
+
+The suggestions themselves are shown as follows:
+
+.. figure:: modeling/assessment-suggestions-example.png
+          :align: center
+
+Suggestion Generation Process
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+This section intends to provide insights into how the generation of automated feedback suggestions works for modeling
+exercises. The modeling feedback module generates feedback through the following process:
+
+1. **Feedback Request Reception:** Upon receiving a feedback request, the corresponding modeling submission is serialized into an appropriate exchange format. The format selection depends on the submission type. For BPMN diagrams, BPMN 2.0 XML is used as it is well understood by Large Language Models. IDs of diagram elements are shortened during serialization, resulting in a serialized feedback model and a mapping dictionary for the shortened identifiers.
+
+2. **Prompt Input Collection:** The module gathers all required input to query the connected language model. This includes:
+
+- Number of points and bonus points achievable
+- Grading instructions
+- Problem statement
+- Explanation of the submission format
+- Optional example solution
+- Serialized submission
+
+3. **Prompt Template Filling:** The collected input is used to fill in the prompt template. If the prompt exceeds the language model's token limit, omittable features are removed in the following order: example solution, grading instructions, and problem statement. The system can still provide improvement suggestions without detailed grading instructions.
+
+4. **Token Limit Check:** If the prompt remains too long after removing omittable features, feedback generation is aborted. Otherwise, the prompt is executed on the connected language model.
+
+5. **Response Parsing:** The model's response is parsed into a dictionary representation. Feedback items are mapped back to their original element IDs, ensuring correct attachment to referenced elements.
+
+.. figure:: modeling/modeling-llm-activity.svg
+          :align: center
+
+Optimizing Exercises for Automated Assessment
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+To get the best possible assessment suggestions for a modeling exercise, a few best practises should be considered.
+As the current version of the module for generating suggestions for modeling exercises is based on a large language model,
+when composing grading instructions for an exercise, it is advisable to follow similar strategies as for prompt engineering
+an LLM: https://platform.openai.com/docs/guides/prompt-engineering
+
+The following listing shows exemplary grading instructions for a BPMN process modeling exercise. The instructions
+explicitly list all aspects Athena should be aware and how credits should be assigned accordingly. Instructions formulated
+as explicitly as this tend to yield high quality assessment suggestions.
+
+.. code-block:: html
+
+    Evaluate the following 10 criteria:
+
+    1. Give 1 point if all elements described in the problem statement are present in the submission, 0 otherwise.
+    2. Give 1 point if the outgoing flows from an exclusive gateway are also labeled if there is more than one outgoing flow from the exclusive gateway, 0 otherwise.
+    3. Give 1 point if a start-event is present in the student's submission, 0 otherwise.
+    4. Give 1 point if an end-event is present in the student's submission, 0 otherwise.
+    5. Give 0 points if the activities in the diagram are not in the correct order according to the problem statement, 1 otherwise.
+    6. Give 1 point if all pools and swimlanes are labeled, 0 otherwise.
+    7. Give 1 point if the submission does not contain elements that are not described in the problem statement, 0 otherwise.
+    8. Give 1 point if all diagram elements are connected, 0 otherwise.
+    9. Give 1 point if all tasks are named in the "Verb Object"-format where a name consists of a verb followed by the object, 0 otherwise.
+    10. Give 1 point if no sequence flows connect elements in two different pools, 0 otherwise.
 
 .. |edit| image:: modeling/edit.png
     :scale: 75

@@ -1,0 +1,13 @@
+:orphan:
+
+Automatic Assessment of Modeling exercise
+=========================================
+
+.. contents:: Content of this document
+    :local:
+    :depth: 3
+
+This section describes the process by which the modeling feedback module generates feedback. A visual representation of the described flow is provided in @modeling-llm-activity. Upon receiving a feedback request, the modeling submission for which feedback should be generated is serialized into a suitable exchange format. As the modeling feedback module supports various diagram types, the selected exchange format depends on the specific submissions. For BPMN diagrams, the BPMN 2.0 XML format has been chosen as the target representation as it seems to be well understood by Large Language Models. As delineated in detail in @prompt-design, the serializer also shortens the IDs of the diagram elements. The serialization therefore yields not only a serialized version of the to-be-evaluated feedback model but also a mapping dictionary that allows mapping the shortened identifiers back to their original counterparts. As a next step, the module collects all prompt input required to query the connected language model. This input includes the number of points and bonus points achievable in an exercise, the instructions on how to grade said submission, the problem statement, an explanation of the submission format, an optional example solution, and the serialized submission. The input is then used to fill in the prompt template also described in detail in @prompt-design. If the formatted prompt exceeds the maximum number of allowed tokens for the used language model, features of the prompt that are considered "omittable" are removed. For the modeling module, the features considered as omittable by order of precedence are the example solution, the grading instructions, and the problem statement. Even with no detailed grading instructions, the feedback system is still able to provide some improvement suggestions as demonstrated in @results. If the formatted prompt does still exceed the maximum number of tokens allowed, the feedback generation is aborted. If the length of the formatted prompt is below the token threshold, the prompt is executed on the connected language model. The model's response is parsed into a dictionary representation. The elements referenced by the feedback items in the response are parsed into an array of element IDs which are mapped back to the original element IDs so the feedback can be correctly attached to the referenced elements.
+
+.. figure:: modeling/modeling-llm-activity.svg
+          :align: center
