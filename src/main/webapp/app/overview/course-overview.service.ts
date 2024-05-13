@@ -41,7 +41,7 @@ export class CourseOverviewService {
         }
     }
 
-    getCorrespondingGroupByDate(date: dayjs.Dayjs | undefined): TimeGroupCategory {
+    getCorrespondingExerciseGroupByDate(date: dayjs.Dayjs | undefined): TimeGroupCategory {
         if (!date) {
             return 'noDate';
         }
@@ -62,11 +62,31 @@ export class CourseOverviewService {
         return 'future';
     }
 
+    getCorrespondingLectureGroupByDate(startDate: dayjs.Dayjs | undefined, endDate?: dayjs.Dayjs | undefined): TimeGroupCategory {
+        if (!startDate) {
+            return 'noDate';
+        }
+
+        const now = dayjs();
+        const isStartDateWithinLastWeek = startDate.isAfter(now.subtract(1, 'week'));
+        const isDateInThePast = endDate ? endDate.isBefore(now) : startDate.isBefore(now) && !isStartDateWithinLastWeek;
+
+        if (isDateInThePast) {
+            return 'past';
+        }
+
+        const isDateCurrent = endDate ? startDate.isBefore(now) && endDate.isAfter(now) : isStartDateWithinLastWeek;
+        if (isDateCurrent) {
+            return 'current';
+        }
+        return 'future';
+    }
+
     groupExercisesByDueDate(sortedExercises: Exercise[]): AccordionGroups {
         const groupedExerciseGroups = cloneDeep(DEFAULT_UNIT_GROUPS) as AccordionGroups;
 
         for (const exercise of sortedExercises) {
-            const exerciseGroup = this.getCorrespondingGroupByDate(exercise.dueDate);
+            const exerciseGroup = this.getCorrespondingExerciseGroupByDate(exercise.dueDate);
             const exerciseCardItem = this.mapExerciseToSidebarCardElement(exercise);
             groupedExerciseGroups[exerciseGroup].entityData.push(exerciseCardItem);
         }
@@ -78,7 +98,7 @@ export class CourseOverviewService {
         const groupedLectureGroups = cloneDeep(DEFAULT_UNIT_GROUPS) as AccordionGroups;
 
         for (const lecture of sortedLectures) {
-            const lectureGroup = this.getCorrespondingGroupByDate(lecture.startDate);
+            const lectureGroup = this.getCorrespondingLectureGroupByDate(lecture.startDate, lecture?.endDate);
             const lectureCardItem = this.mapLectureToSidebarCardElement(lecture);
             groupedLectureGroups[lectureGroup].entityData.push(lectureCardItem);
         }
