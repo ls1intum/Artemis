@@ -35,6 +35,11 @@ export class CourseExercisePerformanceComponent implements OnInit, OnChanges {
     };
     yScaleMax = 100;
 
+    protected readonly round = round;
+    protected readonly Math = Math;
+    protected readonly YOUR_GRAPH_COLOR = YOUR_GRAPH_COLOR;
+    protected readonly AVERAGE_GRAPH_COLOR = AVERAGE_GRAPH_COLOR;
+
     constructor(private translateService: TranslateService) {
         this.translateService.onLangChange.subscribe(() => {
             this.setupChart();
@@ -96,9 +101,4 @@ export class CourseExercisePerformanceComponent implements OnInit, OnChanges {
         const maxScore = Math.max(...this.ngxData.flatMap((data) => data.series.map((series) => series.value)));
         this.yScaleMax = Math.max(100, Math.ceil(maxScore / 10) * 10);
     }
-
-    protected readonly round = round;
-    protected readonly Math = Math;
-    protected readonly YOUR_GRAPH_COLOR = YOUR_GRAPH_COLOR;
-    protected readonly AVERAGE_GRAPH_COLOR = AVERAGE_GRAPH_COLOR;
 }

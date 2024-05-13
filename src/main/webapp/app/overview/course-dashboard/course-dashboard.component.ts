@@ -39,6 +39,9 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     private metricsSubscription?: Subscription;
     public course?: Course;
 
+    protected readonly FeatureToggle = FeatureToggle;
+    protected readonly round = round;
+
     constructor(
         private courseStorageService: CourseStorageService,
         private alertService: AlertService,
@@ -183,7 +186,4 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
             this.loadMetrics();
         }
     }
-
-    protected readonly FeatureToggle = FeatureToggle;
-    protected readonly round = round;
 }
