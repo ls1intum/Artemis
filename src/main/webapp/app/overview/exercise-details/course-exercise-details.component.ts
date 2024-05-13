@@ -11,7 +11,7 @@ import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { programmingExerciseFail, programmingExerciseSuccess } from 'app/guided-tour/tours/course-exercise-detail-tour';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Participation } from 'app/entities/participation/participation.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, getIcon, getIconTooltip } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExampleSolutionInfo, ExerciseDetailsType, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -44,6 +44,7 @@ import { ScienceService } from 'app/shared/science/science.service';
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { ChatServiceMode } from 'app/iris/iris-chat.service';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
 
 interface InstructorActionItem {
     routerLink: string;
@@ -107,6 +108,8 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     isTestServer = false;
     isGeneratingFeedback: boolean = false;
     instructorActionItems: InstructorActionItem[] = [];
+    iconTooltip: string;
+    exerciseIcon: IconProp;
 
     exampleSolutionInfo?: ExampleSolutionInfo;
 
@@ -216,7 +219,10 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
         this.subscribeToTeamAssignmentUpdates();
 
         this.baseResource = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/`;
-
+        if (this.exercise?.type) {
+            this.iconTooltip = getIconTooltip(this.exercise?.type);
+            this.exerciseIcon = getIcon(this.exercise?.type);
+        }
         this.createInstructorActions();
     }
 

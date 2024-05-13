@@ -16,11 +16,27 @@ import { ComplaintService } from 'app/complaints/complaint.service';
 import { SubmissionType } from 'app/entities/submission.model';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { TranslateService } from '@ngx-translate/core';
 
+export interface InformationBox {
+    title: string;
+    content: string | number | any;
+    contentType?: string;
+    isContentComponent?: boolean;
+    contentComponent?: any;
+    icon?: IconProp;
+    tooltip?: string;
+    contentColor?: string;
+    tooltipParams?: any;
+}
 @Component({
     selector: 'jhi-header-exercise-page-with-details',
     templateUrl: './header-exercise-page-with-details.component.html',
     styleUrls: ['./header-exercise-page-with-details.component.scss'],
+    // Our tsconfig file has `preserveWhitespaces: 'true'` which causes whitespace to affect content projection.
+    // We need to set it to 'false 'for this component, otherwise the components with the selecotor [contentComponent]
+    // will not be projected into their specific slot of the "InformationBoxComponent" component.
+    preserveWhitespaces: false,
 })
 export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit {
     readonly IncludedInOverallScore = IncludedInOverallScore;
@@ -50,13 +66,17 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
     public canComplainLaterOn: boolean;
     public achievedPoints?: number;
     public numberOfSubmissions: number;
+    public informationBoxItems: InformationBox[] = [];
 
     icon: IconProp;
 
     // Icons
     faQuestionCircle = faQuestionCircle;
 
-    constructor(private sortService: SortService) {}
+    constructor(
+        private sortService: SortService,
+        private translateService: TranslateService,
+    ) {}
 
     ngOnInit() {
         this.exerciseCategories = this.exercise.categories || [];
@@ -90,15 +110,173 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
         }
 
         if (this.dueDate) {
-            this.dueDateStatusBadge = dayjs().isBefore(this.dueDate) ? 'bg-success' : 'bg-danger';
+            // If the due date is less than a day away, the color change to red
+            this.dueDateStatusBadge = this.dueDate.isBetween(dayjs().add(1, 'day'), dayjs()) ? 'danger' : 'body-color';
         }
+        this.createInformationBoxItems();
     }
+
+    createInformationBoxItems() {
+        const notReleased = this.exercise.releaseDate && dayjs(this.exercise.releaseDate).isAfter(dayjs());
+        if (this.exercise.maxPoints) this.informationBoxItems.push(this.getMaxPointsItem());
+        this.informationBoxItems.push(this.getDueDateItem());
+        this.informationBoxItems.push(this.getDifficultyItem());
+        // (exercise.releaseDate && dayjs(exercise.releaseDate).isAfter(dayjs()))
+        if (notReleased || this.exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY || this.exercise.categories?.length)
+            this.informationBoxItems.push(this.getCategoryItems());
+        // this.informationBoxItems.push(this.getNextRelevantDateItem());
+        // if (this.submissionPolicy?.active) this.informationBoxItems.push(this.getSubmissionPolicyItem());
+        this.informationBoxItems.push(this.getSubmissionStatusItem());
+
+        if (this.exercise.assessmentType && this.exercise.type === ExerciseType.PROGRAMMING) this.informationBoxItems.push(this.getAssessmentTypeItem());
+    }
+
+    getDueDateItem(): InformationBox {
+        return {
+            title: 'artemisApp.courseOverview.exerciseDetails.submissionDue',
+            //  less than a day make time relative to now
+            content: this.dueDate,
+            // content: this.dueDate?.format('lll') ?? '-',
+            // icon: this.icon,
+            isContentComponent: true,
+            contentType: 'timeAgo',
+            tooltip: 'artemisApp.courseOverview.exerciseDetails.submissionDueTooltip',
+            contentColor: this.dueDateStatusBadge,
+            tooltipParams: { date: this.dueDate?.format('lll') },
+        };
+    }
+    //  Status: Not released, no graded, graded, submitted, reviewed, assessed, complaint, complaint response, complaint applied, complaint resolved
+    // getStatusItem(): InformationBox {
+
+    // }
+
+    getAssessmentTypeItem(): InformationBox {
+        return {
+            title: 'artemisApp.courseOverview.exerciseDetails.assessmentType',
+            content: this.capitalize(this.exercise?.assessmentType),
+            tooltip: 'artemisApp.AssessmentType.tooltip.' + this.exercise.assessmentType,
+        };
+    }
+
+    capitalize(title?: string) {
+        if (!title) return '-';
+        return title.toString().charAt(0).toUpperCase() + title.slice(1).toLowerCase();
+    }
+    getDifficultyItem(): InformationBox {
+        return {
+            title: 'artemisApp.courseOverview.exerciseDetails.difficulty',
+            content: this.exercise.difficulty,
+            contentComponent: 'difficultyLevel',
+            isContentComponent: true,
+        };
+    }
+    getSubmissionStatusItem(): InformationBox {
+        return {
+            title: 'artemisApp.courseOverview.exerciseDetails.submissionStatus',
+            content: this.studentParticipation,
+            contentComponent: 'submissionStatus',
+            isContentComponent: true,
+        };
+    }
+    getCategoryItems(): InformationBox {
+        return {
+            title: 'artemisApp.courseOverview.exerciseDetails.categories',
+            content: this.exercise,
+            contentComponent: 'categories',
+            isContentComponent: true,
+        };
+    }
+
+    getSubmissionPolicyItem(): InformationBox {
+        console.log(this.submissionPolicy);
+        // {{ 'artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle' | artemisTranslate }}:
+        // {{
+        //         numberOfSubmissions +
+        //         '/' +
+        //         submissionPolicy.submissionLimit +
+        //         (submissionPolicy.exceedingPenalty
+        //             ? ('artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInfoLabel'
+        //               | artemisTranslate: { points: submissionPolicy.exceedingPenalty })
+        //             : '')
+        // }}
+
+        // TODO Make Red if submissionLimit is (nearly) reached
+        return {
+            title: 'artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle',
+            content: this.numberOfSubmissions + ' / ' + this.submissionPolicy?.submissionLimit,
+            // content:
+            //     this.numberOfSubmissions +
+            //     '/' +
+            //     this.submissionPolicy?.submissionLimit +
+            //     (this.submissionPolicy?.exceedingPenalty
+            //         ? ' ' + this.translateService.instant('artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInfoLabel', {
+            //               points: this.submissionPolicy.exceedingPenalty,
+            //           })
+            //         : ''),
+            tooltip: 'artemisApp.programmingExercise.submissionPolicy.submissionPolicyType.' + this.submissionPolicy?.type + '.tooltip',
+        };
+    }
+
+    getExceedingPenalty() {
+        return {
+            title: 'artemisApp.programmingExercise.submissionPolicy.submissionPolicyType.submission_penalty.title',
+            content: '-' + this.submissionPolicy?.exceedingPenalty + ' Points',
+        };
+    }
+
+    // Can be visible in the tooltip above a status
+    // getNextRelevantDateItem(): InformationBox {
+    //     console.log('get Next Relevant Date Item')
+    //     console.log(this.nextRelevantDateLabel)
+    //     // {{ 'artemisApp.courseOverview.exerciseDetails.' + nextRelevantDateLabel | artemisTranslate }}
+    //     return {
+    //         title: this.nextRelevantDateLabel ? this.nextRelevantDateLabel : 'Next Relevant Date',
+    //         content: this.nextRelevantDate?.format('lll') ?? '-',
+    //         icon: faQuestionCircle,
+    //     };
+
+    // }
+
+    getMaxPointsItem(): InformationBox {
+        if (this.exercise.bonusPoints) {
+            const pointsAndBonusTitle = 'artemisApp.courseOverview.exerciseDetails.pointsAndBonus';
+            const pointsAndBonusContent = this.exercise.maxPoints + ` + ${this.exercise.bonusPoints}`;
+            return {
+                title: pointsAndBonusTitle,
+                content: this.achievedPoints !== undefined ? this.achievedPoints + ' / ' + pointsAndBonusContent : pointsAndBonusContent,
+            };
+        }
+        return {
+            title: 'artemisApp.courseOverview.exerciseDetails.points',
+            content: this.achievedPoints !== undefined ? this.achievedPoints + ' / ' + this.exercise.maxPoints : this.exercise.maxPoints ?? '-',
+        };
+    }
+    // getDefaultItems(): InformationBox[] {
+    //     const exercisesItem: InformationBox = {
+    //         title: `${this.baseResource}`,
+    //         icon: faEye,
+    //         content: 'entity.action.view',
+    //     };
+
+    //     const statisticsItem: InformationBox = {
+    //         routerLink: `${this.baseResource}scores`,
+    //         icon: faTable,
+    //         translation: 'entity.action.scores',
+    //     };
+
+    //     return [exercisesItem, statisticsItem];
+    // }
 
     ngOnChanges() {
         this.course = this.course ?? getCourseFromExercise(this.exercise);
 
         if (this.submissionPolicy?.active) {
+            console.log('Changes Submission');
             this.countSubmissions();
+            this.informationBoxItems.push(this.getSubmissionPolicyItem());
+            if (this.submissionPolicy?.exceedingPenalty) {
+                this.informationBoxItems.push(this.getExceedingPenalty());
+            }
         }
         if (this.studentParticipation?.results?.length) {
             // The updated participation by the websocket is not guaranteed to be sorted, find the newest result (highest id)
@@ -125,6 +303,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
      * Determines the next date of the course exercise cycle. If none exists the latest date in the past is determined
      */
     private determineNextRelevantDateCourseMode() {
+        console.log('Hi');
         const possibleDates = [this.exercise.releaseDate, this.exercise.startDate, this.exercise.assessmentDueDate, this.individualComplaintDueDate];
         const possibleDatesLabels = ['releaseDate', 'startDate', 'assessmentDue', 'complaintDue'];
 
@@ -143,21 +322,31 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
         this.nextRelevantDate = undefined;
         this.nextRelevantDateLabel = undefined;
         this.nextRelevantDateStatusBadge = undefined;
-
+        console.log('Determine Next Date');
+        console.log(dates);
+        console.log(dateLabels);
         for (let i = 0; i < dates.length; i++) {
             if (dates[i] && now.isBefore(dates[i])) {
+                console.log('If Satetment');
                 this.nextRelevantDate = dates[i]!;
                 this.nextRelevantDateLabel = dateLabels[i];
                 this.nextRelevantDateStatusBadge = 'bg-success';
                 return;
             }
         }
+
+        console.log(this.nextRelevantDateLabel);
         if (this.canComplainLaterOn) {
             return;
         }
         for (let i = dates.length - 1; i >= 0; i--) {
+            console.log(i);
             if (dates[i]) {
+                console.log(i);
+                console.log('If Satetment3');
                 if (this.dueDate && this.dueDate.isAfter(dates[i])) {
+                    console.log('If Satetment2');
+                    console.log(this.nextRelevantDateLabel);
                     return;
                 }
 
@@ -167,6 +356,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
                 return;
             }
         }
+        console.log('Haaaallo');
     }
 
     private countSubmissions() {

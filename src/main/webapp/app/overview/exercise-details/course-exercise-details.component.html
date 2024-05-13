@@ -1,7 +1,12 @@
 @if (exercise) {
     <div class="px-3 scrollable-content" [ngClass]="{ 'content-height-dev': !isProduction || isTestServer }">
         <div class="d-flex align-items-center my-2 justify-content-between">
-            <h5 class="mb-0">{{ exercise.title }}</h5>
+            <div class="d-flex">
+                <!-- @if (exercise.type) {
+                    <fa-icon class="me-1" [icon]="exerciseIcon" [ngbTooltip]="iconTooltip | artemisTranslate" />
+                } -->
+                <h5 class="mb-0">{{ exercise.title }}</h5>
+            </div>
             <div class="d-flex gap-2">
                 @if (exercise.isAtLeastTutor) {
                     <div ngbDropdown class="d-inline">
@@ -50,6 +55,7 @@
         >
             <span pagetitle>{{ exercise.title }}</span>
         </jhi-header-exercise-page-with-details>
+        <hr class="mt-0" />
         <div class="tab-bar-exercise-details justify-content-end">
             <div class="d-flex flex-column gap-2">
                 <div class="col-auto">

@@ -9,6 +9,6 @@ import { Exercise } from 'app/entities/exercise.model';
 })
 export class NotReleasedTagComponent {
     @Input() public exercise: Exercise;
-    @Input() public noMargin?: boolean;
+    @Input() public noMargin?: boolean = true;
     readonly dayjs = dayjs;
 }
