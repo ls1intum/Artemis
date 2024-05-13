@@ -33,7 +33,7 @@ public interface ExerciseMetricsRepository extends JpaRepository<Exercise, Long>
             FROM Exercise e
             WHERE e.course.id = :courseId
             """)
-    Set<ExerciseInformationDTO> findAllExerciseInformationByCourseId(long courseId);
+    Set<ExerciseInformationDTO> findAllExerciseInformationByCourseId(@Param("courseId") long courseId);
 
     @Query("""
             SELECT new de.tum.in.www1.artemis.web.rest.dto.metrics.ScoreDTO(p.exercise.id, AVG(COALESCE(p.lastScore, 0)))
