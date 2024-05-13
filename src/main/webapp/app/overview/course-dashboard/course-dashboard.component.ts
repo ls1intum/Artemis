@@ -1,7 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { Subscription, forkJoin } from 'rxjs';
-import { Exercise } from 'app/entities/exercise.model';
 import { ActivatedRoute } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { Competency } from 'app/entities/competency.model';
@@ -36,9 +35,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     private paramSubscription?: Subscription;
     private courseUpdatesSubscription?: Subscription;
     private metricsSubscription?: Subscription;
-    private courseExercises: Exercise[] = [];
     public course?: Course;
-    public data: any;
 
     constructor(
         private courseStorageService: CourseStorageService,
@@ -57,12 +54,6 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
         this.courseUpdatesSubscription = this.courseStorageService.subscribeToCourseUpdates(this.courseId).subscribe((course: Course) => {
             this.setCourse(course);
         });
-    }
-
-    private onCourseLoad(): void {
-        if (this.course?.exercises) {
-            this.courseExercises = this.course.exercises;
-        }
     }
 
     ngOnDestroy(): void {
@@ -185,7 +176,6 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
 
     private setCourse(course?: Course) {
         this.course = course;
-        this.onCourseLoad();
         // Note: this component is only shown if there are at least 1 competencies or at least 1 prerequisites, so if they do not exist, we load the data from the server
         if (this.course && ((this.course.competencies && this.course.competencies.length > 0) || (this.course.prerequisites && this.course.prerequisites.length > 0))) {
             this.competencies = this.course.competencies || [];
