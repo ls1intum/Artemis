@@ -14,6 +14,7 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 @Component({
     selector: 'jhi-course-dashboard',
     templateUrl: './course-dashboard.component.html',
+    styleUrls: ['./course-dashboard.component.scss'],
 })
 export class CourseDashboardComponent implements OnInit, OnDestroy {
     courseId: number;

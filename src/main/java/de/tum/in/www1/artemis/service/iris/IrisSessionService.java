@@ -8,12 +8,14 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.session.IrisCompetencyGenerationSession;
+import de.tum.in.www1.artemis.domain.iris.session.IrisCourseChatSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisHestiaSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisTutorChatSession;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.iris.session.IrisChatBasedFeatureInterface;
 import de.tum.in.www1.artemis.service.iris.session.IrisCompetencyGenerationSessionService;
+import de.tum.in.www1.artemis.service.iris.session.IrisCourseChatSessionService;
 import de.tum.in.www1.artemis.service.iris.session.IrisHestiaSessionService;
 import de.tum.in.www1.artemis.service.iris.session.IrisRateLimitedFeatureInterface;
 import de.tum.in.www1.artemis.service.iris.session.IrisSubFeatureInterface;
@@ -30,14 +32,17 @@ public class IrisSessionService {
 
     private final IrisTutorChatSessionService irisTutorChatSessionService;
 
+    private final IrisCourseChatSessionService irisCourseChatSessionService;
+
     private final IrisHestiaSessionService irisHestiaSessionService;
 
     private final IrisCompetencyGenerationSessionService irisCompetencyGenerationSessionService;
 
-    public IrisSessionService(UserRepository userRepository, IrisTutorChatSessionService irisTutorChatSessionService, IrisHestiaSessionService irisHestiaSessionService,
-            IrisCompetencyGenerationSessionService irisCompetencyGenerationSessionService) {
+    public IrisSessionService(UserRepository userRepository, IrisTutorChatSessionService irisTutorChatSessionService, IrisCourseChatSessionService irisCourseChatSessionService,
+            IrisHestiaSessionService irisHestiaSessionService, IrisCompetencyGenerationSessionService irisCompetencyGenerationSessionService) {
         this.userRepository = userRepository;
         this.irisTutorChatSessionService = irisTutorChatSessionService;
+        this.irisCourseChatSessionService = irisCourseChatSessionService;
         this.irisHestiaSessionService = irisHestiaSessionService;
         this.irisCompetencyGenerationSessionService = irisCompetencyGenerationSessionService;
     }
@@ -131,6 +136,9 @@ public class IrisSessionService {
     private <S extends IrisSession> IrisSubFeatureWrapper<S> getIrisSessionSubService(S session) {
         if (session instanceof IrisTutorChatSession chatSession) {
             return (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisTutorChatSessionService, chatSession);
+        }
+        if (session instanceof IrisCourseChatSession courseChatSession) {
+            return (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisCourseChatSessionService, courseChatSession);
         }
         if (session instanceof IrisHestiaSession hestiaSession) {
             return (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisHestiaSessionService, hestiaSession);

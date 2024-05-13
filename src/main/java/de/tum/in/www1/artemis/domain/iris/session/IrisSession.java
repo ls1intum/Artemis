@@ -39,6 +39,7 @@ import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 // @formatter:off
 @JsonSubTypes({
     @JsonSubTypes.Type(value = IrisTutorChatSession.class, name = "chat"),
+    @JsonSubTypes.Type(value = IrisCourseChatSession.class, name = "course_chat"),
     @JsonSubTypes.Type(value = IrisHestiaSession.class, name = "hestia"),
 })
 // @formatter:on

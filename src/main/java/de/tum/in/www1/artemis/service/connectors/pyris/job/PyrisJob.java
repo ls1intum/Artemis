@@ -17,7 +17,9 @@ public interface PyrisJob extends Serializable {
 
     boolean canAccess(Course course);
 
-    boolean canAccess(Exercise exercise);
+    default boolean canAccess(Exercise exercise) {
+        return this.canAccess(exercise.getCourseViaExerciseGroupOrCourseMember());
+    }
 
     default boolean canAccess(LectureUnit lectureUnit) {
         return this.canAccess(lectureUnit.getLecture().getCourse());

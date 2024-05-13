@@ -22,6 +22,7 @@ import { IrisLogoButtonComponent } from 'app/iris/iris-logo-button/iris-logo-but
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 import { IrisBaseChatbotComponent } from 'app/iris/base-chatbot/iris-base-chatbot.component';
 import { ChatStatusBarComponent } from 'app/iris/base-chatbot/chat-status-bar/chat-status-bar.component';
+import { CourseChatbotComponent } from 'app/iris/course-chatbot/course-chatbot.component';
 
 @NgModule({
     declarations: [
@@ -39,6 +40,7 @@ import { ChatStatusBarComponent } from 'app/iris/base-chatbot/chat-status-bar/ch
         IrisEnabledComponent,
         ChatStatusBarComponent,
         IrisLogoButtonComponent,
+        CourseChatbotComponent,
     ],
     imports: [
         CommonModule,
@@ -51,6 +53,6 @@ import { ChatStatusBarComponent } from 'app/iris/base-chatbot/chat-status-bar/ch
         RouterModule,
         FeatureToggleModule,
     ],
-    exports: [IrisTutorChatbotButtonComponent, IrisEnabledComponent, IrisLogoButtonComponent],
+    exports: [IrisTutorChatbotButtonComponent, IrisEnabledComponent, IrisLogoButtonComponent, IrisBaseChatbotComponent, CourseChatbotComponent],
 })
 export class IrisModule {}

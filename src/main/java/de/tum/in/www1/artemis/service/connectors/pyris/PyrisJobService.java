@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
+import de.tum.in.www1.artemis.service.connectors.pyris.job.CourseChatJob;
 import de.tum.in.www1.artemis.service.connectors.pyris.job.PyrisJob;
 import de.tum.in.www1.artemis.service.connectors.pyris.job.TutorChatJob;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -55,9 +56,16 @@ public class PyrisJobService {
         jobMap = hazelcastInstance.getMap("pyris-job-map");
     }
 
-    public String addJob(Long courseId, Long exerciseId, Long sessionId) {
+    public String addTutorChatJob(Long courseId, Long exerciseId, Long sessionId) {
         var token = generateJobIdToken();
         var job = new TutorChatJob(token, courseId, exerciseId, sessionId);
+        jobMap.put(token, job);
+        return token;
+    }
+
+    public String addCourseChatJob(Long courseId, Long sessionId) {
+        var token = generateJobIdToken();
+        var job = new CourseChatJob(token, courseId, sessionId);
         jobMap.put(token, job);
         return token;
     }

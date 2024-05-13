@@ -51,7 +51,7 @@
     font-weight: bold;
     padding: 5px;
     width: 100%;
-    height: calc(1lh + 15px);
+    max-height: calc(1lh + 15px);
     flex: 0;
     z-index: 10;
     background-color: var(--iris-chat-widget-background);

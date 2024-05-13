@@ -29,7 +29,7 @@ export abstract class IrisChatService implements OnDestroy {
     rateLimitSubscription: Subscription;
 
     /**
-     * Creates an instance of IrisSessionService.
+     * Creates an instance of IrisChatService.
      * @param http The IrisChatHttpService for HTTP operations related to sessions.
      * @param ws The IrisChatWebsocketService for websocket operations
      * @param status The IrisStatusService for handling the status of the service.

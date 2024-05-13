@@ -15,24 +15,20 @@ import de.tum.in.www1.artemis.domain.User;
  * This is used for students receiving tutor assistance from Iris while working on an exercise.
  */
 @Entity
-@DiscriminatorValue("CHAT")
+@DiscriminatorValue("CHAT") // Legacy. Should ideally be "TUTOR_CHAT"
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class IrisTutorChatSession extends IrisSession {
+public class IrisTutorChatSession extends IrisChatSession {
 
     @ManyToOne
     @JsonIgnore
     private Exercise exercise;
 
-    @ManyToOne
-    @JsonIgnore
-    private User user;
-
     public IrisTutorChatSession() {
     }
 
     public IrisTutorChatSession(Exercise exercise, User user) {
+        super(user);
         this.exercise = exercise;
-        this.user = user;
     }
 
     public Exercise getExercise() {
@@ -43,17 +39,8 @@ public class IrisTutorChatSession extends IrisSession {
         this.exercise = exercise;
     }
 
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
-
     @Override
     public String toString() {
-        return "IrisTutorChatSession{" + "id=" + getId() + ", exercise=" + (exercise == null ? "null" : exercise.getId()) + ", user=" + (user == null ? "null" : user.getName())
-                + '}';
+        return "IrisTutorChatSession{" + "user=" + getUser().getLogin() + "," + "exercise=" + exercise + '}';
     }
 }
