@@ -138,24 +138,6 @@ public class ParticipationService {
      * @return the participation connecting the given exercise and user
      */
     public StudentParticipation startExercise(Exercise exercise, Participant participant, boolean createInitialSubmission) {
-        return startExerciseWithInitializationDate(exercise, participant, createInitialSubmission, null);
-    }
-
-    /**
-     * This method is called when an StudentExam for a test exam is set up for conduction.
-     * It creates a Participation which connects the corresponding student and exercise. The test exam is linked with the initializationDate = startedDate (StudentExam)
-     * Additionally, it configures repository / build plan related stuff for programming exercises.
-     * In the case of modeling or text exercises, it also initializes and stores the corresponding submission.
-     *
-     * @param exercise                - the exercise for which a new participation is to be created
-     * @param participant             - the user for which the new participation is to be created
-     * @param createInitialSubmission - whether an initial empty submission should be created for text, modeling, quiz, file-upload or not
-     * @param initializationDate      - the date which should be set as the initializationDate of the Participation. Links studentExam <-> participation
-     * @return a new participation for the given exercise and user
-     */
-    // TODO: Stephan Krusche: offer this method again like above "startExercise" without initializationDate which is not really necessary at the moment, because we only support on
-    // test exam per exam/student
-    public StudentParticipation startExerciseWithInitializationDate(Exercise exercise, Participant participant, boolean createInitialSubmission, ZonedDateTime initializationDate) {
         // common for all exercises
         Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseAndParticipantAnyState(exercise, participant);
         if (optionalStudentParticipation.isPresent() && optionalStudentParticipation.get().isPracticeMode() && exercise.isCourseExercise()) {
@@ -169,7 +151,7 @@ public class ParticipationService {
         // Check if participation already exists
         StudentParticipation participation;
         if (optionalStudentParticipation.isEmpty()) {
-            participation = createNewParticipationWithInitializationDate(exercise, participant, initializationDate);
+            participation = createNewParticipation(exercise, participant);
         }
         else {
             // make sure participation and exercise are connected
@@ -179,7 +161,7 @@ public class ParticipationService {
 
         if (exercise instanceof ProgrammingExercise programmingExercise) {
             // fetch again to get additional objects
-            participation = startProgrammingExercise(programmingExercise, (ProgrammingExerciseStudentParticipation) participation, initializationDate == null);
+            participation = startProgrammingExercise(programmingExercise, (ProgrammingExerciseStudentParticipation) participation, false);
         }
         else {// for all other exercises: QuizExercise, ModelingExercise, TextExercise, FileUploadExercise
             if (participation.getInitializationState() == null || participation.getInitializationState() == InitializationState.UNINITIALIZED
@@ -208,12 +190,11 @@ public class ParticipationService {
     /**
      * Helper Method to create a new Participation for the
      *
-     * @param exercise           the exercise for which a participation should be created
-     * @param participant        the participant for the participation
-     * @param initializationDate (optional) Value for the initializationDate of the Participation
+     * @param exercise    the exercise for which a participation should be created
+     * @param participant the participant for the participation
      * @return a StudentParticipation for the exercise and participant with an optional specified initializationDate
      */
-    private StudentParticipation createNewParticipationWithInitializationDate(Exercise exercise, Participant participant, ZonedDateTime initializationDate) {
+    private StudentParticipation createNewParticipation(Exercise exercise, Participant participant) {
         StudentParticipation participation;
         // create a new participation only if no participation can be found
         if (exercise instanceof ProgrammingExercise) {
@@ -225,10 +206,7 @@ public class ParticipationService {
         participation.setInitializationState(InitializationState.UNINITIALIZED);
         participation.setExercise(exercise);
         participation.setParticipant(participant);
-        // StartedDate is used to link a Participation to a test exam exercise
-        if (initializationDate != null) {
-            participation.setInitializationDate(initializationDate);
-        }
+
         return studentParticipationRepository.saveAndFlush(participation);
     }
 
