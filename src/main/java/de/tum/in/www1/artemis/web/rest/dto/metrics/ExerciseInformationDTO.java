@@ -20,6 +20,12 @@ import de.tum.in.www1.artemis.domain.Exercise;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExerciseInformationDTO(long id, String shortName, String title, ZonedDateTime start, ZonedDateTime due, Double maxPoints, Class<? extends Exercise> type) {
 
+    /**
+     * Create a new ExerciseInformationDTO from an exercise.
+     *
+     * @param exercise the exercise to create the DTO from
+     * @return the new ExerciseInformationDTO
+     */
     public static <E extends Exercise> ExerciseInformationDTO of(E exercise) {
         var startDate = exercise.getStartDate();
         if (startDate == null) {
