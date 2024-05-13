@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabPersonalAccessTokenManagementService;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabUserManagementService;
