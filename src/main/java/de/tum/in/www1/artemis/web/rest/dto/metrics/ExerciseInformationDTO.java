@@ -14,6 +14,7 @@ import de.tum.in.www1.artemis.domain.Exercise;
  * @param title     title the title of the exercise
  * @param start     the start date of the exercise
  * @param due       the due date of the exercise
+ * @param maxPoints the maximum achievable points of the exercise
  * @param type      the type of the exercise
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
