@@ -1,6 +1,6 @@
 import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { Color, ScaleType } from '@swimlane/ngx-charts';
+import { ScaleType } from '@swimlane/ngx-charts';
 import { GraphColors } from 'app/entities/statistics.model';
 import { NgxChartsMultiSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { round } from 'app/shared/util/utils';
@@ -24,11 +24,11 @@ export class CourseExerciseLatenessComponent implements OnInit, OnChanges {
     yourLatenessLabel: string;
     averageLatenessLabel: string;
     ngxData: NgxChartsMultiSeriesDataEntry[];
-    ngxColor: Color = {
+    ngxColor = {
         name: 'Lateness in Exercises',
         selectable: true,
         group: ScaleType.Ordinal,
-        domain: [GraphColors.BLUE, GraphColors.YELLOW],
+        domain: [GraphColors.BLUE, GraphColors.YELLOW] as const,
     };
     yScaleMax = 100;
 
