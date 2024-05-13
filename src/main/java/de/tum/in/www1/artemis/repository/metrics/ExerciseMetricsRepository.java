@@ -43,6 +43,14 @@ public interface ExerciseMetricsRepository extends JpaRepository<Exercise, Long>
             """)
     Set<ScoreDTO> findAverageScore(@Param("exerciseIds") Set<Long> exerciseIds);
 
+    @Query("""
+            SELECT new de.tum.in.www1.artemis.web.rest.dto.metrics.ScoreDTO(s.exercise.id, CAST(COALESCE(s.lastRatedScore, s.lastScore, 0) AS DOUBLE))
+            FROM StudentScore s
+            WHERE s.exercise.id IN :exerciseIds
+                AND s.user.id = :userId
+            """)
+    Set<ScoreDTO> findScore(@Param("exerciseIds") Set<Long> exerciseIds, @Param("userId") long userId);
+
     /**
      * Get the latest submission dates for a user in a set of exercises.
      *

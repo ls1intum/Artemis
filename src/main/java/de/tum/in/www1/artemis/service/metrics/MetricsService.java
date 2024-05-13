@@ -64,6 +64,9 @@ public class MetricsService {
         final var averageScore = exerciseMetricsRepository.findAverageScore(exerciseIds);
         final var averageScoreMap = averageScore.stream().collect(toMap(ScoreDTO::exerciseId, ScoreDTO::score));
 
+        final var score = exerciseMetricsRepository.findScore(exerciseIds, userId);
+        final var scoreMap = score.stream().collect(toMap(ScoreDTO::exerciseId, ScoreDTO::score));
+
         final var latestSubmissions = exerciseMetricsRepository.findLatestSubmissionDates(exerciseIds);
         final ToDoubleFunction<ResourceTimestampDTO> relativeTime = dto -> toRelativeTime(exerciseInfoMap.get(dto.id()).start(), exerciseInfoMap.get(dto.id()).due(),
                 dto.timestamp());
@@ -72,6 +75,6 @@ public class MetricsService {
         final var latestSubmissionOfUser = exerciseMetricsRepository.findLatestSubmissionDatesForUser(exerciseIds, userId);
         final var latestSubmissionMap = latestSubmissionOfUser.stream().collect(toMap(ResourceTimestampDTO::id, relativeTime::applyAsDouble));
 
-        return new ExerciseStudentMetricsDTO(exerciseInfoMap, averageScoreMap, averageLatestSubmissionMap, latestSubmissionMap);
+        return new ExerciseStudentMetricsDTO(exerciseInfoMap, averageScoreMap, scoreMap, averageLatestSubmissionMap, latestSubmissionMap);
     }
 }
