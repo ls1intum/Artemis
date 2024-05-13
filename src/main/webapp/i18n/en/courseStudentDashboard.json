@@ -12,11 +12,11 @@
                 "yAxisLabel": "Score (%)"
             },
             "exerciseLateness": {
-                "title": "Exercise Timeliness",
-                "yourLatenessLabel": "Your timeliness",
-                "averageLatenessLabel": "Average timeliness",
+                "title": "Exercise Lateness",
+                "yourLatenessLabel": "Your lateness",
+                "averageLatenessLabel": "Average lateness",
                 "xAxisLabel": "Exercises",
-                "yAxisLabel": "Relative timeliness (%)"
+                "yAxisLabel": "Relative lateness (%)"
             }
         }
     }

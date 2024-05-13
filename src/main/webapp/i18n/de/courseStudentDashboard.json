@@ -5,18 +5,18 @@
                 "title": "Gesamtleistung"
             },
             "exercisePerformance": {
-                "title": "Leistungen in den Übungen",
+                "title": "Übungsleistungen",
                 "yourScoreLabel": "Dein Ergebnis",
                 "averageScoreLabel": "Durchschnittsergebnis",
                 "xAxisLabel": "Aufgaben",
                 "yAxisLabel": "Ergebnis (%)"
             },
             "exerciseLateness": {
-                "title": "Fristeinhaltung bei den Übungen",
-                "yourLatenessLabel": "Deine Fristeinhaltung",
-                "averageLatenessLabel": "Durchschnittliche Fristeinhaltung",
+                "title": "Übungsverspätungen",
+                "yourLatenessLabel": "Deine Verspätung",
+                "averageLatenessLabel": "Durchschnittliche Verspätung",
                 "xAxisLabel": "Aufgaben",
-                "yAxisLabel": "Relative Fristeinhaltung (%)"
+                "yAxisLabel": "Relative Verspätung (%)"
             }
         }
     }
