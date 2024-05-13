@@ -216,14 +216,6 @@ const routes: Routes = [
                 },
             },
             {
-                path: 'grading-system',
-                data: {
-                    authorities: [Authority.USER],
-                    pageTitle: 'overview.gradingSystem',
-                },
-                loadChildren: () => import('../grading-system/grading-system.module').then((m) => m.GradingSystemModule),
-            },
-            {
                 path: '',
                 redirectTo: 'exercises',
                 pathMatch: 'full',
