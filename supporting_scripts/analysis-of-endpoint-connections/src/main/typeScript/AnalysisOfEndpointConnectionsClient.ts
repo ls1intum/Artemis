@@ -19,7 +19,11 @@ fileNames.forEach(fileName => {
                     // Check if the property name is one of the httpClient methods
                     if (['get', 'post', 'put', 'delete'].includes(name)) {
                         console.log(`Found REST call: ${name}`);
-                        console.log(`with URL: ${node.arguments[0].getText()}`);
+                        if (node.arguments.length > 0) {
+                            console.log(`with URL: ${node.arguments[0].getText()}`);
+                        } else {
+                            console.log('No arguments provided for this REST call');
+                        }
                         console.log(`At line: ${sourceFile.getLineAndCharacterOfPosition(node.getStart()).line + 1}`);
                         console.log(`At file path: ${fileName}`);
                         console.log('-----------------------------------');
