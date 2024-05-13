@@ -154,10 +154,6 @@ public class LearningPathRecommendationService {
                 .filter(competency -> getRecommendedOrderOfLearningObjects(learningPath, competency, recommendationState).contains(learningObject)).findFirst().orElse(null);
     }
 
-    public List<Competency> getMasteredCompetencies(Set<Competency> competencies, List<Long> recommendedOrderOfCompetencies) {
-        return competencies.stream().filter(competency -> !recommendedOrderOfCompetencies.contains(competency.getId())).toList();
-    }
-
     /**
      * Generates the initial state of the recommendation containing all necessary information for the prediction.
      *

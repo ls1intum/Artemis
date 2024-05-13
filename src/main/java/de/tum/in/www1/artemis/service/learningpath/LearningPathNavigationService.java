@@ -36,9 +36,8 @@ public class LearningPathNavigationService {
 
         var currentLearningObject = learningPathRecommendationService.getCurrentUncompletedLearningObject(learningPath, recommendationState);
 
-        var masteredCompetencies = learningPathRecommendationService.getMasteredCompetencies(learningPath.getCompetencies(), recommendationState.recommendedOrderOfCompetencies());
-        var predecessorLearningObject = learningObjectService.getCompletedPredecessorOfLearningObjectRelatedToDate(learningPath.getUser(), Optional.empty(), masteredCompetencies)
-                .orElse(null);
+        var predecessorLearningObject = learningObjectService
+                .getCompletedPredecessorOfLearningObjectRelatedToDate(learningPath.getUser(), Optional.empty(), learningPath.getCompetencies()).orElse(null);
         var successorLearningObject = learningPathRecommendationService.getUncompletedSuccessorOfLearningObject(learningPath, recommendationState, currentLearningObject);
         return mapLearningPathObjectNavigationDto(learningPath.getUser(), learningPath.getProgress(), predecessorLearningObject, currentLearningObject, successorLearningObject);
     }
@@ -47,21 +46,21 @@ public class LearningPathNavigationService {
         var currentLearningObject = learningObjectService.getLearningObjectByIdAndType(learningObjectId, learningObjectType);
 
         var recommendationState = learningPathRecommendationService.getRecommendedOrderOfCompetencies(learningPath);
-        var masteredCompetencies = learningPathRecommendationService.getMasteredCompetencies(learningPath.getCompetencies(), recommendationState.recommendedOrderOfCompetencies());
+        var competencies = learningPath.getCompetencies();
 
         var learningPathUser = learningPath.getUser();
         var completionDateOptional = currentLearningObject.getCompletionDate(learningPathUser);
         if (completionDateOptional.isPresent()) {
-            var predecessorLearningObject = learningObjectService
-                    .getCompletedPredecessorOfLearningObjectRelatedToDate(learningPathUser, completionDateOptional, masteredCompetencies).orElse(null);
+            var predecessorLearningObject = learningObjectService.getCompletedPredecessorOfLearningObjectRelatedToDate(learningPathUser, completionDateOptional, competencies)
+                    .orElse(null);
 
-            var successorLearningObject = learningObjectService.getCompletedSuccessorOfLearningObjectRelatedToDate(learningPathUser, completionDateOptional, masteredCompetencies)
+            var successorLearningObject = learningObjectService.getCompletedSuccessorOfLearningObjectRelatedToDate(learningPathUser, completionDateOptional, competencies)
                     .orElseGet(() -> learningPathRecommendationService.getCurrentUncompletedLearningObject(learningPath, recommendationState));
             return mapLearningPathObjectNavigationDto(learningPath.getUser(), learningPath.getProgress(), predecessorLearningObject, currentLearningObject,
                     successorLearningObject);
         }
         var predecessorLearningObject = learningPathRecommendationService.getUncompletedPredecessorOfLearningObject(currentLearningObject, learningPath, recommendationState)
-                .orElse(learningObjectService.getCompletedPredecessorOfLearningObjectRelatedToDate(learningPathUser, completionDateOptional, masteredCompetencies).orElse(null));
+                .orElse(learningObjectService.getCompletedPredecessorOfLearningObjectRelatedToDate(learningPathUser, completionDateOptional, competencies).orElse(null));
 
         var successorLearningObject = learningPathRecommendationService.getUncompletedSuccessorOfLearningObject(learningPath, recommendationState, currentLearningObject);
         return mapLearningPathObjectNavigationDto(learningPath.getUser(), learningPath.getProgress(), predecessorLearningObject, currentLearningObject, successorLearningObject);

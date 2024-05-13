@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -66,23 +65,22 @@ public class LearningObjectService {
         throw new IllegalArgumentException("Learning object must be either LectureUnit or Exercise");
     }
 
-    public Optional<LearningObject> getCompletedPredecessorOfLearningObjectRelatedToDate(User user, Optional<ZonedDateTime> relatedDate, List<Competency> masteredCompetencies) {
-        return getCompletedUnitsForUserAndCompetencies(user, masteredCompetencies)
+    public Optional<LearningObject> getCompletedPredecessorOfLearningObjectRelatedToDate(User user, Optional<ZonedDateTime> relatedDate, Set<Competency> competencies) {
+        return getCompletedUnitsForUserAndCompetencies(user, competencies)
                 .filter(learningObject -> learningObject.getCompletionDate(user).orElseThrow().isBefore(relatedDate.orElse(ZonedDateTime.now())))
                 .max(Comparator.comparing(o -> o.getCompletionDate(user).orElseThrow()));
     }
 
-    public Optional<LearningObject> getCompletedSuccessorOfLearningObjectRelatedToDate(User user, Optional<ZonedDateTime> relatedDate, List<Competency> masteredCompetencies) {
+    public Optional<LearningObject> getCompletedSuccessorOfLearningObjectRelatedToDate(User user, Optional<ZonedDateTime> relatedDate, Set<Competency> competencies) {
         if (relatedDate.isEmpty()) {
             throw new RuntimeException("relatedDate must be present to get next completed learning object.");
         }
-        return getCompletedUnitsForUserAndCompetencies(user, masteredCompetencies)
-                .filter(learningObject -> learningObject.getCompletionDate(user).orElseThrow().isAfter(relatedDate.get()))
+        return getCompletedUnitsForUserAndCompetencies(user, competencies).filter(learningObject -> learningObject.getCompletionDate(user).orElseThrow().isAfter(relatedDate.get()))
                 .min(Comparator.comparing(o -> o.getCompletionDate(user).orElseThrow()));
     }
 
-    private Stream<LearningObject> getCompletedUnitsForUserAndCompetencies(User user, List<Competency> masteredCompetencies) {
-        return Stream.concat(masteredCompetencies.stream().map(Competency::getLectureUnits), masteredCompetencies.stream().map(Competency::getExercises)).flatMap(Set::stream)
+    private Stream<LearningObject> getCompletedUnitsForUserAndCompetencies(User user, Set<Competency> competencies) {
+        return Stream.concat(competencies.stream().map(Competency::getLectureUnits), competencies.stream().map(Competency::getExercises)).flatMap(Set::stream)
                 .filter(learningObject -> learningObject.getCompletionDate(user).isPresent()).map(LearningObject.class::cast);
     }
 
