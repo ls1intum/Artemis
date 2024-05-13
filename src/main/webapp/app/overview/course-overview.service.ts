@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
 import { Exercise, getIcon } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -20,7 +21,10 @@ const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     providedIn: 'root',
 })
 export class CourseOverviewService {
-    constructor(private participationService: ParticipationService) {}
+    constructor(
+        private participationService: ParticipationService,
+        private translate: TranslateService,
+    ) {}
 
     getUpcomingTutorialGroup(tutorialGroups: TutorialGroup[] | undefined): TutorialGroup | undefined {
         if (tutorialGroups && tutorialGroups.length) {
@@ -101,7 +105,7 @@ export class CourseOverviewService {
         const lectureCardItem: SidebarCardElement = {
             title: lecture.title ?? '',
             id: lecture.id ?? '',
-            subtitleLeft: lecture.startDate?.format('MMM DD, YYYY') ?? 'No date associated',
+            subtitleLeft: lecture.startDate?.format('MMM DD, YYYY') ?? this.translate.instant('artemisApp.courseOverview.sidebar.noDate'),
         };
         return lectureCardItem;
     }
@@ -109,7 +113,9 @@ export class CourseOverviewService {
         const tutorialGroupCardItem: SidebarCardElement = {
             title: tutorialGroup.title ?? '',
             id: tutorialGroup.id ?? '',
-            subtitleLeft: tutorialGroup.nextSession?.start?.format('MMM DD, YYYY') ? 'Next: ' + tutorialGroup.nextSession?.start?.format('MMM DD, YYYY') : 'No upcoming session',
+            subtitleLeft: tutorialGroup.nextSession?.start?.format('MMM DD, YYYY')
+                ? tutorialGroup.nextSession?.start?.format('MMM DD, YYYY')
+                : this.translate.instant('artemisApp.courseOverview.sidebar.noUpcomingSession'),
             subtitleRight: this.getUtilization(tutorialGroup),
         };
         return tutorialGroupCardItem;
@@ -118,9 +124,9 @@ export class CourseOverviewService {
     getUtilization(tutorialGroup: TutorialGroup): string {
         if (tutorialGroup.capacity && tutorialGroup.averageAttendance) {
             const utilization = Math.round((tutorialGroup.averageAttendance / tutorialGroup.capacity) * 100);
-            return 'Utilization: ' + utilization + '%';
+            return this.translate.instant('artemisApp.entities.tutorialGroup.utilization') + ': ' + utilization + '%';
         } else {
-            return tutorialGroup?.averageAttendance ? 'Ø Attendance: ' + tutorialGroup.averageAttendance : '';
+            return tutorialGroup?.averageAttendance ? 'Ø ' + this.translate.instant('artemisApp.entities.tutorialGroup.attendance') + ': ' + tutorialGroup.averageAttendance : '';
         }
     }
 
@@ -128,7 +134,7 @@ export class CourseOverviewService {
         const exerciseCardItem: SidebarCardElement = {
             title: exercise.title ?? '',
             id: exercise.id ?? '',
-            subtitleLeft: exercise.dueDate?.format('MMM DD, YYYY') ?? 'No due date',
+            subtitleLeft: exercise.dueDate?.format('MMM DD, YYYY') ?? this.translate.instant('artemisApp.courseOverview.sidebar.noDueDate'),
             type: exercise.type,
             icon: getIcon(exercise.type),
             difficulty: exercise.difficulty,
