@@ -28,6 +28,8 @@ import { ConfirmEntityNameComponent } from 'app/shared/confirm-entity-name/confi
 import { DetailOverviewNavigationBarComponent } from 'app/shared/detail-overview-navigation-bar/detail-overview-navigation-bar.component';
 import { ScienceDirective } from 'app/shared/science/science.directive';
 import { SearchFilterComponent } from './search-filter/search-filter.component';
+import { InformationBoxComponent } from './information-box/information-box.component';
+import { DifficultyLevelComponent } from './difficulty-level/difficulty-level.component';
 
 @NgModule({
     imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule, RouterModule],
@@ -57,6 +59,8 @@ import { SearchFilterComponent } from './search-filter/search-filter.component';
         StickyPopoverDirective,
         ScienceDirective,
         SearchFilterComponent,
+        InformationBoxComponent,
+        DifficultyLevelComponent,
     ],
     exports: [
         ArtemisSharedLibsModule,
@@ -88,6 +92,8 @@ import { SearchFilterComponent } from './search-filter/search-filter.component';
         StickyPopoverDirective,
         ScienceDirective,
         SearchFilterComponent,
+        InformationBoxComponent,
+        DifficultyLevelComponent,
     ],
 })
 export class ArtemisSharedModule {}
