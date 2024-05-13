@@ -1,5 +1,5 @@
 <div class="row justify-content-center m-4 gap-4">
-    @if (hasMetrics) {
+    @if (!isLoadingMetrics && hasExercises) {
         @if (points > 0 || maxPoints > 0) {
             <div class="d-sm-flex gap-3 align-items-baseline">
                 <h4>
@@ -12,12 +12,8 @@
                 </div>
             </div>
         }
-        @if (exercisePerformance !== undefined) {
-            <jhi-course-exercise-performance [exercisePerformance]="exercisePerformance" />
-        }
-        @if (exerciseLateness !== undefined) {
-            <jhi-course-exercise-lateness [exerciseLateness]="exerciseLateness" />
-        }
+        <jhi-course-exercise-performance [exercisePerformance]="exercisePerformance || []" />
+        <jhi-course-exercise-lateness [exerciseLateness]="exerciseLateness || []" />
     } @else {
         <div>
             {{ 'artemisApp.courseStudentDashboard.noMetrics' | artemisTranslate }}

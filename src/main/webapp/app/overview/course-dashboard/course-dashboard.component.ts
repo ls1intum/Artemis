@@ -26,6 +26,8 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     maxPoints: number = 0;
     isLoadingMetrics = false;
     isLoadingCompetencies = false;
+
+    hasExercises = false;
     exerciseLateness?: ExerciseLateness[];
     exercisePerformance?: ExercisePerformance[];
 
@@ -102,6 +104,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
                         .sort((a, b) => new Date(a.due).getTime() - new Date(b.start).getTime())
                         .map((exercise) => exercise.id);
 
+                    this.hasExercises = sortedExerciseIds.length > 0;
                     this.setOverallPerformance(exerciseMetrics);
                     this.setExercisePerformance(sortedExerciseIds, exerciseMetrics);
                     this.setExerciseLateness(sortedExerciseIds, exerciseMetrics);
@@ -113,14 +116,6 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
                 this.isLoadingMetrics = false;
             },
         });
-    }
-
-    /**
-     * This getter checks if there are metrics available for the course dashboard.
-     * Used to determine if the metrics should be displayed.
-     */
-    get hasMetrics(): boolean {
-        return (this.exercisePerformance !== undefined && this.exercisePerformance.length > 0) || (this.exerciseLateness !== undefined && this.exerciseLateness.length > 0);
     }
 
     /**
@@ -150,7 +145,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
                 title: exerciseInformation.title,
                 shortName: exerciseInformation.shortName,
                 score: exerciseMetrics.score?.[exerciseId],
-                averageScore: exerciseMetrics.averageScore[exerciseId],
+                averageScore: exerciseMetrics.averageScore?.[exerciseId],
             };
         });
     }
@@ -169,7 +164,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
                 title: exerciseInformation.title,
                 shortName: exerciseInformation.shortName,
                 relativeLatestSubmission: exerciseMetrics.latestSubmission?.[exerciseId],
-                relativeAverageLatestSubmission: exerciseMetrics.averageLatestSubmission[exerciseId],
+                relativeAverageLatestSubmission: exerciseMetrics.averageLatestSubmission?.[exerciseId],
             };
         });
     }

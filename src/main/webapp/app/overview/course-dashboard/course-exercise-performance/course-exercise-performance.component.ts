@@ -10,7 +10,7 @@ export interface ExercisePerformance {
     title: string;
     shortName?: string;
     score?: number;
-    averageScore: number;
+    averageScore?: number;
 }
 
 @Component({
@@ -81,7 +81,7 @@ export class CourseExercisePerformanceComponent implements OnInit, OnChanges {
                 series: this.exercisePerformance.map((performance) => {
                     return {
                         name: performance.shortName?.toUpperCase() || performance.title,
-                        value: performance.averageScore,
+                        value: performance.averageScore || 0,
                         extra: {
                             title: performance.title,
                         },

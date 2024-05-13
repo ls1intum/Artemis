@@ -10,7 +10,7 @@ export interface ExerciseLateness {
     title: string;
     shortName?: string;
     relativeLatestSubmission?: number;
-    relativeAverageLatestSubmission: number;
+    relativeAverageLatestSubmission?: number;
 }
 
 @Component({
@@ -81,7 +81,7 @@ export class CourseExerciseLatenessComponent implements OnInit, OnChanges {
                 series: this.exerciseLateness.map((lateness) => {
                     return {
                         name: lateness.shortName?.toUpperCase() || lateness.title,
-                        value: lateness.relativeAverageLatestSubmission,
+                        value: lateness.relativeAverageLatestSubmission || 100,
                         extra: {
                             title: lateness.title,
                         },
