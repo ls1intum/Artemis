@@ -5,6 +5,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { NavigationStart, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { ButtonType } from 'app/shared/components/button.component';
+import { IrisTutorChatService } from 'app/iris/iris-tutor-chat.service';
 
 @Component({
     selector: 'jhi-chatbot-widget',
@@ -27,6 +28,7 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
         @Inject(DOCUMENT) private document: Document,
         private router: Router,
         private dialog: MatDialog,
+        public irisChatService: IrisTutorChatService,
     ) {
         this.navigationSubscription = this.router.events.subscribe((event) => {
             if (event instanceof NavigationStart) {
