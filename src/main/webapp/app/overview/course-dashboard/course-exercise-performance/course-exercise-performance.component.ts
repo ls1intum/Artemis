@@ -50,7 +50,17 @@ export class CourseExercisePerformanceComponent implements OnInit, OnChanges {
     }
 
     /**
-     * Sets up the chart for given exercise performances
+     * This getter checks if there is data available for the chart.
+     * It checks if `ngxData` is defined, if it has at least one entry, and if at least one of those entries has a non-empty `series` array.
+     * @returns {boolean} - Returns true if data is available for the chart, false otherwise.
+     */
+    get isDataAvailable(): boolean {
+        return this.ngxData && this.ngxData.length > 0 && this.ngxData.some((data) => data.series.length > 0);
+    }
+
+    /**
+     * This method is responsible for setting up the chart that displays the performance of the exercises.
+     * It translates the labels for the chart, prepares the data for the chart, and calculates the maximum value for the y-axis.
      */
     private setupChart(): void {
         this.yourScoreLabel = this.translateService.instant('artemisApp.courseStudentDashboard.exercisePerformance.yourScoreLabel');

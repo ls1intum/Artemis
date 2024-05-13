@@ -6,6 +6,7 @@
             },
             "exercisePerformance": {
                 "title": "Übungsleistungen",
+                "noData": "Es sind noch keine Ergebnisse für dich in diesem Kurs verfügbar.",
                 "yourScoreLabel": "Dein Ergebnis",
                 "averageScoreLabel": "Durchschnittsergebnis",
                 "xAxisLabel": "Aufgaben",
@@ -13,6 +14,7 @@
             },
             "exerciseLateness": {
                 "title": "Übungsverspätungen",
+                "noData": "Du hast noch keine Aufgaben in diesem Kurs eingereicht.",
                 "yourLatenessLabel": "Deine Verspätung",
                 "averageLatenessLabel": "Durchschnittliche Verspätung",
                 "xAxisLabel": "Aufgaben",

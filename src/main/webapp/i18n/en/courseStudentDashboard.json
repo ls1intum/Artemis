@@ -6,6 +6,7 @@
             },
             "exercisePerformance": {
                 "title": "Exercise Performance",
+                "noData": "No scores are available for you in this course yet.",
                 "yourScoreLabel": "Your score",
                 "averageScoreLabel": "Average score",
                 "xAxisLabel": "Exercises",
@@ -13,6 +14,7 @@
             },
             "exerciseLateness": {
                 "title": "Exercise Lateness",
+                "noData": "You have not submitted any exercises in this course yet.",
                 "yourLatenessLabel": "Your lateness",
                 "averageLatenessLabel": "Average lateness",
                 "xAxisLabel": "Exercises",
