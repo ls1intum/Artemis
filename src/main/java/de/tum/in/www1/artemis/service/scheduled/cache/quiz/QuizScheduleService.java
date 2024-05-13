@@ -1,9 +1,11 @@
 package de.tum.in.www1.artemis.service.scheduled.cache.quiz;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.in.www1.artemis.config.StartupDelayConfig.QUIZ_EXERCISE_SCHEDULE_DELAY_SEC;
 import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.HashSet;
@@ -23,10 +25,12 @@ import org.hibernate.Hibernate;
 import org.hibernate.exception.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
 import com.hazelcast.config.Config;
@@ -58,10 +62,10 @@ import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.QuizMessagingService;
-import de.tum.in.www1.artemis.service.QuizStatisticService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiNewResultService;
+import de.tum.in.www1.artemis.service.quiz.QuizMessagingService;
+import de.tum.in.www1.artemis.service.quiz.QuizStatisticService;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -97,10 +101,14 @@ public class QuizScheduleService {
 
     private final TeamRepository teamRepository;
 
+    private final TaskScheduler scheduler;
+
+    private static final int SCHEDULE_RATE_PERIOD_SEC = 5;
+
     public QuizScheduleService(WebsocketMessagingService websocketMessagingService, StudentParticipationRepository studentParticipationRepository, UserRepository userRepository,
-            QuizSubmissionRepository quizSubmissionRepository, HazelcastInstance hazelcastInstance, QuizExerciseRepository quizExerciseRepository,
-            QuizMessagingService quizMessagingService, QuizStatisticService quizStatisticService, Optional<LtiNewResultService> ltiNewResultService,
-            TeamRepository teamRepository) {
+            QuizSubmissionRepository quizSubmissionRepository, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, QuizExerciseRepository quizExerciseRepository,
+            QuizMessagingService quizMessagingService, QuizStatisticService quizStatisticService, Optional<LtiNewResultService> ltiNewResultService, TeamRepository teamRepository,
+            @Qualifier("taskScheduler") TaskScheduler scheduler) {
         this.websocketMessagingService = websocketMessagingService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.userRepository = userRepository;
@@ -111,6 +119,7 @@ public class QuizScheduleService {
         this.ltiNewResultService = ltiNewResultService;
         this.hazelcastInstance = hazelcastInstance;
         this.teamRepository = teamRepository;
+        this.scheduler = scheduler;
     }
 
     @PostConstruct
@@ -135,7 +144,7 @@ public class QuizScheduleService {
     public void applicationReady() {
         // activate Quiz Schedule Service
         SecurityUtils.setAuthorizationObject();
-        startSchedule(5 * 1000);                          // every 5 seconds
+        scheduler.schedule(this::startSchedule, Instant.now().plusSeconds(QUIZ_EXERCISE_SCHEDULE_DELAY_SEC));
     }
 
     /**
@@ -240,7 +249,7 @@ public class QuizScheduleService {
      * @param quizExercise should include questions and statistics without Hibernate proxies!
      */
     public void updateQuizExercise(@NotNull QuizExercise quizExercise) {
-        log.info("updateQuizExercise invoked for {}", quizExercise.getId());
+        log.debug("updateQuizExercise invoked for {}", quizExercise.getId());
         quizCache.updateQuizExercise(quizExercise);
     }
 
@@ -257,14 +266,13 @@ public class QuizScheduleService {
     /**
      * Start scheduler of quiz schedule service
      *
-     * @param delayInMillis gap for which the QuizScheduleService should run repeatedly
      */
-    public void startSchedule(long delayInMillis) {
+    private void startSchedule() {
         if (scheduledProcessQuizSubmissions.isNull()) {
             try {
-                var scheduledFuture = threadPoolTaskScheduler.scheduleAtFixedRate(new QuizProcessCacheTask(), 0, delayInMillis, TimeUnit.MILLISECONDS);
+                var scheduledFuture = threadPoolTaskScheduler.scheduleAtFixedRate(new QuizProcessCacheTask(), 0, SCHEDULE_RATE_PERIOD_SEC, TimeUnit.SECONDS);
                 scheduledProcessQuizSubmissions.set(scheduledFuture.getHandler());
-                log.info("QuizScheduleService was started to run repeatedly with {} second delay.", delayInMillis / 1000.0);
+                log.debug("QuizScheduleService was started to run repeatedly with {} second delay.", SCHEDULE_RATE_PERIOD_SEC);
             }
             catch (@SuppressWarnings("unused") DuplicateTaskException e) {
                 log.warn("Quiz process cache task already registered");
@@ -273,7 +281,7 @@ public class QuizScheduleService {
 
             // schedule quiz start for all existing quizzes that are planned to start in the future
             List<QuizExercise> quizExercises = quizExerciseRepository.findAllPlannedToStartInTheFuture();
-            log.info("Found {} quiz exercises with planned start in the future", quizExercises.size());
+            log.debug("Found {} quiz exercises with planned start in the future", quizExercises.size());
             for (QuizExercise quizExercise : quizExercises) {
                 if (quizExercise.isCourseExercise()) {
                     // only schedule quiz exercises in courses, not in exams
@@ -283,7 +291,7 @@ public class QuizScheduleService {
             }
         }
         else {
-            log.info("Cannot start quiz exercise schedule service, it is already RUNNING");
+            log.debug("Cannot start quiz exercise schedule service, it is already RUNNING");
         }
     }
 
@@ -293,17 +301,17 @@ public class QuizScheduleService {
     public void stopSchedule() {
         var savedHandler = scheduledProcessQuizSubmissions.get();
         if (savedHandler != null) {
-            log.info("Try to stop quiz schedule service");
+            log.debug("Try to stop quiz schedule service");
             var scheduledFuture = threadPoolTaskScheduler.getScheduledFuture(savedHandler);
             try {
                 // if the task has been disposed, this will throw a StaleTaskException
                 boolean cancelSuccess = scheduledFuture.cancel(false);
                 scheduledFuture.dispose();
                 scheduledProcessQuizSubmissions.set(null);
-                log.info("Stop Quiz Schedule Service was successful: {}", cancelSuccess);
+                log.debug("Stop Quiz Schedule Service was successful: {}", cancelSuccess);
             }
             catch (@SuppressWarnings("unused") StaleTaskException e) {
-                log.info("Stop Quiz Schedule Service already disposed/cancelled");
+                log.debug("Stop Quiz Schedule Service already disposed/cancelled");
                 // has already been disposed (sadly there is no method to check that)
             }
             for (QuizExerciseCache quizCache : quizCache.getAllCaches()) {
@@ -372,11 +380,11 @@ public class QuizScheduleService {
                 }
                 scheduledFuture.dispose();
                 if (taskNotDone) {
-                    log.info("Stop scheduled quiz start for quiz {} was successful: {}", quizExerciseId, cancelSuccess);
+                    log.debug("Stop scheduled quiz start for quiz {} was successful: {}", quizExerciseId, cancelSuccess);
                 }
             }
             catch (@SuppressWarnings("unused") StaleTaskException e) {
-                log.info("Stop scheduled quiz start for quiz {} already disposed/cancelled", quizExerciseId);
+                log.debug("Stop scheduled quiz start for quiz {} already disposed/cancelled", quizExerciseId);
                 // has already been disposed (sadly there is no method to check that)
             }
         });
@@ -395,7 +403,7 @@ public class QuizScheduleService {
             log.debug("Removed quiz {} start tasks", quizExerciseId);
             return quizExerciseCache;
         });
-        log.info("Sending quiz {} start", quizExerciseId);
+        log.debug("Sending quiz {} start", quizExerciseId);
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
         updateQuizExercise(quizExercise);
         if (quizExercise.getQuizMode() != QuizMode.SYNCHRONIZED) {
@@ -456,7 +464,7 @@ public class QuizScheduleService {
                 QuizExercise quizExercise = quizExerciseRepository.findOne(quizExerciseId);
                 // check if quiz has been deleted
                 if (quizExercise == null) {
-                    log.info("Remove quiz {} from resultHashMap", quizExerciseId);
+                    log.debug("Remove quiz {} from resultHashMap", quizExerciseId);
                     quizCache.removeAndClear(quizExerciseId);
                     continue;
                 }
@@ -507,7 +515,7 @@ public class QuizScheduleService {
                         hasNewParticipations = true;
                         hasNewResults = true;
 
-                        log.info("Saved {} submissions to database in {} in quiz {}", numberOfSubmittedSubmissions, formatDurationFrom(start), quizExercise.getTitle());
+                        log.debug("Saved {} submissions to database in {} in quiz {}", numberOfSubmittedSubmissions, formatDurationFrom(start), quizExercise.getTitle());
                     }
                 }
 
@@ -533,7 +541,7 @@ public class QuizScheduleService {
                         }
                     });
                     if (!finishedParticipations.isEmpty()) {
-                        log.info("Sent out {} participations in {} for quiz {}", finishedParticipations.size(), formatDurationFrom(start), quizExercise.getTitle());
+                        log.debug("Sent out {} participations in {} for quiz {}", finishedParticipations.size(), formatDurationFrom(start), quizExercise.getTitle());
                     }
                 }
 
@@ -547,7 +555,7 @@ public class QuizScheduleService {
                         Set<Result> newResultsForQuiz = Set.copyOf(cache.getResults().values());
                         // Update the statistics
                         quizStatisticService.updateStatistics(newResultsForQuiz, quizExercise);
-                        log.info("Updated statistics with {} new results in {} for quiz {}", newResultsForQuiz.size(), formatDurationFrom(start), quizExercise.getTitle());
+                        log.debug("Updated statistics with {} new results in {} for quiz {}", newResultsForQuiz.size(), formatDurationFrom(start), quizExercise.getTitle());
                         // Remove only processed results
                         for (Result result : newResultsForQuiz) {
                             cache.getResults().remove(result.getId());
@@ -694,7 +702,7 @@ public class QuizScheduleService {
                 // this automatically saves the results due to CascadeType.ALL
                 quizSubmission = quizSubmissionRepository.save(quizSubmission);
 
-                log.info("Successfully saved submission in quiz {} for user {}", quizExercise.getTitle(), username);
+                log.debug("Successfully saved submission in quiz {} for user {}", quizExercise.getTitle(), username);
 
                 // reconnect entities after save
                 participation.setSubmissions(Set.of(quizSubmission));
