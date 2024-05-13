@@ -1,16 +1,16 @@
 <div>
     <div class="d-flex flex-wrap justify-content-between align-items-baseline gap-2">
-        <h4>{{ 'artemisApp.courseStudentDashboard.exerciseLateness.title' | artemisTranslate }}</h4>
+        <h4 jhiTranslate="artemisApp.courseStudentDashboard.exerciseLateness.title"></h4>
         @if (isDataAvailable) {
             <!-- Legend-->
             <div class="d-flex gap-3">
                 <div class="d-flex align-items-center gap-1">
                     <span class="tooltip-label-color" [style.background-color]="ngxColor.domain[0]"></span>
-                    {{ 'artemisApp.courseStudentDashboard.exerciseLateness.yourLatenessLabel' | artemisTranslate }}
+                    <span jhiTranslate="artemisApp.courseStudentDashboard.exerciseLateness.yourLatenessLabel"></span>
                 </div>
                 <div class="d-flex align-items-center gap-1">
                     <span class="tooltip-label-color" [style.background-color]="ngxColor.domain[1]"></span>
-                    {{ 'artemisApp.courseStudentDashboard.exerciseLateness.averageLatenessLabel' | artemisTranslate }}
+                    <span jhiTranslate="artemisApp.courseStudentDashboard.exerciseLateness.averageLatenessLabel"></span>
                 </div>
             </div>
         }
@@ -54,8 +54,6 @@
             </ngx-charts-line-chart>
         </div>
     } @else {
-        <div class="mt-2">
-            <span>{{ 'artemisApp.courseStudentDashboard.exerciseLateness.noData' | artemisTranslate }}</span>
-        </div>
+        <div class="mt-2" jhiTranslate="artemisApp.courseStudentDashboard.exerciseLateness.noData"></div>
     }
 </div>
