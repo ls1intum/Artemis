@@ -635,25 +635,21 @@ public class StudentExamService {
      * Method to set up new participations for a StudentExam of a test exam.
      *
      * @param studentExam the studentExam for which the new participations should be set up
-     * @param startedDate the Date to which the InitializationDate should be set, in order to link StudentExam <-> participation
      */
-    public void setUpTestExamExerciseParticipationsAndSubmissions(StudentExam studentExam, ZonedDateTime startedDate) {
+    public void setUpTestExamExerciseParticipationsAndSubmissions(StudentExam studentExam) {
         List<StudentParticipation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
-        setUpExerciseParticipationsAndSubmissionsWithInitializationDate(studentExam, generatedParticipations, startedDate);
+        setUpExerciseParticipationsAndSubmissions(studentExam, generatedParticipations);
         // TODO: Michael Allgaier: schedule a lock operation for all involved student repositories of this student exam (test exam) at the end of the individual working time
         studentParticipationRepository.saveAll(generatedParticipations);
     }
 
     /**
-     * Helper-Method for the Set up process of an StudentExam with a given startedDate. The method forces a new participation for every exercise,
-     * unlocks the Repository in case the StudentExam starts in less than 5mins and returns the generated participations
+     * Sets up the participations and submissions for all the exercises of the student exam.
      *
-     * @param studentExam             the studentExam for which the new participations should be set up
-     * @param generatedParticipations the list where the newly generated participations should be added
-     * @param startedDate             the Date to which the InitializationDate should be set, in order to link StudentExam <-> participation
+     * @param studentExam             The studentExam for which the participations and submissions should be created
+     * @param generatedParticipations List of generated participations to track how many participations have been generated
      */
-    private void setUpExerciseParticipationsAndSubmissionsWithInitializationDate(StudentExam studentExam, List<StudentParticipation> generatedParticipations,
-            ZonedDateTime startedDate) {
+    public void setUpExerciseParticipationsAndSubmissions(StudentExam studentExam, List<StudentParticipation> generatedParticipations) {
         User student = studentExam.getUser();
 
         for (Exercise exercise : studentExam.getExercises()) {
@@ -674,14 +670,8 @@ public class StudentExamService {
                         programmingExercise.setTemplateParticipation(programmingExerciseReloaded.getTemplateParticipation());
                     }
                     // this will also create initial (empty) submissions for quiz, text, modeling and file upload
-                    // If the startedDate is provided, the InitializationDate is set to the startedDate
-                    StudentParticipation participation;
-                    if (startedDate != null) {
-                        participation = participationService.startExerciseWithInitializationDate(exercise, student, true, startedDate);
-                    }
-                    else {
-                        participation = participationService.startExercise(exercise, student, true);
-                    }
+                    StudentParticipation participation = participationService.startExercise(exercise, student, true);
+
                     generatedParticipations.add(participation);
                     // Unlock repository and participation only if the real exam starts within 5 minutes or if we have a test exam or test run
                     if (participation instanceof ProgrammingExerciseStudentParticipation programmingParticipation && exercise instanceof ProgrammingExercise programmingExercise) {
@@ -784,16 +774,6 @@ public class StudentExamService {
     public Optional<ExamExerciseStartPreparationStatus> getExerciseStartStatusOfExam(Long examId) {
         return Optional.ofNullable(cacheManager.getCache(EXAM_EXERCISE_START_STATUS)).map(cache -> cache.get(examId))
                 .map(wrapper -> (ExamExerciseStartPreparationStatus) wrapper.get());
-    }
-
-    /**
-     * Sets up the participations and submissions for all the exercises of the student exam.
-     *
-     * @param studentExam             The studentExam for which the participations and submissions should be created
-     * @param generatedParticipations List of generated participations to track how many participations have been generated
-     */
-    public void setUpExerciseParticipationsAndSubmissions(StudentExam studentExam, List<StudentParticipation> generatedParticipations) {
-        setUpExerciseParticipationsAndSubmissionsWithInitializationDate(studentExam, generatedParticipations, null);
     }
 
     /**
