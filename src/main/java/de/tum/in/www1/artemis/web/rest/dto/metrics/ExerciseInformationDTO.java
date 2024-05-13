@@ -17,14 +17,15 @@ import de.tum.in.www1.artemis.domain.Exercise;
  * @param type      the type of the exercise
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ExerciseInformationDTO(long id, String shortName, String title, ZonedDateTime start, ZonedDateTime due, Class<? extends Exercise> type) {
+public record ExerciseInformationDTO(long id, String shortName, String title, ZonedDateTime start, ZonedDateTime due, Double maxPoints, Class<? extends Exercise> type) {
 
     public static <E extends Exercise> ExerciseInformationDTO of(E exercise) {
         var startDate = exercise.getStartDate();
         if (startDate == null) {
             startDate = exercise.getReleaseDate();
         }
-        return new ExerciseInformationDTO(exercise.getId(), exercise.getShortName(), exercise.getTitle(), startDate, exercise.getDueDate(), exercise.getClass());
+        return new ExerciseInformationDTO(exercise.getId(), exercise.getShortName(), exercise.getTitle(), startDate, exercise.getDueDate(), exercise.getMaxPoints(),
+                exercise.getClass());
     }
 
     @Override
@@ -36,7 +37,7 @@ public record ExerciseInformationDTO(long id, String shortName, String title, Zo
         if (other instanceof ExerciseInformationDTO otherDTO) {
             // Compare all fields for equality, for dates the isEqual method is used to compare the date and time
             return id == otherDTO.id && shortName.equals(otherDTO.shortName) && title.equals(otherDTO.title) && start.isEqual(otherDTO.start) && due.isEqual(otherDTO.due)
-                    && type.equals(otherDTO.type);
+                    && maxPoints.equals(otherDTO.maxPoints) && type.equals(otherDTO.type);
         }
 
         return false;
