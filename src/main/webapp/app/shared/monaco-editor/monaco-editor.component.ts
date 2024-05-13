@@ -45,6 +45,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             readOnly: this._readOnly,
             lineNumbersMinChars: 4,
             scrollBeyondLastLine: false,
+            wordWrap: 'on', // TODO make this a setting
         });
         renderer.appendChild(elementRef.nativeElement, this.monacoEditorContainerElement);
     }
