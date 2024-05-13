@@ -91,13 +91,25 @@ describe('BuildAgentsService', () => {
     it('should return build agents', () => {
         const expectedResponse = [element]; // Expecting an array
 
-        service.getBuildAgents().subscribe((data) => {
+        service.getBuildAgentSummary().subscribe((data) => {
             expect(data).toEqual(expectedResponse); // Check if the response matches expected
         });
 
         const req = httpMock.expectOne(`${service.adminResourceUrl}/build-agents`);
         expect(req.request.method).toBe('GET');
         req.flush(expectedResponse); // Flush an array of elements
+    });
+
+    it('should return build agent details', () => {
+        const expectedResponse = element;
+
+        service.getBuildAgentDetails('buildAgent1').subscribe((data) => {
+            expect(data).toEqual(expectedResponse);
+        });
+
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/build-agent?agentName=buildAgent1`);
+        expect(req.request.method).toBe('GET');
+        req.flush(expectedResponse);
     });
 
     afterEach(() => {
