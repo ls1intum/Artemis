@@ -68,8 +68,8 @@ export class CourseOverviewService {
         }
 
         const now = dayjs();
-        const isStartDateWithinLastWeek = startDate.isAfter(now.subtract(1, 'week'));
-        const isDateInThePast = endDate ? endDate.isBefore(now) : startDate.isBefore(now) && !isStartDateWithinLastWeek;
+        const isStartDateWithinLastWeek = startDate.isBetween(now.subtract(1, 'week'), now);
+        const isDateInThePast = endDate ? endDate.isBefore(now) : startDate.isBefore(now.subtract(1, 'week'));
 
         if (isDateInThePast) {
             return 'past';
