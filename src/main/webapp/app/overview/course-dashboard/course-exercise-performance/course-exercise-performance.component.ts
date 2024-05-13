@@ -9,7 +9,7 @@ export interface ExercisePerformance {
     exerciseId: number;
     title: string;
     shortName?: string;
-    score: number;
+    score?: number;
     averageScore: number;
 }
 
@@ -72,9 +72,10 @@ export class CourseExercisePerformanceComponent implements OnInit, OnChanges {
                 series: this.exercisePerformance.map((performance) => {
                     return {
                         name: performance.shortName?.toUpperCase() || performance.title,
-                        value: performance.score,
+                        value: performance.score || 0, // If the score is undefined, set it to 0
                         extra: {
                             title: performance.title,
+                            hasScore: performance.score !== undefined,
                         },
                     };
                 }),
@@ -93,7 +94,7 @@ export class CourseExercisePerformanceComponent implements OnInit, OnChanges {
             },
         ];
 
-        const maxScore = Math.max(...this.exercisePerformance.flatMap((performance) => [performance.score, performance.averageScore]));
+        const maxScore = Math.max(...this.ngxData.flatMap((data) => data.series.map((series) => series.value)));
         this.yScaleMax = Math.max(100, Math.ceil(maxScore / 10) * 10);
     }
 }

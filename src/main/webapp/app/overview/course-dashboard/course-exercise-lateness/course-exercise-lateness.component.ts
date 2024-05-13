@@ -9,7 +9,7 @@ export interface ExerciseLateness {
     exerciseId: number;
     title: string;
     shortName?: string;
-    relativeLatestSubmission: number;
+    relativeLatestSubmission?: number;
     relativeAverageLatestSubmission: number;
 }
 
@@ -25,7 +25,7 @@ export class CourseExerciseLatenessComponent implements OnInit, OnChanges {
     averageLatenessLabel: string;
     ngxData: NgxChartsMultiSeriesDataEntry[];
     ngxColor: Color = {
-        name: 'Performance in Exercises',
+        name: 'Lateness in Exercises',
         selectable: true,
         group: ScaleType.Ordinal,
         domain: [GraphColors.BLUE, GraphColors.YELLOW],
@@ -72,9 +72,10 @@ export class CourseExerciseLatenessComponent implements OnInit, OnChanges {
                 series: this.exerciseLateness.map((lateness) => {
                     return {
                         name: lateness.shortName?.toUpperCase() || lateness.title,
-                        value: lateness.relativeLatestSubmission,
+                        value: lateness.relativeLatestSubmission || 100, // If there is no data, we assume the submission is late
                         extra: {
                             title: lateness.title,
+                            hasSubmission: lateness.relativeLatestSubmission !== undefined,
                         },
                     };
                 }),
@@ -93,7 +94,7 @@ export class CourseExerciseLatenessComponent implements OnInit, OnChanges {
             },
         ];
 
-        const maxRelativeTime = Math.max(...this.exerciseLateness.flatMap((lateness) => [lateness.relativeLatestSubmission, lateness.relativeAverageLatestSubmission]));
+        const maxRelativeTime = Math.max(...this.ngxData.flatMap((data) => data.series.map((series) => series.value)));
         this.yScaleMax = Math.max(100, Math.ceil(maxRelativeTime / 10) * 10);
     }
 

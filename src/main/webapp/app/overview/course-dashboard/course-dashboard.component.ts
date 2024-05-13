@@ -133,7 +133,6 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
                 averageScore: exerciseMetrics.averageScore[exerciseId],
             };
         });
-        console.log(this.exercisePerformance);
     }
 
     private setExerciseLateness(sortedExerciseIds: number[], exerciseMetrics: ExerciseMetrics) {
@@ -147,7 +146,6 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
                 relativeAverageLatestSubmission: exerciseMetrics.averageLatestSubmission[exerciseId],
             };
         });
-        console.log(this.exerciseLateness);
     }
 
     private setCourse(course?: Course) {
