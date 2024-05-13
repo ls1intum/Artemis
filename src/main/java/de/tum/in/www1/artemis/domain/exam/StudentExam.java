@@ -31,6 +31,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.domain.AbstractAuditingEntity;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
 
 @Entity
@@ -83,6 +84,12 @@ public class StudentExam extends AbstractAuditingEntity {
     @ManyToMany
     @JoinTable(name = "student_exam_quiz_question", joinColumns = @JoinColumn(name = "student_exam_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "quiz_question_id", referencedColumnName = "id"))
     private List<QuizQuestion> quizQuestions = new ArrayList<>();
+
+    @ManyToMany
+    @JoinTable(name = "student_exam_participation", joinColumns = @JoinColumn(name = "student_exam_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "participation_id", referencedColumnName = "id"))
+    @OrderColumn(name = "participation_order")
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    private List<StudentParticipation> studentParticipations = new ArrayList<>();
 
     public Boolean isSubmitted() {
         return submitted;
@@ -197,6 +204,14 @@ public class StudentExam extends AbstractAuditingEntity {
 
     public void setQuizQuestions(List<QuizQuestion> quizQuestions) {
         this.quizQuestions = quizQuestions;
+    }
+
+    public List<StudentParticipation> getStudentParticipations() {
+        return studentParticipations;
+    }
+
+    public void setStudentParticipations(List<StudentParticipation> studentParticipations) {
+        this.studentParticipations = studentParticipations;
     }
 
     /**
