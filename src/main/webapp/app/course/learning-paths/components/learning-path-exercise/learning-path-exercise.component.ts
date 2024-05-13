@@ -1,4 +1,4 @@
-import { Component, InputSignal, Signal, effect, input, viewChild } from '@angular/core';
+import { Component, InputSignal, ViewContainerRef, effect, inject, input } from '@angular/core';
 import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/course-exercise-details.component';
 import { CourseExerciseDetailsModule } from 'app/overview/exercise-details/course-exercise-details.module';
 
@@ -13,14 +13,16 @@ export class LearningPathExerciseComponent {
     public readonly courseId: InputSignal<number> = input.required<number>();
     public readonly exerciseId: InputSignal<number> = input.required<number>();
 
-    private readonly exercise: Signal<CourseExerciseDetailsComponent> = viewChild.required(CourseExerciseDetailsComponent);
+    private readonly viewContainerRef = inject(ViewContainerRef);
+
+    // private readonly exercise = viewChild(CourseExerciseDetailsComponent);
 
     constructor() {
         effect(() => {
-            this.exercise().courseId = this.courseId();
-            this.exercise().exerciseId = this.exerciseId();
-            this.exercise().learningPathMode = true;
-            this.exercise().loadExercise();
+            const exerciseComponent = this.viewContainerRef.createComponent(CourseExerciseDetailsComponent);
+            exerciseComponent.instance.courseId = this.courseId();
+            exerciseComponent.instance.exerciseId = this.exerciseId();
+            exerciseComponent.instance.learningPathMode = true;
         });
     }
 }
