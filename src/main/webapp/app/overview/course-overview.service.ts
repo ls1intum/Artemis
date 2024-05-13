@@ -109,11 +109,21 @@ export class CourseOverviewService {
         const tutorialGroupCardItem: SidebarCardElement = {
             title: tutorialGroup.title ?? '',
             id: tutorialGroup.id ?? '',
-            subtitleLeft: tutorialGroup.language,
-            subtitleRight: tutorialGroup.nextSession?.start?.format('MMM DD, YYYY') ? 'Next: ' + tutorialGroup.nextSession?.start?.format('MMM DD, YYYY') : 'No upcoming session',
+            subtitleLeft: tutorialGroup.nextSession?.start?.format('MMM DD, YYYY') ? 'Next: ' + tutorialGroup.nextSession?.start?.format('MMM DD, YYYY') : 'No upcoming session',
+            subtitleRight: this.getUtilization(tutorialGroup),
         };
         return tutorialGroupCardItem;
     }
+
+    getUtilization(tutorialGroup: TutorialGroup): string {
+        if (tutorialGroup.capacity && tutorialGroup.averageAttendance) {
+            const utilization = Math.round((tutorialGroup.averageAttendance / tutorialGroup.capacity) * 100);
+            return 'Utilization: ' + utilization + '%';
+        } else {
+            return tutorialGroup?.averageAttendance ? 'Ø Attendance: ' + tutorialGroup.averageAttendance : '';
+        }
+    }
+
     mapExerciseToSidebarCardElement(exercise: Exercise): SidebarCardElement {
         const exerciseCardItem: SidebarCardElement = {
             title: exercise.title ?? '',
