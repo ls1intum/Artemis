@@ -1,6 +1,6 @@
 import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { ScaleType } from '@swimlane/ngx-charts';
+import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { GraphColors } from 'app/entities/statistics.model';
 import { NgxChartsMultiSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { round } from 'app/shared/util/utils';
@@ -13,6 +13,9 @@ export interface ExerciseLateness {
     relativeAverageLatestSubmission?: number;
 }
 
+const YOUR_GRAPH_COLOR = GraphColors.BLUE;
+const AVERAGE_GRAPH_COLOR = GraphColors.YELLOW;
+
 @Component({
     selector: 'jhi-course-exercise-lateness',
     templateUrl: './course-exercise-lateness.component.html',
@@ -24,11 +27,12 @@ export class CourseExerciseLatenessComponent implements OnInit, OnChanges {
     yourLatenessLabel: string;
     averageLatenessLabel: string;
     ngxData: NgxChartsMultiSeriesDataEntry[];
-    ngxColor = {
+
+    ngxColor: Color = {
         name: 'Lateness in Exercises',
         selectable: true,
         group: ScaleType.Ordinal,
-        domain: [GraphColors.BLUE, GraphColors.YELLOW] as const,
+        domain: [YOUR_GRAPH_COLOR, AVERAGE_GRAPH_COLOR],
     };
     yScaleMax = 100;
 
@@ -96,4 +100,6 @@ export class CourseExerciseLatenessComponent implements OnInit, OnChanges {
 
     protected readonly round = round;
     protected readonly Math = Math;
+    protected readonly YOUR_GRAPH_COLOR = YOUR_GRAPH_COLOR;
+    protected readonly AVERAGE_GRAPH_COLOR = AVERAGE_GRAPH_COLOR;
 }
