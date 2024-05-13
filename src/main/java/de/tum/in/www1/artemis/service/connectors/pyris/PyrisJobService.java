@@ -5,6 +5,7 @@ import java.security.SecureRandom;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -39,7 +40,7 @@ public class PyrisJobService {
     @Value("${artemis.iris.jobs.timeout:300}")
     private int jobTimeout; // in seconds
 
-    public PyrisJobService(HazelcastInstance hazelcastInstance) {
+    public PyrisJobService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
         this.hazelcastInstance = hazelcastInstance;
     }
 
