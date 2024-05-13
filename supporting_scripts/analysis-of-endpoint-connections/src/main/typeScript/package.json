@@ -1,5 +1,5 @@
 {
-  "type": "module",
+  "type": "commonjs",
   "name": "analysis-of-endpoint-connections",
   "version": "1.0.0",
   "description": "Parses Typescript files and generates a report of all the endpoint connections in the file.",
