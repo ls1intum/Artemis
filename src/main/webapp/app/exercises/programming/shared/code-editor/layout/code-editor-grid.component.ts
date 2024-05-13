@@ -23,6 +23,7 @@ export class CodeEditorGridComponent implements AfterViewInit {
 
     @Input() isTutorAssessment = false;
     @Output() onResize = new EventEmitter<ResizeType>();
+    @Output() onResizeMainHeightMove = new EventEmitter<number>();
 
     fileBrowserIsCollapsed = false;
     rightPanelIsCollapsed = false;
@@ -57,6 +58,7 @@ export class CodeEditorGridComponent implements AfterViewInit {
      */
     ngAfterViewInit(): void {
         this.resizableMinHeightMain = window.screen.height / 3;
+        const onResizeMainHeightMove = this.onResizeMainHeightMove;
         this.interactResizableMain = interact('.editor-main')
             .resizable({
                 // Enable resize from bottom edge; triggered by class rg-bottom
@@ -81,6 +83,7 @@ export class CodeEditorGridComponent implements AfterViewInit {
                 const target = event.target;
                 // Update element height
                 target.style.height = event.rect.height + 'px';
+                onResizeMainHeightMove.emit(event.rect.height);
             });
 
         this.resizableMinWidthLeft = window.screen.width / 7;

@@ -53,4 +53,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             this.editableInstructions.markdownEditor.aceEditorContainer.getEditor().resize();
         }
     }
+
+    onResizeHeight(height: number) {
+        this.editableInstructions.resizeHeight(height);
+    }
 }

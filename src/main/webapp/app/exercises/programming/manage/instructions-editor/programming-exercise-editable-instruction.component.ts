@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, EventEmitter, HostListener, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, HostListener, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { Observable, Subject, Subscription, of, throwError } from 'rxjs';
 import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
@@ -45,6 +45,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
 
     @ViewChild(MarkdownEditorComponent, { static: false }) markdownEditor?: MarkdownEditorComponent;
     @ViewChild(MarkdownEditorMonacoComponent, { static: true }) markdownEditorMonaco?: MarkdownEditorMonacoComponent;
+    @ViewChild('statusFooter', { static: false }) statusFooter: ElementRef<HTMLDivElement>;
+
+    editorHeight: number | undefined;
 
     @Input() showStatus = true;
     // If the programming exercise is being created, some features have to be disabled (saving the problemStatement & querying test cases).
@@ -265,4 +268,11 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
 
         return annotations;
     };
+
+    resizeHeight(height: number) {
+        const footerHeight = this.statusFooter.nativeElement.getBoundingClientRect().height;
+        this.editorHeight = height - footerHeight - 42; // TODO: 42 is the height of the header, should be calculated dynamically
+        this.statusFooter.nativeElement.style.height = footerHeight + 'px';
+        this.markdownEditorMonaco?.monacoEditor.layoutWithFixedSize(0, this.editorHeight);
+    }
 }

@@ -24,6 +24,7 @@
         [allowHiddenFiles]="true"
         [useMonacoEditor]="true"
         (onResizeEditorInstructions)="onResizeEditorInstructions()"
+        (onResizeEditorHeight)="onResizeHeight($event)"
     >
         <div editorTitle>
             <span>{{ exercise?.title }}</span>
