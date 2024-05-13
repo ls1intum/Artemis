@@ -23,6 +23,7 @@ import jakarta.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -79,8 +80,8 @@ public class BuildJobManagementService {
      */
     private final Set<String> cancelledBuildJobs = new ConcurrentSkipListSet<>();
 
-    public BuildJobManagementService(HazelcastInstance hazelcastInstance, BuildJobExecutionService buildJobExecutionService, ExecutorService localCIBuildExecutorService,
-            BuildJobContainerService buildJobContainerService, BuildLogsMap buildLogsMap) {
+    public BuildJobManagementService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, BuildJobExecutionService buildJobExecutionService,
+            ExecutorService localCIBuildExecutorService, BuildJobContainerService buildJobContainerService, BuildLogsMap buildLogsMap) {
         this.buildJobExecutionService = buildJobExecutionService;
         this.localCIBuildExecutorService = localCIBuildExecutorService;
         this.buildJobContainerService = buildJobContainerService;
