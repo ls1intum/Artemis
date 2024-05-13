@@ -9,11 +9,11 @@ import { TranslateService } from '@ngx-translate/core';
 import { IrisLogoSize } from 'app/iris/iris-logo/iris-logo.component';
 import { IrisStageDTO } from 'app/entities/iris/iris-stage-dto.model';
 import { IrisRateLimitInformation } from 'app/entities/iris/iris-ratelimit-info.model';
-import { IrisTutorChatService } from 'app/iris/iris-tutor-chat.service';
 import { IrisStatusService } from 'app/iris/iris-status.service';
 import { IrisMessageContentType, IrisTextMessageContent } from 'app/entities/iris/iris-content-type.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { animate, group, style, transition, trigger } from '@angular/animations';
+import { IrisChatService } from 'app/iris/iris-chat-base.service';
 
 @Component({
     selector: 'jhi-iris-base-chatbot',
@@ -86,6 +86,8 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     resendAnimationActive: boolean;
     public ButtonType = ButtonType;
 
+    @Input() chatService: IrisChatService;
+
     @Input() fullSize: boolean | undefined;
     @Output() fullSizeToggle = new EventEmitter<void>();
     @Output() closeClicked = new EventEmitter<void>();
@@ -100,9 +102,10 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
         protected accountService: AccountService,
         protected modalService: NgbModal,
         protected translateService: TranslateService,
-        protected chatService: IrisTutorChatService,
         protected statusService: IrisStatusService,
-    ) {
+    ) {}
+
+    ngOnInit() {
         this.messagesSubscription = this.chatService.currentMessages().subscribe((messages) => {
             if (messages.length !== this.messages?.length) {
                 this.scrollToBottom('auto');
@@ -130,9 +133,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
             }
             this.active = active;
         });
-    }
 
-    ngOnInit() {
         this.checkIfUserAcceptedIris();
 
         // Focus on message textarea
