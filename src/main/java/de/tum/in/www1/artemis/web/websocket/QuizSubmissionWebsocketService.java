@@ -15,8 +15,8 @@ import org.springframework.stereotype.Controller;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.exception.QuizSubmissionException;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.QuizSubmissionService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
+import de.tum.in.www1.artemis.service.quiz.QuizSubmissionService;
 
 @Controller
 @Profile(PROFILE_CORE)
