@@ -23,8 +23,8 @@ import de.tum.in.www1.artemis.domain.quiz.QuizGroup;
 import de.tum.in.www1.artemis.domain.quiz.QuizPool;
 import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
 import de.tum.in.www1.artemis.domain.quiz.ShortAnswerQuestion;
-import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseFactory;
-import de.tum.in.www1.artemis.service.QuizPoolService;
+import de.tum.in.www1.artemis.exercise.quiz.QuizExerciseFactory;
+import de.tum.in.www1.artemis.service.quiz.QuizPoolService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 

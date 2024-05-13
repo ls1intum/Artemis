@@ -8,7 +8,7 @@ import { expect } from '@playwright/test';
  */
 export class ProgrammingExerciseFeedbackPage extends AbstractExerciseFeedback {
     async shouldShowAdditionalFeedback(points: number, feedbackText: string) {
-        await Commands.reloadUntilFound(this.page, this.additionalFeedbackSelector);
+        await Commands.reloadUntilFound(this.page, this.page.locator(this.additionalFeedbackSelector));
         await expect(this.page.locator(this.additionalFeedbackSelector).getByText(`${points} Points: ${feedbackText}`)).toBeVisible();
     }
 
