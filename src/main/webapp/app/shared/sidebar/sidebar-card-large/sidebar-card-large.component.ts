@@ -11,7 +11,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 })
 export class SidebarCardLargeComponent {
     DifficultyLevel = DifficultyLevel;
-    @Input() sidebarItem: SidebarCardElement;
+    @Input({ required: true }) sidebarItem: SidebarCardElement;
     @Input() sidebarType?: SidebarTypes;
     @Input() itemSelected?: boolean;
 
@@ -34,8 +34,8 @@ export class SidebarCardLargeComponent {
     forceReload(): void {
         this.router.navigate(['../'], { skipLocationChange: true, relativeTo: this.route }).then(() => {
             this.itemSelected
-                ? this.router.navigate(['../' + this.sidebarItem?.id], { relativeTo: this.route })
-                : this.router.navigate(['./' + this.sidebarItem?.id], { relativeTo: this.route });
+                ? this.router.navigate(['../' + this.sidebarItem.id], { relativeTo: this.route })
+                : this.router.navigate(['./' + this.sidebarItem.id], { relativeTo: this.route });
         });
     }
 }
