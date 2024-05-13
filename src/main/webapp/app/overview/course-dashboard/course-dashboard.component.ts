@@ -23,24 +23,22 @@ import { round } from 'app/shared/util/utils';
 export class CourseDashboardComponent implements OnInit, OnDestroy {
     courseId: number;
     exerciseId: number;
-    isLoading = false;
+    points: number = 0;
+    maxPoints: number = 0;
+    isLoadingMetrics = false;
+    isLoadingCompetencies = false;
+    exerciseLateness?: ExerciseLateness[];
+    exercisePerformance?: ExercisePerformance[];
 
     public competencies: Competency[] = [];
     private prerequisites: Competency[] = [];
 
     private paramSubscription?: Subscription;
     private courseUpdatesSubscription?: Subscription;
+    private metricsSubscription?: Subscription;
     private courseExercises: Exercise[] = [];
     public course?: Course;
     public data: any;
-
-    score: number = 30;
-    maxScore: number = 100;
-
-    metricsSubscription?: Subscription;
-
-    public exerciseLateness: ExerciseLateness[] = [];
-    public exercisePerformance: ExercisePerformance[] = [];
 
     constructor(
         private courseStorageService: CourseStorageService,
@@ -77,7 +75,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
      * Loads all prerequisites and competencies for the course
      */
     loadCompetencies() {
-        this.isLoading = true;
+        this.isLoadingCompetencies = true;
         forkJoin([this.competencyService.getAllForCourse(this.courseId), this.competencyService.getAllPrerequisitesForCourse(this.courseId)]).subscribe({
             next: ([competencies, prerequisites]) => {
                 this.competencies = competencies.body!;
@@ -87,9 +85,12 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
                     this.course.competencies = this.competencies;
                     this.course.prerequisites = this.prerequisites;
                 }
-                this.isLoading = false;
+                this.isLoadingCompetencies = false;
             },
-            error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+            error: (errorResponse: HttpErrorResponse) => {
+                onError(this.alertService, errorResponse);
+                this.isLoadingCompetencies = false;
+            },
         });
     }
 
@@ -101,7 +102,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
             this.metricsSubscription.unsubscribe();
         }
 
-        this.isLoading = true;
+        this.isLoadingMetrics = true;
         this.metricsSubscription = this.courseDashboardService.getCourseMetricsForUser(this.courseId).subscribe({
             next: (response) => {
                 if (response.body && response.body.exerciseMetrics) {
@@ -110,18 +111,46 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
                         .sort((a, b) => new Date(a.due).getTime() - new Date(b.start).getTime())
                         .map((exercise) => exercise.id);
 
+                    this.setOverallPerformance(exerciseMetrics);
                     this.setExercisePerformance(sortedExerciseIds, exerciseMetrics);
                     this.setExerciseLateness(sortedExerciseIds, exerciseMetrics);
                 }
-                this.isLoading = false;
+                this.isLoadingMetrics = false;
             },
             error: (errorResponse: HttpErrorResponse) => {
                 onError(this.alertService, errorResponse);
-                this.isLoading = false;
+                this.isLoadingMetrics = false;
             },
         });
     }
 
+    /**
+     * This getter checks if there are metrics available for the course dashboard.
+     * Used to determine if the metrics should be displayed.
+     */
+    get hasMetrics(): boolean {
+        return (this.exercisePerformance !== undefined && this.exercisePerformance.length > 0) || (this.exerciseLateness !== undefined && this.exerciseLateness.length > 0);
+    }
+
+    /**
+     * This method sets the overall performance, i.e. the points and max points.
+     *
+     * @param {ExerciseMetrics} exerciseMetrics - An object containing metrics related to exercises.
+     */
+    private setOverallPerformance(exerciseMetrics: ExerciseMetrics) {
+        this.points = Object.values(exerciseMetrics.exerciseInformation).reduce(
+            (sum, exercise) => sum + ((exerciseMetrics.score?.[exercise.id] || 0) / 100) * exercise.maxPoints,
+            0,
+        );
+        this.maxPoints = Object.values(exerciseMetrics.exerciseInformation).reduce((sum, exercise) => sum + exercise.maxPoints, 0);
+    }
+
+    /**
+     * This method sets the exercise performance data for the course dashboard from the given exercise metrics.
+     *
+     * @param {number[]} sortedExerciseIds - An array of exercise IDs sorted in a specific order.
+     * @param {ExerciseMetrics} exerciseMetrics - An object containing metrics related to exercises.
+     */
     private setExercisePerformance(sortedExerciseIds: number[], exerciseMetrics: ExerciseMetrics) {
         this.exercisePerformance = sortedExerciseIds.map((exerciseId) => {
             const exerciseInformation = exerciseMetrics.exerciseInformation[exerciseId];
@@ -129,12 +158,18 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
                 exerciseId: exerciseId,
                 title: exerciseInformation.title,
                 shortName: exerciseInformation.shortName,
-                score: exerciseMetrics.score?.[exerciseId] || 0,
+                score: exerciseMetrics.score?.[exerciseId],
                 averageScore: exerciseMetrics.averageScore[exerciseId],
             };
         });
     }
 
+    /**
+     * This method sets the exercise lateness data for the course dashboard from the given exercise metrics.
+     *
+     * @param {number[]} sortedExerciseIds - An array of exercise IDs sorted in a specific order.
+     * @param {ExerciseMetrics} exerciseMetrics - An object containing metrics related to exercises.
+     */
     private setExerciseLateness(sortedExerciseIds: number[], exerciseMetrics: ExerciseMetrics) {
         this.exerciseLateness = sortedExerciseIds.map((exerciseId) => {
             const exerciseInformation = exerciseMetrics.exerciseInformation[exerciseId];
@@ -142,7 +177,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
                 exerciseId: exerciseId,
                 title: exerciseInformation.title,
                 shortName: exerciseInformation.shortName,
-                relativeLatestSubmission: exerciseMetrics.latestSubmission[exerciseId],
+                relativeLatestSubmission: exerciseMetrics.latestSubmission?.[exerciseId],
                 relativeAverageLatestSubmission: exerciseMetrics.averageLatestSubmission[exerciseId],
             };
         });

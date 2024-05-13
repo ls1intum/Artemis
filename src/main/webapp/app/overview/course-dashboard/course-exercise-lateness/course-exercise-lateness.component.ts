@@ -16,7 +16,7 @@ export interface ExerciseLateness {
 @Component({
     selector: 'jhi-course-exercise-lateness',
     templateUrl: './course-exercise-lateness.component.html',
-    styleUrl: './course-exercise-lateness.component.scss',
+    styleUrls: ['./course-exercise-lateness.component.scss'],
 })
 export class CourseExerciseLatenessComponent implements OnInit, OnChanges {
     @Input() exerciseLateness: ExerciseLateness[] = [];
@@ -31,9 +31,6 @@ export class CourseExerciseLatenessComponent implements OnInit, OnChanges {
         domain: [GraphColors.BLUE, GraphColors.YELLOW],
     };
     yScaleMax = 100;
-
-    readonly round = round;
-    readonly Math = Math;
 
     constructor(private translateService: TranslateService) {
         this.translateService.onLangChange.subscribe(() => {
@@ -75,7 +72,6 @@ export class CourseExerciseLatenessComponent implements OnInit, OnChanges {
                         value: lateness.relativeLatestSubmission || 100, // If there is no data, we assume the submission is late
                         extra: {
                             title: lateness.title,
-                            hasSubmission: lateness.relativeLatestSubmission !== undefined,
                         },
                     };
                 }),
@@ -98,5 +94,6 @@ export class CourseExerciseLatenessComponent implements OnInit, OnChanges {
         this.yScaleMax = Math.max(100, Math.ceil(maxRelativeTime / 10) * 10);
     }
 
-    protected readonly JSON = JSON;
+    protected readonly round = round;
+    protected readonly Math = Math;
 }

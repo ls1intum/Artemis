@@ -16,7 +16,7 @@ export interface ExercisePerformance {
 @Component({
     selector: 'jhi-course-exercise-performance',
     templateUrl: './course-exercise-performance.component.html',
-    styleUrl: './course-exercise-performance.component.scss',
+    styleUrls: ['./course-exercise-performance.component.scss'],
 })
 export class CourseExercisePerformanceComponent implements OnInit, OnChanges {
     @Input() exercisePerformance: ExercisePerformance[] = [];
@@ -31,9 +31,6 @@ export class CourseExercisePerformanceComponent implements OnInit, OnChanges {
         domain: [GraphColors.BLUE, GraphColors.YELLOW],
     };
     yScaleMax = 100;
-
-    readonly round = round;
-    readonly Math = Math;
 
     constructor(private translateService: TranslateService) {
         this.translateService.onLangChange.subscribe(() => {
@@ -75,7 +72,6 @@ export class CourseExercisePerformanceComponent implements OnInit, OnChanges {
                         value: performance.score || 0, // If the score is undefined, set it to 0
                         extra: {
                             title: performance.title,
-                            hasScore: performance.score !== undefined,
                         },
                     };
                 }),
@@ -97,4 +93,7 @@ export class CourseExercisePerformanceComponent implements OnInit, OnChanges {
         const maxScore = Math.max(...this.ngxData.flatMap((data) => data.series.map((series) => series.value)));
         this.yScaleMax = Math.max(100, Math.ceil(maxScore / 10) * 10);
     }
+
+    protected readonly round = round;
+    protected readonly Math = Math;
 }

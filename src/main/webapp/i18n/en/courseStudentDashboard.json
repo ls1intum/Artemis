@@ -1,6 +1,7 @@
 {
     "artemisApp": {
         "courseStudentDashboard": {
+            "noMetrics": "No metrics are available for you in this course yet.",
             "overallPerformance": {
                 "title": "Overall Performance"
             },

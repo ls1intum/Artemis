@@ -20,5 +20,6 @@ export class ExerciseInformation {
     public shortName?: string;
     public start: string;
     public due: string;
+    public maxPoints: number;
     public type: string;
 }

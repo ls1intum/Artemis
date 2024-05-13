@@ -1,14 +1,26 @@
 <div class="row justify-content-center m-4 gap-4">
-    <div class="d-sm-flex gap-2 align-items-baseline">
-        <h4>
-            {{ 'artemisApp.courseStudentDashboard.overallPerformance.title' | artemisTranslate }}
-        </h4>
-        <div class="flex-grow-1">
-            <ngb-progressbar type="success overflow-visible" [value]="1" height="1.35rem">
-                <span class="fs-6 mx-1">{{ score }} / {{ maxScore }} ({{ round((score / maxScore) * 1000) / 10 }}%)</span>
-            </ngb-progressbar>
+    @if (hasMetrics) {
+        @if (points > 0 || maxPoints > 0) {
+            <div class="d-sm-flex gap-3 align-items-baseline">
+                <h4>
+                    {{ 'artemisApp.courseStudentDashboard.overallPerformance.title' | artemisTranslate }}
+                </h4>
+                <div class="flex-grow-1">
+                    <ngb-progressbar type="success overflow-visible" [value]="points" [max]="maxPoints" height="1.75rem">
+                        <span class="fs-5 mx-2">{{ points }} / {{ maxPoints }} ({{ round((points / maxPoints) * 1000) / 10 }}%)</span>
+                    </ngb-progressbar>
+                </div>
+            </div>
+        }
+        @if (exercisePerformance !== undefined) {
+            <jhi-course-exercise-performance [exercisePerformance]="exercisePerformance" />
+        }
+        @if (exerciseLateness !== undefined) {
+            <jhi-course-exercise-lateness [exerciseLateness]="exerciseLateness" />
+        }
+    } @else {
+        <div>
+            {{ 'artemisApp.courseStudentDashboard.noMetrics' | artemisTranslate }}
         </div>
-    </div>
-    <jhi-course-exercise-performance [exercisePerformance]="exercisePerformance" />
-    <jhi-course-exercise-lateness [exerciseLateness]="exerciseLateness" />
+    }
 </div>
