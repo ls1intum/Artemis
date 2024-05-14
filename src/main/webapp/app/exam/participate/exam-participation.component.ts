@@ -153,6 +153,15 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * loads the exam from the server and initializes the view
      */
     ngOnInit(): void {
+        this.examParticipationService.examState$.subscribe((state) => {
+            this.examStartConfirmed = state.examStartConfirmed;
+            this.testStartTime = state.testStartTime;
+            this.handInEarly = state.handInEarly;
+            this.handInPossible = state.handInPossible;
+            this.submitInProgress = state.submitInProgress;
+            this.attendanceChecked = state.attendanceChecked;
+        });
+
         this.route.parent?.parent?.parent?.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId'], 10);
         });
@@ -198,10 +207,12 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         // listen to connect / disconnect events
         this.websocketSubscription = this.websocketService.connectionState.subscribe((status) => {
             this.connected = status.connected;
+            console.log('Ngoninit ici cagrildi');
         });
     }
 
     loadAndDisplaySummary() {
+        console.log('loadanddisplaysummary ici cagrildi');
         this.examParticipationService.loadStudentExamWithExercisesForSummary(this.courseId, this.examId, this.studentExam.id!).subscribe({
             next: (studentExamWithExercises: StudentExam) => {
                 this.studentExam = studentExamWithExercises;
@@ -213,10 +224,12 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     canDeactivate() {
+        console.log('canDeactivate ici cagrildi');
         return this.loggedOut || this.isOver() || !this.studentExam || this.handInEarly || !this.examStartConfirmed;
     }
 
     get canDeactivateWarning() {
+        console.log('CanDeactivateWarning ici cagrildi');
         return this.translateService.instant('artemisApp.examParticipation.pendingChanges');
     }
 
@@ -229,6 +242,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     get activePageIndex(): number {
+        console.log('activePageIndex ici cagrildi');
         if (!this.activeExamPage || this.activeExamPage.isOverviewPage) {
             return -1;
         }
@@ -236,6 +250,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     get activePageComponent(): ExamPageComponent | undefined {
+        console.log('activePageComponent ici cagrildi');
         // we have to find the current component based on the activeExercise because the queryList might not be full yet (e.g. only 2 of 5 components initialized)
         return this.currentPageComponents.find(
             (submissionComponent) => !this.activeExamPage.isOverviewPage && (submissionComponent as ExamSubmissionComponent).getExerciseId() === this.activeExamPage.exercise!.id,
@@ -246,6 +261,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * exam start text confirmed and name entered, start button clicked and exam active
      */
     examStarted(studentExam: StudentExam) {
+        console.log('examStarted ici cagrildi');
         if (studentExam) {
             // Keep working time
             studentExam.workingTime = this.studentExam?.workingTime ?? studentExam.workingTime;
@@ -257,8 +273,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             this.examParticipationService.setExamExerciseIds(exerciseIds);
             // set endDate with workingTime
             if (!!this.testRunId || this.testExam) {
-                this.testStartTime = studentExam.startedDate ? dayjs(studentExam.startedDate) : dayjs();
-                this.initIndividualEndDates(this.testStartTime);
+                //this.testStartTime = studentExam.startedDate ? dayjs(studentExam.startedDate) : dayjs();
+                this.examParticipationService.setExamState({ testStartTime: studentExam.startedDate ? dayjs(studentExam.startedDate) : dayjs() });
+                this.initIndividualEndDates(this.testStartTime!);
             } else {
                 this.individualStudentEndDate = dayjs(this.exam.startDate).add(this.studentExam.workingTime!, 'seconds');
             }
@@ -298,7 +315,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             });
             this.initializeOverviewPage();
         }
-        this.examStartConfirmed = true;
+        //this.examStartConfirmed = true;
+        this.examParticipationService.setExamState({ examStartConfirmed: true });
         this.startAutoSaveTimer();
     }
 
@@ -308,6 +326,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * @returns true if valid, false otherwise
      */
     private static isExerciseParticipationValid(exercise: Exercise): boolean {
+        console.log('isExerviceParticipationValid ici cagrildi');
         // check if there is at least one participation with state === Initialized or state === FINISHED
         return (
             exercise.studentParticipations !== undefined &&
@@ -321,6 +340,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * start AutoSaveTimer
      */
     public startAutoSaveTimer(): void {
+        console.log('startAutoSaveTimer ici cagrildi');
         // auto save of submission if there are changes
         this.autoSaveInterval = window.setInterval(() => {
             this.autoSaveTimer++;
@@ -334,9 +354,12 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * triggered after student accepted exam end terms, will make final call to update submission on server
      */
     onExamEndConfirmed() {
+        console.log('onExamEndConfirmed ici cagrildi');
         // temporary lock the submit button in order to protect against spam
-        this.handInPossible = false;
-        this.submitInProgress = true;
+        //this.handInPossible = false;
+        this.examParticipationService.setExamState({ handInPossible: false });
+        //his.submitInProgress = true;
+        this.examParticipationService.setExamState({ submitInProgress: true });
         if (this.autoSaveInterval) {
             window.clearInterval(this.autoSaveInterval);
         }
@@ -357,7 +380,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         // If we have a test exam, we reload the summary from the server right away
                         this.loadAndDisplaySummary();
                     }
-                    this.submitInProgress = false;
+                    //this.submitInProgress = false;
+                    this.examParticipationService.setExamState({ submitInProgress: false });
 
                     // As we don't get the student exam from the server, we need to set the submitted flag and the submission date manually
                     this.studentExam.submitted = true;
@@ -392,8 +416,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                                     this.alertService.error(loadError.message);
 
                                     // Allow the user to try to reload the exam from the server
-                                    this.submitInProgress = false;
-                                    this.handInPossible = true;
+                                    //this.submitInProgress = false;
+                                    this.examParticipationService.setExamState({ submitInProgress: false });
+                                    //this.handInPossible = true;
+                                    this.examParticipationService.setExamState({ handInPossible: true });
                                 },
                             });
                         } else {
@@ -405,15 +431,19 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                                     this.alertService.error(loadError.message);
 
                                     // Allow the user to try to reload the exam from the server
-                                    this.submitInProgress = false;
-                                    this.handInPossible = true;
+                                    //this.submitInProgress = false;
+                                    this.examParticipationService.setExamState({ submitInProgress: false });
+                                    //this.handInPossible = true;
+                                    this.examParticipationService.setExamState({ handInPossible: true });
                                 },
                             });
                         }
                     } else {
                         this.alertService.error(error.message);
-                        this.submitInProgress = false;
-                        this.handInPossible = error.message !== 'artemisApp.studentExam.submissionNotInTime';
+                        //this.submitInProgress = false;
+                        this.examParticipationService.setExamState({ submitInProgress: false });
+                        //this.handInPossible = error.message !== 'artemisApp.studentExam.submissionNotInTime';
+                        this.examParticipationService.setExamState({ handInPossible: error.message !== 'artemisApp.studentExam.submissionNotInTime' });
                     }
                 },
             });
@@ -423,6 +453,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * called when exam ended because the working time is over
      */
     examEnded() {
+        console.log('examEnded ici cagrildi');
         if (this.autoSaveInterval) {
             window.clearInterval(this.autoSaveInterval);
         }
@@ -434,13 +465,15 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * Called when a user wants to hand in early or decides to continue.
      */
     toggleHandInEarly() {
+        console.log('toggleHandInEarly ici cagrildi');
         // no need to fetch attendance check status from the server if it is a test exam or an exam without attendance check or when clicking continue
         if (this.exam.testExam || !this.exam.examWithAttendanceCheck || this.handInEarly) {
             this.handleHandInEarly();
         } else {
             this.examManagementService.isAttendanceChecked(this.courseId, this.examId).subscribe((res) => {
                 if (res.body) {
-                    this.attendanceChecked = res.body;
+                    //this.attendanceChecked = res.body;
+                    this.examParticipationService.setExamState({ attendanceChecked: res.body });
                 }
                 this.handleHandInEarly();
             });
@@ -448,7 +481,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     handleHandInEarly() {
-        this.handInEarly = !this.handInEarly;
+        console.log('handleInEarly ici cagrildi');
+        this.examParticipationService.setExamState({ handInEarly: !this.handInEarly });
+        //this.handInEarly = !this.handInEarly;
         if (this.handInEarly) {
             // update local studentExam for later sync with server if the student wants to hand in early
             this.updateLocalStudentExam();
@@ -470,6 +505,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * check if exam is over
      */
     isOver(): boolean {
+        console.log('isOver ici cagrildi');
         if (this.studentExam && this.studentExam.ended) {
             // if this was calculated to true by the server, we can be sure the student exam has finished
             return true;
@@ -485,6 +521,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * check if the grace period has already passed
      */
     isGracePeriodOver() {
+        console.log('isGracePeriodOver ici cagrildi');
         return this.individualStudentEndDateWithGracePeriod && this.individualStudentEndDateWithGracePeriod.isBefore(this.serverDateService.now());
     }
 
@@ -492,6 +529,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * check if exam is visible
      */
     isVisible(): boolean {
+        console.log('isVisible ici cagrildi');
         if (this.testRunId) {
             return true;
         }
@@ -505,6 +543,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * check if exam has started
      */
     isActive(): boolean {
+        console.log('isActive ici cagrildi');
         if (this.testRunId) {
             return true;
         }
@@ -515,6 +554,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     ngOnDestroy(): void {
+        console.log('ngOnDestroy ici cagrildi');
         this.programmingSubmissionSubscriptions.forEach((subscription) => {
             subscription.unsubscribe();
         });
@@ -525,6 +565,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     handleStudentExam(studentExam: StudentExam) {
+        console.log('handleStudentExam ici cagrildi');
         this.studentExam = studentExam;
         this.exam = studentExam.exam!;
         this.testExam = this.exam.testExam!;
@@ -557,6 +598,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * This check is not done in the normal case due to performance reasons of 2000 students sending additional requests
      */
     handleNoStudentExam() {
+        console.log('handleNoStudentExam ici cagrildi');
         const course = this.courseStorageService.getCourse(this.courseId);
         if (!course) {
             this.courseService.find(this.courseId).subscribe((courseResponse) => {
@@ -575,6 +617,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * @param startDate the start date of the exam
      */
     initIndividualEndDates(startDate: dayjs.Dayjs) {
+        console.log('initIndividualEndDates ici cagrildi');
         this.individualStudentEndDate = dayjs(startDate).add(this.studentExam.workingTime!, 'seconds');
         this.individualStudentEndDateWithGracePeriod = this.individualStudentEndDate.clone().add(this.exam.gracePeriod!, 'seconds');
 
@@ -582,6 +625,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     private subscribeToWorkingTimeUpdates(startDate: dayjs.Dayjs) {
+        console.log('subscribeToWorkingTimeUpdates ici cagrildi');
         if (this.liveEventsSubscription) {
             this.liveEventsSubscription.unsubscribe();
         }
@@ -600,6 +644,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * @param exerciseChange
      */
     onPageChange(exerciseChange: { overViewChange: boolean; exercise?: Exercise; forceSave: boolean }): void {
+        console.log('onPageChange ici cagrildi');
         const activeComponent = this.activePageComponent;
         if (activeComponent) {
             activeComponent.onDeactivate();
@@ -623,6 +668,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * @param exercise to initialize
      */
     private initializeExercise(exercise: Exercise) {
+        console.log('initializeExericise ici cagrildi');
         this.activeExamPage.isOverviewPage = false;
         this.activeExamPage.exercise = exercise;
         // set current exercise Index
@@ -649,6 +695,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     private initializeOverviewPage() {
+        console.log('initializeOverviewPage ici cagrildi');
         this.activeExamPage.isOverviewPage = true;
         this.activeExamPage.exercise = undefined;
         this.exerciseIndex = -1;
@@ -658,6 +705,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * this will make sure that the component is displayed in the user interface
      */
     private activateActiveComponent() {
+        console.log('activateActiveComponent ici cagrildi');
         this.pageComponentVisited[this.activePageIndex] = true;
         const activeComponent = this.activePageComponent;
         if (activeComponent) {
@@ -672,6 +720,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * @param {number} activePageIndex - The index of the currently active exercise page in the pageComponentVisited array.
      */
     private resetPageComponentVisited(activePageIndex: number) {
+        console.log('resetPageComponentVisited ici cagrildi');
         this.pageComponentVisited.fill(false);
         if (activePageIndex >= 0) {
             this.pageComponentVisited[activePageIndex] = true;
@@ -684,6 +733,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * @param exercise
      */
     createParticipationForExercise(exercise: Exercise): Observable<StudentParticipation | undefined> {
+        console.log('createParticipationForExercise ici cagrildi');
         this.generateParticipationStatus.next('generating');
         return this.courseExerciseService.startExercise(exercise.id!).pipe(
             map((createdParticipation: StudentParticipation) => {
@@ -713,6 +763,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * @param forceSave is set to true, when the current exercise should be saved (even if there are no changes)
      */
     triggerSave(forceSave: boolean) {
+        console.log('triggerSave ici cagrildi');
         // before the request, we would mark the submission as isSynced = true
         // right after the response - in case it was successful - we mark the submission as isSynced = false
         this.autoSaveTimer = 0;
@@ -788,16 +839,19 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     private updateLocalStudentExam() {
+        console.log('updateLocalStudentExam ici cagrildi');
         this.currentPageComponents.filter((component) => component.hasUnsavedChanges()).forEach((component) => component.updateSubmissionFromView());
     }
 
     private onSaveSubmissionSuccess(submission: Submission) {
+        console.log('onSaveSubmissionSuccess ici cagrildi');
         this.examParticipationService.setLastSaveFailed(false, this.courseId, this.examId);
         submission.isSynced = true;
         submission.submitted = true;
     }
 
     private onSaveSubmissionError(error: HttpErrorResponse) {
+        console.log('onSaveSubmissionError ici cagrildi');
         this.examParticipationService.setLastSaveFailed(true, this.courseId, this.examId);
 
         if (error.status === 401) {
@@ -819,6 +873,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * @param fetchPending whether the latest pending submission should be fetched (true) or _only_ the websocket subscription is created (false)
      */
     private createProgrammingExerciseSubmission(exerciseId: number, participationId: number, fetchPending: boolean): Subscription {
+        console.log('createProgrammingExerciseSubmission ici cagrildi');
         return this.programmingSubmissionService
             .getLatestPendingSubmissionByParticipationId(participationId, exerciseId, true, false, fetchPending)
             .pipe(

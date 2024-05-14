@@ -2,8 +2,7 @@ import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
-import { ExamParticipationComponent } from 'app/exam/participate/exam-participation.component';
-import { examParticipationState } from 'app/exam/participate/exam-participation.route';
+import { ExamParticipationCoverComponent } from './exam-participation-cover.component';
 import { ArtemisQuizQuestionTypesModule } from 'app/exercises/quiz/shared/questions/artemis-quiz-question-types.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/modeling-editor.module';
@@ -20,7 +19,6 @@ import { ArtemisParticipationSummaryModule } from 'app/exam/participate/summary/
 import { ArtemisExerciseButtonsModule } from 'app/overview/exercise-details/exercise-buttons.module';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
-import { ExamExerciseOverviewPageComponent } from 'app/exam/participate/exercises/exercise-overview-page/exam-exercise-overview-page.component';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
 import { ArtemisExamNavigationBarModule } from 'app/exam/participate/exam-navigation-bar/exam-navigation-bar.module';
 import { ArtemisExamTimerModule } from 'app/exam/participate/timer/exam-timer.module';
@@ -28,12 +26,25 @@ import { ArtemisExamSubmissionComponentsModule } from 'app/exam/participate/exer
 import { ExamExerciseUpdateHighlighterModule } from 'app/exam/participate/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.module';
 import { ArtemisExamSharedModule } from 'app/exam/shared/exam-shared.module';
 import { ArtemisExamLiveEventsModule } from 'app/exam/participate/events/exam-live-events.module';
+import { Authority } from 'app/shared/constants/authority.constants';
+import { Routes } from '@angular/router';
+import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 
-const ENTITY_STATES = [...examParticipationState];
+const routes: Routes = [
+    {
+        path: '',
+        component: ExamParticipationCoverComponent,
+        data: {
+            authorities: [Authority.USER],
+            pageTitle: 'artemisApp.pages.courseTutorialGroupDetail.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+];
 
 @NgModule({
     imports: [
-        RouterModule.forChild(ENTITY_STATES),
+        RouterModule.forChild(routes),
         ArtemisSharedCommonModule,
         ArtemisHeaderExercisePageWithDetailsModule,
         ArtemisSharedModule,
@@ -59,6 +70,6 @@ const ENTITY_STATES = [...examParticipationState];
         ArtemisExamSharedModule,
         ArtemisExamLiveEventsModule,
     ],
-    declarations: [ExamParticipationComponent, ExamExerciseOverviewPageComponent],
+    declarations: [ExamParticipationCoverComponent],
 })
-export class ArtemisExamParticipationModule {}
+export class ArtemisExamParticipationCoverModule {}

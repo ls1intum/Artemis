@@ -2,11 +2,6 @@
     <jhi-test-run-ribbon id="testRunRibbon" />
 }
 @if (exam) {
-    @if (isVisible() && !isGracePeriodOver() && !this.studentExam?.submitted && !examStartConfirmed) {
-        <div class="px-3 scrollable-content content-height-dev">
-            <jhi-exam-participation-cover [startView]="true" [exam]="exam" [studentExam]="studentExam" [testRunStartTime]="testStartTime" (onExamStarted)="examStarted($event)" />
-        </div>
-    }
     @if (studentExam) {
         <!-- exam participation -->
         @if (isVisible() && isActive() && !isOver() && examStartConfirmed) {
@@ -107,7 +102,7 @@
             }
         }
         @if (!studentExam.submitted && ((isOver() && examStartConfirmed) || isGracePeriodOver())) {
-            <jhi-exam-participation-cover
+            <!-- <jhi-exam-participation-cover
                 [startView]="false"
                 [exam]="exam"
                 [studentExam]="studentExam"
@@ -117,7 +112,7 @@
                 [attendanceChecked]="attendanceChecked"
                 (onExamEnded)="onExamEndConfirmed()"
                 (onExamContinueAfterHandInEarly)="toggleHandInEarly()"
-            />
+            /> -->
         }
         @if (this.studentExam?.submitted && !showExamSummary && !loadingExam) {
             <div class="submissionSuccessfulHint">

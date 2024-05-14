@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable, Subject, of, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, of, throwError } from 'rxjs';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { HttpClient, HttpErrorResponse, HttpParams, HttpResponse } from '@angular/common/http';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -18,11 +18,35 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 
 export type ButtonTooltipType = 'submitted' | 'submittedSubmissionLimitReached' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted';
 
+interface ExamState {
+    testStartTime: dayjs.Dayjs | undefined;
+    examStartConfirmed: boolean;
+    handInEarly: boolean;
+    handInPossible: boolean;
+    submitInProgress: boolean;
+    attendanceChecked: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ExamParticipationService {
     public currentlyLoadedStudentExam = new Subject<StudentExam>();
 
     private examExerciseIds: number[];
+
+    private examStartConfirmedSource = new BehaviorSubject<boolean>(false);
+    examStartConfirmed$ = this.examStartConfirmedSource.asObservable();
+
+    private initialState: ExamState = {
+        testStartTime: undefined,
+        examStartConfirmed: false,
+        handInEarly: false,
+        handInPossible: true,
+        submitInProgress: false,
+        attendanceChecked: false,
+    };
+
+    private examStateSource = new BehaviorSubject<ExamState>(this.initialState);
+    examState$ = this.examStateSource.asObservable();
 
     public getResourceURL(courseId: number, examId: number): string {
         return `api/courses/${courseId}/exams/${examId}`;
@@ -337,5 +361,10 @@ export class ExamParticipationService {
 
     public setExamExerciseIds(examExerciseIds: number[]) {
         this.examExerciseIds = examExerciseIds;
+    }
+
+    public setExamState(newState: Partial<ExamState>) {
+        const currentState = this.examStateSource.value;
+        this.examStateSource.next({ ...currentState, ...newState });
     }
 }

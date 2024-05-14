@@ -8,6 +8,7 @@ import { CourseExercisesComponent } from 'app/overview/course-exercises/course-e
 import { CourseOverviewComponent } from './course-overview.component';
 import { CourseExamsComponent } from './course-exams/course-exams.component';
 import { CourseTutorialGroupsComponent } from './course-tutorial-groups/course-tutorial-groups.component';
+import { ExamParticipationComponent } from 'app/exam/participate/exam-participation.component';
 
 const routes: Routes = [
     {
@@ -160,6 +161,16 @@ const routes: Routes = [
                     authorities: [Authority.USER],
                     pageTitle: 'overview.exams',
                     hasSidebar: true,
+                },
+                canActivate: [UserRouteAccessService],
+                loadChildren: () => import('../exam/participate/exam-cover/exam-participation-cover.module').then((m) => m.ArtemisExamParticipationCoverModule),
+            },
+            {
+                path: 'exams/:examId/participation',
+                component: ExamParticipationComponent,
+                data: {
+                    authorities: [Authority.USER],
+                    pageTitle: 'overview.exams',
                 },
                 canActivate: [UserRouteAccessService],
                 loadChildren: () => import('../exam/participate/exam-participation.module').then((m) => m.ArtemisExamParticipationModule),
