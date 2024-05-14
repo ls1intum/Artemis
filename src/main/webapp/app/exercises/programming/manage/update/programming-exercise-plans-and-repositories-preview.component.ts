@@ -46,9 +46,12 @@ export class ProgrammingExercisePlansAndRepositoriesPreviewComponent {
 
     ngOnChanges(changes: SimpleChanges) {
         if (
+            this.programmingExerciseCreationConfig &&
+            this.programmingExerciseCreationConfig.selectedProgrammingLanguage &&
             changes.programmingExerciseCreationConfig &&
+            changes.programmingExerciseCreationConfig.currentValue &&
             changes.programmingExerciseCreationConfig.currentValue.selectedProgrammingLanguage !==
-                changes.programmingExerciseCreationConfig.previousValue.selectedProgrammingLanguage
+                changes.programmingExerciseCreationConfig.previousValue?.selectedProgrammingLanguage
         ) {
             this.updateCheckoutDirectories();
         }

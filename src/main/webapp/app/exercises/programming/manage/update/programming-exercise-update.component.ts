@@ -211,12 +211,12 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         let legalNameAndDirs = false;
         // Check that there are no duplicate names.
         const names = new Set<string | undefined>();
-        const auxReposWithName = this.programmingExercise.auxiliaryRepositories!.filter((auxiliaryRepository) => auxiliaryRepository.name);
-        auxReposWithName.forEach((auxiliaryRepository) => {
+        const auxReposWithName = this.programmingExercise.auxiliaryRepositories?.filter((auxiliaryRepository) => auxiliaryRepository.name);
+        auxReposWithName?.forEach((auxiliaryRepository) => {
             names.add(auxiliaryRepository.name);
             legalNameAndDirs ||= !this.invalidRepositoryNamePattern.test(auxiliaryRepository.name!);
         });
-        this.auxiliaryRepositoryDuplicateNames = names.size !== auxReposWithName.length;
+        this.auxiliaryRepositoryDuplicateNames = names.size !== auxReposWithName?.length;
 
         // Check that there are no duplicate checkout directories
         const directories = new Set<string | undefined>();
@@ -228,7 +228,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.auxiliaryRepositoryDuplicateDirectories = directories.size !== auxReposWithDirectory.length;
 
         // Check that there are no empty/incorrect repository names and directories
-        this.auxiliaryRepositoryNamedCorrectly = this.programmingExercise.auxiliaryRepositories!.length === auxReposWithName.length && !legalNameAndDirs;
+        this.auxiliaryRepositoryNamedCorrectly = this.programmingExercise.auxiliaryRepositories!.length === auxReposWithName?.length && !legalNameAndDirs;
 
         // Combining auxiliary variables to one to keep the template readable
         this.auxiliaryRepositoriesValid = this.auxiliaryRepositoryNamedCorrectly && !this.auxiliaryRepositoryDuplicateNames && !this.auxiliaryRepositoryDuplicateDirectories;
