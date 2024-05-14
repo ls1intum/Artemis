@@ -3,6 +3,7 @@ import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-programming-exercise-plans-and-repositories-preview',
@@ -27,7 +28,9 @@ export class ProgrammingExercisePlansAndRepositoriesPreviewComponent {
     exerciseCheckoutDirectory: string | undefined;
     testCheckoutDirectory: string | undefined;
 
-    ngOnInit() {
+    programmingExerciseServiceSubscription: Subscription;
+
+    private updateCheckoutDirectories() {
         this.programmingExerciseService
             .getCheckoutDirectoriesForProgrammingLanguage(this.programmingExerciseCreationConfig.selectedProgrammingLanguage)
             .subscribe((checkoutDirectories) => {
@@ -37,20 +40,23 @@ export class ProgrammingExercisePlansAndRepositoriesPreviewComponent {
             });
     }
 
-    // TODO fix change detection
+    ngOnInit() {
+        this.updateCheckoutDirectories();
+    }
+
     ngOnChanges(changes: SimpleChanges) {
         if (
             changes.programmingExerciseCreationConfig &&
             changes.programmingExerciseCreationConfig.currentValue.selectedProgrammingLanguage !==
                 changes.programmingExerciseCreationConfig.previousValue.selectedProgrammingLanguage
         ) {
-            this.programmingExerciseService
-                .getCheckoutDirectoriesForProgrammingLanguage(this.programmingExerciseCreationConfig.selectedProgrammingLanguage)
-                .subscribe((checkoutDirectories) => {
-                    this.solutionCheckoutDirectory = checkoutDirectories.solutionCheckoutDirectory;
-                    this.exerciseCheckoutDirectory = checkoutDirectories.exerciseCheckoutDirectory;
-                    this.testCheckoutDirectory = checkoutDirectories.testCheckoutDirectory;
-                });
+            this.updateCheckoutDirectories();
+        }
+    }
+
+    ngOnDestroy() {
+        if (this.programmingExerciseServiceSubscription) {
+            this.programmingExerciseServiceSubscription.unsubscribe();
         }
     }
 }
