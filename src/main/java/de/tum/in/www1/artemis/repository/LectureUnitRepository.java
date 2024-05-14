@@ -65,7 +65,7 @@ public interface LectureUnitRepository extends JpaRepository<LectureUnit, Long> 
             """)
     Set<LectureUnit> findAllByIdWithCompetenciesBidirectional(@Param("lectureUnitIds") Iterable<Long> longs);
 
-    @EntityGraph(attributePaths = { "completedUsers" })
+    @EntityGraph(attributePaths = { "completedUsers", "lecture", "lecture.course" })
     @Query("""
             SELECT lu
             FROM LectureUnit lu

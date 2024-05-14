@@ -27,6 +27,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.LectureUnitService;
 import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
+import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.web.rest.dto.lectureunit.LectureUnitForLearningPathNodeDetailsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -57,7 +58,7 @@ public class LectureUnitResource {
     private final CompetencyProgressService competencyProgressService;
 
     public LectureUnitResource(AuthorizationCheckService authorizationCheckService, UserRepository userRepository, LectureRepository lectureRepository,
-            LectureUnitRepository lectureUnitRepository, LectureUnitService lectureUnitService, CompetencyProgressService competencyProgressService) {
+            LectureUnitRepository lectureUnitRepository, LectureUnitService lectureUnitService, CompetencyProgressService competencyProgressService, UserService userService) {
         this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
         this.lectureUnitRepository = lectureUnitRepository;
@@ -186,7 +187,8 @@ public class LectureUnitResource {
     @GetMapping("lecture-units/{lectureUnitId}")
     public ResponseEntity<LectureUnit> getLectureUnitById(@PathVariable @Valid Long lectureUnitId) {
         log.debug("REST request to get lecture unit with id: {}", lectureUnitId);
-        var lectureUnit = lectureUnitRepository.findById(lectureUnitId).orElseThrow();
+        var lectureUnit = lectureUnitRepository.findByIdWithCompletedUsersElseThrow(lectureUnitId);
+        lectureUnit.setCompleted(lectureUnit.isCompletedFor(userRepository.getUser()));
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, lectureUnit.getLecture().getCourse(), null);
         return ResponseEntity.ok(lectureUnit);
     }

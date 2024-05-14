@@ -15,10 +15,9 @@ export class LearningPathExerciseComponent {
 
     private readonly viewContainerRef = inject(ViewContainerRef);
 
-    // private readonly exercise = viewChild(CourseExerciseDetailsComponent);
-
     constructor() {
         effect(() => {
+            this.viewContainerRef.clear();
             const exerciseComponent = this.viewContainerRef.createComponent(CourseExerciseDetailsComponent);
             exerciseComponent.instance.courseId = this.courseId();
             exerciseComponent.instance.exerciseId = this.exerciseId();

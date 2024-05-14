@@ -8,6 +8,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { LoadedValue } from 'app/course/learning-paths/components/learning-path-student-nav/learning-path-student-nav.component';
 import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 import { ArtemisLectureUnitsModule } from 'app/overview/course-lectures/lecture-units.module';
+import { LectureUnitCompletionEvent } from 'app/overview/course-lectures/course-lecture-details.component';
 
 @Component({
     selector: 'jhi-learning-path-lecture-unit',
@@ -39,8 +40,9 @@ export class LearningPathLectureUnitComponent {
 
     readonly onLearningObjectCompleted = output<boolean>();
 
-    setLearningObjectCompletion(completed: boolean) {
-        this.onLearningObjectCompleted.emit(completed);
+    setLearningObjectCompletion(completionEvent: LectureUnitCompletionEvent) {
+        this.lectureUnitService.completeLectureUnit(this.lectureUnit()!.lecture!, completionEvent);
+        this.onLearningObjectCompleted.emit(completionEvent.completed);
     }
 
     protected readonly LectureUnitType = LectureUnitType;
