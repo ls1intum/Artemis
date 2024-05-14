@@ -209,8 +209,8 @@ test.describe('Programming exercise participation', () => {
                 await courseManagementExercises.openExerciseParticipations(exercise.id!);
                 await programmingExerciseParticipations.getParticipation(participation.id!).waitFor({ state: 'visible' });
                 await programmingExerciseParticipations.checkParticipationTeam(participation.id!, team.name!);
-                const studentUsernames = submissions.map(({ student }) => student.username!);
                 await programmingExerciseParticipations.checkParticipationBuildPlan(participation);
+                const studentUsernames = submissions.map(({ student }) => student.username!);
                 await programmingExerciseParticipations.checkParticipationStudents(participation.id!, studentUsernames);
 
                 await programmingExerciseParticipations.openRepository(participation.id!);

@@ -14,23 +14,41 @@ export class ProgrammingExerciseParticipationsPage {
             .filter({ hasText: `${participationId}` });
     }
 
+    private async getParticipationCell(participationId: number, columnName: string) {
+        const headerCells = this.page.getByRole('table').getByRole('columnheader');
+        const numberOfColumns = await headerCells.count();
+        const participationRow = this.getParticipation(participationId);
+
+        for (let columnIndex = 0; columnIndex < numberOfColumns; columnIndex++) {
+            const textContent = await headerCells.nth(columnIndex).textContent();
+            if (textContent?.includes(columnName)) {
+                return participationRow.getByRole('cell').nth(columnIndex);
+            }
+        }
+    }
+
     async openRepository(participationId: number) {
         const participation = this.getParticipation(participationId);
         await participation.locator('a', { hasText: 'Open repository' }).click();
     }
 
     async checkParticipationBuildPlan(participation: any) {
-        await expect(this.getParticipation(participation.id).filter({ hasText: participation.buildPlanId })).toBeVisible();
+        const buildPlanIdCell = await this.getParticipationCell(participation.id, 'Build Plan Id');
+        expect(buildPlanIdCell).not.toBeUndefined();
+        await expect(buildPlanIdCell!.filter({ hasText: participation.buildPlanId })).toBeVisible();
     }
 
     async checkParticipationTeam(participationId: number, teamName: string) {
-        await expect(this.getParticipation(participationId).filter({ hasText: teamName })).toBeVisible();
+        const teamCell = await this.getParticipationCell(participationId, 'Team');
+        expect(teamCell).not.toBeUndefined();
+        await expect(teamCell!.filter({ hasText: teamName })).toBeVisible();
     }
 
     async checkParticipationStudents(participationId: number, studentUsernames: string[]) {
-        const participation = this.getParticipation(participationId);
+        const studentsCell = await this.getParticipationCell(participationId, 'Students');
+        expect(studentsCell).not.toBeUndefined();
         for (const studentName of studentUsernames) {
-            await expect(participation.locator('.student-group-item', { hasText: studentName })).toBeVisible();
+            await expect(studentsCell!.filter({ hasText: studentName })).toBeVisible();
         }
     }
 }
