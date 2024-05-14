@@ -138,32 +138,47 @@ public class ParticipationService {
      * @return the participation connecting the given exercise and user
      */
     public StudentParticipation startExercise(Exercise exercise, Participant participant, boolean createInitialSubmission) {
-        // common for all exercises
-        Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseAndParticipantAnyState(exercise, participant);
-        if (optionalStudentParticipation.isPresent() && optionalStudentParticipation.get().isPracticeMode() && exercise.isCourseExercise()) {
-            // In case there is already a practice participation, set it to inactive
-            optionalStudentParticipation.get().setInitializationState(InitializationState.INACTIVE);
-            studentParticipationRepository.saveAndFlush(optionalStudentParticipation.get());
 
-            optionalStudentParticipation = findOneByExerciseAndParticipantAnyStateAndTestRun(exercise, participant, false);
-        }
-
-        // Check if participation already exists
         StudentParticipation participation;
-        if (optionalStudentParticipation.isEmpty()) {
+        Optional<StudentParticipation> optionalStudentParticipation = Optional.empty();
+
+        // In case of a test exam we don't try find an existing participation, because students can participate multiple times
+        // Instead, all previous participations are marked as finished and a new one is created
+        if (exercise.isExamExercise() && exercise.getExamViaExerciseGroupOrCourseMember().isTestExam()) {
+            List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdAndStudentId(exercise.getId(), participant.getId());
+            participations.forEach(studentParticipation -> studentParticipation.setInitializationState(InitializationState.FINISHED));
             participation = createNewParticipation(exercise, participant);
+            studentParticipationRepository.saveAll(participations);
         }
+
+        // All other cases, i.e. normal exercises, and regular exam exercises
         else {
-            // make sure participation and exercise are connected
-            participation = optionalStudentParticipation.get();
-            participation.setExercise(exercise);
+            // common for all exercises
+            optionalStudentParticipation = findOneByExerciseAndParticipantAnyState(exercise, participant);
+            if (optionalStudentParticipation.isPresent() && optionalStudentParticipation.get().isPracticeMode() && exercise.isCourseExercise()) {
+                // In case there is already a practice participation, set it to inactive
+                optionalStudentParticipation.get().setInitializationState(InitializationState.INACTIVE);
+                studentParticipationRepository.saveAndFlush(optionalStudentParticipation.get());
+
+                optionalStudentParticipation = findOneByExerciseAndParticipantAnyStateAndTestRun(exercise, participant, false);
+            }
+            // Check if participation already exists
+            if (optionalStudentParticipation.isEmpty()) {
+                participation = createNewParticipation(exercise, participant);
+            }
+            else {
+                // make sure participation and exercise are connected
+                participation = optionalStudentParticipation.get();
+                participation.setExercise(exercise);
+            }
         }
 
         if (exercise instanceof ProgrammingExercise programmingExercise) {
             // fetch again to get additional objects
             participation = startProgrammingExercise(programmingExercise, (ProgrammingExerciseStudentParticipation) participation, false);
         }
-        else {// for all other exercises: QuizExercise, ModelingExercise, TextExercise, FileUploadExercise
+        // for all other exercises: QuizExercise, ModelingExercise, TextExercise, FileUploadExercise
+        else {
             if (participation.getInitializationState() == null || participation.getInitializationState() == InitializationState.UNINITIALIZED
                     || participation.getInitializationState() == InitializationState.FINISHED && !(exercise instanceof QuizExercise)) {
                 // in case the participation was finished before, we set it to initialized again so that the user sees the correct button "Open modeling editor" on the client side.
@@ -624,6 +639,10 @@ public class ParticipationService {
             return optionalTeam.flatMap(team -> studentParticipationRepository.findWithEagerLegalSubmissionsAndTeamStudentsByExerciseIdAndTeamId(exercise.getId(), team.getId()));
         }
         return studentParticipationRepository.findWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), username);
+    }
+
+    public Optional<StudentParticipation> findLatestByExerciseAndStudentLoginWithEagerSubmissionsAnyState(Exercise exercise, String username) {
+        return studentParticipationRepository.findLatestWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), username);
     }
 
     /**
