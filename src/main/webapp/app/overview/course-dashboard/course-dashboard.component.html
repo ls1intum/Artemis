@@ -1,8 +1,8 @@
-<div class="d-flex justify-content-center gap-4">
-    <div class="col-6 d-flex flex-column">
+<div class="dashboard-container d-flex justify-content-center gap-4">
+    <div class="d-flex flex-column">
         <jhi-course-chatbot [courseId]="courseId" />
     </div>
-    <div class="col-6">
+    <div class="">
         <!-- Exercise Statistics -->
         @if (!isLoadingMetrics && hasExercises) {
             @if (points > 0 || maxPoints > 0) {
@@ -39,7 +39,7 @@
                     }
                 </div>
             } @else {
-                <h3 jhiTranslate="artemisApp.studentAnalyticsDashboard.competencyAccordion.noData"></h3>
+                <div jhiTranslate="artemisApp.studentAnalyticsDashboard.competencyAccordion.noData"></div>
             }
         </div>
         @if (learningPathsEnabled) {

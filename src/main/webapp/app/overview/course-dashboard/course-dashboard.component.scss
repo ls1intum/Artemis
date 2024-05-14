@@ -3,9 +3,10 @@
     flex: 1;
     height: calc(100%); // 32px is the padding of the container
 
-    .row {
-        height: 100%;
-        margin: 0 !important;
+    .dashboard-container {
+        > div {
+            flex: 1;
+        }
     }
 }
 
