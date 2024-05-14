@@ -339,7 +339,7 @@ test.describe('Exam participation', () => {
             }
 
             const announcement = 'Important announcement!';
-            await examManagement.openAnnouncementDialog();
+            await examManagement.openAnnouncementPopup();
             const announcementTypingTime = dayjs();
             await examManagement.typeAnnouncementMessage(announcement);
             await examManagement.verifyAnnouncementContent(announcementTypingTime, announcement, instructor.username);
