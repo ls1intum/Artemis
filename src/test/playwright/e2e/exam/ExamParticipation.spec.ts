@@ -4,12 +4,13 @@ import { Exercise, ExerciseType } from '../../support/constants';
 import { admin, instructor, studentFour, studentOne, studentThree, studentTwo, tutor, users } from '../../support/users';
 import { generateUUID } from '../../support/utils';
 import javaAllSuccessfulSubmission from '../../fixtures/exercise/programming/java/all_successful/submission.json';
-import dayjs, { Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
 import { Exam } from 'app/entities/exam.model';
 import { expect } from '@playwright/test';
 import { ExamStartEndPage } from '../../support/pageobjects/exam/ExamStartEndPage';
 import { ExamManagementPage } from '../../support/pageobjects/exam/ExamManagementPage';
 import { Commands } from '../../support/commands';
+import { ExamAPIRequests } from '../../support/requests/ExamAPIRequests';
 
 // Common primitives
 const textFixture = 'loremIpsum.txt';
@@ -47,16 +48,7 @@ test.describe('Exam participation', () => {
 
         test.beforeEach('Create exam', async ({ login, examAPIRequests, examExerciseGroupCreation }) => {
             await login(admin);
-            const examConfig = {
-                course,
-                title: examTitle,
-                visibleDate: dayjs().subtract(3, 'minutes'),
-                startDate: dayjs().subtract(2, 'minutes'),
-                endDate: dayjs().add(1, 'hour'),
-                examMaxPoints: 40,
-                numberOfExercisesInExam: 4,
-            };
-            exam = await examAPIRequests.createExam(examConfig);
+            exam = await createExam(course, examAPIRequests, { title: examTitle, examMaxPoints: 40, numberOfExercisesInExam: 4 });
             const textExercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture });
             const programmingExercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.PROGRAMMING, { submission: javaAllSuccessfulSubmission });
             const quizExercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.QUIZ, { quizExerciseID: 0 });
@@ -139,17 +131,7 @@ test.describe('Exam participation', () => {
             exerciseArray = [];
 
             await login(admin);
-
-            const examConfig = {
-                course,
-                title: examTitle,
-                visibleDate: dayjs().subtract(3, 'minutes'),
-                startDate: dayjs().subtract(2, 'minutes'),
-                endDate: dayjs().add(1, 'hour'),
-                examMaxPoints: 10,
-                numberOfExercisesInExam: 1,
-            };
-            exam = await examAPIRequests.createExam(examConfig);
+            exam = await createExam(course, examAPIRequests, { title: examTitle });
             await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture }).then((response) => {
                 exerciseArray.push(response);
             });
@@ -252,17 +234,7 @@ test.describe('Exam participation', () => {
             exerciseArray = [];
 
             await login(admin);
-
-            const examConfig = {
-                course,
-                title: examTitle,
-                visibleDate: dayjs().subtract(3, 'minutes'),
-                startDate: dayjs().subtract(2, 'minutes'),
-                endDate: dayjs().add(30, 'seconds'),
-                examMaxPoints: 10,
-                numberOfExercisesInExam: 1,
-            };
-            exam = await examAPIRequests.createExam(examConfig);
+            exam = await createExam(course, examAPIRequests, { title: examTitle, endDate: dayjs().add(30, 'seconds') });
             const exercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture });
             exerciseArray.push(exercise);
 
@@ -293,22 +265,11 @@ test.describe('Exam participation', () => {
 
     test.describe('Exam announcements', () => {
         let exam: Exam;
-        let endDate: Dayjs;
         const students = [studentOne, studentTwo];
 
         test.beforeEach('Create exam', async ({ login, examAPIRequests, examExerciseGroupCreation }) => {
             await login(admin);
-            endDate = dayjs().add(1, 'day');
-            const examConfig = {
-                course,
-                title: 'exam' + generateUUID(),
-                visibleDate: dayjs().subtract(3, 'minutes'),
-                startDate: dayjs().subtract(2, 'minutes'),
-                endDate: endDate,
-                examMaxPoints: 10,
-                numberOfExercisesInExam: 1,
-            };
-            exam = await examAPIRequests.createExam(examConfig);
+            exam = await createExam(course, examAPIRequests);
             const exercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture });
             exerciseArray.push(exercise);
             for (const student of students) {
@@ -339,7 +300,7 @@ test.describe('Exam participation', () => {
             }
 
             const announcement = 'Important announcement!';
-            await examManagement.openAnnouncementPopup();
+            await examManagement.openAnnouncementDialog();
             const announcementTypingTime = dayjs();
             await examManagement.typeAnnouncementMessage(announcement);
             await examManagement.verifyAnnouncementContent(announcementTypingTime, announcement, instructor.username);
@@ -356,3 +317,17 @@ test.describe('Exam participation', () => {
         await courseManagementAPIRequests.deleteCourse(course, admin);
     });
 });
+
+async function createExam(course: Course, examAPIRequests: ExamAPIRequests, customExamConfig?: any) {
+    const defaultExamConfig = {
+        course,
+        title: 'exam' + generateUUID(),
+        visibleDate: dayjs().subtract(3, 'minutes'),
+        startDate: dayjs().subtract(2, 'minutes'),
+        endDate: dayjs().add(1, 'hour'),
+        examMaxPoints: 10,
+        numberOfExercisesInExam: 1,
+    };
+    const examConfig = { ...defaultExamConfig, ...customExamConfig };
+    return await examAPIRequests.createExam(examConfig);
+}

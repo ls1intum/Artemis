@@ -109,7 +109,7 @@ export class ExamManagementPage {
         await expect(this.page.locator('#exercise-result-score')).toHaveText(score);
     }
 
-    async openAnnouncementPopup() {
+    async openAnnouncementDialog() {
         await this.page.locator('#announcement-create-button').click();
     }
 
@@ -118,13 +118,13 @@ export class ExamManagementPage {
     }
 
     async verifyAnnouncementContent(announcementTime: Dayjs, message: string, authorUsername: string) {
-        const announcementPopup = this.page.locator('.modal-content');
+        const announcementDialog = this.page.locator('.modal-content');
         const timeFormat = 'MMM D, YYYY HH:mm';
         const announcementTimeFormatted = announcementTime.format(timeFormat);
         const announcementTimeAfterMinute = announcementTime.add(1, 'minute').format(timeFormat);
-        await expect(announcementPopup.locator('.date').getByText(new RegExp(`(${announcementTimeFormatted}|${announcementTimeAfterMinute})`))).toBeVisible();
-        await expect(announcementPopup.locator('.content').getByText(message)).toBeVisible();
-        await expect(announcementPopup.locator('.author').getByText(authorUsername)).toBeVisible();
+        await expect(announcementDialog.locator('.date').getByText(new RegExp(`(${announcementTimeFormatted}|${announcementTimeAfterMinute})`))).toBeVisible();
+        await expect(announcementDialog.locator('.content').getByText(message)).toBeVisible();
+        await expect(announcementDialog.locator('.author').getByText(authorUsername)).toBeVisible();
     }
 
     async sendAnnouncement() {
