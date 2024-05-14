@@ -20,7 +20,6 @@ const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     styleUrls: ['../course-overview.scss'],
 })
 export class CourseLecturesComponent implements OnInit, OnDestroy {
-    private paramSubscription: Subscription;
     private parentParamSubscription: Subscription;
     private courseUpdatesSubscription: Subscription;
     course?: Course;
@@ -53,19 +52,21 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
             this.prepareSidebarData();
         });
 
+        // If no lecture is selected navigate to the lastSelected or upcoming lecture
+        this.navigateToLecture();
+    }
+
+    navigateToLecture() {
         const upcomingLecture = this.courseOverviewService.getUpcomingLecture(this.course?.lectures);
         const lastSelectedLecture = this.getLastSelectedLecture();
-        this.paramSubscription = this.route.params.subscribe((params) => {
-            const lectureId = parseInt(params.lectureId, 10);
-            // If no lecture is selected navigate to the upcoming lecture
-            if (!lectureId && lastSelectedLecture) {
-                this.router.navigate([lastSelectedLecture], { relativeTo: this.route, replaceUrl: true });
-            } else if (!lectureId && upcomingLecture) {
-                this.router.navigate([upcomingLecture.id], { relativeTo: this.route, replaceUrl: true });
-            } else {
-                this.lectureSelected = lectureId ? true : false;
-            }
-        });
+        const lectureId = this.route.firstChild?.snapshot.params.lectureId;
+        if (!lectureId && lastSelectedLecture) {
+            this.router.navigate([lastSelectedLecture], { relativeTo: this.route, replaceUrl: true });
+        } else if (!lectureId && upcomingLecture) {
+            this.router.navigate([upcomingLecture.id], { relativeTo: this.route, replaceUrl: true });
+        } else {
+            this.lectureSelected = lectureId ? true : false;
+        }
     }
 
     prepareSidebarData() {
@@ -96,9 +97,15 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
         return sessionStorage.getItem('sidebar.lastSelectedItem.lecture.byCourse.' + this.courseId);
     }
 
+    onSubRouteDeactivate() {
+        if (this.route.firstChild) {
+            return;
+        }
+        this.navigateToLecture();
+    }
+
     ngOnDestroy(): void {
         this.courseUpdatesSubscription?.unsubscribe();
-        this.paramSubscription?.unsubscribe();
         this.parentParamSubscription?.unsubscribe();
     }
 }

@@ -6,7 +6,7 @@
 
         @if (lectureSelected) {
             <div class="vw-100 module-bg rounded-3">
-                <router-outlet />
+                <router-outlet (deactivate)="onSubRouteDeactivate()" />
             </div>
         } @else {
             <div class="vw-100 module-bg rounded-3 p-3 d-flex justify-content-between">

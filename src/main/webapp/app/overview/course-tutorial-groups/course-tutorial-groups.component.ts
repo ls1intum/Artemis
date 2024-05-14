@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
-import { Subject, Subscription, finalize } from 'rxjs';
+import { Subject, finalize } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -43,7 +43,6 @@ export class CourseTutorialGroupsComponent implements OnInit, OnDestroy {
     sortedTutorialGroups: TutorialGroup[] = [];
     accordionTutorialGroupsGroups: AccordionGroups = TUTORIAL_UNIT_GROUPS;
     sidebarTutorialGroups: SidebarCardElement[] = [];
-    private paramSubscription: Subscription;
 
     constructor(
         private router: Router,
@@ -55,12 +54,6 @@ export class CourseTutorialGroupsComponent implements OnInit, OnDestroy {
         private cdr: ChangeDetectorRef,
         private courseOverviewService: CourseOverviewService,
     ) {}
-
-    ngOnDestroy(): void {
-        this.ngUnsubscribe.next();
-        this.ngUnsubscribe.complete();
-        this.paramSubscription?.unsubscribe();
-    }
 
     get registeredTutorialGroups() {
         if (this.course?.isAtLeastTutor) {
@@ -86,19 +79,20 @@ export class CourseTutorialGroupsComponent implements OnInit, OnDestroy {
             })
             .add(() => this.cdr.detectChanges());
 
+        this.navigateToTutorialGroup();
+    }
+
+    navigateToTutorialGroup() {
         const upcomingTutorialGroup = this.courseOverviewService.getUpcomingTutorialGroup(this.course?.tutorialGroups);
         const lastSelectedTutorialGroup = this.getLastSelectedTutorialGroup();
-        this.paramSubscription = this.route.params.subscribe((params) => {
-            const tutorialGroupId = parseInt(params.tutorialGroupId, 10);
-            // If no tutorial group is selected navigate to the upcoming tutorial group
-            if (!tutorialGroupId && lastSelectedTutorialGroup) {
-                this.router.navigate([lastSelectedTutorialGroup], { relativeTo: this.route, replaceUrl: true });
-            } else if (!tutorialGroupId && upcomingTutorialGroup) {
-                this.router.navigate([upcomingTutorialGroup.id], { relativeTo: this.route, replaceUrl: true });
-            } else {
-                this.tutorialGroupSelected = tutorialGroupId ? true : false;
-            }
-        });
+        const tutorialGroupId = this.route.firstChild?.snapshot.params.exerciseId;
+        if (!tutorialGroupId && lastSelectedTutorialGroup) {
+            this.router.navigate([lastSelectedTutorialGroup], { relativeTo: this.route, replaceUrl: true });
+        } else if (!tutorialGroupId && upcomingTutorialGroup) {
+            this.router.navigate([upcomingTutorialGroup.id], { relativeTo: this.route, replaceUrl: true });
+        } else {
+            this.tutorialGroupSelected = tutorialGroupId ? true : false;
+        }
     }
 
     subscribeToCourseUpdates() {
@@ -253,5 +247,17 @@ export class CourseTutorialGroupsComponent implements OnInit, OnDestroy {
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             })
             .add(() => this.cdr.detectChanges());
+    }
+
+    onSubRouteDeactivate() {
+        if (this.route.firstChild) {
+            return;
+        }
+        this.navigateToTutorialGroup();
+    }
+
+    ngOnDestroy(): void {
+        this.ngUnsubscribe.next();
+        this.ngUnsubscribe.complete();
     }
 }

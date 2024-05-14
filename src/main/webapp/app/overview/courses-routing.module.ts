@@ -7,6 +7,7 @@ import { Authority } from 'app/shared/constants/authority.constants';
 import { CourseExercisesComponent } from 'app/overview/course-exercises/course-exercises.component';
 import { CourseOverviewComponent } from './course-overview.component';
 import { CourseTutorialGroupsComponent } from './course-tutorial-groups/course-tutorial-groups.component';
+import { CourseTutorialGroupDetailComponent } from './tutorial-group-details/course-tutorial-group-detail/course-tutorial-group-detail.component';
 
 const routes: Routes = [
     {
@@ -47,6 +48,19 @@ const routes: Routes = [
                     hasSidebar: true,
                 },
                 canActivate: [UserRouteAccessService],
+
+                children: [
+                    {
+                        path: ':exerciseId',
+                        data: {
+                            authorities: [Authority.USER],
+                            pageTitle: 'overview.exercises',
+                            hasSidebar: true,
+                        },
+                        canActivate: [UserRouteAccessService],
+                        loadChildren: () => import('../overview/exercise-details/course-exercise-details.module').then((m) => m.CourseExerciseDetailsModule),
+                    },
+                ],
             },
             {
                 path: 'exercises/text-exercises/:exerciseId',
@@ -96,17 +110,6 @@ const routes: Routes = [
                 },
                 loadChildren: () => import('../exercises/file-upload/participate/file-upload-participation.module').then((m) => m.ArtemisFileUploadParticipationModule),
             },
-            {
-                path: 'exercises/:exerciseId',
-                component: CourseExercisesComponent,
-                data: {
-                    authorities: [Authority.USER],
-                    pageTitle: 'overview.exercises',
-                    hasSidebar: true,
-                },
-                canActivate: [UserRouteAccessService],
-                loadChildren: () => import('../overview/exercise-details/course-exercise-details.module').then((m) => m.CourseExerciseDetailsModule),
-            },
 
             {
                 path: 'lectures',
@@ -117,17 +120,18 @@ const routes: Routes = [
                     hasSidebar: true,
                 },
                 canActivate: [UserRouteAccessService],
-            },
-            {
-                path: 'lectures/:lectureId',
-                component: CourseLecturesComponent,
-                data: {
-                    authorities: [Authority.USER],
-                    pageTitle: 'overview.lectures',
-                    hasSidebar: true,
-                },
-                canActivate: [UserRouteAccessService],
-                loadChildren: () => import('../overview/course-lectures/course-lecture-details.module').then((m) => m.ArtemisCourseLectureDetailsModule),
+                children: [
+                    {
+                        path: ':lectureId',
+                        data: {
+                            authorities: [Authority.USER],
+                            pageTitle: 'overview.lectures',
+                            hasSidebar: true,
+                        },
+                        canActivate: [UserRouteAccessService],
+                        loadChildren: () => import('../overview/course-lectures/course-lecture-details.module').then((m) => m.ArtemisCourseLectureDetailsModule),
+                    },
+                ],
             },
             {
                 path: 'statistics',
@@ -187,17 +191,19 @@ const routes: Routes = [
                     hasSidebar: true,
                 },
                 canActivate: [UserRouteAccessService],
-            },
-            {
-                path: 'tutorial-groups/:tutorialGroupId',
-                component: CourseTutorialGroupsComponent,
-                data: {
-                    authorities: [Authority.USER],
-                    pageTitle: 'overview.tutorialGroups',
-                    hasSidebar: true,
-                },
-                canActivate: [UserRouteAccessService],
-                loadChildren: () => import('../overview/tutorial-group-details/course-tutorial-group-details.module').then((m) => m.CourseTutorialGroupDetailsModule),
+                children: [
+                    {
+                        path: ':tutorialGroupId',
+                        component: CourseTutorialGroupDetailComponent,
+                        data: {
+                            authorities: [Authority.USER],
+                            pageTitle: 'overview.tutorialGroups',
+                            hasSidebar: true,
+                        },
+                        canActivate: [UserRouteAccessService],
+                        loadChildren: () => import('../overview/tutorial-group-details/course-tutorial-group-details.module').then((m) => m.CourseTutorialGroupDetailsModule),
+                    },
+                ],
             },
             {
                 path: 'exams',
