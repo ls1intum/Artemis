@@ -35,6 +35,7 @@ public record ExerciseInformationDTO(long id, String shortName, String title, Zo
                 exercise.getClass());
     }
 
+    @Override
     public boolean equals(Object other) {
         if (other == null) {
             return false;
