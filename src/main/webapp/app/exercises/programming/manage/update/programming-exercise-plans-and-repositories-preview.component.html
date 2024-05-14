@@ -78,13 +78,11 @@
                     <li>
                         <code> {{ testCheckoutDirectory }} </code>
                     </li>
-                    @if (programmingExercise.auxiliaryRepositories) {
-                        @for (auxiliaryRepository of programmingExercise.auxiliaryRepositories; track auxiliaryRepository) {
-                            <div>
-                                <li>
-                                    <code>{{ auxiliaryRepository.checkoutDirectory }} </code>
-                                </li>
-                            </div>
+                    @if (auxiliaryRepositoryCheckoutDirectories?.length) {
+                        @for (auxiliaryRepositoryCheckoutDirectory of auxiliaryRepositoryCheckoutDirectories; track auxiliaryRepositoryCheckoutDirectory) {
+                            <li>
+                                <code>{{ auxiliaryRepositoryCheckoutDirectory }} </code>
+                            </li>
                         }
                     }
                 </ul>

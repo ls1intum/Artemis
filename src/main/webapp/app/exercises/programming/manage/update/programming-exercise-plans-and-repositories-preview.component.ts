@@ -5,6 +5,8 @@ import { ProgrammingExerciseService } from 'app/exercises/programming/manage/ser
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 import { Subscription } from 'rxjs';
 
+const ROOT_DIRECTORY: string = '/';
+
 @Component({
     selector: 'jhi-programming-exercise-plans-and-repositories-preview',
     templateUrl: './programming-exercise-plans-and-repositories-preview.component.html',
@@ -27,21 +29,36 @@ export class ProgrammingExercisePlansAndRepositoriesPreviewComponent {
     solutionCheckoutDirectory: string | undefined;
     exerciseCheckoutDirectory: string | undefined;
     testCheckoutDirectory: string | undefined;
+    auxiliaryRepositoryCheckoutDirectories: string[] = [];
 
     programmingExerciseServiceSubscription: Subscription;
+
+    private addLeadingSlashIfNotPresent(directory: string | undefined): string {
+        if (!directory) {
+            return ROOT_DIRECTORY;
+        }
+
+        return directory.startsWith(ROOT_DIRECTORY) ? directory : ROOT_DIRECTORY + directory;
+    }
 
     private updateCheckoutDirectories() {
         this.programmingExerciseService
             .getCheckoutDirectoriesForProgrammingLanguage(this.programmingExerciseCreationConfig.selectedProgrammingLanguage)
             .subscribe((checkoutDirectories) => {
-                this.solutionCheckoutDirectory = checkoutDirectories.solutionCheckoutDirectory;
-                this.exerciseCheckoutDirectory = checkoutDirectories.exerciseCheckoutDirectory;
-                this.testCheckoutDirectory = checkoutDirectories.testCheckoutDirectory;
+                this.solutionCheckoutDirectory = this.addLeadingSlashIfNotPresent(checkoutDirectories.solutionCheckoutDirectory);
+                this.exerciseCheckoutDirectory = this.addLeadingSlashIfNotPresent(checkoutDirectories.exerciseCheckoutDirectory);
+                this.testCheckoutDirectory = this.addLeadingSlashIfNotPresent(checkoutDirectories.testCheckoutDirectory);
             });
+    }
+
+    private updateAuxiliaryRepositoryCheckoutDirectories() {
+        this.auxiliaryRepositoryCheckoutDirectories =
+            this.programmingExercise?.auxiliaryRepositories?.map((auxiliaryRepository) => this.addLeadingSlashIfNotPresent(auxiliaryRepository.checkoutDirectory)) ?? [];
     }
 
     ngOnInit() {
         this.updateCheckoutDirectories();
+        this.updateAuxiliaryRepositoryCheckoutDirectories();
     }
 
     ngOnChanges(changes: SimpleChanges) {
@@ -54,6 +71,10 @@ export class ProgrammingExercisePlansAndRepositoriesPreviewComponent {
                 changes.programmingExerciseCreationConfig.previousValue?.selectedProgrammingLanguage
         ) {
             this.updateCheckoutDirectories();
+        }
+
+        if (this.programmingExercise?.auxiliaryRepositories) {
+            this.updateAuxiliaryRepositoryCheckoutDirectories();
         }
     }
 
