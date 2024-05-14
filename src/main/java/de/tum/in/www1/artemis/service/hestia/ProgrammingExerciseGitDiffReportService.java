@@ -36,7 +36,6 @@ import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipatio
 import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseGitDiffReportRepository;
 import de.tum.in.www1.artemis.service.FileService;
-import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.web.rest.GitDiffReportParserService;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
@@ -66,13 +65,11 @@ public class ProgrammingExerciseGitDiffReportService {
 
     private final GitDiffReportParserService gitDiffReportParserService;
 
-    private final ProfileService profileService;
-
     public ProgrammingExerciseGitDiffReportService(GitService gitService, ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository,
             ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, FileService fileService,
-            GitDiffReportParserService gitDiffReportParserService, ProfileService profileService) {
+            GitDiffReportParserService gitDiffReportParserService) {
         this.gitService = gitService;
         this.programmingExerciseGitDiffReportRepository = programmingExerciseGitDiffReportRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
@@ -81,7 +78,6 @@ public class ProgrammingExerciseGitDiffReportService {
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.fileService = fileService;
         this.gitDiffReportParserService = gitDiffReportParserService;
-        this.profileService = profileService;
     }
 
     /**
