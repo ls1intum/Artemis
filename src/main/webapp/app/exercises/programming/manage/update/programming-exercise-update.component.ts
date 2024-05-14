@@ -207,6 +207,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      * used in the template to display warnings.
      */
     refreshAuxiliaryRepositoryChecks() {
+        if (!this.programmingExercise?.auxiliaryRepositories) {
+            return;
+        }
+
         let legalNameAndDirs = false;
         // Check that there are no duplicate names.
         const names = new Set<string | undefined>();
