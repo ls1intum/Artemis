@@ -15,7 +15,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender;
 import de.tum.in.www1.artemis.domain.iris.message.IrisTextMessageContent;
-import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
+import de.tum.in.www1.artemis.domain.iris.session.IrisTutorChatSession;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettingsType;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.pyris.PyrisPipelineService;
-import de.tum.in.www1.artemis.service.connectors.pyris.dto.tutorChat.PyrisTutorChatStatusUpdateDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.chat.PyrisChatStatusUpdateDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.job.TutorChatJob;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;
@@ -38,9 +38,9 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
  */
 @Service
 @Profile("iris")
-public class IrisChatSessionService implements IrisChatBasedFeatureInterface<IrisChatSession>, IrisRateLimitedFeatureInterface {
+public class IrisTutorChatSessionService implements IrisChatBasedFeatureInterface<IrisTutorChatSession>, IrisRateLimitedFeatureInterface {
 
-    private static final Logger log = LoggerFactory.getLogger(IrisChatSessionService.class);
+    private static final Logger log = LoggerFactory.getLogger(IrisTutorChatSessionService.class);
 
     private final IrisMessageService irisMessageService;
 
@@ -62,7 +62,7 @@ public class IrisChatSessionService implements IrisChatBasedFeatureInterface<Iri
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    public IrisChatSessionService(IrisMessageService irisMessageService, IrisSettingsService irisSettingsService, IrisChatWebsocketService irisChatWebsocketService,
+    public IrisTutorChatSessionService(IrisMessageService irisMessageService, IrisSettingsService irisSettingsService, IrisChatWebsocketService irisChatWebsocketService,
             AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             IrisRateLimitService rateLimitService, PyrisPipelineService pyrisPipelineService, ProgrammingExerciseRepository programmingExerciseRepository) {
@@ -85,11 +85,11 @@ public class IrisChatSessionService implements IrisChatBasedFeatureInterface<Iri
      * @param user     The user the session belongs to
      * @return The created session
      */
-    public IrisChatSession createChatSessionForProgrammingExercise(ProgrammingExercise exercise, User user) {
+    public IrisTutorChatSession createChatSessionForProgrammingExercise(ProgrammingExercise exercise, User user) {
         if (exercise.isExamExercise()) {
             throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
         }
-        return irisSessionRepository.save(new IrisChatSession(exercise, user));
+        return irisSessionRepository.save(new IrisTutorChatSession(exercise, user));
     }
 
     /**
@@ -101,7 +101,7 @@ public class IrisChatSessionService implements IrisChatBasedFeatureInterface<Iri
      * @param session The session to check
      */
     @Override
-    public void checkHasAccessTo(User user, IrisChatSession session) {
+    public void checkHasAccessTo(User user, IrisTutorChatSession session) {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, session.getExercise(), user);
         if (!Objects.equals(session.getUser(), user)) {
             throw new AccessForbiddenException("Iris Session", session.getId());
@@ -114,7 +114,7 @@ public class IrisChatSessionService implements IrisChatBasedFeatureInterface<Iri
      * @param session The session to check
      */
     @Override
-    public void checkIsFeatureActivatedFor(IrisChatSession session) {
+    public void checkIsFeatureActivatedFor(IrisTutorChatSession session) {
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.CHAT, session.getExercise());
     }
 
@@ -135,11 +135,12 @@ public class IrisChatSessionService implements IrisChatBasedFeatureInterface<Iri
      * @param session The chat session to send to the LLM
      */
     @Override
-    public void requestAndHandleResponse(IrisChatSession session) {
-        var chatSession = (IrisChatSession) irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
+    public void requestAndHandleResponse(IrisTutorChatSession session) {
+        var chatSession = (IrisTutorChatSession) irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
         if (chatSession.getExercise().isExamExercise()) {
             throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
         }
+        // TODO support more exercise types
         var exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(chatSession.getExercise().getId());
         var latestSubmission = getLatestSubmissionIfExists(exercise, chatSession.getUser());
 
@@ -163,8 +164,8 @@ public class IrisChatSessionService implements IrisChatBasedFeatureInterface<Iri
      * @param job          The job that was executed
      * @param statusUpdate The status update of the job
      */
-    public void handleStatusUpdate(TutorChatJob job, PyrisTutorChatStatusUpdateDTO statusUpdate) {
-        var session = (IrisChatSession) irisSessionRepository.findByIdWithMessagesAndContents(job.sessionId());
+    public void handleStatusUpdate(TutorChatJob job, PyrisChatStatusUpdateDTO statusUpdate) {
+        var session = (IrisTutorChatSession) irisSessionRepository.findByIdWithMessagesAndContents(job.sessionId());
         if (statusUpdate.result() != null) {
             var message = new IrisMessage();
             message.addContent(new IrisTextMessageContent(statusUpdate.result()));

@@ -12,8 +12,8 @@ import org.springframework.http.ResponseEntity;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
+import de.tum.in.www1.artemis.domain.iris.session.IrisTutorChatSession;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettingsType;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -113,7 +113,7 @@ public abstract class IrisExerciseChatBasedSessionResource<E extends Exercise, S
         IrisRateLimitService.IrisRateLimitInformation rateLimitInfo = null;
 
         // TODO: Refactor rate limit service in the future
-        if (session instanceof IrisChatSession) {
+        if (session instanceof IrisTutorChatSession) {
             rateLimitInfo = irisRateLimitService.getRateLimitInformation(user);
         }
 

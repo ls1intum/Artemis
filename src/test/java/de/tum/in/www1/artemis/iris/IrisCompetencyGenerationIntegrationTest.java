@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.iris;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 import java.util.List;
 import java.util.Map;
@@ -54,11 +55,13 @@ class IrisCompetencyGenerationIntegrationTest extends AbstractIrisIntegrationTes
         var competencyMap3 = Map.of("malformed", "any content");
         var responseMap = Map.of("competencies", List.of(competencyMap1, competencyMap2, competencyMap3));
 
-        irisRequestMockProvider.mockRunResponse(dto -> {
-            assertThat(dto.settings().authenticationToken()).isNotNull();
-
-            pipelineDone.set(true);
-        });
+        /*
+         * irisRequestMockProvider.mockRunResponse(dto -> {
+         * assertThat(dto.settings().authenticationToken()).isNotNull();
+         * pipelineDone.set(true);
+         * });
+         */
+        fail("This test is not yet implemented. Implement it and remove the fail call.");
 
         List<Competency> competencies = request.postListWithResponseBody("/api/courses/" + course.getId() + "/competencies/generate-from-description", courseDescription,
                 Competency.class, HttpStatus.OK);

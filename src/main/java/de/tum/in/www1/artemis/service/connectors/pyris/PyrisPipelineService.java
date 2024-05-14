@@ -2,20 +2,30 @@ package de.tum.in.www1.artemis.service.connectors.pyris;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
+import de.tum.in.www1.artemis.domain.iris.session.IrisCourseChatSession;
+import de.tum.in.www1.artemis.domain.iris.session.IrisTutorChatSession;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisPipelineExecutionSettingsDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.chat.PyrisChatPipelineExecutionBaseDataDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.chat.course.PyrisCourseChatPipelineExecutionDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.chat.tutor.PyrisTutorChatPipelineExecutionDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisCourseDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisUserDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageStateDTO;
-import de.tum.in.www1.artemis.service.connectors.pyris.dto.tutorChat.PyrisTutorChatPipelineExecutionDTO;
+import de.tum.in.www1.artemis.service.iris.exception.IrisException;
 import de.tum.in.www1.artemis.service.iris.websocket.IrisChatWebsocketService;
 
 /**
@@ -25,6 +35,8 @@ import de.tum.in.www1.artemis.service.iris.websocket.IrisChatWebsocketService;
 @Service
 @Profile("iris")
 public class PyrisPipelineService {
+
+    private static final Logger log = LoggerFactory.getLogger(PyrisPipelineService.class);
 
     private final PyrisConnectorService pyrisConnectorService;
 
@@ -45,30 +57,50 @@ public class PyrisPipelineService {
         this.irisChatWebsocketService = irisChatWebsocketService;
     }
 
-    /**
-     * Execute the tutor chat pipeline for the given exercise and session.
-     * This method will create a new job, setup the DTOs and execution settings, and then execute the pipeline.
-     *
-     * @param variant          the variant of the pipeline to execute
-     * @param latestSubmission the latest submission for the exercise
-     * @param exercise         the programming exercise
-     * @param session          the chat session
-     */
-    public void executeTutorChatPipeline(String variant, Optional<ProgrammingSubmission> latestSubmission, ProgrammingExercise exercise, IrisChatSession session) {
-        var jobToken = pyrisJobService.addJob(exercise.getCourseViaExerciseGroupOrCourseMember().getId(), exercise.getId(), session.getId());
+    private <T extends IrisChatSession, U> void executeChatPipeline(String variant, T session, String pipelineName,
+            Function<PyrisChatPipelineExecutionBaseDataDTO, U> executionDtoSupplier, Supplier<String> jobTokenSupplier) {
+        var jobToken = jobTokenSupplier.get();
         var settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, List.of(), artemisBaseUrl);
-        var preparingRequestStageInProgress = new PyrisStageDTO("Preparing request", 10, PyrisStageStateDTO.IN_PROGRESS, "Checking out repositories and loading data");
-        var preparingRequestStageDone = new PyrisStageDTO("Preparing request", 10, PyrisStageStateDTO.DONE, "Checking out repositories and loading data");
+
+        var preparingRequestStageInProgress = new PyrisStageDTO("Preparing", 10, PyrisStageStateDTO.IN_PROGRESS, null);
+        var preparingRequestStageDone = new PyrisStageDTO("Preparing", 10, PyrisStageStateDTO.DONE, null);
         var executingPipelineStageNotStarted = new PyrisStageDTO("Executing pipeline", 30, PyrisStageStateDTO.NOT_STARTED, null);
         var executingPipelineStageInProgress = new PyrisStageDTO("Executing pipeline", 30, PyrisStageStateDTO.IN_PROGRESS, null);
         irisChatWebsocketService.sendStatusUpdate(session, List.of(preparingRequestStageInProgress, executingPipelineStageNotStarted));
 
-        var executionDTO = new PyrisTutorChatPipelineExecutionDTO(latestSubmission.map(pyrisDTOService::toPyrisDTO).orElse(null), pyrisDTOService.toPyrisDTO(exercise),
-                new PyrisCourseDTO(exercise.getCourseViaExerciseGroupOrCourseMember()), pyrisDTOService.toPyrisDTO(session.getMessages()), new PyrisUserDTO(session.getUser()),
-                settingsDTO, List.of(preparingRequestStageDone));
+        try {
+            var base = new PyrisChatPipelineExecutionBaseDataDTO(pyrisDTOService.toPyrisMessageDTOList(session.getMessages()), new PyrisUserDTO(session.getUser()), settingsDTO,
+                    List.of(preparingRequestStageDone));
 
-        irisChatWebsocketService.sendStatusUpdate(session, List.of(preparingRequestStageDone, executingPipelineStageInProgress));
+            U executionDTO = executionDtoSupplier.apply(base);
 
-        pyrisConnectorService.executePipeline("tutor-chat", variant, executionDTO);
+            irisChatWebsocketService.sendStatusUpdate(session, List.of(preparingRequestStageDone, executingPipelineStageInProgress));
+
+            try {
+                pyrisConnectorService.executePipeline(pipelineName, variant, executionDTO);
+            }
+            catch (PyrisConnectorException | IrisException e) {
+                log.error("Failed to execute " + pipelineName + " pipeline", e);
+                var executingPipelineStageFailed = new PyrisStageDTO("Executing pipeline", 30, PyrisStageStateDTO.ERROR, "An internal error occurred");
+                irisChatWebsocketService.sendStatusUpdate(session, List.of(preparingRequestStageDone, executingPipelineStageFailed));
+            }
+        }
+        catch (Exception e) {
+            log.error("Failed to prepare " + pipelineName + " pipeline execution", e);
+            var preparingRequestStageFailed = new PyrisStageDTO("Preparing request", 10, PyrisStageStateDTO.ERROR, "An internal error occurred");
+            irisChatWebsocketService.sendStatusUpdate(session, List.of(preparingRequestStageFailed, executingPipelineStageNotStarted));
+        }
+    }
+
+    public void executeTutorChatPipeline(String variant, Optional<ProgrammingSubmission> latestSubmission, ProgrammingExercise exercise, IrisTutorChatSession session) {
+        executeChatPipeline(variant, session, "tutor-chat",
+                base -> new PyrisTutorChatPipelineExecutionDTO(base, latestSubmission.map(pyrisDTOService::toPyrisSubmissionDTO).orElse(null),
+                        pyrisDTOService.toPyrisProgrammingExerciseDTO(exercise), new PyrisCourseDTO(exercise.getCourseViaExerciseGroupOrCourseMember())),
+                () -> pyrisJobService.addTutorChatJob(exercise.getCourseViaExerciseGroupOrCourseMember().getId(), exercise.getId(), session.getId()));
+    }
+
+    public void executeCourseChatPipeline(String variant, Course course, IrisCourseChatSession session) {
+        executeChatPipeline(variant, session, "course-chat", base -> new PyrisCourseChatPipelineExecutionDTO(base, pyrisDTOService.toPyrisExtendedCourseDTO(course)),
+                () -> pyrisJobService.addCourseChatJob(course.getId(), session.getId()));
     }
 }

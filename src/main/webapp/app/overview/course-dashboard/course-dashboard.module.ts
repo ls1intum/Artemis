@@ -7,6 +7,7 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { RouterModule, Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { Authority } from 'app/shared/constants/authority.constants';
+import { IrisModule } from 'app/iris/iris.module';
 import { CourseExercisePerformanceComponent } from 'app/overview/course-dashboard/course-exercise-performance/course-exercise-performance.component';
 import { CourseExerciseLatenessComponent } from 'app/overview/course-dashboard/course-exercise-lateness/course-exercise-lateness.component';
 import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
@@ -44,6 +45,7 @@ const routes: Routes = [
         ArtemisSharedComponentModule,
         FeatureToggleModule,
         LineChartModule,
+        IrisModule,
     ],
 })
 export class CourseDashboardModule {}

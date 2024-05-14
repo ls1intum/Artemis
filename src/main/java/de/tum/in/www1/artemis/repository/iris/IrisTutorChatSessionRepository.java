@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.repository.iris;
 
 import java.util.List;
+import java.util.Optional;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -8,18 +9,18 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
+import de.tum.in.www1.artemis.domain.iris.session.IrisTutorChatSession;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
- * Repository interface for managing {@link IrisChatSession} entities.
+ * Repository interface for managing {@link IrisTutorChatSession} entities.
  * Extends Spring Data JPA's {@link JpaRepository}.
  * Provides custom queries for finding chat sessions based on different criteria.
  */
-public interface IrisChatSessionRepository extends JpaRepository<IrisChatSession, Long> {
+public interface IrisTutorChatSessionRepository extends JpaRepository<IrisTutorChatSession, Long> {
 
     /**
-     * Finds a list of {@link IrisChatSession} based on the exercise and user IDs.
+     * Finds a list of {@link IrisTutorChatSession} based on the exercise and user IDs.
      *
      * @param exerciseId The ID of the exercise.
      * @param userId     The ID of the user.
@@ -27,12 +28,23 @@ public interface IrisChatSessionRepository extends JpaRepository<IrisChatSession
      */
     @Query("""
             SELECT s
-            FROM IrisChatSession s
+            FROM IrisTutorChatSession s
             WHERE s.exercise.id = :exerciseId
                 AND s.user.id = :userId
             ORDER BY s.creationDate DESC
             """)
-    List<IrisChatSession> findByExerciseIdAndUserId(@Param("exerciseId") Long exerciseId, @Param("userId") Long userId);
+    List<IrisTutorChatSession> findByExerciseIdAndUserId(@Param("exerciseId") Long exerciseId, @Param("userId") Long userId);
+
+    @Query("""
+                SELECT s
+                FROM IrisTutorChatSession s
+                LEFT JOIN FETCH s.messages
+                WHERE s.exercise.id = :exerciseId
+                    AND s.user.id = :userId
+                ORDER BY s.creationDate DESC
+                LIMIT 1
+            """)
+    Optional<IrisTutorChatSession> findLatestByExerciseIdAndUserIdWithMessages(@Param("exerciseId") Long exerciseId, @Param("userId") Long userId);
 
     /**
      * Finds a list of chat sessions or throws an exception if none are found.
@@ -43,7 +55,7 @@ public interface IrisChatSessionRepository extends JpaRepository<IrisChatSession
      * @throws EntityNotFoundException if no sessions are found.
      */
     @NotNull
-    default List<IrisChatSession> findByExerciseIdAndUserIdElseThrow(long exerciseId, long userId) throws EntityNotFoundException {
+    default List<IrisTutorChatSession> findByExerciseIdAndUserIdElseThrow(long exerciseId, long userId) throws EntityNotFoundException {
         var result = findByExerciseIdAndUserId(exerciseId, userId);
         if (result.isEmpty()) {
             throw new EntityNotFoundException("Iris Chat Session");
@@ -59,23 +71,20 @@ public interface IrisChatSessionRepository extends JpaRepository<IrisChatSession
      * @throws EntityNotFoundException if no session is found.
      */
     @NotNull
-    default IrisChatSession findByIdElseThrow(long sessionId) throws EntityNotFoundException {
+    default IrisTutorChatSession findByIdElseThrow(long sessionId) throws EntityNotFoundException {
         return findById(sessionId).orElseThrow(() -> new EntityNotFoundException("Iris Chat Session", sessionId));
     }
 
     /**
-     * Finds the newest chat session for a given exercise and user ID or throws an exception if none are found.
+     * Finds the latest chat session by exercise and user ID or throws an exception if not found.
      *
      * @param exerciseId The ID of the exercise.
      * @param userId     The ID of the user.
-     * @return The newest chat session.
-     * @throws EntityNotFoundException if no sessions are found.
+     * @return The latest chat session.
+     * @throws EntityNotFoundException if no session is found.
      */
-    default IrisChatSession findNewestByExerciseIdAndUserIdElseThrow(long exerciseId, long userId) throws EntityNotFoundException {
-        var result = findByExerciseIdAndUserId(exerciseId, userId);
-        if (result.isEmpty()) {
-            throw new EntityNotFoundException("Iris Chat Session");
-        }
-        return result.getFirst();
+    @NotNull
+    default IrisTutorChatSession findLatestByExerciseIdAndUserIdWithMessagesElseThrow(long exerciseId, long userId) throws EntityNotFoundException {
+        return this.findLatestByExerciseIdAndUserIdWithMessages(exerciseId, userId).orElseThrow(() -> new EntityNotFoundException("Iris Chat Session"));
     }
 }

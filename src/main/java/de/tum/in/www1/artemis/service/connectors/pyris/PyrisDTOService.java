@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.connectors.pyris;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -15,9 +16,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Repository;
+import de.tum.in.www1.artemis.domain.competency.Competency;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.iris.message.IrisJsonMessageContent;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.message.IrisTextMessageContent;
@@ -25,6 +30,10 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisBuildLogEntryDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisCompetencyDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisExamDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisExerciseDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisExtendedCourseDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisFeedbackDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisJsonMessageContentDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisMessageContentDTO;
@@ -56,7 +65,7 @@ public class PyrisDTOService {
      * @param exercise the programming exercise to convert
      * @return the converted PyrisProgrammingExerciseDTO
      */
-    public PyrisProgrammingExerciseDTO toPyrisDTO(ProgrammingExercise exercise) {
+    public PyrisProgrammingExerciseDTO toPyrisProgrammingExerciseDTO(ProgrammingExercise exercise) {
         var templateRepositoryContents = getRepository(exercise.getTemplateParticipation()).map(repositoryService::getFilesWithContent).orElse(Map.of());
         var solutionRepositoryContents = getRepository(exercise.getSolutionParticipation()).map(repositoryService::getFilesWithContent).orElse(Map.of());
         Optional<Repository> testRepo = Optional.empty();
@@ -79,7 +88,7 @@ public class PyrisDTOService {
      * @param submission the students submission
      * @return the converted PyrisSubmissionDTO
      */
-    public PyrisSubmissionDTO toPyrisDTO(ProgrammingSubmission submission) {
+    public PyrisSubmissionDTO toPyrisSubmissionDTO(ProgrammingSubmission submission) {
         var buildLogEntries = submission.getBuildLogEntries().stream().map(buildLogEntry -> new PyrisBuildLogEntryDTO(toInstant(buildLogEntry.getTime()), buildLogEntry.getLog()))
                 .toList();
         var studentRepositoryContents = getRepository((ProgrammingExerciseParticipation) submission.getParticipation()).map(repositoryService::getFilesWithContent)
@@ -95,7 +104,7 @@ public class PyrisDTOService {
      * @param messages the messages with contents to convert
      * @return the converted list of PyrisMessageDTOs
      */
-    public List<PyrisMessageDTO> toPyrisDTO(List<IrisMessage> messages) {
+    public List<PyrisMessageDTO> toPyrisMessageDTOList(List<IrisMessage> messages) {
         return messages.stream().map(message -> {
             var content = message.getContent().stream().map(messageContent -> {
                 PyrisMessageContentDTO result = null;
@@ -109,6 +118,36 @@ public class PyrisDTOService {
             }).filter(Objects::nonNull).toList();
             return new PyrisMessageDTO(toInstant(message.getSentAt()), message.getSender(), content);
         }).toList();
+    }
+
+    public List<PyrisCompetencyDTO> toPyrisCompetencyDTOList(Collection<Competency> competencies) {
+        return competencies.stream().map(competency -> new PyrisCompetencyDTO(competency.getId(), competency.getTitle(), competency.getDescription(), competency.getTaxonomy(),
+                toInstant(competency.getSoftDueDate()), competency.isOptional())).toList();
+    }
+
+    public PyrisExtendedCourseDTO toPyrisExtendedCourseDTO(Course course) {
+        // Convert the Exercise list to PyrisExerciseDTO list
+        List<PyrisExerciseDTO> exercises = course.getExercises().stream().map(this::toPyrisExerciseDTO).toList();
+
+        // Convert the Exam list to PyrisExamDTO list
+        List<PyrisExamDTO> exams = course.getExams().stream().map(this::toPyrisExamDTO).toList();
+
+        // Create a new PyrisExtendedCourseDTO object using the extracted fields and the converted lists
+        return new PyrisExtendedCourseDTO(course.getId(), course.getTitle(), course.getDescription(), toInstant(course.getStartDate()), toInstant(course.getEndDate()),
+                course.getDefaultProgrammingLanguage(), course.getMaxComplaints(), course.getMaxTeamComplaints(), course.getMaxComplaintTimeDays(),
+                course.getMaxRequestMoreFeedbackTimeDays(), course.getMaxPoints(), course.getPresentationScore(), exercises, exams,
+                toPyrisCompetencyDTOList(course.getCompetencies()));
+    }
+
+    public PyrisExerciseDTO toPyrisExerciseDTO(Exercise exercise) {
+        return new PyrisExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getExerciseType(), exercise.getMode(), exercise.getMaxPoints(), exercise.getBonusPoints(),
+                exercise.getDifficulty(), toInstant(exercise.getReleaseDate()), toInstant(exercise.getDueDate()), exercise.getIncludedInOverallScore(),
+                Boolean.TRUE.equals(exercise.getPresentationScoreEnabled()));
+    }
+
+    public PyrisExamDTO toPyrisExamDTO(Exam exam) {
+        return new PyrisExamDTO(exam.getId(), exam.getTitle(), exam.isTestExam(), toInstant(exam.getStartDate()), toInstant(exam.getEndDate()),
+                toInstant(exam.getPublishResultsDate()), toInstant(exam.getExamStudentReviewStart()), toInstant(exam.getExamStudentReviewEnd()));
     }
 
     /**
