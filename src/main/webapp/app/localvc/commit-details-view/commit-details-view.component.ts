@@ -19,7 +19,7 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
     commitHash: string;
     isTemplate = false;
 
-    errorWhileFetchingRepos = false;
+    errorWhileFetching = false;
     leftCommitFileContentByPath: Map<string, string>;
     rightCommitFileContentByPath: Map<string, string>;
     commits: CommitInfo[] = [];
@@ -92,14 +92,15 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
                         this.isTemplate = foundIndex === this.commits.length - 1;
                     }
                 }),
-                catchError((error) => {
-                    console.error('Error retrieving or handling commits:', error);
+                catchError(() => {
                     return throwError(() => new Error('Error processing commits'));
                 }),
             )
             .subscribe({
                 next: () => this.getDiffReport(),
-                error: (err) => console.error('An error occurred:', err),
+                error: () => {
+                    this.errorWhileFetching = true;
+                },
             });
     }
 
@@ -151,7 +152,7 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
                         this.fetchParticipationRepoFilesAtRightCommit();
                     },
                     error: () => {
-                        this.errorWhileFetchingRepos = true;
+                        this.errorWhileFetching = true;
                     },
                 });
         }
@@ -174,7 +175,7 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
                     this.rightCommitFileContentByPath = filesWithContent;
                 },
                 error: () => {
-                    this.errorWhileFetchingRepos = true;
+                    this.errorWhileFetching = true;
                 },
             });
     }

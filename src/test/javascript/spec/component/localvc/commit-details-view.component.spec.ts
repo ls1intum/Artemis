@@ -6,7 +6,7 @@ import { MockProgrammingExerciseParticipationService } from '../../helpers/mocks
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import dayjs from 'dayjs/esm';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { Observable, of } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { CommitInfo } from 'app/entities/programming-submission.model';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { CommitDetailsViewComponent } from 'app/localvc/commit-details-view/commit-details-view.component';
@@ -104,7 +104,7 @@ describe('CommitDetailsViewComponent', () => {
         }).compileComponents();
     });
 
-    function setupComponent() {
+    function setupComponent(throwErrorWhenRetrievingCommitHistory = false) {
         fixture = TestBed.createComponent(CommitDetailsViewComponent);
         component = fixture.componentInstance;
         activatedRoute = fixture.debugElement.injector.get(ActivatedRoute) as MockActivatedRoute;
@@ -118,9 +118,13 @@ describe('CommitDetailsViewComponent', () => {
 
         const mockExerciseResponse: HttpResponse<ProgrammingExercise> = new HttpResponse({ body: mockExerciseWithTemplateAndSolution });
         jest.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipation').mockReturnValue(of(mockExerciseResponse));
-
-        jest.spyOn(programmingExerciseParticipationService, 'retrieveCommitHistoryForParticipation').mockReturnValue(of(mockCommits));
-        jest.spyOn(programmingExerciseParticipationService, 'retrieveCommitHistoryForTemplateSolutionOrTests').mockReturnValue(of(mockTemplateCommits));
+        const errorObservable = throwError(() => new Error('Error'));
+        jest.spyOn(programmingExerciseParticipationService, 'retrieveCommitHistoryForParticipation').mockReturnValue(
+            throwErrorWhenRetrievingCommitHistory ? errorObservable : of(mockCommits),
+        );
+        jest.spyOn(programmingExerciseParticipationService, 'retrieveCommitHistoryForTemplateSolutionOrTests').mockReturnValue(
+            throwErrorWhenRetrievingCommitHistory ? errorObservable : of(mockTemplateCommits),
+        );
         jest.spyOn(programmingExerciseService, 'getDiffReportForCommits').mockReturnValue(of(mockDiffReportForCommits));
 
         fixture.detectChanges();
@@ -222,6 +226,23 @@ describe('CommitDetailsViewComponent', () => {
         expect(component.repoFilesSubscription?.closed).toBeTrue();
     });
 
+    it('should handle error when retrieving commit info', () => {
+        setupComponent(true);
+        activatedRoute.setParameters({ participationId: 2, commitHash: 'commit2', exerciseId: 1 });
+
+        // Trigger ngOnInit
+        component.ngOnInit();
+
+        expect(component.commits).toEqual([]);
+        expect(component.errorWhileFetching).toBeTrue();
+
+        // Trigger ngOnDestroy
+        component.ngOnDestroy();
+
+        // Expect subscription to be unsubscribed
+        expect(component.paramSub?.closed).toBeTrue();
+    });
+
     it('should fetch repository files', () => {
         setupComponent();
         activatedRoute.setParameters({ participationId: 2, commitHash: 'commit2', exerciseId: 1 });
@@ -259,7 +280,7 @@ describe('CommitDetailsViewComponent', () => {
 
         expect(component.leftCommitFileContentByPath).toEqual(new Map<string, string>());
         expect(component.rightCommitFileContentByPath).toEqual(new Map<string, string>());
-        expect(component.errorWhileFetchingRepos).toBeTrue();
+        expect(component.errorWhileFetching).toBeTrue();
 
         // Trigger ngOnDestroy
         component.ngOnDestroy();
@@ -297,7 +318,7 @@ describe('CommitDetailsViewComponent', () => {
 
         expect(component.leftCommitFileContentByPath).toEqual(mockRepositoryFiles);
         expect(component.rightCommitFileContentByPath).toEqual(new Map<string, string>());
-        expect(component.errorWhileFetchingRepos).toBeTrue();
+        expect(component.errorWhileFetching).toBeTrue();
 
         // Trigger ngOnDestroy
         component.ngOnDestroy();
