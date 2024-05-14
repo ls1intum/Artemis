@@ -25,8 +25,11 @@ import { CompetencySearchComponent } from 'app/course/competencies/import-compet
 import { ImportCompetenciesTableComponent } from 'app/course/competencies/import-competencies/import-competencies-table.component';
 import { TaxonomySelectComponent } from 'app/course/competencies/taxonomy-select/taxonomy-select.component';
 import { CompetencyRelationGraphComponent } from 'app/course/competencies/competency-management/competency-relation-graph.component';
+import { CompetencyAccordionComponent } from 'app/course/competencies/competency-accordion/competency-accordion.component';
 import { CourseImportStandardizedCompetenciesComponent } from 'app/course/competencies/import-standardized-competencies/course-import-standardized-competencies.component';
 import { ArtemisStandardizedCompetencyModule } from 'app/shared/standardized-competencies/standardized-competency.module';
+import { ArtemisCourseExerciseRowModule } from 'app/overview/course-exercises/course-exercise-row.module';
+import { ArtemisLectureUnitsModule } from 'app/overview/course-lectures/lecture-units.module';
 
 @NgModule({
     imports: [
@@ -41,6 +44,8 @@ import { ArtemisStandardizedCompetencyModule } from 'app/shared/standardized-com
         ArtemisMarkdownModule,
         IrisModule,
         ArtemisStandardizedCompetencyModule,
+        ArtemisCourseExerciseRowModule,
+        ArtemisLectureUnitsModule,
     ],
     declarations: [
         CompetencyFormComponent,
@@ -54,6 +59,7 @@ import { ArtemisStandardizedCompetencyModule } from 'app/shared/standardized-com
         CourseDescriptionFormComponent,
         CompetencyManagementComponent,
         CompetencyCardComponent,
+        CompetencyAccordionComponent,
         CompetenciesPopoverComponent,
         PrerequisiteImportComponent,
         CompetencyImportCourseComponent,
@@ -62,6 +68,6 @@ import { ArtemisStandardizedCompetencyModule } from 'app/shared/standardized-com
         CompetencyRelationGraphComponent,
         CourseImportStandardizedCompetenciesComponent,
     ],
-    exports: [CompetencyCardComponent, CompetenciesPopoverComponent, CompetencyFormComponent, CompetencyRingsComponent, TaxonomySelectComponent],
+    exports: [CompetencyCardComponent, CompetencyAccordionComponent, CompetenciesPopoverComponent, CompetencyFormComponent, CompetencyRingsComponent, TaxonomySelectComponent],
 })
 export class ArtemisCompetenciesModule {}

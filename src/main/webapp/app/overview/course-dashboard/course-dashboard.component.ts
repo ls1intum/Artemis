@@ -1,7 +1,7 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { Subscription, forkJoin } from 'rxjs';
-import { ActivatedRoute } from '@angular/router';
+import { Subscription } from 'rxjs';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { Competency } from 'app/entities/competency.model';
 import { onError } from 'app/shared/util/global.utils';
@@ -14,10 +14,13 @@ import { ExerciseMetrics } from 'app/entities/student-metrics.model';
 import { ExerciseLateness } from 'app/overview/course-dashboard/course-exercise-lateness/course-exercise-lateness.component';
 import { ExercisePerformance } from 'app/overview/course-dashboard/course-exercise-performance/course-exercise-performance.component';
 import { round } from 'app/shared/util/utils';
+import { ICompetencyAccordionToggleEvent } from 'app/shared/competency/interfaces/competency-accordion-toggle-event.interface';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-course-dashboard',
     templateUrl: './course-dashboard.component.html',
+    styleUrls: ['./course-dashboard.component.scss'],
 })
 export class CourseDashboardComponent implements OnInit, OnDestroy {
     courseId: number;
@@ -32,7 +35,8 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     exercisePerformance?: ExercisePerformance[];
 
     public competencies: Competency[] = [];
-    private prerequisites: Competency[] = [];
+    public openedAccordionIndex: number | null = null;
+    private subscriptions: Subscription[] = [];
 
     private paramSubscription?: Subscription;
     private courseUpdatesSubscription?: Subscription;
@@ -42,10 +46,13 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     protected readonly FeatureToggle = FeatureToggle;
     protected readonly round = round;
 
+    @ViewChildren('competencyAccordionElement', { read: ElementRef }) competencyAccordions: QueryList<ElementRef>;
+
     constructor(
         private courseStorageService: CourseStorageService,
         private alertService: AlertService,
         private route: ActivatedRoute,
+        private router: Router,
         private competencyService: CompetencyService,
         private courseDashboardService: CourseDashboardService,
     ) {}
@@ -65,6 +72,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
         this.paramSubscription?.unsubscribe();
         this.courseUpdatesSubscription?.unsubscribe();
         this.metricsSubscription?.unsubscribe();
+        this.subscriptions.forEach((subscription) => subscription.unsubscribe());
     }
 
     /**
@@ -72,22 +80,23 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
      */
     loadCompetencies() {
         this.isLoadingCompetencies = true;
-        forkJoin([this.competencyService.getAllForCourse(this.courseId), this.competencyService.getAllPrerequisitesForCourse(this.courseId)]).subscribe({
-            next: ([competencies, prerequisites]) => {
-                this.competencies = competencies.body!;
-                this.prerequisites = prerequisites.body!;
-                // Also update the course, so we do not need to fetch again next time
-                if (this.course) {
-                    this.course.competencies = this.competencies;
-                    this.course.prerequisites = this.prerequisites;
-                }
-                this.isLoadingCompetencies = false;
-            },
-            error: (errorResponse: HttpErrorResponse) => {
-                onError(this.alertService, errorResponse);
-                this.isLoadingCompetencies = false;
-            },
-        });
+        this.subscriptions.push(
+            this.competencyService.getAllForCourseStudentDashboard(this.courseId).subscribe({
+                next: (response) => {
+                    this.competencies = response.body!;
+                    this.isLoadingCompetencies = false;
+                    // scroll to the current competency
+                    const scrollIndex = this.currentCompetencyIndex !== -1 ? this.currentCompetencyIndex : 0;
+                    setTimeout(() => {
+                        this.scrollToAccordion(scrollIndex);
+                    }, 0);
+                },
+                error: (error: HttpErrorResponse) => {
+                    onError(this.alertService, error);
+                    this.isLoadingCompetencies = false;
+                },
+            }),
+        );
     }
 
     /**
@@ -172,18 +181,39 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
         });
     }
 
+    get currentCompetencyIndex() {
+        return this.competencies.findIndex((competency) => dayjs().isBefore(competency.softDueDate));
+    }
+
+    private scrollToAccordion(index: number) {
+        const accordionsArray = this.competencyAccordions.toArray();
+        if (index !== -1 && accordionsArray[index]) {
+            accordionsArray[index].nativeElement.scrollIntoView({ behavior: 'smooth' });
+        }
+    }
+
     private setCourse(course?: Course) {
         this.course = course;
         // Note: this component is only shown if there are at least 1 competencies or at least 1 prerequisites, so if they do not exist, we load the data from the server
         if (this.course && ((this.course.competencies && this.course.competencies.length > 0) || (this.course.prerequisites && this.course.prerequisites.length > 0))) {
             this.competencies = this.course.competencies || [];
-            this.prerequisites = this.course.prerequisites || [];
         } else {
             this.loadCompetencies();
         }
-
         if (this.course) {
             this.loadMetrics();
         }
+    }
+
+    handleToggle(event: ICompetencyAccordionToggleEvent) {
+        this.openedAccordionIndex = event.opened ? event.index : null;
+    }
+
+    get learningPathsEnabled() {
+        return this.course?.learningPathsEnabled || false;
+    }
+
+    navigateToLearningPaths() {
+        this.router.navigate(['courses', this.courseId, 'learning-path']);
     }
 }

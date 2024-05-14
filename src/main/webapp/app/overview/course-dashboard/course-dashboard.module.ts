@@ -13,6 +13,8 @@ import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module'
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { LineChartModule } from '@swimlane/ngx-charts';
+import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
+import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 
 const routes: Routes = [
     {
@@ -36,9 +38,11 @@ const routes: Routes = [
         NgbModule,
         ArtemisSharedModule,
         FontAwesomeModule,
+        ArtemisCompetenciesModule,
         ArtemisDataTableModule,
         NgxDatatableModule,
         ArtemisSharedComponentModule,
+        FeatureToggleModule,
         LineChartModule,
     ],
 })
