@@ -2,6 +2,7 @@ import { Component, Input, SimpleChanges } from '@angular/core';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
+import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 
 @Component({
     selector: 'jhi-programming-exercise-plans-and-repositories-preview',
@@ -11,6 +12,7 @@ import { ProgrammingExerciseService } from 'app/exercises/programming/manage/ser
 export class ProgrammingExercisePlansAndRepositoriesPreviewComponent {
     @Input() programmingExercise: ProgrammingExercise | null;
     @Input() isLocal: boolean;
+    @Input() programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
 
     constructor(private programmingExerciseService: ProgrammingExerciseService) {}
 
@@ -26,33 +28,29 @@ export class ProgrammingExercisePlansAndRepositoriesPreviewComponent {
     testCheckoutDirectory: string | undefined;
 
     ngOnInit() {
-        if (!this.programmingExercise?.programmingLanguage) {
-            return;
-        }
-
-        this.programmingExerciseService.getCheckoutDirectoriesForProgrammingLanguage(this.programmingExercise?.programmingLanguage).subscribe((checkoutDirectories) => {
-            if (this.programmingExercise) {
+        this.programmingExerciseService
+            .getCheckoutDirectoriesForProgrammingLanguage(this.programmingExerciseCreationConfig.selectedProgrammingLanguage)
+            .subscribe((checkoutDirectories) => {
                 this.solutionCheckoutDirectory = checkoutDirectories.solutionCheckoutDirectory;
                 this.exerciseCheckoutDirectory = checkoutDirectories.exerciseCheckoutDirectory;
                 this.testCheckoutDirectory = checkoutDirectories.testCheckoutDirectory;
-            }
-        });
+            });
     }
 
     // TODO fix change detection
     ngOnChanges(changes: SimpleChanges) {
         if (
-            changes.programmingExercise &&
-            changes.programmingExercise.currentValue.programmingLanguage !== changes.programmingExercise.previousValue.programmingLanguage &&
-            this.programmingExercise?.programmingLanguage
+            changes.programmingExerciseCreationConfig &&
+            changes.programmingExerciseCreationConfig.currentValue.selectedProgrammingLanguage !==
+                changes.programmingExerciseCreationConfig.previousValue.selectedProgrammingLanguage
         ) {
-            this.programmingExerciseService.getCheckoutDirectoriesForProgrammingLanguage(this.programmingExercise?.programmingLanguage).subscribe((checkoutDirectories) => {
-                if (this.programmingExercise) {
+            this.programmingExerciseService
+                .getCheckoutDirectoriesForProgrammingLanguage(this.programmingExerciseCreationConfig.selectedProgrammingLanguage)
+                .subscribe((checkoutDirectories) => {
                     this.solutionCheckoutDirectory = checkoutDirectories.solutionCheckoutDirectory;
                     this.exerciseCheckoutDirectory = checkoutDirectories.exerciseCheckoutDirectory;
                     this.testCheckoutDirectory = checkoutDirectories.testCheckoutDirectory;
-                }
-            });
+                });
         }
     }
 }
