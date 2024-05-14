@@ -102,6 +102,10 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                     loadChildren: () => import('./exam/manage/exam-management.module').then((m) => m.ArtemisExamManagementModule),
                 },
                 {
+                    path: 'courses/:courseId/exams/:examId/participation',
+                    loadChildren: () => import('./exam/participate/exam-participation.module').then((m) => m.ArtemisExamParticipationModule),
+                },
+                {
                     path: 'courses/:courseId/exams/:examId/grading-system',
                     loadChildren: () => import('./grading-system/grading-system.module').then((m) => m.GradingSystemModule),
                 },

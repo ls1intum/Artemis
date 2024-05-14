@@ -88,19 +88,18 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
             this.prepareSidebarData();
         }
 
-        //const upcomingExam = this.courseOverviewService.getUpcomingExam([...this.realExamsOfCourse, ...this.testExamsOfCourse]);
-        //const lastSelectedExam = this.getLastSelectedExam();
+        const upcomingExam = this.courseOverviewService.getUpcomingExam([...this.realExamsOfCourse, ...this.testExamsOfCourse]);
+        const lastSelectedExam = this.getLastSelectedExam();
         this.paramSubscription = this.route.params.subscribe((params) => {
             const examId = parseInt(params.examId, 10);
-            // If no exam is selected, navigate to the lastSelectedExam or upcoming exam
-            // if (!examId && lastSelectedExam) {
-            //     this.router.navigate([lastSelectedExam], { relativeTo: this.route, replaceUrl: true });
-            // } else if (!examId && upcomingExam) {
-            //     this.router.navigate([upcomingExam.id], { relativeTo: this.route, replaceUrl: true });
-            // } else {
-            //     this.examSelected = examId ? true : false;
-            // }
-            this.examSelected = examId ? true : false;
+            //If no exam is selected, navigate to the lastSelectedExam or upcoming exam
+            if (!examId && lastSelectedExam) {
+                this.router.navigate([lastSelectedExam], { relativeTo: this.route, replaceUrl: true });
+            } else if (!examId && upcomingExam) {
+                this.router.navigate([upcomingExam.id], { relativeTo: this.route, replaceUrl: true });
+            } else {
+                this.examSelected = examId ? true : false;
+            }
         });
     }
 

@@ -25,6 +25,12 @@ interface ExamState {
     handInPossible: boolean;
     submitInProgress: boolean;
     attendanceChecked: boolean;
+    courseId?: number;
+    examId?: number;
+    testRunId?: number;
+    studentExamId?: number;
+    exam?: Exam;
+    studentExam?: StudentExam;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -33,8 +39,8 @@ export class ExamParticipationService {
 
     private examExerciseIds: number[];
 
-    private examStartConfirmedSource = new BehaviorSubject<boolean>(false);
-    examStartConfirmed$ = this.examStartConfirmedSource.asObservable();
+    private examStartedSource = new Subject<StudentExam>();
+    examStarted$ = this.examStartedSource.asObservable();
 
     private initialState: ExamState = {
         testStartTime: undefined,
@@ -366,5 +372,9 @@ export class ExamParticipationService {
     public setExamState(newState: Partial<ExamState>) {
         const currentState = this.examStateSource.value;
         this.examStateSource.next({ ...currentState, ...newState });
+    }
+
+    public emitExamStarted(studentExam: StudentExam) {
+        this.examStartedSource.next(studentExam);
     }
 }
