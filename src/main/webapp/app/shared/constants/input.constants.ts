@@ -13,6 +13,8 @@ export const MAX_SUBMISSION_TEXT_LENGTH = 30 * 1000;
 export const MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH = 255; // Must be consistent with database column definition
 /** Short names must start with a letter and cannot contain special characters **/
 export const SHORT_NAME_PATTERN = /^[a-zA-Z][a-zA-Z0-9]{2,}$/;
+/** Programming exercise titles must only contain alphanumeric characters, or whitespaces, or '_' or '-' **/
+export const TITLE_NAME_PATTERN = '^[a-zA-Z0-9_\\-\\s]*';
 /** Prefixes must follow the login pattern **/
 export const LOGIN_PATTERN = /^[_'.@A-Za-z0-9-]*$/;
 export const MAX_QUIZ_QUESTION_POINTS = 9999;

@@ -18,7 +18,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ProgrammingLanguageFeatureService } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
+import { SHORT_NAME_PATTERN, TITLE_NAME_PATTERN } from 'app/shared/constants/input.constants';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { cloneDeep } from 'lodash-es';
 import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
@@ -119,7 +119,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
     // length of < 3 is also accepted in order to provide more accurate validation error messages
     readonly shortNamePattern = RegExp('(^(?![\\s\\S]))|^[a-zA-Z][a-zA-Z0-9]*$|' + SHORT_NAME_PATTERN); // must start with a letter and cannot contain special characters
-    titleNamePattern = '^[a-zA-Z0-9-_ ]+'; // must only contain alphanumeric characters, or whitespaces, or '_' or '-'
 
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
@@ -843,7 +842,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 translateKey: 'artemisApp.exercise.form.title.undefined',
                 translateValues: {},
             });
-        } else if (this.programmingExercise.title.match(this.titleNamePattern) === null || this.programmingExercise.title?.match(this.titleNamePattern)?.length === 0) {
+        } else if (this.programmingExercise.title.match(TITLE_NAME_PATTERN) === null || this.programmingExercise.title?.match(TITLE_NAME_PATTERN)?.length === 0) {
             validationErrorReasons.push({
                 translateKey: 'artemisApp.exercise.form.title.pattern',
                 translateValues: {},
@@ -1063,7 +1062,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             customBuildPlansSupported: this.customBuildPlansSupported,
             invalidDirectoryNamePattern: this.invalidDirectoryNamePattern,
             invalidRepositoryNamePattern: this.invalidRepositoryNamePattern,
-            titleNamePattern: this.titleNamePattern,
+            titleNamePattern: TITLE_NAME_PATTERN,
             shortNamePattern: this.shortNamePattern,
             updateRepositoryName: this.updateRepositoryName,
             updateCheckoutDirectory: this.updateCheckoutDirectory,
