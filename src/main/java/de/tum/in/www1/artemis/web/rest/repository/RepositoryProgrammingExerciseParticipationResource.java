@@ -217,7 +217,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      * @param repositoryType  the type of the repository (template, solution, tests)
      * @return a map with the file path as key and the file content as value
      */
-    @GetMapping(value = "/repository-files-content/{commitId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "repository-files-content/{commitId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastStudent
     public ResponseEntity<Map<String, String>> getFilesAtCommit(@RequestParam(required = false) Long participationId, @PathVariable String commitId,
             @RequestParam(required = false) RepositoryType repositoryType) {
