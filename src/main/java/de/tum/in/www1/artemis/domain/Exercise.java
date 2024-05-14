@@ -238,7 +238,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     private String channelNameTransient;
 
     /**
-     * Used for receiving marking if the user completed an exercise.
+     * Used for marking if the user completed an exercise.
      */
     @Transient
     private boolean completed;

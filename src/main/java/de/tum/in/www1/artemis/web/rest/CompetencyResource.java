@@ -47,6 +47,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
+import de.tum.in.www1.artemis.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.LearningObjectService;
@@ -191,12 +192,10 @@ public class CompetencyResource {
      * @return the ResponseEntity with status 200 (OK) and with body the found competencies with exercises and lecture units
      */
     @GetMapping("courses/{courseId}/competencies/student-analytics-dashboard")
-    @EnforceAtLeastStudent
+    @EnforceAtLeastStudentInCourse
     public ResponseEntity<List<Competency>> getCompetenciesWithDetailsForDashboard(@PathVariable long courseId) {
         log.debug("REST request to get competencies for course student dashboard with id: {}", courseId);
-        Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         final var competencies = competencyService.findCompetenciesWithExercisesAndLectureUnitsAndProgressForUserByCourseId(courseId, user.getId());
 
         for (Competency competency : competencies) {
@@ -206,9 +205,11 @@ public class CompetencyResource {
 
             // Load exercises with information needed for the dashboard
             Set<Exercise> exercisesUserIsAllowedToSee = exerciseService.filterOutExercisesThatUserShouldNotSee(competency.getExercises(), user);
-            Set<Exercise> exercisesWithAllInformationNeeded = exerciseService.loadExercisesWithInformationForDashboard(exercisesUserIsAllowedToSee.stream()
-                    .peek(exercise -> exercise.setCompleted(learningObjectService.isCompletedByUser(exercise, user))).map(Exercise::getId).collect(Collectors.toSet()), user);
+            Set<Exercise> exercisesWithAllInformationNeeded = exerciseService
+                    .loadExercisesWithInformationForDashboard(exercisesUserIsAllowedToSee.stream().map(Exercise::getId).collect(Collectors.toSet()), user);
+            exercisesWithAllInformationNeeded.forEach(exercise -> exercise.setCompleted(learningObjectService.isCompletedByUser(exercise, user)));
             competency.setExercises(exercisesWithAllInformationNeeded);
+
         }
 
         return ResponseEntity.ok(competencies);
