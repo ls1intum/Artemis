@@ -54,7 +54,6 @@ export class LearningPathContainerComponent implements OnInit {
     ngOnInit() {
         if (!this.courseId) {
             this.activatedRoute.parent!.parent!.params.subscribe((params) => {
-                console.log(params);
                 this.courseId = params['courseId'];
             });
         }
@@ -173,9 +172,7 @@ export class LearningPathContainerComponent implements OnInit {
     }
 
     setupExerciseView(instance: CourseExerciseDetailsComponent) {
-        console.log('Instance:', instance);
         if (this.exercise) {
-            console.log(this.learningObjectId);
             instance.learningPathMode = true;
             instance.courseId = this.courseId;
             instance.exerciseId = this.learningObjectId!;
