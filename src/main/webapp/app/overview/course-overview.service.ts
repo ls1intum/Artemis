@@ -113,9 +113,7 @@ export class CourseOverviewService {
         const tutorialGroupCardItem: SidebarCardElement = {
             title: tutorialGroup.title ?? '',
             id: tutorialGroup.id ?? '',
-            subtitleLeft: tutorialGroup.nextSession?.start?.format('MMM DD, YYYY')
-                ? tutorialGroup.nextSession?.start?.format('MMM DD, YYYY')
-                : this.translate.instant('artemisApp.courseOverview.sidebar.noUpcomingSession'),
+            subtitleLeft: tutorialGroup.nextSession?.start?.format('MMM DD, YYYY') ?? this.translate.instant('artemisApp.courseOverview.sidebar.noUpcomingSession'),
             subtitleRight: this.getUtilization(tutorialGroup),
         };
         return tutorialGroupCardItem;
