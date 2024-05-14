@@ -86,7 +86,7 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             assertThat(exerciseInformation).allSatisfy((id, dto) -> assertThat(id).isEqualTo(dto.id()));
         }
 
-        @Disabled
+        @Disabled // TODO: reduce jacoco missing by one after enabled
         @Test
         @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
         void shouldReturnAverageScores() throws Exception {
