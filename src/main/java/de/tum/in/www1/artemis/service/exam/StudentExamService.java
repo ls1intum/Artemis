@@ -640,6 +640,8 @@ public class StudentExamService {
         List<StudentParticipation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
         setUpExerciseParticipationsAndSubmissions(studentExam, generatedParticipations);
         // TODO: Michael Allgaier: schedule a lock operation for all involved student repositories of this student exam (test exam) at the end of the individual working time
+        studentExam.setStudentParticipations(generatedParticipations);
+        studentExamRepository.save(studentExam);
         studentParticipationRepository.saveAll(generatedParticipations);
     }
 
@@ -661,7 +663,7 @@ public class StudentExamService {
             // TODO: directly check in the database if the entry exists for the student, exercise and InitializationState.INITIALIZED
             var studentParticipations = participationService.findByExerciseAndStudentId(exercise, student.getId());
             // we start the exercise if no participation was found that was already fully initialized
-            if (studentParticipations.stream().noneMatch(studentParticipation -> studentParticipation.getParticipant().equals(student)
+            if (studentExam.isTestExam() || studentParticipations.stream().noneMatch(studentParticipation -> studentParticipation.getParticipant().equals(student)
                     && studentParticipation.getInitializationState() != null && studentParticipation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED))) {
                 try {
                     // Load lazy property
