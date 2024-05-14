@@ -79,7 +79,7 @@ public class LearningObjectService {
                 .min(Comparator.comparing(o -> o.getCompletionDate(user).orElseThrow()));
     }
 
-    private Stream<LearningObject> getCompletedUnitsForUserAndCompetencies(User user, Set<Competency> competencies) {
+    public Stream<LearningObject> getCompletedUnitsForUserAndCompetencies(User user, Set<Competency> competencies) {
         return Stream.concat(competencies.stream().map(Competency::getLectureUnits), competencies.stream().map(Competency::getExercises)).flatMap(Set::stream)
                 .filter(learningObject -> learningObject.getCompletionDate(user).isPresent()).map(LearningObject.class::cast);
     }

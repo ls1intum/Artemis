@@ -40,6 +40,7 @@ import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathHealthDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationDto;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationDto.LearningPathNavigationObjectDto;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationDto.LearningPathNavigationObjectDto.LearningObjectType;
 import de.tum.in.www1.artemis.web.rest.dto.competency.NgxLearningPathDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
@@ -310,12 +311,17 @@ public class LearningPathService {
         return this.learningPathNgxService.generateNgxPathRepresentation(learningPath);
     }
 
-    public LearningPathNavigationDto getLearningPathNavigation(Long learningPathId, @Nullable Long learningObjectId, @Nullable LearningObjectType learningObjectType) {
+    public LearningPathNavigationDto getLearningPathNavigation(long learningPathId, @Nullable Long learningObjectId, @Nullable LearningObjectType learningObjectType) {
         var learningPath = findWithCompetenciesAndLearningObjectsAndCompletedUsersById(learningPathId);
         if (learningObjectId != null && learningObjectType != null) {
-            return learningPathNavigationService.getLearningPathNavigationRelativeToLearningObject(learningPath, learningObjectId, learningObjectType);
+            return learningPathNavigationService.getNavigationRelativeToLearningObject(learningPath, learningObjectId, learningObjectType);
         }
-        return learningPathNavigationService.getLearningPathNavigation(learningPath);
+        return learningPathNavigationService.getNavigation(learningPath);
+    }
+
+    public List<LearningPathNavigationObjectDto> getLearningPathNavigationOverview(long learningPathId) {
+        var learningPath = findWithCompetenciesAndLearningObjectsAndCompletedUsersById(learningPathId);
+        return learningPathNavigationService.getNavigationOverview(learningPath);
     }
 
     /**

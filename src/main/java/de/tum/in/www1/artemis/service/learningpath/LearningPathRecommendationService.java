@@ -129,6 +129,12 @@ public class LearningPathRecommendationService {
         return Optional.empty();
     }
 
+    public Stream<LearningObject> getUncompletedLearningObjects(LearningPath learningPath) {
+        var recommendationState = getRecommendedOrderOfCompetencies(learningPath);
+        return recommendationState.recommendedOrderOfCompetencies.stream().map(recommendationState.competencyIdMap::get)
+                .map(competency -> getRecommendedOrderOfLearningObjects(learningPath, competency, recommendationState)).flatMap(List::stream);
+    }
+
     public LearningObject getUncompletedSuccessorOfLearningObject(LearningPath learningPath, RecommendationState recommendationState, LearningObject currentLearningObject) {
         var orderOfCompetencies = recommendationState.recommendedOrderOfCompetencies;
         var currentCompetency = getCompetencyOfUncompletedLearningObjectOnLearningPath(learningPath, currentLearningObject, recommendationState);

@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.service.learningpath;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.springframework.stereotype.Service;
 
@@ -8,6 +10,7 @@ import de.tum.in.www1.artemis.domain.LearningObject;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.LearningPath;
 import de.tum.in.www1.artemis.service.LearningObjectService;
+import de.tum.in.www1.artemis.service.learningpath.LearningPathRecommendationService.RecommendationState;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationDto;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationDto.LearningPathNavigationObjectDto;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationDto.LearningPathNavigationObjectDto.LearningObjectType;
@@ -24,14 +27,18 @@ public class LearningPathNavigationService {
         this.learningObjectService = learningObjectService;
     }
 
-    private LearningPathNavigationDto mapLearningPathObjectNavigationDto(User learningPathUser, int progress, LearningObject predecessorLearningObject,
+    private LearningPathNavigationDto mapLearningObjectsToNavigationDto(User learningPathUser, int progress, LearningObject predecessorLearningObject,
             LearningObject currentLearningObject, LearningObject successorLearningObject) {
         return new LearningPathNavigationDto(LearningPathNavigationObjectDto.of(predecessorLearningObject, learningPathUser),
                 LearningPathNavigationObjectDto.of(currentLearningObject, learningPathUser), LearningPathNavigationObjectDto.of(successorLearningObject, learningPathUser),
                 progress);
     }
 
-    public LearningPathNavigationDto getLearningPathNavigation(LearningPath learningPath) {
+    private LearningPathNavigationObjectDto mapLearningObjectToNavigationObjectDto(LearningObject learningObject, User learningPathUser) {
+        return LearningPathNavigationObjectDto.of(learningObject, learningPathUser);
+    }
+
+    public LearningPathNavigationDto getNavigation(LearningPath learningPath) {
         var recommendationState = learningPathRecommendationService.getRecommendedOrderOfCompetencies(learningPath);
 
         var currentLearningObject = learningPathRecommendationService.getCurrentUncompletedLearningObject(learningPath, recommendationState);
@@ -39,30 +46,47 @@ public class LearningPathNavigationService {
         var predecessorLearningObject = learningObjectService
                 .getCompletedPredecessorOfLearningObjectRelatedToDate(learningPath.getUser(), Optional.empty(), learningPath.getCompetencies()).orElse(null);
         var successorLearningObject = learningPathRecommendationService.getUncompletedSuccessorOfLearningObject(learningPath, recommendationState, currentLearningObject);
-        return mapLearningPathObjectNavigationDto(learningPath.getUser(), learningPath.getProgress(), predecessorLearningObject, currentLearningObject, successorLearningObject);
+        return mapLearningObjectsToNavigationDto(learningPath.getUser(), learningPath.getProgress(), predecessorLearningObject, currentLearningObject, successorLearningObject);
     }
 
-    public LearningPathNavigationDto getLearningPathNavigationRelativeToLearningObject(LearningPath learningPath, Long learningObjectId, LearningObjectType learningObjectType) {
+    public LearningPathNavigationDto getNavigationRelativeToLearningObject(LearningPath learningPath, Long learningObjectId, LearningObjectType learningObjectType) {
         var currentLearningObject = learningObjectService.getLearningObjectByIdAndType(learningObjectId, learningObjectType);
-
         var recommendationState = learningPathRecommendationService.getRecommendedOrderOfCompetencies(learningPath);
-        var competencies = learningPath.getCompetencies();
+        if (currentLearningObject.isCompletedFor(learningPath.getUser())) {
+            return getNavigationRelativeToCompletedLearningObject(learningPath, currentLearningObject, recommendationState);
+        }
+        return getNavigationRelativeToUncompletedLearningObject(learningPath, currentLearningObject, recommendationState);
+    }
 
+    private LearningPathNavigationDto getNavigationRelativeToCompletedLearningObject(LearningPath learningPath, LearningObject currentLearningObject,
+            RecommendationState recommendationState) {
         var learningPathUser = learningPath.getUser();
         var completionDateOptional = currentLearningObject.getCompletionDate(learningPathUser);
-        if (completionDateOptional.isPresent()) {
-            var predecessorLearningObject = learningObjectService.getCompletedPredecessorOfLearningObjectRelatedToDate(learningPathUser, completionDateOptional, competencies)
-                    .orElse(null);
+        var competencies = learningPath.getCompetencies();
 
-            var successorLearningObject = learningObjectService.getCompletedSuccessorOfLearningObjectRelatedToDate(learningPathUser, completionDateOptional, competencies)
-                    .orElseGet(() -> learningPathRecommendationService.getCurrentUncompletedLearningObject(learningPath, recommendationState));
-            return mapLearningPathObjectNavigationDto(learningPath.getUser(), learningPath.getProgress(), predecessorLearningObject, currentLearningObject,
-                    successorLearningObject);
-        }
+        var predecessorLearningObject = learningObjectService.getCompletedPredecessorOfLearningObjectRelatedToDate(learningPathUser, completionDateOptional, competencies)
+                .orElse(null);
+        var successorLearningObject = learningObjectService.getCompletedSuccessorOfLearningObjectRelatedToDate(learningPathUser, completionDateOptional, competencies)
+                .orElseGet(() -> learningPathRecommendationService.getCurrentUncompletedLearningObject(learningPath, recommendationState));
+
+        return mapLearningObjectsToNavigationDto(learningPathUser, learningPath.getProgress(), predecessorLearningObject, currentLearningObject, successorLearningObject);
+    }
+
+    private LearningPathNavigationDto getNavigationRelativeToUncompletedLearningObject(LearningPath learningPath, LearningObject currentLearningObject,
+            RecommendationState recommendationState) {
         var predecessorLearningObject = learningPathRecommendationService.getUncompletedPredecessorOfLearningObject(currentLearningObject, learningPath, recommendationState)
-                .orElse(learningObjectService.getCompletedPredecessorOfLearningObjectRelatedToDate(learningPathUser, completionDateOptional, competencies).orElse(null));
-
+                .orElse(learningObjectService.getCompletedPredecessorOfLearningObjectRelatedToDate(learningPath.getUser(), Optional.empty(), learningPath.getCompetencies())
+                        .orElse(null));
         var successorLearningObject = learningPathRecommendationService.getUncompletedSuccessorOfLearningObject(learningPath, recommendationState, currentLearningObject);
-        return mapLearningPathObjectNavigationDto(learningPath.getUser(), learningPath.getProgress(), predecessorLearningObject, currentLearningObject, successorLearningObject);
+
+        return mapLearningObjectsToNavigationDto(learningPath.getUser(), learningPath.getProgress(), predecessorLearningObject, currentLearningObject, successorLearningObject);
+    }
+
+    public List<LearningPathNavigationObjectDto> getNavigationOverview(LearningPath learningPath) {
+        var learningPathUser = learningPath.getUser();
+        return Stream
+                .concat(learningObjectService.getCompletedUnitsForUserAndCompetencies(learningPath.getUser(), learningPath.getCompetencies()),
+                        learningPathRecommendationService.getUncompletedLearningObjects(learningPath))
+                .map(learningObject -> this.mapLearningObjectToNavigationObjectDto(learningObject, learningPathUser)).toList();
     }
 }
