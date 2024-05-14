@@ -58,7 +58,7 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
             FROM ParticipantScore p
             WHERE p.exercise.course.id = :courseId
             """)
-    List<ParticipantScore> findAllByCourseId(long courseId);
+    List<ParticipantScore> findAllByCourseId(@Param("courseId") long courseId);
 
     @Query("""
             SELECT AVG(p.lastScore)
