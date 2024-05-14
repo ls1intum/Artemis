@@ -1,23 +1,31 @@
 package de.tum.in.www1.artemis.iris;
 
+import static de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageStateDTO.DONE;
+import static de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageStateDTO.IN_PROGRESS;
+import static de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageStateDTO.NOT_STARTED;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatcher;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -29,9 +37,12 @@ import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.iris.IrisMessageRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageStateDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.tutorChat.PyrisTutorChatStatusUpdateDTO;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.session.IrisChatSessionService;
-import de.tum.in.www1.artemis.service.iris.websocket.IrisChatWebsocketService;
+import de.tum.in.www1.artemis.service.iris.websocket.IrisWebsocketDTO;
 import de.tum.in.www1.artemis.util.IrisUtilTestService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
@@ -61,6 +72,8 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
     private LocalRepository repository;
 
+    private AtomicBoolean pipelineDone;
+
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 0);
@@ -71,6 +84,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
         activateIrisFor(course);
         activateIrisFor(exercise);
         repository = new LocalRepository("main");
+        pipelineDone = new AtomicBoolean(false);
     }
 
     @Test
@@ -80,19 +94,22 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var messageToSend = createDefaultMockMessage(irisSession);
         messageToSend.setMessageDifferentiator(1453);
 
-        irisRequestMockProvider.mockMessageV2Response(Map.of("response", "Hello World"));
         setupExercise();
 
-        var irisMessage = request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.CREATED);
-        assertThat(irisMessage.getSender()).isEqualTo(IrisMessageSender.USER);
-        assertThat(irisMessage.getHelpful()).isNull();
-        assertThat(irisMessage.getMessageDifferentiator()).isEqualTo(1453);
-        assertThat(irisMessage.getContent()).hasSize(3);
-        assertThat(irisMessage.getContent().stream().map(IrisMessageContent::getContentAsString).toList())
-                .isEqualTo(messageToSend.getContent().stream().map(IrisMessageContent::getContentAsString).toList());
-        await().untilAsserted(() -> assertThat(irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId()).getMessages()).hasSize(2).contains(irisMessage));
+        irisRequestMockProvider.mockRunResponse(dto -> {
+            assertThat(dto.settings().authenticationToken()).isNotNull();
 
-        verifyWebsocketActivityWasExactly(irisSession, messageDTO(messageToSend.getContent()), messageDTO("Hello World"));
+            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World", dto.initialStages()));
+
+            pipelineDone.set(true);
+        });
+
+        request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, HttpStatus.CREATED);
+
+        await().until(pipelineDone::get);
+
+        verifyWebsocketActivityWasExactly(irisSession, messageDTO(messageToSend.getContent()), statusDTO(IN_PROGRESS, NOT_STARTED), statusDTO(DONE, IN_PROGRESS),
+                messageDTO("Hello World"));
     }
 
     @Test
@@ -101,7 +118,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
         irisChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         var irisSession = irisChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student2"));
         IrisMessage messageToSend = createDefaultMockMessage(irisSession);
-        request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.FORBIDDEN);
+        request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -109,7 +126,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
     void sendMessageWithoutContent() throws Exception {
         var irisSession = irisChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         var messageToSend = irisSession.newMessage();
-        request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.BAD_REQUEST);
+        request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -120,28 +137,31 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
         setupExercise();
 
-        var irisMessage1 = request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend1, IrisMessage.class, HttpStatus.CREATED);
-        assertThat(irisMessage1.getSender()).isEqualTo(IrisMessageSender.USER);
-        assertThat(irisMessage1.getHelpful()).isNull();
-        assertThat(irisMessage1.getContent()).hasSize(3);
-        // Compare contents of messages by only comparing the string content
-        assertThat(irisMessage1.getContent().stream().map(IrisMessageContent::getContentAsString).toList())
-                .isEqualTo(messageToSend1.getContent().stream().map(IrisMessageContent::getContentAsString).toList());
-        var irisSessionFromDb = irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId());
-        assertThat(irisSessionFromDb.getMessages()).hasSize(1).isEqualTo(List.of(irisMessage1));
+        irisRequestMockProvider.mockRunResponse(dto -> {
+            assertThat(dto.settings().authenticationToken()).isNotNull();
+
+            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World 1", dto.initialStages()));
+
+            pipelineDone.set(true);
+        });
+
+        irisRequestMockProvider.mockRunResponse(dto -> {
+            assertThat(dto.settings().authenticationToken()).isNotNull();
+
+            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World 2", dto.initialStages()));
+
+            pipelineDone.set(true);
+        });
+
+        request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend1, HttpStatus.CREATED);
 
         IrisMessage messageToSend2 = createDefaultMockMessage(irisSession);
-        var irisMessage2 = request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend2, IrisMessage.class, HttpStatus.CREATED);
-        assertThat(irisMessage2.getSender()).isEqualTo(IrisMessageSender.USER);
-        assertThat(irisMessage2.getHelpful()).isNull();
-        assertThat(irisMessage2.getContent()).hasSize(3);
-        // Compare contents of messages by only comparing the string content
-        assertThat(irisMessage2.getContent().stream().map(IrisMessageContent::getContentAsString).toList())
-                .isEqualTo(messageToSend2.getContent().stream().map(IrisMessageContent::getContentAsString).toList());
-        irisSessionFromDb = irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId());
-        assertThat(irisSessionFromDb.getMessages()).hasSize(2).isEqualTo(List.of(irisMessage1, irisMessage2));
+        request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend2, HttpStatus.CREATED);
 
-        verify(websocketMessagingService, timeout(3000).times(4)).sendMessageToUser(eq(TEST_PREFIX + "student1"), any(), any());
+        verify(websocketMessagingService, times(8)).sendMessageToUser(eq(TEST_PREFIX + "student1"), eq("/topic/iris/sessions/" + irisSession.getId()), any());
+
+        var irisSessionFromDb = irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId());
+        assertThat(irisSessionFromDb.getMessages()).hasSize(4);
     }
 
     @Test
@@ -219,45 +239,24 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void sendOneMessageBadRequest() throws Exception {
-        var irisSession = irisChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
-        IrisMessage messageToSend = createDefaultMockMessage(irisSession);
-
-        irisRequestMockProvider.mockMessageV1Error(500);
-        setupExercise();
-
-        request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.CREATED);
-
-        verifyWebsocketActivityWasExactly(irisSession, messageDTO(messageToSend.getContent()), errorDTO());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void sendOneMessageEmptyBody() throws Exception {
-        var irisSession = irisChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
-        IrisMessage messageToSend = createDefaultMockMessage(irisSession);
-
-        irisRequestMockProvider.mockEmptyResponse();
-        setupExercise();
-
-        request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.CREATED);
-
-        verifyWebsocketActivityWasExactly(irisSession, messageDTO(messageToSend.getContent()), errorDTO());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void resendMessage() throws Exception {
         var irisSession = irisChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         var messageToSend = createDefaultMockMessage(irisSession);
 
-        irisRequestMockProvider.mockMessageV2Response(Map.of("response", "Hello World"));
         setupExercise();
 
+        irisRequestMockProvider.mockRunResponse(dto -> {
+            assertThat(dto.settings().authenticationToken()).isNotNull();
+
+            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World", dto.initialStages()));
+
+            pipelineDone.set(true);
+        });
+
         var irisMessage = irisMessageService.saveMessage(messageToSend, irisSession, IrisMessageSender.USER);
-        request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/resend", null, IrisMessage.class, HttpStatus.OK);
+        request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/resend", null, HttpStatus.OK);
         await().until(() -> irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId()).getMessages().size() == 2);
-        verifyWebsocketActivityWasExactly(irisSession, messageDTO("Hello World"));
+        verifyWebsocketActivityWasExactly(irisSession, statusDTO(IN_PROGRESS, NOT_STARTED), statusDTO(DONE, IN_PROGRESS), messageDTO("Hello World"));
     }
 
     // User needs to be Admin to change settings
@@ -268,31 +267,43 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var messageToSend1 = createDefaultMockMessage(irisSession);
         var messageToSend2 = createDefaultMockMessage(irisSession);
 
-        irisRequestMockProvider.mockMessageV2Response(Map.of("response", "Hello World"));
         setupExercise();
+
+        irisRequestMockProvider.mockRunResponse(dto -> {
+            assertThat(dto.settings().authenticationToken()).isNotNull();
+
+            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World", dto.initialStages()));
+
+            pipelineDone.set(true);
+        });
 
         var globalSettings = irisSettingsService.getGlobalSettings();
         globalSettings.getIrisChatSettings().setRateLimit(1);
         globalSettings.getIrisChatSettings().setRateLimitTimeframeHours(10);
         irisSettingsService.saveIrisSettings(globalSettings);
 
-        request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend1, IrisMessage.class, HttpStatus.CREATED);
-        await().until(() -> irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId()).getMessages().size() == 2);
-        request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend2, IrisMessage.class, HttpStatus.TOO_MANY_REQUESTS);
-        var irisMessage = irisMessageService.saveMessage(messageToSend2, irisSession, IrisMessageSender.USER);
-        request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/resend", null, IrisMessage.class,
-                HttpStatus.TOO_MANY_REQUESTS);
+        try {
+            request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend1, HttpStatus.CREATED);
+            await().until(() -> irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId()).getMessages().size() == 2);
+            request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend2, HttpStatus.TOO_MANY_REQUESTS);
+            var irisMessage = irisMessageService.saveMessage(messageToSend2, irisSession, IrisMessageSender.USER);
+            request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/resend", null, HttpStatus.TOO_MANY_REQUESTS);
 
-        verifyWebsocketActivityWasExactly(irisSession, messageDTO(messageToSend1.getContent()), messageDTO("Hello World"));
-
-        // Reset to not interfere with other tests
-        globalSettings.getIrisChatSettings().setRateLimit(null);
-        globalSettings.getIrisChatSettings().setRateLimitTimeframeHours(null);
-        irisSettingsService.saveIrisSettings(globalSettings);
+            verifyWebsocketActivityWasExactly(irisSession, messageDTO(messageToSend1.getContent()), statusDTO(IN_PROGRESS, NOT_STARTED), statusDTO(DONE, IN_PROGRESS),
+                    messageDTO("Hello World"));
+        }
+        finally {
+            // Reset to not interfere with other tests
+            globalSettings.getIrisChatSettings().setRateLimit(null);
+            globalSettings.getIrisChatSettings().setRateLimitTimeframeHours(null);
+            irisSettingsService.saveIrisSettings(globalSettings);
+        }
     }
 
     private void setupExercise() throws Exception {
         var savedExercise = irisUtilTestService.setupTemplate(exercise, repository);
+        savedExercise = irisUtilTestService.setupSolution(savedExercise, repository);
+        savedExercise = irisUtilTestService.setupTest(savedExercise, repository);
         var exerciseParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(savedExercise, TEST_PREFIX + "student1");
         irisUtilTestService.setupStudentParticipation(exerciseParticipation, repository);
     }
@@ -324,13 +335,13 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
             @Override
             public boolean matches(Object argument) {
-                if (!(argument instanceof IrisChatWebsocketService.IrisWebsocketDTO websocketDTO)) {
+                if (!(argument instanceof IrisWebsocketDTO websocketDTO)) {
                     return false;
                 }
-                if (websocketDTO.getType() != IrisChatWebsocketService.IrisWebsocketDTO.IrisWebsocketMessageType.MESSAGE) {
+                if (websocketDTO.type() != IrisWebsocketDTO.IrisWebsocketMessageType.MESSAGE) {
                     return false;
                 }
-                return Objects.equals(websocketDTO.getMessage().getContent().stream().map(IrisMessageContent::getContentAsString).toList(),
+                return Objects.equals(websocketDTO.message().getContent().stream().map(IrisMessageContent::getContentAsString).toList(),
                         content.stream().map(IrisMessageContent::getContentAsString).toList());
             }
 
@@ -341,15 +352,42 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
         };
     }
 
+    private ArgumentMatcher<Object> statusDTO(PyrisStageStateDTO... stageStates) {
+        return new ArgumentMatcher<>() {
+
+            @Override
+            public boolean matches(Object argument) {
+                if (!(argument instanceof IrisWebsocketDTO websocketDTO)) {
+                    return false;
+                }
+                if (websocketDTO.type() != IrisWebsocketDTO.IrisWebsocketMessageType.STATUS) {
+                    return false;
+                }
+                if (websocketDTO.stages() == null) {
+                    return stageStates == null;
+                }
+                if (websocketDTO.stages().size() != stageStates.length) {
+                    return false;
+                }
+                return websocketDTO.stages().stream().map(PyrisStageDTO::state).toList().equals(List.of(stageStates));
+            }
+
+            @Override
+            public String toString() {
+                return "IrisChatWebsocketService.IrisWebsocketDTO with type STATUS and stage states " + Arrays.toString(stageStates);
+            }
+        };
+    }
+
     private ArgumentMatcher<Object> errorDTO() {
         return new ArgumentMatcher<>() {
 
             @Override
             public boolean matches(Object argument) {
-                if (!(argument instanceof IrisChatWebsocketService.IrisWebsocketDTO websocketDTO)) {
+                if (!(argument instanceof IrisWebsocketDTO websocketDTO)) {
                     return false;
                 }
-                return websocketDTO.getType() == IrisChatWebsocketService.IrisWebsocketDTO.IrisWebsocketMessageType.ERROR;
+                return websocketDTO.type() == IrisWebsocketDTO.IrisWebsocketMessageType.ERROR;
             }
 
             @Override
@@ -359,4 +397,9 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
         };
     }
 
+    private void sendStatus(String jobId, String result, List<PyrisStageDTO> stages) throws Exception {
+        var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of("Authorization", List.of("Bearer " + jobId))));
+        request.postWithoutResponseBody("/api/public/pyris/pipelines/tutor-chat/runs/" + jobId + "/status", new PyrisTutorChatStatusUpdateDTO(result, stages), HttpStatus.OK,
+                headers);
+    }
 }
