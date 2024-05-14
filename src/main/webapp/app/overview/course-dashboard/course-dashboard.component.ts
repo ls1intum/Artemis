@@ -1,11 +1,9 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { Subscription, forkJoin } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { Course } from 'app/entities/course.model';
-import { Competency } from 'app/entities/competency.model';
 import { onError } from 'app/shared/util/global.utils';
-import { CompetencyService } from 'app/course/competencies/competency.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
@@ -24,19 +22,15 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     exerciseId: number;
     points: number = 0;
     maxPoints: number = 0;
-    isLoadingMetrics = false;
-    isLoadingCompetencies = false;
-
+    isLoading = false;
     hasExercises = false;
     exerciseLateness?: ExerciseLateness[];
     exercisePerformance?: ExercisePerformance[];
 
-    public competencies: Competency[] = [];
-    private prerequisites: Competency[] = [];
-
     private paramSubscription?: Subscription;
     private courseUpdatesSubscription?: Subscription;
     private metricsSubscription?: Subscription;
+
     public course?: Course;
 
     protected readonly FeatureToggle = FeatureToggle;
@@ -46,7 +40,6 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
         private courseStorageService: CourseStorageService,
         private alertService: AlertService,
         private route: ActivatedRoute,
-        private competencyService: CompetencyService,
         private courseDashboardService: CourseDashboardService,
     ) {}
 
@@ -68,29 +61,6 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Loads all prerequisites and competencies for the course
-     */
-    loadCompetencies() {
-        this.isLoadingCompetencies = true;
-        forkJoin([this.competencyService.getAllForCourse(this.courseId), this.competencyService.getAllPrerequisitesForCourse(this.courseId)]).subscribe({
-            next: ([competencies, prerequisites]) => {
-                this.competencies = competencies.body!;
-                this.prerequisites = prerequisites.body!;
-                // Also update the course, so we do not need to fetch again next time
-                if (this.course) {
-                    this.course.competencies = this.competencies;
-                    this.course.prerequisites = this.prerequisites;
-                }
-                this.isLoadingCompetencies = false;
-            },
-            error: (errorResponse: HttpErrorResponse) => {
-                onError(this.alertService, errorResponse);
-                this.isLoadingCompetencies = false;
-            },
-        });
-    }
-
-    /**
      * Loads the metrics for the course
      */
     loadMetrics() {
@@ -98,7 +68,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
             this.metricsSubscription.unsubscribe();
         }
 
-        this.isLoadingMetrics = true;
+        this.isLoading = true;
         this.metricsSubscription = this.courseDashboardService.getCourseMetricsForUser(this.courseId).subscribe({
             next: (response) => {
                 if (response.body && response.body.exerciseMetrics) {
@@ -112,11 +82,11 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
                     this.setExercisePerformance(sortedExerciseIds, exerciseMetrics);
                     this.setExerciseLateness(sortedExerciseIds, exerciseMetrics);
                 }
-                this.isLoadingMetrics = false;
+                this.isLoading = false;
             },
             error: (errorResponse: HttpErrorResponse) => {
                 onError(this.alertService, errorResponse);
-                this.isLoadingMetrics = false;
+                this.isLoading = false;
             },
         });
     }
@@ -127,11 +97,14 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
      * @param {ExerciseMetrics} exerciseMetrics - An object containing metrics related to exercises.
      */
     private setOverallPerformance(exerciseMetrics: ExerciseMetrics) {
-        this.points = Object.values(exerciseMetrics.exerciseInformation).reduce(
+        const points = Object.values(exerciseMetrics.exerciseInformation).reduce(
             (sum, exercise) => sum + ((exerciseMetrics.score?.[exercise.id] || 0) / 100) * exercise.maxPoints,
             0,
         );
-        this.maxPoints = Object.values(exerciseMetrics.exerciseInformation).reduce((sum, exercise) => sum + exercise.maxPoints, 0);
+        this.points = round(points, 1);
+
+        const maxPoints = Object.values(exerciseMetrics.exerciseInformation).reduce((sum, exercise) => sum + exercise.maxPoints, 0);
+        this.maxPoints = round(maxPoints, 1);
     }
 
     /**
@@ -174,14 +147,6 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
 
     private setCourse(course?: Course) {
         this.course = course;
-        // Note: this component is only shown if there are at least 1 competencies or at least 1 prerequisites, so if they do not exist, we load the data from the server
-        if (this.course && ((this.course.competencies && this.course.competencies.length > 0) || (this.course.prerequisites && this.course.prerequisites.length > 0))) {
-            this.competencies = this.course.competencies || [];
-            this.prerequisites = this.course.prerequisites || [];
-        } else {
-            this.loadCompetencies();
-        }
-
         if (this.course) {
             this.loadMetrics();
         }

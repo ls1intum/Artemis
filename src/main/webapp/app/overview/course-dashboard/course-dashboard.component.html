@@ -1,5 +1,5 @@
 <div class="row justify-content-center m-4 gap-4">
-    @if (!isLoadingMetrics && hasExercises) {
+    @if (!isLoading && hasExercises) {
         @if (points > 0 || maxPoints > 0) {
             <div class="d-sm-flex gap-3 align-items-baseline">
                 <h4 jhiTranslate="artemisApp.courseStudentDashboard.overallPerformance.title"></h4>
