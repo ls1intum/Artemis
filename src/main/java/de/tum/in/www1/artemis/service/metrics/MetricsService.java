@@ -56,7 +56,7 @@ public class MetricsService {
     public ExerciseStudentMetricsDTO getStudentExerciseMetrics(long userId, long courseId) {
         final var exerciseInfo = exerciseMetricsRepository.findAllExerciseInformationByCourseId(courseId);
         // generate map and remove exercises that are not yet started
-        final Predicate<ExerciseInformationDTO> started = e -> e.start().isBefore(ZonedDateTime.now());
+        final Predicate<ExerciseInformationDTO> started = e -> e.start() != null && e.start().isBefore(ZonedDateTime.now());
         final var exerciseInfoMap = exerciseInfo.stream().filter(started).collect(toMap(ExerciseInformationDTO::id, identity()));
 
         final var exerciseIds = exerciseInfoMap.keySet();
