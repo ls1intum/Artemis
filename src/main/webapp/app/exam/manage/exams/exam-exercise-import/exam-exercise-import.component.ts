@@ -33,8 +33,8 @@ export class ExamExerciseImportComponent implements OnInit {
 
     // Patterns
     // length of < 3 is also accepted in order to provide more accurate validation error messages
-    readonly shortNamePattern = RegExp('(^(?![\\s\\S]))|^[a-zA-Z][a-zA-Z0-9]*$|' + SHORT_NAME_PATTERN); // must start with a letter and cannot contain special characters
-    readonly titleNamePattern = RegExp(TITLE_NAME_PATTERN);
+    readonly SHORT_NAME_REGEX = RegExp('(^(?![\\s\\S]))|^[a-zA-Z][a-zA-Z0-9]*$|' + SHORT_NAME_PATTERN); // must start with a letter and cannot contain special characters
+    readonly TITLE_NAME_REGEX = RegExp(TITLE_NAME_PATTERN);
 
     // Icons
     faCheckDouble = faCheckDouble;
@@ -217,7 +217,7 @@ export class ExamExerciseImportComponent implements OnInit {
     validateTitleOfProgrammingExercise(exercise: Exercise): boolean {
         return (
             !!exercise.title?.length &&
-            this.titleNamePattern.test(exercise.title!) &&
+            this.TITLE_NAME_REGEX.test(exercise.title!) &&
             !this.exercisesWithDuplicatedTitles.has(exercise.id!) &&
             (exercise.title !== this.getBlocklistTitleOfProgrammingExercise(exercise.id!) || this.getBlocklistShortNameOfProgrammingExercise(exercise.id!) === '')
         );
@@ -231,7 +231,7 @@ export class ExamExerciseImportComponent implements OnInit {
         return (
             // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
             exercise.shortName?.length! > 2 &&
-            this.shortNamePattern.test(exercise.shortName!) &&
+            this.SHORT_NAME_REGEX.test(exercise.shortName!) &&
             !this.exercisesWithDuplicatedShortNames.has(exercise.id!) &&
             exercise.shortName !== this.getBlocklistShortNameOfProgrammingExercise(exercise.id!)
         );
