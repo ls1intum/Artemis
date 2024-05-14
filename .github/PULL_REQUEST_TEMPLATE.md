@@ -9,8 +9,7 @@
 - [ ] I tested **all** changes and their related features with **all** corresponding user types on a test server.
 - [ ] This is a small issue that I tested locally and was confirmed by another developer on a test server.
 - [ ] Language: I followed the [guidelines for inclusive, diversity-sensitive, and appreciative language](https://docs.artemis.cit.tum.de/dev/guidelines/language-guidelines/).
-- [ ] I chose a title conforming to
-  the [naming conventions for pull requests](https://docs.artemis.cit.tum.de/dev/development-process/development-process.html#naming-conventions-for-github-pull-requests).
+- [ ] I chose a title conforming to the [naming conventions for pull requests](https://docs.artemis.cit.tum.de/dev/development-process/development-process.html#naming-conventions-for-github-pull-requests).
 
 
 #### Server
