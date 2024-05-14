@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.localvc;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALVC;
+
 import java.net.URL;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -11,7 +13,7 @@ import org.springframework.stereotype.Component;
 import de.tum.in.www1.artemis.config.Constants;
 
 @Component
-@Profile("localvc")
+@Profile(PROFILE_LOCALVC)
 public class LocalVCInfoContributor implements InfoContributor {
 
     @Value("${artemis.version-control.url}")

@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALCI;
+
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,7 +32,7 @@ import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueu
  * Includes methods for managing and retrieving the shared build job queue and build agent information. Also contains methods for cancelling build jobs.
  */
 @Service
-@Profile("localci")
+@Profile(PROFILE_LOCALCI)
 public class SharedQueueManagementService {
 
     private static final Logger log = LoggerFactory.getLogger(SharedQueueManagementService.class);

@@ -7,6 +7,7 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -40,7 +41,6 @@ import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.exception.LocalCIException;
-import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
 import de.tum.in.www1.artemis.service.connectors.localci.scaparser.exception.UnsupportedToolException;
@@ -69,7 +69,7 @@ public class BuildJobExecutionService {
      */
     private final XMLInputFactory localCIXMLInputFactory;
 
-    private final GitService gitService;
+    private final BuildJobGitService buildJobGitService;
 
     private final LocalCIDockerService localCIDockerService;
 
@@ -78,11 +78,11 @@ public class BuildJobExecutionService {
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
 
-    public BuildJobExecutionService(BuildJobContainerService buildJobContainerService, XMLInputFactory localCIXMLInputFactory, GitService gitService,
+    public BuildJobExecutionService(BuildJobContainerService buildJobContainerService, XMLInputFactory localCIXMLInputFactory, BuildJobGitService buildJobGitService,
             LocalCIDockerService localCIDockerService, BuildLogsMap buildLogsMap) {
         this.buildJobContainerService = buildJobContainerService;
         this.localCIXMLInputFactory = localCIXMLInputFactory;
-        this.gitService = gitService;
+        this.buildJobGitService = buildJobGitService;
         this.localCIDockerService = localCIDockerService;
         this.buildLogsMap = buildLogsMap;
     }
@@ -133,7 +133,7 @@ public class BuildJobExecutionService {
         String assignmentCommitHash = buildJob.buildConfig().assignmentCommitHash();
         if (assignmentCommitHash == null) {
             try {
-                assignmentCommitHash = gitService.getLastCommitHash(assignmentRepoUri).getName();
+                assignmentCommitHash = buildJobGitService.getLastCommitHash(assignmentRepoUri).getName();
             }
             catch (EntityNotFoundException e) {
                 msg = "Could not find last commit hash for assignment repository " + assignmentRepoUri.repositorySlug();
@@ -144,7 +144,7 @@ public class BuildJobExecutionService {
         String testCommitHash = buildJob.buildConfig().testCommitHash();
         if (testCommitHash == null) {
             try {
-                testCommitHash = gitService.getLastCommitHash(testsRepoUri).getName();
+                testCommitHash = buildJobGitService.getLastCommitHash(testsRepoUri).getName();
             }
             catch (EntityNotFoundException e) {
                 msg = "Could not find last commit hash for test repository " + testsRepoUri.repositorySlug();
@@ -557,15 +557,15 @@ public class BuildJobExecutionService {
     private Path cloneRepository(VcsRepositoryUri repositoryUri, String commitHash, boolean checkout, String buildJobId) {
         try {
             // Clone the assignment repository into a temporary directory
-            Repository repository = gitService.getOrCheckoutRepository(repositoryUri, Paths.get(CHECKED_OUT_REPOS_TEMP_DIR, commitHash, repositoryUri.folderNameForRepositoryUri()),
-                    false);
+            Repository repository = buildJobGitService.cloneRepository(repositoryUri,
+                    Paths.get(CHECKED_OUT_REPOS_TEMP_DIR, commitHash, repositoryUri.folderNameForRepositoryUri()));
             if (checkout) {
                 // Checkout the commit hash
-                gitService.checkoutRepositoryAtCommit(repository, commitHash);
+                buildJobGitService.checkoutRepositoryAtCommit(repository, commitHash);
             }
             return repository.getLocalPath();
         }
-        catch (GitAPIException e) {
+        catch (GitAPIException | IOException | URISyntaxException e) {
             String msg = "Error while cloning repository " + repositoryUri.repositorySlug();
             buildLogsMap.appendBuildLogEntry(buildJobId, msg);
             throw new LocalCIException(msg, e);
@@ -575,14 +575,14 @@ public class BuildJobExecutionService {
     private void deleteCloneRepo(VcsRepositoryUri repositoryUri, String commitHash, String buildJobId) {
         String msg;
         try {
-            Repository repository = gitService.getExistingCheckedOutRepositoryByLocalPath(
+            Repository repository = buildJobGitService.getExistingCheckedOutRepositoryByLocalPath(
                     Paths.get(CHECKED_OUT_REPOS_TEMP_DIR, commitHash, repositoryUri.folderNameForRepositoryUri()), repositoryUri, defaultBranch);
             if (repository == null) {
                 msg = "Repository with commit hash " + commitHash + " not found";
                 buildLogsMap.appendBuildLogEntry(buildJobId, msg);
                 throw new EntityNotFoundException(msg);
             }
-            gitService.deleteLocalRepository(repository);
+            buildJobGitService.deleteLocalRepository(repository);
         }
         catch (EntityNotFoundException e) {
             msg = "Error while checking out repository";

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALCI;
 import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.ASSEMBLER;
 import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.C;
 import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.HASKELL;
@@ -29,7 +30,7 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeatureServ
  * Sets the features provided for the different programming languages when using the local CI system.
  */
 @Service
-@Profile("localci")
+@Profile(PROFILE_LOCALCI)
 public class LocalCIProgrammingLanguageFeatureService extends ProgrammingLanguageFeatureService {
 
     public LocalCIProgrammingLanguageFeatureService() {

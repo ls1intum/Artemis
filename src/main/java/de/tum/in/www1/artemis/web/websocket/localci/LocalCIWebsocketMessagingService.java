@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.websocket.localci;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALCI;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -20,7 +22,7 @@ import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueu
  * It is also used to send build agent information to the client.
  */
 @Service
-@Profile("localci")
+@Profile(PROFILE_LOCALCI)
 public class LocalCIWebsocketMessagingService {
 
     private static final Logger log = LoggerFactory.getLogger(LocalCIWebsocketMessagingService.class);

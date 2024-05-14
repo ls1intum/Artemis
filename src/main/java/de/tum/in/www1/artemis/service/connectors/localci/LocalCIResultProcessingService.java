@@ -1,11 +1,14 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALCI;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
 
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +47,7 @@ import de.tum.in.www1.artemis.web.rest.dto.ResultDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWebsocketError;
 
-@Profile("localci")
+@Profile(PROFILE_LOCALCI)
 @Service
 public class LocalCIResultProcessingService {
 
@@ -98,6 +101,7 @@ public class LocalCIResultProcessingService {
         this.listenerId = resultQueue.addItemListener(new ResultQueueListener(), true);
     }
 
+    @PreDestroy
     public void removeListener() {
         this.resultQueue.removeItemListener(this.listenerId);
     }

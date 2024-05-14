@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.localci;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALCI;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -17,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
 
-@Profile("localci")
+@Profile(PROFILE_LOCALCI)
 @RestController
 @RequestMapping("api/")
 public class BuildLogResource {

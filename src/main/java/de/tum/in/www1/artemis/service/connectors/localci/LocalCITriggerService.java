@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
 import static de.tum.in.www1.artemis.config.Constants.LOCALCI_WORKING_DIRECTORY;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALCI;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -47,7 +48,7 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
  * Service for triggering builds on the local CI system.
  */
 @Service
-@Profile("localci")
+@Profile(PROFILE_LOCALCI)
 public class LocalCITriggerService implements ContinuousIntegrationTriggerService {
 
     private static final Logger log = LoggerFactory.getLogger(LocalCITriggerService.class);

@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALCI;
+
 import java.util.List;
 
 import org.springframework.context.annotation.Profile;
@@ -22,7 +24,7 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseFeedbackCre
  * Service implementation for integrated CI.
  */
 @Service
-@Profile("localci")
+@Profile(PROFILE_LOCALCI)
 public class LocalCIResultService extends AbstractContinuousIntegrationResultService {
 
     public LocalCIResultService(TestwiseCoverageService testwiseCoverageService, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository,

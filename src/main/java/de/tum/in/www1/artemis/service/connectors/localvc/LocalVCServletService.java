@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.localvc;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALVC;
+
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
@@ -61,7 +63,7 @@ import de.tum.in.www1.artemis.web.rest.repository.RepositoryActionType;
  * It is used by the ArtemisGitServlet, the LocalVCFetchFilter, and the LocalVCPushFilter.
  */
 @Service
-@Profile("localvc")
+@Profile(PROFILE_LOCALVC)
 public class LocalVCServletService {
 
     private static final Logger log = LoggerFactory.getLogger(LocalVCServletService.class);

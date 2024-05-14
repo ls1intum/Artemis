@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.admin;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALCI;
+
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -28,7 +30,7 @@ import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 import tech.jhipster.web.util.PaginationUtil;
 
-@Profile("localci")
+@Profile(PROFILE_LOCALCI)
 @RestController
 @RequestMapping("api/admin/")
 public class AdminBuildJobQueueResource {
