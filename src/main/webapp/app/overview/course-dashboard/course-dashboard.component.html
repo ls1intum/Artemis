@@ -1,12 +1,18 @@
-<div class="row justify-content-center m-4">
-    <!--
-    Currently work in progress.
-    TODO: A page with two columns.
-        - Left part: Iris Course Chat
-        - Right part: Statistics and competencies.
-    -->
-    <div class="col-6 d-flex flex-column">
-        <jhi-course-chatbot [courseId]="courseId" />
-    </div>
-    <div class="col-6">Stats go here</div>
+<div class="row justify-content-center m-4 gap-4">
+    @if (!isLoading && hasExercises) {
+        @if (points > 0 || maxPoints > 0) {
+            <div class="d-sm-flex gap-3 align-items-baseline">
+                <h4 jhiTranslate="artemisApp.courseStudentDashboard.overallPerformance.title"></h4>
+                <div class="flex-grow-1">
+                    <ngb-progressbar type="success overflow-visible" [value]="points" [max]="maxPoints" height="1.75rem">
+                        <span class="fs-5 mx-2">{{ points }} / {{ maxPoints }} ({{ round((points / maxPoints) * 1000) / 10 }}%)</span>
+                    </ngb-progressbar>
+                </div>
+            </div>
+        }
+        <jhi-course-exercise-performance [exercisePerformance]="exercisePerformance || []" />
+        <jhi-course-exercise-lateness [exerciseLateness]="exerciseLateness || []" />
+    } @else {
+        <div jhiTranslate="artemisApp.courseStudentDashboard.noMetrics"></div>
+    }
 </div>

@@ -1,0 +1,26 @@
+{
+    "artemisApp": {
+        "courseStudentDashboard": {
+            "noMetrics": "Es sind keine Metriken für diesen Kurs verfügbar.",
+            "overallPerformance": {
+                "title": "Gesamtleistung"
+            },
+            "exercisePerformance": {
+                "title": "Übungsleistungen",
+                "noData": "Es sind noch keine Ergebnisse für dich in diesem Kurs verfügbar.",
+                "yourScoreLabel": "Dein Ergebnis",
+                "averageScoreLabel": "Durchschnittsergebnis",
+                "xAxisLabel": "Aufgaben",
+                "yAxisLabel": "Ergebnis (%)"
+            },
+            "exerciseLateness": {
+                "title": "Übungsverspätungen",
+                "noData": "Du hast noch keine Aufgaben in diesem Kurs eingereicht.",
+                "yourLatenessLabel": "Deine Verspätung",
+                "averageLatenessLabel": "Durchschnittliche Verspätung",
+                "xAxisLabel": "Aufgaben",
+                "yAxisLabel": "Relative Verspätung (%)"
+            }
+        }
+    }
+}

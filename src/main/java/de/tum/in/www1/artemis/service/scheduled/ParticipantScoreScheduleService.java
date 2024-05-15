@@ -11,6 +11,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 
 import jakarta.annotation.PreDestroy;
 import jakarta.validation.constraints.NotNull;
@@ -267,7 +268,7 @@ public class ParticipantScoreScheduleService {
                     teamScoreRepository.deleteAllByTeamId(participantId);
                     return;
                 }
-                participantScore = teamScoreRepository.findByExercise_IdAndTeam_Id(exerciseId, participantId).map(score -> score);
+                participantScore = teamScoreRepository.findByExercise_IdAndTeam_Id(exerciseId, participantId).map(Function.identity());
             }
             else {
                 // Fetch the student and its score for the given exercise
@@ -278,7 +279,7 @@ public class ParticipantScoreScheduleService {
                     studentScoreRepository.deleteAllByUserId(participantId);
                     return;
                 }
-                participantScore = studentScoreRepository.findByExercise_IdAndUser_Id(exerciseId, participantId).map(score -> score);
+                participantScore = studentScoreRepository.findByExercise_IdAndUser_Id(exerciseId, participantId).map(Function.identity());
             }
 
             if (participantScore.isPresent()) {
