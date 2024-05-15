@@ -9,13 +9,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
-import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -331,6 +331,12 @@ public class LearningPathService {
         return learningPathNavigationService.getNavigation(learningPath);
     }
 
+    /**
+     * Get the navigation overview for a given learning path.
+     *
+     * @param learningPathId the id of the learning path
+     * @return the navigation overview
+     */
     public LearningPathNavigationOverviewDto getLearningPathNavigationOverview(long learningPathId) {
         var learningPath = findWithCompetenciesAndLearningObjectsAndCompletedUsersById(learningPathId);
         if (!userRepository.getUser().equals(learningPath.getUser())) {
