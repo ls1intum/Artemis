@@ -1,14 +1,13 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
 import java.io.Serializable;
-import java.util.Objects;
+
+import de.tum.in.www1.artemis.domain.TempIdObject;
 
 /**
  * A AnswerOption.
  */
-public class AnswerOption implements QuizQuestionComponent<MultipleChoiceQuestion>, Serializable {
-
-    private Long id;
+public class AnswerOption extends TempIdObject implements QuizQuestionComponent<MultipleChoiceQuestion>, Serializable {
 
     private String text;
 
@@ -20,17 +19,9 @@ public class AnswerOption implements QuizQuestionComponent<MultipleChoiceQuestio
 
     private Boolean invalid = false;
 
-    public Long getId() {
-        return id;
-    }
-
     @Override
     public void setQuestion(MultipleChoiceQuestion quizQuestion) {
 
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public String getText() {
@@ -103,31 +94,4 @@ public class AnswerOption implements QuizQuestionComponent<MultipleChoiceQuestio
         return "AnswerOptionDTO{" + "id=" + getId() + ", text='" + getText() + "'" + ", hint='" + "'" + ", explanation='" + "'" + ", isCorrect='" + isIsCorrect() + "'"
                 + ", invalid='" + isInvalid() + "'" + "}";
     }
-
-    /**
-     * this method checks for database equality based on the id
-     *
-     * @param obj another object
-     * @return whether this and the other object are equal based on the database id
-     */
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null || getClass() != obj.getClass()) {
-            return false;
-        }
-        AnswerOption answerOption = (AnswerOption) obj;
-        if (answerOption.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), answerOption.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
-    }
-
 }

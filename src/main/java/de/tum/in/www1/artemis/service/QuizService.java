@@ -12,12 +12,10 @@ import java.util.function.Function;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.quiz.AnswerOption;
+import de.tum.in.www1.artemis.domain.TempIdObject;
 import de.tum.in.www1.artemis.domain.quiz.DragAndDropMapping;
 import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestion;
 import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestionStatistic;
-import de.tum.in.www1.artemis.domain.quiz.DragItem;
-import de.tum.in.www1.artemis.domain.quiz.DropLocation;
 import de.tum.in.www1.artemis.domain.quiz.MultipleChoiceQuestion;
 import de.tum.in.www1.artemis.domain.quiz.MultipleChoiceQuestionStatistic;
 import de.tum.in.www1.artemis.domain.quiz.QuizConfiguration;
@@ -28,8 +26,6 @@ import de.tum.in.www1.artemis.domain.quiz.QuizQuestionStatisticComponent;
 import de.tum.in.www1.artemis.domain.quiz.ShortAnswerMapping;
 import de.tum.in.www1.artemis.domain.quiz.ShortAnswerQuestion;
 import de.tum.in.www1.artemis.domain.quiz.ShortAnswerQuestionStatistic;
-import de.tum.in.www1.artemis.domain.quiz.ShortAnswerSolution;
-import de.tum.in.www1.artemis.domain.quiz.ShortAnswerSpot;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -58,15 +54,7 @@ public abstract class QuizService<T extends QuizConfiguration> {
 
             if (quizQuestion instanceof MultipleChoiceQuestion multipleChoiceQuestion) {
                 fixReferenceMultipleChoice(multipleChoiceQuestion);
-
-                Long currentId = multipleChoiceQuestion.getAnswerOptions().stream().filter(item1 -> item1.getId() != null).mapToLong(AnswerOption::getId).max().orElse(0L);
-
-                for (AnswerOption item : multipleChoiceQuestion.getAnswerOptions()) {
-                    if (item.getId() == null) {
-                        currentId = currentId + 1; // Increment using Long
-                        item.setId(currentId); // This assumes a setter setId(Long id) exists in Item class
-                    }
-                }
+                assignIds(multipleChoiceQuestion.getAnswerOptions());
             }
             else if (quizQuestion instanceof DragAndDropQuestion dragAndDropQuestion) {
                 fixReferenceDragAndDrop(dragAndDropQuestion);
@@ -261,33 +249,9 @@ public abstract class QuizService<T extends QuizConfiguration> {
      * @param dragAndDropQuestion the question for which to perform these actions
      */
     private void restoreCorrectMappingsFromIndicesDragAndDrop(DragAndDropQuestion dragAndDropQuestion) {
-
-        Long currentId = dragAndDropQuestion.getDropLocations().stream().filter(item1 -> item1.getId() != null).mapToLong(DropLocation::getId).max().orElse(0L);
-
-        for (DropLocation item : dragAndDropQuestion.getDropLocations()) {
-            if (item.getId() == null) {
-                currentId = currentId + 1; // Increment using Long
-                item.setId(currentId); // This assumes a setter setId(Long id) exists in Item class
-            }
-        }
-
-        currentId = dragAndDropQuestion.getDragItems().stream().filter(item1 -> item1.getId() != null).mapToLong(DragItem::getId).max().orElse(0L);
-
-        for (DragItem item : dragAndDropQuestion.getDragItems()) {
-            if (item.getId() == null) {
-                currentId = currentId + 1; // Increment using Long
-                item.setId(currentId); // This assumes a setter setId(Long id) exists in Item class
-            }
-        }
-
-        currentId = dragAndDropQuestion.getCorrectMappings().stream().filter(item1 -> item1.getId() != null).mapToLong(DragAndDropMapping::getId).max().orElse(0L);
-
-        for (DragAndDropMapping item : dragAndDropQuestion.getCorrectMappings()) {
-            if (item.getId() == null) {
-                currentId = currentId + 1; // Increment using Long
-                item.setId(currentId); // This assumes a setter setId(Long id) exists in Item class
-            }
-        }
+        assignIds(dragAndDropQuestion.getDragItems());
+        assignIds(dragAndDropQuestion.getDropLocations());
+        assignIds(dragAndDropQuestion.getCorrectMappings());
 
         for (DragAndDropMapping mapping : dragAndDropQuestion.getCorrectMappings()) {
             // drag item
@@ -306,33 +270,10 @@ public abstract class QuizService<T extends QuizConfiguration> {
      * @param shortAnswerQuestion the question for which to perform these actions
      */
     private void restoreCorrectMappingsFromIndicesShortAnswer(ShortAnswerQuestion shortAnswerQuestion) {
-
-        Long currentId = shortAnswerQuestion.getSpots().stream().filter(item1 -> item1.getId() != null).mapToLong(ShortAnswerSpot::getId).max().orElse(0L);
-
-        for (ShortAnswerSpot item : shortAnswerQuestion.getSpots()) {
-            if (item.getId() == null) {
-                currentId = currentId + 1; // Increment using Long
-                item.setId(currentId); // This assumes a setter setId(Long id) exists in Item class
-            }
-        }
-
-        currentId = shortAnswerQuestion.getSolutions().stream().filter(item1 -> item1.getId() != null).mapToLong(ShortAnswerSolution::getId).max().orElse(0L);
-
-        for (ShortAnswerSolution item : shortAnswerQuestion.getSolutions()) {
-            if (item.getId() == null) {
-                currentId = currentId + 1; // Increment using Long
-                item.setId(currentId); // This assumes a setter setId(Long id) exists in Item class
-            }
-        }
-
-        currentId = shortAnswerQuestion.getCorrectMappings().stream().filter(item1 -> item1.getId() != null).mapToLong(ShortAnswerMapping::getId).max().orElse(0L);
-
-        for (ShortAnswerMapping item : shortAnswerQuestion.getCorrectMappings()) {
-            if (item.getId() == null) {
-                currentId = currentId + 1; // Increment using Long
-                item.setId(currentId); // This assumes a setter setId(Long id) exists in Item class
-            }
-        }
+        // Assign IDs to spots
+        assignIds(shortAnswerQuestion.getSpots());
+        assignIds(shortAnswerQuestion.getSolutions());
+        assignIds(shortAnswerQuestion.getCorrectMappings());
 
         for (ShortAnswerMapping mapping : shortAnswerQuestion.getCorrectMappings()) {
             // solution
@@ -344,4 +285,16 @@ public abstract class QuizService<T extends QuizConfiguration> {
         shortAnswerQuestion.getContent().setSpots(shortAnswerQuestion.getSpots());
         shortAnswerQuestion.getContent().setCorrectMappings(shortAnswerQuestion.getCorrectMappings());
     }
+
+    public static <T extends TempIdObject> void assignIds(List<T> items) {
+        Long currentId = items.stream().filter(item1 -> item1.getId() != null).mapToLong(TempIdObject::getId).max().orElse(0L);
+
+        for (TempIdObject item : items) {
+            if (item.getId() == null) {
+                currentId = currentId + 1;
+                item.setId(currentId);
+            }
+        }
+    }
+
 }

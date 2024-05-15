@@ -16,8 +16,7 @@ public abstract class TempIdObject implements Serializable {
      * tempID is needed to refer to objects that have not been persisted yet (so user can create and connect those in the UI before saving them)
      */
     @Transient
-    // variable name must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it
-    private Long tempIDTransient;
+    private Long tempID;
 
     public Long getId() {
         return id;
@@ -28,11 +27,11 @@ public abstract class TempIdObject implements Serializable {
     }
 
     public Long getTempID() {
-        return tempIDTransient;
+        return tempID;
     }
 
     public void setTempID(Long tempID) {
-        this.tempIDTransient = tempID;
+        this.tempID = tempID;
     }
 
     @Override

@@ -1,14 +1,13 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
 import java.io.Serializable;
-import java.util.Objects;
+
+import de.tum.in.www1.artemis.domain.TempIdObject;
 
 /**
  * A DragAndDropMapping.
  */
-public class DragAndDropMapping implements QuizQuestionComponent<DragAndDropQuestion>, Serializable {
-
-    private Long id;
+public class DragAndDropMapping extends TempIdObject implements QuizQuestionComponent<DragAndDropQuestion>, Serializable {
 
     private Integer dragItemIndex;
 
@@ -21,15 +20,6 @@ public class DragAndDropMapping implements QuizQuestionComponent<DragAndDropQues
     private DropLocation dropLocation;
 
     private DragAndDropSubmittedAnswer submittedAnswer;
-
-    @Override
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public Integer getDragItemIndex() {
         return dragItemIndex;
@@ -98,25 +88,5 @@ public class DragAndDropMapping implements QuizQuestionComponent<DragAndDropQues
     @Override
     public void setQuestion(DragAndDropQuestion quizQuestion) {
 
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null || getClass() != obj.getClass()) {
-            return false;
-        }
-        DragAndDropMapping dragAndDropMapping = (DragAndDropMapping) obj;
-        if (dragAndDropMapping.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), dragAndDropMapping.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 }
