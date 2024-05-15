@@ -21,9 +21,9 @@ services:
     group_add:
       - ${DOCKER_GROUP_ID:-0}
     env_file:
-      - ./artemis/config/prod-multinode.env}
-      - ./artemis/config/node1.env}
-      - ./artemis/config/cypress.env}
+      - ./artemis/config/prod-multinode.env
+      - ./artemis/config/node1.env
+      - ./artemis/config/cypress.env
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
 
@@ -47,9 +47,9 @@ services:
     group_add:
       - ${DOCKER_GROUP_ID:-0}
     env_file:
-      - ./artemis/config/prod-multinode.env}
-      - ./artemis/config/node2.env}
-      - ./artemis/config/cypress.env}
+      - ./artemis/config/prod-multinode.env
+      - ./artemis/config/node2.env
+      - ./artemis/config/cypress.env
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
 
@@ -73,9 +73,9 @@ services:
     group_add:
       - ${DOCKER_GROUP_ID:-0}
     env_file:
-      - ./artemis/config/prod-multinode.env}
-      - ./artemis/config/node3.env}
-      - ./artemis/config/cypress.env}
+      - ./artemis/config/prod-multinode.env
+      - ./artemis/config/node3.env
+      - ./artemis/config/cypress.env
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
 
