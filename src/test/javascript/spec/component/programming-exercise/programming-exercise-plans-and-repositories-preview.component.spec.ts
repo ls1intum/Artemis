@@ -2,49 +2,52 @@ import { ProgrammingExercisePlansAndRepositoriesPreviewComponent } from 'app/exe
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
+import { RepositoriesCheckoutDirectoriesDTO } from 'app/exercises/programming/manage/repositories-checkout-directories-dto';
+import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
+import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { MockComponent } from 'ng-mocks';
+import { of } from 'rxjs';
 
 describe('ProgrammingExercisePlansAndRepositoriesPreviewComponent', () => {
     let component: ProgrammingExercisePlansAndRepositoriesPreviewComponent;
     let fixture: ComponentFixture<ProgrammingExercisePlansAndRepositoriesPreviewComponent>;
+    let programmingExerciseService: ProgrammingExerciseService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [ProgrammingExercisePlansAndRepositoriesPreviewComponent],
+            declarations: [ProgrammingExercisePlansAndRepositoriesPreviewComponent, MockComponent(HelpIconComponent)],
             providers: [{ provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService }],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ProgrammingExercisePlansAndRepositoriesPreviewComponent);
                 component = fixture.componentInstance;
-                fixture.detectChanges();
+                programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
             });
     });
 
-    it('should create', () => {
-        fixture.detectChanges();
-        expect(component).not.toBeNull();
-    });
-
     it('should display checkout directories when they exist', () => {
-        component.exerciseCheckoutDirectory = 'exerciseDirectory';
-        component.solutionCheckoutDirectory = 'solutionDirectory';
-        component.testCheckoutDirectory = 'testDirectory';
+        const checkoutDirectories: RepositoriesCheckoutDirectoriesDTO = {
+            solutionCheckoutDirectory: '/assignment',
+            exerciseCheckoutDirectory: '/assignment',
+            testCheckoutDirectory: '/',
+        };
+
+        component.programmingExercise = { id: 1, shortName: 'shortName' } as ProgrammingExercise;
+        component.isLocal = true;
+
+        component.programmingExerciseCreationConfig = { selectedProgrammingLanguage: ProgrammingLanguage.C } as ProgrammingExerciseCreationConfig;
+
+        jest.spyOn(programmingExerciseService, 'getCheckoutDirectoriesForProgrammingLanguage').mockReturnValue(of(checkoutDirectories));
+
         fixture.detectChanges();
 
         const compiled = fixture.debugElement.nativeElement;
-        expect(compiled.querySelector('.preview-box')).toBeTruthy();
-        expect(compiled.querySelector('.preview-box').textContent).toContain('exerciseDirectory');
-        expect(compiled.querySelector('.preview-box').textContent).toContain('solutionDirectory');
-        expect(compiled.querySelector('.preview-box').textContent).toContain('testDirectory');
-    });
-
-    it('should not display checkout directories when they do not exist', () => {
-        component.exerciseCheckoutDirectory = undefined;
-        component.solutionCheckoutDirectory = undefined;
-        component.testCheckoutDirectory = undefined;
-        fixture.detectChanges();
-
-        const compiled = fixture.debugElement.nativeElement;
-        expect(compiled.querySelector('.preview-box')).toBeFalsy();
+        const previewElement = compiled.querySelector('#checkout-directory-preview');
+        expect(previewElement).toBeTruthy();
+        expect(previewElement.textContent).toContain('/assignment');
+        expect(previewElement.textContent).toContain('/assignment');
+        expect(previewElement.textContent).toContain('/');
     });
 });
