@@ -7,7 +7,7 @@ import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
 import { ButtonType } from 'app/shared/components/button.component';
 import { TranslateService } from '@ngx-translate/core';
 import { IrisLogoSize } from 'app/iris/iris-logo/iris-logo.component';
-import { IrisStageDTO } from 'app/entities/iris/iris-stage-dto.model';
+import { IrisStageDTO, IrisStageStateDTO } from 'app/entities/iris/iris-stage-dto.model';
 import { IrisRateLimitInformation } from 'app/entities/iris/iris-ratelimit-info.model';
 import { IrisStatusService } from 'app/iris/iris-status.service';
 import { IrisMessageContentType, IrisTextMessageContent } from 'app/entities/iris/iris-content-type.model';
@@ -78,6 +78,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     newMessageTextContent = '';
     isLoading: boolean;
     shouldAnimate: boolean = false;
+    hasActiveStage: boolean = false;
 
     // User preferences
     userAccepted: boolean;
@@ -109,16 +110,12 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
         this.messagesSubscription = this.chatService.currentMessages().subscribe((messages) => {
             if (messages.length !== this.messages?.length) {
                 this.scrollToBottom('auto');
-                //setTimeout(() => this.scrollToBottom('smooth'), 510);
             }
             this.messages = [...messages].reverse();
         });
         this.stagesSubscription = this.chatService.currentStages().subscribe((stages) => {
-            //setTimeout(() => this.scrollToBottom('smooth'), 0);
-
-            // This is the time the animation of the status bar takes
-            //setTimeout(() => this.scrollToBottom('smooth'), 510);
             this.stages = stages;
+            this.hasActiveStage = stages?.some((stage) => [IrisStageStateDTO.IN_PROGRESS, IrisStageStateDTO.NOT_STARTED].includes(stage.state));
         });
         this.errorSubscription = this.chatService.currentError().subscribe((error) => (this.error = error));
         this.numNewMessageSubscription = this.chatService.currentNumNewMessages().subscribe((num) => {
