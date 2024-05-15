@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.dto.competency;
 
-import org.springframework.lang.Nullable;
+import jakarta.annotation.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
