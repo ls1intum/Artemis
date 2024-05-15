@@ -1,28 +1,19 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
 import java.io.Serializable;
-import java.util.Objects;
+
+import de.tum.in.www1.artemis.domain.TempIdObject;
 
 /**
  * A ShortAnswerSpot.
  */
-public class ShortAnswerSpot implements QuizQuestionComponent<ShortAnswerQuestion>, Serializable {
-
-    private Long id = 1L;
+public class ShortAnswerSpot extends TempIdObject implements QuizQuestionComponent<ShortAnswerQuestion>, Serializable {
 
     private Integer spotNr;
 
     private Integer width;
 
     private Boolean invalid;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public Integer getSpotNr() {
         return spotNr;
@@ -66,25 +57,5 @@ public class ShortAnswerSpot implements QuizQuestionComponent<ShortAnswerQuestio
     @Override
     public void setQuestion(ShortAnswerQuestion quizQuestion) {
 
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null || getClass() != obj.getClass()) {
-            return false;
-        }
-        ShortAnswerSpot shortAnswerSpot = (ShortAnswerSpot) obj;
-        if (shortAnswerSpot.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), shortAnswerSpot.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 }

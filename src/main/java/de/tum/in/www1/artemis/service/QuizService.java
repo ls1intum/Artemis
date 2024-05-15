@@ -27,6 +27,8 @@ import de.tum.in.www1.artemis.domain.quiz.QuizQuestionStatisticComponent;
 import de.tum.in.www1.artemis.domain.quiz.ShortAnswerMapping;
 import de.tum.in.www1.artemis.domain.quiz.ShortAnswerQuestion;
 import de.tum.in.www1.artemis.domain.quiz.ShortAnswerQuestionStatistic;
+import de.tum.in.www1.artemis.domain.quiz.ShortAnswerSolution;
+import de.tum.in.www1.artemis.domain.quiz.ShortAnswerSpot;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -294,6 +296,34 @@ public abstract class QuizService<T extends QuizConfiguration> {
      * @param shortAnswerQuestion the question for which to perform these actions
      */
     private void restoreCorrectMappingsFromIndicesShortAnswer(ShortAnswerQuestion shortAnswerQuestion) {
+
+        Long currentId = shortAnswerQuestion.getSpots().stream().filter(item1 -> item1.getId() != null).mapToLong(ShortAnswerSpot::getId).max().orElse(0L);
+
+        for (ShortAnswerSpot item : shortAnswerQuestion.getSpots()) {
+            if (item.getId() == null) {
+                currentId = currentId + 1; // Increment using Long
+                item.setId(currentId); // This assumes a setter setId(Long id) exists in Item class
+            }
+        }
+
+        currentId = shortAnswerQuestion.getSolutions().stream().filter(item1 -> item1.getId() != null).mapToLong(ShortAnswerSolution::getId).max().orElse(0L);
+
+        for (ShortAnswerSolution item : shortAnswerQuestion.getSolutions()) {
+            if (item.getId() == null) {
+                currentId = currentId + 1; // Increment using Long
+                item.setId(currentId); // This assumes a setter setId(Long id) exists in Item class
+            }
+        }
+
+        currentId = shortAnswerQuestion.getCorrectMappings().stream().filter(item1 -> item1.getId() != null).mapToLong(ShortAnswerMapping::getId).max().orElse(0L);
+
+        for (ShortAnswerMapping item : shortAnswerQuestion.getCorrectMappings()) {
+            if (item.getId() == null) {
+                currentId = currentId + 1; // Increment using Long
+                item.setId(currentId); // This assumes a setter setId(Long id) exists in Item class
+            }
+        }
+
         for (ShortAnswerMapping mapping : shortAnswerQuestion.getCorrectMappings()) {
             // solution
             mapping.setSolution(shortAnswerQuestion.getSolutions().get(mapping.getShortAnswerSolutionIndex()));

@@ -1,26 +1,17 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
 import java.io.Serializable;
-import java.util.Objects;
+
+import de.tum.in.www1.artemis.domain.TempIdObject;
 
 /**
  * A ShortAnswerSolution.
  */
-public class ShortAnswerSolution implements QuizQuestionComponent<ShortAnswerQuestion>, Serializable {
-
-    private Long id = 1L;
+public class ShortAnswerSolution extends TempIdObject implements QuizQuestionComponent<ShortAnswerQuestion>, Serializable {
 
     private String text;
 
     private Boolean invalid = false;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public String getText() {
         return text;
@@ -51,25 +42,5 @@ public class ShortAnswerSolution implements QuizQuestionComponent<ShortAnswerQue
     @Override
     public String toString() {
         return "ShortAnswerSolution{" + "id=" + getId() + ", text='" + getText() + "'" + ", invalid='" + isInvalid() + "'" + "}";
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null || getClass() != obj.getClass()) {
-            return false;
-        }
-        ShortAnswerSolution shortAnswerSolution = (ShortAnswerSolution) obj;
-        if (shortAnswerSolution.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), shortAnswerSolution.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 }

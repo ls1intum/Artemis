@@ -8,7 +8,7 @@ import java.util.Objects;
  */
 public class ShortAnswerMapping implements QuizQuestionComponent<ShortAnswerQuestion>, Serializable {
 
-    private Long id = 1L;
+    private Long id;
 
     private Integer shortAnswerSpotIndex;
 
