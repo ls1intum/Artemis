@@ -1,12 +1,4 @@
-.competency-accordion-body-collapsed {
-    max-height: 285px;
-}
-.competency-accordion-body-open {
-    max-height: 560px;
-}
 .competency-accordion-body {
     min-height: min-content;
     width: 100%;
-    overflow-x: hidden;
-    overflow-y: auto;
 }

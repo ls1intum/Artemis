@@ -13,7 +13,7 @@ import { PrerequisiteImportComponent } from 'app/course/competencies/competency-
 import { NgxGraphModule } from '@swimlane/ngx-graph';
 import { CompetencyRingsComponent } from 'app/course/competencies/competency-rings/competency-rings.component';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
-import { NgbAccordionModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbAccordionModule, NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { GenerateCompetenciesComponent } from 'app/course/competencies/generate-competencies/generate-competencies.component';
 import { CompetencyRecommendationDetailComponent } from 'app/course/competencies/generate-competencies/competency-recommendation-detail.component';
 import { CourseDescriptionFormComponent } from 'app/course/competencies/generate-competencies/course-description-form.component';
@@ -37,6 +37,7 @@ import { ArtemisLectureUnitsModule } from 'app/overview/course-lectures/lecture-
         FormsModule,
         ReactiveFormsModule,
         NgxGraphModule,
+        NgbModule,
         ArtemisSharedComponentModule,
         RouterModule,
         FormDateTimePickerModule,

@@ -14,6 +14,7 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { LineChartModule } from '@swimlane/ngx-charts';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
+import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
 
 const routes: Routes = [
     {
@@ -42,6 +43,7 @@ const routes: Routes = [
         ArtemisSharedComponentModule,
         LineChartModule,
         FeatureToggleModule,
+        ArtemisCompetenciesModule,
     ],
 })
 export class CourseDashboardModule {}

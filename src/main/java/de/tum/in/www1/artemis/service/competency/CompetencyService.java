@@ -401,8 +401,7 @@ public class CompetencyService {
     }
 
     /**
-     * Finds competencies within a course and fetch and their lecture units, exercises and progress for the provided user. It also fetches the lecture unit and exercise progress
-     * for the same user.
+     * Finds competencies within a course and fetches their lecture units, exercises and progress for the provided user.
      * <p>
      * As Spring Boot 3 doesn't support conditional JOIN FETCH statements, we have to retrieve the data manually.
      *

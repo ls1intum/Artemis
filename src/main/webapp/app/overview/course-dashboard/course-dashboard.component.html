@@ -15,12 +15,12 @@
     } @else {
         <div jhiTranslate="artemisApp.courseStudentDashboard.noMetrics"></div>
     }
-    <div class="competency-accordion-container row justify-content-center align-items-center w-100">
+    <div class="competency-accordion-container justify-content-center align-items-center w-100">
         @if (competencies.length > 0) {
             <div class="competency-accordion-header">
                 <h2 jhiTranslate="artemisApp.studentAnalyticsDashboard.competencyAccordion.title"></h2>
             </div>
-            <div class="competency-accordion-body" [ngClass]="this.openedAccordionIndex !== null ? 'competency-accordion-body-open' : 'competency-accordion-body-collapsed'">
+            <div class="competency-accordion-body">
                 @for (competency of competencies; track competency.id; let i = $index) {
                     <jhi-competency-accordion
                         #competencyAccordionElement

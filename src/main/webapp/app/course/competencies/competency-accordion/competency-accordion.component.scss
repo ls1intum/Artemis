@@ -2,14 +2,14 @@
     background-color: var(--overview-light-background-color);
     color: var(--bs-body-color);
     cursor: pointer;
-    padding: 10px;
+    padding: 5px;
     width: 100%;
     border: none;
     text-align: left;
     outline: none;
     font-size: 15px;
     transition: 0.4s;
-    height: 85px;
+    height: 70px;
 }
 
 .competency-accordion-header:not([disabled]):hover {
@@ -32,28 +32,23 @@
 
 /* A specific class to control the open state */
 .competency-accordion-body-open {
-    height: 275px;
-    padding: 30px 18px;
+    height: min-content;
+    max-height: 250px;
+    padding: 10px;
     animation: openAccordion 0.2s ease-out forwards;
 }
 .competency-accordion-body.closed {
     animation: openAccordion 0.2s ease-out reverse;
 }
-.header-tooltip-open {
-    animation: fadeIn 0.2s ease-out forwards;
-}
-.header-tooltip-closed {
-    animation: fadeIn 0.2s ease-out reverse;
-}
 
 @keyframes openAccordion {
     0% {
         max-height: 0;
-        padding: 0 18px;
+        padding: 0 10px;
     }
     100% {
-        max-height: 1000px;
-        padding: 30px 18px;
+        max-height: 250px;
+        padding: 10px;
     }
 }
 
@@ -79,8 +74,5 @@
 @media only screen and (max-width: 600px) {
     .competency-accordion-body {
         overflow-y: auto;
-    }
-    .competency-accordion-header {
-        height: min-content;
     }
 }
