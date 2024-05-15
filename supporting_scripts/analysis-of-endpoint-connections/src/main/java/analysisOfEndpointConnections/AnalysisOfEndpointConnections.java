@@ -19,7 +19,9 @@ public class AnalysisOfEndpointConnections {
      * @param args List of files that should be analyzed regarding endpoints.
      */
     public static void main(String[] args) {
-        String[] serverFiles = Arrays.stream(args).filter(filePath -> new File(filePath).exists() && filePath.endsWith(".java")).toArray(String[]::new);
+        String[] serverFiles = Arrays.stream(args)
+            .filter(filePath -> new File(filePath).exists() && filePath.endsWith(".java"))
+            .toArray(String[]::new);
         analyzeServerEndpoints(serverFiles);
     }
 
@@ -31,7 +33,8 @@ public class AnalysisOfEndpointConnections {
             "org.springframework.web.bind.annotation.PutMapping",
             "org.springframework.web.bind.annotation.DeleteMapping",
             "org.springframework.web.bind.annotation.PatchMapping",
-            requestMappingFullName);
+            requestMappingFullName
+        );
 
         JavaProjectBuilder builder = new JavaProjectBuilder();
         for (String filePath : filePaths) {
@@ -46,18 +49,18 @@ public class AnalysisOfEndpointConnections {
 
             System.out.println("==================================================");
             System.out.println("Class: " + javaClass.getFullyQualifiedName());
-            if (requestMappingOptional.isPresent()) {
-                System.out.println("Class Request Mapping: " + requestMappingOptional.get().getProperty("value"));
-            }
+            requestMappingOptional.ifPresent(annotation -> System.out.println("Class Request Mapping: " + annotation.getProperty("value")));
             System.out.println("==================================================");
 
             for (JavaMethod method : javaClass.getMethods()) {
                 for (JavaAnnotation annotation : method.getAnnotations()) {
                     if (httpMethodFullNames.contains(annotation.getType().getFullyQualifiedName())) {
                         System.out.println("Endpoint: " + method.getName());
-                        System.out.println(requestMappingFullName.equals(annotation.getType().getFullyQualifiedName()) ?
-                            "RequestMapping method: " + annotation.getProperty("method") :
-                            "HTTP method annotation: " + annotation.getType().getName());
+                        System.out.println(
+                            requestMappingFullName.equals(annotation.getType().getFullyQualifiedName()) ?
+                                "RequestMapping method: " + annotation.getProperty("method") :
+                                "HTTP method annotation: " + annotation.getType().getName()
+                        );
                         System.out.println("Path: " + annotation.getProperty("value"));
                         System.out.println("Line: " + method.getLineNumber());
                         List<String> annotations = method.getAnnotations().stream()
