@@ -90,8 +90,6 @@ export class ProgrammingExercisePlansAndRepositoriesPreviewComponent {
     }
 
     ngOnDestroy() {
-        if (this.programmingExerciseServiceSubscription) {
-            this.programmingExerciseServiceSubscription.unsubscribe();
-        }
+        this.programmingExerciseServiceSubscription?.unsubscribe();
     }
 }
