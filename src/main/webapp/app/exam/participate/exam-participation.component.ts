@@ -95,7 +95,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     faCheckCircle = faCheckCircle;
 
     isProgrammingExercise() {
-        return !this.activeExamPage.isOverviewPage && this.activeExamPage.exercise!.type === ExerciseType.PROGRAMMING;
+        return !this.activeExamPage.isOverviewPage && this.activeExamPage.exercise?.type === ExerciseType.PROGRAMMING;
     }
 
     isProgrammingExerciseWithCodeEditor(): boolean {
@@ -165,20 +165,19 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             this.studentExamId = state.studentExamId!;
             this.exam = state.exam!;
             this.studentExam = state.studentExam!;
-        });
-
-        this.examParticipationService.examStarted$.subscribe((studentExam: StudentExam) => {
-            this.examStarted(studentExam);
+            this.studentExam.exercises = state.exercises!;
         });
 
         // listen to connect / disconnect events
         this.websocketSubscription = this.websocketService.connectionState.subscribe((status) => {
             this.connected = status.connected;
         });
-        console.log('courseId: ' + this.courseId);
-        console.log('examId: ' + this.examId);
-        console.log('testRunId: ' + this.testRunId);
-        console.log('studentExamId: ' + this.studentExamId);
+
+        this.examParticipationService.examStarted$.subscribe((studentExam: StudentExam) => {
+            this.studentExam = studentExam;
+        });
+
+        this.examStarted(this.studentExam);
     }
 
     loadAndDisplaySummary() {
@@ -209,16 +208,16 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     get activePageIndex(): number {
-        if (!this.activeExamPage || this.activeExamPage.isOverviewPage) {
+        if (!this.activeExamPage || this.activeExamPage.isOverviewPage || !this.studentExam.exercises) {
             return -1;
         }
-        return this.studentExam.exercises!.findIndex((examExercise) => examExercise.id === this.activeExamPage.exercise!.id);
+        return this.studentExam.exercises!.findIndex((examExercise) => examExercise.id === this.activeExamPage.exercise?.id);
     }
 
     get activePageComponent(): ExamPageComponent | undefined {
         // we have to find the current component based on the activeExercise because the queryList might not be full yet (e.g. only 2 of 5 components initialized)
         return this.currentPageComponents.find(
-            (submissionComponent) => !this.activeExamPage.isOverviewPage && (submissionComponent as ExamSubmissionComponent).getExerciseId() === this.activeExamPage.exercise!.id,
+            (submissionComponent) => !this.activeExamPage.isOverviewPage && (submissionComponent as ExamSubmissionComponent).getExerciseId() === this.activeExamPage.exercise?.id,
         );
     }
 
@@ -226,7 +225,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * exam start text confirmed and name entered, start button clicked and exam active
      */
     examStarted(studentExam: StudentExam) {
-        console.log('Cagrildi examStarted');
         if (studentExam) {
             // Keep working time
             studentExam.workingTime = this.studentExam?.workingTime ?? studentExam.workingTime;
@@ -452,7 +450,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 captureException(error);
             }
         } else if (this.studentExam?.exercises && this.activeExamPage) {
-            const index = this.studentExam.exercises.findIndex((exercise) => !this.activeExamPage.isOverviewPage && exercise.id === this.activeExamPage.exercise!.id);
+            const index = this.studentExam.exercises.findIndex((exercise) => !this.activeExamPage.isOverviewPage && exercise.id === this.activeExamPage.exercise?.id);
             this.exerciseIndex = index ? index : 0;
 
             // Reset the visited pages array so ngOnInit will be called for only the active page

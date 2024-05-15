@@ -6,18 +6,18 @@
         <!-- exam participation -->
 
         <!-- exam nav -->
-        <!-- <jhi-exam-navigation-bar
-                id="exam-navigation-bar"
-                class="exam-navigation-sticky d-block"
-                [exercises]="studentExam.exercises!"
-                [exerciseIndex]="exerciseIndex"
-                [endDate]="individualStudentEndDate"
-                [overviewPageOpen]="activePageIndex === -1"
-                [examSessions]="studentExam.examSessions"
-                (onPageChanged)="onPageChange($event)"
-                (examAboutToEnd)="examEnded()"
-                (onExamHandInEarly)="toggleHandInEarly()"
-            /> -->
+        <jhi-exam-navigation-bar
+            id="exam-navigation-bar"
+            class="exam-navigation-sticky d-block"
+            [exercises]="studentExam.exercises!"
+            [exerciseIndex]="exerciseIndex"
+            [endDate]="individualStudentEndDate"
+            [overviewPageOpen]="activePageIndex === -1"
+            [examSessions]="studentExam.examSessions"
+            (onPageChanged)="onPageChange($event)"
+            (examAboutToEnd)="examEnded()"
+            (onExamHandInEarly)="toggleHandInEarly()"
+        />
         <!-- exercises -->
         <div [hidden]="activePageIndex !== -1">
             <jhi-exam-exercise-overview-page [studentExam]="studentExam" (onPageChanged)="onPageChange($event)" />

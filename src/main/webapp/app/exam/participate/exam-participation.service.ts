@@ -31,6 +31,7 @@ interface ExamState {
     studentExamId?: number;
     exam?: Exam;
     studentExam?: StudentExam;
+    exercises?: Exercise[];
 }
 
 @Injectable({ providedIn: 'root' })

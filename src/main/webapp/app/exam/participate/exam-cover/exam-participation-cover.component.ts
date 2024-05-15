@@ -90,6 +90,8 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
 
     showExamSummary = false;
 
+    pageComponentVisited: boolean[];
+
     constructor(
         private courseService: CourseManagementService,
         private artemisMarkdown: ArtemisMarkdownService,
@@ -176,6 +178,7 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
      * if the student exam changes, we need to update the displayed times
      */
     ngOnChanges(): void {
+        console.log('ngOnChanges called');
         this.confirmed = false;
         this.startEnabled = false;
         this.testRun = this.studentExam.testRun;
@@ -241,29 +244,30 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
     startExam() {
         if (this.testRun) {
             this.examParticipationService.saveStudentExamToLocalStorage(this.exam.course!.id!, this.exam.id!, this.studentExam);
-            //this.onExamStarted.emit(this.studentExam);
+            // this.onExamStarted.emit(this.studentExam);
             this.examParticipationService.emitExamStarted(this.studentExam);
+            this.router.navigate(['courses', this.courseId, 'exams', this.examId, 'participation']);
         } else {
-            this.examParticipationService
-                .loadStudentExamWithExercisesForConduction(this.exam.course!.id!, this.exam.id!, this.studentExam.id!)
-                .subscribe((studentExam: StudentExam) => {
-                    this.studentExam = studentExam;
-                    this.examParticipationService.saveStudentExamToLocalStorage(this.exam.course!.id!, this.exam.id!, studentExam);
-                    if (this.hasStarted()) {
-                        //this.onExamStarted.emit(studentExam);
-                        this.examParticipationService.emitExamStarted(studentExam);
-                    } else {
-                        this.waitingForExamStart = true;
-                        if (this.interval) {
-                            clearInterval(this.interval);
-                        }
-                        this.interval = window.setInterval(() => {
-                            this.updateDisplayedTimes(studentExam);
-                        }, UI_RELOAD_TIME);
+            this.examParticipationService.loadStudentExamWithExercisesForConduction(this.courseId, this.examId, this.studentExam.id!).subscribe((studentExam: StudentExam) => {
+                this.studentExam = studentExam;
+                this.examParticipationService.saveStudentExamToLocalStorage(this.courseId, this.examId, studentExam);
+                if (this.hasStarted()) {
+                    //this.onExamStarted.emit(studentExam);
+                    this.examParticipationService.emitExamStarted(studentExam);
+                    this.examParticipationService.setExamState({ exercises: studentExam.exercises! });
+                    this.router.navigate(['courses', this.courseId, 'exams', this.examId, 'participation']);
+                } else {
+                    this.waitingForExamStart = true;
+                    if (this.interval) {
+                        clearInterval(this.interval);
                     }
-                });
+                    this.interval = window.setInterval(() => {
+                        this.updateDisplayedTimes(studentExam);
+                    }, UI_RELOAD_TIME);
+                }
+            });
         }
-        this.router.navigate(['courses', this.courseId, 'exams', this.examId, 'participation']);
+        //this.router.navigate(['courses', this.courseId, 'exams', this.examId, 'participation']);
     }
 
     /**
@@ -426,8 +430,7 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
 
                     this.studentExam = localExam;
                     this.loadingExam = false;
-                    console.log('Girdi');
-                    //this.examStarted(this.studentExam);
+                    this.examParticipationService.emitExamStarted(this.studentExam);
                 });
             } else {
                 this.loadingExam = false;
