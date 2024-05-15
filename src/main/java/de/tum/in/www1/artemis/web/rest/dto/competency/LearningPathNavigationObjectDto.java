@@ -18,6 +18,13 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record LearningPathNavigationObjectDto(Long id, boolean completed, String name, LearningObjectType type) {
 
+    /**
+     * Create a navigation object DTO from a learning object.
+     *
+     * @param learningObject the learning object
+     * @param user           the user
+     * @return the navigation object DTO
+     */
     public static LearningPathNavigationObjectDto of(LearningObject learningObject, User user) {
         if (learningObject == null) {
             return null;

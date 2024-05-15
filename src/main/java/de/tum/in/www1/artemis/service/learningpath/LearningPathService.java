@@ -311,6 +311,14 @@ public class LearningPathService {
         return this.learningPathNgxService.generateNgxPathRepresentation(learningPath);
     }
 
+    /**
+     * Get the navigation for the given learning path.
+     *
+     * @param learningPathId     the id of the learning path
+     * @param learningObjectId   the id of the relative learning object
+     * @param learningObjectType the type of the relative learning object
+     * @return the navigation
+     */
     public LearningPathNavigationDto getLearningPathNavigation(long learningPathId, @Nullable Long learningObjectId, @Nullable LearningObjectType learningObjectType) {
         var learningPath = findWithCompetenciesAndLearningObjectsAndCompletedUsersById(learningPathId);
         if (learningObjectId != null && learningObjectType != null) {
