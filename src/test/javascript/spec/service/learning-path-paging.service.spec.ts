@@ -1,5 +1,5 @@
 import { MockHttpService } from '../helpers/mocks/service/mock-http.service';
-import { LearningPathPagingService } from 'app/course/learning-paths/services/learning-path-paging.service';
+import { LearningPathPagingService } from 'app/course/learning-paths/learning-path-paging.service';
 import { SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { TableColumn } from 'app/course/learning-paths/learning-path-management/learning-path-management.component';
