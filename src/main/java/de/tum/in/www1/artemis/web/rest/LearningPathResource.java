@@ -208,6 +208,8 @@ public class LearningPathResource {
     public ResponseEntity<LearningPathNavigationDto> getLearningPathNavigation(@PathVariable @Valid long learningPathId,
             @RequestParam(required = false, name = "learningObjectId") @Nullable @Valid Long learningObjectId,
             @RequestParam(required = false, name = "learningObjectType") @Nullable @Valid LearningObjectType learningObjectType) {
+        log.debug("REST request to get navigation for learning path with id: {} relative to learning object with id: {} and type: {}", learningPathId, learningObjectId,
+                learningObjectType);
         return ResponseEntity.ok(learningPathService.getLearningPathNavigation(learningPathId, learningObjectId, learningObjectType));
     }
 
@@ -219,6 +221,7 @@ public class LearningPathResource {
      */
     @GetMapping("learning-path/{learningPathId}/navigation-overview")
     public ResponseEntity<LearningPathNavigationOverviewDto> getLearningPathNavigationOverview(@PathVariable @Valid long learningPathId) {
+        log.debug("REST request to get navigation overview for learning path with id: {}", learningPathId);
         return ResponseEntity.ok(learningPathService.getLearningPathNavigationOverview(learningPathId));
     }
 

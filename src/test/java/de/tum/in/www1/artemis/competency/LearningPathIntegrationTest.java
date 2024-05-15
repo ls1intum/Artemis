@@ -45,6 +45,9 @@ import de.tum.in.www1.artemis.web.rest.LearningPathResource;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyWithTailRelationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathHealthDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathInformationDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationDto;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationObjectDto;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationOverviewDto;
 import de.tum.in.www1.artemis.web.rest.dto.competency.NgxLearningPathDTO;
 
 class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -566,6 +569,86 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
     void testGetCompetencyProgressForLearningPathByInstructor() throws Exception {
         testGetCompetencyProgressForLearningPath();
+    }
+
+    @Test
+    @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+    void testGetLearningPathNavigation() throws Exception {
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+        final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+        final var result = request.get("/api/learning-path/" + learningPath.getId() + "/navigation", HttpStatus.OK, LearningPathNavigationDto.class);
+
+        var predecessorLearningObject = result.predecessorLearningObject();
+        assertThat(predecessorLearningObject).isNotNull();
+        assertThat(predecessorLearningObject.type()).isEqualTo(LearningPathNavigationObjectDto.LearningObjectType.LECTURE);
+        assertThat(predecessorLearningObject.id()).isEqualTo(textUnit.getId());
+
+        var currentLearningObject = result.currentLearningObject();
+        assertThat(currentLearningObject).isNotNull();
+        assertThat(currentLearningObject.type()).isEqualTo(LearningPathNavigationObjectDto.LearningObjectType.EXERCISE);
+        assertThat(currentLearningObject.id()).isNotNull();
+
+        assertThat(result.successorLearningObject()).isNull();
+        assertThat(result.progress()).isEqualTo(learningPath.getProgress());
+    }
+
+    @Test
+    @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+    void testGetRelativeLearningPathNavigation() throws Exception {
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+        final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+        final var result = request.get("/api/learning-path/" + learningPath.getId() + "/navigation?learningObjectId=" + textUnit.getId() + "&learningObjectType="
+                + LearningPathNavigationObjectDto.LearningObjectType.LECTURE, HttpStatus.OK, LearningPathNavigationDto.class);
+
+        // TODO: currently learning objects connected to more than one competency are provided twice in the learning path
+        // TODO: in the navigation therefore a lecture unit might be the predecessor and the current learning object or similar
+
+        var currentLearningObject = result.currentLearningObject();
+        assertThat(currentLearningObject).isNotNull();
+        assertThat(currentLearningObject.type()).isEqualTo(LearningPathNavigationObjectDto.LearningObjectType.LECTURE);
+        assertThat(currentLearningObject.id()).isEqualTo(textUnit.getId());
+
+        var successorLearningObject = result.successorLearningObject();
+        assertThat(successorLearningObject).isNotNull();
+        assertThat(successorLearningObject.type()).isEqualTo(LearningPathNavigationObjectDto.LearningObjectType.EXERCISE);
+        assertThat(successorLearningObject.id()).isNotNull();
+
+        assertThat(result.progress()).isEqualTo(learningPath.getProgress());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1337", roles = "USER")
+    void testGetLearningPathNavigationForOtherStudent() throws Exception {
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+        final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+        request.get("/api/learning-path/" + learningPath.getId() + "/navigation", HttpStatus.FORBIDDEN, LearningPathNavigationDto.class);
+    }
+
+    @Test
+    @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+    void testGetLearningPathNavigationOverview() throws Exception {
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+        final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+        final var result = request.get("/api/learning-path/" + learningPath.getId() + "/navigation-overview", HttpStatus.OK, LearningPathNavigationOverviewDto.class);
+
+        // TODO: currently learning objects connected to more than one competency are provided twice in the learning path
+        // TODO: this is not a problem for the navigation overview as the duplicates are filtered out
+
+        assertThat(result.learningObjects()).isNotEmpty();
+        assertThat(result.learningObjects().size()).isEqualTo(2);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1337", roles = "USER")
+    void testGetLearningPathNavigationOverviewForOtherStudent() throws Exception {
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+        final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+        request.get("/api/learning-path/" + learningPath.getId() + "/navigation-overview", HttpStatus.FORBIDDEN, LearningPathNavigationOverviewDto.class);
     }
 
     void testGetCompetencyProgressForLearningPath() throws Exception {

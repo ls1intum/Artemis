@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../../test.module';
-import { LearningPathService } from 'app/course/learning-paths/services/learning-path.service';
+import { LearningPathService } from 'app/course/learning-paths/learning-path.service';
 import { NgxLearningPathDTO, NgxLearningPathNode, NodeType } from 'app/entities/competency/learning-path.model';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';

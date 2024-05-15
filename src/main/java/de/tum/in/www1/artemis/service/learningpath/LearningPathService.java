@@ -44,6 +44,7 @@ import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationObje
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationOverviewDto;
 import de.tum.in.www1.artemis.web.rest.dto.competency.NgxLearningPathDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 
 /**
@@ -321,6 +322,9 @@ public class LearningPathService {
      */
     public LearningPathNavigationDto getLearningPathNavigation(long learningPathId, @Nullable Long learningObjectId, @Nullable LearningObjectType learningObjectType) {
         var learningPath = findWithCompetenciesAndLearningObjectsAndCompletedUsersById(learningPathId);
+        if (!userRepository.getUser().equals(learningPath.getUser())) {
+            throw new AccessForbiddenException("You are not allowed to access this learning path");
+        }
         if (learningObjectId != null && learningObjectType != null) {
             return learningPathNavigationService.getNavigationRelativeToLearningObject(learningPath, learningObjectId, learningObjectType);
         }
@@ -329,6 +333,9 @@ public class LearningPathService {
 
     public LearningPathNavigationOverviewDto getLearningPathNavigationOverview(long learningPathId) {
         var learningPath = findWithCompetenciesAndLearningObjectsAndCompletedUsersById(learningPathId);
+        if (!userRepository.getUser().equals(learningPath.getUser())) {
+            throw new AccessForbiddenException("You are not allowed to access this learning path");
+        }
         return learningPathNavigationService.getNavigationOverview(learningPath);
     }
 

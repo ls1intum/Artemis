@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../../test.module';
 import { LearningPathGraphComponent } from 'app/course/learning-paths/learning-path-graph/learning-path-graph.component';
-import { LearningPathService } from 'app/course/learning-paths/services/learning-path.service';
+import { LearningPathService } from 'app/course/learning-paths/learning-path.service';
 import { CompetencyProgressForLearningPathDTO, NgxLearningPathDTO, NgxLearningPathNode, NodeType } from 'app/entities/competency/learning-path.model';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';

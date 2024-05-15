@@ -138,7 +138,7 @@ public class LearningPathRecommendationService {
             if (currentLearningObjectIndex == 0 && currentCompetencyIndex > 0) {
                 var predecessorCompetency = recommendationState.competencyIdMap.get(orderOfCompetencies.get(currentCompetencyIndex - 1));
                 var predecessorOrderOfLearningObjects = getRecommendedOrderOfLearningObjects(learningPath, predecessorCompetency, recommendationState);
-                return Optional.of(predecessorOrderOfLearningObjects.getLast());
+                return Optional.ofNullable(predecessorOrderOfLearningObjects.isEmpty() ? null : predecessorOrderOfLearningObjects.getLast());
             }
         }
         return Optional.empty();
@@ -166,7 +166,7 @@ public class LearningPathRecommendationService {
             if (currentLearningObjectIndex == orderOfLearningObjects.size() - 1 && currentCompetencyIndex < orderOfCompetencies.size() - 1) {
                 var successorCompetency = recommendationState.competencyIdMap.get(orderOfCompetencies.get(currentCompetencyIndex + 1));
                 var successorOrderOfLearningObjects = getRecommendedOrderOfLearningObjects(learningPath, successorCompetency, recommendationState);
-                return successorOrderOfLearningObjects.getFirst();
+                return successorOrderOfLearningObjects.isEmpty() ? null : successorOrderOfLearningObjects.getFirst();
             }
         }
         return null;
