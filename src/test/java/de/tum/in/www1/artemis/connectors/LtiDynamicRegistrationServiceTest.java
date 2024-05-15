@@ -67,12 +67,7 @@ class LtiDynamicRegistrationServiceTest {
         openIdConfigurationUrl = "url";
         registrationToken = "token";
 
-        platformConfiguration = new Lti13PlatformConfiguration();
-        platformConfiguration.setTokenEndpoint("token");
-        platformConfiguration.setAuthorizationEndpoint("auth");
-        platformConfiguration.setRegistrationEndpoint("register");
-        platformConfiguration.setJwksUri("jwks");
-
+        platformConfiguration = new Lti13PlatformConfiguration(null, "token", "auth", "jwks", "register");
         clientRegistrationResponse = new Lti13ClientRegistration();
     }
 
@@ -95,7 +90,7 @@ class LtiDynamicRegistrationServiceTest {
 
     @Test
     void badRequestWhenPlatformConfigurationEmpty() {
-        Lti13PlatformConfiguration platformConfiguration = new Lti13PlatformConfiguration();
+        Lti13PlatformConfiguration platformConfiguration = new Lti13PlatformConfiguration(null, null, null, null, null);
         when(restTemplate.getForEntity(openIdConfigurationUrl, Lti13PlatformConfiguration.class)).thenReturn(ResponseEntity.accepted().body(platformConfiguration));
 
         assertThatExceptionOfType(BadRequestAlertException.class)
@@ -104,10 +99,7 @@ class LtiDynamicRegistrationServiceTest {
 
     @Test
     void badRequestWhenRegistrationEndpointEmpty() {
-        Lti13PlatformConfiguration platformConfiguration = new Lti13PlatformConfiguration();
-        platformConfiguration.setAuthorizationEndpoint("auth");
-        platformConfiguration.setJwksUri("uri");
-        platformConfiguration.setTokenEndpoint("token");
+        Lti13PlatformConfiguration platformConfiguration = new Lti13PlatformConfiguration(null, "token", "auth", "uri", null);
 
         when(restTemplate.getForEntity(openIdConfigurationUrl, Lti13PlatformConfiguration.class)).thenReturn(ResponseEntity.accepted().body(platformConfiguration));
 
@@ -120,7 +112,7 @@ class LtiDynamicRegistrationServiceTest {
 
         when(restTemplate.getForEntity(eq(openIdConfigurationUrl), any())).thenReturn(ResponseEntity.accepted().body(platformConfiguration));
 
-        doThrow(HttpClientErrorException.class).when(restTemplate).postForEntity(eq(platformConfiguration.getRegistrationEndpoint()), any(), eq(Lti13ClientRegistration.class));
+        doThrow(HttpClientErrorException.class).when(restTemplate).postForEntity(eq(platformConfiguration.registrationEndpoint()), any(), eq(Lti13ClientRegistration.class));
 
         assertThatExceptionOfType(BadRequestAlertException.class)
                 .isThrownBy(() -> ltiDynamicRegistrationService.performDynamicRegistration(openIdConfigurationUrl, registrationToken));
@@ -130,7 +122,7 @@ class LtiDynamicRegistrationServiceTest {
     void performDynamicRegistrationSuccess() {
 
         when(restTemplate.getForEntity(openIdConfigurationUrl, Lti13PlatformConfiguration.class)).thenReturn(ResponseEntity.accepted().body(platformConfiguration));
-        when(restTemplate.postForEntity(eq(platformConfiguration.getRegistrationEndpoint()), any(), eq(Lti13ClientRegistration.class)))
+        when(restTemplate.postForEntity(eq(platformConfiguration.registrationEndpoint()), any(), eq(Lti13ClientRegistration.class)))
                 .thenReturn(ResponseEntity.accepted().body(clientRegistrationResponse));
 
         ltiDynamicRegistrationService.performDynamicRegistration(openIdConfigurationUrl, registrationToken);
@@ -143,7 +135,7 @@ class LtiDynamicRegistrationServiceTest {
     void performDynamicRegistrationSuccessWithoutToken() {
 
         when(restTemplate.getForEntity(openIdConfigurationUrl, Lti13PlatformConfiguration.class)).thenReturn(ResponseEntity.accepted().body(platformConfiguration));
-        when(restTemplate.postForEntity(eq(platformConfiguration.getRegistrationEndpoint()), any(), eq(Lti13ClientRegistration.class)))
+        when(restTemplate.postForEntity(eq(platformConfiguration.registrationEndpoint()), any(), eq(Lti13ClientRegistration.class)))
                 .thenReturn(ResponseEntity.accepted().body(clientRegistrationResponse));
 
         ltiDynamicRegistrationService.performDynamicRegistration(openIdConfigurationUrl, null);

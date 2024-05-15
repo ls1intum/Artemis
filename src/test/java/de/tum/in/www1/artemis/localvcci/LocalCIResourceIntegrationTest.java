@@ -89,7 +89,7 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
         job1 = new LocalCIBuildJobItem("1", "job1", "address1", 1, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo, buildConfig, null);
         job2 = new LocalCIBuildJobItem("2", "job2", "address1", 2, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo, buildConfig, null);
         String memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
-        agent1 = new LocalCIBuildAgentInformation(memberAddress, 1, 0, null, false, new ArrayList<>(List.of()));
+        agent1 = new LocalCIBuildAgentInformation(memberAddress, 1, 0, new ArrayList<>(List.of(job1)), false, new ArrayList<>(List.of(job2)));
         LocalCIBuildJobItem finishedJobQueueItem1 = new LocalCIBuildJobItem("3", "job3", "address1", 3, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo,
                 jobTimingInfo, buildConfig, null);
         LocalCIBuildJobItem finishedJobQueueItem2 = new LocalCIBuildJobItem("4", "job4", "address1", 4, course.getId() + 1, 1, 1, 1, BuildStatus.FAILED, repositoryInfo,
@@ -108,8 +108,8 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
         buildJobItemMap = this.hazelcastInstance.getMap("buildJobItemMap");
         buildAgentInformation = hazelcastInstance.getMap("buildAgentInformation");
 
-        processingJobs.put(1L, job1);
-        processingJobs.put(2L, job2);
+        processingJobs.put(Long.valueOf(job1.id()), job1);
+        processingJobs.put(Long.valueOf(job2.id()), job2);
 
         buildAgentInformation.put(memberAddress, agent1);
     }
@@ -190,9 +190,23 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
-    void testCancelBuildJob() throws Exception {
-        LocalCIBuildJobItem buildJob = processingJobs.get(1L);
+    void testGetBuildAgentDetails_returnsAgent() throws Exception {
+        var retrievedAgent = request.get("/api/admin/build-agent?agentName=" + agent1.name(), HttpStatus.OK, LocalCIBuildAgentInformation.class);
+        assertThat(retrievedAgent.name()).isEqualTo(agent1.name());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testCancelProcessingBuildJob() throws Exception {
+        LocalCIBuildJobItem buildJob = processingJobs.get(Long.valueOf(job1.id()));
         request.delete("/api/admin/cancel-job/" + buildJob.id(), HttpStatus.NO_CONTENT);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testCancelQueuedBuildJob() throws Exception {
+        queuedJobs.put(job1);
+        request.delete("/api/admin/cancel-job/" + job1.id(), HttpStatus.NO_CONTENT);
     }
 
     @Test
@@ -210,13 +224,15 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCancelBuildJobForCourse() throws Exception {
-        LocalCIBuildJobItem buildJob = processingJobs.get(1L);
+        LocalCIBuildJobItem buildJob = processingJobs.get(Long.valueOf(job1.id()));
         request.delete("/api/courses/" + course.getId() + "/cancel-job/" + buildJob.id(), HttpStatus.NO_CONTENT);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCancelAllQueuedBuildJobsForCourse() throws Exception {
+        queuedJobs.put(job1);
+        queuedJobs.put(job2);
         request.delete("/api/courses/" + course.getId() + "/cancel-all-queued-jobs", HttpStatus.NO_CONTENT);
     }
 

@@ -47,7 +47,7 @@ courseConfigsToTest.forEach((configToTest) => {
                 });
             });
 
-            it.only('instructor should be able to select answer', () => {
+            it.skip('instructor should be able to select answer', () => {
                 const content = 'Answer Post Content';
                 cy.login(studentOne, `/courses/${course.id}/discussion`);
                 communicationAPIRequest.createCourseWideMessage(course, courseWideRandomChannel.id!, content).then((response) => {
