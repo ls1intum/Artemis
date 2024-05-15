@@ -237,8 +237,8 @@ public interface ContinuousIntegrationService {
             @Override
             public String forProgrammingLanguage(ProgrammingLanguage language) {
                 return switch (language) {
+                    case JAVA, PYTHON, C, KOTLIN, VHDL, ASSEMBLER, SWIFT, EMPTY -> "assignment";
                     case HASKELL, OCAML -> "solution";
-                    default -> throw new IllegalArgumentException("Repository checkout path for solution repo has not yet been defined for " + language);
                 };
             }
         }
