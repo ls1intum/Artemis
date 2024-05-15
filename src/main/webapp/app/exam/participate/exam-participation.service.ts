@@ -19,7 +19,6 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 export type ButtonTooltipType = 'submitted' | 'submittedSubmissionLimitReached' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted';
 
 interface ExamState {
-    testStartTime: dayjs.Dayjs | undefined;
     examStartConfirmed: boolean;
     handInEarly: boolean;
     handInPossible: boolean;
@@ -32,6 +31,8 @@ interface ExamState {
     exam?: Exam;
     studentExam?: StudentExam;
     exercises?: Exercise[];
+    accountName: string;
+    testRun?: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -44,12 +45,12 @@ export class ExamParticipationService {
     examStarted$ = this.examStartedSource.asObservable();
 
     private initialState: ExamState = {
-        testStartTime: undefined,
         examStartConfirmed: false,
         handInEarly: false,
         handInPossible: true,
         submitInProgress: false,
         attendanceChecked: false,
+        accountName: '',
     };
 
     private examStateSource = new BehaviorSubject<ExamState>(this.initialState);

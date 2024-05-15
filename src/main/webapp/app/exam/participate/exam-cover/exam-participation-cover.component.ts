@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnChanges, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -23,27 +23,12 @@ import { ExamLiveEventType, ExamParticipationLiveEventsService, WorkingTimeUpdat
     templateUrl: './exam-participation-cover.component.html',
     styleUrls: ['./exam-participation-cover.scss'],
 })
-export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, OnInit {
-    /**
-     * if startView is set to true: startText and confirmationStartText will be displayed
-     * if startView is set to false: endText and confirmationEndText will be displayed
-     */
-    // @Input() startView: boolean;
-    // @Input() exam: Exam;
-    // @Input() studentExam: StudentExam;
-    //@Input() testRunStartTime: dayjs.Dayjs | undefined;
-
+export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
     handInEarly: boolean;
     handInPossible: boolean;
     submitInProgress: boolean;
     attendanceChecked: boolean;
-    testStartTime?: dayjs.Dayjs;
     examStartConfirmed = false;
-    startView = true;
-
-    @Output() onExamStarted: EventEmitter<StudentExam> = new EventEmitter<StudentExam>();
-    @Output() onExamEnded: EventEmitter<StudentExam> = new EventEmitter<StudentExam>();
-    @Output() onExamContinueAfterHandInEarly = new EventEmitter<void>();
 
     course?: Course;
     startEnabled: boolean;
@@ -57,7 +42,7 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
     testRun?: boolean;
     testExam?: boolean;
 
-    formattedGeneralInformation?: SafeHtml;
+    formattedGeneralInformation: SafeHtml;
     formattedConfirmationText?: SafeHtml;
 
     interval: number;
@@ -66,9 +51,6 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
 
     accountName = '';
     enteredName = '';
-
-    graceEndDate: dayjs.Dayjs;
-    criticalTime = dayjs.duration(30, 'seconds');
 
     // Icons
     faSpinner = faSpinner;
@@ -89,8 +71,6 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
     individualStudentEndDateWithGracePeriod: dayjs.Dayjs;
 
     showExamSummary = false;
-
-    pageComponentVisited: boolean[];
 
     constructor(
         private courseService: CourseManagementService,
@@ -113,7 +93,6 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
 
         this.examParticipationService.examState$.subscribe((state) => {
             this.examStartConfirmed = state.examStartConfirmed;
-            this.testStartTime = state.testStartTime;
             this.handInEarly = state.handInEarly;
             this.handInPossible = state.handInPossible;
             this.submitInProgress = state.submitInProgress;
@@ -168,8 +147,16 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
         this.accountService.identity().then((user) => {
             if (user && user.name) {
                 this.accountName = user.name;
+                this.examParticipationService.setExamState({ accountName: this.accountName });
             }
         });
+
+        this.generateInformationForHtml();
+    }
+
+    generateInformationForHtml() {
+        this.formattedGeneralInformation = this.artemisMarkdown.safeHtmlForMarkdown(this.exam?.startText);
+        this.formattedConfirmationText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam?.confirmationStartText);
     }
 
     /**
@@ -177,13 +164,13 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
      * changes in the exam and subscription is handled in the exam-participation.component
      * if the student exam changes, we need to update the displayed times
      */
+
+    /*
     ngOnChanges(): void {
-        console.log('ngOnChanges called');
         this.confirmed = false;
         this.startEnabled = false;
         this.testRun = this.studentExam.testRun;
         this.testExam = this.exam.testExam;
-        this.isStartViewEnded();
 
         if (this.startView) {
             this.formattedGeneralInformation = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.startText);
@@ -207,6 +194,7 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
             }
         });
     }
+    */
 
     ngOnDestroy() {
         if (this.interval) {
@@ -217,15 +205,10 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
 
     /**
      * checks whether confirmation checkbox has been checked
-     * if startView true:
      * if confirmed, we further check whether exam has started yet regularly
      */
     updateConfirmation() {
-        if (this.startView) {
-            this.startEnabled = this.confirmed;
-        } else {
-            this.endEnabled = this.confirmed;
-        }
+        this.startEnabled = this.confirmed;
     }
 
     /**
@@ -239,7 +222,7 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
     }
 
     /**
-     * displays popup or start exam participation immediately
+     * loads the exam from the server and initializes the view
      */
     startExam() {
         if (this.testRun) {
@@ -305,20 +288,6 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
         }
     }
 
-    /**
-     * Submits the exam
-     */
-    submitExam() {
-        this.onExamEnded.emit();
-    }
-
-    /**
-     * Notify the parent component that the user wants to continue after hand in early
-     */
-    continueAfterHandInEarly() {
-        this.onExamContinueAfterHandInEarly.emit();
-    }
-
     get startButtonEnabled(): boolean {
         if (this.testRun) {
             return this.nameIsCorrect && this.confirmed && !!this.exam;
@@ -334,36 +303,12 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
         );
     }
 
-    get endButtonEnabled(): boolean {
-        return this.nameIsCorrect && this.confirmed && this.exam && this.handInPossible;
-    }
-
     get nameIsCorrect(): boolean {
         return this.enteredName.trim() === this.accountName.trim();
     }
 
     get inserted(): boolean {
         return this.enteredName.trim() !== '';
-    }
-
-    /**
-     * Returns whether the student failed to submit on time. In this case the end page is adapted.
-     */
-    get studentFailedToSubmit(): boolean {
-        if (this.testRun) {
-            return false;
-        }
-        let individualStudentEndDate;
-        if (this.exam?.testExam) {
-            if (!this.studentExam.submitted && this.studentExam.started && this.studentExam.startedDate) {
-                individualStudentEndDate = dayjs(this.studentExam.startedDate).add(this.studentExam.workingTime!, 'seconds');
-            } else {
-                return false;
-            }
-        } else {
-            individualStudentEndDate = dayjs(this.exam?.startDate).add(this.studentExam.workingTime!, 'seconds');
-        }
-        return individualStudentEndDate.add(this.exam?.gracePeriod!, 'seconds').isBefore(this.serverDateService.now()) && !this.studentExam.submitted;
     }
 
     /**
@@ -486,12 +431,5 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
             },
             error: () => (this.loadingExam = false),
         });
-    }
-
-    isStartViewEnded() {
-        if (!this.studentExam.submitted && ((this.isOver() && this.examStartConfirmed) || this.isGracePeriodOver())) {
-            this.startView = false;
-        }
-        this.startView = true;
     }
 }

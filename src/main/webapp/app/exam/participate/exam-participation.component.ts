@@ -31,11 +31,13 @@ import { ExamPage } from 'app/entities/exam-page.model';
 import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-import { faCheckCircle, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faCheckCircle, faGraduationCap, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { ExamLiveEventType, ExamParticipationLiveEventsService, WorkingTimeUpdateEvent } from 'app/exam/participate/exam-participation-live-events.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import { SafeHtml } from '@angular/platform-browser';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -58,6 +60,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     examId: number;
     testRunId: number;
     testExam = false;
+    testRun?: boolean;
     studentExamId: number;
     testStartTime?: dayjs.Dayjs;
 
@@ -93,6 +96,17 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
     // Icons
     faCheckCircle = faCheckCircle;
+    faArrowLeft = faArrowLeft;
+    faSpinner = faSpinner;
+
+    endEnabled: boolean;
+    confirmed: boolean;
+    accountName = '';
+    enteredName = '';
+    formattedGeneralInformation?: SafeHtml;
+    formattedConfirmationText?: SafeHtml;
+    graceEndDate: dayjs.Dayjs;
+    criticalTime = dayjs.duration(30, 'seconds');
 
     isProgrammingExercise() {
         return !this.activeExamPage.isOverviewPage && this.activeExamPage.exercise?.type === ExerciseType.PROGRAMMING;
@@ -129,6 +143,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         private websocketService: JhiWebsocketService,
         private route: ActivatedRoute,
         private router: Router,
+        private artemisMarkdown: ArtemisMarkdownService,
         private examParticipationService: ExamParticipationService,
         private modelingSubmissionService: ModelingSubmissionService,
         private programmingSubmissionService: ProgrammingSubmissionService,
@@ -149,12 +164,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     /**
-     * loads the exam from the server and initializes the view
+     * load exam information from the exam-participation-cover component
      */
     ngOnInit(): void {
         this.examParticipationService.examState$.subscribe((state) => {
             this.examStartConfirmed = state.examStartConfirmed;
-            this.testStartTime = state.testStartTime;
             this.handInEarly = state.handInEarly;
             this.handInPossible = state.handInPossible;
             this.submitInProgress = state.submitInProgress;
@@ -166,6 +180,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             this.exam = state.exam!;
             this.studentExam = state.studentExam!;
             this.studentExam.exercises = state.exercises!;
+            this.accountName = state.accountName;
+            this.testRun = state.testRun;
         });
 
         // listen to connect / disconnect events
@@ -178,6 +194,23 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         });
 
         this.examStarted(this.studentExam);
+        this.generateInformationForHtml();
+        this.loadGradeEndDate();
+    }
+
+    generateInformationForHtml() {
+        this.formattedGeneralInformation = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.endText);
+        this.formattedConfirmationText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.confirmationEndText);
+    }
+
+    loadGradeEndDate() {
+        if (this.testRun) {
+            this.graceEndDate = dayjs(this.testStartTime!).add(this.studentExam.workingTime!, 'seconds').add(this.exam.gracePeriod!, 'seconds');
+        } else if (this.testExam) {
+            this.graceEndDate = dayjs(this.studentExam.startedDate!).add(this.studentExam.workingTime!, 'seconds').add(this.exam.gracePeriod!, 'seconds');
+        } else {
+            this.graceEndDate = dayjs(this.exam.startDate).add(this.studentExam.workingTime!, 'seconds').add(this.exam.gracePeriod!, 'seconds');
+        }
     }
 
     loadAndDisplaySummary() {
@@ -236,8 +269,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             this.examParticipationService.setExamExerciseIds(exerciseIds);
             // set endDate with workingTime
             if (!!this.testRunId || this.testExam) {
-                //this.testStartTime = studentExam.startedDate ? dayjs(studentExam.startedDate) : dayjs();
-                this.examParticipationService.setExamState({ testStartTime: studentExam.startedDate ? dayjs(studentExam.startedDate) : dayjs() });
+                this.testStartTime = studentExam.startedDate ? dayjs(studentExam.startedDate) : dayjs();
                 this.initIndividualEndDates(this.testStartTime!);
             } else {
                 this.individualStudentEndDate = dayjs(this.exam.startDate).add(this.studentExam.workingTime!, 'seconds');
@@ -430,7 +462,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         } else {
             this.examManagementService.isAttendanceChecked(this.courseId, this.examId).subscribe((res) => {
                 if (res.body) {
-                    //this.attendanceChecked = res.body;
+                    this.attendanceChecked = res.body;
                     this.examParticipationService.setExamState({ attendanceChecked: res.body });
                 }
                 this.handleHandInEarly();
@@ -514,52 +546,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.websocketSubscription?.unsubscribe();
         this.liveEventsSubscription?.unsubscribe();
         window.clearInterval(this.autoSaveInterval);
-    }
-
-    handleStudentExam(studentExam: StudentExam) {
-        this.studentExam = studentExam;
-        this.exam = studentExam.exam!;
-        this.testExam = this.exam.testExam!;
-        if (!this.exam.testExam) {
-            this.initIndividualEndDates(this.exam.startDate!);
-        }
-
-        // only show the summary if the student was able to submit on time.
-        if (this.isOver() && this.studentExam.submitted) {
-            this.loadAndDisplaySummary();
-        } else {
-            // Directly start the exam when we continue from a failed save
-            if (this.examParticipationService.lastSaveFailed(this.courseId, this.examId)) {
-                this.examParticipationService.loadStudentExamWithExercisesForConductionFromLocalStorage(this.courseId, this.examId).subscribe((localExam: StudentExam) => {
-                    // Keep the working time from the server
-                    localExam.workingTime = this.studentExam.workingTime ?? localExam.workingTime;
-
-                    this.studentExam = localExam;
-                    this.loadingExam = false;
-                    this.examStarted(this.studentExam);
-                });
-            } else {
-                this.loadingExam = false;
-            }
-        }
-    }
-
-    /**
-     * Handles the case when there is no student exam. Here we have to check if the user is at least tutor to show the redirect to the exam management page.
-     * This check is not done in the normal case due to performance reasons of 2000 students sending additional requests
-     */
-    handleNoStudentExam() {
-        const course = this.courseStorageService.getCourse(this.courseId);
-        if (!course) {
-            this.courseService.find(this.courseId).subscribe((courseResponse) => {
-                this.isAtLeastTutor = courseResponse.body?.isAtLeastTutor;
-                this.isAtLeastInstructor = courseResponse.body?.isAtLeastInstructor;
-            });
-        } else {
-            this.isAtLeastTutor = course.isAtLeastTutor;
-            this.isAtLeastInstructor = course.isAtLeastInstructor;
-        }
-        this.loadingExam = false;
     }
 
     /**
@@ -854,5 +840,41 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     }
                 }
             });
+    }
+
+    /**
+     * Returns whether the student failed to submit on time. In this case the end page is adapted.
+     */
+    get studentFailedToSubmit(): boolean {
+        if (this.testRun) {
+            return false;
+        }
+        let individualStudentEndDate;
+        if (this.exam?.testExam) {
+            if (!this.studentExam.submitted && this.studentExam.started && this.studentExam.startedDate) {
+                individualStudentEndDate = dayjs(this.studentExam.startedDate).add(this.studentExam.workingTime!, 'seconds');
+            } else {
+                return false;
+            }
+        } else {
+            individualStudentEndDate = dayjs(this.exam?.startDate).add(this.studentExam.workingTime!, 'seconds');
+        }
+        return individualStudentEndDate.add(this.exam?.gracePeriod!, 'seconds').isBefore(this.serverDateService.now()) && !this.studentExam.submitted;
+    }
+
+    updateConfirmation() {
+        this.endEnabled = this.confirmed;
+    }
+
+    get nameIsCorrect(): boolean {
+        return this.enteredName.trim() === this.accountName.trim();
+    }
+
+    get inserted(): boolean {
+        return this.enteredName.trim() !== '';
+    }
+
+    get endButtonEnabled(): boolean {
+        return this.nameIsCorrect && this.confirmed && this.exam && this.handInPossible;
     }
 }
