@@ -110,12 +110,16 @@ public class QuizExerciseFactory {
         sa.setSimilarityValue(100);
 
         var shortAnswerSpot1 = new ShortAnswerSpot().spotNr(0).width(1);
+        shortAnswerSpot1.setTempID(generateTempId());
         var shortAnswerSpot2 = new ShortAnswerSpot().spotNr(2).width(2);
+        shortAnswerSpot2.setTempID(generateTempId());
         sa.getSpots().add(shortAnswerSpot1);
         sa.getSpots().add(shortAnswerSpot2);
 
         var shortAnswerSolution1 = new ShortAnswerSolution().text("is");
+        shortAnswerSolution1.setTempID(generateTempId());
         var shortAnswerSolution2 = new ShortAnswerSolution().text("long");
+        shortAnswerSolution2.setTempID(generateTempId());
         sa.addSolution(shortAnswerSolution1);
         // also invoke remove once
         sa.removeSolution(shortAnswerSolution1);
@@ -148,9 +152,13 @@ public class QuizExerciseFactory {
         dnd.setScoringType(ScoringType.PROPORTIONAL_WITH_PENALTY);
 
         var dropLocation1 = new DropLocation().posX(10d).posY(10d).height(10d).width(10d);
+        dropLocation1.setTempID(generateTempId());
         var dropLocation2 = new DropLocation().posX(20d).posY(20d).height(10d).width(10d);
+        dropLocation2.setTempID(generateTempId());
         var dropLocation3 = new DropLocation().posX(30d).posY(30d).height(10d).width(10d);
+        dropLocation3.setTempID(generateTempId());
         var dropLocation4 = new DropLocation().posX(40d).posY(40d).height(10d).width(10d);
+        dropLocation4.setTempID(generateTempId());
         dnd.addDropLocation(dropLocation1);
         // also invoke remove once
         dnd.removeDropLocation(dropLocation1);
@@ -160,9 +168,13 @@ public class QuizExerciseFactory {
         dnd.addDropLocation(dropLocation4);
 
         var dragItem1 = new DragItem().text("D1");
+        dragItem1.setTempID(generateTempId());
         var dragItem2 = new DragItem().pictureFilePath("dragItemImage2.png");
+        dragItem2.setTempID(generateTempId());
         var dragItem3 = new DragItem().text("D3");
+        dragItem3.setTempID(generateTempId());
         var dragItem4 = new DragItem().pictureFilePath("dragItemImage4.png");
+        dragItem4.setTempID(generateTempId());
         dnd.addDragItem(dragItem1);
         // also invoke remove once
         dnd.removeDragItem(dragItem1);
@@ -430,11 +442,16 @@ public class QuizExerciseFactory {
         dnd.setScoringType(ScoringType.PROPORTIONAL_WITH_PENALTY);
 
         var dropLocation1 = new DropLocation().posX(10d).posY(10d).height(10d).width(10d);
+        dropLocation1.setTempID(generateTempId());
         var dropLocation2 = new DropLocation().posX(20d).posY(20d).height(10d).width(10d);
+        dropLocation2.setTempID(generateTempId());
         var dropLocation3 = new DropLocation().posX(30d).posY(30d).height(10d).width(10d);
         dropLocation3.setInvalid(true);
+        dropLocation3.setTempID(generateTempId());
         var dropLocation4 = new DropLocation().posX(40d).posY(40d).height(10d).width(10d);
+        dropLocation4.setTempID(generateTempId());
         var dropLocation5 = new DropLocation().posX(50d).posY(50d).height(10d).width(10d);
+        dropLocation5.setTempID(generateTempId());
         dnd.addDropLocation(dropLocation1);
         // also invoke remove once
         dnd.removeDropLocation(dropLocation1);
@@ -445,9 +462,13 @@ public class QuizExerciseFactory {
         dnd.addDropLocation(dropLocation5);
 
         var dragItem1 = new DragItem().text("D1");
+        dragItem1.setTempID(generateTempId());
         var dragItem2 = new DragItem().text("D2");
+        dragItem2.setTempID(generateTempId());
         var dragItem3 = new DragItem().text("D3");
+        dragItem3.setTempID(generateTempId());
         var dragItem4 = new DragItem().text("invalid drag item");
+        dragItem4.setTempID(generateTempId());
         try {
             FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/attachment/placeholder.jpg"),
                     FilePathService.getDragItemFilePath().resolve("10").resolve("drag_item.jpg").toFile());
