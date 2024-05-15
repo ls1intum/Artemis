@@ -180,7 +180,7 @@ public class RepositoryService {
             String path = treeWalk.getPathString();
             ObjectId objectId = treeWalk.getObjectId(0);
 
-            // TODO: this might not work for binary files
+            // TODO: In the future, it may make sense to exclude binary files here.
             // Open the object stream to read the file content
             try (InputStream inputStream = repository.open(objectId).openStream()) {
                 byte[] bytes = inputStream.readAllBytes(); // Read all bytes at once
