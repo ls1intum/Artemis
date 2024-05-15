@@ -7,7 +7,9 @@ import jakarta.persistence.Transient;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public abstract class TempIdObject extends DomainObject {
+public abstract class TempIdObject {
+
+    private Long id = -1L;
 
     /**
      * tempID is needed to refer to objects that have not been persisted yet (so user can create and connect those in the UI before saving them)
@@ -15,6 +17,14 @@ public abstract class TempIdObject extends DomainObject {
     @Transient
     // variable name must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it
     private Long tempIDTransient;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     public Long getTempID() {
         return tempIDTransient;
@@ -26,8 +36,7 @@ public abstract class TempIdObject extends DomainObject {
 
     @Override
     public int hashCode() {
-        // Important: do not include the tempId in the hash code
-        return super.hashCode();
+        return Objects.hashCode(getId());
     }
 
     /**
@@ -48,6 +57,9 @@ public abstract class TempIdObject extends DomainObject {
         if (tempIdObject.getTempID() != null && getTempID() != null && Objects.equals(getTempID(), tempIdObject.getTempID())) {
             return true;
         }
-        return super.equals(obj);
+        if (tempIdObject.getId() == null || getId() == null) {
+            return false;
+        }
+        return Objects.equals(getId(), tempIdObject.getId());
     }
 }

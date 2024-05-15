@@ -1,14 +1,13 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
 import java.io.Serializable;
-import java.util.Objects;
+
+import de.tum.in.www1.artemis.domain.TempIdObject;
 
 /**
  * A DropLocation.
  */
-public class DropLocation implements QuizQuestionComponent<DragAndDropQuestion>, Serializable {
-
-    private Long id = -1L;
+public class DropLocation extends TempIdObject implements QuizQuestionComponent<DragAndDropQuestion>, Serializable {
 
     private Double posX;
 
@@ -21,17 +20,8 @@ public class DropLocation implements QuizQuestionComponent<DragAndDropQuestion>,
     private Boolean invalid = false;
 
     @Override
-    public Long getId() {
-        return id;
-    }
-
-    @Override
     public void setQuestion(DragAndDropQuestion quizQuestion) {
 
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public Double getPosX() {
@@ -99,25 +89,4 @@ public class DropLocation implements QuizQuestionComponent<DragAndDropQuestion>,
         return "DropLocation{" + "id=" + getId() + ", posX='" + getPosX() + "'" + ", posY='" + getPosY() + "'" + ", width='" + getWidth() + "'" + ", height='" + getHeight() + "'"
                 + ", invalid='" + isInvalid() + "'" + "}";
     }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null || getClass() != obj.getClass()) {
-            return false;
-        }
-        DropLocation dropLocation = (DropLocation) obj;
-        if (dropLocation.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), dropLocation.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
-    }
-
 }
