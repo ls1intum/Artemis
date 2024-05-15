@@ -9,7 +9,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class TempIdObject {
 
-    private Long id = -1L;
+    private Long id;
 
     /**
      * tempID is needed to refer to objects that have not been persisted yet (so user can create and connect those in the UI before saving them)
@@ -57,6 +57,7 @@ public abstract class TempIdObject {
         if (tempIdObject.getTempID() != null && getTempID() != null && Objects.equals(getTempID(), tempIdObject.getTempID())) {
             return true;
         }
+
         if (tempIdObject.getId() == null || getId() == null) {
             return false;
         }

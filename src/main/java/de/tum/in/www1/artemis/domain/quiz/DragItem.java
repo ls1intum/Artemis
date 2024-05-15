@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.domain.quiz;
 
 import java.io.Serializable;
 import java.net.URI;
-import java.util.Objects;
 
 import jakarta.persistence.PostPersist;
 import jakarta.persistence.PostRemove;
@@ -12,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.domain.TempIdObject;
 import de.tum.in.www1.artemis.exception.FilePathParsingException;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
@@ -19,14 +19,12 @@ import de.tum.in.www1.artemis.service.FileService;
 /**
  * A DragItem.
  */
-public class DragItem implements QuizQuestionComponent<DragAndDropQuestion>, Serializable {
+public class DragItem extends TempIdObject implements QuizQuestionComponent<DragAndDropQuestion>, Serializable {
 
     private static final Logger log = LoggerFactory.getLogger(DragItem.class);
 
     @Transient
     private final transient FileService fileService = new FileService();
-
-    private Long id = 1L;
 
     private String pictureFilePath;
 
@@ -35,17 +33,8 @@ public class DragItem implements QuizQuestionComponent<DragAndDropQuestion>, Ser
     private Boolean invalid = false;
 
     @Override
-    public Long getId() {
-        return id;
-    }
-
-    @Override
     public void setQuestion(DragAndDropQuestion quizQuestion) {
 
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public String getPictureFilePath() {
@@ -115,25 +104,4 @@ public class DragItem implements QuizQuestionComponent<DragAndDropQuestion>, Ser
     public String toString() {
         return "DragItem{" + "id=" + getId() + ", pictureFilePath='" + getPictureFilePath() + "'" + ", text='" + getText() + "'" + ", invalid='" + isInvalid() + "'" + "}";
     }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null || getClass() != obj.getClass()) {
-            return false;
-        }
-        DragItem dragItem = (DragItem) obj;
-        if (dragItem.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), dragItem.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
-    }
-
 }
