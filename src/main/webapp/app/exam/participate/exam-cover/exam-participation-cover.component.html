@@ -1,6 +1,6 @@
 @if (exam) {
     @if (isVisible() && !isGracePeriodOver() && !studentExam?.submitted && !examStartConfirmed) {
-        <div class="px-3 scrollable-content content-height-dev">
+        <div class="px-3 pt-3 scrollable-content content-height-dev">
             <div class="w-100 d-flex">
                 <div class="col-md-3">
                     <jhi-exam-live-events-button />
@@ -106,4 +106,25 @@
 }
 @if (showExamSummary) {
     <jhi-exam-participation-summary [studentExam]="studentExam" />
+}
+
+@if (!loadingExam && !exam) {
+    @if (isAtLeastTutor && !testRunId) {
+        <div class="alert alert-warning">
+            <h6 jhiTranslate="artemisApp.examParticipation.atLeastTutorStudentExam"></h6>
+            @if (isAtLeastInstructor) {
+                <a [routerLink]="['/course-management', courseId, 'exams', examId]" class="btn btn-primary">
+                    <fa-icon [icon]="faGraduationCap" [fixedWidth]="true" />&nbsp;{{ 'artemisApp.examParticipation.goToExamManagement' | artemisTranslate }}
+                </a>
+            } @else {
+                <a [routerLink]="['/course-management', courseId, 'exams']" class="btn btn-primary">
+                    <fa-icon [icon]="faGraduationCap" [fixedWidth]="true" />&nbsp;{{ 'artemisApp.examParticipation.goToExamManagement' | artemisTranslate }}
+                </a>
+            }
+        </div>
+    } @else {
+        <div class="alert alert-danger">
+            <h6 [jhiTranslate]="'artemisApp.examParticipation.' + (testExam ? 'noFurtherAttempts' : 'noStudentExam')"></h6>
+        </div>
+    }
 }

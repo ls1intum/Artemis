@@ -17,6 +17,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { ExamLiveEventType, ExamParticipationLiveEventsService, WorkingTimeUpdateEvent } from 'app/exam/participate/exam-participation-live-events.service';
+import { faGraduationCap } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-exam-participation-cover',
@@ -71,6 +72,8 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
     individualStudentEndDateWithGracePeriod: dayjs.Dayjs;
 
     showExamSummary = false;
+
+    faGraduationCap = faGraduationCap;
 
     constructor(
         private courseService: CourseManagementService,
