@@ -17,6 +17,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
+import de.tum.in.www1.artemis.web.rest.dto.RepositoriesCheckoutDirectoryDTO;
 
 /**
  * Abstract service for managing entities related to continuous integration.
@@ -255,4 +256,6 @@ public interface ContinuousIntegrationService {
          */
         String forProgrammingLanguage(ProgrammingLanguage language);
     }
+
+    RepositoriesCheckoutDirectoryDTO getCheckoutDirectories(ProgrammingLanguage programmingLanguage);
 }

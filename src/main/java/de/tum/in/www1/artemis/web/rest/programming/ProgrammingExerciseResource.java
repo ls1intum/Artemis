@@ -104,8 +104,6 @@ public class ProgrammingExerciseResource {
 
     private static final String ENTITY_NAME = "programmingExercise";
 
-    private static final String ROOT_DIRECTORY = "/";
-
     private final ChannelRepository channelRepository;
 
     @Value("${jhipster.clientApp.name}")
@@ -889,25 +887,7 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<RepositoriesCheckoutDirectoryDTO> getRepositoryCheckoutDirectories(@RequestParam(value = "programmingLanguage") ProgrammingLanguage programmingLanguage) {
         log.debug("REST request to get checkout directories for programming language: {}", programmingLanguage);
 
-        String exerciseCheckoutDirectory = ContinuousIntegrationService.RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage);
-        String solutionCheckoutDirectory = ContinuousIntegrationService.RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(programmingLanguage);
-        String testCheckoutDirectory = ContinuousIntegrationService.RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage);
-
-        exerciseCheckoutDirectory = setEmptyPathToRootDirectory(exerciseCheckoutDirectory);
-        solutionCheckoutDirectory = setEmptyPathToRootDirectory(solutionCheckoutDirectory);
-        testCheckoutDirectory = setEmptyPathToRootDirectory(testCheckoutDirectory);
-
-        RepositoriesCheckoutDirectoryDTO repositoriesCheckoutDirectoryDTO = new RepositoriesCheckoutDirectoryDTO(exerciseCheckoutDirectory, solutionCheckoutDirectory,
-                testCheckoutDirectory);
-
+        RepositoriesCheckoutDirectoryDTO repositoriesCheckoutDirectoryDTO = continuousIntegrationService.orElseThrow().getCheckoutDirectories(programmingLanguage);
         return ResponseEntity.ok(repositoriesCheckoutDirectoryDTO);
-    }
-
-    private String setEmptyPathToRootDirectory(String checkoutDirectoryPath) {
-        if (checkoutDirectoryPath.isEmpty()) {
-            return ROOT_DIRECTORY;
-        }
-
-        return checkoutDirectoryPath;
     }
 }

@@ -15,6 +15,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -24,6 +25,8 @@ import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
 import de.tum.in.www1.artemis.service.connectors.ci.AbstractContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.ci.CIPermission;
+import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.web.rest.dto.RepositoriesCheckoutDirectoryDTO;
 
 /**
  * Implementation of ContinuousIntegrationService for local CI. Contains methods for communication with the local CI system.
@@ -41,6 +44,8 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
     private final AeolusTemplateService aeolusTemplateService;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    private static final String ROOT_DIRECTORY = "/";
 
     public LocalCIService(BuildScriptProviderService buildScriptProviderService, AeolusTemplateService aeolusTemplateService,
             ProgrammingExerciseRepository programmingExerciseRepository) {
@@ -205,5 +210,26 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
 
     private String getCleanPlanName(String name) {
         return name.toUpperCase().replaceAll("[^A-Z0-9]", "");
+    }
+
+    @Override
+    public RepositoriesCheckoutDirectoryDTO getCheckoutDirectories(ProgrammingLanguage programmingLanguage) {
+        String exerciseCheckoutDirectory = ContinuousIntegrationService.RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage);
+        String solutionCheckoutDirectory = ContinuousIntegrationService.RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(programmingLanguage);
+        String testCheckoutDirectory = ContinuousIntegrationService.RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage);
+
+        exerciseCheckoutDirectory = setEmptyPathToRootDirectory(exerciseCheckoutDirectory);
+        solutionCheckoutDirectory = setEmptyPathToRootDirectory(solutionCheckoutDirectory);
+        testCheckoutDirectory = setEmptyPathToRootDirectory(testCheckoutDirectory);
+
+        return new RepositoriesCheckoutDirectoryDTO(exerciseCheckoutDirectory, solutionCheckoutDirectory, testCheckoutDirectory);
+    }
+
+    private String setEmptyPathToRootDirectory(String checkoutDirectoryPath) {
+        if (checkoutDirectoryPath.isEmpty()) {
+            return ROOT_DIRECTORY;
+        }
+
+        return checkoutDirectoryPath;
     }
 }
