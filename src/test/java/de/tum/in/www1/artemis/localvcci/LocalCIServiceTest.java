@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -27,6 +28,7 @@ import de.tum.in.www1.artemis.service.connectors.BuildScriptProviderService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService.BuildStatus;
+import de.tum.in.www1.artemis.web.rest.dto.RepositoriesCheckoutDirectoryDTO;
 
 class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
@@ -106,4 +108,25 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         assertThat(latestArtifactResponse.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
         assertThat(latestArtifactResponse.getBody()).hasSize(0);
     }
+
+    @Nested
+    class GetCheckoutDirectoriesTests {
+
+        @Test
+        void getCheckoutDirectoriesForJava() {
+            RepositoriesCheckoutDirectoryDTO checkoutDirectories = continuousIntegrationService.getCheckoutDirectories(ProgrammingLanguage.JAVA);
+            assertThat(checkoutDirectories.exerciseCheckoutDirectory()).isEqualTo("/assignment");
+            assertThat(checkoutDirectories.solutionCheckoutDirectory()).isEqualTo("/assignment");
+            assertThat(checkoutDirectories.testCheckoutDirectory()).isEqualTo("/");
+        }
+
+        @Test
+        void getCheckoutDirectoriesForOcaml() {
+            RepositoriesCheckoutDirectoryDTO checkoutDirectories = continuousIntegrationService.getCheckoutDirectories(ProgrammingLanguage.OCAML);
+            assertThat(checkoutDirectories.exerciseCheckoutDirectory()).isEqualTo("/assignment");
+            assertThat(checkoutDirectories.solutionCheckoutDirectory()).isEqualTo("/solution");
+            assertThat(checkoutDirectories.testCheckoutDirectory()).isEqualTo("/tests");
+        }
+    }
+
 }

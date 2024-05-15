@@ -218,18 +218,14 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
         String solutionCheckoutDirectory = ContinuousIntegrationService.RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(programmingLanguage);
         String testCheckoutDirectory = ContinuousIntegrationService.RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage);
 
-        exerciseCheckoutDirectory = setEmptyPathToRootDirectory(exerciseCheckoutDirectory);
-        solutionCheckoutDirectory = setEmptyPathToRootDirectory(solutionCheckoutDirectory);
-        testCheckoutDirectory = setEmptyPathToRootDirectory(testCheckoutDirectory);
+        exerciseCheckoutDirectory = startPathWithRootDirectory(exerciseCheckoutDirectory);
+        solutionCheckoutDirectory = startPathWithRootDirectory(solutionCheckoutDirectory);
+        testCheckoutDirectory = startPathWithRootDirectory(testCheckoutDirectory);
 
         return new RepositoriesCheckoutDirectoryDTO(exerciseCheckoutDirectory, solutionCheckoutDirectory, testCheckoutDirectory);
     }
 
-    private String setEmptyPathToRootDirectory(String checkoutDirectoryPath) {
-        if (checkoutDirectoryPath.isEmpty()) {
-            return ROOT_DIRECTORY;
-        }
-
-        return checkoutDirectoryPath;
+    private String startPathWithRootDirectory(String checkoutDirectoryPath) {
+        return checkoutDirectoryPath.startsWith(ROOT_DIRECTORY) ? checkoutDirectoryPath : ROOT_DIRECTORY + checkoutDirectoryPath;
     }
 }
