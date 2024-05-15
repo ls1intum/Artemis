@@ -184,6 +184,12 @@ public class LectureUnitResource {
         return ResponseEntity.ok(LectureUnitForLearningPathNodeDetailsDTO.of(lectureUnit));
     }
 
+    /**
+     * GET /lecture-units/:lectureUnitId : get the lecture unit with the given id.
+     *
+     * @param lectureUnitId the id of the lecture unit that should be fetched
+     * @return the ResponseEntity with status 200 (OK) and the lecture unit in the body, or with status 404 (Not Found) if the lecture unit could not be found
+     */
     @GetMapping("lecture-units/{lectureUnitId}")
     public ResponseEntity<LectureUnit> getLectureUnitById(@PathVariable @Valid Long lectureUnitId) {
         log.debug("REST request to get lecture unit with id: {}", lectureUnitId);
