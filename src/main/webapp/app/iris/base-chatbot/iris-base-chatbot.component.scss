@@ -12,6 +12,7 @@
     font-size: 20px;
     display: flex;
     gap: 4px;
+    min-width: 0;
 
     .word-iris,
     a {
@@ -51,13 +52,18 @@
     font-weight: bold;
     padding: 5px;
     width: 100%;
-    height: calc(1lh + 15px);
+    height: 36px;
     flex: 0;
     z-index: 10;
     background-color: var(--iris-chat-widget-background);
     border-radius: var(--bs-border-radius-lg) var(--bs-border-radius-lg) 0 0;
     box-shadow: 0 15px 15px -15px rgba(0, 0, 0, 0.3);
     border-bottom: 1px solid var(--bs-border-color);
+
+    button {
+        // Safari doing Safari things
+        padding-block: 1px;
+    }
 }
 
 .header-icon {

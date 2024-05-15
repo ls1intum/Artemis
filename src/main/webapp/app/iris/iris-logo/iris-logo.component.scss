@@ -1,17 +1,14 @@
 :host {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: contents;
 }
 
 .iris-logo {
     filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.24));
 
     &.fluid {
-        flex: 1 1 auto;
-        max-width: 100%;
+        flex: 0;
         max-height: 100%;
-        aspect-ratio: 1/1;
+        aspect-ratio: 1 / 1;
     }
 
     &.small {
