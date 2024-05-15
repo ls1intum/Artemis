@@ -120,8 +120,8 @@ describe('ProgrammingExercisePlansAndRepositoriesPreviewComponent', () => {
 
         component.ngOnChanges({
             programmingExerciseCreationConfig: {
-                currentValue: { selectedProgrammingLanguage: ProgrammingLanguage.OCAML },
                 previousValue: { selectedProgrammingLanguage: ProgrammingLanguage.JAVA },
+                currentValue: { selectedProgrammingLanguage: ProgrammingLanguage.OCAML },
             },
         } as unknown as SimpleChanges);
 
@@ -136,8 +136,8 @@ describe('ProgrammingExercisePlansAndRepositoriesPreviewComponent', () => {
         component.programmingExercise!.auxiliaryRepositories = [{ checkoutDirectory: 'assignment/src' } as AuxiliaryRepository];
         component.ngOnChanges({
             programmingExercise: {
-                currentValue: { auxiliaryRepositories: [{ checkoutDirectory: 'assignment/src' } as AuxiliaryRepository] },
                 previousValue: { auxiliaryRepositories: [] },
+                currentValue: { auxiliaryRepositories: [{ checkoutDirectory: 'assignment/src' } as AuxiliaryRepository] },
             },
         } as unknown as SimpleChanges);
 
