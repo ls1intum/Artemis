@@ -49,6 +49,7 @@ export abstract class IrisChatService implements OnDestroy {
 
     protected start() {
         this.getCurrentSessionOrCreate().subscribe(this.handleNewSession());
+        this.messages.subscribe(console.log);
     }
 
     /**
@@ -64,7 +65,7 @@ export abstract class IrisChatService implements OnDestroy {
         newMessage.content = [new IrisTextMessageContent(message)];
         return this.http.createMessage(this.sessionId, newMessage).pipe(
             tap((m) => {
-                this.messages.next([...this.messages.getValue(), m.body!]);
+                this.replaceOrAddMessage(m.body!);
             }),
             map(() => undefined),
             catchError((error: HttpErrorResponse) => {
@@ -72,6 +73,13 @@ export abstract class IrisChatService implements OnDestroy {
                 return of();
             }),
         );
+    }
+
+    private replaceOrAddMessage(message: IrisMessage) {
+        const messageWasReplaced = this.replaceMessage(message);
+        if (!messageWasReplaced) {
+            this.messages.next([...this.messages.getValue(), message]);
+        }
     }
 
     /**
@@ -134,13 +142,15 @@ export abstract class IrisChatService implements OnDestroy {
 
     protected abstract initAfterAccept(): void;
 
-    private replaceMessage(message: IrisMessage) {
+    private replaceMessage(message: IrisMessage): boolean {
         const messages = [...this.messages.getValue()];
         const index = messages.findIndex((m) => m.id === message.id);
         if (index >= 0) {
             messages[index] = message;
             this.messages.next(messages);
+            return true;
         }
+        return false;
     }
 
     private handleNewSession() {
@@ -169,7 +179,9 @@ export abstract class IrisChatService implements OnDestroy {
             case IrisChatWebsocketPayloadType.MESSAGE:
                 if (payload.message?.sender === IrisSender.LLM) {
                     this.numNewMessages.next(this.numNewMessages.getValue() + 1);
-                    this.messages.next([...this.messages.getValue(), payload.message!]);
+                }
+                if (payload.message?.id) {
+                    this.replaceOrAddMessage(payload.message);
                 }
                 if (payload.stages) {
                     this.stages.next(payload.stages);
