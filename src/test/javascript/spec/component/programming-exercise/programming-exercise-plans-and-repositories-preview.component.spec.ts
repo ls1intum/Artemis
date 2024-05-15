@@ -129,4 +129,22 @@ describe('ProgrammingExercisePlansAndRepositoriesPreviewComponent', () => {
         expect(programmingExerciseService.getCheckoutDirectoriesForProgrammingLanguage).toHaveBeenCalled();
         expect(component.solutionCheckoutDirectory).toBe('/solution'); // was '/assignment' before with JAVA as programming language
     });
+
+    it('should update auxiliary repository directories on changes', () => {
+        fixture.detectChanges();
+
+        component.programmingExercise!.auxiliaryRepositories = [{ checkoutDirectory: 'assignment/src' } as AuxiliaryRepository];
+        component.ngOnChanges({
+            programmingExercise: {
+                currentValue: { auxiliaryRepositories: [{ checkoutDirectory: 'assignment/src' } as AuxiliaryRepository] },
+                previousValue: { auxiliaryRepositories: [] },
+            },
+        } as unknown as SimpleChanges);
+
+        fixture.detectChanges();
+
+        const previewElement = fixture.debugElement.nativeElement.querySelector(CHECKOUT_DIRECTORY_PREVIEW);
+        expect(previewElement).toBeTruthy();
+        expect(previewElement.textContent).toContain('/assignment/src');
+    });
 });
