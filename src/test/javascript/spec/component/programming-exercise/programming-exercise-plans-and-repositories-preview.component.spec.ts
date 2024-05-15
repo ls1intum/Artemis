@@ -14,6 +14,8 @@ describe('ProgrammingExercisePlansAndRepositoriesPreviewComponent', () => {
     let fixture: ComponentFixture<ProgrammingExercisePlansAndRepositoriesPreviewComponent>;
     let programmingExerciseService: ProgrammingExerciseService;
 
+    const CHECKOUT_DIRECTORY_PREVIEW = '#checkout-directory-preview';
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             declarations: [ProgrammingExercisePlansAndRepositoriesPreviewComponent, MockComponent(HelpIconComponent)],
@@ -28,21 +30,20 @@ describe('ProgrammingExercisePlansAndRepositoriesPreviewComponent', () => {
                 component.programmingExerciseCreationConfig = { selectedProgrammingLanguage: ProgrammingLanguage.C } as ProgrammingExerciseCreationConfig;
                 component.programmingExercise = { id: 1, shortName: 'shortName' } as ProgrammingExercise;
                 component.isLocal = true;
+
+                const checkoutDirectories: RepositoriesCheckoutDirectoriesDTO = {
+                    solutionCheckoutDirectory: '/assignment',
+                    exerciseCheckoutDirectory: '/assignment',
+                    testCheckoutDirectory: '', // Empty string should be converted to '/'
+                };
+                jest.spyOn(programmingExerciseService, 'getCheckoutDirectoriesForProgrammingLanguage').mockReturnValue(of(checkoutDirectories));
             });
     });
 
     it('should display checkout directories when they exist', () => {
-        const checkoutDirectories: RepositoriesCheckoutDirectoriesDTO = {
-            solutionCheckoutDirectory: '/assignment',
-            exerciseCheckoutDirectory: '/assignment',
-            testCheckoutDirectory: '/',
-        };
-        jest.spyOn(programmingExerciseService, 'getCheckoutDirectoriesForProgrammingLanguage').mockReturnValue(of(checkoutDirectories));
-
         fixture.detectChanges();
 
-        const compiled = fixture.debugElement.nativeElement;
-        const previewElement = compiled.querySelector('#checkout-directory-preview');
+        const previewElement = fixture.debugElement.nativeElement.querySelector(CHECKOUT_DIRECTORY_PREVIEW);
         expect(previewElement).toBeTruthy();
         expect(previewElement.textContent).toContain('/assignment');
         expect(previewElement.textContent).toContain('/assignment');
@@ -64,5 +65,18 @@ describe('ProgrammingExercisePlansAndRepositoriesPreviewComponent', () => {
         fixture.detectChanges();
 
         expect(spy).not.toHaveBeenCalled();
+    });
+
+    it('should display checkoutDirectory preview if localCI is used', () => {
+        fixture.detectChanges();
+        const previewElement = fixture.debugElement.nativeElement.querySelector(CHECKOUT_DIRECTORY_PREVIEW);
+        expect(previewElement).toBeTruthy();
+    });
+
+    it('should NOT display checkoutDirectory preview if localCI is NOT used', () => {
+        component.isLocal = false;
+        fixture.detectChanges();
+        const previewElement = fixture.debugElement.nativeElement.querySelector(CHECKOUT_DIRECTORY_PREVIEW);
+        expect(previewElement).toBeFalsy();
     });
 });
