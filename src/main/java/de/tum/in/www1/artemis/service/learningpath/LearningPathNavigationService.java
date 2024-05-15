@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service.learningpath;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -14,6 +13,7 @@ import de.tum.in.www1.artemis.service.learningpath.LearningPathRecommendationSer
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationDto;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationDto.LearningPathNavigationObjectDto;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationDto.LearningPathNavigationObjectDto.LearningObjectType;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationOverviewDto;
 
 @Service
 public class LearningPathNavigationService {
@@ -82,11 +82,12 @@ public class LearningPathNavigationService {
         return mapLearningObjectsToNavigationDto(learningPath.getUser(), learningPath.getProgress(), predecessorLearningObject, currentLearningObject, successorLearningObject);
     }
 
-    public List<LearningPathNavigationObjectDto> getNavigationOverview(LearningPath learningPath) {
+    public LearningPathNavigationOverviewDto getNavigationOverview(LearningPath learningPath) {
         var learningPathUser = learningPath.getUser();
-        return Stream
-                .concat(learningObjectService.getCompletedUnitsForUserAndCompetencies(learningPath.getUser(), learningPath.getCompetencies()),
+        var learningObjects = Stream
+                .concat(learningObjectService.getCompletedLearningObjectsForUserAndCompetencies(learningPath.getUser(), learningPath.getCompetencies()),
                         learningPathRecommendationService.getUncompletedLearningObjects(learningPath))
-                .map(learningObject -> this.mapLearningObjectToNavigationObjectDto(learningObject, learningPathUser)).toList();
+                .map(learningObject -> this.mapLearningObjectToNavigationObjectDto(learningObject, learningPathUser)).distinct().toList();
+        return new LearningPathNavigationOverviewDto(learningObjects);
     }
 }

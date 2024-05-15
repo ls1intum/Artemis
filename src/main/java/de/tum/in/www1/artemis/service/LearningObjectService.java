@@ -66,7 +66,7 @@ public class LearningObjectService {
     }
 
     public Optional<LearningObject> getCompletedPredecessorOfLearningObjectRelatedToDate(User user, Optional<ZonedDateTime> relatedDate, Set<Competency> competencies) {
-        return getCompletedUnitsForUserAndCompetencies(user, competencies)
+        return getCompletedLearningObjectsForUserAndCompetencies(user, competencies)
                 .filter(learningObject -> learningObject.getCompletionDate(user).orElseThrow().isBefore(relatedDate.orElse(ZonedDateTime.now())))
                 .max(Comparator.comparing(o -> o.getCompletionDate(user).orElseThrow()));
     }
@@ -75,13 +75,15 @@ public class LearningObjectService {
         if (relatedDate.isEmpty()) {
             throw new RuntimeException("relatedDate must be present to get next completed learning object.");
         }
-        return getCompletedUnitsForUserAndCompetencies(user, competencies).filter(learningObject -> learningObject.getCompletionDate(user).orElseThrow().isAfter(relatedDate.get()))
+        return getCompletedLearningObjectsForUserAndCompetencies(user, competencies)
+                .filter(learningObject -> learningObject.getCompletionDate(user).orElseThrow().isAfter(relatedDate.get()))
                 .min(Comparator.comparing(o -> o.getCompletionDate(user).orElseThrow()));
     }
 
-    public Stream<LearningObject> getCompletedUnitsForUserAndCompetencies(User user, Set<Competency> competencies) {
+    public Stream<LearningObject> getCompletedLearningObjectsForUserAndCompetencies(User user, Set<Competency> competencies) {
         return Stream.concat(competencies.stream().map(Competency::getLectureUnits), competencies.stream().map(Competency::getExercises)).flatMap(Set::stream)
-                .filter(learningObject -> learningObject.getCompletionDate(user).isPresent()).map(LearningObject.class::cast);
+                .filter(learningObject -> learningObject.getCompletionDate(user).isPresent())
+                .sorted(Comparator.comparing(learningObject -> learningObject.getCompletionDate(user).orElseThrow())).map(LearningObject.class::cast);
     }
 
     public LearningObject getLearningObjectByIdAndType(Long learningObjectId, LearningObjectType learningObjectType) {

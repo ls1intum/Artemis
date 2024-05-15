@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -41,8 +40,8 @@ import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyProgressForLearn
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathHealthDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationDto;
-import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationDto.LearningPathNavigationObjectDto;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationDto.LearningPathNavigationObjectDto.LearningObjectType;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationOverviewDto;
 import de.tum.in.www1.artemis.web.rest.dto.competency.NgxLearningPathDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -204,7 +203,7 @@ public class LearningPathResource {
     }
 
     @GetMapping("learning-path/{learningPathId}/navigation-overview")
-    public ResponseEntity<List<LearningPathNavigationObjectDto>> getLearningPathNavigationOverview(@PathVariable @Valid long learningPathId) {
+    public ResponseEntity<LearningPathNavigationOverviewDto> getLearningPathNavigationOverview(@PathVariable @Valid long learningPathId) {
         return ResponseEntity.ok(learningPathService.getLearningPathNavigationOverview(learningPathId));
     }
 

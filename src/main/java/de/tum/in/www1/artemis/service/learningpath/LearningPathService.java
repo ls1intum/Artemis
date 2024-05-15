@@ -40,8 +40,8 @@ import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathHealthDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationDto;
-import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationDto.LearningPathNavigationObjectDto;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationDto.LearningPathNavigationObjectDto.LearningObjectType;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationOverviewDto;
 import de.tum.in.www1.artemis.web.rest.dto.competency.NgxLearningPathDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
@@ -319,7 +319,7 @@ public class LearningPathService {
         return learningPathNavigationService.getNavigation(learningPath);
     }
 
-    public List<LearningPathNavigationObjectDto> getLearningPathNavigationOverview(long learningPathId) {
+    public LearningPathNavigationOverviewDto getLearningPathNavigationOverview(long learningPathId) {
         var learningPath = findWithCompetenciesAndLearningObjectsAndCompletedUsersById(learningPathId);
         return learningPathNavigationService.getNavigationOverview(learningPath);
     }

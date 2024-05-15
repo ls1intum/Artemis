@@ -7,6 +7,7 @@ import {
     LearningObjectType,
     LearningPathInformationDTO,
     LearningPathNavigationDto,
+    LearningPathNavigationOverviewDto,
     NgxLearningPathDTO,
 } from 'app/entities/competency/learning-path.model';
 import { map, tap } from 'rxjs/operators';
@@ -47,7 +48,14 @@ export class LearningPathService {
             params = params.set('learningObjectId', learningObjectId.toString());
             params = params.set('learningObjectType', learningObjectType);
         }
-        return this.httpClient.get<LearningPathNavigationDto>(`${this.resourceURL}/learning-path/${learningPathId}/navigation`, { params: params, observe: 'response' });
+        return this.httpClient.get<LearningPathNavigationDto>(`${this.resourceURL}/learning-path/${learningPathId}/navigation`, {
+            params: params,
+            observe: 'response',
+        });
+    }
+
+    getLearningPathNavigationOverview(learningPathId: number): Observable<HttpResponse<LearningPathNavigationOverviewDto>> {
+        return this.httpClient.get<LearningPathNavigationOverviewDto>(`${this.resourceURL}/learning-path/${learningPathId}/navigation-overview`, { observe: 'response' });
     }
 
     getLearningPathNgxGraph(learningPathId: number): Observable<HttpResponse<NgxLearningPathDTO>> {

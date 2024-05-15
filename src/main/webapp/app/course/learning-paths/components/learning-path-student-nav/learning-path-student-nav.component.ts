@@ -10,6 +10,7 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faCheckCircle, faChevronDown } from '@fortawesome/free-solid-svg-icons';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
+import { LearningPathStudentNavOverviewComponent } from 'app/course/learning-paths/components/learning-path-student-nav-overview/learning-path-student-nav-overview.component';
 
 export type LoadedValue<T> = {
     isLoading: boolean;
@@ -20,7 +21,7 @@ export type LoadedValue<T> = {
 @Component({
     selector: 'jhi-learning-path-student-nav',
     standalone: true,
-    imports: [CommonModule, NgbDropdownModule, NgbAccordionModule, FontAwesomeModule],
+    imports: [CommonModule, NgbDropdownModule, NgbAccordionModule, FontAwesomeModule, LearningPathStudentNavOverviewComponent],
     templateUrl: './learning-path-student-nav.component.html',
     styleUrl: './learning-path-student-nav.component.scss',
 })
@@ -46,6 +47,8 @@ export class LearningPathStudentNavComponent {
 
     private readonly navigationData: Signal<LoadedValue<LearningPathNavigationDto>> = toSignal(this.navigationData$, { initialValue: { isLoading: true } });
 
+    readonly showNavigationOverview = signal<boolean>(false);
+
     readonly isLoading = computed(() => this.navigationData().isLoading);
 
     readonly learningPathProgress = computed(() => this.navigationData().value?.progress ?? 0);
@@ -61,6 +64,10 @@ export class LearningPathStudentNavComponent {
     selectLearningObject(selectedLearningObject: LearningPathNavigationObjectDto): void {
         this.selectedLearningObject.set(selectedLearningObject);
         this.setCurrentLearningObjectCompletion(selectedLearningObject?.completed ?? false);
+    }
+
+    setShowNavigationOverview(show: boolean): void {
+        this.showNavigationOverview.set(show);
     }
 
     setCurrentLearningObjectCompletion(completed: boolean): void {

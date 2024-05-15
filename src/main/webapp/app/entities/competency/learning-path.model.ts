@@ -40,6 +40,10 @@ export class LearningPathNavigationDto {
     public progress: number;
 }
 
+export class LearningPathNavigationOverviewDto {
+    public learningObjects: LearningPathNavigationObjectDto[];
+}
+
 export class NgxLearningPathDTO {
     public nodes: NgxLearningPathNode[];
     public edges: NgxLearningPathEdge[];
