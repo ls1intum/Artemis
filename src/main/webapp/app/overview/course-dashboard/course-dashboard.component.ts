@@ -12,10 +12,12 @@ import { ExerciseMetrics } from 'app/entities/student-metrics.model';
 import { ExerciseLateness } from 'app/overview/course-dashboard/course-exercise-lateness/course-exercise-lateness.component';
 import { ExercisePerformance } from 'app/overview/course-dashboard/course-exercise-performance/course-exercise-performance.component';
 import { round } from 'app/shared/util/utils';
+import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 
 @Component({
     selector: 'jhi-course-dashboard',
     templateUrl: './course-dashboard.component.html',
+    styleUrls: ['./course-dashboard.component.scss'],
 })
 export class CourseDashboardComponent implements OnInit, OnDestroy {
     courseId: number;
@@ -26,6 +28,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     hasExercises = false;
     exerciseLateness?: ExerciseLateness[];
     exercisePerformance?: ExercisePerformance[];
+    irisEnabled = false;
 
     private paramSubscription?: Subscription;
     private courseUpdatesSubscription?: Subscription;
@@ -41,11 +44,15 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
         private alertService: AlertService,
         private route: ActivatedRoute,
         private courseDashboardService: CourseDashboardService,
+        private irisSettingsService: IrisSettingsService,
     ) {}
 
     ngOnInit(): void {
         this.paramSubscription = this.route.parent?.parent?.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId'], 10);
+            this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
+                this.irisEnabled = !!settings?.irisChatSettings?.enabled;
+            });
         });
         this.setCourse(this.courseStorageService.getCourse(this.courseId));
 

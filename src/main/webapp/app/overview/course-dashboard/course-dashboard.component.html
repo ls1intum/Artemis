@@ -1,4 +1,9 @@
-<div class="row justify-content-center m-4 gap-4">
+@if (irisEnabled) {
+    <div class="chat-container">
+        <jhi-course-chatbot [courseId]="courseId" />
+    </div>
+}
+<div class="stats-container">
     @if (!isLoading && hasExercises) {
         @if (points > 0 || maxPoints > 0) {
             <div class="d-sm-flex gap-3 align-items-baseline">
