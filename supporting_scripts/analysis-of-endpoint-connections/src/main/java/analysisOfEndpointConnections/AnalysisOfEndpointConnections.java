@@ -31,8 +31,7 @@ public class AnalysisOfEndpointConnections {
             "org.springframework.web.bind.annotation.PutMapping",
             "org.springframework.web.bind.annotation.DeleteMapping",
             "org.springframework.web.bind.annotation.PatchMapping",
-            requestMappingFullName
-        );
+            requestMappingFullName);
 
         JavaProjectBuilder builder = new JavaProjectBuilder();
         for (String filePath : filePaths) {
@@ -61,7 +60,10 @@ public class AnalysisOfEndpointConnections {
                             "HTTP method annotation: " + annotation.getType().getName());
                         System.out.println("Path: " + annotation.getProperty("value"));
                         System.out.println("Line: " + method.getLineNumber());
-                        List<String> annotations = method.getAnnotations().stream().filter(a -> !a.equals(annotation)).map(a -> a.getType().getName()).toList();
+                        List<String> annotations = method.getAnnotations().stream()
+                            .filter(a -> !a.equals(annotation))
+                            .map(a -> a.getType().getName())
+                            .toList();
                         System.out.println("Other annotations: " + annotations);
                         System.out.println("---------------------------------------------------");
                     }
