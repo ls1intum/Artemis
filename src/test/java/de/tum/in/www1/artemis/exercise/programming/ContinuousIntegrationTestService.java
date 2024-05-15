@@ -104,10 +104,6 @@ public class ContinuousIntegrationTestService {
         return participation;
     }
 
-    public LocalRepository getLocalRepo() {
-        return localRepo;
-    }
-
     public void testGetBuildStatusNotFound() throws Exception {
         mockDelegate.mockGetBuildPlan(participation.getProgrammingExercise().getProjectKey(), participation.getBuildPlanId(), false, false, false, false);
 
