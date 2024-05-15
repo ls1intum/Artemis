@@ -50,7 +50,7 @@ public class AnalysisOfEndpointConnections {
                         System.out.println("Endpoint: " + method.getName());
                         System.out
                                 .println(requestMappingFullName.equals(annotation.getType().getFullyQualifiedName()) ? "RequestMapping·method: " + annotation.getProperty("method")
-                                    : "HTTP method annotation: " + annotation.getType().getName());
+                                        : "HTTP method annotation: " + annotation.getType().getName());
                         System.out.println("Path: " + annotation.getProperty("value"));
                         System.out.println("Line: " + method.getLineNumber());
                         List<String> annotations = method.getAnnotations().stream().filter(a -> !a.equals(annotation)).map(a -> a.getType().getName()).toList();
