@@ -61,13 +61,14 @@ export class PlagiarismRunDetailsComponent extends PlagiarismAndTutorEffortDirec
     updateChartDataSet(data: number[]) {
         let ngxDataEntity;
         this.ngxData = [];
+        this.totalDetectedPlagiarisms = 0;
 
         // TextBased Exercises return 100 steps in data, Modeling only 10
-        //TODO: Remove once backend fixes plagiarism result logic
+        //TODO: Remove once backend fixes plagiarism result logic (if not intended behavior)
         if (data.length === 100) {
             let sum = 0;
 
-            // Sum up indexes data[X0] - data[X9] to fit into bucket X
+            // Sum up indexes data[X0] - data[X9] to fit into similarity distribution bucket X
             data.forEach((value, position) => {
                 if (position % 10 === 0 && position !== 0) {
                     ngxDataEntity = {
