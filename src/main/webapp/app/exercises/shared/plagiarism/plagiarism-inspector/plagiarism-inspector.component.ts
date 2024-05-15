@@ -325,8 +325,8 @@ export class PlagiarismInspectorComponent implements OnInit {
             this.showRunDetails = true;
         }
 
-        this.plagiarismResult = result.plagiarismResult;
-        this.plagiarismResultStats = result.plagiarismResultStats;
+        this.plagiarismResult = result?.plagiarismResult;
+        this.plagiarismResultStats = result?.plagiarismResultStats;
         this.visibleComparisons = result?.plagiarismResult?.comparisons;
     }
 
@@ -413,6 +413,7 @@ export class PlagiarismInspectorComponent implements OnInit {
      * @param range the range selected by the user in the chart by clicking on a chart bar
      */
     filterByChart(range: Range): void {
+        console.log(range);
         this.visibleComparisons = this.inspectorService.filterComparisons(range, this.plagiarismResult?.comparisons);
         const index = this.plagiarismResult?.comparisons.indexOf(this.visibleComparisons[0]) ?? 0;
         this.sidebarOffset = index !== -1 ? index : 0;
