@@ -32,6 +32,7 @@ import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUri;
 import de.tum.in.www1.artemis.util.LocalRepository;
+import de.tum.in.www1.artemis.web.rest.dto.RepositoriesCheckoutDirectoryDTO;
 
 class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
@@ -66,7 +67,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
 
     @BeforeEach
     void setup() throws Exception {
-        userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
 
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
@@ -238,5 +239,21 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
                 .orElseThrow();
         localVCLocalCITestService.testLatestSubmission(templateParticipation.getId(), null, 0, false);
         localVCLocalCITestService.testLatestSubmission(solutionParticipation.getId(), null, 13, false);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testGetCheckoutDirectories() throws Exception {
+        RepositoriesCheckoutDirectoryDTO checkoutDirectoryDTO = request.get("/api/programming-exercises/repository-checkout-directories?programmingLanguage=JAVA", HttpStatus.OK,
+                RepositoriesCheckoutDirectoryDTO.class);
+        assertThat(checkoutDirectoryDTO.exerciseCheckoutDirectory()).isEqualTo("/assignment");
+        assertThat(checkoutDirectoryDTO.solutionCheckoutDirectory()).isEqualTo("/assignment");
+        assertThat(checkoutDirectoryDTO.testCheckoutDirectory()).isEqualTo("/");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TUTOR")
+    void testGetCheckoutDirectoriesAccessForbidden() throws Exception {
+        request.get("/api/programming-exercises/repository-checkout-directories?programmingLanguage=JAVA", HttpStatus.FORBIDDEN, RepositoriesCheckoutDirectoryDTO.class);
     }
 }
