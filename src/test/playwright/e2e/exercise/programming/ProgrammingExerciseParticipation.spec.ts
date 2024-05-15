@@ -203,6 +203,8 @@ test.describe('Programming exercise participation', () => {
                 programmingExerciseRepository,
                 programmingExerciseParticipations,
             }) => {
+                // Marked test as slow as there are 3 builds being awaited
+                test.slow();
                 await login(instructor);
                 await navigationBar.openCourseManagement();
                 await courseManagement.openExercisesOfCourse(course.id!);

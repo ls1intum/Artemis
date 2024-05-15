@@ -6,7 +6,7 @@ export class RepositoryPage {
     private readonly page: Page;
 
     private static readonly checkBuildResultInterval = 2000;
-    private static readonly checkBuildResultTimeout = 60000;
+    private static readonly checkBuildResultTimeout = 90000;
 
     constructor(page: Page) {
         this.page = page;
