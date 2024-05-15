@@ -7,7 +7,7 @@ import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programmi
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { MockComponent } from 'ng-mocks';
-import { of } from 'rxjs';
+import { Subscription, of } from 'rxjs';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 
 describe('ProgrammingExercisePlansAndRepositoriesPreviewComponent', () => {
@@ -89,5 +89,15 @@ describe('ProgrammingExercisePlansAndRepositoriesPreviewComponent', () => {
         const previewElement = fixture.debugElement.nativeElement.querySelector(CHECKOUT_DIRECTORY_PREVIEW);
         expect(previewElement).toBeTruthy();
         expect(previewElement.textContent).toContain('/assignment/sut'); // the slash for the root directory should have been added
+    });
+
+    it('should unsubscribe from programmingExerciseServiceSubscription on destroy', () => {
+        const subscription = new Subscription();
+        jest.spyOn(subscription, 'unsubscribe');
+        component.programmingExerciseServiceSubscription = subscription;
+
+        component.ngOnDestroy();
+
+        expect(subscription.unsubscribe).toHaveBeenCalled();
     });
 });
