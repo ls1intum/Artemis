@@ -205,7 +205,8 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testCancelQueuedBuildJob() throws Exception {
-        queuedJobs.put(job1);
+        buildJobItemMap.put(job1.participationId(), job1);
+        queuedJobs.put(new LocalCIBuildJobItemReference(job1));
         request.delete("/api/admin/cancel-job/" + job1.id(), HttpStatus.NO_CONTENT);
     }
 
@@ -231,8 +232,10 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCancelAllQueuedBuildJobsForCourse() throws Exception {
-        queuedJobs.put(job1);
-        queuedJobs.put(job2);
+        buildJobItemMap.put(job1.participationId(), job1);
+        queuedJobs.put(new LocalCIBuildJobItemReference(job1));
+        buildJobItemMap.put(job2.participationId(), job2);
+        queuedJobs.put(new LocalCIBuildJobItemReference(job2));
         request.delete("/api/courses/" + course.getId() + "/cancel-all-queued-jobs", HttpStatus.NO_CONTENT);
     }
 
