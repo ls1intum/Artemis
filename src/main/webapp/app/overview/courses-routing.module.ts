@@ -98,6 +98,14 @@ const routes: Routes = [
                 },
             },
             {
+                path: 'dashboard',
+                loadChildren: () => import('./course-dashboard/course-dashboard.module').then((m) => m.CourseDashboardModule),
+                data: {
+                    authorities: [Authority.USER],
+                    pageTitle: 'overview.dashboard',
+                },
+            },
+            {
                 path: 'learning-path',
                 loadChildren: () => import('app/course/learning-paths/learning-paths.module').then((m) => m.ArtemisLearningPathsModule),
                 data: {
