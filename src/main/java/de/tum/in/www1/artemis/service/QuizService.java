@@ -15,7 +15,6 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.quiz.DragAndDropMapping;
 import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestion;
 import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestionStatistic;
-import de.tum.in.www1.artemis.domain.quiz.DropLocation;
 import de.tum.in.www1.artemis.domain.quiz.MultipleChoiceQuestion;
 import de.tum.in.www1.artemis.domain.quiz.MultipleChoiceQuestionStatistic;
 import de.tum.in.www1.artemis.domain.quiz.QuizConfiguration;
@@ -258,14 +257,14 @@ public abstract class QuizService<T extends QuizConfiguration> {
         dragAndDropQuestion.getContent().setDropLocations(dragAndDropQuestion.getDropLocations());
         dragAndDropQuestion.getContent().setCorrectMappings(dragAndDropQuestion.getCorrectMappings());
 
-        Long currentId = dragAndDropQuestion.getContent().getDropLocations().stream().filter(item1 -> item1.getId() != -1L).mapToLong(DropLocation::getId).max().orElse(0L);
-
-        for (DropLocation item : dragAndDropQuestion.getContent().getDropLocations()) {
-            if (item.getId() == -1L) {
-                currentId = currentId + 1; // Increment using Long
-                item.setId(currentId); // This assumes a setter setId(Long id) exists in Item class
-            }
-        }
+        // Long currentId = dragAndDropQuestion.getContent().getDropLocations().stream().filter(item1 -> item1.getId() != -1L).mapToLong(DropLocation::getId).max().orElse(0L);
+        //
+        // for (DropLocation item : dragAndDropQuestion.getContent().getDropLocations()) {
+        // if (item.getId() == -1L) {
+        // currentId = currentId + 1; // Increment using Long
+        // item.setId(currentId); // This assumes a setter setId(Long id) exists in Item class
+        // }
+        // }
     }
 
     /**
