@@ -19,16 +19,11 @@ export class ProgrammingExercisePlansAndRepositoriesPreviewComponent {
 
     constructor(private programmingExerciseService: ProgrammingExerciseService) {}
 
-    getCourseShortName(): string | undefined {
-        if (!this.programmingExercise) {
-            return undefined;
-        }
-        return getCourseFromExercise(this.programmingExercise)?.shortName;
-    }
+    shortName?: string;
 
-    solutionCheckoutDirectory: string | undefined;
-    exerciseCheckoutDirectory: string | undefined;
-    testCheckoutDirectory: string | undefined;
+    solutionCheckoutDirectory?: string;
+    exerciseCheckoutDirectory?: string;
+    testCheckoutDirectory?: string;
     auxiliaryRepositoryCheckoutDirectories: string[] = [];
 
     programmingExerciseServiceSubscription: Subscription;
@@ -56,7 +51,16 @@ export class ProgrammingExercisePlansAndRepositoriesPreviewComponent {
             this.programmingExercise?.auxiliaryRepositories?.map((auxiliaryRepository) => this.addLeadingSlashIfNotPresent(auxiliaryRepository.checkoutDirectory)) ?? [];
     }
 
+    private updateShortName() {
+        if (!this.programmingExercise) {
+            return;
+        }
+        this.shortName = getCourseFromExercise(this.programmingExercise)?.shortName;
+    }
+
     ngOnInit() {
+        this.updateShortName();
+
         if (this.isLocal) {
             this.updateCheckoutDirectories();
             this.updateAuxiliaryRepositoryCheckoutDirectories();
@@ -64,6 +68,10 @@ export class ProgrammingExercisePlansAndRepositoriesPreviewComponent {
     }
 
     ngOnChanges(changes: SimpleChanges) {
+        if (changes.programmingExercise) {
+            this.updateShortName();
+        }
+
         if (
             this.isLocal &&
             this.programmingExerciseCreationConfig &&
