@@ -24,6 +24,10 @@ describe('ProgrammingExercisePlansAndRepositoriesPreviewComponent', () => {
                 fixture = TestBed.createComponent(ProgrammingExercisePlansAndRepositoriesPreviewComponent);
                 component = fixture.componentInstance;
                 programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
+
+                component.programmingExerciseCreationConfig = { selectedProgrammingLanguage: ProgrammingLanguage.C } as ProgrammingExerciseCreationConfig;
+                component.programmingExercise = { id: 1, shortName: 'shortName' } as ProgrammingExercise;
+                component.isLocal = true;
             });
     });
 
@@ -33,12 +37,6 @@ describe('ProgrammingExercisePlansAndRepositoriesPreviewComponent', () => {
             exerciseCheckoutDirectory: '/assignment',
             testCheckoutDirectory: '/',
         };
-
-        component.programmingExercise = { id: 1, shortName: 'shortName' } as ProgrammingExercise;
-        component.isLocal = true;
-
-        component.programmingExerciseCreationConfig = { selectedProgrammingLanguage: ProgrammingLanguage.C } as ProgrammingExerciseCreationConfig;
-
         jest.spyOn(programmingExerciseService, 'getCheckoutDirectoriesForProgrammingLanguage').mockReturnValue(of(checkoutDirectories));
 
         fixture.detectChanges();
@@ -49,5 +47,22 @@ describe('ProgrammingExercisePlansAndRepositoriesPreviewComponent', () => {
         expect(previewElement.textContent).toContain('/assignment');
         expect(previewElement.textContent).toContain('/assignment');
         expect(previewElement.textContent).toContain('/');
+    });
+
+    it('should send request if localCI is used', () => {
+        jest.spyOn(programmingExerciseService, 'getCheckoutDirectoriesForProgrammingLanguage');
+
+        fixture.detectChanges();
+
+        expect(programmingExerciseService.getCheckoutDirectoriesForProgrammingLanguage).toHaveBeenCalled();
+    });
+
+    it('should NOT send request if localCI is NOT used', () => {
+        component.isLocal = false;
+        const spy = jest.spyOn(programmingExerciseService, 'getCheckoutDirectoriesForProgrammingLanguage');
+
+        fixture.detectChanges();
+
+        expect(spy).not.toHaveBeenCalled();
     });
 });

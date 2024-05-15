@@ -57,12 +57,15 @@ export class ProgrammingExercisePlansAndRepositoriesPreviewComponent {
     }
 
     ngOnInit() {
-        this.updateCheckoutDirectories();
-        this.updateAuxiliaryRepositoryCheckoutDirectories();
+        if (this.isLocal) {
+            this.updateCheckoutDirectories();
+            this.updateAuxiliaryRepositoryCheckoutDirectories();
+        }
     }
 
     ngOnChanges(changes: SimpleChanges) {
         if (
+            this.isLocal &&
             this.programmingExerciseCreationConfig &&
             this.programmingExerciseCreationConfig.selectedProgrammingLanguage &&
             changes.programmingExerciseCreationConfig &&
@@ -73,7 +76,7 @@ export class ProgrammingExercisePlansAndRepositoriesPreviewComponent {
             this.updateCheckoutDirectories();
         }
 
-        if (this.programmingExercise?.auxiliaryRepositories) {
+        if (this.isLocal && this.programmingExercise?.auxiliaryRepositories) {
             this.updateAuxiliaryRepositoryCheckoutDirectories();
         }
     }
