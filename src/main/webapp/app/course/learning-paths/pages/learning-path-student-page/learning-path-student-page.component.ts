@@ -35,6 +35,15 @@ export class LearningPathStudentPageComponent {
         switchMap((courseId) => this.learningPathService.getLearningPathId(courseId!)),
         map((response) => ({ isLoading: false, value: response.body })),
         catchError((error: HttpErrorResponse) => {
+            if (error.status === 404) {
+                return this.learningPathService.generateLearningPath(this.courseId()).pipe(
+                    map((response) => ({ isLoading: false, value: response.body })),
+                    catchError((error: HttpErrorResponse) => {
+                        onError(this.alertService, error);
+                        return of({ isLoading: false, error: error });
+                    }),
+                );
+            }
             onError(this.alertService, error);
             return of({ isLoading: false, error: error });
         }),

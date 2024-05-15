@@ -6,7 +6,6 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -65,13 +64,13 @@ public interface LectureUnitRepository extends JpaRepository<LectureUnit, Long> 
             """)
     Set<LectureUnit> findAllByIdWithCompetenciesBidirectional(@Param("lectureUnitIds") Iterable<Long> longs);
 
-    @EntityGraph(attributePaths = { "completedUsers", "lecture", "lecture.course" })
     @Query("""
             SELECT lu
             FROM LectureUnit lu
+                LEFT JOIN FETCH lu.completedUsers
             WHERE lu.id = :lectureUnitId
             """)
-    Optional<LectureUnit> findByIdWithCompletedUsers(long lectureUnitId);
+    Optional<LectureUnit> findByIdWithCompletedUsers(@Param("lectureUnitId") long lectureUnitId);
 
     default LectureUnit findByIdWithCompletedUsersElseThrow(long lectureUnitId) {
         return findByIdWithCompletedUsers(lectureUnitId).orElseThrow(() -> new EntityNotFoundException("LectureUnit", lectureUnitId));
