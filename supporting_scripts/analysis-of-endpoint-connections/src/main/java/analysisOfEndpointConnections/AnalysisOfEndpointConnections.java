@@ -44,8 +44,7 @@ public class AnalysisOfEndpointConnections {
         Collection<JavaClass> classes = builder.getClasses();
         for (JavaClass javaClass : classes) {
             Optional<JavaAnnotation> requestMappingOptional = javaClass.getAnnotations().stream()
-                .filter(annotation -> annotation.getType().getFullyQualifiedName().equals(requestMappingFullName))
-                .findFirst();
+                .filter(annotation -> annotation.getType().getFullyQualifiedName().equals(requestMappingFullName)).findFirst();
 
             System.out.println("==================================================");
             System.out.println("Class: " + javaClass.getFullyQualifiedName());
