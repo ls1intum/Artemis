@@ -14,7 +14,7 @@ import javaPartiallySuccessfulSubmission from '../../fixtures/exercise/programmi
 import { ExamAPIRequests } from '../../support/requests/ExamAPIRequests';
 import { ExamExerciseGroupCreationPage } from '../../support/pageobjects/exam/ExamExerciseGroupCreationPage';
 import { ExerciseAPIRequests } from '../../support/requests/ExerciseAPIRequests';
-import { ExamParticipation } from '../../support/pageobjects/exam/ExamParticipation';
+import { ExamParticipationPage } from '../../support/pageobjects/exam/ExamParticipationPage';
 import { CourseManagementAPIRequests } from '../../support/requests/CourseManagementAPIRequests';
 import { ExamNavigationBar } from '../../support/pageobjects/exam/ExamNavigationBar';
 import { CourseOverviewPage } from '../../support/pageobjects/course/CourseOverviewPage';
@@ -81,7 +81,7 @@ test.describe('Exam Results', () => {
             const courseList = new CoursesPage(page);
             const courseOverview = new CourseOverviewPage(page);
 
-            const examParticipation = new ExamParticipation(
+            const examParticipation = new ExamParticipationPage(
                 courseList,
                 courseOverview,
                 new ExamNavigationBar(page),

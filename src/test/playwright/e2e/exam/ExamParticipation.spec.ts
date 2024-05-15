@@ -8,9 +8,17 @@ import dayjs from 'dayjs';
 import { Exam } from 'app/entities/exam.model';
 import { expect } from '@playwright/test';
 import { ExamStartEndPage } from '../../support/pageobjects/exam/ExamStartEndPage';
-import { ExamManagementPage } from '../../support/pageobjects/exam/ExamManagementPage';
 import { Commands } from '../../support/commands';
 import { ExamAPIRequests } from '../../support/requests/ExamAPIRequests';
+import { ExamParticipationPage } from '../../support/pageobjects/exam/ExamParticipationPage';
+import { CoursesPage } from '../../support/pageobjects/course/CoursesPage';
+import { CourseOverviewPage } from '../../support/pageobjects/course/CourseOverviewPage';
+import { ExamNavigationBar } from '../../support/pageobjects/exam/ExamNavigationBar';
+import { ModelingEditor } from '../../support/pageobjects/exercises/modeling/ModelingEditor';
+import { OnlineEditorPage } from '../../support/pageobjects/exercises/programming/OnlineEditorPage';
+import { MultipleChoiceQuiz } from '../../support/pageobjects/exercises/quiz/MultipleChoiceQuiz';
+import { TextEditorPage } from '../../support/pageobjects/exercises/text/TextEditorPage';
+import { ModalDialogBox } from '../../support/pageobjects/exam/ModalDialogBox';
 
 // Common primitives
 const textFixture = 'loremIpsum.txt';
@@ -307,8 +315,86 @@ test.describe('Exam participation', () => {
             await examManagement.sendAnnouncement();
 
             for (const studentPage of studentPages) {
-                const examManagement = new ExamManagementPage(studentPage);
-                await examManagement.verifyAnnouncementContent(announcementTypingTime, announcement, instructor.username);
+                const modalDialog = new ModalDialogBox(studentPage);
+                await modalDialog.checkDialogTime(announcementTypingTime);
+                await modalDialog.checkDialogMessage(announcement);
+                await modalDialog.checkDialogAuthor(instructor.username);
+                await modalDialog.closeDialog();
+            }
+        });
+    });
+
+    test.describe('Exam working time change', () => {
+        let exam: Exam;
+        const students = [studentOne, studentTwo];
+
+        test.beforeEach('Create exam', async ({ login, examAPIRequests, examExerciseGroupCreation }) => {
+            await login(admin);
+            exam = await createExam(course, examAPIRequests);
+            const exercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture });
+            exerciseArray.push(exercise);
+            for (const student of students) {
+                await examAPIRequests.registerStudentForExam(exam, student);
+            }
+
+            await examAPIRequests.generateMissingIndividualExams(exam);
+            await examAPIRequests.prepareExerciseStartForExam(exam);
+        });
+
+        test('Instructor changes working time and all participants are informed', async ({ browser, login, navigationBar, courseManagement, examManagement }) => {
+            await login(instructor);
+            await navigationBar.openCourseManagement();
+            await courseManagement.openExamsOfCourse(course.id!);
+            await examManagement.openExam(exam.id!);
+
+            const studentPages = [];
+
+            for (const student of students) {
+                const studentContext = await browser.newContext();
+                const studentPage = await studentContext.newPage();
+                studentPages.push(studentPage);
+
+                await Commands.login(studentPage, student);
+                await studentPage.goto(`/courses/${course.id!}/exams/${exam.id!}`);
+                const examStartEnd = new ExamStartEndPage(studentPage);
+                await examStartEnd.startExam(false);
+            }
+
+            await examManagement.openEditWorkingTimeDialog();
+            await examManagement.changeExamWorkingTime({ hours: -1 });
+            await examManagement.verifyExamWorkingTimeChange('1h 2min', '2min');
+            await examManagement.confirmWorkingTimeChange(exam.title!);
+
+            for (const studentPage of studentPages) {
+                const courseList = new CoursesPage(studentPage);
+                const courseOverview = new CourseOverviewPage(studentPage);
+                const examNavigation = new ExamNavigationBar(studentPage);
+                const examStartEnd = new ExamStartEndPage(studentPage);
+                const modelingExerciseEditor = new ModelingEditor(studentPage);
+                const programmingExerciseEditor = new OnlineEditorPage(studentPage);
+                const quizExerciseMultipleChoice = new MultipleChoiceQuiz(studentPage);
+                const textExerciseEditor = new TextEditorPage(studentPage);
+                const examParticipation = new ExamParticipationPage(
+                    courseList,
+                    courseOverview,
+                    examNavigation,
+                    examStartEnd,
+                    modelingExerciseEditor,
+                    programmingExerciseEditor,
+                    quizExerciseMultipleChoice,
+                    textExerciseEditor,
+                    studentPage,
+                );
+                // TODO: There are two dialogs shown on top of each other. Investigate the reason.
+                const modalDialog = new ModalDialogBox(studentPage);
+                await modalDialog.closeDialog();
+                const timeChangeMessage = 'The working time of the exam has been changed.';
+                await modalDialog.checkExamTimeChangeDialog('1h 2min', '2min');
+                await modalDialog.checkDialogTime(dayjs());
+                await modalDialog.checkDialogMessage(timeChangeMessage);
+                await modalDialog.checkDialogAuthor(instructor.username);
+                await examParticipation.checkExamTimeLeft('0min');
+                await modalDialog.closeDialog();
             }
         });
     });

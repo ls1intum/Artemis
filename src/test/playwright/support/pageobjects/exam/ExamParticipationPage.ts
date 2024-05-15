@@ -14,8 +14,9 @@ import { MultipleChoiceQuiz } from '../exercises/quiz/MultipleChoiceQuiz';
 import { TextEditorPage } from '../exercises/text/TextEditorPage';
 import { Commands } from '../../commands';
 import { Fixtures } from '../../../fixtures/fixtures';
+import { Dayjs } from 'dayjs';
 
-export class ExamParticipation {
+export class ExamParticipationPage {
     private readonly courseList: CoursesPage;
     private readonly courseOverview: CourseOverviewPage;
     private readonly examNavigation: ExamNavigationBar;
@@ -149,6 +150,26 @@ export class ExamParticipation {
 
     async checkYourFullname(name: string) {
         await expect(this.page.locator('#your-name')).toContainText(name, { timeout: 30000 });
+    }
+
+    async checkExamTimeLeft(timeLeft: string) {
+        await expect(this.page.locator('#displayTime').getByText(timeLeft)).toBeVisible();
+    }
+
+    async checkExamTimeChangeDialog(previousWorkingTime: string, newWorkingTime: string, announcementTime: Dayjs, authorUsername: string, message: string) {
+        const timeChangeDialog = this.page.locator('.modal-content');
+        await expect(timeChangeDialog.getByTestId('old-time').getByText(previousWorkingTime)).toBeVisible();
+        await expect(timeChangeDialog.getByTestId('new-time').getByText(newWorkingTime)).toBeVisible();
+        const timeFormat = 'MMM D, YYYY HH:mm';
+        const announcementTimeFormatted = announcementTime.format(timeFormat);
+        const announcementTimeAfterMinute = announcementTime.add(1, 'minute').format(timeFormat);
+        await expect(timeChangeDialog.locator('.date').getByText(new RegExp(`(${announcementTimeFormatted}|${announcementTimeAfterMinute})`))).toBeVisible();
+        await expect(timeChangeDialog.locator('.content').getByText(message)).toBeVisible();
+        await expect(timeChangeDialog.locator('.author').getByText(authorUsername)).toBeVisible();
+    }
+
+    async closeDialog() {
+        await this.page.locator('button', { hasText: 'Acknowledge' }).nth(0).click({ force: true, timeout: 5000 });
     }
 
     async handInEarly() {

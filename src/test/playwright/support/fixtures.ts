@@ -20,7 +20,7 @@ import { ExamDetailsPage } from './pageobjects/exam/ExamDetailsPage';
 import { ExamManagementPage } from './pageobjects/exam/ExamManagementPage';
 import { ExamExerciseGroupCreationPage } from './pageobjects/exam/ExamExerciseGroupCreationPage';
 import { ExamNavigationBar } from './pageobjects/exam/ExamNavigationBar';
-import { ExamParticipation } from './pageobjects/exam/ExamParticipation';
+import { ExamParticipationPage } from './pageobjects/exam/ExamParticipationPage';
 import { ExamStartEndPage } from './pageobjects/exam/ExamStartEndPage';
 import { CoursesPage } from './pageobjects/course/CoursesPage';
 import { ExamAssessmentPage } from './pageobjects/assessment/ExamAssessmentPage';
@@ -62,6 +62,7 @@ import { ExamGradingPage } from './pageobjects/exam/ExamGradingPage';
 import { ExamScoresPage } from './pageobjects/exam/ExamScoresPage';
 import { ExamResultsPage } from './pageobjects/exam/ExamResultsPage';
 import { ExerciseTeamsPage } from './pageobjects/exercises/ExerciseTeamsPage';
+import { ModalDialogBox } from './pageobjects/exam/ModalDialogBox';
 
 /*
  * Define custom types for fixtures
@@ -97,11 +98,12 @@ export type ArtemisPageObjects = {
     examGrading: ExamGradingPage;
     examNavigation: ExamNavigationBar;
     examManagement: ExamManagementPage;
-    examParticipation: ExamParticipation;
+    examParticipation: ExamParticipationPage;
     examResultsPage: ExamResultsPage;
     examScores: ExamScoresPage;
     examStartEnd: ExamStartEndPage;
     examTestRun: ExamTestRunPage;
+    modalDialog: ModalDialogBox;
     studentExamManagement: StudentExamManagementPage;
     fileUploadExerciseCreation: FileUploadExerciseCreationPage;
     fileUploadExerciseEditor: FileUploadEditorPage;
@@ -229,7 +231,7 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
         use,
     ) => {
         await use(
-            new ExamParticipation(
+            new ExamParticipationPage(
                 courseList,
                 courseOverview,
                 examNavigation,
@@ -253,6 +255,9 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     },
     examTestRun: async ({ page, examStartEnd }, use) => {
         await use(new ExamTestRunPage(page, examStartEnd));
+    },
+    modalDialog: async ({ page }, use) => {
+        await use(new ModalDialogBox(page));
     },
     studentExamManagement: async ({ page }, use) => {
         await use(new StudentExamManagementPage(page));
