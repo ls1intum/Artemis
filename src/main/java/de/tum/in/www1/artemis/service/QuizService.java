@@ -268,6 +268,15 @@ public abstract class QuizService<T extends QuizConfiguration> {
             }
         }
 
+        currentId = dragAndDropQuestion.getCorrectMappings().stream().filter(item1 -> item1.getId() != null).mapToLong(DragAndDropMapping::getId).max().orElse(0L);
+
+        for (DragAndDropMapping item : dragAndDropQuestion.getCorrectMappings()) {
+            if (item.getId() == null) {
+                currentId = currentId + 1; // Increment using Long
+                item.setId(currentId); // This assumes a setter setId(Long id) exists in Item class
+            }
+        }
+
         for (DragAndDropMapping mapping : dragAndDropQuestion.getCorrectMappings()) {
             // drag item
             mapping.setDragItem(dragAndDropQuestion.getDragItems().get(mapping.getDragItemIndex()));

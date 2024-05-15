@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 import jakarta.persistence.Transient;
@@ -7,7 +8,7 @@ import jakarta.persistence.Transient;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public abstract class TempIdObject {
+public abstract class TempIdObject implements Serializable {
 
     private Long id;
 

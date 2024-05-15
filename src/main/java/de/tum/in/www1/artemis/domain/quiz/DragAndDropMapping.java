@@ -8,7 +8,7 @@ import java.util.Objects;
  */
 public class DragAndDropMapping implements QuizQuestionComponent<DragAndDropQuestion>, Serializable {
 
-    private Long id = 1L;
+    private Long id;
 
     private Integer dragItemIndex;
 
