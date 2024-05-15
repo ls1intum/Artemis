@@ -366,7 +366,7 @@ public class MetricsBean {
      * The update (and recalculation) is performed every 5 minutes.
      * Only executed if the "scheduling"-profile is present.
      */
-    @Scheduled(fixedRate = 5 * 60 * 1000, initialDelay = 0) // Every 5 minutes
+    @Scheduled(fixedRate = 5 * 60 * 1000, initialDelay = 30 * 1000) // Every 5 minutes with an initial delay of 30 seconds
     public void recalculateMetrics() {
         if (!scheduledMetricsEnabled) {
             return;
