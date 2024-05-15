@@ -120,7 +120,7 @@
                     "secondLine": "Artemis erwartet eine Wiederholung der Gliederungsfolie vor jeder Einheit.",
                     "note": "Hinweis: Du kannst die Informationen bearbeiten, bevor die angehängten Einheiten übermittelt werden."
                 },
-                "noFile": "Es gibt keine Datei für die automatische Einheitenverarbeitung. Bitte gehen Sie einen Schritt zurück und versuchen Sie es erneut.",
+                "noFile": "Es gibt keine Datei für die automatische Einheitenverarbeitung. Bitte gehe einen Schritt zurück und versuche es erneut.",
                 "noUnitDetected": "Es wurde keine Einheit erkannt und konnte nicht automatisch geteilt werden. Bitte füge Informationen für jede Einheit hinzu!",
                 "pageTitle": "Einheiten",
                 "addUnit": "Einheit hinzufügen",
@@ -132,7 +132,7 @@
                     "secondLine": "Mehrere Schlüsselsätze werden mit einem Komma getrennt, zwischen Groß- und Kleinbuchstaben wird nicht unterschieden.",
                     "thirdLine": "Folgende Folien werden entfernt:"
                 },
-                "timeout": "Zeitüberschreitung während der automatischen Einheitenverarbeitung. Bitte versuchen Sie es erneut.",
+                "timeout": "Zeitüberschreitung während der automatischen Einheitenverarbeitung. Bitte versuche es erneut.",
                 "removeSlidesPlaceholder": "Beispiel: 'Pause, Beispiellösungen'",
                 "validation": {
                     "invalidPages": "Die Startseite oder die letzte Seite von {{ unitName }} sind falsch eingestellt.",
@@ -155,7 +155,7 @@
                     "endPage": "Letzte Seite"
                 },
                 "lectureFileToolTip": "Bitte auswählen, um die automatischen Trennung von Vorlesungseinheiten zu aktivieren.",
-                "processTimeInfo": "Die Verarbeitung der Vortragseinheiten kann einige Sekunden dauern. Bitte haben Sie etwas Geduld."
+                "processTimeInfo": "Die Verarbeitung der Vortragseinheiten kann einige Sekunden dauern. Habe bitte etwas Geduld."
             },
             "createAttachmentUnit": {
                 "title": "Dateieinheit erstellen",

@@ -4,13 +4,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.anySet;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.util.Collections;
 import java.util.Date;
 import java.util.HexFormat;
 import java.util.Optional;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -48,9 +52,11 @@ class AppleFirebasePushNotificationServiceTest {
 
     private User student;
 
+    private AutoCloseable closeable;
+
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
 
         student = new User();
         student.setId(1L);
@@ -74,6 +80,13 @@ class AppleFirebasePushNotificationServiceTest {
 
         ReflectionTestUtils.setField(applePushNotificationService, "relayServerBaseUrl", Optional.of("test"));
         ReflectionTestUtils.setField(firebasePushNotificationService, "relayServerBaseUrl", Optional.of("test"));
+    }
+
+    @AfterEach
+    void tearDown() throws Exception {
+        if (closeable != null) {
+            closeable.close();
+        }
     }
 
     @Test

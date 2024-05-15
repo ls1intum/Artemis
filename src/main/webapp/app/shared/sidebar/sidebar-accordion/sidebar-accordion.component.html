@@ -6,7 +6,7 @@
     >
         <div id="test-accordion-item-header" class="control-label d-flex align-items-center justify-content-between py-2 bg-module" (click)="toggleGroupCategoryCollapse(groupKey)">
             <div class="my-2">
-                {{ 'artemisApp.courseOverview.exerciseList.' + groupKey | artemisTranslate | titlecase }}
+                {{ 'artemisApp.courseOverview.sidebar.' + groupKey | artemisTranslate | titlecase }}
                 ({{ (groupedData[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue)?.length }})
             </div>
             <div class="icon-container pe-3">
@@ -17,7 +17,7 @@
         <div id="test-accordion-item-content" [ngbCollapse]="collapseState[groupKey]" class="p-2 bg-body">
             @for (sidebarItem of groupedData[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue; let last = $last; track sidebarItem) {
                 <div [ngClass]="{ 'mb-2': !last }">
-                    <jhi-sidebar-card [storageId]="storageId" [sidebarType]="sidebarType" class="pb-1" [sidebarItem]="sidebarItem" [routeParams]="routeParams" />
+                    <jhi-sidebar-card [itemSelected]="itemSelected" [sidebarType]="sidebarType" class="pb-1" [sidebarItem]="sidebarItem" />
                 </div>
             }
         </div>

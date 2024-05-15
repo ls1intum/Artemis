@@ -30,6 +30,7 @@ describe('SidebarCardComponent', () => {
             title: 'testTitle',
             id: 'testId',
         };
+        component.itemSelected = true;
         fixture.detectChanges();
     });
 
@@ -59,16 +60,20 @@ describe('SidebarCardComponent', () => {
     });
 
     it('should store route on click', () => {
-        jest.spyOn(component, 'storeLastSelectedItem');
+        jest.spyOn(component, 'emitStoreLastSelectedItem');
+        jest.spyOn(component, 'forceReload');
         const element: HTMLElement = fixture.nativeElement.querySelector('#test-sidebar-card');
         element.click();
         fixture.detectChanges();
-        expect(component.storeLastSelectedItem).toHaveBeenCalledWith(component.sidebarItem.id);
+        expect(component.emitStoreLastSelectedItem).toHaveBeenCalledWith(component.sidebarItem.id);
+        expect(component.forceReload).toHaveBeenCalled();
     });
 
     it('should navigate to the item URL on click', async () => {
         const mockFn = jest.fn();
-        component.storeLastSelectedItem = mockFn;
+        component.emitStoreLastSelectedItem = mockFn;
+        component.itemSelected = true;
+        fixture.detectChanges();
         const itemElement = fixture.nativeElement.querySelector('#test-sidebar-card');
         itemElement.click();
         await fixture.whenStable();
@@ -76,5 +81,19 @@ describe('SidebarCardComponent', () => {
         expect(router.navigateByUrl).toHaveBeenCalled();
         const navigationArray = router.navigateByUrl.mock.calls[0][0];
         expect(navigationArray).toBe('../testId');
+    });
+
+    it('should navigate to the when no item was selected before', async () => {
+        const mockFn = jest.fn();
+        component.emitStoreLastSelectedItem = mockFn;
+        component.itemSelected = false;
+        fixture.detectChanges();
+        const itemElement = fixture.nativeElement.querySelector('#test-sidebar-card');
+        itemElement.click();
+        await fixture.whenStable();
+        expect(mockFn).toHaveBeenCalledWith('testId');
+        expect(router.navigateByUrl).toHaveBeenCalled();
+        const navigationArray = router.navigateByUrl.mock.calls[0][0];
+        expect(navigationArray).toBe('./testId');
     });
 });

@@ -2,7 +2,12 @@ package de.tum.in.www1.artemis.connectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyBoolean;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -23,7 +28,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.OnlineCourseConfiguration;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.SecurityUtils;

@@ -7,7 +7,11 @@ import jakarta.persistence.EntityManagerFactory;
 import org.apache.commons.lang3.ArrayUtils;
 import org.hibernate.Hibernate;
 import org.hibernate.event.service.spi.EventListenerRegistry;
-import org.hibernate.event.spi.*;
+import org.hibernate.event.spi.EventType;
+import org.hibernate.event.spi.PostDeleteEvent;
+import org.hibernate.event.spi.PostDeleteEventListener;
+import org.hibernate.event.spi.PostUpdateEvent;
+import org.hibernate.event.spi.PostUpdateEventListener;
 import org.hibernate.internal.SessionFactoryImpl;
 import org.hibernate.persister.entity.EntityPersister;
 import org.slf4j.Logger;
@@ -43,7 +47,7 @@ public class TitleCacheEvictionService implements PostUpdateEventListener, PostD
         var eventListenerRegistry = entityManagerFactory.unwrap(SessionFactoryImpl.class).getServiceRegistry().getService(EventListenerRegistry.class);
         eventListenerRegistry.appendListeners(EventType.POST_UPDATE, this);
         eventListenerRegistry.appendListeners(EventType.POST_DELETE, this);
-        log.info("Registered Hibernate listeners");
+        log.debug("Registered Hibernate listeners");
     }
 
     @Override

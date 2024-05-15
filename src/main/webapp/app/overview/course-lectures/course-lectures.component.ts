@@ -20,11 +20,11 @@ const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     styleUrls: ['../course-overview.scss'],
 })
 export class CourseLecturesComponent implements OnInit, OnDestroy {
-    private courseId: number;
     private paramSubscription: Subscription;
     private parentParamSubscription: Subscription;
     private courseUpdatesSubscription: Subscription;
     course?: Course;
+    courseId: number;
 
     lectureSelected: boolean = true;
     sidebarData: SidebarData;
@@ -41,7 +41,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     ) {}
 
     ngOnInit() {
-        this.isCollapsed = this.courseOverviewService.getSidebarCollapseStateFromStorage('lectures');
+        this.isCollapsed = this.courseOverviewService.getSidebarCollapseStateFromStorage('lecture');
         this.parentParamSubscription = this.route.parent!.params.subscribe((params) => {
             this.courseId = parseInt(params.courseId, 10);
         });
@@ -57,7 +57,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
         const lastSelectedLecture = this.getLastSelectedLecture();
         this.paramSubscription = this.route.params.subscribe((params) => {
             const lectureId = parseInt(params.lectureId, 10);
-            // If no exercise is selected navigate to the upcoming exercise
+            // If no lecture is selected navigate to the upcoming lecture
             if (!lectureId && lastSelectedLecture) {
                 this.router.navigate([lastSelectedLecture], { relativeTo: this.route, replaceUrl: true });
             } else if (!lectureId && upcomingLecture) {
@@ -93,7 +93,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     }
 
     getLastSelectedLecture(): string | null {
-        return sessionStorage.getItem('sidebar.lastSelectedItem.' + 'lecture');
+        return sessionStorage.getItem('sidebar.lastSelectedItem.lecture.byCourse.' + this.courseId);
     }
 
     ngOnDestroy(): void {

@@ -10,7 +10,11 @@ import org.springframework.http.HttpStatus;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.Team;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.participation.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;

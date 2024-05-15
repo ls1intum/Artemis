@@ -3,8 +3,14 @@ package de.tum.in.www1.artemis.service;
 import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.io.InputStream;

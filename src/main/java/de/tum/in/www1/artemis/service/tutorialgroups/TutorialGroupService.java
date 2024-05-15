@@ -5,7 +5,14 @@ import static de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupResour
 import static jakarta.persistence.Persistence.getPersistenceUtil;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 

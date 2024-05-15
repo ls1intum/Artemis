@@ -1,8 +1,9 @@
 import { Component, Input } from '@angular/core';
-import { ActivatedRoute, Params, Router } from '@angular/router';
 import { DifficultyLevel } from 'app/entities/exercise.model';
 import { SidebarCardElement, SidebarTypes } from 'app/types/sidebar';
 import { Subscription } from 'rxjs';
+import { SidebarEventService } from '../sidebar-event.service';
+import { ActivatedRoute, Router } from '@angular/router';
 @Component({
     selector: 'jhi-sidebar-card',
     templateUrl: './sidebar-card.component.html',
@@ -11,9 +12,8 @@ import { Subscription } from 'rxjs';
 export class SidebarCardComponent {
     DifficultyLevel = DifficultyLevel;
     @Input() sidebarItem: SidebarCardElement;
-    @Input() routeParams: Params = [];
     @Input() sidebarType?: SidebarTypes;
-    @Input() storageId?: string = '';
+    @Input() itemSelected?: boolean;
 
     isSelected: boolean = false;
 
@@ -21,11 +21,20 @@ export class SidebarCardComponent {
     noItemSelected: boolean = false;
 
     constructor(
+        private sidebarEventService: SidebarEventService,
         private router: Router,
         private route: ActivatedRoute,
     ) {}
 
-    storeLastSelectedItem(itemId: number | string) {
-        sessionStorage.setItem('sidebar.lastSelectedItem.' + this.storageId, JSON.stringify(itemId));
+    emitStoreLastSelectedItem(itemId: number | string) {
+        this.sidebarEventService.emitSidebarCardEvent(itemId);
+    }
+
+    forceReload(): void {
+        this.router.navigate(['../'], { skipLocationChange: true, relativeTo: this.route }).then(() => {
+            this.itemSelected
+                ? this.router.navigate(['../' + this.sidebarItem?.id], { relativeTo: this.route })
+                : this.router.navigate(['./' + this.sidebarItem?.id], { relativeTo: this.route });
+        });
     }
 }

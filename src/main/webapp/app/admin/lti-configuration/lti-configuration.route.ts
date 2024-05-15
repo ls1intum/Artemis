@@ -10,6 +10,7 @@ export const ltiConfigurationRoute: Routes = [
         component: LtiConfigurationComponent,
         data: {
             pageTitle: 'global.menu.admin.lti',
+            defaultSort: 'id,desc',
         },
     },
     {

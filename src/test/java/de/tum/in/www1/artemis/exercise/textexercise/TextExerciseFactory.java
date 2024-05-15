@@ -1,9 +1,16 @@
 package de.tum.in.www1.artemis.exercise.textexercise;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.TextBlock;
+import de.tum.in.www1.artemis.domain.TextBlockType;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.analytics.TextAssessmentEvent;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.TextAssessmentEventType;

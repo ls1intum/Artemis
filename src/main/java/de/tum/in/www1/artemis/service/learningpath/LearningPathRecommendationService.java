@@ -4,7 +4,16 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -21,7 +30,9 @@ import de.tum.in.www1.artemis.domain.competency.RelationType;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.CompetencyRelationRepository;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.ExerciseService;
+import de.tum.in.www1.artemis.service.LearningObjectService;
+import de.tum.in.www1.artemis.service.ParticipantScoreService;
 import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 
 /**

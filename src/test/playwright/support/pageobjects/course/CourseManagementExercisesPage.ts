@@ -60,8 +60,6 @@ export class CourseManagementExercisesPage {
     async deleteProgrammingExercise(exercise: Exercise) {
         const exerciseElement = this.getExercise(exercise.id!);
         await exerciseElement.locator('#delete-exercise').click();
-        await this.page.locator('#additional-check-0').check();
-        await this.page.locator('#additional-check-1').check();
         await this.page.locator('#confirm-entity-name').fill(exercise.title!);
         const responsePromise = this.page.waitForResponse(`${PROGRAMMING_EXERCISE_BASE}/*`);
         await this.page.locator('#delete').click();
@@ -137,5 +135,11 @@ export class CourseManagementExercisesPage {
 
     getModelingExerciseMaxPoints(exerciseID: number) {
         return this.page.locator(`#exercise-card-${exerciseID}`).locator(`#modeling-exercise-${exerciseID}-maxPoints`);
+    }
+
+    async openExerciseTeams(exerciseId: number) {
+        const exerciseElement = this.getExercise(exerciseId);
+        const teamsButton = exerciseElement.locator('.btn', { hasText: 'Teams' });
+        await teamsButton.click();
     }
 }
