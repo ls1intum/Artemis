@@ -12,6 +12,7 @@ import java.util.function.Function;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.quiz.AnswerOption;
 import de.tum.in.www1.artemis.domain.quiz.DragAndDropMapping;
 import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestion;
 import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestionStatistic;
@@ -57,6 +58,15 @@ public abstract class QuizService<T extends QuizConfiguration> {
 
             if (quizQuestion instanceof MultipleChoiceQuestion multipleChoiceQuestion) {
                 fixReferenceMultipleChoice(multipleChoiceQuestion);
+
+                Long currentId = multipleChoiceQuestion.getAnswerOptions().stream().filter(item1 -> item1.getId() != null).mapToLong(AnswerOption::getId).max().orElse(0L);
+
+                for (AnswerOption item : multipleChoiceQuestion.getAnswerOptions()) {
+                    if (item.getId() == null) {
+                        currentId = currentId + 1; // Increment using Long
+                        item.setId(currentId); // This assumes a setter setId(Long id) exists in Item class
+                    }
+                }
             }
             else if (quizQuestion instanceof DragAndDropQuestion dragAndDropQuestion) {
                 fixReferenceDragAndDrop(dragAndDropQuestion);

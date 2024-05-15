@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 /**
  * A AnswerOption.
@@ -101,6 +102,32 @@ public class AnswerOption implements QuizQuestionComponent<MultipleChoiceQuestio
     public String toString() {
         return "AnswerOptionDTO{" + "id=" + getId() + ", text='" + getText() + "'" + ", hint='" + "'" + ", explanation='" + "'" + ", isCorrect='" + isIsCorrect() + "'"
                 + ", invalid='" + isInvalid() + "'" + "}";
+    }
+
+    /**
+     * this method checks for database equality based on the id
+     *
+     * @param obj another object
+     * @return whether this and the other object are equal based on the database id
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        AnswerOption answerOption = (AnswerOption) obj;
+        if (answerOption.getId() == null || getId() == null) {
+            return false;
+        }
+        return Objects.equals(getId(), answerOption.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(getId());
     }
 
 }
