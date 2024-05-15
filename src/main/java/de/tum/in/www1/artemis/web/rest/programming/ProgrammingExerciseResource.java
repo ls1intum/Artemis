@@ -104,6 +104,8 @@ public class ProgrammingExerciseResource {
 
     private static final String ENTITY_NAME = "programmingExercise";
 
+    private static final String ROOT_DIRECTORY = "/";
+
     private final ChannelRepository channelRepository;
 
     @Value("${jhipster.clientApp.name}")
@@ -879,40 +881,33 @@ public class ProgrammingExerciseResource {
     /**
      * GET programming-exercises/checkout-directories
      *
-     * @return a DTO containing the checkout directories for the exercise, solution, and test repository for each programming language.
+     * @return a DTO containing the checkout directories for the exercise, solution, and test repository for the requested programming language.
      */
     @GetMapping("programming-exercises/repository-checkout-directories")
-    // @EnforceAtLeastEditor
+    @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<RepositoriesCheckoutDirectoryDTO> getRepositoryCheckoutDirectories(@RequestParam(value = "programmingLanguage") ProgrammingLanguage programmingLanguage) {
-        log.debug("REST request to get checkout directories");
-
-        String ROOT_DIRECTORY = "/";
+        log.debug("REST request to get checkout directories for programming language: {}", programmingLanguage);
 
         String exerciseCheckoutDirectory = ContinuousIntegrationService.RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage);
+        String solutionCheckoutDirectory = ContinuousIntegrationService.RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(programmingLanguage);
         String testCheckoutDirectory = ContinuousIntegrationService.RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage);
-        String solutionCheckoutDirectory = "";
-        try {
-            solutionCheckoutDirectory = ContinuousIntegrationService.RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(programmingLanguage);
-        }
-        catch (IllegalArgumentException exception) {
-            // assume that the checkout directory is the root directory if the solution repository does not exist
-        }
 
-        // TODO verify assumption
-        if (exerciseCheckoutDirectory.isEmpty()) {
-            exerciseCheckoutDirectory = ROOT_DIRECTORY;
-        }
-        if (solutionCheckoutDirectory.isEmpty()) {
-            solutionCheckoutDirectory = ROOT_DIRECTORY;
-        }
-        if (testCheckoutDirectory.isEmpty()) {
-            testCheckoutDirectory = ROOT_DIRECTORY;
-        }
+        exerciseCheckoutDirectory = setEmptyPathToRootDirectory(exerciseCheckoutDirectory);
+        solutionCheckoutDirectory = setEmptyPathToRootDirectory(solutionCheckoutDirectory);
+        testCheckoutDirectory = setEmptyPathToRootDirectory(testCheckoutDirectory);
 
         RepositoriesCheckoutDirectoryDTO repositoriesCheckoutDirectoryDTO = new RepositoriesCheckoutDirectoryDTO(exerciseCheckoutDirectory, solutionCheckoutDirectory,
                 testCheckoutDirectory);
 
         return ResponseEntity.ok(repositoriesCheckoutDirectoryDTO);
+    }
+
+    private String setEmptyPathToRootDirectory(String checkoutDirectoryPath) {
+        if (checkoutDirectoryPath.isEmpty()) {
+            return ROOT_DIRECTORY;
+        }
+
+        return checkoutDirectoryPath;
     }
 }
