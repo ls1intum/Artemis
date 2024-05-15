@@ -257,5 +257,11 @@ public interface ContinuousIntegrationService {
         String forProgrammingLanguage(ProgrammingLanguage language);
     }
 
+    /**
+     * Get the checkout directories for the default repositories (exercise, solution, test) for a given programming language.
+     *
+     * @param programmingLanguage for which the checkout directories should be retrieved
+     * @return the paths of the checkout directories for the default repositories
+     */
     RepositoriesCheckoutDirectoryDTO getCheckoutDirectories(ProgrammingLanguage programmingLanguage);
 }
