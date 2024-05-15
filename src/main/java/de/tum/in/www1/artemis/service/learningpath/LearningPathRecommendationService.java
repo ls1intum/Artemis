@@ -99,6 +99,13 @@ public class LearningPathRecommendationService {
         return state;
     }
 
+    /**
+     * Gets the next due learning object of a learning path
+     *
+     * @param learningPath        the learning path that should be analyzed
+     * @param recommendationState the current state of the learning path recommendation
+     * @return the next due learning object of learning path
+     */
     public LearningObject getCurrentUncompletedLearningObject(LearningPath learningPath, RecommendationState recommendationState) {
         var recommendedOrderOfCompetencies = recommendationState.recommendedOrderOfCompetencies;
         if (recommendedOrderOfCompetencies.isEmpty()) {
@@ -109,6 +116,14 @@ public class LearningPathRecommendationService {
         return recommendedOrderOfLearningObjects.getFirst();
     }
 
+    /**
+     * Gets the successor learning object relative to the given learning object
+     *
+     * @param currentLearningObject the learning object for which to get the successor
+     * @param learningPath          the learning path that should be analyzed
+     * @param recommendationState   the current state of the learning path recommendation
+     * @return the successor learning object of the given learning object
+     */
     public Optional<LearningObject> getUncompletedPredecessorOfLearningObject(LearningObject currentLearningObject, LearningPath learningPath,
             RecommendationState recommendationState) {
         var orderOfCompetencies = recommendationState.recommendedOrderOfCompetencies;
@@ -129,12 +144,14 @@ public class LearningPathRecommendationService {
         return Optional.empty();
     }
 
-    public Stream<LearningObject> getUncompletedLearningObjects(LearningPath learningPath) {
-        var recommendationState = getRecommendedOrderOfCompetencies(learningPath);
-        return recommendationState.recommendedOrderOfCompetencies.stream().map(recommendationState.competencyIdMap::get)
-                .map(competency -> getRecommendedOrderOfLearningObjects(learningPath, competency, recommendationState)).flatMap(List::stream);
-    }
-
+    /**
+     * Gets the predecessor learning object relative to the given learning object
+     *
+     * @param learningPath          the learning path that should be analyzed
+     * @param recommendationState   the current state of the learning path recommendation
+     * @param currentLearningObject the learning object for which to get the predecessor
+     * @return the predecessor learning object of the given learning object
+     */
     public LearningObject getUncompletedSuccessorOfLearningObject(LearningPath learningPath, RecommendationState recommendationState, LearningObject currentLearningObject) {
         var orderOfCompetencies = recommendationState.recommendedOrderOfCompetencies;
         var currentCompetency = getCompetencyOfUncompletedLearningObjectOnLearningPath(learningPath, currentLearningObject, recommendationState);
@@ -155,6 +172,26 @@ public class LearningPathRecommendationService {
         return null;
     }
 
+    /**
+     * Gets the uncompleted learning objects of a learning path
+     *
+     * @param learningPath the learning path that should be analyzed
+     * @return the uncompleted learning objects of the learning path
+     */
+    public Stream<LearningObject> getUncompletedLearningObjects(LearningPath learningPath) {
+        var recommendationState = getRecommendedOrderOfCompetencies(learningPath);
+        return recommendationState.recommendedOrderOfCompetencies.stream().map(recommendationState.competencyIdMap::get)
+                .map(competency -> getRecommendedOrderOfLearningObjects(learningPath, competency, recommendationState)).flatMap(List::stream);
+    }
+
+    /**
+     * Gets the competency of an uncompleted learning object on a learning path
+     *
+     * @param learningPath        the learning path that should be analyzed
+     * @param learningObject      the learning object for which to get the competency
+     * @param recommendationState the current state of the learning path recommendation
+     * @return the competency of the given learning object
+     */
     private Competency getCompetencyOfUncompletedLearningObjectOnLearningPath(LearningPath learningPath, LearningObject learningObject, RecommendationState recommendationState) {
         return recommendationState.recommendedOrderOfCompetencies.stream().map(recommendationState.competencyIdMap::get)
                 .filter(competency -> getRecommendedOrderOfLearningObjects(learningPath, competency, recommendationState).contains(learningObject)).findFirst().orElse(null);

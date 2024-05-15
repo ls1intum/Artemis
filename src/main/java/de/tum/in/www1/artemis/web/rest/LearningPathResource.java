@@ -195,6 +195,15 @@ public class LearningPathResource {
         return getLearningPathNgx(learningPathId, NgxRequestType.PATH);
     }
 
+    /**
+     * GET learning-path/:learningPathId/navigation : Gets the navigation information for the learning path,
+     * optionally relative to a learning object.
+     *
+     * @param learningPathId     the id of the learning path for which the navigation should be fetched
+     * @param learningObjectId   an optional id of the learning object to navigate to
+     * @param learningObjectType an optional type of the learning object to navigate to
+     * @return the ResponseEntity with status 200 (OK) and with body the navigation information
+     */
     @GetMapping("learning-path/{learningPathId}/navigation")
     public ResponseEntity<LearningPathNavigationDto> getLearningPathNavigation(@PathVariable @Valid long learningPathId,
             @RequestParam(required = false, name = "learningObjectId") @Nullable @Valid Long learningObjectId,
@@ -202,6 +211,12 @@ public class LearningPathResource {
         return ResponseEntity.ok(learningPathService.getLearningPathNavigation(learningPathId, learningObjectId, learningObjectType));
     }
 
+    /**
+     * GET learning-path/:learningPathId/navigation-overview : Gets the navigation overview for the learning path.
+     *
+     * @param learningPathId the id of the learning path for which the navigation overview should be fetched
+     * @return the ResponseEntity with status 200 (OK) and with body the navigation overview
+     */
     @GetMapping("learning-path/{learningPathId}/navigation-overview")
     public ResponseEntity<LearningPathNavigationOverviewDto> getLearningPathNavigationOverview(@PathVariable @Valid long learningPathId) {
         return ResponseEntity.ok(learningPathService.getLearningPathNavigationOverview(learningPathId));

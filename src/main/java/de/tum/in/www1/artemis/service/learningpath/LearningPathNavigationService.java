@@ -1,8 +1,11 @@
 package de.tum.in.www1.artemis.service.learningpath;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.LearningObject;
@@ -15,6 +18,7 @@ import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationDto.
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationDto.LearningPathNavigationObjectDto.LearningObjectType;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationOverviewDto;
 
+@Profile(PROFILE_CORE)
 @Service
 public class LearningPathNavigationService {
 
