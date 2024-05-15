@@ -52,7 +52,7 @@ class LectureImportServiceTest extends AbstractSpringIntegrationIndependentTest 
     void initTestCase() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
         List<Course> courses = lectureUtilService.createCoursesWithExercisesAndLecturesAndLectureUnits(TEST_PREFIX, false, true, 0);
-        Course course1 = this.courseRepository.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());
+        Course course1 = this.courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(courses.get(0).getId());
         long lecture1Id = course1.getLectures().stream().findFirst().orElseThrow().getId();
         this.lecture1 = this.lectureRepository.findByIdWithAttachmentsAndPostsAndLectureUnitsAndCompetenciesAndCompletionsElseThrow(lecture1Id);
         this.course2 = courseUtilService.createCourse();
