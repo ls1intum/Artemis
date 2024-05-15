@@ -13,8 +13,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import jakarta.annotation.PostConstruct;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -22,8 +20,10 @@ import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthContributor;
 import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.boot.actuate.health.NamedContributor;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.cloud.client.discovery.health.DiscoveryCompositeHealthContributor;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.user.SimpUserRegistry;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -101,6 +101,10 @@ public class MetricsBean {
 
     private final ProfileService profileService;
 
+    private final List<HealthContributor> healthContributors;
+
+    private final Optional<HikariDataSource> hikariDataSource;
+
     private final Optional<SharedQueueManagementService> localCIBuildJobQueueService;
 
     /**
@@ -161,6 +165,8 @@ public class MetricsBean {
         this.webSocketStats = webSocketStats;
         this.userRegistry = userRegistry;
         this.webSocketHandler = websocketHandler;
+        this.healthContributors = healthContributors;
+        this.hikariDataSource = hikariDataSource;
         this.exerciseRepository = exerciseRepository;
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
@@ -169,7 +175,10 @@ public class MetricsBean {
         this.statisticsRepository = statisticsRepository;
         this.profileService = profileService;
         this.localCIBuildJobQueueService = localCIBuildJobQueueService;
+    }
 
+    @EventListener(ApplicationReadyEvent.class)
+    public void applicationReady() {
         registerHealthContributors(healthContributors);
         registerWebsocketMetrics();
 
@@ -190,13 +199,8 @@ public class MetricsBean {
 
         // the data source is optional as it is not used during testing
         hikariDataSource.ifPresent(this::registerDatasourceMetrics);
-    }
 
-    /**
-     * initialize the websocket logging
-     */
-    @PostConstruct
-    public void init() {
+        // initialize the websocket logging
         // using Autowired leads to a weird bug, because the order of the method execution is changed. This somehow prevents messages send to single clients
         // later one, e.g. in the code editor. Therefore, we call this method here directly to get a reference and adapt the logging period!
         // Note: this mechanism prevents that this is logged during testing

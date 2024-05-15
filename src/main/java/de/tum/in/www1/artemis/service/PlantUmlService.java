@@ -13,8 +13,10 @@ import java.util.stream.Stream;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -36,9 +38,12 @@ public class PlantUmlService {
 
     private final ResourceLoaderService resourceLoaderService;
 
-    public PlantUmlService(ResourceLoaderService resourceLoaderService) throws IOException {
+    public PlantUmlService(ResourceLoaderService resourceLoaderService) {
         this.resourceLoaderService = resourceLoaderService;
+    }
 
+    @EventListener(ApplicationReadyEvent.class)
+    public void applicationReady() throws IOException {
         // Delete on first launch to ensure updates
         Files.deleteIfExists(PATH_TMP_THEME.resolve(DARK_THEME_FILE_NAME));
         Files.deleteIfExists(PATH_TMP_THEME.resolve(LIGHT_THEME_FILE_NAME));
