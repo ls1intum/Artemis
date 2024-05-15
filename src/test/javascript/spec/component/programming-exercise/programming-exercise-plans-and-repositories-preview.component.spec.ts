@@ -8,6 +8,7 @@ import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/man
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { MockComponent } from 'ng-mocks';
 import { of } from 'rxjs';
+import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 
 describe('ProgrammingExercisePlansAndRepositoriesPreviewComponent', () => {
     let component: ProgrammingExercisePlansAndRepositoriesPreviewComponent;
@@ -78,5 +79,15 @@ describe('ProgrammingExercisePlansAndRepositoriesPreviewComponent', () => {
         fixture.detectChanges();
         const previewElement = fixture.debugElement.nativeElement.querySelector(CHECKOUT_DIRECTORY_PREVIEW);
         expect(previewElement).toBeFalsy();
+    });
+
+    it('should update auxiliary checkout repository directories', () => {
+        component.programmingExercise!.auxiliaryRepositories = [{ checkoutDirectory: 'assignment/sut' } as AuxiliaryRepository];
+
+        fixture.detectChanges();
+
+        const previewElement = fixture.debugElement.nativeElement.querySelector(CHECKOUT_DIRECTORY_PREVIEW);
+        expect(previewElement).toBeTruthy();
+        expect(previewElement.textContent).toContain('/assignment/sut'); // the slash for the root directory should have been added
     });
 });
