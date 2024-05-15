@@ -15,7 +15,7 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
  * @param name      the name of the learning object
  * @param type      the type of the learning object
  */
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record LearningPathNavigationObjectDto(Long id, boolean completed, String name, LearningObjectType type) {
 
     /**
