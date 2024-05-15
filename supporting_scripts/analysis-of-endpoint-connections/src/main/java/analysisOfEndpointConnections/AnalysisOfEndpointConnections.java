@@ -19,9 +19,7 @@ public class AnalysisOfEndpointConnections {
      * @param args List of files that should be analyzed regarding endpoints.
      */
     public static void main(String[] args) {
-        String[] serverFiles = Arrays.stream(args)
-            .filter(filePath -> new File(filePath).exists() && filePath.endsWith(".java"))
-            .toArray(String[]::new);
+        String[] serverFiles = Arrays.stream(args).filter(filePath -> new File(filePath).exists() && filePath.endsWith(".java")).toArray(String[]::new);
         analyzeServerEndpoints(serverFiles);
     }
 
