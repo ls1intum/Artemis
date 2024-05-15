@@ -9,6 +9,7 @@ import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { MockComponent } from 'ng-mocks';
 import { Subscription, of } from 'rxjs';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
+import { SimpleChanges } from '@angular/core';
 
 describe('ProgrammingExercisePlansAndRepositoriesPreviewComponent', () => {
     let component: ProgrammingExercisePlansAndRepositoriesPreviewComponent;
@@ -16,6 +17,18 @@ describe('ProgrammingExercisePlansAndRepositoriesPreviewComponent', () => {
     let programmingExerciseService: ProgrammingExerciseService;
 
     const CHECKOUT_DIRECTORY_PREVIEW = '#checkout-directory-preview';
+
+    const JAVA_CHECKOUT_DIRECTORIES: RepositoriesCheckoutDirectoriesDTO = {
+        exerciseCheckoutDirectory: '/assignment',
+        solutionCheckoutDirectory: '/assignment',
+        testCheckoutDirectory: '', // Empty string should be converted to '/'
+    };
+
+    const OCAML_CHECKOUT_DIRECTORIES: RepositoriesCheckoutDirectoriesDTO = {
+        exerciseCheckoutDirectory: '/assignment',
+        solutionCheckoutDirectory: '/solution',
+        testCheckoutDirectory: '/tests',
+    };
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -32,12 +45,13 @@ describe('ProgrammingExercisePlansAndRepositoriesPreviewComponent', () => {
                 component.programmingExercise = { id: 1, shortName: 'shortName' } as ProgrammingExercise;
                 component.isLocal = true;
 
-                const checkoutDirectories: RepositoriesCheckoutDirectoriesDTO = {
-                    solutionCheckoutDirectory: '/assignment',
-                    exerciseCheckoutDirectory: '/assignment',
-                    testCheckoutDirectory: '', // Empty string should be converted to '/'
-                };
-                jest.spyOn(programmingExerciseService, 'getCheckoutDirectoriesForProgrammingLanguage').mockReturnValue(of(checkoutDirectories));
+                jest.spyOn(programmingExerciseService, 'getCheckoutDirectoriesForProgrammingLanguage').mockImplementation((programmingLanguage: ProgrammingLanguage) => {
+                    if (programmingLanguage === ProgrammingLanguage.JAVA) {
+                        return of(JAVA_CHECKOUT_DIRECTORIES);
+                    }
+
+                    return of(OCAML_CHECKOUT_DIRECTORIES);
+                });
             });
     });
 
@@ -99,5 +113,20 @@ describe('ProgrammingExercisePlansAndRepositoriesPreviewComponent', () => {
         component.ngOnDestroy();
 
         expect(subscription.unsubscribe).toHaveBeenCalled();
+    });
+
+    it('should update checkout directories when selectedProgrammingLanguage changes', () => {
+        jest.spyOn(programmingExerciseService, 'getCheckoutDirectoriesForProgrammingLanguage');
+
+        component.ngOnChanges({
+            programmingExerciseCreationConfig: {
+                currentValue: { selectedProgrammingLanguage: ProgrammingLanguage.OCAML },
+                previousValue: { selectedProgrammingLanguage: ProgrammingLanguage.JAVA },
+            },
+        } as unknown as SimpleChanges);
+
+        // assertion to check if ngOnChanges was executed properly and updated the checkout directories
+        expect(programmingExerciseService.getCheckoutDirectoriesForProgrammingLanguage).toHaveBeenCalled();
+        expect(component.solutionCheckoutDirectory).toBe('/solution'); // was '/assignment' before with JAVA as programming language
     });
 });
