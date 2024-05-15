@@ -23,7 +23,7 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
     @Input() exercise: ProgrammingExercise;
     @Input() isExamMode: boolean;
     @Input() readOnly: boolean;
-    @Input() importOptions: ImportOptions | undefined;
+    @Input() importOptions?: ImportOptions;
 
     @ViewChildren(ProgrammingExerciseTestScheduleDatePickerComponent) datePickerComponents: QueryList<ProgrammingExerciseTestScheduleDatePickerComponent>;
 
@@ -103,9 +103,7 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
     ngOnDestroy() {
         this.datePickerChildrenSubscription?.unsubscribe();
         this.unsubscribeDateFieldSubscriptions();
-        if (this.urlSubscription) {
-            this.urlSubscription.unsubscribe();
-        }
+        this.urlSubscription?.unsubscribe();
     }
 
     calculateFormStatus() {
@@ -125,6 +123,12 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
     unsubscribeDateFieldSubscriptions() {
         for (const subscription of this.inputfieldSubscriptions) {
             subscription?.unsubscribe();
+        }
+    }
+
+    toggleSetTestCaseVisibilityToAfterDueDate() {
+        if (this.importOptions) {
+            this.importOptions.setTestCaseVisibilityToAfterDueDate = !this.importOptions.setTestCaseVisibilityToAfterDueDate;
         }
     }
 

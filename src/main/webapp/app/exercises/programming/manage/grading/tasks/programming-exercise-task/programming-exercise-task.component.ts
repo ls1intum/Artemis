@@ -83,7 +83,7 @@ export class ProgrammingExerciseTaskComponent implements OnInit {
         this.testCaseVisibilityList = Object.entries(Visibility).map(([name, value]) => {
             let displayName = name;
 
-            if (this.isExamExercise && value == Visibility.AfterDueDate) {
+            if (this.isExamExercise && value === Visibility.AfterDueDate) {
                 displayName = 'AfterReleaseDateOfResults';
             }
 
