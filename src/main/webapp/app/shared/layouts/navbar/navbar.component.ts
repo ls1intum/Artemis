@@ -383,6 +383,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         test_exam: 'artemisApp.courseOverview.menu.testExam',
         exercises: 'artemisApp.courseOverview.menu.exercises',
         lectures: 'artemisApp.courseOverview.menu.lectures',
+        dashboard: 'artemisApp.courseOverview.menu.dashboard',
         competencies: 'artemisApp.courseOverview.menu.competencies',
         learning_path: 'artemisApp.courseOverview.menu.learningPath',
         lecture_unit: 'artemisApp.learningPath.breadcrumbs.lectureUnit',

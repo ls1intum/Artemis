@@ -266,6 +266,10 @@ public class CourseResource {
                 throw new BadRequestAlertException("You are not allowed to change the access to restricted Athena modules of a course", Course.ENTITY_NAME,
                         "restrictedAthenaModulesAccessCannotChange", true);
             }
+            // instructors are not allowed to change the dashboard settings
+            if (existingCourse.getStudentCourseAnalyticsDashboardEnabled() != courseUpdate.getStudentCourseAnalyticsDashboardEnabled()) {
+                throw new BadRequestAlertException("You are not allowed to change the dashboard settings of a course", Course.ENTITY_NAME, "dashboardSettingsCannotChange", true);
+            }
         }
 
         if (courseUpdate.getPresentationScore() != null && courseUpdate.getPresentationScore() != 0) {
