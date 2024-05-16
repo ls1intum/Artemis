@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.programming;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.in.www1.artemis.repository.ProgrammingExerciseFetchOptions.GradingCriteria;
 
 import java.io.IOException;
 import java.net.URI;
@@ -45,17 +46,18 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
-import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.BuildLogStatisticsEntryRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.GradingCriterionRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseFetchOptions;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
+import de.tum.in.www1.artemis.repository.SolutionParticipationFetchOptions;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.TemplateParticipationFetchOptions;
 import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
@@ -87,7 +89,6 @@ import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSear
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
-import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import de.tum.in.www1.artemis.web.websocket.dto.ProgrammingExerciseTestCaseStateDTO;
 
@@ -471,7 +472,7 @@ public class ProgrammingExerciseResource {
     @GetMapping("programming-exercises/{exerciseId}/with-participations")
     @EnforceAtLeastEditor
     public ResponseEntity<ProgrammingExercise> getProgrammingExerciseWithSetupParticipations(@PathVariable long exerciseId) {
-        log.debug("REST request to get ProgrammingExercise : {}", exerciseId);
+        log.debug("REST request to get ProgrammingExercise with setup participations : {}", exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationLatestResultFeedbackTestCasesElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
@@ -498,30 +499,23 @@ public class ProgrammingExerciseResource {
             @RequestParam(defaultValue = "false") boolean withSubmissionResults, @RequestParam(defaultValue = "false") boolean withGradingCriteria) {
         log.debug("REST request to get programming exercise with template and solution participation : {}", exerciseId);
 
-        // TODO: Merge this with getProgrammingExerciseWithSetupParticipations? This is almost doing the same thing.
-
-        // 1. Load programming exercise with template and solution participation
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithAuxiliaryRepositoriesTeamAssignmentConfigAndGradingCriteriaElseThrow(exerciseId,
-                withGradingCriteria);
+        // 1. Load programming exercise, optionally with grading criteria
+        final Set<ProgrammingExerciseFetchOptions> fetchOptions = withGradingCriteria ? Set.of(GradingCriteria) : Set.of();
+        var programmingExercise = programmingExerciseRepository.findByIdWithDynamicFetchElseThrow(exerciseId, fetchOptions);
 
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
 
-        // 2. Load solution
-        Optional<SolutionProgrammingExerciseParticipation> solutionParticipation;
-        Optional<TemplateProgrammingExerciseParticipation> templateParticipation;
-        if (withSubmissionResults) {
-            solutionParticipation = solutionProgrammingExerciseParticipationRepository
-                    .findWithEagerSubmissionsAndSubmissionResultsByProgrammingExerciseId(programmingExercise.getId());
-            templateParticipation = templateProgrammingExerciseParticipationRepository
-                    .findWithEagerSubmissionsAndSubmissionResultsByProgrammingExerciseId(programmingExercise.getId());
-        }
-        else {
-            solutionParticipation = solutionProgrammingExerciseParticipationRepository.findWithEagerSubmissionsByProgrammingExerciseId(programmingExercise.getId());
-            templateParticipation = templateProgrammingExerciseParticipationRepository.findWithEagerSubmissionsByProgrammingExerciseId(programmingExercise.getId());
-        }
+        // 2. Load template and solution participation, either with only submissions or with submissions and results
+        final var templateFetchOptions = withSubmissionResults ? Set.of(TemplateParticipationFetchOptions.SubmissionsAndResults)
+                : Set.of(TemplateParticipationFetchOptions.Submissions);
+        final var templateParticipation = templateProgrammingExerciseParticipationRepository.findByExerciseIdWithDynamicFetchElseThrow(exerciseId, templateFetchOptions);
 
-        programmingExercise.setSolutionParticipation(solutionParticipation.orElseThrow(() -> new InternalServerErrorException("Solution Participation could not be loaded")));
-        programmingExercise.setTemplateParticipation(templateParticipation.orElseThrow(() -> new InternalServerErrorException("Template Participation could not be loaded")));
+        final var solutionFetchOptions = withSubmissionResults ? Set.of(SolutionParticipationFetchOptions.SubmissionsAndResults)
+                : Set.of(SolutionParticipationFetchOptions.Submissions);
+        final var solutionParticipation = solutionProgrammingExerciseParticipationRepository.findByExerciseIdWithDynamicFetchElseThrow(exerciseId, solutionFetchOptions);
+
+        programmingExercise.setSolutionParticipation(solutionParticipation);
+        programmingExercise.setTemplateParticipation(templateParticipation);
 
         programmingExerciseTaskService.replaceTestIdsWithNames(programmingExercise);
 

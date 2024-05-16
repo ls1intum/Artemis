@@ -6,6 +6,7 @@ import static de.tum.in.www1.artemis.config.Constants.TITLE_NAME_PATTERN;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -27,9 +28,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.DomainObject_;
-import de.tum.in.www1.artemis.domain.Exercise_;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise_;
 import de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
@@ -638,29 +637,21 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     }
 
     /**
-     * Finds a programming exercise by its id including the submissions for its solution and template participation.
+     * Finds a {@link ProgrammingExercise} by its ID with optional dynamic fetching of associated entities.
      *
-     * @param exerciseId          The id of the programming exercise.
-     * @param withGradingCriteria True, if the grading instructions of the exercise should be included as well.
-     * @return A programming exercise that has the given id.
-     * @throws EntityNotFoundException In case no exercise with the given id exists.
+     * @param exerciseId   the ID of the programming exercise to find.
+     * @param fetchOptions a collection of {@link ProgrammingExerciseFetchOptions} indicating which associated entities to fetch.
+     * @return the {@link ProgrammingExercise} with the specified ID and the associated entities fetched according to the provided options.
+     * @throws EntityNotFoundException if the programming exercise with the specified ID does not exist.
      */
     @NotNull
-    default ProgrammingExercise findByIdWithAuxiliaryRepositoriesTeamAssignmentConfigAndGradingCriteriaElseThrow(long exerciseId, boolean withGradingCriteria)
-            throws EntityNotFoundException {
-
+    default ProgrammingExercise findByIdWithDynamicFetchElseThrow(long exerciseId, Collection<ProgrammingExerciseFetchOptions> fetchOptions) throws EntityNotFoundException {
         final Specification<ProgrammingExercise> specification = (root, query, criteriaBuilder) -> {
-            root.fetch(Exercise_.CATEGORIES, JoinType.LEFT);
-            root.fetch(Exercise_.TEAM_ASSIGNMENT_CONFIG, JoinType.LEFT);
-            root.fetch(ProgrammingExercise_.AUXILIARY_REPOSITORIES, JoinType.LEFT);
-
-            if (withGradingCriteria) {
-                root.fetch(Exercise_.GRADING_CRITERIA, JoinType.LEFT);
+            for (var option : fetchOptions) {
+                root.fetch(option.getFetchPath(), JoinType.LEFT);
             }
-
             return null;
         };
-
         return findOneByIdElseThrow(specification, exerciseId);
     }
 
