@@ -7,7 +7,7 @@ import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageStateDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.tutorChat.PyrisTutorChatStatusUpdateDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.job.TutorChatJob;
-import de.tum.in.www1.artemis.service.iris.session.IrisChatSessionService;
+import de.tum.in.www1.artemis.service.iris.session.IrisTutorChatSessionService;
 
 @Service
 @Profile("iris")
@@ -15,21 +15,21 @@ public class PyrisStatusUpdateService {
 
     private final PyrisJobService pyrisJobService;
 
-    private final IrisChatSessionService irisChatSessionService;
+    private final IrisTutorChatSessionService irisTutorChatSessionService;
 
-    public PyrisStatusUpdateService(PyrisJobService pyrisJobService, IrisChatSessionService irisChatSessionService) {
+    public PyrisStatusUpdateService(PyrisJobService pyrisJobService, IrisTutorChatSessionService irisTutorChatSessionService) {
         this.pyrisJobService = pyrisJobService;
-        this.irisChatSessionService = irisChatSessionService;
+        this.irisTutorChatSessionService = irisTutorChatSessionService;
     }
 
     /**
-     * Handles the status update of a tutor chat job and forwards it to {@link IrisChatSessionService#handleStatusUpdate(TutorChatJob, PyrisTutorChatStatusUpdateDTO)}
+     * Handles the status update of a tutor chat job and forwards it to {@link IrisTutorChatSessionService#handleStatusUpdate(TutorChatJob, PyrisTutorChatStatusUpdateDTO)}
      *
      * @param job          the job that is updated
      * @param statusUpdate the status update
      */
     public void handleStatusUpdate(TutorChatJob job, PyrisTutorChatStatusUpdateDTO statusUpdate) {
-        irisChatSessionService.handleStatusUpdate(job, statusUpdate);
+        irisTutorChatSessionService.handleStatusUpdate(job, statusUpdate);
 
         var isDone = statusUpdate.stages().stream().map(PyrisStageDTO::state)
                 .allMatch(state -> state == PyrisStageStateDTO.DONE || state == PyrisStageStateDTO.ERROR || state == PyrisStageStateDTO.SKIPPED);

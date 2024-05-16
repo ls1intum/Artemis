@@ -138,7 +138,8 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
 
     @ExceptionHandler
     public ResponseEntity<Problem> handleBadRequest(BadRequestException exception, NativeWebRequest request) {
-        Problem problem = Problem.builder().withStatus(Status.BAD_REQUEST).with(MESSAGE_KEY, ErrorConstants.REQ_400_REASON).build();
+        Problem problem = Problem.builder().withStatus(Status.BAD_REQUEST).with(MESSAGE_KEY, StringUtils.firstNonBlank(exception.getMessage(), ErrorConstants.REQ_400_REASON))
+                .build();
         return create(exception, problem, request);
     }
 
