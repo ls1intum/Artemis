@@ -391,6 +391,16 @@ describe('ProgrammingExercise Service', () => {
         tick();
     }));
 
+    it('should export a student repository', fakeAsync(() => {
+        const exerciseId = 1;
+        const participationId = 5;
+        service.exportStudentRepository(exerciseId, participationId).subscribe();
+        const url = `${resourceUrl}/${exerciseId}/export-student-repository/${participationId}`;
+        const req = httpMock.expectOne({ method: 'GET', url });
+        req.flush(new Blob());
+        tick();
+    }));
+
     it('should check plagiarism report', fakeAsync(() => {
         const exerciseId = 1;
         service.checkPlagiarismJPlagReport(exerciseId).subscribe();
