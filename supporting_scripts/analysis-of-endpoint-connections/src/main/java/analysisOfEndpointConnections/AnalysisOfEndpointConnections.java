@@ -19,22 +19,12 @@ public class AnalysisOfEndpointConnections {
      * @param args List of files that should be analyzed regarding endpoints.
      */
     public static void main(String[] args) {
-        System.out.println("Working Directory = " + System.getProperty("user.dir"));
-
         if (args.length == 0) {
             System.out.println("No files to analyze.");
             return;
         }
-
         String[] filePaths = args[0].split("\n");
-
         String[] serverFiles = Arrays.stream(filePaths).map(filePath -> "../../" + filePath).filter(filePath -> new File(filePath).exists() && filePath.endsWith(".java")).toArray(String[]::new);
-
-        System.out.println(serverFiles.length + " server files found.");
-        for (int i = 0; i < serverFiles.length; i++) {
-            System.out.println("Server file " + i + ": " + serverFiles[i]);
-        }
-
         analyzeServerEndpoints(serverFiles);
     }
 
