@@ -46,14 +46,6 @@ export class CompetencyService {
             tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))),
         );
     }
-
-    getAllForCourseStudentDashboard(courseId: number): Observable<EntityArrayResponseType> {
-        return this.httpClient.get<Competency[]>(`${this.resourceURL}/courses/${courseId}/competencies/student-analytics-dashboard`, { observe: 'response' }).pipe(
-            map((res: EntityArrayResponseType) => CompetencyService.convertArrayResponseDatesFromServer(res)),
-            tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))),
-        );
-    }
-
     getProgress(competencyId: number, courseId: number, refresh = false) {
         let params = new HttpParams();
         params = params.set('refresh', refresh.toString());

@@ -401,44 +401,6 @@ public class CompetencyService {
     }
 
     /**
-     * Finds competencies within a course and fetches their lecture units, exercises and progress for the provided user.
-     * <p>
-     * As Spring Boot 3 doesn't support conditional JOIN FETCH statements, we have to retrieve the data manually.
-     *
-     * @param courseId The id of the course for which to fetch the competencies
-     * @param userId   The id of the user for which to fetch the progress
-     * @return The found competencies
-     */
-    public List<Competency> findCompetenciesWithExercisesAndLectureUnitsAndProgressForUserByCourseId(Long courseId, Long userId) {
-        List<Competency> competencies = competencyRepository.findAllWithLectureUnitsAndExercisesByCourseId(courseId);
-        var progress = competencyProgressRepository.findByCompetenciesAndUser(competencies, userId).stream()
-                .collect(Collectors.toMap(completion -> completion.getCompetency().getId(), completion -> completion));
-        // collect to map lecture unit id -> this
-        var completions = lectureUnitCompletionRepository
-                .findByLectureUnitsAndUserId(competencies.stream().flatMap(competency -> competency.getLectureUnits().stream()).collect(Collectors.toSet()), userId).stream()
-                .collect(Collectors.toMap(completion -> completion.getLectureUnit().getId(), completion -> completion));
-
-        competencies.forEach(competency -> {
-            if (progress.containsKey(competency.getId())) {
-                competency.setUserProgress(Set.of(progress.get(competency.getId())));
-            }
-            else {
-                competency.setUserProgress(Collections.emptySet());
-            }
-            competency.getLectureUnits().forEach(lectureUnit -> {
-                if (completions.containsKey(lectureUnit.getId())) {
-                    lectureUnit.setCompletedUsers(Set.of(completions.get(lectureUnit.getId())));
-                }
-                else {
-                    lectureUnit.setCompletedUsers(Collections.emptySet());
-                }
-            });
-        });
-
-        return competencies;
-    }
-
-    /**
      * Gets a new competency from an existing one (without relations).
      * <p>
      * The competency is not persisted.

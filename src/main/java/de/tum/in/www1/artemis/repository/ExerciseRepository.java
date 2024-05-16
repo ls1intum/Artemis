@@ -363,17 +363,6 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             """)
     Set<Long> findAllIdsByCourseId(@Param("courseId") Long courseId);
 
-    @Query("""
-            SELECT DISTINCT e
-            FROM Exercise e
-            WHERE e IN (
-                SELECT ex
-                FROM Exercise ex JOIN ex.competencies c
-                WHERE c.id IN :competencyIds
-            )
-            """)
-    Set<Exercise> findExercisesByCompetencyIds(@Param("competencyIds") Set<Long> competencyIds);
-
     @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.student", "studentParticipations.submissions" })
     Optional<Exercise> findWithEagerStudentParticipationsStudentAndSubmissionsById(Long exerciseId);
 
