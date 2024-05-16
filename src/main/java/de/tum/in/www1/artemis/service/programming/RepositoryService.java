@@ -43,7 +43,6 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -60,14 +59,11 @@ public class RepositoryService {
 
     private final ProfileService profileService;
 
-    private final ParticipationRepository participationRepository;
-
     private static final Logger log = LoggerFactory.getLogger(RepositoryService.class);
 
-    public RepositoryService(GitService gitService, ProfileService profileService, ParticipationRepository participationRepository) {
+    public RepositoryService(GitService gitService, ProfileService profileService) {
         this.gitService = gitService;
         this.profileService = profileService;
-        this.participationRepository = participationRepository;
     }
 
     /**
