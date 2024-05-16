@@ -125,59 +125,6 @@ public class ExamAccessService {
         return studentExam;
     }
 
-    // public StudentExam getExamInCourseElseThrow(Long courseId, Long examId) {
-    // User currentUser = userRepository.getUserWithGroupsAndAuthorities();
-    //
-    // // TODO: we should distinguish the whole method between test exam and real exam to improve the readability of the code
-    // // Check that the current user is at least student in the course.
-    // Course course = courseRepository.findByIdElseThrow(courseId);
-    // authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, currentUser);
-    // Exam exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
-    // StudentExam studentExam;
-    //
-    // if (exam.isTestExam()) {
-    // List<StudentExam> unsubmittedStudentExams = studentExamRepository.findUnsubmittedStudentExamsForTestExamsByExamIdAndUserId(examId, currentUser.getId());
-    // if (unsubmittedStudentExams.isEmpty()) {
-    // studentExam = studentExamService.generateTestExam(exam, currentUser);
-    // // For the start of the exam, the exercises are not needed. They are later loaded via StudentExamResource
-    // studentExam.setExercises(null);
-    // }
-    // else {
-    // studentExam = unsubmittedStudentExams.getFirst();
-    // }
-    // // Check that the current user is registered for the test exam. Otherwise, the student can self-register
-    // examRegistrationService.checkRegistrationOrRegisterStudentToTestExam(course, exam.getId(), currentUser);
-    //
-    // }
-    // else {
-    // // Check that the student exam exists
-    // Optional<StudentExam> optionalStudentExam = studentExamRepository.findByExamIdAndUserId(examId, currentUser.getId());
-    // if (optionalStudentExam.isPresent()) {
-    // studentExam = optionalStudentExam.get();
-    // }
-    // else {
-    // // We skip the alert since this can happen when a tutor sees the exam card or the user did not participate yet is registered for the exam
-    // throw new BadRequestAlertException("The requested Exam is no test exam and thus no student exam can be created", ENTITY_NAME,
-    // "StudentExamGenerationOnlyForTestExams", true);
-    // }
-    // }
-    //
-    // checkExamBelongsToCourseElseThrow(courseId, exam);
-    //
-    // if (!examId.equals(exam.getId())) {
-    // throw new BadRequestAlertException("The provided examId does not match with the examId of the studentExam", ENTITY_NAME, "examIdMismatch");
-    // }
-    //
-    // // Check that the exam is visible
-    // if (exam.getVisibleDate() != null && exam.getVisibleDate().isAfter(ZonedDateTime.now())) {
-    // throw new AccessForbiddenException(ENTITY_NAME, examId);
-    // }
-    //
-    // // NOTE: the check examRepository.isUserRegisteredForExam is not necessary because we already checked before that there is a student exam in this case for the current user
-    //
-    // return studentExam;
-    // }
-
     /**
      * Checks if the current user is allowed to manage exams of the given course.
      *
