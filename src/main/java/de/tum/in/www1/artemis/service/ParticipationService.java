@@ -142,12 +142,14 @@ public class ParticipationService {
         StudentParticipation participation;
         Optional<StudentParticipation> optionalStudentParticipation = Optional.empty();
 
-        // In case of a test exam we don't try find an existing participation, because students can participate multiple times
+        // In case of a test exam we don't try to find an existing participation, because students can participate multiple times
         // Instead, all previous participations are marked as finished and a new one is created
         if (exercise.isExamExercise() && exercise.getExamViaExerciseGroupOrCourseMember().isTestExam()) {
             List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdAndStudentId(exercise.getId(), participant.getId());
             participations.forEach(studentParticipation -> studentParticipation.setInitializationState(InitializationState.FINISHED));
             participation = createNewParticipation(exercise, participant);
+            participation.setNumberOfAttempts(participations.size());
+            participations.add(participation);
             studentParticipationRepository.saveAll(participations);
         }
 
@@ -221,6 +223,7 @@ public class ParticipationService {
         participation.setInitializationState(InitializationState.UNINITIALIZED);
         participation.setExercise(exercise);
         participation.setParticipant(participant);
+        participation.setNumberOfAttempts(0);
 
         return studentParticipationRepository.saveAndFlush(participation);
     }
@@ -638,11 +641,12 @@ public class ParticipationService {
             Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserLogin(exercise.getId(), username);
             return optionalTeam.flatMap(team -> studentParticipationRepository.findWithEagerLegalSubmissionsAndTeamStudentsByExerciseIdAndTeamId(exercise.getId(), team.getId()));
         }
+        // If exercise is a test exam exercise we load the last participation, since there are multiple participations
+        if (exercise.getExamViaExerciseGroupOrCourseMember().isTestExam()) {
+            return studentParticipationRepository.findLatestWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), username);
+        }
         return studentParticipationRepository.findWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), username);
-    }
 
-    public Optional<StudentParticipation> findLatestByExerciseAndStudentLoginWithEagerSubmissionsAnyState(Exercise exercise, String username) {
-        return studentParticipationRepository.findLatestWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), username);
     }
 
     /**
