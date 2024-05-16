@@ -26,24 +26,13 @@ public class AnalysisOfEndpointConnections {
             return;
         }
 
-        System.out.println("Number of files: " + args.length);
-        for (int i = 0; i < args.length; i++) {
-            System.out.println("File " + i + ": " + args[i]);
-        }
-
         String[] filePaths = args[0].split("\n");
 
         for (int i = 0; i < filePaths.length; i++) {
             filePaths[i] = "../../" + filePaths[i];
-            System.out.println("File path " + i + ": " + filePaths[i]);
-            System.out.println("File exists: " + new File(filePaths[i]).exists());
-            System.out.println("File is a Java file: " + filePaths[i].endsWith(".java"));
-            System.out.println("FilePathLength: " + filePaths[i].length());
-            System.out.println("FilePathLength-1: " + filePaths[i].charAt(filePaths[i].length() - 1));
-            System.out.println("---------------------------------------------");
         }
 
-        String[] serverFiles = Arrays.stream(filePaths).filter(filePath -> new File(filePath).exists() && filePath.endsWith(".java")).toArray(String[]::new);
+        String[] serverFiles = Arrays.stream(filePaths).map(filePath -> "../../" + filePath).filter(filePath -> new File(filePath).exists() && filePath.endsWith(".java")).toArray(String[]::new);
 
         System.out.println(serverFiles.length + " server files found.");
         for (int i = 0; i < serverFiles.length; i++) {
@@ -67,12 +56,18 @@ public class AnalysisOfEndpointConnections {
         Collection<JavaClass> classes = builder.getClasses();
         for (JavaClass javaClass : classes) {
             Optional<JavaAnnotation> requestMappingOptional = javaClass.getAnnotations().stream()
-                    .filter(annotation -> annotation.getType().getFullyQualifiedName().equals(requestMappingFullName)).findFirst();
+                .filter(annotation -> annotation.getType().getFullyQualifiedName().equals(requestMappingFullName)).findFirst();
 
-            System.out.println("==================================================");
-            System.out.println("Class: " + javaClass.getFullyQualifiedName());
-            requestMappingOptional.ifPresent(annotation -> System.out.println("Class Request Mapping: " + annotation.getProperty("value")));
-            System.out.println("==================================================");
+            boolean hasEndpoint = javaClass.getMethods().stream()
+                .flatMap(method -> method.getAnnotations().stream())
+                .anyMatch(annotation -> httpMethodFullNames.contains(annotation.getType().getFullyQualifiedName()));
+
+            if (hasEndpoint) {
+                System.out.println("==================================================");
+                System.out.println("Class: " + javaClass.getFullyQualifiedName());
+                requestMappingOptional.ifPresent(annotation -> System.out.println("Class Request Mapping: " + annotation.getProperty("value")));
+                System.out.println("==================================================");
+            }
 
             for (JavaMethod method : javaClass.getMethods()) {
                 for (JavaAnnotation annotation : method.getAnnotations()) {
