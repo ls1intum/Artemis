@@ -4,23 +4,20 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.persistence.DiscriminatorValue;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Transient;
+import jakarta.persistence.Column;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import de.tum.in.www1.artemis.domain.quiz.compare.DnDMapping;
 
 /**
  * A DragAndDropSubmittedAnswer.
  */
-@Entity
-@DiscriminatorValue(value = "DD")
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class DragAndDropSubmittedAnswer extends SubmittedAnswer {
 
-    @Transient
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "selection", columnDefinition = "json")
     private Set<DragAndDropMapping> mappings = new HashSet<>();
 
     public Set<DragAndDropMapping> getMappings() {

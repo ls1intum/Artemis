@@ -5,21 +5,18 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.persistence.DiscriminatorValue;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Transient;
+import jakarta.persistence.Column;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 /**
  * A MultipleChoiceSubmittedAnswer.
  */
-@Entity
-@DiscriminatorValue(value = "MC")
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class MultipleChoiceSubmittedAnswer extends SubmittedAnswer {
 
-    @Transient
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "selection", columnDefinition = "json")
     private Set<AnswerOption> selectedOptions = new HashSet<>();
 
     public Set<AnswerOption> getSelectedOptions() {
