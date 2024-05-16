@@ -85,12 +85,17 @@ export class CourseExamAttemptReviewDetailComponent implements OnInit, OnDestroy
     }
 
     /**
-     * navigate to /courses/:courseId/exams/:examId/test-exam/:studentExamId
+     * navigate to /courses/:courseId/exams/:examId/test-exam/:studentExamId if the attempt is either submitted or the time is up
+     * navigate to /courses/:courseId/exams/:examId/test-exam/start if the attempt can be continued
      * Used to open the corresponding studentExam
      */
     openStudentExam(): void {
-        if (this.studentExam.submitted || this.withinWorkingTime) {
-            this.router.navigate(['courses', this.courseId, 'exams', this.exam.id, 'test-exam', this.studentExam.id]);
+        // If exam is submitted or the time us up, navigate to the exam overview
+        // else navigate to the exam start page to continue the attempt
+        if (this.studentExam.submitted || !this.withinWorkingTime) {
+            this.router.navigate(['courses', this.courseId, 'exams', this.exam.id, 'test-exam', this.studentExam.id]); ///
+        } else {
+            this.router.navigate(['courses', this.courseId, 'exams', this.exam.id, 'test-exam', 'start']);
         }
     }
 }
