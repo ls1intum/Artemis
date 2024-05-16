@@ -18,7 +18,7 @@ if [ "$TEST_FRAMEWORK" = "playwright" ]; then
   elif [ "$CONFIGURATION" = "multi-node" ]; then
     COMPOSE_FILE="playwright-E2E-tests-multi-node.yml"
   else
-      echo "Invalid configuration. Please choose among mysql, postgres or mysql-localci."
+      echo "Invalid configuration. Please choose among mysql, postgres, mysql-localci or multi-node."
       exit 1
   fi
 else
