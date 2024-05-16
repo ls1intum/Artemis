@@ -32,6 +32,11 @@ public class AnalysisOfEndpointConnections {
 
         for (int i = 0; i < filePaths.length; i++) {
             System.out.println("File path " + i + ": " + filePaths[i]);
+            System.out.println("File exists: " + new File(filePaths[i]).exists());
+            System.out.println("File is a Java file: " + filePaths[i].endsWith(".java"));
+            System.out.println("FilePathLength: " + filePaths[i].length());
+            System.out.println("FilePathLength-1: " + filePaths[i].charAt(filePaths[i].length() - 1));
+            System.out.println("---------------------------------------------");
         }
 
         String[] serverFiles = Arrays.stream(filePaths).filter(filePath -> new File(filePath).exists() && filePath.endsWith(".java")).toArray(String[]::new);
