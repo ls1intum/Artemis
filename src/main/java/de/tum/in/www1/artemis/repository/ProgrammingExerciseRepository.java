@@ -645,6 +645,19 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * @throws EntityNotFoundException if the programming exercise with the specified ID does not exist.
      */
     @NotNull
+    default ProgrammingExercise findByIdWithDynamicFetchElseThrow(long exerciseId, ProgrammingExerciseFetchOptions... fetchOptions) throws EntityNotFoundException {
+        return findByIdWithDynamicFetchElseThrow(exerciseId, Set.of(fetchOptions));
+    }
+
+    /**
+     * Finds a {@link ProgrammingExercise} by its ID with optional dynamic fetching of associated entities.
+     *
+     * @param exerciseId   the ID of the programming exercise to find.
+     * @param fetchOptions a collection of {@link ProgrammingExerciseFetchOptions} indicating which associated entities to fetch.
+     * @return the {@link ProgrammingExercise} with the specified ID and the associated entities fetched according to the provided options.
+     * @throws EntityNotFoundException if the programming exercise with the specified ID does not exist.
+     */
+    @NotNull
     default ProgrammingExercise findByIdWithDynamicFetchElseThrow(long exerciseId, Collection<ProgrammingExerciseFetchOptions> fetchOptions) throws EntityNotFoundException {
         final Specification<ProgrammingExercise> specification = (root, query, criteriaBuilder) -> {
             for (var option : fetchOptions) {
