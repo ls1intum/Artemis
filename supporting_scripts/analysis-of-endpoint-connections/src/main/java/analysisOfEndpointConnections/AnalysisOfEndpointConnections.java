@@ -28,10 +28,6 @@ public class AnalysisOfEndpointConnections {
 
         String[] filePaths = args[0].split("\n");
 
-        for (int i = 0; i < filePaths.length; i++) {
-            filePaths[i] = "../../" + filePaths[i];
-        }
-
         String[] serverFiles = Arrays.stream(filePaths).map(filePath -> "../../" + filePath).filter(filePath -> new File(filePath).exists() && filePath.endsWith(".java")).toArray(String[]::new);
 
         System.out.println(serverFiles.length + " server files found.");
