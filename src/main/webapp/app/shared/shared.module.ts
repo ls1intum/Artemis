@@ -28,7 +28,6 @@ import { ConfirmEntityNameComponent } from 'app/shared/confirm-entity-name/confi
 import { DetailOverviewNavigationBarComponent } from 'app/shared/detail-overview-navigation-bar/detail-overview-navigation-bar.component';
 import { ScienceDirective } from 'app/shared/science/science.directive';
 import { SearchFilterComponent } from './search-filter/search-filter.component';
-import { StudentAnalyticsDashboardProgressBarComponent } from 'app/shared/progress-bar/student-analytics-dashboard-progress-bar.component';
 
 @NgModule({
     imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule, RouterModule],
@@ -58,7 +57,6 @@ import { StudentAnalyticsDashboardProgressBarComponent } from 'app/shared/progre
         StickyPopoverDirective,
         ScienceDirective,
         SearchFilterComponent,
-        StudentAnalyticsDashboardProgressBarComponent,
     ],
     exports: [
         ArtemisSharedLibsModule,
@@ -89,7 +87,6 @@ import { StudentAnalyticsDashboardProgressBarComponent } from 'app/shared/progre
         StickyPopoverDirective,
         ScienceDirective,
         SearchFilterComponent,
-        StudentAnalyticsDashboardProgressBarComponent,
     ],
 })
 export class ArtemisSharedModule {}
