@@ -76,6 +76,11 @@
                                         </a>
                                     }
                                 </div>
+                                <div>
+                                    <span>
+                                        Checkout Directory: <code>{{ 'test' }}</code>
+                                    </span>
+                                </div>
                             } @else {
                                 <ng-container *ngTemplateOutlet="noData" />
                             }
@@ -103,8 +108,8 @@
                                             }
                                             <div class="auxiliaryRepositoryDescription">
                                                 @if (auxiliaryRepository.checkoutDirectory) {
-                                                    <span
-                                                        >Checkout Directory: <code>{{ auxiliaryRepository.checkoutDirectory }}</code>
+                                                    <span>
+                                                        Checkout Directory: <code>{{ auxiliaryRepository.checkoutDirectory }}</code>
                                                     </span>
                                                 } @else {
                                                     <fa-icon [icon]="faExclamationTriangle" class="text-warning me-1" [ngbTooltip]="noCheckoutDirectorySetTooltip" />

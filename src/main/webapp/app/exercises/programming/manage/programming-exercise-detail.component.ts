@@ -341,6 +341,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         exerciseId: exercise.id,
                         type: 'TEMPLATE',
                         showOpenLink: !this.localVCEnabled,
+                        checkoutDirectory: this.localVCEnabled ? 'test' : undefined,
                     },
                 },
                 {
@@ -351,6 +352,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         exerciseId: exercise.id,
                         type: 'SOLUTION',
                         showOpenLink: !this.localVCEnabled,
+                        checkoutDirectory: this.localVCEnabled ? 'test' : undefined,
                     },
                 },
                 {
@@ -361,6 +363,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         exerciseId: exercise.id,
                         type: 'TESTS',
                         showOpenLink: !this.localVCEnabled,
+                        checkoutDirectory: this.localVCEnabled ? 'test' : undefined,
                     },
                 },
                 this.supportsAuxiliaryRepositories &&
