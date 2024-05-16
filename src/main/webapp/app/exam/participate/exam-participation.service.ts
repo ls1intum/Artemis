@@ -28,6 +28,7 @@ interface ExamState {
     testRunId?: number;
     studentExamId?: number;
     exam?: Exam;
+    testExam?: boolean;
     studentExam?: StudentExam;
     exercises?: Exercise[];
     accountName: string;

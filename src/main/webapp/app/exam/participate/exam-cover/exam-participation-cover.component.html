@@ -1,4 +1,4 @@
-<div class="px-3 py-3 scrollable-content content-height-dev">
+<div class="px-3 py-3 scrollable-content" [ngClass]="{ 'content-height-dev': !isProduction || isTestServer }">
     @if (exam) {
         @if (isVisible() && !isGracePeriodOver() && !studentExam?.submitted) {
             <div class="w-100 d-flex">

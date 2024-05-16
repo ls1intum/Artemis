@@ -18,11 +18,12 @@ import { Subscription } from 'rxjs';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { ExamLiveEventType, ExamParticipationLiveEventsService, WorkingTimeUpdateEvent } from 'app/exam/participate/exam-participation-live-events.service';
 import { faGraduationCap } from '@fortawesome/free-solid-svg-icons';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 @Component({
     selector: 'jhi-exam-participation-cover',
     templateUrl: './exam-participation-cover.component.html',
-    styleUrls: ['./exam-participation-cover.scss'],
+    styleUrls: ['./exam-participation-cover.scss', '../../../overview/course-overview.scss'],
 })
 export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
     handInEarly: boolean;
@@ -75,6 +76,10 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
 
     faGraduationCap = faGraduationCap;
 
+    profileSubscription?: Subscription;
+    isProduction = true;
+    isTestServer = false;
+
     constructor(
         private courseService: CourseManagementService,
         private artemisMarkdown: ArtemisMarkdownService,
@@ -86,6 +91,7 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
         private router: Router,
         private courseStorageService: CourseStorageService,
         private liveEventsService: ExamParticipationLiveEventsService,
+        private profileService: ProfileService,
     ) {}
 
     ngOnInit(): void {
@@ -127,9 +133,14 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
                         this.studentExam = studentExam;
                         this.studentExam.exam!.course = new Course();
                         this.studentExam.exam!.course.id = this.courseId;
+                        this.examParticipationService.setExamState({ studentExam: this.studentExam });
                         this.exam = studentExam.exam!;
+                        this.examParticipationService.setExamState({ exam: this.exam });
                         this.testExam = this.exam.testExam!;
+                        this.examParticipationService.setExamState({ testExam: this.testExam });
                         this.loadingExam = false;
+                        this.testRun = studentExam.testRun;
+                        this.examParticipationService.setExamState({ testRun: this.testRun });
                         // :examId/test-runs/:testRunId/conduction/participation
                         //this.router.navigate(['course-management', this.courseId, 'exams', this.examId, 'test-runs', this.testRunId, 'conduction', 'participation']);
                     },
@@ -156,7 +167,16 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
             }
         });
 
+        this.profileSubscription = this.profileService.getProfileInfo()?.subscribe((profileInfo) => {
+            this.isProduction = profileInfo?.inProduction;
+            this.isTestServer = profileInfo.testServer ?? false;
+        });
+
         this.generateInformationForHtml();
+        // this.testRun = this.studentExam.testRun;
+        // this.testExam = this.exam.testExam;
+        // this.examParticipationService.setExamState({ testExam: this.testExam });
+        // this.examParticipationService.setExamState({ testRun: this.testRun });
     }
 
     generateInformationForHtml() {
@@ -234,7 +254,10 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
             this.examParticipationService.saveStudentExamToLocalStorage(this.exam.course!.id!, this.exam.id!, this.studentExam);
             // this.onExamStarted.emit(this.studentExam);
             this.examParticipationService.emitExamStarted(this.studentExam);
-            this.router.navigate(['courses', this.courseId, 'exams', this.examId, 'participation']);
+            this.examParticipationService.setExamState({ exercises: this.studentExam.exercises! });
+            //this.router.navigate(['courses', this.courseId, 'exams', this.examId, 'participation']);
+            console.log('geldi buraya');
+            this.router.navigate(['course-management', this.courseId, 'exams', this.examId, 'test-runs', this.testRunId, 'conduction', 'participation']);
         } else {
             this.examParticipationService.loadStudentExamWithExercisesForConduction(this.courseId, this.examId, this.studentExam.id!).subscribe((studentExam: StudentExam) => {
                 this.studentExam = studentExam;

@@ -379,7 +379,6 @@ export const examManagementRoute: Routes = [
             pageTitle: 'artemisApp.exam.title',
         },
         canActivate: [UserRouteAccessService],
-        canDeactivate: [PendingChangesGuard],
     },
     {
         path: ':examId/test-runs/:testRunId/conduction/participation',
