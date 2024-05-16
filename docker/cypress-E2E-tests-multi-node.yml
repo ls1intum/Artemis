@@ -31,6 +31,15 @@ services:
   artemis-app-node-2:
     <<: *artemis-app-base
     container_name: artemis-app-node-2
+    depends_on:
+      mysql:
+        condition: service_healthy
+      jhipster-registry:
+        condition: service_healthy
+      activemq-broker:
+        condition: service_healthy
+      artemis-app-node-1:
+        condition: service_healthy
     env_file:
       - ./artemis/config/prod-multinode.env
       - ./artemis/config/node2.env
@@ -39,6 +48,15 @@ services:
   artemis-app-node-3:
     <<: *artemis-app-base
     container_name: artemis-app-node-3
+    depends_on:
+      mysql:
+        condition: service_healthy
+      jhipster-registry:
+        condition: service_healthy
+      activemq-broker:
+        condition: service_healthy
+      artemis-app-node-1:
+        condition: service_healthy
     env_file:
       - ./artemis/config/prod-multinode.env
       - ./artemis/config/node3.env
