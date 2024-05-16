@@ -41,6 +41,9 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 @RequestMapping("api/")
 public class TutorialGroupFreePeriodResource {
 
+    // testChange
+    int i = 0;
+
     private static final String ENTITY_NAME = "tutorialGroupFreePeriod";
 
     private static final Logger log = LoggerFactory.getLogger(TutorialGroupFreePeriodResource.class);
