@@ -35,6 +35,11 @@ public class AnalysisOfEndpointConnections {
         }
 
         String[] serverFiles = Arrays.stream(filePaths).filter(filePath -> new File(filePath).exists() && filePath.endsWith(".java")).toArray(String[]::new);
+
+        for (int i = 0; i < serverFiles.length; i++) {
+            System.out.println("Server file " + i + ": " + serverFiles[i]);
+        }
+
         analyzeServerEndpoints(serverFiles);
     }
 
