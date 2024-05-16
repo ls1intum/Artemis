@@ -1,12 +1,11 @@
-import dayjs from 'dayjs/esm';
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { faFilePdf, faList } from '@fortawesome/free-solid-svg-icons';
 import { CompetencyProgress, getConfidence, getIcon, getMastery, getProgress } from 'app/entities/competency.model';
-import { Exercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { Router } from '@angular/router';
 import { ICompetencyAccordionToggleEvent } from 'app/shared/competency/interfaces/competency-accordion-toggle-event.interface';
 import { CompetencyInformation, StudentMetrics } from 'app/entities/student-metrics.model';
+import { round } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-competency-accordion',
@@ -14,30 +13,23 @@ import { CompetencyInformation, StudentMetrics } from 'app/entities/student-metr
     styleUrl: './competency-accordion.component.scss',
 })
 export class CompetencyAccordionComponent implements OnChanges {
-    @Input()
-    course?: Course;
-    @Input()
-    competency: CompetencyInformation;
-    @Input()
-    metrics: StudentMetrics;
-    @Input()
-    index: number;
-    @Input()
-    openedIndex: number | null = null;
+    @Input() course?: Course;
+    @Input() competency: CompetencyInformation;
+    @Input() metrics: StudentMetrics;
+    @Input() index: number;
+    @Input() openedIndex?: number;
 
-    @Output()
-    accordionToggle = new EventEmitter<ICompetencyAccordionToggleEvent>();
-
-    faList = faList;
-    faPdf = faFilePdf;
+    @Output() accordionToggle = new EventEmitter<ICompetencyAccordionToggleEvent>();
 
     open = false;
-    remainingExercises: Exercise[] = [];
 
-    getIcon = getIcon;
-    getProgress = getProgress;
-    getConfidence = getConfidence;
-    getMastery = getMastery;
+    protected readonly faList = faList;
+    protected readonly faPdf = faFilePdf;
+    protected readonly getIcon = getIcon;
+    protected readonly getProgress = getProgress;
+    protected readonly getConfidence = getConfidence;
+    protected readonly getMastery = getMastery;
+    protected readonly round = round;
 
     constructor(private router: Router) {}
 
@@ -95,17 +87,6 @@ export class CompetencyAccordionComponent implements OnChanges {
             progress: this.progress,
             confidence: this.confidence,
         } as CompetencyProgress;
-    }
-
-    get competencySoftDueDayPassed() {
-        return this.competency?.softDueDate && dayjs().isAfter(this.competency.softDueDate);
-    }
-
-    isExerciseDueDayPassed(exercise: Exercise): boolean {
-        if (!exercise.dueDate) {
-            return false;
-        }
-        return exercise.dueDate && dayjs().isAfter(exercise.dueDate);
     }
 
     navigateToCompetencyDetailPage(event: Event) {

@@ -10,7 +10,9 @@
                 },
                 "exercises": "Exercises",
                 "lectures": "Lectures",
-                "progress": "Progress: {{progress}}%"
+                "progress": "Progress: {{ progress }}%",
+                "lectureProgress": "Lecture Progress: {{ progress }}%",
+                "exerciseProgress": "Exercise Progress: {{ progress }}%"
             },
             "button": {
                 "showLearningPath": "Show Learning Path",

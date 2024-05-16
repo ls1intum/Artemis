@@ -36,7 +36,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     private metricsSubscription?: Subscription;
 
     public competencies: CompetencyInformation[] = [];
-    public openedAccordionIndex: number | null = null;
+    public openedAccordionIndex?: number;
 
     public course?: Course;
 
@@ -174,11 +174,13 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     }
 
     handleToggle(event: ICompetencyAccordionToggleEvent) {
-        this.openedAccordionIndex = event.opened ? event.index : null;
+        this.openedAccordionIndex = event.opened ? event.index : undefined;
     }
+
     get learningPathsEnabled() {
         return this.course?.learningPathsEnabled || false;
     }
+
     navigateToLearningPaths() {
         this.router.navigate(['courses', this.courseId, 'learning-path']);
     }
