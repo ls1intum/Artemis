@@ -104,7 +104,14 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     checkoutDirectories?: RepositoriesCheckoutDirectoriesDTO;
 
-    programmingExerciseServiceSubscription: Subscription;
+    private checkoutDirectoriesSubscription: Subscription;
+    private activatedRouteSubscription: Subscription;
+    private templateAndSolutionParticipationSubscription: Subscription;
+    private profileInfoSubscription: Subscription;
+    private irisSettingsSubscription: Subscription;
+    private submissionPolicySubscription: Subscription;
+    private buildLogsSubscription: Subscription;
+    private exerciseStatisticsSubscription: Subscription;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -152,7 +159,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.checkBuildPlanEditable();
 
-        this.activatedRoute.data.subscribe(({ programmingExercise }) => {
+        this.activatedRouteSubscription = this.activatedRoute.data.subscribe(({ programmingExercise }) => {
             this.programmingExercise = programmingExercise;
             this.competencies = programmingExercise.competencies;
             const exerciseId = this.programmingExercise.id!;
@@ -175,76 +182,89 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     `/exercise-groups/${this.programmingExercise.exerciseGroup?.id}/exercises/${this.programmingExercise.exerciseGroup?.exam?.id}/`;
             }
 
-            this.programmingExerciseService.findWithTemplateAndSolutionParticipationAndLatestResults(programmingExercise.id!).subscribe((updatedProgrammingExercise) => {
-                this.programmingExercise = updatedProgrammingExercise.body!;
+            this.templateAndSolutionParticipationSubscription = this.programmingExerciseService
+                .findWithTemplateAndSolutionParticipationAndLatestResults(programmingExercise.id!)
+                .subscribe((updatedProgrammingExercise) => {
+                    this.programmingExercise = updatedProgrammingExercise.body!;
 
-                this.setLatestCoveredLineRatio();
-                this.loadingTemplateParticipationResults = false;
-                this.loadingSolutionParticipationResults = false;
-                this.profileService.getProfileInfo().subscribe(async (profileInfo) => {
-                    if (profileInfo) {
-                        if (this.programmingExercise.projectKey && this.programmingExercise.templateParticipation && this.programmingExercise.templateParticipation.buildPlanId) {
-                            this.programmingExercise.templateParticipation.buildPlanUrl = createBuildPlanUrl(
-                                profileInfo.buildPlanURLTemplate,
-                                this.programmingExercise.projectKey,
-                                this.programmingExercise.templateParticipation.buildPlanId,
-                            );
+                    this.setLatestCoveredLineRatio();
+                    this.loadingTemplateParticipationResults = false;
+                    this.loadingSolutionParticipationResults = false;
+                    this.profileInfoSubscription = this.profileService.getProfileInfo().subscribe(async (profileInfo) => {
+                        if (profileInfo) {
+                            if (
+                                this.programmingExercise.projectKey &&
+                                this.programmingExercise.templateParticipation &&
+                                this.programmingExercise.templateParticipation.buildPlanId
+                            ) {
+                                this.programmingExercise.templateParticipation.buildPlanUrl = createBuildPlanUrl(
+                                    profileInfo.buildPlanURLTemplate,
+                                    this.programmingExercise.projectKey,
+                                    this.programmingExercise.templateParticipation.buildPlanId,
+                                );
+                            }
+                            if (
+                                this.programmingExercise.projectKey &&
+                                this.programmingExercise.solutionParticipation &&
+                                this.programmingExercise.solutionParticipation.buildPlanId
+                            ) {
+                                this.programmingExercise.solutionParticipation.buildPlanUrl = createBuildPlanUrl(
+                                    profileInfo.buildPlanURLTemplate,
+                                    this.programmingExercise.projectKey,
+                                    this.programmingExercise.solutionParticipation.buildPlanId,
+                                );
+                            }
+                            this.supportsAuxiliaryRepositories =
+                                this.programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage).auxiliaryRepositoriesSupported ??
+                                false;
+                            this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
+                            this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
+                            if (this.irisEnabled) {
+                                this.irisSettingsSubscription = this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
+                                    this.irisChatEnabled = settings?.irisChatSettings?.enabled ?? false;
+                                    this.exerciseDetailSections = this.getExerciseDetails();
+                                });
+                            }
                         }
-                        if (this.programmingExercise.projectKey && this.programmingExercise.solutionParticipation && this.programmingExercise.solutionParticipation.buildPlanId) {
-                            this.programmingExercise.solutionParticipation.buildPlanUrl = createBuildPlanUrl(
-                                profileInfo.buildPlanURLTemplate,
-                                this.programmingExercise.projectKey,
-                                this.programmingExercise.solutionParticipation.buildPlanId,
-                            );
-                        }
-                        this.supportsAuxiliaryRepositories =
-                            this.programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage).auxiliaryRepositoriesSupported ?? false;
-                        this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
-                        this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
-                        if (this.irisEnabled) {
-                            this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
-                                this.irisChatEnabled = settings?.irisChatSettings?.enabled ?? false;
-                                this.exerciseDetailSections = this.getExerciseDetails();
-                            });
-                        }
+                        this.exerciseDetailSections = this.getExerciseDetails();
+                    });
+
+                    this.submissionPolicySubscription = this.programmingExerciseSubmissionPolicyService
+                        .getSubmissionPolicyOfProgrammingExercise(exerciseId!)
+                        .subscribe((submissionPolicy) => {
+                            this.programmingExercise.submissionPolicy = submissionPolicy;
+                            this.exerciseDetailSections = this.getExerciseDetails();
+                        });
+
+                    this.loadGitDiffReport();
+
+                    // the build logs endpoint requires at least editor privileges
+                    if (this.programmingExercise.isAtLeastEditor) {
+                        this.buildLogsSubscription = this.programmingExerciseService
+                            .getBuildLogStatistics(exerciseId!)
+                            .subscribe((buildLogStatistics) => (this.programmingExercise.buildLogStatistics = buildLogStatistics));
+                        this.exerciseDetailSections = this.getExerciseDetails();
                     }
+
+                    this.setLatestCoveredLineRatio();
+
+                    this.checkAndAlertInconsistencies();
+
+                    this.plagiarismCheckSupported = this.programmingLanguageFeatureService.getProgrammingLanguageFeature(
+                        programmingExercise.programmingLanguage,
+                    ).plagiarismCheckSupported;
                     this.exerciseDetailSections = this.getExerciseDetails();
                 });
-
-                this.programmingExerciseSubmissionPolicyService.getSubmissionPolicyOfProgrammingExercise(exerciseId!).subscribe((submissionPolicy) => {
-                    this.programmingExercise.submissionPolicy = submissionPolicy;
-                    this.exerciseDetailSections = this.getExerciseDetails();
-                });
-
-                this.loadGitDiffReport();
-
-                // the build logs endpoint requires at least editor privileges
-                if (this.programmingExercise.isAtLeastEditor) {
-                    this.programmingExerciseService
-                        .getBuildLogStatistics(exerciseId!)
-                        .subscribe((buildLogStatistics) => (this.programmingExercise.buildLogStatistics = buildLogStatistics));
-                    this.exerciseDetailSections = this.getExerciseDetails();
-                }
-
-                this.setLatestCoveredLineRatio();
-
-                this.checkAndAlertInconsistencies();
-
-                this.plagiarismCheckSupported = this.programmingLanguageFeatureService.getProgrammingLanguageFeature(
-                    programmingExercise.programmingLanguage,
-                ).plagiarismCheckSupported;
-                this.exerciseDetailSections = this.getExerciseDetails();
-            });
 
             if (this.programmingExercise.programmingLanguage) {
-                this.programmingExerciseServiceSubscription = this.programmingExerciseService
+                this.checkoutDirectoriesSubscription = this.programmingExerciseService
                     .getCheckoutDirectoriesForProgrammingLanguage(this.programmingExercise.programmingLanguage)
                     .subscribe((checkoutDirectories) => {
                         this.checkoutDirectories = checkoutDirectories;
                     });
             }
 
-            this.statisticsService.getExerciseStatistics(exerciseId!).subscribe((statistics: ExerciseManagementStatisticsDto) => {
+            this.exerciseStatisticsSubscription = this.statisticsService.getExerciseStatistics(exerciseId!).subscribe((statistics: ExerciseManagementStatisticsDto) => {
                 this.doughnutStats = statistics;
             });
         });
@@ -252,7 +272,14 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     ngOnDestroy(): void {
         this.dialogErrorSource.unsubscribe();
-        this.programmingExerciseServiceSubscription?.unsubscribe();
+        this.checkoutDirectoriesSubscription?.unsubscribe();
+        this.activatedRouteSubscription?.unsubscribe();
+        this.templateAndSolutionParticipationSubscription?.unsubscribe();
+        this.profileInfoSubscription?.unsubscribe();
+        this.irisSettingsSubscription?.unsubscribe();
+        this.submissionPolicySubscription?.unsubscribe();
+        this.buildLogsSubscription?.unsubscribe();
+        this.exerciseStatisticsSubscription?.unsubscribe();
     }
 
     getExerciseDetails(): DetailOverviewSection[] {
