@@ -77,9 +77,8 @@
                                     }
                                 </div>
                                 <div>
-                                    <span>
-                                        Checkout Directory: <code>{{ detail.data.checkoutDirectory }}</code>
-                                    </span>
+                                    <span jhiTranslate="artemisApp.programmingExercise.checkoutDirectory"></span>:
+                                    <code>{{ detail.data.checkoutDirectory }}</code>
                                 </div>
                             } @else {
                                 <ng-container *ngTemplateOutlet="noData" />
@@ -108,9 +107,8 @@
                                             }
                                             <div class="auxiliaryRepositoryDescription">
                                                 @if (auxiliaryRepository.checkoutDirectory) {
-                                                    <span>
-                                                        Checkout Directory: <code>{{ auxiliaryRepository.checkoutDirectory }}</code>
-                                                    </span>
+                                                    <span jhiTranslate="artemisApp.programmingExercise.checkoutDirectory"></span>:
+                                                    <code>{{ auxiliaryRepository.checkoutDirectory }}</code>
                                                 } @else {
                                                     <fa-icon [icon]="faExclamationTriangle" class="text-warning me-1" [ngbTooltip]="noCheckoutDirectorySetTooltip" />
                                                     <span jhiTranslate="artemisApp.programmingExercise.noCheckoutDirectorySet"></span>
