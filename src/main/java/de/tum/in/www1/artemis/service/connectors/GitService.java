@@ -1252,6 +1252,7 @@ public class GitService {
             return repository;
         }
         catch (IOException | InvalidRefNameException e) {
+            log.error("Could not create the bare repository with uri {}", repositoryUri, e);
             throw new GitException("Could not create the bare repository", e);
         }
     }
