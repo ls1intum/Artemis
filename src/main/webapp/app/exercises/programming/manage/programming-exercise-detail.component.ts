@@ -56,6 +56,7 @@ import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-setting
 import { Detail } from 'app/detail-overview-list/detail.model';
 import { Competency } from 'app/entities/competency.model';
 import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';
+import { RepositoriesCheckoutDirectoriesDTO } from 'app/exercises/programming/manage/repositories-checkout-directories-dto';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -100,6 +101,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     isBuildPlanEditable = false;
 
     plagiarismCheckSupported = false; // default value
+
+    checkoutDirectories?: RepositoriesCheckoutDirectoriesDTO;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -231,6 +234,12 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 this.exerciseDetailSections = this.getExerciseDetails();
             });
 
+            if (this.programmingExercise.programmingLanguage) {
+                this.programmingExerciseService.getCheckoutDirectoriesForProgrammingLanguage(this.programmingExercise.programmingLanguage).subscribe((checkoutDirectories) => {
+                    this.checkoutDirectories = checkoutDirectories;
+                });
+            }
+
             this.statisticsService.getExerciseStatistics(exerciseId!).subscribe((statistics: ExerciseManagementStatisticsDto) => {
                 this.doughnutStats = statistics;
             });
@@ -341,7 +350,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         exerciseId: exercise.id,
                         type: 'TEMPLATE',
                         showOpenLink: !this.localVCEnabled,
-                        checkoutDirectory: this.localVCEnabled ? 'test' : undefined,
+                        checkoutDirectory: this.localVCEnabled ? this.checkoutDirectories?.exerciseCheckoutDirectory : undefined,
                     },
                 },
                 {
@@ -352,7 +361,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         exerciseId: exercise.id,
                         type: 'SOLUTION',
                         showOpenLink: !this.localVCEnabled,
-                        checkoutDirectory: this.localVCEnabled ? 'test' : undefined,
+                        checkoutDirectory: this.localVCEnabled ? this.checkoutDirectories?.solutionCheckoutDirectory : undefined,
                     },
                 },
                 {
@@ -363,7 +372,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         exerciseId: exercise.id,
                         type: 'TESTS',
                         showOpenLink: !this.localVCEnabled,
-                        checkoutDirectory: this.localVCEnabled ? 'test' : undefined,
+                        checkoutDirectory: this.localVCEnabled ? this.checkoutDirectories?.testCheckoutDirectory : undefined,
                     },
                 },
                 this.supportsAuxiliaryRepositories &&
