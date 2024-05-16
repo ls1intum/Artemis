@@ -19,6 +19,8 @@ public class AnalysisOfEndpointConnections {
      * @param args List of files that should be analyzed regarding endpoints.
      */
     public static void main(String[] args) {
+        System.out.println("Working Directory = " + System.getProperty("user.dir"));
+
         if (args.length == 0) {
             System.out.println("No files to analyze.");
             return;

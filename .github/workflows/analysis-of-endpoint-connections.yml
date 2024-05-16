@@ -36,5 +36,5 @@ jobs:
 
       - name: Run analysis-of-endpoint-connections
         run: |
-          cd ${{ github.workspace }}
+          cat modified_files.txt
           ./gradlew :supporting_scripts:analysis-of-endpoint-connections:run --args="$(cat modified_files.txt)"
