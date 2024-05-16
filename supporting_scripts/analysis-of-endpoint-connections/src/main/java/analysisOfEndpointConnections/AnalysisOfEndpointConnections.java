@@ -24,7 +24,8 @@ public class AnalysisOfEndpointConnections {
             return;
         }
         String[] filePaths = args[0].split("\n");
-        String[] serverFiles = Arrays.stream(filePaths).map(filePath -> "../../" + filePath).filter(filePath -> new File(filePath).exists() && filePath.endsWith(".java")).toArray(String[]::new);
+        String[] serverFiles = Arrays.stream(filePaths).map(filePath -> "../../" + filePath).filter(filePath -> new File(filePath).exists() && filePath.endsWith(".java"))
+                .toArray(String[]::new);
         analyzeServerEndpoints(serverFiles);
     }
 
@@ -42,11 +43,10 @@ public class AnalysisOfEndpointConnections {
         Collection<JavaClass> classes = builder.getClasses();
         for (JavaClass javaClass : classes) {
             Optional<JavaAnnotation> requestMappingOptional = javaClass.getAnnotations().stream()
-                .filter(annotation -> annotation.getType().getFullyQualifiedName().equals(requestMappingFullName)).findFirst();
+                    .filter(annotation -> annotation.getType().getFullyQualifiedName().equals(requestMappingFullName)).findFirst();
 
-            boolean hasEndpoint = javaClass.getMethods().stream()
-                .flatMap(method -> method.getAnnotations().stream())
-                .anyMatch(annotation -> httpMethodFullNames.contains(annotation.getType().getFullyQualifiedName()));
+            boolean hasEndpoint = javaClass.getMethods().stream().flatMap(method -> method.getAnnotations().stream())
+                    .anyMatch(annotation -> httpMethodFullNames.contains(annotation.getType().getFullyQualifiedName()));
 
             if (hasEndpoint) {
                 System.out.println("==================================================");

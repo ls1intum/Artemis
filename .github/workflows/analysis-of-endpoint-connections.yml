@@ -28,11 +28,6 @@ jobs:
         with:
           java-version: '21'
           distribution: 'adopt'
-#
-#      - name: Build analysis-of-endpoint-connections
-#        run: |
-#          ./gradlew :supporting_scripts:analysis-of-endpoint-connections:build --warning-mode all
-#          ./gradlew :supporting_scripts:analysis-of-endpoint-connections:shadowJar --warning-mode all
 
       - name: Run analysis-of-endpoint-connections
         run: |
