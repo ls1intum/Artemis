@@ -24,6 +24,7 @@ public class AnalysisOfEndpointConnections {
             return;
         }
 
+        System.out.println("Number of files: " + args.length);
         for (int i = 0; i < args.length; i++) {
             System.out.println("File " + i + ": " + args[i]);
         }
