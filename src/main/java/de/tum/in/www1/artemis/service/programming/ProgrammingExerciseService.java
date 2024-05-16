@@ -3,7 +3,8 @@ package de.tum.in.www1.artemis.service.programming;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
-import static de.tum.in.www1.artemis.repository.ProgrammingExerciseFetchOptions.GradingCriteria;
+import static de.tum.in.www1.artemis.repository.fetchOptions.ProgrammingExerciseFetchOptions.AuxiliaryRepositories;
+import static de.tum.in.www1.artemis.repository.fetchOptions.ProgrammingExerciseFetchOptions.GradingCriteria;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -56,15 +57,15 @@ import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExercisePa
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseFetchOptions;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.SolutionParticipationFetchOptions;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
-import de.tum.in.www1.artemis.repository.TemplateParticipationFetchOptions;
 import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.fetchOptions.ProgrammingExerciseFetchOptions;
+import de.tum.in.www1.artemis.repository.fetchOptions.SolutionParticipationFetchOptions;
+import de.tum.in.www1.artemis.repository.fetchOptions.TemplateParticipationFetchOptions;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseGitDiffReportRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
@@ -947,9 +948,21 @@ public class ProgrammingExerciseService {
         programmingExerciseStudentParticipationRepository.unsetBuildPlanIdForExercise(programmingExercise.getId());
     }
 
+    /**
+     * Load a programming exercise with eager
+     * - auxiliary repositories
+     * - template participation with submissions (and results if withSubmissionResults is true)
+     * - solution participation with submissions (and results if withSubmissionResults is true)
+     * - grading criteria (only if withGradingCriteria is true)
+     *
+     * @param exerciseId            the ID of the programming exercise to load
+     * @param withSubmissionResults a flag indicating whether to include submission results
+     * @param withGradingCriteria   a flag indicating whether to include grading criteria
+     * @return the loaded programming exercise entity
+     */
     public ProgrammingExercise loadProgrammingExercise(long exerciseId, boolean withSubmissionResults, boolean withGradingCriteria) {
         // 1. Load programming exercise, optionally with grading criteria
-        final Set<ProgrammingExerciseFetchOptions> fetchOptions = withGradingCriteria ? Set.of(GradingCriteria) : Set.of();
+        final Set<ProgrammingExerciseFetchOptions> fetchOptions = withGradingCriteria ? Set.of(GradingCriteria, AuxiliaryRepositories) : Set.of(AuxiliaryRepositories);
         var programmingExercise = programmingExerciseRepository.findByIdWithDynamicFetchElseThrow(exerciseId, fetchOptions);
 
         // 2. Load template and solution participation, either with only submissions or with submissions and results

@@ -17,7 +17,12 @@ import org.springframework.data.jpa.repository.support.JpaEntityInformationSuppo
 import org.springframework.data.jpa.repository.support.SimpleJpaRepository;
 import org.springframework.util.Assert;
 
+import de.tum.in.www1.artemis.domain.DomainObject_;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+
 public class RepositoryImpl<T, ID extends Serializable> extends SimpleJpaRepository<T, ID> {
+
+    private final JpaEntityInformation<T, ?> entityInformation;
 
     private final EntityManager em;
 
@@ -29,6 +34,7 @@ public class RepositoryImpl<T, ID extends Serializable> extends SimpleJpaReposit
      */
     public RepositoryImpl(JpaEntityInformation<T, ?> entityInformation, EntityManager entityManager) {
         super(entityInformation, entityManager);
+        this.entityInformation = entityInformation;
         this.em = entityManager;
     }
 
@@ -40,6 +46,18 @@ public class RepositoryImpl<T, ID extends Serializable> extends SimpleJpaReposit
      */
     public RepositoryImpl(Class<T> domainClass, EntityManager entityManager) {
         this(JpaEntityInformationSupport.getEntityInformation(domainClass, entityManager), entityManager);
+    }
+
+    /**
+     * Find an entity by its id or throw an EntityNotFoundException if it does not exist.
+     *
+     * @param specification
+     * @param id
+     * @return
+     */
+    public T findOneByIdElseThrow(final Specification<T> specification, long id) {
+        final Specification<T> hasIdSpec = (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get(DomainObject_.ID), id);
+        return findOne(specification.and(hasIdSpec)).orElseThrow(() -> new EntityNotFoundException(entityInformation.getEntityName(), id));
     }
 
     /**

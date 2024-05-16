@@ -1,9 +1,13 @@
-package de.tum.in.www1.artemis.repository;
+package de.tum.in.www1.artemis.repository.fetchOptions;
 
 import de.tum.in.www1.artemis.domain.Exercise_;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise_;
 
-public enum ProgrammingExerciseFetchOptions {
+/**
+ * Fetch options for the {@link de.tum.in.www1.artemis.domain.ProgrammingExercise} entity.
+ * Each option specifies an entity or a collection of entities to fetch eagerly when using a dynamic fetching query.
+ */
+public enum ProgrammingExerciseFetchOptions implements FetchOptions {
 
     // @formatter:off
     Categories(Exercise_.CATEGORIES),

@@ -6,7 +6,6 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 import java.util.Collection;
 import java.util.Optional;
 
-import jakarta.persistence.criteria.JoinType;
 import jakarta.validation.constraints.NotNull;
 
 import org.springframework.context.annotation.Profile;
@@ -21,6 +20,7 @@ import org.springframework.stereotype.Repository;
 import de.tum.in.www1.artemis.domain.DomainObject_;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation_;
+import de.tum.in.www1.artemis.repository.fetchOptions.SolutionParticipationFetchOptions;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -28,8 +28,8 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface SolutionProgrammingExerciseParticipationRepository
-        extends JpaRepository<SolutionProgrammingExerciseParticipation, Long>, JpaSpecificationExecutor<SolutionProgrammingExerciseParticipation> {
+public interface SolutionProgrammingExerciseParticipationRepository extends JpaRepository<SolutionProgrammingExerciseParticipation, Long>,
+        JpaSpecificationExecutor<SolutionProgrammingExerciseParticipation>, DynamicSpecificationRepository<SolutionProgrammingExerciseParticipation> {
 
     @Query("""
             SELECT p
@@ -73,22 +73,7 @@ public interface SolutionProgrammingExerciseParticipationRepository
     @NotNull
     default SolutionProgrammingExerciseParticipation findByExerciseIdWithDynamicFetchElseThrow(long exerciseId, Collection<SolutionParticipationFetchOptions> fetchOptions)
             throws EntityNotFoundException {
-
-        final Specification<SolutionProgrammingExerciseParticipation> specification = (root, query, criteriaBuilder) -> {
-            for (var option : fetchOptions) {
-                if (option == SolutionParticipationFetchOptions.SubmissionsAndResults) {
-                    // Handle nested fetch
-                    var fetchPath = option.getFetchPath().split("\\.");
-                    var submissionsFetch = root.fetch(fetchPath[0], JoinType.LEFT);
-                    submissionsFetch.fetch(fetchPath[1], JoinType.LEFT);
-                }
-                else {
-                    root.fetch(option.getFetchPath(), JoinType.LEFT);
-                }
-            }
-            return null;
-        };
-
+        var specification = getDynamicSpecification(fetchOptions);
         return findByExerciseIdElseThrow(specification, exerciseId);
     }
 

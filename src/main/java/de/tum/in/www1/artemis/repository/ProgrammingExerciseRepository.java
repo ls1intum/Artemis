@@ -13,12 +13,10 @@ import java.util.Set;
 import java.util.regex.Matcher;
 
 import jakarta.annotation.Nullable;
-import jakarta.persistence.criteria.JoinType;
 import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.Hibernate;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -27,13 +25,13 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.DomainObject_;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.repository.fetchOptions.ProgrammingExerciseFetchOptions;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -42,12 +40,8 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface ProgrammingExerciseRepository extends JpaRepository<ProgrammingExercise, Long>, JpaSpecificationExecutor<ProgrammingExercise> {
-
-    default ProgrammingExercise findOneByIdElseThrow(final Specification<ProgrammingExercise> specification, long exerciseId) {
-        final Specification<ProgrammingExercise> hasIdSpec = (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get(DomainObject_.ID), exerciseId);
-        return findOne(specification.and(hasIdSpec)).orElseThrow(() -> new EntityNotFoundException("Programming Exercise", exerciseId));
-    }
+public interface ProgrammingExerciseRepository
+        extends JpaRepository<ProgrammingExercise, Long>, JpaSpecificationExecutor<ProgrammingExercise>, DynamicSpecificationRepository<ProgrammingExercise> {
 
     /**
      * Does a max join on the result table for each participation by result id (the newer the result id, the newer the result).
@@ -659,12 +653,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      */
     @NotNull
     default ProgrammingExercise findByIdWithDynamicFetchElseThrow(long exerciseId, Collection<ProgrammingExerciseFetchOptions> fetchOptions) throws EntityNotFoundException {
-        final Specification<ProgrammingExercise> specification = (root, query, criteriaBuilder) -> {
-            for (var option : fetchOptions) {
-                root.fetch(option.getFetchPath(), JoinType.LEFT);
-            }
-            return null;
-        };
+        var specification = getDynamicSpecification(fetchOptions);
         return findOneByIdElseThrow(specification, exerciseId);
     }
 
