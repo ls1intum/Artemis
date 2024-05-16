@@ -26,6 +26,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     maxPoints: number = 0;
     isLoading = false;
     hasExercises = false;
+    hasCompetencies = false;
     exerciseLateness?: ExerciseLateness[];
     exercisePerformance?: ExercisePerformance[];
     studentMetrics?: StudentMetrics;
@@ -33,7 +34,6 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     private paramSubscription?: Subscription;
     private courseUpdatesSubscription?: Subscription;
     private metricsSubscription?: Subscription;
-    private subscriptions: Subscription[] = [];
 
     public competencies: CompetencyInformation[] = [];
     public openedAccordionIndex: number | null = null;
@@ -68,7 +68,6 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
         this.paramSubscription?.unsubscribe();
         this.courseUpdatesSubscription?.unsubscribe();
         this.metricsSubscription?.unsubscribe();
-        this.subscriptions.forEach((subscription) => subscription.unsubscribe());
     }
 
     /**
@@ -101,6 +100,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
                             const bDate = b.softDueDate ? new Date(b.softDueDate).getTime() : 0;
                             return aDate - bDate;
                         });
+                        this.hasCompetencies = this.competencies.length > 0;
                     }
                 }
                 this.isLoading = false;

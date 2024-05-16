@@ -15,8 +15,8 @@
     } @else {
         <div jhiTranslate="artemisApp.courseStudentDashboard.noMetrics"></div>
     }
-    <div class="competency-accordion-container justify-content-center align-items-center w-100">
-        @if (competencies.length > 0) {
+    @if (!isLoading && this.hasExercises) {
+        <div class="competency-accordion-container justify-content-center align-items-center w-100">
             <div class="competency-accordion-header">
                 <h2 jhiTranslate="artemisApp.studentAnalyticsDashboard.competencyAccordion.title"></h2>
             </div>
@@ -35,10 +35,10 @@
                     }
                 }
             </div>
-        } @else {
-            <h3 jhiTranslate="artemisApp.studentAnalyticsDashboard.competencyAccordion.noData"></h3>
-        }
-    </div>
+        </div>
+    } @else {
+        <div jhiTranslate="artemisApp.studentAnalyticsDashboard.competencyAccordion.noData"></div>
+    }
     @if (learningPathsEnabled) {
         <div class="competency-accordion-container row justify-content-center w-100" [jhiFeatureToggleHide]="FeatureToggle.LearningPaths">
             <button class="btn btn-primary mt-2" (click)="navigateToLearningPaths()" jhiTranslate="artemisApp.studentAnalyticsDashboard.button.showLearningPath"></button>
