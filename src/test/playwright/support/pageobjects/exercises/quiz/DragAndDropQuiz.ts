@@ -57,9 +57,8 @@ export class DragAndDropQuiz {
 
     async activateInteractiveMode() {
         const modelingEditorSidebar = this.page.locator('#modeling-editor-sidebar');
-        const container = modelingEditorSidebar.locator('div').nth(0);
-        const interactiveButton = container.locator('button').nth(1);
-        await interactiveButton.click();
+        const modeDropdownList = modelingEditorSidebar.locator('.dropdown').locator('select');
+        await modeDropdownList.selectOption('Exporting');
     }
 
     async markElementAsInteractive(nthElementOnCanvas: number, nthChildOfElement: number) {

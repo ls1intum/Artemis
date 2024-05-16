@@ -19,6 +19,7 @@ import { ArtemisProgrammingExerciseModule } from 'app/exercises/programming/shar
 import { CommitHistoryComponent } from 'app/localvc/commit-history/commit-history.component';
 import { CommitDetailsViewComponent } from 'app/localvc/commit-details-view/commit-details-view.component';
 import { GitDiffReportModule } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report.module';
+import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programming/shared/actions/programming-exercise-actions.module';
 
 @NgModule({
     imports: [
@@ -39,6 +40,7 @@ import { GitDiffReportModule } from 'app/exercises/programming/hestia/git-diff-r
         SubmissionResultStatusModule,
         ArtemisProgrammingExerciseModule,
         GitDiffReportModule,
+        ArtemisProgrammingExerciseActionsModule,
     ],
     declarations: [RepositoryViewComponent, CommitHistoryComponent, CommitDetailsViewComponent],
     exports: [RepositoryViewComponent],
