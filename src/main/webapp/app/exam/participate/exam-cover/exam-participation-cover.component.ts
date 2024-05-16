@@ -130,6 +130,8 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
                         this.exam = studentExam.exam!;
                         this.testExam = this.exam.testExam!;
                         this.loadingExam = false;
+                        // :examId/test-runs/:testRunId/conduction/participation
+                        //this.router.navigate(['course-management', this.courseId, 'exams', this.examId, 'test-runs', this.testRunId, 'conduction', 'participation']);
                     },
                     error: () => (this.loadingExam = false),
                 });
@@ -444,14 +446,14 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
         }
         let individualStudentEndDate;
         if (this.exam?.testExam) {
-            if (!this.studentExam.submitted && this.studentExam.started && this.studentExam.startedDate) {
-                individualStudentEndDate = dayjs(this.studentExam.startedDate).add(this.studentExam.workingTime!, 'seconds');
+            if (!this.studentExam?.submitted && this.studentExam?.started && this.studentExam?.startedDate) {
+                individualStudentEndDate = dayjs(this.studentExam?.startedDate).add(this.studentExam?.workingTime!, 'seconds');
             } else {
                 return false;
             }
         } else {
-            individualStudentEndDate = dayjs(this.exam?.startDate).add(this.studentExam.workingTime!, 'seconds');
+            individualStudentEndDate = dayjs(this.exam?.startDate).add(this.studentExam?.workingTime!, 'seconds');
         }
-        return individualStudentEndDate.add(this.exam?.gracePeriod!, 'seconds').isBefore(this.serverDateService.now()) && !this.studentExam.submitted;
+        return individualStudentEndDate.add(this.exam?.gracePeriod!, 'seconds').isBefore(this.serverDateService.now()) && !this.studentExam?.submitted;
     }
 }

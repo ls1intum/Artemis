@@ -1,6 +1,6 @@
-@if (exam) {
-    @if (isVisible() && !isGracePeriodOver() && !studentExam?.submitted) {
-        <div class="px-3 pt-3 scrollable-content content-height-dev">
+<div class="px-3 py-3 scrollable-content content-height-dev">
+    @if (exam) {
+        @if (isVisible() && !isGracePeriodOver() && !studentExam?.submitted) {
             <div class="w-100 d-flex">
                 <div class="col-md-3">
                     <jhi-exam-live-events-button />
@@ -106,19 +106,24 @@
                     }
                 }
             </div>
+        }
+    }
+
+    @if (studentFailedToSubmit) {
+        <div class="d-flex align-items-center justify-content-between">
+            <h2 style="font-weight: normal">
+                {{ exam.title }}
+            </h2>
+        </div>
+        <div class="mt-2 font-weight-bold text-danger">
+            {{ 'artemisApp.studentExam.submissionNotInTime' | artemisTranslate }}
         </div>
     }
-}
 
-@if (studentFailedToSubmit) {
-    <div class="mb-2 font-weight-bold text-danger">
-        {{ 'artemisApp.studentExam.submissionNotInTime' | artemisTranslate }}
-    </div>
-}
-
-@if (showExamSummary) {
-    <jhi-exam-participation-summary [studentExam]="studentExam" />
-}
+    @if (showExamSummary) {
+        <jhi-exam-participation-summary [studentExam]="studentExam" />
+    }
+</div>
 
 @if (!loadingExam && !exam) {
     @if (isAtLeastTutor && !testRunId) {
