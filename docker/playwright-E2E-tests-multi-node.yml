@@ -13,6 +13,7 @@ services:
     restart: always
     user: 0:0
     depends_on:
+      &depends-on-base
       mysql:
         condition: service_healthy
       jhipster-registry:
@@ -31,12 +32,7 @@ services:
     <<: *artemis-app-base
     container_name: artemis-app-node-2
     depends_on:
-      mysql:
-        condition: service_healthy
-      jhipster-registry:
-        condition: service_healthy
-      activemq-broker:
-        condition: service_healthy
+      <<: *depends-on-base
       artemis-app-node-1:
         condition: service_healthy
     env_file:
@@ -48,12 +44,7 @@ services:
     <<: *artemis-app-base
     container_name: artemis-app-node-3
     depends_on:
-      mysql:
-        condition: service_healthy
-      jhipster-registry:
-        condition: service_healthy
-      activemq-broker:
-        condition: service_healthy
+      <<: *depends-on-base
       artemis-app-node-1:
         condition: service_healthy
     env_file:
