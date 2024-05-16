@@ -96,4 +96,22 @@ public interface ExerciseMetricsRepository extends JpaRepository<Exercise, Long>
                 )
             """)
     Set<ResourceTimestampDTO> findLatestSubmissionDates(@Param("exerciseIds") Set<Long> exerciseIds);
+
+    /**
+     * Get the ids of the completed exercises for a user in a set of exercises.
+     *
+     * @param userId      the id of the user
+     * @param exerciseIds the ids of the exercises
+     * @return the ids of the completed exercises for the user in the exercises
+     */
+    @Query("""
+            SELECT e.id
+            FROM Exercise e
+            LEFT JOIN e.studentParticipations p
+            LEFT JOIN e.teams t
+            LEFT JOIN t.students u
+            WHERE e.id IN :exerciseIds
+                AND (p.student.id = :userId OR u.id = :userId)
+            """)
+    Set<Long> findAllCompletedExerciseIdsForUserByExerciseIds(@Param("userId") long userId, @Param("exerciseIds") Set<Long> exerciseIds);
 }

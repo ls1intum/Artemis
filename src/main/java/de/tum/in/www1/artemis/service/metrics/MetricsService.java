@@ -94,7 +94,9 @@ public class MetricsService {
         final var latestSubmissionOfUser = exerciseMetricsRepository.findLatestSubmissionDatesForUser(exerciseIds, userId);
         final var latestSubmissionMap = latestSubmissionOfUser.stream().collect(toMap(ResourceTimestampDTO::id, relativeTime::applyAsDouble));
 
-        return new ExerciseStudentMetricsDTO(exerciseInfoMap, averageScoreMap, scoreMap, averageLatestSubmissionMap, latestSubmissionMap);
+        final var completedExerciseIds = exerciseMetricsRepository.findAllCompletedExerciseIdsForUserByExerciseIds(userId, exerciseIds);
+
+        return new ExerciseStudentMetricsDTO(exerciseInfoMap, averageScoreMap, scoreMap, averageLatestSubmissionMap, latestSubmissionMap, completedExerciseIds);
     }
 
     /**
