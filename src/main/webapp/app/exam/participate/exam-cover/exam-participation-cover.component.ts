@@ -29,7 +29,7 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
     handInPossible: boolean;
     submitInProgress: boolean;
     attendanceChecked: boolean;
-    examStartConfirmed = false;
+    //examStartConfirmed = false;
 
     course?: Course;
     startEnabled: boolean;
@@ -95,7 +95,7 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
         });
 
         this.examParticipationService.examState$.subscribe((state) => {
-            this.examStartConfirmed = state.examStartConfirmed;
+            //this.examStartConfirmed = state.examStartConfirmed;
             this.handInEarly = state.handInEarly;
             this.handInPossible = state.handInPossible;
             this.submitInProgress = state.submitInProgress;
@@ -145,7 +145,7 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
             }
         });
 
-        this.isAttendanceChecked = this.exam?.testExam || !this.exam?.examWithAttendanceCheck || this.attendanceChecked;
+        //this.isAttendanceChecked = this.exam?.testExam || !this.exam?.examWithAttendanceCheck || this.attendanceChecked;
 
         this.accountService.identity().then((user) => {
             if (user && user.name) {

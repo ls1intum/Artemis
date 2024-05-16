@@ -168,11 +168,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      */
     ngOnInit(): void {
         this.examParticipationService.examState$.subscribe((state) => {
-            this.examStartConfirmed = state.examStartConfirmed;
             this.handInEarly = state.handInEarly;
             this.handInPossible = state.handInPossible;
             this.submitInProgress = state.submitInProgress;
-            this.attendanceChecked = state.attendanceChecked;
+            //this.attendanceChecked = state.attendanceChecked;
             this.courseId = state.courseId!;
             this.examId = state.examId!;
             this.testRunId = state.testRunId!;
@@ -310,8 +309,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             });
             this.initializeOverviewPage();
         }
-        //this.examStartConfirmed = true;
-        this.examParticipationService.setExamState({ examStartConfirmed: true });
+        this.examStartConfirmed = true;
         this.startAutoSaveTimer();
     }
 
@@ -462,8 +460,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         } else {
             this.examManagementService.isAttendanceChecked(this.courseId, this.examId).subscribe((res) => {
                 if (res.body) {
-                    this.attendanceChecked = res.body;
-                    this.examParticipationService.setExamState({ attendanceChecked: res.body });
+                    this.attendanceChecked = this.exam?.testExam || !this.exam?.examWithAttendanceCheck || res.body;
+                    //this.examParticipationService.setExamState({ attendanceChecked: res.body });
                 }
                 this.handleHandInEarly();
             });

@@ -19,7 +19,6 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 export type ButtonTooltipType = 'submitted' | 'submittedSubmissionLimitReached' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted';
 
 interface ExamState {
-    examStartConfirmed: boolean;
     handInEarly: boolean;
     handInPossible: boolean;
     submitInProgress: boolean;
@@ -45,7 +44,6 @@ export class ExamParticipationService {
     examStarted$ = this.examStartedSource.asObservable();
 
     private initialState: ExamState = {
-        examStartConfirmed: false,
         handInEarly: false,
         handInPossible: true,
         submitInProgress: false,
