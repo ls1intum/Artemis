@@ -13,10 +13,19 @@ import org.springframework.stereotype.Repository;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.LectureUnitInformationDTO;
 
+/**
+ * Spring Data JPA repository to fetch lecture unit related metrics.
+ */
 @Profile(PROFILE_CORE)
 @Repository
 public interface LectureUnitMetricsRepository extends JpaRepository<LectureUnit, Long> {
 
+    /**
+     * Get the lecture unit information for all lecture units in a course.
+     *
+     * @param courseId the id of the course
+     * @return the lecture unit information for all lecture units in the course
+     */
     @Query("""
             SELECT new de.tum.in.www1.artemis.web.rest.dto.metrics.LectureUnitInformationDTO(lu.id, lu.name, lu.releaseDate, TYPE(lu))
             FROM LectureUnit lu
@@ -24,6 +33,13 @@ public interface LectureUnitMetricsRepository extends JpaRepository<LectureUnit,
             """)
     Set<LectureUnitInformationDTO> findAllLectureUnitInformationByCourseId(@Param("courseId") long courseId);
 
+    /**
+     * Get the ids of the completed lecture units for a user for a set of lecture units.
+     *
+     * @param userId         the id of the user
+     * @param lectureUnitIds the ids of the lecture units
+     * @return the ids of the completed lecture units for the user
+     */
     @Query("""
             SELECT luc.lectureUnit.id
             FROM LectureUnitCompletion luc

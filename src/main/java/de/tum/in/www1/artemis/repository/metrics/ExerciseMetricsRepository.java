@@ -35,6 +35,12 @@ public interface ExerciseMetricsRepository extends JpaRepository<Exercise, Long>
             """)
     Set<ExerciseInformationDTO> findAllExerciseInformationByCourseId(@Param("courseId") long courseId);
 
+    /**
+     * Get the average score for a set of exercises.
+     *
+     * @param exerciseIds the ids of the exercises
+     * @return the average score for each exercise
+     */
     @Query("""
             SELECT new de.tum.in.www1.artemis.web.rest.dto.metrics.ScoreDTO(p.exercise.id, AVG(COALESCE(p.lastScore, 0)))
             FROM ParticipantScore p
@@ -43,6 +49,13 @@ public interface ExerciseMetricsRepository extends JpaRepository<Exercise, Long>
             """)
     Set<ScoreDTO> findAverageScore(@Param("exerciseIds") Set<Long> exerciseIds);
 
+    /**
+     * Get the score for a user in a set of exercises.
+     *
+     * @param exerciseIds the ids of the exercises
+     * @param userId      the id of the user
+     * @return the score for the user in each exercise
+     */
     @Query("""
             SELECT new de.tum.in.www1.artemis.web.rest.dto.metrics.ScoreDTO(s.exercise.id, CAST(COALESCE(s.lastRatedScore, s.lastScore, 0) AS DOUBLE))
             FROM StudentScore s
