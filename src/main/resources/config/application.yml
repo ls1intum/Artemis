@@ -197,9 +197,9 @@ spring:
     messages:
         basename: i18n/messages
     main:
-        allow-bean-definition-overriding: true
-        lazy-initialization: false
-        allow-circular-references: true # TODO: we should deactivate this in the future, however currently securityConfiguration has a circular dependency to itself
+        allow-bean-definition-overriding: false
+        lazy-initialization: true
+        allow-circular-references: false
     task:
         execution:
             thread-name-prefix: artemis-task-

@@ -129,8 +129,8 @@ spring:
     mail:
         host: localhost
     main:
-        allow-bean-definition-overriding: true
-        allow-circular-references: true # TODO: we should deactivate this in the future, however currently securityConfiguration has a circular dependency to itself
+        allow-bean-definition-overriding: false
+        allow-circular-references: false
     messages:
         basename: i18n/messages
         cache-duration: PT1S # 1 second, see the ISO 8601 standard
