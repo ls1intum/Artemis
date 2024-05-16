@@ -12,6 +12,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.CompetencyInformationDTO;
+import de.tum.in.www1.artemis.web.rest.dto.metrics.CompetencyProgressDTO;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.MapEntryDTO;
 
 @Profile(PROFILE_CORE)
@@ -19,7 +20,7 @@ import de.tum.in.www1.artemis.web.rest.dto.metrics.MapEntryDTO;
 public interface CompetencyMetricsRepository extends JpaRepository<Competency, Long> {
 
     @Query("""
-            SELECT new de.tum.in.www1.artemis.web.rest.dto.metrics.CompetencyInformationDTO(c.id, c.title, c.description, c.taxonomy, c.softDueDate, c.optional)
+            SELECT new de.tum.in.www1.artemis.web.rest.dto.metrics.CompetencyInformationDTO(c.id, c.title, c.description, c.taxonomy, c.softDueDate, c.optional, c.masteryThreshold)
             FROM Competency c
             WHERE c.course.id = :courseId
             """)
@@ -40,4 +41,13 @@ public interface CompetencyMetricsRepository extends JpaRepository<Competency, L
             WHERE c.id IN :competencyIds
             """)
     Set<MapEntryDTO> findAllLectureUnitIdsByCompetencyIds(@Param("competencyIds") Set<Long> competencyIds);
+
+    @Query("""
+            SELECT new de.tum.in.www1.artemis.web.rest.dto.metrics.CompetencyProgressDTO(c.id, cp.progress, cp.confidence)
+            FROM CompetencyProgress cp
+            JOIN cp.competency c
+            WHERE cp.user.id = :userId
+            AND c.id IN :competencyIds
+            """)
+    Set<CompetencyProgressDTO> findAllCompetencyProgressForUserByCompetencyIds(@Param("userId") long userId, @Param("competencyIds") Set<Long> competencyIds);
 }

@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.repository.metrics.CompetencyMetricsRepository;
 import de.tum.in.www1.artemis.repository.metrics.ExerciseMetricsRepository;
 import de.tum.in.www1.artemis.repository.metrics.LectureUnitMetricsRepository;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.CompetencyInformationDTO;
+import de.tum.in.www1.artemis.web.rest.dto.metrics.CompetencyProgressDTO;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.CompetencyStudentMetricsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.ExerciseInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.ExerciseStudentMetricsDTO;
@@ -129,6 +130,10 @@ public class MetricsService {
         final var competencyLectureUnitMapEntries = competencyMetricsRepository.findAllLectureUnitIdsByCompetencyIds(competencyIds);
         final var lectureUnitMap = competencyLectureUnitMapEntries.stream().collect(groupingBy(MapEntryDTO::key, mapping(MapEntryDTO::value, toSet())));
 
-        return new CompetencyStudentMetricsDTO(competencyInfoMap, exerciseMap, lectureUnitMap);
+        final var competencyProgress = competencyMetricsRepository.findAllCompetencyProgressForUserByCompetencyIds(userId, competencyIds);
+        final var competencyProgressMap = competencyProgress.stream().collect(toMap(CompetencyProgressDTO::competencyId, CompetencyProgressDTO::progress));
+        final var competencyConfidenceMap = competencyProgress.stream().collect(toMap(CompetencyProgressDTO::competencyId, CompetencyProgressDTO::confidence));
+
+        return new CompetencyStudentMetricsDTO(competencyInfoMap, exerciseMap, lectureUnitMap, competencyProgressMap, competencyConfidenceMap);
     }
 }
