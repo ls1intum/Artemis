@@ -49,8 +49,11 @@ public class BuildScriptProviderService {
     }
 
     /**
-     * Loads all scripts from the resources/templates/aeolus directory into the cache
-     * The windfiles are ignored, since they are only used for the windfile and are cached in {@link AeolusTemplateService}
+     * Loads all scripts from the resources/templates/aeolus directory into the cache.
+     *
+     * <p>
+     * Windfiles are ignored since they are only used for the windfile and are cached in {@link AeolusTemplateService}.
+     * Each script is read, processed, and stored in the {@code scriptCache}. Errors during loading are logged.
      */
     @EventListener(ApplicationReadyEvent.class)
     public void cacheOnBoot() {

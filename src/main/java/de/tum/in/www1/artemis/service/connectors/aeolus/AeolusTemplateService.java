@@ -53,6 +53,12 @@ public class AeolusTemplateService {
         this.buildScriptProviderService = buildScriptProviderService;
     }
 
+    /**
+     * Loads all YAML scripts from the "templates/aeolus" directory into the cache when the application is ready.
+     *
+     * <p>
+     * Scripts are read, processed, and stored in the {@code templateCache}. Errors during loading are logged.
+     */
     @EventListener(ApplicationReadyEvent.class)
     public void cacheOnBoot() {
         // load all scripts into the cache

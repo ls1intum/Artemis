@@ -177,6 +177,33 @@ public class MetricsBean {
         this.localCIBuildJobQueueService = localCIBuildJobQueueService;
     }
 
+    /**
+     * Event listener method that is invoked when the application is ready. It registers various health and metric
+     * contributors, and conditionally enables metrics based on active profiles.
+     *
+     * <p>
+     * Specifically, this method performs the following actions:
+     * <ul>
+     * <li>Registers health contributors.</li>
+     * <li>Registers websocket metrics.</li>
+     * <li>If the scheduling profile is active:
+     * <ul>
+     * <li>Enables scheduled metrics.</li>
+     * <li>Calculates cached active user names.</li>
+     * <li>Registers exercise and exam metrics.</li>
+     * <li>Registers public Artemis metrics.</li>
+     * </ul>
+     * </li>
+     * <li>If the local CI profile is active, registers local CI metrics.</li>
+     * <li>Registers datasource metrics if the Hikari datasource is present.</li>
+     * <li>If the websocket logging profile is active:
+     * <ul>
+     * <li>Sets the logging period for websocket statistics.</li>
+     * <li>Schedules periodic logging of connected users and active websocket subscriptions.</li>
+     * </ul>
+     * </li>
+     * </ul>
+     */
     @EventListener(ApplicationReadyEvent.class)
     public void applicationReady() {
         registerHealthContributors(healthContributors);

@@ -42,6 +42,14 @@ public class PlantUmlService {
         this.resourceLoaderService = resourceLoaderService;
     }
 
+    /**
+     * Initializes themes and sets system properties for PlantUML security when the application is ready.
+     *
+     * <p>
+     * Deletes temporary theme files to ensure updates, ensures themes are available, and configures PlantUML security settings.
+     *
+     * @throws IOException if an I/O error occurs during file deletion
+     */
     @EventListener(ApplicationReadyEvent.class)
     public void applicationReady() throws IOException {
         // Delete on first launch to ensure updates
