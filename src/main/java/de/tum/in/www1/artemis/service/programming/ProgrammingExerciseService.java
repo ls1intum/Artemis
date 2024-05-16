@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.programming;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
+import static de.tum.in.www1.artemis.repository.ProgrammingExerciseFetchOptions.GradingCriteria;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -55,10 +56,13 @@ import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExercisePa
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseFetchOptions;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.SolutionParticipationFetchOptions;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.repository.TemplateParticipationFetchOptions;
 import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseGitDiffReportRepository;
@@ -941,5 +945,26 @@ public class ProgrammingExerciseService {
 
     private void resetAllStudentBuildPlanIdsForExercise(ProgrammingExercise programmingExercise) {
         programmingExerciseStudentParticipationRepository.unsetBuildPlanIdForExercise(programmingExercise.getId());
+    }
+
+    public ProgrammingExercise loadProgrammingExercise(long exerciseId, boolean withSubmissionResults, boolean withGradingCriteria) {
+        // 1. Load programming exercise, optionally with grading criteria
+        final Set<ProgrammingExerciseFetchOptions> fetchOptions = withGradingCriteria ? Set.of(GradingCriteria) : Set.of();
+        var programmingExercise = programmingExerciseRepository.findByIdWithDynamicFetchElseThrow(exerciseId, fetchOptions);
+
+        // 2. Load template and solution participation, either with only submissions or with submissions and results
+        final var templateFetchOptions = withSubmissionResults ? Set.of(TemplateParticipationFetchOptions.SubmissionsAndResults)
+                : Set.of(TemplateParticipationFetchOptions.Submissions);
+        final var templateParticipation = templateProgrammingExerciseParticipationRepository.findByExerciseIdWithDynamicFetchElseThrow(exerciseId, templateFetchOptions);
+
+        final var solutionFetchOptions = withSubmissionResults ? Set.of(SolutionParticipationFetchOptions.SubmissionsAndResults)
+                : Set.of(SolutionParticipationFetchOptions.Submissions);
+        final var solutionParticipation = solutionProgrammingExerciseParticipationRepository.findByExerciseIdWithDynamicFetchElseThrow(exerciseId, solutionFetchOptions);
+
+        programmingExercise.setSolutionParticipation(solutionParticipation);
+        programmingExercise.setTemplateParticipation(templateParticipation);
+
+        programmingExerciseTaskService.replaceTestIdsWithNames(programmingExercise);
+        return programmingExercise;
     }
 }

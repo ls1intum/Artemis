@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.programming;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
-import static de.tum.in.www1.artemis.repository.ProgrammingExerciseFetchOptions.GradingCriteria;
 
 import java.io.IOException;
 import java.net.URI;
@@ -51,13 +50,10 @@ import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.BuildLogStatisticsEntryRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.GradingCriterionRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseFetchOptions;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
-import de.tum.in.www1.artemis.repository.SolutionParticipationFetchOptions;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.TemplateParticipationFetchOptions;
 import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
@@ -65,6 +61,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
+import de.tum.in.www1.artemis.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.service.ExerciseDeletionService;
@@ -494,31 +491,11 @@ public class ProgrammingExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and the programming exercise with template and solution participation, or with status 404 (Not Found)
      */
     @GetMapping("programming-exercises/{exerciseId}/with-template-and-solution-participation")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInExercise
     public ResponseEntity<ProgrammingExercise> getProgrammingExerciseWithTemplateAndSolutionParticipation(@PathVariable long exerciseId,
             @RequestParam(defaultValue = "false") boolean withSubmissionResults, @RequestParam(defaultValue = "false") boolean withGradingCriteria) {
         log.debug("REST request to get programming exercise with template and solution participation : {}", exerciseId);
-
-        // 1. Load programming exercise, optionally with grading criteria
-        final Set<ProgrammingExerciseFetchOptions> fetchOptions = withGradingCriteria ? Set.of(GradingCriteria) : Set.of();
-        var programmingExercise = programmingExerciseRepository.findByIdWithDynamicFetchElseThrow(exerciseId, fetchOptions);
-
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
-
-        // 2. Load template and solution participation, either with only submissions or with submissions and results
-        final var templateFetchOptions = withSubmissionResults ? Set.of(TemplateParticipationFetchOptions.SubmissionsAndResults)
-                : Set.of(TemplateParticipationFetchOptions.Submissions);
-        final var templateParticipation = templateProgrammingExerciseParticipationRepository.findByExerciseIdWithDynamicFetchElseThrow(exerciseId, templateFetchOptions);
-
-        final var solutionFetchOptions = withSubmissionResults ? Set.of(SolutionParticipationFetchOptions.SubmissionsAndResults)
-                : Set.of(SolutionParticipationFetchOptions.Submissions);
-        final var solutionParticipation = solutionProgrammingExerciseParticipationRepository.findByExerciseIdWithDynamicFetchElseThrow(exerciseId, solutionFetchOptions);
-
-        programmingExercise.setSolutionParticipation(solutionParticipation);
-        programmingExercise.setTemplateParticipation(templateParticipation);
-
-        programmingExerciseTaskService.replaceTestIdsWithNames(programmingExercise);
-
+        final var programmingExercise = programmingExerciseService.loadProgrammingExercise(exerciseId, withSubmissionResults, withGradingCriteria);
         return ResponseEntity.ok(programmingExercise);
     }
 
