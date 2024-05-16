@@ -146,6 +146,17 @@
                             }
                         </ng-template>
                     </ngx-datatable-column>
+                    <ngx-datatable-column prop="jobTimingInfo.buildDuration" [minWidth]="150" [width]="200">
+                        <ng-template ngx-datatable-header-template>
+                            <span class="datatable-header-cell-wrapper" (click)="controls.onSort('jobTimingInfo.buildDuration')">
+                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.buildDuration"></span>
+                                <fa-icon [icon]="controls.iconForSortPropField('jobTimingInfo.buildDuration')" />
+                            </span>
+                        </ng-template>
+                        <ng-template ngx-datatable-cell-template let-value="value">
+                            <span>{{ value | artemisDurationFromSeconds }}</span>
+                        </ng-template>
+                    </ngx-datatable-column>
                     <ngx-datatable-column prop="jobTimingInfo.submissionDate" [minWidth]="150" [width]="200">
                         <ng-template ngx-datatable-header-template>
                             <span class="datatable-header-cell-wrapper" (click)="controls.onSort('jobTimingInfo.submissionDate')">
