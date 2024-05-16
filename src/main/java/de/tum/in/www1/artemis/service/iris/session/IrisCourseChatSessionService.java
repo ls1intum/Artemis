@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;
 import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
 import de.tum.in.www1.artemis.service.iris.websocket.IrisChatWebsocketService;
+import de.tum.in.www1.artemis.service.metrics.MetricsService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 /**
@@ -52,9 +53,11 @@ public class IrisCourseChatSessionService implements IrisChatBasedFeatureInterfa
 
     private final CourseRepository courseRepository;
 
+    private final MetricsService metricsService;
+
     public IrisCourseChatSessionService(IrisMessageService irisMessageService, IrisSettingsService irisSettingsService, IrisChatWebsocketService irisChatWebsocketService,
             AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository, IrisRateLimitService rateLimitService,
-            PyrisPipelineService pyrisPipelineService, CourseRepository courseRepository) {
+            PyrisPipelineService pyrisPipelineService, CourseRepository courseRepository, MetricsService metricsService) {
         this.irisMessageService = irisMessageService;
         this.irisSettingsService = irisSettingsService;
         this.irisChatWebsocketService = irisChatWebsocketService;
@@ -63,6 +66,7 @@ public class IrisCourseChatSessionService implements IrisChatBasedFeatureInterfa
         this.rateLimitService = rateLimitService;
         this.pyrisPipelineService = pyrisPipelineService;
         this.courseRepository = courseRepository;
+        this.metricsService = metricsService;
     }
 
     /**
@@ -123,9 +127,7 @@ public class IrisCourseChatSessionService implements IrisChatBasedFeatureInterfa
     public void requestAndHandleResponse(IrisCourseChatSession session) {
         var chatSession = (IrisCourseChatSession) irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
 
-        var course = courseRepository.findWithEagerExercisesAndLecturesAndLectureUnitsAndCompetenciesAndExamsById(chatSession.getCourse().getId()).orElseThrow();
-
-        pyrisPipelineService.executeCourseChatPipeline("default", course, chatSession);
+        pyrisPipelineService.executeCourseChatPipeline("default", chatSession);
     }
 
     /**

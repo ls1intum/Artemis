@@ -11,12 +11,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisCourseChatSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisTutorChatSession;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisPipelineExecutionSettingsDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.chat.PyrisChatPipelineExecutionBaseDataDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.chat.course.PyrisCourseChatPipelineExecutionDTO;
@@ -27,6 +27,7 @@ import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageStateDTO;
 import de.tum.in.www1.artemis.service.iris.exception.IrisException;
 import de.tum.in.www1.artemis.service.iris.websocket.IrisChatWebsocketService;
+import de.tum.in.www1.artemis.service.metrics.MetricsService;
 
 /**
  * Service responsible for executing the various Pyris pipelines in a type-safe manner.
@@ -46,15 +47,21 @@ public class PyrisPipelineService {
 
     private final IrisChatWebsocketService irisChatWebsocketService;
 
+    private final CourseRepository courseRepository;
+
+    private final MetricsService metricsService;
+
     @Value("${server.url}")
     private String artemisBaseUrl;
 
     public PyrisPipelineService(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, PyrisDTOService pyrisDTOService,
-            IrisChatWebsocketService irisChatWebsocketService) {
+            IrisChatWebsocketService irisChatWebsocketService, CourseRepository courseRepository, MetricsService metricsService) {
         this.pyrisConnectorService = pyrisConnectorService;
         this.pyrisJobService = pyrisJobService;
         this.pyrisDTOService = pyrisDTOService;
         this.irisChatWebsocketService = irisChatWebsocketService;
+        this.courseRepository = courseRepository;
+        this.metricsService = metricsService;
     }
 
     private <T extends IrisChatSession, U> void executeChatPipeline(String variant, T session, String pipelineName,
@@ -99,8 +106,12 @@ public class PyrisPipelineService {
                 () -> pyrisJobService.addTutorChatJob(exercise.getCourseViaExerciseGroupOrCourseMember().getId(), exercise.getId(), session.getId()));
     }
 
-    public void executeCourseChatPipeline(String variant, Course course, IrisCourseChatSession session) {
-        executeChatPipeline(variant, session, "course-chat", base -> new PyrisCourseChatPipelineExecutionDTO(base, pyrisDTOService.toPyrisExtendedCourseDTO(course)),
-                () -> pyrisJobService.addCourseChatJob(course.getId(), session.getId()));
+    public void executeCourseChatPipeline(String variant, IrisCourseChatSession session) {
+        var courseId = session.getCourse().getId();
+        executeChatPipeline(variant, session, "course-chat", base -> {
+            var fullCourse = courseRepository.findWithEagerExercisesAndLecturesAndLectureUnitsAndCompetenciesAndExamsById(courseId).orElseThrow();
+            var metrics = metricsService.getStudentCourseMetrics(courseId, session.getUser().getId());
+            return new PyrisCourseChatPipelineExecutionDTO(base, pyrisDTOService.toPyrisExtendedCourseDTO(fullCourse), metrics);
+        }, () -> pyrisJobService.addCourseChatJob(courseId, session.getId()));
     }
 }
