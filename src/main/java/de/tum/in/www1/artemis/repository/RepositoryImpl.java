@@ -51,9 +51,9 @@ public class RepositoryImpl<T, ID extends Serializable> extends SimpleJpaReposit
     /**
      * Find an entity by its id or throw an EntityNotFoundException if it does not exist.
      *
-     * @param specification
-     * @param id
-     * @return
+     * @param specification the specification to apply
+     * @param id            the id of the entity to find
+     * @return the entity with the given id
      */
     public T findOneByIdElseThrow(final Specification<T> specification, long id) {
         final Specification<T> hasIdSpec = (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get(DomainObject_.ID), id);
