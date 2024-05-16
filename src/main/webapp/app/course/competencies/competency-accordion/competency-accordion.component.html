@@ -2,6 +2,7 @@
     <button
         [id]="'competency-accordion-' + competency.id"
         class="competency-accordion-header row align-items-center justify-content-between mt-2 position-relative flex-wrap"
+        [class.closed]="!open"
         (click)="toggle()"
     >
         <div class="col-auto d-md-block my-2">

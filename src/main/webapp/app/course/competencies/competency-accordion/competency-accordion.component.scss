@@ -10,6 +10,12 @@
     font-size: 15px;
     transition: 0.4s;
     height: 70px;
+    border-radius: 3px 3px 0 0;
+    transition: border-radius 0.2s ease-out;
+}
+
+.competency-accordion-header.closed {
+    border-radius: 3px;
 }
 
 .competency-accordion-header:not([disabled]):hover {
@@ -26,30 +32,23 @@
     color: var(--bs-body-color);
     overflow: hidden;
     width: 100%;
-    transition: height 0.2s ease-out;
-    height: 0;
+    transition:
+        max-height 0.2s ease-out,
+        padding 0.2s ease-out;
+    max-height: 0;
+    border-radius: 0 0 3px 3px;
 }
 
-/* A specific class to control the open state */
+/* Open state */
 .competency-accordion-body-open {
-    height: min-content;
     max-height: 250px;
-    padding: 10px;
-    animation: openAccordion 0.2s ease-out forwards;
-}
-.competency-accordion-body.closed {
-    animation: openAccordion 0.2s ease-out reverse;
+    padding: 10px 18px;
 }
 
-@keyframes openAccordion {
-    0% {
-        max-height: 0;
-        padding: 0 10px;
-    }
-    100% {
-        max-height: 250px;
-        padding: 10px;
-    }
+/* Closed state */
+.competency-accordion-body-closed {
+    max-height: 0;
+    padding: 0 18px;
 }
 
 @keyframes fadeIn {
