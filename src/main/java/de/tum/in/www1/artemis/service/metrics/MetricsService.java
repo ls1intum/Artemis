@@ -5,7 +5,9 @@ import static de.tum.in.www1.artemis.service.util.ZonedDateTimeUtil.toRelativeTi
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.averagingDouble;
 import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.mapping;
 import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Collectors.toSet;
 
 import java.time.ZonedDateTime;
 import java.util.function.Predicate;
@@ -14,9 +16,17 @@ import java.util.function.ToDoubleFunction;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.repository.metrics.CompetencyMetricsRepository;
 import de.tum.in.www1.artemis.repository.metrics.ExerciseMetricsRepository;
+import de.tum.in.www1.artemis.repository.metrics.LectureUnitMetricsRepository;
+import de.tum.in.www1.artemis.web.rest.dto.metrics.CompetencyInformationDTO;
+import de.tum.in.www1.artemis.web.rest.dto.metrics.CompetencyProgressDTO;
+import de.tum.in.www1.artemis.web.rest.dto.metrics.CompetencyStudentMetricsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.ExerciseInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.ExerciseStudentMetricsDTO;
+import de.tum.in.www1.artemis.web.rest.dto.metrics.LectureUnitInformationDTO;
+import de.tum.in.www1.artemis.web.rest.dto.metrics.LectureUnitStudentMetricsDTO;
+import de.tum.in.www1.artemis.web.rest.dto.metrics.MapEntryDTO;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.ResourceTimestampDTO;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.ScoreDTO;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.StudentMetricsDTO;
@@ -30,8 +40,15 @@ public class MetricsService {
 
     private final ExerciseMetricsRepository exerciseMetricsRepository;
 
-    public MetricsService(ExerciseMetricsRepository exerciseMetricsRepository) {
+    private final LectureUnitMetricsRepository lectureUnitMetricsRepository;
+
+    private final CompetencyMetricsRepository competencyMetricsRepository;
+
+    public MetricsService(ExerciseMetricsRepository exerciseMetricsRepository, LectureUnitMetricsRepository lectureUnitMetricsRepository,
+            CompetencyMetricsRepository competencyMetricsRepository) {
         this.exerciseMetricsRepository = exerciseMetricsRepository;
+        this.lectureUnitMetricsRepository = lectureUnitMetricsRepository;
+        this.competencyMetricsRepository = competencyMetricsRepository;
     }
 
     /**
@@ -43,7 +60,9 @@ public class MetricsService {
      */
     public StudentMetricsDTO getStudentCourseMetrics(long userId, long courseId) {
         final var exerciseMetricsDTO = getStudentExerciseMetrics(userId, courseId);
-        return new StudentMetricsDTO(exerciseMetricsDTO);
+        final var lectureUnitMetricsDTO = getStudentLectureUnitMetrics(userId, courseId);
+        final var competencyMetricsDTO = getStudentCompetencyMetrics(userId, courseId);
+        return new StudentMetricsDTO(exerciseMetricsDTO, lectureUnitMetricsDTO, competencyMetricsDTO);
     }
 
     /**
@@ -75,6 +94,52 @@ public class MetricsService {
         final var latestSubmissionOfUser = exerciseMetricsRepository.findLatestSubmissionDatesForUser(exerciseIds, userId);
         final var latestSubmissionMap = latestSubmissionOfUser.stream().collect(toMap(ResourceTimestampDTO::id, relativeTime::applyAsDouble));
 
-        return new ExerciseStudentMetricsDTO(exerciseInfoMap, averageScoreMap, scoreMap, averageLatestSubmissionMap, latestSubmissionMap);
+        final var completedExerciseIds = exerciseMetricsRepository.findAllCompletedExerciseIdsForUserByExerciseIds(userId, exerciseIds);
+
+        return new ExerciseStudentMetricsDTO(exerciseInfoMap, averageScoreMap, scoreMap, averageLatestSubmissionMap, latestSubmissionMap, completedExerciseIds);
+    }
+
+    /**
+     * Get the lecture unit metrics for a student in a course.
+     *
+     * @param userId   the id of the student
+     * @param courseId the id of the course
+     * @return the metrics for the student in the course
+     */
+    public LectureUnitStudentMetricsDTO getStudentLectureUnitMetrics(long userId, long courseId) {
+        final var lectureUnitInfo = lectureUnitMetricsRepository.findAllLectureUnitInformationByCourseId(courseId);
+        final var lectureUnitInfoMap = lectureUnitInfo.stream().collect(toMap(LectureUnitInformationDTO::id, identity()));
+
+        final var lectureUnitIds = lectureUnitInfoMap.keySet();
+
+        final var completedLectureUnitIds = lectureUnitMetricsRepository.findAllCompletedLectureUnitIdsForUserByLectureUnitIds(userId, lectureUnitIds);
+
+        return new LectureUnitStudentMetricsDTO(lectureUnitInfoMap, completedLectureUnitIds);
+    }
+
+    /**
+     * Get the competency metrics for a student in a course.
+     *
+     * @param userId   the id of the student
+     * @param courseId the id of the course
+     * @return the metrics for the student in the course
+     */
+    public CompetencyStudentMetricsDTO getStudentCompetencyMetrics(long userId, long courseId) {
+        final var competencyInfo = competencyMetricsRepository.findAllCompetencyInformationByCourseId(courseId);
+        final var competencyInfoMap = competencyInfo.stream().collect(toMap(CompetencyInformationDTO::id, identity()));
+
+        final var competencyIds = competencyInfoMap.keySet();
+
+        final var competencyExerciseMapEntries = competencyMetricsRepository.findAllExerciseIdsByCompetencyIds(competencyIds);
+        final var exerciseMap = competencyExerciseMapEntries.stream().collect(groupingBy(MapEntryDTO::key, mapping(MapEntryDTO::value, toSet())));
+
+        final var competencyLectureUnitMapEntries = competencyMetricsRepository.findAllLectureUnitIdsByCompetencyIds(competencyIds);
+        final var lectureUnitMap = competencyLectureUnitMapEntries.stream().collect(groupingBy(MapEntryDTO::key, mapping(MapEntryDTO::value, toSet())));
+
+        final var competencyProgress = competencyMetricsRepository.findAllCompetencyProgressForUserByCompetencyIds(userId, competencyIds);
+        final var competencyProgressMap = competencyProgress.stream().collect(toMap(CompetencyProgressDTO::competencyId, CompetencyProgressDTO::progress));
+        final var competencyConfidenceMap = competencyProgress.stream().collect(toMap(CompetencyProgressDTO::competencyId, CompetencyProgressDTO::confidence));
+
+        return new CompetencyStudentMetricsDTO(competencyInfoMap, exerciseMap, lectureUnitMap, competencyProgressMap, competencyConfidenceMap);
     }
 }
