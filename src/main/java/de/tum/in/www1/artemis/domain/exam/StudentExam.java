@@ -246,6 +246,10 @@ public class StudentExam extends AbstractAuditingEntity {
         return ZonedDateTime.now().isAfter(getIndividualEndDate());
     }
 
+    public boolean isFinished() {
+        return Boolean.TRUE.equals(this.isStarted()) && (Boolean.TRUE.equals(this.isEnded()) || Boolean.TRUE.equals(this.isSubmitted()));
+    }
+
     /**
      * Returns the individual exam end date taking the working time of this student exam into account.
      * For test exams, the startedDate needs to be defined as this is not equal to exam.startDate
