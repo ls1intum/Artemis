@@ -10,7 +10,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -49,11 +51,17 @@ public class AeolusTemplateService {
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
         this.resourceLoaderService = resourceLoaderService;
         this.buildScriptProviderService = buildScriptProviderService;
-        // load all scripts into the cache
-        cacheOnBoot();
     }
 
-    private void cacheOnBoot() {
+    /**
+     * Loads all YAML scripts from the "templates/aeolus" directory into the cache when the application is ready.
+     *
+     * <p>
+     * Scripts are read, processed, and stored in the {@code templateCache}. Errors during loading are logged.
+     */
+    @EventListener(ApplicationReadyEvent.class)
+    public void cacheOnBoot() {
+        // load all scripts into the cache
         var resources = this.resourceLoaderService.getResources(Path.of("templates", "aeolus"));
         for (var resource : resources) {
             try {
