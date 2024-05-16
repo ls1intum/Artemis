@@ -35,4 +35,9 @@ jobs:
 #          ./gradlew :supporting_scripts:analysis-of-endpoint-connections:shadowJar --warning-mode all
 
       - name: Run analysis-of-endpoint-connections
-        run: ./gradlew :supporting_scripts:analysis-of-endpoint-connections:run --args="$(cat modified_files.txt)"
+        run: |
+          args=""
+          while IFS= read -r line; do
+            args+=" '$line'"
+          done < modified_files.txt
+         ./gradlew :supporting_scripts:analysis-of-endpoint-connections:run --args="$(cat modified_files.txt)"
