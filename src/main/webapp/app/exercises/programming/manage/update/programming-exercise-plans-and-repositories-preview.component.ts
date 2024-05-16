@@ -5,7 +5,7 @@ import { ProgrammingExerciseService } from 'app/exercises/programming/manage/ser
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 import { Subscription } from 'rxjs';
 
-const ROOT_DIRECTORY: string = '/';
+const ROOT_DIRECTORY_PATH: string = '/';
 
 @Component({
     selector: 'jhi-programming-exercise-plans-and-repositories-preview',
@@ -30,10 +30,10 @@ export class ProgrammingExercisePlansAndRepositoriesPreviewComponent {
 
     private addLeadingSlashIfNotPresent(directory: string | undefined): string {
         if (!directory) {
-            return ROOT_DIRECTORY;
+            return ROOT_DIRECTORY_PATH;
         }
 
-        return directory.startsWith(ROOT_DIRECTORY) ? directory : ROOT_DIRECTORY + directory;
+        return directory.startsWith(ROOT_DIRECTORY_PATH) ? directory : ROOT_DIRECTORY_PATH + directory;
     }
 
     private updateCheckoutDirectories() {
