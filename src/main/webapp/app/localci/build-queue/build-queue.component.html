@@ -23,8 +23,17 @@
                                 <fa-icon [icon]="controls.iconForSortPropField('id')" />
                             </span>
                         </ng-template>
-                        <ng-template ngx-datatable-cell-template let-value="value">
-                            <span>{{ value }}</span>
+                        <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
+                            <span
+                                [ngClass]="{
+                                    'text-danger': row.jobTimingInfo.buildDuration > 240
+                                }"
+                            >
+                                @if (row.jobTimingInfo.buildDuration > 240) {
+                                    <fa-icon [icon]="faExclamationCircle" />
+                                }
+                                {{ value }}
+                            </span>
                         </ng-template>
                     </ngx-datatable-column>
                     <ngx-datatable-column prop="buildAgentAddress" [minWidth]="150" [width]="200">
