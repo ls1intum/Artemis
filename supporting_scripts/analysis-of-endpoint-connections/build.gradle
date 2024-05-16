@@ -29,13 +29,3 @@ run {
         args = project.appArgs.split(' ')
     }
 }
-
-//jar {
-//    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-//    manifest {
-//        attributes 'Main-Class': 'analysisOfEndpointConnections.AnalysisOfEndpointConnections'
-//    }
-//    from {
-//        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
-//    }
-//}
