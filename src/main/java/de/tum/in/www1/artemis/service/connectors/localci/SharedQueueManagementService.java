@@ -22,6 +22,7 @@ import com.hazelcast.map.IMap;
 import com.hazelcast.topic.ITopic;
 
 import de.tum.in.www1.artemis.repository.BuildJobRepository;
+import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.DockerImageBuild;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildAgentInformation;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
@@ -38,6 +39,8 @@ public class SharedQueueManagementService {
     private final BuildJobRepository buildJobRepository;
 
     private final HazelcastInstance hazelcastInstance;
+
+    private final ProfileService profileService;
 
     private IQueue<LocalCIBuildJobQueueItem> queue;
 
@@ -57,9 +60,10 @@ public class SharedQueueManagementService {
 
     private ITopic<String> canceledBuildJobsTopic;
 
-    public SharedQueueManagementService(BuildJobRepository buildJobRepository, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
+    public SharedQueueManagementService(BuildJobRepository buildJobRepository, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, ProfileService profileService) {
         this.buildJobRepository = buildJobRepository;
         this.hazelcastInstance = hazelcastInstance;
+        this.profileService = profileService;
     }
 
     /**
@@ -76,14 +80,19 @@ public class SharedQueueManagementService {
     }
 
     /**
-     * Pushes the last build dates for all docker images to the hazelcast map dockerImageCleanupInfo
+     * Pushes the last build dates for all docker images to the hazelcast map dockerImageCleanupInfo, only executed on the main node (with active scheduling)
+     * This method is scheduled to run every 5 minutes with an initial delay of 30 seconds.
      */
-    @Scheduled(fixedRate = 90000, initialDelay = 1000 * 60 * 10)
+    @Scheduled(fixedRate = 5 * 60 * 1000, initialDelay = 30 * 1000)
     public void pushDockerImageCleanupInfo() {
-        dockerImageCleanupInfo.clear();
-        Set<DockerImageBuild> lastBuildDatesForDockerImages = buildJobRepository.findAllLastBuildDatesForDockerImages();
-        for (DockerImageBuild dockerImageBuild : lastBuildDatesForDockerImages) {
-            dockerImageCleanupInfo.put(dockerImageBuild.dockerImage(), dockerImageBuild.lastBuildCompletionDate());
+        if (profileService.isSchedulingActive()) {
+            var startDate = System.currentTimeMillis();
+            dockerImageCleanupInfo.clear();
+            Set<DockerImageBuild> lastBuildDatesForDockerImages = buildJobRepository.findAllLastBuildDatesForDockerImages();
+            for (DockerImageBuild dockerImageBuild : lastBuildDatesForDockerImages) {
+                dockerImageCleanupInfo.put(dockerImageBuild.dockerImage(), dockerImageBuild.lastBuildCompletionDate());
+            }
+            log.info("pushDockerImageCleanupInfo took {}ms", System.currentTimeMillis() - startDate);
         }
     }
 
