@@ -269,16 +269,18 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
      * Update the build jobs duration
      */
     updateBuildJobDuration() {
-        if (this.runningBuildJobs) {
-            for (const buildJob of this.runningBuildJobs) {
-                if (buildJob.jobTimingInfo && buildJob.jobTimingInfo?.buildStartDate) {
-                    const start = dayjs(buildJob.jobTimingInfo?.buildStartDate);
-                    const end = dayjs();
-                    buildJob.jobTimingInfo.buildDuration = end.diff(start, 'seconds');
-                }
-            }
-            // This is necessary to update the view when the build job duration is updated
-            this.runningBuildJobs = JSON.parse(JSON.stringify(this.runningBuildJobs));
+        if (!this.runningBuildJobs) {
+            return;
         }
+
+        for (const buildJob of this.runningBuildJobs) {
+            if (buildJob.jobTimingInfo && buildJob.jobTimingInfo?.buildStartDate) {
+                const start = dayjs(buildJob.jobTimingInfo?.buildStartDate);
+                const now = dayjs();
+                buildJob.jobTimingInfo.buildDuration = now.diff(start, 'seconds');
+            }
+        }
+        // This is necessary to update the view when the build job duration is updated
+        this.runningBuildJobs = JSON.parse(JSON.stringify(this.runningBuildJobs));
     }
 }
