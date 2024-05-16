@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.dto.metrics;
 
 import java.util.Map;
+import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -14,8 +15,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param score                   the score of the student in the exercises
  * @param averageLatestSubmission the average relative time of the latest submissions in the exercises
  * @param latestSubmission        the relative time of the latest submission of the students in the exercises
+ * @param completed               the ids of the completed exercises
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExerciseStudentMetricsDTO(Map<Long, ExerciseInformationDTO> exerciseInformation, Map<Long, Double> averageScore, Map<Long, Double> score,
-        Map<Long, Double> averageLatestSubmission, Map<Long, Double> latestSubmission) {
+        Map<Long, Double> averageLatestSubmission, Map<Long, Double> latestSubmission, Set<Long> completed) {
 }
