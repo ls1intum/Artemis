@@ -39,7 +39,7 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
     page = 1;
     predicate = 'build_completion_date';
     ascending = false;
-    interval: any;
+    interval: ReturnType<typeof setInterval>;
 
     constructor(
         private route: ActivatedRoute,
