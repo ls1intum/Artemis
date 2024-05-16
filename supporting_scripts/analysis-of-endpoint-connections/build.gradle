@@ -24,6 +24,12 @@ application {
     mainClass = 'analysisOfEndpointConnections.AnalysisOfEndpointConnections'
 }
 
+run {
+    if (project.hasProperty('appArgs')) {
+        args = project.appArgs.split()
+    }
+}
+
 //jar {
 //    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 //    manifest {
