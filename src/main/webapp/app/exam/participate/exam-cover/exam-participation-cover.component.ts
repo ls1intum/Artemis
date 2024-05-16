@@ -267,6 +267,8 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
                 this.timeUntilStart = this.translateService.instant(translationBasePath + 'now');
                 //this.onExamStarted.emit(studentExam);
                 this.examParticipationService.emitExamStarted(studentExam);
+                this.examParticipationService.setExamState({ exercises: studentExam.exercises! });
+                this.router.navigate(['courses', this.courseId, 'exams', this.examId, 'participation']);
             } else {
                 this.timeUntilStart = this.relativeTimeText(this.exam.startDate.diff(this.serverDateService.now(), 'seconds'));
             }
