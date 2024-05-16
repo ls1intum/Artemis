@@ -34,6 +34,7 @@ public class AnalysisOfEndpointConnections {
         String[] filePaths = args[0].split("\n");
 
         for (int i = 0; i < filePaths.length; i++) {
+            filePaths[i] = "../../" + filePaths[i];
             System.out.println("File path " + i + ": " + filePaths[i]);
             System.out.println("File exists: " + new File(filePaths[i]).exists());
             System.out.println("File is a Java file: " + filePaths[i].endsWith(".java"));
