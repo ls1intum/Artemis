@@ -12,6 +12,7 @@ import jakarta.annotation.PostConstruct;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -73,7 +74,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private IMap<String, ZonedDateTime> dockerImageCleanupInfo;
 
-    public LocalCITriggerService(HazelcastInstance hazelcastInstance, AeolusTemplateService aeolusTemplateService,
+    public LocalCITriggerService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, AeolusTemplateService aeolusTemplateService,
             ProgrammingLanguageConfiguration programmingLanguageConfiguration, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
             LocalCIProgrammingLanguageFeatureService programmingLanguageFeatureService, Optional<VersionControlService> versionControlService,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,

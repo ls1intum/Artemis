@@ -19,37 +19,39 @@
         <fa-icon class="ms-auto clickable" [icon]="faChevronLeft" />
     </div>
     <!-- Root actions -->
-    <div class="card-second-header">
-        <button
-            id="create_file_root"
-            [disabled]="disableActions || isLoadingFiles || commitState === CommitState.CONFLICT"
-            class="btn"
-            (click)="setCreatingFileInRoot(FileType.FILE)"
-            title="{{ 'artemisApp.editor.fileBrowser.createFileRoot' | artemisTranslate }}"
-        >
-            <fa-icon [icon]="faPlus" />
-            <fa-icon [icon]="faFile" class="ms-1" />
-        </button>
-        <button
-            id="create_folder_root"
-            [disabled]="disableActions || isLoadingFiles || commitState === CommitState.CONFLICT"
-            class="btn ms-2"
-            (click)="setCreatingFileInRoot(FileType.FOLDER)"
-            title="{{ 'artemisApp.editor.fileBrowser.createFolderRoot' | artemisTranslate }}"
-        >
-            <fa-icon [icon]="faPlus" />
-            <fa-icon [icon]="faFolder" class="ms-1" />
-        </button>
-        <button
-            id="compress_tree"
-            [disabled]="isLoadingFiles"
-            class="btn ms-auto"
-            (click)="toggleTreeCompress()"
-            title="{{ 'artemisApp.editor.fileBrowser.compressTree' | artemisTranslate }}"
-        >
-            <fa-icon [icon]="compressFolders ? faAngleDoubleUp : faAngleDoubleDown" />
-        </button>
-    </div>
+    @if (!displayOnly) {
+        <div class="card-second-header">
+            <button
+                id="create_file_root"
+                [disabled]="disableActions || isLoadingFiles || commitState === CommitState.CONFLICT"
+                class="btn"
+                (click)="setCreatingFileInRoot(FileType.FILE)"
+                title="{{ 'artemisApp.editor.fileBrowser.createFileRoot' | artemisTranslate }}"
+            >
+                <fa-icon [icon]="faPlus" />
+                <fa-icon [icon]="faFile" class="ms-1" />
+            </button>
+            <button
+                id="create_folder_root"
+                [disabled]="disableActions || isLoadingFiles || commitState === CommitState.CONFLICT"
+                class="btn ms-2"
+                (click)="setCreatingFileInRoot(FileType.FOLDER)"
+                title="{{ 'artemisApp.editor.fileBrowser.createFolderRoot' | artemisTranslate }}"
+            >
+                <fa-icon [icon]="faPlus" />
+                <fa-icon [icon]="faFolder" class="ms-1" />
+            </button>
+            <button
+                id="compress_tree"
+                [disabled]="isLoadingFiles"
+                class="btn ms-auto"
+                (click)="toggleTreeCompress()"
+                title="{{ 'artemisApp.editor.fileBrowser.compressTree' | artemisTranslate }}"
+            >
+                <fa-icon [icon]="compressFolders ? faAngleDoubleUp : faAngleDoubleDown" />
+            </button>
+        </div>
+    }
     <!-- File Tree -->
     <div class="card-body">
         <!-- Root level create file/folder tree element -->
@@ -72,7 +74,7 @@
             </div>
         }
     </div>
-    @if (!collapsed) {
+    @if (!collapsed && !displayOnly) {
         <jhi-code-editor-status #status [editorState]="editorState" [commitState]="commitState" />
     }
 </div>

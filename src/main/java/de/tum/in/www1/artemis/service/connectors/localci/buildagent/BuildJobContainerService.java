@@ -274,8 +274,6 @@ public class BuildJobContainerService {
         for (int i = 0; i < auxiliaryRepositoriesPaths.length; i++) {
             addAndPrepareDirectory(buildJobContainerId, auxiliaryRepositoriesPaths[i], LOCALCI_WORKING_DIRECTORY + "/testing-dir/" + auxiliaryRepositoryCheckoutDirectories[i]);
         }
-        // TODO: this might lead to issues in certain builds
-        // convertDosFilesToUnix(LOCALCI_WORKING_DIRECTORY + "/testing-dir/", buildJobContainerId);
 
         createScriptFile(buildJobContainerId);
     }
@@ -297,10 +295,6 @@ public class BuildJobContainerService {
     private void addDirectory(String containerId, String directoryName, boolean createParentsIfNecessary) {
         String[] command = createParentsIfNecessary ? new String[] { "mkdir", "-p", directoryName } : new String[] { "mkdir", directoryName };
         executeDockerCommand(containerId, null, false, false, true, command);
-    }
-
-    private void convertDosFilesToUnix(String path, String containerId) {
-        executeDockerCommand(containerId, null, false, false, true, "sh", "-c", "find " + path + " -type f ! -path '*/.git/*' -exec sed -i 's/\\r$//' {} \\;");
     }
 
     private void copyToContainer(String sourcePath, String containerId) {

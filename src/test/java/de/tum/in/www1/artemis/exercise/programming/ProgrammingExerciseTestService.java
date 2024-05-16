@@ -1544,6 +1544,25 @@ public class ProgrammingExerciseTestService {
         return request.get(url, expectedStatus, String.class);
     }
 
+    /**
+     * Attempts to export a student repository and verifies that the file is (or is not) returned.
+     *
+     * @param authorized Whether to expect that the user is authorized.
+     */
+    void exportStudentRepository(boolean authorized) throws Exception {
+        HttpStatus expectedStatus = authorized ? HttpStatus.OK : HttpStatus.FORBIDDEN;
+        generateProgrammingExerciseForExport();
+        var participation = createStudentParticipationWithSubmission(INDIVIDUAL);
+        var url = "/api/programming-exercises/" + exercise.getId() + "/export-student-repository/" + participation.getId();
+        String zip = request.get(url, expectedStatus, String.class);
+        if (expectedStatus.is2xxSuccessful()) {
+            assertThat(zip).isNotNull();
+        }
+        else {
+            assertThat(zip).isNull();
+        }
+    }
+
     // Test
 
     /**
@@ -1838,7 +1857,7 @@ public class ProgrammingExerciseTestService {
         // Mock error when exporting a participation
         doThrow(exceptionToThrow).when(gitService).getOrCheckoutRepository(eq(participation.getVcsRepositoryUri()), any(Path.class), anyBoolean());
 
-        course = courseRepository.findByIdWithExercisesAndLecturesElseThrow(course.getId());
+        course = courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(course.getId());
         List<String> errors = new ArrayList<>();
         var optionalExportedCourse = courseExamExportService.exportCourse(course, courseArchivesDirPath, errors);
         assertThat(optionalExportedCourse).isPresent();
