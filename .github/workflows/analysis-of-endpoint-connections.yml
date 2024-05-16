@@ -36,5 +36,4 @@ jobs:
 
       - name: Run analysis-of-endpoint-connections
         run: |
-          cat modified_files.txt
           ./gradlew :supporting_scripts:analysis-of-endpoint-connections:run --args="$(cat modified_files.txt)"
