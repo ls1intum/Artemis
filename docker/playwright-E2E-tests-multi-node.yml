@@ -18,8 +18,7 @@ services:
         condition: service_healthy
     pull_policy: always
     restart: always
-    group_add:
-      - ${DOCKER_GROUP_ID:-0}
+    user: 0:0
     env_file:
       - ./artemis/config/prod-multinode.env
       - ./artemis/config/node1.env
@@ -44,8 +43,7 @@ services:
         condition: service_healthy
     pull_policy: always
     restart: always
-    group_add:
-      - ${DOCKER_GROUP_ID:-0}
+    user: 0:0
     env_file:
       - ./artemis/config/prod-multinode.env
       - ./artemis/config/node2.env
@@ -70,8 +68,7 @@ services:
         condition: service_healthy
     pull_policy: always
     restart: always
-    group_add:
-      - ${DOCKER_GROUP_ID:-0}
+    user: 0:0
     env_file:
       - ./artemis/config/prod-multinode.env
       - ./artemis/config/node3.env
