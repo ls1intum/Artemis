@@ -26,7 +26,7 @@ application {
 
 run {
     if (project.hasProperty('appArgs')) {
-        args = project.appArgs.split()
+        args = project.appArgs.split('\n')
     }
 }
 
