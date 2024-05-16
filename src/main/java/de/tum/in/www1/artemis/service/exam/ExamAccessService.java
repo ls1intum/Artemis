@@ -86,7 +86,7 @@ public class ExamAccessService {
                 // For the start of the exam, the exercises are not needed. They are later loaded via StudentExamResource
                 studentExam.setExercises(null);
             }
-            // TODO Michal Kawka is it possible, that the list has more elements. If yes, throw an error?
+            // TODO Michal Kawka I think we should throw an error if the list has more than one element, since it's a violation
             else {
                 studentExam = unfinishedStudentExams.getFirst();
             }
@@ -103,6 +103,7 @@ public class ExamAccessService {
             }
             else {
                 // We skip the alert since this can happen when a tutor sees the exam card or the user did not participate yet is registered for the exam
+                // TODO Michal Kawka I think we can throw entity not found there
                 throw new BadRequestAlertException("The requested Exam is no test exam and thus no student exam can be created", ENTITY_NAME,
                         "StudentExamGenerationOnlyForTestExams", true);
             }
