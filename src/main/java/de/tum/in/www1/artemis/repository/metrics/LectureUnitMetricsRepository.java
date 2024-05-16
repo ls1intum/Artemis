@@ -23,4 +23,12 @@ public interface LectureUnitMetricsRepository extends JpaRepository<LectureUnit,
             WHERE lu.lecture.course.id = :courseId
             """)
     Set<LectureUnitInformationDTO> findAllLectureUnitInformationByCourseId(@Param("courseId") long courseId);
+
+    @Query("""
+            SELECT luc.lectureUnit.id
+            FROM LectureUnitCompletion luc
+            WHERE luc.user.id = :userId
+                AND luc.lectureUnit.id IN :lectureUnitIds
+            """)
+    Set<Long> findAllCompletedLectureUnitIdsForUserByLectureUnitIds(@Param("userId") long userId, @Param("lectureUnitIds") Set<Long> lectureUnitIds);
 }

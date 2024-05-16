@@ -1,9 +1,10 @@
 package de.tum.in.www1.artemis.web.rest.dto.metrics;
 
 import java.util.Map;
+import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record LectureUnitStudentMetricsDTO(Map<Long, LectureUnitInformationDTO> lectureUnitInformation) {
+public record LectureUnitStudentMetricsDTO(Map<Long, LectureUnitInformationDTO> lectureUnitInformation, Set<Long> completed) {
 }

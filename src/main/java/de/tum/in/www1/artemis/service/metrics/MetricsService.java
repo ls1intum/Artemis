@@ -108,7 +108,11 @@ public class MetricsService {
         final var lectureUnitInfo = lectureUnitMetricsRepository.findAllLectureUnitInformationByCourseId(courseId);
         final var lectureUnitInfoMap = lectureUnitInfo.stream().collect(toMap(LectureUnitInformationDTO::id, identity()));
 
-        return new LectureUnitStudentMetricsDTO(lectureUnitInfoMap);
+        final var lectureUnitIds = lectureUnitInfoMap.keySet();
+
+        final var completedLectureUnitIds = lectureUnitMetricsRepository.findAllCompletedLectureUnitIdsForUserByLectureUnitIds(userId, lectureUnitIds);
+
+        return new LectureUnitStudentMetricsDTO(lectureUnitInfoMap, completedLectureUnitIds);
     }
 
     /**
