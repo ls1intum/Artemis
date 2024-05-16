@@ -31,7 +31,7 @@ else
   elif [ "$CONFIGURATION" = "multi-node" ]; then
     COMPOSE_FILE="cypress-E2E-tests-multi-node.yml"
   else
-    echo "Invalid configuration. Please choose among mysql, postgres or local."
+    echo "Invalid configuration. Please choose among mysql, postgres, local or multi-node."
     exit 1
   fi
 fi
@@ -50,7 +50,7 @@ cd docker
 #just pull everything else than artemis-app as we build it later either way
 if [ "$TEST_FRAMEWORK" = "playwright" ]; then
   if [ "$CONFIGURATION" = "multi-node" ]; then
-    echo "Building for playwright"
+    echo "Building for playwright (multi-node)"
     docker compose -f $COMPOSE_FILE pull artemis-playwright $CONFIGURATION nginx
     docker compose -f $COMPOSE_FILE build --build-arg WAR_FILE_STAGE=external_builder --no-cache --pull artemis-app-node-1 artemis-app-node-2 artemis-app-node-3
     docker compose -f $COMPOSE_FILE up --exit-code-from artemis-playwright
@@ -62,7 +62,7 @@ if [ "$TEST_FRAMEWORK" = "playwright" ]; then
   fi
 else
   if [ "$CONFIGURATION" = "multi-node" ]; then
-    echo "Building for cypress"
+    echo "Building for cypress (multi-node)"
     docker compose -f $COMPOSE_FILE pull artemis-cypress $CONFIGURATION nginx
     docker compose -f $COMPOSE_FILE build --build-arg WAR_FILE_STAGE=external_builder --no-cache --pull artemis-app-node-1 artemis-app-node-2 artemis-app-node-3
     docker compose -f $COMPOSE_FILE up --exit-code-from artemis-cypress
