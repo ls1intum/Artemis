@@ -42,6 +42,7 @@ public class ShortAnswerSubmittedText extends DomainObject {
     private Boolean isCorrect;
 
     @Transient
+    @JsonView(QuizView.Before.class)
     private ShortAnswerSpot spot;
 
     @ManyToOne(fetch = FetchType.LAZY)

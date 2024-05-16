@@ -2,21 +2,31 @@ package de.tum.in.www1.artemis.domain.quiz;
 
 import java.io.Serializable;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonView;
+
 import de.tum.in.www1.artemis.domain.TempIdObject;
+import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**
  * A AnswerOption.
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class AnswerOption extends TempIdObject implements QuizQuestionComponent<MultipleChoiceQuestion>, Serializable {
 
+    @JsonView(QuizView.Before.class)
     private String text;
 
+    @JsonView(QuizView.Before.class)
     private String hint;
 
+    @JsonView(QuizView.After.class)
     private String explanation;
 
+    @JsonView(QuizView.After.class)
     private Boolean isCorrect;
 
+    @JsonView(QuizView.Before.class)
     private Boolean invalid = false;
 
     @Override

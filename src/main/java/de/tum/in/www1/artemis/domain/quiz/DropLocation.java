@@ -2,21 +2,31 @@ package de.tum.in.www1.artemis.domain.quiz;
 
 import java.io.Serializable;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonView;
+
 import de.tum.in.www1.artemis.domain.TempIdObject;
+import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**
  * A DropLocation.
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class DropLocation extends TempIdObject implements QuizQuestionComponent<DragAndDropQuestion>, Serializable {
 
+    @JsonView(QuizView.Before.class)
     private Double posX;
 
+    @JsonView(QuizView.Before.class)
     private Double posY;
 
+    @JsonView(QuizView.Before.class)
     private Double width;
 
+    @JsonView(QuizView.Before.class)
     private Double height;
 
+    @JsonView(QuizView.Before.class)
     private Boolean invalid = false;
 
     @Override

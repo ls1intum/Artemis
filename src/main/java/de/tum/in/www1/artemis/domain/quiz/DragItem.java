@@ -10,8 +10,12 @@ import jakarta.persistence.Transient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonView;
+
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.TempIdObject;
+import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.exception.FilePathParsingException;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
@@ -19,6 +23,7 @@ import de.tum.in.www1.artemis.service.FileService;
 /**
  * A DragItem.
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class DragItem extends TempIdObject implements QuizQuestionComponent<DragAndDropQuestion>, Serializable {
 
     private static final Logger log = LoggerFactory.getLogger(DragItem.class);
@@ -26,10 +31,13 @@ public class DragItem extends TempIdObject implements QuizQuestionComponent<Drag
     @Transient
     private final transient FileService fileService = new FileService();
 
+    @JsonView(QuizView.Before.class)
     private String pictureFilePath;
 
+    @JsonView(QuizView.Before.class)
     private String text;
 
+    @JsonView(QuizView.Before.class)
     private Boolean invalid = false;
 
     @Override

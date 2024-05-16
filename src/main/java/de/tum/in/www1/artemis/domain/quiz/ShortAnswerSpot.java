@@ -2,17 +2,25 @@ package de.tum.in.www1.artemis.domain.quiz;
 
 import java.io.Serializable;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonView;
+
 import de.tum.in.www1.artemis.domain.TempIdObject;
+import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**
  * A ShortAnswerSpot.
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ShortAnswerSpot extends TempIdObject implements QuizQuestionComponent<ShortAnswerQuestion>, Serializable {
 
+    @JsonView(QuizView.Before.class)
     private Integer spotNr;
 
+    @JsonView(QuizView.Before.class)
     private Integer width;
 
+    @JsonView(QuizView.Before.class)
     private Boolean invalid;
 
     public Integer getSpotNr() {

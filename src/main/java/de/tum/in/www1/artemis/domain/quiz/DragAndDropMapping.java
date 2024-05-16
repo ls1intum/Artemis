@@ -2,21 +2,31 @@ package de.tum.in.www1.artemis.domain.quiz;
 
 import java.io.Serializable;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonView;
+
 import de.tum.in.www1.artemis.domain.TempIdObject;
+import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**
  * A DragAndDropMapping.
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class DragAndDropMapping extends TempIdObject implements QuizQuestionComponent<DragAndDropQuestion>, Serializable {
 
+    @JsonView(QuizView.Before.class)
     private Integer dragItemIndex;
 
+    @JsonView(QuizView.Before.class)
     private Integer dropLocationIndex;
 
+    @JsonView(QuizView.Before.class)
     private Boolean invalid = false;
 
+    @JsonView(QuizView.Before.class)
     private DragItem dragItem;
 
+    @JsonView(QuizView.Before.class)
     private DropLocation dropLocation;
 
     private DragAndDropSubmittedAnswer submittedAnswer;

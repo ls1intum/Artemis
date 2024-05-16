@@ -34,12 +34,15 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 public class ShortAnswerQuestion extends QuizQuestion {
 
     @Transient
+    @JsonView(QuizView.Before.class)
     private List<ShortAnswerSpot> spots = new ArrayList<>();
 
     @Transient
+    @JsonView(QuizView.Before.class)
     private List<ShortAnswerSolution> solutions = new ArrayList<>();
 
     @Transient
+    @JsonView(QuizView.After.class)
     private List<ShortAnswerMapping> correctMappings = new ArrayList<>();
 
     @JdbcTypeCode(SqlTypes.JSON)

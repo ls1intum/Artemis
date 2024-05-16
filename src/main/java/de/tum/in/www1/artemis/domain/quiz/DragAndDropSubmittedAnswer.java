@@ -9,11 +9,14 @@ import jakarta.persistence.Column;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.in.www1.artemis.domain.quiz.compare.DnDMapping;
 
 /**
  * A DragAndDropSubmittedAnswer.
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class DragAndDropSubmittedAnswer extends SubmittedAnswer {
 
     @JdbcTypeCode(SqlTypes.JSON)

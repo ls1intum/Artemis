@@ -49,12 +49,15 @@ public class DragAndDropQuestion extends QuizQuestion {
     private final transient FileService fileService = new FileService();
 
     @Transient
+    @JsonView(QuizView.Before.class)
     private List<DropLocation> dropLocations = new ArrayList<>();
 
     @Transient
+    @JsonView(QuizView.Before.class)
     private List<DragItem> dragItems = new ArrayList<>();
 
     @Transient
+    @JsonView(QuizView.After.class)
     private List<DragAndDropMapping> correctMappings = new ArrayList<>();
 
     @Column(name = "background_file_path")
