@@ -529,4 +529,32 @@ public class ProgrammingExerciseExportImportResource {
 
         return returnZipFileForRepositoryExport(zipFile, RepositoryType.SOLUTION.getName(), programmingExercise, start);
     }
+
+    /**
+     * GET /programming-exercises/:exerciseId/export-student-repository/:participationId : Exports the repository belonging to a participation as a zip file.
+     *
+     * @param exerciseId      The id of the programming exercise
+     * @param participationId The id of the student participation for which to export the repository.
+     * @return A ResponseEntity containing the zipped repository.
+     * @throws IOException If the repository could not be zipped.
+     */
+    @GetMapping("programming-exercises/{exerciseId}/export-student-repository/{participationId}")
+    @EnforceAtLeastStudent
+    @FeatureToggle({ Feature.ProgrammingExercises, Feature.Exports })
+    public ResponseEntity<Resource> exportStudentRepository(@PathVariable long exerciseId, @PathVariable long participationId) throws IOException {
+        var programmingExercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndLegalSubmissionsElseThrow(exerciseId);
+        var studentParticipation = programmingExercise.getStudentParticipations().stream().filter(p -> p.getId().equals(participationId))
+                .map(p -> (ProgrammingExerciseStudentParticipation) p).findFirst()
+                .orElseThrow(() -> new EntityNotFoundException("No student participation with id " + participationId + " was found for programming exercise " + exerciseId));
+        if (!authCheckService.isOwnerOfParticipation(studentParticipation)) {
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
+        }
+        List<String> exportErrors = new ArrayList<>();
+        long start = System.nanoTime();
+        Optional<File> zipFile = programmingExerciseExportService.exportStudentRepository(exerciseId, studentParticipation, exportErrors);
+        if (zipFile.isEmpty()) {
+            throw new InternalServerErrorException("Could not export the student repository of participation " + participationId + ". Logged errors: " + exportErrors);
+        }
+        return returnZipFileForRepositoryExport(zipFile, RepositoryType.USER.getName(), programmingExercise, start);
+    }
 }
