@@ -42,6 +42,9 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
     @EntityGraph(type = LOAD, attributePaths = { "exercises" })
     Optional<StudentExam> findWithExercisesById(Long studentExamId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "exercises", "studentParticipations" })
+    Optional<StudentExam> findWithExercisesAndStudentParticipationsById(Long studentExamId);
+
     @Query("""
             SELECT se
             FROM StudentExam se
@@ -215,6 +218,22 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
             """)
     Optional<StudentExam> findByExamIdAndUserId(@Param("examId") long examId, @Param("userId") long userId);
 
+    @Query("""
+            SELECT DISTINCT se
+            FROM StudentExam se
+            WHERE se.testRun = FALSE
+                AND se.exam.id = :examId
+                AND se.user.id = :userId
+                AND se.id = (
+                    SELECT MAX(se2.id)
+                    FROM StudentExam se2
+                    WHERE se2.testRun = FALSE
+                        AND se2.exam.id = :examId
+                        AND se2.user.id = :userId
+                )
+            """)
+    Optional<StudentExam> findLatestByExamIdAndUserId(@Param("examId") long examId, @Param("userId") long userId);
+
     /**
      * Checks if any StudentExam exists for the given user (student) id in the given course.
      *
@@ -343,6 +362,11 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
     @NotNull
     default StudentExam findByIdWithExercisesElseThrow(Long studentExamId) {
         return findWithExercisesById(studentExamId).orElseThrow(() -> new EntityNotFoundException("Student exam", studentExamId));
+    }
+
+    @NotNull
+    default StudentExam findByIdWithExercisesAndStudentParticipationsElseThrow(Long studentExamId) {
+        return findWithExercisesAndStudentParticipationsById(studentExamId).orElseThrow(() -> new EntityNotFoundException("Student exam", studentExamId));
     }
 
     /**
