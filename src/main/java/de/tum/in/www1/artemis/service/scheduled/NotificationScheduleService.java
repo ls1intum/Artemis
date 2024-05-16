@@ -1,13 +1,18 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
+import static de.tum.in.www1.artemis.config.StartupDelayConfig.NOTIFICATION_SCHEDULE_DELAY_SEC;
+
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Set;
 
-import jakarta.annotation.PostConstruct;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -35,20 +40,28 @@ public class NotificationScheduleService {
 
     private final SingleUserNotificationService singleUserNotificationService;
 
+    private final TaskScheduler scheduler;
+
     public NotificationScheduleService(ScheduleService scheduleService, ExerciseRepository exerciseRepository, ProfileService profileService,
-            GroupNotificationService groupNotificationService, SingleUserNotificationService singleUserNotificationService) {
+            GroupNotificationService groupNotificationService, SingleUserNotificationService singleUserNotificationService, @Qualifier("taskScheduler") TaskScheduler scheduler) {
         this.scheduleService = scheduleService;
         this.exerciseRepository = exerciseRepository;
         this.profileService = profileService;
         this.groupNotificationService = groupNotificationService;
         this.singleUserNotificationService = singleUserNotificationService;
+        this.scheduler = scheduler;
+    }
+
+    @EventListener(ApplicationReadyEvent.class)
+    public void applicationReady() {
+        // schedule the task after the application has started to avoid delaying the start of the application
+        scheduler.schedule(this::scheduleRunningNotificationProcessesOnStartup, Instant.now().plusSeconds(NOTIFICATION_SCHEDULE_DELAY_SEC));
     }
 
     /**
-     * Schedules ongoing notification processes on server start up
+     * Schedules ongoing notification processes shortly after server start up
      */
-    @PostConstruct
-    public void scheduleRunningNotificationProcessesOnStartup() {
+    private void scheduleRunningNotificationProcessesOnStartup() {
         try {
             if (profileService.isDevActive()) {
                 // only execute this on production server, i.e. when the prod profile is active

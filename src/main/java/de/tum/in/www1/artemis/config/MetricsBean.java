@@ -17,6 +17,7 @@ import jakarta.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthContributor;
 import org.springframework.boot.actuate.health.HealthIndicator;
@@ -78,7 +79,7 @@ public class MetricsBean {
 
     private final MeterRegistry meterRegistry;
 
-    private final TaskScheduler taskScheduler;
+    private final TaskScheduler scheduler;
 
     private final WebSocketMessageBrokerStats webSocketStats;
 
@@ -151,12 +152,12 @@ public class MetricsBean {
 
     private boolean scheduledMetricsEnabled = false;
 
-    public MetricsBean(MeterRegistry meterRegistry, TaskScheduler taskScheduler, WebSocketMessageBrokerStats webSocketStats, SimpUserRegistry userRegistry,
+    public MetricsBean(MeterRegistry meterRegistry, @Qualifier("taskScheduler") TaskScheduler scheduler, WebSocketMessageBrokerStats webSocketStats, SimpUserRegistry userRegistry,
             WebSocketHandler websocketHandler, List<HealthContributor> healthContributors, Optional<HikariDataSource> hikariDataSource, ExerciseRepository exerciseRepository,
             StudentExamRepository studentExamRepository, ExamRepository examRepository, CourseRepository courseRepository, UserRepository userRepository,
             StatisticsRepository statisticsRepository, ProfileService profileService, Optional<SharedQueueManagementService> localCIBuildJobQueueService) {
         this.meterRegistry = meterRegistry;
-        this.taskScheduler = taskScheduler;
+        this.scheduler = scheduler;
         this.webSocketStats = webSocketStats;
         this.userRegistry = userRegistry;
         this.webSocketHandler = websocketHandler;
@@ -201,7 +202,7 @@ public class MetricsBean {
         // Note: this mechanism prevents that this is logged during testing
         if (profileService.isProfileActive("websocketLog")) {
             webSocketStats.setLoggingPeriod(LOGGING_DELAY_SECONDS * 1000L);
-            taskScheduler.scheduleAtFixedRate(() -> {
+            scheduler.scheduleAtFixedRate(() -> {
                 final var connectedUsers = userRegistry.getUsers();
                 final var subscriptionCount = connectedUsers.stream().flatMap(simpUser -> simpUser.getSessions().stream()).map(simpSession -> simpSession.getSubscriptions().size())
                         .reduce(0, Integer::sum);
