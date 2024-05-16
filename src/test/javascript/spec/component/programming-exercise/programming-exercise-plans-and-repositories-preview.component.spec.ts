@@ -127,7 +127,7 @@ describe('ProgrammingExercisePlansAndRepositoriesPreviewComponent', () => {
 
         // assertion to check if ngOnChanges was executed properly and updated the checkout directories
         expect(programmingExerciseService.getCheckoutDirectoriesForProgrammingLanguage).toHaveBeenCalled();
-        expect(component.solutionCheckoutDirectory).toBe('/solution'); // was '/assignment' before with JAVA as programming language
+        expect(component.checkoutDirectories?.solutionCheckoutDirectory).toBe('/solution'); // was '/assignment' before with JAVA as programming language
     });
 
     it('should update auxiliary repository directories on changes', () => {
