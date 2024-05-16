@@ -12,7 +12,6 @@ import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import dayjs from 'dayjs/esm';
-import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 
 @Component({
     selector: 'jhi-build-queue',
@@ -53,7 +52,7 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
         this.loadQueue();
         this.interval = setInterval(() => {
             this.updateBuildJobDuration();
-        }, UI_RELOAD_TIME);
+        }, 1000);
         this.loadFinishedBuildJobs();
         this.initWebsocketSubscription();
     }
