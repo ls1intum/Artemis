@@ -8,7 +8,7 @@
             <column name="student_id"/>
             <column name="exercise_id"/>
             <column name="initialization_state"/>
-            <column name="participation_id"/>
+            <column name="number_of_attempts"/>
         </createIndex>
     </changeSet>
 </databaseChangeLog>

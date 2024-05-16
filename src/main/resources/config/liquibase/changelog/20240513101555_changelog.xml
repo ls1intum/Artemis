@@ -5,7 +5,7 @@
     <changeSet id="20240513101555" author="mkawka">
         <addColumn tableName="participation">
             <column defaultValueNumeric="0"
-                    name="participation_id"
+                    name="number_of_attempts"
                     type="tinyint(3) UNSIGNED">
                 <constraints nullable="false"/>
             </column>
