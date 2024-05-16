@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SafeHtml } from '@angular/platform-browser';
-import { Subject } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
@@ -103,6 +103,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     plagiarismCheckSupported = false; // default value
 
     checkoutDirectories?: RepositoriesCheckoutDirectoriesDTO;
+
+    programmingExerciseServiceSubscription: Subscription;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -235,9 +237,11 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             });
 
             if (this.programmingExercise.programmingLanguage) {
-                this.programmingExerciseService.getCheckoutDirectoriesForProgrammingLanguage(this.programmingExercise.programmingLanguage).subscribe((checkoutDirectories) => {
-                    this.checkoutDirectories = checkoutDirectories;
-                });
+                this.programmingExerciseServiceSubscription = this.programmingExerciseService
+                    .getCheckoutDirectoriesForProgrammingLanguage(this.programmingExercise.programmingLanguage)
+                    .subscribe((checkoutDirectories) => {
+                        this.checkoutDirectories = checkoutDirectories;
+                    });
             }
 
             this.statisticsService.getExerciseStatistics(exerciseId!).subscribe((statistics: ExerciseManagementStatisticsDto) => {
@@ -248,6 +252,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     ngOnDestroy(): void {
         this.dialogErrorSource.unsubscribe();
+        this.programmingExerciseServiceSubscription?.unsubscribe();
     }
 
     getExerciseDetails(): DetailOverviewSection[] {
