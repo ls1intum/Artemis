@@ -4,8 +4,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 import { Subscription } from 'rxjs';
-
-const ROOT_DIRECTORY_PATH: string = '/';
+import { addLeadingSlashIfNotPresent } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-programming-exercise-plans-and-repositories-preview',
@@ -28,27 +27,19 @@ export class ProgrammingExercisePlansAndRepositoriesPreviewComponent {
 
     programmingExerciseServiceSubscription: Subscription;
 
-    private addLeadingSlashIfNotPresent(directory: string | undefined): string {
-        if (!directory) {
-            return ROOT_DIRECTORY_PATH;
-        }
-
-        return directory.startsWith(ROOT_DIRECTORY_PATH) ? directory : ROOT_DIRECTORY_PATH + directory;
-    }
-
     private updateCheckoutDirectories() {
-        this.programmingExerciseService
+        this.programmingExerciseServiceSubscription = this.programmingExerciseService
             .getCheckoutDirectoriesForProgrammingLanguage(this.programmingExerciseCreationConfig.selectedProgrammingLanguage)
             .subscribe((checkoutDirectories) => {
-                this.solutionCheckoutDirectory = this.addLeadingSlashIfNotPresent(checkoutDirectories.solutionCheckoutDirectory);
-                this.exerciseCheckoutDirectory = this.addLeadingSlashIfNotPresent(checkoutDirectories.exerciseCheckoutDirectory);
-                this.testCheckoutDirectory = this.addLeadingSlashIfNotPresent(checkoutDirectories.testCheckoutDirectory);
+                this.exerciseCheckoutDirectory = checkoutDirectories.exerciseCheckoutDirectory;
+                this.solutionCheckoutDirectory = checkoutDirectories.solutionCheckoutDirectory;
+                this.testCheckoutDirectory = checkoutDirectories.testCheckoutDirectory;
             });
     }
 
     private updateAuxiliaryRepositoryCheckoutDirectories() {
         this.auxiliaryRepositoryCheckoutDirectories =
-            this.programmingExercise?.auxiliaryRepositories?.map((auxiliaryRepository) => this.addLeadingSlashIfNotPresent(auxiliaryRepository.checkoutDirectory)) ?? [];
+            this.programmingExercise?.auxiliaryRepositories?.map((auxiliaryRepository) => addLeadingSlashIfNotPresent(auxiliaryRepository.checkoutDirectory)) ?? [];
     }
 
     private updateShortName() {

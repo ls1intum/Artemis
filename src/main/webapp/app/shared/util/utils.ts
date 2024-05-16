@@ -166,3 +166,13 @@ export function scrollToTopOfPage() {
         pageWrapper.scroll(0, 0);
     }
 }
+
+const ROOT_DIRECTORY_PATH: string = '/';
+
+export function addLeadingSlashIfNotPresent(directory: string | undefined): string {
+    if (!directory) {
+        return ROOT_DIRECTORY_PATH;
+    }
+
+    return directory.startsWith(ROOT_DIRECTORY_PATH) ? directory : ROOT_DIRECTORY_PATH + directory;
+}
