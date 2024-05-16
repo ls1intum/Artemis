@@ -20,6 +20,9 @@ public class AnalysisOfEndpointConnections {
      */
     public static void main(String[] args) {
         System.out.println("Analyzing server sided endpoints. args.length: " + args.length);
+        for (int i = 0; i < args.length; i++) {
+            System.out.println("args[" + i + "]: " + args[i]);
+        }
         String[] serverFiles = Arrays.stream(args).filter(filePath -> new File(filePath).exists() && filePath.endsWith(".java")).toArray(String[]::new);
         analyzeServerEndpoints(serverFiles);
     }
