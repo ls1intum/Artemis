@@ -40,4 +40,4 @@ jobs:
           while IFS= read -r line; do
             args+=" '$line'"
           done < modified_files.txt
-         ./gradlew :supporting_scripts:analysis-of-endpoint-connections:run --args="$(cat modified_files.txt)"
+          ./gradlew :supporting_scripts:analysis-of-endpoint-connections:run --args="$(cat modified_files.txt)"
