@@ -21,15 +21,18 @@
                 <h2 jhiTranslate="artemisApp.studentAnalyticsDashboard.competencyAccordion.title"></h2>
             </div>
             <div class="competency-accordion-body">
-                @for (competency of competencies; track competency.id; let i = $index) {
-                    <jhi-competency-accordion
-                        #competencyAccordionElement
-                        [course]="course"
-                        [competency]="competency"
-                        [index]="i"
-                        [openedIndex]="openedAccordionIndex"
-                        (accordionToggle)="handleToggle($event)"
-                    />
+                @if (studentMetrics) {
+                    @for (competency of competencies; track competency.id; let i = $index) {
+                        <jhi-competency-accordion
+                            #competencyAccordionElement
+                            [course]="course"
+                            [competency]="competency"
+                            [metrics]="studentMetrics"
+                            [index]="i"
+                            [openedIndex]="openedAccordionIndex"
+                            (accordionToggle)="handleToggle($event)"
+                        />
+                    }
                 }
             </div>
         } @else {

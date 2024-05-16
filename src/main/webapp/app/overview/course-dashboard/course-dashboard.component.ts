@@ -1,6 +1,5 @@
 import { Component, ElementRef, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { CompetencyService } from 'app/course/competencies/competency.service';
 import { Subscription } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Course } from 'app/entities/course.model';
@@ -9,13 +8,11 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CourseDashboardService } from 'app/overview/course-dashboard/course-dashboard.service';
-import { ExerciseMetrics } from 'app/entities/student-metrics.model';
+import { CompetencyInformation, ExerciseMetrics, StudentMetrics } from 'app/entities/student-metrics.model';
 import { ExerciseLateness } from 'app/overview/course-dashboard/course-exercise-lateness/course-exercise-lateness.component';
 import { ExercisePerformance } from 'app/overview/course-dashboard/course-exercise-performance/course-exercise-performance.component';
-import { Competency } from 'app/entities/competency.model';
 import { ICompetencyAccordionToggleEvent } from 'app/shared/competency/interfaces/competency-accordion-toggle-event.interface';
 import { round } from 'app/shared/util/utils';
-import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-course-dashboard',
@@ -31,13 +28,14 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     hasExercises = false;
     exerciseLateness?: ExerciseLateness[];
     exercisePerformance?: ExercisePerformance[];
+    studentMetrics?: StudentMetrics;
 
     private paramSubscription?: Subscription;
     private courseUpdatesSubscription?: Subscription;
     private metricsSubscription?: Subscription;
     private subscriptions: Subscription[] = [];
 
-    public competencies: Competency[] = [];
+    public competencies: CompetencyInformation[] = [];
     public openedAccordionIndex: number | null = null;
 
     public course?: Course;
@@ -52,7 +50,6 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
         private alertService: AlertService,
         private route: ActivatedRoute,
         private router: Router,
-        private competencyService: CompetencyService,
         private courseDashboardService: CourseDashboardService,
     ) {}
 
@@ -85,16 +82,26 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
         this.isLoading = true;
         this.metricsSubscription = this.courseDashboardService.getCourseMetricsForUser(this.courseId).subscribe({
             next: (response) => {
-                if (response.body && response.body.exerciseMetrics) {
-                    const exerciseMetrics = response.body.exerciseMetrics;
-                    const sortedExerciseIds = Object.values(exerciseMetrics.exerciseInformation)
-                        .sort((a, b) => new Date(a.due).getTime() - new Date(b.start).getTime())
-                        .map((exercise) => exercise.id);
+                if (response.body) {
+                    this.studentMetrics = response.body;
+                    if (response.body.exerciseMetrics) {
+                        const exerciseMetrics = response.body.exerciseMetrics;
+                        const sortedExerciseIds = Object.values(exerciseMetrics.exerciseInformation)
+                            .sort((a, b) => new Date(a.due).getTime() - new Date(b.start).getTime())
+                            .map((exercise) => exercise.id);
 
-                    this.hasExercises = sortedExerciseIds.length > 0;
-                    this.setOverallPerformance(exerciseMetrics);
-                    this.setExercisePerformance(sortedExerciseIds, exerciseMetrics);
-                    this.setExerciseLateness(sortedExerciseIds, exerciseMetrics);
+                        this.hasExercises = sortedExerciseIds.length > 0;
+                        this.setOverallPerformance(exerciseMetrics);
+                        this.setExercisePerformance(sortedExerciseIds, exerciseMetrics);
+                        this.setExerciseLateness(sortedExerciseIds, exerciseMetrics);
+                    }
+                    if (response.body.competencyMetrics) {
+                        this.competencies = Object.values(response.body.competencyMetrics.competencyInformation).sort((a, b) => {
+                            const aDate = a.softDueDate ? new Date(a.softDueDate).getTime() : 0;
+                            const bDate = b.softDueDate ? new Date(b.softDueDate).getTime() : 0;
+                            return aDate - bDate;
+                        });
+                    }
                 }
                 this.isLoading = false;
             },
@@ -103,29 +110,6 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
                 this.isLoading = false;
             },
         });
-    }
-    /**
-     * Loads all prerequisites and competencies for the course
-     */
-    loadCompetencies() {
-        this.isLoading = true;
-        this.subscriptions.push(
-            this.competencyService.getAllForCourseStudentDashboard(this.courseId).subscribe({
-                next: (response) => {
-                    this.competencies = response.body!;
-                    this.isLoading = false;
-                    // scroll to the current competency
-                    const scrollIndex = this.currentCompetencyIndex !== -1 ? this.currentCompetencyIndex : 0;
-                    setTimeout(() => {
-                        this.scrollToAccordion(scrollIndex);
-                    }, 0);
-                },
-                error: (error: HttpErrorResponse) => {
-                    onError(this.alertService, error);
-                    this.isLoading = false;
-                },
-            }),
-        );
     }
 
     /**
@@ -186,23 +170,6 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
         this.course = course;
         if (this.course) {
             this.loadMetrics();
-            // Note: this component is only shown if there is at least 1 competency or at least 1 prerequisite, so if they do not exist, we load the data from the server
-            if ((this.course.competencies && this.course.competencies.length > 0) || (this.course.prerequisites && this.course.prerequisites.length > 0)) {
-                this.competencies = this.course.competencies || [];
-            } else {
-                this.loadCompetencies();
-            }
-        }
-    }
-
-    get currentCompetencyIndex() {
-        return this.competencies.findIndex((competency) => dayjs().isBefore(competency.softDueDate));
-    }
-
-    private scrollToAccordion(index: number) {
-        const accordionsArray = this.competencyAccordions.toArray();
-        if (index !== -1 && accordionsArray[index]) {
-            accordionsArray[index].nativeElement.scrollIntoView({ behavior: 'smooth' });
         }
     }
 

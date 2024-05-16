@@ -1,11 +1,12 @@
 import dayjs from 'dayjs/esm';
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { faFilePdf, faList } from '@fortawesome/free-solid-svg-icons';
-import { Competency, CompetencyProgress, getConfidence, getIcon, getMastery, getProgress } from 'app/entities/competency.model';
+import { CompetencyProgress, getConfidence, getIcon, getMastery, getProgress } from 'app/entities/competency.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { Router } from '@angular/router';
 import { ICompetencyAccordionToggleEvent } from 'app/shared/competency/interfaces/competency-accordion-toggle-event.interface';
+import { CompetencyInformation, StudentMetrics } from 'app/entities/student-metrics.model';
 
 @Component({
     selector: 'jhi-competency-accordion',
@@ -16,7 +17,9 @@ export class CompetencyAccordionComponent implements OnChanges {
     @Input()
     course?: Course;
     @Input()
-    competency: Competency;
+    competency: CompetencyInformation;
+    @Input()
+    metrics: StudentMetrics;
     @Input()
     index: number;
     @Input()
@@ -49,10 +52,9 @@ export class CompetencyAccordionComponent implements OnChanges {
     }
 
     getUserProgress(): CompetencyProgress {
-        if (this.competency.userProgress?.length) {
-            return this.competency.userProgress.first()!;
-        }
-        return { progress: 0, confidence: 0 } as CompetencyProgress;
+        const progress = this.metrics.competencyMetrics?.progress[this.competency.id] ?? 0;
+        const confidence = this.metrics.competencyMetrics?.confidence[this.competency.id] ?? 0;
+        return { progress, confidence } as CompetencyProgress;
     }
 
     get progress() {
@@ -60,17 +62,22 @@ export class CompetencyAccordionComponent implements OnChanges {
     }
 
     get lectureUnitsProgress() {
-        if (this.competency.lectureUnits?.length) {
-            const completedLectureUnits = this.competency.lectureUnits.filter((lectureUnit) => lectureUnit.completed).length;
-            return Math.round((completedLectureUnits / this.competency.lectureUnits.length) * 100);
+        if (this.metrics.lectureUnitStudentMetricsDTO) {
+            const competencyLectureUnits = this.metrics.competencyMetrics?.lectureUnits[this.competency.id];
+            const completedLectureUnits = competencyLectureUnits?.filter((lectureUnitId) => this.metrics.lectureUnitStudentMetricsDTO?.completed?.includes(lectureUnitId)).length;
+            if (competencyLectureUnits && completedLectureUnits) {
+                return Math.round((completedLectureUnits / competencyLectureUnits.length) * 100);
+            }
+            return 0;
         }
         return 0;
     }
 
     get exercisesProgress() {
-        if (this.competency.exercises?.length) {
-            const completedExercises = this.competency.exercises.filter((exercise) => exercise.completed).length;
-            return Math.round((completedExercises / this.competency.exercises.length) * 100);
+        const competencyExercises = this.metrics.competencyMetrics?.exercises[this.competency.id];
+        const completedExercises = competencyExercises?.filter((exerciseId) => this.metrics.exerciseMetrics?.completed?.includes(exerciseId)).length;
+        if (competencyExercises && completedExercises) {
+            return Math.round((completedExercises / competencyExercises.length) * 100);
         }
         return 0;
     }
@@ -90,20 +97,6 @@ export class CompetencyAccordionComponent implements OnChanges {
         } as CompetencyProgress;
     }
 
-    getNextExercise() {
-        if (this.competency && this.competency.exercises && this.competency.exercises?.length !== 0) {
-            this.remainingExercises = this.competency.exercises?.filter((exercise) => exercise && !exercise.completed && !this.isExerciseDueDayPassed(exercise));
-            if (this.remainingExercises.length && this.remainingExercises.first()) {
-                const exercise = this.remainingExercises.first();
-                if (exercise?.dueDate) {
-                    exercise.dueDate = dayjs(exercise.dueDate);
-                }
-                return exercise;
-            }
-            return null;
-        }
-        return null;
-    }
     get competencySoftDueDayPassed() {
         return this.competency?.softDueDate && dayjs().isAfter(this.competency.softDueDate);
     }
@@ -113,10 +106,6 @@ export class CompetencyAccordionComponent implements OnChanges {
             return false;
         }
         return exercise.dueDate && dayjs().isAfter(exercise.dueDate);
-    }
-
-    get nextExercise() {
-        return this.getNextExercise();
     }
 
     navigateToCompetencyDetailPage(event: Event) {

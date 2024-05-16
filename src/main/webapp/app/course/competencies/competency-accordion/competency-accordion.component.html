@@ -9,7 +9,7 @@
                 <fa-icon
                     [icon]="getIcon(competency.taxonomy)"
                     [fixedWidth]="true"
-                    [ngbTooltip]="'artemisApp.competency.taxonomies.' + (competency.taxonomy ?? 'none') | artemisTranslate"
+                    [ngbTooltip]="'artemisApp.competency.taxonomies.' + competency.taxonomy | artemisTranslate"
                     container="body"
                 />
             </h4>
@@ -40,14 +40,6 @@
         </div>
     </button>
     <div [class.competency-accordion-body-open]="open" [class.competency-accordion-body-closed]="!open" class="competency-accordion-body">
-        @if (nextExercise) {
-            <div class="row align-items-center justify-content-center">
-                <div class="col">
-                    <h5><b jhiTranslate="artemisApp.studentAnalyticsDashboard.competencyAccordion.nextExercise.title"></b></h5>
-                    <jhi-course-exercise-row [exercise]="nextExercise" [course]="competency!.course!" />
-                </div>
-            </div>
-        }
         <div class="row align-items-center justify-content-center m-2">
             <button
                 (click)="navigateToCompetencyDetailPage($event)"
