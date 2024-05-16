@@ -52,7 +52,7 @@
                     </li>
                 </ul>
             </div>
-        } @else if (exerciseCheckoutDirectory || solutionCheckoutDirectory || testCheckoutDirectory) {
+        } @else if (checkoutDirectories) {
             <div class="col-auto rounded pt-1 pb-1 preview-box" id="checkout-directory-preview">
                 <div>
                     <span class="font-weight-bold" jhiTranslate="artemisApp.programmingExercise.checkoutDirectory"></span>
@@ -60,13 +60,13 @@
                 <hr class="pt-0 pb-0 mt-1 mb-1" />
                 <ul>
                     <li>
-                        <code>{{ exerciseCheckoutDirectory }} </code>
+                        <code>{{ checkoutDirectories.exerciseCheckoutDirectory }} </code>
                     </li>
                     <li>
-                        <code> {{ solutionCheckoutDirectory }} </code>
+                        <code> {{ checkoutDirectories.solutionCheckoutDirectory }} </code>
                     </li>
                     <li>
-                        <code> {{ testCheckoutDirectory }} </code>
+                        <code> {{ checkoutDirectories.testCheckoutDirectory }} </code>
                     </li>
                     @for (auxiliaryRepositoryCheckoutDirectory of auxiliaryRepositoryCheckoutDirectories; track auxiliaryRepositoryCheckoutDirectory) {
                         <li>
