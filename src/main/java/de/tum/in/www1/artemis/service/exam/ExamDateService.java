@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -99,7 +100,17 @@ public class ExamDateService {
             return false;
         }
 
-        var optionalStudentExam = studentExamRepository.findByExamIdAndUserId(exam.getId(), studentParticipation.getParticipant().getId());
+        Optional<StudentExam> optionalStudentExam;
+        // There are multiple test exams possible for one exam, which implies that there are multiple student exams for one exam.
+        // For test exams we try to find the latest student exam
+        // For real exams we try to find the only existing student exam
+        if (exam.isTestExam()) {
+            optionalStudentExam = studentExamRepository.findLatestByExamIdAndUserId(exam.getId(), studentParticipation.getParticipant().getId());
+        }
+        else {
+            optionalStudentExam = studentExamRepository.findByExamIdAndUserId(exam.getId(), studentParticipation.getParticipant().getId());
+        }
+
         if (optionalStudentExam.isPresent()) {
             StudentExam studentExam = optionalStudentExam.get();
             return Boolean.TRUE.equals(studentExam.isSubmitted()) || studentExam.isEnded();
