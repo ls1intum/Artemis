@@ -110,7 +110,7 @@ public class PyrisPipelineService {
         var courseId = session.getCourse().getId();
         executeChatPipeline(variant, session, "course-chat", base -> {
             var fullCourse = courseRepository.findWithEagerExercisesAndLecturesAndLectureUnitsAndCompetenciesAndExamsById(courseId).orElseThrow();
-            var metrics = metricsService.getStudentCourseMetrics(courseId, session.getUser().getId());
+            var metrics = metricsService.getStudentCourseMetrics(session.getUser().getId(), courseId);
             return new PyrisCourseChatPipelineExecutionDTO(base, pyrisDTOService.toPyrisExtendedCourseDTO(fullCourse), metrics);
         }, () -> pyrisJobService.addCourseChatJob(courseId, session.getId()));
     }
