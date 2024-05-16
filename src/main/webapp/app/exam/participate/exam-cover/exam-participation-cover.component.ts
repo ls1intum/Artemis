@@ -28,14 +28,14 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
     handInEarly: boolean;
     handInPossible: boolean;
     submitInProgress: boolean;
-    attendanceChecked: boolean;
+    //attendanceChecked: boolean;
     //examStartConfirmed = false;
 
     course?: Course;
     startEnabled: boolean;
     endEnabled: boolean;
     confirmed: boolean;
-    isAttendanceChecked: boolean;
+    //isAttendanceChecked: boolean;
 
     exam: Exam;
     studentExam: StudentExam;
@@ -99,7 +99,7 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
             this.handInEarly = state.handInEarly;
             this.handInPossible = state.handInPossible;
             this.submitInProgress = state.submitInProgress;
-            this.attendanceChecked = state.attendanceChecked;
+            //this.attendanceChecked = state.attendanceChecked;
         });
 
         this.route.params.subscribe((params) => {
