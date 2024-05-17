@@ -190,9 +190,10 @@ describe('LearningPathStudentNavComponent', () => {
         tick();
         fixture.detectChanges();
 
-        const previousButton = fixture.debugElement.query(By.css('#previous-button'));
-        previousButton.nativeElement.click();
+        const previousButton = fixture.debugElement.nativeElement.querySelector('#previous-button');
+        previousButton.click();
         fixture.detectChanges();
         expect(selectLearningObjectSpy).toHaveBeenCalledWith(navigationDto.predecessorLearningObject);
+        expect(getLearningPathNavigationSpy).toHaveBeenCalledTimes(2);
     }));
 });
