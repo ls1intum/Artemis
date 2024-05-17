@@ -8,6 +8,7 @@ import static org.mockito.Mockito.verify;
 
 import java.util.List;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -34,6 +35,12 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
         }
     }
 
+    @AfterEach
+    void tearDown() {
+        conversationMessageRepository.deleteAll();
+        conversationRepository.deleteAll();
+    }
+
     @Override
     String getTestPrefix() {
         return TEST_PREFIX;
@@ -55,9 +62,6 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
         assertParticipants(chat2.getId(), 2, "student1", "student3");
         // members of the created one to one chat are only notified in case the first message within the conversation is created
         verifyNoParticipantTopicWebsocketSent();
-
-        // cleanup
-        conversationRepository.deleteAllById(List.of(chat1.getId(), chat2.getId()));
     }
 
     @Test
@@ -79,10 +83,6 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
 
         // members of the created one to one chat are only notified in case the first message within the conversation is created
         verifyNoParticipantTopicWebsocketSent();
-
-        // cleanup
-        var conversation = oneToOneChatRepository.findByIdWithConversationParticipantsAndUserGroups(chat.getId()).orElseThrow();
-        conversationRepository.delete(conversation);
     }
 
     @Test
@@ -140,9 +140,6 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
         // members of the created one to one chat are only notified in case the first message within the conversation is created
         verifyNoParticipantTopicWebsocketSent();
 
-        // cleanup
-        var conversation = oneToOneChatRepository.findByIdWithConversationParticipantsAndUserGroups(chat.getId()).orElseThrow();
-        conversationRepository.delete(conversation);
     }
 
     @Test
@@ -158,9 +155,5 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
                 (Object) argThat(argument -> argument instanceof PostDTO postDTO && postDTO.post().equals(post)));
         verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.CREATE, MetisCrudAction.NEW_MESSAGE);
 
-        // cleanup
-        var conversation = oneToOneChatRepository.findByIdWithConversationParticipantsAndUserGroups(chat.getId()).orElseThrow();
-        conversationMessageRepository.deleteById(post.getId());
-        conversationRepository.delete(conversation);
     }
 }
