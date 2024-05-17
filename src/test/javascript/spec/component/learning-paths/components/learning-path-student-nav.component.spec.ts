@@ -42,7 +42,14 @@ describe('LearningPathStudentNavComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [LearningPathStudentNavComponent],
-            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: TranslateService, useValue: jest.fn() }],
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                {
+                    provide: TranslateService,
+                    useValue: jest.fn(),
+                },
+            ],
         })
             .overrideComponent(LearningPathStudentNavComponent, {
                 add: {
@@ -61,7 +68,11 @@ describe('LearningPathStudentNavComponent', () => {
     });
 
     afterEach(() => {
+        if (fixture) {
+            fixture.destroy();
+        }
         jest.restoreAllMocks();
+        TestBed.resetTestingModule();
     });
 
     it('should initialize', () => {
@@ -134,7 +145,7 @@ describe('LearningPathStudentNavComponent', () => {
     }));
 
     it('should navigation with only next button', fakeAsync(() => {
-        navigationDto = {
+        const navigationDto = {
             currentLearningObject: {
                 id: 2,
                 name: 'Lecture',
@@ -190,8 +201,8 @@ describe('LearningPathStudentNavComponent', () => {
         tick();
         fixture.detectChanges();
 
-        const previousButton = fixture.debugElement.nativeElement.querySelector('#previous-button');
-        previousButton.click();
+        const previousButton = fixture.debugElement.query(By.css('#previous-button'));
+        previousButton.nativeElement.click();
         fixture.detectChanges();
         expect(selectLearningObjectSpy).toHaveBeenCalledWith(navigationDto.predecessorLearningObject);
         expect(getLearningPathNavigationSpy).toHaveBeenCalledTimes(2);
