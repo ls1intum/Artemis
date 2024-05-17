@@ -2,9 +2,28 @@
     "artemisApp": {
         "standardizedCompetency": {
             "title": "Standardized Competencies",
+            "model": {
+                "title": "Title",
+                "description": "Description",
+                "taxonomy": "Taxonomy",
+                "knowledgeArea": "Knowledge Area",
+                "version": "Version"
+            },
+            "details": {
+                "title": "Standardized Competency Details",
+                "titleCreate": "Create Standardized Competency",
+                "titleEdit": "Edit Standardized Competency",
+                "error": {
+                    "titleRequired": "A standardized competency needs to have a title",
+                    "titleMaxLength": "The title of a standardized competency is limited to {{max}} characters",
+                    "descriptionMaxLength": "The description of a standardized competency is limited to {{max}} characters",
+                    "knowledgeAreaRequired": "A standardized competency needs to have a knowledge area"
+                }
+            },
             "manage": {
                 "title": "Standardized Competency Management",
                 "filter": "Filter competencies",
+                "empty": "No knowledge areas or standardized competencies exist. You can create a new knowledge area with the \"+\" button.",
                 "importButton": "Import standardized competencies",
                 "expandButtonTooltip": "Expand all knowledge areas",
                 "collapseButtonTooltip": "Collapse all knowledge areas",
@@ -45,23 +64,13 @@
                     "success": "Successfully imported all knowledge areas and standardized competencies"
                 }
             },
-            "model": {
-                "title": "Title",
-                "description": "Description",
-                "taxonomy": "Taxonomy",
-                "knowledgeArea": "Knowledge Area",
-                "version": "Version"
-            },
-            "details": {
-                "title": "Standardized Competency Details",
-                "titleCreate": "Create Standardized Competency",
-                "titleEdit": "Edit Standardized Competency",
-                "error": {
-                    "titleRequired": "A standardized competency needs to have a title",
-                    "titleMaxLength": "The title of a standardized competency is limited to {{max}} characters",
-                    "descriptionMaxLength": "The description of a standardized competency is limited to {{max}} characters",
-                    "knowledgeAreaRequired": "A standardized competency needs to have a knowledge area"
-                }
+            "courseImport": {
+                "title": "Import Standardized Competencies",
+                "empty": "No knowledge areas or standardized competencies exist.",
+                "success": "Successfully imported {{count}} standardized competencies",
+                "selectedTitle": "Selected Competencies",
+                "selectedEmpty": "No standardized competencies selected for import",
+                "selectedCompetencies": "{{count}} standardized competencies selected for import"
             }
         },
         "knowledgeArea": {

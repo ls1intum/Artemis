@@ -1,5 +1,6 @@
 import { Page } from 'playwright';
 import { EXERCISE_BASE, MODELING_EDITOR_CANVAS } from '../../../constants';
+import { drag } from '../../../utils';
 import { Locator } from '@playwright/test';
 
 export class DragAndDropQuiz {
@@ -19,7 +20,7 @@ export class DragAndDropQuiz {
     async dragItemIntoDragArea(itemIndex: number) {
         const dragLocation = this.page.locator(`#drag-item-${itemIndex}`);
         const dropLocation = this.page.locator('#drop-location');
-        await dragLocation.dragTo(dropLocation);
+        await drag(this.page, dragLocation, dropLocation);
     }
 
     async setTitle(title: string) {
@@ -56,9 +57,8 @@ export class DragAndDropQuiz {
 
     async activateInteractiveMode() {
         const modelingEditorSidebar = this.page.locator('#modeling-editor-sidebar');
-        const container = modelingEditorSidebar.locator('div').nth(0);
-        const interactiveButton = container.locator('button').nth(1);
-        await interactiveButton.click();
+        const modeDropdownList = modelingEditorSidebar.locator('.dropdown').locator('select');
+        await modeDropdownList.selectOption('Exporting');
     }
 
     async markElementAsInteractive(nthElementOnCanvas: number, nthChildOfElement: number) {

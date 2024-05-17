@@ -1,14 +1,17 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
+import static de.tum.in.www1.artemis.config.StartupDelayConfig.PARTICIPATION_SCORES_SCHEDULE_DELAY_SEC;
+
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.validation.constraints.NotNull;
 
@@ -16,7 +19,9 @@ import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -30,7 +35,13 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.scores.ParticipantScore;
 import de.tum.in.www1.artemis.domain.scores.StudentScore;
 import de.tum.in.www1.artemis.domain.scores.TeamScore;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.ParticipantScoreRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.StudentScoreRepository;
+import de.tum.in.www1.artemis.repository.TeamRepository;
+import de.tum.in.www1.artemis.repository.TeamScoreRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.util.RoundingUtil;
@@ -111,16 +122,18 @@ public class ParticipantScoreScheduleService {
     /**
      * Schedule all outdated participant scores when the service is started.
      */
-    @PostConstruct
+    @EventListener(ApplicationReadyEvent.class)
     public void startup() {
-        isRunning.set(true);
-        try {
-            // this should never prevent the application start of Artemis
-            scheduleTasks();
-        }
-        catch (Exception ex) {
-            log.error("Cannot schedule participant score service", ex);
-        }
+        scheduler.schedule(() -> {
+            isRunning.set(true);
+            try {
+                // this should never prevent the application start of Artemis
+                scheduleTasks();
+            }
+            catch (Exception ex) {
+                log.error("Cannot schedule participant score service", ex);
+            }
+        }, Instant.now().plusSeconds(PARTICIPATION_SCORES_SCHEDULE_DELAY_SEC));
     }
 
     public void activate() {
@@ -143,6 +156,7 @@ public class ParticipantScoreScheduleService {
      * We schedule all results that were created/updated since the last run of the cron job.
      * Additionally, we schedule all participant scores that are outdated/invalid.
      */
+    // TODO: could be converted to TaskScheduler, but tests depend on this implementation at the moment. See QuizScheduleService for reference
     @Scheduled(cron = "0 * * * * *")
     protected void scheduleTasks() {
         log.debug("Schedule tasks to process...");

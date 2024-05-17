@@ -40,6 +40,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.web.rest.dto.ModelingAssessmentDTO;
 import de.tum.in.www1.artemis.web.rest.errors.ErrorConstants;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
@@ -104,10 +105,10 @@ public class ModelingAssessmentResource extends AssessmentResource {
     /**
      * PUT modeling-submissions/:submissionId/result/resultId/assessment : save manual modeling assessment. See {@link AssessmentResource#saveAssessment}.
      *
-     * @param submissionId id of the submission
-     * @param resultId     id of the result
-     * @param feedbacks    list of feedbacks
-     * @param submit       if true the assessment is submitted, else only saved
+     * @param submissionId       id of the submission
+     * @param resultId           id of the result
+     * @param submit             if true the assessment is submitted, else only saved
+     * @param modelingAssessment the DTO containing the list of feedbacks and the assessment note, if one exists
      * @return result after saving/submitting modeling assessment
      */
     @ResponseStatus(HttpStatus.OK)
@@ -116,9 +117,9 @@ public class ModelingAssessmentResource extends AssessmentResource {
     @PutMapping("modeling-submissions/{submissionId}/result/{resultId}/assessment")
     @EnforceAtLeastTutor
     public ResponseEntity<Result> saveModelingAssessment(@PathVariable long submissionId, @PathVariable long resultId,
-            @RequestParam(value = "submit", defaultValue = "false") boolean submit, @RequestBody List<Feedback> feedbacks) {
-        Submission submission = submissionRepository.findOneWithEagerResultAndFeedback(submissionId);
-        return super.saveAssessment(submission, submit, feedbacks, resultId);
+            @RequestParam(value = "submit", defaultValue = "false") boolean submit, @RequestBody ModelingAssessmentDTO modelingAssessment) {
+        Submission submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submissionId);
+        return super.saveAssessment(submission, submit, modelingAssessment.feedbacks(), resultId, modelingAssessment.assessmentNote());
     }
 
     /**

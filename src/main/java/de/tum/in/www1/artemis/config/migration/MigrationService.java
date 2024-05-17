@@ -6,7 +6,13 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.HashSet;
+import java.util.HexFormat;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -57,7 +63,7 @@ public class MigrationService {
             return;
         }
 
-        log.info("Starting Artemis migration");
+        log.debug("Starting Artemis migration");
 
         SortedMap<Integer, MigrationEntry> entryMap = instantiateEntryMap(entryClassMap);
 
@@ -66,7 +72,7 @@ public class MigrationService {
             throw new MigrationIntegrityException();
         }
         else {
-            log.info("Integrity check passed.");
+            log.debug("Integrity check passed.");
         }
 
         Set<String> executedChanges = migrationChangeRepository.findAll().stream().map(MigrationChangelog::getDateString).collect(Collectors.toCollection(HashSet::new));
@@ -94,9 +100,9 @@ public class MigrationService {
             log.info("Executed {} migration entries", migrationEntryMap.size());
         }
         else {
-            log.info("No migration entries executed");
+            log.debug("No migration entries executed");
         }
-        log.info("Ending Artemis migration");
+        log.debug("Ending Artemis migration");
     }
 
     public SortedMap<Integer, MigrationEntry> instantiateEntryMap(SortedMap<Integer, Class<? extends MigrationEntry>> entryClassMap) {
@@ -115,7 +121,7 @@ public class MigrationService {
      * @return True if the check was successful, otherwise false
      */
     public boolean checkIntegrity(SortedMap<Integer, MigrationEntry> entryMap) {
-        log.info("Starting migration integrity check");
+        log.debug("Starting migration integrity check");
         boolean passed = true;
         Map<Integer, MigrationEntry> brokenInstances = entryMap.entrySet().stream()
                 .filter(entry -> !StringUtils.hasLength(entry.getValue().date()) || !StringUtils.hasLength(entry.getValue().author()))
@@ -146,7 +152,7 @@ public class MigrationService {
                 baseEntry = entry;
             }
         }
-        log.info("Ending migration integrity check.");
+        log.debug("Ending migration integrity check.");
         return passed;
     }
 

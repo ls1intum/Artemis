@@ -365,8 +365,10 @@ export class ProgrammingExerciseService {
      */
     delete(programmingExerciseId: number, deleteStudentReposBuildPlans: boolean, deleteBaseReposBuildPlans: boolean): Observable<HttpResponse<any>> {
         let params = new HttpParams();
-        params = params.set('deleteStudentReposBuildPlans', deleteStudentReposBuildPlans.toString());
-        params = params.set('deleteBaseReposBuildPlans', deleteBaseReposBuildPlans.toString());
+        if (deleteBaseReposBuildPlans != undefined && deleteStudentReposBuildPlans != undefined) {
+            params = params.set('deleteStudentReposBuildPlans', deleteStudentReposBuildPlans.toString());
+            params = params.set('deleteBaseReposBuildPlans', deleteBaseReposBuildPlans.toString());
+        }
         return this.http.delete(`${this.resourceUrl}/${programmingExerciseId}`, { params, observe: 'response' });
     }
 
@@ -445,6 +447,18 @@ export class ProgrammingExerciseService {
                 responseType: 'blob',
             });
         }
+    }
+
+    /**
+     * Exports the repository belonging to a specific student participation of a programming exercise.
+     * @param exerciseId The ID of the programming exercise.
+     * @param participationId The ID of the (student) participation
+     */
+    exportStudentRepository(exerciseId: number, participationId: number): Observable<HttpResponse<Blob>> {
+        return this.http.get(`${this.resourceUrl}/${exerciseId}/export-student-repository/${participationId}`, {
+            observe: 'response',
+            responseType: 'blob',
+        });
     }
 
     /**

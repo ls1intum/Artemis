@@ -17,11 +17,27 @@ import org.springframework.context.annotation.Import;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.async.ResultCallback;
-import com.github.dockerjava.api.command.*;
+import com.github.dockerjava.api.command.CopyArchiveToContainerCmd;
+import com.github.dockerjava.api.command.CreateContainerCmd;
+import com.github.dockerjava.api.command.CreateContainerResponse;
+import com.github.dockerjava.api.command.ExecCreateCmd;
+import com.github.dockerjava.api.command.ExecCreateCmdResponse;
+import com.github.dockerjava.api.command.ExecStartCmd;
+import com.github.dockerjava.api.command.InspectImageCmd;
+import com.github.dockerjava.api.command.InspectImageResponse;
+import com.github.dockerjava.api.command.KillContainerCmd;
+import com.github.dockerjava.api.command.ListContainersCmd;
+import com.github.dockerjava.api.command.ListImagesCmd;
+import com.github.dockerjava.api.command.PullImageCmd;
+import com.github.dockerjava.api.command.RemoveContainerCmd;
+import com.github.dockerjava.api.command.RemoveImageCmd;
+import com.github.dockerjava.api.command.StartContainerCmd;
+import com.github.dockerjava.api.command.StopContainerCmd;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Image;
 
 import de.tum.in.www1.artemis.config.localvcci.LocalCIConfiguration;
+import de.tum.in.www1.artemis.service.connectors.localci.buildagent.LocalCIDockerService;
 import de.tum.in.www1.artemis.util.FixMissingServletPathProcessor;
 
 /**
@@ -50,8 +66,9 @@ public class LocalCITestConfiguration {
         // Mock PullImageCmd
         PullImageCmd pullImageCmd = mock(PullImageCmd.class);
         doReturn(pullImageCmd).when(dockerClient).pullImageCmd(anyString());
-        PullImageResultCallback callback1 = mock(PullImageResultCallback.class);
-        doReturn(callback1).when(pullImageCmd).exec(any(PullImageResultCallback.class));
+        doReturn(pullImageCmd).when(pullImageCmd).withPlatform(anyString());
+        LocalCIDockerService.MyPullImageResultCallback callback1 = mock(LocalCIDockerService.MyPullImageResultCallback.class);
+        doReturn(callback1).when(pullImageCmd).exec(any(LocalCIDockerService.MyPullImageResultCallback.class));
         doReturn(null).when(callback1).awaitCompletion();
 
         String dummyContainerId = "1234567890";
@@ -122,7 +139,7 @@ public class LocalCITestConfiguration {
         doReturn(new String[] { "test-image-name" }).when(image).getRepoTags();
         doReturn(List.of(image)).when(listImagesCmd).exec();
 
-        // Mock removeContainer() method.
+        // Mock removeImageCmd method.
         RemoveImageCmd removeImageCmd = mock(RemoveImageCmd.class);
         doReturn(removeImageCmd).when(dockerClient).removeImageCmd(anyString());
         doNothing().when(removeImageCmd).exec();
@@ -131,6 +148,15 @@ public class LocalCITestConfiguration {
         RemoveContainerCmd removeContainerCmd = mock(RemoveContainerCmd.class);
         doReturn(removeContainerCmd).when(dockerClient).removeContainerCmd(anyString());
         doReturn(removeContainerCmd).when(removeContainerCmd).withForce(true);
+
+        // Mock stopContainerCmd
+        StopContainerCmd stopContainerCmd = mock(StopContainerCmd.class);
+        doReturn(stopContainerCmd).when(dockerClient).stopContainerCmd(anyString());
+        doReturn(stopContainerCmd).when(stopContainerCmd).withTimeout(any());
+
+        // Mock killContainerCmd
+        KillContainerCmd killContainerCmd = mock(KillContainerCmd.class);
+        doReturn(killContainerCmd).when(dockerClient).killContainerCmd(anyString());
 
         return dockerClient;
     }

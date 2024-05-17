@@ -4,7 +4,13 @@ import static de.tum.in.www1.artemis.domain.enumeration.ExerciseType.MODELING;
 
 import java.time.ZonedDateTime;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.SecondaryTable;
+import jakarta.persistence.Transient;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;

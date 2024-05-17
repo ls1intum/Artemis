@@ -6,16 +6,27 @@ import jakarta.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import com.hazelcast.core.HazelcastInstance;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.scheduled.*;
+import de.tum.in.www1.artemis.service.scheduled.AthenaScheduleService;
+import de.tum.in.www1.artemis.service.scheduled.ModelingExerciseScheduleService;
+import de.tum.in.www1.artemis.service.scheduled.NotificationScheduleService;
+import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
+import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
+import de.tum.in.www1.artemis.service.scheduled.UserScheduleService;
 
 /**
  * This service is only available on a node with the 'scheduling' profile.
@@ -51,8 +62,8 @@ public class InstanceMessageReceiveService {
 
     public InstanceMessageReceiveService(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseScheduleService programmingExerciseScheduleService,
             ModelingExerciseRepository modelingExerciseRepository, ModelingExerciseScheduleService modelingExerciseScheduleService, ExerciseRepository exerciseRepository,
-            Optional<AthenaScheduleService> athenaScheduleService, HazelcastInstance hazelcastInstance, UserRepository userRepository, UserScheduleService userScheduleService,
-            NotificationScheduleService notificationScheduleService, ParticipantScoreScheduleService participantScoreScheduleService) {
+            Optional<AthenaScheduleService> athenaScheduleService, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, UserRepository userRepository,
+            UserScheduleService userScheduleService, NotificationScheduleService notificationScheduleService, ParticipantScoreScheduleService participantScoreScheduleService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseScheduleService = programmingExerciseScheduleService;
         this.athenaScheduleService = athenaScheduleService;

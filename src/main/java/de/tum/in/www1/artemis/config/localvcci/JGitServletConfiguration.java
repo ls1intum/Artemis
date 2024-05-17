@@ -31,7 +31,7 @@ public class JGitServletConfiguration {
     @Bean
     public ServletRegistrationBean<GitServlet> jgitServlet() {
         ArtemisGitServlet gitServlet = new ArtemisGitServlet(localVCServletService);
-        log.info("Registering ArtemisGitServlet for handling fetch and push requests to [Artemis URL]/git/[Project Key]/[Repository Slug].git");
+        log.debug("Registering ArtemisGitServlet for handling fetch and push requests to [Artemis URL]/git/[Project Key]/[Repository Slug].git");
         return new ServletRegistrationBean<>(gitServlet, "/git/*");
     }
 }

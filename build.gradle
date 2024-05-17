@@ -1,5 +1,9 @@
+import com.diffplug.spotless.FormatterFunc
+import com.diffplug.spotless.FormatterStep
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
+
+import static com.diffplug.spotless.Formatter.NO_FILE_SENTINEL
 
 buildscript {
     repositories {
@@ -15,20 +19,20 @@ plugins {
     id "idea"
     id "jacoco"
     id "org.springframework.boot" version "${spring_boot_version}"
-    id "io.spring.dependency-management" version "1.1.4"
+    id "io.spring.dependency-management" version "1.1.5"
     id "com.google.cloud.tools.jib" version "3.4.2"
     id "com.github.node-gradle.node" version "${gradle_node_plugin_version}"
     id "com.diffplug.spotless" version "6.25.0"
     // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
     id "com.github.ben-manes.versions" version "0.51.0"
     id "com.github.andygoossens.modernizer" version "${modernizer_plugin_version}"
-    id "com.gorylenko.gradle-git-properties" version "2.4.1"
+    id "com.gorylenko.gradle-git-properties" version "2.4.2"
     id "org.owasp.dependencycheck" version "9.1.0"
     id "com.adarshr.test-logger" version "4.0.0"
 }
 
 group = "de.tum.in.www1.artemis"
-version = "7.0.2"
+version = "7.1.0"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -83,6 +87,23 @@ spotless {
 
         removeUnusedImports()
         trimTrailingWhitespace()
+
+        // Wildcard imports can't be resolved by spotless itself.
+        // This will require the developer themselves to adhere to best practices.
+        addStep(FormatterStep.createNeverUpToDate("Refuse wildcard imports", new FormatterFunc() {
+            @Override
+            String apply(String s) throws Exception {
+                apply(s, NO_FILE_SENTINEL)
+            }
+
+            @Override
+            String apply(String s, File file) throws Exception {
+                if (s =~ /\nimport .*\*;/) {
+                    throw new AssertionError("Do not use wildcard imports. 'spotlessApply' cannot resolve this issue.\n" +
+                        "The following file violates this rule: " + file.getName())
+                }
+            }
+        }))
     }
 }
 
@@ -136,12 +157,14 @@ jar {
 private excludedClassFilesForReport(classDirectories) {
     classDirectories.setFrom(files(classDirectories.files.collect {
         fileTree(dir: it,
-                exclude: [
-                        "**/de/tum/in/www1/artemis/domain/**/*_*",
-                        "**/de/tum/in/www1/artemis/config/migration/entries/**",
-                        "**/org/eclipse/jgit/**",
-                        "**/gradle-wrapper.jar/**"
-                ]
+            exclude: [
+                "**/de/tum/in/www1/artemis/domain/**/*_*",
+                "**/de/tum/in/www1/artemis/config/migration/entries/**",
+                "**/de/tum/in/www1/artemis/service/connectors/pyris/dto/**",
+                "**/de/tum/in/www1/artemis/web/rest/iris/dto/**",
+                "**/org/eclipse/jgit/**",
+                "**/gradle-wrapper.jar/**"
+            ]
         )
     }))
 }
@@ -163,13 +186,13 @@ jacocoTestCoverageVerification {
                 counter = "INSTRUCTION"
                 value = "COVEREDRATIO"
                 // TODO: in the future the following value should become higher than 0.92
-                minimum = 0.897
+                minimum = 0.898
             }
             limit {
                 counter = "CLASS"
                 value = "MISSEDCOUNT"
                 // TODO: in the future the following value should become less than 10
-                maximum = 25
+                maximum = 29
             }
         }
     }
@@ -283,7 +306,7 @@ dependencies {
     implementation "org.apache.santuario:xmlsec:4.0.2"
 
     implementation "org.jsoup:jsoup:1.17.2"
-    implementation "commons-codec:commons-codec:1.16.1"   // needed for spring security saml2
+    implementation "commons-codec:commons-codec:1.17.0"   // needed for spring security saml2
 
     implementation "org.springdoc:springdoc-openapi-ui:1.8.0"
     implementation "com.vdurmont:semver4j:3.1.0"
@@ -364,7 +387,7 @@ dependencies {
     implementation "org.springframework.security:spring-security-oauth2-core:${spring_security_version}"
     implementation "org.springframework.security:spring-security-oauth2-client:${spring_security_version}"
     // use newest version of nimbus-jose-jwt to avoid security issues through outdated dependencies
-    implementation "com.nimbusds:nimbus-jose-jwt:9.37.3"
+    implementation "com.nimbusds:nimbus-jose-jwt:9.38"
     implementation "org.springframework.security:spring-security-oauth2-jose:${spring_security_version}"
     implementation "org.springframework.security:spring-security-crypto:${spring_security_version}"
     implementation "org.springframework.security:spring-security-web:${spring_security_version}"
@@ -388,7 +411,7 @@ dependencies {
         exclude module: "mapstruct"
     }
     implementation "io.springfox:springfox-bean-validators:3.0.0"
-    implementation "com.mysql:mysql-connector-j:8.3.0"
+    implementation "com.mysql:mysql-connector-j:8.4.0"
     implementation "org.postgresql:postgresql:42.7.3"
     implementation "com.h2database:h2:2.2.224"
 
@@ -399,13 +422,13 @@ dependencies {
     implementation "org.apache.maven:maven-model:3.9.6"
     implementation "org.apache.pdfbox:pdfbox:3.0.2"
     implementation "com.google.protobuf:protobuf-java:4.26.1"
-    implementation "org.apache.commons:commons-csv:1.10.0"
+    implementation "org.apache.commons:commons-csv:1.11.0"
     implementation "org.commonmark:commonmark:0.22.0"
     implementation "commons-fileupload:commons-fileupload:1.5"
     implementation "net.lingala.zip4j:zip4j:2.11.5"
     implementation "org.jgrapht:jgrapht-core:1.5.2"
     // use newest version of guava to avoid security issues through outdated dependencies
-    implementation "com.google.guava:guava:33.1.0-jre"
+    implementation "com.google.guava:guava:33.2.0-jre"
 
     // use newest version of gson to avoid security issues through outdated dependencies
     implementation "com.google.code.gson:gson:2.10.1"
@@ -438,7 +461,7 @@ dependencies {
     testImplementation "org.assertj:assertj-core:3.25.3"
     testImplementation "org.mockito:mockito-core:${mockito_version}"
     testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
-    testImplementation "io.github.classgraph:classgraph:4.8.170"
+    testImplementation "io.github.classgraph:classgraph:4.8.171"
     testImplementation "org.awaitility:awaitility:4.2.1"
     testImplementation "org.apache.maven.shared:maven-invoker:3.2.0"
     testImplementation "org.gradle:gradle-tooling-api:8.7"
@@ -454,7 +477,7 @@ dependencies {
     }
     testImplementation("net.bytebuddy:byte-buddy") {
         version {
-            strictly "1.14.14"
+            strictly "1.14.15"
         }
     }
     testImplementation "io.github.classgraph:classgraph:4.8.172"

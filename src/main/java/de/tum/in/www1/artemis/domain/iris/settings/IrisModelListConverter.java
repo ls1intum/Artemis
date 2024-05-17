@@ -2,16 +2,17 @@ package de.tum.in.www1.artemis.domain.iris.settings;
 
 import java.util.Comparator;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.TreeSet;
 
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 
 @Converter
-public class IrisModelListConverter implements AttributeConverter<Set<String>, String> {
+public class IrisModelListConverter implements AttributeConverter<SortedSet<String>, String> {
 
     @Override
-    public String convertToDatabaseColumn(Set<String> type) {
+    public String convertToDatabaseColumn(SortedSet<String> type) {
         if (type == null || type.isEmpty()) {
             return null;
         }
@@ -20,7 +21,7 @@ public class IrisModelListConverter implements AttributeConverter<Set<String>, S
     }
 
     @Override
-    public Set<String> convertToEntityAttribute(String value) {
+    public SortedSet<String> convertToEntityAttribute(String value) {
         var treeSet = new TreeSet<String>(Comparator.naturalOrder());
         if (value != null) {
             treeSet.addAll(Set.of(value.split(",")));

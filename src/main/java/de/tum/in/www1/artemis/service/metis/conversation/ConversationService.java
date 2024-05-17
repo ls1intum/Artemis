@@ -3,7 +3,11 @@ package de.tum.in.www1.artemis.service.metis.conversation;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -19,12 +23,20 @@ import org.springframework.web.bind.annotation.RequestBody;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
-import de.tum.in.www1.artemis.domain.metis.conversation.*;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
+import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
+import de.tum.in.www1.artemis.domain.metis.conversation.ConversationSummary;
+import de.tum.in.www1.artemis.domain.metis.conversation.GeneralConversationInfo;
+import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
+import de.tum.in.www1.artemis.domain.metis.conversation.UserConversationInfo;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
-import de.tum.in.www1.artemis.repository.metis.conversation.*;
+import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.GroupChatRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.OneToOneChatRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -361,7 +373,7 @@ public class ConversationService {
     public Page<User> searchMembersOfConversation(Course course, Conversation conversation, Pageable pageable, String searchTerm,
             Optional<ConversationMemberSearchFilters> filter) {
         if (filter.isEmpty()) {
-            if (conversation instanceof Channel && ((Channel) conversation).getIsCourseWide()) {
+            if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
                 return userRepository.searchAllByLoginOrNameInCourse(pageable, searchTerm, course.getId());
             }
             return userRepository.searchAllByLoginOrNameInConversation(pageable, searchTerm, conversation.getId());
@@ -377,13 +389,15 @@ public class ConversationService {
                 }
                 case STUDENT -> groups.add(course.getStudentGroupName());
                 case CHANNEL_MODERATOR -> {
-                    assert conversation instanceof Channel : "The filter CHANNEL_MODERATOR is only allowed for channels!";
+                    if (!(conversation instanceof Channel)) {
+                        throw new IllegalArgumentException("The filter CHANNEL_MODERATOR is only allowed for channels!");
+                    }
                     return userRepository.searchChannelModeratorsByLoginOrNameInConversation(pageable, searchTerm, conversation.getId());
                 }
                 default -> throw new IllegalArgumentException("The filter is not supported.");
             }
 
-            if (conversation instanceof Channel && ((Channel) conversation).getIsCourseWide()) {
+            if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
                 return userRepository.searchAllByLoginOrNameInGroups(pageable, searchTerm, groups);
             }
 

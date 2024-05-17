@@ -2,7 +2,10 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -13,13 +16,30 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.GradingCriterion;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.GradingCriterionRepository;
+import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
@@ -151,7 +171,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     @ResponseStatus(HttpStatus.OK)
     @ApiResponses({ @ApiResponse(code = 200, message = GET_200_SUBMISSIONS_REASON, response = ModelingSubmission.class, responseContainer = "List"),
             @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON), })
-    @GetMapping(value = "/exercises/{exerciseId}/modeling-submissions")
+    @GetMapping("exercises/{exerciseId}/modeling-submissions")
     @EnforceAtLeastTutor
     public ResponseEntity<List<Submission>> getAllModelingSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
             @RequestParam(defaultValue = "false") boolean assessedByTutor, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
@@ -197,7 +217,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
             // load submission with results either by resultId or by correctionRound
             if (resultId != null) {
                 // load the submission with additional needed properties
-                modelingSubmission = (ModelingSubmission) submissionRepository.findOneWithEagerResultAndFeedback(submissionId);
+                modelingSubmission = (ModelingSubmission) submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submissionId);
                 // check if result exists
                 Result result = modelingSubmission.getManualResultsById(resultId);
                 if (result == null) {
@@ -235,7 +255,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      * @param correctionRound correctionRound for which submissions without a result should be returned
      * @return the ResponseEntity with status 200 (OK) and a modeling submission without assessment in body
      */
-    @GetMapping(value = "/exercises/{exerciseId}/modeling-submission-without-assessment")
+    @GetMapping("exercises/{exerciseId}/modeling-submission-without-assessment")
     @EnforceAtLeastTutor
     public ResponseEntity<ModelingSubmission> getModelingSubmissionWithoutAssessment(@PathVariable Long exerciseId,
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
@@ -328,7 +348,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         }
 
         if (modelingSubmission.getLatestResult() != null && !authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise)) {
-            modelingSubmission.getLatestResult().setAssessor(null);
+            modelingSubmission.getLatestResult().filterSensitiveInformation();
         }
 
         // make sure sensitive information are not sent to the client

@@ -16,10 +16,22 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.FileType;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.Repository;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
@@ -85,21 +97,21 @@ public class TestRepositoryResource extends RepositoryResource {
     }
 
     @Override
-    @GetMapping(value = "/test-repository/{exerciseId}/files", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "test-repository/{exerciseId}/files", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastTutor
     public ResponseEntity<Map<String, FileType>> getFiles(@PathVariable Long exerciseId) {
         return super.getFiles(exerciseId);
     }
 
     @Override
-    @GetMapping(value = "/test-repository/{exerciseId}/file", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @GetMapping(value = "test-repository/{exerciseId}/file", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     @EnforceAtLeastTutor
     public ResponseEntity<byte[]> getFile(@PathVariable Long exerciseId, @RequestParam("file") String filename) {
         return super.getFile(exerciseId, filename);
     }
 
     @Override
-    @PostMapping(value = "/test-repository/{exerciseId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "test-repository/{exerciseId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> createFile(@PathVariable Long exerciseId, @RequestParam("file") String filePath, HttpServletRequest request) {
@@ -107,7 +119,7 @@ public class TestRepositoryResource extends RepositoryResource {
     }
 
     @Override
-    @PostMapping(value = "/test-repository/{exerciseId}/folder", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "test-repository/{exerciseId}/folder", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> createFolder(@PathVariable Long exerciseId, @RequestParam("folder") String folderPath, HttpServletRequest request) {
@@ -115,7 +127,7 @@ public class TestRepositoryResource extends RepositoryResource {
     }
 
     @Override
-    @PostMapping(value = "/test-repository/{exerciseId}/rename-file", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "test-repository/{exerciseId}/rename-file", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> renameFile(@PathVariable Long exerciseId, @RequestBody FileMove fileMove) {
@@ -123,7 +135,7 @@ public class TestRepositoryResource extends RepositoryResource {
     }
 
     @Override
-    @DeleteMapping(value = "/test-repository/{exerciseId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
+    @DeleteMapping(value = "test-repository/{exerciseId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> deleteFile(@PathVariable Long exerciseId, @RequestParam("file") String filename) {
@@ -131,14 +143,14 @@ public class TestRepositoryResource extends RepositoryResource {
     }
 
     @Override
-    @GetMapping(value = "/test-repository/{exerciseId}/pull", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "test-repository/{exerciseId}/pull", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastTutor
     public ResponseEntity<Void> pullChanges(@PathVariable Long exerciseId) {
         return super.pullChanges(exerciseId);
     }
 
     @Override
-    @PostMapping(value = "/test-repository/{exerciseId}/commit", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "test-repository/{exerciseId}/commit", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> commitChanges(@PathVariable Long exerciseId) {
@@ -146,7 +158,7 @@ public class TestRepositoryResource extends RepositoryResource {
     }
 
     @Override
-    @PostMapping(value = "/test-repository/{exerciseId}/reset", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "test-repository/{exerciseId}/reset", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> resetToLastCommit(@PathVariable Long exerciseId) {
@@ -154,7 +166,7 @@ public class TestRepositoryResource extends RepositoryResource {
     }
 
     @Override
-    @GetMapping(value = "/test-repository/{exerciseId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "test-repository/{exerciseId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastTutor
     public ResponseEntity<RepositoryStatusDTO> getStatus(@PathVariable Long exerciseId) throws GitAPIException {
         return super.getStatus(exerciseId);

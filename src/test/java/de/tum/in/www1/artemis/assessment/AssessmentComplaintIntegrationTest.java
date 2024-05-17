@@ -40,10 +40,10 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exam.ExamFactory;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.fileupload.FileUploadExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.modeling.ModelingExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
@@ -277,7 +277,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
 
         Complaint storedComplaint = complaintRepo.findByResultId(modelingAssessment.getId()).orElseThrow();
         assertThat(storedComplaint.isAccepted()).as("complaint is not accepted").isFalse();
-        Result storedResult = resultRepo.findWithBidirectionalSubmissionAndFeedbackAndAssessorAndTeamStudentsByIdElseThrow(modelingAssessment.getId());
+        Result storedResult = resultRepo.findWithBidirectionalSubmissionAndFeedbackAndAssessorAndAssessmentNoteAndTeamStudentsByIdElseThrow(modelingAssessment.getId());
         Result updatedResult = storedResult.getSubmission().getLatestResult();
         participationUtilService.checkFeedbackCorrectlyStored(modelingAssessment.getFeedbacks(), updatedResult.getFeedbacks(), FeedbackType.MANUAL);
         assertThat(storedResult).as("only feedbacks are changed in the result").isEqualToIgnoringGivenFields(modelingAssessment, "feedbacks");

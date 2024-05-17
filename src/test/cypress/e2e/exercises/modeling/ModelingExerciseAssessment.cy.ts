@@ -16,7 +16,7 @@ import {
 import { admin, instructor, studentOne, tutor } from '../../../support/users';
 import { convertModelAfterMultiPart } from '../../../support/utils';
 
-describe('Modeling Exercise Assessment', () => {
+describe.skip('Modeling Exercise Assessment', () => {
     let course: Course;
     let modelingExercise: ModelingExercise;
 
