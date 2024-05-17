@@ -86,7 +86,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
                     if (response.body.exerciseMetrics) {
                         const exerciseMetrics = response.body.exerciseMetrics;
                         const sortedExerciseIds = Object.values(exerciseMetrics.exerciseInformation)
-                            .sort((a, b) => new Date(a.due).getTime() - new Date(b.start).getTime())
+                            .sort((a, b) => (a.dueDate.isBefore(b.dueDate) ? -1 : 1))
                             .map((exercise) => exercise.id);
 
                         this.hasExercises = sortedExerciseIds.length > 0;
