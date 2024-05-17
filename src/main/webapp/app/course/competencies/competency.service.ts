@@ -46,7 +46,6 @@ export class CompetencyService {
             tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))),
         );
     }
-
     getProgress(competencyId: number, courseId: number, refresh = false) {
         let params = new HttpParams();
         params = params.set('refresh', refresh.toString());
