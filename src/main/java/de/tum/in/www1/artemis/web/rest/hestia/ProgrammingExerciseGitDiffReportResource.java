@@ -179,7 +179,7 @@ public class ProgrammingExerciseGitDiffReportResource {
         }
         else if (repositoryType != null) {
             ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(exerciseId);
-            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
             repositoryUri = switch (repositoryType) {
                 case TEMPLATE -> programmingExercise.getTemplateParticipation().getVcsRepositoryUri();
                 case SOLUTION -> programmingExercise.getSolutionParticipation().getVcsRepositoryUri();
