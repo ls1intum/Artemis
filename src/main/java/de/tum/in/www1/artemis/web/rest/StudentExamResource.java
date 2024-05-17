@@ -685,7 +685,7 @@ public class StudentExamResource {
      * @param examId   the exam to which the student exam belongs to
      * @return ResponseEntity containing the list of generated participations
      */
-    @PostMapping(value = "/courses/{courseId}/exams/{examId}/student-exams/start-exercises")
+    @PostMapping(value = "courses/{courseId}/exams/{examId}/student-exams/start-exercises")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> startExercises(@PathVariable Long courseId, @PathVariable Long examId) {
         long start = System.nanoTime();

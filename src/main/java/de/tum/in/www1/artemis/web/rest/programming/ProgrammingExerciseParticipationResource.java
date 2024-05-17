@@ -111,7 +111,7 @@ public class ProgrammingExerciseParticipationResource {
      * @param participationId for which to retrieve the student participation with all results and feedbacks.
      * @return the ResponseEntity with status 200 (OK) and the participation with all results and feedbacks in the body.
      */
-    @GetMapping("/programming-exercise-participations/{participationId}/student-participation-with-all-results")
+    @GetMapping("programming-exercise-participations/{participationId}/student-participation-with-all-results")
     @EnforceAtLeastStudent
     public ResponseEntity<ProgrammingExerciseStudentParticipation> getParticipationWithAllResultsForStudentParticipation(@PathVariable Long participationId) {
         ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository.findByIdWithAllResultsAndRelatedSubmissions(participationId)
@@ -132,7 +132,7 @@ public class ProgrammingExerciseParticipationResource {
      * @return the ResponseEntity with status 200 (OK) and the latest result with feedbacks in its body, 404 if the participation can't be found or 403 if the user is not allowed
      *         to access the participation.
      */
-    @GetMapping(value = "/programming-exercise-participations/{participationId}/latest-result-with-feedbacks")
+    @GetMapping("programming-exercise-participations/{participationId}/latest-result-with-feedbacks")
     @EnforceAtLeastStudent
     public ResponseEntity<Result> getLatestResultWithFeedbacksForProgrammingExerciseParticipation(@PathVariable Long participationId,
             @RequestParam(defaultValue = "false") boolean withSubmission) {
@@ -150,7 +150,7 @@ public class ProgrammingExerciseParticipationResource {
      * @param participationId of the participation to check.
      * @return the ResponseEntity with status 200 (OK) with true if there is a result, otherwise false.
      */
-    @GetMapping(value = "/programming-exercise-participations/{participationId}/has-result")
+    @GetMapping("programming-exercise-participations/{participationId}/has-result")
     @EnforceAtLeastStudent
     public ResponseEntity<Boolean> checkIfParticipationHashResult(@PathVariable Long participationId) {
         boolean hasResult = resultRepository.existsByParticipationId(participationId);

@@ -42,7 +42,6 @@ courseConfigsToTest.forEach((configToTest) => {
             });
 
             test('Instructor should be able to select answer', async ({ page, login, communicationAPIRequests, courseCommunication }) => {
-                test.fixme();
                 const content = 'Answer Post Content';
                 await login(studentOne, `/courses/${course.id}/discussion`);
                 const post = await communicationAPIRequests.createCourseWideMessage(course, courseWideRandomChannel.id!, content);

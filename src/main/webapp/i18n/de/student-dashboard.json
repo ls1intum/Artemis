@@ -34,6 +34,17 @@
             "general": {
                 "noDataFound": "Keine Einträge gefunden."
             },
+            "sidebar": {
+                "past": "Vorangegangen",
+                "current": "Aktuell",
+                "future": "Zukünftig",
+                "noDueDate": "Unbefristet",
+                "noDate": "Ohne Datum",
+                "all": "Übungsgruppen",
+                "registered": "Meine Übungsgruppen",
+                "further": "Weitere Übungsgruppen",
+                "noUpcomingSession": "Kein Termin"
+            },
             "menu": {
                 "exercises": "Aufgaben",
                 "statistics": "Statistiken",
