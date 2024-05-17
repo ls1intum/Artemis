@@ -20,6 +20,10 @@
                 "averageLatenessLabel": "Durchschnittliche Verspätung",
                 "xAxisLabel": "Aufgaben",
                 "yAxisLabel": "Relative Verspätung (%)"
+            },
+            "judgementOfLearning": {
+                "title": "Wie würdest du dein Verständnis bewerten?",
+                "artemisRating": "Artemis bewertet dein Verständnis als"
             }
         }
     }
