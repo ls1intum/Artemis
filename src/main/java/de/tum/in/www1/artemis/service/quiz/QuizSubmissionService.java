@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.quiz;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
 
@@ -254,7 +255,7 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         return quizSubmissionRepository.save(quizSubmission);
     }
 
-    public static <T extends TempIdObject> void assignIds(Set<T> items) {
+    public static <T extends TempIdObject> void assignIds(Collection<T> items) {
         Long currentId = items.stream().filter(item1 -> item1.getId() != null).mapToLong(TempIdObject::getId).max().orElse(0L);
 
         for (TempIdObject item : items) {

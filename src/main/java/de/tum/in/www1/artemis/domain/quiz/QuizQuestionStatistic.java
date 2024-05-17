@@ -6,6 +6,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.JsonView;
+
+import de.tum.in.www1.artemis.domain.view.QuizView;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 // @formatter:off
@@ -18,7 +21,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class QuizQuestionStatistic implements QuizQuestionComponent<QuizQuestion>, Serializable {
 
-    private Long id;
+    @JsonView(QuizView.Before.class)
+    private Long id = 1L;
 
     private Integer participantsRated = 0;
 

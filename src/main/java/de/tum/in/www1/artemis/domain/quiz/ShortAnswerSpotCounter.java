@@ -3,16 +3,22 @@ package de.tum.in.www1.artemis.domain.quiz;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.in.www1.artemis.domain.TempIdObject;
+
 /**
  * A ShortAnswerSpotCounter.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class ShortAnswerSpotCounter extends QuizStatisticCounter implements QuizQuestionStatisticComponent<ShortAnswerQuestionStatistic, ShortAnswerSpot, ShortAnswerQuestion> {
+public class ShortAnswerSpotCounter extends TempIdObject implements QuizQuestionStatisticComponent<ShortAnswerQuestionStatistic, ShortAnswerSpot, ShortAnswerQuestion> {
 
     @JsonIgnore
     private ShortAnswerQuestionStatistic shortAnswerQuestionStatistic;
 
     private ShortAnswerSpot spot;
+
+    private Integer ratedCounter = 0;
+
+    private Integer unRatedCounter = 0;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
 
@@ -53,5 +59,21 @@ public class ShortAnswerSpotCounter extends QuizStatisticCounter implements Quiz
     @Override
     public String toString() {
         return "ShortAnswerSpotCounter{" + "id=" + getId() + "}";
+    }
+
+    public Integer getRatedCounter() {
+        return ratedCounter;
+    }
+
+    public void setRatedCounter(Integer ratedCounter) {
+        this.ratedCounter = ratedCounter;
+    }
+
+    public Integer getUnRatedCounter() {
+        return unRatedCounter;
+    }
+
+    public void setUnRatedCounter(Integer unRatedCounter) {
+        this.unRatedCounter = unRatedCounter;
     }
 }
