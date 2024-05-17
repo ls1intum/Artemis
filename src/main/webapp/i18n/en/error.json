@@ -93,6 +93,7 @@
         "exportFailed": "Exercise export failed",
         "unableToImportProgrammingExercise": "Unable to import programming exercise.",
         "titleAlreadyExists": "A programming exercise with the same title already exists. Please choose a different title.",
-        "shortnameAlreadyExists": "A programming exercise with the same short name already exists. Please choose a different short name."
+        "shortnameAlreadyExists": "A programming exercise with the same short name already exists. Please choose a different short name.",
+        "courseTitleTooLong": "The course title is too long (max. 255 characters). Please choose a shorter title."
     }
 }

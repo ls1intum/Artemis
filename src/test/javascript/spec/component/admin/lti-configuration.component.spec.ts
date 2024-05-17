@@ -3,7 +3,6 @@ import { LtiConfigurationService } from 'app/admin/lti-configuration/lti-configu
 import { Router } from '@angular/router';
 import { SortService } from 'app/shared/service/sort.service';
 import { LtiConfigurationComponent } from 'app/admin/lti-configuration/lti-configuration.component';
-import { MockLtiConfigurationService } from '../../helpers/mocks/service/mock-lti-configuration-service';
 import { LtiPlatformConfiguration } from 'app/admin/lti-configuration/lti-configuration.model';
 import { NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -17,18 +16,45 @@ import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-rout
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { ActivatedRoute } from '@angular/router';
+import { of, throwError } from 'rxjs';
+import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
+import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { AlertService } from 'app/core/util/alert.service';
+import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
 
 describe('LtiConfigurationComponent', () => {
     let component: LtiConfigurationComponent;
     let fixture: ComponentFixture<LtiConfigurationComponent>;
     let mockRouter: any;
+    let mockActivatedRoute: any;
     let mockSortService: any;
-    let ltiConfigurationService: LtiConfigurationService;
+    let mockLtiConfigurationService: any;
+    let mockAlertService: AlertService;
 
     beforeEach(async () => {
         mockRouter = { navigate: jest.fn() };
         mockSortService = { sortByProperty: jest.fn() };
-
+        mockActivatedRoute = {
+            data: of({ defaultSort: 'id,desc' }),
+            queryParamMap: of(
+                new Map([
+                    ['page', '1'],
+                    ['sort', 'id,asc'],
+                ]),
+            ),
+        };
+        mockLtiConfigurationService = {
+            query: jest.fn().mockReturnValue(
+                of(
+                    new HttpResponse({
+                        body: [{ id: 1, registrationId: 'platform-1' }],
+                        headers: new HttpHeaders({ 'X-Total-Count': '1' }),
+                    }),
+                ),
+            ),
+            deleteLtiPlatform: jest.fn().mockReturnValue(of({})),
+        };
         await TestBed.configureTestingModule({
             imports: [NgbNavModule, FontAwesomeModule],
             declarations: [
@@ -42,18 +68,21 @@ describe('LtiConfigurationComponent', () => {
                 MockRouterLinkDirective,
             ],
             providers: [
-                { provide: LtiConfigurationService, useClass: MockLtiConfigurationService },
                 { provide: Router, useValue: mockRouter },
                 { provide: SortService, useValue: mockSortService },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ActivatedRoute, useValue: mockActivatedRoute },
+                { provide: LtiConfigurationService, useValue: mockLtiConfigurationService },
+                { provide: AlertService, useClass: MockAlertService },
             ],
+            schemas: [NO_ERRORS_SCHEMA],
         }).compileComponents();
 
         fixture = TestBed.createComponent(LtiConfigurationComponent);
         component = fixture.componentInstance;
-        ltiConfigurationService = TestBed.inject(LtiConfigurationService);
         fixture.detectChanges();
         component.predicate = 'id';
+        mockAlertService = fixture.debugElement.injector.get(AlertService);
     });
 
     it('should create', () => {
@@ -62,7 +91,11 @@ describe('LtiConfigurationComponent', () => {
 
     it('should initialize and load LTI platforms', () => {
         expect(component.platforms).toBeDefined();
-        expect(component.platforms).toHaveLength(2);
+        expect(component.page).toBe(1);
+        expect(component.predicate).toBe('id');
+        expect(component.ascending).toBeTrue();
+        expect(mockLtiConfigurationService.query).toHaveBeenCalled();
+        expect(component.platforms).toHaveLength(1);
     });
 
     it('should generate URLs correctly', () => {
@@ -111,11 +144,26 @@ describe('LtiConfigurationComponent', () => {
 
     it('should delete an LTI platform and navigate', () => {
         const platformIdToDelete = 1;
-        const deleteSpy = jest.spyOn(ltiConfigurationService, 'deleteLtiPlatform');
-
         component.deleteLtiPlatform(platformIdToDelete);
-
-        expect(deleteSpy).toHaveBeenCalledWith(platformIdToDelete);
+        expect(mockLtiConfigurationService.deleteLtiPlatform).toHaveBeenCalledWith(platformIdToDelete);
         expect(mockRouter.navigate).toHaveBeenCalledWith(['admin', 'lti-configuration']);
+    });
+
+    it('should handle navigation on transition', () => {
+        component.transition();
+        expect(mockRouter.navigate).toHaveBeenCalledWith(['/admin/lti-configuration'], {
+            queryParams: {
+                page: component.page,
+                sort: 'id,asc',
+            },
+        });
+    });
+
+    it('should handle errors on deleting LTI platform', () => {
+        const errorResponse = new HttpErrorResponse({ status: 500, statusText: 'Server Error', error: { message: 'Error occurred' } });
+        const errorSpy = jest.spyOn(mockAlertService, 'error');
+        mockLtiConfigurationService.deleteLtiPlatform.mockReturnValue(throwError(() => errorResponse));
+        component.deleteLtiPlatform(123);
+        expect(errorSpy).toHaveBeenCalled();
     });
 });

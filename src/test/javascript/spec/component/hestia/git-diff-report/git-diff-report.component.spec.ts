@@ -6,6 +6,9 @@ import { GitDiffLineStatComponent } from 'app/exercises/programming/hestia/git-d
 import { GitDiffReportComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report.component';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 import { ProgrammingExerciseGitDiffEntry } from 'app/entities/hestia/programming-exercise-git-diff-entry.model';
+import { NgbTooltipMocksModule } from '../../../helpers/mocks/directive/ngbTooltipMocks.module';
+import { GitDiffFilePanelComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-file-panel.component';
+import { ButtonComponent } from 'app/shared/components/button.component';
 
 describe('ProgrammingExerciseGitDiffReport Component', () => {
     let comp: GitDiffReportComponent;
@@ -13,8 +16,14 @@ describe('ProgrammingExerciseGitDiffReport Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [GitDiffReportComponent, MockPipe(ArtemisTranslatePipe), MockComponent(GitDiffLineStatComponent)],
+            imports: [ArtemisTestModule, NgbTooltipMocksModule],
+            declarations: [
+                GitDiffReportComponent,
+                MockComponent(ButtonComponent),
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(GitDiffFilePanelComponent),
+                MockComponent(GitDiffLineStatComponent),
+            ],
             providers: [],
         }).compileComponents();
         fixture = TestBed.createComponent(GitDiffReportComponent);
@@ -139,5 +148,38 @@ describe('ProgrammingExerciseGitDiffReport Component', () => {
         comp.ngOnInit();
         expect(comp.addedLineCount).toBe(0);
         expect(comp.removedLineCount).toBe(1);
+    });
+
+    it('should record for each path whether the diff is ready', () => {
+        const filePath1 = 'src/a.java';
+        const filePath2 = 'src/b.java';
+        const entries: ProgrammingExerciseGitDiffEntry[] = [
+            { filePath: 'src/a.java', previousStartLine: 3 },
+            { filePath: 'src/b.java', startLine: 1 },
+            { filePath: 'src/a.java', startLine: 2 },
+            { filePath: 'src/a.java', previousStartLine: 4 },
+            { filePath: 'src/b.java', startLine: 2 },
+            { filePath: 'src/a.java', startLine: 1 },
+        ];
+        comp.solutionFileContentByPath = new Map<string, string>();
+        comp.solutionFileContentByPath.set(filePath1, 'some file content');
+        comp.solutionFileContentByPath.set(filePath2, 'some other file content');
+        comp.templateFileContentByPath = comp.solutionFileContentByPath;
+        comp.report = { entries } as ProgrammingExerciseGitDiffReport;
+        fixture.detectChanges();
+        // Initialization
+        expect(comp.allDiffsReady).toBeFalse();
+        expect(comp.diffsReadyByPath[filePath1]).toBeFalse();
+        expect(comp.diffsReadyByPath[filePath2]).toBeFalse();
+        // First file ready
+        comp.onDiffReady(filePath1, true);
+        expect(comp.allDiffsReady).toBeFalse();
+        expect(comp.diffsReadyByPath[filePath1]).toBeTrue();
+        expect(comp.diffsReadyByPath[filePath2]).toBeFalse();
+        // Second file ready
+        comp.onDiffReady(filePath2, true);
+        expect(comp.allDiffsReady).toBeTrue();
+        expect(comp.diffsReadyByPath[filePath1]).toBeTrue();
+        expect(comp.diffsReadyByPath[filePath2]).toBeTrue();
     });
 });

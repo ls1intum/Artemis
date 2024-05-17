@@ -59,7 +59,8 @@ import de.tum.in.www1.artemis.user.UserUtilService;
         "artemis.version-control.local-vcs-repo-path=${java.io.tmpdir}", "artemis.build-logs-path=${java.io.tmpdir}/build-logs",
         "artemis.continuous-integration.specify-concurrent-builds=true", "artemis.continuous-integration.concurrent-build-size=1",
         "artemis.continuous-integration.asynchronous=false", "artemis.continuous-integration.build.images.java.default=dummy-docker-image",
-        "artemis.continuous-integration.image-cleanup.enabled=true", "spring.liquibase.enabled=true" })
+        "artemis.continuous-integration.image-cleanup.enabled=true", "artemis.continuous-integration.image-cleanup.disk-space-threshold-mb=1000000000",
+        "spring.liquibase.enabled=true" })
 @ContextConfiguration(classes = LocalCITestConfiguration.class)
 public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends AbstractArtemisIntegrationTest {
 

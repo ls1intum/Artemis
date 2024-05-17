@@ -31,9 +31,9 @@ import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.fileupload.FileUploadExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.modeling.ModelingExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
 

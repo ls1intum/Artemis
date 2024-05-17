@@ -2,24 +2,28 @@ package de.tum.in.www1.artemis.service.connectors.localci.buildagent;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
 
+import java.io.File;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -53,6 +57,10 @@ public class LocalCIDockerService {
 
     private final HazelcastInstance hazelcastInstance;
 
+    private final BuildJobContainerService buildJobContainerService;
+
+    private final TaskScheduler taskScheduler;
+
     private boolean isFirstCleanup = true;
 
     @Value("${artemis.continuous-integration.image-cleanup.enabled:false}")
@@ -60,6 +68,9 @@ public class LocalCIDockerService {
 
     @Value("${artemis.continuous-integration.image-cleanup.expiry-days:2}")
     private int imageExpiryDays;
+
+    @Value("${artemis.continuous-integration.image-cleanup.disk-space-threshold-mb:2000}")
+    private int imageCleanupDiskSpaceThresholdMb;
 
     @Value("${artemis.continuous-integration.build-container-prefix:local-ci-}")
     private String buildContainerPrefix;
@@ -77,16 +88,18 @@ public class LocalCIDockerService {
     @Value("${artemis.continuous-integration.image-architecture:amd64}")
     private String imageArchitecture;
 
-    public LocalCIDockerService(DockerClient dockerClient, HazelcastInstance hazelcastInstance) {
+    public LocalCIDockerService(DockerClient dockerClient, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, BuildJobContainerService buildJobContainerService,
+            @Qualifier("taskScheduler") TaskScheduler taskScheduler) {
         this.dockerClient = dockerClient;
         this.hazelcastInstance = hazelcastInstance;
+        this.buildJobContainerService = buildJobContainerService;
+        this.taskScheduler = taskScheduler;
     }
 
     @EventListener(ApplicationReadyEvent.class)
     public void applicationReady() {
-        // Schedule the cleanup of dangling build containers once 10 seconds after the application has started and then every containerCleanupScheduleHour hours
-        ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
-        scheduledExecutorService.scheduleAtFixedRate(this::cleanUpContainers, 10, containerCleanupScheduleMinutes * 60L, TimeUnit.SECONDS);
+        // Schedule the cleanup of dangling build containers once 10 seconds after the application has started and then every containerCleanupScheduleMinutes minutes
+        taskScheduler.scheduleAtFixedRate(this::cleanUpContainers, Instant.now().plusSeconds(10), Duration.ofMinutes(containerCleanupScheduleMinutes));
     }
 
     /**
@@ -109,7 +122,7 @@ public class LocalCIDockerService {
      */
     public void cleanUpContainers() {
         List<Container> danglingBuildContainers;
-        log.debug("Start cleanup dangling build containers");
+        log.info("Start cleanup dangling build containers");
         if (isFirstCleanup) {
             // Cleanup all dangling build containers after the application has started
             try {
@@ -135,9 +148,9 @@ public class LocalCIDockerService {
 
         if (!danglingBuildContainers.isEmpty()) {
             log.info("Found {} dangling build containers", danglingBuildContainers.size());
-            danglingBuildContainers.forEach(container -> dockerClient.removeContainerCmd(container.getId()).withForce(true).exec());
+            danglingBuildContainers.forEach(container -> buildJobContainerService.stopUnresponsiveContainer(container.getId()));
         }
-        log.debug("Cleanup dangling build containers done");
+        log.info("Cleanup dangling build containers done");
     }
 
     /**
@@ -177,7 +190,9 @@ public class LocalCIDockerService {
      * <p>
      * The process includes:
      * - Checking if the Docker image is already available locally.
-     * - If not available, acquiring a lock and checking again to handle any race conditions.
+     * - If not available, acquiring a lock to prevent concurrent pulls.
+     * - Checking for usable disk space and triggering image cleanup if the threshold is exceeded.
+     * - Re-inspecting the image to confirm its absence after acquiring the lock.
      * - Pulling the image if both checks confirm its absence.
      * - Logging the operations and their outcomes to build logs for user visibility.
      * <p>
@@ -211,6 +226,8 @@ public class LocalCIDockerService {
                 checkImageArchitecture(imageName, inspectImageResponse, buildJob, buildLogsMap);
             }
             catch (NotFoundException | BadRequestException e2) {
+                checkUsableDiskSpaceThenCleanUp();
+
                 long start = System.nanoTime();
                 String msg = "~~~~~~~~~~~~~~~~~~~~ Pulling docker image " + imageName + " with a lock after error " + e.getMessage() + " ~~~~~~~~~~~~~~~~~~~~";
                 log.info(msg);
@@ -267,8 +284,7 @@ public class LocalCIDockerService {
      * The process involves:
      * - Checking if image cleanup is enabled; if disabled, the operation is aborted.
      * - Retrieving a map of Docker images and their last usage dates.
-     * - Listing all currently running containers to ensure their images are not deleted.
-     * - Identifying all Docker images that are not currently in use.
+     * - Getting a set of image names that are not associated with any running containers.
      * - Removing images that have exceeded the configured expiry days and are not associated with any running containers.
      * <p>
      * Exception handling includes catching NotFoundException for cases where images are already deleted or not found during the cleanup process.
@@ -279,15 +295,102 @@ public class LocalCIDockerService {
 
     @Scheduled(cron = "${artemis.continuous-integration.image-cleanup.cleanup-schedule-time:0 0 3 * * *}")
     public void deleteOldDockerImages() {
-
         if (!imageCleanupEnabled) {
             log.info("Docker image cleanup is disabled");
             return;
         }
 
+        Set<String> imageNames = getUnusedDockerImages();
+
         // Get map of docker images and their last build dates
         IMap<String, ZonedDateTime> dockerImageCleanupInfo = hazelcastInstance.getMap("dockerImageCleanupInfo");
 
+        // Delete images that have not been used for more than imageExpiryDays days
+        for (String dockerImage : dockerImageCleanupInfo.keySet()) {
+            if (imageNames.contains(dockerImage)) {
+                if (dockerImageCleanupInfo.get(dockerImage).isBefore(ZonedDateTime.now().minusDays(imageExpiryDays))) {
+                    log.info("Deleting docker image {}", dockerImage);
+                    try {
+                        dockerClient.removeImageCmd(dockerImage).exec();
+                    }
+                    catch (NotFoundException e) {
+                        log.warn("Docker image {} not found during cleanup", dockerImage);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Checks for available disk space and triggers the cleanup of old Docker images if the available space falls below
+     * {@link LocalCIDockerService#imageCleanupDiskSpaceThresholdMb}.
+     *
+     * @implNote - We use the Docker root directory to check disk space availability. This is in case the Docker images are stored on a separate partition.
+     *           - We need to iterate over the map entries since don't remove the oldest image from the map.
+     */
+
+    @Scheduled(fixedRateString = "${artemis.continuous-integration.image-cleanup.disk-space-check-interval-minutes:60}", initialDelayString = "${artemis.continuous-integration.image-cleanup.disk-space-check-interval-minutes:60}", timeUnit = TimeUnit.MINUTES)
+    public void checkUsableDiskSpaceThenCleanUp() {
+        if (!imageCleanupEnabled) {
+            return;
+        }
+        try {
+            // Get the Docker root directory to check disk space.
+            File dockerRootDirectory = new File(Objects.requireNonNullElse(dockerClient.infoCmd().exec().getDockerRootDir(), "/"));
+            long usableSpace = dockerRootDirectory.getUsableSpace();
+
+            long threshold = convertMegabytesToBytes(imageCleanupDiskSpaceThresholdMb);
+
+            if (usableSpace >= threshold) {
+                return;
+            }
+
+            // Get map of docker images and their last build dates
+            IMap<String, ZonedDateTime> dockerImageCleanupInfo = hazelcastInstance.getMap("dockerImageCleanupInfo");
+
+            // Get unused images
+            Set<String> unusedImages = getUnusedDockerImages();
+
+            // Get a sorted list of images by last build date
+            // We cast to ArrayList since we need the list to be mutable
+            List<Map.Entry<String, ZonedDateTime>> sortedImagesByLastBuildDate = dockerImageCleanupInfo.entrySet().stream().sorted(Map.Entry.comparingByValue()).toList();
+            List<Map.Entry<String, ZonedDateTime>> mutableSortedImagesByLastBuildDate = new java.util.ArrayList<>(sortedImagesByLastBuildDate);
+
+            if (mutableSortedImagesByLastBuildDate.isEmpty()) {
+                return;
+            }
+
+            int deleteAttempts = 5;
+            int totalAttempts = mutableSortedImagesByLastBuildDate.size(); // We limit the total number of attempts to avoid infinite loops
+            Map.Entry<String, ZonedDateTime> oldestImage = mutableSortedImagesByLastBuildDate.getFirst();
+            while (oldestImage != null && usableSpace < threshold && deleteAttempts > 0 && totalAttempts > 0) {
+                if (unusedImages.contains(oldestImage.getKey())) {
+                    log.info("Deleting docker image {}", oldestImage.getKey());
+                    try {
+                        dockerClient.removeImageCmd(oldestImage.getKey()).exec();
+                        usableSpace = dockerRootDirectory.getUsableSpace();
+                        deleteAttempts--;
+                    }
+                    catch (NotFoundException e) {
+                        log.warn("Docker image {} not found during cleanup", oldestImage.getKey());
+                    }
+                }
+                mutableSortedImagesByLastBuildDate.remove(oldestImage);
+                oldestImage = mutableSortedImagesByLastBuildDate.getFirst();
+                totalAttempts--;
+            }
+        }
+        catch (Exception e) {
+            log.error("Error while checking disk space for Docker image cleanup: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Gets a set of Docker image names that are not associated with any running containers.
+     *
+     * @return a set of image names that are not associated with any running containers.
+     */
+    private Set<String> getUnusedDockerImages() {
         // Get list of all running containers
         List<Container> containers = dockerClient.listContainersCmd().exec();
 
@@ -307,20 +410,11 @@ public class LocalCIDockerService {
                 Collections.addAll(imageNames, imageRepoTags);
             }
         }
+        return imageNames;
+    }
 
-        // Delete images that have not been used for more than imageExpiryDays days
-        for (String dockerImage : dockerImageCleanupInfo.keySet()) {
-            if (imageNames.contains(dockerImage)) {
-                if (dockerImageCleanupInfo.get(dockerImage).isBefore(ZonedDateTime.now().minusDays(imageExpiryDays))) {
-                    log.info("Deleting docker image {}", dockerImage);
-                    try {
-                        dockerClient.removeImageCmd(dockerImage).exec();
-                    }
-                    catch (NotFoundException e) {
-                        log.warn("Docker image {} not found during cleanup", dockerImage);
-                    }
-                }
-            }
-        }
+    private long convertMegabytesToBytes(int mb) {
+        long byteConversionRate = 1024L;
+        return mb * byteConversionRate * byteConversionRate;
     }
 }
