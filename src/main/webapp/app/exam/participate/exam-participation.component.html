@@ -218,7 +218,7 @@
                                 </div>
                             }
                         }
-                        <button id="end-exam" [disabled]="!endButtonEnabled" type="submit" (click)="onExamEndConfirmed()" class="btn btn-primary">
+                        <button id="end-exam" [disabled]="!endButtonEnabled()" type="submit" (click)="onExamEndConfirmed()" class="btn btn-primary">
                             @if (submitInProgress) {
                                 <fa-icon [icon]="faSpinner" [spin]="true" />
                             }

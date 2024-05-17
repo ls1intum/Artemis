@@ -27,7 +27,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 })
 export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
     handInEarly: boolean;
-    handInPossible: boolean;
+    //handInPossible: boolean;
     submitInProgress: boolean;
     //attendanceChecked: boolean;
     //examStartConfirmed = false;
@@ -103,7 +103,7 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
         this.examParticipationService.examState$.subscribe((state) => {
             //this.examStartConfirmed = state.examStartConfirmed;
             this.handInEarly = state.handInEarly;
-            this.handInPossible = state.handInPossible;
+            //this.handInPossible = state.handInPossible;
             this.submitInProgress = state.submitInProgress;
             //this.attendanceChecked = state.attendanceChecked;
         });
@@ -173,6 +173,10 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
         });
 
         this.generateInformationForHtml();
+        console.log('ngOnInit in cover, exam: ', this.exam);
+        console.log('ngOnInit in cover, examId: ', this.examId);
+        console.log('ngOnInit in cover, studentExam: ', this.studentExam);
+        console.log('ngOnInit in cover, studentExamId: ', this.studentExamId);
         // this.testRun = this.studentExam.testRun;
         // this.testExam = this.exam.testExam;
         // this.examParticipationService.setExamState({ testExam: this.testExam });
@@ -344,17 +348,17 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
     /**
      * check if exam is over
      */
-    isOver(): boolean {
-        if (this.studentExam && this.studentExam.ended) {
-            // if this was calculated to true by the server, we can be sure the student exam has finished
-            return true;
-        }
-        if (this.handInEarly || this.studentExam?.submitted) {
-            // implicitly the exam is over when the student wants to abort the exam or when the user has already submitted
-            return true;
-        }
-        return this.individualStudentEndDate && this.individualStudentEndDate.isBefore(this.serverDateService.now());
-    }
+    // isOver(): boolean {
+    //     if (this.studentExam && this.studentExam.ended) {
+    //         // if this was calculated to true by the server, we can be sure the student exam has finished
+    //         return true;
+    //     }
+    //     if (this.handInEarly || this.studentExam?.submitted) {
+    //         // implicitly the exam is over when the student wants to abort the exam or when the user has already submitted
+    //         return true;
+    //     }
+    //     return this.individualStudentEndDate && this.individualStudentEndDate.isBefore(this.serverDateService.now());
+    // }
 
     /**
      * check if the grace period has already passed
@@ -386,6 +390,10 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
     handleStudentExam(studentExam: StudentExam) {
         this.studentExam = studentExam;
         this.exam = studentExam.exam!;
+        console.log('handleStudentExam in cover, exam: ', this.exam);
+        console.log('handleStudentExam in cover, examId: ', this.examId);
+        console.log('handleStudentExam in cover, studentExam: ', this.studentExam);
+        console.log('handleStudentExam in cover, studentExamId: ', this.studentExamId);
         this.examParticipationService.setExamState({ exam: this.exam });
         this.examParticipationService.setExamState({ studentExam: this.studentExam });
         this.testExam = this.exam.testExam!;
@@ -394,7 +402,7 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
         }
 
         // only show the summary if the student was able to submit on time.
-        if (this.isOver() && this.studentExam.submitted) {
+        if (this.studentExam.submitted) {
             this.loadAndDisplaySummary();
         } else {
             // Directly start the exam when we continue from a failed save

@@ -168,8 +168,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      */
     ngOnInit(): void {
         this.examParticipationService.examState$.subscribe((state) => {
-            this.handInEarly = state.handInEarly;
-            this.handInPossible = state.handInPossible;
+            //this.handInEarly = state.handInEarly;
+            //this.handInPossible = state.handInPossible;
             this.submitInProgress = state.submitInProgress;
             //this.attendanceChecked = state.attendanceChecked;
             this.courseId = state.courseId!;
@@ -192,9 +192,20 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             this.studentExam = studentExam;
         });
 
+        console.log('ngOnInit in participation, exam: ', this.exam);
+        console.log('ngOnInit in participation, examId: ', this.examId);
+        console.log('ngOnInit in participation, studentExam: ', this.studentExam);
+        console.log('ngOnInit in participation, studentExamId: ', this.studentExamId);
+
         this.examStarted(this.studentExam);
         this.generateInformationForHtml();
         this.loadGradeEndDate();
+
+        console.log('ngOnInit in participation, handInEarly', this.handInEarly);
+        console.log('ngOnInit in participation, studentExam.submitted', this.studentExam.submitted);
+        console.log('ngOnInit in participation, isOver()', this.isOver());
+        console.log('ngOnInit in participation, examStartConfirmed', this.examStartConfirmed);
+        console.log('ngOnInit in participation, isGracePeriodOver()', this.isGracePeriodOver());
     }
 
     generateInformationForHtml() {
@@ -261,6 +272,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             // Keep working time
             studentExam.workingTime = this.studentExam?.workingTime ?? studentExam.workingTime;
             this.studentExam = studentExam;
+
+            console.log('examStarted in participation, exam: ', this.exam);
+            console.log('examStarted in participation, examId: ', this.examId);
+            console.log('examStarted in participation, studentExam: ', this.studentExam);
+            console.log('examStarted in participation, studentExamId: ', this.studentExamId);
 
             // provide exam-participation.service with exerciseId information (e.g. needed for exam notifications)
             const exercises: Exercise[] = this.studentExam.exercises!;
@@ -346,8 +362,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      */
     onExamEndConfirmed() {
         // temporary lock the submit button in order to protect against spam
-        //this.handInPossible = false;
-        this.examParticipationService.setExamState({ handInPossible: false });
+        this.handInPossible = false;
+        //this.examParticipationService.setExamState({ handInPossible: false });
         //his.submitInProgress = true;
         this.examParticipationService.setExamState({ submitInProgress: true });
         if (this.autoSaveInterval) {
@@ -408,8 +424,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                                     // Allow the user to try to reload the exam from the server
                                     //this.submitInProgress = false;
                                     this.examParticipationService.setExamState({ submitInProgress: false });
-                                    //this.handInPossible = true;
-                                    this.examParticipationService.setExamState({ handInPossible: true });
+                                    this.handInPossible = true;
+                                    //this.examParticipationService.setExamState({ handInPossible: true });
                                 },
                             });
                         } else {
@@ -423,8 +439,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                                     // Allow the user to try to reload the exam from the server
                                     //this.submitInProgress = false;
                                     this.examParticipationService.setExamState({ submitInProgress: false });
-                                    //this.handInPossible = true;
-                                    this.examParticipationService.setExamState({ handInPossible: true });
+                                    this.handInPossible = true;
+                                    //this.examParticipationService.setExamState({ handInPossible: true });
                                 },
                             });
                         }
@@ -432,8 +448,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         this.alertService.error(error.message);
                         //this.submitInProgress = false;
                         this.examParticipationService.setExamState({ submitInProgress: false });
-                        //this.handInPossible = error.message !== 'artemisApp.studentExam.submissionNotInTime';
-                        this.examParticipationService.setExamState({ handInPossible: error.message !== 'artemisApp.studentExam.submissionNotInTime' });
+                        this.handInPossible = error.message !== 'artemisApp.studentExam.submissionNotInTime';
+                        //this.examParticipationService.setExamState({ handInPossible: error.message !== 'artemisApp.studentExam.submissionNotInTime' });
                     }
                 },
             });
@@ -455,6 +471,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      */
     toggleHandInEarly() {
         this.attendanceChecked = this.exam?.testExam || !this.exam?.examWithAttendanceCheck;
+        console.log('this.attendanceChecked 1: ' + this.attendanceChecked);
         // no need to fetch attendance check status from the server if it is a test exam or an exam without attendance check or when clicking continue
         if (this.exam.testExam || !this.exam.examWithAttendanceCheck || this.handInEarly) {
             this.handleHandInEarly();
@@ -462,6 +479,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             this.examManagementService.isAttendanceChecked(this.courseId, this.examId).subscribe((res) => {
                 if (res.body) {
                     this.attendanceChecked = this.exam?.testExam || !this.exam?.examWithAttendanceCheck || res.body;
+                    console.log('this.attendanceChecked 2: ' + this.attendanceChecked);
                     //this.examParticipationService.setExamState({ attendanceChecked: res.body });
                 }
                 this.handleHandInEarly();
@@ -470,7 +488,14 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     handleHandInEarly() {
-        this.examParticipationService.setExamState({ handInEarly: !this.handInEarly });
+        this.handInEarly = !this.handInEarly;
+        console.log('handleHandInEarly, handInEarly', this.handInEarly);
+        //this.examParticipationService.setExamState({ handInEarly: this.handInEarly });
+        //!studentExam.submitted && ((isOver() && examStartConfirmed) || isGracePeriodOver())
+        console.log('handleHandInEarly, studentExam.submitted', this.studentExam.submitted);
+        console.log('handleHandInEarly, isOver()', this.isOver());
+        console.log('handleHandInEarly, examStartConfirmed', this.examStartConfirmed);
+        console.log('handleHandInEarly, isGracePeriodOver()', this.isGracePeriodOver());
         //this.handInEarly = !this.handInEarly;
         if (this.handInEarly) {
             // update local studentExam for later sync with server if the student wants to hand in early
@@ -873,7 +898,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         return this.enteredName.trim() !== '';
     }
 
-    get endButtonEnabled(): boolean {
+    endButtonEnabled(): boolean {
+        console.log('endButtonEnabled, nameIsCorrect: ' + this.nameIsCorrect);
+        console.log('endButtonEnabled, confirmed: ' + this.confirmed);
+        console.log('endButtonEnabled, exam: ' + this.exam);
+        console.log('endButtonEnabled, handInPossible: ' + this.handInPossible);
         return this.nameIsCorrect && this.confirmed && this.exam && this.handInPossible;
     }
 }
