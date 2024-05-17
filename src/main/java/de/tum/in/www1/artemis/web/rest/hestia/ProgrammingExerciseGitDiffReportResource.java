@@ -174,8 +174,8 @@ public class ProgrammingExerciseGitDiffReportResource {
         VcsRepositoryUri repositoryUri = null;
         if (participationId != null) {
             Participation participation = participationRepository.findByIdElseThrow(participationId);
-            repositoryUri = getVcsRepositoryUri(exerciseId, repositoryType, participation);
             participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+            repositoryUri = getVcsRepositoryUri(exerciseId, repositoryType, participation);
         }
         else if (repositoryType != null) {
             ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(exerciseId);
