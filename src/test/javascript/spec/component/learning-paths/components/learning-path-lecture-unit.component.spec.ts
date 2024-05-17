@@ -21,6 +21,8 @@ describe('LearningPathLectureUnitComponent', () => {
     let fixture: ComponentFixture<LearningPathLectureUnitComponent>;
     let lectureUnitService: LectureUnitService;
 
+    const lectureUnit = new VideoUnit();
+
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [LearningPathLectureUnitComponent],
@@ -49,6 +51,10 @@ describe('LearningPathLectureUnitComponent', () => {
             .compileComponents();
 
         lectureUnitService = TestBed.inject(LectureUnitService);
+
+        lectureUnit.id = 1;
+        lectureUnit.description = 'Example video unit';
+        lectureUnit.name = 'Example video';
 
         fixture = TestBed.createComponent(LearningPathLectureUnitComponent);
         component = fixture.componentInstance;

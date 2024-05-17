@@ -137,4 +137,10 @@ describe('LectureUnitService', () => {
         service.getLectureUnitById(videoUnit.id!).subscribe();
         httpMock.expectOne({ method: 'GET', url: `api/lecture-units/${videoUnit.id!}` });
     }));
+
+    it('should delete lecture unit by id', fakeAsync(() => {
+        const lectureId = 5;
+        service.delete(videoUnit.id!, lectureId).subscribe();
+        httpMock.expectOne({ method: 'DELETE', url: `api/lectures/${lectureId}/lecture-units/${videoUnit.id!}` });
+    }));
 });

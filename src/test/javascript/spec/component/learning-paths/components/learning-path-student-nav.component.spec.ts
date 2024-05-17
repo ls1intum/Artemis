@@ -140,7 +140,7 @@ describe('LearningPathStudentNavComponent', () => {
         expect(nextButton).toBeFalsy();
     }));
 
-    it('should navigation with only next button', fakeAsync(() => {
+    it('should show navigation with only next button', fakeAsync(() => {
         const navigationDto = {
             currentLearningObject: {
                 id: 2,
