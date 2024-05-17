@@ -13,6 +13,8 @@ import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module'
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { LineChartModule } from '@swimlane/ngx-charts';
+import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
+import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
 import { RatingModule } from 'app/exercises/shared/rating/rating.module';
 import { JudgementOfLearningRatingComponent } from 'app/overview/course-dashboard/judgement-of-learning-rating/judgement-of-learning-rating.component';
 
@@ -44,6 +46,8 @@ const routes: Routes = [
         LineChartModule,
         RatingModule,
         JudgementOfLearningRatingComponent,
+        FeatureToggleModule,
+        ArtemisCompetenciesModule,
     ],
 })
 export class CourseDashboardModule {}

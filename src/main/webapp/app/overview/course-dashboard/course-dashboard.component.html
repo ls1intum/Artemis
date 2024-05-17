@@ -15,5 +15,31 @@
     } @else {
         <div jhiTranslate="artemisApp.courseStudentDashboard.noMetrics"></div>
     }
-    <jhi-judgement-of-learning-rating />
+    @if (!isLoading && this.hasCompetencies) {
+        <div class="competency-accordion-container justify-content-center align-items-center w-100">
+            <h3 jhiTranslate="artemisApp.studentAnalyticsDashboard.competencyAccordion.title"></h3>
+            <div class="competencies d-flex flex-column gap-2">
+                @if (studentMetrics) {
+                    @for (competency of competencies; track competency.id; let i = $index) {
+                        <jhi-competency-accordion
+                            #competencyAccordionElement
+                            [course]="course"
+                            [competency]="competency"
+                            [metrics]="studentMetrics"
+                            [index]="i"
+                            [openedIndex]="openedAccordionIndex"
+                            (accordionToggle)="handleToggle($event)"
+                        />
+                    }
+                }
+            </div>
+        </div>
+    } @else {
+        <div jhiTranslate="artemisApp.studentAnalyticsDashboard.competencyAccordion.noData"></div>
+    }
+    @if (learningPathsEnabled) {
+        <div class="competency-accordion-container row justify-content-center w-100" [jhiFeatureToggleHide]="FeatureToggle.LearningPaths">
+            <button class="btn btn-primary mt-2" (click)="navigateToLearningPaths()" jhiTranslate="artemisApp.studentAnalyticsDashboard.button.showLearningPath"></button>
+        </div>
+    }
 </div>

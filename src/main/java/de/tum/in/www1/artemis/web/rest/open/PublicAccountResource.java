@@ -153,7 +153,7 @@ public class PublicAccountResource {
 
         Optional<String> loginOptional = SecurityUtils.getCurrentUserLogin();
         if (loginOptional.isPresent()) {
-            userOptional = userRepository.findOneWithGroupsAuthoritiesAndGuidedTourSettingsByLogin(loginOptional.get());
+            userOptional = userRepository.findOneWithGroupsAuthoritiesAndGuidedTourSettingsAndIrisAcceptedTimestampByLogin(loginOptional.get());
         }
 
         if (userOptional.isEmpty()) {

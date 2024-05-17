@@ -31,7 +31,7 @@ import { MockAccountService } from '../../../helpers/mocks/service/mock-account.
 import { IrisSender, IrisUserMessage } from 'app/entities/iris/iris-message.model';
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
 import { UserService } from 'app/core/user/user.service';
-import { IrisHttpMessageService } from 'app/iris/http-message.service';
+import { IrisChatHttpService } from 'app/iris/http-message.service';
 import { IrisTextMessageContent } from 'app/entities/iris/iris-content-type.model';
 import { IrisSessionService } from 'app/iris/session.service';
 
@@ -42,7 +42,7 @@ describe('IrisChatbotWidgetComponent', () => {
     let mockDialog: MatDialog;
     let mockModalService: NgbModal;
     let mockUserService: UserService;
-    let mockHttpMessageService: IrisHttpMessageService;
+    let mockHttpMessageService: IrisChatHttpService;
     let mockSessionService: IrisSessionService;
 
     beforeEach(async () => {
@@ -84,7 +84,7 @@ describe('IrisChatbotWidgetComponent', () => {
             declarations: [IrisChatbotWidgetComponent, MockPipe(ArtemisTranslatePipe), MockPipe(HtmlForMarkdownPipe)],
             providers: [
                 { provide: MAT_DIALOG_DATA, useValue: { stateStore: stateStore, courseId: 1, exerciseId: 1, sessionService: mockSessionService } },
-                { provide: IrisHttpMessageService, useValue: mockHttpMessageService },
+                { provide: IrisChatHttpService, useValue: mockHttpMessageService },
                 { provide: NgbModal, useValue: mockModalService },
                 { provide: MatDialog, useValue: mockDialog },
                 { provide: ActivatedRoute, useValue: {} },

@@ -1,9 +1,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { IrisMessage, IrisServerMessage, IrisUserMessage } from 'app/entities/iris/iris-message.model';
+import { IrisAssistantMessage, IrisMessage, IrisUserMessage } from 'app/entities/iris/iris-message.model';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 import { map, tap } from 'rxjs/operators';
+import { IrisSession } from 'app/entities/iris/iris-session.model';
 
 export type Response<T> = Observable<HttpResponse<T>>;
 
@@ -11,10 +12,10 @@ export type Response<T> = Observable<HttpResponse<T>>;
  * Provides a set of methods to perform CRUD operations on messages
  */
 @Injectable({ providedIn: 'root' })
-export abstract class IrisHttpMessageService {
+export class IrisChatHttpService {
     protected apiPrefix: string = 'api/iris';
 
-    protected constructor(protected httpClient: HttpClient) {}
+    constructor(protected httpClient: HttpClient) {}
 
     protected randomInt(): number {
         const maxIntJava = 2147483647;
@@ -38,6 +39,14 @@ export abstract class IrisHttpMessageService {
                     });
                 });
 
+                modifiedMessages.sort((a, b) => {
+                    if (a.sentAt && b.sentAt) {
+                        if (a.sentAt === b.sentAt) return 0;
+                        return a.sentAt.isBefore(b.sentAt) ? -1 : 1;
+                    }
+                    return 0;
+                });
+
                 return Object.assign({}, response, {
                     body: modifiedMessages,
                 });
@@ -50,23 +59,15 @@ export abstract class IrisHttpMessageService {
      * @param sessionId of the session
      * @param message  to be created
      */
-    createMessage(sessionId: number, message: IrisUserMessage): Response<IrisMessage> {
+    createMessage(sessionId: number, message: IrisUserMessage): Response<IrisUserMessage> {
         message.messageDifferentiator = this.randomInt();
-        return this.httpClient
-            .post<IrisServerMessage>(
-                `${this.apiPrefix}/sessions/${sessionId}/messages`,
-                Object.assign({}, message, {
-                    sentAt: convertDateFromClient(message.sentAt),
-                }),
-                { observe: 'response' },
-            )
-            .pipe(
-                tap((response) => {
-                    if (response.body && response.body.id) {
-                        message.id = response.body.id;
-                    }
-                }),
-            );
+        return this.httpClient.post<IrisUserMessage>(
+            `${this.apiPrefix}/sessions/${sessionId}/messages`,
+            Object.assign({}, message, {
+                sentAt: convertDateFromClient(message.sentAt),
+            }),
+            { observe: 'response' },
+        );
     }
 
     /**
@@ -77,7 +78,7 @@ export abstract class IrisHttpMessageService {
      */
     resendMessage(sessionId: number, message: IrisUserMessage): Response<IrisMessage> {
         message.messageDifferentiator = message.messageDifferentiator ?? this.randomInt();
-        return this.httpClient.post<IrisServerMessage>(`${this.apiPrefix}/sessions/${sessionId}/messages/${message.id}/resend`, null, { observe: 'response' }).pipe(
+        return this.httpClient.post<IrisAssistantMessage>(`${this.apiPrefix}/sessions/${sessionId}/messages/${message.id}/resend`, null, { observe: 'response' }).pipe(
             tap((response) => {
                 if (response.body && response.body.id) {
                     message.id = response.body.id;
@@ -95,5 +96,13 @@ export abstract class IrisHttpMessageService {
      */
     rateMessage(sessionId: number, messageId: number, helpful: boolean): Response<IrisMessage> {
         return this.httpClient.put<IrisMessage>(`${this.apiPrefix}/sessions/${sessionId}/messages/${messageId}/helpful/${helpful}`, null, { observe: 'response' });
+    }
+
+    getCurrentSessionOrCreateIfNotExists<T extends IrisSession>(identifier: string): Response<T> {
+        return this.httpClient.post<T>(`${this.apiPrefix}/${identifier}/sessions/current`, null, { observe: 'response' });
+    }
+
+    createSession<T extends IrisSession>(identifier: string): Response<T> {
+        return this.httpClient.post<T>(`${this.apiPrefix}/${identifier}/sessions`, null, { observe: 'response' });
     }
 }

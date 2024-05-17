@@ -134,15 +134,9 @@ public class IrisMessageResource {
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the updated message, or with status {@code 404 (Not Found)} if the session or message could not
      *         be found.
      */
-    // @formatter:off
-    @PutMapping(value = {
-            "sessions/{sessionId}/messages/{messageId}/helpful/null",
-            "sessions/{sessionId}/messages/{messageId}/helpful/undefined",
-            "sessions/{sessionId}/messages/{messageId}/helpful/{helpful}"
-    })
-    // @formatter:on
+    @PutMapping(value = "sessions/{sessionId}/messages/{messageId}/helpful/{helpful}")
     @EnforceAtLeastStudent
-    public ResponseEntity<IrisMessage> rateMessage(@PathVariable Long sessionId, @PathVariable Long messageId, @PathVariable(required = false) Boolean helpful) {
+    public ResponseEntity<IrisMessage> rateMessage(@PathVariable Long sessionId, @PathVariable Long messageId, @PathVariable Boolean helpful) {
         var message = irisMessageRepository.findByIdElseThrow(messageId);
         var session = message.getSession();
         if (!Objects.equals(session.getId(), sessionId)) {

@@ -1,0 +1,60 @@
+<div>
+    <button
+        [id]="'competency-accordion-' + competency.id"
+        class="competency-accordion-header d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-between gap-2 px-4"
+        [class.closed]="!open"
+        (click)="toggle()"
+    >
+        <h4 class="fw-medium mb-0 py-2 col-sm-6 d-flex gap-2">
+            <fa-icon
+                [icon]="getIcon(competency.taxonomy)"
+                [fixedWidth]="true"
+                [ngbTooltip]="'artemisApp.competency.taxonomies.' + competency.taxonomy | artemisTranslate"
+                container="body"
+            />
+            {{ competency.title }}
+        </h4>
+        <div class="w-100 d-flex align-items-center gap-4">
+            <div class="w-100 d-flex flex-column gap-2">
+                <div class="d-flex gap-3 align-items-center justify-content-center">
+                    <fa-icon [icon]="faList" [ngbTooltip]="'artemisApp.studentAnalyticsDashboard.competencyAccordion.exercises' | artemisTranslate" />
+                    <ngb-progressbar
+                        class="w-100"
+                        type="success overflow-visible"
+                        [value]="exercisesProgress"
+                        [max]="100"
+                        height="0.75rem"
+                        [ngbTooltip]="'artemisApp.studentAnalyticsDashboard.competencyAccordion.exerciseProgress' | artemisTranslate: { progress: round(exercisesProgress, 1) }"
+                    />
+                </div>
+                <div class="d-flex gap-3 align-items-center justify-content-center">
+                    <fa-icon [icon]="faPdf" [ngbTooltip]="'artemisApp.studentAnalyticsDashboard.competencyAccordion.lectures' | artemisTranslate" />
+                    <ngb-progressbar
+                        class="w-100"
+                        type="success overflow-visible"
+                        [value]="lectureUnitsProgress"
+                        [max]="100"
+                        height="0.75rem"
+                        [ngbTooltip]="'artemisApp.studentAnalyticsDashboard.competencyAccordion.lectureProgress' | artemisTranslate: { progress: round(lectureUnitsProgress, 1) }"
+                    />
+                </div>
+            </div>
+            <div class="py-2" style="max-width: 65px">
+                <jhi-competency-rings [confidence]="this.confidence" [progress]="this.progress" [mastery]="this.mastery" [hideTooltip]="false" [playAnimation]="false" />
+            </div>
+        </div>
+    </button>
+    <div [class.competency-accordion-body-open]="open" [class.competency-accordion-body-closed]="!open" class="competency-accordion-body">
+        @if (course && nextExercises.length > 0) {
+            <h5 class="fw-medium mt-2 fs-4" jhiTranslate="artemisApp.studentAnalyticsDashboard.competencyAccordion.nextObjectives"></h5>
+            @for (exercise of nextExercises; track exercise) {
+                <jhi-course-exercise-row [course]="course" [exercise]="exercise" />
+            }
+        }
+        <button
+            (click)="navigateToCompetencyDetailPage($event)"
+            class="btn btn-primary w-100 my-2"
+            jhiTranslate="artemisApp.studentAnalyticsDashboard.button.viewLecturesAndExercises"
+        ></button>
+    </div>
+</div>
