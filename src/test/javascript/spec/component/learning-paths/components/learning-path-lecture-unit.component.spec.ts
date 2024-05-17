@@ -12,7 +12,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service.ts';
+import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 
@@ -69,7 +69,6 @@ describe('LearningPathLectureUnitComponent', () => {
         lectureUnit.id = 1;
         lectureUnit.description = 'Example video unit';
         lectureUnit.name = 'Example video';
-        lectureUnit.link = '/path/to/video/test.mp4';
 
         const httpResponse = new HttpResponse({ body: lectureUnit });
         const getLectureUnitSpy = jest.spyOn(lectureUnitService, 'getLectureUnitById').mockReturnValue(of(httpResponse));
@@ -79,6 +78,6 @@ describe('LearningPathLectureUnitComponent', () => {
         fixture.detectChanges();
 
         expect(component.lectureUnit()).toEqual(lectureUnit);
-        expect(getLectureUnitSpy).toHaveBeenCalledOnce(1);
+        expect(getLectureUnitSpy).toHaveBeenCalledOnce();
     }));
 });
