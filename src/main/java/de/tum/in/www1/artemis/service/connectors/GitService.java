@@ -330,7 +330,6 @@ public class GitService {
         if (profileService.isLocalVcsCiActive()) {
             // Create less generic LocalVCRepositoryUri out of VcsRepositoryUri.
             LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(vcsRepositoryUri.toString());
-            String localVCBasePath = environment.getProperty("artemis.version-control.local-vcs-repo-path");
             return localVCRepositoryUri.getLocalRepositoryPath(localVCBasePath).toUri();
         }
         return useSsh() ? getSshUri(vcsRepositoryUri) : vcsRepositoryUri.getURI();
