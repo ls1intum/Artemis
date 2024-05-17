@@ -6,10 +6,14 @@ import java.util.Objects;
 import jakarta.persistence.Transient;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonView;
+
+import de.tum.in.www1.artemis.domain.view.QuizView;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class TempIdObject implements Serializable {
 
+    @JsonView(QuizView.Before.class)
     private Long id;
 
     /**

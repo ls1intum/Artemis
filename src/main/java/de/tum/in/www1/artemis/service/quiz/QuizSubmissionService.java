@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.AbstractQuizSubmission;
+import de.tum.in.www1.artemis.domain.quiz.DragAndDropSubmittedAnswer;
 import de.tum.in.www1.artemis.domain.quiz.MultipleChoiceSubmittedAnswer;
 import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
@@ -136,6 +137,9 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
             submittedAnswer.setSubmission(quizSubmission);
             if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer) {
                 assignIds(((MultipleChoiceSubmittedAnswer) submittedAnswer).getSelectedOptions());
+            }
+            else if (submittedAnswer instanceof DragAndDropSubmittedAnswer) {
+                assignIds(((DragAndDropSubmittedAnswer) submittedAnswer).getMappings());
             }
         }
 

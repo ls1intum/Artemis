@@ -76,7 +76,7 @@ public class DragAndDropSubmittedAnswer extends SubmittedAnswer {
             // Check if a dragItem or dropLocation was deleted and delete reference to it in mappings
             Set<DragAndDropMapping> selectedMappingsToDelete = new HashSet<>();
             for (DragAndDropMapping mapping : this.getMappings()) {
-                if ((!question.getContent().getDragItems().contains(mapping.getDragItem())) || (!question.getContent().getDropLocations().contains(mapping.getDropLocation()))) {
+                if ((!question.getDragItems().contains(mapping.getDragItem())) || (!question.getDropLocations().contains(mapping.getDropLocation()))) {
                     selectedMappingsToDelete.add(mapping);
                 }
             }
