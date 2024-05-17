@@ -21,8 +21,8 @@ public abstract class IrisWebsocketService {
         this.websocketMessagingService = websocketMessagingService;
     }
 
-    protected void send(User user, String sessionType, Long sessionId, Object payload) {
-        String irisWebsocketTopic = String.format("%s/%s/%s", IRIS_WEBSOCKET_TOPIC_PREFIX, sessionType, sessionId);
+    protected void send(User user, Long sessionId, Object payload) {
+        String irisWebsocketTopic = String.format("%s/%s", IRIS_WEBSOCKET_TOPIC_PREFIX, sessionId);
         log.debug("Sending message to user {} on topic {}: {}", user.getLogin(), irisWebsocketTopic, payload);
         websocketMessagingService.sendMessageToUser(user.getLogin(), irisWebsocketTopic, payload);
     }

@@ -1,7 +1,7 @@
 {
     "artemisApp": {
         "exerciseChatbot": {
-            "popUpMessage": "Indem du fortfährst, erklärst du dich damit einverstanden, dass deine Interaktionen mit Iris von Microsoft und OpenAI verarbeitet werden, wobei die Datenübertragung außerhalb unseres Universitätsrechenzentrums erfolgt. Wenn du mit diesen Bedingungen nicht einverstanden bist, wähle bitte 'Ablehnen'. Um dies zu bestätigen und deinen Chat mit IrisBot zu beginnen, klick auf 'Akzeptieren'.",
+            "popUpMessage": "Indem du fortfährst, erklärst du dich damit einverstanden, dass deine Interaktionen mit Iris und die erforderlichen Kontextdaten, z.B. dein Code, von Microsoft und OpenAI verarbeitet werden, wobei die Daten außerhalb unseres Universitätsrechenzentrums verarbeitet werden.",
             "inputMessage": "Schreib eine Nachricht...",
             "accept": "Akzeptieren",
             "decline": "Ablehnen",
@@ -27,7 +27,6 @@
             "text4_4": "<b>Vollbildmodus:</b> Du kannst das Widget im Vollbildmodus öffnen, indem du auf den Vollbildmodus-Button (in der oberen rechten Ecke des Widgets) klickst.",
             "text4_5": "<b>Chatverlauf löschen:</b> Du kannst deinen Chatverlauf löschen, indem du auf den Mülleimer klickst (oben rechts im Widget). Dadurch werden alle vorherigen Nachrichten gelöscht und du kannst einen neuen Chat starten.",
             "supportText": "(Wenn du Probleme mit dem Iris-Widget oder bei der Interaktion mit Iris hast, erstelle bitte einen Issue auf GitHub https://github.com/ls1intum/Artemis)",
-            "unreadMessages": "Ungelesene Nachrichten",
             "clearSession": {
                 "title": "Chatverlauf löschen",
                 "text": "Bist du sicher, dass du den Chatverlauf löschen möchtest?",
