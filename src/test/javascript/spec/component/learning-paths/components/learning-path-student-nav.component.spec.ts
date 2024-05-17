@@ -167,6 +167,7 @@ describe('LearningPathStudentNavComponent', () => {
 
     it('should show navigation overview', fakeAsync(() => {
         getLearningPathNavigationSpy.mockReturnValue(of(new HttpResponse({ body: navigationDto })));
+        const setShowNavigationOverviewSpy = jest.spyOn(component, 'setShowNavigationOverview');
 
         fixture.detectChanges();
         tick();
@@ -177,6 +178,21 @@ describe('LearningPathStudentNavComponent', () => {
         fixture.detectChanges();
         const navOverview = fixture.debugElement.query(By.css('jhi-learning-path-student-nav-overview'));
         expect(navOverview).toBeTruthy();
+        expect(setShowNavigationOverviewSpy).toHaveBeenCalledWith(true);
         expect(component.showNavigationOverview()).toBeTrue();
+    }));
+
+    it('should call select learning object on previous click', fakeAsync(() => {
+        getLearningPathNavigationSpy.mockReturnValue(of(new HttpResponse({ body: navigationDto })));
+        const selectLearningObjectSpy = jest.spyOn(component, 'selectLearningObject');
+
+        fixture.detectChanges();
+        tick();
+        fixture.detectChanges();
+
+        const previousButton = fixture.debugElement.query(By.css('#previous-button'));
+        previousButton.nativeElement.click();
+        fixture.detectChanges();
+        expect(selectLearningObjectSpy).toHaveBeenCalledWith(navigationDto.predecessorLearningObject);
     }));
 });
