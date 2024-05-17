@@ -7,7 +7,7 @@
     <changeSet id="00000000000002" author="beyzaaltuntas">
         <addColumn tableName="submitted_answer">
             <column name="selection" type="JSON">
-                <constraints nullable="false"/>
+                <constraints nullable="true"/>
             </column>
         </addColumn>
     </changeSet>
