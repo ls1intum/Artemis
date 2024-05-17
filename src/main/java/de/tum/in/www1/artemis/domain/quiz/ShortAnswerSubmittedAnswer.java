@@ -4,16 +4,13 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToMany;
 import jakarta.validation.Valid;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
@@ -29,10 +26,8 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ShortAnswerSubmittedAnswer extends SubmittedAnswer {
 
-    // NOTE: this relation cannot be bidirectional, because it would otherwise be ManyToMany
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
-    @JoinColumn(name = "submitted_answer_id")
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "selection", columnDefinition = "json")
     @JsonView(QuizView.Before.class)
     @Valid
     private Set<ShortAnswerSubmittedText> submittedTexts = new HashSet<>();
@@ -43,13 +38,11 @@ public class ShortAnswerSubmittedAnswer extends SubmittedAnswer {
 
     public ShortAnswerSubmittedAnswer addSubmittedTexts(ShortAnswerSubmittedText shortAnswerSubmittedText) {
         this.submittedTexts.add(shortAnswerSubmittedText);
-        shortAnswerSubmittedText.setSubmittedAnswer(this);
         return this;
     }
 
     public ShortAnswerSubmittedAnswer removeSubmittedTexts(ShortAnswerSubmittedText shortAnswerSubmittedText) {
         this.submittedTexts.remove(shortAnswerSubmittedText);
-        shortAnswerSubmittedText.setSubmittedAnswer(null);
         return this;
     }
 

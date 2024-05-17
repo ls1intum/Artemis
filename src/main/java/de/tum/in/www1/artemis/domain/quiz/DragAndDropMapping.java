@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.domain.quiz;
 
 import java.io.Serializable;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
 
@@ -29,6 +30,7 @@ public class DragAndDropMapping extends TempIdObject implements QuizQuestionComp
     @JsonView(QuizView.Before.class)
     private DropLocation dropLocation;
 
+    @JsonIgnore
     private DragAndDropSubmittedAnswer submittedAnswer;
 
     public Integer getDragItemIndex() {

@@ -2,50 +2,35 @@ package de.tum.in.www1.artemis.domain.quiz;
 
 import static de.tum.in.www1.artemis.config.Constants.MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH;
 
+import java.io.Serializable;
 import java.util.Objects;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
 import jakarta.validation.constraints.Size;
-
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
 
-import de.tum.in.www1.artemis.domain.DomainObject;
+import de.tum.in.www1.artemis.domain.TempIdObject;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import me.xdrop.fuzzywuzzy.FuzzySearch;
 
 /**
  * A ShortAnswerSubmittedText.
  */
-@Entity
-@Table(name = "short_answer_submitted_text")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class ShortAnswerSubmittedText extends DomainObject {
+public class ShortAnswerSubmittedText extends TempIdObject implements Serializable {
 
-    @Column(name = "text")
     @Size(max = MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH, message = "The submitted answer text is too long.")
     @JsonView(QuizView.Before.class)
     private String text;
 
-    @Column(name = "is_correct")
     @JsonView(QuizView.Before.class)
     private Boolean isCorrect;
 
-    @Transient
     @JsonView(QuizView.Before.class)
     private ShortAnswerSpot spot;
 
-    @ManyToOne(fetch = FetchType.LAZY)
     @JsonIgnore
     private ShortAnswerSubmittedAnswer submittedAnswer;
 
