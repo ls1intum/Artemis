@@ -194,7 +194,7 @@ public class ProgrammingExerciseExportImportResource {
         log.debug("REST request to import programming exercise {} into course {}", sourceExerciseId, newExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         newExercise.validateGeneralSettings();
         newExercise.validateProgrammingSettings();
-        newExercise.validateManualFeedbackSettings();
+        newExercise.validateSettingsForFeedbackRequest();
         validateStaticCodeAnalysisSettings(newExercise);
 
         final User user = userRepository.getUserWithGroupsAndAuthorities();

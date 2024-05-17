@@ -724,7 +724,7 @@ public class ProgrammingExercise extends Exercise {
         if (getAssessmentType() == AssessmentType.SEMI_AUTOMATIC || getAllowComplaintsForAutomaticAssessments()) {
             // The relevantDueDate check below keeps us from assessing feedback requests,
             // as their relevantDueDate is before the due date
-            if (getAllowManualFeedbackRequests()) {
+            if (getAllowFeedbackRequests()) {
                 return true;
             }
 
@@ -752,7 +752,8 @@ public class ProgrammingExercise extends Exercise {
      * @return true if the result is manual and the assessment is over, or it is an automatic result, false otherwise
      */
     private boolean checkForAssessedResult(Result result) {
-        return result.getCompletionDate() != null && ((result.isManual() && ExerciseDateService.isAfterAssessmentDueDate(this)) || result.isAutomatic());
+        return result.getCompletionDate() != null
+                && ((result.isManual() && ExerciseDateService.isAfterAssessmentDueDate(this)) || result.isAutomatic() || result.isAthenaAutomatic());
     }
 
     @Override
@@ -837,10 +838,10 @@ public class ProgrammingExercise extends Exercise {
     }
 
     /**
-     * Validates settings for exercises, where allowManualFeedbackRequests is set
+     * Validates settings for exercises, where allowFeedbackRequests is set
      */
-    public void validateManualFeedbackSettings() {
-        if (!this.getAllowManualFeedbackRequests()) {
+    public void validateSettingsForFeedbackRequest() {
+        if (!this.getAllowFeedbackRequests()) {
             return;
         }
 
