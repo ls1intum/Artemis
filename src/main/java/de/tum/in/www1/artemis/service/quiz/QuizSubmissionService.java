@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.TempIdObject;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
@@ -19,6 +20,7 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.AbstractQuizSubmission;
+import de.tum.in.www1.artemis.domain.quiz.MultipleChoiceSubmittedAnswer;
 import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
@@ -132,6 +134,9 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         // recreate pointers back to submission in each submitted answer
         for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
             submittedAnswer.setSubmission(quizSubmission);
+            if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer) {
+                assignIds(((MultipleChoiceSubmittedAnswer) submittedAnswer).getSelectedOptions());
+            }
         }
 
         // set submission date
@@ -243,5 +248,16 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
     protected QuizSubmission save(QuizExercise quizExercise, QuizSubmission quizSubmission, User user) {
         quizSubmission.setParticipation(this.getParticipation(quizExercise, quizSubmission, user));
         return quizSubmissionRepository.save(quizSubmission);
+    }
+
+    public static <T extends TempIdObject> void assignIds(Set<T> items) {
+        Long currentId = items.stream().filter(item1 -> item1.getId() != null).mapToLong(TempIdObject::getId).max().orElse(0L);
+
+        for (TempIdObject item : items) {
+            if (item.getId() == null) {
+                currentId = currentId + 1;
+                item.setId(currentId);
+            }
+        }
     }
 }
