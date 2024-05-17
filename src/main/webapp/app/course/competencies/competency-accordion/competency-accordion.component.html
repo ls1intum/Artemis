@@ -45,6 +45,12 @@
         </div>
     </button>
     <div [class.competency-accordion-body-open]="open" [class.competency-accordion-body-closed]="!open" class="competency-accordion-body">
+        @if (course && nextExercises.length > 0) {
+            <h5 class="fw-medium mt-2 fs-4" jhiTranslate="artemisApp.studentAnalyticsDashboard.competencyAccordion.nextObjectives"></h5>
+            @for (exercise of nextExercises; track exercise) {
+                <jhi-course-exercise-row [course]="course" [exercise]="exercise" />
+            }
+        }
         <button
             (click)="navigateToCompetencyDetailPage($event)"
             class="btn btn-primary w-100 my-2"

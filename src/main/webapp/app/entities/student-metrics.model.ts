@@ -1,4 +1,6 @@
 import { CompetencyTaxonomy } from 'app/entities/competency.model';
+import { ExerciseType } from 'app/entities/exercise.model';
+import dayjs from 'dayjs/esm';
 
 export class StudentMetrics {
     public exerciseMetrics?: ExerciseMetrics;
@@ -25,10 +27,10 @@ export class ExerciseInformation {
     public id: number;
     public title: string;
     public shortName?: string;
-    public start: string;
-    public due: string;
+    public startDate: dayjs.Dayjs;
+    public dueDate: dayjs.Dayjs;
     public maxPoints: number;
-    public type: string;
+    public type: ExerciseType;
 }
 
 export class LectureUnitStudentMetricsDTO {

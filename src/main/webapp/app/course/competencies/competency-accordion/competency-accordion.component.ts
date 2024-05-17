@@ -6,6 +6,8 @@ import { Router } from '@angular/router';
 import { ICompetencyAccordionToggleEvent } from 'app/shared/competency/interfaces/competency-accordion-toggle-event.interface';
 import { CompetencyInformation, StudentMetrics } from 'app/entities/student-metrics.model';
 import { round } from 'app/shared/util/utils';
+import { Exercise } from 'app/entities/exercise.model';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-competency-accordion',
@@ -23,6 +25,8 @@ export class CompetencyAccordionComponent implements OnChanges {
 
     open = false;
 
+    nextExercises: Exercise[] = [];
+
     protected readonly faList = faList;
     protected readonly faPdf = faFilePdf;
     protected readonly getIcon = getIcon;
@@ -37,6 +41,25 @@ export class CompetencyAccordionComponent implements OnChanges {
         if (changes.openedIndex && this.index !== this.openedIndex) {
             this.open = false;
         }
+        if (changes.metrics) {
+            this.setNextExercises();
+        }
+    }
+
+    setNextExercises() {
+        if (!this.metrics) {
+            this.nextExercises = [];
+        }
+
+        const submittedExercises = Object.keys(this.metrics.exerciseMetrics?.latestSubmission ?? {}).map(Number);
+        const competencyExercises = this.metrics.competencyMetrics?.exercises[this.competency.id] ?? [];
+        const nextExerciseInformations = competencyExercises
+            .filter((exerciseId) => !submittedExercises.includes(exerciseId))
+            .flatMap((exerciseId) => this.metrics.exerciseMetrics?.exerciseInformation[exerciseId] ?? [])
+            .filter((exercise) => exercise.startDate.isBefore(dayjs()) && exercise.dueDate.isAfter(dayjs()))
+            .sort((a, b) => a.dueDate.diff(b.dueDate));
+
+        this.nextExercises = nextExerciseInformations as Exercise[]; // TODO: Fix type casting
     }
 
     toggle() {
