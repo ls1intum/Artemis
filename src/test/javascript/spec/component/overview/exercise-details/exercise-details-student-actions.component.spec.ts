@@ -11,7 +11,6 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { QuizBatch, QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { Result } from 'app/entities/result.model';
 import { Team } from 'app/entities/team.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
@@ -33,6 +32,7 @@ import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MockCourseExerciseService } from '../../../helpers/mocks/service/mock-course-exercise.service';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { ArtemisTestModule } from '../../../test.module';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 
 describe('ExerciseDetailsStudentActionsComponent', () => {
     let comp: ExerciseDetailsStudentActionsComponent;
@@ -312,32 +312,6 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         expect(comp.exercise.studentParticipations).toEqual([activeParticipation, practiceParticipation]);
     });
 
-    it('should disable the feedback request button', () => {
-        const result: Result = { score: 50, rated: true };
-        const participation: StudentParticipation = {
-            results: [result],
-            individualDueDate: undefined,
-        };
-
-        comp.exercise = { ...exercise, allowManualFeedbackRequests: true };
-        comp.gradedParticipation = participation;
-
-        expect(comp.isFeedbackRequestButtonDisabled()).toBeTrue();
-    });
-
-    it('should enable the feedback request button', () => {
-        const result: Result = { score: 100, rated: true };
-        const participation: StudentParticipation = {
-            results: [result],
-            individualDueDate: undefined,
-        };
-
-        comp.exercise = { ...exercise, allowManualFeedbackRequests: true };
-        comp.gradedParticipation = participation;
-
-        expect(comp.isFeedbackRequestButtonDisabled()).toBeFalse();
-    });
-
     it('should show correct buttons in exam mode', fakeAsync(() => {
         const exercise = { type: ExerciseType.PROGRAMMING, allowOfflineIde: false, allowOnlineEditor: true } as ProgrammingExercise;
         exercise.studentParticipations = [{ initializationState: InitializationState.INITIALIZED } as StudentParticipation];
@@ -525,4 +499,128 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
             }
         }),
     );
+
+    // until a policy is set
+    it.skip('assureConditionsSatisfied should alert and return false if not all hidden tests have passed', () => {
+        jest.spyOn(window, 'alert').mockImplementation(() => {});
+        comp.exercise = {
+            type: ExerciseType.PROGRAMMING,
+            dueDate: dayjs().subtract(5, 'minutes'),
+            studentParticipations: [
+                {
+                    id: 2,
+                    results: [
+                        {
+                            assessmentType: AssessmentType.AUTOMATIC,
+                            score: 80,
+                        },
+                    ],
+                },
+            ] as StudentParticipation[],
+        } as ProgrammingExercise;
+
+        const result = comp.assureConditionsSatisfied();
+
+        expect(window.alert).toHaveBeenCalledWith('artemisApp.exercise.notEnoughPoints');
+        expect(result).toBeFalse();
+    });
+
+    it('assureConditionsSatisfied should alert and return false if the feedback request has already been sent', () => {
+        jest.spyOn(window, 'alert').mockImplementation(() => {});
+        comp.exercise = {
+            type: ExerciseType.PROGRAMMING,
+            dueDate: dayjs().add(5, 'minutes'),
+            studentParticipations: [
+                {
+                    id: 2,
+                    individualDueDate: dayjs().subtract(5, 'days'),
+                    results: [
+                        {
+                            assessmentType: AssessmentType.AUTOMATIC,
+                            score: 100,
+                        },
+                    ],
+                },
+            ] as StudentParticipation[],
+        } as ProgrammingExercise;
+
+        const result = comp.assureConditionsSatisfied();
+
+        expect(window.alert).toHaveBeenCalledWith('artemisApp.exercise.feedbackRequestAlreadySent');
+        expect(result).toBeFalse();
+    });
+
+    it('assureConditionsSatisfied should alert and return false if the request is made after the due date', () => {
+        jest.spyOn(window, 'alert').mockImplementation(() => {});
+        comp.exercise = {
+            type: ExerciseType.PROGRAMMING,
+            dueDate: dayjs().subtract(5, 'minutes'),
+            studentParticipations: [
+                {
+                    id: 2,
+                    results: [
+                        {
+                            assessmentType: AssessmentType.AUTOMATIC,
+                            score: 100,
+                        },
+                    ],
+                },
+            ] as StudentParticipation[],
+        } as ProgrammingExercise;
+
+        const result = comp.assureConditionsSatisfied();
+
+        expect(window.alert).toHaveBeenCalledWith('artemisApp.exercise.feedbackRequestAfterDueDate');
+        expect(result).toBeFalse();
+    });
+
+    it('assureConditionsSatisfied should return true if all conditions are satisfied', () => {
+        comp.exercise = {
+            type: ExerciseType.PROGRAMMING,
+            dueDate: dayjs().add(5, 'minutes'),
+            studentParticipations: [
+                {
+                    id: 2,
+                    results: [
+                        {
+                            assessmentType: AssessmentType.AUTOMATIC,
+                            score: 100,
+                        },
+                    ],
+                },
+            ] as StudentParticipation[],
+        } as ProgrammingExercise;
+
+        const result = comp.assureConditionsSatisfied();
+
+        expect(result).toBeTrue();
+    });
+
+    it('assureConditionsSatisfied should alert and return false if the maximum number of successful Athena results is reached', () => {
+        jest.spyOn(window, 'alert').mockImplementation(() => {});
+        comp.exercise = {
+            type: ExerciseType.PROGRAMMING,
+            dueDate: dayjs().add(5, 'minutes'),
+            studentParticipations: [
+                {
+                    id: 2,
+                    individualDueDate: undefined,
+                    results: [
+                        {
+                            assessmentType: AssessmentType.AUTOMATIC,
+                            score: 100,
+                        },
+                        { assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true },
+                        { assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true },
+                        { assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true },
+                    ],
+                },
+            ] as StudentParticipation[],
+        } as ProgrammingExercise;
+
+        const result = comp.assureConditionsSatisfied();
+
+        expect(window.alert).toHaveBeenCalledWith('artemisApp.exercise.maxAthenaResultsReached');
+        expect(result).toBeFalse();
+    });
 });

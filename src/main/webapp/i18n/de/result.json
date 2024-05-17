@@ -45,7 +45,15 @@
                 "programming": "{{ relativeScore }}%, {{ buildAndTestMessage }}, {{ points }} Punkte",
                 "programmingCodeIssues": "{{ relativeScore }}%, {{ buildAndTestMessage }}, {{ numberOfIssues }} Issues, {{ points }} Punkte",
                 "programmingShort": "{{ relativeScore }}%, {{ buildAndTestMessage }}",
-                "short": "{{ relativeScore }}%"
+                "short": "{{ relativeScore }}%",
+                "automaticAIFeedbackSuccessful": "Feedback",
+                "automaticAIFeedbackFailed": "Feedback",
+                "automaticAIFeedbackInProgress": "Feedbackanfrage",
+                "automaticAIFeedbackTimedOut": "Feedbackanfrage ist ohne Ergebnis abgelaufen",
+                "automaticAIFeedbackSuccessfulTooltip": "AI-Feedbackanfrage war erfolgreich. Beachte, dass die Ergebnisse Fehler beinhalten können. Verwende sie nur zur Orientierung.",
+                "automaticAIFeedbackFailedTooltip": "AI-Feedbackanfrage ist aufgrund eines internen Fehlers fehlgeschlagen. Bitte versuche es in Kürze erneut oder kontaktiere die Artemis-Administratoren, sollte der Fehler wieder auftreten.",
+                "automaticAIFeedbackInProgressTooltip": "AI-Feedback wird generiert.",
+                "automaticAIFeedbackTimedOutTooltip": "Die Zeit für die Generierung des AI-Feedbacks ist abgelaufen. Bitte versuche es in Kürze erneut oder kontaktiere die Artemis-Administratoren, sollte der Fehler wieder auftreten."
             },
             "completionDate": "Abgabedatum",
             "successful": "Erfolgreich",

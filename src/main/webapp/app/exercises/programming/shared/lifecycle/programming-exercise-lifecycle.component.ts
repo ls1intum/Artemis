@@ -100,9 +100,9 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
         }
     }
 
-    toggleManualFeedbackRequests() {
-        this.exercise.allowManualFeedbackRequests = !this.exercise.allowManualFeedbackRequests;
-        if (this.exercise.allowManualFeedbackRequests) {
+    toggleFeedbackRequests() {
+        this.exercise.allowFeedbackRequests = !this.exercise.allowFeedbackRequests;
+        if (this.exercise.allowFeedbackRequests) {
             this.exercise.assessmentDueDate = undefined;
             this.exercise.buildAndTestStudentSubmissionsAfterDueDate = undefined;
         }
@@ -122,7 +122,7 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
         } else {
             this.exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
             this.exercise.allowComplaintsForAutomaticAssessments = false;
-            this.exercise.allowManualFeedbackRequests = false;
+            this.exercise.allowFeedbackRequests = false;
         }
     }
 
