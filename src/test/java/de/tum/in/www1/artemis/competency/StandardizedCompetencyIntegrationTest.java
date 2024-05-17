@@ -400,6 +400,39 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationInd
                 request.put("/api/admin/standardized-competencies/import", importData, HttpStatus.BAD_REQUEST);
             }
         }
+
+        @Nested
+        class ExportStandardizedCompetencies {
+
+            @Test
+            @WithMockUser(username = "admin", roles = "ADMIN")
+            void shouldExport() throws Exception {
+                var source1 = new Source("title", "author", "http://localhost:1");
+                var source2 = new Source("title2", "author2", "http://localhost:2");
+                sourceRepository.saveAll(List.of(source1, source2));
+                var knowledgeArea1 = standardizedCompetencyUtilService.saveKnowledgeArea("knowledgeArea1", "ka1", "description1", null);
+                var knowledgeArea2 = standardizedCompetencyUtilService.saveKnowledgeArea("knowledgeArea2", "ka2", "description2", knowledgeArea1);
+                var competency1 = standardizedCompetencyUtilService.saveStandardizedCompetency("competency1", "description1", CompetencyTaxonomy.APPLY, "1.0.0", knowledgeArea1,
+                        source1);
+                var competency2 = standardizedCompetencyUtilService.saveStandardizedCompetency("competency2", "description2", CompetencyTaxonomy.APPLY, "1.1.1", knowledgeArea2,
+                        source2);
+
+                // set values to match database
+                knowledgeArea.setCompetencies(Set.of(standardizedCompetency));
+                knowledgeArea1.setChildren(Set.of(knowledgeArea2));
+                knowledgeArea1.setCompetencies(Set.of(competency1));
+                knowledgeArea2.setCompetencies(Set.of(competency2));
+                // set null values (instead of empty lists) to match the response
+                knowledgeArea.setChildren(null);
+                knowledgeArea2.setChildren(null);
+
+                var expectedCatalog = StandardizedCompetencyCatalogDTO.of(List.of(knowledgeArea, knowledgeArea1), List.of(source, source1, source2));
+
+                var actualCatalog = request.get("/api/admin/standardized-competencies/export", HttpStatus.OK, StandardizedCompetencyCatalogDTO.class);
+
+                assertThat(actualCatalog).isEqualTo(expectedCatalog);
+            }
+        }
     }
 
     @Nested
