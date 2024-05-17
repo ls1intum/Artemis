@@ -41,19 +41,23 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void startOneToOneChat_asStudent1WithStudent2_shouldCreateOneToOneChat() throws Exception {
+    void startOneToOneChat_asStudent1_shouldCreateMultipleOneToOneChats() throws Exception {
         // when
-        var chat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/one-to-one-chats", List.of(testPrefix + "student2"), OneToOneChatDTO.class,
+        var chat1 = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/one-to-one-chats", List.of(testPrefix + "student2"), OneToOneChatDTO.class,
+                HttpStatus.CREATED);
+
+        var chat2 = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/one-to-one-chats", List.of(testPrefix + "student3"), OneToOneChatDTO.class,
                 HttpStatus.CREATED);
         // then
-        assertThat(chat).isNotNull();
-        assertParticipants(chat.getId(), 2, "student1", "student2");
+        assertThat(chat1).isNotNull();
+        assertParticipants(chat1.getId(), 2, "student1", "student2");
+        assertThat(chat2).isNotNull();
+        assertParticipants(chat2.getId(), 2, "student1", "student3");
         // members of the created one to one chat are only notified in case the first message within the conversation is created
         verifyNoParticipantTopicWebsocketSent();
 
         // cleanup
-        var conversation = oneToOneChatRepository.findByIdWithConversationParticipantsAndUserGroups(chat.getId()).orElseThrow();
-        conversationRepository.delete(conversation);
+        conversationRepository.deleteAllById(List.of(chat1.getId(), chat2.getId()));
     }
 
     @Test
