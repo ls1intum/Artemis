@@ -415,7 +415,8 @@
                 "assessmentDueDate": "Einreichungsfrist der Bewertung",
                 "assessmentDueDateTooltip": "Die Frist für manuelle Reviews. Sobald das Datum erreicht ist, werden alle manuellen Ergebnisse an die Studierenden veröffentlicht!",
                 "notSet": "nicht gesetzt",
-                "allowFeedbackRequests": "Feedbackanfragen erlauben",
+                "allowFeedbackRequests": "Automatische nicht bewertete Feedbackanfragen/manuelle Feedbackanfragen erlauben",
+                "allowFeedbackRequestsTooltip": "Studierende können vor dem Einreichungsfrist um Feedback bitten. Die Anfragen werden von Athena bearbeitet oder, falls Athena nicht erreicht werden kann, können Studierende manuelle Feedbackanfragen stellen.",
                 "manualFeedbackRequests": "Anfragen nach manuellem Feedback",
                 "manualFeedbackRequestsTooltip": "Studierende können manuelle Korrekturen vor der Einreichungsfrist anfragen, um Feedback zu erhalten.",
                 "feedbackRequestsEnabled": "Korrekturanfragen sind möglich",
@@ -540,6 +541,11 @@
             "diffReport": {
                 "button": "Anzeigen",
                 "tooltip": "Zeigt den detaillierten Git-Diff zwischen den Template- und Lösungs-Repositories.",
+                "splitView": {
+                    "enable": "Getrennte Ansicht aktivieren",
+                    "disable": "Getrennte Ansicht deaktivieren",
+                    "tooltip": "In der getrennten Ansicht werden beide Versionen jeder geänderten Datei nebeneinander angezeigt. Beachte, dass die getrennte Ansicht nur dann angezeigt wird, wenn dein Browserfenster breit genug ist."
+                },
                 "tooltipBetweenSubmissions": "Zeigt den detaillierten Git-Diff zwischen der aktuellen und der vorherigen Abgabe.",
                 "title": "Template-Lösungs-Diff",
                 "titleForSubmissions": "Abgaben-Diff",
@@ -550,6 +556,11 @@
                 "previousCommit": "Vorheriger Commit",
                 "currentSubmission": "Aktuelle Abgabe",
                 "currentCommit": "Aktueller Commit",
+                "fileChange": {
+                    "created": "Erstellt",
+                    "deleted": "Gelöscht",
+                    "renamed": "Umbenannt"
+                },
                 "errorWhileFetchingRepos": "Fehler beim Abrufen der Repositories. Bitte überprüfe deine Internetverbindung und öffne das Popup erneut.",
                 "404": "Template-Lösungs-Diff wurde noch nicht generiert. Bitte pusche etwas in die Template- oder Lösungs-Repositories, um ihn zu erstellen.",
                 "lineStatLabel": "Zeilen, die zwischen Vorlage und Lösung hinzugefügt/entfernt wurden",
