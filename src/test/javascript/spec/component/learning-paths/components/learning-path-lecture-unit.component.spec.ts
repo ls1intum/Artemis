@@ -15,11 +15,14 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { AlertService } from 'app/core/util/alert.service';
+import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.service';
 
 describe('LearningPathLectureUnitComponent', () => {
     let component: LearningPathLectureUnitComponent;
     let fixture: ComponentFixture<LearningPathLectureUnitComponent>;
     let lectureUnitService: LectureUnitService;
+    let getLectureUnitSpy: jest.SpyInstance;
 
     const lectureUnit = new VideoUnit();
 
@@ -41,6 +44,10 @@ describe('LearningPathLectureUnitComponent', () => {
                     provide: SessionStorageService,
                     useClass: MockSyncStorage,
                 },
+                {
+                    provide: AlertService,
+                    useClass: MockAlertService,
+                },
             ],
         })
             .overrideComponent(LearningPathLectureUnitComponent, {
@@ -52,9 +59,12 @@ describe('LearningPathLectureUnitComponent', () => {
 
         lectureUnitService = TestBed.inject(LectureUnitService);
 
+        getLectureUnitSpy = jest.spyOn(lectureUnitService, 'getLectureUnitById').mockReturnValue(of(new HttpResponse({ body: lectureUnit })));
+
         lectureUnit.id = 1;
         lectureUnit.description = 'Example video unit';
         lectureUnit.name = 'Example video';
+        lectureUnit.lecture = { id: 2 };
 
         fixture = TestBed.createComponent(LearningPathLectureUnitComponent);
         component = fixture.componentInstance;
@@ -71,19 +81,23 @@ describe('LearningPathLectureUnitComponent', () => {
     });
 
     it('should get lecture unit', fakeAsync(() => {
-        const lectureUnit = new VideoUnit();
-        lectureUnit.id = 1;
-        lectureUnit.description = 'Example video unit';
-        lectureUnit.name = 'Example video';
-
-        const httpResponse = new HttpResponse({ body: lectureUnit });
-        const getLectureUnitSpy = jest.spyOn(lectureUnitService, 'getLectureUnitById').mockReturnValue(of(httpResponse));
-
         fixture.detectChanges();
         tick();
         fixture.detectChanges();
 
         expect(component.lectureUnit()).toEqual(lectureUnit);
         expect(getLectureUnitSpy).toHaveBeenCalledOnce();
+    }));
+
+    it('should call lecture unit service on completion', fakeAsync(() => {
+        const lectureCompletionSpy = jest.spyOn(lectureUnitService, 'completeLectureUnit').mockReturnValue();
+
+        fixture.detectChanges();
+        component.setLearningObjectCompletion({ lectureUnit: component.lectureUnit()!, completed: true });
+        fixture.detectChanges();
+        tick();
+        fixture.detectChanges();
+
+        expect(lectureCompletionSpy).toHaveBeenCalledOnce();
     }));
 });
