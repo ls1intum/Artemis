@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.service.quiz;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
-import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
 
@@ -13,7 +12,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.TempIdObject;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
@@ -137,10 +135,10 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
             submittedAnswer.setSubmission(quizSubmission);
             if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer) {
-                assignIds(((MultipleChoiceSubmittedAnswer) submittedAnswer).getSelectedOptions());
+                QuizIdAssigner.assignIds(((MultipleChoiceSubmittedAnswer) submittedAnswer).getSelectedOptions());
             }
             else if (submittedAnswer instanceof DragAndDropSubmittedAnswer) {
-                assignIds(((DragAndDropSubmittedAnswer) submittedAnswer).getMappings());
+                QuizIdAssigner.assignIds(((DragAndDropSubmittedAnswer) submittedAnswer).getMappings());
             }
         }
 
@@ -253,16 +251,5 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
     protected QuizSubmission save(QuizExercise quizExercise, QuizSubmission quizSubmission, User user) {
         quizSubmission.setParticipation(this.getParticipation(quizExercise, quizSubmission, user));
         return quizSubmissionRepository.save(quizSubmission);
-    }
-
-    public static <T extends TempIdObject> void assignIds(Collection<T> items) {
-        Long currentId = items.stream().filter(item1 -> item1.getId() != null).mapToLong(TempIdObject::getId).max().orElse(0L);
-
-        for (TempIdObject item : items) {
-            if (item.getId() == null) {
-                currentId = currentId + 1;
-                item.setId(currentId);
-            }
-        }
     }
 }

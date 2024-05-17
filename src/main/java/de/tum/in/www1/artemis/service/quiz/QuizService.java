@@ -12,7 +12,6 @@ import java.util.function.Function;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.TempIdObject;
 import de.tum.in.www1.artemis.domain.quiz.DragAndDropMapping;
 import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestion;
 import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestionStatistic;
@@ -54,18 +53,18 @@ public abstract class QuizService<T extends QuizConfiguration> {
 
             if (quizQuestion instanceof MultipleChoiceQuestion multipleChoiceQuestion) {
                 fixReferenceMultipleChoice(multipleChoiceQuestion);
-                assignIds(multipleChoiceQuestion.getAnswerOptions());
-                assignIds(((MultipleChoiceQuestionStatistic) multipleChoiceQuestion.getQuizQuestionStatistic()).getAnswerCounters());
+                QuizIdAssigner.assignIds(multipleChoiceQuestion.getAnswerOptions());
+                QuizIdAssigner.assignIds(((MultipleChoiceQuestionStatistic) multipleChoiceQuestion.getQuizQuestionStatistic()).getAnswerCounters());
             }
             else if (quizQuestion instanceof DragAndDropQuestion dragAndDropQuestion) {
                 fixReferenceDragAndDrop(dragAndDropQuestion);
                 restoreCorrectMappingsFromIndicesDragAndDrop(dragAndDropQuestion);
-                assignIds(((DragAndDropQuestionStatistic) dragAndDropQuestion.getQuizQuestionStatistic()).getDropLocationCounters());
+                QuizIdAssigner.assignIds(((DragAndDropQuestionStatistic) dragAndDropQuestion.getQuizQuestionStatistic()).getDropLocationCounters());
             }
             else if (quizQuestion instanceof ShortAnswerQuestion shortAnswerQuestion) {
                 fixReferenceShortAnswer(shortAnswerQuestion);
                 restoreCorrectMappingsFromIndicesShortAnswer(shortAnswerQuestion);
-                assignIds(((ShortAnswerQuestionStatistic) shortAnswerQuestion.getQuizQuestionStatistic()).getShortAnswerSpotCounters());
+                QuizIdAssigner.assignIds(((ShortAnswerQuestionStatistic) shortAnswerQuestion.getQuizQuestionStatistic()).getShortAnswerSpotCounters());
             }
         }
 
@@ -252,9 +251,9 @@ public abstract class QuizService<T extends QuizConfiguration> {
      * @param dragAndDropQuestion the question for which to perform these actions
      */
     private void restoreCorrectMappingsFromIndicesDragAndDrop(DragAndDropQuestion dragAndDropQuestion) {
-        assignIds(dragAndDropQuestion.getDragItems());
-        assignIds(dragAndDropQuestion.getDropLocations());
-        assignIds(dragAndDropQuestion.getCorrectMappings());
+        QuizIdAssigner.assignIds(dragAndDropQuestion.getDragItems());
+        QuizIdAssigner.assignIds(dragAndDropQuestion.getDropLocations());
+        QuizIdAssigner.assignIds(dragAndDropQuestion.getCorrectMappings());
 
         for (DragAndDropMapping mapping : dragAndDropQuestion.getCorrectMappings()) {
             // drag item
@@ -274,9 +273,9 @@ public abstract class QuizService<T extends QuizConfiguration> {
      */
     private void restoreCorrectMappingsFromIndicesShortAnswer(ShortAnswerQuestion shortAnswerQuestion) {
         // Assign IDs to spots
-        assignIds(shortAnswerQuestion.getSpots());
-        assignIds(shortAnswerQuestion.getSolutions());
-        assignIds(shortAnswerQuestion.getCorrectMappings());
+        QuizIdAssigner.assignIds(shortAnswerQuestion.getSpots());
+        QuizIdAssigner.assignIds(shortAnswerQuestion.getSolutions());
+        QuizIdAssigner.assignIds(shortAnswerQuestion.getCorrectMappings());
 
         for (ShortAnswerMapping mapping : shortAnswerQuestion.getCorrectMappings()) {
             // solution
@@ -288,16 +287,4 @@ public abstract class QuizService<T extends QuizConfiguration> {
         shortAnswerQuestion.getContent().setSpots(shortAnswerQuestion.getSpots());
         shortAnswerQuestion.getContent().setCorrectMappings(shortAnswerQuestion.getCorrectMappings());
     }
-
-    public static <T extends TempIdObject> void assignIds(Collection<T> items) {
-        Long currentId = items.stream().filter(item1 -> item1.getId() != null).mapToLong(TempIdObject::getId).max().orElse(0L);
-
-        for (TempIdObject item : items) {
-            if (item.getId() == null) {
-                currentId = currentId + 1;
-                item.setId(currentId);
-            }
-        }
-    }
-
 }

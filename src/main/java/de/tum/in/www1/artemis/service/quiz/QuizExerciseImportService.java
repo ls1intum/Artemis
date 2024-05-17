@@ -132,7 +132,6 @@ public class QuizExerciseImportService extends ExerciseImportService {
     private void setUpMultipleChoiceQuestionForImport(MultipleChoiceQuestion mcQuestion) {
         for (AnswerOption answerOption : mcQuestion.getAnswerOptions()) {
             answerOption.setId(null);
-            // answerOption.setQuestion(mcQuestion);
         }
     }
 
