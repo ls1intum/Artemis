@@ -556,7 +556,7 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
             for (QuizQuestion quizQuestion : getQuizQuestions()) {
                 // update QuestionStatistics with the result
                 if (quizQuestion.getQuizQuestionStatistic() != null && quizSubmission != null) {
-                    quizQuestion.getQuizQuestionStatistic().addResult(quizSubmission.getSubmittedAnswerForQuestion(quizQuestion), result.isRated());
+                    quizQuestion.getQuizQuestionStatistic().addResult(quizSubmission.getSubmittedAnswerForQuestion(quizQuestion), result.isRated(), quizQuestion);
                 }
             }
         }
@@ -576,7 +576,7 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
             for (QuizQuestion quizQuestion : getQuizQuestions()) {
                 // update QuestionStatistics with the result
                 if (quizQuestion.getQuizQuestionStatistic() != null) {
-                    quizQuestion.getQuizQuestionStatistic().removeOldResult(quizSubmission.getSubmittedAnswerForQuestion(quizQuestion), result.isRated());
+                    quizQuestion.getQuizQuestionStatistic().removeOldResult(quizSubmission.getSubmittedAnswerForQuestion(quizQuestion), result.isRated(), quizQuestion);
                 }
             }
         }

@@ -19,7 +19,6 @@ import de.tum.in.www1.artemis.domain.quiz.QuizPointStatistic;
 import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
 import de.tum.in.www1.artemis.domain.quiz.QuizQuestionStatistic;
 import de.tum.in.www1.artemis.repository.QuizPointStatisticRepository;
-import de.tum.in.www1.artemis.repository.QuizQuestionStatisticRepository;
 import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
@@ -38,8 +37,6 @@ public class QuizStatisticService {
 
     private final QuizPointStatisticRepository quizPointStatisticRepository;
 
-    private final QuizQuestionStatisticRepository quizQuestionStatisticRepository;
-
     private final QuizSubmissionRepository quizSubmissionRepository;
 
     private final WebsocketMessagingService websocketMessagingService;
@@ -47,12 +44,11 @@ public class QuizStatisticService {
     private final Optional<LtiNewResultService> ltiNewResultService;
 
     public QuizStatisticService(StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
-            WebsocketMessagingService websocketMessagingService, QuizPointStatisticRepository quizPointStatisticRepository,
-            QuizQuestionStatisticRepository quizQuestionStatisticRepository, QuizSubmissionRepository quizSubmissionRepository, Optional<LtiNewResultService> ltiNewResultService) {
+            WebsocketMessagingService websocketMessagingService, QuizPointStatisticRepository quizPointStatisticRepository, QuizSubmissionRepository quizSubmissionRepository,
+            Optional<LtiNewResultService> ltiNewResultService) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.resultRepository = resultRepository;
         this.quizPointStatisticRepository = quizPointStatisticRepository;
-        this.quizQuestionStatisticRepository = quizQuestionStatisticRepository;
         this.websocketMessagingService = websocketMessagingService;
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.ltiNewResultService = ltiNewResultService;
@@ -117,12 +113,6 @@ public class QuizStatisticService {
         // save changed Statistics
         quizPointStatisticRepository.save(quizExercise.getQuizPointStatistic());
         quizPointStatisticRepository.flush();
-        for (QuizQuestion quizQuestion : quizExercise.getQuizQuestions()) {
-            if (quizQuestion.getQuizQuestionStatistic() != null) {
-                quizQuestionStatisticRepository.save(quizQuestion.getQuizQuestionStatistic());
-                quizQuestionStatisticRepository.flush();
-            }
-        }
     }
 
     /**
@@ -154,7 +144,6 @@ public class QuizStatisticService {
                     quizQuestionStatistics.add(quizQuestion.getQuizQuestionStatistic());
                 }
             }
-            quizQuestionStatisticRepository.saveAll(quizQuestionStatistics);
             // notify users via websocket about new results for the statistics.
             // filters out solution information
             quiz.filterForStatisticWebsocket();

@@ -1,26 +1,17 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import jakarta.persistence.DiscriminatorValue;
-import jakarta.persistence.Entity;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Transient;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * A ShortAnswerSpotCounter.
  */
-@Entity
-@DiscriminatorValue(value = "SA")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ShortAnswerSpotCounter extends QuizStatisticCounter implements QuizQuestionStatisticComponent<ShortAnswerQuestionStatistic, ShortAnswerSpot, ShortAnswerQuestion> {
 
-    @ManyToOne
     @JsonIgnore
     private ShortAnswerQuestionStatistic shortAnswerQuestionStatistic;
 
-    @Transient
     private ShortAnswerSpot spot;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
@@ -44,19 +35,19 @@ public class ShortAnswerSpotCounter extends QuizStatisticCounter implements Quiz
     @Override
     @JsonIgnore
     public void setQuizQuestionStatistic(ShortAnswerQuestionStatistic shortAnswerQuestionStatistic) {
-        setShortAnswerQuestionStatistic(shortAnswerQuestionStatistic);
+
     }
 
     @Override
     @JsonIgnore
     public ShortAnswerSpot getQuizQuestionComponent() {
-        return getSpot();
+        return null;
     }
 
     @Override
     @JsonIgnore
     public void setQuizQuestionComponent(ShortAnswerSpot shortAnswerSpot) {
-        setSpot(shortAnswerSpot);
+
     }
 
     @Override

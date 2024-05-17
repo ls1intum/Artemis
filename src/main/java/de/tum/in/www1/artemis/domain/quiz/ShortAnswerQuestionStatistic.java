@@ -4,27 +4,14 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.DiscriminatorValue;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.OneToMany;
-
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * A ShortAnswerQuestionStatistic.
  */
-@Entity
-@DiscriminatorValue(value = "SA")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ShortAnswerQuestionStatistic extends QuizQuestionStatistic {
 
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true, mappedBy = "shortAnswerQuestionStatistic")
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<ShortAnswerSpotCounter> shortAnswerSpotCounters = new HashSet<>();
 
     public Set<ShortAnswerSpotCounter> getShortAnswerSpotCounters() {
@@ -77,9 +64,10 @@ public class ShortAnswerQuestionStatistic extends QuizQuestionStatistic {
      * @param rated           specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise) or unrated ( participated after the dueDate
      *                            of the quizExercise)
      * @param change          the int-value, which will be added to the Counter and participants
+     * @param quizQuestion
      */
     @Override
-    protected void changeStatisticBasedOnResult(SubmittedAnswer submittedAnswer, boolean rated, int change) {
+    protected void changeStatisticBasedOnResult(SubmittedAnswer submittedAnswer, boolean rated, int change, QuizQuestion quizQuestion) {
         if (!(submittedAnswer instanceof ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer)) {
             return;
         }
@@ -93,7 +81,7 @@ public class ShortAnswerQuestionStatistic extends QuizQuestionStatistic {
             });
 
             // change rated correctCounter if answer is complete correct
-            if (getQuizQuestion().isAnswerCorrect(shortAnswerSubmittedAnswer)) {
+            if (quizQuestion.isAnswerCorrect(shortAnswerSubmittedAnswer)) {
                 setRatedCorrectCounter(getRatedCorrectCounter() + change);
             }
         }
@@ -106,7 +94,7 @@ public class ShortAnswerQuestionStatistic extends QuizQuestionStatistic {
                 spotCounter.setUnRatedCounter(spotCounter.getUnRatedCounter() + change);
             });
             // change unrated correctCounter if answer is complete correct
-            if (getQuizQuestion().isAnswerCorrect(shortAnswerSubmittedAnswer)) {
+            if (quizQuestion.isAnswerCorrect(shortAnswerSubmittedAnswer)) {
                 setUnRatedCorrectCounter(getUnRatedCorrectCounter() + change);
             }
         }

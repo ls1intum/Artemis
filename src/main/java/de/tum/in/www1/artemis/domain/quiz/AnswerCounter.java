@@ -1,30 +1,17 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import jakarta.persistence.DiscriminatorValue;
-import jakarta.persistence.Entity;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Transient;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * A AnswerCounter.
  */
-@Entity
-@DiscriminatorValue(value = "AC")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class AnswerCounter extends QuizStatisticCounter implements QuizQuestionStatisticComponent<MultipleChoiceQuestionStatistic, AnswerOption, MultipleChoiceQuestion> {
 
-    @ManyToOne
     @JsonIgnore
     private MultipleChoiceQuestionStatistic multipleChoiceQuestionStatistic;
 
-    // @OneToOne(cascade = { CascadeType.PERSIST })
-    // @JoinColumn(unique = true)
-    // private AnswerOption answer;
-
-    @Transient
     private AnswerOption answer;
 
     public MultipleChoiceQuestionStatistic getMultipleChoiceQuestionStatistic() {
@@ -46,19 +33,19 @@ public class AnswerCounter extends QuizStatisticCounter implements QuizQuestionS
     @Override
     @JsonIgnore
     public void setQuizQuestionStatistic(MultipleChoiceQuestionStatistic quizQuestionStatistic) {
-        setMultipleChoiceQuestionStatistic(quizQuestionStatistic);
+
     }
 
     @Override
     @JsonIgnore
     public AnswerOption getQuizQuestionComponent() {
-        return getAnswer();
+        return null;
     }
 
     @Override
     @JsonIgnore
     public void setQuizQuestionComponent(AnswerOption answerOption) {
-        setAnswer(answerOption);
+
     }
 
     @Override

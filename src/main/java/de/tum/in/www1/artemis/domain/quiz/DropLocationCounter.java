@@ -1,26 +1,17 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import jakarta.persistence.DiscriminatorValue;
-import jakarta.persistence.Entity;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Transient;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * A DropLocationCounter.
  */
-@Entity
-@DiscriminatorValue(value = "DD")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class DropLocationCounter extends QuizStatisticCounter implements QuizQuestionStatisticComponent<DragAndDropQuestionStatistic, DropLocation, DragAndDropQuestion> {
 
-    @ManyToOne
     @JsonIgnore
     private DragAndDropQuestionStatistic dragAndDropQuestionStatistic;
 
-    @Transient
     private DropLocation dropLocation;
 
     public DragAndDropQuestionStatistic getDragAndDropQuestionStatistic() {
@@ -42,19 +33,18 @@ public class DropLocationCounter extends QuizStatisticCounter implements QuizQue
     @Override
     @JsonIgnore
     public void setQuizQuestionStatistic(DragAndDropQuestionStatistic dragAndDropQuestionStatistic) {
-        setDragAndDropQuestionStatistic(dragAndDropQuestionStatistic);
     }
 
     @Override
     @JsonIgnore
     public DropLocation getQuizQuestionComponent() {
-        return getDropLocation();
+        return null;
     }
 
     @Override
     @JsonIgnore
     public void setQuizQuestionComponent(DropLocation dropLocation) {
-        setDropLocation(dropLocation);
+
     }
 
     @Override

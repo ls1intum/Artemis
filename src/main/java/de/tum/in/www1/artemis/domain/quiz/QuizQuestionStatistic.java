@@ -1,17 +1,12 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.DiscriminatorValue;
-import jakarta.persistence.Entity;
-import jakarta.persistence.OneToOne;
+import java.io.Serializable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
-@Entity
-@DiscriminatorValue(value = "Q")
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 // @formatter:off
 @JsonSubTypes({
@@ -21,17 +16,17 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 })
 // @formatter:on
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public abstract class QuizQuestionStatistic extends QuizStatistic implements QuizQuestionComponent<QuizQuestion> {
+public abstract class QuizQuestionStatistic implements QuizQuestionComponent<QuizQuestion>, Serializable {
 
-    @Column(name = "rated_correct_counter")
+    private Long id;
+
+    private Integer participantsRated = 0;
+
+    private Integer participantsUnrated = 0;
+
     private Integer ratedCorrectCounter = 0;
 
-    @Column(name = "un_rated_correct_counter")
     private Integer unRatedCorrectCounter = 0;
-
-    @OneToOne(mappedBy = "quizQuestionStatistic")
-    @JsonIgnore
-    private QuizQuestion quizQuestion;
 
     public Integer getRatedCorrectCounter() {
         return ratedCorrectCounter;
@@ -49,17 +44,9 @@ public abstract class QuizQuestionStatistic extends QuizStatistic implements Qui
         this.unRatedCorrectCounter = unRatedCorrectCounter;
     }
 
-    public QuizQuestion getQuizQuestion() {
-        return quizQuestion;
-    }
-
-    public void setQuizQuestion(QuizQuestion quizQuestion) {
-        this.quizQuestion = quizQuestion;
-    }
-
     @JsonIgnore
     public void setQuestion(QuizQuestion quizQuestion) {
-        setQuizQuestion(quizQuestion);
+
     }
 
     /**
@@ -69,8 +56,8 @@ public abstract class QuizQuestionStatistic extends QuizStatistic implements Qui
      * @param rated           specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise) or unrated ( participated after the dueDate
      *                            of the quizExercise)
      */
-    public void addResult(SubmittedAnswer submittedAnswer, boolean rated) {
-        changeStatisticBasedOnResult(submittedAnswer, rated, 1);
+    public void addResult(SubmittedAnswer submittedAnswer, boolean rated, QuizQuestion quizQuestion) {
+        changeStatisticBasedOnResult(submittedAnswer, rated, 1, quizQuestion);
     }
 
     /**
@@ -79,12 +66,13 @@ public abstract class QuizQuestionStatistic extends QuizStatistic implements Qui
      * @param submittedAnswer the submittedAnswer object which contains all selected answers
      * @param rated           specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise) or unrated ( participated after the dueDate
      *                            of the quizExercise)
+     * @param quizQuestion
      */
-    public void removeOldResult(SubmittedAnswer submittedAnswer, boolean rated) {
-        changeStatisticBasedOnResult(submittedAnswer, rated, -1);
+    public void removeOldResult(SubmittedAnswer submittedAnswer, boolean rated, QuizQuestion quizQuestion) {
+        changeStatisticBasedOnResult(submittedAnswer, rated, -1, quizQuestion);
     }
 
-    protected abstract void changeStatisticBasedOnResult(SubmittedAnswer submittedAnswer, boolean rated, int change);
+    protected abstract void changeStatisticBasedOnResult(SubmittedAnswer submittedAnswer, boolean rated, int change, QuizQuestion quizQuestion);
 
     /**
      * reset the general statistics
@@ -100,5 +88,29 @@ public abstract class QuizQuestionStatistic extends QuizStatistic implements Qui
     public String toString() {
         return getClass() + "{" + "ratedCorrectCounter=" + ratedCorrectCounter + ", unRatedCorrectCounter=" + unRatedCorrectCounter + "participantsRated=" + getParticipantsRated()
                 + ", participantsUnrated=" + getParticipantsUnrated() + '}';
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Integer getParticipantsRated() {
+        return participantsRated;
+    }
+
+    public void setParticipantsRated(Integer participantsRated) {
+        this.participantsRated = participantsRated;
+    }
+
+    public Integer getParticipantsUnrated() {
+        return participantsUnrated;
+    }
+
+    public void setParticipantsUnrated(Integer participantsUnrated) {
+        this.participantsUnrated = participantsUnrated;
     }
 }

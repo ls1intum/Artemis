@@ -3,27 +3,14 @@ package de.tum.in.www1.artemis.domain.quiz;
 import java.util.HashSet;
 import java.util.Set;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.DiscriminatorValue;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.OneToMany;
-
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * A MultipleChoiceQuestionStatistic.
  */
-@Entity
-@DiscriminatorValue(value = "MC")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class MultipleChoiceQuestionStatistic extends QuizQuestionStatistic {
 
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true, mappedBy = "multipleChoiceQuestionStatistic")
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<AnswerCounter> answerCounters = new HashSet<>();
 
     public Set<AnswerCounter> getAnswerCounters() {
@@ -65,9 +52,10 @@ public class MultipleChoiceQuestionStatistic extends QuizQuestionStatistic {
      * @param rated           specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise) or unrated ( participated after the dueDate
      *                            of the quizExercise)
      * @param change          the int-value, which will be added to the Counter and participants
+     * @param quizQuestion
      */
     @Override
-    protected void changeStatisticBasedOnResult(SubmittedAnswer submittedAnswer, boolean rated, int change) {
+    protected void changeStatisticBasedOnResult(SubmittedAnswer submittedAnswer, boolean rated, int change, QuizQuestion quizQuestion) {
         if (!(submittedAnswer instanceof MultipleChoiceSubmittedAnswer mcSubmittedAnswer)) {
             return;
         }
@@ -85,7 +73,7 @@ public class MultipleChoiceQuestionStatistic extends QuizQuestionStatistic {
                 }
             }
             // change rated correctCounter if answer is complete correct
-            if (getQuizQuestion().isAnswerCorrect(mcSubmittedAnswer)) {
+            if (quizQuestion.isAnswerCorrect(mcSubmittedAnswer)) {
                 setRatedCorrectCounter(getRatedCorrectCounter() + change);
             }
         }
@@ -104,7 +92,7 @@ public class MultipleChoiceQuestionStatistic extends QuizQuestionStatistic {
             }
 
             // change unrated correctCounter if answer is complete correct
-            if (getQuizQuestion().isAnswerCorrect(mcSubmittedAnswer)) {
+            if (quizQuestion.isAnswerCorrect(mcSubmittedAnswer)) {
                 setUnRatedCorrectCounter(getUnRatedCorrectCounter() + change);
             }
         }
