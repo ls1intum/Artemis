@@ -4,7 +4,7 @@
             <div class="row justify-content-start align-items-center">
                 @if (predecessorLearningObject()) {
                     <div class="col-md-auto">
-                        <button (click)="selectLearningObject(predecessorLearningObject()!)" type="button" class="btn btn-secondary">Previous</button>
+                        <button id="previous-button" (click)="selectLearningObject(predecessorLearningObject()!)" type="button" class="btn btn-secondary">Previous</button>
                     </div>
                     <span class="col ps-3 text-truncate text-secondary">{{ predecessorLearningObject()!.name }}</span>
                 }
@@ -34,7 +34,13 @@
                 @if (successorLearningObject()) {
                     <span class="col text-end pe-3 text-truncate text-secondary">{{ successorLearningObject()!.name }}</span>
                     <div class="col-md-auto">
-                        <button (click)="selectLearningObject(successorLearningObject()!)" [disabled]="!isCurrentLearningObjectCompleted()" type="button" class="btn btn-primary">
+                        <button
+                            id="next-button"
+                            (click)="selectLearningObject(successorLearningObject()!)"
+                            [disabled]="!isCurrentLearningObjectCompleted()"
+                            type="button"
+                            class="btn btn-primary"
+                        >
                             Next
                         </button>
                     </div>
