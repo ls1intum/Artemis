@@ -60,12 +60,7 @@ public interface OneToOneChatRepository extends JpaRepository<OneToOneChat, Long
                 LEFT JOIN FETCH p.user u
                 LEFT JOIN FETCH u.groups
             WHERE o.course.id = :courseId
-                AND EXISTS (
-                    SELECT 1
-                    FROM ConversationParticipant cp
-                    WHERE cp.conversation = o
-                        AND cp.user.id = :userIdA
-                )
+                AND u.id = :userIdA
                 AND EXISTS (
                     SELECT 1
                     FROM ConversationParticipant cp
@@ -73,7 +68,9 @@ public interface OneToOneChatRepository extends JpaRepository<OneToOneChat, Long
                         AND cp.user.id = :userIdB
                 )
             """)
-    // Exist checks required because we have a many-to-many relationship and hibernate doesn't allow multiple joins on the same table anymore
+    // Exist checks required because we have a many-to-many relationship and hibernate doesn't allow multiple joins on the same table anymore.
+    // We only execute the exists check for the second user, because we can filter the chats by the first user. This reduces the amounts of existence checks to the number of
+    // one-to-one chats userA has in that specific course.
     Optional<OneToOneChat> findWithParticipantsAndUserGroupsInCourseBetweenUsers(@Param("courseId") Long courseId, @Param("userIdA") Long userIdA, @Param("userIdB") Long userIdB);
 
     @Query("""
