@@ -13,7 +13,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -102,7 +101,7 @@ public class RepositoryService {
         if (profileService.isLocalVcsActive()) {
             log.info("Using local VCS for getting files at commit {} for participation {}", commitId, participation.getId());
             // If local VCS is active, operate directly on the bare repository
-            var repoUri = Objects.equals(repositoryType, RepositoryType.TESTS) ? programmingExercise.getVcsTestRepositoryUri() : participation.getVcsRepositoryUri();
+            var repoUri = repositoryType == RepositoryType.TESTS ? programmingExercise.getVcsTestRepositoryUri() : participation.getVcsRepositoryUri();
             Repository repository = gitService.getBareRepository(repoUri);
             return getFilesContentFromBareRepository(repository, commitId);
         }
