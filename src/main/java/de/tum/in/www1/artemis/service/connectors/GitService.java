@@ -1241,12 +1241,12 @@ public class GitService {
     public Repository getBareRepository(VcsRepositoryUri repositoryUri) {
         var localRepoUri = new LocalVCRepositoryUri(repositoryUri.toString());
         var localPath = localRepoUri.getLocalRepositoryPath(localVCBasePath);
+        // Check if the repository is already cached in the server's session.
+        Repository cachedRepository = cachedBareRepositories.get(localPath);
+        if (cachedRepository != null) {
+            return cachedRepository;
+        }
         try {
-            // Check if the repository is already cached in the server's session.
-            Repository cachedRepository = cachedBareRepositories.get(localPath);
-            if (cachedRepository != null) {
-                return cachedRepository;
-            }
             var repository = linkRepositoryForExistingGit(localPath, repositoryUri, defaultBranch, true);
             cachedBareRepositories.put(localPath, repository);
             return repository;
