@@ -218,7 +218,7 @@
                                 </div>
                             }
                         }
-                        <button id="end-exam" [disabled]="!endButtonEnabled()" type="submit" (click)="onExamEndConfirmed()" class="btn btn-primary">
+                        <button id="end-exam" [disabled]="!endButtonEnabled" type="submit" (click)="onExamEndConfirmed()" class="btn btn-primary">
                             @if (submitInProgress) {
                                 <fa-icon [icon]="faSpinner" [spin]="true" />
                             }
@@ -251,7 +251,6 @@
                     id="showExamSummaryButton"
                     class="btn btn-primary"
                     [disabled]="examSummaryButtonSecondsLeft"
-                    (click)="loadAndDisplaySummary()"
                     jhiTranslate="artemisApp.examParticipation.submissionSuccessful.button"
                     [translateValues]="{ countdown: examSummaryButtonSecondsLeft ? ' (' + examSummaryButtonSecondsLeft + ')' : '' }"
                     [routerLink]="['/courses', courseId, 'exams', examId]"

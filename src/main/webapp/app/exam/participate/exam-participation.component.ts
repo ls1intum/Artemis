@@ -223,16 +223,16 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         }
     }
 
-    loadAndDisplaySummary() {
-        this.examParticipationService.loadStudentExamWithExercisesForSummary(this.courseId, this.examId, this.studentExam.id!).subscribe({
-            next: (studentExamWithExercises: StudentExam) => {
-                this.studentExam = studentExamWithExercises;
-                this.showExamSummary = true;
-                this.loadingExam = false;
-            },
-            error: () => (this.loadingExam = false),
-        });
-    }
+    // loadAndDisplaySummary() {
+    //     this.examParticipationService.loadStudentExamWithExercisesForSummary(this.courseId, this.examId, this.studentExam.id!).subscribe({
+    //         next: (studentExamWithExercises: StudentExam) => {
+    //             this.studentExam = studentExamWithExercises;
+    //             this.showExamSummary = true;
+    //             this.loadingExam = false;
+    //         },
+    //         error: () => (this.loadingExam = false),
+    //     });
+    // }
 
     canDeactivate() {
         return this.loggedOut || this.isOver() || !this.studentExam || this.handInEarly || !this.examStartConfirmed;
@@ -384,7 +384,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 next: () => {
                     if (this.testExam) {
                         // If we have a test exam, we reload the summary from the server right away
-                        this.loadAndDisplaySummary();
+                        //this.loadAndDisplaySummary();
                     }
                     //this.submitInProgress = false;
                     this.examParticipationService.setExamState({ submitInProgress: false });
@@ -898,7 +898,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         return this.enteredName.trim() !== '';
     }
 
-    endButtonEnabled(): boolean {
+    get endButtonEnabled(): boolean {
         console.log('endButtonEnabled, nameIsCorrect: ' + this.nameIsCorrect);
         console.log('endButtonEnabled, confirmed: ' + this.confirmed);
         console.log('endButtonEnabled, exam: ' + this.exam);
