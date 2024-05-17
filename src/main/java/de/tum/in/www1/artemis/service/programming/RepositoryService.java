@@ -107,7 +107,6 @@ public class RepositoryService {
         }
         else {
             Repository repository;
-            // If the repository type is tests, check out the tests repository
             if (repositoryType == RepositoryType.TESTS) {
                 repository = gitService.checkoutRepositoryAtCommit(programmingExercise.getVcsTestRepositoryUri(), commitId, true);
             }
