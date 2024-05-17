@@ -143,7 +143,7 @@ describe('AdminStandardizedCompetencyService', () => {
         };
 
         adminStandardizedCompetencyService
-            .importCompetencies(requestBody)
+            .importStandardizedCompetencyCatalog(requestBody)
             .pipe(take(1))
             .subscribe((resp) => (actualResult = resp));
 
@@ -152,5 +152,25 @@ describe('AdminStandardizedCompetencyService', () => {
         tick();
 
         expect(actualResult.status).toBe(200);
+    }));
+
+    it('should export competencies', fakeAsync(() => {
+        let actualResult = new HttpResponse<KnowledgeAreasForImportDTO>();
+        const expectedResult: KnowledgeAreasForImportDTO = {
+            knowledgeAreas: [],
+            sources: [],
+        };
+        const returnedFromService: KnowledgeAreasForImportDTO = { ...expectedResult };
+
+        adminStandardizedCompetencyService
+            .exportStandardizedCompetencyCatalog()
+            .pipe(take(1))
+            .subscribe((resp) => (actualResult = resp));
+
+        const req = httpTestingController.expectOne({ method: 'GET' });
+        req.flush(returnedFromService);
+        tick();
+
+        expect(actualResult.body).toEqual(expectedResult);
     }));
 });

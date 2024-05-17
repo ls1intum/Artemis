@@ -21,9 +21,10 @@ import de.tum.in.www1.artemis.domain.competency.StandardizedCompetency;
 import de.tum.in.www1.artemis.repository.SourceRepository;
 import de.tum.in.www1.artemis.repository.competency.KnowledgeAreaRepository;
 import de.tum.in.www1.artemis.repository.competency.StandardizedCompetencyRepository;
-import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreasForImportDTO;
-import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreasForImportDTO.KnowledgeAreaForImportDTO;
-import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreasForImportDTO.StandardizedCompetencyForImportDTO;
+import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.SourceDTO;
+import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.StandardizedCompetencyCatalogDTO;
+import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.StandardizedCompetencyCatalogDTO.KnowledgeAreaForCatalogDTO;
+import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.StandardizedCompetencyCatalogDTO.StandardizedCompetencyForCatalogDTO;
 import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.StandardizedCompetencyRequestDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -147,31 +148,41 @@ public class StandardizedCompetencyService {
     }
 
     /**
-     * Imports the knowledge areas, standardized competencies and sources given in the DTO into Artemis
+     * Imports the catalog of knowledge areas, standardized competencies and sources given in the DTO into Artemis
      *
-     * @param knowledgeAreasForImportDTO the DTO containing the data to import
+     * @param standardizedCompetencyCatalogDTO the DTO containing the data to import
      */
-    public void adminImportStandardizedCompetencies(KnowledgeAreasForImportDTO knowledgeAreasForImportDTO) {
-        List<KnowledgeAreaForImportDTO> topLevelKnowledgeAreas = knowledgeAreasForImportDTO.knowledgeAreas() != null ? knowledgeAreasForImportDTO.knowledgeAreas()
+    public void importStandardizedCompetencyCatalog(StandardizedCompetencyCatalogDTO standardizedCompetencyCatalogDTO) {
+        List<KnowledgeAreaForCatalogDTO> topLevelKnowledgeAreas = standardizedCompetencyCatalogDTO.knowledgeAreas() != null ? standardizedCompetencyCatalogDTO.knowledgeAreas()
                 : Collections.emptyList();
-        List<Source> sources = knowledgeAreasForImportDTO.sources() != null ? knowledgeAreasForImportDTO.sources() : Collections.emptyList();
-        var sourceIds = sources.stream().map(Source::getId).toList();
+        List<SourceDTO> sourceDTOs = standardizedCompetencyCatalogDTO.sources() != null ? standardizedCompetencyCatalogDTO.sources() : Collections.emptyList();
+        var sourceIds = sourceDTOs.stream().map(SourceDTO::id).toList();
 
         for (var knowledgeAreaDTO : topLevelKnowledgeAreas) {
             verifySourcesForSelfAndDescendants(knowledgeAreaDTO, sourceIds);
         }
 
         var sourceMap = new HashMap<Long, Source>();
-        for (var source : sources) {
-            Long oldId = source.getId();
-            source.setId(null);
-            var newSource = sourceRepository.save(source);
-            sourceMap.put(oldId, newSource);
+        for (var sourceDTO : sourceDTOs) {
+            Long oldId = sourceDTO.id();
+            var source = sourceRepository.save(new Source(sourceDTO.title(), sourceDTO.author(), sourceDTO.uri()));
+            sourceMap.put(oldId, source);
         }
 
         for (var knowledgeAreaDTO : topLevelKnowledgeAreas) {
             importSelfAndDescendants(knowledgeAreaDTO, null, sourceMap);
         }
+    }
+
+    /**
+     * Returns the catalog of knowledge areas, standardized competencies and sources of this Artemis instance. Used for exporting.
+     *
+     * @return the DTO containing the data to export
+     */
+    public StandardizedCompetencyCatalogDTO exportStandardizedCompetencyCatalog() {
+        var knowledgeAreas = getAllForTreeView();
+        var sources = sourceRepository.findAll();
+        return StandardizedCompetencyCatalogDTO.of(knowledgeAreas, sources);
     }
 
     /**
@@ -181,9 +192,9 @@ public class StandardizedCompetencyService {
      * @param knowledgeArea the knowledge area to check
      * @param sourceIds     the list of valid source ids
      */
-    private void verifySourcesForSelfAndDescendants(KnowledgeAreaForImportDTO knowledgeArea, List<Long> sourceIds) {
-        List<KnowledgeAreaForImportDTO> children = knowledgeArea.children() != null ? knowledgeArea.children() : Collections.emptyList();
-        List<StandardizedCompetencyForImportDTO> competencies = knowledgeArea.competencies() != null ? knowledgeArea.competencies() : Collections.emptyList();
+    private void verifySourcesForSelfAndDescendants(KnowledgeAreaForCatalogDTO knowledgeArea, List<Long> sourceIds) {
+        List<KnowledgeAreaForCatalogDTO> children = knowledgeArea.children() != null ? knowledgeArea.children() : Collections.emptyList();
+        List<StandardizedCompetencyForCatalogDTO> competencies = knowledgeArea.competencies() != null ? knowledgeArea.competencies() : Collections.emptyList();
 
         for (var competency : competencies) {
             var sourceId = competency.sourceId();
@@ -203,7 +214,7 @@ public class StandardizedCompetencyService {
      * @param parent        the parent of the knowledge area or null (needed to set the parent attribute)
      * @param sourceMap     the map of sourceId to source object
      */
-    private void importSelfAndDescendants(KnowledgeAreaForImportDTO knowledgeArea, KnowledgeArea parent, Map<Long, Source> sourceMap) {
+    private void importSelfAndDescendants(KnowledgeAreaForCatalogDTO knowledgeArea, KnowledgeArea parent, Map<Long, Source> sourceMap) {
         // import self without competencies and children
         var knowledgeAreaToImport = new KnowledgeArea(knowledgeArea.title(), knowledgeArea.shortTitle(), knowledgeArea.description());
         knowledgeAreaToImport.setParent(parent);

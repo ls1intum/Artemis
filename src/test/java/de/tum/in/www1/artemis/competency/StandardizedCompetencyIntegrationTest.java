@@ -27,7 +27,8 @@ import de.tum.in.www1.artemis.repository.competency.StandardizedCompetencyReposi
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreaRequestDTO;
 import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreaResultDTO;
-import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreasForImportDTO;
+import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.SourceDTO;
+import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.StandardizedCompetencyCatalogDTO;
 import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.StandardizedCompetencyRequestDTO;
 import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.StandardizedCompetencyResultDTO;
 
@@ -350,10 +351,10 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationInd
             @Test
             @WithMockUser(username = "admin", roles = "ADMIN")
             void shouldImport() throws Exception {
-                var competency2 = new KnowledgeAreasForImportDTO.StandardizedCompetencyForImportDTO("competency2", "description2", CompetencyTaxonomy.APPLY, null, null);
-                var competency1 = new KnowledgeAreasForImportDTO.StandardizedCompetencyForImportDTO("competency1", "description", CompetencyTaxonomy.ANALYZE, "1.1.0", 1L);
-                var knowledgeArea2 = new KnowledgeAreasForImportDTO.KnowledgeAreaForImportDTO("knowledgeArea2", "ka2", "description2", null, List.of(competency2));
-                var knowledgeArea1 = new KnowledgeAreasForImportDTO.KnowledgeAreaForImportDTO("knowledgeArea1", "ka1", "description", List.of(knowledgeArea2),
+                var competency2 = new StandardizedCompetencyCatalogDTO.StandardizedCompetencyForCatalogDTO("competency2", "description2", CompetencyTaxonomy.APPLY, null, null);
+                var competency1 = new StandardizedCompetencyCatalogDTO.StandardizedCompetencyForCatalogDTO("competency1", "description", CompetencyTaxonomy.ANALYZE, "1.1.0", 1L);
+                var knowledgeArea2 = new StandardizedCompetencyCatalogDTO.KnowledgeAreaForCatalogDTO("knowledgeArea2", "ka2", "description2", null, List.of(competency2));
+                var knowledgeArea1 = new StandardizedCompetencyCatalogDTO.KnowledgeAreaForCatalogDTO("knowledgeArea1", "ka1", "description", List.of(knowledgeArea2),
                         List.of(competency1));
                 var source1 = new Source("title", "author", "http://localhost:1");
                 source1.setId(1L);
@@ -361,7 +362,7 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationInd
                 source2.setId(2L);
 
                 // do not put knowledgeArea2, it is not top-level
-                var importData = new KnowledgeAreasForImportDTO(List.of(knowledgeArea1), List.of(source1, source2));
+                var importData = new StandardizedCompetencyCatalogDTO(List.of(knowledgeArea1), List.of(SourceDTO.of(source1), SourceDTO.of(source2)));
                 request.put("/api/admin/standardized-competencies/import", importData, HttpStatus.OK);
 
                 var competencies = standardizedCompetencyRepository.findAll(Sort.by(Sort.Direction.ASC, "id"));
@@ -392,9 +393,9 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationInd
             @WithMockUser(username = "admin", roles = "ADMIN")
             void shouldReturnBadRequestForInvalidSources() throws Exception {
                 // this competency references a source that does not exist!
-                var competency = new KnowledgeAreasForImportDTO.StandardizedCompetencyForImportDTO("title", "description", null, null, 1L);
-                var knowledgeArea = new KnowledgeAreasForImportDTO.KnowledgeAreaForImportDTO("title", "title", "", null, List.of(competency));
-                var importData = new KnowledgeAreasForImportDTO(List.of(knowledgeArea), null);
+                var competency = new StandardizedCompetencyCatalogDTO.StandardizedCompetencyForCatalogDTO("title", "description", null, null, 1L);
+                var knowledgeArea = new StandardizedCompetencyCatalogDTO.KnowledgeAreaForCatalogDTO("title", "title", "", null, List.of(competency));
+                var importData = new StandardizedCompetencyCatalogDTO(List.of(knowledgeArea), null);
 
                 request.put("/api/admin/standardized-competencies/import", importData, HttpStatus.BAD_REQUEST);
             }
