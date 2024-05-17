@@ -122,10 +122,10 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
         repositoryType?: string,
     ): Observable<Map<string, string> | undefined> {
         const params = {};
-        if (repositoryType !== undefined) {
+        if (repositoryType) {
             params['repositoryType'] = repositoryType;
         }
-        if (participationId !== undefined && !isNaN(participationId)) {
+        if (participationId) {
             params['participationId'] = participationId;
         }
         return this.http.get(`${this.resourceUrl}${exerciseId}/files-content-commit-details/${commitId}`, { params: params }).pipe(
