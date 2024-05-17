@@ -13,16 +13,17 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import jakarta.annotation.PostConstruct;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthContributor;
 import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.boot.actuate.health.NamedContributor;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.cloud.client.discovery.health.DiscoveryCompositeHealthContributor;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.user.SimpUserRegistry;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -78,7 +79,7 @@ public class MetricsBean {
 
     private final MeterRegistry meterRegistry;
 
-    private final TaskScheduler taskScheduler;
+    private final TaskScheduler scheduler;
 
     private final WebSocketMessageBrokerStats webSocketStats;
 
@@ -99,6 +100,10 @@ public class MetricsBean {
     private final StatisticsRepository statisticsRepository;
 
     private final ProfileService profileService;
+
+    private final List<HealthContributor> healthContributors;
+
+    private final Optional<HikariDataSource> hikariDataSource;
 
     private final Optional<SharedQueueManagementService> localCIBuildJobQueueService;
 
@@ -151,15 +156,17 @@ public class MetricsBean {
 
     private boolean scheduledMetricsEnabled = false;
 
-    public MetricsBean(MeterRegistry meterRegistry, TaskScheduler taskScheduler, WebSocketMessageBrokerStats webSocketStats, SimpUserRegistry userRegistry,
+    public MetricsBean(MeterRegistry meterRegistry, @Qualifier("taskScheduler") TaskScheduler scheduler, WebSocketMessageBrokerStats webSocketStats, SimpUserRegistry userRegistry,
             WebSocketHandler websocketHandler, List<HealthContributor> healthContributors, Optional<HikariDataSource> hikariDataSource, ExerciseRepository exerciseRepository,
             StudentExamRepository studentExamRepository, ExamRepository examRepository, CourseRepository courseRepository, UserRepository userRepository,
             StatisticsRepository statisticsRepository, ProfileService profileService, Optional<SharedQueueManagementService> localCIBuildJobQueueService) {
         this.meterRegistry = meterRegistry;
-        this.taskScheduler = taskScheduler;
+        this.scheduler = scheduler;
         this.webSocketStats = webSocketStats;
         this.userRegistry = userRegistry;
         this.webSocketHandler = websocketHandler;
+        this.healthContributors = healthContributors;
+        this.hikariDataSource = hikariDataSource;
         this.exerciseRepository = exerciseRepository;
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
@@ -168,7 +175,37 @@ public class MetricsBean {
         this.statisticsRepository = statisticsRepository;
         this.profileService = profileService;
         this.localCIBuildJobQueueService = localCIBuildJobQueueService;
+    }
 
+    /**
+     * Event listener method that is invoked when the application is ready. It registers various health and metric
+     * contributors, and conditionally enables metrics based on active profiles.
+     *
+     * <p>
+     * Specifically, this method performs the following actions:
+     * <ul>
+     * <li>Registers health contributors.</li>
+     * <li>Registers websocket metrics.</li>
+     * <li>If the scheduling profile is active:
+     * <ul>
+     * <li>Enables scheduled metrics.</li>
+     * <li>Calculates cached active user names.</li>
+     * <li>Registers exercise and exam metrics.</li>
+     * <li>Registers public Artemis metrics.</li>
+     * </ul>
+     * </li>
+     * <li>If the local CI profile is active, registers local CI metrics.</li>
+     * <li>Registers datasource metrics if the Hikari datasource is present.</li>
+     * <li>If the websocket logging profile is active:
+     * <ul>
+     * <li>Sets the logging period for websocket statistics.</li>
+     * <li>Schedules periodic logging of connected users and active websocket subscriptions.</li>
+     * </ul>
+     * </li>
+     * </ul>
+     */
+    @EventListener(ApplicationReadyEvent.class)
+    public void applicationReady() {
         registerHealthContributors(healthContributors);
         registerWebsocketMetrics();
 
@@ -189,19 +226,14 @@ public class MetricsBean {
 
         // the data source is optional as it is not used during testing
         hikariDataSource.ifPresent(this::registerDatasourceMetrics);
-    }
 
-    /**
-     * initialize the websocket logging
-     */
-    @PostConstruct
-    public void init() {
+        // initialize the websocket logging
         // using Autowired leads to a weird bug, because the order of the method execution is changed. This somehow prevents messages send to single clients
         // later one, e.g. in the code editor. Therefore, we call this method here directly to get a reference and adapt the logging period!
         // Note: this mechanism prevents that this is logged during testing
         if (profileService.isProfileActive("websocketLog")) {
             webSocketStats.setLoggingPeriod(LOGGING_DELAY_SECONDS * 1000L);
-            taskScheduler.scheduleAtFixedRate(() -> {
+            scheduler.scheduleAtFixedRate(() -> {
                 final var connectedUsers = userRegistry.getUsers();
                 final var subscriptionCount = connectedUsers.stream().flatMap(simpUser -> simpUser.getSessions().stream()).map(simpSession -> simpSession.getSubscriptions().size())
                         .reduce(0, Integer::sum);
@@ -365,7 +397,7 @@ public class MetricsBean {
      * The update (and recalculation) is performed every 5 minutes.
      * Only executed if the "scheduling"-profile is present.
      */
-    @Scheduled(fixedRate = 5 * 60 * 1000, initialDelay = 0) // Every 5 minutes
+    @Scheduled(fixedRate = 5 * 60 * 1000, initialDelay = 30 * 1000) // Every 5 minutes with an initial delay of 30 seconds
     public void recalculateMetrics() {
         if (!scheduledMetricsEnabled) {
             return;
