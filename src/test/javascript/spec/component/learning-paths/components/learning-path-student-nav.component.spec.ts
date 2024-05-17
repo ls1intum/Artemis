@@ -68,11 +68,7 @@ describe('LearningPathStudentNavComponent', () => {
     });
 
     afterEach(() => {
-        if (fixture) {
-            fixture.destroy();
-        }
         jest.restoreAllMocks();
-        TestBed.resetTestingModule();
     });
 
     it('should initialize', () => {
@@ -196,6 +192,7 @@ describe('LearningPathStudentNavComponent', () => {
     it('should call select learning object on previous click', fakeAsync(() => {
         getLearningPathNavigationSpy.mockReturnValue(of(new HttpResponse({ body: navigationDto })));
         const selectLearningObjectSpy = jest.spyOn(component, 'selectLearningObject');
+        const setCurrentLearningObjectCompletionSpy = jest.spyOn(component, 'setCurrentLearningObjectCompletion');
 
         fixture.detectChanges();
         tick();
@@ -206,5 +203,6 @@ describe('LearningPathStudentNavComponent', () => {
         fixture.detectChanges();
         expect(selectLearningObjectSpy).toHaveBeenCalledWith(navigationDto.predecessorLearningObject);
         expect(getLearningPathNavigationSpy).toHaveBeenCalledTimes(2);
+        expect(setCurrentLearningObjectCompletionSpy).toHaveBeenCalledWith(navigationDto.predecessorLearningObject!.completed);
     }));
 });

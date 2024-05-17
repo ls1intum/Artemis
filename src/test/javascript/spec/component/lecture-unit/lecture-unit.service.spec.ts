@@ -132,4 +132,9 @@ describe('LectureUnitService', () => {
         service.completeLectureUnit(lecture, { lectureUnit: exerciseUnit, completed: false });
         httpMock.expectNone({ method: 'POST', url: 'api/lectures/5/lecture-units/42/completion?completed=false' });
     }));
+
+    it('should get lecture unit by id', fakeAsync(() => {
+        service.getLectureUnitById(videoUnit.id!).subscribe();
+        httpMock.expectOne({ method: 'GET', url: `api/lecture-units/${videoUnit.id!}` });
+    }));
 });

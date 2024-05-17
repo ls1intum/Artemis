@@ -10,6 +10,7 @@ import { LearningPathStudentNavComponent } from 'app/course/learning-paths/compo
 import { By } from '@angular/platform-browser';
 import { LearningPathExerciseComponent } from 'app/course/learning-paths/components/learning-path-exercise/learning-path-exercise.component';
 import { LearningPathLectureUnitComponent } from 'app/course/learning-paths/components/learning-path-lecture-unit/learning-path-lecture-unit.component';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 
 describe('LearningPathStudentPageComponent', () => {
     let component: LearningPathStudentPageComponent;
@@ -35,8 +36,7 @@ describe('LearningPathStudentPageComponent', () => {
                         },
                     },
                 },
-
-                { provide: TranslateService, useValue: jest.fn() },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
             .overrideComponent(LearningPathStudentPageComponent, {
