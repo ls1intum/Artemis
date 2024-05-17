@@ -24,9 +24,7 @@
                         [value]="exercisesProgress"
                         [max]="100"
                         height="0.75rem"
-                        [ngbTooltip]="
-                            'artemisApp.studentAnalyticsDashboard.competencyAccordion.exerciseProgress' | artemisTranslate: { progress: round(exercisesProgress * 10) / 10 }
-                        "
+                        [ngbTooltip]="'artemisApp.studentAnalyticsDashboard.competencyAccordion.exerciseProgress' | artemisTranslate: { progress: round(exercisesProgress, 1) }"
                     />
                 </div>
                 <div class="d-flex gap-3 align-items-center justify-content-center">
@@ -37,9 +35,7 @@
                         [value]="lectureUnitsProgress"
                         [max]="100"
                         height="0.75rem"
-                        [ngbTooltip]="
-                            'artemisApp.studentAnalyticsDashboard.competencyAccordion.lectureProgress' | artemisTranslate: { progress: round(lectureUnitsProgress * 10) / 10 }
-                        "
+                        [ngbTooltip]="'artemisApp.studentAnalyticsDashboard.competencyAccordion.lectureProgress' | artemisTranslate: { progress: round(lectureUnitsProgress, 1) }"
                     />
                 </div>
             </div>

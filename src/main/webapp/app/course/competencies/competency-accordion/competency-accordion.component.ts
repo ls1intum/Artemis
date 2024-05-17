@@ -38,6 +38,7 @@ export class CompetencyAccordionComponent implements OnChanges {
             this.open = false;
         }
     }
+
     toggle() {
         this.open = !this.open;
         this.accordionToggle.emit({ opened: this.open, index: this.index });
@@ -58,7 +59,8 @@ export class CompetencyAccordionComponent implements OnChanges {
             const competencyLectureUnits = this.metrics.competencyMetrics?.lectureUnits[this.competency.id];
             const completedLectureUnits = competencyLectureUnits?.filter((lectureUnitId) => this.metrics.lectureUnitStudentMetricsDTO?.completed?.includes(lectureUnitId)).length;
             if (competencyLectureUnits && completedLectureUnits) {
-                return Math.round((completedLectureUnits / competencyLectureUnits.length) * 100);
+                const progress = (completedLectureUnits / competencyLectureUnits.length) * 100;
+                return round(progress, 1);
             }
             return 0;
         }
@@ -69,7 +71,8 @@ export class CompetencyAccordionComponent implements OnChanges {
         const competencyExercises = this.metrics.competencyMetrics?.exercises[this.competency.id];
         const completedExercises = competencyExercises?.filter((exerciseId) => this.metrics.exerciseMetrics?.completed?.includes(exerciseId)).length;
         if (competencyExercises && completedExercises) {
-            return Math.round((completedExercises / competencyExercises.length) * 100);
+            const progress = (completedExercises / competencyExercises.length) * 100;
+            return round(progress, 1);
         }
         return 0;
     }

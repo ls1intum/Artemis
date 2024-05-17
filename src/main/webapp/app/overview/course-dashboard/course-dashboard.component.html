@@ -5,7 +5,7 @@
                 <h3 jhiTranslate="artemisApp.courseStudentDashboard.overallPerformance.title"></h3>
                 <div class="flex-grow-1">
                     <ngb-progressbar type="success overflow-visible" [value]="points" [max]="maxPoints" height="1.75rem">
-                        <span class="fs-5 mx-2">{{ points }} / {{ maxPoints }} ({{ round((points / maxPoints) * 1000) / 10 }}%)</span>
+                        <span class="fs-5 mx-2">{{ points }} / {{ maxPoints }} ({{ round((points / maxPoints) * 100, 1) }}%)</span>
                     </ngb-progressbar>
                 </div>
             </div>
