@@ -20,7 +20,6 @@ import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffReport;
 import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
@@ -32,9 +31,9 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ParticipationAuthorizationCheckService;
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseGitDiffReportService;
 import de.tum.in.www1.artemis.service.programming.CommitHistoryService;
+import de.tum.in.www1.artemis.service.programming.RepositoryService;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGitDiffReportDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
 /**
  * REST controller for managing ProgrammingExerciseGitDiffReports and its entries.
@@ -60,11 +59,13 @@ public class ProgrammingExerciseGitDiffReportResource {
 
     private final CommitHistoryService commitHistoryService;
 
+    private final RepositoryService repositoryService;
+
     private static final String ENTITY_NAME = "programmingExerciseGitDiffReportEntry";
 
     public ProgrammingExerciseGitDiffReportResource(AuthorizationCheckService authCheckService, ProgrammingExerciseRepository programmingExerciseRepository,
             ParticipationRepository participationRepository, ProgrammingExerciseGitDiffReportService gitDiffReportService, ProgrammingSubmissionRepository submissionRepository,
-            ParticipationAuthorizationCheckService participationAuthCheckService, CommitHistoryService commitHistoryService) {
+            ParticipationAuthorizationCheckService participationAuthCheckService, CommitHistoryService commitHistoryService, RepositoryService repositoryService) {
         this.authCheckService = authCheckService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.participationRepository = participationRepository;
@@ -72,6 +73,7 @@ public class ProgrammingExerciseGitDiffReportResource {
         this.submissionRepository = submissionRepository;
         this.participationAuthCheckService = participationAuthCheckService;
         this.commitHistoryService = commitHistoryService;
+        this.repositoryService = repositoryService;
     }
 
     /**
@@ -175,7 +177,8 @@ public class ProgrammingExerciseGitDiffReportResource {
         if (participationId != null) {
             Participation participation = participationRepository.findByIdElseThrow(participationId);
             participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
-            repositoryUri = getVcsRepositoryUri(exerciseId, participation);
+            var programmingExerciseParticipation = repositoryService.getAsProgrammingExerciseParticipationOfExerciseElseThrow(exerciseId, participation, ENTITY_NAME);
+            repositoryUri = programmingExerciseParticipation.getVcsRepositoryUri();
         }
         else if (repositoryType != null) {
             ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(exerciseId);
@@ -193,17 +196,4 @@ public class ProgrammingExerciseGitDiffReportResource {
         var report = commitHistoryService.generateReportForCommits(repositoryUri, commitHash1, commitHash2);
         return ResponseEntity.ok(new ProgrammingExerciseGitDiffReportDTO(report));
     }
-
-    private static VcsRepositoryUri getVcsRepositoryUri(long exerciseId, Participation participation) {
-        if (!participation.getExercise().getId().equals(exerciseId)) {
-            throw new ConflictException("A git diff report entry can only be retrieved if the participation's exercise id matches with the exercise id", ENTITY_NAME,
-                    "exerciseIdsMismatch");
-        }
-        if (!(participation instanceof ProgrammingExerciseParticipation programmingExerciseParticipation)) {
-            throw new ConflictException("A git diff report entry can only be retrieved for programming exercise participations", ENTITY_NAME,
-                    "notProgrammingExerciseParticipation");
-        }
-        return programmingExerciseParticipation.getVcsRepositoryUri();
-    }
-
 }

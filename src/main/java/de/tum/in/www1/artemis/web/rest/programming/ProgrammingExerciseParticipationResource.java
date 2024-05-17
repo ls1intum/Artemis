@@ -44,7 +44,6 @@ import de.tum.in.www1.artemis.service.programming.RepositoryService;
 import de.tum.in.www1.artemis.web.rest.dto.CommitInfoDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Profile(PROFILE_CORE)
@@ -355,20 +354,12 @@ public class ProgrammingExerciseParticipationResource {
             @RequestParam(required = false) Long participationId, @RequestParam(required = false) RepositoryType repositoryType) throws GitAPIException, IOException {
         if (participationId != null) {
             Participation participation = participationRepository.findByIdElseThrow(participationId);
-            if (!participation.getExercise().getId().equals(exerciseId)) {
-                throw new ConflictException("A git diff report entry can only be retrieved if the participation's exercise id matches with the exercise id", ENTITY_NAME,
-                        "exerciseIdsMismatch");
-            }
-            if (participation instanceof ProgrammingExerciseParticipation programmingExerciseParticipation) {
-                ProgrammingExercise programmingExercise = programmingExerciseRepository.getProgrammingExerciseFromParticipation(programmingExerciseParticipation);
-                participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
-                // we only forward the repository type for the test repository, as the test repository is the only one that needs to be treated differently
-                return ResponseEntity.ok(repositoryService.getFilesContentAtCommit(programmingExercise, commitId, null, programmingExerciseParticipation));
-            }
-            else {
-                throw new ConflictException("A git diff report entry can only be retrieved for programming exercise participations", ENTITY_NAME,
-                        "notProgrammingExerciseParticipation");
-            }
+            ProgrammingExerciseParticipation programmingExerciseParticipation = repositoryService.getAsProgrammingExerciseParticipationOfExerciseElseThrow(exerciseId,
+                    participation, ENTITY_NAME);
+            ProgrammingExercise programmingExercise = programmingExerciseRepository.getProgrammingExerciseFromParticipation(programmingExerciseParticipation);
+            participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+            // we only forward the repository type for the test repository, as the test repository is the only one that needs to be treated differently
+            return ResponseEntity.ok(repositoryService.getFilesContentAtCommit(programmingExercise, commitId, null, programmingExerciseParticipation));
         }
         else if (repositoryType != null) {
             ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(exerciseId);

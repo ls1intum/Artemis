@@ -41,11 +41,13 @@ import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
+import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
 /**
  * Service that provides utilities for managing files in a git repository.
@@ -63,6 +65,25 @@ public class RepositoryService {
     public RepositoryService(GitService gitService, ProfileService profileService) {
         this.gitService = gitService;
         this.profileService = profileService;
+    }
+
+    /**
+     * Gets a participation as a {@link ProgrammingExerciseParticipation} if it belongs to the specified programming exercise.
+     *
+     * @param programmingExerciseId The ID of the programming exercise to which the participation belongs.
+     * @param participation         The participation which to check and retrieve.
+     * @param entityName            The name of the entity to include in the exception message if an error occurs.
+     * @return The participation as a {@link ProgrammingExerciseParticipation} if it belongs to the specified programming exercise.
+     *         An exception is thrown if the participation does not belong to the specified exercise or is not a programming exercise participation.
+     */
+    public ProgrammingExerciseParticipation getAsProgrammingExerciseParticipationOfExerciseElseThrow(long programmingExerciseId, Participation participation, String entityName) {
+        if (!participation.getExercise().getId().equals(programmingExerciseId)) {
+            throw new ConflictException("The specified participation does not belong to the specified exercise.", entityName, "exerciseIdsMismatch");
+        }
+        if (!(participation instanceof ProgrammingExerciseParticipation programmingExerciseParticipation)) {
+            throw new ConflictException("The specified participation does not belong to a programming exercise.", entityName, "notProgrammingExerciseParticipation");
+        }
+        return programmingExerciseParticipation;
     }
 
     /**
