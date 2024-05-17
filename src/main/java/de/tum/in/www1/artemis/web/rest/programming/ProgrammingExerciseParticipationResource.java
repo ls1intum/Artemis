@@ -351,9 +351,8 @@ public class ProgrammingExerciseParticipationResource {
      */
     @GetMapping("programming-exercise/{exerciseId}/files-content-commit-details/{commitId}")
     @EnforceAtLeastStudent
-    public ResponseEntity<Map<String, String>> getParticipationRepositoryFilesForCommitsDetailsView(@PathVariable long exerciseId,
-            @RequestParam(required = false) Long participationId, @PathVariable String commitId, @RequestParam(required = false) RepositoryType repositoryType)
-            throws GitAPIException, IOException {
+    public ResponseEntity<Map<String, String>> getParticipationRepositoryFilesForCommitsDetailsView(@PathVariable long exerciseId, @PathVariable String commitId,
+            @RequestParam(required = false) Long participationId, @RequestParam(required = false) RepositoryType repositoryType) throws GitAPIException, IOException {
         if (participationId != null) {
             Participation participation = participationRepository.findByIdElseThrow(participationId);
             if (!participation.getExercise().getId().equals(exerciseId)) {
