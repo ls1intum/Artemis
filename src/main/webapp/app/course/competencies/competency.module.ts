@@ -29,6 +29,8 @@ import { CompetencyAccordionComponent } from 'app/course/competencies/competency
 import { CourseImportStandardizedCompetenciesComponent } from 'app/course/competencies/import-standardized-competencies/course-import-standardized-competencies.component';
 import { ArtemisStandardizedCompetencyModule } from 'app/shared/standardized-competencies/standardized-competency.module';
 import { ArtemisCourseExerciseRowModule } from 'app/overview/course-exercises/course-exercise-row.module';
+import { RatingModule } from 'app/exercises/shared/rating/rating.module';
+import { JudgementOfLearningRatingComponent } from 'app/course/competencies/judgement-of-learning-rating/judgement-of-learning-rating.component';
 
 @NgModule({
     imports: [
@@ -45,6 +47,8 @@ import { ArtemisCourseExerciseRowModule } from 'app/overview/course-exercises/co
         IrisModule,
         ArtemisStandardizedCompetencyModule,
         ArtemisCourseExerciseRowModule,
+        RatingModule,
+        JudgementOfLearningRatingComponent,
     ],
     declarations: [
         CompetencyFormComponent,

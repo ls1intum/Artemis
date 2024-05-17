@@ -51,6 +51,9 @@
                 <jhi-course-exercise-row [course]="course" [exercise]="exercise" />
             }
         }
+        <div [class.pt-3]="course && nextExercises.length > 0">
+            <jhi-judgement-of-learning-rating />
+        </div>
         <button
             (click)="navigateToCompetencyDetailPage($event)"
             class="btn btn-primary w-100 my-2"
