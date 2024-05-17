@@ -192,20 +192,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             this.studentExam = studentExam;
         });
 
-        console.log('ngOnInit in participation, exam: ', this.exam);
-        console.log('ngOnInit in participation, examId: ', this.examId);
-        console.log('ngOnInit in participation, studentExam: ', this.studentExam);
-        console.log('ngOnInit in participation, studentExamId: ', this.studentExamId);
-
         this.examStarted(this.studentExam);
         this.generateInformationForHtml();
         this.loadGradeEndDate();
-
-        console.log('ngOnInit in participation, handInEarly', this.handInEarly);
-        console.log('ngOnInit in participation, studentExam.submitted', this.studentExam.submitted);
-        console.log('ngOnInit in participation, isOver()', this.isOver());
-        console.log('ngOnInit in participation, examStartConfirmed', this.examStartConfirmed);
-        console.log('ngOnInit in participation, isGracePeriodOver()', this.isGracePeriodOver());
     }
 
     generateInformationForHtml() {
@@ -272,11 +261,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             // Keep working time
             studentExam.workingTime = this.studentExam?.workingTime ?? studentExam.workingTime;
             this.studentExam = studentExam;
-
-            console.log('examStarted in participation, exam: ', this.exam);
-            console.log('examStarted in participation, examId: ', this.examId);
-            console.log('examStarted in participation, studentExam: ', this.studentExam);
-            console.log('examStarted in participation, studentExamId: ', this.studentExamId);
 
             // provide exam-participation.service with exerciseId information (e.g. needed for exam notifications)
             const exercises: Exercise[] = this.studentExam.exercises!;
@@ -489,13 +473,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
     handleHandInEarly() {
         this.handInEarly = !this.handInEarly;
-        console.log('handleHandInEarly, handInEarly', this.handInEarly);
         //this.examParticipationService.setExamState({ handInEarly: this.handInEarly });
         //!studentExam.submitted && ((isOver() && examStartConfirmed) || isGracePeriodOver())
-        console.log('handleHandInEarly, studentExam.submitted', this.studentExam.submitted);
-        console.log('handleHandInEarly, isOver()', this.isOver());
-        console.log('handleHandInEarly, examStartConfirmed', this.examStartConfirmed);
-        console.log('handleHandInEarly, isGracePeriodOver()', this.isGracePeriodOver());
         //this.handInEarly = !this.handInEarly;
         if (this.handInEarly) {
             // update local studentExam for later sync with server if the student wants to hand in early
@@ -899,10 +878,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     get endButtonEnabled(): boolean {
-        console.log('endButtonEnabled, nameIsCorrect: ' + this.nameIsCorrect);
-        console.log('endButtonEnabled, confirmed: ' + this.confirmed);
-        console.log('endButtonEnabled, exam: ' + this.exam);
-        console.log('endButtonEnabled, handInPossible: ' + this.handInPossible);
         return this.nameIsCorrect && this.confirmed && this.exam && this.handInPossible;
     }
 }

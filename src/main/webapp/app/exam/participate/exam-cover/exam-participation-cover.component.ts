@@ -173,10 +173,6 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
         });
 
         this.generateInformationForHtml();
-        console.log('ngOnInit in cover, exam: ', this.exam);
-        console.log('ngOnInit in cover, examId: ', this.examId);
-        console.log('ngOnInit in cover, studentExam: ', this.studentExam);
-        console.log('ngOnInit in cover, studentExamId: ', this.studentExamId);
         // this.testRun = this.studentExam.testRun;
         // this.testExam = this.exam.testExam;
         // this.examParticipationService.setExamState({ testExam: this.testExam });
@@ -260,7 +256,6 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
             this.examParticipationService.emitExamStarted(this.studentExam);
             this.examParticipationService.setExamState({ exercises: this.studentExam.exercises! });
             //this.router.navigate(['courses', this.courseId, 'exams', this.examId, 'participation']);
-            console.log('geldi buraya');
             this.router.navigate(['course-management', this.courseId, 'exams', this.examId, 'test-runs', this.testRunId, 'conduction', 'participation']);
         } else {
             this.examParticipationService.loadStudentExamWithExercisesForConduction(this.courseId, this.examId, this.studentExam.id!).subscribe((studentExam: StudentExam) => {
@@ -390,10 +385,6 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
     handleStudentExam(studentExam: StudentExam) {
         this.studentExam = studentExam;
         this.exam = studentExam.exam!;
-        console.log('handleStudentExam in cover, exam: ', this.exam);
-        console.log('handleStudentExam in cover, examId: ', this.examId);
-        console.log('handleStudentExam in cover, studentExam: ', this.studentExam);
-        console.log('handleStudentExam in cover, studentExamId: ', this.studentExamId);
         this.examParticipationService.setExamState({ exam: this.exam });
         this.examParticipationService.setExamState({ studentExam: this.studentExam });
         this.testExam = this.exam.testExam!;
