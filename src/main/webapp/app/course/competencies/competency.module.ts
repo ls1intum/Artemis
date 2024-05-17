@@ -28,6 +28,7 @@ import { CompetencyRelationGraphComponent } from 'app/course/competencies/compet
 import { CompetencyAccordionComponent } from 'app/course/competencies/competency-accordion/competency-accordion.component';
 import { CourseImportStandardizedCompetenciesComponent } from 'app/course/competencies/import-standardized-competencies/course-import-standardized-competencies.component';
 import { ArtemisStandardizedCompetencyModule } from 'app/shared/standardized-competencies/standardized-competency.module';
+import { ArtemisCourseExerciseRowModule } from 'app/overview/course-exercises/course-exercise-row.module';
 
 @NgModule({
     imports: [
@@ -43,6 +44,7 @@ import { ArtemisStandardizedCompetencyModule } from 'app/shared/standardized-com
         ArtemisMarkdownModule,
         IrisModule,
         ArtemisStandardizedCompetencyModule,
+        ArtemisCourseExerciseRowModule,
     ],
     declarations: [
         CompetencyFormComponent,

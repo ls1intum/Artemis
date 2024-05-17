@@ -33,13 +33,11 @@
     transition:
         max-height 0.2s ease-out,
         padding 0.2s ease-out;
-    max-height: 0;
     border-radius: 0 0 3px 3px;
 }
 
 /* Open state */
 .competency-accordion-body-open {
-    max-height: 250px;
     padding: 10px 18px;
 }
 

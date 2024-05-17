@@ -4,10 +4,9 @@
             "competencyAccordion": {
                 "title": "Kompetenzen",
                 "noData": "Für diesen Kurs sind keine Kompetenzen verfügbar.",
-                "nextExercise": {
-                    "title": "Nächste Aufgabe",
-                    "noData": "Für diese Kompetenz sind keine Aufgaben verfügbar."
-                },
+                "nextObjectives": "Nächste Ziele",
+                "nextExercises": "Nächste Aufgaben",
+                "nextLectureUnits": "Nächste Vorlesungseinheiten",
                 "exercises": "Aufgaben",
                 "lectures": "Vorlesungen",
                 "progress": "Fortschritt: {{ progress }}%",
