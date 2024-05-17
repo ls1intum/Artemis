@@ -519,7 +519,6 @@ public class GitService {
      */
     public Repository getOrCheckoutRepository(VcsRepositoryUri sourceRepoUri, VcsRepositoryUri targetRepoUri, Path localPath, boolean pullOnGet, String defaultBranch)
             throws GitAPIException, GitException, InvalidPathException {
-        log.info("Execute the get or checkout operation");
         // First try to just retrieve the git repository from our server, as it might already be checked out.
         // If the sourceRepoUri differs from the targetRepoUri, we attempt to clone the source repo into the target directory
         Repository repository = getExistingCheckedOutRepositoryByLocalPath(localPath, targetRepoUri, defaultBranch);
@@ -1564,12 +1563,13 @@ public class GitService {
         List<CommitInfoDTO> commitInfos = new ArrayList<>();
 
         if (profileService.isLocalVcsActive()) {
-            log.info("Using local VCS for getting commit info on repo {}", vcsRepositoryUri);
+            log.debug("Using local VCS for getting commit info on repo {}", vcsRepositoryUri);
             try (var repo = getBareRepository(vcsRepositoryUri); var git = new Git(repo)) {
                 getCommitInfo(git, commitInfos);
             }
         }
         else {
+            log.debug("Checking out repo {} to get commit info", vcsRepositoryUri);
             try (var repo = getOrCheckoutRepository(vcsRepositoryUri, true); var git = new Git(repo)) {
                 getCommitInfo(git, commitInfos);
             }

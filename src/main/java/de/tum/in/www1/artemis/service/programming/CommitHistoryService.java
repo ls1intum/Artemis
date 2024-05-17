@@ -58,10 +58,11 @@ public class CommitHistoryService {
 
         Repository repository;
         if (profileService.isLocalVcsActive()) {
-            log.info("Using local VCS generateReportForCommits on repo {}", repositoryUri);
+            log.debug("Using local VCS generateReportForCommits on repo {}", repositoryUri);
             repository = gitService.getBareRepository(repositoryUri);
         }
         else {
+            log.debug("Checking out repo {} for generateReportForCommits", repositoryUri);
             repository = gitService.getOrCheckoutRepository(repositoryUri, true);
         }
 

@@ -120,13 +120,14 @@ public class RepositoryService {
             ProgrammingExerciseParticipation participation) throws IOException, GitAPIException {
         // Check if local VCS is active
         if (profileService.isLocalVcsActive()) {
-            log.info("Using local VCS for getting files at commit {} for participation {}", commitId, participation.getId());
+            log.debug("Using local VCS for getting files at commit {} for participation {}", commitId, participation.getId());
             // If local VCS is active, operate directly on the bare repository
             var repoUri = repositoryType == RepositoryType.TESTS ? programmingExercise.getVcsTestRepositoryUri() : participation.getVcsRepositoryUri();
             Repository repository = gitService.getBareRepository(repoUri);
             return getFilesContentFromBareRepository(repository, commitId);
         }
         else {
+            log.debug("Checking out repo to get files at commit {} for participation {}", commitId, participation.getId());
             Repository repository;
             if (repositoryType == RepositoryType.TESTS) {
                 repository = gitService.checkoutRepositoryAtCommit(programmingExercise.getVcsTestRepositoryUri(), commitId, true);
