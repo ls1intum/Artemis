@@ -534,7 +534,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     title: 'artemisApp.programmingExercise.timeline.complaintOnAutomaticAssessment',
                     data: { boolean: exercise.allowComplaintsForAutomaticAssessments },
                 },
-                { type: DetailType.Boolean, title: 'artemisApp.programmingExercise.timeline.manualFeedbackRequests', data: { boolean: exercise.allowManualFeedbackRequests } },
+                { type: DetailType.Boolean, title: 'artemisApp.programmingExercise.timeline.manualFeedbackRequests', data: { boolean: exercise.allowFeedbackRequests } },
                 { type: DetailType.Boolean, title: 'artemisApp.programmingExercise.showTestNamesToStudents', data: { boolean: exercise.showTestNamesToStudents } },
                 {
                     type: DetailType.Boolean,

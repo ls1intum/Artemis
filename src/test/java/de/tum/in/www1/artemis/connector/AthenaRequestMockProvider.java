@@ -6,6 +6,7 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withException;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
+import java.io.IOException;
 import java.net.SocketTimeoutException;
 
 import org.mockito.MockitoAnnotations;
@@ -199,7 +200,7 @@ public class AthenaRequestMockProvider {
             suggestion = suggestion.put("indexStart", 3).put("indexEnd", 9);
         }
         else if (moduleType.equals("programming")) {
-            suggestion = suggestion.put("lineStart", 3).put("lineEnd", 4);
+            suggestion = suggestion.put("lineStart", 3).put("lineEnd", 4).put("description", "invoke infinite compression here").put("filePath", "client.cpp");
         }
         else if (moduleType.equals("modeling")) {
             suggestion = suggestion.put("credits", 0);
@@ -212,6 +213,25 @@ public class AthenaRequestMockProvider {
                 mapper.createArrayNode().add(suggestion));
 
         responseActions.andRespond(withSuccess(node.toString(), MediaType.APPLICATION_JSON));
+    }
+
+    /**
+     * Mocks the /feedback_suggestions API from Athena used to retrieve feedback suggestions for a submission
+     * Makes the endpoint fail
+     *
+     * @param moduleType       The type of the module: "text" or "programming"
+     * @param expectedContents The expected contents of the request
+     */
+    public void mockGetFeedbackSuggestionsWithFailure(String moduleType, RequestMatcher... expectedContents) {
+        ResponseActions responseActions = mockServer
+                .expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules/" + moduleType + "/" + getTestModuleName(moduleType) + "/feedback_suggestions"))
+                .andExpect(method(HttpMethod.POST)).andExpect(content().contentType(MediaType.APPLICATION_JSON));
+
+        for (RequestMatcher matcher : expectedContents) {
+            responseActions.andExpect(matcher);
+        }
+
+        responseActions.andRespond(withException(new IOException("Service unavailable")));
     }
 
     /**
