@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
 import { Exercise, getIcon } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';

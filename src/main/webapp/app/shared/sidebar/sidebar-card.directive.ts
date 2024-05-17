@@ -9,7 +9,7 @@ import { SidebarCardElement, SidebarTypes } from 'app/types/sidebar';
     standalone: true,
 })
 export class SidebarCardDirective implements OnInit, OnDestroy {
-    @Input() size: string;
+    @Input() size = 'M';
     @Input() sidebarItem: SidebarCardElement;
     @Input() sidebarType?: SidebarTypes;
     @Input() itemSelected?: boolean;
