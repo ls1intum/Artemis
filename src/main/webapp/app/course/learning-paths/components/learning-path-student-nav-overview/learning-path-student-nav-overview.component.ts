@@ -11,11 +11,12 @@ import { onError } from 'app/shared/util/global.utils';
 import { LoadedValue } from 'app/course/learning-paths/components/learning-path-student-nav/learning-path-student-nav.component';
 import { LearningObjectType, LearningPathNavigationObjectDto, LearningPathNavigationOverviewDto } from 'app/entities/competency/learning-path.model';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 @Component({
     selector: 'jhi-learning-path-student-nav-overview',
     standalone: true,
-    imports: [FontAwesomeModule, CommonModule, NgbDropdownModule, NgbAccordionModule],
+    imports: [FontAwesomeModule, CommonModule, NgbDropdownModule, NgbAccordionModule, ArtemisSharedModule],
     templateUrl: './learning-path-student-nav-overview.component.html',
     styleUrl: './learning-path-student-nav-overview.component.scss',
 })

@@ -1,0 +1,11 @@
+{
+    "artemisApp": {
+        "learningPath": {
+            "navigation": {
+                "nextButton": "Next",
+                "previousButton": "Previous",
+                "overviewTitle": "Learning objects"
+            }
+        }
+    }
+}

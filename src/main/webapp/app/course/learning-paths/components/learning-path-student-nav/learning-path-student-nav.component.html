@@ -4,7 +4,9 @@
             <div class="row justify-content-start align-items-center">
                 @if (predecessorLearningObject()) {
                     <div class="col-md-auto">
-                        <button id="previous-button" (click)="selectLearningObject(predecessorLearningObject()!)" type="button" class="btn btn-secondary">Previous</button>
+                        <button id="previous-button" (click)="selectLearningObject(predecessorLearningObject()!)" type="button" class="btn btn-secondary">
+                            <span jhiTranslate="artemisApp.learningPath.navigation.previousButton"></span>
+                        </button>
                     </div>
                     <span class="col ps-3 text-truncate text-secondary">{{ predecessorLearningObject()!.name }}</span>
                 }
@@ -41,7 +43,7 @@
                             type="button"
                             class="btn btn-primary"
                         >
-                            Next
+                            <span jhiTranslate="artemisApp.learningPath.navigation.nextButton"></span>
                         </button>
                     </div>
                 }

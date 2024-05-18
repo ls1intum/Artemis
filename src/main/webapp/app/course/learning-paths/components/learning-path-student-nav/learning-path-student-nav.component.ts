@@ -11,6 +11,7 @@ import { faCheckCircle, faChevronDown } from '@fortawesome/free-solid-svg-icons'
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
 import { LearningPathStudentNavOverviewComponent } from 'app/course/learning-paths/components/learning-path-student-nav-overview/learning-path-student-nav-overview.component';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 export type LoadedValue<T> = {
     isLoading: boolean;
@@ -21,7 +22,7 @@ export type LoadedValue<T> = {
 @Component({
     selector: 'jhi-learning-path-student-nav',
     standalone: true,
-    imports: [CommonModule, NgbDropdownModule, NgbAccordionModule, FontAwesomeModule, LearningPathStudentNavOverviewComponent],
+    imports: [CommonModule, NgbDropdownModule, NgbAccordionModule, FontAwesomeModule, LearningPathStudentNavOverviewComponent, ArtemisSharedModule],
     templateUrl: './learning-path-student-nav.component.html',
     styleUrl: './learning-path-student-nav.component.scss',
 })

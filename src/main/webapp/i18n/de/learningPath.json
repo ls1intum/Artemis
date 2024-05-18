@@ -1,0 +1,11 @@
+{
+    "artemisApp": {
+        "learningPath": {
+            "navigation": {
+                "nextButton": "Weiter",
+                "previousButton": "Zurück",
+                "overviewTitle": "Lerneinheiten"
+            }
+        }
+    }
+}
