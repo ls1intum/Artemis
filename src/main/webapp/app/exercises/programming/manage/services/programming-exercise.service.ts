@@ -575,19 +575,27 @@ export class ProgrammingExerciseService {
      * @param participationId The id of a participation
      * @param olderCommitHash The hash of the older commit
      * @param newerCommitHash The hash of the newer commit
-     * @param repositoryType The type of the repository
+     * @param repositoryType The type of the repository (optional)
      */
     getDiffReportForCommits(
         exerciseId: number,
-        participationId: number,
+        participationId: number | undefined,
         olderCommitHash: string,
         newerCommitHash: string,
-        repositoryType: string,
+        repositoryType?: string,
     ): Observable<ProgrammingExerciseGitDiffReport | undefined> {
+        const params = {};
+        if (repositoryType !== undefined) {
+            params['repositoryType'] = repositoryType;
+        }
+        if (participationId !== undefined && !isNaN(participationId)) {
+            params['participationId'] = participationId;
+        }
+
         return this.http
-            .get<ProgrammingExerciseGitDiffReport>(`${this.resourceUrl}/${exerciseId}/participation/${participationId}/commits/${olderCommitHash}/diff-report/${newerCommitHash}`, {
+            .get<ProgrammingExerciseGitDiffReport>(`${this.resourceUrl}/${exerciseId}/commits/${olderCommitHash}/diff-report/${newerCommitHash}`, {
                 observe: 'response',
-                params: { repositoryType },
+                params: params,
             })
             .pipe(map((res: HttpResponse<ProgrammingExerciseGitDiffReport>) => res.body ?? undefined));
     }
