@@ -790,6 +790,7 @@ public class ExerciseService {
      *
      * @param originalExercise the original exercise
      * @param updatedExercise  the updated exercise
+     * @param notificationText custom notification text
      */
     public void notifyAboutExerciseChanges(Exercise originalExercise, Exercise updatedExercise, String notificationText) {
         if (originalExercise.isCourseExercise()) {

@@ -96,12 +96,19 @@ describe('ExamLiveEventComponent', () => {
             problemStatement: 'New problem statement',
             exerciseId: 1,
             exerciseName: 'Programming Exercise',
+            createdBy: 'John Doe',
         } as ProblemStatementUpdateEvent;
 
         fixture.detectChanges();
 
+        const typeElement = fixture.debugElement.query(By.css('.type')).nativeElement;
+        const authorElement = fixture.debugElement.query(By.css('.author > span:last-child')).nativeElement;
         const contentElement = fixture.debugElement.query(By.css('.content > div')).nativeElement;
+
+        expect(typeElement.textContent).toContain('artemisApp.exam.events.type.problemStatementUpdate');
+        expect(authorElement.textContent).toBe('John Doe');
         expect(contentElement.innerHTML).toContain('Dear students, the problem statement of the exercise was changed');
+        expect(contentElement.innerHTML).toContain('artemisApp.exam.events.messages.problemStatementUpdate.description');
     });
 
     it('should emit event when acknowledge button is clicked', () => {
