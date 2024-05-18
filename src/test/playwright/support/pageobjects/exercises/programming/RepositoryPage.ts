@@ -17,15 +17,15 @@ export class RepositoryPage {
     }
 
     async checkCommitHistory(commits: ExerciseCommit[]) {
-        // Reverse commit history as the latest commit in commit history table is at the bottom
-        commits = commits.reverse();
         const commitHistory = this.page.locator('.card-body', { hasText: 'Commit History' });
 
         if (commits) {
-            const commitCount = commits.length;
-            for (let index = commitCount - 1; index >= 0; index--) {
+            // Initial commit is at the bottom of the table
+            const initialCommitIndexInTable = commits.length - 1;
+            for (let index = 0; index < commits.length; index++) {
                 const commit = commits[index];
-                const commitRow = commitHistory.locator('tbody').locator('tr').nth(index);
+                const commitIndexInTable = initialCommitIndexInTable - 1 - index;
+                const commitRow = commitHistory.locator('tbody').locator('tr').nth(commitIndexInTable);
                 await expect(commitRow.locator('td').getByText(commit.message)).toBeVisible();
 
                 if (commit.result) {
