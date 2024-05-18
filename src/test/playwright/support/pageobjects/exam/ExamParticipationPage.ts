@@ -3,7 +3,6 @@ import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
 import { AdditionalData, ExerciseType } from '../../constants';
 import { UserCredentials } from '../../users';
-import { getExercise } from '../../utils';
 import { OnlineEditorPage, ProgrammingExerciseSubmission } from '../exercises/programming/OnlineEditorPage';
 import { CoursesPage } from '../course/CoursesPage';
 import { CourseOverviewPage } from '../course/CourseOverviewPage';
@@ -14,9 +13,9 @@ import { MultipleChoiceQuiz } from '../exercises/quiz/MultipleChoiceQuiz';
 import { TextEditorPage } from '../exercises/text/TextEditorPage';
 import { Commands } from '../../commands';
 import { Fixtures } from '../../../fixtures/fixtures';
-import { Dayjs } from 'dayjs';
+import { ExamParticipationActions } from './ExamParticipationActions';
 
-export class ExamParticipationPage {
+export class ExamParticipationPage extends ExamParticipationActions {
     private readonly courseList: CoursesPage;
     private readonly courseOverview: CourseOverviewPage;
     private readonly examNavigation: ExamNavigationBar;
@@ -25,7 +24,6 @@ export class ExamParticipationPage {
     private readonly programmingExerciseEditor: OnlineEditorPage;
     private readonly quizExerciseMultipleChoice: MultipleChoiceQuiz;
     private readonly textExerciseEditor: TextEditorPage;
-    private readonly page: Page;
 
     constructor(
         courseList: CoursesPage,
@@ -38,6 +36,7 @@ export class ExamParticipationPage {
         textExerciseEditor: TextEditorPage,
         page: Page,
     ) {
+        super(page);
         this.courseList = courseList;
         this.courseOverview = courseOverview;
         this.examNavigation = examNavigation;
@@ -46,7 +45,6 @@ export class ExamParticipationPage {
         this.programmingExerciseEditor = programmingExerciseEditor;
         this.quizExerciseMultipleChoice = quizExerciseMultipleChoice;
         this.textExerciseEditor = textExerciseEditor;
-        this.page = page;
     }
 
     async makeSubmission(exerciseID: number, exerciseType: ExerciseType, additionalData?: AdditionalData) {
@@ -111,87 +109,9 @@ export class ExamParticipationPage {
         await this.examStartEnd.startExam(true);
     }
 
-    async selectExerciseOnOverview(index: number) {
-        await this.page.locator(`.exercise-table tr:nth-child(${index}) a`).click();
-    }
-
-    async clickSaveAndContinue() {
-        await this.page.click('#save');
-    }
-
-    async checkExerciseTitle(exerciseID: number, title: string) {
-        const exercise = getExercise(this.page, exerciseID);
-        await expect(exercise.locator('.exercise-title')).toContainText(title);
-    }
-
-    async checkExamTitle(title: string) {
-        await expect(this.page.locator('#exam-title')).toContainText(title);
-    }
-
-    async getResultScore(exerciseID?: number) {
-        const parentComponent = exerciseID ? getExercise(this.page, exerciseID) : this.page;
-        const resultScoreLocator = parentComponent.locator('#exercise-result-score');
-        await Commands.reloadUntilFound(this.page, resultScoreLocator);
-        return resultScoreLocator;
-    }
-
-    async checkResultScore(scoreText: string, exerciseID?: number) {
-        const scoreElement = await this.getResultScore(exerciseID);
-        await expect(scoreElement.getByText(new RegExp(scoreText))).toBeVisible();
-    }
-
-    async checkExamFinishedTitle(title: string) {
-        await expect(this.page.locator('#exam-finished-title')).toContainText(title, { timeout: 40000 });
-    }
-
-    async checkExamFullnameInputExists() {
-        await expect(this.page.locator('#fullname')).toBeVisible({ timeout: 30000 });
-    }
-
-    async checkYourFullname(name: string) {
-        await expect(this.page.locator('#your-name')).toContainText(name, { timeout: 30000 });
-    }
-
-    async checkExamTimeLeft(timeLeft: string) {
-        await expect(this.page.locator('#displayTime').getByText(timeLeft)).toBeVisible();
-    }
-
-    async checkExamTimeChangeDialog(previousWorkingTime: string, newWorkingTime: string, announcementTime: Dayjs, authorUsername: string, message: string) {
-        const timeChangeDialog = this.page.locator('.modal-content');
-        await expect(timeChangeDialog.getByTestId('old-time').getByText(previousWorkingTime)).toBeVisible();
-        await expect(timeChangeDialog.getByTestId('new-time').getByText(newWorkingTime)).toBeVisible();
-        const timeFormat = 'MMM D, YYYY HH:mm';
-        const announcementTimeFormatted = announcementTime.format(timeFormat);
-        const announcementTimeAfterMinute = announcementTime.add(1, 'minute').format(timeFormat);
-        await expect(timeChangeDialog.locator('.date').getByText(new RegExp(`(${announcementTimeFormatted}|${announcementTimeAfterMinute})`))).toBeVisible();
-        await expect(timeChangeDialog.locator('.content').getByText(message)).toBeVisible();
-        await expect(timeChangeDialog.locator('.author').getByText(authorUsername)).toBeVisible();
-    }
-
-    async closeDialog() {
-        await this.page.locator('button', { hasText: 'Acknowledge' }).nth(0).click({ force: true, timeout: 5000 });
-    }
-
     async handInEarly() {
         await this.examNavigation.handInEarly();
         const response = await this.examStartEnd.finishExam();
         expect(response.status()).toBe(200);
-    }
-
-    async verifyExerciseTitleOnFinalPage(exerciseID: number, exerciseTitle: string): Promise<void> {
-        const exercise = getExercise(this.page, exerciseID);
-        await expect(exercise.locator(`#exercise-group-title-${exerciseID}`).getByText(exerciseTitle)).toBeVisible();
-    }
-
-    async verifyTextExerciseOnFinalPage(exerciseID: number, textFixture: string): Promise<void> {
-        const exercise = getExercise(this.page, exerciseID);
-        const submissionText = await Fixtures.get(textFixture);
-        await expect(exercise.locator('#text-editor')).toHaveValue(submissionText!);
-    }
-
-    async verifyGradingKeyOnFinalPage(gradeName: string) {
-        const gradingKeyCard = this.page.locator('jhi-collapsible-card').filter({ hasText: 'Grading Key Grade Interval' });
-        await gradingKeyCard.locator('button.rotate-icon').click();
-        await expect(gradingKeyCard.locator('tr.highlighted').locator('td', { hasText: gradeName })).toBeVisible();
     }
 }

@@ -10,15 +10,8 @@ import { expect } from '@playwright/test';
 import { ExamStartEndPage } from '../../support/pageobjects/exam/ExamStartEndPage';
 import { Commands } from '../../support/commands';
 import { ExamAPIRequests } from '../../support/requests/ExamAPIRequests';
-import { ExamParticipationPage } from '../../support/pageobjects/exam/ExamParticipationPage';
-import { CoursesPage } from '../../support/pageobjects/course/CoursesPage';
-import { CourseOverviewPage } from '../../support/pageobjects/course/CourseOverviewPage';
-import { ExamNavigationBar } from '../../support/pageobjects/exam/ExamNavigationBar';
-import { ModelingEditor } from '../../support/pageobjects/exercises/modeling/ModelingEditor';
-import { OnlineEditorPage } from '../../support/pageobjects/exercises/programming/OnlineEditorPage';
-import { MultipleChoiceQuiz } from '../../support/pageobjects/exercises/quiz/MultipleChoiceQuiz';
-import { TextEditorPage } from '../../support/pageobjects/exercises/text/TextEditorPage';
 import { ModalDialogBox } from '../../support/pageobjects/exam/ModalDialogBox';
+import { ExamParticipationActions } from '../../support/pageobjects/exam/ExamParticipationActions';
 
 // Common primitives
 const textFixture = 'loremIpsum.txt';
@@ -288,7 +281,7 @@ test.describe('Exam participation', () => {
             await examAPIRequests.prepareExerciseStartForExam(exam);
         });
 
-        test('Instructor sends an announcement and all participants receive it', async ({ browser, login, navigationBar, courseManagement, examManagement }) => {
+        test('Instructor sends an announcement message and all participants receive it', async ({ browser, login, navigationBar, courseManagement, examManagement }) => {
             await login(instructor);
             await navigationBar.openCourseManagement();
             await courseManagement.openExamsOfCourse(course.id!);
@@ -322,24 +315,6 @@ test.describe('Exam participation', () => {
                 await modalDialog.closeDialog();
             }
         });
-    });
-
-    test.describe('Exam working time change', () => {
-        let exam: Exam;
-        const students = [studentOne, studentTwo];
-
-        test.beforeEach('Create exam', async ({ login, examAPIRequests, examExerciseGroupCreation }) => {
-            await login(admin);
-            exam = await createExam(course, examAPIRequests);
-            const exercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture });
-            exerciseArray.push(exercise);
-            for (const student of students) {
-                await examAPIRequests.registerStudentForExam(exam, student);
-            }
-
-            await examAPIRequests.generateMissingIndividualExams(exam);
-            await examAPIRequests.prepareExerciseStartForExam(exam);
-        });
 
         test('Instructor changes working time and all participants are informed', async ({ browser, login, navigationBar, courseManagement, examManagement }) => {
             await login(instructor);
@@ -366,34 +341,17 @@ test.describe('Exam participation', () => {
             await examManagement.confirmWorkingTimeChange(exam.title!);
 
             for (const studentPage of studentPages) {
-                const courseList = new CoursesPage(studentPage);
-                const courseOverview = new CourseOverviewPage(studentPage);
-                const examNavigation = new ExamNavigationBar(studentPage);
-                const examStartEnd = new ExamStartEndPage(studentPage);
-                const modelingExerciseEditor = new ModelingEditor(studentPage);
-                const programmingExerciseEditor = new OnlineEditorPage(studentPage);
-                const quizExerciseMultipleChoice = new MultipleChoiceQuiz(studentPage);
-                const textExerciseEditor = new TextEditorPage(studentPage);
-                const examParticipation = new ExamParticipationPage(
-                    courseList,
-                    courseOverview,
-                    examNavigation,
-                    examStartEnd,
-                    modelingExerciseEditor,
-                    programmingExerciseEditor,
-                    quizExerciseMultipleChoice,
-                    textExerciseEditor,
-                    studentPage,
-                );
-                // There are two dialogs shown on top of each other. We close one of them.
+                const examParticipationActions = new ExamParticipationActions(studentPage);
                 const modalDialog = new ModalDialogBox(studentPage);
-                await modalDialog.closeDialog();
+                // There are two dialogs shown on top of each other. We close the one
+                // on top for now as a workaround to avoid strict mode violation.
+                await modalDialog.getModalDialogContent().locator('button').last().click();
                 const timeChangeMessage = 'The working time of the exam has been changed.';
                 await modalDialog.checkExamTimeChangeDialog('1h 2min', '2min');
                 await modalDialog.checkDialogTime(dayjs());
                 await modalDialog.checkDialogMessage(timeChangeMessage);
                 await modalDialog.checkDialogAuthor(instructor.username);
-                await examParticipation.checkExamTimeLeft('0min');
+                await examParticipationActions.checkExamTimeLeft('0min');
                 await modalDialog.closeDialog();
             }
         });

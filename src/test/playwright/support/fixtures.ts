@@ -63,6 +63,7 @@ import { ExamScoresPage } from './pageobjects/exam/ExamScoresPage';
 import { ExamResultsPage } from './pageobjects/exam/ExamResultsPage';
 import { ExerciseTeamsPage } from './pageobjects/exercises/ExerciseTeamsPage';
 import { ModalDialogBox } from './pageobjects/exam/ModalDialogBox';
+import { ExamParticipationActions } from './pageobjects/exam/ExamParticipationActions';
 
 /*
  * Define custom types for fixtures
@@ -99,6 +100,7 @@ export type ArtemisPageObjects = {
     examNavigation: ExamNavigationBar;
     examManagement: ExamManagementPage;
     examParticipation: ExamParticipationPage;
+    examParticipationActions: ExamParticipationActions;
     examResultsPage: ExamResultsPage;
     examScores: ExamScoresPage;
     examStartEnd: ExamStartEndPage;
@@ -244,6 +246,9 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
             ),
         );
     },
+    examParticipationActions: async ({ page }, use) => {
+        await use(new ExamParticipationActions(page));
+    },
     examResultsPage: async ({ page }, use) => {
         await use(new ExamResultsPage(page));
     },
@@ -253,6 +258,7 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     examStartEnd: async ({ page }, use) => {
         await use(new ExamStartEndPage(page));
     },
+
     examTestRun: async ({ page, examStartEnd }, use) => {
         await use(new ExamTestRunPage(page, examStartEnd));
     },

@@ -8,7 +8,7 @@ export class ModalDialogBox {
         this.page = page;
     }
 
-    private getModalDialogContent() {
+    getModalDialogContent() {
         return this.page.locator('.modal-content');
     }
 
@@ -35,6 +35,6 @@ export class ModalDialogBox {
     }
 
     async closeDialog() {
-        await this.getModalDialogContent().locator('button').nth(0).click({ force: true });
+        await this.getModalDialogContent().locator('button').click({ force: true });
     }
 }
