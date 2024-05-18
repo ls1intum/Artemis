@@ -1,7 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ExamLiveEventComponent } from 'app/exam/shared/events/exam-live-event.component';
-import { ExamLiveEvent, ExamLiveEventType, ExamWideAnnouncementEvent, WorkingTimeUpdateEvent } from 'app/exam/participate/exam-participation-live-events.service';
+import {
+    ExamLiveEvent,
+    ExamLiveEventType,
+    ExamWideAnnouncementEvent,
+    ProblemStatementUpdateEvent,
+    WorkingTimeUpdateEvent,
+} from 'app/exam/participate/exam-participation-live-events.service';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -81,6 +87,21 @@ describe('ExamLiveEventComponent', () => {
         expect(previousTimeElement.textContent).toContain('5min');
         expect(newTimeElement.textContent).toContain('10min');
         expect(titleElement.getAttribute('jhiTranslate')).toBe('artemisApp.exam.events.messages.workingTimeUpdate.titleEveryone');
+    });
+
+    it('should display problem statement update when event is of type PROBLEM_STATEMENT_UPDATE', () => {
+        component.event = {
+            eventType: ExamLiveEventType.PROBLEM_STATEMENT_UPDATE,
+            text: 'Dear students, the problem statement of the exercise was changed',
+            problemStatement: 'New problem statement',
+            exerciseId: 1,
+            exerciseName: 'Programming Exercise',
+        } as ProblemStatementUpdateEvent;
+
+        fixture.detectChanges();
+
+        const contentElement = fixture.debugElement.query(By.css('.content > div')).nativeElement;
+        expect(contentElement.innerHTML).toContain('Dear students, the problem statement of the exercise was changed');
     });
 
     it('should emit event when acknowledge button is clicked', () => {
