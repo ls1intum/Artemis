@@ -88,7 +88,15 @@ Furthermore it is important to include a description of the user flow that refer
     </div>
 
 
-4. Implement the Feature
+4. Create a local Branch
+========================
+We use the following structure for branch names: ``<type>/<area>/<short-description>``
+- Possible types are: **feature**, **chore**, and **bugfix**
+- Possible areas are all allowed feature tags (see :ref:`pr_naming_conventions`), written kebab-case. For example, ``Programming exercises`` becomes **programming-exercises**.
+
+**Branches that do not follow this structure will get rejected automatically!**
+
+5. Implement the Feature
 ========================
 In this step, the development team converts the detailed plans and designs outlined in the functional proposal into working code.
 This step requires careful adherence to the previously defined requirements and system architecture to ensure that the function fits seamlessly into the existing system and fulfills the specified functional and performance criteria.
@@ -96,10 +104,12 @@ This step requires careful adherence to the previously defined requirements and 
 .. note::
       Make sure to follow the `Artemis Code and Design Guidelines <https://docs.artemis.cit.tum.de/dev/guidelines.html>`_.
 
-5. Create a Pull Request
+6. Create a Pull Request
 ========================
 After the feature implementation is complete, the developer is required to create a pull request for integrating the feature into the develop branch.
 The subsequent sections provide guidance on the naming conventions and outline the necessary steps for creating and merging a pull request.
+
+.. _pr_naming_conventions:
 
 Naming Conventions for GitHub Pull Requests
 -------------------------------------------
@@ -124,13 +134,12 @@ Naming Conventions for GitHub Pull Requests
         - “Fix an issue when clicking on the start exercise button”
         - “Add the possibility for instructors to define submission policies”
 
-
-
 Steps to Create and Merge a Pull Request
 ----------------------------------------
 
 0. Preconditions (For Developers Only)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* **Merge fast**: PRs should only be open for a couple of days.
 * Limit yourself to one functionality per pull request.
 * Split up your task in multiple branches & pull requests if necessary.
 * `Commit Early, Commit Often, Perfect Later, Publish Once. <https://speakerdeck.com/lemiorhan/10-git-anti-patterns-you-should-be-aware-of>`_
@@ -144,6 +153,8 @@ Steps to Create and Merge a Pull Request
 * Make sure all steps in the `Checklist <https://github.com/ls1intum/Artemis/blob/develop/.github/PULL_REQUEST_TEMPLATE.md>`_ are completed.
 * Add or update the "Steps for Testing" in the description of your pull request.
 * Make sure that the changes in the pull request are only the ones necessary.
+* Make sure that the PR is up-to-date with develop.
+* Make sure at least all required checks pass.
 * Mark the pull request as `ready for review. <https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/changing-the-stage-of-a-pull-request>`_
 
 3. Review Process
@@ -158,10 +169,12 @@ Steps to Create and Merge a Pull Request
 * Perform the "Steps for Testing" and verify that the new functionality is working as expected.
 * Verify that related functionality is still working as expected.
 * Ensure that the code changes...
-    * conform to the code style guide.
+    * conform to the code style and code design guidelines.
     * are easily understandable.
     * contain thorough documentation where applicable.
     * maintain reasonable performance (e.g. no excessive/unnecessary database queries or HTTP calls).
+* Respect the PR scope: Implementations that are unrelated to the PRs topic should not be enforced in a code review.
+* Explain your rationale when requesting changes: E.g., not "Please change X to Y", but "Please change X to Y, because this would improve Z"
 * Submit your comments and status (✅ Approve or ❌ Request Changes) using GitHub.
     * Explain what you did (test, review code) and on which test server in the review comment.
 
@@ -192,8 +205,6 @@ Steps to Create and Merge a Pull Request
 5. Merge Changes
 ^^^^^^^^^^^^^^^^
 A project maintainer merges your changes into the ``develop`` branch.
-
-
 
 Stale Bot
 ---------

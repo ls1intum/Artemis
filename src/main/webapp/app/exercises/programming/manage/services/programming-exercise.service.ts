@@ -450,6 +450,18 @@ export class ProgrammingExerciseService {
     }
 
     /**
+     * Exports the repository belonging to a specific student participation of a programming exercise.
+     * @param exerciseId The ID of the programming exercise.
+     * @param participationId The ID of the (student) participation
+     */
+    exportStudentRepository(exerciseId: number, participationId: number): Observable<HttpResponse<Blob>> {
+        return this.http.get(`${this.resourceUrl}/${exerciseId}/export-student-repository/${participationId}`, {
+            observe: 'response',
+            responseType: 'blob',
+        });
+    }
+
+    /**
      * Exports all instructor repositories (solution, template, test), the problem statement and the exercise details.
      * @param exerciseId
      */
@@ -563,19 +575,27 @@ export class ProgrammingExerciseService {
      * @param participationId The id of a participation
      * @param olderCommitHash The hash of the older commit
      * @param newerCommitHash The hash of the newer commit
-     * @param repositoryType The type of the repository
+     * @param repositoryType The type of the repository (optional)
      */
     getDiffReportForCommits(
         exerciseId: number,
-        participationId: number,
+        participationId: number | undefined,
         olderCommitHash: string,
         newerCommitHash: string,
-        repositoryType: string,
+        repositoryType?: string,
     ): Observable<ProgrammingExerciseGitDiffReport | undefined> {
+        const params = {};
+        if (repositoryType !== undefined) {
+            params['repositoryType'] = repositoryType;
+        }
+        if (participationId !== undefined && !isNaN(participationId)) {
+            params['participationId'] = participationId;
+        }
+
         return this.http
-            .get<ProgrammingExerciseGitDiffReport>(`${this.resourceUrl}/${exerciseId}/participation/${participationId}/commits/${olderCommitHash}/diff-report/${newerCommitHash}`, {
+            .get<ProgrammingExerciseGitDiffReport>(`${this.resourceUrl}/${exerciseId}/commits/${olderCommitHash}/diff-report/${newerCommitHash}`, {
                 observe: 'response',
-                params: { repositoryType },
+                params: params,
             })
             .pipe(map((res: HttpResponse<ProgrammingExerciseGitDiffReport>) => res.body ?? undefined));
     }

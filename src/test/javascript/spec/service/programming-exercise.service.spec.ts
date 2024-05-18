@@ -321,7 +321,7 @@ describe('ProgrammingExercise Service', () => {
         const repositoryType = 'TEMPLATE';
         const expected = { id: 1, entries: [new ProgrammingExerciseGitDiffEntry()] } as unknown as ProgrammingExerciseGitDiffReport;
         service.getDiffReportForCommits(exerciseId, participationId, commitId, commitId2, repositoryType).subscribe((resp) => expect(resp).toEqual(expected));
-        const url = `${resourceUrl}/${exerciseId}/participation/${participationId}/commits/${commitId}/diff-report/${commitId2}?repositoryType=${repositoryType}`;
+        const url = `${resourceUrl}/${exerciseId}/commits/${commitId}/diff-report/${commitId2}?repositoryType=${repositoryType}&participationId=${participationId}`;
         const req = httpMock.expectOne({ method: 'GET', url });
         req.flush(expected);
         tick();
@@ -386,6 +386,16 @@ describe('ProgrammingExercise Service', () => {
         const exerciseId = 1;
         service.exportStudentRequestedRepository(exerciseId, true).subscribe();
         const url = `${resourceUrl}/${exerciseId}/export-student-requested-repository?includeTests=true`;
+        const req = httpMock.expectOne({ method: 'GET', url });
+        req.flush(new Blob());
+        tick();
+    }));
+
+    it('should export a student repository', fakeAsync(() => {
+        const exerciseId = 1;
+        const participationId = 5;
+        service.exportStudentRepository(exerciseId, participationId).subscribe();
+        const url = `${resourceUrl}/${exerciseId}/export-student-repository/${participationId}`;
         const req = httpMock.expectOne({ method: 'GET', url });
         req.flush(new Blob());
         tick();
