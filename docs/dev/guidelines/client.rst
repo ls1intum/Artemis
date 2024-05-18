@@ -28,8 +28,9 @@ Some general aspects:
 3. Use PascalCase for enum values.
 4. Use camelCase for function names.
 5. Use camelCase for property names and local variables.
-6. Do not use "_" as a prefix for private properties.
-7. Use whole words in names when possible.
+6. Use SCREAMING_SNAKE_CASE for constants, i.e. properties with the ``readonly`` keyword.
+7. Do not use "_" as a prefix for private properties.
+8. Use whole words in names when possible.
 
 2. Components
 =============
