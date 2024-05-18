@@ -48,7 +48,7 @@ The following activity diagram shows this exercise workflow.
 Exercise Templates
 ------------------
 
-The subsequent sections describes the programming-related features that Artemis supports.
+The subsequent sections describe the programming-related features that Artemis supports.
 
 .. include:: programming-exercise-features.inc
 
@@ -72,7 +72,7 @@ The following sections list the rules that are active for the default static cod
 Submission Policy Configuration
 -------------------------------
 
-The following sections explains the configuration options for submission policies:
+The following sections explain the configuration options for submission policies:
 
 .. include:: programming-submission-policy-configuration.inc
 
