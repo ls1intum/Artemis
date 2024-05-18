@@ -39,6 +39,7 @@
                 class="form-step"
                 [programmingExercise]="programmingExercise"
                 [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
+                [importOptions]="importOptions"
             />
             @if (!isExamMode) {
                 <jhi-exercise-update-plagiarism [exercise]="programmingExercise" />

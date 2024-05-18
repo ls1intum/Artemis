@@ -23,8 +23,17 @@
                                 <fa-icon [icon]="controls.iconForSortPropField('id')" />
                             </span>
                         </ng-template>
-                        <ng-template ngx-datatable-cell-template let-value="value">
-                            <span>{{ value }}</span>
+                        <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
+                            <span
+                                [ngClass]="{
+                                    'text-danger': row.jobTimingInfo.buildDuration > 240
+                                }"
+                            >
+                                @if (row.jobTimingInfo.buildDuration > 240) {
+                                    <fa-icon [icon]="faExclamationCircle" />
+                                }
+                                {{ value }}
+                            </span>
                         </ng-template>
                     </ngx-datatable-column>
                     <ngx-datatable-column prop="buildAgentAddress" [minWidth]="150" [width]="200">
@@ -144,6 +153,17 @@
                             } @else {
                                 <span class="wrap-long-text">{{ value }}</span>
                             }
+                        </ng-template>
+                    </ngx-datatable-column>
+                    <ngx-datatable-column prop="jobTimingInfo.buildDuration" [minWidth]="150" [width]="150">
+                        <ng-template ngx-datatable-header-template>
+                            <span class="datatable-header-cell-wrapper" (click)="controls.onSort('jobTimingInfo.buildDuration')">
+                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.buildDuration"></span>
+                                <fa-icon [icon]="controls.iconForSortPropField('jobTimingInfo.buildDuration')" />
+                            </span>
+                        </ng-template>
+                        <ng-template ngx-datatable-cell-template let-value="value">
+                            <span>{{ value | artemisDurationFromSeconds }}</span>
                         </ng-template>
                     </ngx-datatable-column>
                     <ngx-datatable-column prop="jobTimingInfo.submissionDate" [minWidth]="150" [width]="200">
