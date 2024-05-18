@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ConversationOptionsComponent } from 'app/shared/sidebar/conversation-options/conversation-options.component';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
@@ -21,6 +21,11 @@ import { MockMetisService } from '../../../helpers/mocks/service/mock-metis-serv
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockNotificationService } from '../../../helpers/mocks/service/mock-notification.service';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { GroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
+import { defaultFirstLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
+import { ConversationDetailDialogComponent } from 'app/overview/course-conversations/dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
+import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
+import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 
 const examples: (() => ConversationDTO)[] = [
     () => generateOneToOneChatDTO({}),
@@ -57,6 +62,7 @@ examples.forEach((conversation) => {
                 declarations: [ConversationOptionsComponent, MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe)],
                 providers: [
                     MockProvider(ConversationService),
+                    MockProvider(MetisConversationService),
                     MockProvider(AlertService),
                     MockProvider(NgbModal),
                     MockPipe(ArtemisTranslatePipe),
@@ -103,6 +109,34 @@ examples.forEach((conversation) => {
             tick(501);
             expect(updateIsMutedSpy).toHaveBeenCalledOnce();
             expect(updateIsMutedSpy).toHaveBeenCalledWith(course.id, component.conversation.id, true);
+        }));
+
+        it('should open channel overview dialog when button is pressed', fakeAsync(() => {
+            if (isOneToOneChatDTO(component.conversation)) {
+                // directMessages do not have a channel overview dialog
+                return;
+            }
+            fixture.detectChanges();
+            tick(301);
+            const modalService = TestBed.inject(NgbModal);
+            const mockModalRef = {
+                componentInstance: {
+                    course: undefined,
+                    createChannelFn: undefined,
+                    initialize: () => {},
+                },
+                result: Promise.resolve([new GroupChatDTO(), true]),
+            };
+            const openDialogSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as unknown as NgbModalRef);
+            fixture.detectChanges();
+
+            const dialogOpenButton = fixture.debugElement.nativeElement.querySelector('.setting');
+            dialogOpenButton.click();
+            tick(301);
+            fixture.whenStable().then(() => {
+                expect(openDialogSpy).toHaveBeenCalledOnce();
+                expect(openDialogSpy).toHaveBeenCalledWith(ConversationDetailDialogComponent, defaultFirstLayerDialogOptions);
+            });
         }));
     });
 });
