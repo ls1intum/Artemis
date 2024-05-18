@@ -45,8 +45,8 @@ The following activity diagram shows this exercise workflow.
 
    Exercise Workflow
 
-Features
---------
+Exercise Templates
+------------------
 
 The subsequent sections describes the programming-related features that Artemis supports.
 

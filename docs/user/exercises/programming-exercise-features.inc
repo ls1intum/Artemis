@@ -1,5 +1,8 @@
 .. _programming_features:
 
+Feature Overview
+^^^^^^^^^^^^^^^^
+
 Artemis and its version control and continuous integration infrastructure is independent of the programming language and thus supports
 teaching and learning with any programming language that can be compiled and tested on the command line.
 Instructors have a lot of freedom in defining the environment (e.g. using build agents and Docker images) in which student code is executed and tested.
@@ -87,3 +90,5 @@ Instructors can still use those templates to generate programming exercises and 
 
 We encourage instructors to contribute improvements to the existing ``templates`` or to provide new templates. Please contact Stephan Krusche and/or create Pull Requests in the GitHub repository.
 
+Java Dejagnu: Blackbox Testing
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
