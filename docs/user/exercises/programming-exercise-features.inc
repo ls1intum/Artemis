@@ -43,7 +43,7 @@ Instructors can still use those templates to generate programming exercises and 
   +----------------------+----------------------+----------------------+---------------------+--------------+------------------------------------------+------------------------------+----------------------------+------------------------+
   | Programming Language | Sequential Test Runs | Static Code Analysis | Plagiarism Check    | Package Name | Project Type                             | Solution Repository Checkout | Testwise Coverage Analysis | Auxiliary repositories |
   +======================+======================+======================+=====================+==============+==========================================+==============================+============================+========================+
-  | Java                 | yes                  | yes                  | yes                 | yes          | Gradle, Maven                            | no                           | J: yes; L: no              | L: yes, J: no          |
+  | Java                 | yes                  | yes                  | yes                 | yes          | Gradle, Maven, J: `Dejagnu`_             | no                           | J: yes; L: no              | L: yes, J: no          |
   +----------------------+----------------------+----------------------+---------------------+--------------+------------------------------------------+------------------------------+----------------------------+------------------------+
   | Python               | L: yes; J: no        | no                   | yes                 | no           | n/a                                      | no                           | no                         | L: yes, J: no          |
   +----------------------+----------------------+----------------------+---------------------+--------------+------------------------------------------+------------------------------+----------------------------+------------------------+
@@ -89,6 +89,8 @@ Instructors can still use those templates to generate programming exercises and 
   Documentation for FACT framework can be found here: https://fact.readthedocs.io/en/latest/
 
 We encourage instructors to contribute improvements to the existing ``templates`` or to provide new templates. Please contact Stephan Krusche and/or create Pull Requests in the GitHub repository.
+
+.. _Dejagnu:
 
 Java Dejagnu: Blackbox Testing
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
