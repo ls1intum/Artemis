@@ -39,6 +39,7 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
     page = 1;
     predicate = 'build_completion_date';
     ascending = false;
+    interval: ReturnType<typeof setInterval>;
 
     constructor(
         private route: ActivatedRoute,
@@ -49,6 +50,9 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.loadQueue();
+        this.interval = setInterval(() => {
+            this.updateBuildJobDuration();
+        }, 1000);
         this.loadFinishedBuildJobs();
         this.initWebsocketSubscription();
     }
@@ -62,6 +66,7 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
         this.courseChannels.forEach((channel) => {
             this.websocketService.unsubscribe(channel);
         });
+        clearInterval(this.interval);
     }
 
     /**
@@ -258,5 +263,24 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
      */
     refresh() {
         this.loadFinishedBuildJobs();
+    }
+
+    /**
+     * Update the build jobs duration
+     */
+    updateBuildJobDuration() {
+        if (!this.runningBuildJobs) {
+            return;
+        }
+
+        for (const buildJob of this.runningBuildJobs) {
+            if (buildJob.jobTimingInfo && buildJob.jobTimingInfo?.buildStartDate) {
+                const start = dayjs(buildJob.jobTimingInfo?.buildStartDate);
+                const now = dayjs();
+                buildJob.jobTimingInfo.buildDuration = now.diff(start, 'seconds');
+            }
+        }
+        // This is necessary to update the view when the build job duration is updated
+        this.runningBuildJobs = JSON.parse(JSON.stringify(this.runningBuildJobs));
     }
 }

@@ -24,7 +24,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -52,15 +51,15 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.ParticipationAuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ProfileService;
-import de.tum.in.www1.artemis.service.RepositoryAccessService;
-import de.tum.in.www1.artemis.service.RepositoryParticipationService;
-import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCServletService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
+import de.tum.in.www1.artemis.service.programming.RepositoryAccessService;
+import de.tum.in.www1.artemis.service.programming.RepositoryParticipationService;
+import de.tum.in.www1.artemis.service.programming.RepositoryService;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -218,29 +217,16 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      * @param repositoryType  the type of the repository (template, solution, tests)
      * @return a map with the file path as key and the file content as value
      */
-    @GetMapping(value = "repository/{participationId}/files-content/{commitId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "repository-files-content/{commitId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastStudent
-    public ResponseEntity<Map<String, String>> getFilesAtCommit(@PathVariable long participationId, @PathVariable String commitId,
-            @RequestAttribute(required = false) RepositoryType repositoryType) {
+    public ResponseEntity<Map<String, String>> getFilesAtCommit(@PathVariable String commitId, @RequestParam(required = false) Long participationId,
+            @RequestParam(required = false) RepositoryType repositoryType) {
         log.debug("REST request to files for domainId {} at commitId {}", participationId, commitId);
         var participation = getProgrammingExerciseParticipation(participationId);
         var programmingExercise = programmingExerciseRepository.getProgrammingExerciseFromParticipationElseThrow(participation);
-
         repositoryAccessService.checkAccessRepositoryElseThrow(participation, userRepository.getUserWithGroupsAndAuthorities(), programmingExercise, RepositoryActionType.READ);
 
-        return executeAndCheckForExceptions(() -> {
-            Repository repository;
-            // if the repository type is tests, we need to check out the tests repository
-            if (repositoryType != null && repositoryType.equals(RepositoryType.TESTS)) {
-                repository = gitService.checkoutRepositoryAtCommit(programmingExercise.getVcsTestRepositoryUri(), commitId, true);
-            }
-            else {
-                repository = gitService.checkoutRepositoryAtCommit(getRepositoryUri(participationId), commitId, true);
-            }
-            Map<String, String> filesWithContent = super.repositoryService.getFilesWithContent(repository);
-            gitService.switchBackToDefaultBranchHead(repository);
-            return new ResponseEntity<>(filesWithContent, HttpStatus.OK);
-        });
+        return executeAndCheckForExceptions(() -> ResponseEntity.ok(repositoryService.getFilesContentAtCommit(programmingExercise, commitId, repositoryType, participation)));
     }
 
     /**
@@ -303,7 +289,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     public ResponseEntity<Map<String, String>> getFilesWithContent(@PathVariable Long participationId) {
         return super.executeAndCheckForExceptions(() -> {
             Repository repository = getRepository(participationId, RepositoryActionType.READ, true);
-            var filesWithContent = super.repositoryService.getFilesWithContent(repository);
+            var filesWithContent = super.repositoryService.getFilesContentFromWorkingCopy(repository);
             return new ResponseEntity<>(filesWithContent, HttpStatus.OK);
         });
     }
@@ -406,16 +392,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, error.getMessage(), error);
         }
 
-        Map<String, String> fileSaveResult = saveFileSubmissions(submissions, repository);
-
-        if (commit) {
-            var response = super.commitChanges(participationId);
-            if (response.getStatusCode() != HttpStatus.OK) {
-                throw new ResponseStatusException(response.getStatusCode());
-            }
-        }
-
-        return ResponseEntity.ok(fileSaveResult);
+        return saveFilesAndCommitChanges(participationId, submissions, commit, repository);
     }
 
     /**

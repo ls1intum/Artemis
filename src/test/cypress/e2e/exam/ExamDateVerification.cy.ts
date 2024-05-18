@@ -69,7 +69,7 @@ describe.skip('Exam date verification', () => {
                 cy.url().should('contain', `${course.id}`);
                 courseOverview.openExamsTab();
                 courseOverview.openExam(exam.id!);
-                cy.url().should('contain', `/exams/${exam.id}`);
+                cy.url({ timeout: 40000 }).should('contain', `/exams/${exam.id}`);
             });
         });
 
