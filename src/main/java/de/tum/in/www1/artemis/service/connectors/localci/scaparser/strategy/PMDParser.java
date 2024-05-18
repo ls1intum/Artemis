@@ -66,9 +66,9 @@ class PMDParser implements ParserStrategy {
             String unixPath = ParserStrategy.transformToUnixPath(fileViolation.fileName());
 
             for (Violation violation : fileViolation.violations()) {
+                // The penalty is decided by the course instructor, there is no penalty information in the xml
                 StaticCodeAnalysisIssue issue = new StaticCodeAnalysisIssue(unixPath, violation.beginLine(), violation.endLine(), violation.beginColumn(), violation.endColumn(),
-                        violation.rule(), violation.ruleset(), violation.message().strip(), violation.priority(), null  // Assuming there is no penalty info in PMD XML
-                );
+                        violation.rule(), violation.ruleset(), violation.message().strip(), violation.priority(), null);
                 issues.add(issue);
             }
         }

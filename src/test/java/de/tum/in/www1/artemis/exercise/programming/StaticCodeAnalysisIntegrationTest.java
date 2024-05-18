@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -314,8 +315,9 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationLocalCI
         var result = new Result();
         var feedbackForInactiveCategory = ProgrammingExerciseFactory.createSCAFeedbackWithInactiveCategory(result);
         result.addFeedback(feedbackForInactiveCategory);
-        var filteredFeedback = feedbackCreationService.categorizeScaFeedback(result, List.of(feedbackForInactiveCategory), programmingExerciseSCAEnabled);
-        assertThat(filteredFeedback).isEmpty();
+        var feedbacks = new ArrayList<>(List.of(feedbackForInactiveCategory));
+        feedbackCreationService.categorizeScaFeedback(result, feedbacks, programmingExerciseSCAEnabled);
+        assertThat(feedbacks).isEmpty();
         assertThat(result.getFeedbacks()).isEmpty();
     }
 
@@ -325,9 +327,10 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationLocalCI
         var feedback = new Feedback().result(result).text(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER).reference("SPOTBUGS").detailText("{\"category\": \"BAD_PRACTICE\"}")
                 .type(FeedbackType.AUTOMATIC).positive(false);
         result.addFeedback(feedback);
-        var filteredFeedback = feedbackCreationService.categorizeScaFeedback(result, List.of(feedback), programmingExerciseSCAEnabled);
-        assertThat(filteredFeedback).hasSize(1);
-        assertThat(result.getFeedbacks()).containsExactlyInAnyOrderElementsOf(filteredFeedback);
+        var feedbacks = new ArrayList<>(List.of(feedback));
+        feedbackCreationService.categorizeScaFeedback(result, feedbacks, programmingExerciseSCAEnabled);
+        assertThat(feedbacks).hasSize(1);
+        assertThat(result.getFeedbacks()).containsExactlyInAnyOrderElementsOf(feedbacks);
         assertThat(result.getFeedbacks().getFirst().getStaticCodeAnalysisCategory()).isEqualTo("Bad Practice");
         assertThat(new ObjectMapper().readValue(result.getFeedbacks().getFirst().getDetailText(), StaticCodeAnalysisIssue.class).penalty()).isEqualTo(3.0);
     }

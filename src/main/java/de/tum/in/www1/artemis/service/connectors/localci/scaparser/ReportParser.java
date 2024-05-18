@@ -88,6 +88,6 @@ public class ReportParser {
     public static StaticCodeAnalysisReportDTO getReport(String xmlContent, String fileName) {
         ParserPolicy parserPolicy = new ParserPolicy();
         ParserStrategy parserStrategy = parserPolicy.configure(fileName);
-        return parserStrategy.parse(xmlContent);  // Pass the whole XML content directly
+        return parserStrategy.parse(xmlContent);
     }
 }

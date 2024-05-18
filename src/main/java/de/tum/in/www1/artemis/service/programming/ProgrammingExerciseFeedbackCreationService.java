@@ -5,9 +5,11 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -16,6 +18,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -194,7 +197,7 @@ public class ProgrammingExerciseFeedbackCreationService {
             StaticCodeAnalysisTool tool = report.tool();
 
             for (final StaticCodeAnalysisIssue issue : report.issues()) {
-                String truncatedMessage = truncateMessage(issue.message());
+                String truncatedMessage = truncateSCADetailMessage(issue.message());
                 String cleanedPath = removeCIDirectoriesFromPath(issue.filePath());
 
                 // Create a new issue record with the modified message and file path
@@ -212,6 +215,7 @@ public class ProgrammingExerciseFeedbackCreationService {
                     feedback.setDetailTextTruncated(mapper.writeValueAsString(updatedIssue));
                 }
                 catch (JsonProcessingException e) {
+                    log.warn("Skipping feedback creation for static code analysis issue due to JSON processing error:", e);
                     continue;  // Skip this feedback if JSON processing fails
                 }
                 feedbackList.add(feedback);
@@ -220,12 +224,9 @@ public class ProgrammingExerciseFeedbackCreationService {
         return feedbackList;
     }
 
-    private String truncateMessage(String message) {
-        if (message != null) {
-            int maxLength = Math.min(message.length(), FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH - 500);
-            return message.substring(0, maxLength);
-        }
-        return null;
+    private String truncateSCADetailMessage(String message) {
+        // Leave some space for the json structure that will be saved in the database
+        return StringUtils.truncate(message, FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH - 500);
     }
 
     /**
@@ -391,15 +392,13 @@ public class ProgrammingExerciseFeedbackCreationService {
      * the removed feedback into account.
      *
      * @param result                     of the build run
-     * @param staticCodeAnalysisFeedback List of static code analysis feedback objects
+     * @param staticCodeAnalysisFeedback modifiable list of static code analysis feedback objects that will get filtered
      * @param programmingExercise        The current exercise
-     * @return The filtered list of feedback objects
      */
-    public List<Feedback> categorizeScaFeedback(Result result, List<Feedback> staticCodeAnalysisFeedback, ProgrammingExercise programmingExercise) {
-        List<CategoryMappingPair> categoryPairs = getCategoriesWithMappingForExercise(programmingExercise);
+    public void categorizeScaFeedback(Result result, List<Feedback> staticCodeAnalysisFeedback, ProgrammingExercise programmingExercise) {
+        var categoryPairs = getCategoriesWithMappingForExercise(programmingExercise);
 
-        List<Feedback> modifiableScaFeedback = new ArrayList<>(staticCodeAnalysisFeedback);
-        for (Iterator<Feedback> iterator = modifiableScaFeedback.iterator(); iterator.hasNext();) {
+        for (Iterator<Feedback> iterator = staticCodeAnalysisFeedback.iterator(); iterator.hasNext();) {
             var scaFeedback = iterator.next();
             try {
                 // Extract the sca issue
@@ -439,13 +438,13 @@ public class ProgrammingExerciseFeedbackCreationService {
                 iterator.remove();
             }
         }
-        return modifiableScaFeedback;
     }
 
-    private Optional<StaticCodeAnalysisCategory> findCategoryForIssue(StaticCodeAnalysisIssue issue, Feedback scaFeedback, List<CategoryMappingPair> categoryPairs) {
-        return categoryPairs.stream()
-                .filter(pair -> pair.mappings.stream().anyMatch(mapping -> mapping.tool().name().equals(scaFeedback.getReference()) && mapping.category().equals(issue.category())))
-                .map(pair -> pair.category).findFirst();
+    private Optional<StaticCodeAnalysisCategory> findCategoryForIssue(StaticCodeAnalysisIssue issue, Feedback scaFeedback,
+            Map<StaticCodeAnalysisCategory, List<StaticCodeAnalysisDefaultCategory.CategoryMapping>> categoryPairs) {
+        return categoryPairs.entrySet().stream().filter(
+                pair -> pair.getValue().stream().anyMatch(mapping -> mapping.tool().name().equals(scaFeedback.getReference()) && mapping.category().equals(issue.category())))
+                .map(Map.Entry::getKey).findFirst();
     }
 
     /**
@@ -454,24 +453,21 @@ public class ProgrammingExerciseFeedbackCreationService {
      * @param programmingExercise The programming exercise
      * @return A list of pairs of categories and their mappings.
      */
-    private List<CategoryMappingPair> getCategoriesWithMappingForExercise(ProgrammingExercise programmingExercise) {
+    private Map<StaticCodeAnalysisCategory, List<StaticCodeAnalysisDefaultCategory.CategoryMapping>> getCategoriesWithMappingForExercise(ProgrammingExercise programmingExercise) {
         var categories = staticCodeAnalysisCategoryRepository.findByExerciseId(programmingExercise.getId());
         var defaultCategories = StaticCodeAnalysisConfigurer.staticCodeAnalysisConfiguration().get(programmingExercise.getProgrammingLanguage());
 
-        List<CategoryMappingPair> categoryPairsWithMapping = new ArrayList<>();
+        Map<StaticCodeAnalysisCategory, List<StaticCodeAnalysisDefaultCategory.CategoryMapping>> categoryPairsWithMapping = new HashMap<>();
 
         for (var category : categories) {
             var defaultCategoryMatch = defaultCategories.stream().filter(defaultCategory -> defaultCategory.name().equals(category.getName())).findFirst();
             if (defaultCategoryMatch.isPresent()) {
                 var categoryMappings = defaultCategoryMatch.get().categoryMappings();
-                categoryPairsWithMapping.add(new CategoryMappingPair(category, categoryMappings));
+                categoryPairsWithMapping.put(category, categoryMappings);
             }
         }
 
         return categoryPairsWithMapping;
-    }
-
-    private record CategoryMappingPair(StaticCodeAnalysisCategory category, List<StaticCodeAnalysisDefaultCategory.CategoryMapping> mappings) {
     }
 
 }

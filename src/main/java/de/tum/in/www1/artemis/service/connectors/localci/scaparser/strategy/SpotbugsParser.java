@@ -71,7 +71,7 @@ class SpotbugsParser implements ParserStrategy {
             for (SourceLine sourceLine : bugInstance.sourceLines()) {
                 String unixPath = ParserStrategy.transformToUnixPath(sourceDirectory + sourceLine.sourcePath());
                 StaticCodeAnalysisIssue issue = new StaticCodeAnalysisIssue(unixPath, sourceLine.start(), sourceLine.end(), null, null, bugInstance.type(), bugInstance.category(),
-                        bugInstance.longMessage(), bugInstance.priority(), null);
+                        bugInstance.longMessage(), bugInstance.priority(), null); // The penalty is decided by the course instructor, there is no penalty information in the xml
                 issues.add(issue);
             }
         }

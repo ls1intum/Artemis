@@ -61,9 +61,6 @@ class TestResultXmlParser {
 
         private String detailedMessage;
 
-        public Failure() {
-        }
-
         private String extractMessage() {
             return message != null ? message : detailedMessage;
         }

@@ -56,26 +56,27 @@ class PMDCPDParser implements ParserStrategy {
     private StaticCodeAnalysisReportDTO createReportFromDuplication(PmdCpc report) {
         List<StaticCodeAnalysisIssue> issues = new ArrayList<>();
         for (var duplication : report.duplications()) {
+            if (duplication.files() == null) {
+                continue;
+            }
+
             StringBuilder messageBuilder = new StringBuilder("Code duplication of ").append(duplication.lines()).append(" lines in the following files:");
+            // Iterate through the files to create on commonly used error message refering to all instances of duplication.
+            for (DuplicationFile file : duplication.files()) {
+                String unixPath = ParserStrategy.transformToUnixPath(file.path());
+                String filename = new File(unixPath).getName();
+                messageBuilder.append("\n - ").append(filename).append(": Lines ").append(file.startLine()).append(" to ").append(file.endLine());
+            }
 
-            if (duplication.files() != null) {
-                // Iterate through the files to create on commonly used error message refering to all instances of duplication.
-                for (DuplicationFile file : duplication.files()) {
-                    String unixPath = ParserStrategy.transformToUnixPath(file.path());
-                    String filename = new File(unixPath).getName();
-                    messageBuilder.append("\n - ").append(filename).append(": Lines ").append(file.startLine()).append(" to ").append(file.endLine());
-                }
-
-                String message = messageBuilder.toString();
-                // We create a new issue for every instance of duplicated code blocks.
-                for (DuplicationFile file : duplication.files()) {
-                    String unixPath = ParserStrategy.transformToUnixPath(file.path());
-                    StaticCodeAnalysisIssue issue = new StaticCodeAnalysisIssue(unixPath, file.startLine(), file.endLine(), file.startColumn(), file.endColumn(), CPD_CATEGORY,
-                            CPD_CATEGORY, message, null,  // Priority might not be applicable
-                            null   // Penalty not applicable
-                    );
-                    issues.add(issue);
-                }
+            String message = messageBuilder.toString();
+            // We create a new issue for every instance of duplicated code blocks.
+            for (DuplicationFile file : duplication.files()) {
+                String unixPath = ParserStrategy.transformToUnixPath(file.path());
+                StaticCodeAnalysisIssue issue = new StaticCodeAnalysisIssue(unixPath, file.startLine(), file.endLine(), file.startColumn(), file.endColumn(), CPD_CATEGORY,
+                        CPD_CATEGORY, message, null,  // Priority might not be applicable
+                        null   // Penalty not applicable
+                );
+                issues.add(issue);
             }
         }
 

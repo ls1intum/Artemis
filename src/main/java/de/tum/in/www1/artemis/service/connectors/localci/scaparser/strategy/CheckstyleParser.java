@@ -64,7 +64,7 @@ public class CheckstyleParser implements ParserStrategy {
                         error.column(), error.column(),  // As Checkstyle does not support an end column
                         extractRule(error.source()),  // Method to extract the rule from source
                         extractCategory(error.source()),  // Method to extract the category from source
-                        error.message(), error.severity(), null  // Assuming no penalty
+                        error.message(), error.severity(), null // The penalty is decided by the course instructor, there is no penalty information in the xml
                 );
                 issues.add(issue);
             }
@@ -72,16 +72,36 @@ public class CheckstyleParser implements ParserStrategy {
         return report;
     }
 
+    /**
+     * The source string is full qualified name of the checkstyle rule.
+     * E.g. com.puppycrawl.tools.checkstyle.checks.imports.UnusedImportsCheck
+     * This method extracts the rule name (class name at the end) from the source string.
+     *
+     * @param errorSource The source string of the checkstyle error
+     * @return the rule name
+     */
     private String extractRule(String errorSource) {
         String[] parts = errorSource.split("\\.");
         return parts.length > 0 ? parts[parts.length - 1] : "Unknown";
     }
 
+    /**
+     * The source string is full qualified name of the checkstyle rule.
+     * E.g. com.puppycrawl.tools.checkstyle.checks.imports.UnusedImportsCheck
+     * This method extracts the category name (package following after 'checks') from the source string.
+     * If the class is located directly in the checks package, the category is 'miscellaneous'.
+     *
+     * @param errorSource The source string of the checkstyle error
+     * @return the category name
+     */
     private String extractCategory(String errorSource) {
         String[] parts = errorSource.split("\\.");
-        if (parts.length > 1 && parts[parts.length - 2].equals(CATEGORY_DELIMITER)) {
+        if (parts.length < 2) {
+            return "Unknown";
+        }
+        if (parts[parts.length - 2].equals(CATEGORY_DELIMITER)) {
             return CATEGORY_MISCELLANEOUS;
         }
-        return parts.length > 1 ? parts[parts.length - 2] : "Unknown";
+        return parts[parts.length - 2];
     }
 }
