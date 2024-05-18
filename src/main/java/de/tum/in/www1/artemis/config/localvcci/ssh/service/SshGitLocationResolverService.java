@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.config.localvcci.ssh;
+package de.tum.in.www1.artemis.config.localvcci.ssh.service;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALVC;
 import static de.tum.in.www1.artemis.config.localvcci.ssh.SshConstants.USER_KEY;
@@ -31,9 +31,9 @@ import de.tum.in.www1.artemis.web.rest.repository.RepositoryActionType;
 
 @Profile(PROFILE_LOCALVC)
 @Service
-public class SshGitLocationResolver implements GitLocationResolver {
+public class SshGitLocationResolverService implements GitLocationResolver {
 
-    private static final Logger log = LoggerFactory.getLogger(SshGitLocationResolver.class);
+    private static final Logger log = LoggerFactory.getLogger(SshGitLocationResolverService.class);
 
     @Value("${artemis.version-control.url}")
     private URL localVCBaseUrl;
@@ -42,7 +42,7 @@ public class SshGitLocationResolver implements GitLocationResolver {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    public SshGitLocationResolver(LocalVCServletService localVCServletService, ProgrammingExerciseRepository programmingExerciseRepository) {
+    public SshGitLocationResolverService(LocalVCServletService localVCServletService, ProgrammingExerciseRepository programmingExerciseRepository) {
         this.localVCServletService = localVCServletService;
         this.programmingExerciseRepository = programmingExerciseRepository;
     }

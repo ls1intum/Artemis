@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.config.localvcci;
+package de.tum.in.www1.artemis.config.localvcci.service;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALVC;
 
@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCServletService;
  */
 @Profile(PROFILE_LOCALVC)
 @Service
-public class ArtemisGitServlet extends GitServlet {
+public class ArtemisGitServletService extends GitServlet {
 
     private final LocalVCServletService localVCServletService;
 
@@ -30,7 +30,7 @@ public class ArtemisGitServlet extends GitServlet {
      *
      * @param localVCServletService the service for authenticating and authorizing users and retrieving the repository from disk
      */
-    public ArtemisGitServlet(LocalVCServletService localVCServletService) {
+    public ArtemisGitServletService(LocalVCServletService localVCServletService) {
         this.localVCServletService = localVCServletService;
     }
 

@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.config.localvcci.ssh;
+package de.tum.in.www1.artemis.config.localvcci.ssh.service;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALVC;
 
@@ -11,17 +11,19 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.config.localvcci.ssh.HashUtils;
+import de.tum.in.www1.artemis.config.localvcci.ssh.SshConstants;
 import de.tum.in.www1.artemis.repository.UserRepository;
 
 @Profile(PROFILE_LOCALVC)
 @Service
-public class GitPublickeyAuthenticator implements PublickeyAuthenticator {
+public class GitPublickeyAuthenticatorService implements PublickeyAuthenticator {
 
-    private static final Logger log = LoggerFactory.getLogger(GitPublickeyAuthenticator.class);
+    private static final Logger log = LoggerFactory.getLogger(GitPublickeyAuthenticatorService.class);
 
     private final UserRepository userRepository;
 
-    public GitPublickeyAuthenticator(UserRepository userRepository) {
+    public GitPublickeyAuthenticatorService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 

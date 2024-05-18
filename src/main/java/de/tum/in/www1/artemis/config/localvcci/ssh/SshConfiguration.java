@@ -18,6 +18,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
+import de.tum.in.www1.artemis.config.localvcci.ssh.service.GitPublickeyAuthenticatorService;
+import de.tum.in.www1.artemis.config.localvcci.ssh.service.SshGitCommandFactoryService;
+import de.tum.in.www1.artemis.config.localvcci.ssh.service.SshGitLocationResolverService;
+
 @Profile(PROFILE_LOCALVC)
 @Configuration
 public class SshConfiguration {
@@ -33,16 +37,17 @@ public class SshConfiguration {
     @Value("${server.url}")
     private String artemisServerUrl;
 
-    private final GitPublickeyAuthenticator gitPublickeyAuthenticator;
+    private final GitPublickeyAuthenticatorService gitPublickeyAuthenticatorService;
 
-    private final SshGitCommandFactory sshGitCommandFactory;
+    private final SshGitCommandFactoryService sshGitCommandFactoryService;
 
-    private final SshGitLocationResolver sshGitLocationResolver;
+    private final SshGitLocationResolverService sshGitLocationResolverService;
 
-    public SshConfiguration(GitPublickeyAuthenticator gitPublickeyAuthenticator, SshGitCommandFactory sshGitCommandFactory, SshGitLocationResolver sshGitLocationResolver) {
-        this.gitPublickeyAuthenticator = gitPublickeyAuthenticator;
-        this.sshGitCommandFactory = sshGitCommandFactory;
-        this.sshGitLocationResolver = sshGitLocationResolver;
+    public SshConfiguration(GitPublickeyAuthenticatorService gitPublickeyAuthenticatorService, SshGitCommandFactoryService sshGitCommandFactoryService,
+            SshGitLocationResolverService sshGitLocationResolverService) {
+        this.gitPublickeyAuthenticatorService = gitPublickeyAuthenticatorService;
+        this.sshGitCommandFactoryService = sshGitCommandFactoryService;
+        this.sshGitLocationResolverService = sshGitLocationResolverService;
     }
 
     /**
@@ -65,9 +70,9 @@ public class SshConfiguration {
             sshd.setKeyPairProvider(new SimpleGeneratorHostKeyProvider(Paths.get("tmp", "hostkey.ser")));
         }
         sshd.setCommandFactory(
-                sshGitCommandFactory.withGitLocationResolver(sshGitLocationResolver).withExecutorServiceProvider(() -> ThreadUtils.newFixedThreadPool("git-ssh", 8)));
+                sshGitCommandFactoryService.withGitLocationResolver(sshGitLocationResolverService).withExecutorServiceProvider(() -> ThreadUtils.newFixedThreadPool("git-ssh", 8)));
         // sshd.setCommandFactory(gitCommandFactory());
-        sshd.setPublickeyAuthenticator(gitPublickeyAuthenticator);
+        sshd.setPublickeyAuthenticator(gitPublickeyAuthenticatorService);
         // Add command factory or shell here to handle Git commands or any other commands
 
         try {
