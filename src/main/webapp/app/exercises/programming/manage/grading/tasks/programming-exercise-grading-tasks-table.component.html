@@ -93,7 +93,10 @@
         <button
             type="button"
             class="task__row__cell sort__button"
-            [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.visibility' | artemisTranslate"
+            [ngbTooltip]="
+                (this.isExamExercise ? 'artemisApp.programmingExercise.configureGrading.help.visibilityExam' : 'artemisApp.programmingExercise.configureGrading.help.visibility')
+                    | artemisTranslate
+            "
             placement="bottom auto"
             (click)="changeSort('visibility')"
         >
@@ -128,6 +131,6 @@
         </div>
     </div>
     @for (task of tasks; track task; let i = $index) {
-        <jhi-programming-exercise-task [index]="i" [task]="task" [openSubject]="allTasksExpandedSubject" (updateTasksEvent)="updateTasks()" />
+        <jhi-programming-exercise-task [index]="i" [task]="task" [openSubject]="allTasksExpandedSubject" (updateTasksEvent)="updateTasks()" [isExamExercise]="isExamExercise" />
     }
 </form>

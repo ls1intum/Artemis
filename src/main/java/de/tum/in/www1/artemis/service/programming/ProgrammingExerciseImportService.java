@@ -6,9 +6,11 @@ import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
@@ -20,12 +22,15 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.UriService;
@@ -65,11 +70,13 @@ public class ProgrammingExerciseImportService {
 
     private final ProgrammingExerciseImportBasicService programmingExerciseImportBasicService;
 
+    private final ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
+
     public ProgrammingExerciseImportService(Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
             Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ProgrammingExerciseService programmingExerciseService,
             ProgrammingExerciseTaskService programmingExerciseTaskService, GitService gitService, FileService fileService, UserRepository userRepository,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, UriService uriService, TemplateUpgradePolicyService templateUpgradePolicyService,
-            ProgrammingExerciseImportBasicService programmingExerciseImportBasicService) {
+            ProgrammingExerciseImportBasicService programmingExerciseImportBasicService, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository) {
         this.versionControlService = versionControlService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
@@ -82,6 +89,7 @@ public class ProgrammingExerciseImportService {
         this.uriService = uriService;
         this.templateUpgradePolicyService = templateUpgradePolicyService;
         this.programmingExerciseImportBasicService = programmingExerciseImportBasicService;
+        this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
     }
 
     /**
@@ -271,14 +279,15 @@ public class ProgrammingExerciseImportService {
      * Method to import a programming exercise, including all base build plans (template, solution) and repositories (template, solution, test).
      * Referenced entities, s.a. the test cases or the hints will get cloned and assigned a new id.
      *
-     * @param originalProgrammingExercise the Programming Exercise which should be used as a blueprint
-     * @param newProgrammingExercise      The new exercise already containing values which should not get copied, i.e. overwritten
-     * @param updateTemplate              if the template files should be updated
-     * @param recreateBuildPlans          if the build plans should be recreated
+     * @param originalProgrammingExercise         the Programming Exercise which should be used as a blueprint
+     * @param newProgrammingExercise              The new exercise already containing values which should not get copied, i.e. overwritten
+     * @param updateTemplate                      if the template files should be updated
+     * @param recreateBuildPlans                  if the build plans should be recreated
+     * @param setTestCaseVisibilityToAfterDueDate if the test case visibility should be set to {@link Visibility#AFTER_DUE_DATE}
      * @return the imported programming exercise
      */
     public ProgrammingExercise importProgrammingExercise(ProgrammingExercise originalProgrammingExercise, ProgrammingExercise newProgrammingExercise, boolean updateTemplate,
-            boolean recreateBuildPlans) throws JsonProcessingException {
+            boolean recreateBuildPlans, boolean setTestCaseVisibilityToAfterDueDate) throws JsonProcessingException {
         // remove all non-alphanumeric characters from the short name. This gets already done in the client, but we do it again here to be sure
         newProgrammingExercise.setShortName(newProgrammingExercise.getShortName().replaceAll("[^a-zA-Z0-9]", ""));
         newProgrammingExercise.generateAndSetProjectKey();
@@ -291,6 +300,15 @@ public class ProgrammingExerciseImportService {
 
         newProgrammingExercise = programmingExerciseImportBasicService.importProgrammingExerciseBasis(originalProgrammingExercise, newProgrammingExercise);
         importRepositories(originalProgrammingExercise, newProgrammingExercise);
+
+        if (setTestCaseVisibilityToAfterDueDate) {
+            Set<ProgrammingExerciseTestCase> testCases = this.programmingExerciseTestCaseRepository.findByExerciseId(newProgrammingExercise.getId());
+            for (ProgrammingExerciseTestCase testCase : testCases) {
+                testCase.setVisibility(Visibility.AFTER_DUE_DATE);
+            }
+            List<ProgrammingExerciseTestCase> updatedTestCases = programmingExerciseTestCaseRepository.saveAll(testCases);
+            newProgrammingExercise.setTestCases(new HashSet<>(updatedTestCases));
+        }
 
         // Update the template files
         if (updateTemplate) {

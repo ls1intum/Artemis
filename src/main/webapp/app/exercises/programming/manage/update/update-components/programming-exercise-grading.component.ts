@@ -10,6 +10,7 @@ import { Subject, Subscription } from 'rxjs';
 import { NgModel } from '@angular/forms';
 import { SubmissionPolicyUpdateComponent } from 'app/exercises/shared/submission-policy/submission-policy-update.component';
 import { ProgrammingExerciseLifecycleComponent } from 'app/exercises/programming/shared/lifecycle/programming-exercise-lifecycle.component';
+import { ImportOptions } from 'app/types/programming-exercises';
 
 @Component({
     selector: 'jhi-programming-exercise-grading',
@@ -25,6 +26,7 @@ export class ProgrammingExerciseGradingComponent implements AfterViewInit, OnDes
 
     @Input() programmingExercise: ProgrammingExercise;
     @Input() programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
+    @Input() importOptions: ImportOptions;
 
     @ViewChild(SubmissionPolicyUpdateComponent) submissionPolicyUpdateComponent?: SubmissionPolicyUpdateComponent;
     @ViewChild(ProgrammingExerciseLifecycleComponent) lifecycleComponent?: ProgrammingExerciseLifecycleComponent;
