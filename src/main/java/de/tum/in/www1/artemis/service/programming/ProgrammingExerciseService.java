@@ -665,9 +665,13 @@ public class ProgrammingExerciseService {
     public ProgrammingExercise updateProblemStatement(ProgrammingExercise programmingExercise, String problemStatement, @Nullable String notificationText)
             throws EntityNotFoundException {
 
+        String oldProblemStatement = programmingExercise.getProblemStatement();
         programmingExercise.setProblemStatement(problemStatement);
         programmingExerciseTaskService.replaceTestNamesWithIds(programmingExercise);
         ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
+
+        // Set the old problem statement again for notifyAboutExerciseChanges method, but don't save it
+        programmingExercise.setProblemStatement(oldProblemStatement);
 
         programmingExerciseTaskService.updateTasksFromProblemStatement(updatedProgrammingExercise);
 

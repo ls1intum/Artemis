@@ -35,6 +35,7 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
@@ -68,6 +69,9 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationJenkinsGitlabTest
 
     @Autowired
     private ChannelRepository channelRepository;
+
+    @Autowired
+    private ExamUtilService examUtilService;
 
     @BeforeEach
     void init() {
@@ -123,16 +127,33 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationJenkinsGitlabTest
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void updateProblemStatement() throws Exception {
+    void updateProblemStatement_courseExercise() throws Exception {
         final var newProblem = "a new problem statement";
         final var endpoint = "/api/programming-exercises/" + programmingExerciseId + "/problem-statement";
+        ProgrammingExercise updatedProgrammingExercise = request.patchWithResponseBody(endpoint, newProblem, ProgrammingExercise.class, HttpStatus.OK, MediaType.TEXT_PLAIN);
+
+        assertThat(updatedProgrammingExercise.getProblemStatement()).isEqualTo(newProblem);
+        verify(examLiveEventsService, never()).createAndSendProblemStatementUpdateEvent(any(), any());
+        verify(groupNotificationScheduleService, times(1)).checkAndCreateAppropriateNotificationsWhenUpdatingExercise(any(), any(), any());
+
+        ProgrammingExercise fromDb = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId).orElseThrow();
+        assertThat(fromDb.getProblemStatement()).isEqualTo(newProblem);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateProblemStatement_examExercise() throws Exception {
+        var programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
+        final var newProblem = "a new problem statement";
+        final var endpoint = "/api/programming-exercises/" + programmingExercise.getId() + "/problem-statement";
         ProgrammingExercise updatedProgrammingExercise = request.patchWithResponseBody(endpoint, newProblem, ProgrammingExercise.class, HttpStatus.OK, MediaType.TEXT_PLAIN);
 
         assertThat(updatedProgrammingExercise.getProblemStatement()).isEqualTo(newProblem);
         verify(examLiveEventsService, times(1)).createAndSendProblemStatementUpdateEvent(any(), any());
         verify(groupNotificationScheduleService, never()).checkAndCreateAppropriateNotificationsWhenUpdatingExercise(any(), any(), any());
 
-        ProgrammingExercise fromDb = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId).orElseThrow();
+        ProgrammingExercise fromDb = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExercise.getId())
+                .orElseThrow();
         assertThat(fromDb.getProblemStatement()).isEqualTo(newProblem);
     }
 
