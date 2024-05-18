@@ -102,6 +102,8 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTe
 
     private final String studentRepoBaseUrl = "/api/repository/";
 
+    private final String filesContentBaseUrl = "/api/repository-files-content/";
+
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -199,7 +201,8 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTe
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(1));
         programmingExerciseRepository.save(programmingExercise);
 
-        studentRepository.configureRepos("studentLocalRepo", "studentOriginRepo");
+        // Instantiate the remote repository as non-bare so its files can be manipulated
+        studentRepository.configureRepos("studentLocalRepo", "studentOriginRepo", false);
 
         // add file to the repository folder
         studentFilePath = Path.of(studentRepository.localRepoFile + "/" + currentLocalFileName);
@@ -337,7 +340,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTe
         prepareRepository();
         String commitHash = getCommitHash(studentRepository.localGit);
         courseUtilService.updateCourseGroups("abc", course, "");
-        request.getMap(studentRepoBaseUrl + participation.getId() + "/files-content/" + commitHash, HttpStatus.FORBIDDEN, String.class, String.class);
+        request.getMap(filesContentBaseUrl + commitHash + "?participationId=" + participation.getId(), HttpStatus.FORBIDDEN, String.class, String.class);
         courseUtilService.updateCourseGroups(TEST_PREFIX, course, "");
     }
 
@@ -347,7 +350,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTe
         prepareRepository();
         String commitHash = getCommitHash(studentRepository.localGit);
         courseUtilService.updateCourseGroups("abc", course, "");
-        request.getMap(studentRepoBaseUrl + participation.getId() + "/files-content/" + commitHash, HttpStatus.FORBIDDEN, String.class, String.class);
+        request.getMap(filesContentBaseUrl + commitHash + "?participationId=" + participation.getId(), HttpStatus.FORBIDDEN, String.class, String.class);
         courseUtilService.updateCourseGroups(TEST_PREFIX, course, "");
     }
 
@@ -357,7 +360,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTe
         prepareRepository();
         String commitHash = getCommitHash(studentRepository.localGit);
         courseUtilService.updateCourseGroups("abc", course, "");
-        request.getMap(studentRepoBaseUrl + participation.getId() + "/files-content/" + commitHash, HttpStatus.FORBIDDEN, String.class, String.class);
+        request.getMap(filesContentBaseUrl + commitHash + "?participationId=" + participation.getId(), HttpStatus.FORBIDDEN, String.class, String.class);
         courseUtilService.updateCourseGroups(TEST_PREFIX, course, "");
     }
 
@@ -366,7 +369,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTe
     void testGetFilesWithContentAtCommit() throws Exception {
         prepareRepository();
         String commitHash = getCommitHash(studentRepository.localGit);
-        var files = request.getMap(studentRepoBaseUrl + participation.getId() + "/files-content/" + commitHash, HttpStatus.OK, String.class, String.class);
+        var files = request.getMap(filesContentBaseUrl + commitHash + "?participationId=" + participation.getId(), HttpStatus.OK, String.class, String.class);
         assertThat(files).isNotEmpty();
 
         // Check if all files exist
@@ -379,7 +382,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetFilesWithContentAtCommitParticipationNotFound() throws Exception {
-        request.getMap(studentRepoBaseUrl + UUID.randomUUID().getLeastSignificantBits() + "/files-content/abc", HttpStatus.NOT_FOUND, String.class, String.class);
+        request.getMap(filesContentBaseUrl + "abc?participationId=" + UUID.randomUUID().getLeastSignificantBits(), HttpStatus.NOT_FOUND, String.class, String.class);
     }
 
     private void prepareRepository() throws GitAPIException, IOException {

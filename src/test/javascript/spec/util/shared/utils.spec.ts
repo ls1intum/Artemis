@@ -1,11 +1,14 @@
 import {
     average,
     getAsMutableObject,
+    isExamExercise,
     round,
     roundScorePercentSpecifiedByCourseSettings,
     roundValueSpecifiedByCourseSettings,
     stringifyIgnoringFields,
 } from 'app/shared/util/utils';
+import { Exercise } from 'app/entities/exercise.model';
+import { Course } from 'app/entities/course.model';
 
 describe('Round', () => {
     it('Decimal length', () => {
@@ -95,8 +98,24 @@ describe('getAsMutableObject', () => {
         });
 
         const mutableObject = getAsMutableObject(immutableObject);
-        mutableObject.name = 'Kelly';
+        mutableObject.name = 'Kelly'; // would throw an error if the object was not mutable
         mutableObject.familyName = 'Wilkins';
         mutableObject.age = 42;
+    });
+});
+
+describe('isExamExercise', () => {
+    it('should return true if course is not set', () => {
+        const examExercise = { course: undefined } as Exercise;
+
+        const isExamExerciseResult = isExamExercise(examExercise);
+        expect(isExamExerciseResult).toBeTrue();
+    });
+
+    it('should return false if course is set', () => {
+        const courseExercise = { course: new Course() } as Exercise;
+
+        const isExamExerciseResult = isExamExercise(courseExercise);
+        expect(isExamExerciseResult).toBeFalse();
     });
 });
