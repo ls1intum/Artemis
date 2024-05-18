@@ -13,7 +13,7 @@
             <ng-container matTreeNodeOutlet />
             @for (competency of knowledgeArea.competencies; track competency.id) {
                 <div class="card tree-card" [class.d-none]="!competency.isVisible">
-                    <ng-container [ngTemplateOutlet]="competencyTemplate" [ngTemplateOutletContext]="{ competency: competency }" />
+                    <ng-container [ngTemplateOutlet]="competencyTemplate" [ngTemplateOutletContext]="{ competency: competency, knowledgeArea: knowledgeArea }" />
                 </div>
             }
             @if (!knowledgeArea.children?.length && !knowledgeArea.competencies?.length) {

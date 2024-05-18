@@ -40,6 +40,7 @@ artemis:
         ssh-template-clone-url: ssh://git@version-control.fake.fake:1111/
         ssh-keys-url-path: /plugins/servlet/ssh/account/keys
         default-branch: main
+        local-vcs-repo-path: ./test-local-vcs-repos
     continuous-integration:
         user: fake-username-ci
         password: fake-password

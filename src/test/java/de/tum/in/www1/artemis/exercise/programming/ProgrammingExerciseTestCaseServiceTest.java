@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
+import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -77,8 +78,19 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationLo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void shouldResetTestCases() throws Exception {
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldResetCourseExerciseTestCases() throws Exception {
+        testResetTestCases(programmingExercise, Visibility.ALWAYS);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldResetExamExerciseTestCases() throws Exception {
+        programmingExercise.setExerciseGroup(new ExerciseGroup());
+        testResetTestCases(programmingExercise, Visibility.AFTER_DUE_DATE);
+    }
+
+    private void testResetTestCases(ProgrammingExercise programmingExercise, Visibility expectedVisibility) throws Exception {
         String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         when(gitService.getLastCommitHash(any())).thenReturn(ObjectId.fromString(dummyHash));
         participationUtilService.addProgrammingParticipationWithResultForExercise(programmingExercise, TEST_PREFIX + "student1");
@@ -86,7 +98,7 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationLo
 
         assertThat(programmingExercise.getTestCasesChanged()).isFalse();
 
-        testCaseService.reset(programmingExercise.getId());
+        testCaseService.reset(programmingExercise);
 
         Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
         ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository
@@ -96,7 +108,7 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationLo
             assertThat(testCase.getWeight()).isEqualTo(1.0);
             assertThat(testCase.getBonusMultiplier()).isEqualTo(1.0);
             assertThat(testCase.getBonusPoints()).isZero();
-            assertThat(testCase.getVisibility()).isEqualTo(Visibility.ALWAYS);
+            assertThat(testCase.getVisibility()).isEqualTo(expectedVisibility);
         }
         assertThat(updatedProgrammingExercise.getTestCasesChanged()).isTrue();
 

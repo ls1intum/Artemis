@@ -49,6 +49,7 @@ class ResourceArchitectureTest extends AbstractArchitectureTest {
 
     @Test
     void allPublicMethodsShouldReturnResponseEntity() {
+        // TODO: We want to move away from ModelAndView. Once all occurrences are removed, this test needs to be adjusted.
         // REST controller methods should return ResponseEntity ("normal" endpoints) or ModelAndView (for redirects)
         ArchRule rule = methods().that().areDeclaredInClassesThat().areAnnotatedWith(RestController.class).and().arePublic().should().haveRawReturnType(ResponseEntity.class)
                 .orShould().haveRawReturnType(ModelAndView.class);
