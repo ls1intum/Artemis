@@ -22,6 +22,7 @@ import { ConversationDTO } from 'app/entities/metis/conversation/conversation.mo
 import { AbstractDialogComponent } from 'app/overview/course-conversations/dialogs/abstract-dialog.component';
 import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { ChannelSubType } from 'app/entities/metis/conversation/channel.model';
 
 describe('AccordionAddOptionsComponent', () => {
     let component: AccordionAddOptionsComponent;
@@ -66,6 +67,30 @@ describe('AccordionAddOptionsComponent', () => {
 
     it('should create', () => {
         expect(component).toBeTruthy();
+    });
+
+    it('should return correct channelSubType when subtype is exercise', fakeAsync(() => {
+        component.groupKey = 'exerciseChannels';
+        fixture.detectChanges();
+        expect(component.getChannelSubType()).toEqual(ChannelSubType.EXERCISE);
+    }));
+
+    it('should return correct channelSubType when subtype is lecture', () => {
+        component.groupKey = 'lectureChannels';
+        fixture.detectChanges();
+        expect(component.getChannelSubType()).toEqual(ChannelSubType.LECTURE);
+    });
+
+    it('should return correct channelSubType when groupKey is general', () => {
+        component.groupKey = 'generalChannels';
+        fixture.detectChanges();
+        expect(component.getChannelSubType()).toEqual(ChannelSubType.GENERAL);
+    });
+
+    it('should return correct channelSubType when groupKey is exercise', () => {
+        component.groupKey = 'examChannels';
+        fixture.detectChanges();
+        expect(component.getChannelSubType()).toEqual(ChannelSubType.EXAM);
     });
 
     it('should not show create channel button if user is missing the permission', fakeAsync(() => {
