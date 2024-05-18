@@ -15,9 +15,10 @@ import { LectureUnitCompletionEvent } from 'app/overview/course-lectures/course-
     standalone: true,
     imports: [ArtemisLectureUnitsModule],
     templateUrl: './learning-path-lecture-unit.component.html',
-    styleUrl: './learning-path-lecture-unit.component.scss',
 })
 export class LearningPathLectureUnitComponent {
+    protected readonly LectureUnitType = LectureUnitType;
+
     private readonly lectureUnitService = inject(LectureUnitService);
     private readonly alertService = inject(AlertService);
 
@@ -44,6 +45,4 @@ export class LearningPathLectureUnitComponent {
         this.lectureUnitService.completeLectureUnit(this.lectureUnit()!.lecture!, completionEvent);
         this.onLearningObjectCompleted.emit(completionEvent.completed);
     }
-
-    protected readonly LectureUnitType = LectureUnitType;
 }

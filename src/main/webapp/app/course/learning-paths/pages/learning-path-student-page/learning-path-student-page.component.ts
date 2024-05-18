@@ -29,9 +29,9 @@ export class LearningPathStudentPageComponent {
 
     private readonly navigation = viewChild(LearningPathStudentNavComponent);
 
-    readonly courseId: Signal<number> = toSignal(this.activatedRoute.parent!.parent!.params.pipe(map((params) => params.courseId)));
+    readonly courseId = toSignal(this.activatedRoute.parent!.parent!.params.pipe(map((params) => params.courseId))) as Signal<number>;
 
-    private readonly learningPathIdData$: Observable<LoadedValue<number>> = toObservable(this.courseId).pipe(
+    private readonly learningPathIdData$ = toObservable(this.courseId).pipe(
         switchMap((courseId) => this.learningPathService.getLearningPathId(courseId!)),
         map((response) => ({ isLoading: false, value: response.body })),
         catchError((error: HttpErrorResponse) => {
@@ -47,9 +47,9 @@ export class LearningPathStudentPageComponent {
             onError(this.alertService, error);
             return of({ isLoading: false, error: error });
         }),
-    );
+    ) as Observable<LoadedValue<number>>;
 
-    private readonly learningPathIdData: Signal<LoadedValue<number>> = toSignal(this.learningPathIdData$, { initialValue: { isLoading: true } });
+    private readonly learningPathIdData = toSignal(this.learningPathIdData$, { initialValue: { isLoading: true } }) as Signal<LoadedValue<number>>;
 
     readonly learningPathId = computed(() => this.learningPathIdData().value);
 

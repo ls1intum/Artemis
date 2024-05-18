@@ -18,7 +18,6 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
     standalone: true,
     imports: [FontAwesomeModule, CommonModule, NgbDropdownModule, NgbAccordionModule, ArtemisSharedModule],
     templateUrl: './learning-path-student-nav-overview.component.html',
-    styleUrl: './learning-path-student-nav-overview.component.scss',
 })
 export class LearningPathStudentNavOverviewComponent {
     protected readonly faCheckCircle = faCheckCircle;

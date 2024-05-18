@@ -117,12 +117,10 @@ public class LearningObjectService {
      * @return the learning object with the given id and type
      */
     public LearningObject getLearningObjectByIdAndType(Long learningObjectId, LearningObjectType learningObjectType) {
-        if (learningObjectType.equals(LearningObjectType.LECTURE)) {
-            return lectureUnitRepository.findByIdWithCompletedUsersElseThrow(learningObjectId);
-        }
-        else if (learningObjectType.equals(LearningObjectType.EXERCISE)) {
-            return exerciseRepository.findByIdWithStudentParticipationsElseThrow(learningObjectId);
-        }
-        throw new IllegalArgumentException("Learning object must be either LectureUnit or Exercise");
+        return switch (learningObjectType) {
+            case LECTURE -> lectureUnitRepository.findByIdWithCompletedUsersElseThrow(learningObjectId);
+            case EXERCISE -> exerciseRepository.findByIdWithStudentParticipationsElseThrow(learningObjectId);
+            case null -> throw new IllegalArgumentException("Learning object must be either LectureUnit or Exercise");
+        };
     }
 }

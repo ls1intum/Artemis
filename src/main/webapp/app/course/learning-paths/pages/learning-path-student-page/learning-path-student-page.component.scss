@@ -3,6 +3,6 @@
 
     .learning-path-student-content {
         height: calc(100vh - var(--sidebar-footer-height-dev) - 10.65rem);
-        overflow: scroll;
+        overflow: auto;
     }
 }

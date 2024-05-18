@@ -26,22 +26,22 @@ export enum LearningObjectType {
     EXERCISE = 'EXERCISE',
 }
 
-export class LearningPathNavigationObjectDto {
-    public id: number;
-    public completed: boolean;
-    public name: string;
-    public type: LearningObjectType;
+export interface LearningPathNavigationObjectDto {
+    id: number;
+    completed: boolean;
+    name: string;
+    type: LearningObjectType;
 }
 
-export class LearningPathNavigationDto {
-    public predecessorLearningObject?: LearningPathNavigationObjectDto;
-    public currentLearningObject: LearningPathNavigationObjectDto;
-    public successorLearningObject?: LearningPathNavigationObjectDto;
-    public progress: number;
+export interface LearningPathNavigationDto {
+    predecessorLearningObject?: LearningPathNavigationObjectDto;
+    currentLearningObject: LearningPathNavigationObjectDto;
+    successorLearningObject?: LearningPathNavigationObjectDto;
+    progress: number;
 }
 
-export class LearningPathNavigationOverviewDto {
-    public learningObjects: LearningPathNavigationObjectDto[];
+export interface LearningPathNavigationOverviewDto {
+    learningObjects: LearningPathNavigationObjectDto[];
 }
 
 export class NgxLearningPathDTO {
