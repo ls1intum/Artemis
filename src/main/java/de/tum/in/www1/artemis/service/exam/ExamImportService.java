@@ -319,7 +319,8 @@ public class ExamImportService {
                     originalProgrammingExercise.setTasks(new ArrayList<>(templateTasks));
 
                     prepareProgrammingExerciseForExamImport((ProgrammingExercise) exerciseToCopy);
-                    yield Optional.of(programmingExerciseImportService.importProgrammingExercise(originalProgrammingExercise, (ProgrammingExercise) exerciseToCopy, false, false));
+                    yield Optional
+                            .of(programmingExerciseImportService.importProgrammingExercise(originalProgrammingExercise, (ProgrammingExercise) exerciseToCopy, false, false, false));
                 }
 
                 case FILE_UPLOAD -> {

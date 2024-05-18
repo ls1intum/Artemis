@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service;
+package de.tum.in.www1.artemis.service.programming;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
@@ -19,6 +19,11 @@ import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.text.StringEscapeUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevTree;
+import org.eclipse.jgit.revwalk.RevWalk;
+import org.eclipse.jgit.treewalk.TreeWalk;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -31,11 +36,18 @@ import org.springframework.util.FileSystemUtils;
 
 import de.tum.in.www1.artemis.domain.File;
 import de.tum.in.www1.artemis.domain.FileType;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.service.FileService;
+import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
+import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
 /**
  * Service that provides utilities for managing files in a git repository.
@@ -46,10 +58,32 @@ public class RepositoryService {
 
     private final GitService gitService;
 
+    private final ProfileService profileService;
+
     private static final Logger log = LoggerFactory.getLogger(RepositoryService.class);
 
-    public RepositoryService(GitService gitService) {
+    public RepositoryService(GitService gitService, ProfileService profileService) {
         this.gitService = gitService;
+        this.profileService = profileService;
+    }
+
+    /**
+     * Gets a participation as a {@link ProgrammingExerciseParticipation} if it belongs to the specified programming exercise.
+     *
+     * @param programmingExerciseId The ID of the programming exercise to which the participation belongs.
+     * @param participation         The participation which to check and retrieve.
+     * @param entityName            The name of the entity to include in the exception message if an error occurs.
+     * @return The participation as a {@link ProgrammingExerciseParticipation} if it belongs to the specified programming exercise.
+     *         An exception is thrown if the participation does not belong to the specified exercise or is not a programming exercise participation.
+     */
+    public ProgrammingExerciseParticipation getAsProgrammingExerciseParticipationOfExerciseElseThrow(long programmingExerciseId, Participation participation, String entityName) {
+        if (!participation.getExercise().getId().equals(programmingExerciseId)) {
+            throw new ConflictException("The specified participation does not belong to the specified exercise.", entityName, "exerciseIdsMismatch");
+        }
+        if (!(participation instanceof ProgrammingExerciseParticipation programmingExerciseParticipation)) {
+            throw new ConflictException("The specified participation does not belong to a programming exercise.", entityName, "notProgrammingExerciseParticipation");
+        }
+        return programmingExerciseParticipation;
     }
 
     /**
@@ -72,12 +106,54 @@ public class RepositoryService {
     }
 
     /**
-     * Get all files/folders with content from repository.
+     * Retrieves the content of files at a specific commit in a given repository.
      *
-     * @param repository in which the requested files are located
-     * @return Files with code or an exception is thrown
+     * @param programmingExercise The programming exercise which contains the VCS repository. This is used to determine the repository URI for TESTS repositories.
+     * @param commitId            The commit identifier from which to extract file contents.
+     * @param repositoryType      The type of the repository (e.g., TESTS, TEMPLATE, etc.). Relevant for participations of type TESTS.
+     * @param participation       The participation related to the repository.
+     * @return A map where each key is a file path and each value is the content of the file as a String. This represents the state of the repository at the given commit.
+     * @throws IOException     If an I/O error occurs during the file content retrieval process. This could be due to issues with file access, network problems, etc.
+     * @throws GitAPIException If an error occurs while interacting with the Git repository. This could be due to issues with repository access, invalid commit ids, etc.
      */
-    public Map<String, String> getFilesWithContent(Repository repository) {
+    public Map<String, String> getFilesContentAtCommit(ProgrammingExercise programmingExercise, String commitId, RepositoryType repositoryType,
+            ProgrammingExerciseParticipation participation) throws IOException, GitAPIException {
+        // Check if local VCS is active
+        if (profileService.isLocalVcsActive()) {
+            log.debug("Using local VCS for getting files at commit {} for participation {}", commitId, participation.getId());
+            // If local VCS is active, operate directly on the bare repository
+            var repoUri = repositoryType == RepositoryType.TESTS ? programmingExercise.getVcsTestRepositoryUri() : participation.getVcsRepositoryUri();
+            Repository repository = gitService.getBareRepository(repoUri);
+            return getFilesContentFromBareRepository(repository, commitId);
+        }
+        else {
+            log.debug("Checking out repo to get files at commit {} for participation {}", commitId, participation.getId());
+            Repository repository;
+            if (repositoryType == RepositoryType.TESTS) {
+                repository = gitService.checkoutRepositoryAtCommit(programmingExercise.getVcsTestRepositoryUri(), commitId, true);
+            }
+            else {
+                // For other repository types, check out the repository at the commit
+                repository = gitService.checkoutRepositoryAtCommit(participation.getVcsRepositoryUri(), commitId, true);
+            }
+            // Get the files content from the working copy of the repository
+            Map<String, String> filesWithContent = getFilesContentFromWorkingCopy(repository);
+            // Switch back to the default branch head
+            gitService.switchBackToDefaultBranchHead(repository);
+            return filesWithContent;
+        }
+    }
+
+    /**
+     * Retrieves a mapping of file paths to their contents within a specified repository.
+     * This method filters out all non-file type entries and reads the content of each file.
+     * Note: If an I/O error occurs reading any file, this exception is caught internally and logged.
+     *
+     * @param repository The repository from which files are to be fetched.
+     * @return A {@link Map} where each key is a file path (as a {@link String}) and each value is the content of the file (also as a {@link String}).
+     *         The map includes only those files that could successfully have their contents read; files that cause an IOException are logged but not included.
+     */
+    public Map<String, String> getFilesContentFromWorkingCopy(Repository repository) {
         var files = gitService.listFilesAndFolders(repository).entrySet().stream().filter(entry -> entry.getValue() == FileType.FILE).map(Map.Entry::getKey).toList();
         Map<String, String> fileListWithContent = new HashMap<>();
 
@@ -90,6 +166,48 @@ public class RepositoryService {
             }
         });
         return fileListWithContent;
+    }
+
+    /**
+     * Retrieves a mapping of file paths to their content for a specific commit in a bare Git repository.
+     * This method extracts file content by traversing the repository's tree from the specified commit.
+     * It is primarily designed to read text files, converting the binary content to a UTF-8 string.
+     * Usage of this method with binary files may lead to data corruption or misrepresentation as
+     * binary data does not convert cleanly into UTF-8 strings.
+     *
+     * @param repository The repository from which file contents are to be retrieved. Must be a bare repository.
+     * @param commitId   The commit identifier from which to extract file contents.
+     * @return A {@link Map} where each key is a file path and each value is the content of the file as a {@link String}.
+     *         The content is encoded in UTF-8 and may not represent binary data accurately.
+     * @throws IOException If an I/O error occurs during the file content retrieval process, including issues with
+     *                         opening and reading the file stream.
+     */
+    public Map<String, String> getFilesContentFromBareRepository(Repository repository, String commitId) throws IOException {
+        RevWalk revWalk = new RevWalk(repository);
+        RevCommit commit = revWalk.parseCommit(repository.resolve(commitId));
+        RevTree tree = commit.getTree();
+        // Initialize your map to store file paths and their contents
+        Map<String, String> filesWithContent = new HashMap<>();
+
+        TreeWalk treeWalk = new TreeWalk(repository);
+        treeWalk.addTree(tree);
+        treeWalk.setRecursive(true);
+        while (treeWalk.next()) {
+            String path = treeWalk.getPathString();
+            ObjectId objectId = treeWalk.getObjectId(0);
+
+            // TODO: In the future, it may make sense to exclude binary files here.
+            // Open the object stream to read the file content
+            try (InputStream inputStream = repository.open(objectId).openStream()) {
+                byte[] bytes = inputStream.readAllBytes(); // Read all bytes at once
+                String content = new String(bytes, StandardCharsets.UTF_8); // Convert bytes to string with UTF-8 encoding
+
+                // Put the path and corresponding file content into the map
+                filesWithContent.put(path, content);
+            }
+        }
+        revWalk.close();
+        return filesWithContent;
     }
 
     /**
@@ -108,8 +226,6 @@ public class RepositoryService {
                 }
             });
         }
-        // invalidate cache
-        repository.setContent(null);
     }
 
     /**
@@ -204,7 +320,6 @@ public class RepositoryService {
         Path safePath = checkIfPathIsValidAndExistanceAndReturnSafePath(repository, filePath, false);
         File file = checkIfPathAndFileAreValidAndReturnSafeFile(repository, safePath);
         FileUtils.copyToFile(inputStream, file);
-        repository.setContent(null); // invalidate cache
     }
 
     /**
@@ -222,7 +337,6 @@ public class RepositoryService {
         // We need to add an empty keep file so that the folder can be added to the git repository
         File keep = new File(repository.getLocalPath().resolve(safePath).resolve(".keep"), repository);
         FileUtils.copyToFile(inputStream, keep);
-        repository.setContent(null); // invalidate cache
     }
 
     /**
@@ -312,8 +426,6 @@ public class RepositoryService {
         if (!isRenamed) {
             throw new IllegalArgumentException("Existing path is not valid");
         }
-
-        repository.setContent(null); // invalidate cache
     }
 
     /**
@@ -341,7 +453,6 @@ public class RepositoryService {
         else {
             FileUtils.deleteDirectory(file.get());
         }
-        repository.setContent(null); // invalidate cache
     }
 
     /**

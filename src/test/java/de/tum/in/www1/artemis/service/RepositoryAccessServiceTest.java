@@ -30,6 +30,7 @@ import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
+import de.tum.in.www1.artemis.service.programming.RepositoryAccessService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.TestConstants;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;

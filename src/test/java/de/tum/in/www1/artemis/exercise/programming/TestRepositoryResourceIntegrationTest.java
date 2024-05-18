@@ -77,7 +77,9 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationJen
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         Course course = courseUtilService.addEmptyCourse();
         programmingExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
-        testRepo.configureRepos("testLocalRepo", "testOriginRepo");
+
+        // Instantiate the remote repository as non-bare so its files can be manipulated
+        testRepo.configureRepos("testLocalRepo", "testOriginRepo", false);
 
         // add file to the repository folder
         Path filePath = Path.of(testRepo.localRepoFile + "/" + currentLocalFileName);
