@@ -42,7 +42,9 @@ import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipatio
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.service.connectors.localci.LocalCIService;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCService;
+import de.tum.in.www1.artemis.service.exam.ExamLiveEventsService;
 import de.tum.in.www1.artemis.service.ldap.LdapUserService;
+import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingMessagingService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
@@ -106,6 +108,12 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
 
     @SpyBean
     protected ProgrammingMessagingService programmingMessagingService;
+
+    @SpyBean
+    protected ExamLiveEventsService examLiveEventsService;
+
+    @SpyBean
+    protected GroupNotificationScheduleService groupNotificationScheduleService;
 
     @Value("${artemis.version-control.url}")
     protected URL localVCBaseUrl;

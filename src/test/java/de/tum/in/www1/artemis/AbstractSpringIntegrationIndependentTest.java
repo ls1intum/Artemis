@@ -25,6 +25,8 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.LtiPlatformConfigurationRepository;
 import de.tum.in.www1.artemis.security.OAuth2JWKSService;
+import de.tum.in.www1.artemis.service.exam.ExamLiveEventsService;
+import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleService;
 
 /**
  * This SpringBootTest is used for tests that only require a minimal set of Active Spring Profiles.
@@ -42,6 +44,12 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
 
     @SpyBean
     protected LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository;
+
+    @SpyBean
+    protected ExamLiveEventsService examLiveEventsService;
+
+    @SpyBean
+    protected GroupNotificationScheduleService groupNotificationScheduleService;
 
     @AfterEach
     protected void resetSpyBeans() {

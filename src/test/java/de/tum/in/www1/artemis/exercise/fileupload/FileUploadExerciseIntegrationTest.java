@@ -22,7 +22,6 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -52,8 +51,6 @@ import de.tum.in.www1.artemis.repository.FileUploadExerciseRepository;
 import de.tum.in.www1.artemis.repository.GradingCriterionRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
-import de.tum.in.www1.artemis.service.exam.ExamLiveEventsService;
-import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
@@ -106,12 +103,6 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationIndepen
 
     @Autowired
     private PageableSearchUtilService pageableSearchUtilService;
-
-    @SpyBean
-    private ExamLiveEventsService examLiveEventsService;
-
-    @SpyBean
-    private GroupNotificationScheduleService groupNotificationScheduleService;
 
     private Set<GradingCriterion> gradingCriteria;
 

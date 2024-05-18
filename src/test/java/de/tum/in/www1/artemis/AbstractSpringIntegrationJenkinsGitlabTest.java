@@ -43,6 +43,8 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabService;
 import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsService;
+import de.tum.in.www1.artemis.service.exam.ExamLiveEventsService;
+import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingMessagingService;
 
 @ResourceLock("AbstractSpringIntegrationJenkinsGitlabTest")
@@ -76,6 +78,12 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
 
     @Autowired
     protected AeolusRequestMockProvider aeolusRequestMockProvider;
+
+    @SpyBean
+    protected ExamLiveEventsService examLiveEventsService;
+
+    @SpyBean
+    protected GroupNotificationScheduleService groupNotificationScheduleService;
 
     @AfterEach
     protected void resetSpyBeans() {

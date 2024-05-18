@@ -18,7 +18,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -41,8 +40,6 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
-import de.tum.in.www1.artemis.service.exam.ExamLiveEventsService;
-import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
 class ProgrammingExerciseTest extends AbstractSpringIntegrationJenkinsGitlabTest {
@@ -71,12 +68,6 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationJenkinsGitlabTest
 
     @Autowired
     private ChannelRepository channelRepository;
-
-    @SpyBean
-    private ExamLiveEventsService examLiveEventsService;
-
-    @SpyBean
-    private GroupNotificationScheduleService groupNotificationScheduleService;
 
     @BeforeEach
     void init() {
