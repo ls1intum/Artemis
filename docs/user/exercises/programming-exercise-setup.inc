@@ -4,7 +4,7 @@ Creating an exercise consists of the following steps:
 
 #. `Generate programming exercise`_: Start by configuring basic settings and add a new exercise to the course.
 #. `Update exercise code in repositories`_: Update the template, solution, and test-repositories to contain the code of your exercise.
-#. `Adapt the build plans`_ (optional): If needed, tailor the build plans to suit your requirements.
+#. `Adapt the build script`_ (optional): If needed, tailor the build script to suit your requirements.
 #. `Configure static code analysis`_ (optional): If static code analysis is activated, customize the configuration as per your needs.
 #. `Adapt the interactive problem statement`_: Clearly define your exercise in the problem statement. Use tasks to create a group of test cases.
 #. `Configure Grading`_: Configure the way students can score points in the exercise. Hide test cases that should only be visible after the due date ("hidden tests").
@@ -24,14 +24,14 @@ Generate programming exercise
     .. figure:: programming/course-management-exercise-dashboard.png
               :align: center
 
-    - **Guided Mode**: The form for generating new programming exercises offers the option to switch to the guided mode by clicking the |switch-to-guided-mode-btn|.
-      This mode splits up the generation of a programming exercise into multiple steps. The following video shows an exemplary use of the guided mode.
+    - The guided mode has been removed. We now introduced a validation bar to navigate through sections and help the user validate the form.
+      For more information, watch the video below.
 
     |
 
     .. raw:: html
 
-        <iframe src="https://live.rbg.tum.de/w/artemisintro/26850?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="400">
+        <iframe src="https://live.rbg.tum.de/w/artemisintro/45966?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="400">
             Watch this video on TUM-Live.
         </iframe>
 
@@ -109,8 +109,8 @@ Generate programming exercise
     - **Record Testwise Coverage:** Activate this option to record the testwise coverage for the solution repository.
       This is necessary when working with Hestia to generate code-based hints.
       This option is only available for Java/Kotlin-exercises with non-sequential test runs.
-    - **Customize Build Plan (with Aeolus)** Activate this option if you want to customize the build plan of your exercise.
-      This feature is available for all programming languages, and works with Bamboo, Jenkins, and LocalCI, Artemis provides templates for the build plan configuration.
+    - **Customize Build Plan** Activate this option if you want to customize the build plan of your exercise.
+      This feature is available for all programming languages, and works with LocalCI and Jenkins, Artemis provides templates for the build plan configuration.
       The build plan can also be customized after the exercise creation.
 
     |
@@ -221,13 +221,6 @@ Generate programming exercise
 
   - **Template:** also called BASE, basic configuration for the test + template repository, used to create student build plans
   - **Solution:** also called SOLUTION, configuration for the test + solution repository, used to manage test cases and to verify the exercise configuration
-
-  .. figure:: programming/programming-view-1.png
-            :align: center
-  .. figure:: programming/programming-view-2.png
-            :align: center
-  .. figure:: programming/programming-view-3.png
-            :align: center
 
 Update exercise code in repositories
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -358,12 +351,26 @@ Update exercise code in repositories
 - In case of a |build_failed| result, some configuration is wrong, please check the build errors on the corresponding build plan.
 - **Hints:** Test cases should only reference code, that is available in the template repository. In case this is **not** possible, please try out the option **Sequential Test Runs**
 
-Adapt the build plans
-^^^^^^^^^^^^^^^^^^^^^
+Adapt the build script
+^^^^^^^^^^^^^^^^^^^^^^
 
-This section is optional. In most cases, the preconfigured build plans do not need to be changed.
-However, if you have additional build steps or different configurations, you can adapt the BASE and SOLUTION build plan as needed.
-When students start the programming exercise, the current version of the BASE build plan will be copied. All changes in the configuration will be considered.
+This section is optional. In most cases, the preconfigured build script does not need to be changed.
+However, if you have additional build steps or different configurations, you can adapt the build script and docker image as needed.
+You can activate the option `Customize Build Script` in the programming exercise create / edit / import screen.
+All changes in the configuration will be considered for all builds (template, solution, student submissions).
+
+There are predefined build scripts in bash for all programming languages, project types and configurations (e.g. with or without static code analysis).
+Notice that the checkout paths for the test and the assignment (template, solution or student) repo cannot be customized at the moment and are determined
+by the chosen programming language. Most programming languages clone the test repos into the root folder and the assignment repo into the `assignment` folder.
+This means that build files in the test repo (e.g. Gradle, Maven) typically refer to the `assignment` folder.
+
+You can also use a custom docker image for the build. Make sure to publish the docker image in a publicly available repository (e.g. DockerHub). Ideally build it
+for both, amd64 and arm64, architectures to make sure it runs on all platforms. Try to keep the docker image size as small as possible, because build agents need
+to download it before they execute the build and might run out of space. Try to include all build dependencies to avoid that they will be downloaded in every build.
+The default Java Docker image can be found on https://github.com/ls1intum/artemis-maven-docker and on https://hub.docker.com/r/ls1tum/artemis-maven-template/tags.
+
+Hint: Try out the build of a custom programming exercise locally before you publish a custom docker image and before you upload the code to Artemis, because the
+development and debugging experience is much better.
 
 .. _configure_static_code_analysis_tools:
 

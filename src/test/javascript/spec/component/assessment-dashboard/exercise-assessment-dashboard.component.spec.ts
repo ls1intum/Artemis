@@ -274,9 +274,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
                 submissionService = TestBed.inject(SubmissionService);
                 jest.spyOn(submissionService, 'getSubmissionsWithComplaintsForTutor').mockReturnValue(of(new HttpResponse({ body: [] })));
 
-                const complaintService = TestBed.inject(ComplaintService);
-                jest.spyOn(complaintService, 'getMoreFeedbackRequestsForTutor').mockReturnValue(of(new HttpResponse({ body: [] })));
-
                 const router = fixture.debugElement.injector.get(Router);
                 navigateSpy = jest.spyOn(router, 'navigate').mockImplementation();
 
@@ -596,7 +593,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
         function initComponent() {
             comp.exercise = {
-                allowManualFeedbackRequests: false,
+                allowFeedbackRequests: false,
                 type: fakeExerciseType,
                 numberOfAssessmentsOfCorrectionRounds: [],
                 studentAssignedTeamIdComputed: false,

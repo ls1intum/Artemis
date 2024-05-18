@@ -5,6 +5,7 @@
             "pageTitle": "Build Job Information",
             "queuedBuildJobs": "Queued Build Jobs",
             "runningBuildJobs": "Running Build Jobs",
+            "finishedBuildJobs": "Finished Build Jobs",
             "buildJob": {
                 "id": "ID",
                 "buildAgent": "Build Agent",
@@ -19,7 +20,11 @@
                 "priority": "Priority",
                 "buildCompletionDate": "Build Completion Date",
                 "buildDuration": "Build Duration",
-                "status": "Status"
+                "completion": "Completion",
+                "start": "Start",
+                "duration": "Duration",
+                "status": "Status",
+                "buildLogs": "Build Logs"
             },
             "cancelAll": "Cancel All"
         }

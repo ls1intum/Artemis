@@ -27,7 +27,27 @@ The main application is stored under ``/src/main`` and the main folders are:
 1. Naming convention
 ====================
 
-All variables, methods and classes should use CamelCase style. The only difference: the first letter of any class should be capital. Most importantly use intention-revealing, pronounceable names.
+All methods and classes should use camelCase style. The only difference: the first letter of any class should be capitalized. Most importantly, use intention-revealing, pronounceable names.
+Variable names should also use camelCase style, where the first letter should be lowercase. For constants, i.e. arguments with the ``static final`` keywords, use all uppercase letters with underscores to separate words: SCREAMING_SNAKE_CASE.
+The only exception to this rule is for the logger, which should be named ``log``.
+Variable and constant names should also be intention-revealing and pronounceable.
+
+Example:
+
+.. code-block:: java
+
+    public class ExampleClass {
+        private static final Logger log = LoggerFactory.getLogger(ExampleClass.class);
+
+        private static final int MAXIMUM_NUMBER_OF_STUDENTS = 10;
+
+        private final ExampleService exampleService;
+
+        public void exampleMethod() {
+            int numberOfStudents = 0;
+            [...]
+        }
+    }
 
 2. Single responsibility principle
 ==================================
@@ -535,7 +555,7 @@ To reduce duplication, do not add explicit checks for authorization or existence
 
 .. code-block:: java
 
-    @GetMapping(Endpoints.GET_FOR_COURSE)
+    @GetMapping("courses/{courseId}/programming-exercises")
     @EnforceAtLeastTutor
     public ResponseEntity<List<ProgrammingExercise>> getActiveProgrammingExercisesForCourse(@PathVariable Long courseId) {
         Course course = courseRepository.findByIdElseThrow(courseId);

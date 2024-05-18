@@ -20,8 +20,14 @@ import { MockAccountService } from '../helpers/mocks/service/mock-account.servic
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
-import { FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, SUBMISSION_POLICY_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
+import {
+    FeedbackType,
+    NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER,
+    STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER,
+    SUBMISSION_POLICY_FEEDBACK_IDENTIFIER,
+} from 'app/entities/feedback.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import * as Sentry from '@sentry/angular-ivy';
 // Preliminary mock before import to prevent errors
 jest.mock('@sentry/angular-ivy', () => {
     const originalModule = jest.requireActual('@sentry/angular-ivy');
@@ -30,7 +36,6 @@ jest.mock('@sentry/angular-ivy', () => {
         captureException: jest.fn(),
     };
 });
-import * as Sentry from '@sentry/angular-ivy';
 
 describe('ResultService', () => {
     let resultService: ResultService;
@@ -83,6 +88,34 @@ describe('ResultService', () => {
         participation: { type: ParticipationType.PROGRAMMING },
         completionDate: dayjs().subtract(5, 'minutes'),
         score: 80,
+    };
+    const result6: Result = {
+        feedbacks: [{ text: NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER + 'AI feedback', type: FeedbackType.AUTOMATIC }],
+        participation: { type: ParticipationType.PROGRAMMING },
+        completionDate: dayjs().subtract(5, 'minutes'),
+        assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+        successful: true,
+    };
+    const result7: Result = {
+        feedbacks: [{ text: NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER + 'AI feedback', type: FeedbackType.AUTOMATIC }],
+        participation: { type: ParticipationType.PROGRAMMING },
+        completionDate: dayjs().subtract(5, 'minutes'),
+        assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+        successful: false,
+    };
+    const result8: Result = {
+        feedbacks: [],
+        participation: { type: ParticipationType.PROGRAMMING },
+        completionDate: dayjs().subtract(5, 'minutes'),
+        assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+        successful: undefined,
+    };
+    const result9: Result = {
+        feedbacks: [],
+        participation: { type: ParticipationType.PROGRAMMING },
+        completionDate: dayjs().add(5, 'minutes'),
+        assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+        successful: undefined,
     };
 
     const modelingExercise: ModelingExercise = {
@@ -268,6 +301,36 @@ describe('ResultService', () => {
                 points: 160,
             });
             expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.preliminary');
+        });
+
+        it('should return correct string for Athena non graded successful feedback', () => {
+            programmingExercise.assessmentDueDate = dayjs().subtract(5, 'minutes');
+
+            expect(resultService.getResultString(result6, programmingExercise)).toBe('artemisApp.result.resultString.automaticAIFeedbackSuccessful');
+            expect(translateServiceSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should return correct string for Athena non graded unsuccessful feedback', () => {
+            programmingExercise.assessmentDueDate = dayjs().subtract(5, 'minutes');
+
+            expect(resultService.getResultString(result7, programmingExercise)).toBe('artemisApp.result.resultString.automaticAIFeedbackFailed');
+            expect(translateServiceSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should return correct string for Athena timed out non graded feedback', () => {
+            programmingExercise.assessmentDueDate = dayjs().add(5, 'minutes');
+
+            expect(resultService.getResultString(result8, programmingExercise)).toBe('artemisApp.result.resultString.automaticAIFeedbackTimedOut');
+            expect(translateServiceSpy).toHaveBeenCalledOnce();
+            expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultString.automaticAIFeedbackTimedOut');
+        });
+
+        it('should return correct string for in progress Athena non-graded feedback', () => {
+            programmingExercise.assessmentDueDate = dayjs().add(5, 'minutes');
+
+            expect(resultService.getResultString(result9, programmingExercise)).toBe('artemisApp.result.resultString.automaticAIFeedbackInProgress');
+            expect(translateServiceSpy).toHaveBeenCalledOnce();
+            expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultString.automaticAIFeedbackInProgress');
         });
 
         it('reports to Sentry if result or exercise is undefined', () => {

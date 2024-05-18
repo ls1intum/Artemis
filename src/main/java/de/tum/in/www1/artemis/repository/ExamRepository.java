@@ -5,7 +5,11 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import jakarta.validation.constraints.NotNull;
@@ -203,6 +207,10 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
 
     @EntityGraph(type = LOAD, attributePaths = { "exerciseGroups", "exerciseGroups.exercises" })
     Optional<Exam> findWithExerciseGroupsAndExercisesById(long examId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "exerciseGroups", "exerciseGroups.exercises", "exerciseGroups.exercises.plagiarismDetectionConfig",
+            "exerciseGroups.exercises.teamAssignmentConfig" })
+    Optional<Exam> findWithExerciseGroupsAndExercisesAndExerciseDetailsById(long examId);
 
     @EntityGraph(type = LOAD, attributePaths = { "exerciseGroups", "exerciseGroups.exercises", "exerciseGroups.exercises.studentParticipations",
             "exerciseGroups.exercises.studentParticipations.submissions" })
@@ -409,13 +417,13 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
 
     /**
      * Returns a set containing all exercises that are defined in the
-     * specified exam.
+     * specified exam including their details.
      *
      * @param examId The id of the exam
      * @return A set containing the exercises
      */
-    default Set<Exercise> findAllExercisesByExamId(long examId) {
-        var exam = findWithExerciseGroupsAndExercisesById(examId);
+    default Set<Exercise> findAllExercisesWithDetailsByExamId(long examId) {
+        var exam = findWithExerciseGroupsAndExercisesAndExerciseDetailsById(examId);
         return exam.map(value -> value.getExerciseGroups().stream().map(ExerciseGroup::getExercises).flatMap(Collection::stream).collect(Collectors.toSet())).orElseGet(Set::of);
     }
 

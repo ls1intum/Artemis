@@ -4,7 +4,10 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static java.lang.Math.toIntExact;
 import static java.util.stream.Collectors.groupingBy;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.springframework.context.annotation.Profile;

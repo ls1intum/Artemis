@@ -332,6 +332,9 @@
         <div>
             <ol class="breadcrumb">
                 @for (breadcrumb of breadcrumbs; track breadcrumb; let i = $index) {
+                    @if (i !== 0) {
+                        <fa-icon [icon]="faChevronRight" size="xs" class="breadcrumb-divider mx-2" />
+                    }
                     <li class="breadcrumb-item">
                         @if (breadcrumb && breadcrumb.translate) {
                             <a
@@ -344,14 +347,26 @@
                             >
                         }
                         @if (breadcrumb && !breadcrumb.translate) {
-                            <a
-                                class="breadcrumb-link"
-                                id="bread-crumb-plain-{{ i }}"
-                                [routerLink]="breadcrumb.uri"
-                                routerLinkActive="active"
-                                [routerLinkActiveOptions]="{ exact: true }"
-                                >{{ breadcrumb.label }}</a
-                            >
+                            @if (isBuildAgentDetails) {
+                                <a
+                                    class="breadcrumb-link"
+                                    id="bread-crumb-{{ i }}"
+                                    [routerLink]="breadcrumb.uri"
+                                    routerLinkActive="active"
+                                    [routerLinkActiveOptions]="{ exact: true }"
+                                    [queryParams]="{ agentName: agentName }"
+                                    >{{ breadcrumb.label }}</a
+                                >
+                            } @else {
+                                <a
+                                    class="breadcrumb-link"
+                                    id="bread-crumb-plain-{{ i }}"
+                                    [routerLink]="breadcrumb.uri"
+                                    routerLinkActive="active"
+                                    [routerLinkActiveOptions]="{ exact: true }"
+                                    >{{ breadcrumb.label }}</a
+                                >
+                            }
                         }
                     </li>
                 }

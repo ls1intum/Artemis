@@ -1,8 +1,12 @@
 package de.tum.in.www1.artemis.connector;
 
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
-import static org.springframework.test.web.client.response.MockRestResponseCreators.*;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.content;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withException;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
+import java.io.IOException;
 import java.net.SocketTimeoutException;
 
 import org.mockito.MockitoAnnotations;
@@ -54,6 +58,10 @@ public class AthenaRequestMockProvider {
     public static final String ATHENA_MODULE_PROGRAMMING_TEST = "module_programming_test";
 
     public static final String ATHENA_RESTRICTED_MODULE_PROGRAMMING_TEST = "module_programming_test_restricted";
+
+    public static final String ATHENA_MODULE_MODELING_TEST = "module_modeling_test";
+
+    public static final String ATHENA_RESTRICTED_MODULE_MODELING_TEST = "module_modeling_test_restricted";
 
     public AthenaRequestMockProvider(@Qualifier("athenaRestTemplate") RestTemplate restTemplate, @Qualifier("shortTimeoutAthenaRestTemplate") RestTemplate shortTimeoutRestTemplate,
             @Qualifier("veryShortTimeoutAthenaRestTemplate") RestTemplate veryShortTimeoutRestTemplate) {
@@ -192,7 +200,10 @@ public class AthenaRequestMockProvider {
             suggestion = suggestion.put("indexStart", 3).put("indexEnd", 9);
         }
         else if (moduleType.equals("programming")) {
-            suggestion = suggestion.put("lineStart", 3).put("lineEnd", 4);
+            suggestion = suggestion.put("lineStart", 3).put("lineEnd", 4).put("description", "invoke infinite compression here").put("filePath", "client.cpp");
+        }
+        else if (moduleType.equals("modeling")) {
+            suggestion = suggestion.put("credits", 0);
         }
         else {
             throw new IllegalArgumentException("Unknown module type: " + moduleType);
@@ -202,6 +213,25 @@ public class AthenaRequestMockProvider {
                 mapper.createArrayNode().add(suggestion));
 
         responseActions.andRespond(withSuccess(node.toString(), MediaType.APPLICATION_JSON));
+    }
+
+    /**
+     * Mocks the /feedback_suggestions API from Athena used to retrieve feedback suggestions for a submission
+     * Makes the endpoint fail
+     *
+     * @param moduleType       The type of the module: "text" or "programming"
+     * @param expectedContents The expected contents of the request
+     */
+    public void mockGetFeedbackSuggestionsWithFailure(String moduleType, RequestMatcher... expectedContents) {
+        ResponseActions responseActions = mockServer
+                .expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules/" + moduleType + "/" + getTestModuleName(moduleType) + "/feedback_suggestions"))
+                .andExpect(method(HttpMethod.POST)).andExpect(content().contentType(MediaType.APPLICATION_JSON));
+
+        for (RequestMatcher matcher : expectedContents) {
+            responseActions.andExpect(matcher);
+        }
+
+        responseActions.andRespond(withException(new IOException("Service unavailable")));
     }
 
     /**
@@ -229,8 +259,10 @@ public class AthenaRequestMockProvider {
 
         array.add(createModule(ATHENA_MODULE_TEXT_TEST, "http://module-text-test-service:5001", "text", true));
         array.add(createModule(ATHENA_MODULE_PROGRAMMING_TEST, "http://module-programming-test-service:5002", "programming", false));
+        array.add(createModule(ATHENA_MODULE_MODELING_TEST, "http://module-modeling-test-service:5005", "modeling", false));
         array.add(createModule(ATHENA_RESTRICTED_MODULE_TEXT_TEST, "http://module-restricted-text-service:5004", "text", false));
         array.add(createModule(ATHENA_RESTRICTED_MODULE_PROGRAMMING_TEST, "http://module-restricted-programming-test-service:5003", "programming", true));
+        array.add(createModule(ATHENA_RESTRICTED_MODULE_MODELING_TEST, "http://module-restricted-modeling-test-service:5006", "modeling", false));
 
         final ResponseActions responseActions = mockServerShortTimeout.expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules")).andExpect(method(HttpMethod.GET));
         responseActions.andRespond(withSuccess().body(array.toString()).contentType(MediaType.APPLICATION_JSON));

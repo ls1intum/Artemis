@@ -5,7 +5,14 @@ import static de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupResour
 import static jakarta.persistence.Persistence.getPersistenceUtil;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -330,8 +337,8 @@ public class TutorialGroupService {
         // === Step 3: Register all found users to their respective tutorial groups ===
         Map<TutorialGroup, Set<User>> tutorialGroupToRegisteredUsers = new HashMap<>();
         for (var registrationUserPair : uniqueRegistrationsWithMatchingUsers.entrySet()) {
-            assert registrationUserPair.getKey().title() != null;
-            var tutorialGroup = tutorialGroupTitleToTutorialGroup.get(registrationUserPair.getKey().title().trim());
+            String title = Objects.requireNonNull(registrationUserPair.getKey().title());
+            var tutorialGroup = tutorialGroupTitleToTutorialGroup.get(title.trim());
             var user = registrationUserPair.getValue();
             tutorialGroupToRegisteredUsers.computeIfAbsent(tutorialGroup, key -> new HashSet<>()).add(user);
         }
@@ -449,7 +456,9 @@ public class TutorialGroupService {
 
     private static Optional<User> getMatchingUser(Set<User> users, TutorialGroupRegistrationImportDTO registration) {
         return users.stream().filter(user -> {
-            assert registration.student() != null; // should be the case as we filtered out all registrations without a student
+            if (registration.student() == null) {
+                return false;
+            }
             boolean hasRegistrationNumber = StringUtils.hasText(registration.student().registrationNumber());
             boolean hasLogin = StringUtils.hasText(registration.student().login());
 
@@ -468,7 +477,9 @@ public class TutorialGroupService {
         var loginsToSearchFor = new HashSet<String>();
 
         for (var registration : registrations) {
-            assert registration.student() != null; // should be the case as we filtered out all registrations without a student in the calling method
+            if (registration.student() == null) {
+                continue; // should not be the case as we filtered out all registrations without a student in the calling method
+            }
             boolean hasRegistrationNumber = StringUtils.hasText(registration.student().registrationNumber());
             boolean hasLogin = StringUtils.hasText(registration.student().login());
 
@@ -492,7 +503,6 @@ public class TutorialGroupService {
 
     private Set<User> findUsersByLogins(Set<String> logins, String groupName) {
         return new HashSet<>(userRepository.findAllWithGroupsByIsDeletedIsFalseAndGroupsContainsAndLoginIn(groupName, logins));
-
     }
 
     /**

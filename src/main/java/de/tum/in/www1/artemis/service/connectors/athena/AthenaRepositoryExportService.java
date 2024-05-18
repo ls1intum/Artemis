@@ -15,7 +15,9 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.export.ProgrammingExerciseExportService;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
@@ -62,8 +64,8 @@ public class AthenaRepositoryExportService {
      * @param exercise the exercise to check
      * @throws AccessForbiddenException if the feedback suggestions are not enabled for the given exercise
      */
-    private void checkFeedbackSuggestionsEnabledElseThrow(Exercise exercise) {
-        if (!exercise.areFeedbackSuggestionsEnabled()) {
+    private void checkFeedbackSuggestionsOrAutomaticFeedbackEnabledElseThrow(Exercise exercise) {
+        if (!(exercise.areFeedbackSuggestionsEnabled() || exercise.getAllowFeedbackRequests())) {
             log.error("Feedback suggestions are not enabled for exercise {}", exercise.getId());
             throw new ServiceUnavailableException("Feedback suggestions are not enabled for exercise");
         }
@@ -84,7 +86,7 @@ public class AthenaRepositoryExportService {
         log.debug("Exporting repository for exercise {}, submission {}", exerciseId, submissionId);
 
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        checkFeedbackSuggestionsEnabledElseThrow(programmingExercise);
+        checkFeedbackSuggestionsOrAutomaticFeedbackEnabledElseThrow(programmingExercise);
 
         var exportOptions = new RepositoryExportOptionsDTO();
         exportOptions.setAnonymizeRepository(true);

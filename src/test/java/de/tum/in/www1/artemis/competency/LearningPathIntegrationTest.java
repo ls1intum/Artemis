@@ -9,6 +9,7 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -29,7 +30,7 @@ import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.LearningPath;
 import de.tum.in.www1.artemis.domain.lecture.TextUnit;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.in.www1.artemis.lecture.LectureUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.CourseRepository;
@@ -525,26 +526,58 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
         request.get("/api/learning-path/" + learningPath.getId() + "/" + type, HttpStatus.OK, NgxLearningPathDTO.class);
     }
 
-    @Test
-    @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
-    void testGetLearningPathId() throws Exception {
-        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
-        final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
-        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
-        final var result = request.get("/api/courses/" + course.getId() + "/learning-path-id", HttpStatus.OK, Long.class);
-        assertThat(result).isEqualTo(learningPath.getId());
+    @Nested
+    class GetLearningPathId {
+
+        @Test
+        @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+        void shouldReturnExistingId() throws Exception {
+            course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+            final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+            final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+            final var result = request.get("/api/courses/" + course.getId() + "/learning-path-id", HttpStatus.OK, Long.class);
+            assertThat(result).isEqualTo(learningPath.getId());
+        }
+
+        @Test
+        @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+        void shouldReturnNotFoundIfNotExists() throws Exception {
+            course.setLearningPathsEnabled(true);
+            course = courseRepository.save(course);
+            var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+            student = userRepository.findWithLearningPathsByIdElseThrow(student.getId());
+            learningPathRepository.deleteAll(student.getLearningPaths());
+            request.get("/api/courses/" + course.getId() + "/learning-path-id", HttpStatus.NOT_FOUND, Long.class);
+        }
     }
 
-    @Test
-    @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
-    void testGetLearningPathIdNotExisting() throws Exception {
-        course.setLearningPathsEnabled(true);
-        course = courseRepository.save(course);
-        var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
-        student = userRepository.findWithLearningPathsByIdElseThrow(student.getId());
-        learningPathRepository.deleteAll(student.getLearningPaths());
-        final var result = request.get("/api/courses/" + course.getId() + "/learning-path-id", HttpStatus.OK, Long.class);
-        assertThat(result).isNotNull();
+    @Nested
+    class GenerateLearningPath {
+
+        @Test
+        @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+        void shouldReturnForbiddenIfNotEnabled() throws Exception {
+            request.postWithResponseBody("/api/courses/" + course.getId() + "/learning-path", null, Long.class, HttpStatus.BAD_REQUEST);
+        }
+
+        @Test
+        @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+        void shouldReturnBadRequestIfAlreadyExists() throws Exception {
+            course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+            request.postWithResponseBody("/api/courses/" + course.getId() + "/learning-path", null, Long.class, HttpStatus.BAD_REQUEST);
+        }
+
+        @Test
+        @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+        void shouldGenerateLearningPath() throws Exception {
+            course.setLearningPathsEnabled(true);
+            course = courseRepository.save(course);
+            final var response = request.postWithResponseBody("/api/courses/" + course.getId() + "/learning-path", null, Long.class, HttpStatus.CREATED);
+            assertThat(response).isNotNull();
+            final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+            final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+            assertThat(learningPath).isNotNull();
+        }
     }
 
     @Test

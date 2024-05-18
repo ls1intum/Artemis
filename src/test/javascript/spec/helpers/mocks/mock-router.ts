@@ -5,7 +5,7 @@ import { NavigationEnd, RouterEvent, RouterState, UrlTree } from '@angular/route
 export class MockRouter {
     url = '/';
     navigateByUrl = jest.fn().mockReturnValue(true);
-    navigate = jest.fn().mockReturnValue(true);
+    navigate = jest.fn().mockReturnValue(Promise.resolve(true));
     routerState: RouterState;
     createUrlTree = jest.fn().mockReturnValue({ path: 'testValue' } as unknown as UrlTree);
     serializeUrl = jest.fn().mockReturnValue('testValue');

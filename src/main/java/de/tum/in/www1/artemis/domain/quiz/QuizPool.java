@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;

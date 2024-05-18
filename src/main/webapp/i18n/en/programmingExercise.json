@@ -16,8 +16,12 @@
             "deleted": "Deleted Programming Exercise with title {{ param }}",
             "delete": {
                 "question": "Are you sure you want to delete the Programming Exercise <strong>{{ title }}</strong>?",
-                "studentReposBuildPlans": "Additionally delete all student repositories and student build plans (Be careful: this can NOT be undone!). Before you activate this option, we recommend that you archive the exercise first!",
-                "studentRepos": "Additionally delete all student repositories (Be careful: this can NOT be undone!). Before you activate this option, we recommend that you archive the exercise first!",
+                "questionLocalVC": {
+                    "single": "Are you sure you want to delete the Programming Exercise <strong>{{ title }}</strong>?<br>All student, template, solution, test, and auxiliary repositories and build plans will be deleted.<br>Be careful: this can <strong class='text-danger'>NOT</strong> be undone!<br>Before you activate this option, we recommend that you archive the repositories and build plans first!",
+                    "multiple": "Are you sure you want to delete selected programming exercises?<br>All student, template, solution, test, and auxiliary repositories and build plans will be deleted.<br>Be careful: this can <strong class='text-danger'>NOT</strong> be undone!<br>Before you activate this option, we recommend that you archive the repositories and build plans first!"
+                },
+                "studentReposBuildPlans": "Additionally delete all student repositories and student build plans (Be careful: this can NOT be undone!). Before you activate this option, we recommend that you archive the repositories and build plans first!",
+                "studentRepos": "Additionally delete all student repositories (Be careful: this can NOT be undone!). Before you activate this option, we recommend that you archive the repositories and build plans first!",
                 "baseReposBuildPlans": "Additionally delete template, solution, test, and auxiliary repos and build plans (Be careful: this can NOT be undone!). Before you activate this option, we recommend that you back up these build plans and repos first!"
             },
             "cleanup": {
@@ -33,7 +37,7 @@
                 },
                 "deleteRepositories": {
                     "title": "Delete student repositories (on {{ vcPlatform }}).",
-                    "warning": "Before you activate this option, we recommend that you archive the exercise first."
+                    "warning": "Before you activate this option, we recommend that you archive the repositories and build plans first."
                 },
                 "deleteParticipationsSubmissionsAndResults": "Delete all student participations, submissions and results (on Artemis).",
                 "artefactsWarning": "Deleting student participations, submissions, and results without removing the associated repositories and build plans may lead to undeleted artifacts on {{ vcPlatform }} and {{ ciPlatform }}. Please carefully review if this is the desired action before proceeding.",
@@ -74,7 +78,7 @@
                     "buildPlansTitle": "Build Plans",
                     "difficultyStepMessage": "Configure the settings related to the execution and collaboration aspects of the programming exercise",
                     "languageStepTitle": "Language",
-                    "languageStepMessage": "Set the specific details related to the programming language used in the exercise as well as features directly related to it",
+                    "languageStepMessage": "Configure the specific details related to the programming language and build mechanism used in the exercise",
                     "problemStepTitle": "Problem",
                     "problemStepMessage": "Create a comprehensive problem statement for the new exercise, including detailed tasks that clearly outline the required actions and expectations for students.",
                     "gradingStepTitle": "Grading",
@@ -115,14 +119,15 @@
             "buildConfiguration": "Build Configuration",
             "buildPlanEditor": "Build Plan Editor",
             "buildPlanFetchError": "Could not find a build plan for this exercise. This is expected for older exercises. Edit the build plan in the CI system or reset the build plan in Artemis to create a new one that is editable here.",
-            "customizeBuildPlan": "Customize Build Plan",
-            "customizeBuildPlanWithAeolus": "Customize Build Plan with Aeolus",
-            "revertToTemplateBuildPlan": "If you are not happy with your build plan, you can reset it to its template by using the Reset button.",
+            "customizeBuildPlan": "Customize Build Script",
+            "customizeBuildPlanWithAeolus": "Customize Build Script",
+            "revertToTemplateBuildPlan": "Artemis executes the following build script for each submission in a Docker container. You can customize the build script and reset it to its default value by using the Reset button above.",
             "runActionAlways": "Always run, even if other actions fail",
             "workdir": "Working Directory",
             "parameters": "Parameters",
             "dockerImage": "Docker Image",
-            "script": "Script",
+            "script": "Build script",
+            "customizeDockerImage": "You can customize the Docker image. Make sure to provide it in amd64 and arm64 and include all build dependencies to guarantee a short build duration.",
             "allowOnlineEditor": {
                 "title": "Allow Online Editor",
                 "alert": "At least one option (Offline IDE or Online Editor) must be selected"
@@ -313,6 +318,7 @@
                     "bonusMultiplier": "Bonus multiplier: This multiplies the points given for passing a test case without affecting the fractions of other test cases. Multipliers greater than 1 can result in student scores greater than 100%.",
                     "bonusPoints": "Bonus points: Additional points added on top of the regular points for passing a test case. Setting bonus points can result in student scores greater than 100%.",
                     "visibility": "Feedback and points for test cases marked as ‘After Due Date’ only become visible to students after the due date has passed. Tests with visibility ‘Never’ do not influence the student score.",
+                    "visibilityExam": "Feedback and points for test cases marked as ‘After Release Date of Results’ only become visible to students after the exam results release date has passed. Tests with visibility ‘Never’ do not influence the student score.",
                     "points": "The amount of points the student gets for passing this test. This value is rounded according to the course settings.",
                     "type": "The type of the test case determines if the test case has been generated from the test.json (STRUCTURAL), or has been written manually (BEHAVIORAL)."
                 },
@@ -363,9 +369,10 @@
                     "title": "Normalize code style",
                     "tooltip": "Standardize line endings and encoding for consistency"
                 },
+                "successMessageRepo": "Export of repo was successful. The exported zip file is currently being downloaded.",
                 "successMessageRepos": "Export of repos was successful. The exported zip file with all repositories is currently being downloaded.",
                 "successMessageExercise": "Export of exercise was successful. The exported zip file with all exercise material is currently being downloaded.",
-                "notFoundMessageRepos": "No Repsoitories exported for exercise {{exerciseId}}: There are no submission of the given students."
+                "notFoundMessageRepos": "No repos exported for exercise {{exerciseId}}: There are no submissions from the given students."
             },
             "resubmitOnFailedSubmission": "An automatic assessment for this participant's last submission could not be generated. Click the button to submit again. This will trigger a new build run that tests the last submission.",
             "resubmit": "Resubmit the last submission. This will execute a build run on the participant's repository without making a commit.",
@@ -411,14 +418,17 @@
                 "assessmentDueDate": "Assessment Due Date",
                 "assessmentDueDateTooltip": "The due date for manual reviews. As soon as the specified date passes, all manual assessments will be released to students!",
                 "notSet": "not set",
-                "allowFeedbackRequests": "Allow feedback requests",
+                "allowFeedbackRequests": "Allow automatic non graded feedback requests/manual feedback requests",
+                "allowFeedbackRequestsTooltip": "Students can request feedback before the due date. The requests will be processed by Athena, or, if Athena cannot be reached, students can send manual feedback requests.",
                 "manualFeedbackRequests": "Manual feedback requests",
                 "manualFeedbackRequestsTooltip": "Students can request manual feedback before the due date to receive feedback.",
                 "complaintOnAutomaticAssessment": "Complaint on Automatic Assessment",
                 "complaintOnAutomaticAssessmentTooltip": "Students can complain after receiving an automatic assessment. Which will be evaluated by a tutor afterwards.",
                 "exampleSolutionPublicationDateTooltip": "The date when the Solution Repository becomes available to download for students. Leave blank to disable.",
                 "releaseTestsWithExampleSolution": "Include tests into example solution",
-                "releaseTestsWithExampleSolutionTooltip": "In addition to the example solution the automatic tests can be published after the due date."
+                "releaseTestsWithExampleSolutionTooltip": "In addition to the example solution the automatic tests can be published after the due date.",
+                "setTestCaseVisibilityToAfterReleaseDateOfResults": "Set test case visibility to After Release Date of Results",
+                "setTestCaseVisibilityToAfterReleaseDateOfResultsTooltip": "During the exam students will only see if their code compiles. Details about the test results will be displayed after the Release Date of Results."
             },
             "repositoryIsLocked": {
                 "title": "Your repository is locked.",
@@ -457,13 +467,16 @@
             "auxiliaryRepository": {
                 "error": "There is a problem with the auxiliary repository.",
                 "addAuxiliaryRepository": "Add Auxiliary Repository",
+                "usageDescription": "You can use auxiliary repositories to provide additional code that students cannot see or modify. The additional code is inserted at the specified Checkout Directory during the build of the submission.",
                 "repositoryName": "Repository Name",
                 "checkoutDirectory": "Checkout Directory",
+                "description": "Description",
                 "invalidRepositoryName": "A repository with that name already exists in this exercise!",
                 "duplicateRepositoryNames": "Multiple auxiliary repositories must not share the same name!",
                 "duplicateDirectoryNames": "Multiple auxiliary repositories must not share the same checkout directory!",
                 "warning": "Auxiliary repositories can be added, edited and removed. Changes in Artemis do not carry over to the VCS and CIS and must be done manually in these systems.",
                 "editedWarning": "You changed the auxiliary repositories. These changes in Artemis do not carry over to the VCS and CIS and must be done manually in these systems.",
+                "editedWarningLocalCI": "You changed the auxiliary repositories. These changes in Artemis do not carry over to the VCS and the build script must be adjusted manually.",
                 "repositoryNameRequired": {
                     "pattern": "Auxiliary repositories might not be named 'exercise', 'solution', 'tests', or 'auxiliary'. Names might not contain special characters other than '-' and '_'."
                 },
@@ -533,6 +546,11 @@
             "diffReport": {
                 "button": "Show",
                 "tooltip": "Shows the detailed git-diff between the template and solution repositories.",
+                "splitView": {
+                    "enable": "Enable split view",
+                    "disable": "Disable split view",
+                    "tooltip": "In the split view, both versions of each changed file are displayed next to each other. Note that the split view will only be shown if your browser window is wide enough."
+                },
                 "tooltipBetweenSubmissions": "Shows the detailed git-diff between the current and previous submission.",
                 "title": "Template-Solution-Diff",
                 "titleForSubmissions": "Submission-Diff",
@@ -543,6 +561,11 @@
                 "previousCommit": "Previous Commit",
                 "currentSubmission": "Current Submission",
                 "currentCommit": "Current Commit",
+                "fileChange": {
+                    "created": "Created",
+                    "deleted": "Deleted",
+                    "renamed": "Renamed"
+                },
                 "errorWhileFetchingRepos": "An error occurred while fetching the repositories. Please check your internet connection and reopen the modal.",
                 "404": "Template-Solution-Diff has not been generated yet. Please do a push to the template or solution repository to generate it.",
                 "lineStatLabel": "Lines added/removed between template and solution",
@@ -569,8 +592,8 @@
             "withDependenciesTooltip": "Adds an external Apache commons-lang dependency to the generated project as an example how Maven dependencies should be used with Artemis exercises.",
             "recordTestwiseCoverage": "Record Testwise Coverage",
             "recordTestwiseCoverageTooltip": "Activate this option to record the testwise coverage for the solution repository. This option is only available for Java/Kotlin-exercises with non-sequential test runs.",
-            "customizeBuildPlansWithAeolusTooltip": "Activate this option to customize the build plans with Aeolus.",
-            "customizeBuildPlansTooltip": "Activate this option to customize the build plan for this exercise.",
+            "customizeBuildPlansWithAeolusTooltip": "Activate this option to customize the docker image and build plan which is executed on Artemis for each submission in a Docker container.",
+            "customizeBuildPlansTooltip": "Activate this option to customize the docker image and build plan which is executed on Artemis for each submission in a Docker container.",
             "coveredLineRatio": "Ratio Test-Covered Lines",
             "testwiseCoverageReport": {
                 "button": "Show testwise coverage",

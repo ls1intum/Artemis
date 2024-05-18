@@ -6,7 +6,6 @@ import { createCommitUrl } from 'app/exercises/programming/shared/utils/programm
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_LOCALVC } from 'app/app.constants';
 import { Subscription } from 'rxjs';
-import { Router } from '@angular/router';
 import { faCircle } from '@fortawesome/free-regular-svg-icons';
 
 @Component({
@@ -25,18 +24,15 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
     private commitsInfoSubscription: Subscription;
     private profileInfoSubscription: Subscription;
     localVC = false;
-    routerLink: string;
 
     faCircle = faCircle;
 
     constructor(
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private profileService: ProfileService,
-        private router: Router,
     ) {}
 
     ngOnInit(): void {
-        this.routerLink = this.router.url;
         if (!this.commits) {
             if (this.participationId) {
                 this.commitsInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitsInfoForParticipation(this.participationId).subscribe((commits) => {

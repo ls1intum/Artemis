@@ -3,8 +3,15 @@ package de.tum.in.www1.artemis.service.connectors.localci.buildagent;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
 
 import java.time.ZonedDateTime;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
@@ -13,6 +20,7 @@ import jakarta.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -24,9 +32,14 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.cp.lock.FencedLock;
 import com.hazelcast.map.IMap;
 
+import de.tum.in.www1.artemis.domain.BuildLogEntry;
 import de.tum.in.www1.artemis.domain.enumeration.BuildStatus;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.*;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.JobTimingInfo;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildAgentInformation;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.ResultQueueItem;
 
 /**
  * Includes functionality for processing build jobs from the shared build job queue.
@@ -42,6 +55,8 @@ public class SharedQueueProcessingService {
     private final ThreadPoolExecutor localCIBuildExecutorService;
 
     private final BuildJobManagementService buildJobManagementService;
+
+    private final BuildLogsMap buildLogsMap;
 
     private final AtomicInteger localProcessingJobs = new AtomicInteger(0);
 
@@ -68,10 +83,12 @@ public class SharedQueueProcessingService {
 
     private UUID listenerId;
 
-    public SharedQueueProcessingService(HazelcastInstance hazelcastInstance, ExecutorService localCIBuildExecutorService, BuildJobManagementService buildJobManagementService) {
+    public SharedQueueProcessingService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, ExecutorService localCIBuildExecutorService,
+            BuildJobManagementService buildJobManagementService, BuildLogsMap buildLogsMap) {
         this.hazelcastInstance = hazelcastInstance;
         this.localCIBuildExecutorService = (ThreadPoolExecutor) localCIBuildExecutorService;
         this.buildJobManagementService = buildJobManagementService;
+        this.buildLogsMap = buildLogsMap;
     }
 
     /**
@@ -261,7 +278,10 @@ public class SharedQueueProcessingService {
                     buildJob.courseId(), buildJob.exerciseId(), buildJob.retryCount(), buildJob.priority(), BuildStatus.SUCCESSFUL, buildJob.repositoryInfo(), jobTimingInfo,
                     buildJob.buildConfig(), null);
 
-            ResultQueueItem resultQueueItem = new ResultQueueItem(buildResult, finishedJob, null);
+            List<BuildLogEntry> buildLogs = buildLogsMap.getBuildLogs(buildJob.id());
+            buildLogsMap.removeBuildLogs(buildJob.id());
+
+            ResultQueueItem resultQueueItem = new ResultQueueItem(buildResult, finishedJob, buildLogs, null);
             resultQueue.add(resultQueueItem);
 
             // after processing a build job, remove it from the processing jobs
@@ -289,7 +309,14 @@ public class SharedQueueProcessingService {
 
             job = new LocalCIBuildJobQueueItem(buildJob, completionDate, status);
 
-            ResultQueueItem resultQueueItem = new ResultQueueItem(null, job, ex);
+            List<BuildLogEntry> buildLogs = buildLogsMap.getBuildLogs(buildJob.id());
+            buildLogsMap.removeBuildLogs(buildJob.id());
+
+            LocalCIBuildResult failedResult = new LocalCIBuildResult(buildJob.buildConfig().branch(), buildJob.buildConfig().assignmentCommitHash(),
+                    buildJob.buildConfig().testCommitHash(), false);
+            failedResult.setBuildLogEntries(buildLogs);
+
+            ResultQueueItem resultQueueItem = new ResultQueueItem(failedResult, job, buildLogs, ex);
             resultQueue.add(resultQueueItem);
 
             processingJobs.remove(buildJob.id());

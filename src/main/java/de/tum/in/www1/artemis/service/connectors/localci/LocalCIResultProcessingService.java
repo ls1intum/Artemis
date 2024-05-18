@@ -9,6 +9,7 @@ import jakarta.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +21,7 @@ import com.hazelcast.cp.lock.FencedLock;
 import com.hazelcast.map.IMap;
 
 import de.tum.in.www1.artemis.domain.BuildJob;
+import de.tum.in.www1.artemis.domain.BuildLogEntry;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.BuildStatus;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
@@ -30,6 +32,7 @@ import de.tum.in.www1.artemis.repository.BuildJobRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildAgentInformation;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
@@ -61,6 +64,8 @@ public class LocalCIResultProcessingService {
 
     private final ProgrammingTriggerService programmingTriggerService;
 
+    private final BuildLogEntryService buildLogEntryService;
+
     private IQueue<ResultQueueItem> resultQueue;
 
     private IMap<String, LocalCIBuildAgentInformation> buildAgentInformation;
@@ -69,9 +74,9 @@ public class LocalCIResultProcessingService {
 
     private UUID listenerId;
 
-    public LocalCIResultProcessingService(HazelcastInstance hazelcastInstance, ProgrammingExerciseGradingService programmingExerciseGradingService,
+    public LocalCIResultProcessingService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, ProgrammingExerciseGradingService programmingExerciseGradingService,
             ProgrammingMessagingService programmingMessagingService, BuildJobRepository buildJobRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            ParticipationRepository participationRepository, ProgrammingTriggerService programmingTriggerService) {
+            ParticipationRepository participationRepository, ProgrammingTriggerService programmingTriggerService, BuildLogEntryService buildLogEntryService) {
         this.hazelcastInstance = hazelcastInstance;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.participationRepository = participationRepository;
@@ -79,6 +84,7 @@ public class LocalCIResultProcessingService {
         this.programmingMessagingService = programmingMessagingService;
         this.buildJobRepository = buildJobRepository;
         this.programmingTriggerService = programmingTriggerService;
+        this.buildLogEntryService = buildLogEntryService;
     }
 
     /**
@@ -113,75 +119,83 @@ public class LocalCIResultProcessingService {
 
         LocalCIBuildJobQueueItem buildJob = resultQueueItem.buildJobQueueItem();
         LocalCIBuildResult buildResult = resultQueueItem.buildResult();
+        List<BuildLogEntry> buildLogs = resultQueueItem.buildLogs();
         Throwable ex = resultQueueItem.exception();
+
+        BuildJob savedBuildJob;
 
         SecurityUtils.setAuthorizationObject();
         Optional<Participation> participationOptional = participationRepository.findById(buildJob.participationId());
 
         if (buildResult != null) {
-            if (participationOptional.isPresent()) {
-                ProgrammingExerciseParticipation participation = (ProgrammingExerciseParticipation) participationOptional.get();
-
-                // In case the participation does not contain the exercise, we have to load it from the database
-                if (participation.getProgrammingExercise() == null) {
-                    participation.setProgrammingExercise(programmingExerciseRepository.findByParticipationIdOrElseThrow(participation.getId()));
-                }
-                Result result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult);
-
-                if (result != null) {
-                    programmingMessagingService.notifyUserAboutNewResult(result, participation);
-                    addResultToBuildAgentsRecentBuildJobs(buildJob, result);
-                }
-                else {
-                    programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation,
-                            new BuildTriggerWebsocketError("Result could not be processed", participation.getId()));
-                }
-            }
-            else {
-                log.warn("Participation with id {} has been deleted. Cancelling the processing of the build result.", buildJob.participationId());
-            }
-            // save build job to database
-            saveFinishedBuildJob(buildJob, BuildStatus.SUCCESSFUL);
-        }
-        else {
-            if (ex.getCause() instanceof CancellationException && ex.getMessage().equals("Build job with id " + buildJob.id() + " was cancelled.")) {
-
-                if (participationOptional.isPresent()) {
-                    ProgrammingExerciseParticipation participation = (ProgrammingExerciseParticipation) participationOptional.get();
-                    programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation,
-                            new BuildTriggerWebsocketError("Build job was cancelled", participation.getId()));
-                }
-
-                saveFinishedBuildJob(buildJob, BuildStatus.CANCELLED);
-            }
-            else {
-                log.error("Error while processing build job: {}", buildJob, ex);
-
-                if (participationOptional.isPresent()) {
-                    ProgrammingExerciseParticipation participation = (ProgrammingExerciseParticipation) participationOptional.get();
-                    programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation,
-                            new BuildTriggerWebsocketError(ex.getMessage(), participation.getId()));
-                }
-                else {
-                    log.warn("Participation with id {} has been deleted. Cancelling the requeueing of the build job.", buildJob.participationId());
-                }
-
-                saveFinishedBuildJob(buildJob, BuildStatus.FAILED);
-            }
-        }
-
-        // If the build job is a solution build of a test or auxiliary push, we need to trigger the build of the corresponding template repository
-        if (isSolutionBuildOfTestOrAuxPush(buildJob)) {
-            log.debug("Triggering build of template repository for solution build with id {}", buildJob.id());
+            Result result = null;
             try {
-                programmingTriggerService.triggerTemplateBuildAndNotifyUser(buildJob.exerciseId(), buildJob.buildConfig().commitHash(), SubmissionType.TEST,
-                        buildJob.repositoryInfo().triggeredByPushTo());
+                if (participationOptional.isPresent()) {
+                    ProgrammingExerciseParticipation participation = (ProgrammingExerciseParticipation) participationOptional.get();
+
+                    // In case the participation does not contain the exercise, we have to load it from the database
+                    if (participation.getProgrammingExercise() == null) {
+                        participation.setProgrammingExercise(programmingExerciseRepository.getProgrammingExerciseFromParticipationElseThrow(participation));
+                    }
+                    result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult);
+
+                }
+                else {
+                    log.warn("Participation with id {} has been deleted. Cancelling the processing of the build result.", buildJob.participationId());
+                }
             }
-            catch (EntityNotFoundException e) {
-                // Something went wrong while retrieving the template participation.
-                // At this point, programmingMessagingService.notifyUserAboutSubmissionError() does not work, because the template participation is not available.
-                // The instructor will see in the UI that no build of the template repository was conducted and will receive an error message when triggering the build manually.
-                log.error("Something went wrong while triggering the template build for exercise {} after the solution build was finished.", buildJob.exerciseId(), e);
+            finally {
+                // save build job to database
+                if (ex != null) {
+                    if (ex.getCause() instanceof CancellationException && ex.getMessage().equals("Build job with id " + buildJob.id() + " was cancelled.")) {
+                        savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.CANCELLED, result);
+                    }
+                    else {
+                        log.error("Error while processing build job: {}", buildJob, ex);
+                        savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.FAILED, result);
+                    }
+                }
+                else {
+                    savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.SUCCESSFUL, result);
+                }
+
+                if (participationOptional.isPresent()) {
+                    ProgrammingExerciseParticipation participation = (ProgrammingExerciseParticipation) participationOptional.get();
+
+                    if (result != null) {
+                        programmingMessagingService.notifyUserAboutNewResult(result, participation);
+                        addResultToBuildAgentsRecentBuildJobs(buildJob, result);
+                    }
+                    else {
+                        programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation,
+                                new BuildTriggerWebsocketError("Result could not be processed", participation.getId()));
+                    }
+                }
+            }
+
+            if (!buildLogs.isEmpty()) {
+                if (savedBuildJob != null) {
+                    buildLogEntryService.saveBuildLogsToFile(buildLogs, savedBuildJob.getBuildJobId());
+                }
+                else {
+                    log.warn("Couldn't save build logs as build job {} was not saved", buildJob.id());
+                }
+            }
+
+            // If the build job is a solution build of a test or auxiliary push, we need to trigger the build of the corresponding template repository
+            if (isSolutionBuildOfTestOrAuxPush(buildJob)) {
+                log.debug("Triggering build of template repository for solution build with id {}", buildJob.id());
+                try {
+                    programmingTriggerService.triggerTemplateBuildAndNotifyUser(buildJob.exerciseId(), buildJob.buildConfig().testCommitHash(), SubmissionType.TEST,
+                            buildJob.repositoryInfo().triggeredByPushTo());
+                }
+                catch (EntityNotFoundException e) {
+                    // Something went wrong while retrieving the template participation.
+                    // At this point, programmingMessagingService.notifyUserAboutSubmissionError() does not work, because the template participation is not available.
+                    // The instructor will see in the UI that no build of the template repository was conducted and will receive an error message when triggering the build
+                    // manually.
+                    log.error("Something went wrong while triggering the template build for exercise {} after the solution build was finished.", buildJob.exerciseId(), e);
+                }
             }
         }
     }
@@ -216,16 +230,20 @@ public class LocalCIResultProcessingService {
     /**
      * Save a finished build job to the database.
      *
-     * @param queueItem the build job object from the queue
-     * @param result    the result of the build job (SUCCESSFUL, FAILED, CANCELLED)
+     * @param queueItem   the build job object from the queue
+     * @param buildStatus the status of the build job (SUCCESSFUL, FAILED, CANCELLED)
+     * @param result      the submission result
+     *
+     * @return the saved the build job
      */
-    public void saveFinishedBuildJob(LocalCIBuildJobQueueItem queueItem, BuildStatus result) {
+    public BuildJob saveFinishedBuildJob(LocalCIBuildJobQueueItem queueItem, BuildStatus buildStatus, Result result) {
         try {
-            BuildJob buildJob = new BuildJob(queueItem, result);
-            buildJobRepository.save(buildJob);
+            BuildJob buildJob = new BuildJob(queueItem, buildStatus, result);
+            return buildJobRepository.save(buildJob);
         }
         catch (Exception e) {
             log.error("Could not save build job to database", e);
+            return null;
         }
     }
 
