@@ -444,7 +444,7 @@ public class TeamResource {
      * @param teamShortName short name of the team (all teams with the short name in the course are seen as the same team)
      * @return Course with exercises and participations (and latest submissions) for the team
      */
-    @GetMapping(value = "/courses/{courseId}/teams/{teamShortName}/with-exercises-and-participations")
+    @GetMapping("courses/{courseId}/teams/{teamShortName}/with-exercises-and-participations")
     @EnforceAtLeastStudent
     public ResponseEntity<Course> getCourseWithExercisesAndParticipationsForTeam(@PathVariable Long courseId, @PathVariable String teamShortName) {
         log.debug("REST request to get Course {} with exercises and participations for Team with short name {}", courseId, teamShortName);

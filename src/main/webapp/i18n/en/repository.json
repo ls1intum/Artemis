@@ -11,7 +11,8 @@
                     "commitHash": "Commit Hash",
                     "author": "Author",
                     "date": "Date",
-                    "commit": "Commit"
+                    "commit": "Commit",
+                    "empty": "No changes"
                 }
             }
         }

@@ -33,7 +33,7 @@ import {
 import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
 import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exercise-import-wrapper/exercise-import-wrapper.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { PROFILE_LOCALVC } from 'app/app.constants';
+import { PROFILE_LOCALCI, PROFILE_LOCALVC } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-exercise-groups',
@@ -54,6 +54,7 @@ export class ExerciseGroupsComponent implements OnInit {
     exerciseGroupToExerciseTypesDict = new Map<number, ExerciseType[]>();
 
     localVCEnabled = false;
+    localCIEnabled = false;
 
     // Icons
     faPlus = faPlus;
@@ -100,6 +101,7 @@ export class ExerciseGroupsComponent implements OnInit {
         });
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
+            this.localCIEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALCI);
         });
     }
 

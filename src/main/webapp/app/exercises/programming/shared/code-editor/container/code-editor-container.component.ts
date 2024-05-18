@@ -55,6 +55,8 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     @Input()
     editable = true;
     @Input()
+    forRepositoryView = false;
+    @Input()
     buildable = true;
     @Input()
     showEditorInstructions = true;

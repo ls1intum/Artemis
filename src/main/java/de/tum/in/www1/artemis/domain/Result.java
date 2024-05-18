@@ -619,6 +619,16 @@ public class Result extends DomainObject implements Comparable<Result> {
         return AssessmentType.AUTOMATIC == assessmentType;
     }
 
+    /**
+     * Checks whether the result is an automatic Athena result: AUTOMATIC_ATHENA
+     *
+     * @return true if the result is an automatic AI Athena result
+     */
+    @JsonIgnore
+    public boolean isAthenaAutomatic() {
+        return AssessmentType.AUTOMATIC_ATHENA == assessmentType;
+    }
+
     @Override
     public String toString() {
         return "Result{" + "id" + getId() + ", completionDate=" + completionDate + ", successful=" + successful + ", score=" + score + ", rated=" + rated + ", assessmentType="
