@@ -160,7 +160,7 @@ public class ProgrammingExerciseFeedbackCreationService {
      * Transforms static code analysis reports to feedback objects.
      * As we reuse the Feedback entity to store static code analysis findings, a mapping to those attributes
      * has to be defined, violating the first normal form.
-     * <p>
+     * <br>
      * Mapping:
      * - text: STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER
      * - reference: Tool
@@ -353,10 +353,12 @@ public class ProgrammingExerciseFeedbackCreationService {
     }
 
     private Set<ProgrammingExerciseTestCase> getTestCasesFromBuildResult(AbstractBuildResultNotificationDTO buildResult, ProgrammingExercise exercise) {
+        Visibility defaultVisibility = exercise.getDefaultTestCaseVisibility();
+
         return buildResult.getBuildJobs().stream().flatMap(job -> Stream.concat(job.getFailedTests().stream(), job.getSuccessfulTests().stream()))
                 // we use default values for weight, bonus multiplier and bonus points
                 .map(testCase -> new ProgrammingExerciseTestCase().testName(testCase.getName()).weight(1.0).bonusMultiplier(1.0).bonusPoints(0.0).exercise(exercise).active(true)
-                        .visibility(Visibility.ALWAYS))
+                        .visibility(defaultVisibility))
                 .collect(Collectors.toSet());
     }
 
