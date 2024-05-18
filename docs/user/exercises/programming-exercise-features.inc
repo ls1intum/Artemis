@@ -94,3 +94,21 @@ We encourage instructors to contribute improvements to the existing ``templates`
 
 Java Dejagnu: Blackbox Testing
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The classical testing frameworks, like JUnit for example, allows writing white box tests.
+This enforces many assumptions about the structure of the source code under test,
+like the class and methods names and even the exact method signatures.
+This implies for a Programming Exercise you have to specify all the structural aspect
+if your test suite should be able to run on the student submissions.
+That is maybe okay or even desired for a beginner course,
+but for advanced courses this is a downside,
+because without making their own decision about the structure of their source code,
+the students cannot collect experience in this import aspect of programming through your exercises.
+
+To be able to include the structural aspect of programming in your Programming Exercises,
+without losing the ability to test submissions automatically, you can use DejaGnu.
+It allows you to write blackbox tests for command line interfaces of applications.
+For the exercises you only have to specify the syntax of the command line interface
+and at least a rough guidance for the output format.
+The source code structure can be all up to the students as far as you want.
+An assessment of the quality of the students source code structures can be made with manual assessment after the submission deadline.
