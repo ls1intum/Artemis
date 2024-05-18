@@ -240,7 +240,7 @@
                 }
             </div>
         }
-        @if (this.studentExam?.submitted && !showExamSummary && !loadingExam) {
+        @if (this.studentExam?.submitted && !showExamSummary) {
             <div class="submissionSuccessfulHint">
                 <fa-icon [icon]="faCheckCircle" class="check" />
                 <h2 jhiTranslate="artemisApp.examParticipation.submissionSuccessful.title"></h2>

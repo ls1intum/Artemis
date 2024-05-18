@@ -12,7 +12,6 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import dayjs from 'dayjs/esm';
 import { EXAM_START_WAIT_TIME_MINUTES } from 'app/app.constants';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
-import { faArrowLeft, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
@@ -26,26 +25,18 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
     styleUrls: ['./exam-participation-cover.scss', '../../../overview/course-overview.scss'],
 })
 export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
-    handInEarly: boolean;
-    //handInPossible: boolean;
-    submitInProgress: boolean;
-    //attendanceChecked: boolean;
-    //examStartConfirmed = false;
-
     course?: Course;
     startEnabled: boolean;
-    endEnabled: boolean;
     confirmed: boolean;
-    //isAttendanceChecked: boolean;
 
     exam: Exam;
     studentExam: StudentExam;
 
     testRun?: boolean;
-    testExam?: boolean;
+    testExam = false;
 
     formattedGeneralInformation: SafeHtml;
-    formattedConfirmationText?: SafeHtml;
+    formattedConfirmationText: SafeHtml;
 
     interval: number;
     waitingForExamStart = false;
@@ -53,10 +44,6 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
 
     accountName = '';
     enteredName = '';
-
-    // Icons
-    faSpinner = faSpinner;
-    faArrowLeft = faArrowLeft;
 
     courseId: number;
     examId: number;
@@ -100,14 +87,6 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
             this.examParticipationService.setExamState({ courseId: this.courseId });
         });
 
-        this.examParticipationService.examState$.subscribe((state) => {
-            //this.examStartConfirmed = state.examStartConfirmed;
-            this.handInEarly = state.handInEarly;
-            //this.handInPossible = state.handInPossible;
-            this.submitInProgress = state.submitInProgress;
-            //this.attendanceChecked = state.attendanceChecked;
-        });
-
         this.route.params.subscribe((params) => {
             this.examId = parseInt(params['examId'], 10);
             this.testRunId = parseInt(params['testRunId'], 10);
@@ -117,6 +96,7 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
             if (params['studentExamId']) {
                 // If a new StudentExam should be created, the keyword start is used (and no StudentExam exists)
                 this.testExam = true;
+                this.examParticipationService.setExamState({ testExam: this.testExam });
                 if (params['studentExamId'] !== 'start') {
                     this.studentExamId = parseInt(params['studentExamId'], 10);
                     this.examParticipationService.setExamState({ studentExamId: this.studentExamId });
@@ -141,8 +121,6 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
                         this.loadingExam = false;
                         this.testRun = studentExam.testRun;
                         this.examParticipationService.setExamState({ testRun: this.testRun });
-                        // :examId/test-runs/:testRunId/conduction/participation
-                        //this.router.navigate(['course-management', this.courseId, 'exams', this.examId, 'test-runs', this.testRunId, 'conduction', 'participation']);
                     },
                     error: () => (this.loadingExam = false),
                 });
@@ -158,8 +136,6 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
             }
         });
 
-        //this.isAttendanceChecked = this.exam?.testExam || !this.exam?.examWithAttendanceCheck || this.attendanceChecked;
-
         this.accountService.identity().then((user) => {
             if (user && user.name) {
                 this.accountName = user.name;
@@ -173,53 +149,12 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
         });
 
         this.generateInformationForHtml();
-        // this.testRun = this.studentExam.testRun;
-        // this.testExam = this.exam.testExam;
-        // this.examParticipationService.setExamState({ testExam: this.testExam });
-        // this.examParticipationService.setExamState({ testRun: this.testRun });
     }
 
     generateInformationForHtml() {
         this.formattedGeneralInformation = this.artemisMarkdown.safeHtmlForMarkdown(this.exam?.startText);
         this.formattedConfirmationText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam?.confirmationStartText);
     }
-
-    /**
-     * on changes uses the correct information to display in either start or final view
-     * changes in the exam and subscription is handled in the exam-participation.component
-     * if the student exam changes, we need to update the displayed times
-     */
-
-    /*
-    ngOnChanges(): void {
-        this.confirmed = false;
-        this.startEnabled = false;
-        this.testRun = this.studentExam.testRun;
-        this.testExam = this.exam.testExam;
-
-        if (this.startView) {
-            this.formattedGeneralInformation = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.startText);
-            this.formattedConfirmationText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.confirmationStartText);
-        } else {
-            this.formattedGeneralInformation = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.endText);
-            this.formattedConfirmationText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.confirmationEndText);
-            // this should be the individual working end + the grace period
-            if (this.testRun) {
-                this.graceEndDate = dayjs(this.testStartTime!).add(this.studentExam.workingTime!, 'seconds').add(this.exam.gracePeriod!, 'seconds');
-            } else if (this.testExam) {
-                this.graceEndDate = dayjs(this.studentExam.startedDate!).add(this.studentExam.workingTime!, 'seconds').add(this.exam.gracePeriod!, 'seconds');
-            } else {
-                this.graceEndDate = dayjs(this.exam.startDate).add(this.studentExam.workingTime!, 'seconds').add(this.exam.gracePeriod!, 'seconds');
-            }
-        }
-
-        this.accountService.identity().then((user) => {
-            if (user && user.name) {
-                this.accountName = user.name;
-            }
-        });
-    }
-    */
 
     ngOnDestroy() {
         if (this.interval) {
@@ -252,18 +187,15 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
     startExam() {
         if (this.testRun) {
             this.examParticipationService.saveStudentExamToLocalStorage(this.exam.course!.id!, this.exam.id!, this.studentExam);
-            // this.onExamStarted.emit(this.studentExam);
-            this.examParticipationService.emitExamStarted(this.studentExam);
+            this.examParticipationService.setExamState({ studentExam: this.studentExam });
             this.examParticipationService.setExamState({ exercises: this.studentExam.exercises! });
-            //this.router.navigate(['courses', this.courseId, 'exams', this.examId, 'participation']);
             this.router.navigate(['course-management', this.courseId, 'exams', this.examId, 'test-runs', this.testRunId, 'conduction', 'participation']);
         } else {
             this.examParticipationService.loadStudentExamWithExercisesForConduction(this.courseId, this.examId, this.studentExam.id!).subscribe((studentExam: StudentExam) => {
                 this.studentExam = studentExam;
                 this.examParticipationService.saveStudentExamToLocalStorage(this.courseId, this.examId, studentExam);
                 if (this.hasStarted()) {
-                    //this.onExamStarted.emit(studentExam);
-                    this.examParticipationService.emitExamStarted(studentExam);
+                    this.examParticipationService.setExamState({ studentExam: studentExam });
                     this.examParticipationService.setExamState({ exercises: studentExam.exercises! });
                     this.router.navigate(['courses', this.courseId, 'exams', this.examId, 'participation']);
                 } else {
@@ -277,7 +209,6 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
                 }
             });
         }
-        //this.router.navigate(['courses', this.courseId, 'exams', this.examId, 'participation']);
     }
 
     /**
@@ -289,8 +220,7 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
         if (this.exam && this.exam.startDate) {
             if (this.hasStarted()) {
                 this.timeUntilStart = this.translateService.instant(translationBasePath + 'now');
-                //this.onExamStarted.emit(studentExam);
-                this.examParticipationService.emitExamStarted(studentExam);
+                this.examParticipationService.setExamState({ studentExam: studentExam });
                 this.examParticipationService.setExamState({ exercises: studentExam.exercises! });
                 this.router.navigate(['courses', this.courseId, 'exams', this.examId, 'participation']);
             } else {
@@ -358,9 +288,9 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
     /**
      * check if the grace period has already passed
      */
-    isGracePeriodOver() {
-        return this.individualStudentEndDateWithGracePeriod && this.individualStudentEndDateWithGracePeriod.isBefore(this.serverDateService.now());
-    }
+    // isGracePeriodOver() {
+    //     return this.individualStudentEndDateWithGracePeriod && this.individualStudentEndDateWithGracePeriod.isBefore(this.serverDateService.now());
+    // }
 
     isVisible(): boolean {
         if (this.testRunId) {
@@ -372,15 +302,15 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
         return this.exam.visibleDate ? this.exam.visibleDate.isBefore(this.serverDateService.now()) : false;
     }
 
-    isActive(): boolean {
-        if (this.testRunId) {
-            return true;
-        }
-        if (!this.exam) {
-            return false;
-        }
-        return this.exam.startDate ? this.exam.startDate.isBefore(this.serverDateService.now()) : false;
-    }
+    // isActive(): boolean {
+    //     if (this.testRunId) {
+    //         return true;
+    //     }
+    //     if (!this.exam) {
+    //         return false;
+    //     }
+    //     return this.exam.startDate ? this.exam.startDate.isBefore(this.serverDateService.now()) : false;
+    // }
 
     handleStudentExam(studentExam: StudentExam) {
         this.studentExam = studentExam;
@@ -388,6 +318,7 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
         this.examParticipationService.setExamState({ exam: this.exam });
         this.examParticipationService.setExamState({ studentExam: this.studentExam });
         this.testExam = this.exam.testExam!;
+        this.examParticipationService.setExamState({ testExam: this.testExam });
         if (!this.exam.testExam) {
             this.initIndividualEndDates(this.exam.startDate!);
         }
@@ -404,7 +335,7 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
 
                     this.studentExam = localExam;
                     this.loadingExam = false;
-                    this.examParticipationService.emitExamStarted(this.studentExam);
+                    this.examParticipationService.setExamState({ studentExam: this.studentExam });
                 });
             } else {
                 this.loadingExam = false;
@@ -462,6 +393,9 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
         });
     }
 
+    /**
+     * Returns whether the student failed to submit on time. In this case the end page is adapted.
+     */
     get studentFailedToSubmit(): boolean {
         if (this.testRun) {
             return false;

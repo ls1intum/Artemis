@@ -1,6 +1,6 @@
 <div class="px-3 py-3 scrollable-content" [ngClass]="{ 'content-height-dev': !isProduction || isTestServer }">
     @if (exam) {
-        @if (isVisible() && !isGracePeriodOver() && !studentExam?.submitted) {
+        @if (isVisible() && !studentExam?.submitted) {
             <div class="w-100 d-flex">
                 <div class="col-md-3">
                     <jhi-exam-live-events-button />
@@ -8,7 +8,7 @@
 
                 <h2 class="col-md-6" style="text-align: center; font-weight: normal">
                     <span>
-                        {{ 'artemisApp.examParticipation.greeting' | artemisTranslate: { title: exam.title } }}
+                        {{ studentFailedToSubmit ? exam.title : ('artemisApp.examParticipation.greeting' | artemisTranslate: { title: exam.title }) }}
                     </span>
                     <br />
                 </h2>
@@ -109,7 +109,7 @@
         }
     }
 
-    @if (studentFailedToSubmit) {
+    <!-- @if (studentFailedToSubmit) {
         <div class="d-flex align-items-center justify-content-between">
             <h2 style="font-weight: normal">
                 {{ exam.title }}
@@ -118,7 +118,7 @@
         <div class="mt-2 font-weight-bold text-danger">
             {{ 'artemisApp.studentExam.submissionNotInTime' | artemisTranslate }}
         </div>
-    }
+    } -->
 
     @if (showExamSummary) {
         <jhi-exam-participation-summary [studentExam]="studentExam" />

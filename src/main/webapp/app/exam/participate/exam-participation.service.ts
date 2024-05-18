@@ -19,10 +19,6 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 export type ButtonTooltipType = 'submitted' | 'submittedSubmissionLimitReached' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted';
 
 interface ExamState {
-    handInEarly: boolean;
-    handInPossible: boolean;
-    submitInProgress: boolean;
-    attendanceChecked: boolean;
     courseId?: number;
     examId?: number;
     testRunId?: number;
@@ -31,7 +27,7 @@ interface ExamState {
     testExam?: boolean;
     studentExam?: StudentExam;
     exercises?: Exercise[];
-    accountName: string;
+    accountName?: string;
     testRun?: boolean;
 }
 
@@ -41,18 +37,7 @@ export class ExamParticipationService {
 
     private examExerciseIds: number[];
 
-    private examStartedSource = new Subject<StudentExam>();
-    examStarted$ = this.examStartedSource.asObservable();
-
-    private initialState: ExamState = {
-        handInEarly: false,
-        handInPossible: true,
-        submitInProgress: false,
-        attendanceChecked: false,
-        accountName: '',
-    };
-
-    private examStateSource = new BehaviorSubject<ExamState>(this.initialState);
+    private examStateSource = new BehaviorSubject<ExamState>({});
     examState$ = this.examStateSource.asObservable();
 
     public getResourceURL(courseId: number, examId: number): string {
@@ -370,12 +355,9 @@ export class ExamParticipationService {
         this.examExerciseIds = examExerciseIds;
     }
 
+    // To update the exam state
     public setExamState(newState: Partial<ExamState>) {
         const currentState = this.examStateSource.value;
         this.examStateSource.next({ ...currentState, ...newState });
-    }
-
-    public emitExamStarted(studentExam: StudentExam) {
-        this.examStartedSource.next(studentExam);
     }
 }
