@@ -62,6 +62,7 @@ import { CourseExercisesComponent } from './course-exercises/course-exercises.co
 import { CourseLecturesComponent } from './course-lectures/course-lectures.component';
 import { facSidebar } from '../../content/icons/icons';
 import { CourseTutorialGroupsComponent } from './course-tutorial-groups/course-tutorial-groups.component';
+import { CourseConversationsComponent } from 'app/overview/course-conversations/course-conversations.component';
 
 interface CourseActionItem {
     title: string;
@@ -125,7 +126,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
 
     private conversationServiceInstantiated = false;
     private checkedForUnreadMessages = false;
-    activatedComponentReference: CourseExercisesComponent | CourseLecturesComponent | CourseTutorialGroupsComponent;
+    activatedComponentReference: CourseExercisesComponent | CourseLecturesComponent | CourseTutorialGroupsComponent | CourseConversationsComponent;
 
     // Rendered embedded view for controls in the bar so we can destroy it if needed
     private controlsEmbeddedView?: EmbeddedViewRef<any>;
@@ -524,7 +525,12 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
                     this.tryRenderControls();
                 }) || undefined;
         }
-        if (componentRef instanceof CourseExercisesComponent || componentRef instanceof CourseLecturesComponent || componentRef instanceof CourseTutorialGroupsComponent) {
+        if (
+            componentRef instanceof CourseExercisesComponent ||
+            componentRef instanceof CourseLecturesComponent ||
+            componentRef instanceof CourseTutorialGroupsComponent ||
+            componentRef instanceof CourseConversationsComponent
+        ) {
             this.activatedComponentReference = componentRef;
         }
 

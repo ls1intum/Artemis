@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { DifficultyLevel } from 'app/entities/exercise.model';
 import { SidebarCardElement, SidebarTypes } from 'app/types/sidebar';
 import { Subscription } from 'rxjs';
@@ -11,6 +11,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 })
 export class SidebarCardSmallComponent {
     DifficultyLevel = DifficultyLevel;
+    @Output() onUpdateSidebar = new EventEmitter<void>();
     @Input({ required: true }) sidebarItem: SidebarCardElement;
     @Input() sidebarType?: SidebarTypes;
     @Input() itemSelected?: boolean;
@@ -28,6 +29,9 @@ export class SidebarCardSmallComponent {
 
     emitStoreLastSelectedItem(itemId: number | string) {
         this.sidebarEventService.emitSidebarCardEvent(itemId);
+        if (this.sidebarType !== 'conversation') {
+            this.forceReload();
+        }
     }
 
     forceReload(): void {
@@ -36,5 +40,13 @@ export class SidebarCardSmallComponent {
                 ? this.router.navigate(['../' + this.sidebarItem.id], { relativeTo: this.route })
                 : this.router.navigate(['./' + this.sidebarItem.id], { relativeTo: this.route });
         });
+    }
+
+    get isConversationUnread(): boolean {
+        if (!this.sidebarItem.conversation) {
+            return false;
+        } else {
+            return !!this.sidebarItem.conversation.unreadMessagesCount && this.sidebarItem.conversation.unreadMessagesCount > 0;
+        }
     }
 }

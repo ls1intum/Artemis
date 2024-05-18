@@ -18,5 +18,13 @@
     padding-bottom: 0.1rem;
     padding-top: 0.5rem;
     padding-left: 0.25rem;
-    padding-right: 0.25rem;
+}
+
+.inline-block {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.padding-bottom {
+    padding-bottom: 0.4rem;
 }

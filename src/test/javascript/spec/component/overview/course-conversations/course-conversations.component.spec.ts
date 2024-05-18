@@ -2,10 +2,9 @@ import { CourseConversationsComponent } from 'app/overview/course-conversations/
 import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from './helpers/conversationExampleModels';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { LoadingIndicatorContainerStubComponent } from '../../../helpers/stubs/loading-indicator-container-stub.component';
-import { ConversationSelectionSidebarComponent } from 'app/overview/course-conversations/layout/conversation-selection-sidebar/conversation-selection-sidebar.component';
 import { ConversationHeaderComponent } from 'app/overview/course-conversations/layout/conversation-header/conversation-header.component';
 import { CourseWideSearchComponent } from 'app/overview/course-conversations/course-wide-search/course-wide-search.component';
 import { ConversationMessagesComponent } from 'app/overview/course-conversations/layout/conversation-messages/conversation-messages.component';
@@ -28,6 +27,8 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { SortDirection } from 'app/shared/metis/metis.util';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { getElement } from '../../../helpers/utils/general.utils';
+import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
+import { CourseOverviewService } from 'app/overview/course-overview.service';
 
 const examples: (ConversationDTO | undefined)[] = [undefined, generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
 
@@ -48,13 +49,13 @@ examples.forEach((activeConversation) => {
                 declarations: [
                     CourseConversationsComponent,
                     LoadingIndicatorContainerStubComponent,
-                    MockComponent(ConversationSelectionSidebarComponent),
                     MockComponent(ConversationHeaderComponent),
                     MockComponent(DocumentationButtonComponent),
                     MockComponent(ConversationMessagesComponent),
                     MockComponent(ConversationThreadSidebarComponent),
                     MockComponent(CourseConversationsCodeOfConductComponent),
                     MockComponent(ButtonComponent),
+                    MockComponent(SidebarComponent),
                     MockComponent(CourseWideSearchComponent),
                     MockPipe(ArtemisTranslatePipe),
                     MockPipe(HtmlForMarkdownPipe),
@@ -76,6 +77,7 @@ examples.forEach((activeConversation) => {
                             queryParams: queryParamsSubject,
                         },
                     },
+                    MockProvider(CourseOverviewService),
                 ],
                 imports: [FormsModule, ReactiveFormsModule, FontAwesomeModule, NgbModule],
             }).compileComponents();
@@ -266,5 +268,30 @@ examples.forEach((activeConversation) => {
             selectedDirectionOption.dispatchEvent(new Event('click'));
             expect(component.courseWideSearchConfig.sortingOrder).toBe(SortDirection.DESCENDING);
         }));
+
+        it('should toggle isNavbarCollapsed when toggleCollapseState is called', () => {
+            component.toggleSidebar();
+            expect(component.isCollapsed).toBeTrue();
+
+            component.toggleSidebar();
+            expect(component.isCollapsed).toBeFalse();
+        });
+
+        it('should display sidebar when conversation is provided', () => {
+            fixture.detectChanges();
+            // Wait for any async operations to complete here if necessary
+            fixture.detectChanges(); // Trigger change detection again if async operations might change the state
+            expect(fixture.nativeElement.querySelector('jhi-sidebar')).not.toBeNull();
+        });
+
+        it('should toggle sidebar visibility based on isCollapsed property', () => {
+            component.isCollapsed = false;
+            fixture.detectChanges();
+            expect(fixture.nativeElement.querySelector('.sidebar-collapsed')).toBeNull();
+
+            component.isCollapsed = true;
+            fixture.detectChanges();
+            expect(fixture.nativeElement.querySelector('.sidebar-collapsed')).not.toBeNull();
+        });
     });
 });

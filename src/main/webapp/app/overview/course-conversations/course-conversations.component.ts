@@ -13,6 +13,20 @@ import { faFilter, faLongArrowAltDown, faLongArrowAltUp, faPlus, faSearch, faTim
 import { ButtonType } from 'app/shared/components/button.component';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { CourseWideSearchComponent, CourseWideSearchConfig } from 'app/overview/course-conversations/course-wide-search/course-wide-search.component';
+import { AccordionGroups, SidebarCardElement, SidebarData } from 'app/types/sidebar';
+import { CourseOverviewService } from 'app/overview/course-overview.service';
+
+const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
+    favoriteChannels: { entityData: [] },
+    generalChannels: { entityData: [] },
+    exerciseChannels: { entityData: [] },
+    lectureChannels: { entityData: [] },
+    examChannels: { entityData: [] },
+    groupChats: { entityData: [] },
+    directMessages: { entityData: [] },
+    hiddenChannels: { entityData: [] },
+    otherChannels: { entityData: [] },
+};
 
 @Component({
     selector: 'jhi-course-conversations',
@@ -29,6 +43,12 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     postInThread?: Post;
     activeConversation?: ConversationDTO = undefined;
     conversationsOfUser: ConversationDTO[] = [];
+
+    conversationSelected: boolean = true;
+    sidebarData: SidebarData;
+    accordionConversationGroups: AccordionGroups = DEFAULT_CHANNEL_GROUPS;
+    sidebarConversations: SidebarCardElement[] = [];
+    isCollapsed: boolean = false;
 
     // set undefined so nothing gets displayed until isCodeOfConductAccepted is loaded
     isCodeOfConductAccepted?: boolean;
@@ -60,6 +80,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         private metisConversationService: MetisConversationService,
         private metisService: MetisService,
         private formBuilder: FormBuilder,
+        private courseOverviewService: CourseOverviewService,
     ) {}
 
     getAsChannel = getAsChannelDTO;
@@ -79,6 +100,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         this.isLoading = true;
+        this.isCollapsed = this.courseOverviewService.getSidebarCollapseStateFromStorage('conversation');
         this.metisConversationService.isServiceSetup$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((isServiceSetUp: boolean) => {
             if (isServiceSetUp) {
                 this.course = this.metisConversationService.course;
@@ -94,6 +116,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                 this.subscribeToConversationsOfUser();
                 this.subscribeToLoading();
                 this.updateQueryParameters();
+                this.prepareSidebarData();
                 this.metisConversationService.checkIsCodeOfConductAccepted(this.course!);
                 this.isServiceSetUp = true;
             }
@@ -201,5 +224,30 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             filterToOwn: false,
             filterToAnsweredOrReacted: false,
         });
+    }
+
+    prepareSidebarData() {
+        this.sidebarConversations = this.courseOverviewService.mapConversationsToSidebarCardElements(this.conversationsOfUser);
+        this.accordionConversationGroups = this.courseOverviewService.groupConversationsByChannelType(this.conversationsOfUser);
+        this.updateSidebarData();
+    }
+
+    updateSidebarData() {
+        this.sidebarData = {
+            groupByCategory: true,
+            sidebarType: 'conversation',
+            storageId: 'conversation',
+            groupedData: this.accordionConversationGroups,
+            ungroupedData: this.sidebarConversations,
+        };
+    }
+
+    onConversationSelected(conversationId: number) {
+        this.metisConversationService.setActiveConversation(conversationId);
+    }
+
+    toggleSidebar() {
+        this.isCollapsed = !this.isCollapsed;
+        this.courseOverviewService.setSidebarCollapseState('conversation', this.isCollapsed);
     }
 }

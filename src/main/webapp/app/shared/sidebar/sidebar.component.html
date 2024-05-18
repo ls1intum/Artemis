@@ -23,6 +23,7 @@
                             [routeParams]="routeParams"
                             [courseId]="courseId"
                             [itemSelected]="itemSelected"
+                            (onUpdateSidebar)="onUpdateSidebar.emit()"
                         />
                     } @else {
                         @for (sidebarItem of sidebarData?.ungroupedData | searchFilter: ['title', 'type'] : searchValue; track sidebarItem; let last = $last) {

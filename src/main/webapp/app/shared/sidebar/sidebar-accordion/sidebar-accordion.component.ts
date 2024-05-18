@@ -1,5 +1,5 @@
-import { Component, Input, OnChanges, OnInit } from '@angular/core';
-import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
+import { faBan, faChevronRight, faComment, faComments, faFile, faGraduationCap, faHeart, faList, faMessage } from '@fortawesome/free-solid-svg-icons';
 import { AccordionGroups, ExerciseCollapseState, SidebarCardElement, SidebarTypes } from 'app/types/sidebar';
 import { Params } from '@angular/router';
 
@@ -18,6 +18,7 @@ const DEFAULT_EXERCISE_COLLAPSE_STATE: ExerciseCollapseState = {
 export class SidebarAccordionComponent implements OnChanges, OnInit {
     protected readonly Object = Object;
 
+    @Output() onUpdateSidebar = new EventEmitter<void>();
     @Input() searchValue: string;
     @Input() routeParams: Params;
     @Input() groupedData: AccordionGroups;
@@ -28,8 +29,8 @@ export class SidebarAccordionComponent implements OnChanges, OnInit {
 
     collapseState = DEFAULT_EXERCISE_COLLAPSE_STATE;
 
-    //icon
     faChevronRight = faChevronRight;
+    faFile = faFile;
 
     ngOnInit() {
         this.expandGroupWithSelectedItem();
@@ -73,5 +74,19 @@ export class SidebarAccordionComponent implements OnChanges, OnInit {
     toggleGroupCategoryCollapse(groupCategoryKey: string) {
         this.collapseState[groupCategoryKey] = !this.collapseState[groupCategoryKey];
         sessionStorage.setItem('sidebar.accordion.collapseState.' + this.storageId + '.byCourse.' + this.courseId, JSON.stringify(this.collapseState));
+    }
+
+    getIcon(groupCategoryKey: string) {
+        const icons = {
+            ['generalChannels']: faMessage,
+            ['exerciseChannels']: faList,
+            ['examChannels']: faGraduationCap,
+            ['groupChats']: faComments,
+            ['directMessages']: faComment,
+            ['favoriteChannels']: faHeart,
+            ['lectureChannels']: faFile,
+            ['hiddenChannels']: faBan,
+        };
+        return icons[groupCategoryKey];
     }
 }

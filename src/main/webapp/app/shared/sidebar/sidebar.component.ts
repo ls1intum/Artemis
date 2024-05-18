@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output } from '@angular/core';
 import { faChevronRight, faFilter, faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Params } from '@angular/router';
 import { Subscription, distinctUntilChanged } from 'rxjs';
@@ -12,6 +12,8 @@ import { SidebarEventService } from './sidebar-event.service';
     styleUrls: ['./sidebar.component.scss'],
 })
 export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
+    @Output() onSelectConversation = new EventEmitter<number>();
+    @Output() onUpdateSidebar = new EventEmitter<void>();
     @Input() searchFieldEnabled: boolean = true;
     @Input() sidebarData: SidebarData;
     @Input() courseId?: number;
@@ -53,6 +55,10 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
             .subscribe((itemId) => {
                 if (itemId) {
                     this.storeLastSelectedItem(itemId);
+                    if (this.sidebarData.sidebarType == 'conversation') {
+                        this.onSelectConversation.emit(+itemId);
+                        this.onUpdateSidebar.emit();
+                    }
                 }
             });
     }

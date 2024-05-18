@@ -1,0 +1,12 @@
+.dropdown-toggle::after {
+    display: none;
+}
+
+.sidebar-button {
+    border: 0;
+    border-radius: var(--bs-btn-border-radius);
+
+    &:hover {
+        background-color: var(--metis-conversation-sidebar-button-background-hover);
+    }
+}

@@ -80,16 +80,22 @@
         </div>
     }
     @if (isCodeOfConductAccepted && isServiceSetUp && course) {
-        <div class="row mt-2">
-            <div class="col d-flex flex-grow-1 justify-end px-0 me-1" style="max-width: min-content">
-                <jhi-conversation-selection-sidebar />
+        <div class="d-flex justify-content-between gap-3">
+            <div [ngClass]="{ 'sidebar-collapsed': isCollapsed }">
+                <jhi-sidebar
+                    (onSelectConversation)="onConversationSelected($event)"
+                    (onUpdateSidebar)="prepareSidebarData()"
+                    [itemSelected]="conversationSelected"
+                    [courseId]="course.id"
+                    [sidebarData]="sidebarData"
+                />
             </div>
             @if (course && !activeConversation && isCodeOfConductPresented) {
                 <div class="col pe-0 flex-grow-1">
                     <jhi-course-conversations-code-of-conduct [course]="course!" />
                 </div>
             }
-            <div class="col pe-0 flex-grow-1" [ngClass]="{ 'card-border': true }" style="min-width: 200px">
+            <div class="col pe-0 flex-grow-1 module-bg" [ngClass]="{ 'card-border': true }" style="min-width: 200px">
                 @if (activeConversation) {
                     <jhi-conversation-header />
                     <jhi-conversation-messages (openThread)="postInThread = $event" [course]="course" />

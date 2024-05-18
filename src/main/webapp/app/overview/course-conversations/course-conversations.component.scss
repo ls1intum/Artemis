@@ -2,6 +2,10 @@
     background-color: var(--secondary);
 }
 
+.module-bg {
+    background-color: var(--module-bg);
+}
+
 .card-border {
     border: 1px solid;
     border-color: var(--bs-card-border-color);
