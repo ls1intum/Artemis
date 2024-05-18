@@ -62,6 +62,10 @@ class SpotbugsParser implements ParserStrategy {
     private StaticCodeAnalysisReportDTO createReportFromBugCollection(BugCollection bugCollection) {
         List<StaticCodeAnalysisIssue> issues = new ArrayList<>();
 
+        if (bugCollection.bugInstances() == null) {
+            return new StaticCodeAnalysisReportDTO(StaticCodeAnalysisTool.SPOTBUGS, issues);
+        }
+
         String sourceDirectory = bugCollection.project().srcDirs().isEmpty() ? "" : bugCollection.project().srcDirs().getFirst();
         if (!sourceDirectory.endsWith(File.separator)) {
             sourceDirectory += File.separator;

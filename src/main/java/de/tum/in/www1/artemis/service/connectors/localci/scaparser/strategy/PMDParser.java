@@ -62,6 +62,10 @@ class PMDParser implements ParserStrategy {
         List<StaticCodeAnalysisIssue> issues = new ArrayList<>();
         StaticCodeAnalysisReportDTO report = new StaticCodeAnalysisReportDTO(StaticCodeAnalysisTool.PMD, issues);
 
+        if (pmdReport.files() == null) {
+            return report;
+        }
+
         for (FileViolation fileViolation : pmdReport.files()) {
             String unixPath = ParserStrategy.transformToUnixPath(fileViolation.fileName());
 
