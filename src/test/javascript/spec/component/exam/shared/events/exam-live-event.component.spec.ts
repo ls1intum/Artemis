@@ -127,4 +127,23 @@ describe('ExamLiveEventComponent', () => {
 
         expect(acknowledgeSpy).toHaveBeenCalledWith(mockEvent);
     });
+
+    it('should emit event when navigate to exercise button is clicked', () => {
+        const mockEvent: ExamLiveEvent = {
+            eventType: ExamLiveEventType.PROBLEM_STATEMENT_UPDATE,
+            createdBy: 'John Doe',
+        } as any as ExamLiveEvent;
+        component.event = mockEvent;
+        component.showAcknowledge = true;
+
+        fixture.detectChanges();
+
+        const acknowledgeSpy = jest.spyOn(component.onNavigate, 'emit');
+        const buttons = fixture.debugElement.queryAll(By.css('button'));
+        expect(buttons).toHaveLength(2);
+        // Navigate to exercise is the second button
+        buttons[1].nativeElement.click();
+
+        expect(acknowledgeSpy).toHaveBeenCalledWith(mockEvent);
+    });
 });
