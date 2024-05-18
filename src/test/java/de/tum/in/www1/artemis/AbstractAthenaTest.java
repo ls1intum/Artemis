@@ -9,7 +9,7 @@ import de.tum.in.www1.artemis.connector.AthenaRequestMockProvider;
 /**
  * Base class for Athena tests providing common functionality
  */
-public abstract class AbstractAthenaTest extends AbstractSpringIntegrationIndependentTest {
+public abstract class AbstractAthenaTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     @Autowired
     protected AthenaRequestMockProvider athenaRequestMockProvider;

@@ -14,6 +14,7 @@ import { AdminStandardizedCompetencyService } from 'app/admin/standardized-compe
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { KnowledgeAreasForImportDTO } from 'app/entities/competency/standardized-competency.model';
+import { StandardizedCompetencyDetailComponent } from 'app/shared/standardized-competencies/standardized-competency-detail.component';
 
 describe('ImportStandardizedCompetenciesComponent', () => {
     let componentFixture: ComponentFixture<AdminImportStandardizedCompetenciesComponent>;
@@ -22,7 +23,13 @@ describe('ImportStandardizedCompetenciesComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, NgbCollapseMocksModule],
-            declarations: [AdminImportStandardizedCompetenciesComponent, MockPipe(HtmlForMarkdownPipe), KnowledgeAreaTreeStubComponent, MockComponent(ButtonComponent)],
+            declarations: [
+                AdminImportStandardizedCompetenciesComponent,
+                MockPipe(HtmlForMarkdownPipe),
+                KnowledgeAreaTreeStubComponent,
+                MockComponent(ButtonComponent),
+                MockComponent(StandardizedCompetencyDetailComponent),
+            ],
             providers: [{ provide: Router, useClass: MockRouter }, MockProvider(AlertService)],
         })
             .compileComponents()
@@ -148,5 +155,24 @@ describe('ImportStandardizedCompetenciesComponent', () => {
         component.toggleCollapse();
 
         expect(component['isCollapsed']).toBeTrue();
+    });
+
+    it('should open details', () => {
+        const competencyToOpen = { id: 2, isVisible: true };
+        const knowledgeAreaTitle = 'knowledgeArea';
+
+        component['openCompetencyDetails'](competencyToOpen, knowledgeAreaTitle);
+
+        expect(component['selectedCompetency']).toEqual(competencyToOpen);
+        expect(component['knowledgeAreaTitle']).toEqual(knowledgeAreaTitle);
+    });
+
+    it('should close details', () => {
+        component['selectedCompetency'] = { id: 2, isVisible: true };
+
+        component['closeCompetencyDetails']();
+
+        expect(component['selectedCompetency']).toBeUndefined();
+        expect(component['knowledgeAreaTitle']).toBe('');
     });
 });
