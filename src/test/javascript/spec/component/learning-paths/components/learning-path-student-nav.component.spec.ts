@@ -8,6 +8,7 @@ import { of } from 'rxjs';
 import { LearningObjectType, LearningPathNavigationDto } from 'app/entities/competency/learning-path.model';
 import { By } from '@angular/platform-browser';
 import { LearningPathStudentNavOverviewComponent } from 'app/course/learning-paths/components/learning-path-student-nav-overview/learning-path-student-nav-overview.component';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 
 describe('LearningPathStudentNavComponent', () => {
     let component: LearningPathStudentNavComponent;
@@ -47,7 +48,7 @@ describe('LearningPathStudentNavComponent', () => {
                 provideHttpClientTesting(),
                 {
                     provide: TranslateService,
-                    useValue: jest.fn(),
+                    useClass: MockTranslateService,
                 },
             ],
         })
