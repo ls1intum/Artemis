@@ -73,6 +73,9 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
     void setUp() {
         queuedJobs = hazelcastInstance.getQueue("buildJobQueue");
         processingJobs = hazelcastInstance.getMap("processingJobs");
+
+        // remove listener to avoid triggering build job processing
+        sharedQueueProcessingService.removeListener();
     }
 
     @AfterEach
@@ -91,9 +94,6 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         ProgrammingExercise exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
-
-        // remove listener to avoid triggering build job processing
-        sharedQueueProcessingService.removeListener();
 
         JobTimingInfo jobTimingInfo = new JobTimingInfo(ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(1), ZonedDateTime.now().plusMinutes(2));
         BuildConfig buildConfig = new BuildConfig("echo 'test'", "test", "test", "test", "test", "test", null, null, false, false, false, null);
