@@ -23,6 +23,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -92,6 +93,8 @@ public class LocalVCLocalCITestService {
 
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;
+
+    private final int DEFAULT_AWAITILITY_TIMEOUT_IN_SECONDS = 10;
 
     private static final Logger log = LoggerFactory.getLogger(LocalVCLocalCITestService.class);
 
@@ -544,11 +547,13 @@ public class LocalVCLocalCITestService {
      * @param buildFailed                     whether the build should have failed or not.
      * @param isStaticCodeAnalysisEnabled     whether static code analysis is enabled for the exercise.
      * @param expectedCodeIssueCount          the expected number of code issues (only relevant if static code analysis is enabled).
+     * @param timeoutInSeconds                the maximum time to wait for the result to be persisted. If null, the default timeout of 10s is used.
      */
     public void testLatestSubmission(Long participationId, String expectedCommitHash, int expectedSuccessfulTestCaseCount, boolean buildFailed, boolean isStaticCodeAnalysisEnabled,
-            int expectedCodeIssueCount) {
+            int expectedCodeIssueCount, Integer timeoutInSeconds) {
         // wait for result to be persisted
-        await().until(() -> resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participationId).isPresent());
+        Duration timeoutDuration = timeoutInSeconds != null ? Duration.ofSeconds(timeoutInSeconds) : Duration.ofSeconds(DEFAULT_AWAITILITY_TIMEOUT_IN_SECONDS);
+        await().atMost(timeoutDuration).until(() -> resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participationId).isPresent());
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
         List<ProgrammingSubmission> submissions = programmingSubmissionRepository.findAllByParticipationIdWithResults(participationId);
@@ -581,7 +586,7 @@ public class LocalVCLocalCITestService {
     }
 
     public void testLatestSubmission(Long participationId, String expectedCommitHash, int expectedSuccessfulTestCaseCount, boolean buildFailed) {
-        testLatestSubmission(participationId, expectedCommitHash, expectedSuccessfulTestCaseCount, buildFailed, false, 0);
+        testLatestSubmission(participationId, expectedCommitHash, expectedSuccessfulTestCaseCount, buildFailed, false, 0, null);
     }
 
     /**
