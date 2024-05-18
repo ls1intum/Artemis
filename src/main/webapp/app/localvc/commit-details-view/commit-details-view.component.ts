@@ -2,15 +2,11 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
-import { Subscription } from 'rxjs';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { Subscription, throwError } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { CommitInfo } from 'app/entities/programming-submission.model';
 import dayjs from 'dayjs/esm';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { tap } from 'rxjs/operators';
-import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
-import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
+import { catchError, map, tap } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-commit-details-view',
@@ -19,20 +15,17 @@ import { SolutionProgrammingExerciseParticipation } from 'app/entities/participa
 export class CommitDetailsViewComponent implements OnDestroy, OnInit {
     report: ProgrammingExerciseGitDiffReport;
     exerciseId: number;
-    participationId: number;
+    participationId?: number;
     commitHash: string;
     isTemplate = false;
 
-    errorWhileFetchingRepos = false;
+    errorWhileFetching = false;
     leftCommitFileContentByPath: Map<string, string>;
     rightCommitFileContentByPath: Map<string, string>;
-    commitsInfoSubscription: Subscription;
     commits: CommitInfo[] = [];
     currentCommit: CommitInfo;
     previousCommit: CommitInfo;
-    participation: TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation | ProgrammingExerciseStudentParticipation;
-    repositoryType: string;
-    exercise: ProgrammingExercise;
+    repositoryType?: string;
 
     repoFilesSubscription: Subscription;
     participationRepoFilesAtLeftCommitSubscription: Subscription;
@@ -52,7 +45,6 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
         this.participationRepoFilesAtLeftCommitSubscription?.unsubscribe();
         this.participationRepoFilesAtRightCommitSubscription?.unsubscribe();
         this.paramSub?.unsubscribe();
-        this.commitsInfoSubscription?.unsubscribe();
         this.participationSub?.unsubscribe();
     }
 
@@ -64,33 +56,13 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
     ngOnInit(): void {
         this.paramSub = this.route.params.subscribe((params) => {
             this.exerciseId = Number(params['exerciseId']);
-            this.participationId = Number(params['participationId']);
+            this.participationId = isNaN(Number(params['participationId'])) ? undefined : Number(params['participationId']);
             this.commitHash = params['commitHash'];
-            this.repositoryType = params['repositoryType'];
-            this.fetchParticipation();
+            this.repositoryType = params['repositoryType'] || undefined;
+            this.retrieveAndHandleCommits();
         });
     }
 
-    /**
-     * Fetches the participation based on the repository type and sets the participation and participation id.
-     * @private
-     */
-    private fetchParticipation() {
-        if (this.repositoryType) {
-            this.participationSub = this.programmingExerciseService.findWithTemplateAndSolutionParticipation(this.exerciseId, true).subscribe((exerciseRes) => {
-                this.exercise = exerciseRes.body!;
-                this.participation = this.repositoryType === 'SOLUTION' ? this.exercise.solutionParticipation! : this.exercise.templateParticipation!;
-                this.participationId = this.participation.id!;
-                this.retrieveAndHandleCommits();
-            });
-        } else {
-            this.participationSub = this.programmingExerciseParticipationService.getStudentParticipationWithAllResults(this.participationId).subscribe((participation) => {
-                this.repositoryType = 'USER';
-                this.participation = participation;
-                this.retrieveAndHandleCommits();
-            });
-        }
-    }
     /**
      * Retrieves the commits for the participation and sets the current and previous commit.
      * If there is no previous commit, the template commit is chosen.
@@ -98,37 +70,36 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
      * @private
      */
     private retrieveAndHandleCommits() {
-        let retrieveCommitHistory;
-
-        if (this.repositoryType === 'USER') {
-            retrieveCommitHistory = this.programmingExerciseParticipationService.retrieveCommitHistoryForParticipation(this.participationId);
-        } else {
-            retrieveCommitHistory = this.programmingExerciseParticipationService.retrieveCommitHistoryForTemplateSolutionOrTests(this.exerciseId, this.repositoryType);
+        let commitInfoSubscription;
+        if (this.repositoryType) {
+            commitInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitHistoryForTemplateSolutionOrTests(this.exerciseId, this.repositoryType);
+        } else if (this.participationId) {
+            commitInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitHistoryForParticipation(this.participationId);
+        }
+        if (!commitInfoSubscription) {
+            return;
         }
 
-        this.commitsInfoSubscription = retrieveCommitHistory
+        commitInfoSubscription
             .pipe(
-                tap((commits) => {
-                    this.commits = commits.sort((a, b) => (dayjs(b.timestamp!).isAfter(dayjs(a.timestamp!)) ? 1 : -1));
-                    for (let i = 0; i < this.commits.length; i++) {
-                        const commit = this.commits[i];
-                        if (commit.hash === this.commitHash) {
-                            this.currentCommit = commit;
-                            if (i < this.commits.length - 1) {
-                                this.previousCommit = this.commits[i + 1];
-                            } else {
-                                // choose template commit
-                                this.isTemplate = true;
-                                this.previousCommit = this.commits[this.commits.length - 1];
-                            }
-                            break;
-                        }
+                map((commits) => commits.sort((a, b) => (dayjs(b.timestamp).isAfter(dayjs(a.timestamp)) ? 1 : -1))),
+                tap((sortedCommits) => {
+                    this.commits = sortedCommits;
+                    const foundIndex = this.commits.findIndex((commit) => commit.hash === this.commitHash);
+                    if (foundIndex !== -1) {
+                        this.currentCommit = this.commits[foundIndex];
+                        this.previousCommit = foundIndex < this.commits.length - 1 ? this.commits[foundIndex + 1] : this.commits[this.commits.length - 1];
+                        this.isTemplate = foundIndex === this.commits.length - 1;
                     }
+                }),
+                catchError(() => {
+                    return throwError(() => new Error('Error processing commits'));
                 }),
             )
             .subscribe({
-                next: () => {
-                    this.getDiffReport();
+                next: () => this.getDiffReport(),
+                error: () => {
+                    this.errorWhileFetching = true;
                 },
             });
     }
@@ -152,7 +123,6 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
      */
     private handleNewReport(report: ProgrammingExerciseGitDiffReport) {
         this.report = report;
-        this.report.programmingExercise = this.participation.exercise as ProgrammingExercise;
         this.report.leftCommitHash = this.previousCommit.hash;
         this.report.rightCommitHash = this.currentCommit.hash;
         this.report.participationIdForLeftCommit = this.participationId;
@@ -182,7 +152,7 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
                         this.fetchParticipationRepoFilesAtRightCommit();
                     },
                     error: () => {
-                        this.errorWhileFetchingRepos = true;
+                        this.errorWhileFetching = true;
                     },
                 });
         }
@@ -205,7 +175,7 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
                     this.rightCommitFileContentByPath = filesWithContent;
                 },
                 error: () => {
-                    this.errorWhileFetchingRepos = true;
+                    this.errorWhileFetching = true;
                 },
             });
     }

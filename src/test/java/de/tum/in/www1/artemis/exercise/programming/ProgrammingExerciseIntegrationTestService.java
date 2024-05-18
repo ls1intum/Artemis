@@ -263,17 +263,17 @@ class ProgrammingExerciseIntegrationTestService {
         participationUtilService.addStudentParticipationForProgrammingExercise(programmingExerciseInExam, userPrefix + "student2");
 
         localRepoFile = Files.createTempDirectory("repo").toFile();
-        localGit = LocalRepository.initialize(localRepoFile, defaultBranch);
+        localGit = LocalRepository.initialize(localRepoFile, defaultBranch, false);
         remoteRepoFile = Files.createTempDirectory("repoOrigin").toFile();
-        remoteGit = LocalRepository.initialize(remoteRepoFile, defaultBranch);
+        remoteGit = LocalRepository.initialize(remoteRepoFile, defaultBranch, true);
         StoredConfig config = localGit.getRepository().getConfig();
         config.setString("remote", "origin", "url", remoteRepoFile.getAbsolutePath());
         config.save();
 
         localRepoFile2 = Files.createTempDirectory("repo2").toFile();
-        localGit2 = LocalRepository.initialize(localRepoFile2, defaultBranch);
+        localGit2 = LocalRepository.initialize(localRepoFile2, defaultBranch, false);
         remoteRepo2File = Files.createTempDirectory("repoOrigin").toFile();
-        remoteGit2 = LocalRepository.initialize(remoteRepo2File, defaultBranch);
+        remoteGit2 = LocalRepository.initialize(remoteRepo2File, defaultBranch, true);
         StoredConfig config2 = localGit2.getRepository().getConfig();
         config2.setString("remote", "origin", "url", remoteRepo2File.getAbsolutePath());
         config2.save();

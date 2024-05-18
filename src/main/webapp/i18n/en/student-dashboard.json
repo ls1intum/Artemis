@@ -42,7 +42,8 @@
                 "noDate": "No date",
                 "all": "Tutorial Groups",
                 "registered": "My Tutorial Groups",
-                "further": "Further Tutorial Groups"
+                "further": "Further Tutorial Groups",
+                "noUpcomingSession": "No upcoming Session"
             },
             "menu": {
                 "exercises": "Exercises",
