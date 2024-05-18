@@ -13,6 +13,12 @@ import cProgrammingExerciseTemplate from '../../fixtures/exercise/programming/c/
 import javaAssessmentSubmission from '../../fixtures/exercise/programming/java/assessment/submission.json';
 import javaProgrammingExerciseTemplate from '../../fixtures/exercise/programming/java/template.json';
 import pythonProgrammingExerciseTemplate from '../../fixtures/exercise/programming/python/template.json';
+import swiftProgrammingExerciseTemplate from '../../fixtures/exercise/programming/swift/template.json';
+import haskellProgrammingExerciseTemplate from '../../fixtures/exercise/programming/haskell/template.json';
+import kotlinProgrammingExerciseTemplate from '../../fixtures/exercise/programming/kotlin/template.json';
+import vhdlProgrammingExerciseTemplate from '../../fixtures/exercise/programming/vhdl/template.json';
+import assemblerProgrammingExerciseTemplate from '../../fixtures/exercise/programming/assembler/template.json';
+import ocamlProgrammingExerciseTemplate from '../../fixtures/exercise/programming/ocaml/template.json';
 import multipleChoiceSubmissionTemplate from '../../fixtures/exercise/quiz/multiple_choice/submission.json';
 import shortAnswerSubmissionTemplate from '../../fixtures/exercise/quiz/short_answer/submission.json';
 import quizTemplate from '../../fixtures/exercise/quiz/template.json';
@@ -43,6 +49,18 @@ import { TeamAssignmentConfig } from 'app/entities/team-assignment-config.model'
 
 export class ExerciseAPIRequests {
     private readonly page: Page;
+
+    readonly programmingExerciseTemplates = new Map([
+        [ProgrammingLanguage.PYTHON, pythonProgrammingExerciseTemplate as any],
+        [ProgrammingLanguage.C, cProgrammingExerciseTemplate],
+        [ProgrammingLanguage.JAVA, javaProgrammingExerciseTemplate],
+        [ProgrammingLanguage.SWIFT, swiftProgrammingExerciseTemplate],
+        [ProgrammingLanguage.HASKELL, haskellProgrammingExerciseTemplate],
+        [ProgrammingLanguage.KOTLIN, kotlinProgrammingExerciseTemplate],
+        [ProgrammingLanguage.VHDL, vhdlProgrammingExerciseTemplate],
+        [ProgrammingLanguage.ASSEMBLER, assemblerProgrammingExerciseTemplate],
+        [ProgrammingLanguage.OCAML, ocamlProgrammingExerciseTemplate],
+    ]);
 
     constructor(page: Page) {
         this.page = page;
@@ -92,7 +110,7 @@ export class ExerciseAPIRequests {
             title = 'Programming ' + generateUUID(),
             programmingShortName = 'programming' + generateUUID(),
             programmingLanguage = ProgrammingLanguage.JAVA,
-            packageName = 'de.test',
+            packageName,
             assessmentDate = dayjs().add(2, 'days'),
             assessmentType = ProgrammingExerciseAssessmentType.AUTOMATIC,
             mode = ExerciseMode.INDIVIDUAL,
@@ -101,23 +119,17 @@ export class ExerciseAPIRequests {
 
         let programmingExerciseTemplate = {};
 
-        if (programmingLanguage == ProgrammingLanguage.PYTHON) {
-            programmingExerciseTemplate = pythonProgrammingExerciseTemplate;
-        } else if (programmingLanguage == ProgrammingLanguage.C) {
-            programmingExerciseTemplate = cProgrammingExerciseTemplate;
-        } else if (programmingLanguage == ProgrammingLanguage.JAVA) {
-            programmingExerciseTemplate = javaProgrammingExerciseTemplate;
-        }
+        programmingExerciseTemplate = this.programmingExerciseTemplates.get(programmingLanguage);
 
         const exercise = {
             ...programmingExerciseTemplate,
             title,
             shortName: programmingShortName,
-            packageName,
             channelName: 'exercise-' + titleLowercase(title),
             assessmentType: ProgrammingExerciseAssessmentType[assessmentType],
             ...(course ? { course } : {}),
             ...(exerciseGroup ? { exerciseGroup } : {}),
+            ...(packageName ? { packageName } : {}),
         } as ProgrammingExercise;
 
         if (!exerciseGroup) {
@@ -135,6 +147,8 @@ export class ExerciseAPIRequests {
         exercise.testwiseCoverageEnabled = recordTestwiseCoverage;
         exercise.mode = mode;
         exercise.teamAssignmentConfig = teamAssignmentConfig;
+
+        console.log('Creating programming exercise:', exercise);
 
         const response = await this.page.request.post(`${PROGRAMMING_EXERCISE_BASE}/setup`, { data: exercise });
         return response.json();

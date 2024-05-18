@@ -1,0 +1,11 @@
+{
+    "deleteFiles": ["Exercise.hs"],
+    "files": [
+        {
+            "name": "Exercise.hs",
+            "path": "exercise/programming/haskell/all_successful/Exercise.txt"
+        }
+    ],
+    "expectedResult": "100%",
+    "sourcePath": "src/"
+}

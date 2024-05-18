@@ -1,0 +1,10 @@
+{
+    "deleteFiles": ["addOne.asm"],
+    "files": [
+        {
+            "name": "addOne.asm",
+            "path": "exercise/programming/assembler/all_successful/addOne.txt"
+        }
+    ],
+    "expectedResult": "100%"
+}

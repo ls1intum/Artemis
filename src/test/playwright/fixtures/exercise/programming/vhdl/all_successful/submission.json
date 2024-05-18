@@ -1,0 +1,10 @@
+{
+    "deleteFiles": ["verzoegerung.vhd"],
+    "files": [
+        {
+            "name": "verzoegerung.vhd",
+            "path": "exercise/programming/vhdl/all_successful/verzoegerung.txt"
+        }
+    ],
+    "expectedResult": "100%"
+}

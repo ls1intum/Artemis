@@ -1,0 +1,33 @@
+{
+    "allowComplaintsForAutomaticAssessments": false,
+    "allowManualFeedbackRequests": false,
+    "allowOfflineIde": true,
+    "allowOnlineEditor": true,
+    "assessmentDueDateError": false,
+    "assessmentType": "AUTOMATIC",
+    "bonusPoints": 0,
+    "checkoutSolutionRepository": false,
+    "dueDateError": false,
+    "exampleSolutionPublicationDateError": false,
+    "includedInOverallScore": "INCLUDED_COMPLETELY",
+    "maxPoints": 10,
+    "mode": "INDIVIDUAL",
+    "presentationScoreEnabled": false,
+    "problemStatement": "# Do It Once, Do It Twice, Do It Thrice!\n\nYour task is to implement a function of type `(Int,Int) -> [(Int,Int)] -> [(Int,Int)]` which takes a range `(i,j)` and a list `xs` of pairs `(x,y)` representing points in the euclidean plane as arguments.\nThe function should select only those elements in `xs` whose x-component lies in the inclusive range $$[i,j]$$.\nIt should then reflect the remaining points along the x-axis and return the resulting list.\n\nImplement the function in three different ways:\n\n1. [task][List Comprehension](Properties.Checked by QuickCheck.Testing A against sample solution, Properties.Checked by SmallCheck.Testing filtering in A, Properties.Checked by SmallCheck.Testing mapping in A,  Unit Tests.Testing selectAndReflectA (0,0) [])\n   As a list comprehension without using any higher-order functions or recursion.\n   Call this function `selectAndReflectA`.\n\n2. [task][Recursion](Properties.Checked by QuickCheck.Testing B against sample solution, Properties.Checked by SmallCheck.Testing filtering in B, Properties.Checked by SmallCheck.Testing mapping in B,  Unit Tests.Testing selectAndReflectB (0,1) [(0,0)])\n   As a recursive function with the help of pattern matching.\n   You are not allowed to use list comprehensions or higher-order functions.\n   Call this function `selectAndReflectB`.\n\n3. [task][Higher-Order Functions](Properties.Checked by QuickCheck.Testing C against sample solution, Properties.Checked by SmallCheck.Testing filtering in C, Properties.Checked by SmallCheck.Testing mapping in C,  Unit Tests.Testing selectAndReflectC (0,1) [(-1,-1)])\n   Use higher-order functions (e.g. `map`, `filter`, etc.) but no recursion or list comprehensions.\n   Call this function `selectAndReflectC`.\n",
+    "programmingLanguage": "HASKELL",
+    "secondCorrectionEnabled": false,
+    "shortName": "<Insert programming exercise short name here>",
+    "showTestNamesToStudents": false,
+    "solutionParticipation": {
+        "type": "solution"
+    },
+    "staticCodeAnalysisEnabled": false,
+    "studentAssignedTeamIdComputed": false,
+    "teamMode": false,
+    "templateParticipation": {
+        "type": "template"
+    },
+    "testwiseCoverageEnabled": false,
+    "title": "<Insert programming exercise title here>",
+    "type": "programming"
+}

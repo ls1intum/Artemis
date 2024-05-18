@@ -1,6 +1,5 @@
 {
     "deleteFiles": ["context.py", "policy.py", "sort_strategy.py", "sorting_algorithms.py"],
-    "createFilesInRootFolder": true,
     "files": [
         {
             "name": "context.py",

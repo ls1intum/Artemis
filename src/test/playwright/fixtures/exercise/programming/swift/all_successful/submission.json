@@ -1,0 +1,32 @@
+{
+    "deleteFiles": ["BubbleSort.swift", "Client.swift", "MergeSort.swift"],
+    "files": [
+        {
+            "name": "BubbleSort.swift",
+            "path": "exercise/programming/swift/all_successful/BubbleSort.txt"
+        },
+        {
+            "name": "Context.swift",
+            "path": "exercise/programming/swift/all_successful/Context.txt"
+        },
+        {
+            "name": "Client.swift",
+            "path": "exercise/programming/swift/all_successful/Client.txt"
+        },
+        {
+            "name": "MergeSort.swift",
+            "path": "exercise/programming/swift/all_successful/MergeSort.txt"
+        },
+        {
+            "name": "Policy.swift",
+            "path": "exercise/programming/swift/all_successful/Policy.txt"
+        },
+        {
+            "name": "SortStrategy.swift",
+            "path": "exercise/programming/swift/all_successful/SortStrategy.txt"
+        }
+    ],
+    "expectedResult": "100%",
+    "packageName": "swifttest",
+    "sourcePath": "Sources/swifttestLib/"
+}

@@ -1,0 +1,30 @@
+{
+    "allowComplaintsForAutomaticAssessments": false,
+    "allowManualFeedbackRequests": false,
+    "allowOfflineIde": true,
+    "allowOnlineEditor": true,
+    "assessmentType": "AUTOMATIC",
+    "bonusPoints": 0,
+    "checkoutSolutionRepository": false,
+    "includedInOverallScore": "INCLUDED_COMPLETELY",
+    "maxPoints": 10,
+    "mode": "INDIVIDUAL",
+    "presentationScoreEnabled": false,
+    "problemStatement": "# Arithmetic, Lists and Using Libraries\n\nIn this exercise, you will use basic features of the OCaml programming language for arithmetic, list and string operations.\n\n1. [task][add](0:add:0,0:add:1)\nImplement the function `add` that takes two values of type `int` and returns their sum.\n\n2. [task][filter](2:filter:0,2:filter:1)\nImplement the generic and recursive function `filter` that that takes a predicate of type `'a -> bool` and a list of type `'a list`. The function should return the list of elements contained in the input list that fulfill the predicate. The elements in the returned list must appear in the same order as in the input list.\n\n3. [task][starts_with](4:starts_with:0,4:starts_with:1)\nImplement the function `starts_with` that takes two `string`s and returns `true` if, and only if, the second string is a prefix of the first.\n\n",
+    "programmingLanguage": "OCAML",
+    "secondCorrectionEnabled": false,
+    "shortName": "<Insert programming exercise short name here>",
+    "showTestNamesToStudents": false,
+    "solutionParticipation": {
+        "type": "solution"
+    },
+    "staticCodeAnalysisEnabled": false,
+    "studentAssignedTeamIdComputed": false,
+    "teamMode": false,
+    "templateParticipation": {
+        "type": "template"
+    },
+    "testwiseCoverageEnabled": false,
+    "title": "<Insert programming exercise title here>",
+    "type": "programming"
+}

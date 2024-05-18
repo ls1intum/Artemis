@@ -1,0 +1,36 @@
+{
+    "allowComplaintsForAutomaticAssessments": false,
+    "allowManualFeedbackRequests": false,
+    "allowOfflineIde": true,
+    "allowOnlineEditor": true,
+    "assessmentType": "AUTOMATIC",
+    "bonusPoints": 0,
+    "checkoutSolutionRepository": false,
+    "exerciseType": "PROGRAMMING",
+    "gradingInstructionFeedbackUsed": false,
+    "includedInOverallScore": "INCLUDED_COMPLETELY",
+    "maxPoints": 10,
+    "mode": "INDIVIDUAL",
+    "packageName": "swifttest",
+    "presentationScoreEnabled": false,
+    "problemStatement": "# Sorting with the Strategy Pattern\n\nIn this exercise, we want to implement sorting algorithms and choose them based on runtime specific variables.\n\n### Part 1: Sorting\n\nFirst, we need to implement two sorting algorithms, in this case `MergeSort` and `BubbleSort`.\n\n**You have the following tasks:**\n\n1. [task][Implement Bubble Sort](testBubbleSort)\nImplement the method `performSort([Date])` in the class `BubbleSort`. Make sure to follow the Bubble Sort algorithm exactly.\n\n2. [task][Implement Merge Sort](testMergeSort)\nImplement the method `performSort([Date])` in the class `MergeSort`. Make sure to follow the Merge Sort algorithm exactly.\n\n### Part 2: Strategy Pattern\n\nWe want the application to apply different algorithms for sorting an `Array` of `Date` objects.\nUse the strategy pattern to select the right sorting algorithm at runtime.\n\n**You have the following tasks:**\n\n1. [task][SortStrategy Protocol](testClassSortStrategy,testMethodsSortStrategy)\nCreate a `SortStrategy` protocol and adjust the sorting algorithms so that they implement this protocol.\n\n2. [task][Context Class](testClassContext,testAttributesContext,testMethodsContext)\nCreate and implement a `Context` class following the below class diagram\n\n3. [task][Context Policy](testClassPolicy,testAttributesPolicy,testMethodsPolicy)\nCreate and implement a `Policy` class following the below class diagram with a simple configuration mechanism:\n\n    1. **Select MergeSort**\n    Select `MergeSort` when the Array has more than 10 dates.\n\n    2. **Select BubbleSort**\n    Select `BubbleSort` when the Array has less or equal 10 dates.\n\n4. Complete the `Client` class which demonstrates switching between two strategies at runtime.\n\n@startuml\n\nclass Client {\n}\n\nclass Policy {\n  +configure()\n}\n\nclass Context {\n  -dates: [Date]\n  +sort()\n}\n\ninterface SortStrategy {\n  +performSort([Date])\n}\n\nclass BubbleSort {\n  +performSort([Date])\n}\n\nclass MergeSort {\n  +performSort([Date])\n}\n\nMergeSort -up-|> SortStrategy\nBubbleSort -up-|> SortStrategy\nPolicy -right-> Context : context\nContext -right-> SortStrategy : sortAlgorithm\nClient .down.> Policy\nClient .down.> Context\n\nhide empty fields\nhide empty methods\n\n@enduml\n\n\n### Part 3: Optional Challenges\n\n(These are not tested)\n\n1. Create a new class `QuickSort` that implements `SortStrategy` and implement the Quick Sort algorithm.\n\n2. Make the method `performSort([Date])` generic, so that other objects can also be sorted by the same method.\n**Hint:** Have a look at Swift Generics and the interface `Comparable`.\n\n3. Think about a useful decision in `Policy` when to use the new `QuickSort` algorithm.\n",
+    "programmingLanguage": "SWIFT",
+    "projectType": "PLAIN",
+    "releaseTestsWithExampleSolution": false,
+    "secondCorrectionEnabled": false,
+    "shortName": "<Insert programming exercise short name here>",
+    "showTestNamesToStudents": false,
+    "solutionParticipation": {
+        "type": "solution"
+    },
+    "staticCodeAnalysisEnabled": false,
+    "studentAssignedTeamIdComputed": false,
+    "teamMode": false,
+    "templateParticipation": {
+        "type": "template"
+    },
+    "testCasesChanged": false,
+    "testwiseCoverageEnabled": false,
+    "title": "<Insert programming exercise title here>",
+    "type": "programming"
+}

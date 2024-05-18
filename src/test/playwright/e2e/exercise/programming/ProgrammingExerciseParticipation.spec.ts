@@ -2,6 +2,12 @@ import { Course } from 'app/entities/course.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 import javaAllSuccessfulSubmission from '../../../fixtures/exercise/programming/java/all_successful/submission.json';
+import swiftAllSuccessfulSubmission from '../../../fixtures/exercise/programming/swift/all_successful/submission.json';
+import haskellAllSuccessfulSubmission from '../../../fixtures/exercise/programming/haskell/all_successful/submission.json';
+import kotlinAllSuccessfulSubmission from '../../../fixtures/exercise/programming/kotlin/all_successful/submission.json';
+import vhdlAllSuccessfulSubmission from '../../../fixtures/exercise/programming/vhdl/all_successful/submission.json';
+import assemblerAllSuccessfulSubmission from '../../../fixtures/exercise/programming/assembler/all_successful/submission.json';
+import ocamlAllSuccessfulSubmission from '../../../fixtures/exercise/programming/ocaml/all_successful/submission.json';
 import javaBuildErrorSubmission from '../../../fixtures/exercise/programming/java/build_error/submission.json';
 import javaPartiallySuccessfulSubmission from '../../../fixtures/exercise/programming/java/partially_successful/submission.json';
 import pythonAllSuccessful from '../../../fixtures/exercise/programming/python/all_successful/submission.json';
@@ -45,6 +51,42 @@ test.describe('Programming exercise participation', () => {
             description: 'Makes a successful Python submission',
             programmingLanguage: ProgrammingLanguage.PYTHON,
             submission: pythonAllSuccessful,
+            commitMessage: 'Implemented all tasks',
+        },
+        {
+            description: 'Makes a successful Swift submission',
+            programmingLanguage: ProgrammingLanguage.SWIFT,
+            submission: swiftAllSuccessfulSubmission,
+            commitMessage: 'Implemented all tasks',
+        },
+        {
+            description: 'Makes a successful Haskell submission',
+            programmingLanguage: ProgrammingLanguage.HASKELL,
+            submission: haskellAllSuccessfulSubmission,
+            commitMessage: 'Implemented all tasks',
+        },
+        {
+            description: 'Makes a successful Kotlin submission',
+            programmingLanguage: ProgrammingLanguage.KOTLIN,
+            submission: kotlinAllSuccessfulSubmission,
+            commitMessage: 'Implemented all tasks',
+        },
+        {
+            description: 'Makes a successful VHDL submission',
+            programmingLanguage: ProgrammingLanguage.VHDL,
+            submission: vhdlAllSuccessfulSubmission,
+            commitMessage: 'Implemented all tasks',
+        },
+        {
+            description: 'Makes a successful Assembler submission',
+            programmingLanguage: ProgrammingLanguage.ASSEMBLER,
+            submission: assemblerAllSuccessfulSubmission,
+            commitMessage: 'Implemented all tasks',
+        },
+        {
+            description: 'Makes a successful Ocaml submission',
+            programmingLanguage: ProgrammingLanguage.OCAML,
+            submission: ocamlAllSuccessfulSubmission,
             commitMessage: 'Implemented all tasks',
         },
     ];
@@ -113,11 +155,7 @@ async function makeGitSubmission(
     commitMessage: string,
     deleteFiles: boolean = true,
 ) {
-    let sourcePath = '';
-    if (submission.packageName) {
-        const packagePath = submission.packageName.replace(/\./g, '/');
-        sourcePath = `src/${packagePath}/`;
-    }
+    const sourcePath = submission.sourcePath ?? '';
 
     if (deleteFiles) {
         for (const fileName of submission.deleteFiles) {

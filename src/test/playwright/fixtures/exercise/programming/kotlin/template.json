@@ -1,0 +1,32 @@
+{
+    "allowComplaintsForAutomaticAssessments": false,
+    "allowManualFeedbackRequests": false,
+    "allowOfflineIde": true,
+    "allowOnlineEditor": true,
+    "assessmentType": "AUTOMATIC",
+    "bonusPoints": 0,
+    "checkoutSolutionRepository": false,
+    "exampleSolutionPublicationDateError": false,
+    "includedInOverallScore": "INCLUDED_COMPLETELY",
+    "maxPoints": 10,
+    "mode": "INDIVIDUAL",
+    "packageName": "kotlintest",
+    "presentationScoreEnabled": false,
+    "problemStatement": "**We will now turn the UML from the last exercise into Kotlin Code**\n\nFor that you'll need to clone the repository and open it in IntelliJ. We marked all the areas where you need to implement something with appropriate `TODOs`.\n\n1. [task][Declare `SortStrategy` interface](testClass[SortStrategy]){}\n2. [task][Add the missing methods to `SortStrategy` interface](testMethods[SortStrategy]){}\n3. [task][Implement inheritance for `MergeSort` and `QuickSort`](testClass[MergeSort],testClass[QuickSort]){}\n4. [task][Implement members and methods for `Context`](testAttributes[Context],testMethods[Context]){}\n5. [task][Implement constructor, members and methods for `Policy`](testConstructors[Policy],testAttributes[Policy],testMethods[Policy]){}\n6. [task][Implement policy configuration](testMergeSort,testQuickSort,testSimulateRuntimeStrategyChoice){}\n",
+    "programmingLanguage": "KOTLIN",
+    "secondCorrectionEnabled": false,
+    "shortName": "<Insert programming exercise short name here>",
+    "showTestNamesToStudents": false,
+    "solutionParticipation": {
+        "type": "solution"
+    },
+    "staticCodeAnalysisEnabled": false,
+    "studentAssignedTeamIdComputed": false,
+    "teamMode": false,
+    "templateParticipation": {
+        "type": "template"
+    },
+    "testwiseCoverageEnabled": false,
+    "title": "<Insert programming exercise title here>",
+    "type": "programming"
+}

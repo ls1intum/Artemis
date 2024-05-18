@@ -1,0 +1,30 @@
+{
+    "allowComplaintsForAutomaticAssessments": false,
+    "allowManualFeedbackRequests": false,
+    "allowOfflineIde": true,
+    "allowOnlineEditor": true,
+    "assessmentType": "AUTOMATIC",
+    "bonusPoints": 0,
+    "checkoutSolutionRepository": false,
+    "includedInOverallScore": "INCLUDED_COMPLETELY",
+    "maxPoints": 10,
+    "mode": "INDIVIDUAL",
+    "presentationScoreEnabled": false,
+    "problemStatement": "#### General Tasks\n1. [task][Successful Compilation](Compile)\nYour submission has to compile in order for it to be graded\n",
+    "programmingLanguage": "VHDL",
+    "secondCorrectionEnabled": false,
+    "shortName": "<Insert programming exercise short name here>",
+    "showTestNamesToStudents": false,
+    "solutionParticipation": {
+        "type": "solution"
+    },
+    "staticCodeAnalysisEnabled": false,
+    "studentAssignedTeamIdComputed": false,
+    "teamMode": false,
+    "templateParticipation": {
+        "type": "template"
+    },
+    "testwiseCoverageEnabled": false,
+    "title": "<Insert programming exercise title here>",
+    "type": "programming"
+}

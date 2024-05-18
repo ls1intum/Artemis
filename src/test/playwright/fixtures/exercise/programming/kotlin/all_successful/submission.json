@@ -1,0 +1,36 @@
+{
+    "deleteFiles": ["Client.kt", "Context.kt", "Main.kt", "MergeSort.kt", "Policy.kt", "QuickSort.kt", "SortStrategy.kt"],
+    "files": [
+        {
+            "name": "Client.kt",
+            "path": "exercise/programming/kotlin/all_successful/Client.txt"
+        },
+        {
+            "name": "Context.kt",
+            "path": "exercise/programming/kotlin/all_successful/Context.txt"
+        },
+        {
+            "name": "Main.kt",
+            "path": "exercise/programming/kotlin/all_successful/Main.txt"
+        },
+        {
+            "name": "MergeSort.kt",
+            "path": "exercise/programming/kotlin/all_successful/MergeSort.txt"
+        },
+        {
+            "name": "Policy.kt",
+            "path": "exercise/programming/kotlin/all_successful/Policy.txt"
+        },
+        {
+            "name": "QuickSort.kt",
+            "path": "exercise/programming/kotlin/all_successful/QuickSort.txt"
+        },
+        {
+            "name": "SortStrategy.kt",
+            "path": "exercise/programming/kotlin/all_successful/SortStrategy.txt"
+        }
+    ],
+    "expectedResult": "100%",
+    "packageName": "kotlintest",
+    "sourcePath": "src/kotlintest/"
+}

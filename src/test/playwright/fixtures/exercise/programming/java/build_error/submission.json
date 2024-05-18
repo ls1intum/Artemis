@@ -1,6 +1,5 @@
 {
     "deleteFiles": ["BubbleSort.java", "Client.java", "MergeSort.java"],
-    "createFilesInRootFolder": false,
     "files": [
         {
             "name": "BubbleSort.java",
@@ -8,5 +7,6 @@
         }
     ],
     "expectedResult": "0%",
-    "packageName": "de.test"
+    "packageName": "de.test",
+    "sourcePath": "src/de/test/"
 }

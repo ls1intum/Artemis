@@ -1,0 +1,11 @@
+{
+    "deleteFiles": ["assignment.ml"],
+    "files": [
+        {
+            "name": "assignment.ml",
+            "path": "exercise/programming/ocaml/all_successful/assignment.txt"
+        }
+    ],
+    "expectedResult": "100%",
+    "sourcePath": "src/"
+}

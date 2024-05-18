@@ -1,6 +1,5 @@
 {
     "deleteFiles": ["exercise.c"],
-    "createFilesInRootFolder": true,
     "files": [
         {
             "name": "exercise.c",
