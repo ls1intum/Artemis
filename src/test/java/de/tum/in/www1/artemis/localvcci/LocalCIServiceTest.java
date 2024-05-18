@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -15,10 +16,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hazelcast.collection.IQueue;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.in.www1.artemis.domain.Course;
@@ -68,6 +69,12 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     protected IMap<Long, LocalCIBuildJobQueueItem> processingJobs;
 
+    @BeforeEach
+    void setUp() {
+        queuedJobs = hazelcastInstance.getQueue("buildJobQueue");
+        processingJobs = hazelcastInstance.getMap("processingJobs");
+    }
+
     @AfterEach
     void tearDown() {
         queuedJobs.clear();
@@ -89,7 +96,7 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         sharedQueueProcessingService.removeListener();
 
         JobTimingInfo jobTimingInfo = new JobTimingInfo(ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(1), ZonedDateTime.now().plusMinutes(2));
-        BuildConfig buildConfig = new BuildConfig("echo 'test'", "test", "test", "test", null, null, false, false, false, null);
+        BuildConfig buildConfig = new BuildConfig("echo 'test'", "test", "test", "test", "test", "test", null, null, false, false, false, null);
         RepositoryInfo repositoryInfo = new RepositoryInfo("test", null, RepositoryType.USER, "test", "test", "test", null, null);
 
         LocalCIBuildJobQueueItem job1 = new LocalCIBuildJobQueueItem("1", "job1", "address1", participation.getId(), course.getId(), 1, 1, 1,
