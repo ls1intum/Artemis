@@ -5,10 +5,8 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
-import java.util.Optional;
 
 import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
@@ -23,7 +21,6 @@ import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.eclipse.jgit.transport.sshd.JGitKeyCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -37,30 +34,6 @@ import de.tum.in.www1.artemis.service.connectors.AbstractGitService;
 public class BuildJobGitService extends AbstractGitService {
 
     private static final Logger log = LoggerFactory.getLogger(BuildJobGitService.class);
-
-    @Value("${artemis.version-control.url}")
-    private URL gitUrl;
-
-    @Value("${artemis.version-control.user}")
-    private String gitUser;
-
-    @Value("${artemis.version-control.password}")
-    private String gitPassword;
-
-    @Value("${artemis.version-control.token:#{null}}")
-    private Optional<String> gitToken;
-
-    @Value("${artemis.version-control.ssh-private-key-folder-path:#{null}}")
-    private Optional<String> gitSshPrivateKeyPath;
-
-    @Value("${artemis.version-control.ssh-private-key-password:#{null}}")
-    private Optional<String> gitSshPrivateKeyPassphrase;
-
-    @Value("${artemis.version-control.ssh-template-clone-url:#{null}}")
-    private Optional<String> sshUrlTemplate;
-
-    @Value("${artemis.version-control.default-branch:main}")
-    private String defaultBranch;
 
     public BuildJobGitService() {
         super();
@@ -159,7 +132,7 @@ public class BuildJobGitService extends AbstractGitService {
      */
     public Repository getExistingCheckedOutRepositoryByLocalPath(@NotNull Path localPath, @Nullable VcsRepositoryUri remoteRepositoryUri, String defaultBranch) {
         try {
-            return openRepositoryFromFileSystem(localPath, remoteRepositoryUri, defaultBranch);
+            return openCheckedOutRepositoryFromFileSystem(localPath, remoteRepositoryUri, defaultBranch);
         }
         catch (IOException | InvalidRefNameException ex) {
             log.warn("Cannot get existing checkout out repository by local path: {}", ex.getMessage());

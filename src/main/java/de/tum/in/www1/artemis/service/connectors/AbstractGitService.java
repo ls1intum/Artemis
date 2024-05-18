@@ -42,6 +42,7 @@ import org.eclipse.jgit.transport.sshd.SshdSessionFactory;
 import org.eclipse.jgit.transport.sshd.SshdSessionFactoryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 
 import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
@@ -56,6 +57,30 @@ public abstract class AbstractGitService {
     protected static final int JGIT_TIMEOUT_IN_SECONDS = 5;
 
     protected static final String REMOTE_NAME = "origin";
+
+    @Value("${artemis.version-control.url}")
+    protected URL gitUrl;
+
+    @Value("${artemis.version-control.user}")
+    protected String gitUser;
+
+    @Value("${artemis.version-control.password}")
+    protected String gitPassword;
+
+    @Value("${artemis.version-control.token:#{null}}")
+    protected Optional<String> gitToken;
+
+    @Value("${artemis.version-control.ssh-private-key-folder-path:#{null}}")
+    protected Optional<String> gitSshPrivateKeyPath;
+
+    @Value("${artemis.version-control.ssh-private-key-password:#{null}}")
+    protected Optional<String> gitSshPrivateKeyPassphrase;
+
+    @Value("${artemis.version-control.ssh-template-clone-url:#{null}}")
+    protected Optional<String> sshUrlTemplate;
+
+    @Value("${artemis.version-control.default-branch:main}")
+    protected String defaultBranch;
 
     protected AbstractGitService() {
         log.debug("file.encoding={}", Charset.defaultCharset().displayName());
@@ -166,47 +191,82 @@ public abstract class AbstractGitService {
     }
 
     /**
-     * Creates a new Repository with the given parameters and saves the Repository's StoredConfig.
+     * Creates a JGit repository instance using the provided local path and remote repository URI with specific configurations.
+     * This method sets up the repository to avoid auto garbage collection and disables the use of symbolic links to enhance security.
+     * It also makes sure that the default branch and HEAD are correctly configured.
+     * Works for both, local checkout repositories and bare repositories (without working directory).
      *
-     * @param localPath           The local path of the repository.
-     * @param remoteRepositoryUri The remote repository uri for the git repository.
-     * @param defaultBranch       The default branch of the repository.
-     * @param builder             The FileRepositoryBuilder.
-     * @return The created Repository.
-     * @throws IOException if the configuration file cannot be accessed.
+     * @param localPath           The path to the local repository directory, not null.
+     * @param remoteRepositoryUri The URI of the remote repository, not null.
+     * @param defaultBranch       The name of the default branch to be checked out, not null.
+     * @param isBare              Whether the repository is a bare repository (without working directory)
+     * @return The configured Repository instance.
+     * @throws IOException             If an I/O error occurs during repository initialization or configuration.
+     * @throws InvalidRefNameException If the provided default branch name is invalid.
+     *
+     *                                     <p>
+     *                                     The method disables automatic garbage collection of the repository to prevent potential issues with file deletion
+     *                                     as discussed in multiple resources. It also avoids the use of symbolic links for security reasons,
+     *                                     following best practices against remote code execution vulnerabilities.
+     *                                     </p>
+     *
+     *                                     <p>
+     *                                     References:
+     *                                     <ul>
+     *                                     <li>https://stackoverflow.com/questions/45266021/java-jgit-files-delete-fails-to-delete-a-file-but-file-delete-succeeds</li>
+     *                                     <li>https://git-scm.com/docs/git-gc</li>
+     *                                     <li>https://www.eclipse.org/lists/jgit-dev/msg03734.html</li>
+     *                                     </ul>
+     *                                     </p>
      */
     @NotNull
-    protected static Repository createRepository(Path localPath, VcsRepositoryUri remoteRepositoryUri, String defaultBranch, FileRepositoryBuilder builder) throws IOException {
+    public static Repository linkRepositoryForExistingGit(Path localPath, VcsRepositoryUri remoteRepositoryUri, String defaultBranch, boolean isBare)
+            throws IOException, InvalidRefNameException {
         // Create the JGit repository object
-        Repository repository = new Repository(builder, localPath, remoteRepositoryUri);
-        // disable auto garbage collection because it can lead to problems (especially with deleting local repositories)
-        // see https://stackoverflow.com/questions/45266021/java-jgit-files-delete-fails-to-delete-a-file-but-file-delete-succeeds
-        // and https://git-scm.com/docs/git-gc for an explanation of the parameter
-        // and https://www.eclipse.org/lists/jgit-dev/msg03734.html
-        StoredConfig gitRepoConfig = repository.getConfig();
-        gitRepoConfig.setInt(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTO, 0);
-        gitRepoConfig.setBoolean(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTODETACH, false);
-        gitRepoConfig.setInt(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTOPACKLIMIT, 0);
-        gitRepoConfig.setBoolean(ConfigConstants.CONFIG_RECEIVE_SECTION, null, ConfigConstants.CONFIG_KEY_AUTOGC, false);
 
-        // disable symlinks to avoid security issues such as remote code execution
-        gitRepoConfig.setBoolean(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_SYMLINKS, false);
-        gitRepoConfig.setBoolean(ConfigConstants.CONFIG_COMMIT_SECTION, null, ConfigConstants.CONFIG_KEY_GPGSIGN, false);
-        gitRepoConfig.setString(ConfigConstants.CONFIG_BRANCH_SECTION, defaultBranch, ConfigConstants.CONFIG_REMOTE_SECTION, REMOTE_NAME);
-        gitRepoConfig.setString(ConfigConstants.CONFIG_BRANCH_SECTION, defaultBranch, ConfigConstants.CONFIG_MERGE_SECTION, "refs/heads/" + defaultBranch);
+        // Open the repository from the filesystem
+        FileRepositoryBuilder builder = new FileRepositoryBuilder();
 
-        gitRepoConfig.save();
-        return repository;
+        if (isBare) {
+            builder.setBare();
+        }
+        // bare repositories use a different path than checked out ones
+        builder.setGitDir(isBare ? localPath.toFile() : localPath.resolve(".git").toFile()).setInitialBranch(defaultBranch).setMustExist(true).readEnvironment().findGitDir()
+                .setup(); // scan environment GIT_* variables
+
+        try (Repository repository = new Repository(builder, localPath, remoteRepositoryUri)) {
+            // disable auto garbage collection because it can lead to problems (especially with deleting local repositories)
+            // see https://stackoverflow.com/questions/45266021/java-jgit-files-delete-fails-to-delete-a-file-but-file-delete-succeeds
+            // and https://git-scm.com/docs/git-gc for an explanation of the parameter
+            // and https://www.eclipse.org/lists/jgit-dev/msg03734.html
+            StoredConfig gitRepoConfig = repository.getConfig();
+            gitRepoConfig.setInt(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTO, 0);
+            gitRepoConfig.setBoolean(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTODETACH, false);
+            gitRepoConfig.setInt(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTOPACKLIMIT, 0);
+            gitRepoConfig.setBoolean(ConfigConstants.CONFIG_RECEIVE_SECTION, null, ConfigConstants.CONFIG_KEY_AUTOGC, false);
+
+            // disable symlinks to avoid security issues such as remote code execution
+            gitRepoConfig.setBoolean(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_SYMLINKS, false);
+            gitRepoConfig.setBoolean(ConfigConstants.CONFIG_COMMIT_SECTION, null, ConfigConstants.CONFIG_KEY_GPGSIGN, false);
+            gitRepoConfig.setString(ConfigConstants.CONFIG_BRANCH_SECTION, defaultBranch, ConfigConstants.CONFIG_REMOTE_SECTION, REMOTE_NAME);
+            gitRepoConfig.setString(ConfigConstants.CONFIG_BRANCH_SECTION, defaultBranch, ConfigConstants.CONFIG_MERGE_SECTION, "refs/heads/" + defaultBranch);
+
+            // Important for new / empty repositories so the default branch is set correctly.
+            RefUpdate refUpdate = repository.getRefDatabase().newUpdate(Constants.HEAD, false);
+            refUpdate.setForceUpdate(true);
+            refUpdate.link("refs/heads/" + defaultBranch);
+
+            gitRepoConfig.save();
+
+            return repository;
+        }
     }
 
     @NotNull
-    protected static Repository openRepositoryFromFileSystem(Path localPath, VcsRepositoryUri remoteRepositoryUri, String defaultBranch)
+    protected static Repository openCheckedOutRepositoryFromFileSystem(Path localPath, VcsRepositoryUri remoteRepositoryUri, String defaultBranch)
             throws IOException, InvalidRefNameException {
-        final Path gitPath = localPath.resolve(".git");
-        FileRepositoryBuilder builder = new FileRepositoryBuilder();
-        builder.setGitDir(gitPath.toFile()).setInitialBranch(defaultBranch).readEnvironment().findGitDir().setup(); // scan environment GIT_* variables
 
-        Repository repository = createRepository(localPath, remoteRepositoryUri, defaultBranch, builder);
+        Repository repository = linkRepositoryForExistingGit(localPath, remoteRepositoryUri, defaultBranch, false);
 
         RefUpdate refUpdate = repository.getRefDatabase().newUpdate(Constants.HEAD, false);
         refUpdate.setForceUpdate(true);
@@ -275,7 +335,6 @@ public abstract class AbstractGitService {
         // java.io.IOException: Unable to delete file: ...\.git\objects\pack\...
         repository.closeBeforeDelete();
         FileUtils.deleteDirectory(repoPath.toFile());
-        repository.setContent(null);
         log.debug("Deleted Repository at {}", repoPath);
     }
 }
