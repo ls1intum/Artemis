@@ -32,6 +32,7 @@ import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -45,7 +46,7 @@ import de.tum.in.www1.artemis.user.UserUtilService;
 
 class ProgrammingExerciseTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
-    private static final String TEST_PREFIX = "programmingexercise";
+    private static final String TEST_PREFIX = "peinttest";
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
@@ -65,13 +66,13 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationJenkinsGitlabTest
     @Autowired
     private ExerciseUtilService exerciseUtilService;
 
+    @Autowired
+    private ExamUtilService examUtilService;
+
     private Long programmingExerciseId;
 
     @Autowired
     private ChannelRepository channelRepository;
-
-    @Autowired
-    private ExamUtilService examUtilService;
 
     @BeforeEach
     void init() {
@@ -144,6 +145,10 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationJenkinsGitlabTest
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateProblemStatement_examExercise() throws Exception {
         var programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
+        var exam = programmingExercise.getExamViaExerciseGroupOrCourseMember();
+        StudentExam studentExam = examUtilService.addStudentExam(exam);
+        examUtilService.addExerciseToStudentExam(studentExam, programmingExercise);
+
         final var newProblem = "a new problem statement";
         final var endpoint = "/api/programming-exercises/" + programmingExercise.getId() + "/problem-statement";
         ProgrammingExercise updatedProgrammingExercise = request.patchWithResponseBody(endpoint, newProblem, ProgrammingExercise.class, HttpStatus.OK, MediaType.TEXT_PLAIN);
