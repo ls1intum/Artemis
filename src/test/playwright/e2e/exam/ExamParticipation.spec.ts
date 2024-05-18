@@ -385,7 +385,7 @@ test.describe('Exam participation', () => {
                     textExerciseEditor,
                     studentPage,
                 );
-                // TODO: There are two dialogs shown on top of each other. Investigate the reason.
+                // There are two dialogs shown on top of each other. We close one of them.
                 const modalDialog = new ModalDialogBox(studentPage);
                 await modalDialog.closeDialog();
                 const timeChangeMessage = 'The working time of the exam has been changed.';
