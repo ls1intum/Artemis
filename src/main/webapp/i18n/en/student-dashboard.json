@@ -34,6 +34,17 @@
             "general": {
                 "noDataFound": "No data found."
             },
+            "sidebar": {
+                "past": "Past",
+                "current": "Current",
+                "future": "Future",
+                "noDueDate": "No due date",
+                "noDate": "No date",
+                "all": "Tutorial Groups",
+                "registered": "My Tutorial Groups",
+                "further": "Further Tutorial Groups",
+                "noUpcomingSession": "No upcoming Session"
+            },
             "menu": {
                 "exercises": "Exercises",
                 "statistics": "Statistics",
@@ -41,6 +52,7 @@
                 "tutorialGroups": "Tutorials",
                 "competencies": "Competencies",
                 "learningPath": "Learning Path",
+                "more": "More",
                 "exams": "Exams",
                 "testExam": "Test Exam",
                 "communication": "Communication",

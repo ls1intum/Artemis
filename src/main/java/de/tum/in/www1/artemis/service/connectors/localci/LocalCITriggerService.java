@@ -12,6 +12,7 @@ import jakarta.annotation.PostConstruct;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -30,11 +31,15 @@ import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
 import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusResult;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.*;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildConfig;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.JobTimingInfo;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.RepositoryInfo;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
 
@@ -63,15 +68,17 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private final LocalCIBuildConfigurationService localCIBuildConfigurationService;
 
+    private final GitService gitService;
+
     private IQueue<LocalCIBuildJobQueueItem> queue;
 
     private IMap<String, ZonedDateTime> dockerImageCleanupInfo;
 
-    public LocalCITriggerService(HazelcastInstance hazelcastInstance, AeolusTemplateService aeolusTemplateService,
+    public LocalCITriggerService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, AeolusTemplateService aeolusTemplateService,
             ProgrammingLanguageConfiguration programmingLanguageConfiguration, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
             LocalCIProgrammingLanguageFeatureService programmingLanguageFeatureService, Optional<VersionControlService> versionControlService,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
-            LocalCIBuildConfigurationService localCIBuildConfigurationService) {
+            LocalCIBuildConfigurationService localCIBuildConfigurationService, GitService gitService) {
         this.hazelcastInstance = hazelcastInstance;
         this.aeolusTemplateService = aeolusTemplateService;
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
@@ -80,6 +87,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         this.versionControlService = versionControlService;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.localCIBuildConfigurationService = localCIBuildConfigurationService;
+        this.gitService = gitService;
     }
 
     @PostConstruct
@@ -103,12 +111,31 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
      * Add a new build job item containing all relevant information necessary for the execution to the distributed build job queue.
      *
      * @param participation     the participation of the repository which should be built and tested
-     * @param commitHash        the commit hash of the commit that triggers the build. If it is null, the latest commit of the default branch will be built.
+     * @param commitHashToBuild the commit hash of the commit that triggers the build. If it is null, the latest commit of the default branch will be built.
      * @param triggeredByPushTo type of the repository that was pushed to and triggered the build job
      * @throws LocalCIException if the build job could not be added to the queue.
      */
     @Override
-    public void triggerBuild(ProgrammingExerciseParticipation participation, String commitHash, RepositoryType triggeredByPushTo) throws LocalCIException {
+    public void triggerBuild(ProgrammingExerciseParticipation participation, String commitHashToBuild, RepositoryType triggeredByPushTo) throws LocalCIException {
+
+        // Commit hash related to the repository that will be tested
+        String assignmentCommitHash;
+
+        // Commit hash related to the test repository
+        String testCommitHash;
+
+        if (triggeredByPushTo == null || triggeredByPushTo.equals(RepositoryType.AUXILIARY)) {
+            assignmentCommitHash = gitService.getLastCommitHash(participation.getVcsRepositoryUri()).getName();
+            testCommitHash = gitService.getLastCommitHash(participation.getProgrammingExercise().getVcsTestRepositoryUri()).getName();
+        }
+        else if (triggeredByPushTo.equals(RepositoryType.TESTS)) {
+            assignmentCommitHash = gitService.getLastCommitHash(participation.getVcsRepositoryUri()).getName();
+            testCommitHash = commitHashToBuild;
+        }
+        else {
+            assignmentCommitHash = commitHashToBuild;
+            testCommitHash = gitService.getLastCommitHash(participation.getProgrammingExercise().getVcsTestRepositoryUri()).getName();
+        }
 
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
 
@@ -125,7 +152,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         RepositoryInfo repositoryInfo = getRepositoryInfo(participation, triggeredByPushTo);
 
-        BuildConfig buildConfig = getBuildConfig(participation, commitHash);
+        BuildConfig buildConfig = getBuildConfig(participation, commitHashToBuild, assignmentCommitHash, testCommitHash);
 
         LocalCIBuildJobQueueItem buildJobQueueItem = new LocalCIBuildJobQueueItem(buildJobId, participation.getBuildPlanId(), null, participation.getId(), courseId,
                 programmingExercise.getId(), 0, priority, null, repositoryInfo, jobTimingInfo, buildConfig, null);
@@ -140,7 +167,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
     private List<String> getTestResultPaths(Windfile windfile) throws IllegalArgumentException {
         List<String> testResultPaths = new ArrayList<>();
         for (AeolusResult testResultPath : windfile.getResults()) {
-            testResultPaths.add(LOCALCI_WORKING_DIRECTORY + "/testing-dir/" + testResultPath.getPath());
+            testResultPaths.add(LOCALCI_WORKING_DIRECTORY + "/testing-dir/" + testResultPath.path());
         }
         return testResultPaths;
     }
@@ -208,7 +235,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     }
 
-    private BuildConfig getBuildConfig(ProgrammingExerciseParticipation participation, String commitHash) {
+    private BuildConfig getBuildConfig(ProgrammingExerciseParticipation participation, String commitHashToBuild, String assignmentCommitHash, String testCommitHash) {
         String branch;
         try {
             branch = versionControlService.orElseThrow().getOrRetrieveBranchOfParticipation(participation);
@@ -228,7 +255,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         String dockerImage;
         try {
             windfile = programmingExercise.getWindfile();
-            dockerImage = windfile.getMetadata().getDocker().getFullImageName();
+            dockerImage = windfile.getMetadata().docker().getFullImageName();
         }
         catch (NullPointerException e) {
             log.warn("Could not retrieve windfile for programming exercise {}. Using default windfile instead.", programmingExercise.getId());
@@ -241,7 +268,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         // Todo: If build agent does not have access to filesystem, we need to send the build script to the build agent and execute it there.
         String buildScript = localCIBuildConfigurationService.createBuildScript(participation);
 
-        return new BuildConfig(buildScript, dockerImage, commitHash, branch, programmingLanguage, projectType, staticCodeAnalysisEnabled, sequentialTestRunsEnabled,
-                testwiseCoverageEnabled, resultPaths);
+        return new BuildConfig(buildScript, dockerImage, commitHashToBuild, assignmentCommitHash, testCommitHash, branch, programmingLanguage, projectType,
+                staticCodeAnalysisEnabled, sequentialTestRunsEnabled, testwiseCoverageEnabled, resultPaths);
     }
 }

@@ -12,7 +12,10 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.LectureRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
@@ -103,13 +106,13 @@ public class PlagiarismAnswerPostService extends PostingService {
         }
         AnswerPost existingAnswerPost = this.findById(answerPostId);
         final Course course = courseRepository.findByIdElseThrow(courseId);
-        authorizationCheckService.isAtLeastStudentInCourse(course, user);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         parseUserMentions(course, answerPost.getContent());
 
         AnswerPost updatedAnswerPost;
 
         // determine if the update operation is to mark the answer post as resolving the original post
-        if (existingAnswerPost.doesResolvePost() != answerPost.doesResolvePost()) {
+        if (!Objects.equals(existingAnswerPost.doesResolvePost(), answerPost.doesResolvePost())) {
             // check if requesting user is allowed to mark this answer post as resolving, i.e. if user is author or original post or at least tutor
             mayMarkAnswerPostAsResolvingElseThrow(existingAnswerPost, user, course);
             existingAnswerPost.setResolvesPost(answerPost.doesResolvePost());

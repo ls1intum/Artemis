@@ -27,12 +27,14 @@
     <jhi-code-editor-file-browser
         editorSidebarLeft
         [disableActions]="!editable"
+        [displayOnly]="forRepositoryView"
         [unsavedFiles]="unsavedFiles | keys"
         [errorFiles]="errorFiles"
         [editorState]="editorState"
         [isTutorAssessment]="isTutorAssessment"
         [highlightFileChanges]="highlightFileChanges"
         [fileBadges]="fileBadges"
+        [allowHiddenFiles]="allowHiddenFiles"
         [(selectedFile)]="selectedFile"
         [(commitState)]="commitState"
         (onFileChange)="onFileChange($event)"

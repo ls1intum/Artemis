@@ -14,7 +14,6 @@ import static com.tngtech.archunit.core.domain.JavaClass.Predicates.type;
 import static com.tngtech.archunit.core.domain.JavaCodeUnit.Predicates.constructor;
 import static com.tngtech.archunit.core.domain.properties.HasName.Predicates.nameMatching;
 import static com.tngtech.archunit.core.domain.properties.HasOwner.Predicates.With.owner;
-import static com.tngtech.archunit.core.domain.properties.HasType.Predicates.rawType;
 import static com.tngtech.archunit.lang.SimpleConditionEvent.violated;
 import static com.tngtech.archunit.lang.conditions.ArchPredicates.are;
 import static com.tngtech.archunit.lang.conditions.ArchPredicates.have;
@@ -92,16 +91,20 @@ class ArchitectureTest extends AbstractArchitectureTest {
     @Test
     void testNoJUnit4() {
         ArchRule noJUnit4Imports = noClasses().should().dependOnClassesThat().resideInAPackage("org.junit");
-        ArchRule noPublicTests = noMethods().that().areAnnotatedWith(Test.class).or().areAnnotatedWith(ParameterizedTest.class).or().areAnnotatedWith(BeforeEach.class).or()
-                .areAnnotatedWith(BeforeAll.class).or().areAnnotatedWith(AfterEach.class).or().areAnnotatedWith(AfterAll.class).should().bePublic();
+        noJUnit4Imports.check(testClasses);
+    }
+
+    @Test
+    void testClassNameAndVisibility() {
         ArchRule classNames = methods().that().areAnnotatedWith(Test.class).should().beDeclaredInClassesThat().haveNameMatching(".*Test").orShould().beDeclaredInClassesThat()
                 .areAnnotatedWith(Nested.class);
         ArchRule noPublicTestClasses = noClasses().that().haveNameMatching(".*Test").should().bePublic();
+        ArchRule noPublicTests = noMethods().that().areAnnotatedWith(Test.class).or().areAnnotatedWith(ParameterizedTest.class).or().areAnnotatedWith(BeforeEach.class).or()
+                .areAnnotatedWith(BeforeAll.class).or().areAnnotatedWith(AfterEach.class).or().areAnnotatedWith(AfterAll.class).should().bePublic();
 
-        noJUnit4Imports.check(testClasses);
-        noPublicTests.check(testClasses);
         classNames.check(testClasses);
         noPublicTestClasses.check(testClasses.that(are(not(simpleNameContaining("Abstract")))));
+        noPublicTests.check(testClasses);
     }
 
     @Test
@@ -205,7 +208,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
         var gsonUsageRule = noClasses().should().accessClassesThat().resideInAnyPackage("com.google.gson..").because("we use an alternative JSON parsing library.");
         var result = gsonUsageRule.evaluate(allClasses);
         // TODO: reduce the following number to 0
-        assertThat(result.getFailureReport().getDetails()).hasSize(822);
+        assertThat(result.getFailureReport().getDetails()).hasSize(733);
     }
 
     /**
@@ -249,7 +252,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
             @Override
             public void check(T item, ConditionEvents events) {
-                var annotation = item.getAnnotations().stream().filter(rawType(JsonInclude.class)).findAny().orElseThrow();
+                var annotation = findJavaAnnotation(item, JsonInclude.class);
                 var valueProperty = annotation.tryGetExplicitlyDeclaredProperty("value");
                 if (valueProperty.isEmpty()) {
                     // @JsonInclude() is ok since it allows explicitly including properties

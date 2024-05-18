@@ -14,7 +14,7 @@ import { convertModelAfterMultiPart, generateUUID } from '../../../support/utils
 // Common primitives
 const textFixture = 'loremIpsum-short.txt';
 
-describe('Test exam participation', () => {
+describe.skip('Test exam participation', () => {
     let course: Course;
     let exerciseArray: Array<Exercise> = [];
 

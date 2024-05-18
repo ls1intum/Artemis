@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.plagiarism;
 
-import static de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus.*;
+import static de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus.CONFIRMED;
+import static de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus.DENIED;
+import static de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus.NONE;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Optional;
@@ -22,7 +24,7 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
-import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;

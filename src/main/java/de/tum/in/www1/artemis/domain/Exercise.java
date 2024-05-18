@@ -1,17 +1,52 @@
 package de.tum.in.www1.artemis.domain;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import jakarta.annotation.Nullable;
-import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorColumn;
+import jakarta.persistence.DiscriminatorType;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Inheritance;
+import jakarta.persistence.InheritanceType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonIncludeProperties;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
@@ -58,8 +93,9 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @Column(name = "allow_complaints_for_automatic_assessments")
     private boolean allowComplaintsForAutomaticAssessments;
 
+    // TODO: rename in a follow up
     @Column(name = "allow_manual_feedback_requests")
-    private boolean allowManualFeedbackRequests;
+    private boolean allowFeedbackRequests;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "included_in_overall_score")
@@ -211,12 +247,12 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         return this.getStudentParticipations().stream().filter((participation) -> participation.getStudents().contains(user)).map(Participation::getInitializationDate).findFirst();
     }
 
-    public boolean getAllowManualFeedbackRequests() {
-        return allowManualFeedbackRequests;
+    public boolean getAllowFeedbackRequests() {
+        return allowFeedbackRequests;
     }
 
-    public void setAllowManualFeedbackRequests(boolean allowManualFeedbackRequests) {
-        this.allowManualFeedbackRequests = allowManualFeedbackRequests;
+    public void setAllowFeedbackRequests(boolean allowFeedbackRequests) {
+        this.allowFeedbackRequests = allowFeedbackRequests;
     }
 
     public boolean getAllowComplaintsForAutomaticAssessments() {

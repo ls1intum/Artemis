@@ -13,12 +13,16 @@ import java.util.stream.Stream;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import net.sourceforge.plantuml.*;
+import net.sourceforge.plantuml.FileFormat;
+import net.sourceforge.plantuml.FileFormatOption;
+import net.sourceforge.plantuml.SourceStringReader;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -34,9 +38,20 @@ public class PlantUmlService {
 
     private final ResourceLoaderService resourceLoaderService;
 
-    public PlantUmlService(ResourceLoaderService resourceLoaderService) throws IOException {
+    public PlantUmlService(ResourceLoaderService resourceLoaderService) {
         this.resourceLoaderService = resourceLoaderService;
+    }
 
+    /**
+     * Initializes themes and sets system properties for PlantUML security when the application is ready.
+     *
+     * <p>
+     * Deletes temporary theme files to ensure updates, ensures themes are available, and configures PlantUML security settings.
+     *
+     * @throws IOException if an I/O error occurs during file deletion
+     */
+    @EventListener(ApplicationReadyEvent.class)
+    public void applicationReady() throws IOException {
         // Delete on first launch to ensure updates
         Files.deleteIfExists(PATH_TMP_THEME.resolve(DARK_THEME_FILE_NAME));
         Files.deleteIfExists(PATH_TMP_THEME.resolve(LIGHT_THEME_FILE_NAME));
@@ -50,11 +65,11 @@ public class PlantUmlService {
         Stream.of(DARK_THEME_FILE_NAME, LIGHT_THEME_FILE_NAME).forEach(fileName -> {
             final Path path = PATH_TMP_THEME.resolve(fileName);
             if (!Files.exists(path)) {
-                log.info("Storing UML theme to temporary directory");
+                log.debug("Storing UML theme to temporary directory");
                 final var themeResource = resourceLoaderService.getResource(Path.of("puml", fileName));
                 try (var inputStream = themeResource.getInputStream()) {
                     FileUtils.copyToFile(inputStream, path.toFile());
-                    log.info("UML theme stored successfully to {}", path);
+                    log.debug("UML theme stored successfully to {}", path);
                 }
                 catch (IOException e) {
                     log.error("Unable to store UML dark theme", e);

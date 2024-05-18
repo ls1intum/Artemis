@@ -5,8 +5,17 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.time.ZonedDateTime;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
@@ -14,6 +23,7 @@ import jakarta.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -70,8 +80,8 @@ public class BuildJobManagementService {
      */
     private final Set<String> cancelledBuildJobs = new ConcurrentSkipListSet<>();
 
-    public BuildJobManagementService(HazelcastInstance hazelcastInstance, BuildJobExecutionService buildJobExecutionService, ExecutorService localCIBuildExecutorService,
-            BuildJobContainerService buildJobContainerService, BuildLogsMap buildLogsMap) {
+    public BuildJobManagementService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, BuildJobExecutionService buildJobExecutionService,
+            ExecutorService localCIBuildExecutorService, BuildJobContainerService buildJobContainerService, BuildLogsMap buildLogsMap) {
         this.buildJobExecutionService = buildJobExecutionService;
         this.localCIBuildExecutorService = localCIBuildExecutorService;
         this.buildJobContainerService = buildJobContainerService;
@@ -129,7 +139,7 @@ public class BuildJobManagementService {
             if (cancelledBuildJobs.contains(buildJobItem.id())) {
                 finishCancelledBuildJob(buildJobItem.repositoryInfo().assignmentRepositoryUri(), buildJobItem.id(), containerName);
                 String msg = "Build job with id " + buildJobItem.id() + " was cancelled before it was submitted to the executor service.";
-                buildLogsMap.appendBuildLogEntry(buildJobItem.id(), new BuildLogEntry(ZonedDateTime.now(), msg + "\n"));
+                buildLogsMap.appendBuildLogEntry(buildJobItem.id(), msg);
                 throw new CompletionException(msg, null);
             }
             future = localCIBuildExecutorService.submit(buildJob);
@@ -204,7 +214,10 @@ public class BuildJobManagementService {
         buildLogsMap.appendBuildLogEntry(buildJobId, new BuildLogEntry(ZonedDateTime.now(), msg + "\n" + stackTrace));
         log.error(msg);
 
-        buildJobContainerService.stopContainer(containerName);
+        String containerId = buildJobContainerService.getIDOfRunningContainer(containerName);
+        if (containerId != null) {
+            buildJobContainerService.stopUnresponsiveContainer(containerId);
+        }
     }
 
     /**
