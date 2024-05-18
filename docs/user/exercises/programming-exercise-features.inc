@@ -112,3 +112,6 @@ For the exercises you only have to specify the syntax of the command line interf
 and at least a rough guidance for the output format.
 The source code structure can be all up to the students as far as you want.
 An assessment of the quality of the students source code structures can be made with manual assessment after the submission deadline.
+
+For the usage of Dejagnu consult the `offical documentation <https://www.gnu.org/software/dejagnu/manual/index.html>`_
+and take a look at the example of the template.
