@@ -318,6 +318,7 @@
                     "bonusMultiplier": "Bonus multiplier: This multiplies the points given for passing a test case without affecting the fractions of other test cases. Multipliers greater than 1 can result in student scores greater than 100%.",
                     "bonusPoints": "Bonus points: Additional points added on top of the regular points for passing a test case. Setting bonus points can result in student scores greater than 100%.",
                     "visibility": "Feedback and points for test cases marked as ‘After Due Date’ only become visible to students after the due date has passed. Tests with visibility ‘Never’ do not influence the student score.",
+                    "visibilityExam": "Feedback and points for test cases marked as ‘After Release Date of Results’ only become visible to students after the exam results release date has passed. Tests with visibility ‘Never’ do not influence the student score.",
                     "points": "The amount of points the student gets for passing this test. This value is rounded according to the course settings.",
                     "type": "The type of the test case determines if the test case has been generated from the test.json (STRUCTURAL), or has been written manually (BEHAVIORAL)."
                 },
@@ -425,7 +426,9 @@
                 "complaintOnAutomaticAssessmentTooltip": "Students can complain after receiving an automatic assessment. Which will be evaluated by a tutor afterwards.",
                 "exampleSolutionPublicationDateTooltip": "The date when the Solution Repository becomes available to download for students. Leave blank to disable.",
                 "releaseTestsWithExampleSolution": "Include tests into example solution",
-                "releaseTestsWithExampleSolutionTooltip": "In addition to the example solution the automatic tests can be published after the due date."
+                "releaseTestsWithExampleSolutionTooltip": "In addition to the example solution the automatic tests can be published after the due date.",
+                "setTestCaseVisibilityToAfterReleaseDateOfResults": "Set test case visibility to After Release Date of Results",
+                "setTestCaseVisibilityToAfterReleaseDateOfResultsTooltip": "During the exam students will only see if their code compiles. Details about the test results will be displayed after the Release Date of Results."
             },
             "repositoryIsLocked": {
                 "title": "Your repository is locked.",
