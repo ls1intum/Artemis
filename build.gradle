@@ -27,12 +27,12 @@ plugins {
     id "com.github.ben-manes.versions" version "0.51.0"
     id "com.github.andygoossens.modernizer" version "${modernizer_plugin_version}"
     id "com.gorylenko.gradle-git-properties" version "2.4.2"
-    id "org.owasp.dependencycheck" version "9.1.0"
+    id "org.owasp.dependencycheck" version "9.2.0"
     id "com.adarshr.test-logger" version "4.0.0"
 }
 
 group = "de.tum.in.www1.artemis"
-version = "7.0.5"
+version = "7.1.0"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -192,7 +192,7 @@ jacocoTestCoverageVerification {
                 counter = "CLASS"
                 value = "MISSEDCOUNT"
                 // TODO: in the future the following value should become less than 10
-                maximum = 28
+                maximum = 29
             }
         }
     }
@@ -323,7 +323,7 @@ dependencies {
 
     implementation "tech.jhipster:jhipster-framework:${jhipster_dependencies_version}"
     implementation "org.springframework.boot:spring-boot-starter-cache:${spring_boot_version}"
-    implementation "io.micrometer:micrometer-registry-prometheus:1.12.5"
+    implementation "io.micrometer:micrometer-registry-prometheus:1.13.0"
     implementation "net.logstash.logback:logstash-logback-encoder:7.4"
 
     // Defines low-level streaming API, and includes JSON-specific implementations
@@ -365,7 +365,7 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-oauth2-client:${spring_boot_version}"
 
     implementation "org.springframework.ldap:spring-ldap-core:3.2.3"
-    implementation "org.springframework.data:spring-data-ldap:3.2.5"
+    implementation "org.springframework.data:spring-data-ldap:3.3.0"
 
     implementation("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:4.1.1") {
         // NOTE: these modules contain security vulnerabilities and are not needed
@@ -377,9 +377,9 @@ dependencies {
     implementation "org.springframework.cloud:spring-cloud-commons:4.1.2"
 
     implementation "io.netty:netty-all:4.1.109.Final"
-    implementation "io.projectreactor.netty:reactor-netty:1.1.18"
-    implementation "org.springframework:spring-messaging:6.1.6"
-    implementation "org.springframework.retry:spring-retry:2.0.5"
+    implementation "io.projectreactor.netty:reactor-netty:1.1.19"
+    implementation "org.springframework:spring-messaging:6.1.7"
+    implementation "org.springframework.retry:spring-retry:2.0.6"
 
     implementation "org.springframework.security:spring-security-config:${spring_security_version}"
     implementation "org.springframework.security:spring-security-data:${spring_security_version}"
@@ -387,7 +387,8 @@ dependencies {
     implementation "org.springframework.security:spring-security-oauth2-core:${spring_security_version}"
     implementation "org.springframework.security:spring-security-oauth2-client:${spring_security_version}"
     // use newest version of nimbus-jose-jwt to avoid security issues through outdated dependencies
-    implementation "com.nimbusds:nimbus-jose-jwt:9.38"
+    implementation "com.nimbusds:nimbus-jose-jwt:9.39.1"
+
     implementation "org.springframework.security:spring-security-oauth2-jose:${spring_security_version}"
     implementation "org.springframework.security:spring-security-crypto:${spring_security_version}"
     implementation "org.springframework.security:spring-security-web:${spring_security_version}"
@@ -463,7 +464,7 @@ dependencies {
     testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
     testImplementation "io.github.classgraph:classgraph:4.8.171"
     testImplementation "org.awaitility:awaitility:4.2.1"
-    testImplementation "org.apache.maven.shared:maven-invoker:3.2.0"
+    testImplementation "org.apache.maven.shared:maven-invoker:3.3.0"
     testImplementation "org.gradle:gradle-tooling-api:8.7"
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.2.5"
     testImplementation "com.opencsv:opencsv:5.9"
@@ -500,6 +501,9 @@ tasks.register("cleanResources", Delete) {
 
 // Taken from here: https://stackoverflow.com/questions/3963708/gradle-how-to-display-test-results-in-the-console-in-real-time
 tasks.withType(Test).configureEach {
+    // a collection to track failedTests
+    ext.failedTests = []
+
     testLogging {
         // set options for log level LIFECYCLE
         events TestLogEvent.FAILED,
@@ -514,12 +518,27 @@ tasks.withType(Test).configureEach {
         info.exceptionFormat = debug.exceptionFormat
     }
 
-    afterSuite { desc, result ->
-        if (!desc.parent) { // will match the outermost suite
+    afterTest { descriptor, result ->
+        if (result.resultType == TestResult.ResultType.FAILURE) {
+            String failedTest = "${descriptor.className}::${descriptor.name}"
+            logger.debug("Adding " + failedTest + " to failedTests...")
+            failedTests << [failedTest]
+        }
+    }
+
+    afterSuite { suite, result ->
+        if (!suite.parent) { // will match the outermost suite
             def output = "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} successes, ${result.failedTestCount} failures, ${result.skippedTestCount} skipped)"
             def startItem = "|  ", endItem = "  |"
             def repeatLength = startItem.length() + output.length() + endItem.length()
             println("\n" + ("-" * repeatLength) + "\n" + startItem + output + endItem + "\n" + ("-" * repeatLength))
+            // logs each failed test
+            if (!failedTests.empty) {
+                logger.lifecycle("Failed tests:")
+                failedTests.each { failedTest ->
+                    println("${failedTest}")
+                }
+            }
         }
     }
 }

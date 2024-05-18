@@ -6,6 +6,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -25,7 +26,7 @@ public class DistributedInstanceMessageSendService implements InstanceMessageSen
 
     private final HazelcastInstance hazelcastInstance;
 
-    public DistributedInstanceMessageSendService(HazelcastInstance hazelcastInstance) {
+    public DistributedInstanceMessageSendService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
         this.hazelcastInstance = hazelcastInstance;
     }
 

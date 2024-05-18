@@ -559,6 +559,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * @throws EntityNotFoundException the programming exercise could not be found.
      */
     @NotNull
+    // TODO: rename, this method does more than it promises
     default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationElseThrow(long programmingExerciseId) throws EntityNotFoundException {
         Optional<ProgrammingExercise> programmingExercise = findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId);
         return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));

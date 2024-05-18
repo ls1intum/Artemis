@@ -83,7 +83,7 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegrationInd
         participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
 
         localRepoFile = Files.createTempDirectory("repo").toFile();
-        localGit = LocalRepository.initialize(localRepoFile, defaultBranch);
+        localGit = LocalRepository.initialize(localRepoFile, defaultBranch, false);
 
         // create commits
         // the following 2 lines prepare the generation of the structural test oracle
@@ -149,7 +149,7 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegrationInd
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCombineTemplateRepositoryCommits() throws Exception {
         originRepoFile = Files.createTempDirectory("repoOrigin").toFile();
-        originGit = LocalRepository.initialize(originRepoFile, defaultBranch);
+        originGit = LocalRepository.initialize(originRepoFile, defaultBranch, true);
         StoredConfig config = localGit.getRepository().getConfig();
         config.setString("remote", "origin", "url", originRepoFile.getAbsolutePath());
         config.save();
