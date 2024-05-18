@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed, async } from '@angular/core/testing';
 import { SidebarCardItemComponent } from 'app/shared/sidebar/sidebar-card-item/sidebar-card-item.component';
+import { SidebarCardSize } from 'app/types/sidebar';
 import { ArtemisTestModule } from '../../../test.module';
 import { DifficultyLevel } from 'app/entities/exercise.model';
 
@@ -28,6 +29,7 @@ describe('SidebarCardItemComponent', () => {
         const testItem = {
             title: 'testTitle',
             id: 'testId',
+            size: 'M' as SidebarCardSize,
             difficulty: DifficultyLevel.EASY,
         };
         component.sidebarItem = testItem;
