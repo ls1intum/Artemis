@@ -91,4 +91,57 @@ class TestResultXmlParserTest {
         assertThat(successfulTests).map(test -> test.getName()).containsExactlyInAnyOrder("testMergeSort()", "testUseBubbleSortForSmallList()", "testBubbleSort()",
                 "testUseMergeSortForBigList()");
     }
+
+    @Test
+    void testWithTestSuitesWrapper() throws Exception {
+        String input = """
+                <?xml version='1.0' encoding='utf-8'?>
+                <testsuites>
+                  <testsuite
+                      id='0'
+                      package='course_avg_grade [hidden]'
+                      name='course_avg_grade [hidden]'
+                      timestamp='2024-05-18T15:16:31'
+                      hostname='e4e8695d4525'
+                      tests='12'
+                      failures='0'
+                      errors='0'
+                      time='7.964748'>
+                    <properties>
+                      <property name='suite_name' value='anon' />
+                    </properties>
+                    <testcase name='0:remove_by_id' classname='0:remove_by_id' time='0.000754'>
+                    </testcase>
+                    <testcase name='1:remove_by_id [hidden]' classname='1:remove_by_id [hidden]' time='7.548552'>
+                    </testcase>
+                    <testcase name='2:count_in_semester' classname='2:count_in_semester' time='0.001188'>
+                    </testcase>
+                    <testcase name='3:count_in_semester [hidden]' classname='3:count_in_semester [hidden]' time='7.581734'>
+                    </testcase>
+                    <testcase name='4:student_avg_grade' classname='4:student_avg_grade' time='0.000529'>
+                    </testcase>
+                    <testcase name='5:student_avg_grade [hidden]' classname='5:student_avg_grade [hidden]' time='7.589047'>
+                    </testcase>
+                    <testcase name='6:course_avg_grade' classname='6:course_avg_grade' time='0.000501'>
+                    </testcase>
+                    <testcase name='7:course_avg_grade [hidden]' classname='7:course_avg_grade [hidden]' time='7.861614'>
+                    </testcase>
+                    <testcase name='8:remove_by_id' classname='8:remove_by_id' time='0.000438'>
+                    </testcase>
+                    <testcase name='9:count_in_semester' classname='9:count_in_semester' time='0.000433'>
+                    </testcase>
+                    <testcase name='10:student_avg_grade' classname='10:student_avg_grade' time='0.000414'>
+                    </testcase>
+                    <testcase name='11:course_avg_grade' classname='11:course_avg_grade' time='0.000377'>
+                    </testcase>
+                    <system-err />
+                  </testsuite>
+                </testsuites>
+                """;
+
+        TestResultXmlParser.processTestResultFile(input, failedTests, successfulTests);
+        assertThat(failedTests).isEmpty();
+        assertThat(successfulTests).isNotEmpty().hasSize(12);
+
+    }
 }

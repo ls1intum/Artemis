@@ -13,6 +13,8 @@ import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
 
 class TestResultXmlParser {
 
+    private static final XmlMapper mapper = new XmlMapper();
+
     /**
      * Parses the test result file and extracts failed and successful tests.
      *
@@ -23,11 +25,24 @@ class TestResultXmlParser {
      */
     static void processTestResultFile(String testResultFileString, List<LocalCIBuildResult.LocalCITestJobDTO> failedTests,
             List<LocalCIBuildResult.LocalCITestJobDTO> successfulTests) throws IOException {
-        TestSuite testSuite = new XmlMapper().readValue(testResultFileString, TestSuite.class);
+        TestSuite testSuite = mapper.readValue(testResultFileString, TestSuite.class);
 
-        if (testSuite.testCases() == null) {
-            return;
+        if (testSuite.testCases() != null) {
+            processTestSuite(testSuite, failedTests, successfulTests);
         }
+        else {
+            TestSuites suites = mapper.readValue(testResultFileString, TestSuites.class);
+            if (suites.testsuites() == null) {
+                return;
+            }
+
+            for (TestSuite suite : suites.testsuites()) {
+                processTestSuite(suite, failedTests, successfulTests);
+            }
+        }
+    }
+
+    private static void processTestSuite(TestSuite testSuite, List<LocalCIBuildResult.LocalCITestJobDTO> failedTests, List<LocalCIBuildResult.LocalCITestJobDTO> successfulTests) {
         for (TestCase testCase : testSuite.testCases()) {
             Failure failure = testCase.extractFailure();
             if (failure != null) {
@@ -37,6 +52,10 @@ class TestResultXmlParser {
                 successfulTests.add(new LocalCIBuildResult.LocalCITestJobDTO(testCase.name(), List.of()));
             }
         }
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    record TestSuites(@JacksonXmlElementWrapper(useWrapping = false) @JacksonXmlProperty(localName = "testsuite") List<TestSuite> testsuites) {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
