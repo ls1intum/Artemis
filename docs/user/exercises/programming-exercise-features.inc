@@ -43,7 +43,7 @@ Instructors can still use those templates to generate programming exercises and 
   +----------------------+----------------------+----------------------+---------------------+--------------+------------------------------------------+------------------------------+----------------------------+------------------------+
   | Programming Language | Sequential Test Runs | Static Code Analysis | Plagiarism Check    | Package Name | Project Type                             | Solution Repository Checkout | Testwise Coverage Analysis | Auxiliary repositories |
   +======================+======================+======================+=====================+==============+==========================================+==============================+============================+========================+
-  | Java                 | yes                  | yes                  | yes                 | yes          | Gradle, Maven, J: `Dejagnu`_             | no                           | J: yes; L: no              | L: yes, J: no          |
+  | Java                 | yes                  | yes                  | yes                 | yes          | Gradle, Maven, J: `DejaGnu`_             | no                           | J: yes; L: no              | L: yes, J: no          |
   +----------------------+----------------------+----------------------+---------------------+--------------+------------------------------------------+------------------------------+----------------------------+------------------------+
   | Python               | L: yes; J: no        | no                   | yes                 | no           | n/a                                      | no                           | no                         | L: yes, J: no          |
   +----------------------+----------------------+----------------------+---------------------+--------------+------------------------------------------+------------------------------+----------------------------+------------------------+
@@ -90,9 +90,9 @@ Instructors can still use those templates to generate programming exercises and 
 
 We encourage instructors to contribute improvements to the existing ``templates`` or to provide new templates. Please contact Stephan Krusche and/or create Pull Requests in the GitHub repository.
 
-.. _Dejagnu:
+.. _DejaGnu:
 
-Java Dejagnu: Blackbox Testing
+Java DejaGnu: Blackbox Testing
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The classical testing frameworks, like JUnit for example, allows writing white box tests.
@@ -113,5 +113,5 @@ and at least a rough guidance for the output format.
 The source code structure can be all up to the students as far as you want.
 An assessment of the quality of the students source code structures can be made with manual assessment after the submission deadline.
 
-For the usage of Dejagnu consult the `offical documentation <https://www.gnu.org/software/dejagnu/manual/index.html>`_
+For the usage of DejaGnu consult the `offical documentation <https://www.gnu.org/software/dejagnu/manual/index.html>`_
 and take a look at the example of the template.
