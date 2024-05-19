@@ -109,17 +109,6 @@
         }
     }
 
-    <!-- @if (studentFailedToSubmit) {
-        <div class="d-flex align-items-center justify-content-between">
-            <h2 style="font-weight: normal">
-                {{ exam.title }}
-            </h2>
-        </div>
-        <div class="mt-2 font-weight-bold text-danger">
-            {{ 'artemisApp.studentExam.submissionNotInTime' | artemisTranslate }}
-        </div>
-    } -->
-
     @if (showExamSummary) {
         <jhi-exam-participation-summary [studentExam]="studentExam" />
     }

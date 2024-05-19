@@ -258,4 +258,16 @@
             </div>
         }
     }
+} @else {
+    <div>
+        @if (testRunId) {
+            <a [routerLink]="['/course-management', courseId, 'exams', examId, 'test-runs', testRunId, 'conduction']" class="btn btn-primary">
+                <fa-icon [icon]="faGraduationCap" [fixedWidth]="true" />&nbsp;{{ 'artemisApp.examParticipation.goToExamBack' | artemisTranslate }}
+            </a>
+        } @else {
+            <a [routerLink]="['/courses', courseId, 'exams', examId]" class="btn btn-primary">
+                <fa-icon [icon]="faGraduationCap" [fixedWidth]="true" />&nbsp;{{ 'artemisApp.examParticipation.goToExamBack' | artemisTranslate }}
+            </a>
+        }
+    </div>
 }

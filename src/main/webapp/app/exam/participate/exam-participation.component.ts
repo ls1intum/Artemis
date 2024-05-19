@@ -92,6 +92,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     websocketSubscription?: Subscription;
     liveEventsSubscription?: Subscription;
     examStateSubscription?: Subscription;
+    subscription?: Subscription;
 
     // Icons
     faCheckCircle = faCheckCircle;
@@ -183,6 +184,13 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.websocketSubscription = this.websocketService.connectionState.subscribe((status) => {
             this.connected = status.connected;
         });
+
+        // Needed in case of prage reload to navigate back to the exam start page
+        if (!this.examId || !this.courseId) {
+            this.courseId = parseInt(this.route.snapshot.parent?.parent?.params['courseId'], 10);
+            this.examId = parseInt(this.route.snapshot.params['examId'], 10);
+            this.testRunId = parseInt(this.route.snapshot.params['testRunId'], 10);
+        }
 
         this.examStarted(this.studentExam);
         this.generateInformationForHtml();
@@ -516,6 +524,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.websocketSubscription?.unsubscribe();
         this.liveEventsSubscription?.unsubscribe();
         this.examStateSubscription?.unsubscribe();
+        this.subscription?.unsubscribe();
         window.clearInterval(this.autoSaveInterval);
     }
 
