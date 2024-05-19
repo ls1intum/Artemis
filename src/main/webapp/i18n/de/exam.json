@@ -182,11 +182,13 @@
                 "type": {
                     "examWideAnnouncement": "Klausurweite Ankündigung",
                     "workingTimeUpdate": "Bearbeitungszeit Aktualisiert",
-                    "examAttendanceCheck": "Anwesenheitskontrolle"
+                    "examAttendanceCheck": "Anwesenheitskontrolle",
+                    "problemStatementUpdate": "Aufgabenstellung Aktualisiert"
                 },
                 "from": "von",
                 "acknowledge": "Bestätigen",
                 "acknowledgeAll": "Alle bestätigen",
+                "navigateToExercise": "Navigiere zur Aufgabe",
                 "messages": {
                     "workingTimeUpdate": {
                         "titleEveryone": "Die Bearbeitungszeit der Klausur wurde geändert.",
@@ -196,6 +198,10 @@
                     },
                     "examAttendanceCheck": {
                         "description": "Eine Klausur-Aufsicht hat die Anwesenheitskontrolle für dich ausgelöst. Bitte folge den Anweisungen der Aufsicht."
+                    },
+                    "problemStatementUpdate": {
+                        "description": "Die Aufgabenstellung der Aufgabe '{{ exerciseName }}' wurde aktualisiert. Bitte öffne die Aufgabe, um die Änderungen zu sehen.",
+                        "instructorMessage": "Lehrkraft Nachricht:"
                     }
                 }
             }
