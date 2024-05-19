@@ -456,7 +456,7 @@
             "reEvaluateSuccessful": "{{number}} automatic results were successfully updated, including the template and solution.",
             "reEvaluateFailed": "The re-evaluation failed: {{message}}",
             "editSelectedModal": {
-                "currentlyEdiƒted": "You are editing the following exercises:",
+                "currentlyEdited": "You are editing the following exercises:",
                 "errorReadButton": "Ok",
                 "errorOccurred": "The following exercises could not be updated:"
             },
