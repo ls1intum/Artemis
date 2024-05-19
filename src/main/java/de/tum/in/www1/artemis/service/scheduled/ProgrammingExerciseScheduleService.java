@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
+import static de.tum.in.www1.artemis.config.StartupDelayConfig.PROGRAMMING_EXERCISE_SCHEDULE_DELAY_SEC;
+
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,14 +20,17 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import jakarta.annotation.PostConstruct;
 import jakarta.validation.constraints.NotNull;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 import org.springframework.core.env.Environment;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.config.Constants;
@@ -94,12 +100,14 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     private final GitService gitService;
 
+    private final TaskScheduler scheduler;
+
     public ProgrammingExerciseScheduleService(ScheduleService scheduleService, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, ResultRepository resultRepository, ParticipationRepository participationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseParticipationRepository, Environment env, ProgrammingTriggerService programmingTriggerService,
             ProgrammingExerciseGradingService programmingExerciseGradingService, GroupNotificationService groupNotificationService, ExamDateService examDateService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, ExerciseDateService exerciseDateService, ExamRepository examRepository,
-            StudentExamRepository studentExamRepository, GitService gitService) {
+            StudentExamRepository studentExamRepository, GitService gitService, @Qualifier("taskScheduler") TaskScheduler scheduler) {
         this.scheduleService = scheduleService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
@@ -116,9 +124,15 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         this.programmingExerciseGradingService = programmingExerciseGradingService;
         this.env = env;
         this.gitService = gitService;
+        this.scheduler = scheduler;
     }
 
-    @PostConstruct
+    @EventListener(ApplicationReadyEvent.class)
+    public void applicationReady() {
+        // schedule the task after the application has started to avoid delaying the start of the application
+        scheduler.schedule(this::scheduleRunningExercisesOnStartup, Instant.now().plusSeconds(PROGRAMMING_EXERCISE_SCHEDULE_DELAY_SEC));
+    }
+
     @Override
     public void scheduleRunningExercisesOnStartup() {
         try {
@@ -141,7 +155,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             programmingExercisesWithExam.forEach(this::scheduleExamExercise);
 
             log.info("Scheduled {} programming exercises.", exercisesToBeScheduled.size());
-            log.info("Scheduled {} programming exercises for a score update after due date.", programmingExercisesWithTestsAfterDueDateButNoRebuild.size());
+            log.debug("Scheduled {} programming exercises for a score update after due date.", programmingExercisesWithTestsAfterDueDateButNoRebuild.size());
             log.info("Scheduled {} exam programming exercises.", programmingExercisesWithExam.size());
         }
         catch (Exception e) {
@@ -284,11 +298,13 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     }
 
     private void scheduleTemplateCommitCombination(ProgrammingExercise exercise) {
-        var scheduledRunnable = Set.of(new Tuple<>(exercise.getReleaseDate().minusSeconds(Constants.SECONDS_BEFORE_RELEASE_DATE_FOR_COMBINING_TEMPLATE_COMMITS),
-                combineTemplateCommitsForExercise(exercise)));
-        scheduleService.scheduleTask(exercise, ExerciseLifecycle.RELEASE, scheduledRunnable);
-        log.debug("Scheduled combining template commits before release date for Programming Exercise \"{}\" (#{}) for {}.", exercise.getTitle(), exercise.getId(),
-                exercise.getReleaseDate());
+        if (exercise.getReleaseDate() != null) {
+            var scheduledRunnable = Set.of(new Tuple<>(exercise.getReleaseDate().minusSeconds(Constants.SECONDS_BEFORE_RELEASE_DATE_FOR_COMBINING_TEMPLATE_COMMITS),
+                    combineTemplateCommitsForExercise(exercise)));
+            scheduleService.scheduleTask(exercise, ExerciseLifecycle.RELEASE, scheduledRunnable);
+            log.debug("Scheduled combining template commits before release date for Programming Exercise \"{}\" (#{}) for {}.", exercise.getTitle(), exercise.getId(),
+                    exercise.getReleaseDate());
+        }
     }
 
     private void scheduleDueDateLockAndScoreUpdate(ProgrammingExercise exercise) {
@@ -657,14 +673,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         if (Boolean.TRUE.equals(exercise.isAllowOnlineEditor())) {
             var failedStashOperations = stashChangesInAllStudentRepositories(programmingExerciseId, condition);
             failedStashOperations.thenAccept(failures -> {
-                long numberOfFailedStashOperations = failures.size();
-                String stashNotificationText;
-                if (numberOfFailedStashOperations > 0) {
-                    stashNotificationText = Constants.PROGRAMMING_EXERCISE_FAILED_STASH_OPERATIONS_NOTIFICATION + numberOfFailedStashOperations;
-                }
-                else {
-                    stashNotificationText = Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_STASH_OPERATION_NOTIFICATION;
-                }
+                final var stashNotificationText = getNotificationText(failures, Constants.PROGRAMMING_EXERCISE_FAILED_STASH_OPERATIONS_NOTIFICATION,
+                        Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_STASH_OPERATION_NOTIFICATION);
                 groupNotificationService.notifyEditorAndInstructorGroupsAboutRepositoryLocks(exercise, stashNotificationText);
             });
         }
@@ -720,14 +730,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
                 failedUnlockOperations.thenAccept(failures -> {
                     // We send a notification to the instructor about the success of the repository unlocking operation.
-                    long numberOfFailedUnlockOperations = failures.size();
-                    String notificationText;
-                    if (numberOfFailedUnlockOperations > 0) {
-                        notificationText = Constants.PROGRAMMING_EXERCISE_FAILED_UNLOCK_OPERATIONS_NOTIFICATION + numberOfFailedUnlockOperations;
-                    }
-                    else {
-                        notificationText = Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_UNLOCK_OPERATION_NOTIFICATION;
-                    }
+                    final var notificationText = getNotificationText(failures, Constants.PROGRAMMING_EXERCISE_FAILED_UNLOCK_OPERATIONS_NOTIFICATION,
+                            Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_UNLOCK_OPERATION_NOTIFICATION);
                     groupNotificationService.notifyEditorAndInstructorGroupsAboutRepositoryLocks(exercise, notificationText);
 
                     // Schedule the lock operations here, this is also done here because the working times might change often before the exam start
@@ -743,6 +747,19 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                 log.error("Programming exercise with id {} is no longer available in database for use in scheduled task.", programmingExerciseId);
             }
         };
+    }
+
+    private static String getNotificationText(List<ProgrammingExerciseStudentParticipation> failures, String programmingExerciseFailedUnlockOperationsNotification,
+            String programmingExerciseSuccessfulUnlockOperationNotification) {
+        long numberOfFailedUnlockOperations = failures.size();
+        String notificationText;
+        if (numberOfFailedUnlockOperations > 0) {
+            notificationText = programmingExerciseFailedUnlockOperationsNotification + numberOfFailedUnlockOperations;
+        }
+        else {
+            notificationText = programmingExerciseSuccessfulUnlockOperationNotification;
+        }
+        return notificationText;
     }
 
     /**

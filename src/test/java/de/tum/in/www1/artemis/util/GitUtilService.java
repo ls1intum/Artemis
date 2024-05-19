@@ -68,7 +68,7 @@ public class GitUtilService {
             deleteRepos();
 
             Files.createDirectories(remotePath);
-            Git remoteGit = LocalRepository.initialize(remotePath.toFile(), defaultBranch);
+            Git remoteGit = LocalRepository.initialize(remotePath.toFile(), defaultBranch, false);
             // create some files in the remote repository
             remotePath.resolve(FILES.FILE1.toString()).toFile().createNewFile();
             remotePath.resolve(FILES.FILE2.toString()).toFile().createNewFile();

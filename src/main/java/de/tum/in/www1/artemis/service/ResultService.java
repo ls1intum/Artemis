@@ -273,15 +273,8 @@ public class ResultService {
      */
     public void filterSensitiveInformationIfNecessary(final Participation participation, final Collection<Result> results, Optional<User> user) {
         results.forEach(Result::filterSensitiveInformation);
-        if (user.isPresent()) {
-            if (!authCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise(), user.get())) {
-                filterInformation(participation, results);
-            }
-        }
-        else {
-            if (!authCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise())) {
-                filterInformation(participation, results);
-            }
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise(), user.orElse(null))) {
+            filterInformation(participation, results);
         }
     }
 

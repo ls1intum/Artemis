@@ -64,6 +64,7 @@ public class LocalCIConfiguration {
      * @return The HostConfig bean.
      */
     @Bean
+    // TODO: reconsider if a bean is necessary here, this could also be created after application startup with @EventListener(ApplicationReadyEvent.class) to speed up the startup
     public HostConfig hostConfig() {
         long cpuCount = 0;
         long cpuPeriod = 100000L;
@@ -159,6 +160,7 @@ public class LocalCIConfiguration {
      * @return The DockerClient bean.
      */
     @Bean
+    // TODO: reconsider if a bean is necessary here, this could also be created after application startup with @EventListener(ApplicationReadyEvent.class) to speed up the startup
     public DockerClient dockerClient() {
         log.debug("Create bean dockerClient");
         DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder().withDockerHost(dockerConnectionUri).build();
