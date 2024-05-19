@@ -81,11 +81,5 @@ public abstract class ExamLiveEvent extends DomainObject {
         this.studentExamId = studentExamId;
     }
 
-    protected void populateDTO(ExamLiveEventDTO dto) {
-        dto.setId(getId());
-        dto.setCreatedBy(getCreatedBy());
-        dto.setCreatedDate(getCreatedDate());
-    }
-
     public abstract ExamLiveEventDTO asDTO();
 }
