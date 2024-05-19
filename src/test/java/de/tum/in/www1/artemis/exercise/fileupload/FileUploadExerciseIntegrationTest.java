@@ -1,6 +1,10 @@
 package de.tum.in.www1.artemis.exercise.fileupload;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -426,6 +430,8 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationIndepen
         assertThat(receivedFileUploadExercise.getCourseViaExerciseGroupOrCourseMember()).as("course was set for normal exercise").isNotNull();
         assertThat(receivedFileUploadExercise.getExerciseGroup()).as("exerciseGroup was not set for normal exercise").isNull();
         assertThat(receivedFileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId()).as("courseId was not updated").isEqualTo(course.getId());
+        verify(examLiveEventsService, never()).createAndSendProblemStatementUpdateEvent(any(), any());
+        verify(groupNotificationScheduleService, times(1)).checkAndCreateAppropriateNotificationsWhenUpdatingExercise(any(), any(), any());
     }
 
     @Test
@@ -446,6 +452,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationIndepen
         FileUploadExercise fileUploadExercise = fileUploadExerciseUtilService.addCourseExamExerciseGroupWithOneFileUploadExercise();
         String newTitle = "New file upload exercise title";
         fileUploadExercise.setTitle(newTitle);
+        fileUploadExercise.setProblemStatement("New problem statement");
 
         FileUploadExercise updatedFileUploadExercise = request.putWithResponseBody("/api/file-upload-exercises/" + fileUploadExercise.getId(), fileUploadExercise,
                 FileUploadExercise.class, HttpStatus.OK);
@@ -454,6 +461,8 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationIndepen
         assertThat(updatedFileUploadExercise.isCourseExercise()).as("course was not set for exam exercise").isFalse();
         assertThat(updatedFileUploadExercise.getExerciseGroup()).as("exerciseGroup was set for exam exercise").isNotNull();
         assertThat(updatedFileUploadExercise.getExerciseGroup().getId()).as("exerciseGroupId was not updated").isEqualTo(fileUploadExercise.getExerciseGroup().getId());
+        verify(examLiveEventsService, times(1)).createAndSendProblemStatementUpdateEvent(any(), any());
+        verify(groupNotificationScheduleService, never()).checkAndCreateAppropriateNotificationsWhenUpdatingExercise(any(), any(), any());
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
