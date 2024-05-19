@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { faBan, faPencil, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { KnowledgeArea, StandardizedCompetencyDTO, StandardizedCompetencyValidators } from 'app/entities/competency/standardized-competency.model';
+import { KnowledgeArea, Source, StandardizedCompetencyDTO, StandardizedCompetencyValidators } from 'app/entities/competency/standardized-competency.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { CompetencyTaxonomy } from 'app/entities/competency.model';
@@ -13,6 +13,8 @@ import { Observable } from 'rxjs';
 export class StandardizedCompetencyEditComponent {
     // values for the knowledge area select
     @Input() knowledgeAreas: KnowledgeArea[] = [];
+    // values for the source select
+    @Input() sources: Source[] = [];
     @Input({ required: true }) set competency(competency: StandardizedCompetencyDTO) {
         this._competency = competency;
         this.form = this.formBuilder.nonNullable.group({
@@ -20,6 +22,7 @@ export class StandardizedCompetencyEditComponent {
             description: [competency.description, [Validators.maxLength(StandardizedCompetencyValidators.DESCRIPTION_MAX)]],
             taxonomy: [competency.taxonomy],
             knowledgeAreaId: [competency.knowledgeAreaId, [Validators.required]],
+            sourceId: [competency.sourceId],
         });
         if (!this.isEditing) {
             this.form.disable();
@@ -58,6 +61,7 @@ export class StandardizedCompetencyEditComponent {
         description: FormControl<string | undefined>;
         taxonomy: FormControl<CompetencyTaxonomy | undefined>;
         knowledgeAreaId: FormControl<number | undefined>;
+        sourceId: FormControl<number | undefined>;
     }>;
 
     // icons

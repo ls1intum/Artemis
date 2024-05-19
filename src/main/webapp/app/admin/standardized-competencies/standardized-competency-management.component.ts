@@ -79,6 +79,9 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });
+        //TODO: get all sources here aswell -> to a forkJoin
+        //TODO: add a component that displays the source text nicely
+        //TODO: add a source select to stdcomp edit.
     }
 
     ngOnDestroy(): void {

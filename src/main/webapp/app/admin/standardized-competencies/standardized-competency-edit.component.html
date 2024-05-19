@@ -79,7 +79,22 @@
                 <div class="alert alert-danger" jhiTranslate="artemisApp.standardizedCompetency.details.error.knowledgeAreaRequired"></div>
             }
         </div>
-        <!-- TODO: add source handling in follow-up PR -->
+        <div class="form-group">
+            <label for="source-select" jhiTranslate="artemisApp.standardizedCompetency.model.source"></label>
+            @if (isEditing) {
+                <select id="source-select" class="form-select" formControlName="sourceId">
+                    @for (source of sources; track source.id) {
+                        <!-- TODO maybe a "none" for empty values? -> also for knowledge areas. but do this in follow-up. -->
+                        <option [ngValue]="source.id">
+                            <!-- TODO: test select with author maybe too? -->
+                            {{ source.title }}
+                        </option>
+                    }
+                </select>
+            } @else {
+                <!-- TODO: add the correct source display component here.-->
+            }
+        </div>
     </div>
     @if (isEditing) {
         <div>

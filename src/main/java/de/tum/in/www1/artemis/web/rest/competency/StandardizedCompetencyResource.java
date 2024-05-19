@@ -14,7 +14,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.competency.KnowledgeArea;
+import de.tum.in.www1.artemis.domain.competency.Source;
 import de.tum.in.www1.artemis.domain.competency.StandardizedCompetency;
+import de.tum.in.www1.artemis.repository.SourceRepository;
 import de.tum.in.www1.artemis.repository.competency.KnowledgeAreaRepository;
 import de.tum.in.www1.artemis.repository.competency.StandardizedCompetencyRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
@@ -37,11 +39,14 @@ public class StandardizedCompetencyResource {
 
     private final KnowledgeAreaRepository knowledgeAreaRepository;
 
+    private final SourceRepository sourceRepository;
+
     public StandardizedCompetencyResource(StandardizedCompetencyService standardizedCompetencyService, StandardizedCompetencyRepository standardizedCompetencyRepository,
-            KnowledgeAreaRepository knowledgeAreaRepository) {
+            KnowledgeAreaRepository knowledgeAreaRepository, SourceRepository sourceRepository) {
         this.standardizedCompetencyService = standardizedCompetencyService;
         this.standardizedCompetencyRepository = standardizedCompetencyRepository;
         this.knowledgeAreaRepository = knowledgeAreaRepository;
+        this.sourceRepository = sourceRepository;
     }
 
     /**
@@ -89,5 +94,19 @@ public class StandardizedCompetencyResource {
         var knowledgeArea = knowledgeAreaRepository.findWithChildrenAndCompetenciesByIdElseThrow(knowledgeAreaId);
 
         return ResponseEntity.ok().body(knowledgeArea);
+    }
+
+    /**
+     * GET api/standardized-competencies/sources : Gets all sources
+     *
+     * @return the ResponseEntity with status 200 (OK) and with body containing the list of sources
+     */
+    @GetMapping("sources")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<List<Source>> getSources() {
+        // TODO: replace with sourceDTO.
+        log.debug("REST request to get all sources");
+
+        return ResponseEntity.ok().body(sourceRepository.findAll());
     }
 }
