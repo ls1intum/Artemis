@@ -91,6 +91,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     errorSubscription: Subscription;
     websocketSubscription?: Subscription;
     liveEventsSubscription?: Subscription;
+    examStateSubscription?: Subscription;
 
     // Icons
     faCheckCircle = faCheckCircle;
@@ -162,7 +163,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * load exam information from the exam-participation-cover component
      */
     ngOnInit(): void {
-        this.examParticipationService.examState$.subscribe((state) => {
+        this.examStateSubscription = this.examParticipationService.examState$.subscribe((state) => {
             this.courseId = state.courseId!;
             this.examId = state.examId!;
             this.testRunId = state.testRunId!;
@@ -176,14 +177,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             this.accountName = state.accountName!;
 
             this.testRun = state.testRun;
-        });
-
-        this.examParticipationService.examStarted$.subscribe((studentExam) => {
-            this.studentExam = studentExam;
-        });
-
-        this.examParticipationService.testRunStarted$.subscribe((testRunId) => {
-            this.testRunId = testRunId;
         });
 
         // listen to connect / disconnect events
@@ -519,6 +512,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.errorSubscription.unsubscribe();
         this.websocketSubscription?.unsubscribe();
         this.liveEventsSubscription?.unsubscribe();
+        this.examStateSubscription?.unsubscribe();
         window.clearInterval(this.autoSaveInterval);
     }
 

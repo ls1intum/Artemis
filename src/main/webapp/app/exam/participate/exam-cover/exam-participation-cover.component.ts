@@ -91,7 +91,7 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
             this.examId = parseInt(params['examId'], 10);
             this.testRunId = parseInt(params['testRunId'], 10);
             this.examParticipationService.setExamState({ examId: this.examId });
-            this.examParticipationService.setTestRunId(this.testRunId);
+            this.examParticipationService.setExamState({ testRunId: this.testRunId });
             // As a student can have multiple test exams, the studentExamId is passed as a parameter.
             if (params['studentExamId']) {
                 // If a new StudentExam should be created, the keyword start is used (and no StudentExam exists)
@@ -107,7 +107,6 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
                 this.route.parent?.parent?.params.subscribe((params) => {
                     this.courseId = parseInt(params['courseId'], 10);
                     this.examParticipationService.setExamState({ courseId: this.courseId });
-                    this.examParticipationService.setTestRunId(this.testRunId);
                 });
                 this.examParticipationService.loadTestRunWithExercisesForConduction(this.courseId, this.examId, this.testRunId).subscribe({
                     next: (studentExam) => {
@@ -188,7 +187,7 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
     startExam() {
         if (this.testRun) {
             this.examParticipationService.saveStudentExamToLocalStorage(this.exam.course!.id!, this.exam.id!, this.studentExam);
-            this.examParticipationService.emitExamStarted(this.studentExam);
+            this.examParticipationService.setExamState({ studentExam: this.studentExam });
             this.examParticipationService.setExamState({ exercises: this.studentExam.exercises! });
             this.router.navigate(['course-management', this.courseId, 'exams', this.examId, 'test-runs', this.testRunId, 'conduction', 'participation']);
         } else {
@@ -196,7 +195,7 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
                 this.studentExam = studentExam;
                 this.examParticipationService.saveStudentExamToLocalStorage(this.courseId, this.examId, studentExam);
                 if (this.hasStarted()) {
-                    this.examParticipationService.emitExamStarted(studentExam);
+                    this.examParticipationService.setExamState({ studentExam: studentExam });
                     this.examParticipationService.setExamState({ exercises: studentExam.exercises! });
                     this.router.navigate(['courses', this.courseId, 'exams', this.examId, 'participation']);
                 } else {
@@ -221,7 +220,7 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
         if (this.exam && this.exam.startDate) {
             if (this.hasStarted()) {
                 this.timeUntilStart = this.translateService.instant(translationBasePath + 'now');
-                this.examParticipationService.emitExamStarted(studentExam);
+                this.examParticipationService.setExamState({ studentExam: studentExam });
                 this.examParticipationService.setExamState({ exercises: studentExam.exercises! });
                 this.router.navigate(['courses', this.courseId, 'exams', this.examId, 'participation']);
             } else {
