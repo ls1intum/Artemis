@@ -245,15 +245,15 @@
                     }
                     <ngx-datatable-column prop="" [sortable]="true" [minWidth]="100" [width]="100">
                         <ng-template ngx-datatable-header-template>
-                            <span class="datatable-header-cell-wrapper d-inline-block w-100 text-center" (click)="controls.onSort('results?.[0]?.assessmentNote?.note')">
+                            <span class="datatable-header-cell-wrapper d-inline-block w-100 text-center" (click)="controls.onSort('results?.last()?.assessmentNote?.note')">
                                 <fa-icon [icon]="faComment" [ngbTooltip]="'artemisApp.assessment.assessmentNote' | artemisTranslate" />
-                                <fa-icon [icon]="controls.iconForSortPropField('results?.[0]?.assessmentNote?.note')" />
+                                <fa-icon [icon]="controls.iconForSortPropField('results?.last()?.assessmentNote?.note')" />
                             </span>
                         </ng-template>
                         <ng-template ngx-datatable-cell-template let-value="value">
-                            @if (value.results?.[0]?.assessmentNote?.note) {
+                            @if (value.results?.last()?.assessmentNote?.note) {
                                 <span class="w-100 text-center">
-                                    <fa-icon [ngbPopover]="(value.results?.[0]?.assessmentNote)!.note" [triggers]="'hover'" [icon]="faComment" />
+                                    <fa-icon [ngbPopover]="(value.results?.last()?.assessmentNote)!.note" [triggers]="'hover'" [icon]="faComment" />
                                 </span>
                             }
                         </ng-template>
