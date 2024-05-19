@@ -35,8 +35,14 @@ import { CourseExerciseService } from 'app/exercises/shared/course-exercises/cou
 import { faCheckCircle, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { ExamLiveEventType, ExamParticipationLiveEventsService, WorkingTimeUpdateEvent } from 'app/exam/participate/exam-participation-live-events.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import {
+    ExamLiveEventType,
+    ExamParticipationLiveEventsService,
+    ProblemStatementUpdateEvent,
+    WorkingTimeUpdateEvent,
+} from 'app/exam/participate/exam-participation-live-events.service';
+import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -90,7 +96,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
     errorSubscription: Subscription;
     websocketSubscription?: Subscription;
-    liveEventsSubscription?: Subscription;
+    workingTimeUpdateEventsSubscription?: Subscription;
+    problemStatementUpdateEventsSubscription?: Subscription;
 
     // Icons
     faCheckCircle = faCheckCircle;
@@ -141,6 +148,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         private liveEventsService: ExamParticipationLiveEventsService,
         private courseService: CourseManagementService,
         private courseStorageService: CourseStorageService,
+        private examExerciseUpdateService: ExamExerciseUpdateService,
         private examManagementService: ExamManagementService,
     ) {
         // show only one synchronization error every 5s
@@ -291,6 +299,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     });
                 }
             });
+            this.subscribeToProblemStatementUpdates();
             this.initializeOverviewPage();
         }
         this.examStartConfirmed = true;
@@ -516,7 +525,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         });
         this.errorSubscription.unsubscribe();
         this.websocketSubscription?.unsubscribe();
-        this.liveEventsSubscription?.unsubscribe();
+        this.workingTimeUpdateEventsSubscription?.unsubscribe();
+        this.problemStatementUpdateEventsSubscription?.unsubscribe();
         window.clearInterval(this.autoSaveInterval);
     }
 
@@ -578,17 +588,31 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     private subscribeToWorkingTimeUpdates(startDate: dayjs.Dayjs) {
-        if (this.liveEventsSubscription) {
-            this.liveEventsSubscription.unsubscribe();
+        if (this.workingTimeUpdateEventsSubscription) {
+            this.workingTimeUpdateEventsSubscription.unsubscribe();
         }
-        this.liveEventsSubscription = this.liveEventsService.observeNewEventsAsSystem([ExamLiveEventType.WORKING_TIME_UPDATE]).subscribe((event: WorkingTimeUpdateEvent) => {
-            // Create new object to make change detection work, otherwise the date will not update
-            this.studentExam = { ...this.studentExam, workingTime: event.newWorkingTime! };
-            this.examParticipationService.currentlyLoadedStudentExam.next(this.studentExam);
-            this.individualStudentEndDate = dayjs(startDate).add(this.studentExam.workingTime!, 'seconds');
-            this.individualStudentEndDateWithGracePeriod = this.individualStudentEndDate.clone().add(this.exam.gracePeriod!, 'seconds');
-            this.liveEventsService.acknowledgeEvent(event, false);
-        });
+        this.workingTimeUpdateEventsSubscription = this.liveEventsService
+            .observeNewEventsAsSystem([ExamLiveEventType.WORKING_TIME_UPDATE])
+            .subscribe((event: WorkingTimeUpdateEvent) => {
+                // Create new object to make change detection work, otherwise the date will not update
+                this.studentExam = { ...this.studentExam, workingTime: event.newWorkingTime! };
+                this.examParticipationService.currentlyLoadedStudentExam.next(this.studentExam);
+                this.individualStudentEndDate = dayjs(startDate).add(this.studentExam.workingTime!, 'seconds');
+                this.individualStudentEndDateWithGracePeriod = this.individualStudentEndDate.clone().add(this.exam.gracePeriod!, 'seconds');
+                this.liveEventsService.acknowledgeEvent(event, false);
+            });
+    }
+
+    private subscribeToProblemStatementUpdates() {
+        if (this.problemStatementUpdateEventsSubscription) {
+            this.problemStatementUpdateEventsSubscription.unsubscribe();
+        }
+        this.problemStatementUpdateEventsSubscription = this.liveEventsService
+            .observeNewEventsAsSystem([ExamLiveEventType.PROBLEM_STATEMENT_UPDATE])
+            .subscribe((event: ProblemStatementUpdateEvent) => {
+                this.examExerciseUpdateService.updateLiveExamExercise(event.exerciseId, event.problemStatement);
+                this.liveEventsService.acknowledgeEvent(event, false);
+            });
     }
 
     /**
