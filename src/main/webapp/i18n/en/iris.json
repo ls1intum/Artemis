@@ -52,6 +52,10 @@
                     "disabled": {
                         "course": "IRIS is disabled in course IRIS settings",
                         "global": "IRIS is disabled in global IRIS settings"
+                    },
+                    "lectureChat": {
+                        "title": "Lecture chat settings",
+                        "lectureChatIngestion": "Lecture Ingestion"
                     }
                 },
                 "title": {

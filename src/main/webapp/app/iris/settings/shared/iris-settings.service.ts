@@ -77,6 +77,7 @@ export class IrisSettingsService {
      * @param settings the settings to set
      */
     setCourseSettings(courseId: number, settings: IrisCourseSettings): Observable<HttpResponse<IrisCourseSettings>> {
+        console.log('Serialized settings:', JSON.stringify(settings));
         return this.http.put<IrisCourseSettings>(`${this.resourceUrl}/courses/${courseId}/raw-iris-settings`, settings, { observe: 'response' });
     }
 

@@ -10,6 +10,7 @@ import { IrisModel } from 'app/entities/iris/settings/iris-model';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { cloneDeep, isEqual } from 'lodash-es';
 import { IrisChatSubSettings, IrisCompetencyGenerationSubSettings, IrisHestiaSubSettings } from 'app/entities/iris/settings/iris-sub-settings.model';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-iris-settings-update',
@@ -44,11 +45,16 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
     GLOBAL = IrisSettingsType.GLOBAL;
     COURSE = IrisSettingsType.COURSE;
     EXERCISE = IrisSettingsType.EXERCISE;
+    isAdmin: boolean;
+    lectureChat: boolean = false;
 
     constructor(
         private irisSettingsService: IrisSettingsService,
         private alertService: AlertService,
-    ) {}
+        private accountService: AccountService,
+    ) {
+        this.isAdmin = accountService.isAdmin();
+    }
 
     ngOnInit(): void {
         this.loadIrisSettings();
@@ -81,7 +87,11 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
             if (!settings) {
                 this.alertService.error('artemisApp.iris.settings.error.noSettings');
             }
+            console.log('FIRST INITIAL settings', this.irisSettings);
             this.irisSettings = settings;
+            console.log('FIRST INITIAL irisSettings', this.irisSettings);
+            this.lectureChat = this.irisSettings?.irisChatSettings?.lectureChat ?? false;
+            console.log('FIRST INITIAL D', this.lectureChat);
             this.fillEmptyIrisSubSettings();
             this.originalIrisSettings = cloneDeep(settings);
             this.isDirty = false;
@@ -110,11 +120,14 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
     }
 
     saveIrisSettings(): void {
+        console.log('no#########################\n', this.irisSettings?.irisChatSettings?.lectureChat);
+        this.syncLectureChatIngestion();
         this.isSaving = true;
         this.saveIrisSettingsObservable().subscribe(
             (response) => {
                 this.isSaving = false;
                 this.isDirty = false;
+                console.log(response.body);
                 this.irisSettings = response.body ?? undefined;
                 this.fillEmptyIrisSubSettings();
                 this.originalIrisSettings = cloneDeep(this.irisSettings);
@@ -125,6 +138,19 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
                 this.alertService.error('artemisApp.iris.settings.error.save');
             },
         );
+        console.log('yaaaas#########################\n', this.irisSettings?.irisChatSettings?.lectureChat);
+    }
+
+    saveIrisSettingsObservable(): Observable<HttpResponse<IrisSettings | undefined>> {
+        switch (this.settingsType) {
+            case IrisSettingsType.GLOBAL:
+                return this.irisSettingsService.setGlobalSettings(this.irisSettings!);
+            case IrisSettingsType.COURSE:
+                console.log(' this.irisSettingsService.setCourseSettings(this.courseId!, this.irisSettings!);');
+                return this.irisSettingsService.setCourseSettings(this.courseId!, this.irisSettings!);
+            case IrisSettingsType.EXERCISE:
+                return this.irisSettingsService.setProgrammingExerciseSettings(this.exerciseId!, this.irisSettings!);
+        }
     }
 
     loadParentIrisSettingsObservable(): Observable<IrisSettings | undefined> {
@@ -150,14 +176,9 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
         }
     }
 
-    saveIrisSettingsObservable(): Observable<HttpResponse<IrisSettings | undefined>> {
-        switch (this.settingsType) {
-            case IrisSettingsType.GLOBAL:
-                return this.irisSettingsService.setGlobalSettings(this.irisSettings!);
-            case IrisSettingsType.COURSE:
-                return this.irisSettingsService.setCourseSettings(this.courseId!, this.irisSettings!);
-            case IrisSettingsType.EXERCISE:
-                return this.irisSettingsService.setProgrammingExerciseSettings(this.exerciseId!, this.irisSettings!);
+    private syncLectureChatIngestion() {
+        if (this.irisSettings?.irisChatSettings) {
+            this.irisSettings.irisChatSettings.lectureChat = this.lectureChat;
         }
     }
 }

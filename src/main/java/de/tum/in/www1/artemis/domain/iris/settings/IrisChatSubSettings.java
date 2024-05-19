@@ -35,6 +35,19 @@ public class IrisChatSubSettings extends IrisSubSettings {
     private Integer rateLimitTimeframeHours;
 
     @Nullable
+    @Column(name = "lecture_chat")
+    private Boolean lectureChat;
+
+    @Nullable
+    public Boolean getLectureChat() {
+        return lectureChat;
+    }
+
+    public void setLectureChat(@Nullable Boolean lectureChat) {
+        this.lectureChat = lectureChat;
+    }
+
+    @Nullable
     public IrisTemplate getTemplate() {
         return template;
     }

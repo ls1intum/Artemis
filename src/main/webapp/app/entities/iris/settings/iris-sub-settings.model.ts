@@ -20,6 +20,7 @@ export class IrisChatSubSettings extends IrisSubSettings {
     template?: IrisTemplate;
     rateLimit?: number;
     rateLimitTimeframeHours?: number;
+    lectureChat: boolean = false;
 }
 
 export class IrisHestiaSubSettings extends IrisSubSettings {

@@ -14,12 +14,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisPipelineExecutionSettingsDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.lectureIngestionWebhook.PyrisLectureUnitWebhookDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.lectureIngestionWebhook.PyrisWebhookLectureIngestionExecutionDTO;
+import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
 
 @Service
 @Profile("iris")
@@ -31,12 +33,19 @@ public class PyrisWebhookService {
 
     private final PyrisJobService pyrisJobService;
 
+    private final IrisSettingsService irisSettingsService;
+
     @Value("${server.url}")
     private String artemisBaseUrl;
 
-    public PyrisWebhookService(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService) {
+    public PyrisWebhookService(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, IrisSettingsService irisSettingsService) {
         this.pyrisConnectorService = pyrisConnectorService;
         this.pyrisJobService = pyrisJobService;
+        this.irisSettingsService = irisSettingsService;
+    }
+
+    private boolean lectureChatEnabled(Course course) {
+        return Boolean.TRUE.equals(irisSettingsService.getRawIrisSettingsFor(course).getIrisChatSettings().getLectureChat());
     }
 
     private String attachmentToBase64(AttachmentUnit attachmentUnit) {
@@ -84,17 +93,19 @@ public class PyrisWebhookService {
      * @param attachmentUnits The attachmentUnit that got Updated / erased
      */
     public void executeIngestionPipeline(Boolean shouldUpdate, List<AttachmentUnit> attachmentUnits) {
-        PyrisWebhookLectureIngestionExecutionDTO executionDTO;
-        var jobToken = pyrisJobService.addIngestionWebhookJob();
-        var settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, List.of(), artemisBaseUrl);
-        List<PyrisLectureUnitWebhookDTO> toUpdateAttachmentUnits = new ArrayList<>();
-        for (AttachmentUnit attachmentUnit : attachmentUnits) {
-            if (attachmentUnit.getAttachment().getAttachmentType() == AttachmentType.FILE)
-                toUpdateAttachmentUnits.add(processAttachments(shouldUpdate, attachmentUnit));
-        }
-        if (!toUpdateAttachmentUnits.isEmpty()) {
-            executionDTO = new PyrisWebhookLectureIngestionExecutionDTO(toUpdateAttachmentUnits, settingsDTO, List.of());
-            pyrisConnectorService.executeWebhook("lectures", executionDTO);
+        boolean xx = lectureChatEnabled(attachmentUnits.getFirst().getLecture().getCourse());
+        if (xx) {
+            var jobToken = pyrisJobService.addIngestionWebhookJob();
+            var settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, List.of(), artemisBaseUrl);
+            List<PyrisLectureUnitWebhookDTO> toUpdateAttachmentUnits = new ArrayList<>();
+            for (AttachmentUnit attachmentUnit : attachmentUnits) {
+                if (attachmentUnit.getAttachment().getAttachmentType() == AttachmentType.FILE)
+                    toUpdateAttachmentUnits.add(processAttachments(shouldUpdate, attachmentUnit));
+            }
+            if (!toUpdateAttachmentUnits.isEmpty()) {
+                PyrisWebhookLectureIngestionExecutionDTO executionDTO = new PyrisWebhookLectureIngestionExecutionDTO(toUpdateAttachmentUnits, settingsDTO, List.of());
+                pyrisConnectorService.executeWebhook("lectures", executionDTO);
+            }
         }
     }
 }

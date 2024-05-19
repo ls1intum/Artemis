@@ -71,6 +71,7 @@ public class IrisSubSettingsService {
         if (authCheckService.isAdmin()) {
             currentSettings.setRateLimit(newSettings.getRateLimit());
             currentSettings.setRateLimitTimeframeHours(newSettings.getRateLimitTimeframeHours());
+            currentSettings.setLectureChat(newSettings.getLectureChat());
         }
         currentSettings.setAllowedModels(selectAllowedModels(currentSettings.getAllowedModels(), newSettings.getAllowedModels()));
         currentSettings.setPreferredModel(validatePreferredModel(currentSettings.getPreferredModel(), newSettings.getPreferredModel(), currentSettings.getAllowedModels(),
@@ -196,10 +197,11 @@ public class IrisSubSettingsService {
     public IrisCombinedChatSubSettingsDTO combineChatSettings(ArrayList<IrisSettings> settingsList, boolean minimal) {
         var enabled = getCombinedEnabled(settingsList, IrisSettings::getIrisChatSettings);
         var rateLimit = getCombinedRateLimit(settingsList);
+        var lectureChatEnabled = getCombinedLectureChatEnabled(settingsList, IrisSettings::getIrisChatSettings);
         var allowedModels = minimal ? getCombinedAllowedModels(settingsList, IrisSettings::getIrisChatSettings) : null;
         var preferredModel = minimal ? getCombinedPreferredModel(settingsList, IrisSettings::getIrisChatSettings) : null;
         var template = minimal ? getCombinedTemplate(settingsList, IrisSettings::getIrisChatSettings, IrisChatSubSettings::getTemplate) : null;
-        return new IrisCombinedChatSubSettingsDTO(enabled, rateLimit, null, allowedModels, preferredModel, template);
+        return new IrisCombinedChatSubSettingsDTO(enabled, rateLimit, null, allowedModels, preferredModel, template, lectureChatEnabled);
     }
 
     /**
@@ -255,6 +257,24 @@ public class IrisSubSettingsService {
             var settings = subSettingsFunction.apply(irisSettings);
             if (settings == null || !settings.isEnabled()) {
                 return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean getCombinedLectureChatEnabled(List<IrisSettings> settingsList, Function<IrisSettings, IrisChatSubSettings> subSettingsFunction) {
+        for (var irisSettings : settingsList) {
+            if (irisSettings == null) {
+                return false;
+            }
+            var settings = subSettingsFunction.apply(irisSettings);
+            if (settings == null) {
+                return false;
+            }
+            else {
+                if (!settings.getLectureChat()) {
+                    return false;
+                }
             }
         }
         return true;
