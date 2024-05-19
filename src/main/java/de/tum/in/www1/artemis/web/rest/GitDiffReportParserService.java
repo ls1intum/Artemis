@@ -3,7 +3,9 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -19,6 +21,10 @@ public class GitDiffReportParserService {
 
     private final Pattern gitDiffLinePattern = Pattern.compile("@@ -(?<previousLine>\\d+)(,(?<previousLineCount>\\d+))? \\+(?<newLine>\\d+)(,(?<newLineCount>\\d+))? @@");
 
+    private final Pattern gitRenameFromPattern = Pattern.compile("rename from (?<previousFileName>.*)");
+
+    private final Pattern gitRenameToPattern = Pattern.compile("rename to (?<newFileName>.*)");
+
     /**
      * Extracts the ProgrammingExerciseGitDiffEntry from the raw git-diff output
      *
@@ -29,7 +35,7 @@ public class GitDiffReportParserService {
     public List<ProgrammingExerciseGitDiffEntry> extractDiffEntries(String diff, boolean useAbsoluteLineCount) {
         var lines = diff.split("\n");
         var parserState = new ParserState();
-
+        Map<String, String> renamedFilePaths = new HashMap<>();
         for (int i = 0; i < lines.length; i++) {
             var line = lines[i];
             // Filter out no new line message
@@ -39,6 +45,16 @@ public class GitDiffReportParserService {
             var lineMatcher = gitDiffLinePattern.matcher(line);
             if (lineMatcher.matches()) {
                 handleNewDiffBlock(lines, i, parserState, lineMatcher);
+            }
+            // Under certain circumstances, Git can track renamed files. These may not always contain diff entries,
+            // so keep track of renamed files manually.
+            var renameFromMatcher = gitRenameFromPattern.matcher(line);
+            if (renameFromMatcher.matches() && i + 1 < lines.length) {
+                var nextLine = lines[i + 1];
+                var renameToMatcher = gitRenameToPattern.matcher(nextLine);
+                if (renameToMatcher.matches()) {
+                    renamedFilePaths.put(renameFromMatcher.group("previousFileName"), renameToMatcher.group("newFileName"));
+                }
             }
             else if (!parserState.deactivateCodeReading) {
                 switch (line.charAt(0)) {
@@ -51,6 +67,16 @@ public class GitDiffReportParserService {
         }
         if (!parserState.currentEntry.isEmpty()) {
             parserState.entries.add(parserState.currentEntry);
+        }
+        // Add empty diff entries for each renamed file if not already present
+        for (String previousPath : renamedFilePaths.keySet()) {
+            String newPath = renamedFilePaths.get(previousPath);
+            if (parserState.entries.stream().noneMatch(entry -> entry.getPreviousFilePath().equals(previousPath))) {
+                var entry = new ProgrammingExerciseGitDiffEntry();
+                entry.setPreviousFilePath(previousPath);
+                entry.setFilePath(newPath);
+                parserState.entries.add(entry);
+            }
         }
         return parserState.entries;
     }
