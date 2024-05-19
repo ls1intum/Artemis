@@ -42,8 +42,8 @@ import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyProgressForLearningPathDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathHealthDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathInformationDTO;
-import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationDto;
-import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationObjectDto.LearningObjectType;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationObjectDTO.LearningObjectType;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationOverviewDto;
 import de.tum.in.www1.artemis.web.rest.dto.competency.NgxLearningPathDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
@@ -208,7 +208,9 @@ public class LearningPathResource {
      * @return the ResponseEntity with status 200 (OK) and with body the navigation information
      */
     @GetMapping("learning-path/{learningPathId}/navigation")
-    public ResponseEntity<LearningPathNavigationDto> getLearningPathNavigation(@PathVariable @Valid long learningPathId,
+    @FeatureToggle(Feature.LearningPaths)
+    @EnforceAtLeastStudent
+    public ResponseEntity<LearningPathNavigationDTO> getLearningPathNavigation(@PathVariable @Valid long learningPathId,
             @RequestParam(required = false, name = "learningObjectId") @Nullable @Valid Long learningObjectId,
             @RequestParam(required = false, name = "learningObjectType") @Nullable @Valid LearningObjectType learningObjectType) {
         log.debug("REST request to get navigation for learning path with id: {} relative to learning object with id: {} and type: {}", learningPathId, learningObjectId,
@@ -223,6 +225,8 @@ public class LearningPathResource {
      * @return the ResponseEntity with status 200 (OK) and with body the navigation overview
      */
     @GetMapping("learning-path/{learningPathId}/navigation-overview")
+    @FeatureToggle(Feature.LearningPaths)
+    @EnforceAtLeastStudent
     public ResponseEntity<LearningPathNavigationOverviewDto> getLearningPathNavigationOverview(@PathVariable @Valid long learningPathId) {
         log.debug("REST request to get navigation overview for learning path with id: {}", learningPathId);
         return ResponseEntity.ok(learningPathService.getLearningPathNavigationOverview(learningPathId));

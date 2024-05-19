@@ -3,7 +3,7 @@ import { LearningPathService } from 'app/course/learning-paths/learning-path.ser
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { LearningPathNavigationDto, LearningPathNavigationObjectDto } from 'app/entities/competency/learning-path.model';
-import { Observable, catchError, map, of, switchMap } from 'rxjs';
+import { Observable, catchError, map, of, startWith, switchMap } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { NgbAccordionModule, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -44,9 +44,10 @@ export class LearningPathStudentNavComponent {
             onError(this.alertService, error);
             return of({ isLoading: false, error: error });
         }),
+        startWith({ isLoading: true }),
     ) as Observable<LoadedValue<LearningPathNavigationDto>>;
 
-    private readonly navigationData = toSignal(this.navigationData$, { initialValue: { isLoading: true } as LoadedValue<LearningPathNavigationDto> });
+    private readonly navigationData = toSignal(this.navigationData$, { requireSync: true });
 
     readonly showNavigationOverview = signal<boolean>(false);
 

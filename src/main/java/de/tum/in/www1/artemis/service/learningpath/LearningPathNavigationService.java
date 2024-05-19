@@ -13,9 +13,9 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.LearningPath;
 import de.tum.in.www1.artemis.service.LearningObjectService;
 import de.tum.in.www1.artemis.service.learningpath.LearningPathRecommendationService.RecommendationState;
-import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationDto;
-import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationObjectDto;
-import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationObjectDto.LearningObjectType;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationObjectDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationObjectDTO.LearningObjectType;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationOverviewDto;
 
 /**
@@ -44,22 +44,11 @@ public class LearningPathNavigationService {
      * @param successorLearningObject   the successor learning object
      * @return the navigation DTO
      */
-    private LearningPathNavigationDto mapLearningObjectsToNavigationDto(User learningPathUser, int progress, LearningObject predecessorLearningObject,
+    private LearningPathNavigationDTO mapLearningObjectsToNavigationDto(User learningPathUser, int progress, LearningObject predecessorLearningObject,
             LearningObject currentLearningObject, LearningObject successorLearningObject) {
-        return new LearningPathNavigationDto(LearningPathNavigationObjectDto.of(predecessorLearningObject, learningPathUser),
-                LearningPathNavigationObjectDto.of(currentLearningObject, learningPathUser), LearningPathNavigationObjectDto.of(successorLearningObject, learningPathUser),
+        return new LearningPathNavigationDTO(LearningPathNavigationObjectDTO.of(predecessorLearningObject, learningPathUser),
+                LearningPathNavigationObjectDTO.of(currentLearningObject, learningPathUser), LearningPathNavigationObjectDTO.of(successorLearningObject, learningPathUser),
                 progress);
-    }
-
-    /**
-     * Map a learning object to a navigation object DTO.
-     *
-     * @param learningObject   the learning object
-     * @param learningPathUser the user of the learning path
-     * @return the navigation object DTO
-     */
-    private LearningPathNavigationObjectDto mapLearningObjectToNavigationObjectDto(LearningObject learningObject, User learningPathUser) {
-        return LearningPathNavigationObjectDto.of(learningObject, learningPathUser);
     }
 
     /**
@@ -68,7 +57,7 @@ public class LearningPathNavigationService {
      * @param learningPath the learning path
      * @return the navigation
      */
-    public LearningPathNavigationDto getNavigation(LearningPath learningPath) {
+    public LearningPathNavigationDTO getNavigation(LearningPath learningPath) {
         var recommendationState = learningPathRecommendationService.getRecommendedOrderOfCompetencies(learningPath);
 
         var currentLearningObject = learningPathRecommendationService.getCurrentUncompletedLearningObject(learningPath, recommendationState);
@@ -87,7 +76,7 @@ public class LearningPathNavigationService {
      * @param learningObjectType the type of the relative learning object
      * @return the navigation
      */
-    public LearningPathNavigationDto getNavigationRelativeToLearningObject(LearningPath learningPath, Long learningObjectId, LearningObjectType learningObjectType) {
+    public LearningPathNavigationDTO getNavigationRelativeToLearningObject(LearningPath learningPath, Long learningObjectId, LearningObjectType learningObjectType) {
         var currentLearningObject = learningObjectService.getLearningObjectByIdAndType(learningObjectId, learningObjectType);
         var recommendationState = learningPathRecommendationService.getRecommendedOrderOfCompetencies(learningPath);
         if (currentLearningObject.isCompletedFor(learningPath.getUser())) {
@@ -104,7 +93,7 @@ public class LearningPathNavigationService {
      * @param recommendationState    the recommendation state of the learning path
      * @return the navigation
      */
-    private LearningPathNavigationDto getNavigationRelativeToCompletedLearningObject(LearningPath learningPath, LearningObject relativeLearningObject,
+    private LearningPathNavigationDTO getNavigationRelativeToCompletedLearningObject(LearningPath learningPath, LearningObject relativeLearningObject,
             RecommendationState recommendationState) {
         var learningPathUser = learningPath.getUser();
         var completionDateOptional = relativeLearningObject.getCompletionDate(learningPathUser);
@@ -126,7 +115,7 @@ public class LearningPathNavigationService {
      * @param recommendationState    the recommendation state of the learning path
      * @return the navigation
      */
-    private LearningPathNavigationDto getNavigationRelativeToUncompletedLearningObject(LearningPath learningPath, LearningObject relativeLearningObject,
+    private LearningPathNavigationDTO getNavigationRelativeToUncompletedLearningObject(LearningPath learningPath, LearningObject relativeLearningObject,
             RecommendationState recommendationState) {
         var predecessorLearningObject = learningPathRecommendationService.getUncompletedPredecessorOfLearningObject(relativeLearningObject, learningPath, recommendationState)
                 .orElse(learningObjectService.getCompletedPredecessorOfLearningObjectRelatedToDate(learningPath.getUser(), Optional.empty(), learningPath.getCompetencies())
@@ -147,7 +136,7 @@ public class LearningPathNavigationService {
         var learningObjects = Stream
                 .concat(learningObjectService.getCompletedLearningObjectsForUserAndCompetencies(learningPath.getUser(), learningPath.getCompetencies()),
                         learningPathRecommendationService.getUncompletedLearningObjects(learningPath))
-                .map(learningObject -> this.mapLearningObjectToNavigationObjectDto(learningObject, learningPathUser)).distinct().toList();
+                .map(learningObject -> LearningPathNavigationObjectDTO.of(learningObject, learningPathUser)).distinct().toList();
         return new LearningPathNavigationOverviewDto(learningObjects);
     }
 }

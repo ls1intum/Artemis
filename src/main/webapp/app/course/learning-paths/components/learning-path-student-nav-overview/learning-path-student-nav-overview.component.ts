@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faCheckCircle } from '@fortawesome/free-solid-svg-icons';
 import { LearningPathService } from '../../learning-path.service';
-import { Observable, catchError, map, of, switchMap } from 'rxjs';
+import { Observable, catchError, map, of, startWith, switchMap } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -36,9 +36,10 @@ export class LearningPathStudentNavOverviewComponent {
             onError(this.alertService, error);
             return of({ isLoading: false, error: error });
         }),
+        startWith({ isLoading: true }),
     ) as Observable<LoadedValue<LearningPathNavigationOverviewDto>>;
 
-    private readonly navigationOverviewData = toSignal(this.navigationOverviewData$, { initialValue: { isLoading: true } as LoadedValue<LearningPathNavigationOverviewDto> });
+    private readonly navigationOverviewData = toSignal(this.navigationOverviewData$, { requireSync: true });
 
     readonly isLoading = computed(() => this.navigationOverviewData().isLoading);
 
@@ -47,7 +48,9 @@ export class LearningPathStudentNavOverviewComponent {
     readonly onLearningObjectSelected = output<LearningPathNavigationObjectDto>();
 
     selectLearningObject(learningObject: LearningPathNavigationObjectDto) {
-        this.onLearningObjectSelected.emit(learningObject);
+        if (this.isLearningObjectSelectable(learningObject)) {
+            this.onLearningObjectSelected.emit(learningObject);
+        }
     }
 
     isEqualToCurrentLearningObject(id: number, type: LearningObjectType): boolean {

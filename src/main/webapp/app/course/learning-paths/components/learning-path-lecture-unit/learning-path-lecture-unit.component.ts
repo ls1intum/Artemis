@@ -1,7 +1,7 @@
-import { Component, Signal, computed, inject, input, output } from '@angular/core';
+import { Component, computed, inject, input, output } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
-import { Observable, catchError, map, of, switchMap } from 'rxjs';
+import { Observable, catchError, map, of, startWith, switchMap } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
@@ -31,11 +31,12 @@ export class LearningPathLectureUnitComponent {
             onError(this.alertService, error);
             return of({ isLoading: false, error: error });
         }),
+        startWith({ isLoading: true }),
     ) as Observable<LoadedValue<LectureUnit>>;
 
-    private readonly lectureUnitData = toSignal(this.lectureUnitData$, { initialValue: { isLoading: true } }) as Signal<LoadedValue<LectureUnit>>;
+    private readonly lectureUnitData = toSignal(this.lectureUnitData$, { requireSync: true });
 
-    readonly loading = computed(() => this.lectureUnitData().isLoading);
+    readonly isLoading = computed(() => this.lectureUnitData().isLoading);
 
     readonly lectureUnit = computed(() => this.lectureUnitData().value);
 

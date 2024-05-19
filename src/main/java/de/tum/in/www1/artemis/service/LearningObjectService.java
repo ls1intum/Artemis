@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnitCompletion;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitRepository;
-import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationObjectDto.LearningObjectType;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationObjectDTO.LearningObjectType;
 
 /**
  * Service implementation for interactions with learning objects.

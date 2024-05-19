@@ -13,6 +13,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param progress                  the progress of the learning path
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record LearningPathNavigationDto(@Nullable LearningPathNavigationObjectDto predecessorLearningObject, @Nullable LearningPathNavigationObjectDto currentLearningObject,
-        @Nullable LearningPathNavigationObjectDto successorLearningObject, int progress) {
+public record LearningPathNavigationDTO(@Nullable LearningPathNavigationObjectDTO predecessorLearningObject, @Nullable LearningPathNavigationObjectDTO currentLearningObject,
+        @Nullable LearningPathNavigationObjectDTO successorLearningObject, int progress) {
 }

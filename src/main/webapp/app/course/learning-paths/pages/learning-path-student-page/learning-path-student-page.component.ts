@@ -1,7 +1,7 @@
 import { Component, Signal, computed, inject, viewChild } from '@angular/core';
 import { LearningPathService } from 'app/course/learning-paths/learning-path.service';
 import { LearningObjectType } from 'app/entities/competency/learning-path.model';
-import { Observable, catchError, map, of, switchMap } from 'rxjs';
+import { Observable, catchError, map, of, startWith, switchMap } from 'rxjs';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse } from '@angular/common/http';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
@@ -47,9 +47,10 @@ export class LearningPathStudentPageComponent {
             onError(this.alertService, error);
             return of({ isLoading: false, error: error });
         }),
+        startWith({ isLoading: true }),
     ) as Observable<LoadedValue<number>>;
 
-    private readonly learningPathIdData = toSignal(this.learningPathIdData$, { initialValue: { isLoading: true } }) as Signal<LoadedValue<number>>;
+    private readonly learningPathIdData = toSignal(this.learningPathIdData$, { requireSync: true });
 
     readonly learningPathId = computed(() => this.learningPathIdData().value);
 

@@ -16,7 +16,7 @@
     } @else {
         @for (learningObject of learningObjects(); track learningObject; let i = $index) {
             <div
-                (click)="isLearningObjectSelectable(learningObject) && selectLearningObject(learningObject)"
+                (click)="selectLearningObject(learningObject)"
                 class="row px-3 py-3 m-0"
                 [ngClass]="{ 'bg-light': isEqualToCurrentLearningObject(learningObject.id, learningObject.type), clickable: isLearningObjectSelectable(learningObject) }"
             >

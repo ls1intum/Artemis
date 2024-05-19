@@ -46,8 +46,8 @@ import de.tum.in.www1.artemis.web.rest.LearningPathResource;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyWithTailRelationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathHealthDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathInformationDTO;
-import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationDto;
-import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationObjectDto;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationObjectDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationOverviewDto;
 import de.tum.in.www1.artemis.web.rest.dto.competency.NgxLearningPathDTO;
 
@@ -610,16 +610,16 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
         final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
-        final var result = request.get("/api/learning-path/" + learningPath.getId() + "/navigation", HttpStatus.OK, LearningPathNavigationDto.class);
+        final var result = request.get("/api/learning-path/" + learningPath.getId() + "/navigation", HttpStatus.OK, LearningPathNavigationDTO.class);
 
         var predecessorLearningObject = result.predecessorLearningObject();
         assertThat(predecessorLearningObject).isNotNull();
-        assertThat(predecessorLearningObject.type()).isEqualTo(LearningPathNavigationObjectDto.LearningObjectType.LECTURE);
+        assertThat(predecessorLearningObject.type()).isEqualTo(LearningPathNavigationObjectDTO.LearningObjectType.LECTURE);
         assertThat(predecessorLearningObject.id()).isEqualTo(textUnit.getId());
 
         var currentLearningObject = result.currentLearningObject();
         assertThat(currentLearningObject).isNotNull();
-        assertThat(currentLearningObject.type()).isEqualTo(LearningPathNavigationObjectDto.LearningObjectType.EXERCISE);
+        assertThat(currentLearningObject.type()).isEqualTo(LearningPathNavigationObjectDTO.LearningObjectType.EXERCISE);
         assertThat(currentLearningObject.id()).isNotNull();
 
         assertThat(result.successorLearningObject()).isNull();
@@ -633,19 +633,19 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
         final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
         final var result = request.get("/api/learning-path/" + learningPath.getId() + "/navigation?learningObjectId=" + textUnit.getId() + "&learningObjectType="
-                + LearningPathNavigationObjectDto.LearningObjectType.LECTURE, HttpStatus.OK, LearningPathNavigationDto.class);
+                + LearningPathNavigationObjectDTO.LearningObjectType.LECTURE, HttpStatus.OK, LearningPathNavigationDTO.class);
 
         // TODO: currently learning objects connected to more than one competency are provided twice in the learning path
         // TODO: in the navigation therefore a lecture unit might be the predecessor and the current learning object or similar
 
         var currentLearningObject = result.currentLearningObject();
         assertThat(currentLearningObject).isNotNull();
-        assertThat(currentLearningObject.type()).isEqualTo(LearningPathNavigationObjectDto.LearningObjectType.LECTURE);
+        assertThat(currentLearningObject.type()).isEqualTo(LearningPathNavigationObjectDTO.LearningObjectType.LECTURE);
         assertThat(currentLearningObject.id()).isEqualTo(textUnit.getId());
 
         var successorLearningObject = result.successorLearningObject();
         assertThat(successorLearningObject).isNotNull();
-        assertThat(successorLearningObject.type()).isEqualTo(LearningPathNavigationObjectDto.LearningObjectType.EXERCISE);
+        assertThat(successorLearningObject.type()).isEqualTo(LearningPathNavigationObjectDTO.LearningObjectType.EXERCISE);
         assertThat(successorLearningObject.id()).isNotNull();
 
         assertThat(result.progress()).isEqualTo(learningPath.getProgress());
@@ -657,7 +657,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
         final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
-        request.get("/api/learning-path/" + learningPath.getId() + "/navigation", HttpStatus.FORBIDDEN, LearningPathNavigationDto.class);
+        request.get("/api/learning-path/" + learningPath.getId() + "/navigation", HttpStatus.FORBIDDEN, LearningPathNavigationDTO.class);
     }
 
     @Test

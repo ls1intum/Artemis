@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
  * @param type      the type of the learning object
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record LearningPathNavigationObjectDto(Long id, boolean completed, String name, LearningObjectType type) {
+public record LearningPathNavigationObjectDTO(Long id, boolean completed, String name, LearningObjectType type) {
 
     /**
      * Create a navigation object DTO from a learning object.
@@ -25,15 +25,15 @@ public record LearningPathNavigationObjectDto(Long id, boolean completed, String
      * @param user           the user
      * @return the navigation object DTO
      */
-    public static LearningPathNavigationObjectDto of(LearningObject learningObject, User user) {
+    public static LearningPathNavigationObjectDTO of(LearningObject learningObject, User user) {
         if (learningObject == null) {
             return null;
         }
         return switch (learningObject) {
             case LectureUnit lectureUnit ->
-                new LearningPathNavigationObjectDto(lectureUnit.getId(), learningObject.isCompletedFor(user), lectureUnit.getName(), LearningObjectType.LECTURE);
+                new LearningPathNavigationObjectDTO(lectureUnit.getId(), learningObject.isCompletedFor(user), lectureUnit.getName(), LearningObjectType.LECTURE);
             case Exercise exercise ->
-                new LearningPathNavigationObjectDto(learningObject.getId(), learningObject.isCompletedFor(user), exercise.getTitle(), LearningObjectType.EXERCISE);
+                new LearningPathNavigationObjectDTO(learningObject.getId(), learningObject.isCompletedFor(user), exercise.getTitle(), LearningObjectType.EXERCISE);
             default -> throw new IllegalArgumentException("Learning object must be either LectureUnit or Exercise");
         };
     }

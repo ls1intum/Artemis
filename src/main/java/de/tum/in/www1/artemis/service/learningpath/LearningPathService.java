@@ -39,8 +39,8 @@ import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathHealthDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathInformationDTO;
-import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationDto;
-import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationObjectDto.LearningObjectType;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationObjectDTO.LearningObjectType;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathNavigationOverviewDto;
 import de.tum.in.www1.artemis.web.rest.dto.competency.NgxLearningPathDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
@@ -320,7 +320,7 @@ public class LearningPathService {
      * @param learningObjectType the type of the relative learning object
      * @return the navigation
      */
-    public LearningPathNavigationDto getLearningPathNavigation(long learningPathId, @Nullable Long learningObjectId, @Nullable LearningObjectType learningObjectType) {
+    public LearningPathNavigationDTO getLearningPathNavigation(long learningPathId, @Nullable Long learningObjectId, @Nullable LearningObjectType learningObjectType) {
         var learningPath = findWithCompetenciesAndLearningObjectsAndCompletedUsersById(learningPathId);
         if (!userRepository.getUser().equals(learningPath.getUser())) {
             throw new AccessForbiddenException("You are not allowed to access this learning path");
