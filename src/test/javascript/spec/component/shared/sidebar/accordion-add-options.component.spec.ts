@@ -51,6 +51,7 @@ describe('AccordionAddOptionsComponent', () => {
         }).compileComponents();
 
         metisConversationService = TestBed.inject(MetisConversationService);
+        canCreateChannel.mockReturnValue(true);
         fixture = TestBed.createComponent(AccordionAddOptionsComponent);
         component = fixture.componentInstance;
         fixture.detectChanges();
