@@ -136,6 +136,20 @@ class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractLocalCILoc
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getGitDiffReportForCommitsWithRenamedFile() throws Exception {
+        String fileContent = "content\ncontent\ncontent\ncontent";
+        exercise = hestiaUtilTestService.setupTemplate(FILE_NAME, fileContent, exercise, templateRepo);
+        participationRepo.configureRepos("participationLocalRepo", "participationOriginRepo");
+        var studentLogin = TEST_PREFIX + "student1";
+        var submission = hestiaUtilTestService.setupSubmission(FILE_NAME, fileContent, exercise, participationRepo, studentLogin);
+        // Simulate a renaming by deleting the file and creating a new one with the same content. Git will track this as long as the content is similar enough.
+        var submission2 = hestiaUtilTestService.deleteFileAndSetupSubmission(FILE_NAME, FILE_NAME + "-renamed", fileContent, exercise, participationRepo, studentLogin);
+        request.get("/api/programming-exercises/" + exercise.getId() + "/commits/" + submission.getCommitHash() + "/diff-report/" + submission2.getCommitHash()
+                + "?participationId=" + submission.getParticipation().getId(), HttpStatus.OK, ProgrammingExerciseGitDiffReport.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getGitDiffReportForCommitsThrowsConflictException() throws Exception {
         exercise = hestiaUtilTestService.setupTemplate(FILE_NAME, "ABC", exercise, templateRepo);
         var wrongExerciseId = exercise.getId() + 1;
