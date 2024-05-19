@@ -258,7 +258,6 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
 
     @Override
     public RepositoriesCheckoutDirectoryDTO getCheckoutDirectories(ProgrammingLanguage programmingLanguage) {
-        // Not needed since the checkout directories are defined in the build plans in Jenkins
-        return null;
+        throw new UnsupportedOperationException("Method not implemented, consult the build plans in Jenkins for the checkout directories.");
     }
 }
