@@ -39,8 +39,6 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
 
     private static final Logger log = LoggerFactory.getLogger(LocalCIService.class);
 
-    private static final String ROOT_DIRECTORY = "/";
-
     private final BuildScriptProviderService buildScriptProviderService;
 
     private final AeolusTemplateService aeolusTemplateService;
@@ -236,6 +234,7 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
     }
 
     private String startPathWithRootDirectory(String checkoutDirectoryPath) {
+        final String ROOT_DIRECTORY = "/";
         return checkoutDirectoryPath.startsWith(ROOT_DIRECTORY) ? checkoutDirectoryPath : ROOT_DIRECTORY + checkoutDirectoryPath;
     }
 }
