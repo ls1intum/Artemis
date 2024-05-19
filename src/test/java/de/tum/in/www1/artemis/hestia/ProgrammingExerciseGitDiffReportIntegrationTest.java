@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.hestia;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.time.ZonedDateTime;
 
 import org.junit.jupiter.api.AfterEach;
@@ -12,6 +14,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffEntry;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffReport;
 import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseFactory;
 import de.tum.in.www1.artemis.localvcci.AbstractLocalCILocalVCIntegrationTest;
@@ -143,9 +146,15 @@ class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractLocalCILoc
         var studentLogin = TEST_PREFIX + "student1";
         var submission = hestiaUtilTestService.setupSubmission(FILE_NAME, fileContent, exercise, participationRepo, studentLogin);
         // Simulate a renaming by deleting the file and creating a new one with the same content. Git will track this as long as the content is similar enough.
-        var submission2 = hestiaUtilTestService.deleteFileAndSetupSubmission(FILE_NAME, FILE_NAME + "-renamed", fileContent, exercise, participationRepo, studentLogin);
-        request.get("/api/programming-exercises/" + exercise.getId() + "/commits/" + submission.getCommitHash() + "/diff-report/" + submission2.getCommitHash()
+        var submission2 = hestiaUtilTestService.deleteFileAndSetupSubmission(FILE_NAME, FILE_NAME2, fileContent, exercise, participationRepo, studentLogin);
+        var report = request.get("/api/programming-exercises/" + exercise.getId() + "/commits/" + submission.getCommitHash() + "/diff-report/" + submission2.getCommitHash()
                 + "?participationId=" + submission.getParticipation().getId(), HttpStatus.OK, ProgrammingExerciseGitDiffReport.class);
+        var entries = report.getEntries();
+        assertThat(entries.size()).isEqualTo(1);
+        ProgrammingExerciseGitDiffEntry entry = entries.iterator().next();
+        assertThat(entry.getPreviousFilePath()).isEqualTo(FILE_NAME);
+        assertThat(entry.getFilePath()).isEqualTo(FILE_NAME2);
+        assertThat(entry.isEmpty()).isTrue();
     }
 
     @Test
