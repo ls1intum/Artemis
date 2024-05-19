@@ -7,6 +7,7 @@ import { ProgrammingExerciseGradingStatistics } from 'app/entities/programming-e
 import { ProgrammingExerciseTask } from './programming-exercise-task';
 import { Observable, Subject } from 'rxjs';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
+import { isExamExercise } from 'app/shared/util/utils';
 
 type Sort = {
     by: 'name' | 'weight' | 'multiplier' | 'bonusPoints' | 'visibility' | 'resulting' | 'type';
@@ -39,6 +40,8 @@ export class ProgrammingExerciseGradingTasksTableComponent implements OnInit {
 
     currentSort: Sort | undefined;
 
+    isExamExercise: boolean = false;
+
     get ignoreInactive() {
         return this.taskService.ignoreInactive;
     }
@@ -55,6 +58,8 @@ export class ProgrammingExerciseGradingTasksTableComponent implements OnInit {
             by: 'name',
             descending: true,
         };
+
+        this.isExamExercise = isExamExercise(this.exercise);
     }
 
     updateTasks = () => {
