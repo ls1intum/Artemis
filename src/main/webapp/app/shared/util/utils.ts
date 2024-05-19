@@ -2,6 +2,7 @@ import { omit, sum } from 'lodash-es';
 import { captureException } from '@sentry/angular-ivy';
 import { Result } from 'app/entities/result.model';
 import { Course } from 'app/entities/course.model';
+import { Exercise } from 'app/entities/exercise.model';
 
 // Cartesian product helper function
 const cartesianConcatHelper = (a: any[], b: any[]): any[][] => ([] as any[][]).concat(...a.map((a2) => b.map((b2) => ([] as any[]).concat(a2, b2))));
@@ -165,6 +166,15 @@ export function scrollToTopOfPage() {
     if (pageWrapper) {
         pageWrapper.scroll(0, 0);
     }
+}
+
+/**
+ * For exam exercises the course will not be set as exam exercises are linked via exercise groups.
+ *
+ * @param exercise for which is checked if it belongs to an exam
+ */
+export function isExamExercise(exercise: Exercise) {
+    return exercise.course === undefined;
 }
 
 const ROOT_DIRECTORY_PATH: string = '/';

@@ -807,6 +807,7 @@ public class ProgrammingExerciseResource {
 
         var participation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(exerciseId);
 
+        // TODO: We want to get rid of ModelAndView and use ResponseEntity instead. Define an appropriate service method and then call it here and in the referenced endpoint.
         return new ModelAndView("forward:/api/repository/" + participation.getId() + "/files-content");
     }
 
@@ -830,6 +831,7 @@ public class ProgrammingExerciseResource {
 
         var participation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(exerciseId);
 
+        // TODO: We want to get rid of ModelAndView and use ResponseEntity instead. Define an appropriate service method and then call it here and in the referenced endpoint.
         return new ModelAndView("forward:/api/repository/" + participation.getId() + "/files-content");
     }
 
@@ -853,6 +855,7 @@ public class ProgrammingExerciseResource {
 
         var participation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(exerciseId);
 
+        // TODO: We want to get rid of ModelAndView and use ResponseEntity instead. Define an appropriate service method and then call it here and in the referenced endpoint.
         return new ModelAndView("forward:/api/repository/" + participation.getId() + "/file-names");
     }
 

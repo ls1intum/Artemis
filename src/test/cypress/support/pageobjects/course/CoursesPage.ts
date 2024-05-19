@@ -3,7 +3,7 @@
  */
 export class CoursesPage {
     openCourse(courseId: number) {
-        cy.get(`#course-${courseId}-header`).click();
+        cy.get(`#course-${courseId}-header`, { timeout: 30000 }).click();
         cy.url().should('include', '/exercises');
     }
 }

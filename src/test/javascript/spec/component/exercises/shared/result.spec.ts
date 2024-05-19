@@ -81,6 +81,7 @@ describe('ResultComponent', () => {
         const participation1 = cloneDeep(programmingParticipation);
         participation1.results = [result1, result2];
         component.participation = participation1;
+        component.showUngradedResults = true;
 
         fixture.detectChanges();
 
@@ -99,6 +100,7 @@ describe('ResultComponent', () => {
         const participation1 = cloneDeep(modelingParticipation);
         participation1.results = [result1, result2];
         component.participation = participation1;
+        component.showUngradedResults = true;
 
         fixture.detectChanges();
 
