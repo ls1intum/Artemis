@@ -1,5 +1,5 @@
 import { Component, HostListener, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { StudentExam } from 'app/entities/student-exam.model';
@@ -139,6 +139,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     constructor(
         private websocketService: JhiWebsocketService,
         private router: Router,
+        private route: ActivatedRoute,
         private artemisMarkdown: ArtemisMarkdownService,
         private examParticipationService: ExamParticipationService,
         private modelingSubmissionService: ModelingSubmissionService,

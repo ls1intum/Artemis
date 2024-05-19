@@ -150,7 +150,7 @@ export class CourseOverviewService {
             title: exam.title ?? '',
             id: exam.id ?? '',
             icon: faGraduationCap,
-            subtitleLeft: exam.moduleNumber ?? 'CIT5230000',
+            subtitleLeft: exam.moduleNumber ?? '',
             startDateWithTime: exam.startDate,
             workingTime: this.convertWorkingTimeToString(exam.workingTime ?? 0),
             attainablePoints: exam.examMaxPoints ?? 0,
