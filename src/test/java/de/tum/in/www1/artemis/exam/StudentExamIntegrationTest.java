@@ -856,8 +856,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
 
         var capturedEvent = (WorkingTimeUpdateEventDTO) captureExamLiveEventForId(studentExam1.getId(), false);
 
-        assertThat(capturedEvent.getNewWorkingTime()).isEqualTo(newWorkingTime);
-        assertThat(capturedEvent.getOldWorkingTime()).isEqualTo(oldWorkingTime);
+        assertThat(capturedEvent.newWorkingTime()).isEqualTo(newWorkingTime);
+        assertThat(capturedEvent.oldWorkingTime()).isEqualTo(oldWorkingTime);
     }
 
     private ExamLiveEventDTO captureExamLiveEventForId(Long studentExamOrExamId, boolean examWide) {
@@ -883,10 +883,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         var result = request.postWithPlainStringResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/announcements", testMessage,
                 ExamWideAnnouncementEventDTO.class, HttpStatus.OK);
 
-        assertThat(result.getId()).isGreaterThan(0L);
-        assertThat(result.getText()).isEqualTo(testMessage);
-        assertThat(result.getCreatedBy()).isEqualTo(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1").getName());
-        assertThat(result.getCreatedDate()).isCloseTo(Instant.now(), within(5, ChronoUnit.SECONDS));
+        assertThat(result.id()).isGreaterThan(0L);
+        assertThat(result.text()).isEqualTo(testMessage);
+        assertThat(result.createdBy()).isEqualTo(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1").getName());
+        assertThat(result.createdDate()).isCloseTo(Instant.now(), within(5, ChronoUnit.SECONDS));
 
         var event = captureExamLiveEventForId(exam1.getId(), true);
         assertThat(event).isEqualTo(result);
@@ -914,10 +914,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
                 "/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/" + studentExam1.getUser().getLogin() + "/attendance-check", testMessage,
                 ExamAttendanceCheckEventDTO.class, HttpStatus.OK);
 
-        assertThat(result.getId()).isGreaterThan(0L);
-        assertThat(result.getText()).isEqualTo(testMessage);
-        assertThat(result.getCreatedBy()).isEqualTo(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1").getName());
-        assertThat(result.getCreatedDate()).isCloseTo(Instant.now(), within(5, ChronoUnit.SECONDS));
+        assertThat(result.id()).isGreaterThan(0L);
+        assertThat(result.text()).isEqualTo(testMessage);
+        assertThat(result.createdBy()).isEqualTo(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1").getName());
+        assertThat(result.createdDate()).isCloseTo(Instant.now(), within(5, ChronoUnit.SECONDS));
 
     }
 
