@@ -10,7 +10,6 @@ export abstract class AbstractExerciseFeedback {
 
     readonly resultSelector = '#result';
     readonly additionalFeedbackSelector = '#additional-feedback';
-    readonly complainButtonSelector = '#complain';
 
     constructor(page: Page) {
         this.page = page;
@@ -31,8 +30,9 @@ export abstract class AbstractExerciseFeedback {
     }
 
     async complain(complaint: string) {
-        await Commands.reloadUntilFound(this.page, this.complainButtonSelector);
-        await this.page.locator(this.complainButtonSelector).click();
+        const complainButton = this.page.locator('#complain');
+        await Commands.reloadUntilFound(this.page, complainButton);
+        await complainButton.click();
         await this.page.locator('#complainTextArea').fill(complaint);
         const responsePromise = this.page.waitForResponse(`${BASE_API}/complaints`);
         await this.page.locator('#submit-complaint').click();

@@ -36,6 +36,8 @@ import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
@@ -156,13 +158,13 @@ class Lti13TokenRetrieverTest {
     }
 
     @Test
-    void getToken() throws NoSuchAlgorithmException {
+    void getToken() throws NoSuchAlgorithmException, JsonProcessingException {
         JWK jwk = generateKey();
         when(oAuth2JWKSService.getJWK(any())).thenReturn(jwk);
 
         Map<String, String> map = new HashMap<>();
         map.put("access_token", "result");
-        ResponseEntity<String> responseEntity = ResponseEntity.of(Optional.of(map.toString()));
+        ResponseEntity<String> responseEntity = ResponseEntity.of(Optional.of(new ObjectMapper().writeValueAsString(map)));
         when(restTemplate.exchange(any(), eq(String.class))).thenReturn(responseEntity);
 
         String token = lti13TokenRetriever.getToken(clientRegistration, Scopes.AGS_SCORE);

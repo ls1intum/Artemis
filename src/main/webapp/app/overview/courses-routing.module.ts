@@ -6,6 +6,7 @@ import { NgModule } from '@angular/core';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { CourseExercisesComponent } from 'app/overview/course-exercises/course-exercises.component';
 import { CourseOverviewComponent } from './course-overview.component';
+import { CourseTutorialGroupsComponent } from './course-tutorial-groups/course-tutorial-groups.component';
 
 const routes: Routes = [
     {
@@ -122,11 +123,24 @@ const routes: Routes = [
             },
             {
                 path: 'tutorial-groups',
-                loadChildren: () => import('./course-tutorial-groups/course-tutorial-groups.module').then((m) => m.CourseTutorialGroupsModule),
+                component: CourseTutorialGroupsComponent,
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.tutorialGroups',
+                    hasSidebar: true,
                 },
+                canActivate: [UserRouteAccessService],
+            },
+            {
+                path: 'tutorial-groups/:tutorialGroupId',
+                component: CourseTutorialGroupsComponent,
+                data: {
+                    authorities: [Authority.USER],
+                    pageTitle: 'overview.tutorialGroups',
+                    hasSidebar: true,
+                },
+                canActivate: [UserRouteAccessService],
+                loadChildren: () => import('../overview/tutorial-group-details/course-tutorial-group-details.module').then((m) => m.CourseTutorialGroupDetailsModule),
             },
             {
                 path: 'exams',

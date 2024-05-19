@@ -10,10 +10,10 @@
                 <div
                     [ngClass]="{ 'content-height-dev': !isProduction || isTestServer }"
                     jhiTranslate="artemisApp.courseOverview.general.noDataFound"
-                    class="mt-2 text-center scrollable-content"
+                    class="mt-2 text-center scrollable-item-content"
                 ></div>
             } @else {
-                <div class="scrollable-content my-2" [ngClass]="{ 'content-height-dev': !isProduction || isTestServer }">
+                <div class="scrollable-item-content my-2" [ngClass]="{ 'content-height-dev': !isProduction || isTestServer }">
                     @if (sidebarData?.groupByCategory && sidebarData.groupedData) {
                         <jhi-sidebar-accordion
                             [searchValue]="searchValue"

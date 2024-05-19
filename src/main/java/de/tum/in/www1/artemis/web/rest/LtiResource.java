@@ -5,6 +5,10 @@ import java.util.List;
 import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,8 +17,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import com.google.gson.JsonObject;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nimbusds.jwt.SignedJWT;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -26,6 +32,8 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiDeepLinkingService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import io.swagger.annotations.ApiParam;
+import tech.jhipster.web.util.PaginationUtil;
 
 /**
  * REST controller to handle LTI13 launches.
@@ -85,20 +93,22 @@ public class LtiResource {
 
         String targetLink = ltiDeepLinkingService.performDeepLinking(idToken, clientRegistrationId, courseId, exerciseIds);
 
-        JsonObject json = new JsonObject();
-        json.addProperty("targetLinkUri", targetLink);
+        ObjectNode json = new ObjectMapper().createObjectNode();
+        json.put("targetLinkUri", targetLink);
         return ResponseEntity.ok(json.toString());
     }
 
     /**
      * GET lti platforms : Get all configured lti platforms
      *
+     * @param pageable Pageable
      * @return ResponseEntity containing a list of all lti platforms with status 200 (OK)
      */
     @GetMapping("lti-platforms")
     @EnforceAtLeastInstructor
-    public ResponseEntity<List<LtiPlatformConfiguration>> getAllConfiguredLtiPlatforms() {
-        List<LtiPlatformConfiguration> platforms = ltiPlatformConfigurationRepository.findAll();
-        return ResponseEntity.ok(platforms);
+    public ResponseEntity<List<LtiPlatformConfiguration>> getAllConfiguredLtiPlatforms(@ApiParam Pageable pageable) {
+        Page<LtiPlatformConfiguration> platformsPage = ltiPlatformConfigurationRepository.findAll(pageable);
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), platformsPage);
+        return new ResponseEntity<>(platformsPage.getContent(), headers, HttpStatus.OK);
     }
 }

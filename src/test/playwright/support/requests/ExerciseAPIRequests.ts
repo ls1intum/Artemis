@@ -21,6 +21,8 @@ import {
     BASE_API,
     COURSE_BASE,
     EXERCISE_BASE,
+    Exercise,
+    ExerciseMode,
     ExerciseType,
     MODELING_EXERCISE_BASE,
     PROGRAMMING_EXERCISE_BASE,
@@ -35,9 +37,9 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { Participation } from 'app/entities/participation/participation.model';
-import { Exercise } from 'app/entities/exercise.model';
 import { Exam } from 'app/entities/exam.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { TeamAssignmentConfig } from 'app/entities/team-assignment-config.model';
 
 export class ExerciseAPIRequests {
     private readonly page: Page;
@@ -67,7 +69,7 @@ export class ExerciseAPIRequests {
     async createProgrammingExercise(options: {
         course?: Course;
         exerciseGroup?: ExerciseGroup;
-        scaMaxPenalty?: number | null;
+        scaMaxPenalty?: number | undefined;
         recordTestwiseCoverage?: boolean;
         releaseDate?: dayjs.Dayjs;
         dueDate?: dayjs.Dayjs;
@@ -77,11 +79,13 @@ export class ExerciseAPIRequests {
         packageName?: string;
         assessmentDate?: dayjs.Dayjs;
         assessmentType?: ProgrammingExerciseAssessmentType;
+        mode?: ExerciseMode;
+        teamAssignmentConfig?: TeamAssignmentConfig;
     }): Promise<ProgrammingExercise> {
         const {
             course,
             exerciseGroup,
-            scaMaxPenalty = null,
+            scaMaxPenalty = undefined,
             recordTestwiseCoverage = false,
             releaseDate = dayjs(),
             dueDate = dayjs().add(1, 'day'),
@@ -91,6 +95,8 @@ export class ExerciseAPIRequests {
             packageName = 'de.test',
             assessmentDate = dayjs().add(2, 'days'),
             assessmentType = ProgrammingExerciseAssessmentType.AUTOMATIC,
+            mode = ExerciseMode.INDIVIDUAL,
+            teamAssignmentConfig,
         } = options;
 
         let programmingExerciseTemplate = {};
@@ -127,6 +133,8 @@ export class ExerciseAPIRequests {
 
         exercise.programmingLanguage = programmingLanguage;
         exercise.testwiseCoverageEnabled = recordTestwiseCoverage;
+        exercise.mode = mode;
+        exercise.teamAssignmentConfig = teamAssignmentConfig;
 
         const response = await this.page.request.post(`${PROGRAMMING_EXERCISE_BASE}/setup`, { data: exercise });
         return response.json();
@@ -176,10 +184,15 @@ export class ExerciseAPIRequests {
      * @param exerciseId - The ID of the text exercise for which the submission is made.
      * @param text - The text content of the submission.
      */
-    async makeTextExerciseSubmission(exerciseId: number, text: string) {
-        await this.page.request.put(`${EXERCISE_BASE}/${exerciseId}/text-submissions`, {
-            data: { submissionExerciseType: 'text', text },
-        });
+    async makeTextExerciseSubmission(exerciseId: number, text: string, createNewSubmission = true) {
+        const url = `${EXERCISE_BASE}/${exerciseId}/text-submissions`;
+        const data = { submissionExerciseType: 'text', text };
+
+        if (createNewSubmission) {
+            await this.page.request.post(url, { data });
+        } else {
+            await this.page.request.put(url, { data });
+        }
     }
 
     /**

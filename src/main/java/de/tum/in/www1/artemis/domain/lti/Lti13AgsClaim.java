@@ -6,20 +6,13 @@ import java.util.Optional;
 
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
- * A wrapper class for an LTI 1.3 Assignment and Grading Services Claim. We support the Score Publishing Service in order to transmit scores.
+ * A wrapper record for an LTI 1.3 Assignment and Grading Services Claim. We support the Score Publishing Service in order to transmit scores.
  */
-public class Lti13AgsClaim {
-
-    private List<String> scope;
-
-    private String lineItem;
+public record Lti13AgsClaim(List<String> scope, String lineItem) {
 
     /**
      * Returns an Ags-Claim representation if the provided idToken contains any.
@@ -34,53 +27,29 @@ public class Lti13AgsClaim {
         }
 
         try {
-            JsonObject agsClaimJson = new Gson().toJsonTree(idToken.getClaim(Claims.AGS_CLAIM)).getAsJsonObject();
-            Lti13AgsClaim agsClaim = new Lti13AgsClaim();
-            JsonArray scopes = agsClaimJson.get("scope").getAsJsonArray();
+            ObjectMapper objectMapper = new ObjectMapper();
+            JsonNode agsClaimJson = objectMapper.convertValue(idToken.getClaim(Claims.AGS_CLAIM), JsonNode.class);
 
-            if (scopes == null) {
-                return Optional.empty();
-            }
-
-            if (scopes.contains(new JsonPrimitive(Scopes.AGS_SCORE))) {
-                agsClaim.setScope(Collections.singletonList(Scopes.AGS_SCORE));
+            JsonNode scopes = agsClaimJson.get("scope");
+            List<String> scopeList = null;
+            if (scopes != null && scopes.isArray() && scopes.has(Scopes.AGS_SCORE)) {
+                scopeList = Collections.singletonList(Scopes.AGS_SCORE);
             }
 
             // For moodle lineItem is stored in lineitem claim, for edX it is in lineitems
-            JsonElement lineItem;
+            JsonNode lineItemNode;
             if (agsClaimJson.get("lineitem") == null) {
-                lineItem = agsClaimJson.get("lineitems");
+                lineItemNode = agsClaimJson.get("lineitems");
             }
             else {
-                lineItem = agsClaimJson.get("lineitem");
+                lineItemNode = agsClaimJson.get("lineitem");
             }
 
-            if (lineItem != null) {
-                agsClaim.setLineItem(lineItem.getAsString());
-            }
-            else {
-                agsClaim.setLineItem(null);
-            }
-            return Optional.of(agsClaim);
+            String lineItem = lineItemNode != null ? lineItemNode.asText() : null;
+            return Optional.of(new Lti13AgsClaim(scopeList, lineItem));
         }
         catch (IllegalStateException | ClassCastException ex) {
             throw new IllegalStateException("Failed to parse LTI 1.3 ags claim.", ex);
         }
-    }
-
-    public List<String> getScope() {
-        return scope;
-    }
-
-    private void setScope(List<String> scope) {
-        this.scope = scope;
-    }
-
-    public String getLineItem() {
-        return lineItem;
-    }
-
-    private void setLineItem(String lineItem) {
-        this.lineItem = lineItem;
     }
 }

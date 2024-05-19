@@ -6,9 +6,7 @@
         "pages": {
             "courseTutorialGroups": {
                 "title": "Your Tutorial Groups",
-                "noRegistrations": "You are not registered to any tutorial group in this course.",
-                "allFilter": "Show all Tutorial Groups",
-                "registeredFilter": "Show my Tutorial Groups"
+                "noRegistrations": "You are not registered to any tutorial group in this course."
             },
             "courseTutorialGroupDetail": {
                 "title": "Tutorial Group Details",

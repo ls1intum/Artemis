@@ -93,6 +93,7 @@
         "exportFailed": "Aufgabenexport fehlgeschlagen",
         "unableToImportProgrammingExercise": "Fehler beim Importieren der Programmieraufgabe.",
         "titleAlreadyExists": "Es existiert bereits eine Programmieraufgabe mit demselben Titel, bitte nutze einen anderen Titel.",
-        "shortnameAlreadyExists": "Es existiert bereits eine Programmieraufgabe mit demselben Kurznamen, bitte nutze einen anderen Kurznamen."
+        "shortnameAlreadyExists": "Es existiert bereits eine Programmieraufgabe mit demselben Kurznamen, bitte nutze einen anderen Kurznamen.",
+        "courseTitleTooLong": "Der Kurstitel ist zu lang (max. 255 Zeichen), bitte nutze einen kürzeren Kurstitel."
     }
 }

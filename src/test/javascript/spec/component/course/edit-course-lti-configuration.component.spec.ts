@@ -1,4 +1,4 @@
-import { HttpResponse } from '@angular/common/http';
+import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
@@ -20,11 +20,13 @@ import { ArtemisTestModule } from '../../test.module';
 import { regexValidator } from 'app/shared/form/shortname-validator.directive';
 import { LOGIN_PATTERN } from 'app/shared/constants/input.constants';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
+import { LtiConfigurationService } from 'app/admin/lti-configuration/lti-configuration.service';
 
 describe('Edit Course LTI Configuration Component', () => {
     let comp: EditCourseLtiConfigurationComponent;
     let fixture: ComponentFixture<EditCourseLtiConfigurationComponent>;
     let courseService: CourseManagementService;
+    let ltiConfigService: { query: any };
 
     const router = new MockRouter();
 
@@ -41,6 +43,17 @@ describe('Edit Course LTI Configuration Component', () => {
     } as Course;
 
     beforeEach(() => {
+        ltiConfigService = {
+            query: jest.fn().mockReturnValue(
+                of(
+                    new HttpResponse({
+                        body: [],
+                        headers: new HttpHeaders({ 'X-Total-Count': '0' }),
+                    }),
+                ),
+            ),
+        };
+
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, NgbNavModule, MockModule(ReactiveFormsModule)],
             declarations: [
@@ -63,6 +76,7 @@ describe('Edit Course LTI Configuration Component', () => {
                     },
                     {},
                 ),
+                { provide: LtiConfigurationService, useValue: ltiConfigService },
             ],
         })
             .compileComponents()

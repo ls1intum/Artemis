@@ -27,7 +27,9 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.google.gson.JsonObject;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -125,7 +127,8 @@ public class Lti13Service {
             throw new BadRequestAlertException("LTI is not configured for this course", "LTI", "ltiNotConfigured");
         }
 
-        Optional<String> optionalUsername = artemisAuthenticationProvider.getUsernameForEmail(ltiIdToken.getEmail());
+        Optional<String> optionalUsername = artemisAuthenticationProvider.getUsernameForEmail(ltiIdToken.getEmail())
+                .or(() -> userRepository.findOneByEmailIgnoreCase(ltiIdToken.getEmail()).map(User::getLogin));
 
         if (!onlineCourseConfiguration.isRequireExistingUser() && optionalUsername.isEmpty()) {
             SecurityContextHolder.getContext().setAuthentication(ltiService.createNewUserFromLaunchRequest(ltiIdToken.getEmail(),
@@ -172,7 +175,7 @@ public class Lti13Service {
 
     private Lti13LaunchRequest launchRequestFrom(OidcIdToken ltiIdToken, String clientRegistrationId) {
         try {
-            return new Lti13LaunchRequest(ltiIdToken, clientRegistrationId);
+            return Lti13LaunchRequest.from(ltiIdToken, clientRegistrationId);
         }
         catch (IllegalArgumentException ex) {
             throw new IllegalArgumentException("Could not create LTI 1.3 launch request with provided idToken: " + ex.getMessage());
@@ -232,16 +235,16 @@ public class Lti13Service {
             return;
         }
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.valueOf("application/vnd.ims.lis.v1.score+json"));
-        headers.setBearerAuth(token);
-        String body = getScoreBody(launch.getSub(), comment, score);
-        HttpEntity<String> httpRequest = new HttpEntity<>(body, headers);
         try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.valueOf("application/vnd.ims.lis.v1.score+json"));
+            headers.setBearerAuth(token);
+            String body = getScoreBody(launch.getSub(), comment, score);
+            HttpEntity<String> httpRequest = new HttpEntity<>(body, headers);
             restTemplate.postForEntity(scoreLineItemUrl, httpRequest, Object.class);
             log.info("Submitted score for {} to client {}", launch.getUser().getLogin(), clientRegistration.getClientId());
         }
-        catch (HttpClientErrorException e) {
+        catch (HttpClientErrorException | JsonProcessingException e) {
             String message = "Could not submit score for " + launch.getUser().getLogin() + " to client " + clientRegistration.getClientId() + ": " + e.getMessage();
             log.error(message);
         }
@@ -259,16 +262,17 @@ public class Lti13Service {
         return builder.insert(index, "/scores").toString(); // Adds "/scores" before the "?" in case there are query parameters
     }
 
-    private String getScoreBody(String userId, String comment, Double score) {
-        JsonObject requestBody = new JsonObject();
-        requestBody.addProperty("userId", userId);
-        requestBody.addProperty("timestamp", (new DateTime()).toString());
-        requestBody.addProperty("activityProgress", "Submitted");
-        requestBody.addProperty("gradingProgress", "FullyGraded");
-        requestBody.addProperty("comment", comment);
-        requestBody.addProperty("scoreGiven", score);
-        requestBody.addProperty("scoreMaximum", 100D);
-        return requestBody.toString();
+    private String getScoreBody(String userId, String comment, Double score) throws JsonProcessingException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectNode requestBody = objectMapper.createObjectNode();
+        requestBody.put("userId", userId);
+        requestBody.put("timestamp", new DateTime().toString());
+        requestBody.put("activityProgress", "Submitted");
+        requestBody.put("gradingProgress", "FullyGraded");
+        requestBody.put("comment", comment);
+        requestBody.put("scoreGiven", score);
+        requestBody.put("scoreMaximum", 100D);
+        return new ObjectMapper().writeValueAsString(requestBody);
     }
 
     /**
@@ -308,21 +312,21 @@ public class Lti13Service {
     }
 
     private void createOrUpdateResourceLaunch(Lti13LaunchRequest launchRequest, User user, Exercise exercise) {
-        Optional<LtiResourceLaunch> launchOpt = launchRepository.findByIssAndSubAndDeploymentIdAndResourceLinkId(launchRequest.getIss(), launchRequest.getSub(),
-                launchRequest.getDeploymentId(), launchRequest.getResourceLinkId());
+        Optional<LtiResourceLaunch> launchOpt = launchRepository.findByIssAndSubAndDeploymentIdAndResourceLinkId(launchRequest.iss(), launchRequest.sub(),
+                launchRequest.deploymentId(), launchRequest.resourceLinkId());
 
         LtiResourceLaunch launch = launchOpt.orElse(LtiResourceLaunch.from(launchRequest));
 
-        Lti13AgsClaim agsClaim = launchRequest.getAgsClaim();
+        Lti13AgsClaim agsClaim = launchRequest.agsClaim();
         // we do support LTI 1.3 Assigment and Grading Services SCORE publish service
         if (agsClaim != null) {
-            launch.setScoreLineItemUrl(agsClaim.getLineItem());
+            launch.setScoreLineItemUrl(agsClaim.lineItem());
         }
 
         launch.setExercise(exercise);
         launch.setUser(user);
 
-        Optional<LtiPlatformConfiguration> ltiPlatformConfiguration = ltiPlatformConfigurationRepository.findByRegistrationId(launchRequest.getClientRegistrationId());
+        Optional<LtiPlatformConfiguration> ltiPlatformConfiguration = ltiPlatformConfigurationRepository.findByRegistrationId(launchRequest.clientRegistrationId());
         ltiPlatformConfiguration.ifPresent(launch::setLtiPlatformConfiguration);
 
         launchRepository.save(launch);

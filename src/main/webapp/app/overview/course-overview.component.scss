@@ -221,7 +221,7 @@ jhi-secured-image {
 .btn-sidebar-collapse {
     background-color: var(--link-item-bg);
     &:hover {
-        background-color: var(--gray-200);
+        background-color: var(--sidebar-card-selected-bg);
         color: var(--primary);
     }
     &:focus {

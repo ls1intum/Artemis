@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { LtiPlatformConfiguration } from 'app/admin/lti-configuration/lti-configuration.model';
+import { createRequestOption } from 'app/shared/util/request.util';
 
 @Injectable({ providedIn: 'root' })
 export class LtiConfigurationService {
@@ -10,8 +11,12 @@ export class LtiConfigurationService {
     /**
      * Sends a GET request to retrieve all lti platform configurations
      */
-    findAll(): Observable<LtiPlatformConfiguration[]> {
-        return this.http.get<LtiPlatformConfiguration[]>('api/lti-platforms');
+    query(req?: any): Observable<HttpResponse<LtiPlatformConfiguration[]>> {
+        const params: HttpParams = createRequestOption(req);
+        return this.http.get<LtiPlatformConfiguration[]>('api/lti-platforms', {
+            params,
+            observe: 'response',
+        });
     }
 
     /**

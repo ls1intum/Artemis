@@ -7,9 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.course.CourseFactory;
 import de.tum.in.www1.artemis.domain.Course;
@@ -33,8 +32,8 @@ class OAuth2JWKSIntegrationTest extends AbstractSpringIntegrationIndependentTest
     void getKeysetIsPublicAndReturnsJson() throws Exception {
 
         String keyset = request.get("/.well-known/jwks.json", HttpStatus.OK, String.class);
-        JsonObject jsonKeyset = JsonParser.parseString(keyset).getAsJsonObject();
-        assertThat(jsonKeyset).isNotNull();
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode jsonKeyset = objectMapper.readTree(keyset);
         assertThat(jsonKeyset.get("keys")).isNotNull();
     }
 
@@ -57,9 +56,11 @@ class OAuth2JWKSIntegrationTest extends AbstractSpringIntegrationIndependentTest
         oAuth2JWKSService.updateKey(TEST_PREFIX + "registrationId");
 
         String keyset = request.get("/.well-known/jwks.json", HttpStatus.OK, String.class);
-        JsonObject jsonKeyset = JsonParser.parseString(keyset).getAsJsonObject();
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode jsonKeyset = objectMapper.readTree(keyset);
+
         assertThat(jsonKeyset).isNotNull();
-        JsonElement keys = jsonKeyset.get("keys");
+        JsonNode keys = jsonKeyset.get("keys");
         assertThat(keys).isNotNull();
     }
 }

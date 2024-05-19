@@ -1,13 +1,12 @@
 $search-height: 97px;
-$header-height: 68px;
 
-.scrollable-content {
-    height: calc(100vh - var(--sidebar-footer-height-prod) - $header-height - $search-height);
+.scrollable-item-content {
+    height: calc(100vh - var(--sidebar-footer-height-prod) - var(--header-height) - $search-height);
     &.content-height-dev {
-        height: calc(100vh - var(--sidebar-footer-height-dev) - $header-height - $search-height);
+        height: calc(100vh - var(--sidebar-footer-height-dev) - var(--header-height) - $search-height);
     }
     @media (max-width: 768px) {
-        height: calc(100vh - var(--sidebar-footer-height-prod) - $header-height - $search-height) !important;
+        height: calc(100vh - var(--sidebar-footer-height-prod) - var(--header-height) - $search-height) !important;
     }
 
     overflow-y: auto;
@@ -15,12 +14,12 @@ $header-height: 68px;
 
 .sidebar {
     background-color: var(--module-bg);
-    height: calc(100vh - var(--sidebar-footer-height-prod) - $header-height);
+    height: calc(100vh - var(--sidebar-footer-height-prod) - var(--header-height));
     &.sidebar-height-dev {
-        height: calc(100vh - var(--sidebar-footer-height-dev) - $header-height);
+        height: calc(100vh - var(--sidebar-footer-height-dev) - var(--header-height));
     }
     @media (max-width: 768px) {
-        height: calc(100vh - var(--sidebar-footer-height-prod) - $header-height) !important;
+        height: calc(100vh - var(--sidebar-footer-height-prod) - var(--header-height)) !important;
     }
 }
 

@@ -54,6 +54,8 @@ public class AdminCourseResource {
 
     private static final Logger log = LoggerFactory.getLogger(AdminCourseResource.class);
 
+    private static final int MAX_TITLE_LENGTH = 255;
+
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
@@ -116,6 +118,10 @@ public class AdminCourseResource {
         log.debug("REST request to save Course : {}", course);
         if (course.getId() != null) {
             throw new BadRequestAlertException("A new course cannot already have an ID", Course.ENTITY_NAME, "idExists");
+        }
+
+        if (course.getTitle().length() > MAX_TITLE_LENGTH) {
+            throw new BadRequestAlertException("The course title is too long", Course.ENTITY_NAME, "courseTitleTooLong");
         }
 
         course.validateShortName();

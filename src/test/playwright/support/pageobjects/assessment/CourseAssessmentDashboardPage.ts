@@ -17,10 +17,11 @@ export class CourseAssessmentDashboardPage {
         await this.page.locator('#show-complaint').click();
     }
 
-    async clickExerciseDashboardButton() {
+    async clickExerciseDashboardButton(exerciseIndex: number = 0) {
         // Sometimes the page does not load properly, so we reload it if the button is not found
-        await Commands.reloadUntilFound(this.page, '#open-exercise-dashboard');
-        await this.page.locator('#open-exercise-dashboard').click();
+        const openExerciseDashboardLocator = this.page.locator('#open-exercise-dashboard').nth(exerciseIndex);
+        await Commands.reloadUntilFound(this.page, openExerciseDashboardLocator);
+        await openExerciseDashboardLocator.click();
     }
 
     async clickEvaluateQuizzes() {

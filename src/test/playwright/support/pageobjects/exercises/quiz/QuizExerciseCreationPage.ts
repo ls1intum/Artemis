@@ -1,7 +1,7 @@
-import { Page } from '@playwright/test';
-import { clearTextField, enterDate } from '../../../utils';
+import { Page, expect } from '@playwright/test';
+import { clearTextField, drag, enterDate } from '../../../utils';
 import { Dayjs } from 'dayjs';
-import { BASE_API, QUIZ_EXERCISE_BASE } from '../../../constants';
+import { QUIZ_EXERCISE_BASE } from '../../../constants';
 import { Fixtures } from '../../../../fixtures/fixtures';
 
 export class QuizExerciseCreationPage {
@@ -46,17 +46,21 @@ export class QuizExerciseCreationPage {
         await this.page.locator('#drag-and-drop-question-title').fill(title);
 
         await this.uploadDragAndDropBackground();
-        await this.page.mouse.move(50, 50);
+        const element = this.page.locator('.background-area');
+        const boundingBox = await element?.boundingBox();
+
+        expect(boundingBox, { message: 'Could not get bounding box of element' }).not.toBeNull();
+        await this.page.mouse.move(boundingBox.x + 800, boundingBox.y + 10);
         await this.page.mouse.down();
-        await this.page.mouse.move(500, 300);
+        await this.page.mouse.move(boundingBox.x + 1000, boundingBox.y + 150);
         await this.page.mouse.up();
 
         await this.createDragAndDropItem('Rick Astley');
         const dragLocator = this.page.locator('#drag-item-0');
         const dropLocator = this.page.locator('#drop-location');
-        await dragLocator.dragTo(dropLocator);
+        await drag(this.page, dragLocator, dropLocator);
 
-        const fileContent = await Fixtures.get('fixtures/exercise/quiz/drag_and_drop/question.txt');
+        const fileContent = await Fixtures.get('exercise/quiz/drag_and_drop/question.txt');
         const textInputField = this.page.locator('.ace_text-input');
         await clearTextField(textInputField);
         await textInputField.fill(fileContent!);
@@ -71,11 +75,9 @@ export class QuizExerciseCreationPage {
 
     async uploadDragAndDropBackground() {
         const fileChooserPromise = this.page.waitForEvent('filechooser');
-        const fileUploadPromise = this.page.waitForResponse(`${BASE_API}/fileUpload*`);
-        await this.page.locator('#background-image-input-form').click();
+        await this.page.locator('#background-file-input-button').click();
         const fileChooser = await fileChooserPromise;
-        await fileChooser.setFiles('exercise/quiz/drag_and_drop/background.jpg');
-        await fileUploadPromise;
+        await fileChooser.setFiles('./fixtures/exercise/quiz/drag_and_drop/background.jpg');
     }
 
     async saveQuiz() {

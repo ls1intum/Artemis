@@ -1,24 +1,23 @@
-<jhi-post-header
-    [previewMode]="previewMode"
-    [readOnlyMode]="readOnlyMode"
-    [posting]="posting"
-    [isCourseMessagesPage]="isCourseMessagesPage"
-    [isCommunicationPage]="isCommunicationPage"
-    [hasChannelModerationRights]="hasChannelModerationRights"
-    (isModalOpen)="displayInlineInput = true"
-    [lastReadDate]="lastReadDate"
-/>
+<div class="d-flex align-items-center">
+    <jhi-post-header
+        [previewMode]="previewMode"
+        [readOnlyMode]="readOnlyMode"
+        [posting]="posting"
+        [isCourseMessagesPage]="isCourseMessagesPage"
+        [isCommunicationPage]="isCommunicationPage"
+        [hasChannelModerationRights]="hasChannelModerationRights"
+        (isModalOpen)="displayInlineInput = true"
+        [lastReadDate]="lastReadDate"
+    />
+    <div class="resolution-indicator ps-3">
+        @if (posting.resolved) {
+            <fa-icon [icon]="faCheckSquare" iconSize="xs" class="col-auto pe-0 resolved" [ngbTooltip]="'artemisApp.metis.post.postMarkedAsResolvedTooltip' | artemisTranslate" />
+        }
+    </div>
+</div>
 <div class="row align-items-center">
     <div class="col">
         <div class="mb-1">
-            @if (posting.resolved) {
-                <fa-icon
-                    [icon]="faCheckSquare"
-                    iconSize="xs"
-                    class="col-auto pe-0 resolved"
-                    [ngbTooltip]="'artemisApp.metis.post.postMarkedAsResolvedTooltip' | artemisTranslate"
-                />
-            }
             @if (showAnnouncementIcon) {
                 <fa-icon
                     [icon]="faBullhorn"

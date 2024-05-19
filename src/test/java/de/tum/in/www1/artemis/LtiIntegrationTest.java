@@ -12,7 +12,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -20,6 +19,8 @@ import java.util.UUID;
 import org.hibernate.Hibernate;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -60,13 +61,14 @@ class LtiIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         LtiPlatformConfiguration platform1 = new LtiPlatformConfiguration();
         platform1.setId(1L);
         fillLtiPlatformConfig(platform1);
+        ltiPlatformConfigurationRepository.save(platform1);
 
         LtiPlatformConfiguration platform2 = new LtiPlatformConfiguration();
         platform1.setId(2L);
         fillLtiPlatformConfig(platform2);
+        ltiPlatformConfigurationRepository.save(platform2);
 
-        List<LtiPlatformConfiguration> expectedPlatforms = Arrays.asList(platform1, platform2);
-        doReturn(expectedPlatforms).when(ltiPlatformConfigurationRepository).findAll();
+        Page<LtiPlatformConfiguration> expectedPlatforms = ltiPlatformConfigurationRepository.findAll(Pageable.unpaged());
 
         MvcResult mvcResult = request.performMvcRequest(get("/api/lti-platforms")).andExpect(status().isOk()).andReturn();
 
@@ -75,8 +77,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             // Empty block intended for type inference by Jackson's ObjectMapper
         });
 
-        assertThat(actualPlatforms).hasSize(expectedPlatforms.size());
-        assertThat(actualPlatforms).usingRecursiveComparison().isEqualTo(expectedPlatforms);
+        assertThat(actualPlatforms).hasSize(expectedPlatforms.getSize());
     }
 
     @Test

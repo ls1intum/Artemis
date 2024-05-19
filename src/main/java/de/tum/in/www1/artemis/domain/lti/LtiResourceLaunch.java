@@ -50,10 +50,10 @@ public class LtiResourceLaunch extends DomainObject {
      */
     public static LtiResourceLaunch from(Lti13LaunchRequest launchRequest) {
         LtiResourceLaunch launch = new LtiResourceLaunch();
-        launch.iss = launchRequest.getIss();
-        launch.sub = launchRequest.getSub();
-        launch.deploymentId = launchRequest.getDeploymentId();
-        launch.resourceLinkId = launchRequest.getResourceLinkId();
+        launch.iss = launchRequest.iss();
+        launch.sub = launchRequest.sub();
+        launch.deploymentId = launchRequest.deploymentId();
+        launch.resourceLinkId = launchRequest.resourceLinkId();
 
         return launch;
     }

@@ -6,7 +6,7 @@
     >
         <div id="test-accordion-item-header" class="control-label d-flex align-items-center justify-content-between py-2 bg-module" (click)="toggleGroupCategoryCollapse(groupKey)">
             <div class="my-2">
-                {{ 'artemisApp.courseOverview.exerciseList.' + groupKey | artemisTranslate | titlecase }}
+                {{ 'artemisApp.courseOverview.sidebar.' + groupKey | artemisTranslate | titlecase }}
                 ({{ (groupedData[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue)?.length }})
             </div>
             <div class="icon-container pe-3">

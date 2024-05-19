@@ -36,10 +36,6 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                     path: 'courses/:courseId/competencies/:competencyId',
                     loadChildren: () => import('./overview/course-competencies/course-competencies-details.module').then((m) => m.ArtemisCourseCompetenciesDetailsModule),
                 },
-                {
-                    path: 'courses/:courseId/tutorial-groups/:tutorialGroupId',
-                    loadChildren: () => import('./overview/tutorial-group-details/course-tutorial-group-details.module').then((m) => m.CourseTutorialGroupDetailsModule),
-                },
                 // ===== TEAM ====
                 {
                     path: 'course-management/:courseId/exercises/:exerciseId/teams',

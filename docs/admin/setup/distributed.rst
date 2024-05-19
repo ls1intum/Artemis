@@ -43,6 +43,8 @@ have to be synchronized:
 
 Each of these three aspects is synchronized using a different solution
 
+.. _Database Cache:
+
 Database cache
 ^^^^^^^^^^^^^^
 Artemis uses a cache provider that supports distributed caching: Hazelcast_.
@@ -280,6 +282,8 @@ This enables the registry in nginx
 
 This will apply the config changes and the registry will be reachable.
 
+
+.. _WebSockets:
 
 WebSockets
 ^^^^^^^^^^
@@ -652,3 +656,116 @@ different ports and a unique instance ID for each instance.
 #. Start the remaining instances.
 
 You should now be able to see all instances in the registry interface at ``http://localhost:8761``.
+
+.. _Running multiple instances locally with Docker:
+
+Running multiple instances locally with Docker
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+You can also run multiple instances of Artemis locally using Docker. This will start 3 Artemis instances, each running
+on a its own container. A load balancer (nginx) will be used to distribute the requests to the different instances. The
+load balancer will be running in a separate container and will be accessible on ports 80/443 of the host system. The
+instances will be registered in the registry service running on a separate container. The instances will use the registry
+service to discover each other and form a Hazelcast cluster. Further details can be found in :ref:`Database Cache`. The
+instances will also use a ActiveMQ Artemis broker to synchronize WebSocket messages. Further details can be found in
+:ref:`WebSockets`. In summary, the setup will look like this:
+
+* 3 Artemis instances:
+
+    * artemis-app-node-1: using following spring profile: ``prod,localvc,localci,core,scheduling,docker``
+    * artemis-app-node-2: using following profile: ``prod,localvc,localci,buildagent,core,docker``
+    * artemis-app-node-3: using following profile: ``prod,buildagent``
+* A MySQL database addressable on port 3306 of the host system
+* A Load balancer (nginx) addressable on ports 80/443 of the host system: ``http(s)://localhost``
+* A Registry service addressable on port 8761 of the host system: ``http://localhost:8761``
+* An ActiveMQ broker
+
+
+   .. figure:: distributed/multi-node-setup.drawio.png
+      :align: center
+
+
+
+.. note::
+
+    - You don't have to start the client manually. The client files are served by the Artemis instances and can be
+      accessed through the load balancer on ``http(s)://localhost``.
+
+    - You may run into the following error when starting the containers
+      ``No member group is available to assign partition ownership...``. This issue should resolve itself after a few
+      minutes. Otherwise, you can first start the following containers:
+      ``docker compose -f docker/test-server-multi-node-mysql-localci.yml up mysql jhipster-registry activemq-broker artemis-app-node-1``.
+      After these containers are up and running, you can start the remaining containers:
+      ``docker compose -f docker/test-server-multi-node-mysql-localci.yml up artemis-app-node-2 artemis-app-node-3 nginx``.
+
+
+Linux setup
+"""""""""""
+
+#. When running the Artemis container on a Unix system, you will have to give the user running in the container
+   permission to access the Docker socket by adding them to the docker group. You can find the group ID of the docker
+   group by running ``getent group docker | cut -d: -f3``. Afterwards, create a new file ``docker/.env`` with the
+   following content:
+
+    .. code:: bash
+
+        DOCKER_GROUP_ID=<REPLACE_WITH_DOCKER_GROUP_ID_OF_YOUR_SYSTEM>
+
+#. The docker compose setup which we will use will mount some local directories
+   (namely the ones under docker/.docker-data) into the containers. To ensure that the user running in the container has
+   the necessary permissions to these directories, you will have to change the owner of these directories to the
+   user running in the container (User with ID 1337). You can do this by running the following command:
+
+    .. code:: bash
+
+        sudo chown -R 1337:1337 docker/.docker-data
+
+    .. note::
+
+        - If you don't want to change the owner of the directories, you can create other directories with the necessary
+          permissions and adjust the paths in the docker-compose file accordingly.
+        - You could also use docker volumes instead of mounting local directories. You will have to adjust the docker-compose
+          file accordingly (`Docker docs <https://docs.docker.com/storage/volumes/#use-a-volume-with-docker-compose/>`_).
+          However, this would make it more difficult to access the files on the host system.
+
+#. Start the docker containers by running the following command:
+
+    .. code:: bash
+
+        docker compose -f docker/test-server-multi-node-mysql-localci.yml up
+
+#. You can now access artemis on ``http(s)://localhost`` and the registry on ``http://localhost:8761``.
+
+Windows setup
+"""""""""""""
+
+#. When running the Artemis container on a Windows system, you will have to change the value for the Docker connection
+   URI. You need to change the value of the environment variable ``ARTEMIS_CONTINUOUSINTEGRATION_DOCKERCONNECTIONURI``
+   in the file ``docker/artemis/config/prod-multinode.env`` to ``tcp://host.docker.internal:2375``.
+
+    .. note::
+
+        - Make sure that option "Expose daemon on tcp://localhost:2375 without TLS" is enabled. This can be found under
+          Settings > General in Docker Desktop.
+
+#. Start the docker containers by running the following command:
+
+    .. code:: bash
+
+        docker compose -f docker/test-server-multi-node-mysql-localci.yml up
+
+#. You can now access artemis on ``http(s)://localhost`` and the registry on ``http://localhost:8761``.
+
+MacOS setup
+"""""""""""
+
+#. Make sure to enable "Allow the default Docker socket to be used (requires password)" in the Docker Desktop settings.
+   This can be found under Settings > Advanced in Docker Desktop.
+
+#. Start the docker containers by running the following command:
+
+    .. code:: bash
+
+        docker compose -f docker/test-server-multi-node-mysql-localci.yml up
+
+#. You can now access artemis on ``http(s)://localhost`` and the registry on ``http://localhost:8761``.

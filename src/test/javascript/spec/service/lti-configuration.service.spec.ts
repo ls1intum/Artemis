@@ -2,6 +2,8 @@ import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { LtiPlatformConfiguration } from 'app/admin/lti-configuration/lti-configuration.model';
 import { LtiConfigurationService } from 'app/admin/lti-configuration/lti-configuration.service';
+import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
+import { HttpErrorResponse } from '@angular/common/http';
 
 describe('LtiConfigurationService', () => {
     let service: LtiConfigurationService;
@@ -56,12 +58,18 @@ describe('LtiConfigurationService', () => {
             },
         ];
 
-        service.findAll().subscribe((platforms) => {
-            expect(platforms.length).toHaveLength(2);
-            expect(platforms).toEqual(dummyLtiPlatforms);
-        });
+        service
+            .query({
+                page: 0,
+                size: ITEMS_PER_PAGE,
+                sort: ['id', 'desc'],
+            })
+            .subscribe((platforms) => {
+                expect(platforms.body?.length).toHaveLength(2);
+                expect(platforms).toEqual(dummyLtiPlatforms);
+            });
 
-        const req = httpMock.expectOne('api/lti-platforms');
+        const req = httpMock.expectOne('api/lti-platforms?page=0&size=50&sort=id&sort=desc');
         expect(req.request.method).toBe('GET');
         req.flush(dummyLtiPlatforms);
     });
@@ -116,5 +124,32 @@ describe('LtiConfigurationService', () => {
         const req = httpMock.expectOne(`api/admin/lti-platform`);
         expect(req.request.method).toBe('POST');
         req.flush(dummyResponse);
+    });
+
+    it('should query with different sorting parameters', () => {
+        service.query({ sort: ['name,asc', 'id,desc'] }).subscribe();
+        const req = httpMock.expectOne('api/lti-platforms?sort=name,asc&sort=id,desc');
+        expect(req.request.method).toBe('GET');
+        req.flush([]);
+    });
+
+    it('should handle errors when querying LTI platforms', () => {
+        const errorResponse = new HttpErrorResponse({
+            status: 404,
+            statusText: 'Not Found',
+            error: { message: 'No data found' },
+        });
+
+        service.query({ page: 0, size: ITEMS_PER_PAGE, sort: ['id', 'desc'] }).subscribe({
+            next: () => {},
+            error: (error) => {
+                expect(error.status).toBe(404);
+                expect(error.message).toContain('No data found');
+            },
+        });
+
+        const req = httpMock.expectOne('api/lti-platforms?page=0&size=50&sort=id&sort=desc');
+        expect(req.request.method).toBe('GET');
+        req.flush(null, errorResponse);
     });
 });

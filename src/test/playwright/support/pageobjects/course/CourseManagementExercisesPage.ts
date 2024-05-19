@@ -136,4 +136,10 @@ export class CourseManagementExercisesPage {
     getModelingExerciseMaxPoints(exerciseID: number) {
         return this.page.locator(`#exercise-card-${exerciseID}`).locator(`#modeling-exercise-${exerciseID}-maxPoints`);
     }
+
+    async openExerciseTeams(exerciseId: number) {
+        const exerciseElement = this.getExercise(exerciseId);
+        const teamsButton = exerciseElement.locator('.btn', { hasText: 'Teams' });
+        await teamsButton.click();
+    }
 }

@@ -2,24 +2,24 @@ package de.tum.in.www1.artemis.service.connectors.localci.buildagent;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -53,6 +53,10 @@ public class LocalCIDockerService {
 
     private final HazelcastInstance hazelcastInstance;
 
+    private final BuildJobContainerService buildJobContainerService;
+
+    private final TaskScheduler taskScheduler;
+
     private boolean isFirstCleanup = true;
 
     @Value("${artemis.continuous-integration.image-cleanup.enabled:false}")
@@ -77,16 +81,18 @@ public class LocalCIDockerService {
     @Value("${artemis.continuous-integration.image-architecture:amd64}")
     private String imageArchitecture;
 
-    public LocalCIDockerService(DockerClient dockerClient, HazelcastInstance hazelcastInstance) {
+    public LocalCIDockerService(DockerClient dockerClient, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, BuildJobContainerService buildJobContainerService,
+            @Qualifier("taskScheduler") TaskScheduler taskScheduler) {
         this.dockerClient = dockerClient;
         this.hazelcastInstance = hazelcastInstance;
+        this.buildJobContainerService = buildJobContainerService;
+        this.taskScheduler = taskScheduler;
     }
 
     @EventListener(ApplicationReadyEvent.class)
     public void applicationReady() {
-        // Schedule the cleanup of dangling build containers once 10 seconds after the application has started and then every containerCleanupScheduleHour hours
-        ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
-        scheduledExecutorService.scheduleAtFixedRate(this::cleanUpContainers, 10, containerCleanupScheduleMinutes * 60L, TimeUnit.SECONDS);
+        // Schedule the cleanup of dangling build containers once 10 seconds after the application has started and then every containerCleanupScheduleMinutes minutes
+        taskScheduler.scheduleAtFixedRate(this::cleanUpContainers, Instant.now().plusSeconds(10), Duration.ofMinutes(containerCleanupScheduleMinutes));
     }
 
     /**
@@ -109,7 +115,7 @@ public class LocalCIDockerService {
      */
     public void cleanUpContainers() {
         List<Container> danglingBuildContainers;
-        log.debug("Start cleanup dangling build containers");
+        log.info("Start cleanup dangling build containers");
         if (isFirstCleanup) {
             // Cleanup all dangling build containers after the application has started
             try {
@@ -135,9 +141,9 @@ public class LocalCIDockerService {
 
         if (!danglingBuildContainers.isEmpty()) {
             log.info("Found {} dangling build containers", danglingBuildContainers.size());
-            danglingBuildContainers.forEach(container -> dockerClient.removeContainerCmd(container.getId()).withForce(true).exec());
+            danglingBuildContainers.forEach(container -> buildJobContainerService.stopUnresponsiveContainer(container.getId()));
         }
-        log.debug("Cleanup dangling build containers done");
+        log.info("Cleanup dangling build containers done");
     }
 
     /**

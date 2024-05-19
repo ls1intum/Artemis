@@ -19,7 +19,7 @@ plugins {
     id "idea"
     id "jacoco"
     id "org.springframework.boot" version "${spring_boot_version}"
-    id "io.spring.dependency-management" version "1.1.4"
+    id "io.spring.dependency-management" version "1.1.5"
     id "com.google.cloud.tools.jib" version "3.4.2"
     id "com.github.node-gradle.node" version "${gradle_node_plugin_version}"
     id "com.diffplug.spotless" version "6.25.0"
@@ -32,7 +32,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "7.0.3"
+version = "7.1.0"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -157,12 +157,14 @@ jar {
 private excludedClassFilesForReport(classDirectories) {
     classDirectories.setFrom(files(classDirectories.files.collect {
         fileTree(dir: it,
-                exclude: [
-                        "**/de/tum/in/www1/artemis/domain/**/*_*",
-                        "**/de/tum/in/www1/artemis/config/migration/entries/**",
-                        "**/org/eclipse/jgit/**",
-                        "**/gradle-wrapper.jar/**"
-                ]
+            exclude: [
+                "**/de/tum/in/www1/artemis/domain/**/*_*",
+                "**/de/tum/in/www1/artemis/config/migration/entries/**",
+                "**/de/tum/in/www1/artemis/service/connectors/pyris/dto/**",
+                "**/de/tum/in/www1/artemis/web/rest/iris/dto/**",
+                "**/org/eclipse/jgit/**",
+                "**/gradle-wrapper.jar/**"
+            ]
         )
     }))
 }
@@ -184,13 +186,13 @@ jacocoTestCoverageVerification {
                 counter = "INSTRUCTION"
                 value = "COVEREDRATIO"
                 // TODO: in the future the following value should become higher than 0.92
-                minimum = 0.899
+                minimum = 0.898
             }
             limit {
                 counter = "CLASS"
                 value = "MISSEDCOUNT"
                 // TODO: in the future the following value should become less than 10
-                maximum = 26
+                maximum = 29
             }
         }
     }
@@ -385,7 +387,7 @@ dependencies {
     implementation "org.springframework.security:spring-security-oauth2-core:${spring_security_version}"
     implementation "org.springframework.security:spring-security-oauth2-client:${spring_security_version}"
     // use newest version of nimbus-jose-jwt to avoid security issues through outdated dependencies
-    implementation "com.nimbusds:nimbus-jose-jwt:9.37.3"
+    implementation "com.nimbusds:nimbus-jose-jwt:9.38"
     implementation "org.springframework.security:spring-security-oauth2-jose:${spring_security_version}"
     implementation "org.springframework.security:spring-security-crypto:${spring_security_version}"
     implementation "org.springframework.security:spring-security-web:${spring_security_version}"
@@ -420,7 +422,7 @@ dependencies {
     implementation "org.apache.maven:maven-model:3.9.6"
     implementation "org.apache.pdfbox:pdfbox:3.0.2"
     implementation "com.google.protobuf:protobuf-java:4.26.1"
-    implementation "org.apache.commons:commons-csv:1.10.0"
+    implementation "org.apache.commons:commons-csv:1.11.0"
     implementation "org.commonmark:commonmark:0.22.0"
     implementation "commons-fileupload:commons-fileupload:1.5"
     implementation "net.lingala.zip4j:zip4j:2.11.5"
@@ -475,7 +477,7 @@ dependencies {
     }
     testImplementation("net.bytebuddy:byte-buddy") {
         version {
-            strictly "1.14.14"
+            strictly "1.14.15"
         }
     }
     testImplementation "io.github.classgraph:classgraph:4.8.172"

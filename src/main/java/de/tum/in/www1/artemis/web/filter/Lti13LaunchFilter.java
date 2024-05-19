@@ -23,7 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.config.lti.CustomLti13Configurer;
 import de.tum.in.www1.artemis.domain.lti.Claims;
-import de.tum.in.www1.artemis.domain.lti.LtiAuthenticationResponseDTO;
+import de.tum.in.www1.artemis.domain.lti.LtiAuthenticationResponse;
 import de.tum.in.www1.artemis.exception.LtiEmailAlreadyInUseException;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.lti.Lti13Service;
@@ -119,7 +119,7 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
         if (SecurityUtils.isAuthenticated()) {
             lti13Service.buildLtiResponse(uriBuilder, response);
         }
-        LtiAuthenticationResponseDTO jsonResponse = new LtiAuthenticationResponseDTO(uriBuilder.build().toUriString(), ltiIdToken.getTokenValue(), clientRegistrationId);
+        LtiAuthenticationResponse jsonResponse = new LtiAuthenticationResponse(uriBuilder.build().toUriString(), ltiIdToken.getTokenValue(), clientRegistrationId);
 
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");

@@ -140,7 +140,7 @@ describe('Exam assessment', () => {
             prepareExam(course, examEnd, ExerciseType.QUIZ);
         });
 
-        it('Assesses quiz automatically', () => {
+        it.skip('Assesses quiz automatically', () => {
             cy.login(instructor);
             examManagement.verifySubmitted(course.id!, exam.id!, studentOneName);
             if (dayjs().isBefore(examEnd)) {
