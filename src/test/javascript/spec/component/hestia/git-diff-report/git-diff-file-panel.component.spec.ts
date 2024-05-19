@@ -8,6 +8,7 @@ import { GitDiffFilePanelComponent } from 'app/exercises/programming/hestia/git-
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { NgbAccordionBody, NgbAccordionButton, NgbAccordionCollapse, NgbAccordionDirective, NgbAccordionHeader, NgbAccordionItem } from '@ng-bootstrap/ng-bootstrap';
 import { GitDiffFileComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-file.component';
+import { GitDiffFilePanelTitleComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-file-panel-title.component';
 
 describe('ProgrammingExerciseGitDiffFilePanel Component', () => {
     let comp: GitDiffFilePanelComponent;
@@ -19,6 +20,7 @@ describe('ProgrammingExerciseGitDiffFilePanel Component', () => {
             declarations: [
                 GitDiffFilePanelComponent,
                 MockPipe(ArtemisTranslatePipe),
+                MockComponent(GitDiffFilePanelTitleComponent),
                 MockComponent(GitDiffLineStatComponent),
                 MockComponent(GitDiffFileComponent),
                 MockDirective(DeleteButtonDirective),
