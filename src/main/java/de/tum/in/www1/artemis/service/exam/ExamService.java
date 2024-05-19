@@ -91,13 +91,13 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.BonusService;
 import de.tum.in.www1.artemis.service.CourseScoreCalculationService;
 import de.tum.in.www1.artemis.service.ExerciseDeletionService;
-import de.tum.in.www1.artemis.service.QuizPoolService;
 import de.tum.in.www1.artemis.service.TutorLeaderboardService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.export.CourseExamExportService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.plagiarism.PlagiarismCaseService.PlagiarismMapping;
+import de.tum.in.www1.artemis.service.quiz.QuizPoolService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.BonusExampleDTO;
 import de.tum.in.www1.artemis.web.rest.dto.BonusResultDTO;
@@ -1123,6 +1123,10 @@ public class ExamService {
             examChecklistDTO.setNumberOfExamsSubmitted(numberOfStudentExamsSubmitted);
         }
         examChecklistDTO.setNumberOfTotalParticipationsForAssessment(totalNumberOfParticipationsForAssessment);
+        boolean existsUnassessedQuizzes = submissionRepository.existsUnassessedQuizzesByExamId(exam.getId());
+        examChecklistDTO.setExistsUnassessedQuizzes(existsUnassessedQuizzes);
+        boolean existsUnsubmittedExercises = submissionRepository.existsUnsubmittedExercisesByExamId(exam.getId());
+        examChecklistDTO.setExistsUnsubmittedExercises(existsUnsubmittedExercises);
         return examChecklistDTO;
     }
 

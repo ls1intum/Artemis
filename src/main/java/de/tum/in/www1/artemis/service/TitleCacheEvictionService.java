@@ -16,8 +16,10 @@ import org.hibernate.internal.SessionFactoryImpl;
 import org.hibernate.persister.entity.EntityPersister;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -41,13 +43,31 @@ public class TitleCacheEvictionService implements PostUpdateEventListener, PostD
 
     private final CacheManager cacheManager;
 
+    private final EntityManagerFactory entityManagerFactory;
+
     public TitleCacheEvictionService(EntityManagerFactory entityManagerFactory, CacheManager cacheManager) {
         this.cacheManager = cacheManager;
+        this.entityManagerFactory = entityManagerFactory;
+    }
 
+    /**
+     * Registers Hibernate event listeners for POST_UPDATE and POST_DELETE events when the application is ready.
+     *
+     * <p>
+     * If the {@link EventListenerRegistry} is available, the listeners are appended and a debug message is logged.
+     * If the registry is null, a warning is logged indicating a possible misconfiguration.
+     */
+    @EventListener(ApplicationReadyEvent.class)
+    public void applicationReady() {
         var eventListenerRegistry = entityManagerFactory.unwrap(SessionFactoryImpl.class).getServiceRegistry().getService(EventListenerRegistry.class);
-        eventListenerRegistry.appendListeners(EventType.POST_UPDATE, this);
-        eventListenerRegistry.appendListeners(EventType.POST_DELETE, this);
-        log.debug("Registered Hibernate listeners");
+        if (eventListenerRegistry != null) {
+            eventListenerRegistry.appendListeners(EventType.POST_UPDATE, this);
+            eventListenerRegistry.appendListeners(EventType.POST_DELETE, this);
+            log.debug("Registered Hibernate listeners");
+        }
+        else {
+            log.warn("Could not register Hibernate listeners because the EventListenerRegistry is null. This is likely due to a misconfiguration of the entity manager factory.");
+        }
     }
 
     @Override

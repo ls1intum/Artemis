@@ -176,13 +176,14 @@ describe('ExamParticipationLiveEventsService', () => {
         expect(service['events']).toEqual([mockEvent]);
 
         // Expect emission
-        expect(service['allEventsSubject'].getValue()).toEqual([mockEvent]);
         const userEvents = firstValueFrom(service.observeNewEventsAsUser());
         const systemEvents = firstValueFrom(service.observeNewEventsAsSystem());
+        const allEvents = firstValueFrom(service.observeAllEvents());
 
         tick();
         await expect(userEvents).resolves.toEqual(mockEvent);
         await expect(systemEvents).resolves.toEqual(mockEvent);
+        await expect(allEvents).resolves.toEqual([mockEvent]);
 
         expect(replayEventsSpy).toHaveBeenCalledTimes(2);
     }));

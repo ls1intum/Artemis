@@ -93,8 +93,9 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @Column(name = "allow_complaints_for_automatic_assessments")
     private boolean allowComplaintsForAutomaticAssessments;
 
+    // TODO: rename in a follow up
     @Column(name = "allow_manual_feedback_requests")
-    private boolean allowManualFeedbackRequests;
+    private boolean allowFeedbackRequests;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "included_in_overall_score")
@@ -246,12 +247,12 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         return this.getStudentParticipations().stream().filter((participation) -> participation.getStudents().contains(user)).map(Participation::getInitializationDate).findFirst();
     }
 
-    public boolean getAllowManualFeedbackRequests() {
-        return allowManualFeedbackRequests;
+    public boolean getAllowFeedbackRequests() {
+        return allowFeedbackRequests;
     }
 
-    public void setAllowManualFeedbackRequests(boolean allowManualFeedbackRequests) {
-        this.allowManualFeedbackRequests = allowManualFeedbackRequests;
+    public void setAllowFeedbackRequests(boolean allowFeedbackRequests) {
+        this.allowFeedbackRequests = allowFeedbackRequests;
     }
 
     public boolean getAllowComplaintsForAutomaticAssessments() {

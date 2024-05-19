@@ -5,6 +5,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.function.Function;
 
@@ -20,9 +21,9 @@ import de.tum.in.www1.artemis.domain.iris.settings.IrisSettings;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSettingsType;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettings;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.dto.iris.IrisCombinedChatSubSettingsDTO;
-import de.tum.in.www1.artemis.service.dto.iris.IrisCombinedCompetencyGenerationSubSettingsDTO;
-import de.tum.in.www1.artemis.service.dto.iris.IrisCombinedHestiaSubSettingsDTO;
+import de.tum.in.www1.artemis.service.iris.dto.IrisCombinedChatSubSettingsDTO;
+import de.tum.in.www1.artemis.service.iris.dto.IrisCombinedCompetencyGenerationSubSettingsDTO;
+import de.tum.in.www1.artemis.service.iris.dto.IrisCombinedHestiaSubSettingsDTO;
 
 /**
  * Service for handling {@link IrisSubSettings} objects.
@@ -73,7 +74,7 @@ public class IrisSubSettingsService {
         }
         currentSettings.setAllowedModels(selectAllowedModels(currentSettings.getAllowedModels(), newSettings.getAllowedModels()));
         currentSettings.setPreferredModel(validatePreferredModel(currentSettings.getPreferredModel(), newSettings.getPreferredModel(), currentSettings.getAllowedModels(),
-                parentSettings != null ? parentSettings.getAllowedModels() : null));
+                parentSettings != null ? parentSettings.allowedModels() : null));
         currentSettings.setTemplate(newSettings.getTemplate());
         return currentSettings;
     }
@@ -107,7 +108,7 @@ public class IrisSubSettingsService {
         }
         currentSettings.setAllowedModels(selectAllowedModels(currentSettings.getAllowedModels(), newSettings.getAllowedModels()));
         currentSettings.setPreferredModel(validatePreferredModel(currentSettings.getPreferredModel(), newSettings.getPreferredModel(), currentSettings.getAllowedModels(),
-                parentSettings != null ? parentSettings.getAllowedModels() : null));
+                parentSettings != null ? parentSettings.allowedModels() : null));
         currentSettings.setTemplate(newSettings.getTemplate());
         return currentSettings;
     }
@@ -141,7 +142,7 @@ public class IrisSubSettingsService {
             currentSettings.setAllowedModels(selectAllowedModels(currentSettings.getAllowedModels(), newSettings.getAllowedModels()));
         }
         currentSettings.setPreferredModel(validatePreferredModel(currentSettings.getPreferredModel(), newSettings.getPreferredModel(), currentSettings.getAllowedModels(),
-                parentSettings != null ? parentSettings.getAllowedModels() : null));
+                parentSettings != null ? parentSettings.allowedModels() : null));
         currentSettings.setTemplate(newSettings.getTemplate());
         return currentSettings;
     }
@@ -155,7 +156,7 @@ public class IrisSubSettingsService {
      * @param updatedAllowedModels The allowed models of the updated settings.
      * @return The filtered allowed models.
      */
-    private Set<String> selectAllowedModels(Set<String> allowedModels, Set<String> updatedAllowedModels) {
+    private SortedSet<String> selectAllowedModels(SortedSet<String> allowedModels, SortedSet<String> updatedAllowedModels) {
         return authCheckService.isAdmin() ? updatedAllowedModels : allowedModels;
     }
 
@@ -193,15 +194,12 @@ public class IrisSubSettingsService {
      * @return Combined chat settings.
      */
     public IrisCombinedChatSubSettingsDTO combineChatSettings(ArrayList<IrisSettings> settingsList, boolean minimal) {
-        var combinedChatSettings = new IrisCombinedChatSubSettingsDTO();
-        combinedChatSettings.setEnabled(getCombinedEnabled(settingsList, IrisSettings::getIrisChatSettings));
-        combinedChatSettings.setRateLimit(getCombinedRateLimit(settingsList));
-        if (!minimal) {
-            combinedChatSettings.setAllowedModels(getCombinedAllowedModels(settingsList, IrisSettings::getIrisChatSettings));
-            combinedChatSettings.setPreferredModel(getCombinedPreferredModel(settingsList, IrisSettings::getIrisChatSettings));
-            combinedChatSettings.setTemplate(getCombinedTemplate(settingsList, IrisSettings::getIrisChatSettings, IrisChatSubSettings::getTemplate));
-        }
-        return combinedChatSettings;
+        var enabled = getCombinedEnabled(settingsList, IrisSettings::getIrisChatSettings);
+        var rateLimit = getCombinedRateLimit(settingsList);
+        var allowedModels = minimal ? getCombinedAllowedModels(settingsList, IrisSettings::getIrisChatSettings) : null;
+        var preferredModel = minimal ? getCombinedPreferredModel(settingsList, IrisSettings::getIrisChatSettings) : null;
+        var template = minimal ? getCombinedTemplate(settingsList, IrisSettings::getIrisChatSettings, IrisChatSubSettings::getTemplate) : null;
+        return new IrisCombinedChatSubSettingsDTO(enabled, rateLimit, null, allowedModels, preferredModel, template);
     }
 
     /**
@@ -215,14 +213,11 @@ public class IrisSubSettingsService {
      */
     public IrisCombinedHestiaSubSettingsDTO combineHestiaSettings(ArrayList<IrisSettings> settingsList, boolean minimal) {
         var actualSettingsList = settingsList.stream().filter(settings -> !(settings instanceof IrisExerciseSettings)).toList();
-        var combinedHestiaSettings = new IrisCombinedHestiaSubSettingsDTO();
-        combinedHestiaSettings.setEnabled(getCombinedEnabled(actualSettingsList, IrisSettings::getIrisHestiaSettings));
-        if (!minimal) {
-            combinedHestiaSettings.setAllowedModels(getCombinedAllowedModels(actualSettingsList, IrisSettings::getIrisHestiaSettings));
-            combinedHestiaSettings.setPreferredModel(getCombinedPreferredModel(actualSettingsList, IrisSettings::getIrisHestiaSettings));
-            combinedHestiaSettings.setTemplate(getCombinedTemplate(actualSettingsList, IrisSettings::getIrisHestiaSettings, IrisHestiaSubSettings::getTemplate));
-        }
-        return combinedHestiaSettings;
+        var enabled = getCombinedEnabled(actualSettingsList, IrisSettings::getIrisHestiaSettings);
+        var allowedModels = minimal ? getCombinedAllowedModels(actualSettingsList, IrisSettings::getIrisHestiaSettings) : null;
+        var preferredModel = minimal ? getCombinedPreferredModel(actualSettingsList, IrisSettings::getIrisHestiaSettings) : null;
+        var template = minimal ? getCombinedTemplate(actualSettingsList, IrisSettings::getIrisHestiaSettings, IrisHestiaSubSettings::getTemplate) : null;
+        return new IrisCombinedHestiaSubSettingsDTO(enabled, allowedModels, preferredModel, template);
     }
 
     /**
@@ -236,15 +231,12 @@ public class IrisSubSettingsService {
      */
     public IrisCombinedCompetencyGenerationSubSettingsDTO combineCompetencyGenerationSettings(ArrayList<IrisSettings> settingsList, boolean minimal) {
         var actualSettingsList = settingsList.stream().filter(settings -> !(settings instanceof IrisExerciseSettings)).toList();
-        var combinedCompetencyGenerationSettings = new IrisCombinedCompetencyGenerationSubSettingsDTO();
-        combinedCompetencyGenerationSettings.setEnabled(getCombinedEnabled(actualSettingsList, IrisSettings::getIrisCompetencyGenerationSettings));
-        if (!minimal) {
-            combinedCompetencyGenerationSettings.setAllowedModels(getCombinedAllowedModels(actualSettingsList, IrisSettings::getIrisCompetencyGenerationSettings));
-            combinedCompetencyGenerationSettings.setPreferredModel(getCombinedPreferredModel(actualSettingsList, IrisSettings::getIrisCompetencyGenerationSettings));
-            combinedCompetencyGenerationSettings
-                    .setTemplate(getCombinedTemplate(actualSettingsList, IrisSettings::getIrisCompetencyGenerationSettings, IrisCompetencyGenerationSubSettings::getTemplate));
-        }
-        return combinedCompetencyGenerationSettings;
+        var enabled = getCombinedEnabled(actualSettingsList, IrisSettings::getIrisCompetencyGenerationSettings);
+        var allowedModels = minimal ? getCombinedAllowedModels(actualSettingsList, IrisSettings::getIrisCompetencyGenerationSettings) : null;
+        var preferredModel = minimal ? getCombinedPreferredModel(actualSettingsList, IrisSettings::getIrisCompetencyGenerationSettings) : null;
+        var template = minimal ? getCombinedTemplate(actualSettingsList, IrisSettings::getIrisCompetencyGenerationSettings, IrisCompetencyGenerationSubSettings::getTemplate)
+                : null;
+        return new IrisCombinedCompetencyGenerationSubSettingsDTO(enabled, allowedModels, preferredModel, template);
     }
 
     /**

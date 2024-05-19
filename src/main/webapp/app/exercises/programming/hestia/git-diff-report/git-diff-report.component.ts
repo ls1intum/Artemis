@@ -1,6 +1,8 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 import { ProgrammingExerciseGitDiffEntry } from 'app/entities/hestia/programming-exercise-git-diff-entry.model';
+import { faSpinner, faTableColumns } from '@fortawesome/free-solid-svg-icons';
+import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 
 @Component({
     selector: 'jhi-git-diff-report',
@@ -25,12 +27,21 @@ export class GitDiffReportComponent implements OnInit {
 
     rightCommit: string | undefined;
 
-    // TODO: Make this configurable by the user
-    numberOfContextLines = 3;
     entries: ProgrammingExerciseGitDiffEntry[];
     entriesByPath: Map<string, ProgrammingExerciseGitDiffEntry[]>;
     addedLineCount: number;
     removedLineCount: number;
+    diffsReadyByPath: { [path: string]: boolean } = {};
+    allDiffsReady = false;
+    nothingToDisplay = false;
+    allowSplitView = true;
+
+    faSpinner = faSpinner;
+    faTableColumns = faTableColumns;
+
+    // Expose to template
+    protected readonly ButtonSize = ButtonSize;
+    protected readonly ButtonType = ButtonType;
 
     constructor() {}
 
@@ -73,7 +84,6 @@ export class GitDiffReportComponent implements OnInit {
 
         // Create a set of all file paths
         this.filePaths = [...new Set([...this.templateFileContentByPath.keys(), ...this.solutionFileContentByPath.keys()])].sort();
-
         // Group the diff entries by file path
         this.entriesByPath = new Map<string, ProgrammingExerciseGitDiffEntry[]>();
         [...this.templateFileContentByPath.keys()].forEach((filePath) => {
@@ -90,5 +100,22 @@ export class GitDiffReportComponent implements OnInit {
         });
         this.leftCommit = this.report.leftCommitHash?.substring(0, 10);
         this.rightCommit = this.report.rightCommitHash?.substring(0, 10);
+        this.filePaths.forEach((path) => {
+            if (this.entriesByPath.get(path)?.length) {
+                this.diffsReadyByPath[path] = false;
+            }
+        });
+        this.nothingToDisplay = Object.keys(this.diffsReadyByPath).length === 0;
+    }
+
+    /**
+     * Records that the diff editor for a file has changed its "ready" state.
+     * If all paths have reported that they are ready, {@link allDiffsReady} will be set to true.
+     * @param path The path of the file whose diff this event refers to.
+     * @param ready Whether the diff is ready to be displayed or not.
+     */
+    onDiffReady(path: string, ready: boolean) {
+        this.diffsReadyByPath[path] = ready;
+        this.allDiffsReady = Object.values(this.diffsReadyByPath).reduce((a, b) => a && b);
     }
 }

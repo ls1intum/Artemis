@@ -164,11 +164,10 @@ test.describe('Exam assessment', () => {
         });
 
         test('Assesses quiz automatically', async ({ page, login, examManagement, courseAssessment, examParticipation }) => {
-            test.fixme();
             await login(instructor);
             await examManagement.verifySubmitted(course.id!, exam.id!, studentOneName);
             if (dayjs().isBefore(examEnd)) {
-                await page.waitForTimeout(examEnd.diff(dayjs(), 'ms') + 1000);
+                await page.waitForTimeout(examEnd.diff(dayjs(), 'ms') + 10000);
             }
             await examManagement.openAssessmentDashboard(course.id!, exam.id!, 60000);
             await page.goto(`/course-management/${course.id}/exams/${exam.id}/assessment-dashboard`);
@@ -177,7 +176,7 @@ test.describe('Exam assessment', () => {
             if (dayjs().isBefore(resultDate)) {
                 await page.waitForTimeout(resultDate.diff(dayjs(), 'ms') + 1000);
             }
-            await examManagement.checkQuizSubmission(course.id!, exam.id!, studentOneName, '50%');
+            await examManagement.checkQuizSubmission(course.id!, exam.id!, studentOneName, '[5 / 10 Points] 50%');
             await login(studentOne, `/courses/${course.id}/exams/${exam.id}`);
             await examParticipation.checkResultScore('50%');
         });

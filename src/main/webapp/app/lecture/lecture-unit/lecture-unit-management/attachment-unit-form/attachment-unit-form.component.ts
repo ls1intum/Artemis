@@ -88,7 +88,7 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
             name: [undefined as string | undefined, [Validators.required, Validators.maxLength(255)]],
             description: [undefined as string | undefined, [Validators.maxLength(1000)]],
             releaseDate: [undefined as dayjs.Dayjs | undefined],
-            version: [{ value: 1, disabled: true, readOnly: true }],
+            version: [{ value: 1, disabled: true }],
             updateNotificationText: [undefined as string | undefined, [Validators.maxLength(1000)]],
             competencies: [undefined as Competency[] | undefined],
         });

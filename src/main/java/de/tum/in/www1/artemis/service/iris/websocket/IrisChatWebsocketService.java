@@ -1,21 +1,17 @@
 package de.tum.in.www1.artemis.service.iris.websocket;
 
-import java.util.Collections;
-import java.util.Map;
-import java.util.Objects;
+import java.util.List;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-
-import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageDTO;
 import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;
-import de.tum.in.www1.artemis.service.iris.exception.IrisException;
 
 @Service
 @Profile("iris")
@@ -41,12 +37,13 @@ public class IrisChatWebsocketService extends IrisWebsocketService {
      * Sends a message over the websocket to a specific user
      *
      * @param irisMessage that should be sent over the websocket
+     * @param stages      that should be sent over the websocket
      */
-    public void sendMessage(IrisMessage irisMessage) {
+    public void sendMessage(IrisMessage irisMessage, List<PyrisStageDTO> stages) {
         var session = irisMessage.getSession();
         var user = checkSessionTypeAndGetUser(session);
         var rateLimitInfo = rateLimitService.getRateLimitInformation(user);
-        super.send(user, WEBSOCKET_TOPIC_SESSION_TYPE, session.getId(), new IrisWebsocketDTO(irisMessage, rateLimitInfo));
+        super.send(user, WEBSOCKET_TOPIC_SESSION_TYPE, session.getId(), new IrisWebsocketDTO(irisMessage, null, rateLimitInfo, stages));
     }
 
     /**
@@ -54,97 +51,16 @@ public class IrisChatWebsocketService extends IrisWebsocketService {
      *
      * @param session   to which the exception belongs
      * @param throwable that should be sent over the websocket
+     * @param stages    that should be sent over the websocket
      */
-    public void sendException(IrisSession session, Throwable throwable) {
+    public void sendException(IrisSession session, Throwable throwable, List<PyrisStageDTO> stages) {
         User user = checkSessionTypeAndGetUser(session);
         var rateLimitInfo = rateLimitService.getRateLimitInformation(user);
-        super.send(user, WEBSOCKET_TOPIC_SESSION_TYPE, session.getId(), new IrisWebsocketDTO(throwable, rateLimitInfo));
+        super.send(user, WEBSOCKET_TOPIC_SESSION_TYPE, session.getId(), new IrisWebsocketDTO(null, throwable, rateLimitInfo, stages));
     }
 
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public static class IrisWebsocketDTO {
-
-        private final IrisWebsocketMessageType type;
-
-        private final IrisMessage message;
-
-        private final String errorMessage;
-
-        private final String errorTranslationKey;
-
-        private final Map<String, Object> translationParams;
-
-        private final IrisRateLimitService.IrisRateLimitInformation rateLimitInfo;
-
-        public IrisWebsocketDTO(IrisMessage message, IrisRateLimitService.IrisRateLimitInformation rateLimitInfo) {
-            this.rateLimitInfo = rateLimitInfo;
-            this.type = IrisWebsocketMessageType.MESSAGE;
-            this.message = message;
-            this.errorMessage = null;
-            this.errorTranslationKey = null;
-            this.translationParams = null;
-        }
-
-        public IrisWebsocketDTO(Throwable throwable, IrisRateLimitService.IrisRateLimitInformation rateLimitInfo) {
-            this.rateLimitInfo = rateLimitInfo;
-            this.type = IrisWebsocketMessageType.ERROR;
-            this.message = null;
-            this.errorMessage = throwable.getMessage();
-            this.errorTranslationKey = throwable instanceof IrisException irisException ? irisException.getTranslationKey() : null;
-            this.translationParams = throwable instanceof IrisException irisException ? irisException.getTranslationParams() : null;
-        }
-
-        public IrisWebsocketMessageType getType() {
-            return type;
-        }
-
-        public IrisMessage getMessage() {
-            return message;
-        }
-
-        public String getErrorMessage() {
-            return errorMessage;
-        }
-
-        public String getErrorTranslationKey() {
-            return errorTranslationKey;
-        }
-
-        public Map<String, Object> getTranslationParams() {
-            return translationParams != null ? Collections.unmodifiableMap(translationParams) : null;
-        }
-
-        public IrisRateLimitService.IrisRateLimitInformation getRateLimitInfo() {
-            return rateLimitInfo;
-        }
-
-        public enum IrisWebsocketMessageType {
-            MESSAGE, ERROR
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            if (this == other) {
-                return true;
-            }
-            if (other == null || getClass() != other.getClass()) {
-                return false;
-            }
-            IrisWebsocketDTO that = (IrisWebsocketDTO) other;
-            return type == that.type && Objects.equals(message, that.message) && Objects.equals(errorMessage, that.errorMessage)
-                    && Objects.equals(errorTranslationKey, that.errorTranslationKey) && Objects.equals(translationParams, that.translationParams);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(type, message, errorMessage, errorTranslationKey, translationParams);
-        }
-
-        @Override
-        public String toString() {
-            return "IrisWebsocketDTO{" + "type=" + type + ", message=" + message + ", errorMessage='" + errorMessage + '\'' + ", errorTranslationKey='" + errorTranslationKey + '\''
-                    + ", translationParams=" + translationParams + '}';
-        }
+    public void sendStatusUpdate(IrisSession session, List<PyrisStageDTO> stages) {
+        var user = checkSessionTypeAndGetUser(session);
+        super.send(user, WEBSOCKET_TOPIC_SESSION_TYPE, session.getId(), new IrisWebsocketDTO(null, null, rateLimitService.getRateLimitInformation(user), stages));
     }
-
 }
