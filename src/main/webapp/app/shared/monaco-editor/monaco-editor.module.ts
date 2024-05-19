@@ -18,7 +18,6 @@ monaco.editor.defineTheme('custom-dark', {
     colors: {},
 });
 
-alert('register!');
 monaco.languages.register({ id: 'custom-md' });
 monaco.languages.setLanguageConfiguration('custom-md', conf);
 monaco.languages.setMonarchTokensProvider('custom-md', language);

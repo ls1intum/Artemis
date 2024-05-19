@@ -44,6 +44,7 @@ const language: languages.IMonarchLanguage = {
     empty: ['area', 'base', 'basefont', 'br', 'col', 'frame', 'hr', 'img', 'input', 'isindex', 'link', 'meta', 'param'],
     tokenizer: {
         root: [
+            // Programming exercise tasks are malformed in the Markdown syntax. We parse them immediately to prevent problems with the bracket matching.
             [/\[task\]\[.*\]\(.*\)/, 'task'],
             // markdown tables
             [/^\s*\|/, '@rematch', '@table_header'],
@@ -57,8 +58,8 @@ const language: languages.IMonarchLanguage = {
             [/^\s*>+/, 'comment'],
             // list (starting with * or number)
             [/^\s*([*\-+:]|\d+\.)\s/, 'keyword'],
-            // code block (4 spaces indent)
-            [/^(\t|[ ]{4})[^ ].*$/, 'string'],
+            // code block (4 spaces indent). Disabled to prevent conflicts with the list syntax.
+            // [/^(\t|[ ]{4})[^ ].*$/, 'string'],
             // code block (3 tilde)
             [/^\s*~~~\s*((?:\w|[/\-#])+)?\s*$/, { token: 'string', next: '@codeblock' }],
             // github style code blocks (with backticks and language)
