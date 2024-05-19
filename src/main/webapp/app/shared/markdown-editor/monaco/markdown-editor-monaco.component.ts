@@ -31,7 +31,7 @@ export class MarkdownEditorMonacoComponent implements OnInit, OnDestroy {
     resizeObserver?: ResizeObserver;
 
     ngOnInit(): void {
-        this.monacoEditor.changeModel('markdown-content.md', this._markdown);
+        this.monacoEditor.changeModel('markdown-content.custom-md', this._markdown, 'custom-md');
         this.monacoEditor.layoutWithFixedSize(100, 400);
         this.resizeObserver = new ResizeObserver(() => {
             this.monacoEditor.layout();

@@ -154,9 +154,10 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      * @param fileName The name of the file to switch to.
      * @param newFileContent The content of the file (will be retrieved from the model if left out).
      */
-    changeModel(fileName: string, newFileContent?: string) {
+    changeModel(fileName: string, newFileContent?: string, languageId?: string) {
         const uri = monaco.Uri.parse(`inmemory://model/${this._editor.getId()}/${fileName}`);
         const model = monaco.editor.getModel(uri) ?? monaco.editor.createModel(newFileContent ?? '', undefined, uri);
+
         if (!this.models.includes(model)) {
             this.models.push(model);
         }
@@ -167,7 +168,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         // Some elements remain when the model is changed - dispose of them.
         this.disposeEditorElements();
 
-        monaco.editor.setModelLanguage(model, model.getLanguageId());
+        monaco.editor.setModelLanguage(model, languageId !== undefined ? languageId : model.getLanguageId());
         this._editor.setModel(model);
     }
 
@@ -212,7 +213,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
 
     changeTheme(artemisTheme: Theme): void {
         this._editor.updateOptions({
-            theme: artemisTheme === Theme.DARK ? 'vs-dark' : 'vs-light',
+            theme: artemisTheme === Theme.DARK ? 'custom-dark' : 'vs-light',
         });
     }
 
