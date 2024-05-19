@@ -108,6 +108,9 @@ the students cannot collect experience in this import aspect of programming thro
 To be able to include the structural aspect of programming in your Programming Exercises,
 without losing the ability to test submissions automatically, you can use DejaGnu.
 It allows you to write blackbox tests for command line interfaces of applications.
+The tests are written in Expect Script, an extension to the Tcl scripting language.
+Expect is a traditional unix utility for automatic interactions with programs that expose a text terminal
+interface in a robust way.
 For the exercises you only have to specify the syntax of the command line interface
 and at least a rough guidance for the output format.
 The source code structure can be all up to the students as far as you want.
@@ -115,3 +118,7 @@ An assessment of the quality of the students source code structures can be made 
 
 For the usage of DejaGnu consult the `offical documentation <https://www.gnu.org/software/dejagnu/manual/index.html>`_
 and take a look at the example of the template.
+The best documentation of `Expect https://core.tcl-lang.org/expect/`_
+can be found in the `Book Exploring Expect https://books.google.com.sg/books?id=t8C4pEDQ8s0C&printsec=frontcover#v=onepage&q&f=false`.
+However, for easy starting the basic setup of expect (file default.exp) can usually be overtaken in large
+parts from the template's example.
