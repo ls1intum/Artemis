@@ -67,7 +67,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
 
     @BeforeEach
     void setup() throws Exception {
-        userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
 
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
@@ -242,7 +242,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TUTOR")
     void testGetCheckoutDirectories() throws Exception {
         RepositoriesCheckoutDirectoryDTO checkoutDirectoryDTO = request.get("/api/programming-exercises/repository-checkout-directories?programmingLanguage=JAVA", HttpStatus.OK,
                 RepositoriesCheckoutDirectoryDTO.class);
@@ -252,7 +252,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TUTOR")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void testGetCheckoutDirectoriesAccessForbidden() throws Exception {
         request.get("/api/programming-exercises/repository-checkout-directories?programmingLanguage=JAVA", HttpStatus.FORBIDDEN, RepositoriesCheckoutDirectoryDTO.class);
     }
