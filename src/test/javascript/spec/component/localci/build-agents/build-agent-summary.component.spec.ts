@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-import { BuildAgentsComponent } from 'app/localci/build-agents/build-agents.component';
+import { BuildAgentSummaryComponent } from 'app/localci/build-agents/build-agent-summary/build-agent-summary.component';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { BuildAgentsService } from 'app/localci/build-agents/build-agents.service';
 import { of } from 'rxjs';
@@ -15,9 +15,9 @@ import { RepositoryInfo, TriggeredByPushTo } from 'app/entities/repository-info.
 import { JobTimingInfo } from 'app/entities/job-timing-info.model';
 import { BuildConfig } from 'app/entities/build-config.model';
 
-describe('BuildAgentsComponent', () => {
-    let component: BuildAgentsComponent;
-    let fixture: ComponentFixture<BuildAgentsComponent>;
+describe('BuildAgentSummaryComponent', () => {
+    let component: BuildAgentSummaryComponent;
+    let fixture: ComponentFixture<BuildAgentSummaryComponent>;
 
     const mockWebsocketService = {
         subscribe: jest.fn(),
@@ -26,7 +26,7 @@ describe('BuildAgentsComponent', () => {
     };
 
     const mockBuildAgentsService = {
-        getBuildAgents: jest.fn().mockReturnValue(of([])),
+        getBuildAgentSummary: jest.fn().mockReturnValue(of([])),
     };
 
     const repositoryInfo: RepositoryInfo = {
@@ -44,13 +44,6 @@ describe('BuildAgentsComponent', () => {
         submissionDate: dayjs('2023-01-01'),
         buildStartDate: dayjs('2023-01-01'),
         buildCompletionDate: dayjs('2023-01-02'),
-        buildDuration: undefined,
-    };
-
-    const jobTimingInfo2: JobTimingInfo = {
-        submissionDate: dayjs('2023-01-03'),
-        buildStartDate: dayjs('2023-01-03'),
-        buildCompletionDate: dayjs('2023-01-07'),
         buildDuration: undefined,
     };
 
@@ -124,64 +117,6 @@ describe('BuildAgentsComponent', () => {
         },
     ];
 
-    const mockRecentBuildJobs1: BuildJob[] = [
-        {
-            id: '1',
-            name: 'Build Job 1',
-            buildAgentAddress: 'agent1',
-            participationId: 101,
-            courseId: 10,
-            exerciseId: 100,
-            retryCount: 0,
-            priority: 4,
-            repositoryInfo: repositoryInfo,
-            jobTimingInfo: jobTimingInfo1,
-            buildConfig: buildConfig,
-        },
-        {
-            id: '2',
-            name: 'Build Job 2',
-            buildAgentAddress: 'agent2',
-            participationId: 102,
-            courseId: 10,
-            exerciseId: 100,
-            retryCount: 0,
-            priority: 3,
-            repositoryInfo: repositoryInfo,
-            jobTimingInfo: jobTimingInfo2,
-            buildConfig: buildConfig,
-        },
-    ];
-
-    const mockRecentBuildJobs2: BuildJob[] = [
-        {
-            id: '3',
-            name: 'Build Job 3',
-            buildAgentAddress: 'agent3',
-            participationId: 103,
-            courseId: 10,
-            exerciseId: 100,
-            retryCount: 0,
-            priority: 5,
-            repositoryInfo: repositoryInfo,
-            jobTimingInfo: jobTimingInfo1,
-            buildConfig: buildConfig,
-        },
-        {
-            id: '4',
-            name: 'Build Job 4',
-            buildAgentAddress: 'agent4',
-            participationId: 104,
-            courseId: 10,
-            exerciseId: 100,
-            retryCount: 0,
-            priority: 2,
-            repositoryInfo: repositoryInfo,
-            jobTimingInfo: jobTimingInfo2,
-            buildConfig: buildConfig,
-        },
-    ];
-
     const mockBuildAgents: BuildAgent[] = [
         {
             id: 1,
@@ -189,7 +124,6 @@ describe('BuildAgentsComponent', () => {
             maxNumberOfConcurrentBuildJobs: 2,
             numberOfCurrentBuildJobs: 2,
             runningBuildJobs: mockRunningJobs1,
-            recentBuildJobs: mockRecentBuildJobs1,
             status: true,
         },
         {
@@ -198,7 +132,6 @@ describe('BuildAgentsComponent', () => {
             maxNumberOfConcurrentBuildJobs: 2,
             numberOfCurrentBuildJobs: 2,
             runningBuildJobs: mockRunningJobs2,
-            recentBuildJobs: mockRecentBuildJobs2,
             status: true,
         },
     ];
@@ -206,7 +139,7 @@ describe('BuildAgentsComponent', () => {
     beforeEach(waitForAsync(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, NgxDatatableModule],
-            declarations: [BuildAgentsComponent, MockPipe(ArtemisTranslatePipe), MockComponent(DataTableComponent)],
+            declarations: [BuildAgentSummaryComponent, MockPipe(ArtemisTranslatePipe), MockComponent(DataTableComponent)],
             providers: [
                 { provide: JhiWebsocketService, useValue: mockWebsocketService },
                 { provide: BuildAgentsService, useValue: mockBuildAgentsService },
@@ -214,7 +147,7 @@ describe('BuildAgentsComponent', () => {
             ],
         }).compileComponents();
 
-        fixture = TestBed.createComponent(BuildAgentsComponent);
+        fixture = TestBed.createComponent(BuildAgentSummaryComponent);
         component = fixture.componentInstance;
     }));
 
@@ -222,17 +155,13 @@ describe('BuildAgentsComponent', () => {
         jest.clearAllMocks();
     });
 
-    it('should create', () => {
-        expect(component).toBeTruthy();
-    });
-
     it('should load build agents on initialization', () => {
-        mockBuildAgentsService.getBuildAgents.mockReturnValue(of(mockBuildAgents));
+        mockBuildAgentsService.getBuildAgentSummary.mockReturnValue(of(mockBuildAgents));
         mockWebsocketService.receive.mockReturnValue(of(mockBuildAgents));
 
         component.ngOnInit();
 
-        expect(mockBuildAgentsService.getBuildAgents).toHaveBeenCalled();
+        expect(mockBuildAgentsService.getBuildAgentSummary).toHaveBeenCalled();
         expect(component.buildAgents).toEqual(mockBuildAgents);
     });
 
@@ -250,23 +179,6 @@ describe('BuildAgentsComponent', () => {
         component.ngOnDestroy();
 
         expect(mockWebsocketService.unsubscribe).toHaveBeenCalledWith('/topic/admin/build-agents');
-    });
-
-    it('should set recent build jobs duration', () => {
-        mockBuildAgentsService.getBuildAgents.mockReturnValue(of(mockBuildAgents));
-        mockWebsocketService.receive.mockReturnValue(of(mockBuildAgents));
-
-        component.ngOnInit();
-
-        for (const buildAgent of component.buildAgents) {
-            for (const recentBuildJob of buildAgent.recentBuildJobs || []) {
-                const { jobTimingInfo } = recentBuildJob;
-                const { buildCompletionDate, buildStartDate, buildDuration } = jobTimingInfo || {};
-                if (buildDuration && jobTimingInfo) {
-                    expect(buildDuration).toEqual(buildCompletionDate!.diff(buildStartDate!, 'milliseconds') / 1000);
-                }
-            }
-        }
     });
 
     it('should cancel a build job', () => {
@@ -287,5 +199,23 @@ describe('BuildAgentsComponent', () => {
         component.cancelAllBuildJobs(buildAgent.name!);
 
         expect(spy).toHaveBeenCalledExactlyOnceWith(buildAgent.name!);
+    });
+
+    it('should calculate the build capacity and current builds', () => {
+        mockWebsocketService.receive.mockReturnValue(of(mockBuildAgents));
+
+        component.ngOnInit();
+
+        expect(component.buildCapacity).toBe(4);
+        expect(component.currentBuilds).toBe(4);
+    });
+
+    it('should calculate the build capacity and current builds when there are no build agents', () => {
+        mockWebsocketService.receive.mockReturnValue(of([]));
+
+        component.ngOnInit();
+
+        expect(component.buildCapacity).toBe(0);
+        expect(component.currentBuilds).toBe(0);
     });
 });

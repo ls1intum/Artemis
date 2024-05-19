@@ -373,7 +373,7 @@ public class ConversationService {
     public Page<User> searchMembersOfConversation(Course course, Conversation conversation, Pageable pageable, String searchTerm,
             Optional<ConversationMemberSearchFilters> filter) {
         if (filter.isEmpty()) {
-            if (conversation instanceof Channel && ((Channel) conversation).getIsCourseWide()) {
+            if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
                 return userRepository.searchAllByLoginOrNameInCourse(pageable, searchTerm, course.getId());
             }
             return userRepository.searchAllByLoginOrNameInConversation(pageable, searchTerm, conversation.getId());
@@ -389,13 +389,15 @@ public class ConversationService {
                 }
                 case STUDENT -> groups.add(course.getStudentGroupName());
                 case CHANNEL_MODERATOR -> {
-                    assert conversation instanceof Channel : "The filter CHANNEL_MODERATOR is only allowed for channels!";
+                    if (!(conversation instanceof Channel)) {
+                        throw new IllegalArgumentException("The filter CHANNEL_MODERATOR is only allowed for channels!");
+                    }
                     return userRepository.searchChannelModeratorsByLoginOrNameInConversation(pageable, searchTerm, conversation.getId());
                 }
                 default -> throw new IllegalArgumentException("The filter is not supported.");
             }
 
-            if (conversation instanceof Channel && ((Channel) conversation).getIsCourseWide()) {
+            if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
                 return userRepository.searchAllByLoginOrNameInGroups(pageable, searchTerm, groups);
             }
 

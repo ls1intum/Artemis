@@ -3,38 +3,36 @@ import { BuildAgent } from 'app/entities/build-agent.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { BuildAgentsService } from 'app/localci/build-agents/build-agents.service';
 import { Subscription } from 'rxjs';
-import { faCircleCheck, faExclamationCircle, faExclamationTriangle, faTimes } from '@fortawesome/free-solid-svg-icons';
-import dayjs from 'dayjs/esm';
+import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { BuildQueueService } from 'app/localci/build-queue/build-queue.service';
-import { TriggeredByPushTo } from 'app/entities/repository-info.model';
+import { Router } from '@angular/router';
 
 @Component({
     selector: 'jhi-build-agents',
-    templateUrl: './build-agents.component.html',
-    styleUrl: './build-agents.component.scss',
+    templateUrl: './build-agent-summary.component.html',
+    styleUrl: './build-agent-summary.component.scss',
 })
-export class BuildAgentsComponent implements OnInit, OnDestroy {
-    protected readonly TriggeredByPushTo = TriggeredByPushTo;
+export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
     buildAgents: BuildAgent[] = [];
     buildCapacity = 0;
     currentBuilds = 0;
     channel: string = '/topic/admin/build-agents';
     websocketSubscription: Subscription;
     restSubscription: Subscription;
+    routerLink: string;
 
     //icons
-    faCircleCheck = faCircleCheck;
-    faExclamationCircle = faExclamationCircle;
-    faExclamationTriangle = faExclamationTriangle;
     faTimes = faTimes;
 
     constructor(
         private websocketService: JhiWebsocketService,
         private buildAgentsService: BuildAgentsService,
         private buildQueueService: BuildQueueService,
+        private router: Router,
     ) {}
 
     ngOnInit() {
+        this.routerLink = this.router.url;
         this.load();
         this.initWebsocketSubscription();
     }
@@ -60,7 +58,6 @@ export class BuildAgentsComponent implements OnInit, OnDestroy {
 
     private updateBuildAgents(buildAgents: BuildAgent[]) {
         this.buildAgents = buildAgents;
-        this.setRecentBuildJobsDuration(buildAgents);
         this.buildCapacity = this.buildAgents.reduce((sum, agent) => sum + (agent.maxNumberOfConcurrentBuildJobs || 0), 0);
         this.currentBuilds = this.buildAgents.reduce((sum, agent) => sum + (agent.numberOfCurrentBuildJobs || 0), 0);
     }
@@ -69,24 +66,9 @@ export class BuildAgentsComponent implements OnInit, OnDestroy {
      * This method is used to load the build agents.
      */
     load() {
-        this.restSubscription = this.buildAgentsService.getBuildAgents().subscribe((buildAgents) => {
+        this.restSubscription = this.buildAgentsService.getBuildAgentSummary().subscribe((buildAgents) => {
             this.updateBuildAgents(buildAgents);
         });
-    }
-
-    setRecentBuildJobsDuration(buildAgents: BuildAgent[]) {
-        for (const buildAgent of buildAgents) {
-            const recentBuildJobs = buildAgent.recentBuildJobs;
-            if (recentBuildJobs) {
-                for (const buildJob of recentBuildJobs) {
-                    if (buildJob.jobTimingInfo?.buildStartDate && buildJob.jobTimingInfo?.buildCompletionDate) {
-                        const start = dayjs(buildJob.jobTimingInfo.buildStartDate);
-                        const end = dayjs(buildJob.jobTimingInfo.buildCompletionDate);
-                        buildJob.jobTimingInfo.buildDuration = end.diff(start, 'milliseconds') / 1000;
-                    }
-                }
-            }
-        }
     }
 
     cancelBuildJob(buildJobId: string) {
@@ -98,10 +80,5 @@ export class BuildAgentsComponent implements OnInit, OnDestroy {
         if (buildAgent && buildAgent.name) {
             this.buildQueueService.cancelAllRunningBuildJobsForAgent(buildAgent.name).subscribe();
         }
-    }
-
-    viewBuildLogs(resultId: number): void {
-        const url = `/api/build-log/${resultId}`;
-        window.open(url, '_blank');
     }
 }

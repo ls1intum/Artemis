@@ -106,13 +106,13 @@ public class PlagiarismAnswerPostService extends PostingService {
         }
         AnswerPost existingAnswerPost = this.findById(answerPostId);
         final Course course = courseRepository.findByIdElseThrow(courseId);
-        authorizationCheckService.isAtLeastStudentInCourse(course, user);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         parseUserMentions(course, answerPost.getContent());
 
         AnswerPost updatedAnswerPost;
 
         // determine if the update operation is to mark the answer post as resolving the original post
-        if (existingAnswerPost.doesResolvePost() != answerPost.doesResolvePost()) {
+        if (!Objects.equals(existingAnswerPost.doesResolvePost(), answerPost.doesResolvePost())) {
             // check if requesting user is allowed to mark this answer post as resolving, i.e. if user is author or original post or at least tutor
             mayMarkAnswerPostAsResolvingElseThrow(existingAnswerPost, user, course);
             existingAnswerPost.setResolvesPost(answerPost.doesResolvePost());

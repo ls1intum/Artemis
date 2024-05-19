@@ -371,7 +371,7 @@ public class ProgrammingExerciseUtilService {
         var course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
         addProgrammingExerciseToCourse(course, enableStaticCodeAnalysis, enableTestwiseCoverageAnalysis, programmingLanguage, title, shortName, null);
-        return courseRepo.findByIdWithExercisesAndLecturesElseThrow(course.getId());
+        return courseRepo.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(course.getId());
     }
 
     /**
@@ -484,7 +484,7 @@ public class ProgrammingExerciseUtilService {
         programmingExercise = addSolutionParticipationForProgrammingExercise(programmingExercise);
         addTemplateParticipationForProgrammingExercise(programmingExercise);
 
-        return courseRepo.findByIdWithExercisesAndLecturesElseThrow(course.getId());
+        return courseRepo.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(course.getId());
     }
 
     /**
@@ -558,7 +558,7 @@ public class ProgrammingExerciseUtilService {
         Course course = addCourseWithOneProgrammingExercise();
         ProgrammingExercise programmingExercise = exerciseUtilService.findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
         addTestCasesToProgrammingExercise(programmingExercise);
-        return courseRepo.findByIdWithExercisesAndLecturesElseThrow(course.getId());
+        return courseRepo.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(course.getId());
     }
 
     /**

@@ -1,0 +1,11 @@
+/*
+ * Hide the drag handles of the hidden lines, as this feature would result in unintuitive behavior.
+ */
+
+.diff-hidden-lines .top {
+    visibility: hidden;
+}
+
+.diff-hidden-lines .bottom {
+    visibility: hidden;
+}

@@ -13,12 +13,21 @@
                     </a>
                 }
                 @if (exercise?.allowOfflineIde) {
-                    <jhi-clone-repo-button [loading]="!!exercise.loading" [smallButtons]="false" [repositoryUri]="repositoryUri" [exercise]="exercise" style="padding-left: 15px" />
+                    <jhi-clone-repo-button [loading]="!!exercise.loading" [smallButtons]="false" [repositoryUri]="repositoryUri" [exercise]="exercise" />
+                }
+
+                @if (exercise.id) {
+                    @if (repositoryType === 'USER') {
+                        <jhi-programming-exercise-student-repo-download [buttonSize]="ButtonSize.MEDIUM" [exerciseId]="exercise.id" [participationId]="participation.id!" />
+                    } @else {
+                        <jhi-programming-exercise-instructor-repo-download [repositoryType]="repositoryType" [exerciseId]="exercise.id" [buttonSize]="ButtonSize.MEDIUM" />
+                    }
                 }
             </div>
         </div>
         <jhi-code-editor-container
             [useMonacoEditor]="true"
+            [forRepositoryView]="true"
             [editable]="false"
             [buildable]="false"
             [participation]="participation"

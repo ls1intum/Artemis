@@ -55,7 +55,7 @@ import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelIdAndNameD
 
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/courses")
+@RequestMapping("api/courses/")
 public class ChannelResource extends ConversationManagementResource {
 
     private static final Logger log = LoggerFactory.getLogger(ChannelResource.class);
@@ -281,9 +281,9 @@ public class ChannelResource extends ConversationManagementResource {
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         channelAuthorizationService.isAllowedToDeleteChannel(channel, requestingUser);
 
-        tutorialGroupChannelManagementService.getTutorialGroupBelongingToChannel(channel).ifPresentOrElse(tutorialGroup -> {
+        tutorialGroupChannelManagementService.getTutorialGroupBelongingToChannel(channel).ifPresent(tutorialGroup -> {
             throw new BadRequestAlertException("The channel belongs to tutorial group " + tutorialGroup.getTitle(), CHANNEL_ENTITY_NAME, "channel.tutorialGroup.mismatch");
-        }, Optional::empty);
+        });
 
         var usersToNotify = conversationParticipantRepository.findConversationParticipantsByConversationId(channel.getId()).stream().map(ConversationParticipant::getUser)
                 .collect(Collectors.toSet());

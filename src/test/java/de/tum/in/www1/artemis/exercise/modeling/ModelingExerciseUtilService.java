@@ -219,7 +219,7 @@ public class ModelingExerciseUtilService {
         exerciseRepo.save(syntaxTreeExercise);
         exerciseRepo.save(flowchartExercise);
         exerciseRepo.save(finishedExercise);
-        Course storedCourse = courseRepo.findByIdWithExercisesAndLecturesElseThrow(course.getId());
+        Course storedCourse = courseRepo.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(course.getId());
         Set<Exercise> exercises = storedCourse.getExercises();
         assertThat(exercises).as("eleven exercises got stored").hasSize(11);
         assertThat(exercises).as("Contains all exercises").containsExactlyInAnyOrder(course.getExercises().toArray(new Exercise[] {}));

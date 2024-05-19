@@ -76,6 +76,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     gitBranchName: string;
     gitTimestamp: string;
     gitUsername: string;
+    isBuildAgentDetails = false;
     languages = LANGUAGES;
     openApiEnabled?: boolean;
     modalRef: NgbModalRef;
@@ -94,6 +95,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     localCIActive: boolean = false;
     ltiEnabled: boolean;
     standardizedCompetenciesEnabled = false;
+    agentName?: string;
 
     courseTitle?: string;
     exerciseTitle?: string;
@@ -130,6 +132,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     private standardizedCompetencySubscription: Subscription;
     private authStateSubscription: Subscription;
     private routerEventSubscription: Subscription;
+    private queryParamsSubscription: Subscription;
     private studentExam?: StudentExam;
     private examId?: number;
     private routeExamId = 0;
@@ -256,6 +259,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         if (this.standardizedCompetencySubscription) {
             this.standardizedCompetencySubscription.unsubscribe();
         }
+        this.queryParamsSubscription?.unsubscribe();
     }
 
     breadcrumbTranslation = {
@@ -561,6 +565,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
      */
     private addBreadcrumbForUrlSegment(currentPath: string, segment: string): void {
         const isStudentPath = currentPath.startsWith('/courses');
+        this.isBuildAgentDetails = currentPath.startsWith('/admin/build-agents/') && segment == 'details';
 
         if (isStudentPath) {
             if (segment === 'repository') {
@@ -571,6 +576,15 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 this.addTranslationAsCrumb(currentPath.replace(exercisesMatcher[0], 'exercises'), 'exercises');
                 return;
             }
+        }
+
+        if (this.isBuildAgentDetails) {
+            this.queryParamsSubscription = this.route.queryParams.subscribe((params) => {
+                this.agentName = params['agentName'];
+                if (this.agentName) {
+                    segment = decodeURIComponent(this.agentName);
+                }
+            });
         }
         // When we're not dealing with an ID we need to translate the current part
         // The translation might still depend on the previous parts
