@@ -178,6 +178,14 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             this.testRun = state.testRun;
         });
 
+        this.examParticipationService.examStarted$.subscribe((studentExam) => {
+            this.studentExam = studentExam;
+        });
+
+        this.examParticipationService.testRunStarted$.subscribe((testRunId) => {
+            this.testRunId = testRunId;
+        });
+
         // listen to connect / disconnect events
         this.websocketSubscription = this.websocketService.connectionState.subscribe((status) => {
             this.connected = status.connected;

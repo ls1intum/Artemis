@@ -37,6 +37,12 @@ export class ExamParticipationService {
 
     private examExerciseIds: number[];
 
+    private examStartedSource = new Subject<StudentExam>();
+    examStarted$ = this.examStartedSource.asObservable();
+
+    private testRunStartedSource = new Subject<number>();
+    testRunStarted$ = this.testRunStartedSource.asObservable();
+
     private examStateSource = new BehaviorSubject<ExamState>({});
     examState$ = this.examStateSource.asObservable();
 
@@ -359,5 +365,13 @@ export class ExamParticipationService {
     public setExamState(newState: Partial<ExamState>) {
         const currentState = this.examStateSource.value;
         this.examStateSource.next({ ...currentState, ...newState });
+    }
+
+    public emitExamStarted(studentExam: StudentExam) {
+        this.examStartedSource.next(studentExam);
+    }
+
+    public setTestRunId(testRunId: number) {
+        this.testRunStartedSource.next(testRunId);
     }
 }
