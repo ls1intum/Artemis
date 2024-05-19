@@ -384,6 +384,7 @@
             "evaluateQuizExerciseFailure": "Es gab einen Fehler bei der Auswertung der Quiz-Aufgaben:\n {{message}}",
             "assessUnsubmittedStudentExamsSuccess": "Alle Klausuren der Studierenden überprüft und die nicht eingereichten oder leeren Modellierungs- und Textaufgaben mit 0 Punkten bewertet.",
             "assessUnsubmittedStudentExamsFailure": "Die Klausur ist noch nicht für alle Studierenden beendet.",
+            "assessUnsubmittedStudentExamsIdFailure": "Nicht eingereichte Aufgaben konnten aufgrund einer fehlenden Kurs-ID oder Prüfung-ID nicht bewertet werden.",
             "studentExamGenerationModalText": "Es existieren bereits individuelle Klausuren. Beim Fortfahren werden diese Klausuren gelöscht und neue individuelle Klausuren generiert.\n\nBestehende Teilnahmen und Abgaben werden ebenfalls gelöscht!",
             "studentExamStatusSuccess": "Alle registrierten Studierenden haben eine Klausur",
             "studentExamStatusWarning": "Nicht alle registrierten Studierenden haben eine Klausur",
@@ -674,7 +675,13 @@
                     "exerciseTableSingular": "Aufgabe",
                     "points": "Punkte",
                     "numberParticipants": "Teilnehmende",
-                    "variants": "Varianten"
+                    "variants": "Varianten",
+                    "assessmentCheckType": "Check Typ",
+                    "assessmentStatus": "Status",
+                    "assessmentAction": "Aktion",
+                    "checkUnfinishedAssessments": "Unvollständige Bewertungen",
+                    "checkUnassessedQuizzes": "Unbewertete Quizaufgaben",
+                    "checkUnsubmittedExercises": "Nicht eingereichte Aufgaben"
                 }
             },
             "editWorkingTime": {

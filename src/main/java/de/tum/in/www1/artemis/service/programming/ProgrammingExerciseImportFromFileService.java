@@ -36,7 +36,6 @@ import de.tum.in.www1.artemis.repository.BuildPlanRepository;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ProfileService;
-import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
 import de.tum.in.www1.artemis.service.ZipFileService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -214,7 +213,6 @@ public class ProgrammingExerciseImportFromFileService {
         try (var files = Files.walk(repository.getLocalPath())) {
             files.filter(file -> "gradlew".equals(file.getFileName().toString())).forEach(file -> file.toFile().setExecutable(true));
         }
-        repository.setContent(null);
     }
 
     private ProgrammingExercise getProgrammingExerciseFromDetailsFile(Path extractedZipPath) throws IOException {

@@ -294,4 +294,77 @@ describe('ResultComponent', () => {
         const submittedSpan = fixture.nativeElement.querySelector('#test-late');
         expect(submittedSpan).toBeTruthy();
     });
+
+    describe('ResultComponent - Graded Results', () => {
+        beforeEach(() => {
+            comp.participation = mockParticipation;
+        });
+
+        it('should display the first rated result if showUngradedResults is false', () => {
+            comp.participation.results = [{ id: 2, rated: false, score: 50 } as Result, mockResult, { id: 3, rated: false, score: 70 } as Result];
+            comp.showUngradedResults = false;
+            comp.ngOnInit();
+
+            expect(comp.result).toEqual(mockResult);
+        });
+
+        it('should display the first result if showUngradedResults is true', () => {
+            comp.participation.results = [{ id: 2, rated: false, score: 50 } as Result, mockResult];
+            comp.showUngradedResults = true;
+            comp.ngOnInit();
+
+            expect(comp.result).toEqual(comp.participation.results[0]);
+        });
+
+        it('should not have a result if there are no rated results and showUngradedResults is false', () => {
+            comp.participation.results = [{ id: 2, rated: false, score: 50 } as Result, { id: 3, rated: false, score: 70 } as Result];
+            comp.showUngradedResults = false;
+            comp.ngOnInit();
+
+            expect(comp.result).toBeUndefined();
+        });
+    });
+
+    describe('ResultComponent - Feedback Generation', () => {
+        beforeEach(() => {
+            jest.useFakeTimers();
+            comp.result = { ...mockResult, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: undefined, completionDate: dayjs().add(1, 'minute') };
+            comp.exercise = mockExercise;
+            comp.participation = mockParticipation;
+        });
+
+        afterEach(() => {
+            jest.clearAllTimers();
+        });
+
+        it('should call evaluate again after the specified due time', () => {
+            comp.result = { ...comp.result, completionDate: dayjs().add(2, 'seconds') };
+            comp.templateStatus = ResultTemplateStatus.IS_GENERATING_FEEDBACK;
+            comp.evaluate();
+
+            comp.result.completionDate = dayjs().subtract(2, 'seconds');
+            jest.runOnlyPendingTimers();
+
+            expect(comp.templateStatus).not.toEqual(ResultTemplateStatus.IS_GENERATING_FEEDBACK);
+        });
+
+        it('should clear the timeout if the component is destroyed before the feedback generation is complete', () => {
+            comp.templateStatus = ResultTemplateStatus.IS_GENERATING_FEEDBACK;
+            comp.evaluate();
+            expect(jest.getTimerCount()).toBe(1);
+
+            comp.ngOnDestroy();
+            expect(jest.getTimerCount()).toBe(0);
+        });
+    });
+
+    it('should use special handling if result is an automatic AI result', () => {
+        comp.result = { ...mockResult, score: 90, assessmentType: AssessmentType.AUTOMATIC_ATHENA };
+        jest.spyOn(Result, 'isAthenaAIResult').mockReturnValue(true);
+
+        comp.evaluate();
+
+        expect(comp.templateStatus).toEqual(ResultTemplateStatus.HAS_RESULT);
+        expect(comp.resultTooltip).toContain('artemisApp.result.resultString.automaticAIFeedbackSuccessfulTooltip');
+    });
 });
