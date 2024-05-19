@@ -1,4 +1,4 @@
-import { Component, Signal, computed, inject, input, output } from '@angular/core';
+import { Component, computed, inject, input, output } from '@angular/core';
 import { NgbAccordionModule, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { CommonModule } from '@angular/common';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -29,16 +29,16 @@ export class LearningPathStudentNavOverviewComponent {
 
     readonly currentLearningObject = input.required<LearningPathNavigationObjectDto | undefined>();
 
-    private readonly navigationOverviewData$: Observable<LoadedValue<LearningPathNavigationOverviewDto>> = toObservable(this.learningPathId).pipe(
+    private readonly navigationOverviewData$ = toObservable(this.learningPathId).pipe(
         switchMap((learningPathId) => this.learningPathService.getLearningPathNavigationOverview(learningPathId)),
         map((response) => ({ isLoading: false, value: response.body })),
         catchError((error: HttpErrorResponse) => {
             onError(this.alertService, error);
             return of({ isLoading: false, error: error });
         }),
-    );
+    ) as Observable<LoadedValue<LearningPathNavigationOverviewDto>>;
 
-    private readonly navigationOverviewData: Signal<LoadedValue<LearningPathNavigationOverviewDto>> = toSignal(this.navigationOverviewData$, { initialValue: { isLoading: true } });
+    private readonly navigationOverviewData = toSignal(this.navigationOverviewData$, { initialValue: { isLoading: true } as LoadedValue<LearningPathNavigationOverviewDto> });
 
     readonly isLoading = computed(() => this.navigationOverviewData().isLoading);
 

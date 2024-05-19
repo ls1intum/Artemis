@@ -1,4 +1,4 @@
-import { Component, Signal, computed, inject, input, signal } from '@angular/core';
+import { Component, computed, inject, input, signal } from '@angular/core';
 import { LearningPathService } from 'app/course/learning-paths/learning-path.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -37,16 +37,16 @@ export class LearningPathStudentNavComponent {
 
     private readonly selectedLearningObject = signal<LearningPathNavigationObjectDto | undefined>(undefined);
 
-    private readonly navigationData$: Observable<LoadedValue<LearningPathNavigationDto>> = toObservable(this.selectedLearningObject).pipe(
+    private readonly navigationData$ = toObservable(this.selectedLearningObject).pipe(
         switchMap((selectedLearningObject) => this.learningPathService.getLearningPathNavigation(this.learningPathId(), selectedLearningObject?.id, selectedLearningObject?.type)),
         map((response) => ({ isLoading: false, value: response.body })),
         catchError((error: HttpErrorResponse) => {
             onError(this.alertService, error);
             return of({ isLoading: false, error: error });
         }),
-    );
+    ) as Observable<LoadedValue<LearningPathNavigationDto>>;
 
-    private readonly navigationData: Signal<LoadedValue<LearningPathNavigationDto>> = toSignal(this.navigationData$, { initialValue: { isLoading: true } });
+    private readonly navigationData = toSignal(this.navigationData$, { initialValue: { isLoading: true } as LoadedValue<LearningPathNavigationDto> });
 
     readonly showNavigationOverview = signal<boolean>(false);
 
