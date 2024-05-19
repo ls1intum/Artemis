@@ -133,13 +133,13 @@ class ImprintResourceIntegrationTest extends AbstractSpringIntegrationIndependen
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
-    void testGetImprintForUpdateFileDoesntExist_emptyStringSuccess() throws Exception {
+    void testGetImprintForUpdateFileDoesntExist() throws Exception {
         ImprintDTO response;
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
             mockedFiles.when(() -> Files.exists(any())).thenReturn(false);
             response = request.get("/api/admin/imprint-for-update?language=de", HttpStatus.OK, ImprintDTO.class);
         }
-        assertThat(response.text()).isEqualTo("");
+        assertThat(response.text()).isNull();
         assertThat(response.language()).isEqualTo(Language.GERMAN);
     }
 

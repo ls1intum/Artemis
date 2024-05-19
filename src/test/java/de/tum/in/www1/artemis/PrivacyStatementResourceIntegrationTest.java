@@ -139,13 +139,13 @@ class PrivacyStatementResourceIntegrationTest extends AbstractSpringIntegrationI
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
-    void testGetPrivacyStatementForUpdateFileDoesntExist_emptyStringSuccess() throws Exception {
+    void testGetPrivacyStatementForUpdateFileDoesntExist() throws Exception {
         PrivacyStatementDTO response;
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
             mockedFiles.when(() -> Files.exists(any())).thenReturn(false);
             response = request.get("/api/admin/privacy-statement-for-update?language=de", HttpStatus.OK, PrivacyStatementDTO.class);
         }
-        assertThat(response.text()).isEqualTo("");
+        assertThat(response.text()).isNull();
         assertThat(response.language()).isEqualTo(Language.GERMAN);
     }
 
