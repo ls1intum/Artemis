@@ -35,6 +35,7 @@ export class GitDiffReportComponent implements OnInit {
     allDiffsReady = false;
     nothingToDisplay = false;
     allowSplitView = true;
+    renamedFilePaths: { [before: string]: string } = {};
 
     faSpinner = faSpinner;
     faTableColumns = faTableColumns;
@@ -84,6 +85,13 @@ export class GitDiffReportComponent implements OnInit {
 
         // Create a set of all file paths
         this.filePaths = [...new Set([...this.templateFileContentByPath.keys(), ...this.solutionFileContentByPath.keys()])].sort();
+        // Track renamed files
+        this.entries.forEach((entry) => {
+            // Accounts only for files that have existed in the original and the modified version
+            if (entry.filePath && entry.previousFilePath && entry.filePath !== entry.previousFilePath) {
+                this.renamedFilePaths[entry.filePath] = entry.previousFilePath;
+            }
+        });
         // Group the diff entries by file path
         this.entriesByPath = new Map<string, ProgrammingExerciseGitDiffEntry[]>();
         [...this.templateFileContentByPath.keys()].forEach((filePath) => {
@@ -106,6 +114,7 @@ export class GitDiffReportComponent implements OnInit {
             }
         });
         this.nothingToDisplay = Object.keys(this.diffsReadyByPath).length === 0;
+        console.warn('Renamed: ' + JSON.stringify(this.renamedFilePaths));
     }
 
     /**

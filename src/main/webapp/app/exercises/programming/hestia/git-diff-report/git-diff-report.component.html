@@ -71,7 +71,7 @@
                     [allowSplitView]="allowSplitView"
                     [diffForTemplateAndSolution]="diffForTemplateAndSolution"
                     [diffEntries]="entriesByPath.get(filePath) ?? []"
-                    [templateFileContent]="templateFileContentByPath.get(filePath)"
+                    [templateFileContent]="templateFileContentByPath.get(renamedFilePaths[filePath] ?? filePath)"
                     [solutionFileContent]="solutionFileContentByPath.get(filePath)"
                     (onDiffReady)="onDiffReady(filePath, $event)"
                 />
