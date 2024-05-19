@@ -11,8 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import jakarta.validation.constraints.NotNull;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -164,14 +162,14 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         assertThat(statistics.dependenciesDownloadedCount()).isEqualTo(1);
     }
 
-    private static @NotNull List<String> getLogs(String e, String e1) {
+    private static List<String> getLogs(String dependencyDownloaded, String jobFinished) {
         List<String> logs = new ArrayList<>();
         logs.add("[2021-05-10T14:58:30.000Z] Agents is getting prepared");
         logs.add("[2021-05-10T15:00:00.000Z] docker exec"); // Job started
         logs.add("[2021-05-10T15:00:05.000Z] Scanning for projects..."); // Build & test started
-        logs.add(e);
+        logs.add(dependencyDownloaded);
         logs.add("[2021-05-10T15:00:15.000Z] Total time: Some time"); // Build & test finished
-        logs.add(e1); // Job finished
+        logs.add(jobFinished); // Job finished
         return logs;
     }
 

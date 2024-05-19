@@ -21,7 +21,8 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.MockedStatic;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.web.rest.dto.PrivacyStatementDTO;

@@ -29,6 +29,7 @@ class SerializerUtil {
      */
     static ArrayNode serializeModifiers(Set<String> modifiers, JavaMember javaMember) {
         ArrayNode modifiersArray = mapper.createArrayNode();
+        // Check if the class is an interface and adjust modifiers accordingly
         if (javaMember.getDeclaringClass().isInterface()) {
             if (javaMember instanceof JavaMethod method) {
                 if (method.isDefault() || method.isStatic()) {
