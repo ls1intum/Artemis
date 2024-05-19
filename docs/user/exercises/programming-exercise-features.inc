@@ -118,7 +118,7 @@ An assessment of the quality of the students source code structures can be made 
 
 For the usage of DejaGnu consult the `offical documentation <https://www.gnu.org/software/dejagnu/manual/index.html>`_
 and take a look at the example of the template.
-The best documentation of `Expect https://core.tcl-lang.org/expect/`_
-can be found in the `Book Exploring Expect https://books.google.com.sg/books?id=t8C4pEDQ8s0C&printsec=frontcover#v=onepage&q&f=false`.
+The best documentation of `Expect <https://core.tcl-lang.org/expect/>`_
+can be found in the `Book Exploring Expect <https://books.google.com.sg/books?id=t8C4pEDQ8s0C&printsec=frontcover#v=onepage&q&f=false>`_.
 However, for easy starting the basic setup of expect (file default.exp) can usually be overtaken in large
 parts from the template's example.
