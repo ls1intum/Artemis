@@ -338,7 +338,7 @@ public class DataExportExerciseCreationService {
                         if (feedback.getTestCase() != null && feedback.getTestCase().getTestName() != null) {
                             resultScoreAndFeedbacks.append(feedback.getTestCase().getTestName()).append("\t");
                         }
-                        // text() contains, e.g., the file and line number for programming exercises
+                        // getText() contains, e.g., the file and line number for programming exercises
                         if (feedback.getText() != null) {
                             resultScoreAndFeedbacks.append(feedback.getText()).append("\t");
                         }
