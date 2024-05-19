@@ -51,10 +51,6 @@ describe('AccordionAddOptionsComponent', () => {
         }).compileComponents();
 
         metisConversationService = TestBed.inject(MetisConversationService);
-        Object.defineProperty(metisConversationService, 'course', { get: () => course });
-        Object.defineProperty(metisConversationService, 'forceRefresh', { value: () => EMPTY });
-        Object.defineProperty(metisConversationService, 'setActiveConversation', { value: () => {} });
-        canCreateChannel.mockReturnValue(true);
         fixture = TestBed.createComponent(AccordionAddOptionsComponent);
         component = fixture.componentInstance;
         fixture.detectChanges();

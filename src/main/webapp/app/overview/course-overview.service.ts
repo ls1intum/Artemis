@@ -124,19 +124,13 @@ export class CourseOverviewService {
     }
 
     getCorrespondingChannelSubType(channelSubType: ChannelSubType | undefined): ChannelGroupCategory {
-        if (channelSubType == ChannelSubType.EXERCISE) {
-            return 'exerciseChannels';
-        }
-        if (channelSubType == ChannelSubType.GENERAL) {
-            return 'generalChannels';
-        }
-        if (channelSubType == ChannelSubType.LECTURE) {
-            return 'lectureChannels';
-        }
-        if (channelSubType == ChannelSubType.EXAM) {
-            return 'examChannels';
-        }
-        return 'generalChannels';
+        const channelSubTypeMap: { [key in ChannelSubType]: ChannelGroupCategory } = {
+            [ChannelSubType.EXERCISE]: 'exerciseChannels',
+            [ChannelSubType.GENERAL]: 'generalChannels',
+            [ChannelSubType.LECTURE]: 'lectureChannels',
+            [ChannelSubType.EXAM]: 'examChannels',
+        };
+        return channelSubType ? channelSubTypeMap[channelSubType] : 'generalChannels';
     }
 
     groupExercisesByDueDate(sortedExercises: Exercise[]): AccordionGroups {

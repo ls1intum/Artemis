@@ -29,6 +29,7 @@ export class SidebarAccordionComponent implements OnChanges, OnInit {
 
     collapseState = DEFAULT_EXERCISE_COLLAPSE_STATE;
 
+    //icon
     faChevronRight = faChevronRight;
     faFile = faFile;
 

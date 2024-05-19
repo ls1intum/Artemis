@@ -94,10 +94,7 @@ export class AccordionAddOptionsComponent implements OnInit {
         modalRef.componentInstance.channelSubType = subType;
         modalRef.componentInstance.initialize();
         from(modalRef.result)
-            .pipe(
-                catchError(() => EMPTY),
-                //  takeUntil(this.ngUnsubscribe),
-            )
+            .pipe(catchError(() => EMPTY))
             .subscribe((result) => {
                 const [newActiveConversation, isModificationPerformed] = result;
                 if (isModificationPerformed) {
