@@ -434,7 +434,6 @@
                 "title": "Dein Repository ist gesperrt.",
                 "tooltip": "Dein Repository ist gesperrt, weil die Einreichungsfrist abgelaufen ist oder du das Einreichungslimit erreicht hast. Du kannst weiterhin deinen Code einsehen, aber keine Änderungen vornehmen."
             },
-            "checkoutDirectory": "Checkout-Verzeichnis",
             "preview": {
                 "label": "Vorschau",
                 "tooltip": "Für jede Programmieraufgabe, werden verschieden Repositories und Build-Pläne erstellt. Links befinden sich deren generierte Namen basierend auf dem Kurznamen der Aufgabe",
@@ -445,7 +444,8 @@
                 "testRepoTooltip": "Das Repository, welches alle Tests beinhaltet",
                 "auxiliaryRepoTooltip": "{{description}}",
                 "templateBuildPlanTooltip": "Der Build-Plan der Vorlage. Lässt alle Tests über die Vorlage der Aufgabe laufen. Dient als Kontrollreferenz, für welche alle Tests fehlschlagen müssen",
-                "solutionBuildPlanTooltip": "Der Build-Plan der Lösung der Aufgabe. Lässt alle Tests über die Lösung der Aufgabe laufen. Dient als Kontrollreferenz, für welche alle Tests erfolgreich sein müssen"
+                "solutionBuildPlanTooltip": "Der Build-Plan der Lösung der Aufgabe. Lässt alle Tests über die Lösung der Aufgabe laufen. Dient als Kontrollreferenz, für welche alle Tests erfolgreich sein müssen",
+                "checkoutDirectoryDuringBuildExecution": "Checkout-Verzeichnis während der Build-Ausführung"
             },
             "orion": {
                 "openEditor": "Editor Öffnen"
@@ -470,6 +470,7 @@
                 "addAuxiliaryRepository": "Hilfs-Repository anlegen",
                 "usageDescription": "Du kannst Hilfsrepositorys verwenden, um zusätzlichen Code bereitzustellen, den Studierende nicht sehen oder ändern können. Der zusätzliche Code wird während des Builds der Abgabe am angegebenen Checkout-Verzeichnis eingefügt.",
                 "repositoryName": "Name des Repositorys",
+                "checkoutDirectory": "Checkout-Verzeichnis",
                 "description": "Beschreibung",
                 "duplicateRepositoryNames": "Verschiedene Hilfs-Repositories dürfen nicht den gleichen Namen haben.",
                 "duplicateDirectoryNames": "Verschiedene Hilfs-Repositories dürfen nicht das gleiche Checkout-Verzeichnis haben.",

@@ -77,7 +77,7 @@
                                     }
                                 </div>
                                 <div>
-                                    <span jhiTranslate="artemisApp.programmingExercise.checkoutDirectory"></span>:
+                                    <span jhiTranslate="artemisApp.programmingExercise.preview.checkoutDirectoryDuringBuildExecution"></span>:
                                     <code>{{ detail.data.checkoutDirectory }}</code>
                                 </div>
                             } @else {
@@ -107,7 +107,7 @@
                                             }
                                             <div class="auxiliaryRepositoryDescription">
                                                 @if (auxiliaryRepository.checkoutDirectory) {
-                                                    <span jhiTranslate="artemisApp.programmingExercise.checkoutDirectory"></span>:
+                                                    <span jhiTranslate="artemisApp.programmingExercise.preview.checkoutDirectoryDuringBuildExecution"></span>:
                                                     <code>{{ auxiliaryRepository.checkoutDirectory }}</code>
                                                 } @else {
                                                     <fa-icon [icon]="faExclamationTriangle" class="text-warning me-1" [ngbTooltip]="noCheckoutDirectorySetTooltip" />

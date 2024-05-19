@@ -434,7 +434,6 @@
                 "title": "Your repository is locked.",
                 "tooltip": "You are outside of the participation timeframe or you reached your submission limit, your repository is locked. You may still read the code but you may not make any changes to it."
             },
-            "checkoutDirectory": "Checkout Directory",
             "preview": {
                 "label": "Preview",
                 "tooltip": "For every programming exercise, repositories and build plans will be generated. Here you can find their generated names based on the short name of the exercise (and course)",
@@ -445,7 +444,8 @@
                 "testRepoTooltip": "The repository which contains all tests",
                 "auxiliaryRepoTooltip": "{{description}}",
                 "templateBuildPlanTooltip": "The build plan of the template. Runs all tests on the exercise template. Used as a reference in which all tests must fail",
-                "solutionBuildPlanTooltip": "The build plan of the solution. Runs all tests on the exercise solution. Used as a reference in which all tests must succeed"
+                "solutionBuildPlanTooltip": "The build plan of the solution. Runs all tests on the exercise solution. Used as a reference in which all tests must succeed",
+                "checkoutDirectoryDuringBuildExecution": "Checkout Directory during Build Execution"
             },
             "orion": {
                 "openEditor": "Open Editor"
@@ -455,7 +455,7 @@
             "reEvaluateSuccessful": "{{number}} automatic results were successfully updated, including the template and solution.",
             "reEvaluateFailed": "The re-evaluation failed: {{message}}",
             "editSelectedModal": {
-                "currentlyEdited": "You are editing the following exercises:",
+                "currentlyEdiƒted": "You are editing the following exercises:",
                 "errorReadButton": "Ok",
                 "errorOccurred": "The following exercises could not be updated:"
             },
@@ -470,6 +470,7 @@
                 "addAuxiliaryRepository": "Add Auxiliary Repository",
                 "usageDescription": "You can use auxiliary repositories to provide additional code that students cannot see or modify. The additional code is inserted at the specified Checkout Directory during the build of the submission.",
                 "repositoryName": "Repository Name",
+                "checkoutDirectory": "Checkout Directory",
                 "description": "Description",
                 "invalidRepositoryName": "A repository with that name already exists in this exercise!",
                 "duplicateRepositoryNames": "Multiple auxiliary repositories must not share the same name!",
