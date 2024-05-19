@@ -114,7 +114,6 @@ export class GitDiffReportComponent implements OnInit {
             }
         });
         this.nothingToDisplay = Object.keys(this.diffsReadyByPath).length === 0;
-        console.warn('Renamed: ' + JSON.stringify(this.renamedFilePaths));
     }
 
     /**
