@@ -55,6 +55,9 @@ class PMDCPDParser implements ParserStrategy {
 
     private StaticCodeAnalysisReportDTO createReportFromDuplication(PmdCpc report) {
         List<StaticCodeAnalysisIssue> issues = new ArrayList<>();
+        if (report.duplications() == null) {
+            return new StaticCodeAnalysisReportDTO(StaticCodeAnalysisTool.PMD_CPD, issues);
+        }
         for (var duplication : report.duplications()) {
             if (duplication.files() == null) {
                 continue;
