@@ -94,14 +94,14 @@ export class PlaywrightUserManagement {
      * @returns the username template.
      */
     private getUsernameTemplate(): string {
-        return (process.env.PLAYWRIGHT_USERNAME_TEMPLATE ?? 'user') + '_' + USER_ID_SELECTOR;
+        return (process.env.PLAYWRIGHT_USERNAME_TEMPLATE ?? 'user_') + USER_ID_SELECTOR;
     }
 
     /**
      * @returns the password template.
      */
     private getPasswordTemplate(): string {
-        return (process.env.PLAYWRIGHT_PASSWORD_TEMPLATE ?? 'password') + '_' + USER_ID_SELECTOR;
+        return (process.env.PLAYWRIGHT_PASSWORD_TEMPLATE ?? 'password_') + USER_ID_SELECTOR;
     }
 
     /**
