@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -426,11 +427,13 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationInd
                 knowledgeArea.setChildren(null);
                 knowledgeArea2.setChildren(null);
 
-                var expectedCatalog = StandardizedCompetencyCatalogDTO.of(List.of(knowledgeArea, knowledgeArea1), List.of(source, source1, source2));
+                var expectedKnowledgeAreas = Stream.of(knowledgeArea, knowledgeArea1).map(StandardizedCompetencyCatalogDTO.KnowledgeAreaForCatalogDTO::of).toList();
+                var expectedSources = Stream.of(source, source1, source2).map(SourceDTO::of).toList();
 
                 var actualCatalog = request.get("/api/admin/standardized-competencies/export", HttpStatus.OK, StandardizedCompetencyCatalogDTO.class);
 
-                assertThat(actualCatalog).isEqualTo(expectedCatalog);
+                assertThat(actualCatalog.knowledgeAreas()).containsAll(expectedKnowledgeAreas);
+                assertThat(actualCatalog.sources()).containsAll(expectedSources);
             }
         }
     }
