@@ -44,6 +44,7 @@ const language: languages.IMonarchLanguage = {
     empty: ['area', 'base', 'basefont', 'br', 'col', 'frame', 'hr', 'img', 'input', 'isindex', 'link', 'meta', 'param'],
     tokenizer: {
         root: [
+            [/^[@]startuml$/, { token: 'task', next: '@uml' }],
             // Programming exercise tasks are malformed in the Markdown syntax. We parse them immediately to prevent problems with the bracket matching.
             [/\[task\]\[.*\]\(.*\)/, 'task'],
             // markdown tables
@@ -194,6 +195,10 @@ const language: languages.IMonarchLanguage = {
             [/[^<]+/, ''],
             [/<\/script\s*>/, { token: '@rematch', next: '@pop', nextEmbedded: '@pop' }],
             [/</, ''],
+        ],
+        uml: [
+            [/^[@]enduml$/, { token: 'task', next: '@pop' }],
+            [/.*$/, 'variable.source'], // TODO: In the future, this could be used to define custom syntax for UML diagrams in markdown.
         ],
     },
 };
