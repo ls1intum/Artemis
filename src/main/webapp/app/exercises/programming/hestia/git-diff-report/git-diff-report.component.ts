@@ -87,7 +87,7 @@ export class GitDiffReportComponent implements OnInit {
         this.filePaths = [...new Set([...this.templateFileContentByPath.keys(), ...this.solutionFileContentByPath.keys()])].sort();
         // Track renamed files
         this.entries.forEach((entry) => {
-            // Accounts only for files that have existed in the original and the modified version
+            // Accounts only for files that have existed in the original and the modified version, but under different names
             if (entry.filePath && entry.previousFilePath && entry.filePath !== entry.previousFilePath) {
                 this.renamedFilePaths[entry.filePath] = entry.previousFilePath;
             }
