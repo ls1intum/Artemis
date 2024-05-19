@@ -1155,6 +1155,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         assertThat(returnedStatistics.numberOfGeneratedStudentExams()).isEqualTo(actualStatistics.numberOfGeneratedStudentExams());
         assertThat(returnedStatistics.numberOfTotalExamAssessmentsFinishedByCorrectionRound()).isEqualTo(actualStatistics.numberOfTotalExamAssessmentsFinishedByCorrectionRound());
         assertThat(returnedStatistics.numberOfTotalParticipationsForAssessment()).isEqualTo(actualStatistics.numberOfTotalParticipationsForAssessment());
+        assertThat(returnedStatistics.existsUnassessedQuizzes()).isEqualTo(actualStatistics.existsUnassessedQuizzes());
+        assertThat(returnedStatistics.existsUnsubmittedExercises()).isEqualTo(actualStatistics.existsUnsubmittedExercises());
     }
 
     @Test

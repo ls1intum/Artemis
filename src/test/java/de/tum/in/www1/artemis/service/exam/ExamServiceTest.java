@@ -215,6 +215,8 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(examChecklistDTO.numberOfAllComplaints()).isZero();
         assertThat(examChecklistDTO.numberOfAllComplaintsDone()).isZero();
         assertThat(examChecklistDTO.allExamExercisesAllStudentsPrepared()).isFalse();
+        assertThat(examChecklistDTO.existsUnassessedQuizzes()).isFalse();
+        assertThat(examChecklistDTO.existsUnsubmittedExercises()).isFalse();
     }
 
     @Nested

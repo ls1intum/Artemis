@@ -1113,11 +1113,16 @@ public class ExamService {
             }
 
             return new ExamChecklistDTO(numberOfGeneratedStudentExams, numberOfTestRuns, totalNumberOfAssessmentsFinished, totalNumberOfParticipationsForAssessment,
-                    numberOfStudentExamsSubmitted, numberOfStudentExamsStarted, totalNumberOfComplaints, totalNumberOfComplaintResponse, exercisesPrepared);
+                    numberOfStudentExamsSubmitted, numberOfStudentExamsStarted, totalNumberOfComplaints, totalNumberOfComplaintResponse, exercisesPrepared, null, null);
 
         }
+
+        boolean existsUnassessedQuizzes = submissionRepository.existsUnassessedQuizzesByExamId(exam.getId());
+        boolean existsUnsubmittedExercises = submissionRepository.existsUnsubmittedExercisesByExamId(exam.getId());
+
         // For non-instructors, consider what limited information they should receive and adjust accordingly
-        return new ExamChecklistDTO(null, null, null, totalNumberOfParticipationsForAssessment, null, totalNumberOfParticipationsGenerated, null, null, null);
+        return new ExamChecklistDTO(null, null, null, totalNumberOfParticipationsForAssessment, null, totalNumberOfParticipationsGenerated, null, null, null,
+                existsUnassessedQuizzes, existsUnsubmittedExercises);
 
     }
 
