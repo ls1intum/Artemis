@@ -1103,4 +1103,17 @@ public class ExamUtilService {
         quizPoolService.save(quizPool);
         return exam;
     }
+
+    /**
+     * Adds exercise to student exam
+     *
+     * @param studentExam student exam to which exercise should be added
+     * @param exercise    exercise which should be added
+     * @return Student exam with added exercise
+     */
+    public StudentExam addExerciseToStudentExam(StudentExam studentExam, Exercise exercise) {
+        studentExam.addExercise(exercise);
+        return studentExamRepository.save(studentExam);
+    }
+
 }

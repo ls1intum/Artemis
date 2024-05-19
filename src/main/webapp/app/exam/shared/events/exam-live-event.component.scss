@@ -39,6 +39,11 @@
         }
     }
 
+    &.problemStatementUpdate {
+        background-color: var(--artemis-alert-info-background);
+        border-color: var(--artemis-alert-info-border);
+    }
+
     .headline {
         display: flex;
         justify-content: space-between;
