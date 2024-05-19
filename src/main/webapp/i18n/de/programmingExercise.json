@@ -437,6 +437,7 @@
             "preview": {
                 "label": "Vorschau",
                 "tooltip": "Für jede Programmieraufgabe, werden verschieden Repositories und Build-Pläne erstellt. Links befinden sich deren generierte Namen basierend auf dem Kurznamen der Aufgabe",
+                "tooltipLocalVC": "Hier findest du die mit der Programmieraufgabe verknüpften Repositories. Rechts werden die jeweiligen Checkout-Verzeichnisse während der Build-Ausführung angezeigt.",
                 "repositories": "Repositories",
                 "buildPlans": "Build-Pläne",
                 "templateRepoTooltip": "Das Repository, welches die Vorlage der Aufgabe beinhaltet",

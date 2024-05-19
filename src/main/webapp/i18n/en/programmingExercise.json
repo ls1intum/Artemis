@@ -436,7 +436,8 @@
             },
             "preview": {
                 "label": "Preview",
-                "tooltip": "For every programming exercise, repositories and build plans will be generated. Here you can find their generated names based on the short name of the exercise (and course)",
+                "tooltip": "For every programming exercise, repositories and build plans will be generated. Here, you can find their generated names based on the short name of the exercise (and course)",
+                "tooltipLocalVC": "Here, you can find the repositories linked to the exercise and their respective checkout directories during the build execution.",
                 "repositories": "Repositories",
                 "buildPlans": "Build Plans",
                 "templateRepoTooltip": "The repository which contains the template of the exercise",
