@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
 import { Exercise, getIcon } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -20,7 +21,10 @@ const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     providedIn: 'root',
 })
 export class CourseOverviewService {
-    constructor(private participationService: ParticipationService) {}
+    constructor(
+        private participationService: ParticipationService,
+        private translate: TranslateService,
+    ) {}
 
     getUpcomingTutorialGroup(tutorialGroups: TutorialGroup[] | undefined): TutorialGroup | undefined {
         if (tutorialGroups && tutorialGroups.length) {
@@ -41,7 +45,7 @@ export class CourseOverviewService {
         }
     }
 
-    getCorrespondingGroupByDate(date: dayjs.Dayjs | undefined): TimeGroupCategory {
+    getCorrespondingExerciseGroupByDate(date: dayjs.Dayjs | undefined): TimeGroupCategory {
         if (!date) {
             return 'noDate';
         }
@@ -62,11 +66,31 @@ export class CourseOverviewService {
         return 'future';
     }
 
+    getCorrespondingLectureGroupByDate(startDate: dayjs.Dayjs | undefined, endDate?: dayjs.Dayjs | undefined): TimeGroupCategory {
+        if (!startDate) {
+            return 'noDate';
+        }
+
+        const now = dayjs();
+        const isStartDateWithinLastWeek = startDate.isBetween(now.subtract(1, 'week'), now);
+        const isDateInThePast = endDate ? endDate.isBefore(now) : startDate.isBefore(now.subtract(1, 'week'));
+
+        if (isDateInThePast) {
+            return 'past';
+        }
+
+        const isDateCurrent = endDate ? startDate.isBefore(now) && endDate.isAfter(now) : isStartDateWithinLastWeek;
+        if (isDateCurrent) {
+            return 'current';
+        }
+        return 'future';
+    }
+
     groupExercisesByDueDate(sortedExercises: Exercise[]): AccordionGroups {
         const groupedExerciseGroups = cloneDeep(DEFAULT_UNIT_GROUPS) as AccordionGroups;
 
         for (const exercise of sortedExercises) {
-            const exerciseGroup = this.getCorrespondingGroupByDate(exercise.dueDate);
+            const exerciseGroup = this.getCorrespondingExerciseGroupByDate(exercise.dueDate);
             const exerciseCardItem = this.mapExerciseToSidebarCardElement(exercise);
             groupedExerciseGroups[exerciseGroup].entityData.push(exerciseCardItem);
         }
@@ -78,7 +102,7 @@ export class CourseOverviewService {
         const groupedLectureGroups = cloneDeep(DEFAULT_UNIT_GROUPS) as AccordionGroups;
 
         for (const lecture of sortedLectures) {
-            const lectureGroup = this.getCorrespondingGroupByDate(lecture.startDate);
+            const lectureGroup = this.getCorrespondingLectureGroupByDate(lecture.startDate, lecture?.endDate);
             const lectureCardItem = this.mapLectureToSidebarCardElement(lecture);
             groupedLectureGroups[lectureGroup].entityData.push(lectureCardItem);
         }
@@ -101,7 +125,8 @@ export class CourseOverviewService {
         const lectureCardItem: SidebarCardElement = {
             title: lecture.title ?? '',
             id: lecture.id ?? '',
-            subtitleLeft: lecture.startDate?.format('MMM DD, YYYY') ?? 'No date associated',
+            subtitleLeft: lecture.startDate?.format('MMM DD, YYYY') ?? this.translate.instant('artemisApp.courseOverview.sidebar.noDate'),
+            size: 'M',
         };
         return lectureCardItem;
     }
@@ -109,16 +134,27 @@ export class CourseOverviewService {
         const tutorialGroupCardItem: SidebarCardElement = {
             title: tutorialGroup.title ?? '',
             id: tutorialGroup.id ?? '',
-            subtitleLeft: tutorialGroup.language,
-            subtitleRight: tutorialGroup.nextSession?.start?.format('MMM DD, YYYY') ? 'Next: ' + tutorialGroup.nextSession?.start?.format('MMM DD, YYYY') : 'No upcoming session',
+            size: 'M',
+            subtitleLeft: tutorialGroup.nextSession?.start?.format('MMM DD, YYYY') ?? this.translate.instant('artemisApp.courseOverview.sidebar.noUpcomingSession'),
+            subtitleRight: this.getUtilization(tutorialGroup),
         };
         return tutorialGroupCardItem;
     }
+
+    getUtilization(tutorialGroup: TutorialGroup): string {
+        if (tutorialGroup.capacity && tutorialGroup.averageAttendance) {
+            const utilization = Math.round((tutorialGroup.averageAttendance / tutorialGroup.capacity) * 100);
+            return this.translate.instant('artemisApp.entities.tutorialGroup.utilization') + ': ' + utilization + '%';
+        } else {
+            return tutorialGroup?.averageAttendance ? 'Ø ' + this.translate.instant('artemisApp.entities.tutorialGroup.attendance') + ': ' + tutorialGroup.averageAttendance : '';
+        }
+    }
+
     mapExerciseToSidebarCardElement(exercise: Exercise): SidebarCardElement {
         const exerciseCardItem: SidebarCardElement = {
             title: exercise.title ?? '',
             id: exercise.id ?? '',
-            subtitleLeft: exercise.dueDate?.format('MMM DD, YYYY') ?? 'No due date',
+            subtitleLeft: exercise.dueDate?.format('MMM DD, YYYY') ?? this.translate.instant('artemisApp.courseOverview.sidebar.noDueDate'),
             type: exercise.type,
             icon: getIcon(exercise.type),
             difficulty: exercise.difficulty,
@@ -126,6 +162,7 @@ export class CourseOverviewService {
             studentParticipation: exercise?.studentParticipations?.length
                 ? this.participationService.getSpecificStudentParticipation(exercise.studentParticipations, false)
                 : undefined,
+            size: 'M',
         };
         return exerciseCardItem;
     }
