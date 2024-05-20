@@ -62,7 +62,7 @@
                     <li>
                         <code>{{ checkoutDirectories.exerciseCheckoutDirectory }} </code>
                     </li>
-                    <li>
+                    <li [style.visibility]="checkoutDirectories.solutionCheckoutDirectory ? '' : 'hidden'">
                         <code> {{ checkoutDirectories.solutionCheckoutDirectory }} </code>
                     </li>
                     <li>
