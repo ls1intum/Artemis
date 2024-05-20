@@ -16,7 +16,7 @@ import { of } from 'rxjs';
 import { KnowledgeAreasForImportDTO } from 'app/entities/competency/standardized-competency.model';
 import { StandardizedCompetencyDetailComponent } from 'app/shared/standardized-competencies/standardized-competency-detail.component';
 
-describe('ImportStandardizedCompetenciesComponent', () => {
+describe('AdminImportStandardizedCompetenciesComponent', () => {
     let componentFixture: ComponentFixture<AdminImportStandardizedCompetenciesComponent>;
     let component: AdminImportStandardizedCompetenciesComponent;
 

@@ -41,7 +41,7 @@ export class CourseImportStandardizedCompetenciesComponent extends StandardizedC
     protected selectedCompetency?: StandardizedCompetencyForImport;
     protected sourceString = '';
     private courseId: number;
-    private sources: Source[];
+    private sources: Source[] = [];
     protected isLoading = false;
     protected isSubmitted = false;
 
