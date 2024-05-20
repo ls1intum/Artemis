@@ -42,7 +42,7 @@ public interface ContinuousIntegrationService {
      * @param planKey               the key of the plan
      * @param repositoryUri         the URI of the assignment repository (used to separate between exercise and solution)
      * @param testRepositoryUri     the URI of the test repository
-     * @param solutionRepositoryUri the URI of the solution repository. Only used for HASKELL exercises with checkoutSolutionRepository=true. Otherwise ignored.
+     * @param solutionRepositoryUri the URI of the solution repository. Only used for HASKELL exercises with checkoutSolutionRepository=true. Otherwise, ignored.
      */
     void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUri repositoryUri, VcsRepositoryUri testRepositoryUri,
             VcsRepositoryUri solutionRepositoryUri);
@@ -125,7 +125,7 @@ public interface ContinuousIntegrationService {
      * Get the build artifact (JAR/WAR), if any, of the latest build
      *
      * @param participation participation for which to get the build artifact
-     * @return the binary build artifact. Typically a JAR/WAR ResponseEntity.
+     * @return the binary build artifact. Typically, a JAR/WAR ResponseEntity.
      */
     ResponseEntity<byte[]> retrieveLatestArtifact(ProgrammingExerciseParticipation participation);
 
@@ -235,11 +235,19 @@ public interface ContinuousIntegrationService {
         },
         SOLUTION {
 
+            /**
+             * @param language for which the checkout directory should be retrieved
+             * @return checkoutDirectory for the solution repository for the build execution of the template and student submissions
+             * @throws IllegalArgumentException if the solution is not checked out within the build process for the template or student submission
+             *                                      <p>
+             *                                      Note: if the solution is not checked out during the submission build plan, it will be checked out
+             *                                      in the assignment respective repository during the solution build
+             */
             @Override
             public String forProgrammingLanguage(ProgrammingLanguage language) {
                 return switch (language) {
-                    case JAVA, PYTHON, C, KOTLIN, VHDL, ASSEMBLER, SWIFT, EMPTY -> "assignment";
                     case HASKELL, OCAML -> "solution";
+                    default -> throw new IllegalArgumentException("The solution repository is not checked out during the template or student submission for " + language);
                 };
             }
         }
