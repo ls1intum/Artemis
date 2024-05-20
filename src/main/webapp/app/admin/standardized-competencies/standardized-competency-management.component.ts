@@ -69,10 +69,10 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
         const getKnowledgeAreasObservable = this.standardizedCompetencyService.getAllForTreeView();
         const getSourcesObservable = this.standardizedCompetencyService.getSources();
         forkJoin([getKnowledgeAreasObservable, getSourcesObservable]).subscribe({
-            next: ([knowledgeAreaResponse, sourceResponse]) => {
-                this.sourcesForSelect = sourceResponse.body!;
+            next: ([knowledgeAreasResponse, sourcesResponse]) => {
+                this.sourcesForSelect = sourcesResponse.body!;
 
-                const knowledgeAreas = knowledgeAreaResponse.body!;
+                const knowledgeAreas = knowledgeAreasResponse.body!;
                 const knowledgeAreasForTree = knowledgeAreas.map((knowledgeArea) => convertToKnowledgeAreaForTree(knowledgeArea));
                 this.dataSource.data = knowledgeAreasForTree;
                 this.treeControl.dataNodes = knowledgeAreasForTree;
@@ -85,7 +85,6 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
             },
             error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
         });
-        //TODO: add a component that displays the source text nicely
     }
 
     ngOnDestroy(): void {

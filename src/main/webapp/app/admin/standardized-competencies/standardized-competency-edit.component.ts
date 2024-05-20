@@ -56,7 +56,7 @@ export class StandardizedCompetencyEditComponent {
 
     private _isEditing: boolean;
     private _competency: StandardizedCompetencyDTO;
-    form: FormGroup<{
+    protected form: FormGroup<{
         title: FormControl<string | undefined>;
         description: FormControl<string | undefined>;
         taxonomy: FormControl<CompetencyTaxonomy | undefined>;
@@ -65,10 +65,10 @@ export class StandardizedCompetencyEditComponent {
     }>;
 
     // icons
-    readonly faPencil = faPencil;
-    readonly faTrash = faTrash;
-    readonly faBan = faBan;
-    readonly faSave = faSave;
+    protected readonly faPencil = faPencil;
+    protected readonly faTrash = faTrash;
+    protected readonly faBan = faBan;
+    protected readonly faSave = faSave;
     // other constants
     protected readonly ButtonSize = ButtonSize;
     protected readonly ButtonType = ButtonType;

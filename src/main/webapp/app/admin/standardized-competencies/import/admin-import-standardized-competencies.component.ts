@@ -6,6 +6,7 @@ import {
     KnowledgeAreasForImportDTO,
     StandardizedCompetencyForTree,
     convertToKnowledgeAreaForTree,
+    sourceToString,
 } from 'app/entities/competency/standardized-competency.model';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { AlertService } from 'app/core/util/alert.service';
@@ -34,6 +35,7 @@ export class AdminImportStandardizedCompetenciesComponent {
     protected selectedCompetency?: StandardizedCompetencyForTree;
     //the title of the knowledge area belonging to the selected competency
     protected knowledgeAreaTitle = '';
+    protected sourceString = '';
     protected importData?: KnowledgeAreasForImportDTO;
     protected importCount?: ImportCount;
     protected dataSource = new MatTreeNestedDataSource<KnowledgeAreaForTree>();
@@ -111,11 +113,14 @@ export class AdminImportStandardizedCompetenciesComponent {
     }
 
     protected openCompetencyDetails(competency: StandardizedCompetencyForTree, knowledgeAreaTitle: string) {
+        const source = this.importData?.sources.find((source) => source.id === competency.sourceId);
+        this.sourceString = source ? sourceToString(source) : '';
         this.knowledgeAreaTitle = knowledgeAreaTitle;
         this.selectedCompetency = competency;
     }
 
     protected closeCompetencyDetails() {
+        this.sourceString = '';
         this.knowledgeAreaTitle = '';
         this.selectedCompetency = undefined;
     }
