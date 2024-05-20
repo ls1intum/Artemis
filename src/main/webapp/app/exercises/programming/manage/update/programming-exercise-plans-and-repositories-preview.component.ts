@@ -4,7 +4,6 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 import { Subscription } from 'rxjs';
-import { addLeadingSlashIfNotPresent } from 'app/shared/util/utils';
 import { RepositoriesCheckoutDirectoriesDTO } from 'app/entities/repositories-checkout-directories-dto';
 
 @Component({
@@ -36,7 +35,17 @@ export class ProgrammingExercisePlansAndRepositoriesPreviewComponent implements 
 
     private updateAuxiliaryRepositoryCheckoutDirectories() {
         this.auxiliaryRepositoryCheckoutDirectories =
-            this.programmingExercise?.auxiliaryRepositories?.map((auxiliaryRepository) => addLeadingSlashIfNotPresent(auxiliaryRepository.checkoutDirectory)) ?? [];
+            this.programmingExercise?.auxiliaryRepositories?.map((auxiliaryRepository) => this.addLeadingSlashIfNotPresent(auxiliaryRepository.checkoutDirectory)) ?? [];
+    }
+
+    private addLeadingSlashIfNotPresent(directory: string | undefined): string {
+        const ROOT_DIRECTORY_PATH: string = '/';
+
+        if (!directory) {
+            return ROOT_DIRECTORY_PATH;
+        }
+
+        return directory.startsWith(ROOT_DIRECTORY_PATH) ? directory : ROOT_DIRECTORY_PATH + directory;
     }
 
     private updateShortName() {

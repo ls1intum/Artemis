@@ -27,7 +27,6 @@ import { Participation } from 'app/entities/participation/participation.model';
 import { PlagiarismResultDTO } from 'app/exercises/shared/plagiarism/types/PlagiarismResultDTO';
 import { ImportOptions } from 'app/types/programming-exercises';
 import { RepositoriesCheckoutDirectoriesDTO } from 'app/entities/repositories-checkout-directories-dto';
-import { addLeadingSlashIfNotPresent } from 'app/shared/util/utils';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -677,19 +676,10 @@ export class ProgrammingExerciseService {
     }
 
     getCheckoutDirectoriesForProgrammingLanguage(programmingLanguage: ProgrammingLanguage): Observable<RepositoriesCheckoutDirectoriesDTO> {
-        return this.http
-            .get<RepositoriesCheckoutDirectoriesDTO>(`${this.resourceUrl}/repository-checkout-directories`, {
-                params: {
-                    programmingLanguage,
-                },
-            })
-            .pipe(
-                map((checkoutDirectories: RepositoriesCheckoutDirectoriesDTO) => {
-                    checkoutDirectories.exerciseCheckoutDirectory = addLeadingSlashIfNotPresent(checkoutDirectories.exerciseCheckoutDirectory);
-                    checkoutDirectories.solutionCheckoutDirectory = addLeadingSlashIfNotPresent(checkoutDirectories.solutionCheckoutDirectory);
-                    checkoutDirectories.testCheckoutDirectory = addLeadingSlashIfNotPresent(checkoutDirectories.testCheckoutDirectory);
-                    return checkoutDirectories;
-                }),
-            );
+        return this.http.get<RepositoriesCheckoutDirectoriesDTO>(`${this.resourceUrl}/repository-checkout-directories`, {
+            params: {
+                programmingLanguage,
+            },
+        });
     }
 }
