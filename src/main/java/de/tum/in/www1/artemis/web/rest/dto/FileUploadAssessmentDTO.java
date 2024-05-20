@@ -10,8 +10,8 @@ import de.tum.in.www1.artemis.domain.Feedback;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record FileUploadAssessmentDTO(List<Feedback> feedbacks, String assessmentNote) {
 
-    /**
-     * Creates a new FileUploadAssessmentDTO and makes sure that feedbacks is never null.
+    /*
+     * Checks if the feedbacks list is null. If it is, it assigns it a default value of an empty list.
      */
     public FileUploadAssessmentDTO {
         if (feedbacks == null) {

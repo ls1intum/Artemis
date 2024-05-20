@@ -209,7 +209,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 .because("All DTOs should be records and annotated with @JsonInclude(JsonInclude.Include.NON_EMPTY)");
         var result = dtoRecordRule.evaluate(allClasses);
         // TODO: reduce the following number to 0
-        assertThat(result.getFailureReport().getDetails()).hasSize(58);
+        assertThat(result.getFailureReport().getDetails()).hasSizeLessThanOrEqualTo(56);
 
         // TODO: make sure all classes in a package that ends to dto are also named DTO to be included in the rule above
     }
