@@ -60,7 +60,7 @@ import de.tum.in.www1.artemis.web.rest.repository.RepositoryActionType;
 
 /**
  * This service is responsible for authenticating and authorizing git requests as well as for retrieving the requested Git repositories from disk.
- * It is used by the ArtemisGitServlet, the LocalVCFetchFilter, and the LocalVCPushFilter.
+ * It is used by the ArtemisGitServletService, the LocalVCFetchFilter, and the LocalVCPushFilter.
  */
 @Service
 @Profile("localvc")
