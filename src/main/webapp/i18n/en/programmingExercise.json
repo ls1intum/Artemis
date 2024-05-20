@@ -446,7 +446,7 @@
                 "auxiliaryRepoTooltip": "{{description}}",
                 "templateBuildPlanTooltip": "The build plan of the template. Runs all tests on the exercise template. Used as a reference in which all tests must fail",
                 "solutionBuildPlanTooltip": "The build plan of the solution. Runs all tests on the exercise solution. Used as a reference in which all tests must succeed",
-                "checkoutDirectoryDuringBuildExecution": "Checkout Directory during Build Execution"
+                "checkoutDirectoryDuringBuildExecution": "Checkout Directory during build execution"
             },
             "orion": {
                 "openEditor": "Open Editor"
