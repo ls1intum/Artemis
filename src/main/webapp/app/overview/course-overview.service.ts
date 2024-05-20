@@ -12,6 +12,7 @@ import { cloneDeep } from 'lodash-es';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },
+    dueSoon: { entityData: [] },
     current: { entityData: [] },
     past: { entityData: [] },
     noDate: { entityData: [] },
@@ -45,21 +46,30 @@ export class CourseOverviewService {
         }
     }
 
-    getCorrespondingExerciseGroupByDate(date: dayjs.Dayjs | undefined): TimeGroupCategory {
-        if (!date) {
+    getCorrespondingExerciseGroupByDate(exercise: Exercise): TimeGroupCategory {
+        if (!exercise.dueDate) {
             return 'noDate';
         }
 
-        const dueDate = dayjs(date);
         const now = dayjs();
+        const dueDate = dayjs(exercise.dueDate);
 
         const dueDateIsInThePast = dueDate.isBefore(now);
         if (dueDateIsInThePast) {
             return 'past';
         }
 
-        const dueDateIsWithinNextWeek = dueDate.isBefore(now.add(1, 'week'));
-        if (dueDateIsWithinNextWeek) {
+        const dueDateIsSoon = dueDate.isBefore(now.add(3, 'days'));
+        if (dueDateIsSoon) {
+            return 'dueSoon';
+        }
+
+        // any exercise without release/start dates is immediately available for participation
+        const start = exercise.startDate ?? exercise.releaseDate;
+        const startDate = start ? dayjs(start) : now;
+
+        // last parameter indicates inclusive range for both start and end date
+        if (now.isBetween(startDate, dueDate, undefined, '[]')) {
             return 'current';
         }
 
@@ -79,7 +89,7 @@ export class CourseOverviewService {
             return 'past';
         }
 
-        const isDateCurrent = endDate ? startDate.isBefore(now) && endDate.isAfter(now) : isStartDateWithinLastWeek;
+        const isDateCurrent = endDate ? now.isBetween(startDate, endDate, undefined, '[]') : isStartDateWithinLastWeek;
         if (isDateCurrent) {
             return 'current';
         }
@@ -90,7 +100,7 @@ export class CourseOverviewService {
         const groupedExerciseGroups = cloneDeep(DEFAULT_UNIT_GROUPS) as AccordionGroups;
 
         for (const exercise of sortedExercises) {
-            const exerciseGroup = this.getCorrespondingExerciseGroupByDate(exercise.dueDate);
+            const exerciseGroup = this.getCorrespondingExerciseGroupByDate(exercise);
             const exerciseCardItem = this.mapExerciseToSidebarCardElement(exercise);
             groupedExerciseGroups[exerciseGroup].entityData.push(exerciseCardItem);
         }

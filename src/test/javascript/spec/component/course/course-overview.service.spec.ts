@@ -11,12 +11,16 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { TextExercise } from 'app/entities/text-exercise.model';
 
 describe('CourseOverviewService', () => {
     let service: CourseOverviewService;
     let pastExercise: Exercise;
+    let dueSoonExercise: Exercise;
     let currentExercise: Exercise;
+    let currentExerciseNoDueDate: Exercise;
     let futureExercise: Exercise;
+    let futureExercise2: Exercise;
     let course: Course;
     let pastLecture: Lecture;
     let futureLecture: Lecture;
@@ -48,16 +52,35 @@ describe('CourseOverviewService', () => {
         pastExercise.title = 'Past Exercise';
 
         course.id = 2;
+        dueSoonExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined) as Exercise;
+        dueSoonExercise.dueDate = tomorrow;
+        dueSoonExercise.releaseDate = lastWeek;
+        dueSoonExercise.title = 'DueSoon Exercise';
+
+        course.id = 2;
         currentExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined) as Exercise;
-        currentExercise.dueDate = tomorrow;
+        currentExercise.dueDate = nextWeeks;
         currentExercise.releaseDate = lastWeek;
         currentExercise.title = 'Current Exercise';
+
+        course.id = 2;
+        currentExerciseNoDueDate = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined) as Exercise;
+        currentExerciseNoDueDate.dueDate = undefined;
+        currentExerciseNoDueDate.releaseDate = lastWeek;
+        currentExerciseNoDueDate.title = 'Current Exercise No Due Date';
 
         course.id = 3;
         futureExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined) as Exercise;
         futureExercise.dueDate = nextWeeks;
         futureExercise.releaseDate = tomorrow;
         futureExercise.title = 'Future Exercise';
+
+        course.id = 3;
+        futureExercise2 = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined) as Exercise;
+        futureExercise2.dueDate = nextWeeks;
+        futureExercise2.releaseDate = lastWeek;
+        futureExercise2.startDate = tomorrow;
+        futureExercise2.title = 'Future Exercise 2';
 
         pastLecture = new Lecture();
         pastLecture.id = 6;
@@ -100,11 +123,11 @@ describe('CourseOverviewService', () => {
     });
 
     it('should sort exercises by dueDate and by title if dueDate are equal or undefined', () => {
-        const exercises = [currentExercise, pastExercise, futureExercise];
+        const exercises = [dueSoonExercise, pastExercise, futureExercise];
         const sortedExercises = service.sortExercises(exercises);
 
         expect(sortedExercises[0].id).toBe(futureExercise.id);
-        expect(sortedExercises[1].id).toBe(currentExercise.id);
+        expect(sortedExercises[1].id).toBe(dueSoonExercise.id);
         expect(sortedExercises[2].id).toBe(pastExercise.id);
     });
 
@@ -155,7 +178,7 @@ describe('CourseOverviewService', () => {
     });
 
     it('should group exercises by start date and map to sidebar card elements', () => {
-        const sortedExercises = [futureExercise, pastExercise, currentExercise];
+        const sortedExercises = [futureExercise, pastExercise, dueSoonExercise, currentExercise, futureExercise2, currentExerciseNoDueDate];
 
         jest.spyOn(service, 'getCorrespondingExerciseGroupByDate');
 
@@ -163,12 +186,57 @@ describe('CourseOverviewService', () => {
         const groupedExercises = service.groupExercisesByDueDate(sortedExercises);
 
         expect(groupedExercises['current'].entityData).toHaveLength(1);
+        expect(groupedExercises['dueSoon'].entityData).toHaveLength(1);
         expect(groupedExercises['past'].entityData).toHaveLength(1);
-        expect(groupedExercises['future'].entityData).toHaveLength(1);
-        expect(service.mapExerciseToSidebarCardElement).toHaveBeenCalledTimes(3);
+        expect(groupedExercises['future'].entityData).toHaveLength(2);
+        expect(groupedExercises['noDate'].entityData).toHaveLength(1);
+        expect(service.mapExerciseToSidebarCardElement).toHaveBeenCalledTimes(6);
         expect(groupedExercises['current'].entityData[0].title).toBe('Current Exercise');
+        expect(groupedExercises['dueSoon'].entityData[0].title).toBe('DueSoon Exercise');
         expect(groupedExercises['past'].entityData[0].title).toBe('Past Exercise');
         expect(groupedExercises['future'].entityData[0].title).toBe('Future Exercise');
+        expect(groupedExercises['future'].entityData[1].title).toBe('Future Exercise 2');
+        expect(groupedExercises['noDate'].entityData[0].title).toBe('Current Exercise No Due Date');
+    });
+
+    describe.each([
+        // no start date
+        { start: undefined, end: undefined, group: 'noDate' },
+        { start: undefined, end: dayjs().subtract(1, 'hour'), group: 'past' },
+        { start: undefined, end: dayjs().add(2, 'days'), group: 'dueSoon' },
+        { start: undefined, end: dayjs().add(4, 'days'), group: 'current' },
+        // start date in past
+        { start: dayjs().subtract(7, 'days'), end: undefined, group: 'noDate' },
+        { start: dayjs().subtract(7, 'days'), end: dayjs().subtract(1, 'hour'), group: 'past' },
+        { start: dayjs().subtract(7, 'days'), end: dayjs().add(2, 'days'), group: 'dueSoon' },
+        { start: dayjs().subtract(7, 'days'), end: dayjs().add(4, 'days'), group: 'current' },
+        // start date in the future
+        { start: dayjs().add(5, 'minutes'), end: undefined, group: 'future' },
+        { start: dayjs().add(5, 'minutes'), end: dayjs().subtract(1, 'hour'), group: 'future' }, // this case should never happen in actual exercises
+        { start: dayjs().add(5, 'minutes'), end: dayjs().add(2, 'days'), group: 'future' },
+        { start: dayjs().add(5, 'minutes'), end: dayjs().add(4, 'days'), group: 'future' },
+    ])('should group exercises into the correct groups based on start and end dates (expected group: $group)', ({ start, end, group }) => {
+        it.each([
+            { releaseDate: undefined, startDate: start, endDate: end },
+            { releaseDate: start, startDate: undefined, endDate: end },
+            // release date can only be same as or earlier than start date
+            { releaseDate: start, startDate: start, endDate: end },
+            { releaseDate: start?.subtract(1, 'hour'), startDate: start, endDate: end },
+        ])('should group them according to start or release date (release: $releaseDate, start: $startDate, end: $endDate)', ({ releaseDate, startDate, endDate }) => {
+            const exercise = new TextExercise(course, undefined);
+            exercise.releaseDate = releaseDate;
+            exercise.startDate = startDate;
+            exercise.dueDate = endDate;
+
+            const groupedExercises = service.groupExercisesByDueDate([exercise]);
+            for (const possibleGroup in ['past', 'current', 'dueSoon', 'future', 'noDate']) {
+                if (possibleGroup == group) {
+                    expect(groupedExercises[possibleGroup].entityData).toHaveLength(1);
+                } else {
+                    expect(groupedExercises[possibleGroup]).toBeUndefined();
+                }
+            }
+        });
     });
 
     it('should group all exercises as past when all exercises have past due dates', () => {

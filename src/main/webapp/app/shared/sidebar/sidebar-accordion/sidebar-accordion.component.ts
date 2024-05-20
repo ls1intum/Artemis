@@ -6,6 +6,7 @@ import { Params } from '@angular/router';
 const DEFAULT_EXERCISE_COLLAPSE_STATE: ExerciseCollapseState = {
     future: true,
     current: false,
+    dueSoon: false,
     past: true,
     noDate: true,
 };

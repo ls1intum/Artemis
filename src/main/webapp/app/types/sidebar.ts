@@ -3,7 +3,7 @@ import { DifficultyLevel, Exercise } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 export type SidebarCardSize = 'S' | 'M' | 'L';
-export type TimeGroupCategory = 'past' | 'current' | 'future' | 'noDate';
+export type TimeGroupCategory = 'past' | 'current' | 'dueSoon' | 'future' | 'noDate';
 export type TutorialGroupCategory = 'all' | 'registered' | 'further';
 export type SidebarTypes = 'exercise' | 'default';
 
