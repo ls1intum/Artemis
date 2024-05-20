@@ -178,7 +178,8 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
         @Test
         void getCheckoutDirectoriesForJava() {
-            RepositoriesCheckoutDirectoryDTO checkoutDirectories = continuousIntegrationService.getCheckoutDirectoriesForTemplateAndSubmissionBuildPlan(ProgrammingLanguage.JAVA);
+            RepositoriesCheckoutDirectoryDTO checkoutDirectories = continuousIntegrationService
+                    .getCheckoutDirectoryPathsForTemplateAndSubmissionBuildPlan(ProgrammingLanguage.JAVA);
             assertThat(checkoutDirectories.exerciseCheckoutDirectory()).isEqualTo("/assignment");
             assertThat(checkoutDirectories.solutionCheckoutDirectory()).isEqualTo("");
             assertThat(checkoutDirectories.testCheckoutDirectory()).isEqualTo("/");
@@ -186,7 +187,8 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
         @Test
         void getCheckoutDirectoriesForOcaml() {
-            RepositoriesCheckoutDirectoryDTO checkoutDirectories = continuousIntegrationService.getCheckoutDirectoriesForTemplateAndSubmissionBuildPlan(ProgrammingLanguage.OCAML);
+            RepositoriesCheckoutDirectoryDTO checkoutDirectories = continuousIntegrationService
+                    .getCheckoutDirectoryPathsForTemplateAndSubmissionBuildPlan(ProgrammingLanguage.OCAML);
             assertThat(checkoutDirectories.exerciseCheckoutDirectory()).isEqualTo("/assignment");
             assertThat(checkoutDirectories.solutionCheckoutDirectory()).isEqualTo("/solution");
             assertThat(checkoutDirectories.testCheckoutDirectory()).isEqualTo("/tests");
