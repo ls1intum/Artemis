@@ -232,7 +232,7 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
             solutionCheckoutDirectory = ContinuousIntegrationService.RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(programmingLanguage);
             solutionCheckoutDirectory = startPathWithRootDirectory(solutionCheckoutDirectory);
         }
-        catch (UnsupportedOperationException e) {
+        catch (IllegalArgumentException exception) {
             // not checked out during template & submission build
         }
 
