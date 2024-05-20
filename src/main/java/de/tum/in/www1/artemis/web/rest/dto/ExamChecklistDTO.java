@@ -26,6 +26,26 @@ public class ExamChecklistDTO {
 
     private boolean allExamExercisesAllStudentsPrepared;
 
+    private boolean existsUnassessedQuizzes;
+
+    private boolean existsUnsubmittedExercises;
+
+    public boolean getExistsUnassessedQuizzes() {
+        return existsUnassessedQuizzes;
+    }
+
+    public void setExistsUnassessedQuizzes(boolean existsUnassessedQuizzes) {
+        this.existsUnassessedQuizzes = existsUnassessedQuizzes;
+    }
+
+    public boolean getExistsUnsubmittedExercises() {
+        return existsUnsubmittedExercises;
+    }
+
+    public void setExistsUnsubmittedExercises(boolean existsUnsubmittedExercises) {
+        this.existsUnsubmittedExercises = existsUnsubmittedExercises;
+    }
+
     public Long getNumberOfTotalParticipationsForAssessment() {
         return numberOfTotalParticipationsForAssessment;
     }

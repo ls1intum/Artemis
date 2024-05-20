@@ -555,4 +555,41 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     default Submission findByIdElseThrow(long submissionId) {
         return findById(submissionId).orElseThrow(() -> new EntityNotFoundException("Submission", submissionId));
     }
+
+    /**
+     * GChecks if unassessed Quiz Submissions exist for the given exam
+     *
+     * @param examId the ID of the exam
+     * @return boolean indicating if there are unassessed Quiz Submission
+     */
+    @Query("""
+                SELECT COUNT(p.exercise) > 0
+                FROM StudentParticipation p
+                    JOIN p.submissions s
+                    LEFT JOIN s.results r
+                WHERE p.exercise.exerciseGroup.exam.id = :examId
+                    AND p.testRun IS FALSE
+                    AND TYPE(s) = QuizSubmission
+                    AND s.submitted IS TRUE
+                    AND r.id IS NULL
+            """)
+    boolean existsUnassessedQuizzesByExamId(@Param("examId") long examId);
+
+    /**
+     * Checks if unsubmitted text and modeling submissions exist for the exam with the given id
+     *
+     * @param examId the ID of the exam
+     * @return boolean indicating if there are unsubmitted text and modelling submissions
+     */
+    @Query("""
+            SELECT COUNT(p.exercise) > 0
+            FROM StudentParticipation p
+                JOIN p.submissions s
+            WHERE p.exercise.exerciseGroup.exam.id = :examId
+                AND p.testRun IS FALSE
+                AND TYPE(s) IN (TextSubmission, ModelingSubmission)
+                AND (s.submitted IS NULL OR s.submitted IS FALSE)
+                AND s.submissionDate IS NULL
+            """)
+    boolean existsUnsubmittedExercisesByExamId(@Param("examId") long examId);
 }
