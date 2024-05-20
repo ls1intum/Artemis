@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.competency.KnowledgeArea;
-import de.tum.in.www1.artemis.domain.competency.Source;
 import de.tum.in.www1.artemis.domain.competency.StandardizedCompetency;
 import de.tum.in.www1.artemis.repository.SourceRepository;
 import de.tum.in.www1.artemis.repository.competency.KnowledgeAreaRepository;
@@ -22,6 +21,7 @@ import de.tum.in.www1.artemis.repository.competency.StandardizedCompetencyReposi
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.service.competency.StandardizedCompetencyService;
 import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreaResultDTO;
+import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.SourceDTO;
 
 /**
  * REST controller for managing {@link StandardizedCompetency} entities.
@@ -103,10 +103,11 @@ public class StandardizedCompetencyResource {
      */
     @GetMapping("sources")
     @EnforceAtLeastInstructor
-    public ResponseEntity<List<Source>> getSources() {
-        // TODO: replace with sourceDTO.
+    public ResponseEntity<List<SourceDTO>> getSources() {
         log.debug("REST request to get all sources");
 
-        return ResponseEntity.ok().body(sourceRepository.findAll());
+        var sourceDTOs = sourceRepository.findAll().stream().map(SourceDTO::of).toList();
+
+        return ResponseEntity.ok().body(sourceDTOs);
     }
 }

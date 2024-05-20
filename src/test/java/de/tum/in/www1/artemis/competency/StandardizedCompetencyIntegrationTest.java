@@ -28,6 +28,7 @@ import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreaRequestDTO;
 import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreaResultDTO;
 import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreasForImportDTO;
+import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.SourceDTO;
 import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.StandardizedCompetencyRequestDTO;
 import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.StandardizedCompetencyResultDTO;
 
@@ -468,12 +469,31 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationInd
 
                 assertThat(actualKnowledgeArea).isEqualTo(expectedKnowledgeArea);
             }
+
+            @Test
+            @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+            void shouldReturn404() throws Exception {
+                request.get("/api/standardized-competencies/knowledge-areas/" + ID_NOT_EXISTS, HttpStatus.NOT_FOUND, KnowledgeArea.class);
+            }
         }
 
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-        void shouldReturn404() throws Exception {
-            request.get("/api/standardized-competencies/knowledge-areas/" + ID_NOT_EXISTS, HttpStatus.NOT_FOUND, KnowledgeArea.class);
+        @Nested
+        class GetSources {
+
+            @Test
+            @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+            void shouldReturnSources() throws Exception {
+                var source1 = new Source("title", "author", "http://localhost:1");
+                source1.setId(1L);
+                var source2 = new Source("title2", "author2", "http://localhost:2");
+                source2.setId(2L);
+                var sources = sourceRepository.saveAll(List.of(source1, source2));
+                var expectedSources = sources.stream().map(SourceDTO::of).toList();
+
+                var actualSources = request.getList("/api/standardized-competencies/sources", HttpStatus.OK, SourceDTO.class);
+
+                assertThat(actualSources).containsAll(expectedSources);
+            }
         }
     }
 }
