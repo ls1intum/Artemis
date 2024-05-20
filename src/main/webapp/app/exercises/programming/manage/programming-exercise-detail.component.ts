@@ -193,22 +193,14 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     this.loadingSolutionParticipationResults = false;
                     this.profileInfoSubscription = this.profileService.getProfileInfo().subscribe(async (profileInfo) => {
                         if (profileInfo) {
-                            if (
-                                this.programmingExercise.projectKey &&
-                                this.programmingExercise.templateParticipation &&
-                                this.programmingExercise.templateParticipation.buildPlanId
-                            ) {
+                            if (this.programmingExercise.projectKey && this.programmingExercise.templateParticipation?.buildPlanId) {
                                 this.programmingExercise.templateParticipation.buildPlanUrl = createBuildPlanUrl(
                                     profileInfo.buildPlanURLTemplate,
                                     this.programmingExercise.projectKey,
                                     this.programmingExercise.templateParticipation.buildPlanId,
                                 );
                             }
-                            if (
-                                this.programmingExercise.projectKey &&
-                                this.programmingExercise.solutionParticipation &&
-                                this.programmingExercise.solutionParticipation.buildPlanId
-                            ) {
+                            if (this.programmingExercise.projectKey && this.programmingExercise.solutionParticipation?.buildPlanId) {
                                 this.programmingExercise.solutionParticipation.buildPlanUrl = createBuildPlanUrl(
                                     profileInfo.buildPlanURLTemplate,
                                     this.programmingExercise.projectKey,
