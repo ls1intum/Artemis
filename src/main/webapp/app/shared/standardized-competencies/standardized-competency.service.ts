@@ -23,6 +23,6 @@ export class StandardizedCompetencyService {
     }
 
     getSources() {
-        return this.httpClient.get<Source>(`${this.resourceURL}/sources`, { observe: 'response' });
+        return this.httpClient.get<Source[]>(`${this.resourceURL}/sources`, { observe: 'response' });
     }
 }

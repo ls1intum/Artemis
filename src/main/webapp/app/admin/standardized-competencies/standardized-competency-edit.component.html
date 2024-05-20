@@ -83,10 +83,10 @@
             <label for="source-select" jhiTranslate="artemisApp.standardizedCompetency.model.source"></label>
             @if (isEditing) {
                 <select id="source-select" class="form-select" formControlName="sourceId">
+                    <option [ngValue]="undefined"></option>
                     @for (source of sources; track source.id) {
-                        <!-- TODO maybe a "none" for empty values? -> also for knowledge areas. but do this in follow-up. -->
                         <option [ngValue]="source.id">
-                            <!-- TODO: test select with author maybe too? -->
+                            <!-- TODO: what to display here. Author aswell? -->
                             {{ source.title }}
                         </option>
                     }
