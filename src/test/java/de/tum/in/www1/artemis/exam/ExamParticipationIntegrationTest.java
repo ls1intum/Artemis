@@ -1097,7 +1097,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
         userUtilService.changeUser(TEST_PREFIX + "tutor1");
 
         // check that a modified version is returned
-        // check if stats are set correctly for the instructor
+        // check if stats are set correctly for the tutor
         examChecklistDTO = examService.getStatsForChecklist(exam, false);
         assertThat(examChecklistDTO).isNotNull();
         assertThat(examChecklistDTO.numberOfGeneratedStudentExams()).isNull();
