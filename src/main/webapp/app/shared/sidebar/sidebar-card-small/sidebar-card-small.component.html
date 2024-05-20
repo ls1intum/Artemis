@@ -2,7 +2,7 @@
     id="test-sidebar-card"
     class="pointer rounded-3 col-12 border-start border-5 highlight-card bg-module padding-small"
     [routerLink]="itemSelected ? '../' + sidebarItem?.id : './' + sidebarItem?.id"
-    (click)="emitStoreLastSelectedItem(sidebarItem.id)"
+    (click)="emitStoreAndRefresh(sidebarItem.id)"
     [routerLinkActive]="'bg-selected border-selected'"
 >
     <jhi-sidebar-card-item [sidebarType]="sidebarType" [sidebarItem]="sidebarItem" />

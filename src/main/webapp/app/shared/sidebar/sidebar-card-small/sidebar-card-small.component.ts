@@ -1,5 +1,4 @@
 import { Component, Input } from '@angular/core';
-import { DifficultyLevel } from 'app/entities/exercise.model';
 import { SidebarCardElement, SidebarTypes } from 'app/types/sidebar';
 import { SidebarEventService } from '../sidebar-event.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -10,7 +9,6 @@ import { Location } from '@angular/common';
     styleUrls: ['./sidebar-card-small.component.scss'],
 })
 export class SidebarCardSmallComponent {
-    DifficultyLevel = DifficultyLevel;
     @Input({ required: true }) sidebarItem: SidebarCardElement;
     @Input() sidebarType?: SidebarTypes;
     @Input() itemSelected?: boolean;
@@ -22,8 +20,9 @@ export class SidebarCardSmallComponent {
         private location: Location,
     ) {}
 
-    emitStoreLastSelectedItem(itemId: number | string) {
+    emitStoreAndRefresh(itemId: number | string) {
         this.sidebarEventService.emitSidebarCardEvent(itemId);
+        this.refreshChildComponent();
     }
 
     refreshChildComponent(): void {
