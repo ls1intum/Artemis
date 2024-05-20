@@ -443,7 +443,7 @@ public class ConversationMessagingService extends PostingService {
      * @return list of similar posts
      */
     public List<Post> getSimilarPosts(Long courseId, Post post) {
-        PostContextFilter postContextFilter = new PostContextFilter(courseId);
+        PostContextFilter postContextFilter = new PostContextFilter(courseId, null, null, null, null, false, false, false, null, null);
         List<Post> coursePosts = this.getCourseWideMessages(Pageable.unpaged(), postContextFilter, userRepository.getUser()).stream()
                 .sorted(Comparator.comparing(coursePost -> postContentCompareStrategy.performSimilarityCheck(post, coursePost))).toList();
 
