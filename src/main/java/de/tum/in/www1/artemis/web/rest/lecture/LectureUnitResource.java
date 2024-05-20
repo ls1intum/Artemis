@@ -199,11 +199,12 @@ public class LectureUnitResource {
      * @return the ResponseEntity with status 200 (OK) and the lecture unit in the body, or with status 404 (Not Found) if the lecture unit could not be found
      */
     @GetMapping("lecture-units/{lectureUnitId}")
+    @EnforceAtLeastStudent
     public ResponseEntity<LectureUnit> getLectureUnitById(@PathVariable @Valid Long lectureUnitId) {
         log.debug("REST request to get lecture unit with id: {}", lectureUnitId);
         var lectureUnit = lectureUnitRepository.findByIdWithCompletedUsersElseThrow(lectureUnitId);
-        lectureUnit.setCompleted(lectureUnit.isCompletedFor(userRepository.getUser()));
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, lectureUnit.getLecture().getCourse(), null);
+        lectureUnit.setCompleted(lectureUnit.isCompletedFor(userRepository.getUser()));
         return ResponseEntity.ok(lectureUnit);
     }
 }
