@@ -247,7 +247,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                     OR r IS NULL
                 )
             """)
-    Set<StudentParticipation> findByExerciseIdWithLatestAndManualResults(@Param("exerciseId") long exerciseId);
+    Set<StudentParticipation> findByExerciseIdWithLatestAndManualResultsAndAssessmentNote(@Param("exerciseId") long exerciseId);
 
     /**
      * Get all participations for a team exercise with each manual and latest results (determined by id).
@@ -288,7 +288,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                     OR r IS NULL
                 )
             """)
-    Set<StudentParticipation> findByExerciseIdWithLatestAndManualRatedResults(@Param("exerciseId") long exerciseId);
+    Set<StudentParticipation> findByExerciseIdWithLatestAndManualRatedResultsAndAssessmentNote(@Param("exerciseId") long exerciseId);
 
     @Query("""
             SELECT DISTINCT p
