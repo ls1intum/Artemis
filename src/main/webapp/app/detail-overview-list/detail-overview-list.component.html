@@ -76,10 +76,15 @@
                                         </a>
                                     }
                                 </div>
-                                <div>
-                                    <span jhiTranslate="artemisApp.programmingExercise.preview.checkoutDirectoryDuringBuildExecution"></span>:
-                                    <code>{{ detail.data.checkoutDirectory }}</code>
-                                </div>
+                                @if (isLocalVC && detail.data.isAtLeastEditor) {
+                                    <div>
+                                        <span jhiTranslate="artemisApp.programmingExercise.preview.checkoutDirectoryDuringBuildExecution"></span>:
+                                        <code>{{ detail.data.checkoutDirectory }}</code>
+                                        @if (!detail.data.isCheckoutDirectoryForSubmissionAndTemplateBuild) {
+                                            <jhi-help-icon text="artemisApp.programmingExercise.preview.checkoutDirectoryDuringBuildExecution" />
+                                        }
+                                    </div>
+                                }
                             } @else {
                                 <ng-container *ngTemplateOutlet="noData" />
                             }

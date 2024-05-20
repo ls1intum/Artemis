@@ -94,6 +94,8 @@ interface ProgrammingRepositoryButtonsDetail extends DetailBase {
         showOpenLink?: boolean;
         type: ProgrammingExerciseInstructorRepositoryType;
         checkoutDirectory?: string;
+        isCheckoutDirectoryForSubmissionAndTemplateBuild?: boolean;
+        isAtLeastEditor?: boolean;
     };
 }
 

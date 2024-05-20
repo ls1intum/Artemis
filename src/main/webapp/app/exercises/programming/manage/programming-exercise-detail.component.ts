@@ -250,7 +250,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     this.exerciseDetailSections = this.getExerciseDetails();
                 });
 
-            if (this.programmingExercise.programmingLanguage) {
+            if (programmingExercise.isAtLeastEditor && this.programmingExercise.programmingLanguage) {
                 this.checkoutDirectoriesSubscription = this.programmingExerciseService
                     .getCheckoutDirectoriesForProgrammingLanguage(this.programmingExercise.programmingLanguage)
                     .subscribe((checkoutDirectories) => {
@@ -377,6 +377,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         type: 'TEMPLATE',
                         showOpenLink: !this.localVCEnabled,
                         checkoutDirectory: this.localVCEnabled ? this.checkoutDirectories?.exerciseCheckoutDirectory : undefined,
+                        isCheckoutDirectoryForSubmissionAndTemplateBuild: true,
+                        isAtLeastEditor: exercise.isAtLeastEditor,
                     },
                 },
                 {
@@ -387,7 +389,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         exerciseId: exercise.id,
                         type: 'SOLUTION',
                         showOpenLink: !this.localVCEnabled,
-                        checkoutDirectory: this.localVCEnabled ? this.checkoutDirectories?.solutionCheckoutDirectory : undefined,
+                        checkoutDirectory: this.localVCEnabled ? this.getSolutionCheckoutDirectory().checkoutDirectory : undefined,
+                        isCheckoutDirectoryForSubmissionAndTemplateBuild: this.getSolutionCheckoutDirectory().isCheckoutDirectoryForSubmissionAndTemplateBuild,
+                        isAtLeastEditor: exercise.isAtLeastEditor,
                     },
                 },
                 {
@@ -399,6 +403,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         type: 'TESTS',
                         showOpenLink: !this.localVCEnabled,
                         checkoutDirectory: this.localVCEnabled ? this.checkoutDirectories?.testCheckoutDirectory : undefined,
+                        isCheckoutDirectoryForSubmissionAndTemplateBuild: true,
+                        isAtLeastEditor: exercise.isAtLeastEditor,
                     },
                 },
                 this.supportsAuxiliaryRepositories &&
@@ -727,6 +733,23 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 this.onError(err);
             },
         });
+    }
+
+    private getSolutionCheckoutDirectory(): {
+        checkoutDirectory: string;
+        isCheckoutDirectoryForSubmissionAndTemplateBuild: boolean;
+    } {
+        if (this.checkoutDirectories?.solutionCheckoutDirectory) {
+            return {
+                checkoutDirectory: this.checkoutDirectories.solutionCheckoutDirectory,
+                isCheckoutDirectoryForSubmissionAndTemplateBuild: true,
+            };
+        }
+
+        return {
+            checkoutDirectory: this.checkoutDirectories?.exerciseCheckoutDirectory ?? '',
+            isCheckoutDirectoryForSubmissionAndTemplateBuild: false,
+        };
     }
 
     /**
