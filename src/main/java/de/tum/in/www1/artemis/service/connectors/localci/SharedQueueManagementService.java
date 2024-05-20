@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import jakarta.annotation.PostConstruct;
 
@@ -119,11 +120,11 @@ public class SharedQueueManagementService {
         return processingJobs.values().stream().filter(job -> job.courseId() == courseId).toList();
     }
 
-    public List<LocalCIBuildJobQueueItem> getQueuedJobsForParticipation(long participationId) {
-        return queue.stream().filter(job -> job.participationId() == participationId).toList();
+    public List<LocalCIBuildJobItem> getQueuedJobsForParticipation(long participationId) {
+        return Stream.of(buildJobItemMap.get(participationId)).filter(Objects::nonNull).toList();
     }
 
-    public List<LocalCIBuildJobQueueItem> getProcessingJobsForParticipation(long participationId) {
+    public List<LocalCIBuildJobItem> getProcessingJobsForParticipation(long participationId) {
         return processingJobs.values().stream().filter(job -> job.participationId() == participationId).toList();
     }
 

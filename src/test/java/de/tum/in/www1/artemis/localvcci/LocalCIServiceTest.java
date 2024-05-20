@@ -37,7 +37,8 @@ import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService
 import de.tum.in.www1.artemis.service.connectors.localci.buildagent.SharedQueueProcessingService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildConfig;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.JobTimingInfo;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobItem;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobItemReference;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.RepositoryInfo;
 
 class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
@@ -65,14 +66,17 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
     @Autowired
     private HazelcastInstance hazelcastInstance;
 
-    protected IQueue<LocalCIBuildJobQueueItem> queuedJobs;
+    protected IQueue<LocalCIBuildJobItemReference> queuedJobs;
 
-    protected IMap<Long, LocalCIBuildJobQueueItem> processingJobs;
+    protected IMap<Long, LocalCIBuildJobItem> buildJobItemIMap;
+
+    protected IMap<String, LocalCIBuildJobItem> processingJobs;
 
     @BeforeEach
     void setUp() {
         queuedJobs = hazelcastInstance.getQueue("buildJobQueue");
         processingJobs = hazelcastInstance.getMap("processingJobs");
+        buildJobItemIMap = hazelcastInstance.getMap("buildJobItemMap");
 
         // remove listener to avoid triggering build job processing
         sharedQueueProcessingService.removeListener();
@@ -82,6 +86,7 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
     void tearDown() {
         queuedJobs.clear();
         processingJobs.clear();
+        buildJobItemIMap.clear();
 
         // init to activate queue listener again
         sharedQueueProcessingService.init();
@@ -99,23 +104,28 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         BuildConfig buildConfig = new BuildConfig("echo 'test'", "test", "test", "test", "test", "test", null, null, false, false, false, null);
         RepositoryInfo repositoryInfo = new RepositoryInfo("test", null, RepositoryType.USER, "test", "test", "test", null, null);
 
-        LocalCIBuildJobQueueItem job1 = new LocalCIBuildJobQueueItem("1", "job1", "address1", participation.getId(), course.getId(), 1, 1, 1,
+        LocalCIBuildJobItem job1 = new LocalCIBuildJobItem("1", "job1", "address1", participation.getId(), course.getId(), 1, 1, 1,
                 de.tum.in.www1.artemis.domain.enumeration.BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo, buildConfig, null);
-        LocalCIBuildJobQueueItem job2 = new LocalCIBuildJobQueueItem("2", "job2", "address1", participation.getId(), course.getId(), 1, 1, 1,
+        LocalCIBuildJobItem job2 = new LocalCIBuildJobItem("2", "job2", "address1", participation.getId(), course.getId(), 1, 1, 1,
                 de.tum.in.www1.artemis.domain.enumeration.BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo, buildConfig, null);
 
+        LocalCIBuildJobItemReference job1Reference = new LocalCIBuildJobItemReference(job1);
+
         queuedJobs = hazelcastInstance.getQueue("buildJobQueue");
+        buildJobItemIMap = hazelcastInstance.getMap("buildJobItemMap");
         processingJobs = hazelcastInstance.getMap("processingJobs");
 
         // No build jobs for the participation are queued or building
         assertThat(continuousIntegrationService.getBuildStatus(participation)).isEqualTo(BuildStatus.INACTIVE);
 
-        queuedJobs.add(job1);
-        processingJobs.put(1L, job2);
+        queuedJobs.add(job1Reference);
+        buildJobItemIMap.put(job1.participationId(), job1);
+        processingJobs.put(job2.id(), job2);
 
         // At least one build job for the participation is queued
         assertThat(continuousIntegrationService.getBuildStatus(participation)).isEqualTo(BuildStatus.QUEUED);
         queuedJobs.clear();
+        buildJobItemIMap.clear();
 
         // No build jobs for the participation are queued, but at least one is building
         assertThat(continuousIntegrationService.getBuildStatus(participation)).isEqualTo(BuildStatus.BUILDING);
