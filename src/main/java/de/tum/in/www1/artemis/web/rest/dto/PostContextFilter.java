@@ -11,9 +11,8 @@ import de.tum.in.www1.artemis.domain.metis.PostSortCriterion;
 public record PostContextFilter(@NotBlank Long courseId, long[] courseWideChannelIds, Long plagiarismCaseId, Long conversationId, String searchText, Boolean filterToUnresolved,
         Boolean filterToOwn, Boolean filterToAnsweredOrReacted, PostSortCriterion postSortCriterion, SortingOrder sortingOrder) {
 
-    /**
-     * This is an instance initializer block for the PostContextFilter record.
-     * It checks if the Boolean values filterToUnresolved, filterToOwn, and filterToAnsweredOrReacted are null.
+    /*
+     * Checks if the Boolean values filterToUnresolved, filterToOwn, and filterToAnsweredOrReacted are null.
      * If they are, it assigns them a default value of false.
      */
     public PostContextFilter {
