@@ -12,8 +12,13 @@ import java.util.Map;
 
 import jakarta.ws.rs.BadRequestException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.competency.KnowledgeArea;
 import de.tum.in.www1.artemis.domain.competency.Source;
@@ -27,6 +32,7 @@ import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.StandardizedCo
 import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.StandardizedCompetencyCatalogDTO.StandardizedCompetencyForCatalogDTO;
 import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.StandardizedCompetencyRequestDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 /**
  * Service for managing {@link StandardizedCompetency} entities.
@@ -34,6 +40,10 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Profile(PROFILE_CORE)
 @Service
 public class StandardizedCompetencyService {
+
+    private static final ObjectMapper mapper = new ObjectMapper();
+
+    private static final Logger log = LoggerFactory.getLogger(StandardizedCompetencyService.class);
 
     private final StandardizedCompetencyRepository standardizedCompetencyRepository;
 
@@ -175,14 +185,23 @@ public class StandardizedCompetencyService {
     }
 
     /**
-     * Returns the catalog of knowledge areas, standardized competencies and sources of this Artemis instance. Used for exporting.
+     * Returns a pretty-printed JSON string containing the catalog of knowledge areas, standardized competencies and sources of this Artemis instance.
      *
-     * @return the DTO containing the data to export
+     * @return the JSON string containing the catalog to export
      */
-    public StandardizedCompetencyCatalogDTO exportStandardizedCompetencyCatalog() {
+    public String exportStandardizedCompetencyCatalog() {
         var knowledgeAreas = getAllForTreeView();
         var sources = sourceRepository.findAll();
-        return StandardizedCompetencyCatalogDTO.of(knowledgeAreas, sources);
+        var catalog = StandardizedCompetencyCatalogDTO.of(knowledgeAreas, sources);
+
+        try {
+            return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(catalog);
+        }
+        catch (JsonProcessingException e) {
+            var error = "Error pretty printing JSON";
+            log.error(error, e);
+            throw new InternalServerErrorException(error);
+        }
     }
 
     /**

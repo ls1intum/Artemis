@@ -155,12 +155,9 @@ describe('AdminStandardizedCompetencyService', () => {
     }));
 
     it('should export competencies', fakeAsync(() => {
-        let actualResult = new HttpResponse<KnowledgeAreasForImportDTO>();
-        const expectedResult: KnowledgeAreasForImportDTO = {
-            knowledgeAreas: [],
-            sources: [],
-        };
-        const returnedFromService: KnowledgeAreasForImportDTO = { ...expectedResult };
+        let actualResult = new HttpResponse<string>();
+        const expectedResult: string = '{ knowledgeAreas: [], sources: [] }';
+        const returnedFromService = expectedResult;
 
         adminStandardizedCompetencyService
             .exportStandardizedCompetencyCatalog()

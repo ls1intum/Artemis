@@ -39,6 +39,6 @@ export class AdminStandardizedCompetencyService {
     }
 
     exportStandardizedCompetencyCatalog() {
-        return this.httpClient.get<KnowledgeAreasForImportDTO>(`${this.resourceURL}/export`, { observe: 'response' });
+        return this.httpClient.get<string>(`${this.resourceURL}/export`, { observe: 'response' });
     }
 }
