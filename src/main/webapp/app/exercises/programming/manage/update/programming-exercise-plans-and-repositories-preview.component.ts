@@ -62,12 +62,9 @@ export class ProgrammingExercisePlansAndRepositoriesPreviewComponent implements 
 
         if (
             this.isLocal &&
-            this.programmingExerciseCreationConfig &&
-            this.programmingExerciseCreationConfig.selectedProgrammingLanguage &&
-            changes.programmingExerciseCreationConfig &&
-            changes.programmingExerciseCreationConfig.currentValue &&
-            changes.programmingExerciseCreationConfig.currentValue.selectedProgrammingLanguage !==
-                changes.programmingExerciseCreationConfig.previousValue?.selectedProgrammingLanguage
+            this.programmingExerciseCreationConfig?.selectedProgrammingLanguage &&
+            changes.programmingExerciseCreationConfig?.currentValue?.selectedProgrammingLanguage !==
+                changes.programmingExerciseCreationConfig?.previousValue?.selectedProgrammingLanguage
         ) {
             this.updateCheckoutDirectories();
         }
