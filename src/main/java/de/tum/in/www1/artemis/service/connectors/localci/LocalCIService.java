@@ -232,7 +232,7 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
             solutionCheckoutDirectory = ContinuousIntegrationService.RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(programmingLanguage);
             solutionCheckoutDirectory = startPathWithRootDirectory(solutionCheckoutDirectory);
         }
-        catch (Exception e) {
+        catch (UnsupportedOperationException e) {
             // not checked out during template & submission build
         }
 
@@ -241,6 +241,10 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
 
     private String startPathWithRootDirectory(String checkoutDirectoryPath) {
         final String ROOT_DIRECTORY = "/";
+        if (checkoutDirectoryPath == null || checkoutDirectoryPath.isEmpty()) {
+            return ROOT_DIRECTORY;
+        }
+
         return checkoutDirectoryPath.startsWith(ROOT_DIRECTORY) ? checkoutDirectoryPath : ROOT_DIRECTORY + checkoutDirectoryPath;
     }
 }
