@@ -10,26 +10,15 @@ import { ArtemisTestModule } from '../../../test.module';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockNotificationService } from '../../../helpers/mocks/service/mock-notification.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import {
-    LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE,
-    NEW_MESSAGE_TITLE,
-    Notification,
-    QUIZ_EXERCISE_STARTED_TEXT,
-    QUIZ_EXERCISE_STARTED_TITLE,
-} from 'app/entities/notification.model';
+import { NEW_MESSAGE_TITLE, Notification, QUIZ_EXERCISE_STARTED_TEXT, QUIZ_EXERCISE_STARTED_TITLE } from 'app/entities/notification.model';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
-import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
-import { MockExamExerciseUpdateService } from '../../../helpers/mocks/service/mock-exam-exercise-update.service';
-import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
-import { MockExamParticipationService } from '../../../helpers/mocks/service/mock-exam-participation.service';
 
 describe('Notification Popup Component', () => {
     let notificationPopupComponent: NotificationPopupComponent;
     let notificationPopupComponentFixture: ComponentFixture<NotificationPopupComponent>;
     let notificationService: NotificationService;
-    let examExerciseUpdateService: ExamExerciseUpdateService;
     let router: Router;
 
     const generateQuizNotification = (notificationId: number) => {
@@ -46,18 +35,21 @@ describe('Notification Popup Component', () => {
     const quizNotification = generateQuizNotification(1);
 
     const generateNewMessageNotification = (notificationId: number) => {
-        const generatedNotification = { id: notificationId, title: NEW_MESSAGE_TITLE, text: 'New message from user. In course' } as Notification;
-        generatedNotification.target = JSON.stringify({ mainPage: 'courses', course: 1, entity: 'message', id: 20, conversation: 1 });
+        const generatedNotification = {
+            id: notificationId,
+            title: NEW_MESSAGE_TITLE,
+            text: 'New message from user. In course',
+        } as Notification;
+        generatedNotification.target = JSON.stringify({
+            mainPage: 'courses',
+            course: 1,
+            entity: 'message',
+            id: 20,
+            conversation: 1,
+        });
         return generatedNotification;
     };
     const newMessageNotification = generateNewMessageNotification(2);
-
-    const generateExamExerciseUpdateNotification = () => {
-        const generatedNotification = { title: LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE, text: 'Fixed mistake' } as Notification;
-        generatedNotification.target = JSON.stringify({ mainPage: 'courses', course: 1, entity: 'exams', exam: 1, exercise: 7, problemStatement: 'Fixed Problem Statement' });
-        return generatedNotification;
-    };
-    const examExerciseUpdateNotification = generateExamExerciseUpdateNotification();
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -68,8 +60,6 @@ describe('Notification Popup Component', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: NotificationService, useClass: MockNotificationService },
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: ExamExerciseUpdateService, useClass: MockExamExerciseUpdateService },
-                { provide: ExamParticipationService, useClass: MockExamParticipationService },
                 { provide: ArtemisTranslatePipe, useClass: ArtemisTranslatePipe },
             ],
         })
@@ -78,7 +68,6 @@ describe('Notification Popup Component', () => {
                 notificationPopupComponentFixture = TestBed.createComponent(NotificationPopupComponent);
                 notificationPopupComponent = notificationPopupComponentFixture.componentInstance;
                 notificationService = TestBed.inject(NotificationService);
-                examExerciseUpdateService = TestBed.inject(ExamExerciseUpdateService);
                 router = TestBed.inject(Router);
             });
     });
@@ -107,18 +96,6 @@ describe('Notification Popup Component', () => {
             button.nativeElement.click();
             expect(navigateToTarget).toHaveBeenCalledOnce();
             expect(forceComponentReload).toHaveBeenCalledOnce();
-        });
-
-        it('should navigate to exam exercise target when ExamExerciseUpdate notification is clicked', () => {
-            notificationPopupComponent.notifications = [examExerciseUpdateNotification];
-            notificationPopupComponentFixture.detectChanges();
-
-            const navigateToTarget = jest.spyOn(notificationPopupComponent, 'navigateToTarget');
-            const navigateToExamExercise = jest.spyOn(examExerciseUpdateService, 'navigateToExamExercise').mockReturnValue();
-            const button = notificationPopupComponentFixture.debugElement.query(By.css('.notification-popup-container > div button'));
-            button.nativeElement.click();
-            expect(navigateToTarget).toHaveBeenCalledOnce();
-            expect(navigateToExamExercise).toHaveBeenCalledOnce();
         });
 
         describe('General & Quiz', () => {
@@ -163,11 +140,6 @@ describe('Notification Popup Component', () => {
             jest.spyOn(notificationService, 'subscribeToSingleIncomingNotifications').mockReturnValue(replay);
             replay.next(quizNotification);
         };
-        const replaceSubscribeToNotificationUpdatesUsingExamExerciseUpdateNotification = () => {
-            const replay = new ReplaySubject<Notification>();
-            jest.spyOn(notificationService, 'subscribeToSingleIncomingNotifications').mockReturnValue(replay);
-            replay.next(examExerciseUpdateNotification);
-        };
 
         it('should append received notification', fakeAsync(() => {
             jest.spyOn(router, 'isActive').mockReturnValue(false);
@@ -190,19 +162,8 @@ describe('Notification Popup Component', () => {
 
         it('should not add received exam exercise update notification if user is not in exam mode', () => {
             jest.spyOn(router, 'isActive').mockReturnValue(false);
-            jest.spyOn(examExerciseUpdateService, 'updateLiveExamExercise').mockReturnValue();
-            replaceSubscribeToNotificationUpdatesUsingExamExerciseUpdateNotification();
             notificationPopupComponent.ngOnInit();
             expect(notificationPopupComponent.notifications).toBeEmpty();
-        });
-
-        it('should add received exam exercise update notification if user is in exam mode', () => {
-            jest.spyOn(router, 'isActive').mockReturnValue(true);
-            jest.spyOn(router, 'url', 'get').mockReturnValue('/courses/1/exams/95');
-            jest.spyOn(examExerciseUpdateService, 'updateLiveExamExercise').mockReturnValue();
-            replaceSubscribeToNotificationUpdatesUsingExamExerciseUpdateNotification();
-            notificationPopupComponent.ngOnInit();
-            expect(notificationPopupComponent.notifications).not.toBeEmpty();
         });
 
         it('should not add received not exam exercise relevant update notification if user is not in exam mode', () => {

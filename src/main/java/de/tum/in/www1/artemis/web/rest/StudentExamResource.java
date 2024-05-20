@@ -890,4 +890,21 @@ public class StudentExamResource {
 
         return ResponseEntity.ok(studentExamRepository.save(studentExam));
     }
+
+    /**
+     * GET courses/{courseId}/exams/{examId}/longest-working-time : Returns the value of
+     * the longest working time of the exam
+     *
+     * @param courseId the course to which the student exams belong to
+     * @param examId   the exam to which the student exams belong to
+     * @return the longest working time of the exam (in seconds)
+     */
+    @EnforceAtLeastInstructor
+    @GetMapping("courses/{courseId}/exams/{examId}/longest-working-time")
+    public ResponseEntity<Integer> getLongestWorkingTimeForExam(@PathVariable Long courseId, @PathVariable Long examId) {
+
+        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
+        Integer longestWorkingTime = studentExamRepository.findLongestWorkingTimeForExam(examId);
+        return ResponseEntity.ok().body(longestWorkingTime);
+    }
 }

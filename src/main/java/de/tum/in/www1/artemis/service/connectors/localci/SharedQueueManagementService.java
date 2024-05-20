@@ -119,6 +119,14 @@ public class SharedQueueManagementService {
         return processingJobs.values().stream().filter(job -> job.courseId() == courseId).toList();
     }
 
+    public List<LocalCIBuildJobQueueItem> getQueuedJobsForParticipation(long participationId) {
+        return queue.stream().filter(job -> job.participationId() == participationId).toList();
+    }
+
+    public List<LocalCIBuildJobQueueItem> getProcessingJobsForParticipation(long participationId) {
+        return processingJobs.values().stream().filter(job -> job.participationId() == participationId).toList();
+    }
+
     public List<LocalCIBuildAgentInformation> getBuildAgentInformation() {
         return buildAgentInformation.values().stream().toList();
     }

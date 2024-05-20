@@ -88,7 +88,7 @@ def create_course(session):
     response = session.post(url, data=body, headers=headers)
 
     if response.status_code == 201:
-        logging.success(f"Created course {course_name} with shortName {course_short_name} \n {response.json()}")
+        logging.info(f"Created course {course_name} with shortName {course_short_name} \n {response.json()}")
     else:
         logging.error("Problem with the group 'students' and interacting with a test server? Is 'is_local_course' in "
                       "'config.ini' set to 'False'?")

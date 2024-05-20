@@ -165,6 +165,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         buildJobItemMap.put(participation.getId(), buildJobQueueItem);
         queue.add(buildJobItemReference);
+        log.info("Added build job {} to the queue", buildJobId);
 
         dockerImageCleanupInfo.put(buildConfig.dockerImage(), jobTimingInfo.submissionDate());
     }

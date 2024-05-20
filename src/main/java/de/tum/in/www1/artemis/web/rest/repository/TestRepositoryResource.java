@@ -37,13 +37,13 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ProfileService;
-import de.tum.in.www1.artemis.service.RepositoryAccessService;
-import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCServletService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
+import de.tum.in.www1.artemis.service.programming.RepositoryAccessService;
+import de.tum.in.www1.artemis.service.programming.RepositoryService;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -209,15 +209,6 @@ public class TestRepositoryResource extends RepositoryResource {
             FileSubmissionError error = new FileSubmissionError(exerciseId, "checkoutFailed");
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, error.getMessage(), error);
         }
-        Map<String, String> fileSaveResult = saveFileSubmissions(submissions, repository);
-
-        if (commit) {
-            var response = super.commitChanges(exerciseId);
-            if (response.getStatusCode() != HttpStatus.OK) {
-                throw new ResponseStatusException(response.getStatusCode());
-            }
-        }
-
-        return ResponseEntity.ok(fileSaveResult);
+        return saveFilesAndCommitChanges(exerciseId, submissions, commit, repository);
     }
 }

@@ -14,6 +14,7 @@ export class ProgrammingExerciseTaskComponent implements OnInit {
     @Input() index: number;
     @Input() task: ProgrammingExerciseTask;
     @Input() openSubject: Subject<boolean>;
+    @Input() isExamExercise: boolean;
 
     @Output() updateTasksEvent = new EventEmitter<void>();
 
@@ -24,7 +25,7 @@ export class ProgrammingExerciseTaskComponent implements OnInit {
     readonly NOT_ASSIGNED_TO_TASK_NAME = 'Not assigned to task';
     open: boolean;
     onlyViewTestCases: boolean;
-    testCaseVisibilityList = Object.entries(Visibility).map(([name, value]) => ({ value, name }));
+    testCaseVisibilityList: { value: Visibility; name: string }[] = [];
 
     get numParticipations(): number {
         return this.programmingExerciseTaskService?.gradingStatistics?.numParticipations ?? 0;
@@ -40,6 +41,8 @@ export class ProgrammingExerciseTaskComponent implements OnInit {
             this.onlyViewTestCases = true;
             this.open = true;
         }
+
+        this.updateTestCaseVisibilityList();
     }
 
     testUpdateHandler(test: ProgrammingExerciseTestCase) {
@@ -74,5 +77,20 @@ export class ProgrammingExerciseTaskComponent implements OnInit {
 
     formatTestIndex(i: number, j: number): string {
         return `${i + 1}.${j + 1}`;
+    }
+
+    private updateTestCaseVisibilityList() {
+        this.testCaseVisibilityList = Object.entries(Visibility).map(([name, value]) => {
+            let displayName = name;
+
+            if (this.isExamExercise && value === Visibility.AfterDueDate) {
+                displayName = 'AfterReleaseDateOfResults';
+            }
+
+            return {
+                value,
+                name: displayName,
+            };
+        });
     }
 }
