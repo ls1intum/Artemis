@@ -93,8 +93,7 @@ public class PyrisWebhookService {
      * @param attachmentUnits The attachmentUnit that got Updated / erased
      */
     public void executeIngestionPipeline(Boolean shouldUpdate, List<AttachmentUnit> attachmentUnits) {
-        boolean xx = lectureChatEnabled(attachmentUnits.getFirst().getLecture().getCourse());
-        if (xx) {
+        if (lectureChatEnabled(attachmentUnits.getFirst().getLecture().getCourse())) {
             var jobToken = pyrisJobService.addIngestionWebhookJob();
             var settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, List.of(), artemisBaseUrl);
             List<PyrisLectureUnitWebhookDTO> toUpdateAttachmentUnits = new ArrayList<>();

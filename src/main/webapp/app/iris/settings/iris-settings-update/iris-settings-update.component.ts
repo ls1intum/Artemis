@@ -87,11 +87,8 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
             if (!settings) {
                 this.alertService.error('artemisApp.iris.settings.error.noSettings');
             }
-            console.log('FIRST INITIAL settings', this.irisSettings);
             this.irisSettings = settings;
-            console.log('FIRST INITIAL irisSettings', this.irisSettings);
             this.lectureChat = this.irisSettings?.irisChatSettings?.lectureChat ?? false;
-            console.log('FIRST INITIAL D', this.lectureChat);
             this.fillEmptyIrisSubSettings();
             this.originalIrisSettings = cloneDeep(settings);
             this.isDirty = false;
@@ -120,14 +117,12 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
     }
 
     saveIrisSettings(): void {
-        console.log('no#########################\n', this.irisSettings?.irisChatSettings?.lectureChat);
         this.syncLectureChatIngestion();
         this.isSaving = true;
         this.saveIrisSettingsObservable().subscribe(
             (response) => {
                 this.isSaving = false;
                 this.isDirty = false;
-                console.log(response.body);
                 this.irisSettings = response.body ?? undefined;
                 this.fillEmptyIrisSubSettings();
                 this.originalIrisSettings = cloneDeep(this.irisSettings);
@@ -138,7 +133,6 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
                 this.alertService.error('artemisApp.iris.settings.error.save');
             },
         );
-        console.log('yaaaas#########################\n', this.irisSettings?.irisChatSettings?.lectureChat);
     }
 
     saveIrisSettingsObservable(): Observable<HttpResponse<IrisSettings | undefined>> {
@@ -146,7 +140,6 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
             case IrisSettingsType.GLOBAL:
                 return this.irisSettingsService.setGlobalSettings(this.irisSettings!);
             case IrisSettingsType.COURSE:
-                console.log(' this.irisSettingsService.setCourseSettings(this.courseId!, this.irisSettings!);');
                 return this.irisSettingsService.setCourseSettings(this.courseId!, this.irisSettings!);
             case IrisSettingsType.EXERCISE:
                 return this.irisSettingsService.setProgrammingExerciseSettings(this.exerciseId!, this.irisSettings!);

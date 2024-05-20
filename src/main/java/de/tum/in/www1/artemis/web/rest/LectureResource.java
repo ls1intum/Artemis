@@ -389,7 +389,7 @@ public class LectureResource {
 
     private void helpExecuteIngestionPipeline(Lecture lecture) {
         List<AttachmentUnit> attachmentUnitList = lecture.getLectureUnits().stream().filter(lectureUnit -> lectureUnit.getType().equals("attachment"))
-                .map(lectureUnit -> (AttachmentUnit) lectureUnit).collect(Collectors.toList());
+                .map(lectureUnit -> (AttachmentUnit) lectureUnit).collect(Collectors.toCollection(ArrayList::new));
         webhookService.executeIngestionPipeline(true, attachmentUnitList);
     }
 }
