@@ -885,7 +885,7 @@ public class ProgrammingExerciseResource {
      * @return a DTO containing the checkout directories for the exercise, solution, and test repository for the requested programming language.
      */
     @GetMapping("programming-exercises/repository-checkout-directories")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<RepositoriesCheckoutDirectoryDTO> getRepositoryCheckoutDirectories(@RequestParam(value = "programmingLanguage") ProgrammingLanguage programmingLanguage) {
         log.debug("REST request to get checkout directories for programming language: {}", programmingLanguage);
