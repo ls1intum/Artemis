@@ -326,7 +326,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public RepositoriesCheckoutDirectoryDTO getCheckoutDirectories(ProgrammingLanguage programmingLanguage) {
+    public RepositoriesCheckoutDirectoryDTO getCheckoutDirectoriesForTemplateAndSubmissionBuildPlan(ProgrammingLanguage programmingLanguage) {
         throw new UnsupportedOperationException("Method not implemented, consult the build plans in GitLab for the checkout directories.");
     }
 }

@@ -890,7 +890,8 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<RepositoriesCheckoutDirectoryDTO> getRepositoryCheckoutDirectories(@RequestParam(value = "programmingLanguage") ProgrammingLanguage programmingLanguage) {
         log.debug("REST request to get checkout directories for programming language: {}", programmingLanguage);
 
-        RepositoriesCheckoutDirectoryDTO repositoriesCheckoutDirectoryDTO = continuousIntegrationService.orElseThrow().getCheckoutDirectories(programmingLanguage);
+        RepositoriesCheckoutDirectoryDTO repositoriesCheckoutDirectoryDTO = continuousIntegrationService.orElseThrow()
+                .getCheckoutDirectoriesForTemplateAndSubmissionBuildPlan(programmingLanguage);
         return ResponseEntity.ok(repositoriesCheckoutDirectoryDTO);
     }
 }

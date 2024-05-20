@@ -271,5 +271,5 @@ public interface ContinuousIntegrationService {
      * @param programmingLanguage for which the checkout directories should be retrieved
      * @return the paths of the checkout directories for the default repositories
      */
-    RepositoriesCheckoutDirectoryDTO getCheckoutDirectories(ProgrammingLanguage programmingLanguage);
+    RepositoriesCheckoutDirectoryDTO getCheckoutDirectoriesForTemplateAndSubmissionBuildPlan(ProgrammingLanguage programmingLanguage);
 }

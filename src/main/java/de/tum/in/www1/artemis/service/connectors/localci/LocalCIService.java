@@ -221,14 +221,20 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public RepositoriesCheckoutDirectoryDTO getCheckoutDirectories(ProgrammingLanguage programmingLanguage) {
+    public RepositoriesCheckoutDirectoryDTO getCheckoutDirectoriesForTemplateAndSubmissionBuildPlan(ProgrammingLanguage programmingLanguage) {
         String exerciseCheckoutDirectory = ContinuousIntegrationService.RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage);
-        String solutionCheckoutDirectory = ContinuousIntegrationService.RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(programmingLanguage);
         String testCheckoutDirectory = ContinuousIntegrationService.RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage);
-
         exerciseCheckoutDirectory = startPathWithRootDirectory(exerciseCheckoutDirectory);
-        solutionCheckoutDirectory = startPathWithRootDirectory(solutionCheckoutDirectory);
         testCheckoutDirectory = startPathWithRootDirectory(testCheckoutDirectory);
+
+        String solutionCheckoutDirectory = "";
+        try {
+            solutionCheckoutDirectory = ContinuousIntegrationService.RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(programmingLanguage);
+            solutionCheckoutDirectory = startPathWithRootDirectory(solutionCheckoutDirectory);
+        }
+        catch (Exception e) {
+            // not checked out during template & submission build
+        }
 
         return new RepositoriesCheckoutDirectoryDTO(exerciseCheckoutDirectory, solutionCheckoutDirectory, testCheckoutDirectory);
     }
