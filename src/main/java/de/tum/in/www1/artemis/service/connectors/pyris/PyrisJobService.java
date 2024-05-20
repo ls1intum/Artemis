@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.pyris;
 
 import java.security.SecureRandom;
+import java.util.concurrent.TimeUnit;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
@@ -66,7 +67,9 @@ public class PyrisJobService {
     public String addIngestionWebhookJob() {
         var token = generateJobIdToken();
         var job = new IngestionWebhookJob(token);
-        jobMap.put(token, job);
+        long timeoutWebhookJob = 20;
+        TimeUnit unitWebhookJob = TimeUnit.MINUTES;
+        jobMap.put(token, job, timeoutWebhookJob, unitWebhookJob);
         return token;
     }
 
