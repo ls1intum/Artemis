@@ -127,14 +127,18 @@ describe('AccordionAddOptionsComponent', () => {
         fixture.detectChanges();
         tick(301);
         const modalService = TestBed.inject(NgbModal);
+        const newGroupChatDto = new GroupChatDTO();
         const mockModalRef = {
             componentInstance: {
                 course: undefined,
                 createChannelFn: undefined,
                 initialize: () => {},
             },
-            result: Promise.resolve([new GroupChatDTO(), true]),
+            result: Promise.resolve([newGroupChatDto, true]),
         };
+        const forceRefreshSpy = jest.spyOn(metisConversationService, 'forceRefresh');
+        const setActiveConversationSpy = jest.spyOn(metisConversationService, 'setActiveConversation');
+        const emitSpy = jest.spyOn(component.onUpdateSidebar, 'emit');
         const openDialogSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as unknown as NgbModalRef);
         fixture.detectChanges();
 
@@ -145,6 +149,42 @@ describe('AccordionAddOptionsComponent', () => {
             expect(openDialogSpy).toHaveBeenCalledOnce();
             expect(openDialogSpy).toHaveBeenCalledWith(ChannelsOverviewDialogComponent, defaultFirstLayerDialogOptions);
             expect(mockModalRef.componentInstance.course).toEqual(course);
+            expect(setActiveConversationSpy).toHaveBeenCalledWith(newGroupChatDto);
+            expect(forceRefreshSpy).toHaveBeenCalledWith(true, true);
+            expect(emitSpy).toHaveBeenCalled();
+        });
+    }));
+
+    it('should not force refresh when no modification is performed and open channel overview dialog button is pressed', fakeAsync(() => {
+        component.groupKey = 'generalChannels';
+        fixture.detectChanges();
+        tick(301);
+        const modalService = TestBed.inject(NgbModal);
+        const newGroupChatDTO = new GroupChatDTO();
+        const mockModalRef = {
+            componentInstance: {
+                course: undefined,
+                createChannelFn: undefined,
+                initialize: () => {},
+            },
+            result: Promise.resolve([newGroupChatDTO, false]),
+        };
+        const openDialogSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as unknown as NgbModalRef);
+        const setActiveConversationSpy = jest.spyOn(metisConversationService, 'setActiveConversation');
+        const forceRefreshSpy = jest.spyOn(metisConversationService, 'forceRefresh');
+        const emitSpy = jest.spyOn(component.onUpdateSidebar, 'emit');
+        fixture.detectChanges();
+
+        const dialogOpenButton = fixture.debugElement.nativeElement.querySelector('#channelOverview');
+        dialogOpenButton.click();
+        tick(301);
+        fixture.whenStable().then(() => {
+            expect(openDialogSpy).toHaveBeenCalledOnce();
+            expect(openDialogSpy).toHaveBeenCalledWith(ChannelsOverviewDialogComponent, defaultFirstLayerDialogOptions);
+            expect(mockModalRef.componentInstance.course).toEqual(course);
+            expect(setActiveConversationSpy).toHaveBeenCalledWith(newGroupChatDTO);
+            expect(forceRefreshSpy).not.toHaveBeenCalled();
+            expect(emitSpy).toHaveBeenCalled();
         });
     }));
 
