@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.thoughtworks.qdox.JavaProjectBuilder;
 import com.thoughtworks.qdox.model.JavaClass;
+import com.thoughtworks.qdox.model.JavaType;
 
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
@@ -78,8 +79,8 @@ public class OracleGenerator {
         Map<JavaClass, JavaClass> solutionToTemplateMapping = generateSolutionToTemplateMapping(solutionProjectPath, templateProjectPath);
         ArrayNode structureOracleJSON = mapper.createArrayNode();
 
-        solutionToTemplateMapping.entrySet().stream().map(entry -> generateDiffJSON(entry.getKey(), entry.getValue())).filter(java.util.Optional::isPresent)
-                .map(java.util.Optional::get).forEach(structureOracleJSON::add);
+        solutionToTemplateMapping.entrySet().stream().map(entry -> generateDiffJSON(entry.getKey(), entry.getValue())).filter(Optional::isPresent).map(Optional::get)
+                .forEach(structureOracleJSON::add);
 
         return prettyPrint(structureOracleJSON);
     }
@@ -87,7 +88,7 @@ public class OracleGenerator {
     private static Optional<ObjectNode> generateDiffJSON(JavaClass solutionType, JavaClass templateType) {
         JavaClassDiff javaClassDiff = new JavaClassDiff(solutionType, templateType);
         if (javaClassDiff.classesAreEqual() || JavaClassDiffSerializer.isElementToIgnore(solutionType)) {
-            return java.util.Optional.empty();
+            return Optional.empty();
         }
 
         ObjectNode diffJSON = mapper.createObjectNode();
@@ -108,7 +109,7 @@ public class OracleGenerator {
         }
 
         log.debug("Generated JSON for '{}'.", solutionType.getCanonicalName());
-        return java.util.Optional.of(diffJSON);
+        return Optional.of(diffJSON);
     }
 
     /**
@@ -149,15 +150,15 @@ public class OracleGenerator {
 
         // Convert template classes into a map for quick lookup
         Map<String, JavaClass> templateClassMap = templateClasses.stream()
-                .collect(Collectors.toMap(cls -> cls.getPackageName() + "." + cls.getSimpleName(), Function.identity(), (existing, replacement) -> existing)); // In case of name
-                                                                                                                                                               // conflicts, keep
-                                                                                                                                                               // the existing
+                .collect(Collectors.toMap(JavaType::getCanonicalName, Function.identity(), (existing, replacement) -> existing)); // In case of name
+                                                                                                                                  // conflicts, keep
+                                                                                                                                  // the existing
 
         // Map each solution class to its counterpart in the template
         Map<JavaClass, JavaClass> solutionToTemplateMapping = new HashMap<>();
         for (JavaClass solutionClass : solutionClasses) {
-            String qualifiedName = solutionClass.getPackageName() + "." + solutionClass.getSimpleName();
-            JavaClass templateClass = templateClassMap.getOrDefault(qualifiedName, null);
+            String qualifiedName = solutionClass.getCanonicalName();
+            JavaClass templateClass = templateClassMap.get(qualifiedName);
             solutionToTemplateMapping.put(solutionClass, templateClass);
         }
 

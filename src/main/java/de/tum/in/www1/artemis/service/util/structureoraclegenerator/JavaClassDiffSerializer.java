@@ -88,7 +88,6 @@ class JavaClassDiffSerializer {
     ArrayNode serializeAttributes() {
         ArrayNode attributesJSON = mapper.createArrayNode();
 
-        // Using Stream API for a cleaner approach
         javaClassDiff.attributesDiff.stream().filter(attribute -> !JavaClassDiffSerializer.isElementToIgnore(attribute))
                 .forEach(attribute -> attributesJSON.add(createAttributeJson(attribute)));
 
@@ -109,7 +108,6 @@ class JavaClassDiffSerializer {
     ArrayNode serializeEnums() {
         ArrayNode enumsJSON = mapper.createArrayNode();
 
-        // Stream API for filtering and processing
         javaClassDiff.enumsDiff.stream().filter(enumField -> !isElementToIgnore(enumField)).forEach(enumField -> enumsJSON.add(enumField.getName()));
 
         return enumsJSON;
@@ -158,7 +156,7 @@ class JavaClassDiffSerializer {
     private ObjectNode createMethodJson(JavaMethod method) {
         ObjectNode methodJSON = SerializerUtil.createJsonObject(method.getName(), new HashSet<>(method.getModifiers()), method, method.getAnnotations());
 
-        // Directly add parameters and return type without checking for emptiness
+        // No need to check for isEmpty before adding; let the serializer utility methods decide how to handle empty collections
         methodJSON.set("parameters", SerializerUtil.serializeParameters(method.getParameters()));
         methodJSON.put("returnType", method.getReturnType().getValue());
 
