@@ -29,7 +29,7 @@ public interface ExerciseMetricsRepository extends JpaRepository<Exercise, Long>
      * @return the exercise information for all exercises in the course
      */
     @Query("""
-            SELECT new de.tum.in.www1.artemis.web.rest.dto.metrics.ExerciseInformationDTO(e.id, e.shortName, e.title, COALESCE(e.startDate, e.releaseDate), e.dueDate, e.maxPoints, e.class)
+            SELECT new de.tum.in.www1.artemis.web.rest.dto.metrics.ExerciseInformationDTO(e.id, e.shortName, e.title, COALESCE(e.startDate, e.releaseDate), e.dueDate, e.maxPoints, e.difficulty, e.class)
             FROM Exercise e
             WHERE e.course.id = :courseId
             """)
