@@ -62,6 +62,8 @@ import { ExamGradingPage } from './pageobjects/exam/ExamGradingPage';
 import { ExamScoresPage } from './pageobjects/exam/ExamScoresPage';
 import { ExamResultsPage } from './pageobjects/exam/ExamResultsPage';
 import { ExerciseTeamsPage } from './pageobjects/exercises/ExerciseTeamsPage';
+import { QuizExerciseOverviewPage } from './pageobjects/exercises/quiz/QuizExerciseOverviewPage';
+import { QuizExerciseParticipationPage } from './pageobjects/exercises/quiz/QuizExerciseParticipationPage';
 
 /*
  * Define custom types for fixtures
@@ -119,6 +121,8 @@ export type ArtemisPageObjects = {
     quizExerciseCreation: QuizExerciseCreationPage;
     quizExerciseDragAndDropQuiz: DragAndDropQuiz;
     quizExerciseMultipleChoice: MultipleChoiceQuiz;
+    quizExerciseOverview: QuizExerciseOverviewPage;
+    quizExerciseParticipation: QuizExerciseParticipationPage;
     quizExerciseShortAnswerQuiz: ShortAnswerQuiz;
     textExerciseCreation: TextExerciseCreationPage;
     textExerciseEditor: TextEditorPage;
@@ -304,6 +308,12 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     },
     quizExerciseMultipleChoice: async ({ page }, use) => {
         await use(new MultipleChoiceQuiz(page));
+    },
+    quizExerciseOverview: async ({ page }, use) => {
+        await use(new QuizExerciseOverviewPage(page));
+    },
+    quizExerciseParticipation: async ({ page }, use) => {
+        await use(new QuizExerciseParticipationPage(page));
     },
     quizExerciseShortAnswerQuiz: async ({ page }, use) => {
         await use(new ShortAnswerQuiz(page));
