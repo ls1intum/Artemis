@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizPointStatistic;
 import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
 import de.tum.in.www1.artemis.domain.quiz.QuizQuestionStatistic;
+import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
 import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
@@ -40,13 +41,17 @@ public class QuizStatisticService {
 
     private final Optional<LtiNewResultService> ltiNewResultService;
 
+    private final QuizExerciseRepository quizExerciseRepository;
+
     public QuizStatisticService(StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
-            WebsocketMessagingService websocketMessagingService, QuizSubmissionRepository quizSubmissionRepository, Optional<LtiNewResultService> ltiNewResultService) {
+            WebsocketMessagingService websocketMessagingService, QuizSubmissionRepository quizSubmissionRepository, Optional<LtiNewResultService> ltiNewResultService,
+            QuizExerciseRepository quizExerciseRepository) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.resultRepository = resultRepository;
         this.websocketMessagingService = websocketMessagingService;
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.ltiNewResultService = ltiNewResultService;
+        this.quizExerciseRepository = quizExerciseRepository;
     }
 
     /**
@@ -133,6 +138,7 @@ public class QuizStatisticService {
                     quizQuestionStatistics.add(quizQuestion.getQuizQuestionStatistic());
                 }
             }
+            quizExerciseRepository.save(quiz);
             // notify users via websocket about new results for the statistics.
             // filters out solution information
             quiz.filterForStatisticWebsocket();
