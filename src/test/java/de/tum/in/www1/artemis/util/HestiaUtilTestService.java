@@ -188,6 +188,15 @@ public class HestiaUtilTestService {
         return setupSubmission(Collections.singletonMap(fileName, content), exercise, participationRepo, login);
     }
 
+    public ProgrammingSubmission deleteFileAndSetupSubmission(String oldFileName, String newFileName, String content, ProgrammingExercise exercise,
+            LocalRepository participationRepo, String login) throws Exception {
+        Path oldFilePath = Path.of(participationRepo.localRepoFile + "/" + oldFileName);
+        Files.delete(oldFilePath);
+        // Ensure JGit realizes the file has been removed
+        participationRepo.localGit.rm().addFilepattern(oldFileName).call();
+        return setupSubmission(newFileName, content, exercise, participationRepo, login);
+    }
+
     public ProgrammingSubmission setupSubmission(Map<String, String> files, ProgrammingExercise exercise, LocalRepository participationRepo, String login) throws Exception {
         for (Map.Entry<String, String> entry : files.entrySet()) {
             String fileName = entry.getKey();
