@@ -10,6 +10,7 @@ import java.net.URLConnection;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -53,12 +54,14 @@ import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.lecture.Slide;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestion;
+import de.tum.in.www1.artemis.domain.quiz.DragItem;
 import de.tum.in.www1.artemis.repository.AttachmentRepository;
 import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamUserRepository;
 import de.tum.in.www1.artemis.repository.FileUploadSubmissionRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
+import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
 import de.tum.in.www1.artemis.repository.QuizQuestionRepository;
 import de.tum.in.www1.artemis.repository.SlideRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -115,10 +118,13 @@ public class FileResource {
 
     private final LectureUnitService lectureUnitService;
 
+    private final QuizExerciseRepository quizExerciseRepository;
+
     public FileResource(SlideRepository slideRepository, AuthorizationCheckService authorizationCheckService, FileService fileService, ResourceLoaderService resourceLoaderService,
             LectureRepository lectureRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository, AttachmentRepository attachmentRepository,
             AttachmentUnitRepository attachmentUnitRepository, AuthorizationCheckService authCheckService, UserRepository userRepository, ExamUserRepository examUserRepository,
-            QuizQuestionRepository quizQuestionRepository, CourseRepository courseRepository, LectureUnitService lectureUnitService) {
+            QuizQuestionRepository quizQuestionRepository, CourseRepository courseRepository, LectureUnitService lectureUnitService,
+            QuizExerciseRepository quizExerciseRepository) {
         this.fileService = fileService;
         this.resourceLoaderService = resourceLoaderService;
         this.lectureRepository = lectureRepository;
@@ -133,6 +139,7 @@ public class FileResource {
         this.quizQuestionRepository = quizQuestionRepository;
         this.courseRepository = courseRepository;
         this.lectureUnitService = lectureUnitService;
+        this.quizExerciseRepository = quizExerciseRepository;
     }
 
     /**
@@ -232,18 +239,25 @@ public class FileResource {
      * @param dragItemId ID of the drag item, the file belongs to
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
-    // @GetMapping("files/drag-and-drop/drag-items/{dragItemId}/*")
-    // @EnforceAtLeastStudent
-    // public ResponseEntity<byte[]> getDragItemFile(@PathVariable Long dragItemId) {
-    // log.debug("REST request to get file for drag item : {}", dragItemId);
-    // DragItem dragItem = dragItemRepository.findByIdElseThrow(dragItemId);
-    // Course course = dragItem.getQuestion().getExercise().getCourseViaExerciseGroupOrCourseMember();
-    // authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
-    // if (dragItem.getPictureFilePath() == null) {
-    // throw new EntityNotFoundException("Drag item " + dragItemId + " has no picture file");
-    // }
-    // return responseEntityForFilePath(getActualPathFromPublicPathString(dragItem.getPictureFilePath()));
-    // }
+    @GetMapping("files/drag-and-drop/drag-items/{questionId}/{dragItemId}/*")
+    @EnforceAtLeastStudent
+    public ResponseEntity<byte[]> getDragItemFile(@PathVariable Long questionId, @PathVariable Long dragItemId) {
+        log.debug("REST request to get file for drag item : {}", dragItemId);
+        DragAndDropQuestion question = quizQuestionRepository.findDnDQuestionByIdOrElseThrow(questionId);
+        DragItem dragItem = question.getDragItems().stream().filter(e -> Objects.equals(e.getId(), dragItemId)).findFirst().orElse(null);
+
+        Course course = question.getExercise().getCourseViaExerciseGroupOrCourseMember();
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+
+        if (dragItem == null) {
+            throw new EntityNotFoundException("Drag item " + dragItemId + " can not found");
+        }
+        if (dragItem.getPictureFilePath() == null) {
+            throw new EntityNotFoundException("Drag item " + dragItemId + " has no picture file");
+        }
+
+        return responseEntityForFilePath(getActualPathFromPublicPathString(dragItem.getPictureFilePath()));
+    }
 
     /**
      * GET /files/file-upload/submission/:submissionId/:filename : Get the file upload exercise submission file
