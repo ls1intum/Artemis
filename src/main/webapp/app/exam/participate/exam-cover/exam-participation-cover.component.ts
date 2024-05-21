@@ -149,11 +149,17 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
         });
 
         this.generateInformationForHtml();
+        this.resetConfirmation();
     }
 
     generateInformationForHtml() {
         this.formattedGeneralInformation = this.artemisMarkdown.safeHtmlForMarkdown(this.exam?.startText);
         this.formattedConfirmationText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam?.confirmationStartText);
+    }
+
+    resetConfirmation() {
+        this.confirmed = false;
+        this.startEnabled = false;
     }
 
     ngOnDestroy() {

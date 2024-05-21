@@ -153,6 +153,67 @@ describe('ExamParticipationComponent', () => {
         expect(ExamParticipationComponent).toBeTruthy();
     });
 
+    it('should get end button enabled and disabled', () => {
+        fixture.detectChanges();
+        comp.testRun = true;
+        comp.updateConfirmation();
+        expect(comp.endButtonEnabled).toBeFalse();
+
+        const now = dayjs();
+        jest.spyOn(artemisServerDateService, 'now').mockReturnValue(now);
+        //comp.testRun = false;
+        comp.enteredName = 'admin';
+        comp.accountName = 'admin';
+        comp.confirmed = true;
+        comp.exam.visibleDate = dayjs().subtract(1, 'hours');
+
+        comp.handInPossible = true;
+        expect(comp.endButtonEnabled).toBeTrue();
+    });
+
+    it('should get whether student failed to submit', () => {
+        comp.testRun = true;
+        expect(comp.studentFailedToSubmit).toBeFalse();
+
+        comp.testRun = false;
+        const startDate = dayjs();
+        const now = dayjs();
+        jest.spyOn(artemisServerDateService, 'now').mockReturnValue(now);
+        comp.studentExam = new StudentExam();
+        comp.studentExam.exam = comp.exam;
+        comp.exam.startDate = startDate.subtract(2, 'hours');
+        comp.exam.testExam = false;
+        comp.studentExam.workingTime = 3600;
+        comp.exam.gracePeriod = 1;
+        comp.studentExam.submitted = false;
+        expect(comp.studentFailedToSubmit).toBeTrue();
+    });
+
+    it('should not display timer when exam was not submitted', () => {
+        comp.exam = new Exam();
+        comp.studentExam = new StudentExam();
+        comp.studentExam.exercises = [];
+        jest.spyOn(comp, 'studentFailedToSubmit', 'get').mockReturnValue(true);
+        jest.spyOn(comp, 'isGracePeriodOver').mockReturnValue(true);
+        fixture.detectChanges();
+
+        const examTimerDebugElement = fixture.debugElement.query(By.directive(ExamTimerComponent));
+        expect(examTimerDebugElement).toBeFalsy();
+    });
+
+    // GEREK YOK
+    it('should display timer during working time', () => {
+        comp.exam = new Exam();
+        comp.studentExam = new StudentExam();
+        comp.studentExam.exercises = [];
+        jest.spyOn(comp, 'studentFailedToSubmit', 'get').mockReturnValue(false);
+        jest.spyOn(comp, 'isGracePeriodOver').mockReturnValue(true);
+        fixture.detectChanges();
+
+        const examTimerDebugElement = fixture.debugElement.query(By.directive(ExamTimerComponent));
+        expect(examTimerDebugElement).toBeTruthy();
+    });
+
     describe('ExamParticipationSummaryComponent for TestRuns', () => {
         it('should initialize and display test run ribbon', () => {
             comp.testRunId = 3;
@@ -617,6 +678,7 @@ describe('ExamParticipationComponent', () => {
 
     describe('isVisible', () => {
         it('should be visible if test run', () => {
+            comp.exam.visibleDate = undefined;
             comp.testRunId = 3;
             expect(comp.isVisible()).toBeTrue();
             comp.testRunId = undefined;
@@ -646,6 +708,7 @@ describe('ExamParticipationComponent', () => {
 
     describe('isActive', () => {
         it('should be active if test run', () => {
+            comp.exam.startDate = undefined;
             comp.testRunId = 3;
             expect(comp.isActive()).toBeTrue();
             comp.testRunId = undefined;

@@ -1,6 +1,6 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
@@ -52,7 +52,6 @@ import { ProfileInfo } from '../../../../../../main/webapp/app/shared/layouts/pr
 import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
-import { ExamTimerComponent } from 'app/exam/participate/timer/exam-timer.component';
 
 describe('ExamParticipationCoverComponent', () => {
     let fixture: ComponentFixture<ExamParticipationCoverComponent>;
@@ -155,6 +154,36 @@ describe('ExamParticipationCoverComponent', () => {
     it('should initialize', () => {
         fixture.detectChanges();
         expect(ExamParticipationCoverComponent).toBeTruthy();
+    });
+
+    it('should update confirmation', () => {
+        fixture.detectChanges();
+        comp.updateConfirmation();
+        expect(comp.startEnabled).toBeFalse();
+    });
+
+    it('should disable exam button', () => {
+        comp.ngOnInit();
+        comp.testRun = false;
+        const now = dayjs();
+        jest.spyOn(artemisServerDateService, 'now').mockReturnValue(now);
+        comp.enteredName = 'user';
+        comp.accountName = 'user';
+        comp.confirmed = true;
+        comp.exam.visibleDate = dayjs().subtract(1, 'hours');
+        comp.exam.visibleDate = dayjs().add(1, 'hours');
+        expect(comp.startButtonEnabled).toBeFalse();
+    });
+
+    it('should update displayed times if exam suddenly started', () => {
+        const studentExam = new StudentExam();
+        comp.testRun = true;
+        comp.exam.startDate = dayjs();
+        const router = TestBed.inject(Router);
+        const navigateSpy = jest.spyOn(router, 'navigate');
+
+        comp.updateDisplayedTimes(studentExam);
+        expect(navigateSpy).toHaveBeenCalledOnce();
     });
 
     it('should initialize with correct account name', fakeAsync(() => {
@@ -424,6 +453,42 @@ describe('ExamParticipationCoverComponent', () => {
         expect(comp.timeUntilStart).toBe('');
     }));
 
+    it('should redirect to exam participation after start', () => {
+        const studentExam = new StudentExam();
+        studentExam.exam = new Exam();
+        comp.testRun = false;
+        jest.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(of(studentExam));
+        jest.spyOn(examParticipationService, 'lastSaveFailed').mockReturnValue(false);
+        comp.ngOnInit();
+        expect(comp.loadingExam).toBeFalse();
+
+        const router = TestBed.inject(Router);
+        const navigateSpy = jest.spyOn(router, 'navigate');
+        jest.spyOn(examParticipationService, 'loadStudentExamWithExercisesForConduction').mockReturnValue(of(studentExam));
+
+        const startDate = dayjs().subtract(1, 'days');
+        const date = dayjs();
+        comp.exam.startDate = startDate;
+        jest.spyOn(artemisServerDateService, 'now').mockReturnValue(date);
+
+        comp.startExam();
+        expect(navigateSpy).toHaveBeenCalledOnce();
+        expect(navigateSpy).toHaveBeenCalledWith(['courses', 1, 'exams', 2, 'participation']);
+    });
+
+    it('should display exam summary if the student submitted the exam', () => {
+        const studentExam = new StudentExam();
+        studentExam.exam = new Exam();
+        comp.testRun = false;
+        studentExam.submitted = true;
+
+        jest.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(of(studentExam));
+        const loadExamSummaryStub = jest.spyOn(comp, 'loadAndDisplaySummary');
+
+        comp.ngOnInit();
+        expect(loadExamSummaryStub).toHaveBeenCalledOnce();
+    });
+
     it('test run should always have already started', () => {
         comp.testRun = true;
         expect(comp.hasStarted()).toBeTrue();
@@ -511,15 +576,6 @@ describe('ExamParticipationCoverComponent', () => {
         comp.exam.gracePeriod = 1;
         comp.studentExam.submitted = false;
         expect(comp.studentFailedToSubmit).toBeFalse();
-    });
-
-    it('should not display timer when exam was not submitted', () => {
-        jest.spyOn(comp, 'studentFailedToSubmit', 'get').mockReturnValue(true);
-
-        fixture.detectChanges();
-
-        const examTimerDebugElement = fixture.debugElement.query(By.directive(ExamTimerComponent));
-        expect(examTimerDebugElement).toBeFalsy();
     });
 
     describe('websocket working time subscription', () => {

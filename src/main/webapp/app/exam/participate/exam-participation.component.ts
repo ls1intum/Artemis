@@ -100,7 +100,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     faSpinner = faSpinner;
 
     endEnabled: boolean;
-    confirmed: boolean;
+    confirmed = false;
     accountName = '';
     enteredName = '';
     formattedGeneralInformation?: SafeHtml;
@@ -187,7 +187,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             this.connected = status.connected;
         });
 
-        // Needed in case of prage reload to navigate back to the exam start page
+        // Needed in case of page reload to navigate back to the exam start page
         if (!this.examId || !this.courseId) {
             this.courseId = parseInt(this.route.snapshot.parent?.parent?.params['courseId'], 10);
             this.examId = parseInt(this.route.snapshot.params['examId'], 10);
