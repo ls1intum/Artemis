@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.repository.metrics;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.ExerciseInformationDTO;
+import de.tum.in.www1.artemis.web.rest.dto.metrics.MapEntryDTO;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.ResourceTimestampDTO;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.ScoreDTO;
 
@@ -29,11 +31,18 @@ public interface ExerciseMetricsRepository extends JpaRepository<Exercise, Long>
      * @return the exercise information for all exercises in the course
      */
     @Query("""
-            SELECT new de.tum.in.www1.artemis.web.rest.dto.metrics.ExerciseInformationDTO(e.id, e.shortName, e.title, COALESCE(e.startDate, e.releaseDate), e.dueDate, e.maxPoints, e.difficulty, e.class)
+            SELECT new de.tum.in.www1.artemis.web.rest.dto.metrics.ExerciseInformationDTO(e.id, e.shortName, e.title, COALESCE(e.startDate, e.releaseDate), e.dueDate, e.maxPoints, e.difficulty, e.mode, e.class)
             FROM Exercise e
             WHERE e.course.id = :courseId
             """)
     Set<ExerciseInformationDTO> findAllExerciseInformationByCourseId(@Param("courseId") long courseId);
+
+    @Query("""
+            SELECT e.id as key, c as value
+            FROM Exercise e
+            LEFT JOIN e.categories c
+            """)
+    Set<Entry<Long, String>> findCategoriesByExerciseIds(@Param("exerciseIds") Set<Long> exerciseIds);
 
     /**
      * Get the average score for a set of exercises.
@@ -127,4 +136,22 @@ public interface ExerciseMetricsRepository extends JpaRepository<Exercise, Long>
                 AND (p.student.id = :userId OR u.id = :userId)
             """)
     Set<Long> findAllCompletedExerciseIdsForUserByExerciseIds(@Param("userId") long userId, @Param("exerciseIds") Set<Long> exerciseIds);
+
+    /**
+     * Get the ids of the teams the user is in for a set of exercises.
+     *
+     * @param userId      the id of the user
+     * @param exerciseIds the ids of the exercises
+     * @return MapEntryDTO with exercise id and team id
+     */
+    @Query("""
+            SELECT new de.tum.in.www1.artemis.web.rest.dto.metrics.MapEntryDTO(e.id, t.id)
+            FROM Exercise e
+            LEFT JOIN e.teams t
+            LEFT JOIN t.students u
+            WHERE e.mode = de.tum.in.www1.artemis.domain.enumeration.ExerciseMode.TEAM
+                AND e.id IN :exerciseIds
+                AND u.id = :userId
+            """)
+    Set<MapEntryDTO> findTeamIdsForUserByExerciseIds(@Param("userId") long userId, @Param("exerciseIds") Set<Long> exerciseIds);
 }
