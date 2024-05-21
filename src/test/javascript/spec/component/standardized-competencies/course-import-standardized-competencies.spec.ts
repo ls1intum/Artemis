@@ -108,11 +108,13 @@ describe('CourseImportStandardizedCompetenciesComponent', () => {
     });
 
     it('should open details', () => {
-        const competencyToOpen = { id: 2, isVisible: true, selected: true };
+        component['sources'] = [{ id: 1, title: 'title1', author: 'author1' }];
+        const competencyToOpen = { id: 2, isVisible: true, selected: true, sourceId: 1 };
 
         component['openCompetencyDetails'](competencyToOpen);
 
         expect(component['selectedCompetency']).toEqual(competencyToOpen);
+        expect(component['sourceString']).toBeTruthy();
     });
 
     it('should close details', () => {

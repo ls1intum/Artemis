@@ -158,13 +158,15 @@ describe('AdminImportStandardizedCompetenciesComponent', () => {
     });
 
     it('should open details', () => {
-        const competencyToOpen = { id: 2, isVisible: true };
+        component['importData'] = { knowledgeAreas: [], sources: [{ id: 1, title: 'any source' }] };
+        const competencyToOpen = { id: 2, isVisible: true, sourceId: 1 };
         const knowledgeAreaTitle = 'knowledgeArea';
 
         component['openCompetencyDetails'](competencyToOpen, knowledgeAreaTitle);
 
         expect(component['selectedCompetency']).toEqual(competencyToOpen);
         expect(component['knowledgeAreaTitle']).toEqual(knowledgeAreaTitle);
+        expect(component['sourceString']).toBeTruthy();
     });
 
     it('should close details', () => {
