@@ -12,7 +12,7 @@ import de.tum.in.www1.artemis.config.localvcci.ssh.SshGitCommand;
 import de.tum.in.www1.artemis.config.localvcci.ssh.service.SshGitCommandFactoryService;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionTestRepository;
 
-public class LocalVCSSHTest extends LocalVCIntegrationTest {
+class LocalVCSshTest extends LocalVCIntegrationTest {
 
     @Autowired
     ProgrammingSubmissionTestRepository programmingSubmissionRepository;
