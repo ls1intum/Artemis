@@ -555,6 +555,7 @@ public class QuizScheduleService {
                         Set<Result> newResultsForQuiz = Set.copyOf(cache.getResults().values());
                         // Update the statistics
                         quizStatisticService.updateStatistics(newResultsForQuiz, quizExercise);
+                        quizExerciseRepository.saveAndFlush(quizExercise);
                         log.debug("Updated statistics with {} new results in {} for quiz {}", newResultsForQuiz.size(), formatDurationFrom(start), quizExercise.getTitle());
                         // Remove only processed results
                         for (Result result : newResultsForQuiz) {
