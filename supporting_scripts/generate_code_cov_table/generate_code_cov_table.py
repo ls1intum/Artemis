@@ -276,6 +276,9 @@ def main(argv):
     if args.branch_name is None:
         args.branch_name = get_branch_name()
         logging.info(f"Using current branch: {args.branch_name}")
+    if args.base_branch_name is None:
+        args.base_branch_name = 'origin/develop'
+        logging.info(f"Base branch set to: {args.base_branch_name}")
     if args.build_id is None:
         logging.info("Using latest build ID")
 
