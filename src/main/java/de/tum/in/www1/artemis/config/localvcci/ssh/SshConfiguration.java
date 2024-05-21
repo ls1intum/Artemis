@@ -71,7 +71,6 @@ public class SshConfiguration {
         }
         sshd.setCommandFactory(
                 sshGitCommandFactoryService.withGitLocationResolver(sshGitLocationResolverService).withExecutorServiceProvider(() -> ThreadUtils.newFixedThreadPool("git-ssh", 8)));
-        // sshd.setCommandFactory(gitCommandFactory());
         sshd.setPublickeyAuthenticator(gitPublickeyAuthenticatorService);
         // Add command factory or shell here to handle Git commands or any other commands
 
