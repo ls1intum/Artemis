@@ -63,6 +63,10 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                     loadChildren: () =>
                         import('./exercises/programming/manage/programming-exercise-management-routing.module').then((m) => m.ArtemisProgrammingExerciseManagementRoutingModule),
                 },
+                {
+                    path: 'courses',
+                    loadChildren: () => import('./overview/courses.module').then((m) => m.ArtemisCoursesModule),
+                },
                 // ===== GRADING SYSTEM =====
                 {
                     path: 'courses/:courseId/grading-system',

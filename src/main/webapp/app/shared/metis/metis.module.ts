@@ -24,7 +24,6 @@ import { CommonModule } from '@angular/common';
 import { PostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/post-reactions-bar/post-reactions-bar.component';
 import { AnswerPostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/answer-post-reactions-bar/answer-post-reactions-bar.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { ArtemisCoursesRoutingModule } from 'app/overview/courses-routing.module';
 import { PostingContentComponent } from './posting-content/posting-content.components';
 import { PostingContentPartComponent } from 'app/shared/metis/posting-content/posting-content-part/posting-content-part.components';
 import { HtmlForPostingMarkdownPipe } from 'app/shared/pipes/html-for-posting-markdown.pipe';
@@ -50,7 +49,6 @@ import { MetisConversationService } from 'app/shared/metis/metis-conversation.se
         ArtemisConfirmIconModule,
         ArtemisMarkdownModule,
         ArtemisMarkdownEditorModule,
-        ArtemisCoursesRoutingModule,
         ReactiveFormsModule,
         FormsModule,
         ArtemisSharedComponentModule,

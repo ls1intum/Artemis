@@ -40,6 +40,7 @@ const routes: Routes = [
             authorities: [Authority.USER],
             pageTitle: 'overview.exercise',
         },
+        pathMatch: 'full',
         canActivate: [UserRouteAccessService],
         children: [
             {

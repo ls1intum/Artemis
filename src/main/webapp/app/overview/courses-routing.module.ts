@@ -11,7 +11,7 @@ import { CourseTutorialGroupDetailComponent } from './tutorial-group-details/cou
 
 const routes: Routes = [
     {
-        path: 'courses',
+        path: '',
         component: CoursesComponent,
         data: {
             authorities: [Authority.USER],
@@ -20,18 +20,18 @@ const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'courses/enroll',
+        path: 'enroll',
         loadChildren: () => import('./course-registration/course-registration.module').then((m) => m.CourseRegistrationModule),
     },
     // /courses/:courseId/register is special,
     // because we won't have access to the course object before the user is registered,
     // so we need to load it outside the normal course routing
     {
-        path: 'courses/:courseId/register',
+        path: ':courseId/register',
         loadChildren: () => import('./course-registration/course-registration-detail/course-registration-detail.module').then((m) => m.CourseRegistrationDetailModule),
     },
     {
-        path: 'courses/:courseId',
+        path: ':courseId',
         component: CourseOverviewComponent,
         data: {
             authorities: [Authority.USER],
