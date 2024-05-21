@@ -60,18 +60,18 @@ describe('SidebarCardMediumComponent', () => {
     });
 
     it('should store route on click', () => {
-        jest.spyOn(component, 'emitStoreLastSelectedItem');
+        jest.spyOn(component, 'emitStoreAndRefresh');
         jest.spyOn(component, 'refreshChildComponent');
         const element: HTMLElement = fixture.nativeElement.querySelector('#test-sidebar-card');
         element.click();
         fixture.detectChanges();
-        expect(component.emitStoreLastSelectedItem).toHaveBeenCalledWith(component.sidebarItem.id);
+        expect(component.emitStoreAndRefresh).toHaveBeenCalledWith(component.sidebarItem.id);
         expect(component.refreshChildComponent).toHaveBeenCalled();
     });
 
     it('should navigate to the item URL on click', async () => {
         const mockFn = jest.fn();
-        component.emitStoreLastSelectedItem = mockFn;
+        component.emitStoreAndRefresh = mockFn;
         component.itemSelected = true;
         fixture.detectChanges();
         const itemElement = fixture.nativeElement.querySelector('#test-sidebar-card');
@@ -85,7 +85,7 @@ describe('SidebarCardMediumComponent', () => {
 
     it('should navigate to the when no item was selected before', async () => {
         const mockFn = jest.fn();
-        component.emitStoreLastSelectedItem = mockFn;
+        component.emitStoreAndRefresh = mockFn;
         component.itemSelected = false;
         fixture.detectChanges();
         const itemElement = fixture.nativeElement.querySelector('#test-sidebar-card');
