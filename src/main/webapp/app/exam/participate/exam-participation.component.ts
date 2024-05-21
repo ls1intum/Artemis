@@ -56,7 +56,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
     courseId: number;
     examId: number;
-    testRunId: number;
+    testRunId?: number;
     testExam: boolean;
     testRun?: boolean;
     studentExamId: number;
@@ -164,21 +164,23 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * load exam information from the exam-participation-cover component
      */
     ngOnInit(): void {
-        this.examStateSubscription = this.examParticipationService.examState$.subscribe((state) => {
-            this.courseId = state.courseId!;
-            this.examId = state.examId!;
-            this.testRunId = state.testRunId!;
-            this.studentExamId = state.studentExamId!;
+        if (!this.exam) {
+            this.examStateSubscription = this.examParticipationService.examState$.subscribe((state) => {
+                this.courseId = state.courseId!;
+                this.examId = state.examId!;
+                this.testRunId = state.testRunId!;
+                this.studentExamId = state.studentExamId!;
 
-            this.exam = state.exam!;
-            this.studentExam = state.studentExam!;
-            this.studentExam.exercises = state.exercises!;
-            this.testExam = state.testExam!;
+                this.exam = state.exam!;
+                this.studentExam = state.studentExam!;
+                this.studentExam.exercises = state.exercises!;
+                this.testExam = state.testExam!;
 
-            this.accountName = state.accountName!;
+                this.accountName = state.accountName!;
 
-            this.testRun = state.testRun;
-        });
+                this.testRun = state.testRun;
+            });
+        }
 
         // listen to connect / disconnect events
         this.websocketSubscription = this.websocketService.connectionState.subscribe((status) => {

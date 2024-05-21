@@ -18,7 +18,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 
 export type ButtonTooltipType = 'submitted' | 'submittedSubmissionLimitReached' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted';
 
-interface ExamState {
+export interface ExamState {
     courseId?: number;
     examId?: number;
     testRunId?: number;

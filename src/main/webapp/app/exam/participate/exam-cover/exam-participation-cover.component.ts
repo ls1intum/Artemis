@@ -194,9 +194,9 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
             this.examParticipationService.loadStudentExamWithExercisesForConduction(this.courseId, this.examId, this.studentExam.id!).subscribe((studentExam: StudentExam) => {
                 this.studentExam = studentExam;
                 this.examParticipationService.saveStudentExamToLocalStorage(this.courseId, this.examId, studentExam);
+                this.examParticipationService.setExamState({ studentExam: studentExam });
+                this.examParticipationService.setExamState({ exercises: studentExam.exercises! });
                 if (this.hasStarted()) {
-                    this.examParticipationService.setExamState({ studentExam: studentExam });
-                    this.examParticipationService.setExamState({ exercises: studentExam.exercises! });
                     this.router.navigate(['courses', this.courseId, 'exams', this.examId, 'participation']);
                 } else {
                     this.waitingForExamStart = true;
