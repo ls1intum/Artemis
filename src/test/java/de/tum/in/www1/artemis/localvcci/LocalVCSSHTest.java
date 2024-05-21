@@ -29,8 +29,8 @@ public class LocalVCSSHTest extends LocalVCIntegrationTest {
 
         // this command arrives at the ssh server if you would manually push from the command line
         String commandString = "git-receive-pack '/git/" + projectKey1 + "/" + templateRepositorySlug + "'";
-        SshGitCommandFactoryService sfd = (SshGitCommandFactoryService) sshServer.getCommandFactory();
-        SshGitCommand command = (SshGitCommand) sfd.createGitCommand(commandString);
+        SshGitCommandFactoryService sshGitCommandFactory = (SshGitCommandFactoryService) sshServer.getCommandFactory();
+        SshGitCommand command = (SshGitCommand) sshGitCommandFactory.createGitCommand(commandString);
         // command.setSession(....);
         // TODO set serverSession in command and authenticate
 
