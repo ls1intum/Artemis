@@ -421,7 +421,6 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         if (quizExercise.getQuizPointStatistic() == null) {
             QuizPointStatistic quizPointStatistic = new QuizPointStatistic();
             quizExercise.setQuizPointStatistic(quizPointStatistic);
-            quizPointStatistic.setQuiz(quizExercise);
         }
 
         // make sure the pointers in the statistics are correct

@@ -1,36 +1,22 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
+import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.DiscriminatorValue;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
-
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * A QuizPointStatistic.
  */
-@Entity
-@DiscriminatorValue(value = "QP")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class QuizPointStatistic extends QuizStatistic {
+public class QuizPointStatistic implements Serializable {
 
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true, mappedBy = "quizPointStatistic")
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<PointCounter> pointCounters = new HashSet<>();
 
-    @OneToOne(mappedBy = "quizPointStatistic", fetch = FetchType.LAZY)
-    @JsonIgnore
-    private QuizExercise quiz;
+    private Integer participantsRated = 0;
+
+    private Integer participantsUnrated = 0;
 
     public Set<PointCounter> getPointCounters() {
         return pointCounters;
@@ -52,17 +38,25 @@ public class QuizPointStatistic extends QuizStatistic {
         this.pointCounters = pointCounters;
     }
 
-    public QuizExercise getQuiz() {
-        return quiz;
+    public Integer getParticipantsRated() {
+        return participantsRated;
     }
 
-    public void setQuiz(QuizExercise quizExercise) {
-        this.quiz = quizExercise;
+    public void setParticipantsRated(Integer participantsRated) {
+        this.participantsRated = participantsRated;
+    }
+
+    public Integer getParticipantsUnrated() {
+        return participantsUnrated;
+    }
+
+    public void setParticipantsUnrated(Integer participantsUnrated) {
+        this.participantsUnrated = participantsUnrated;
     }
 
     @Override
     public String toString() {
-        return "QuizPointStatistic{" + "id=" + getId() + ", counters=" + getPointCounters() + "}";
+        return "QuizPointStatistic{" + "counters=" + getPointCounters() + "}";
     }
 
     /**
@@ -93,11 +87,11 @@ public class QuizPointStatistic extends QuizStatistic {
      * @param rated specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise) or unrated ( participated after the dueDate of the
      *                  quizExercise)
      */
-    public void addResult(Double score, Boolean rated) {
+    public void addResult(Double score, Boolean rated, QuizExercise quiz) {
         if (score == null) {
             return;
         }
-        changeStatisticBasedOnResult(score, rated, 1);
+        changeStatisticBasedOnResult(score, rated, 1, quiz);
     }
 
     /**
@@ -107,11 +101,11 @@ public class QuizPointStatistic extends QuizStatistic {
      * @param rated specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise) or unrated ( participated after the dueDate of the
      *                  quizExercise)
      */
-    public void removeOldResult(Double score, Boolean rated) {
+    public void removeOldResult(Double score, Boolean rated, QuizExercise quiz) {
         if (score == null) {
             return;
         }
-        changeStatisticBasedOnResult(score, rated, -1);
+        changeStatisticBasedOnResult(score, rated, -1, quiz);
     }
 
     /**
@@ -122,7 +116,7 @@ public class QuizPointStatistic extends QuizStatistic {
      *                        the quizExercise)
      * @param countChange the int-value, which will be added to the Counter and participants
      */
-    private void changeStatisticBasedOnResult(double score, Boolean rated, int countChange) {
+    private void changeStatisticBasedOnResult(double score, Boolean rated, int countChange, QuizExercise quiz) {
         /**
          * {@link RoundingUtil#roundScoreSpecifiedByCourseSettings}
          * is not applicable here, as we need to sort the points into existing integer buckets

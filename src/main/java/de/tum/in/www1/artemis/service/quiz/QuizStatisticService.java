@@ -18,7 +18,6 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizPointStatistic;
 import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
 import de.tum.in.www1.artemis.domain.quiz.QuizQuestionStatistic;
-import de.tum.in.www1.artemis.repository.QuizPointStatisticRepository;
 import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
@@ -35,8 +34,6 @@ public class QuizStatisticService {
 
     private final ResultRepository resultRepository;
 
-    private final QuizPointStatisticRepository quizPointStatisticRepository;
-
     private final QuizSubmissionRepository quizSubmissionRepository;
 
     private final WebsocketMessagingService websocketMessagingService;
@@ -44,11 +41,9 @@ public class QuizStatisticService {
     private final Optional<LtiNewResultService> ltiNewResultService;
 
     public QuizStatisticService(StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
-            WebsocketMessagingService websocketMessagingService, QuizPointStatisticRepository quizPointStatisticRepository, QuizSubmissionRepository quizSubmissionRepository,
-            Optional<LtiNewResultService> ltiNewResultService) {
+            WebsocketMessagingService websocketMessagingService, QuizSubmissionRepository quizSubmissionRepository, Optional<LtiNewResultService> ltiNewResultService) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.resultRepository = resultRepository;
-        this.quizPointStatisticRepository = quizPointStatisticRepository;
         this.websocketMessagingService = websocketMessagingService;
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.ltiNewResultService = ltiNewResultService;
@@ -69,7 +64,6 @@ public class QuizStatisticService {
         else {
             var quizPointStatistic = new QuizPointStatistic();
             quizExercise.setQuizPointStatistic(quizPointStatistic);
-            quizPointStatistic.setQuiz(quizExercise);
             quizExercise.recalculatePointCounters();
         }
         for (QuizQuestion quizQuestion : quizExercise.getQuizQuestions()) {
@@ -109,10 +103,6 @@ public class QuizStatisticService {
 
             ltiNewResultService.ifPresent(newResultService -> newResultService.onNewResult(participation));
         }
-
-        // save changed Statistics
-        quizPointStatisticRepository.save(quizExercise.getQuizPointStatistic());
-        quizPointStatisticRepository.flush();
     }
 
     /**
@@ -137,7 +127,6 @@ public class QuizStatisticService {
                 quiz.addResultToAllStatistics(result, quizSubmission);
             }
             // save statistics
-            quizPointStatisticRepository.save(quiz.getQuizPointStatistic());
             List<QuizQuestionStatistic> quizQuestionStatistics = new ArrayList<>();
             for (QuizQuestion quizQuestion : quiz.getQuizQuestions()) {
                 if (quizQuestion.getQuizQuestionStatistic() != null) {

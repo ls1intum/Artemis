@@ -1,27 +1,26 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.DiscriminatorValue;
-import jakarta.persistence.Entity;
-import jakarta.persistence.ManyToOne;
+import java.io.Serializable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.in.www1.artemis.domain.TempIdObject;
+
 /**
  * A PointCounter.
  */
-@Entity
-@DiscriminatorValue(value = "PC")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class PointCounter extends QuizStatisticCounter {
+public class PointCounter extends TempIdObject implements Serializable {
 
-    @Column(name = "points")
-    private Double points;
-
-    @ManyToOne
     @JsonIgnore
     private QuizPointStatistic quizPointStatistic;
+
+    private Double points;
+
+    private Integer ratedCounter = 0;
+
+    private Integer unRatedCounter = 0;
 
     public Double getPoints() {
         return points;
@@ -37,6 +36,22 @@ public class PointCounter extends QuizStatisticCounter {
 
     public void setQuizPointStatistic(QuizPointStatistic quizPointStatistic) {
         this.quizPointStatistic = quizPointStatistic;
+    }
+
+    public Integer getRatedCounter() {
+        return ratedCounter;
+    }
+
+    public void setRatedCounter(Integer ratedCounter) {
+        this.ratedCounter = ratedCounter;
+    }
+
+    public Integer getUnRatedCounter() {
+        return unRatedCounter;
+    }
+
+    public void setUnRatedCounter(Integer unRatedCounter) {
+        this.unRatedCounter = unRatedCounter;
     }
 
     @Override

@@ -88,7 +88,7 @@ public abstract class QuizQuestion extends DomainObject {
     private Long quizGroupId;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "statistic", columnDefinition = "json")
+    @Column(name = "statistics", columnDefinition = "json")
     private QuizQuestionStatistic quizQuestionStatistic;
 
     @ManyToOne

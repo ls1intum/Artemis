@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 public abstract class QuizQuestionStatistic implements QuizQuestionComponent<QuizQuestion>, Serializable {
 
     @JsonView(QuizView.Before.class)
-    private Long id = 1L;
+    private Long id;
 
     private Integer participantsRated = 0;
 

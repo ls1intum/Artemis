@@ -20,7 +20,6 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.OrderColumn;
 import jakarta.persistence.Transient;
 import jakarta.validation.constraints.NotNull;
@@ -28,6 +27,8 @@ import jakarta.validation.constraints.NotNull;
 import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -42,6 +43,7 @@ import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.view.QuizView;
+import de.tum.in.www1.artemis.service.quiz.QuizIdAssigner;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
@@ -90,8 +92,8 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
     @JsonView(QuizView.Before.class)
     private Integer duration;
 
-    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumn(unique = true)
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "statistics", columnDefinition = "json")
     private QuizPointStatistic quizPointStatistic;
 
     // TODO: test if we should use mappedBy here as well
@@ -540,6 +542,7 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
             }
         }
         quizPointStatistic.getPointCounters().removeAll(pointCounterToDelete);
+        QuizIdAssigner.assignIds(quizPointStatistic.getPointCounters());
     }
 
     /**
@@ -552,7 +555,7 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
 
         // update QuizPointStatistic with the result
         if (result != null) {
-            getQuizPointStatistic().addResult(result.getScore(), result.isRated());
+            getQuizPointStatistic().addResult(result.getScore(), result.isRated(), this);
             for (QuizQuestion quizQuestion : getQuizQuestions()) {
                 // update QuestionStatistics with the result
                 if (quizQuestion.getQuizQuestionStatistic() != null && quizSubmission != null) {
@@ -572,7 +575,7 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
         if (result != null) {
             // check if result contains a quizSubmission if true -> it's not necessary to fetch it from the database
             QuizSubmission quizSubmission = (QuizSubmission) result.getSubmission();
-            getQuizPointStatistic().removeOldResult(result.getScore(), result.isRated());
+            getQuizPointStatistic().removeOldResult(result.getScore(), result.isRated(), this);
             for (QuizQuestion quizQuestion : getQuizQuestions()) {
                 // update QuestionStatistics with the result
                 if (quizQuestion.getQuizQuestionStatistic() != null) {
