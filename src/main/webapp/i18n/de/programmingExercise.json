@@ -449,6 +449,7 @@
                 "checkoutDirectoryDuringBuildExecution": "Checkout-Verzeichnis während der Build-Ausführung",
                 "checkoutDirectoryDuringBuildExecutionTooltip": "Zeigt die Checkout-Verzeichnisse für Abgaben und Template-Repositories während der Build-Ausführung an. Der Lösungs-Build-Plan betrachtet die Lösung als Abgabe."
             },
+            "solutionCheckoutDirectoryDuringBuildExecutionTooltip": "Das Lösungs-Repository wird nicht während des Template-Builds ausgecheckt. Das Lösungs-Repository wird nur während des Lösungs-Builds ausgecheckt.",
             "orion": {
                 "openEditor": "Editor Öffnen"
             },

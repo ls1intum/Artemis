@@ -449,6 +449,7 @@
                 "checkoutDirectoryDuringBuildExecution": "Checkout Directory during build execution",
                 "checkoutDirectoryDuringBuildExecutionTooltip": "Displays the checkout directories for submissions and the exercise template during the build execution. The solution build plan will consider the solution as a submission."
             },
+            "solutionCheckoutDirectoryDuringBuildExecutionTooltip": "The solution repository will not be checked out during the submission and exercise template build. The repository will only be checked out during the solution build.",
             "orion": {
                 "openEditor": "Open Editor"
             },
