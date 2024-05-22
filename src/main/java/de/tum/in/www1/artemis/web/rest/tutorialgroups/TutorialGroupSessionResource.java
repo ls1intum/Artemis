@@ -34,6 +34,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.in.www1.artemis.domain.enumeration.TutorialGroupSessionStatus;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupFreePeriod;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSession;
@@ -330,6 +332,7 @@ public class TutorialGroupSessionResource {
     /**
      * DTO used to send the status explanation when i.g. cancelling a tutorial group session
      */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record TutorialGroupStatusDTO(String status_explanation) {
     }
 

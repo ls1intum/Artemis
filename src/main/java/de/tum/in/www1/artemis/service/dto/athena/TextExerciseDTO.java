@@ -14,7 +14,7 @@ import de.tum.in.www1.artemis.service.dto.GradingCriterionDTO;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record TextExerciseDTO(long id, String title, double maxPoints, double bonusPoints, String gradingInstructions, List<GradingCriterionDTO> gradingCriteria,
-        String problemStatement, String exampleSolution) implements ExerciseDTO {
+        String problemStatement, String exampleSolution) implements Exercise {
 
     /**
      * Create a new TextExerciseDTO from a TextExercise

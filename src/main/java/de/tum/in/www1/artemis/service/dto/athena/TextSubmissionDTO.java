@@ -10,7 +10,7 @@ import de.tum.in.www1.artemis.domain.TextSubmission;
  * A DTO representing a TextSubmission, for transferring data to Athena
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record TextSubmissionDTO(long id, long exerciseId, String text, String language) implements SubmissionDTO {
+public record TextSubmissionDTO(long id, long exerciseId, String text, String language) implements Submission {
 
     /**
      * Creates a new TextSubmissionDTO from a TextSubmission. The DTO also contains the exerciseId of the exercise the submission belongs to.

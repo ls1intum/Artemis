@@ -208,11 +208,12 @@ class ArchitectureTest extends AbstractArchitectureTest {
     @Test
     void testDTOImplementations() {
         var dtoRecordRule = classes().that().haveSimpleNameEndingWith("DTO").should().beRecords().andShould().beAnnotatedWith(JsonInclude.class)
-                // .andShould(useJsonIncludeNonEmpty())
                 .because("All DTOs should be records and annotated with @JsonInclude(JsonInclude.Include.NON_EMPTY)");
         var result = dtoRecordRule.evaluate(allClasses);
+        log.info("Current number of DTO classes: {}", result.getFailureReport().getDetails().size());
+        log.info("Current DTO classes: {}", result.getFailureReport().getDetails());
         // TODO: reduce the following number to 0
-        assertThat(result.getFailureReport().getDetails()).hasSizeLessThanOrEqualTo(56);
+        assertThat(result.getFailureReport().getDetails()).hasSizeLessThanOrEqualTo(35);
 
         // TODO: make sure all classes in a package that ends to dto are also named DTO to be included in the rule above
     }

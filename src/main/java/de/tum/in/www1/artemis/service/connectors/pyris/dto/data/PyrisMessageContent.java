@@ -8,5 +8,5 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 @JsonSubTypes({ @JsonSubTypes.Type(value = PyrisTextMessageContentDTO.class, name = "text"), @JsonSubTypes.Type(value = PyrisJsonMessageContentDTO.class, name = "json"),
         @JsonSubTypes.Type(value = PyrisImageMessageContentDTO.class, name = "image"), })
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public interface PyrisMessageContentDTO {
+public interface PyrisMessageContent {
 }

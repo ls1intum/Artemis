@@ -12,7 +12,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
  * A DTO representing a ProgrammingSubmission, for transferring data to Athena
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ProgrammingSubmissionDTO(long id, long exerciseId, String repositoryUri) implements SubmissionDTO {
+public record ProgrammingSubmissionDTO(long id, long exerciseId, String repositoryUri) implements Submission {
 
     /**
      * Creates a new ProgrammingSubmissionDTO from a ProgrammingSubmission. The DTO also contains the exerciseId of the exercise the submission belongs to.

@@ -10,7 +10,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
  * A DTO representing a ModelingSubmission, for transferring data to Athena
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ModelingSubmissionDTO(long id, long exerciseId, String model) implements SubmissionDTO {
+public record ModelingSubmissionDTO(long id, long exerciseId, String model) implements Submission {
 
     /**
      * Creates a new ModelingSubmissionDTO from a ModelingSubmission. The DTO also contains the exerciseId of the exercise the submission belongs to.
