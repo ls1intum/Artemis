@@ -7,23 +7,25 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
+import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 
 /**
  * DTO for exercise information.
  *
- * @param id           the id of the exercise
- * @param shortName    shortTitle the short title of the exercise
- * @param title        title the title of the exercise
- * @param start        the start date of the exercise
- * @param due          the due date of the exercise
- * @param maxPoints    the maximum achievable points of the exercise
- * @param difficulty   the difficulty level of the exercise
- * @param exerciseMode the mode of the exercise
- * @param type         the type of the exercise
+ * @param id                     the id of the exercise
+ * @param shortName              shortTitle the short title of the exercise
+ * @param title                  title the title of the exercise
+ * @param start                  the start date of the exercise
+ * @param due                    the due date of the exercise
+ * @param maxPoints              the maximum achievable points of the exercise
+ * @param includedInOverallScore whether the exercise is included in the overall score
+ * @param difficulty             the difficulty level of the exercise
+ * @param exerciseMode           the mode of the exercise
+ * @param type                   the type of the exercise
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ExerciseInformationDTO(long id, String shortName, String title, ZonedDateTime start, ZonedDateTime due, Double maxPoints, DifficultyLevel difficulty,
-        ExerciseMode exerciseMode, Class<? extends Exercise> type) {
+public record ExerciseInformationDTO(long id, String shortName, String title, ZonedDateTime start, ZonedDateTime due, Double maxPoints,
+        IncludedInOverallScore includedInOverallScore, DifficultyLevel difficulty, ExerciseMode exerciseMode, Class<? extends Exercise> type) {
 
     /**
      * Create a new ExerciseInformationDTO from an exercise.
@@ -37,7 +39,7 @@ public record ExerciseInformationDTO(long id, String shortName, String title, Zo
             startDate = exercise.getReleaseDate();
         }
         return new ExerciseInformationDTO(exercise.getId(), exercise.getShortName(), exercise.getTitle(), startDate, exercise.getDueDate(), exercise.getMaxPoints(),
-                exercise.getDifficulty(), exercise.getMode(), exercise.getClass());
+                exercise.getIncludedInOverallScore(), exercise.getDifficulty(), exercise.getMode(), exercise.getClass());
     }
 
     @Override
@@ -49,7 +51,8 @@ public record ExerciseInformationDTO(long id, String shortName, String title, Zo
         if (other instanceof ExerciseInformationDTO otherDTO) {
             // Compare all fields for equality, for dates the isEqual method is used to compare the date and time
             return id == otherDTO.id && shortName.equals(otherDTO.shortName) && title.equals(otherDTO.title) && start.isEqual(otherDTO.start) && due.isEqual(otherDTO.due)
-                    && maxPoints.equals(otherDTO.maxPoints) && difficulty.equals(otherDTO.difficulty) && exerciseMode.equals(otherDTO.exerciseMode) && type.equals(otherDTO.type);
+                    && includedInOverallScore.equals(otherDTO.includedInOverallScore) && maxPoints.equals(otherDTO.maxPoints) && difficulty.equals(otherDTO.difficulty)
+                    && exerciseMode.equals(otherDTO.exerciseMode) && type.equals(otherDTO.type);
         }
 
         return false;
