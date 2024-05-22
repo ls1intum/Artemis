@@ -11,8 +11,6 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import javax.xml.stream.XMLInputFactory;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -64,6 +62,7 @@ public class LocalCIConfiguration {
      * @return The HostConfig bean.
      */
     @Bean
+    // TODO: reconsider if a bean is necessary here, this could also be created after application startup with @EventListener(ApplicationReadyEvent.class) to speed up the startup
     public HostConfig hostConfig() {
         long cpuCount = 0;
         long cpuPeriod = 100000L;
@@ -143,22 +142,12 @@ public class LocalCIConfiguration {
     }
 
     /**
-     * Creates an XMLInputFactory that is used to parse the test results during execution of the local CI build jobs.
-     *
-     * @return The XMLInputFactory bean.
-     */
-    @Bean
-    public XMLInputFactory localCIXMLInputFactory() {
-        return XMLInputFactory.newInstance();
-    }
-
-    // TODO: the Artemis server should start even if docker is not running. Also, pulling the image should be done after the start has finished or only on demand
-    /**
      * Creates a Docker client that is used to communicate with the Docker daemon.
      *
      * @return The DockerClient bean.
      */
     @Bean
+    // TODO: reconsider if a bean is necessary here, this could also be created after application startup with @EventListener(ApplicationReadyEvent.class) to speed up the startup
     public DockerClient dockerClient() {
         log.debug("Create bean dockerClient");
         DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder().withDockerHost(dockerConnectionUri).build();

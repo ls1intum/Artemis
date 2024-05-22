@@ -270,7 +270,7 @@
                                             (delete)="deleteProgrammingExercise(programmingExercise.id!, $event)"
                                             [dialogError]="dialogError$"
                                             [additionalChecks]="
-                                                localVCEnabled
+                                                localCIEnabled
                                                     ? {}
                                                     : {
                                                           deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',
@@ -320,7 +320,7 @@
                         (delete)="deleteMultipleProgrammingExercises(selectedExercises, $event)"
                         [requireConfirmationOnlyForAdditionalChecks]="true"
                         [additionalChecks]="
-                            localVCEnabled
+                            localCIEnabled
                                 ? {}
                                 : {
                                       deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',

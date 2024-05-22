@@ -323,6 +323,24 @@ describe('BuildQueueComponent', () => {
         expect(spy).toHaveBeenCalled();
     });
 
+    it('should update build job duration in running build jobs', () => {
+        // Mock ActivatedRoute to return no course ID
+        mockActivatedRoute.paramMap = of(new Map([]));
+
+        // Mock BuildQueueService to return mock data
+        mockBuildQueueService.getRunningBuildJobs.mockReturnValue(of(mockRunningJobs));
+
+        // Initialize the component
+        component.ngOnInit();
+        // Expectations: The build job duration is calculated and set for each running build job
+        for (const runningBuildJob of component.runningBuildJobs) {
+            const { buildDuration, buildCompletionDate, buildStartDate } = runningBuildJob.jobTimingInfo!;
+            if (buildDuration && buildCompletionDate && buildStartDate) {
+                expect(buildDuration).toBeLessThanOrEqual(buildCompletionDate.diff(buildStartDate, 'seconds'));
+            }
+        }
+    });
+
     it('should cancel a build job in a course', () => {
         const buildJobId = '1';
 
