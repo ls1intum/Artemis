@@ -4,6 +4,7 @@ import { Observable, map } from 'rxjs';
 import { ExerciseInformation, StudentMetrics } from 'app/entities/student-metrics.model';
 import { ExerciseType } from 'app/entities/exercise.model';
 import dayjs from 'dayjs/esm';
+import { ExerciseCategory } from 'app/entities/exercise-category.model';
 
 @Injectable({ providedIn: 'root' })
 export class CourseDashboardService {
@@ -15,16 +16,25 @@ export class CourseDashboardService {
         return this.http.get<StudentMetrics>(`${this.resourceUrl}/course/${courseId}/student`, { observe: 'response' }).pipe(
             map((response) => {
                 if (response.body && response.body.exerciseMetrics && response.body.exerciseMetrics.exerciseInformation) {
-                    response.body.exerciseMetrics.exerciseInformation = this.convertToExerciseInformation(response.body.exerciseMetrics.exerciseInformation);
+                    response.body.exerciseMetrics.exerciseInformation = this.convertToExerciseInformation(
+                        response.body.exerciseMetrics.exerciseInformation,
+                        response.body.exerciseMetrics.categories,
+                        response.body.exerciseMetrics.teamId,
+                    );
                 }
                 return response;
             }),
         );
     }
 
-    private convertToExerciseInformation(exerciseInformation: { [key: string]: any }): { [key: string]: ExerciseInformation } {
+    private convertToExerciseInformation(
+        exerciseInformation: { [key: string]: any },
+        categories: { [key: string]: any },
+        teamId?: { [key: string]: number },
+    ): { [key: string]: ExerciseInformation } {
         return Object.keys(exerciseInformation).reduce(
             (acc, key) => {
+                const exerciseCategories = (categories[key] as (string | null)[]).flatMap((category) => (category ? (JSON.parse(category) as ExerciseCategory) : []));
                 const exercise = exerciseInformation[key];
                 acc[key] = {
                     id: exercise.id,
@@ -34,6 +44,11 @@ export class CourseDashboardService {
                     dueDate: dayjs(exercise.due),
                     maxPoints: exercise.maxPoints,
                     type: this.mapToExerciseType(exercise.type),
+                    includedInOverallScore: exercise.includedInOverallScore,
+                    exerciseMode: exercise.exerciseMode,
+                    categories: exerciseCategories,
+                    difficulty: exercise.difficulty,
+                    studentAssignedTeamId: teamId ? teamId?.[key] : undefined,
                 };
                 return acc;
             },

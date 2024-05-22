@@ -58,7 +58,14 @@ export class CompetencyAccordionComponent implements OnChanges {
             .filter((exercise) => exercise.startDate.isBefore(dayjs()) && exercise.dueDate.isAfter(dayjs()))
             .sort((a, b) => a.dueDate.diff(b.dueDate));
 
-        this.nextExercises = nextExerciseInformations as Exercise[]; // TODO: Fix type casting
+        // Workaround to convert ExerciseInformation to Exercise
+        this.nextExercises = nextExerciseInformations.map(
+            (exercise) =>
+                ({
+                    ...exercise,
+                    studentAssignedTeamIdComputed: exercise.studentAssignedTeamId,
+                }) as unknown as Exercise,
+        );
     }
 
     toggle() {
