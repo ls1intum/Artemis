@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
@@ -276,6 +277,7 @@ public abstract class AbstractGitService {
      * @return the latestHash of the given repo.
      * @throws EntityNotFoundException if retrieving the latestHash from the git repo failed.
      */
+    @Nullable
     public ObjectId getLastCommitHash(VcsRepositoryUri repoUri) throws EntityNotFoundException {
         if (repoUri == null || repoUri.getURI() == null) {
             return null;
