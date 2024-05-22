@@ -179,7 +179,7 @@ public class DatabaseMigration {
             if (e.getMessage().contains("databasechangelog") && (e.getMessage().contains("does not exist") || (e.getMessage().contains("doesn't exist")))) {
                 return null;
             }
-            log.error(error);
+            log.error(error, e);
             System.exit(13);
         }
         // this path cannot happen
