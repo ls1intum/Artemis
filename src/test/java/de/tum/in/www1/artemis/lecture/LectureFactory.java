@@ -91,7 +91,7 @@ public class LectureFactory {
         catch (IOException ex) {
             fail("Failed while copying test attachment files", ex);
         }
-        attachment.setLink(FilePathService.publicPathForActualPathOrThrow(savePath, entityId).toString());
+        attachment.setLink(FilePathService.publicPathForActualPathOrThrow(savePath, entityId, null).toString());
         return attachment;
     }
 }

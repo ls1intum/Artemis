@@ -914,7 +914,7 @@ public class CourseUtilService {
                     var savedSubmission = fileUploadExerciseUtilService.saveFileUploadSubmission(fileUploadExercise, submission, userPrefix + "student" + j);
                     var filePath = FileUploadSubmission.buildFilePath(fileUploadExercise.getId(), savedSubmission.getId()).resolve("file.pdf");
                     FileUtils.write(filePath.toFile(), "test content", Charset.defaultCharset());
-                    savedSubmission.setFilePath(FilePathService.publicPathForActualPath(filePath, submission.getId()).toString());
+                    savedSubmission.setFilePath(FilePathService.publicPathForActualPath(filePath, submission.getId(), null).toString());
                     fileUploadSubmissionRepo.save(savedSubmission);
                     if (numberOfAssessments >= j) {
                         Result result = participationUtilService.generateResultWithScore(submission, currentUser, 3.0);

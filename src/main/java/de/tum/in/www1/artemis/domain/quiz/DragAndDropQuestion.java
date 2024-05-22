@@ -188,6 +188,18 @@ public class DragAndDropQuestion extends QuizQuestion {
             // if the file path is invalid, we don't need to delete it
             log.warn("Could not delete file with path {}. Assume already deleted, DragAndDropQuestion {} can be removed.", backgroundFilePath, getId());
         }
+
+        for (DragItem dragItem : dragItems) {
+            try {
+                if (dragItem.getPictureFilePath() != null) {
+                    fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(URI.create(dragItem.getPictureFilePath())), 0);
+                }
+            }
+            catch (FilePathParsingException e) {
+                // if the file path is invalid, we don't need to delete it
+                log.warn("Could not delete file with path {}. Assume already deleted, DragAndDropQuestion {} can be removed.", dragItem.getPictureFilePath(), getId());
+            }
+        }
     }
 
     /**
@@ -460,6 +472,12 @@ public class DragAndDropQuestion extends QuizQuestion {
     @PostLoad
     @PostUpdate
     public void loadContent() {
+        for (DragItem dragItem : content.getDragItems()) {
+            if (dragItem.getPictureFilePath() != null && dragItem.getPictureFilePath().contains(Constants.FILEPATH_ID_PLACEHOLDER)) {
+                dragItem.setPictureFilePath(dragItem.getPictureFilePath().replace(Constants.FILEPATH_ID_PLACEHOLDER, getId().toString() + "/" + dragItem.getId()));
+            }
+        }
+
         if (content != null) {
             setDropLocations(content.getDropLocations());
             setDragItems(content.getDragItems());

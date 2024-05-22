@@ -174,8 +174,8 @@ public class FilePathService {
      * @throws FilePathParsingException if the path is unknown
      * @return the public file url that can be used by users to access the file from outside
      */
-    public static URI publicPathForActualPathOrThrow(Path actualPathString, @Nullable Long entityId) {
-        URI publicPath = publicPathForActualPath(actualPathString, entityId);
+    public static URI publicPathForActualPathOrThrow(Path actualPathString, @Nullable Long entityId, @Nullable Long questionId) {
+        URI publicPath = publicPathForActualPath(actualPathString, entityId, questionId);
         if (publicPath == null) {
             // path is unknown => cannot convert
             throw new FilePathParsingException("Unknown Filepath: " + actualPathString);
@@ -191,12 +191,17 @@ public class FilePathService {
      * @param entityId the id of the entity associated with the file
      * @return the public file url that can be used by users to access the file from outside
      */
-    public static URI publicPathForActualPath(Path path, @Nullable Long entityId) {
+    public static URI publicPathForActualPath(Path path, @Nullable Long entityId, @Nullable Long questionId) {
         // first extract filename
         String filename = path.getFileName().toString();
 
         // generate part for id
-        String id = entityId == null ? Constants.FILEPATH_ID_PLACEHOLDER : entityId.toString();
+        String id = (entityId == null) ? Constants.FILEPATH_ID_PLACEHOLDER : entityId.toString();
+
+        if (questionId != null && entityId != null) {
+            id = String.format("%s/%s", questionId, id);
+        }
+
         // check for known path to convert
         if (path.startsWith(getTempFilePath())) {
             return URI.create(FileService.DEFAULT_FILE_SUBPATH + filename);
