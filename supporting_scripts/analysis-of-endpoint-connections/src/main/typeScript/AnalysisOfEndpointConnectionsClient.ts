@@ -1,7 +1,11 @@
 import * as ts from 'typescript';
+import * as fs from 'fs';
 
 // Get the file names from the command line arguments
 const fileNames = process.argv.slice(2);
+
+let restCalls: Array<{method: string, url: string, line: number, filePath: string}> = [];
+
 
 fileNames.forEach(fileName => {
     if (fileName.endsWith('.ts')) {
@@ -27,6 +31,14 @@ fileNames.forEach(fileName => {
                         console.log(`At line: ${sourceFile.getLineAndCharacterOfPosition(node.getStart()).line + 1}`);
                         console.log(`At file path: ${fileName}`);
                         console.log('-----------------------------------');
+
+                        let restCall = {
+                            method: name,
+                            url: node.arguments.length > 0 ? node.arguments[0].getText() : 'No arguments provided for this REST call',
+                            line: sourceFile.getLineAndCharacterOfPosition(node.getStart()).line + 1,
+                            filePath: fileName
+                        };
+                        restCalls.push(restCall);
                     }
                 }
             }
@@ -39,3 +51,6 @@ fileNames.forEach(fileName => {
         visit(sourceFile);
     }
 });
+
+// Write the restCalls array to a JSON file
+fs.writeFileSync('restCalls.json', JSON.stringify(restCalls, null, 2));
