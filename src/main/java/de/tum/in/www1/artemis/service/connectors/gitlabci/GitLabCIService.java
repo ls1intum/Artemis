@@ -38,7 +38,7 @@ import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.ci.AbstractContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.ci.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.TestResultsDTO;
-import de.tum.in.www1.artemis.web.rest.dto.RepositoriesCheckoutDirectoryDTO;
+import de.tum.in.www1.artemis.web.rest.dto.CheckoutDirectoriesDTO;
 
 @Profile("gitlabci")
 @Service
@@ -326,7 +326,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public RepositoriesCheckoutDirectoryDTO getCheckoutDirectoryPathsForTemplateAndSubmissionBuildPlan(ProgrammingLanguage programmingLanguage) {
+    public CheckoutDirectoriesDTO getCheckoutDirectories(ProgrammingLanguage programmingLanguage) {
         throw new UnsupportedOperationException("Method not implemented, consult the build plans in GitLab for the checkout directories.");
     }
 }

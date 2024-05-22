@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
-import de.tum.in.www1.artemis.web.rest.dto.RepositoriesCheckoutDirectoryDTO;
+import de.tum.in.www1.artemis.web.rest.dto.CheckoutDirectoriesDTO;
 
 /**
  * Abstract service for managing entities related to continuous integration.
@@ -272,5 +272,5 @@ public interface ContinuousIntegrationService {
      * @return the paths of the checkout directories for the default repositories (exercise, solution, tests) for the
      *         template and submission build plan
      */
-    RepositoriesCheckoutDirectoryDTO getCheckoutDirectoryPathsForTemplateAndSubmissionBuildPlan(ProgrammingLanguage programmingLanguage);
+    CheckoutDirectoriesDTO getCheckoutDirectories(ProgrammingLanguage programmingLanguage);
 }

@@ -32,7 +32,7 @@ import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUri;
 import de.tum.in.www1.artemis.util.LocalRepository;
-import de.tum.in.www1.artemis.web.rest.dto.RepositoriesCheckoutDirectoryDTO;
+import de.tum.in.www1.artemis.web.rest.dto.BuildPlanCheckoutDirectoriesDTO;
 
 class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
@@ -244,16 +244,16 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testGetCheckoutDirectories() throws Exception {
-        RepositoriesCheckoutDirectoryDTO checkoutDirectoryDTO = request.get("/api/programming-exercises/repository-checkout-directories?programmingLanguage=JAVA", HttpStatus.OK,
-                RepositoriesCheckoutDirectoryDTO.class);
+        BuildPlanCheckoutDirectoriesDTO checkoutDirectoryDTO = request.get("/api/programming-exercises/repository-checkout-directories?programmingLanguage=JAVA", HttpStatus.OK,
+                BuildPlanCheckoutDirectoriesDTO.class);
         assertThat(checkoutDirectoryDTO.exerciseCheckoutDirectory()).isEqualTo("/assignment");
-        assertThat(checkoutDirectoryDTO.solutionCheckoutDirectory()).isNull();
+        assertThat(checkoutDirectoryDTO.solutionCheckoutDirectories()).isNull();
         assertThat(checkoutDirectoryDTO.testCheckoutDirectory()).isEqualTo("/");
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetCheckoutDirectoriesAccessForbidden() throws Exception {
-        request.get("/api/programming-exercises/repository-checkout-directories?programmingLanguage=JAVA", HttpStatus.FORBIDDEN, RepositoriesCheckoutDirectoryDTO.class);
+        request.get("/api/programming-exercises/repository-checkout-directories?programmingLanguage=JAVA", HttpStatus.FORBIDDEN, BuildPlanCheckoutDirectoriesDTO.class);
     }
 }

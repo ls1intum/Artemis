@@ -37,7 +37,7 @@ import de.tum.in.www1.artemis.service.connectors.ci.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.TestResultsDTO;
 import de.tum.in.www1.artemis.service.connectors.jenkins.build_plan.JenkinsBuildPlanService;
 import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobService;
-import de.tum.in.www1.artemis.web.rest.dto.RepositoriesCheckoutDirectoryDTO;
+import de.tum.in.www1.artemis.web.rest.dto.CheckoutDirectoriesDTO;
 
 @Profile("jenkins")
 @Service
@@ -257,7 +257,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public RepositoriesCheckoutDirectoryDTO getCheckoutDirectoryPathsForTemplateAndSubmissionBuildPlan(ProgrammingLanguage programmingLanguage) {
+    public CheckoutDirectoriesDTO getCheckoutDirectories(ProgrammingLanguage programmingLanguage) {
         throw new UnsupportedOperationException("Method not implemented, consult the build plans in Jenkins for the checkout directories.");
     }
 }

@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.connectors.localci;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -26,7 +27,8 @@ import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
 import de.tum.in.www1.artemis.service.connectors.ci.AbstractContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.ci.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
-import de.tum.in.www1.artemis.web.rest.dto.RepositoriesCheckoutDirectoryDTO;
+import de.tum.in.www1.artemis.web.rest.dto.BuildPlanCheckoutDirectoriesDTO;
+import de.tum.in.www1.artemis.web.rest.dto.CheckoutDirectoriesDTO;
 
 /**
  * Implementation of ContinuousIntegrationService for local CI. Contains methods for communication with the local CI system.
@@ -221,9 +223,17 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public RepositoriesCheckoutDirectoryDTO getCheckoutDirectoryPathsForTemplateAndSubmissionBuildPlan(ProgrammingLanguage programmingLanguage) {
+    public CheckoutDirectoriesDTO getCheckoutDirectories(ProgrammingLanguage programmingLanguage) {
+        BuildPlanCheckoutDirectoriesDTO submissionBuildPlanCheckoutDirectories = getSubmissionBuildPlanCheckoutDirectories(programmingLanguage);
+        BuildPlanCheckoutDirectoriesDTO solutionBuildPlanCheckoutDirectories = getSolutionBuildPlanCheckoutDirectories(submissionBuildPlanCheckoutDirectories);
+
+        return new CheckoutDirectoriesDTO(submissionBuildPlanCheckoutDirectories, solutionBuildPlanCheckoutDirectories);
+    }
+
+    private BuildPlanCheckoutDirectoriesDTO getSubmissionBuildPlanCheckoutDirectories(ProgrammingLanguage programmingLanguage) {
         String exerciseCheckoutDirectory = ContinuousIntegrationService.RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage);
         String testCheckoutDirectory = ContinuousIntegrationService.RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage);
+
         exerciseCheckoutDirectory = startPathWithRootDirectory(exerciseCheckoutDirectory);
         testCheckoutDirectory = startPathWithRootDirectory(testCheckoutDirectory);
 
@@ -236,7 +246,9 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
             // not checked out during template & submission build
         }
 
-        return new RepositoriesCheckoutDirectoryDTO(exerciseCheckoutDirectory, solutionCheckoutDirectory, testCheckoutDirectory);
+        String[] solutionCheckoutDirectories = new String[] { solutionCheckoutDirectory };
+
+        return new BuildPlanCheckoutDirectoriesDTO(exerciseCheckoutDirectory, solutionCheckoutDirectories, testCheckoutDirectory);
     }
 
     private String startPathWithRootDirectory(String checkoutDirectoryPath) {
@@ -246,5 +258,15 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
         }
 
         return checkoutDirectoryPath.startsWith(ROOT_DIRECTORY) ? checkoutDirectoryPath : ROOT_DIRECTORY + checkoutDirectoryPath;
+    }
+
+    private BuildPlanCheckoutDirectoriesDTO getSolutionBuildPlanCheckoutDirectories(BuildPlanCheckoutDirectoriesDTO submissionBuildPlanCheckoutDirectories) {
+        String[] solutionCheckoutDirectories = new String[] { submissionBuildPlanCheckoutDirectories.exerciseCheckoutDirectory() };
+        if (submissionBuildPlanCheckoutDirectories.solutionCheckoutDirectories() != null && submissionBuildPlanCheckoutDirectories.solutionCheckoutDirectories().length > 0) {
+            solutionCheckoutDirectories = ArrayUtils.addAll(solutionCheckoutDirectories, submissionBuildPlanCheckoutDirectories.solutionCheckoutDirectories());
+        }
+        String testCheckoutDirectory = submissionBuildPlanCheckoutDirectories.testCheckoutDirectory();
+
+        return new BuildPlanCheckoutDirectoriesDTO(null, solutionCheckoutDirectories, testCheckoutDirectory);
     }
 }
