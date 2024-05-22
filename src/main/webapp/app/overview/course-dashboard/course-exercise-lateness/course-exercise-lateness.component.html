@@ -1,6 +1,9 @@
 <div>
     <div class="d-flex flex-wrap justify-content-between align-items-baseline gap-2">
-        <h4 jhiTranslate="artemisApp.courseStudentDashboard.exerciseLateness.title"></h4>
+        <div class="d-flex gap-2 align-items-baseline">
+            <h4 jhiTranslate="artemisApp.courseStudentDashboard.exerciseLateness.title"></h4>
+            <jhi-help-icon text="artemisApp.courseStudentDashboard.exerciseLateness.info" />
+        </div>
         @if (isDataAvailable) {
             <!-- Legend-->
             <div class="d-flex gap-3">

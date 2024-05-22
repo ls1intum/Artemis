@@ -7,6 +7,7 @@
             },
             "exercisePerformance": {
                 "title": "Exercise Performance",
+                "info": "Performance is measured as the percentage of points you have achieved in an exercise.",
                 "noData": "No scores are available for you in this course yet.",
                 "yourScoreLabel": "Your score",
                 "averageScoreLabel": "Average score",
@@ -15,6 +16,7 @@
             },
             "exerciseLateness": {
                 "title": "Exercise Lateness",
+                "info": "Relative lateness refers to the percentage of working time that has passed.",
                 "noData": "You have not submitted any exercises in this course yet.",
                 "yourLatenessLabel": "Your lateness",
                 "averageLatenessLabel": "Average lateness",
