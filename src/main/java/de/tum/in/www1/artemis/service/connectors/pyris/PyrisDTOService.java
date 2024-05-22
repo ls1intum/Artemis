@@ -27,7 +27,6 @@ import de.tum.in.www1.artemis.domain.iris.message.IrisJsonMessageContent;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.message.IrisTextMessageContent;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisBuildLogEntryDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisCompetencyDTO;
@@ -42,6 +41,7 @@ import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisProgramming
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisResultDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisSubmissionDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisTextMessageContentDTO;
+import de.tum.in.www1.artemis.service.programming.RepositoryService;
 
 @Service
 @Profile("iris")
@@ -66,8 +66,8 @@ public class PyrisDTOService {
      * @return the converted PyrisProgrammingExerciseDTO
      */
     public PyrisProgrammingExerciseDTO toPyrisProgrammingExerciseDTO(ProgrammingExercise exercise) {
-        var templateRepositoryContents = getRepository(exercise.getTemplateParticipation()).map(repositoryService::getFilesWithContent).orElse(Map.of());
-        var solutionRepositoryContents = getRepository(exercise.getSolutionParticipation()).map(repositoryService::getFilesWithContent).orElse(Map.of());
+        var templateRepositoryContents = getRepository(exercise.getTemplateParticipation()).map(repositoryService::getFilesContentFromWorkingCopy).orElse(Map.of());
+        var solutionRepositoryContents = getRepository(exercise.getSolutionParticipation()).map(repositoryService::getFilesContentFromWorkingCopy).orElse(Map.of());
         Optional<Repository> testRepo = Optional.empty();
         try {
             testRepo = Optional.ofNullable(gitService.getOrCheckoutRepository(exercise.getVcsTestRepositoryUri(), true));
@@ -75,7 +75,7 @@ public class PyrisDTOService {
         catch (GitAPIException e) {
             log.error("Could not fetch existing test repository", e);
         }
-        var testsRepositoryContents = testRepo.map(repositoryService::getFilesWithContent).orElse(Map.of());
+        var testsRepositoryContents = testRepo.map(repositoryService::getFilesContentFromWorkingCopy).orElse(Map.of());
 
         return new PyrisProgrammingExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getProgrammingLanguage(), templateRepositoryContents, solutionRepositoryContents,
                 testsRepositoryContents, exercise.getProblemStatement(), toInstant(exercise.getReleaseDate()), toInstant(exercise.getDueDate()));
@@ -91,7 +91,7 @@ public class PyrisDTOService {
     public PyrisSubmissionDTO toPyrisSubmissionDTO(ProgrammingSubmission submission) {
         var buildLogEntries = submission.getBuildLogEntries().stream().map(buildLogEntry -> new PyrisBuildLogEntryDTO(toInstant(buildLogEntry.getTime()), buildLogEntry.getLog()))
                 .toList();
-        var studentRepositoryContents = getRepository((ProgrammingExerciseParticipation) submission.getParticipation()).map(repositoryService::getFilesWithContent)
+        var studentRepositoryContents = getRepository((ProgrammingExerciseParticipation) submission.getParticipation()).map(repositoryService::getFilesContentFromWorkingCopy)
                 .orElse(Map.of());
         return new PyrisSubmissionDTO(submission.getId(), toInstant(submission.getSubmissionDate()), studentRepositoryContents, submission.getParticipation().isPracticeMode(),
                 submission.isBuildFailed(), buildLogEntries, getLatestResult(submission));

@@ -14,7 +14,7 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { faBook, faExclamationTriangle, faEye, faFileExport, faFileSignature, faPencilAlt, faSignal, faTable, faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
-import { PROFILE_LOCALVC } from 'app/app.constants';
+import { PROFILE_LOCALCI, PROFILE_LOCALVC } from 'app/app.constants';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 @Component({
@@ -47,6 +47,7 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
     farListAlt = faListAlt;
 
     localVCEnabled = false;
+    localCIEnabled = false;
 
     constructor(
         private textExerciseService: TextExerciseService,
@@ -61,6 +62,7 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
     ngOnInit(): void {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
+            this.localCIEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALCI);
         });
     }
 

@@ -39,7 +39,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
-import { PROFILE_LOCALVC } from 'app/app.constants';
+import { PROFILE_LOCALCI, PROFILE_LOCALVC } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-programming-exercise',
@@ -54,6 +54,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     templateParticipationType = ProgrammingExerciseParticipationType.TEMPLATE;
     // Used to make the repository links download the repositories instead of linking to GitLab.
     localVCEnabled = false;
+    localCIEnabled = false;
 
     // extension points, see shared/extension-point
     @ContentChild('overrideRepositoryAndBuildPlan') overrideRepositoryAndBuildPlan: TemplateRef<any>;
@@ -109,6 +110,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
                 this.profileService.getProfileInfo().subscribe((profileInfo) => {
                     this.buildPlanLinkTemplate = profileInfo.buildPlanURLTemplate;
                     this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
+                    this.localCIEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALCI);
                 });
                 // reconnect exercise with course
                 this.programmingExercises.forEach((exercise) => {

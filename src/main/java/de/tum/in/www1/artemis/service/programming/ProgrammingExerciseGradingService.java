@@ -647,7 +647,7 @@ public class ProgrammingExerciseGradingService {
         }
 
         // Remove feedback that is in an invisible SCA category
-        staticCodeAnalysisFeedback = staticCodeAnalysisCategoryRepository.categorizeScaFeedback(result, staticCodeAnalysisFeedback, exercise);
+        feedbackCreationService.categorizeScaFeedback(result, staticCodeAnalysisFeedback, exercise);
 
         if (applySubmissionPolicy) {
             SubmissionPolicy submissionPolicy = programmingExerciseRepository.findByIdWithSubmissionPolicyElseThrow(exercise.getId()).getSubmissionPolicy();

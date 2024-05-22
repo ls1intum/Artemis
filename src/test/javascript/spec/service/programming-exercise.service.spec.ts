@@ -321,7 +321,7 @@ describe('ProgrammingExercise Service', () => {
         const repositoryType = 'TEMPLATE';
         const expected = { id: 1, entries: [new ProgrammingExerciseGitDiffEntry()] } as unknown as ProgrammingExerciseGitDiffReport;
         service.getDiffReportForCommits(exerciseId, participationId, commitId, commitId2, repositoryType).subscribe((resp) => expect(resp).toEqual(expected));
-        const url = `${resourceUrl}/${exerciseId}/participation/${participationId}/commits/${commitId}/diff-report/${commitId2}?repositoryType=${repositoryType}`;
+        const url = `${resourceUrl}/${exerciseId}/commits/${commitId}/diff-report/${commitId2}?repositoryType=${repositoryType}&participationId=${participationId}`;
         const req = httpMock.expectOne({ method: 'GET', url });
         req.flush(expected);
         tick();

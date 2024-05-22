@@ -23,6 +23,7 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.Size;
 
 import org.apache.commons.lang3.StringUtils;
+import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -135,7 +136,9 @@ public class Feedback extends DomainObject {
      */
     public void setDetailTextTruncated(@Nullable final String detailText) {
         this.detailText = StringUtils.truncate(detailText, FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH);
-        this.longFeedbackText.clear();
+        if (Hibernate.isInitialized(longFeedbackText)) {
+            longFeedbackText.clear();
+        }
         this.hasLongFeedbackText = false;
     }
 
