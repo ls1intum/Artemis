@@ -48,6 +48,7 @@ import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.spi.properties.ClusterProperty;
 import com.hazelcast.spring.cache.HazelcastCacheManager;
+import com.hazelcast.spring.context.SpringManagedContext;
 
 import de.tum.in.www1.artemis.service.HazelcastPathSerializer;
 import de.tum.in.www1.artemis.service.connectors.localci.LocalCIPriorityQueueComparator;
@@ -184,7 +185,7 @@ public class CacheConfiguration {
         config.getNetworkConfig().getJoin().getTcpIpConfig().setEnabled(true);
 
         // Allows using @SpringAware and therefore Spring Services in distributed tasks
-        config.setManagedContext(new ArtemisSpringManagedContext(applicationContext, env));
+        config.setManagedContext(new SpringManagedContext(applicationContext));
         config.setClassLoader(applicationContext.getClassLoader());
 
         config.getSerializationConfig().addSerializerConfig(createPathSerializerConfig());

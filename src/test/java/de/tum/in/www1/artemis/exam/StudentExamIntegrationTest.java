@@ -2810,6 +2810,22 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         }
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetLongestWorkingTimeForExam() throws Exception {
+        // Step 1: Create mock student exams
+        List<StudentExam> studentExams = prepareStudentExamsForConduction(false, true, NUMBER_OF_STUDENTS);
+
+        // Step 2: Get the maximum working time among the exams to find the longest time
+        final int longestWorkingTime = studentExams.stream().mapToInt(StudentExam::getWorkingTime).max().orElse(0);
+
+        // When
+        final int response = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/longest-working-time", HttpStatus.OK, Integer.class);
+
+        // Then
+        assertThat(response).isEqualTo(longestWorkingTime);
+    }
+
     @Nested
     class ChangedAndUnchangedSubmissionsIntegrationTest {
 

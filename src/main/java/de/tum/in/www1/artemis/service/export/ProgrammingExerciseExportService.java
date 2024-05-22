@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.service.export;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService.RepositoryCheckoutPath;
-import static de.tum.in.www1.artemis.service.util.XmlFileUtils.getDocumentBuilderFactory;
+import static de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsXmlFileUtils.getDocumentBuilderFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -439,6 +439,36 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         }
     }
 
+    /**
+     * Exports the repository belonging to a student's programming exercise participation.
+     *
+     * @param exerciseId    The ID of the programming exercise.
+     * @param participation The participation for which to export the repository.
+     * @param exportErrors  A list in which to store errors that occur during the export.
+     * @return The zipped repository if the export was successful, otherwise an empty optional.
+     */
+    public Optional<File> exportStudentRepository(long exerciseId, ProgrammingExerciseStudentParticipation participation, List<String> exportErrors) {
+        var exerciseOrEmpty = loadExerciseForRepoExport(exerciseId, exportErrors);
+        if (exerciseOrEmpty.isEmpty()) {
+            return Optional.empty();
+        }
+        var programmingExercise = exerciseOrEmpty.get();
+        var blankExportOptions = new RepositoryExportOptionsDTO();
+        Path outputDirectory = fileService.getTemporaryUniquePathWithoutPathCreation(repoDownloadClonePath, 5);
+        try {
+            Path zipFile = createZipForRepositoryWithParticipation(programmingExercise, participation, blankExportOptions, outputDirectory, outputDirectory);
+            if (zipFile != null) {
+                return Optional.of(zipFile.toFile());
+            }
+        }
+        catch (IOException e) {
+            String error = String.format("Failed to export the student repository of programming exercise %d and participation %d", exerciseId, participation.getId());
+            log.error(error);
+            exportErrors.add(error);
+        }
+        return Optional.empty();
+    }
+
     private Optional<ProgrammingExercise> loadExerciseForRepoExport(long exerciseId, List<String> exportErrors) {
         var exerciseOrEmpty = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(exerciseId);
         if (exerciseOrEmpty.isEmpty()) {
@@ -707,6 +737,9 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
             if (repositoryExportOptions.isAnonymizeRepository()) {
                 log.debug("Anonymizing commits for participation {}", participation);
                 gitService.anonymizeStudentCommits(repository, programmingExercise);
+            }
+            else {
+                gitService.removeRemotesFromRepository(repository);
             }
 
             if (repositoryExportOptions.isNormalizeCodeStyle()) {

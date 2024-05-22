@@ -78,12 +78,19 @@ public class GroupNotificationService {
      * @param notificationText that is used for the notification process
      */
     public void notifyAboutExerciseUpdate(Exercise exercise, String notificationText) {
+
+        if (exercise.isExamExercise()) {
+            // Do not send an exercise-update notification if it's an exam exercise.
+            // Exam exercise updates are handled using exam live events.
+            return;
+        }
+
         if (exercise.getReleaseDate() != null && exercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
             // Do not send an exercise-update notification before the release date of the exercise.
             return;
         }
 
-        if ((notificationText != null && exercise.isCourseExercise()) || exercise.isExamExercise()) {
+        if (notificationText != null) {
             // sends an exercise-update notification
             notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(exercise, notificationText);
         }
@@ -231,7 +238,6 @@ public class GroupNotificationService {
 
     /**
      * Notify editor and instructor groups about started or completed build runs for all participants of an exercise.
-     *
      *
      * @param exercise         the exercise where the builds status changed
      * @param notificationText the notification text

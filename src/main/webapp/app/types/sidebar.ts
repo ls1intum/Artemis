@@ -2,6 +2,7 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { DifficultyLevel, Exercise } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
+export type SidebarCardSize = 'S' | 'M' | 'L';
 export type TimeGroupCategory = 'past' | 'current' | 'future' | 'noDate';
 export type TutorialGroupCategory = 'all' | 'registered' | 'further';
 export type SidebarTypes = 'exercise' | 'default';
@@ -60,6 +61,10 @@ export interface SidebarCardElement {
      * Set for Exercises
      */
     type?: string;
+    /**
+     * Sets the size of SidebarCards
+     */
+    size: SidebarCardSize;
     /**
      * Set for Exercises, shows the colored border on the left side
      */
