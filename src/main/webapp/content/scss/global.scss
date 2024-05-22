@@ -265,11 +265,11 @@ Generic styles
     max-width: 30vw !important;
 }
 
-// Should be used with an width restriction of your choice.
+// Should be used with a width restriction of your choice.
 .text-truncate-4-lines {
     overflow: hidden;
     text-overflow: ellipsis;
-    // Show only the first four lines (limiting height with something else then lines is not possible).
+    // Show only the first four lines (limiting height with something else than lines is not possible).
     display: -webkit-box;
     -webkit-line-clamp: 4;
     line-clamp: 4;
