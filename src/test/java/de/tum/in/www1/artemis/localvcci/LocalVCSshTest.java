@@ -54,11 +54,12 @@ class LocalVCSshTest extends LocalVCIntegrationTest {
     private UserRepository userRepository;
 
     @Autowired
+    @SuppressWarnings("unused")
     private SshServer sshServer;
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testInstructorTriesToForcePushOverSsh() throws Exception {
+    void testInstructorTriesToForcePushOverSsh() {
 
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
@@ -87,7 +88,8 @@ class LocalVCSshTest extends LocalVCIntegrationTest {
         client.start();
         PrivateKey privateKey = loadPrivateKey(sshPrivateKey);
 
-        try (ClientSession session = connectAndAuthenticate(client, user.getName(), publicKey, privateKey, hostname, port)) {
+        try {
+            ClientSession session = connectAndAuthenticate(client, user.getName(), publicKey, privateKey, hostname, port);
             if (session != null && session.isAuthenticated()) {
                 executeGitPush(session);
             }
