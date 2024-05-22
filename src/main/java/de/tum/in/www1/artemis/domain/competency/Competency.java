@@ -80,6 +80,12 @@ public class Competency extends BaseCompetency {
     @JsonIgnoreProperties({ "competencies" })
     private StandardizedCompetency linkedStandardizedCompetency;
 
+    @ManyToMany
+    @JoinTable(name = "jol_competency", joinColumns = @JoinColumn(name = "competency_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "competency_jol_id", referencedColumnName = "id"))
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JsonIgnoreProperties("competency")
+    private Set<CompetencyJOL> competencyJOLs = new HashSet<>();
+
     public Competency() {
     }
 

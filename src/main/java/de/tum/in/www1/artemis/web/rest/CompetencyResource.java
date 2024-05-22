@@ -47,9 +47,11 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
+import de.tum.in.www1.artemis.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.LectureUnitService;
+import de.tum.in.www1.artemis.service.competency.CompetencyJOLService;
 import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.competency.CompetencyRelationService;
 import de.tum.in.www1.artemis.service.competency.CompetencyService;
@@ -103,11 +105,13 @@ public class CompetencyResource {
 
     private final CompetencyRelationService competencyRelationService;
 
+    private final CompetencyJOLService competencyJOLService;
+
     public CompetencyResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             CompetencyRepository competencyRepository, CompetencyRelationRepository competencyRelationRepository, CompetencyService competencyService,
             CompetencyProgressRepository competencyProgressRepository, CompetencyProgressService competencyProgressService, ExerciseService exerciseService,
             LectureUnitService lectureUnitService, CompetencyRelationService competencyRelationService,
-            Optional<IrisCompetencyGenerationSessionService> irisCompetencyGenerationSessionService) {
+            Optional<IrisCompetencyGenerationSessionService> irisCompetencyGenerationSessionService, CompetencyJOLService competencyJOLService) {
         this.courseRepository = courseRepository;
         this.competencyRelationRepository = competencyRelationRepository;
         this.authorizationCheckService = authorizationCheckService;
@@ -120,6 +124,7 @@ public class CompetencyResource {
         this.lectureUnitService = lectureUnitService;
         this.competencyRelationService = competencyRelationService;
         this.irisCompetencyGenerationSessionService = irisCompetencyGenerationSessionService;
+        this.competencyJOLService = competencyJOLService;
     }
 
     /**
@@ -642,5 +647,17 @@ public class CompetencyResource {
             throw new BadRequestAlertException("The competency does not belong to the correct course", ENTITY_NAME, "competencyWrongCourse");
         }
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(role, course, null);
+    }
+
+    @PutMapping("courses/{courseId}/competencies/{competencyId}/jol/{jolValue}")
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<Void> setJudgementOfLearning(@PathVariable long courseId, @PathVariable long competencyId, @PathVariable Integer jolValue) {
+        log.info("REST request to set judgement of learning for competency: {}", competencyId);
+
+        final var userId = userRepository.getUserIdElseThrow();
+
+        competencyJOLService.setJudgementOfLearning(competencyId, userId, jolValue);
+
+        return ResponseEntity.ok().build();
     }
 }
