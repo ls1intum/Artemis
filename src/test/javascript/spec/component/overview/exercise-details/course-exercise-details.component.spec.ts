@@ -72,6 +72,7 @@ import { ScienceService } from 'app/shared/science/science.service';
 import { MockScienceService } from '../../../helpers/mocks/service/mock-science-service';
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { PROFILE_IRIS } from 'app/app.constants';
+import { SelfLearningFeedbackRequest } from 'app/entities/self-learning-feedback-request.model';
 
 describe('CourseExerciseDetailsComponent', () => {
     let comp: CourseExerciseDetailsComponent;
@@ -225,7 +226,11 @@ describe('CourseExerciseDetailsComponent', () => {
         const result = new Result();
         result.id = 1;
         result.completionDate = dayjs();
+        const selfLearningFeedbackRequest = new SelfLearningFeedbackRequest();
+        selfLearningFeedbackRequest.id = 1;
+        selfLearningFeedbackRequest.requestDateTime = dayjs().subtract(2, 'minutes');
         studentParticipation.results = [result];
+        studentParticipation.selfLearningFeedbackRequests = [selfLearningFeedbackRequest];
         studentParticipation.exercise = exercise;
 
         const exerciseDetail = { ...exercise, studentParticipations: [studentParticipation] };
