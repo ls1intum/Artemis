@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed, async } from '@angular/core/testing';
-
-import { SidebarCardComponent } from 'app/shared/sidebar/sidebar-card/sidebar-card.component';
+import { SidebarCardMediumComponent } from 'app/shared/sidebar/sidebar-card-medium/sidebar-card-medium.component';
 import { SidebarCardItemComponent } from 'app/shared/sidebar/sidebar-card-item/sidebar-card-item.component';
 import { ArtemisTestModule } from '../../../test.module';
 import { MockModule } from 'ng-mocks';
@@ -9,26 +8,27 @@ import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-r
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { DifficultyLevel } from 'app/entities/exercise.model';
 
-describe('SidebarCardComponent', () => {
-    let component: SidebarCardComponent;
-    let fixture: ComponentFixture<SidebarCardComponent>;
+describe('SidebarCardMediumComponent', () => {
+    let component: SidebarCardMediumComponent;
+    let fixture: ComponentFixture<SidebarCardMediumComponent>;
     let router: MockRouter;
 
     beforeEach(async(() => {
         router = new MockRouter();
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockModule(RouterModule)],
-            declarations: [SidebarCardComponent, SidebarCardItemComponent, MockRouterLinkDirective],
+            declarations: [SidebarCardMediumComponent, SidebarCardItemComponent, MockRouterLinkDirective],
             providers: [{ provide: Router, useValue: router }],
         }).compileComponents();
     }));
 
     beforeEach(() => {
-        fixture = TestBed.createComponent(SidebarCardComponent);
+        fixture = TestBed.createComponent(SidebarCardMediumComponent);
         component = fixture.componentInstance;
         component.sidebarItem = {
             title: 'testTitle',
             id: 'testId',
+            size: 'M',
         };
         component.itemSelected = true;
         fixture.detectChanges();

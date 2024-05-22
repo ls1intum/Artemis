@@ -42,7 +42,8 @@
                 "noDate": "Ohne Datum",
                 "all": "Übungsgruppen",
                 "registered": "Meine Übungsgruppen",
-                "further": "Weitere Übungsgruppen"
+                "further": "Weitere Übungsgruppen",
+                "noUpcomingSession": "Kein Termin"
             },
             "menu": {
                 "exercises": "Aufgaben",

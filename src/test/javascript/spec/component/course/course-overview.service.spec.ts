@@ -111,17 +111,18 @@ describe('CourseOverviewService', () => {
     it('should group lectures by start date and map to sidebar card elements', () => {
         const sortedLectures = [futureLecture, pastLecture, currentLecture];
 
-        jest.spyOn(service, 'getCorrespondingGroupByDate');
+        jest.spyOn(service, 'getCorrespondingLectureGroupByDate');
 
         jest.spyOn(service, 'mapLectureToSidebarCardElement');
         const groupedLectures = service.groupLecturesByStartDate(sortedLectures);
 
         expect(groupedLectures['current'].entityData).toHaveLength(1);
-        expect(groupedLectures['past'].entityData).toHaveLength(2);
+        expect(groupedLectures['past'].entityData).toHaveLength(1);
+        expect(groupedLectures['future'].entityData).toHaveLength(1);
         expect(service.mapLectureToSidebarCardElement).toHaveBeenCalledTimes(3);
-        expect(groupedLectures['current'].entityData[0].title).toBe('Advanced Topics in Computer Science');
+        expect(groupedLectures['future'].entityData[0].title).toBe('Advanced Topics in Computer Science');
         expect(groupedLectures['past'].entityData[0].title).toBe('Introduction to Computer Science');
-        expect(groupedLectures['past'].entityData[1].title).toBe('Algorithms');
+        expect(groupedLectures['current'].entityData[0].title).toBe('Algorithms');
     });
 
     it('should return undefined if lectures array is undefined', () => {
@@ -156,7 +157,7 @@ describe('CourseOverviewService', () => {
     it('should group exercises by start date and map to sidebar card elements', () => {
         const sortedExercises = [futureExercise, pastExercise, currentExercise];
 
-        jest.spyOn(service, 'getCorrespondingGroupByDate');
+        jest.spyOn(service, 'getCorrespondingExerciseGroupByDate');
 
         jest.spyOn(service, 'mapExerciseToSidebarCardElement');
         const groupedExercises = service.groupExercisesByDueDate(sortedExercises);
@@ -178,7 +179,7 @@ describe('CourseOverviewService', () => {
         ];
         const sortedExercises = service.sortExercises(pastExercises);
 
-        jest.spyOn(service, 'getCorrespondingGroupByDate');
+        jest.spyOn(service, 'getCorrespondingExerciseGroupByDate');
 
         jest.spyOn(service, 'mapExerciseToSidebarCardElement');
         const groupedExercises = service.groupExercisesByDueDate(sortedExercises);

@@ -57,7 +57,7 @@ describe('Exam assessment', () => {
             cy.login(instructor);
             examManagement.verifySubmitted(course.id!, exam.id!, studentOneName);
             cy.login(tutor);
-            startAssessing(course.id!, exam.id!, 155000);
+            startAssessing(course.id!, exam.id!, 175000);
             examAssessment.addNewFeedback(2, 'Good job');
             examAssessment.submit();
             cy.login(studentOne, '/courses/' + course.id + '/exams/' + exam.id);

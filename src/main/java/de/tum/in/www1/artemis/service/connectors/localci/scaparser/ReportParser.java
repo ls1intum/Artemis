@@ -4,11 +4,15 @@ import static de.tum.in.www1.artemis.service.connectors.localci.scaparser.utils.
 import static de.tum.in.www1.artemis.service.connectors.localci.scaparser.utils.ReportUtils.createFileTooLargeReport;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.service.connectors.localci.scaparser.exception.ParserException;
-import de.tum.in.www1.artemis.service.connectors.localci.scaparser.strategy.ParserContext;
+import de.tum.in.www1.artemis.service.connectors.localci.scaparser.exception.UnsupportedToolException;
+import de.tum.in.www1.artemis.service.connectors.localci.scaparser.strategy.ParserPolicy;
+import de.tum.in.www1.artemis.service.connectors.localci.scaparser.strategy.ParserStrategy;
 import de.tum.in.www1.artemis.service.connectors.localci.scaparser.utils.FileUtils;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 
@@ -61,11 +65,29 @@ public class ReportParser {
                 return createFileTooLargeReport(file.getName());
             }
 
-            ParserContext context = new ParserContext();
-            return context.getReport(file);
+            return getReport(file);
         }
         catch (Exception e) {
             return createErrorReport(file.getName(), e);
         }
+    }
+
+    /**
+     * Builds the document using the provided file and parses it to a Report object using ObjectMapper.
+     *
+     * @param file File referencing the static code analysis report
+     * @return Report containing the static code analysis issues
+     * @throws UnsupportedToolException if the static code analysis tool which created the report is not supported
+     * @throws IOException              if the file could not be read
+     */
+    public static StaticCodeAnalysisReportDTO getReport(File file) throws IOException {
+        String xmlContent = Files.readString(file.toPath());
+        return getReport(xmlContent, file.getName());
+    }
+
+    public static StaticCodeAnalysisReportDTO getReport(String xmlContent, String fileName) {
+        ParserPolicy parserPolicy = new ParserPolicy();
+        ParserStrategy parserStrategy = parserPolicy.configure(fileName);
+        return parserStrategy.parse(xmlContent);
     }
 }
