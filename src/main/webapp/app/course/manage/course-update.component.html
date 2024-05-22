@@ -339,7 +339,7 @@
                             ngbTooltip="{{ 'artemisApp.course.courseCommunicationSetting.messagingEnabled.tooltip' | artemisTranslate }}"
                         />
                     </div>
-                    @if (messagingEnabled) {
+                    @if (messagingEnabled || communicationEnabled) {
                         <div class="form-group">
                             <label class="form-control-label" jhiTranslate="artemisApp.codeOfConduct.title"></label>
                             <jhi-help-icon text="artemisApp.codeOfConduct.tooltip" />
