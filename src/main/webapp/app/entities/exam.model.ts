@@ -71,7 +71,7 @@ export class Exam implements BaseEntity {
     }
 }
 
-// REFACTOR THIS
+// THIS PART WILL BE NEEDED IN THE FOLLOW UP PRs WHEN STATUS ICONS FOR EXAMS WILL BE IMPLEMENTED
 /**
  * Determine the status of an exam based on its start and end dates.
  * @param exam {Exam}
@@ -89,6 +89,7 @@ export function determineExamStatus(exam: Exam): ExamStatus {
     return ExamStatus.ONGOING; // Default case if dates are not properly set
 }
 
+// THIS PART WILL BE NEEDED IN THE FOLLOW UP PRs WHEN STATUS ICONS FOR EXAMS WILL BE IMPLEMENTED
 /**
  * Get an icon for the given exam status.
  * @param status {ExamStatus}
@@ -108,6 +109,7 @@ export function getExamStatusIcon(status?: ExamStatus): IconProp {
     return statusIcons[status] as IconProp;
 }
 
+// THIS PART WILL BE NEEDED IN THE FOLLOW UP PRs WHEN STATUS ICONS FOR EXAMS WILL BE IMPLEMENTED
 /**
  * Get the appropriate icon for an exam based on its current status.
  * @param exam {Exam}
@@ -118,6 +120,7 @@ export function getIconForExam(exam: Exam): IconProp {
     return getExamStatusIcon(status);
 }
 
+// THIS PART WILL BE NEEDED IN THE FOLLOW UP PRs WHEN STATUS ICONS FOR EXAMS WILL BE IMPLEMENTED
 /**
  * Get the color for an icon based on the exam's current status.
  * @param exam {Exam}

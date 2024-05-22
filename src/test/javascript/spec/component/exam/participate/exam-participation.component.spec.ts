@@ -201,7 +201,6 @@ describe('ExamParticipationComponent', () => {
         expect(examTimerDebugElement).toBeFalsy();
     });
 
-    // GEREK YOK
     it('should display timer during working time', () => {
         comp.exam = new Exam();
         comp.studentExam = new StudentExam();

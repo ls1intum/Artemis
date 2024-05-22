@@ -276,28 +276,6 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
         return this.enteredName.trim() !== '';
     }
 
-    /**
-     * check if exam is over
-     */
-    // isOver(): boolean {
-    //     if (this.studentExam && this.studentExam.ended) {
-    //         // if this was calculated to true by the server, we can be sure the student exam has finished
-    //         return true;
-    //     }
-    //     if (this.handInEarly || this.studentExam?.submitted) {
-    //         // implicitly the exam is over when the student wants to abort the exam or when the user has already submitted
-    //         return true;
-    //     }
-    //     return this.individualStudentEndDate && this.individualStudentEndDate.isBefore(this.serverDateService.now());
-    // }
-
-    /**
-     * check if the grace period has already passed
-     */
-    // isGracePeriodOver() {
-    //     return this.individualStudentEndDateWithGracePeriod && this.individualStudentEndDateWithGracePeriod.isBefore(this.serverDateService.now());
-    // }
-
     isVisible(): boolean {
         if (this.testRunId) {
             return true;
@@ -307,16 +285,6 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
         }
         return this.exam.visibleDate ? this.exam.visibleDate.isBefore(this.serverDateService.now()) : false;
     }
-
-    // isActive(): boolean {
-    //     if (this.testRunId) {
-    //         return true;
-    //     }
-    //     if (!this.exam) {
-    //         return false;
-    //     }
-    //     return this.exam.startDate ? this.exam.startDate.isBefore(this.serverDateService.now()) : false;
-    // }
 
     handleStudentExam(studentExam: StudentExam) {
         this.studentExam = studentExam;
