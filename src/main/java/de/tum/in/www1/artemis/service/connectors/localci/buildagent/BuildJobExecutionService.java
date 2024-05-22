@@ -563,6 +563,9 @@ public class BuildJobExecutionService {
                 // Checkout the commit hash
                 buildJobGitService.checkoutRepositoryAtCommit(repository, commitHash);
             }
+            // if repository is not closed, it causes weird IO issues when trying to delete the repository later on
+            // java.io.IOException: Unable to delete file: ...\.git\objects\pack\...
+            repository.closeBeforeDelete();
             return repository.getLocalPath();
         }
         catch (GitAPIException | IOException | URISyntaxException e) {
