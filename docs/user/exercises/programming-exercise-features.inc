@@ -109,7 +109,7 @@ To be able to include the structural aspect of programming in your Programming E
 without losing the ability to test submissions automatically, you can use DejaGnu.
 It allows you to write blackbox tests for command line interfaces of applications.
 The tests are written in Expect Script, an extension to the Tcl scripting language.
-Expect is a traditional unix utility for automatic interactions with programs that expose a text terminal
+Expect is a traditional Unix utility for automatic interactions with programs that expose a text terminal
 interface in a robust way.
 For the exercises you only have to specify the syntax of the command line interface
 and at least a rough guidance for the output format.
