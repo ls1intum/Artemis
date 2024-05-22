@@ -52,10 +52,10 @@ export class CompetencyAccordionComponent implements OnChanges {
         }
 
         const submittedExercises = Object.keys(this.metrics.exerciseMetrics?.latestSubmission ?? {}).map(Number);
-        const competencyExercises = this.metrics.competencyMetrics?.exercises[this.competency.id] ?? [];
+        const competencyExercises = this.metrics.competencyMetrics?.exercises?.[this.competency.id] ?? [];
         const nextExerciseInformations = competencyExercises
             .filter((exerciseId) => !submittedExercises.includes(exerciseId))
-            .flatMap((exerciseId) => this.metrics.exerciseMetrics?.exerciseInformation[exerciseId] ?? [])
+            .flatMap((exerciseId) => this.metrics.exerciseMetrics?.exerciseInformation?.[exerciseId] ?? [])
             .filter((exercise) => exercise.startDate.isBefore(dayjs()) && exercise.dueDate.isAfter(dayjs()))
             .sort((a, b) => a.dueDate.diff(b.dueDate));
 
@@ -68,8 +68,8 @@ export class CompetencyAccordionComponent implements OnChanges {
     }
 
     getUserProgress(): CompetencyProgress {
-        const progress = this.metrics.competencyMetrics?.progress[this.competency.id] ?? 0;
-        const confidence = this.metrics.competencyMetrics?.confidence[this.competency.id] ?? 0;
+        const progress = this.metrics.competencyMetrics?.progress?.[this.competency.id] ?? 0;
+        const confidence = this.metrics.competencyMetrics?.confidence?.[this.competency.id] ?? 0;
         return { progress, confidence } as CompetencyProgress;
     }
 
@@ -79,7 +79,7 @@ export class CompetencyAccordionComponent implements OnChanges {
 
     get lectureUnitsProgress() {
         if (this.metrics.lectureUnitStudentMetricsDTO) {
-            const competencyLectureUnits = this.metrics.competencyMetrics?.lectureUnits[this.competency.id];
+            const competencyLectureUnits = this.metrics.competencyMetrics?.lectureUnits?.[this.competency.id];
             const completedLectureUnits = competencyLectureUnits?.filter((lectureUnitId) => this.metrics.lectureUnitStudentMetricsDTO?.completed?.includes(lectureUnitId)).length;
             if (competencyLectureUnits && completedLectureUnits) {
                 const progress = (completedLectureUnits / competencyLectureUnits.length) * 100;
@@ -91,7 +91,7 @@ export class CompetencyAccordionComponent implements OnChanges {
     }
 
     get exercisesProgress() {
-        const competencyExercises = this.metrics.competencyMetrics?.exercises[this.competency.id];
+        const competencyExercises = this.metrics.competencyMetrics?.exercises?.[this.competency.id];
         const completedExercises = competencyExercises?.filter((exerciseId) => this.metrics.exerciseMetrics?.completed?.includes(exerciseId)).length;
         if (competencyExercises && completedExercises) {
             const progress = (completedExercises / competencyExercises.length) * 100;
