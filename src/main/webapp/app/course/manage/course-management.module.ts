@@ -68,6 +68,7 @@ import { DetailModule } from 'app/detail-overview-list/detail.module';
 import { BuildQueueComponent } from 'app/localci/build-queue/build-queue.component';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
 import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal.component';
+import { HeaderCourseComponent } from 'app/overview/header-course.component';
 
 @NgModule({
     imports: [
@@ -142,6 +143,8 @@ import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-moda
         CourseManagementTabBarComponent,
         BuildQueueComponent,
         ImageCropperModalComponent,
+        HeaderCourseComponent,
     ],
+    exports: [HeaderCourseComponent],
 })
 export class ArtemisCourseManagementModule {}
