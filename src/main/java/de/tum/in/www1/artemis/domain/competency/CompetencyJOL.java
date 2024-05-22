@@ -25,10 +25,11 @@ public class CompetencyJOL extends DomainObject {
     private Competency competency;
 
     @ManyToOne
+    @JoinColumn(name = "user_id")
     private User user;
 
     @Column(name = "value")
-    private Double value;
+    private Integer value;
 
     public Competency getCompetency() {
         return this.competency;
@@ -46,11 +47,11 @@ public class CompetencyJOL extends DomainObject {
         this.user = user;
     }
 
-    public Double getValue() {
+    public Integer getValue() {
         return this.value;
     }
 
-    public void setValue(Double value) {
+    public void setValue(Integer value) {
         this.value = value;
     }
 }

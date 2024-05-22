@@ -29,7 +29,7 @@ public class CompetencyJOLService {
         this.userRepository = userRepository;
     }
 
-    public void setJudgementOfLearning(long competencyId, long userId, double jolValue) {
+    public void setJudgementOfLearning(long competencyId, long userId, int jolValue) {
         final var competencyJOL = competencyJOLRepository.findByCompetencyIdAndUserId(competencyId, userId);
 
         // If the competencyJOL already exists, update the value
@@ -44,7 +44,7 @@ public class CompetencyJOLService {
         competencyJOLRepository.save(jol);
     }
 
-    public CompetencyJOL createCompetencyJOL(long competencyId, long userId, double jolValue) {
+    public CompetencyJOL createCompetencyJOL(long competencyId, long userId, int jolValue) {
         final var jol = new CompetencyJOL();
         jol.setCompetency(competencyRepository.findById(competencyId).orElseThrow());
         jol.setUser(userRepository.findById(userId).orElseThrow());

@@ -9,8 +9,10 @@
             </column>
             <column name="competency_id" type="bigint"/>
             <column name="user_id" type="bigint"/>
-            <column name="value" type="double"/>
+            <column name="value" type="int"/>
         </createTable>
+
+        <addUniqueConstraint tableName="competency_jol" columnNames="competency_id, user_id" constraintName="competency_id_user_id_competency_jol_constraint" deferrable="true" disabled="true" initiallyDeferred="true" schemaName="public" validate="true"/>
 
         <createTable tableName="jol_competency">
             <column name="competency_id" type="bigint">
@@ -20,7 +22,8 @@
                 <constraints nullable="false" primaryKey="true"/>
             </column>
         </createTable>
-        <addForeignKeyConstraint baseColumnNames="competency_id" baseTableName="jol_competency" constraintName="competency_id_jol_competency_constraint" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="course" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="competency_jol_id" baseTableName="jol_competency" constraintName="competency_jol_id_jol_competency_constraint" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="course" validate="true"/>
+
+        <addForeignKeyConstraint baseColumnNames="competency_id" baseTableName="jol_competency" constraintName="competency_id_jol_competency_constraint" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="competency" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="competency_jol_id" baseTableName="jol_competency" constraintName="competency_jol_id_jol_competency_constraint" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="competency_jol" validate="true"/>
     </changeSet>
 </databaseChangeLog>
