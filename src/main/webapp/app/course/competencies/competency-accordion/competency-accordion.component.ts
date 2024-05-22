@@ -24,7 +24,6 @@ export class CompetencyAccordionComponent implements OnChanges {
     @Output() accordionToggle = new EventEmitter<ICompetencyAccordionToggleEvent>();
 
     open = false;
-
     nextExercises: Exercise[] = [];
 
     protected readonly faList = faList;
@@ -78,26 +77,31 @@ export class CompetencyAccordionComponent implements OnChanges {
     }
 
     get lectureUnitsProgress() {
-        if (this.metrics.lectureUnitStudentMetricsDTO) {
-            const competencyLectureUnits = this.metrics.competencyMetrics?.lectureUnits?.[this.competency.id];
-            const completedLectureUnits = competencyLectureUnits?.filter((lectureUnitId) => this.metrics.lectureUnitStudentMetricsDTO?.completed?.includes(lectureUnitId)).length;
-            if (competencyLectureUnits && completedLectureUnits) {
-                const progress = (completedLectureUnits / competencyLectureUnits.length) * 100;
-                return round(progress, 1);
-            }
-            return 0;
+        if (!this.metrics.lectureUnitStudentMetricsDTO) {
+            return undefined;
         }
-        return 0;
+
+        const competencyLectureUnits = this.metrics.competencyMetrics?.lectureUnits?.[this.competency.id];
+        const completedLectureUnits = competencyLectureUnits?.filter((lectureUnitId) => this.metrics.lectureUnitStudentMetricsDTO?.completed?.includes(lectureUnitId)).length ?? 0;
+        if (!competencyLectureUnits) {
+            return undefined;
+        }
+        const progress = (completedLectureUnits / competencyLectureUnits.length) * 100;
+        return round(progress, 1);
     }
 
     get exercisesProgress() {
-        const competencyExercises = this.metrics.competencyMetrics?.exercises?.[this.competency.id];
-        const completedExercises = competencyExercises?.filter((exerciseId) => this.metrics.exerciseMetrics?.completed?.includes(exerciseId)).length;
-        if (competencyExercises && completedExercises) {
-            const progress = (completedExercises / competencyExercises.length) * 100;
-            return round(progress, 1);
+        if (!this.metrics.exerciseMetrics) {
+            return undefined;
         }
-        return 0;
+
+        const competencyExercises = this.metrics.competencyMetrics?.exercises?.[this.competency.id];
+        const completedExercises = competencyExercises?.filter((exerciseId) => this.metrics.exerciseMetrics?.completed?.includes(exerciseId)).length ?? 0;
+        if (!competencyExercises) {
+            return undefined;
+        }
+        const progress = (completedExercises / competencyExercises.length) * 100;
+        return round(progress, 1);
     }
 
     get confidence() {

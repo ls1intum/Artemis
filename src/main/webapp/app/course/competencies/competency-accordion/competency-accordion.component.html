@@ -16,28 +16,34 @@
         </h4>
         <div class="w-100 d-flex align-items-center gap-4">
             <div class="w-100 d-flex flex-column gap-2">
-                <div class="d-flex gap-3 align-items-center justify-content-center">
-                    <fa-icon [icon]="faList" [ngbTooltip]="'artemisApp.studentAnalyticsDashboard.competencyAccordion.exercises' | artemisTranslate" />
-                    <ngb-progressbar
-                        class="w-100"
-                        type="success overflow-visible"
-                        [value]="exercisesProgress"
-                        [max]="100"
-                        height="0.75rem"
-                        [ngbTooltip]="'artemisApp.studentAnalyticsDashboard.competencyAccordion.exerciseProgress' | artemisTranslate: { progress: round(exercisesProgress, 1) }"
-                    />
-                </div>
-                <div class="d-flex gap-3 align-items-center justify-content-center">
-                    <fa-icon [icon]="faPdf" [ngbTooltip]="'artemisApp.studentAnalyticsDashboard.competencyAccordion.lectures' | artemisTranslate" />
-                    <ngb-progressbar
-                        class="w-100"
-                        type="success overflow-visible"
-                        [value]="lectureUnitsProgress"
-                        [max]="100"
-                        height="0.75rem"
-                        [ngbTooltip]="'artemisApp.studentAnalyticsDashboard.competencyAccordion.lectureProgress' | artemisTranslate: { progress: round(lectureUnitsProgress, 1) }"
-                    />
-                </div>
+                @if (exercisesProgress !== undefined) {
+                    <div class="d-flex gap-3 align-items-center justify-content-center">
+                        <fa-icon [icon]="faList" [ngbTooltip]="'artemisApp.studentAnalyticsDashboard.competencyAccordion.exercises' | artemisTranslate" />
+                        <ngb-progressbar
+                            class="w-100"
+                            type="success overflow-visible"
+                            [value]="exercisesProgress"
+                            [max]="100"
+                            height="0.75rem"
+                            [ngbTooltip]="'artemisApp.studentAnalyticsDashboard.competencyAccordion.exerciseProgress' | artemisTranslate: { progress: round(exercisesProgress, 1) }"
+                        />
+                    </div>
+                }
+                @if (lectureUnitsProgress !== undefined) {
+                    <div class="d-flex gap-3 align-items-center justify-content-center">
+                        <fa-icon [icon]="faPdf" [ngbTooltip]="'artemisApp.studentAnalyticsDashboard.competencyAccordion.lectures' | artemisTranslate" />
+                        <ngb-progressbar
+                            class="w-100"
+                            type="success overflow-visible"
+                            [value]="lectureUnitsProgress"
+                            [max]="100"
+                            height="0.75rem"
+                            [ngbTooltip]="
+                                'artemisApp.studentAnalyticsDashboard.competencyAccordion.lectureProgress' | artemisTranslate: { progress: round(lectureUnitsProgress, 1) }
+                            "
+                        />
+                    </div>
+                }
             </div>
             <div class="py-2" style="max-width: 65px">
                 <jhi-competency-rings [confidence]="this.confidence" [progress]="this.progress" [mastery]="this.mastery" [hideTooltip]="false" [playAnimation]="false" />
