@@ -138,6 +138,24 @@
                 <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.complaintOnAutomaticAssessmentTooltip'" />
             </div>
         }
+        @if (isExamMode && isImport && importOptions) {
+            <div class="form-check">
+                <input
+                    type="checkbox"
+                    class="form-check-input"
+                    name="setTestCaseVisibilityToAfterDueDate"
+                    [checked]="importOptions.setTestCaseVisibilityToAfterDueDate"
+                    id="setTestCaseVisibilityToAfterDueDate-checkbox"
+                    (change)="toggleSetTestCaseVisibilityToAfterDueDate()"
+                />
+                <label
+                    class="form-control-label"
+                    for="setTestCaseVisibilityToAfterDueDate-checkbox"
+                    jhiTranslate="artemisApp.programmingExercise.timeline.setTestCaseVisibilityToAfterReleaseDateOfResults"
+                ></label>
+                <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.setTestCaseVisibilityToAfterReleaseDateOfResultsTooltip'" />
+            </div>
+        }
         @if (!isExamMode) {
             <div class="form-check">
                 <input
