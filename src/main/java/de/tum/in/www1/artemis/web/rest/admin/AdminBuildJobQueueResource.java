@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.service.connectors.localci.SharedQueueManagementSe
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildAgentInformation;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
 import de.tum.in.www1.artemis.service.dto.FinishedBuildJobDTO;
+import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.FinishedBuildJobPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 import tech.jhipster.web.util.PaginationUtil;
@@ -172,6 +173,22 @@ public class AdminBuildJobQueueResource {
         log.debug("REST request to get a page of finished build jobs");
         final Page<BuildJob> page = buildJobRepository.findAll(PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.BUILD_JOB));
         Page<FinishedBuildJobDTO> finishedBuildJobDTOs = FinishedBuildJobDTO.fromBuildJobsPage(page);
+        log.debug("Found {} finished build jobs", finishedBuildJobDTOs.getTotalElements());
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
+        return new ResponseEntity<>(finishedBuildJobDTOs.getContent(), headers, HttpStatus.OK);
+    }
+
+    @GetMapping("finished-jobs-custom")
+    @EnforceAdmin
+    public ResponseEntity<List<FinishedBuildJobDTO>> getFinishedBuildJobsCustom(FinishedBuildJobPageableSearchDTO search) {
+        log.debug("REST request to get a page of finished build jobs with build status {}, build agent address {}, start date {} and end date {}", search.buildStatus(),
+                search.buildAgentAddress(), search.startDate(), search.endDate());
+
+        final Page<BuildJob> page = buildJobRepository.findAllByBuildStatusAndBuildAgentAddressAndBuildStartDateBetween(search.buildStatus(), search.buildAgentAddress(),
+                search.startDate(), search.endDate(), PageUtil.createDefaultPageRequest(search.search(), PageUtil.ColumnMapping.BUILD_JOB));
+
+        Page<FinishedBuildJobDTO> finishedBuildJobDTOs = FinishedBuildJobDTO.fromBuildJobsPage(page);
+        log.debug("Found {} finished build jobs", finishedBuildJobDTOs.getTotalElements());
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(finishedBuildJobDTOs.getContent(), headers, HttpStatus.OK);
     }

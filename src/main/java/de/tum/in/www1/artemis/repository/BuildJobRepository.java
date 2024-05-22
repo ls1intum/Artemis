@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.repository;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.BuildJob;
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.enumeration.BuildStatus;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.DockerImageBuild;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.ResultBuildJob;
 
@@ -31,6 +33,17 @@ public interface BuildJobRepository extends JpaRepository<BuildJob, Long>, JpaSp
 
     @EntityGraph(attributePaths = { "result", "result.participation", "result.participation.exercise", "result.submission" })
     Page<BuildJob> findAll(Pageable pageable);
+
+    @Query("""
+            SELECT b FROM BuildJob b
+            WHERE (:buildStatus is null or b.buildStatus = :buildStatus)
+            AND (:buildAgentAddress is null or b.buildAgentAddress = :buildAgentAddress)
+            AND (:startDate is null or b.buildStartDate >= :startDate)
+            AND (:endDate is null or b.buildStartDate <= :endDate)
+            """)
+    @EntityGraph(attributePaths = { "result", "result.participation", "result.participation.exercise", "result.submission" })
+    Page<BuildJob> findAllByBuildStatusAndBuildAgentAddressAndBuildStartDateBetween(@Param("buildStatus") BuildStatus buildStatus,
+            @Param("buildAgentAddress") String buildAgentAddress, @Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, Pageable pageable);
 
     @Query("""
             SELECT new de.tum.in.www1.artemis.service.connectors.localci.dto.DockerImageBuild(

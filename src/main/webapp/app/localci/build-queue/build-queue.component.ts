@@ -1,7 +1,7 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { BuildJob, FinishedBuildJob } from 'app/entities/build-job.model';
-import { faCircleCheck, faExclamationCircle, faExclamationTriangle, faSort, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCircleCheck, faExclamationCircle, faExclamationTriangle, faFilter, faSort, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { BuildQueueService } from 'app/localci/build-queue/build-queue.service';
 import { take } from 'rxjs/operators';
@@ -12,6 +12,79 @@ import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import dayjs from 'dayjs/esm';
+import { NgbModal, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
+import { HttpParams } from '@angular/common/http';
+import { LocalStorageService } from 'ngx-webstorage';
+import { Observable, OperatorFunction, Subject, merge } from 'rxjs';
+import { debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
+
+class FinishedBuildJobFilter {
+    status?: string = undefined;
+    buildAgentAddress?: string = undefined;
+    buildStartDateFilterFrom?: dayjs.Dayjs = undefined;
+    buildStartDateFilterTo?: dayjs.Dayjs = undefined;
+
+    /**
+     * Adds the http param options
+     * @param options request options
+     */
+    addHttpParams(options: HttpParams): HttpParams {
+        if (this.status && this.status !== '') {
+            options = options.append('status', this.status);
+        }
+        if (this.buildAgentAddress && this.buildAgentAddress !== '') {
+            options = options.append('buildAgentAddress', this.buildAgentAddress);
+        }
+        if (this.buildStartDateFilterFrom) {
+            options = options.append('buildStartDateFilterFrom', this.buildStartDateFilterFrom.toISOString());
+        }
+        if (this.buildStartDateFilterTo) {
+            options = options.append('buildStartDateFilterTo', this.buildStartDateFilterTo.toISOString());
+        }
+        return options;
+    }
+
+    /**
+     * Returns the number of applied filters.
+     */
+    get numberOfAppliedFilters(): number {
+        return Object.values(this).filter((value) => value !== undefined && value !== '').length;
+    }
+
+    /**
+     * Resets the filter.
+     */
+    reset() {
+        this.status = undefined;
+        this.buildAgentAddress = undefined;
+        this.buildStartDateFilterFrom = undefined;
+        this.buildStartDateFilterTo = undefined;
+    }
+
+    /**
+     * Checks if the dates are valid.
+     */
+    get areDatesValid(): boolean {
+        if (!this.buildStartDateFilterFrom || !this.buildStartDateFilterTo) {
+            return true;
+        }
+        return dayjs(this.buildStartDateFilterFrom).isBefore(dayjs(this.buildStartDateFilterTo));
+    }
+}
+
+enum BuildJobStatusFilter {
+    SUCCESSFUL = 'SUCCESSFUL',
+    FAILED = 'FAILED',
+    ERROR = 'ERROR',
+    CANCELLED = 'CANCELLED',
+}
+
+enum FishedBuildJobFilterStorageKey {
+    STATUS = 'artemis.buildQueue.finishedBuildJobFilterStatus',
+    BUILD_AGENT_ADDRESS = 'artemis.buildQueue.finishedBuildJobFilterBuildAgentAddress',
+    BUILD_START_DATE_FILTER_FROM = 'artemis.buildQueue.finishedBuildJobFilterBuildStartDateFilterFrom',
+    BUILD_START_DATE_FILTER_TO = 'artemis.buildQueue.finishedBuildJobFilterBuildStartDateFilterTo',
+}
 
 @Component({
     selector: 'jhi-build-queue',
@@ -41,11 +114,20 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
     ascending = false;
     interval: ReturnType<typeof setInterval>;
 
+    // Filter
+    @ViewChild('addressTypeahead', { static: true }) addressTypeahead: NgbTypeahead;
+    finishedBuildJobFilter = new FinishedBuildJobFilter();
+    faFilter = faFilter;
+    focus$ = new Subject<string>();
+    click$ = new Subject<string>();
+
     constructor(
         private route: ActivatedRoute,
         private websocketService: JhiWebsocketService,
         private buildQueueService: BuildQueueService,
         private alertService: AlertService,
+        private modalService: NgbModal,
+        private localStorage: LocalStorageService,
     ) {}
 
     ngOnInit() {
@@ -282,5 +364,68 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
         }
         // This is necessary to update the view when the build job duration is updated
         this.runningBuildJobs = JSON.parse(JSON.stringify(this.runningBuildJobs));
+    }
+
+    /**
+     * Opens the modal.
+     */
+    open(content: any) {
+        this.modalService.open(content);
+    }
+
+    get buildJobStatusFilter() {
+        return Object.values(BuildJobStatusFilter);
+    }
+
+    /**
+     * Method to add or remove a status filter and store the selected status filters in the local store if required.
+     */
+    toggleBuildStatusFilter(value?: string) {
+        if (value) {
+            this.finishedBuildJobFilter.status = value;
+            this.localStorage.store(FishedBuildJobFilterStorageKey.STATUS, value);
+        } else {
+            this.finishedBuildJobFilter.status = undefined;
+            this.localStorage.clear(FishedBuildJobFilterStorageKey.STATUS);
+        }
+    }
+
+    /**
+     * Get all build agents' addresses from the finished build jobs.
+     */
+    get buildAgentAddresses(): string[] {
+        return Array.from(new Set(this.finishedBuildJobs.map((buildJob) => buildJob.buildAgentAddress ?? '').filter((address) => address !== '')));
+    }
+
+    // Workaround for the NgbTypeahead issue: https://github.com/ng-bootstrap/ng-bootstrap/issues/2400
+    clickEvents($event: Event, typeaheadInstance: NgbTypeahead) {
+        if (typeaheadInstance.isPopupOpen()) {
+            this.click$.next(($event.target as HTMLInputElement).value);
+        }
+    }
+
+    search: OperatorFunction<string, readonly string[]> = (text$: Observable<string>) => {
+        const buildAgentAddresses = this.buildAgentAddresses;
+        const debouncedText$ = text$.pipe(debounceTime(200), distinctUntilChanged());
+        const clicksWithClosedPopup$ = this.click$;
+        const inputFocus$ = this.focus$;
+
+        return merge(debouncedText$, inputFocus$, clicksWithClosedPopup$).pipe(
+            map((term) => (term === '' ? buildAgentAddresses : buildAgentAddresses.filter((v) => v.toLowerCase().indexOf(term.toLowerCase()) > -1)).slice(0, 10)),
+        );
+    };
+
+    applyFilter() {
+        this.loadFinishedBuildJobs();
+        this.modalService.dismissAll();
+    }
+
+    filterDateChanged() {
+        if (this.finishedBuildJobFilter.areDatesValid) {
+            this.localStorage.store(FishedBuildJobFilterStorageKey.BUILD_START_DATE_FILTER_FROM, this.finishedBuildJobFilter.buildStartDateFilterFrom?.toISOString());
+            this.localStorage.store(FishedBuildJobFilterStorageKey.BUILD_START_DATE_FILTER_TO, this.finishedBuildJobFilter.buildStartDateFilterTo?.toISOString());
+        } else {
+            this.alertService.error('artemisApp.buildQueue.finishedBuildJobFilter.invalidDates');
+        }
     }
 }
