@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.util.structureoraclegenerator;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.function.Function;
 
@@ -333,7 +334,7 @@ public class JavaClassDiff {
         if (solutionList.size() != templateList.size()) {
             return false;
         }
-        return solutionList.containsAll(templateList);
+        return new HashSet<>(solutionList).containsAll(templateList);
     }
 
     /**
@@ -361,7 +362,7 @@ public class JavaClassDiff {
         }
 
         // Otherwise, check if the list of the parameters of the solution executable contains all the parameters in the template executable.
-        return solutionParams.containsAll(templateParams);
+        return new HashSet<>(solutionParams).containsAll(templateParams);
     }
 
     /**

@@ -12,7 +12,8 @@
                     "author": "Author",
                     "date": "Date",
                     "commit": "Commit",
-                    "empty": "No changes"
+                    "empty": "No changes",
+                    "fileUnchanged": "No changes in the file content"
                 }
             }
         }
