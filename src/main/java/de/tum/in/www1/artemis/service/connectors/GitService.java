@@ -1152,14 +1152,8 @@ public class GitService extends AbstractGitService {
      * @throws IOException if the deletion of the repository failed.
      */
     public void deleteLocalRepository(Repository repository) throws IOException {
+        cachedRepositories.remove(repository.getLocalPath());
         super.deleteLocalRepository(repository);
-        Path repoPath = repository.getLocalPath();
-        cachedRepositories.remove(repoPath);
-        // if repository is not closed, it causes weird IO issues when trying to delete the repository again
-        // java.io.IOException: Unable to delete file: ...\.git\objects\pack\...
-        repository.closeBeforeDelete();
-        FileUtils.deleteDirectory(repoPath.toFile());
-        log.debug("Deleted Repository at {}", repoPath);
     }
 
     /**

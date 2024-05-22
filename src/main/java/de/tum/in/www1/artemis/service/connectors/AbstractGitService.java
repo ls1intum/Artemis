@@ -266,12 +266,7 @@ public abstract class AbstractGitService {
     protected static Repository openCheckedOutRepositoryFromFileSystem(Path localPath, VcsRepositoryUri remoteRepositoryUri, String defaultBranch)
             throws IOException, InvalidRefNameException {
 
-        Repository repository = linkRepositoryForExistingGit(localPath, remoteRepositoryUri, defaultBranch, false);
-
-        RefUpdate refUpdate = repository.getRefDatabase().newUpdate(Constants.HEAD, false);
-        refUpdate.setForceUpdate(true);
-        refUpdate.link("refs/heads/" + defaultBranch);
-        return repository;
+        return linkRepositoryForExistingGit(localPath, remoteRepositoryUri, defaultBranch, false);
     }
 
     /**
