@@ -253,7 +253,13 @@
                         <ng-template ngx-datatable-cell-template let-value="value">
                             @if (value.results?.last()?.assessmentNote?.note?.trim()) {
                                 <span class="w-100 text-center">
-                                    <fa-icon [ngbPopover]="value.results?.last()?.assessmentNote.note" [triggers]="'hover'" [icon]="faComment" [container]="'body'" />
+                                    <fa-icon
+                                        [ngbPopover]="value.results?.last()?.assessmentNote.note"
+                                        [triggers]="'hover'"
+                                        [icon]="faComment"
+                                        [container]="'body'"
+                                        [popoverClass]="'max-vw-30 text-truncate-4-lines'"
+                                    />
                                 </span>
                             }
                         </ng-template>
