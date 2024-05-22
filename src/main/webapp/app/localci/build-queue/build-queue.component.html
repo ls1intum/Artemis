@@ -427,9 +427,7 @@
                 [ngClass]="{ 'btn-secondary': !finishedBuildJobFilter.numberOfAppliedFilters, 'btn-success': !!finishedBuildJobFilter.numberOfAppliedFilters }"
             >
                 <fa-icon [icon]="faFilter" />
-                <span class="d-s-none d-md-inline">{{
-                    'artemisApp.userManagement.filter.modal.open' | artemisTranslate: { num: finishedBuildJobFilter.numberOfAppliedFilters }
-                }}</span>
+                <span class="d-s-none d-md-inline">{{ 'artemisApp.buildQueue.filter.open' | artemisTranslate: { num: finishedBuildJobFilter.numberOfAppliedFilters } }}</span>
             </button>
         </div>
     </div>
@@ -677,15 +675,14 @@
 <!-- Modal -->
 <ng-template #content let-modal>
     <div class="modal-header">
-        <h5 class="modal-title">{{ 'artemisApp.userManagement.filter.modal.title' | artemisTranslate }}</h5>
+        <h5 class="modal-title">{{ 'artemisApp.buildQueue.filter.title' | artemisTranslate }}</h5>
         <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
     </div>
     <div class="modal-body">
         <div class="container-fluid">
             <div class="row finished-build-jobs-filter-border-bottom">
                 <div class="col d-flex flex-row pb-1">
-                    <h5 class="my-0">{{ 'artemisApp.userManagement.filter.authority.title' | artemisTranslate }}</h5>
-                    <jhi-help-icon class="ps-1" text="artemisApp.userManagement.filter.authority.tooltip" />
+                    <h5 class="my-0">{{ 'artemisApp.buildQueue.filter.buildStatus.title' | artemisTranslate }}</h5>
                 </div>
             </div>
             <div class="row finished-build-jobs-filter-background-accent">
@@ -700,14 +697,14 @@
                                         [checked]="this.finishedBuildJobFilter.status === status"
                                         type="radio"
                                     />
-                                    <span class="ps-1">{{ 'artemisApp.userManagement.filter.origin.' + status.toString().toLowerCase() | artemisTranslate }}</span>
+                                    <span class="ps-1">{{ 'artemisApp.buildQueue.filter.buildStatus.' + status.toString().toLowerCase() | artemisTranslate }}</span>
                                 </label>
                             </li>
                         }
                         <li class="col-3">
                             <input class="form-check-input" type="radio" (click)="this.toggleBuildStatusFilter()" [checked]="this.finishedBuildJobFilter.status === undefined" />
                             <label class="form-check-label ps-1">
-                                {{ 'artemisApp.userManagement.filter.none' | artemisTranslate }}
+                                {{ 'artemisApp.buildQueue.filter.none' | artemisTranslate }}
                             </label>
                         </li>
                     </ul>
@@ -716,8 +713,7 @@
 
             <div class="row finished-build-jobs-filter-border-bottom">
                 <div class="col d-flex flex-row pb-1">
-                    <h5 class="my-0">{{ 'artemisApp.userManagement.filter.origin.title' | artemisTranslate }}</h5>
-                    <jhi-help-icon class="ps-1" text="artemisApp.userManagement.filter.origin.tooltip" />
+                    <h5 class="my-0">{{ 'artemisApp.buildQueue.filter.buildAgentAddress' | artemisTranslate }}</h5>
                 </div>
             </div>
             <div class="row finished-build-jobs-filter-background-accent">
@@ -725,7 +721,7 @@
                     <input
                         type="text"
                         class="form-control"
-                        [placeholder]="'artemisApp.buildQueue.buildJob.buildAgentAddress' | artemisTranslate"
+                        [placeholder]="'artemisApp.buildQueue.filter.buildAgentAddress' | artemisTranslate"
                         [(ngModel)]="finishedBuildJobFilter.buildAgentAddress"
                         [ngbTypeahead]="search"
                         (focus)="focus$.next($any($event).target.value)"
@@ -737,15 +733,14 @@
 
             <div class="row finished-build-jobs-filter-border-bottom">
                 <div class="col d-flex flex-row pb-1">
-                    <h5 class="my-0">{{ 'artemisApp.userManagement.filter.status.title' | artemisTranslate }}</h5>
-                    <jhi-help-icon class="ps-1" text="artemisApp.userManagement.filter.status.tooltip" />
+                    <h5 class="my-0">{{ 'artemisApp.buildQueue.filter.buildStartDate.title' | artemisTranslate }}</h5>
                 </div>
             </div>
             <div class="row finished-build-jobs-filter-background-accent">
                 <div class="col container px-3 my-0 py-2">
                     <div class="input-group">
                         <div class="input-group-prepend form-item-prepend">
-                            <span class="input-group-text" jhiTranslate="audits.filter.from"></span>
+                            <span class="input-group-text" jhiTranslate="artemisApp.buildQueue.filter.buildStartDate.from"></span>
                         </div>
                         <jhi-date-time-picker
                             id="field_startDate"
@@ -755,12 +750,12 @@
                             (valueChange)="filterDateChanged()"
                         />
                         @if (!finishedBuildJobFilter.areDatesValid) {
-                            <span class="invalid-feedback"> {{ 'artemisApp.course.form.startDate.invalid' | artemisTranslate }}</span>
+                            <span class="invalid-feedback"> {{ 'artemisApp.buildQueue.filter.buildStartDate.invalidDate' | artemisTranslate }}</span>
                         }
                     </div>
                     <div class="input-group">
                         <div class="input-group-append form-item-prepend">
-                            <span class="input-group-text" jhiTranslate="audits.filter.to"></span>
+                            <span class="input-group-text" jhiTranslate="artemisApp.buildQueue.filter.buildStartDate.to"></span>
                         </div>
                         <jhi-date-time-picker
                             id="field_endDate"
@@ -769,7 +764,7 @@
                             [error]="!finishedBuildJobFilter.areDatesValid"
                         />
                         @if (!finishedBuildJobFilter.areDatesValid) {
-                            <span class="invalid-feedback"> {{ 'artemisApp.course.form.startDate.invalid' | artemisTranslate }}</span>
+                            <span class="invalid-feedback"> {{ 'artemisApp.buildQueue.filter.buildStartDate.invalidDate' | artemisTranslate }}</span>
                         }
                     </div>
                 </div>
@@ -778,10 +773,10 @@
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-secondary" (click)="modal.close()">
-            {{ 'artemisApp.userManagement.filter.modal.close' | artemisTranslate }}
+            {{ 'artemisApp.buildQueue.filter.close' | artemisTranslate }}
         </button>
         <button class="btn btn-primary" (click)="applyFilter()">
-            <span jhiTranslate="artemisApp.userManagement.filter.apply"></span>
+            <span jhiTranslate="artemisApp.buildQueue.filter.apply"></span>
         </button>
     </div>
 </ng-template>

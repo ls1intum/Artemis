@@ -26,7 +26,28 @@
                 "status": "Status",
                 "buildLogs": "Build Logs"
             },
-            "cancelAll": "Cancel All"
+            "cancelAll": "Cancel All",
+            "filter": {
+                "title": "BuildJobs Filter",
+                "buildStatus": {
+                    "title": "Build Status",
+                    "cancelled": "Cancelled",
+                    "failed": "Failed",
+                    "error": "Error",
+                    "successful": "Successful"
+                },
+                "buildAgentAddress": "Build Agent Address",
+                "buildStartDate": {
+                    "title": "Build Start Date",
+                    "from": "From",
+                    "to": "To",
+                    "invalidDate": "From date must be before to date"
+                },
+                "none": "None",
+                "close": "Close",
+                "apply": "Apply",
+                "open": "Open"
+            }
         }
     }
 }
