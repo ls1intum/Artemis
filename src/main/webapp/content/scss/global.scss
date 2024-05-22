@@ -274,6 +274,8 @@ Generic styles
     -webkit-line-clamp: 4;
     line-clamp: 4;
     -webkit-box-orient: vertical;
+    // avoid an additional line after the ellipsis end (not necessary for Firefox, but for Chromium-based browsers)
+    max-height: 7.5em;
 }
 
 .mt-n3 {
