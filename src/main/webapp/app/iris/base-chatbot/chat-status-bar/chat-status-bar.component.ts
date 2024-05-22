@@ -29,7 +29,7 @@ export class ChatStatusBarComponent implements OnChanges {
             clearTimeout(this.openTimeout);
             clearTimeout(this.styleTimeout);
             this.open = true;
-            if (firstUnfinished !== this.activeStage) {
+            if (firstUnfinished.name !== this.activeStage?.name) {
                 this.style = undefined;
                 this.styleTimeout = setTimeout(() => (this.style = 'transform: scaleX(0.9)'), 500);
             }
