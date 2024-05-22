@@ -34,7 +34,7 @@ fileNames.forEach(fileName => {
                             let url = node.arguments[0].getText();
                             // Replace class properties in the URL
                             for (const prop in classProperties) {
-                                url = url.replace(new RegExp(`\$\{this.${prop}\}`, 'g'), classProperties[prop]);
+                                url = url.replace(new RegExp(`\\$\\{this.${prop}\\}`, 'g'), classProperties[prop]);
                             }
                             console.log(`with URL: ${url}`);
                         } else {
