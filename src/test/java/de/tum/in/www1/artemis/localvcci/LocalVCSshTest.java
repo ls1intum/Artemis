@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.localvcci;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALVC;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
 import java.security.GeneralSecurityException;
@@ -35,13 +36,13 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 @Profile(PROFILE_LOCALVC)
 class LocalVCSshTest extends LocalVCIntegrationTest {
 
-    String hostname = "localhost";
+    final String hostname = "localhost";
 
-    int port = 7921;
+    final int port = 7921;
 
-    String sshPublicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMnAXgzXikZMbjk1XEIuAQbmDTQheiK4Bx7v3hn//qPY instructor1";
+    final String sshPublicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMnAXgzXikZMbjk1XEIuAQbmDTQheiK4Bx7v3hn//qPY instructor1";
 
-    String sshPrivateKey = "-----BEGIN OPENSSH PRIVATE KEY-----\n" + "b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW\n"
+    final String sshPrivateKey = "-----BEGIN OPENSSH PRIVATE KEY-----\n" + "b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW\n"
             + "QyNTUxOQAAACDJwF4M14pGTG45NVxCLgEG5g00IXoiuAce794Z//6j2AAAAJB2InXodiJ1\n" + "6AAAAAtzc2gtZWQyNTUxOQAAACDJwF4M14pGTG45NVxCLgEG5g00IXoiuAce794Z//6j2A\n"
             + "AAAEABBN8M7QqRn1i3MCY9PwC4PirfLVfvQoQUYXa7VdvPFsnAXgzXikZMbjk1XEIuAQbm\n" + "DTQheiK4Bx7v3hn//qPYAAAAC2luc3RydWN0b3IxAQI=\n" + "-----END OPENSSH PRIVATE KEY-----";
 
@@ -63,7 +64,8 @@ class LocalVCSshTest extends LocalVCIntegrationTest {
 
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
-        // this test currently is unable to authenticate to the ssh server
+        // this test's ssh client currently is unable to authenticate to the ssh server,
+        // but it starts and initializes the ssh server
         try {
             gitPushOverSSH(sshPublicKey, sshPrivateKey);
         }
@@ -94,7 +96,7 @@ class LocalVCSshTest extends LocalVCIntegrationTest {
                 executeGitPush(session);
             }
             else {
-                System.err.println("Failed to authenticate the session.");
+                throw new RuntimeException("Failed to authenticate the session.");
             }
         }
         catch (IOException e) {
@@ -121,13 +123,17 @@ class LocalVCSshTest extends LocalVCIntegrationTest {
     }
 
     private static void executeGitPush(ClientSession session) throws IOException {
-        try (ChannelExec channel = session.createExecChannel("git push origin master")) {
-            channel.setOut(System.out);
-            channel.setErr(System.err);
-            channel.open().verify(5, TimeUnit.SECONDS); // Wait for the channel to be opened
+        ChannelExec channel = session.createExecChannel("git push origin master");
+        // Capture the output and error streams
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        ByteArrayOutputStream errorStream = new ByteArrayOutputStream();
 
-            channel.waitFor(EnumSet.of(ClientChannelEvent.CLOSED), TimeUnit.SECONDS.toMillis(30)); // Wait for the command to complete
-        }
+        channel.setOut(outputStream);
+        channel.setErr(errorStream);
+
+        channel.open().verify(5, TimeUnit.SECONDS); // Wait for the channel to be opened
+
+        channel.waitFor(EnumSet.of(ClientChannelEvent.CLOSED), TimeUnit.SECONDS.toMillis(30)); // Wait for the command to complete
     }
 
     private static PrivateKey loadPrivateKey(String privateKeyContent) throws IOException {
