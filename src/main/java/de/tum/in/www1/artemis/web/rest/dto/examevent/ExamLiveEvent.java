@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.dto.examevent;
 
+import java.time.Instant;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -17,6 +19,11 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
     @JsonSubTypes.Type(value = ProblemStatementUpdateEventDTO.class, name = "problemStatementUpdate"),
 })
 // @formatter:on
-public interface ExamLiveEventDTO {
+public interface ExamLiveEvent {
 
+    Long id();
+
+    String createdBy();
+
+    Instant createdDate();
 }
