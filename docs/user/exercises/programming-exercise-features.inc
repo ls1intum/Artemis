@@ -111,7 +111,12 @@ It allows you to write blackbox tests for command line interfaces of application
 The tests are written in Expect Script, an extension to the Tcl scripting language.
 Expect is a traditional Unix utility for automatic interactions with programs that expose a text terminal
 interface in a robust way.
-For the exercises you only have to specify the syntax of the command line interface
+The test script starts the program to test as own process (possibly several times) and interactively controls
+it by textual inputs via pipelining.
+Using the respective outputs, the script evaluates the functionality and reacts accordingly in a
+fine-grained manner.
+Just like a human user would test the running program manually.
+Thus, for the exercises you only have to specify the syntax of the command line interface
 and at least a rough guidance for the output format.
 The source code structure can be all up to the students as far as you want.
 An assessment of the quality of the students source code structures can be made with manual assessment after the submission deadline.
@@ -123,5 +128,8 @@ which are get replaced by the build plan.
 For example the build plan searches for the Java class with the main method and replace ``MAIN_CLASS`` with it.
 The best documentation of `Expect <https://core.tcl-lang.org/expect/>`_
 can be found in the `Book Exploring Expect <https://books.google.com.sg/books?id=t8C4pEDQ8s0C&printsec=frontcover#v=onepage&q&f=false>`_.
-However, for easy starting the basic setup of expect (file default.exp) can usually be overtaken in large
+However, for easy starting the basic setup of DejaGnu (file default.exp) can usually be overtaken in large
 parts from the template's example.
+
+With the exercise type Java DejaGnu it is quite easy to reuse existing exercises of the
+`Praktomat <https://github.com/KITPraktomatTeam/Praktomat>`_ autograder system with the Artemis platform.
