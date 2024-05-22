@@ -160,7 +160,7 @@ public class DatabaseMigration {
      * adhering to the migration path requirements.
      *
      * @return The latest version string from the 'artemis_version' table if it exists.
-     * @throws RuntimeException If the 'DATABASECHANGELOG' or 'artemis_version' tables do not exist
+     * @throws RuntimeException If the 'artemis_version' table does not exist
      */
     private String getPreviousVersionElseThrow() {
         String error = "Cannot start Artemis because version table does not exist, but a migration path is necessary! Please start the release 5.12.9 first, otherwise the migration will fail";
@@ -181,6 +181,7 @@ public class DatabaseMigration {
             log.error(error);
             System.exit(13);
         }
+        // this path cannot happen
         return null;
     }
 
