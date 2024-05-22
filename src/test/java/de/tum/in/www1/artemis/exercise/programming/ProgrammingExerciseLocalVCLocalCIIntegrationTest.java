@@ -12,6 +12,7 @@ import java.util.Map;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -32,7 +33,7 @@ import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUri;
 import de.tum.in.www1.artemis.util.LocalRepository;
-import de.tum.in.www1.artemis.web.rest.dto.BuildPlanCheckoutDirectoriesDTO;
+import de.tum.in.www1.artemis.web.rest.dto.CheckoutDirectoriesDTO;
 
 class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
@@ -241,19 +242,33 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
         localVCLocalCITestService.testLatestSubmission(solutionParticipation.getId(), null, 13, false);
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void testGetCheckoutDirectories() throws Exception {
-        BuildPlanCheckoutDirectoriesDTO checkoutDirectoryDTO = request.get("/api/programming-exercises/repository-checkout-directories?programmingLanguage=JAVA", HttpStatus.OK,
-                BuildPlanCheckoutDirectoriesDTO.class);
-        assertThat(checkoutDirectoryDTO.exerciseCheckoutDirectory()).isEqualTo("/assignment");
-        assertThat(checkoutDirectoryDTO.solutionCheckoutDirectories()).isNull();
-        assertThat(checkoutDirectoryDTO.testCheckoutDirectory()).isEqualTo("/");
-    }
+    @Nested
+    class TestGetCheckoutDirectories {
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testGetCheckoutDirectoriesAccessForbidden() throws Exception {
-        request.get("/api/programming-exercises/repository-checkout-directories?programmingLanguage=JAVA", HttpStatus.FORBIDDEN, BuildPlanCheckoutDirectoriesDTO.class);
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+        void testWithValidProgrammingLanguage() throws Exception {
+            CheckoutDirectoriesDTO checkoutDirectoryDTO = request.get("/api/programming-exercises/repository-checkout-directories?programmingLanguage=JAVA", HttpStatus.OK,
+                    CheckoutDirectoriesDTO.class);
+
+            assertThat(checkoutDirectoryDTO.submissionBuildPlanCheckoutDirectories().exerciseCheckoutDirectory()).isEqualTo("/assignment");
+            assertThat(checkoutDirectoryDTO.submissionBuildPlanCheckoutDirectories().solutionCheckoutDirectories()).isNull();
+            assertThat(checkoutDirectoryDTO.submissionBuildPlanCheckoutDirectories().testCheckoutDirectory()).isEqualTo("/");
+
+            // TODO
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+        void testWithNotSupportedProgrammingLanguage() throws Exception {
+            request.get("/api/programming-exercises/repository-checkout-directories?programmingLanguage=languageThatDoesNotExist", HttpStatus.BAD_REQUEST,
+                    CheckoutDirectoriesDTO.class);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        void testAccessForbidden() throws Exception {
+            request.get("/api/programming-exercises/repository-checkout-directories?programmingLanguage=JAVA", HttpStatus.FORBIDDEN, CheckoutDirectoriesDTO.class);
+        }
     }
 }
