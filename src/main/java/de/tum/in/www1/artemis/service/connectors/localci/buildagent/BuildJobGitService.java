@@ -111,6 +111,18 @@ public class BuildJobGitService extends AbstractGitService {
         }
     }
 
+    /**
+     * Clone a repository from the given URI to the given local path
+     *
+     * @param repoUri   the URI of the repository to clone
+     * @param localPath the local path to clone the repository to
+     * @return the cloned repository
+     * @throws GitAPIException      if the repository could not be cloned
+     * @throws GitException         if the repository could not be cloned
+     * @throws InvalidPathException if the local path is invalid
+     * @throws IOException          if the local path could not be deleted
+     * @throws URISyntaxException   if the URI is invalid
+     */
     public Repository cloneRepository(VcsRepositoryUri repoUri, Path localPath) throws GitAPIException, GitException, InvalidPathException, IOException, URISyntaxException {
         var gitUriAsString = getGitUriAsString(repoUri);
         log.debug("Cloning from {} to {}", gitUriAsString, localPath);

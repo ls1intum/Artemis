@@ -22,10 +22,15 @@ import javax.naming.ldap.LdapName;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.transport.CredentialsProvider;
+import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -51,6 +56,7 @@ import de.tum.in.www1.artemis.util.LocalRepository;
  * This class contains integration tests for the base repositories (template, solution, tests) and the different types of assignment repositories (student assignment, teaching
  * assistant assignment, instructor assignment).
  */
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
     @Autowired
@@ -74,6 +80,16 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
     private String teamShortName;
 
     private String teamRepositorySlug;
+
+    @Autowired
+    private Environment environment;
+
+    @BeforeAll
+    void setupAll() {
+        String gitUser = environment.getProperty("artemis.version-control.user");
+        String gitPassword = environment.getProperty("artemis.version-control.password");
+        CredentialsProvider.setDefault(new UsernamePasswordCredentialsProvider(gitUser, gitPassword));
+    }
 
     @BeforeEach
     void initRepositories() throws GitAPIException, IOException, URISyntaxException, InvalidNameException {
