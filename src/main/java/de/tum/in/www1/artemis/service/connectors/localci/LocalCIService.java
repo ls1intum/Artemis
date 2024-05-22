@@ -237,16 +237,14 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
         exerciseCheckoutDirectory = startPathWithRootDirectory(exerciseCheckoutDirectory);
         testCheckoutDirectory = startPathWithRootDirectory(testCheckoutDirectory);
 
-        String solutionCheckoutDirectory = "";
+        String[] solutionCheckoutDirectories = null;
         try {
-            solutionCheckoutDirectory = ContinuousIntegrationService.RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(programmingLanguage);
-            solutionCheckoutDirectory = startPathWithRootDirectory(solutionCheckoutDirectory);
+            String solutionCheckoutDirectoryPath = ContinuousIntegrationService.RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(programmingLanguage);
+            solutionCheckoutDirectories = new String[] { startPathWithRootDirectory(solutionCheckoutDirectoryPath) };
         }
         catch (IllegalArgumentException exception) {
             // not checked out during template & submission build
         }
-
-        String[] solutionCheckoutDirectories = new String[] { solutionCheckoutDirectory };
 
         return new BuildPlanCheckoutDirectoriesDTO(exerciseCheckoutDirectory, solutionCheckoutDirectories, testCheckoutDirectory);
     }
