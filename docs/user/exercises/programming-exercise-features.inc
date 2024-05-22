@@ -118,6 +118,9 @@ An assessment of the quality of the students source code structures can be made 
 
 For the usage of DejaGnu consult the `offical documentation <https://www.gnu.org/software/dejagnu/manual/index.html>`_
 and take a look at the example of the template.
+There are variables in upper and Snake case (e.g., ``MAIN_CLASS``) in the template,
+which are get replaced by the build plan.
+For example the build plan searches for the Java class with the main method and replace ``MAIN_CLASS`` with it.
 The best documentation of `Expect <https://core.tcl-lang.org/expect/>`_
 can be found in the `Book Exploring Expect <https://books.google.com.sg/books?id=t8C4pEDQ8s0C&printsec=frontcover#v=onepage&q&f=false>`_.
 However, for easy starting the basic setup of expect (file default.exp) can usually be overtaken in large
