@@ -80,6 +80,9 @@ public class Competency extends BaseCompetency {
     @JsonIgnoreProperties({ "competencies" })
     private StandardizedCompetency linkedStandardizedCompetency;
 
+    @OneToMany(mappedBy = "competency", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<CompetencyJOL> competencyJOLs = new HashSet<>();
+
     public Competency() {
     }
 
@@ -135,11 +138,6 @@ public class Competency extends BaseCompetency {
         exercise.getCompetencies().add(this);
     }
 
-    public void removeExercise(Exercise exercise) {
-        this.exercises.remove(exercise);
-        exercise.getCompetencies().remove(this);
-    }
-
     public Set<LectureUnit> getLectureUnits() {
         return lectureUnits;
     }
@@ -180,10 +178,6 @@ public class Competency extends BaseCompetency {
 
     public Set<Course> getConsecutiveCourses() {
         return consecutiveCourses;
-    }
-
-    public void setConsecutiveCourses(Set<Course> consecutiveCourses) {
-        this.consecutiveCourses = consecutiveCourses;
     }
 
     public Set<CompetencyProgress> getUserProgress() {
