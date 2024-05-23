@@ -27,6 +27,8 @@ public class VersionRequestMappingHandlerMapping extends RequestMappingHandlerMa
 
     private final int latestVersion;
 
+    private final RequestMappingInfo nonVersionedApiInfo;
+
     /**
      * Creates a new VersionRequestMappingHandlerMapping.
      *
@@ -38,6 +40,7 @@ public class VersionRequestMappingHandlerMapping extends RequestMappingHandlerMa
         this.latestVersion = this.apiVersions.getLast();
         this.pathPrefixSegment = pathPrefixSegment;
         this.versionPrefix = versionPrefix;
+        this.nonVersionedApiInfo = createNonVersionedApiInfo();
     }
 
     /**
@@ -61,6 +64,12 @@ public class VersionRequestMappingHandlerMapping extends RequestMappingHandlerMa
         var ignoreGlobalMappingAnnotation = method.getAnnotation(IgnoreGlobalMapping.class);
         if (ignoreGlobalMappingAnnotation != null && ignoreGlobalMappingAnnotation.ignorePaths()) {
             return info;
+        }
+        var useVersioningAnnotation = method.getAnnotation(UseVersioning.class);
+        // We don't handle endpoints that are not explicitly versioned as of now. See the annotation for more information.
+        // TODO: Remove this check once all endpoints are versioned
+        if (useVersioningAnnotation == null) {
+            return nonVersionedApiInfo.combine(info);
         }
         VersionRanges versionRangesAnnotation = AnnotationUtils.findAnnotation(method, VersionRanges.class);
         VersionRange versionRangeAnnotation = AnnotationUtils.findAnnotation(method, VersionRange.class);
@@ -95,5 +104,11 @@ public class VersionRequestMappingHandlerMapping extends RequestMappingHandlerMa
         var builderConfiguration = new RequestMappingInfo.BuilderConfiguration();
         builderConfiguration.setPatternParser(new PathPatternParser());
         return RequestMappingInfo.paths(patterns.toArray(new String[] {})).options(builderConfiguration).customCondition(customCondition).build();
+    }
+
+    private RequestMappingInfo createNonVersionedApiInfo() {
+        var builderConfiguration = new RequestMappingInfo.BuilderConfiguration();
+        builderConfiguration.setPatternParser(new PathPatternParser());
+        return RequestMappingInfo.paths("/" + pathPrefixSegment).options(builderConfiguration).build();
     }
 }

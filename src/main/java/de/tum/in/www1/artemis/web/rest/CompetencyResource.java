@@ -54,6 +54,7 @@ import de.tum.in.www1.artemis.service.competency.CompetencyRelationService;
 import de.tum.in.www1.artemis.service.competency.CompetencyService;
 import de.tum.in.www1.artemis.service.iris.session.IrisCompetencyGenerationSessionService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
+import de.tum.in.www1.artemis.versioning.UseVersioning;
 import de.tum.in.www1.artemis.web.rest.dto.CourseCompetencyProgressDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyImportResponseDTO;
@@ -128,6 +129,7 @@ public class CompetencyResource {
      */
     @GetMapping("competencies/{competencyId}/title")
     @EnforceAtLeastStudent
+    @UseVersioning
     public ResponseEntity<String> getCompetencyTitle(@PathVariable long competencyId) {
         final var title = competencyRepository.getCompetencyTitle(competencyId);
         return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);

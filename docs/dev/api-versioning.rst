@@ -1,6 +1,8 @@
 API Versioning
 ===========================
 
+**Disclaimer**: As we only want to activate API versioning for REST conform endpoints and ensuring such conformity takes time, versioning only applies to endpoints marked by ``@UseVersioning``. Only use this annotation for verified REST conform endpoints. Consult with maintainers if you are unsure. Once all endpoints are verified, we can remove this annotation and activate versioning on default.
+
 The API paths are prefixed with an optional version number. If the version number is not specified, the latest version is assumed. For example, if the latest version is 4, ``/api/v4/...`` is the same as ``/api/...``.
 
 To create a new API version, extend the list of versions in the `VersioningConfiguration`. All endpoints with a lower limit will automatically support the new version.
