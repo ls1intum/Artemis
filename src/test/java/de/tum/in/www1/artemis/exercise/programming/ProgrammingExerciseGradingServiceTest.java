@@ -36,9 +36,12 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.CategoryState;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
@@ -789,6 +792,51 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         }
     }
 
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldUpdateScoresWithSCAAndLongFeedbackText(boolean templateParticipation) {
+        programmingExercise = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(ProgrammingLanguage.JAVA);
+        Result result;
+
+        if (templateParticipation) {
+            programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+            result = programmingExerciseUtilService.addTemplateSubmissionWithResult(programmingExercise.getId());
+        }
+        else {
+            result = programmingExerciseUtilService.addProgrammingSubmissionWithResult(programmingExercise, new ProgrammingSubmission(), student1);
+        }
+        result.setAssessmentType(AssessmentType.AUTOMATIC);
+        result.setCompletionDate(ZonedDateTime.now().minusSeconds(10));
+        result = resultRepository.save(result);
+
+        final Feedback feedback = new Feedback();
+        feedback.setDetailText("long feedback".repeat(1000));
+        result = participationUtilService.addFeedbackToResult(feedback, result);
+
+        // Code Style (coding for checkstyle) is visible by default
+        final Feedback scaFeedback = new Feedback().text(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER).reference("CHECKSTYLE").detailText("{\"category\": \"coding\"}")
+                .type(FeedbackType.AUTOMATIC).positive(false);
+        participationUtilService.addFeedbackToResult(scaFeedback, result);
+
+        var updatedResults = programmingExerciseGradingService.updateAllResults(programmingExercise);
+
+        assertThat(updatedResults).hasSize(1);
+        var updatedResult = updatedResults.getFirst();
+        assertThat(updatedResult.getFeedbacks()).hasSize(2);
+
+        programmingExercise.getStaticCodeAnalysisCategories().stream().filter(category -> category.getName().equals("Code Style")).findFirst()
+                .ifPresent(category -> category.setState(CategoryState.INACTIVE));
+        staticCodeAnalysisCategoryRepository.saveAll(programmingExercise.getStaticCodeAnalysisCategories());
+
+        updatedResults = programmingExerciseGradingService.updateAllResults(programmingExercise);
+
+        assertThat(updatedResults).hasSize(1);
+        updatedResult = updatedResults.getFirst();
+        assertThat(updatedResult.getFeedbacks()).hasSize(1);
+        // only one feedback since the inactive sca feedback got removed
+    }
+
     private Map<String, ProgrammingExerciseTestCase> createTestCases(boolean withAdditionalInvisibleTestCase) {
         var testCases = testCaseRepository.findByExerciseId(programmingExercise.getId()).stream()
                 .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, Function.identity()));
@@ -964,13 +1012,15 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
                 createStudentExam(programmingExercise, student5);
             }
             // Build Failed
-            var result5 = new Result().participation(participation5) //
-                    .feedbacks(List.of()) //
-                    .score(0D) //
-                    .rated(true) //
-                    .successful(false) //
-                    .completionDate(ZonedDateTime.now()) //
+            // @formatter:off
+            var result5 = new Result().participation(participation5)
+                    .feedbacks(List.of())
+                    .score(0D)
+                    .rated(true)
+                    .successful(false)
+                    .completionDate(ZonedDateTime.now())
                     .assessmentType(AssessmentType.AUTOMATIC);
+            // @formatter:on
             gradingService.calculateScoreForResult(result5, programmingExercise, true);
             result5 = resultRepository.save(result5);
             participation5.setResults(Set.of(result5));
