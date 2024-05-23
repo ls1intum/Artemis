@@ -21,7 +21,7 @@ export class RepositoryPage {
 
         if (commits) {
             // Initial commit is at the bottom of the table
-            const initialCommitIndexInTable = commits.length - 1;
+            const initialCommitIndexInTable = commits.length;
             for (let index = 0; index < commits.length; index++) {
                 const commit = commits[index];
                 const commitIndexInTable = initialCommitIndexInTable - 1 - index;
