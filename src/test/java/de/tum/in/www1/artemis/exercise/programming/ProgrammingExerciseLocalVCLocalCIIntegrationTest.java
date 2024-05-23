@@ -12,6 +12,7 @@ import java.util.Map;
 
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -78,6 +79,11 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
         String gitUser = environment.getProperty("artemis.user-management.internal-admin.username");
         String gitPassword = environment.getProperty("artemis.user-management.internal-admin.password");
         CredentialsProvider.setDefault(new UsernamePasswordCredentialsProvider(gitUser, gitPassword));
+    }
+
+    @AfterAll
+    void cleanupAll() {
+        CredentialsProvider.setDefault(null);
     }
 
     @BeforeEach
