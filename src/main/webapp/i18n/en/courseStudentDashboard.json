@@ -25,7 +25,8 @@
             },
             "judgementOfLearning": {
                 "title": "How would you rate your mastery?",
-                "artemisRating": "Artemis rates your mastery as"
+                "artemisRating": "Artemis rates your mastery as",
+                "error": "An error occurred while saving your rating."
             }
         }
     }

@@ -25,7 +25,6 @@ export class CompetencyAccordionComponent implements OnChanges {
     @Output() accordionToggle = new EventEmitter<ICompetencyAccordionToggleEvent>();
 
     open = false;
-    rated = false;
     nextExercises: Exercise[] = [];
     nextLectureUnits: LectureUnitInformation[] = [];
 
@@ -94,6 +93,19 @@ export class CompetencyAccordionComponent implements OnChanges {
         this.accordionToggle.emit({ opened: this.open, index: this.index });
     }
 
+    get jolRating() {
+        return this.metrics.competencyMetrics?.jolValues?.[this.competency.id];
+    }
+
+    onRatingChange(newRating: number) {
+        if (this.metrics.competencyMetrics) {
+            this.metrics.competencyMetrics.jolValues = {
+                ...this.metrics.competencyMetrics.jolValues,
+                [this.competency.id]: newRating,
+            };
+        }
+    }
+
     getUserProgress(): CompetencyProgress {
         const progress = this.metrics.competencyMetrics?.progress?.[this.competency.id] ?? 0;
         const confidence = this.metrics.competencyMetrics?.confidence?.[this.competency.id] ?? 0;
@@ -101,7 +113,7 @@ export class CompetencyAccordionComponent implements OnChanges {
     }
 
     get progress() {
-        if (!this.rated) {
+        if (this.jolRating === undefined) {
             return 0;
         }
         return this.getProgress(this.getUserProgress());
@@ -136,14 +148,14 @@ export class CompetencyAccordionComponent implements OnChanges {
     }
 
     get confidence() {
-        if (!this.rated) {
+        if (this.jolRating === undefined) {
             return 0;
         }
         return this.getConfidence(this.getUserProgress(), this.competency.masteryThreshold!);
     }
 
     get mastery() {
-        if (!this.rated) {
+        if (this.jolRating === undefined) {
             return 0;
         }
         return this.getMastery(this.getUserProgress(), this.competency.masteryThreshold!);
