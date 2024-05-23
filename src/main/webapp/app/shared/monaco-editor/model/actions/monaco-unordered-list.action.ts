@@ -7,7 +7,7 @@ export class MonacoUnorderedListAction extends MonacoEditorAction {
         super('monaco-unordered-list.action', label, translationKey, undefined);
     }
 
-    run(editor: monaco.editor.ICodeEditor) {
+    run(editor: monaco.editor.ICodeEditor): void {
         const selection = editor.getSelection();
         if (selection) {
             for (let lineNumber = selection.startLineNumber; lineNumber <= selection.endLineNumber; lineNumber++) {
