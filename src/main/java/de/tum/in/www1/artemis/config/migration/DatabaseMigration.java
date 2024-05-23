@@ -172,7 +172,7 @@ public class DatabaseMigration {
             if (result.next()) {
                 return result.getString("latest_version");
             }
-            // no version exists
+            // if no version is recorded in the table, we proceed with the startup
             return null;
         }
         catch (SQLException e) {
