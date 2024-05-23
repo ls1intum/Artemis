@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
@@ -32,6 +33,7 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
  */
 @Profile("iris")
 @RestController
+@RequestMapping("iris/")
 public class IrisMessageResource {
 
     private final IrisSessionRepository irisSessionRepository;
@@ -59,7 +61,7 @@ public class IrisMessageResource {
      * @param sessionId of the session
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the list of messages, or with status {@code 404 (Not Found)} if the session could not be found.
      */
-    @GetMapping("iris/sessions/{sessionId}/messages")
+    @GetMapping("sessions/{sessionId}/messages")
     @EnforceAtLeastStudent
     public ResponseEntity<List<IrisMessage>> getMessages(@PathVariable Long sessionId) {
         IrisSession session = irisSessionRepository.findByIdElseThrow(sessionId);
@@ -76,7 +78,7 @@ public class IrisMessageResource {
      * @param message   to send
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the created message, or with status {@code 404 (Not Found)} if the session could not be found.
      */
-    @PostMapping("iris/sessions/{sessionId}/messages")
+    @PostMapping("sessions/{sessionId}/messages")
     @EnforceAtLeastStudent
     public ResponseEntity<IrisMessage> createMessage(@PathVariable Long sessionId, @RequestBody IrisMessage message) throws URISyntaxException {
         var session = irisSessionRepository.findByIdElseThrow(sessionId);
@@ -102,7 +104,7 @@ public class IrisMessageResource {
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the existing message, or with status {@code 404 (Not Found)} if the session or message could
      *         not be found.
      */
-    @PostMapping("iris/sessions/{sessionId}/messages/{messageId}/resend")
+    @PostMapping("sessions/{sessionId}/messages/{messageId}/resend")
     @EnforceAtLeastStudent
     public ResponseEntity<IrisMessage> resendMessage(@PathVariable Long sessionId, @PathVariable Long messageId) {
         var session = irisSessionRepository.findByIdWithMessagesElseThrow(sessionId);
@@ -134,9 +136,9 @@ public class IrisMessageResource {
      */
     // @formatter:off
     @PutMapping(value = {
-            "iris/sessions/{sessionId}/messages/{messageId}/helpful/null",
-            "iris/sessions/{sessionId}/messages/{messageId}/helpful/undefined",
-            "iris/sessions/{sessionId}/messages/{messageId}/helpful/{helpful}"
+            "sessions/{sessionId}/messages/{messageId}/helpful/null",
+            "sessions/{sessionId}/messages/{messageId}/helpful/undefined",
+            "sessions/{sessionId}/messages/{messageId}/helpful/{helpful}"
     })
     // @formatter:on
     @EnforceAtLeastStudent

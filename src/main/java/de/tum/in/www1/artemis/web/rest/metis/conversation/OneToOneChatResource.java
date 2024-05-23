@@ -68,7 +68,7 @@ public class OneToOneChatResource extends ConversationManagementResource {
      * @param otherChatParticipantLogins logins of other participants (must be 1 for one to one chat) excluding the requesting user
      * @return ResponseEntity with status 201 (Created) and with body containing the created one to one chat
      */
-    @PostMapping("courses/{courseId}/one-to-one-chats")
+    @PostMapping("{courseId}/one-to-one-chats")
     @EnforceAtLeastStudent
     public ResponseEntity<OneToOneChatDTO> startOneToOneChat(@PathVariable Long courseId, @RequestBody List<String> otherChatParticipantLogins) throws URISyntaxException {
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();

@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.competency.KnowledgeArea;
@@ -25,6 +26,7 @@ import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreaR
  */
 @Profile(PROFILE_CORE)
 @RestController
+@RequestMapping("standardized-competencies/")
 public class StandardizedCompetencyResource {
 
     private static final Logger log = LoggerFactory.getLogger(StandardizedCompetencyResource.class);
@@ -48,7 +50,7 @@ public class StandardizedCompetencyResource {
      * @param competencyId the id of the standardized competency to get
      * @return the ResponseEntity with status 200 (OK) and with body containing the standardized competency, or with status 404 (Not Found)
      */
-    @GetMapping("standardized-competencies/{competencyId}")
+    @GetMapping("{competencyId}")
     @EnforceAtLeastInstructor
     public ResponseEntity<StandardizedCompetency> getStandardizedCompetency(@PathVariable long competencyId) {
         log.debug("REST request to get standardized competency with id : {}", competencyId);
@@ -63,7 +65,7 @@ public class StandardizedCompetencyResource {
      *
      * @return the ResponseEntity with status 200 (OK) and with body containing the knowledge areas
      */
-    @GetMapping("standardized-competencies/for-tree-view")
+    @GetMapping("for-tree-view")
     @EnforceAtLeastInstructor
     public ResponseEntity<List<KnowledgeAreaResultDTO>> getAllForTreeView() {
         log.debug("REST request to all knowledge areas for tree view");
@@ -79,7 +81,7 @@ public class StandardizedCompetencyResource {
      * @param knowledgeAreaId the id of the knowledge area to get
      * @return the ResponseEntity with status 200 (OK) and with body containing the knowledge area, or with status 404 (Not Found)
      */
-    @GetMapping("standardized-competencies/knowledge-areas/{knowledgeAreaId}")
+    @GetMapping("knowledge-areas/{knowledgeAreaId}")
     @EnforceAtLeastInstructor
     public ResponseEntity<KnowledgeArea> getKnowledgeArea(@PathVariable long knowledgeAreaId) {
         log.debug("REST request to get knowledge area with id : {}", knowledgeAreaId);

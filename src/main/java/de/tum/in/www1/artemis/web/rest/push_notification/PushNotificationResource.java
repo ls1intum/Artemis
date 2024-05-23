@@ -75,7 +75,7 @@ public class PushNotificationResource {
      * @param pushNotificationRegisterBody contains all information required to store the device token for a specific user
      * @return an DTO containing information about the encryption
      */
-    @PostMapping("push_notification/register")
+    @PostMapping("register")
     @EnforceAtLeastStudent
     public ResponseEntity<PushNotificationRegisterDTO> register(@Valid @RequestBody PushNotificationRegisterBody pushNotificationRegisterBody) {
         var newKey = aesKeyGenerator.generateKey();
@@ -114,7 +114,7 @@ public class PushNotificationResource {
      * @param body contains information on which device token should be removed for what user
      * @return HttpStatus as ResponseEntity
      */
-    @DeleteMapping("push_notification/unregister")
+    @DeleteMapping("unregister")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> unregister(@Valid @RequestBody PushNotificationUnregisterRequest body) {
         final var id = new PushNotificationDeviceConfigurationId(userRepository.getUser(), body.token(), body.deviceType());
