@@ -649,6 +649,14 @@ public class CompetencyResource {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(role, course, null);
     }
 
+    /**
+     * PUT courses/:courseId/competencies/:competencyId/jol/:jolValue
+     *
+     * @param courseId     the id of the course for which the competency belongs
+     * @param competencyId the id of the competency for which to set the judgement of learning
+     * @param jolValue     the value of the judgement of learning
+     * @return the ResponseEntity with status 200 (OK)
+     */
     @PutMapping("courses/{courseId}/competencies/{competencyId}/jol/{jolValue}")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<Void> setJudgementOfLearning(@PathVariable long courseId, @PathVariable long competencyId, @PathVariable int jolValue) {

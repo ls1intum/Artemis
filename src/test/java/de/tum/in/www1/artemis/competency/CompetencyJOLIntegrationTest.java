@@ -41,8 +41,14 @@ class CompetencyJOLIntegrationTest extends AbstractSpringIntegrationIndependentT
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    public void shouldReturnBadRequestForInvalidValue() throws Exception {
+        request.put("/api/courses/" + courseId + "/competencies/" + competency.getId() + "/jol/" + 1337, null, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     public void shouldCreateJOL() throws Exception {
-        int jolValue = 1337;
+        int jolValue = 3;
         request.put("/api/courses/" + courseId + "/competencies/" + competency.getId() + "/jol/" + jolValue, null, HttpStatus.OK);
         final var jol = competencyJOLRepository.findByCompetencyIdAndUserId(competency.getId(), student.getId());
         assertThat(jol).isPresent();
@@ -55,11 +61,11 @@ class CompetencyJOLIntegrationTest extends AbstractSpringIntegrationIndependentT
         final var jol = new CompetencyJOL();
         jol.setCompetency(competency);
         jol.setUser(student);
-        jol.setValue(420);
+        jol.setValue(1337);
 
         competencyJOLRepository.save(jol);
 
-        int jolValue = 1337;
+        int jolValue = 3;
 
         request.put("/api/courses/" + courseId + "/competencies/" + competency.getId() + "/jol/" + jolValue, null, HttpStatus.OK);
         final var updatedJol = competencyJOLRepository.findByCompetencyIdAndUserId(competency.getId(), student.getId());

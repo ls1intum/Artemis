@@ -28,7 +28,7 @@ public class CompetencyJOL extends DomainObject {
     @JoinColumn(name = "user_id")
     private User user;
 
-    @Column(name = "value")
+    @Column(name = "jol_value")
     private Integer value;
 
     public Competency getCompetency() {

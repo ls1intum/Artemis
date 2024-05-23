@@ -9,7 +9,7 @@
             </column>
             <column name="competency_id" type="bigint"/>
             <column name="user_id" type="bigint"/>
-            <column name="value" type="int"/>
+            <column name="jol_value" type="int"/>
         </createTable>
         <addForeignKeyConstraint baseColumnNames="competency_id"
                                  baseTableName="competency_jol"

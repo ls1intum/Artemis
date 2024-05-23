@@ -9,6 +9,7 @@ import de.tum.in.www1.artemis.domain.competency.CompetencyJOL;
 import de.tum.in.www1.artemis.repository.CompetencyRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.competency.CompetencyJOLRepository;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
  * Service Implementation for managing CompetencyJOL.
@@ -16,6 +17,8 @@ import de.tum.in.www1.artemis.repository.competency.CompetencyJOLRepository;
 @Profile(PROFILE_CORE)
 @Service
 public class CompetencyJOLService {
+
+    private final String ENTITY_NAME = "CompetencyJOL";
 
     private final CompetencyJOLRepository competencyJOLRepository;
 
@@ -29,7 +32,22 @@ public class CompetencyJOLService {
         this.userRepository = userRepository;
     }
 
+    private static boolean isJolValueValid(int jolValue) {
+        return 1 <= jolValue && jolValue <= 5;
+    }
+
+    /**
+     * Set the judgement of learning value for a user and a competency.
+     *
+     * @param competencyId the id of the competency
+     * @param userId       the id of the user
+     * @param jolValue     the judgement of learning value
+     */
     public void setJudgementOfLearning(long competencyId, long userId, int jolValue) {
+        if (!isJolValueValid(jolValue)) {
+            throw new BadRequestAlertException("Invalid judgement of learning value", ENTITY_NAME, "invalidJolValue");
+        }
+
         final var competencyJOL = competencyJOLRepository.findByCompetencyIdAndUserId(competencyId, userId);
 
         // If the competencyJOL already exists, update the value
@@ -44,6 +62,14 @@ public class CompetencyJOLService {
         competencyJOLRepository.save(jol);
     }
 
+    /**
+     * Create a new CompetencyJOL.
+     *
+     * @param competencyId the id of the competency
+     * @param userId       the id of the user
+     * @param jolValue     the judgement of learning value
+     * @return the created CompetencyJOL (not persisted)
+     */
     public CompetencyJOL createCompetencyJOL(long competencyId, long userId, int jolValue) {
         final var jol = new CompetencyJOL();
         jol.setCompetency(competencyRepository.findById(competencyId).orElseThrow());
