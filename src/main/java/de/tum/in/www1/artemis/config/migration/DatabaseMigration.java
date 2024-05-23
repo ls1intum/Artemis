@@ -7,6 +7,7 @@ import java.util.List;
 
 import javax.sql.DataSource;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -175,10 +176,10 @@ public class DatabaseMigration {
             return null;
         }
         catch (SQLException e) {
-            if (e.getMessage().contains("databasechangelog") && (e.getMessage().contains("does not exist") || (e.getMessage().contains("doesn't exist")))) {
+            if (StringUtils.containsIgnoreCase(e.getMessage(), "databasechangelog") && (e.getMessage().contains("does not exist") || (e.getMessage().contains("doesn't exist")))) {
                 return null;
             }
-            log.error(error);
+            log.error(error, e);
             System.exit(13);
         }
         // this path cannot happen
