@@ -42,7 +42,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.isCollapsed = this.courseOverviewService.getSidebarCollapseStateFromStorage('lecture');
         this.parentParamSubscription = this.route.parent!.params.subscribe((params) => {
-            this.courseId = parseInt(params.courseId, 10);
+            this.courseId = Number(params.courseId);
         });
 
         this.course = this.courseStorageService.getCourse(this.courseId);

@@ -40,7 +40,7 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
         const courseIdParams$ = this.activatedRoute.parent?.parent?.parent?.params;
         if (courseIdParams$) {
             this.parentParamSubscription = courseIdParams$.subscribe((params) => {
-                this.courseId = parseInt(params.courseId, 10);
+                this.courseId = Number(params.courseId);
             });
         }
 

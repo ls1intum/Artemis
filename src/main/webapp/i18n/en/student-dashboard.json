@@ -196,6 +196,9 @@
             "competencies": {
                 "noData": "No competencies available for this course."
             },
+            "tutorialGroups": {
+                "selectTutorialGroup": "Please select a Tutorial Group."
+            },
             "lectureList": {
                 "lectureGroupHeader": "(Lectures: {{ total }})",
                 "totalLectures": "Total lectures:",
@@ -212,7 +215,8 @@
                 "notReleased": "Not released",
                 "version": "Version",
                 "isDownloading": "Is downloading...",
-                "downloadMergedPdf": "Download Complete PDF"
+                "downloadMergedPdf": "Download Complete PDF",
+                "selectLecture": " Please select a Lecture."
             },
             "exerciseDetails": {
                 "dueDate": "Due date:",
@@ -260,7 +264,8 @@
                 "complaintPossible": "Complaint possible:",
                 "complaintPossibleTooltip": "After receiving an assessment, you will have {{days}} days to file a complaint.",
                 "presented": "Presented:",
-                "presentation": "Presentation:"
+                "presentation": "Presentation:",
+                "selectExercise": "Please select an Exercise."
             }
         }
     }

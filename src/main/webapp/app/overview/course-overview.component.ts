@@ -193,7 +193,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
 
     async ngOnInit() {
         this.subscription = this.route.params.subscribe((params) => {
-            this.courseId = parseInt(params.courseId, 10);
+            this.courseId = Number(params.courseId);
         });
         this.profileSubscription = this.profileService.getProfileInfo()?.subscribe((profileInfo) => {
             this.isProduction = profileInfo?.inProduction;

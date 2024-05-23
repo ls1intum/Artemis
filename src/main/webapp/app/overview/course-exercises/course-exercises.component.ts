@@ -49,7 +49,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.isCollapsed = this.courseOverviewService.getSidebarCollapseStateFromStorage('exercise');
         this.parentParamSubscription = this.route.parent!.params.subscribe((params) => {
-            this.courseId = parseInt(params.courseId, 10);
+            this.courseId = Number(params.courseId);
         });
 
         this.course = this.courseStorageService.getCourse(this.courseId);
@@ -71,7 +71,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     navigateToExercise() {
         const upcomingExercise = this.courseOverviewService.getUpcomingExercise(this.course?.exercises);
         const lastSelectedExercise = this.getLastSelectedExercise();
-        const exerciseId = this.route.firstChild?.snapshot.params.exerciseId;
+        const exerciseId = this.route.firstChild?.snapshot?.params.exerciseId;
         if (!exerciseId && lastSelectedExercise) {
             this.router.navigate([lastSelectedExercise], { relativeTo: this.route, replaceUrl: true });
         } else if (!exerciseId && upcomingExercise) {

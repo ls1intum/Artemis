@@ -78,18 +78,18 @@ export class CourseTutorialGroupsComponent implements OnInit, OnDestroy {
                 }
             })
             .add(() => this.cdr.detectChanges());
-
-        this.navigateToTutorialGroup();
     }
 
     navigateToTutorialGroup() {
-        const upcomingTutorialGroup = this.courseOverviewService.getUpcomingTutorialGroup(this.course?.tutorialGroups);
+        const upcomingTutorialGroup = this.courseOverviewService.getUpcomingTutorialGroup(this.tutorialGroups);
         const lastSelectedTutorialGroup = this.getLastSelectedTutorialGroup();
         const tutorialGroupId = this.route.firstChild?.snapshot.params.exerciseId;
         if (!tutorialGroupId && lastSelectedTutorialGroup) {
             this.router.navigate([lastSelectedTutorialGroup], { relativeTo: this.route, replaceUrl: true });
+            this.tutorialGroupSelected = true;
         } else if (!tutorialGroupId && upcomingTutorialGroup) {
             this.router.navigate([upcomingTutorialGroup.id], { relativeTo: this.route, replaceUrl: true });
+            this.tutorialGroupSelected = true;
         } else {
             this.tutorialGroupSelected = tutorialGroupId ? true : false;
         }
@@ -167,6 +167,7 @@ export class CourseTutorialGroupsComponent implements OnInit, OnDestroy {
         if (!tutorialGroupsLoadedFromCache) {
             this.loadTutorialGroupsFromServer();
         }
+        this.navigateToTutorialGroup();
     }
 
     setCourse() {
