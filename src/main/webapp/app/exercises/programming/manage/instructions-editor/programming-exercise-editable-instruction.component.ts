@@ -18,6 +18,7 @@ import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command'
 import { Result } from 'app/entities/result.model';
 import { faCheckCircle, faCircleNotch, faExclamationTriangle, faGripLines, faSave } from '@fortawesome/free-solid-svg-icons';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 
 @Component({
     selector: 'jhi-programming-exercise-editable-instructions',
@@ -44,7 +45,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     forceRenderSubscription: Subscription;
 
     @ViewChild(MarkdownEditorComponent, { static: false }) markdownEditor?: MarkdownEditorComponent;
-    @ViewChild(MarkdownEditorMonacoComponent, { static: true }) markdownEditorMonaco?: MarkdownEditorMonacoComponent;
+    @ViewChild(MarkdownEditorMonacoComponent, { static: false }) markdownEditorMonaco?: MarkdownEditorMonacoComponent;
     @ViewChild('statusFooter', { static: false }) statusFooter: ElementRef<HTMLDivElement>;
 
     editorHeight: number | undefined;
@@ -239,7 +240,8 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      */
     onAnalysisUpdate = (analysis: ProblemStatementAnalysis) => {
         const lineWarnings = this.mapAnalysisToWarnings(analysis);
-
+        // TODO: Add a method to the markdownEditorMonaco to set annotations; also remove the type assertion
+        this.markdownEditorMonaco?.monacoEditor?.setAnnotations(lineWarnings as Annotation[]);
         this.markdownEditor?.aceEditorContainer?.getEditor().getSession().clearAnnotations();
         // We need to wait for the annotations to be removed before we can set the new annotations.
         // Otherwise changes in the editor will trigger the update of the existing annotations.
