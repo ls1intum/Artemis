@@ -336,23 +336,21 @@ test.describe('Exam participation', () => {
             }
 
             await examManagement.openEditWorkingTimeDialog();
-            await examManagement.changeExamWorkingTime({ hours: -1 });
-            await examManagement.verifyExamWorkingTimeChange('1h 2min', '2min');
+            await examManagement.changeExamWorkingTime({ minutes: -30 });
+            await examManagement.verifyExamWorkingTimeChange('1h 2min', '32min');
+            const workingTimeChangeTime = dayjs();
             await examManagement.confirmWorkingTimeChange(exam.title!);
 
             for (const studentPage of studentPages) {
                 const examParticipationActions = new ExamParticipationActions(studentPage);
                 const modalDialog = new ModalDialogBox(studentPage);
-                // There are two dialogs shown on top of each other. We close the one
-                // on top for now as a workaround to avoid strict mode violation.
-                await modalDialog.getModalDialogContent().locator('button').last().click();
                 const timeChangeMessage = 'The working time of the exam has been changed.';
-                await modalDialog.checkExamTimeChangeDialog('1h 2min', '2min');
-                await modalDialog.checkDialogTime(dayjs());
+                await modalDialog.checkExamTimeChangeDialog('1h 2min', '32min');
+                await modalDialog.checkDialogTime(workingTimeChangeTime);
                 await modalDialog.checkDialogMessage(timeChangeMessage);
                 await modalDialog.checkDialogAuthor(instructor.username);
-                await examParticipationActions.checkExamTimeLeft('0min');
                 await modalDialog.closeDialog();
+                await examParticipationActions.checkExamTimeLeft('29min');
             }
         });
     });
