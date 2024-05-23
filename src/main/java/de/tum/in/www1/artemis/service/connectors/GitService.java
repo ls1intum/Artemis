@@ -1003,6 +1003,7 @@ public class GitService {
      * @return the latestHash of the given repo.
      * @throws EntityNotFoundException if retrieving the latestHash from the git repo failed.
      */
+    @Nullable
     public ObjectId getLastCommitHash(VcsRepositoryUri repoUri) throws EntityNotFoundException {
         if (repoUri == null || repoUri.getURI() == null) {
             return null;
