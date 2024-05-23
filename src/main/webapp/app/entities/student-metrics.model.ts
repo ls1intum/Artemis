@@ -1,6 +1,8 @@
 import { CompetencyTaxonomy } from 'app/entities/competency.model';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { DifficultyLevel, ExerciseMode, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import dayjs from 'dayjs/esm';
+import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 
 export class StudentMetrics {
     public exerciseMetrics?: ExerciseMetrics;
@@ -10,6 +12,8 @@ export class StudentMetrics {
 
 export class ExerciseMetrics {
     public exerciseInformation: { [key: number]: ExerciseInformation };
+    public categories: { [key: number]: (string | null)[] };
+    public teamId: { [key: number]: number };
 
     // Performance metrics
     public score: { [key: number]: number };
@@ -31,6 +35,11 @@ export class ExerciseInformation {
     public dueDate: dayjs.Dayjs;
     public maxPoints: number;
     public type: ExerciseType;
+    public includedInOverallScore?: IncludedInOverallScore;
+    public exerciseMode?: ExerciseMode;
+    public categories?: ExerciseCategory[];
+    public difficulty?: DifficultyLevel;
+    public studentAssignedTeamId?: number;
 }
 
 export class LectureUnitStudentMetricsDTO {
@@ -40,9 +49,10 @@ export class LectureUnitStudentMetricsDTO {
 
 export class LectureUnitInformation {
     public id: number;
+    public lectureId: number;
     public name: string;
-    public releaseDate: string;
-    public type: string;
+    public releaseDate: dayjs.Dayjs;
+    public type: LectureUnitType;
 }
 
 export class CompetencyMetrics {

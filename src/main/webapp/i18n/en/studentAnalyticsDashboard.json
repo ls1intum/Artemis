@@ -5,8 +5,6 @@
                 "title": "Competencies",
                 "noData": "No competencies available for this course.",
                 "nextObjectives": "Next objectives",
-                "nextExercises": "Next exercises",
-                "nextLectureUnits": "Next lecture units",
                 "exercises": "Exercises",
                 "lectures": "Lectures",
                 "progress": "Progress: {{ progress }}%",
