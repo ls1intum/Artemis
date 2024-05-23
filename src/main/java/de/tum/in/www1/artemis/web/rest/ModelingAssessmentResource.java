@@ -137,7 +137,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
             @ApiResponse(responseCode = "200", description = PUT_SUBMIT_ASSESSMENT_200_REASON, content = {
                     @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = Result.class)) }),
             @ApiResponse(responseCode = "403", description = ErrorConstants.REQ_403_REASON), @ApiResponse(responseCode = "404", description = ErrorConstants.REQ_404_REASON) })
-    @PutMapping("/modeling-submissions/{exampleSubmissionId}/example-assessment")
+    @PutMapping("modeling-submissions/{exampleSubmissionId}/example-assessment")
     @EnforceAtLeastTutor
     public ResponseEntity<Result> saveModelingExampleAssessment(@PathVariable long exampleSubmissionId, @RequestBody List<Feedback> feedbacks) {
         log.debug("REST request to save modeling example assessment : {}", exampleSubmissionId);
@@ -158,7 +158,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
             @ApiResponse(responseCode = "200", description = POST_ASSESSMENT_AFTER_COMPLAINT_200_REASON, content = {
                     @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = Result.class)) }),
             @ApiResponse(responseCode = "403", description = ErrorConstants.REQ_403_REASON), @ApiResponse(responseCode = "404", description = ErrorConstants.REQ_404_REASON) })
-    @PutMapping("/modeling-submissions/{submissionId}/assessment-after-complaint")
+    @PutMapping("modeling-submissions/{submissionId}/assessment-after-complaint")
     @EnforceAtLeastTutor
     public ResponseEntity<Result> updateModelingAssessmentAfterComplaint(@PathVariable Long submissionId, @RequestBody AssessmentUpdate assessmentUpdate) {
         log.debug("REST request to update the assessment of submission {} after complaint.", submissionId);
