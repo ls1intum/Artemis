@@ -12,7 +12,7 @@
             <column name="value" type="int"/>
         </createTable>
 
-        <addUniqueConstraint tableName="competency_jol" columnNames="competency_id, user_id" constraintName="competency_id_user_id_competency_jol_constraint" deferrable="true" disabled="true" initiallyDeferred="true" schemaName="public" validate="true"/>
+        <addUniqueConstraint tableName="competency_jol" columnNames="competency_id, user_id" constraintName="competency_id_user_id_competency_jol_constraint"/>
 
         <createTable tableName="jol_competency">
             <column name="competency_id" type="bigint">
@@ -23,7 +23,7 @@
             </column>
         </createTable>
 
-        <addForeignKeyConstraint baseColumnNames="competency_id" baseTableName="jol_competency" constraintName="competency_id_jol_competency_constraint" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="competency" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="competency_jol_id" baseTableName="jol_competency" constraintName="competency_jol_id_jol_competency_constraint" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="competency_jol" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="competency_id" baseTableName="jol_competency" constraintName="competency_id_jol_competency_constraint" referencedColumnNames="id" referencedTableName="competency" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="competency_jol_id" baseTableName="jol_competency" constraintName="competency_jol_id_jol_competency_constraint" referencedColumnNames="id" referencedTableName="competency_jol" validate="true"/>
     </changeSet>
 </databaseChangeLog>
