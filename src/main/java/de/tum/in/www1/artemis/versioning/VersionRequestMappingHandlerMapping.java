@@ -65,10 +65,11 @@ public class VersionRequestMappingHandlerMapping extends RequestMappingHandlerMa
         if (ignoreGlobalMappingAnnotation != null && ignoreGlobalMappingAnnotation.ignorePaths()) {
             return info;
         }
-        var useVersioningAnnotation = method.getAnnotation(UseVersioning.class);
+        var useVersioningMethodAnnotation = method.getAnnotation(UseVersioning.class);
+        var useVersioningTypeAnnotation = method.getDeclaringClass().getAnnotation(UseVersioning.class);
         // We don't handle endpoints that are not explicitly versioned as of now. See the annotation for more information.
         // TODO: Remove this check once all endpoints are versioned
-        if (useVersioningAnnotation == null) {
+        if (useVersioningMethodAnnotation == null && useVersioningTypeAnnotation == null) {
             return nonVersionedApiInfo.combine(info);
         }
         VersionRanges versionRangesAnnotation = AnnotationUtils.findAnnotation(method, VersionRanges.class);

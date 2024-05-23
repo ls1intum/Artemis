@@ -15,7 +15,7 @@ import java.lang.reflect.Method;
  * TODO: Remove this annotation and all occurrences of it once all endpoints are versioned. Also remove section in
  * {@link VersionRequestMappingHandlerMapping#getMappingForMethod(Method, Class)}.
  */
-@Target(ElementType.METHOD)
+@Target({ ElementType.METHOD, ElementType.TYPE })
 @Retention(RetentionPolicy.RUNTIME)
 public @interface UseVersioning {
 }
