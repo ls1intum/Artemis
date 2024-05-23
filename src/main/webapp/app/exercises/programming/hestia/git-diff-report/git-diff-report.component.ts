@@ -125,7 +125,7 @@ export class GitDiffReportComponent implements OnInit {
                 const solutionFileContent = this.solutionFileContentByPath.get(path) ?? '';
                 return { path, entries, templateFileContent, solutionFileContent, diffReady: false };
             });
-        this.nothingToDisplay = Object.keys(this.diffInformationForPaths).length === 0;
+        this.nothingToDisplay = this.diffInformationForPaths.length === 0;
     }
 
     /**
