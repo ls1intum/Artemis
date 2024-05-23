@@ -2,7 +2,7 @@
     <h2 jhiTranslate="artemisApp.standardizedCompetency.manage.import.title"></h2>
     <div class="card mt-3">
         <div class="card-header d-flex align-items-center mw-100 clickable" (click)="toggleCollapse()">
-            <div class="icon-container me-2">
+            <div class="me-2">
                 <fa-icon [icon]="faChevronRight" class="rotate-icon chevron-position" [class.rotated]="!isCollapsed" />
             </div>
             <h5 class="mb-0" jhiTranslate="artemisApp.standardizedCompetency.manage.import.format.title"></h5>
@@ -22,19 +22,26 @@
             jhiTranslate="artemisApp.standardizedCompetency.manage.import.count"
             [translateValues]="{ competencies: importCount.competencies, knowledgeAreas: importCount.knowledgeAreas }"
         ></div>
-        <jhi-knowledge-area-tree [dataSource]="dataSource" [treeControl]="treeControl">
-            <ng-template let-competency="competency" #competencyTemplate>
-                <div class="d-flex align-items-center">
-                    <fa-icon
-                        class="me-2"
-                        [icon]="getIcon(competency.taxonomy)"
-                        [ngbTooltip]="'artemisApp.competency.taxonomies.' + (competency.taxonomy ?? 'none') | artemisTranslate"
-                        [fixedWidth]="true"
-                    />
-                    <h6 class="mb-0">{{ competency.title }}</h6>
+        <div class="d-flex">
+            <jhi-knowledge-area-tree class="d-flex flex-grow-1 h-100 w-50" [dataSource]="dataSource" [treeControl]="treeControl">
+                <ng-template let-competency="competency" let-knowledgeArea="knowledgeArea" #competencyTemplate>
+                    <div class="d-flex align-items-center clickable" (click)="openCompetencyDetails(competency, knowledgeArea.title)">
+                        <fa-icon
+                            class="me-2"
+                            [icon]="getIcon(competency.taxonomy)"
+                            [ngbTooltip]="'artemisApp.competency.taxonomies.' + (competency.taxonomy ?? 'none') | artemisTranslate"
+                            [fixedWidth]="true"
+                        />
+                        <h6 class="mb-0">{{ competency.title }}</h6>
+                    </div>
+                </ng-template>
+            </jhi-knowledge-area-tree>
+            @if (selectedCompetency) {
+                <div style="background-color: var(--overview-light-background-color)" class="card d-flex flex-grow-1 w-100 h-100 p-3 ms-1">
+                    <jhi-standardized-competency-detail [competency]="selectedCompetency" [knowledgeAreaTitle]="knowledgeAreaTitle" (onClose)="closeCompetencyDetails()" />
                 </div>
-            </ng-template>
-        </jhi-knowledge-area-tree>
+            }
+        </div>
     } @else {
         <span jhiTranslate="artemisApp.standardizedCompetency.manage.import.preview.empty"></span>
     }

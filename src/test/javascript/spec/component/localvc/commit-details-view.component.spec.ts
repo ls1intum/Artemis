@@ -6,7 +6,7 @@ import { MockProgrammingExerciseParticipationService } from '../../helpers/mocks
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import dayjs from 'dayjs/esm';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { Observable, of } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { CommitInfo } from 'app/entities/programming-submission.model';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { CommitDetailsViewComponent } from 'app/localvc/commit-details-view/commit-details-view.component';
@@ -18,6 +18,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { GitDiffReportComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { HttpResponse } from '@angular/common/http';
+
 describe('CommitDetailsViewComponent', () => {
     let component: CommitDetailsViewComponent;
     let fixture: ComponentFixture<CommitDetailsViewComponent>;
@@ -103,7 +104,7 @@ describe('CommitDetailsViewComponent', () => {
         }).compileComponents();
     });
 
-    function setupComponent() {
+    function setupComponent(throwErrorWhenRetrievingCommitHistory = false) {
         fixture = TestBed.createComponent(CommitDetailsViewComponent);
         component = fixture.componentInstance;
         activatedRoute = fixture.debugElement.injector.get(ActivatedRoute) as MockActivatedRoute;
@@ -117,9 +118,13 @@ describe('CommitDetailsViewComponent', () => {
 
         const mockExerciseResponse: HttpResponse<ProgrammingExercise> = new HttpResponse({ body: mockExerciseWithTemplateAndSolution });
         jest.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipation').mockReturnValue(of(mockExerciseResponse));
-
-        jest.spyOn(programmingExerciseParticipationService, 'retrieveCommitHistoryForParticipation').mockReturnValue(of(mockCommits));
-        jest.spyOn(programmingExerciseParticipationService, 'retrieveCommitHistoryForTemplateSolutionOrTests').mockReturnValue(of(mockTemplateCommits));
+        const errorObservable = throwError(() => new Error('Error'));
+        jest.spyOn(programmingExerciseParticipationService, 'retrieveCommitHistoryForParticipation').mockReturnValue(
+            throwErrorWhenRetrievingCommitHistory ? errorObservable : of(mockCommits),
+        );
+        jest.spyOn(programmingExerciseParticipationService, 'retrieveCommitHistoryForTemplateSolutionOrTests').mockReturnValue(
+            throwErrorWhenRetrievingCommitHistory ? errorObservable : of(mockTemplateCommits),
+        );
         jest.spyOn(programmingExerciseService, 'getDiffReportForCommits').mockReturnValue(of(mockDiffReportForCommits));
 
         fixture.detectChanges();
@@ -128,42 +133,6 @@ describe('CommitDetailsViewComponent', () => {
     it('should create', () => {
         setupComponent();
         expect(component).toBeTruthy();
-    });
-
-    it('should load student participation', () => {
-        setupComponent();
-        activatedRoute.setParameters({ participationId: 2, commitHash: 'commit2', exerciseId: 1 });
-
-        // Trigger ngOnInit
-        component.ngOnInit();
-
-        // Expectations
-        expect(component.participation).toEqual(mockParticipation);
-
-        // Trigger ngOnDestroy
-        component.ngOnDestroy();
-
-        // Expect subscription to be unsubscribed
-        expect(component.paramSub?.closed).toBeTrue();
-    });
-
-    it('should load template participation', () => {
-        setupComponent();
-        activatedRoute.setParameters({ participationId: 2, commitHash: 'templateCommit2', exerciseId: 1, repositoryType: 'TEMPLATE' });
-
-        // Trigger ngOnInit
-        component.ngOnInit();
-
-        // Expectations
-        expect(component.participation).toEqual(mockExerciseWithTemplateAndSolution.templateParticipation);
-        expect(component.exercise).toEqual(mockExerciseWithTemplateAndSolution);
-        expect(component.participationId).toEqual(mockExerciseWithTemplateAndSolution.templateParticipation?.id);
-
-        // Trigger ngOnDestroy
-        component.ngOnDestroy();
-
-        // Expect subscription to be unsubscribed
-        expect(component.paramSub?.closed).toBeTrue();
     });
 
     it('should handle commits for student participation', () => {
@@ -182,7 +151,6 @@ describe('CommitDetailsViewComponent', () => {
 
         // Expect subscription to be unsubscribed
         expect(component.paramSub?.closed).toBeTrue();
-        expect(component.commitsInfoSubscription?.closed).toBeTrue();
     });
 
     it('should handle commits for template participation', () => {
@@ -201,7 +169,6 @@ describe('CommitDetailsViewComponent', () => {
 
         // Expect subscription to be unsubscribed
         expect(component.paramSub?.closed).toBeTrue();
-        expect(component.commitsInfoSubscription?.closed).toBeTrue();
     });
 
     it('should handle new report for commit with template', () => {
@@ -218,7 +185,6 @@ describe('CommitDetailsViewComponent', () => {
 
         // Expect subscription to be unsubscribed
         expect(component.paramSub?.closed).toBeTrue();
-        expect(component.commitsInfoSubscription?.closed).toBeTrue();
         expect(component.repoFilesSubscription?.closed).toBeTrue();
     });
 
@@ -239,7 +205,6 @@ describe('CommitDetailsViewComponent', () => {
 
         // Expect subscription to be unsubscribed
         expect(component.paramSub?.closed).toBeTrue();
-        expect(component.commitsInfoSubscription?.closed).toBeTrue();
         expect(component.repoFilesSubscription?.closed).toBeTrue();
     });
 
@@ -258,8 +223,24 @@ describe('CommitDetailsViewComponent', () => {
 
         // Expect subscription to be unsubscribed
         expect(component.paramSub?.closed).toBeTrue();
-        expect(component.commitsInfoSubscription?.closed).toBeTrue();
         expect(component.repoFilesSubscription?.closed).toBeTrue();
+    });
+
+    it('should handle error when retrieving commit info', () => {
+        setupComponent(true);
+        activatedRoute.setParameters({ participationId: 2, commitHash: 'commit2', exerciseId: 1 });
+
+        // Trigger ngOnInit
+        component.ngOnInit();
+
+        expect(component.commits).toEqual([]);
+        expect(component.errorWhileFetching).toBeTrue();
+
+        // Trigger ngOnDestroy
+        component.ngOnDestroy();
+
+        // Expect subscription to be unsubscribed
+        expect(component.paramSub?.closed).toBeTrue();
     });
 
     it('should fetch repository files', () => {
@@ -278,7 +259,6 @@ describe('CommitDetailsViewComponent', () => {
 
         // Expect subscription to be unsubscribed
         expect(component.paramSub?.closed).toBeTrue();
-        expect(component.commitsInfoSubscription?.closed).toBeTrue();
         expect(component.repoFilesSubscription?.closed).toBeTrue();
         expect(component.participationRepoFilesAtLeftCommitSubscription?.closed).toBeTrue();
         expect(component.participationRepoFilesAtRightCommitSubscription?.closed).toBeTrue();
@@ -300,14 +280,13 @@ describe('CommitDetailsViewComponent', () => {
 
         expect(component.leftCommitFileContentByPath).toEqual(new Map<string, string>());
         expect(component.rightCommitFileContentByPath).toEqual(new Map<string, string>());
-        expect(component.errorWhileFetchingRepos).toBeTrue();
+        expect(component.errorWhileFetching).toBeTrue();
 
         // Trigger ngOnDestroy
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
         expect(component.paramSub?.closed).toBeTrue();
-        expect(component.commitsInfoSubscription?.closed).toBeTrue();
         expect(component.repoFilesSubscription?.closed).toBeTrue();
         expect(component.participationRepoFilesAtLeftCommitSubscription?.closed).toBeTrue();
         expect(component.participationRepoFilesAtRightCommitSubscription?.closed).toBeTrue();
@@ -339,14 +318,13 @@ describe('CommitDetailsViewComponent', () => {
 
         expect(component.leftCommitFileContentByPath).toEqual(mockRepositoryFiles);
         expect(component.rightCommitFileContentByPath).toEqual(new Map<string, string>());
-        expect(component.errorWhileFetchingRepos).toBeTrue();
+        expect(component.errorWhileFetching).toBeTrue();
 
         // Trigger ngOnDestroy
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
         expect(component.paramSub?.closed).toBeTrue();
-        expect(component.commitsInfoSubscription?.closed).toBeTrue();
         expect(component.repoFilesSubscription?.closed).toBeTrue();
         expect(component.participationRepoFilesAtLeftCommitSubscription?.closed).toBeTrue();
         expect(component.participationRepoFilesAtRightCommitSubscription?.closed).toBeTrue();

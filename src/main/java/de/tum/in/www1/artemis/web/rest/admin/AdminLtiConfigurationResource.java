@@ -144,7 +144,7 @@ public class AdminLtiConfigurationResource {
      * @param registrationToken   Optional token for the registration process.
      * @return a {@link ResponseEntity} with status 200 (OK) if the dynamic registration process was successful.
      */
-    @PostMapping("/lti13/dynamic-registration")
+    @PostMapping("lti13/dynamic-registration")
     @EnforceAdmin
     public ResponseEntity<Void> lti13DynamicRegistration(@RequestParam(name = "openid_configuration") String openIdConfiguration,
             @RequestParam(name = "registration_token", required = false) String registrationToken) {

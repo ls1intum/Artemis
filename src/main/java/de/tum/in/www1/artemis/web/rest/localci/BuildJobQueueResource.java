@@ -157,7 +157,7 @@ public class BuildJobQueueResource {
      * @param search   the search criteria
      * @return the page of finished build jobs
      */
-    @GetMapping("/courses/{courseId}/finished-jobs")
+    @GetMapping("courses/{courseId}/finished-jobs")
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<List<FinishedBuildJobDTO>> getFinishedBuildJobsForCourse(@PathVariable long courseId, PageableSearchDTO<String> search) {
         log.debug("REST request to get the finished build jobs for course {}", courseId);

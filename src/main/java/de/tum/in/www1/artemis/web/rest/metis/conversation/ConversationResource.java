@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
@@ -46,6 +47,7 @@ import tech.jhipster.web.util.PaginationUtil;
 
 @Profile(PROFILE_CORE)
 @RestController
+@RequestMapping("courses/")
 public class ConversationResource extends ConversationManagementResource {
 
     private static final Logger log = LoggerFactory.getLogger(ConversationResource.class);
@@ -133,7 +135,7 @@ public class ConversationResource extends ConversationManagementResource {
      * @param isMuted        the new muted status
      * @return ResponseEntity with status 200 (Ok)
      */
-    @PostMapping("courses/{courseId}/conversations/{conversationId}/muted")
+    @PostMapping("{courseId}/conversations/{conversationId}/muted")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> updateIsMuted(@PathVariable Long courseId, @PathVariable Long conversationId, @RequestParam boolean isMuted) {
         checkMessagingOrCommunicationEnabledElseThrow(courseId);

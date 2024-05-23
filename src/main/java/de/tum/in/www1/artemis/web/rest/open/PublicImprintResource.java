@@ -11,10 +11,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.in.www1.artemis.domain.Imprint;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
 import de.tum.in.www1.artemis.service.LegalDocumentService;
+import de.tum.in.www1.artemis.web.rest.dto.ImprintDTO;
 
 /**
  * REST controller for retrieving the imprint.
@@ -39,7 +39,7 @@ public class PublicImprintResource {
      */
     @GetMapping("imprint")
     @EnforceNothing
-    public ResponseEntity<Imprint> getImprint(@RequestParam("language") String language) {
+    public ResponseEntity<ImprintDTO> getImprint(@RequestParam("language") String language) {
         if (!Language.isValidShortName(language)) {
             throw new BadRequestException("Language not supported");
         }

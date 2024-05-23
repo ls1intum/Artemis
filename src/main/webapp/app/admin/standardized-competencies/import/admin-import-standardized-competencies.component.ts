@@ -1,6 +1,12 @@
 import { Component } from '@angular/core';
 import { faBan, faChevronRight, faFileImport, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
-import { KnowledgeAreaDTO, KnowledgeAreaForTree, KnowledgeAreasForImportDTO, convertToKnowledgeAreaForTree } from 'app/entities/competency/standardized-competency.model';
+import {
+    KnowledgeAreaDTO,
+    KnowledgeAreaForTree,
+    KnowledgeAreasForImportDTO,
+    StandardizedCompetencyForTree,
+    convertToKnowledgeAreaForTree,
+} from 'app/entities/competency/standardized-competency.model';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { AlertService } from 'app/core/util/alert.service';
 import { AdminStandardizedCompetencyService } from 'app/admin/standardized-competencies/admin-standardized-competency.service';
@@ -20,11 +26,13 @@ interface ImportCount {
 @Component({
     selector: 'jhi-admin-import-standardized-competencies',
     templateUrl: './admin-import-standardized-competencies.component.html',
-    styleUrls: ['admin-import-standardized-competencies.component.scss'],
 })
 export class AdminImportStandardizedCompetenciesComponent {
     protected isLoading = false;
     protected isCollapsed = false;
+    protected selectedCompetency?: StandardizedCompetencyForTree;
+    //the title of the knowledge area belonging to the selected competency
+    protected knowledgeAreaTitle = '';
     protected importData?: KnowledgeAreasForImportDTO;
     protected importCount?: ImportCount;
     protected dataSource = new MatTreeNestedDataSource<KnowledgeAreaForTree>();
@@ -99,6 +107,16 @@ export class AdminImportStandardizedCompetenciesComponent {
                 this.fileReader.onload = () => this.setImportDataAndCount();
             }
         }
+    }
+
+    protected openCompetencyDetails(competency: StandardizedCompetencyForTree, knowledgeAreaTitle: string) {
+        this.knowledgeAreaTitle = knowledgeAreaTitle;
+        this.selectedCompetency = competency;
+    }
+
+    protected closeCompetencyDetails() {
+        this.knowledgeAreaTitle = '';
+        this.selectedCompetency = undefined;
     }
 
     importCompetencies() {

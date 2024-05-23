@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.exercise.modeling;
 
-import static com.google.gson.JsonParser.parseString;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
@@ -14,7 +13,9 @@ import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.google.gson.JsonObject;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.course.CourseFactory;
 import de.tum.in.www1.artemis.domain.Course;
@@ -219,7 +220,7 @@ public class ModelingExerciseUtilService {
         exerciseRepo.save(syntaxTreeExercise);
         exerciseRepo.save(flowchartExercise);
         exerciseRepo.save(finishedExercise);
-        Course storedCourse = courseRepo.findByIdWithExercisesAndLecturesElseThrow(course.getId());
+        Course storedCourse = courseRepo.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(course.getId());
         Set<Exercise> exercises = storedCourse.getExercises();
         assertThat(exercises).as("eleven exercises got stored").hasSize(11);
         assertThat(exercises).as("Contains all exercises").containsExactlyInAnyOrder(course.getExercises().toArray(new Exercise[] {}));
@@ -340,7 +341,7 @@ public class ModelingExerciseUtilService {
      * @param path     The path to the file that contains the submission's model
      * @param login    The login of the user the submission belongs to
      * @return The created ModelingSubmission
-     * @throws Exception If the file can't be read
+     * @throws IOException If the file can't be read
      */
     public ModelingSubmission addModelingSubmissionFromResources(ModelingExercise exercise, String path, String login) throws IOException {
         String model = TestResourceUtils.loadFileFromResources(path);
@@ -356,7 +357,7 @@ public class ModelingExerciseUtilService {
      * @param submissionId The id of the ModelingSubmission
      * @param sentModel    The model that should have been stored
      */
-    public void checkModelingSubmissionCorrectlyStored(Long submissionId, String sentModel) {
+    public void checkModelingSubmissionCorrectlyStored(Long submissionId, String sentModel) throws JsonProcessingException {
         Optional<ModelingSubmission> modelingSubmission = modelingSubmissionRepo.findById(submissionId);
         assertThat(modelingSubmission).as("submission correctly stored").isPresent();
         checkModelsAreEqual(modelingSubmission.orElseThrow().getModel(), sentModel);
@@ -368,10 +369,11 @@ public class ModelingExerciseUtilService {
      * @param storedModel The model that has been stored
      * @param sentModel   The model that should have been stored
      */
-    public void checkModelsAreEqual(String storedModel, String sentModel) {
-        JsonObject sentModelObject = parseString(sentModel).getAsJsonObject();
-        JsonObject storedModelObject = parseString(storedModel).getAsJsonObject();
-        assertThat(storedModelObject).as("model correctly stored").isEqualTo(sentModelObject);
+    public void checkModelsAreEqual(String storedModel, String sentModel) throws JsonProcessingException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode sentModelNode = objectMapper.readTree(sentModel);
+        JsonNode storedModelNode = objectMapper.readTree(storedModel);
+        assertThat(storedModelNode).as("model correctly stored").isEqualTo(sentModelNode);
     }
 
     /**

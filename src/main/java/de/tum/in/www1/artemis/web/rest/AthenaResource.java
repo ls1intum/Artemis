@@ -104,10 +104,10 @@ public class AthenaResource {
     private interface FeedbackProvider<ExerciseType, SubmissionType, OutputType> {
 
         /**
-         * Method to apply the feedback provider. Examples: AthenaFeedbackSuggestionsService::getTextFeedbackSuggestions,
+         * Method to apply the (graded) feedback provider. Examples: AthenaFeedbackSuggestionsService::getTextFeedbackSuggestions,
          * AthenaFeedbackSuggestionsService::getProgrammingFeedbackSuggestions
          */
-        List<OutputType> apply(ExerciseType exercise, SubmissionType submission) throws NetworkingException;
+        List<OutputType> apply(ExerciseType exercise, SubmissionType submission, Boolean isGraded) throws NetworkingException;
     }
 
     private <ExerciseT extends Exercise, SubmissionT extends Submission, OutputT> ResponseEntity<List<OutputT>> getFeedbackSuggestions(long exerciseId, long submissionId,
@@ -126,7 +126,7 @@ public class AthenaResource {
         final var submission = submissionFetcher.apply(submissionId);
 
         try {
-            return ResponseEntity.ok(feedbackProvider.apply(exercise, submission));
+            return ResponseEntity.ok(feedbackProvider.apply(exercise, submission, true));
         }
         catch (NetworkingException e) {
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();

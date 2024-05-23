@@ -1,4 +1,4 @@
-name: "🐛 Bug report"
+name: "🐛 Bug Report"
 description: Something on Artemis is not working as expected? Create a report to help us improve.
 labels: [bug]
 body:
@@ -8,7 +8,7 @@ body:
 - type: textarea
   attributes:
     label: Describe the bug
-    description: A clear and concise description of what the bug is. 
+    description: A clear and concise description of what the bug is.
     placeholder: What happened? Also tell us, what did you expect to happen?
   validations:
       required: true

@@ -262,7 +262,7 @@ public class CompetencyResource {
      * @return the ResponseEntity with status 201 (Created) and body the created competencies
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("/courses/{courseId}/competencies/bulk")
+    @PostMapping("courses/{courseId}/competencies/bulk")
     @EnforceAtLeastInstructor
     public ResponseEntity<List<Competency>> createCompetencies(@PathVariable Long courseId, @RequestBody List<Competency> competencies) throws URISyntaxException {
         log.debug("REST request to create Competencies : {}", competencies);
@@ -314,7 +314,7 @@ public class CompetencyResource {
      * @return the ResponseEntity with status 201 (Created) and with body containing the imported competencies
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("/courses/{courseId}/competencies/import/bulk")
+    @PostMapping("courses/{courseId}/competencies/import/bulk")
     @EnforceAtLeastEditor
     public ResponseEntity<List<CompetencyWithTailRelationDTO>> importCompetencies(@PathVariable long courseId, @RequestBody List<Competency> competenciesToImport,
             @RequestParam(defaultValue = "false") boolean importRelations) throws URISyntaxException {
@@ -347,7 +347,7 @@ public class CompetencyResource {
      * @return the ResponseEntity with status 201 (Created) and with body containing the imported competencies (and relations)
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("/courses/{courseId}/competencies/import-all/{sourceCourseId}")
+    @PostMapping("courses/{courseId}/competencies/import-all/{sourceCourseId}")
     @EnforceAtLeastInstructor
     public ResponseEntity<List<CompetencyWithTailRelationDTO>> importAllCompetenciesFromCourse(@PathVariable long courseId, @PathVariable long sourceCourseId,
             @RequestParam(defaultValue = "false") boolean importRelations) throws URISyntaxException {
@@ -383,7 +383,7 @@ public class CompetencyResource {
      * @return the ResponseEntity with status 201 (Created) and with body containing the imported competencies
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("/courses/{courseId}/competencies/import-standardized")
+    @PostMapping("courses/{courseId}/competencies/import-standardized")
     @EnforceAtLeastEditorInCourse
     public ResponseEntity<List<CompetencyImportResponseDTO>> importStandardizedCompetencies(@PathVariable long courseId, @RequestBody List<Long> competencyIdsToImport)
             throws URISyntaxException {
@@ -610,7 +610,7 @@ public class CompetencyResource {
      * @param courseDescription the text description of the course
      * @return the ResponseEntity with status 200 (OK) and body the genrated competencies
      */
-    @PostMapping("/courses/{courseId}/competencies/generate-from-description")
+    @PostMapping("courses/{courseId}/competencies/generate-from-description")
     @EnforceAtLeastEditor
     public ResponseEntity<List<Competency>> generateCompetenciesFromCourseDescription(@PathVariable Long courseId, @RequestBody String courseDescription) {
         var irisService = irisCompetencyGenerationSessionService.orElseThrow();

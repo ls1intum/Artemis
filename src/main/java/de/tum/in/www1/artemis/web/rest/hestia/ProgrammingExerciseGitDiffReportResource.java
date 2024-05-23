@@ -18,9 +18,9 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffReport;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
@@ -30,9 +30,9 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ParticipationAuthorizationCheckService;
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseGitDiffReportService;
 import de.tum.in.www1.artemis.service.programming.CommitHistoryService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
+import de.tum.in.www1.artemis.service.programming.RepositoryService;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGitDiffReportDTO;
-import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
  * REST controller for managing ProgrammingExerciseGitDiffReports and its entries.
@@ -47,7 +47,7 @@ public class ProgrammingExerciseGitDiffReportResource {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+    private final ParticipationRepository participationRepository;
 
     private final ProgrammingExerciseGitDiffReportService gitDiffReportService;
 
@@ -55,25 +55,23 @@ public class ProgrammingExerciseGitDiffReportResource {
 
     private final ParticipationAuthorizationCheckService participationAuthCheckService;
 
-    private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
-
     private final CommitHistoryService commitHistoryService;
+
+    private final RepositoryService repositoryService;
 
     private static final String ENTITY_NAME = "programmingExerciseGitDiffReportEntry";
 
     public ProgrammingExerciseGitDiffReportResource(AuthorizationCheckService authCheckService, ProgrammingExerciseRepository programmingExerciseRepository,
-            ProgrammingExerciseGitDiffReportService gitDiffReportService, ProgrammingSubmissionRepository submissionRepository,
-            ParticipationAuthorizationCheckService participationAuthCheckService,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, CommitHistoryService commitHistoryService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
+            ParticipationRepository participationRepository, ProgrammingExerciseGitDiffReportService gitDiffReportService, ProgrammingSubmissionRepository submissionRepository,
+            ParticipationAuthorizationCheckService participationAuthCheckService, CommitHistoryService commitHistoryService, RepositoryService repositoryService) {
         this.authCheckService = authCheckService;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.participationRepository = participationRepository;
         this.gitDiffReportService = gitDiffReportService;
         this.submissionRepository = submissionRepository;
         this.participationAuthCheckService = participationAuthCheckService;
-        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.commitHistoryService = commitHistoryService;
-        this.programmingExerciseParticipationService = programmingExerciseParticipationService;
+        this.repositoryService = repositoryService;
     }
 
     /**
@@ -166,47 +164,34 @@ public class ProgrammingExerciseGitDiffReportResource {
      * @throws GitAPIException if errors occur while accessing the git repository
      * @throws IOException     if errors occur while accessing the file system
      */
-    @GetMapping("programming-exercises/{exerciseId}/participation/{participationId}/commits/{commitHash1}/diff-report/{commitHash2}")
+    @GetMapping("programming-exercises/{exerciseId}/commits/{commitHash1}/diff-report/{commitHash2}")
     @EnforceAtLeastStudent
-    public ResponseEntity<ProgrammingExerciseGitDiffReportDTO> getGitDiffReportForCommits(@PathVariable long exerciseId, @PathVariable long participationId,
-            @PathVariable String commitHash1, @PathVariable String commitHash2, @RequestParam(defaultValue = "USER") RepositoryType repositoryType)
+    public ResponseEntity<ProgrammingExerciseGitDiffReportDTO> getGitDiffReportForCommits(@PathVariable long exerciseId, @PathVariable String commitHash1,
+            @PathVariable String commitHash2, @RequestParam(required = false) Long participationId, @RequestParam(required = false) RepositoryType repositoryType)
             throws GitAPIException, IOException {
-        log.debug("REST request to get a ProgrammingExerciseGitDiffReport for two commits for commit {} and commit {} of participation {}", commitHash1, commitHash2,
-                participationId);
+        log.debug("REST request to get a diff report for two commits for commit {} and commit {} of participation {}", commitHash1, commitHash2, participationId);
 
-        VcsRepositoryUri repositoryUri;
-        ProgrammingExerciseParticipation participation;
-
-        if (repositoryType.equals(RepositoryType.USER)) {
-            participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
-            if (!participation.getExercise().getId().equals(exerciseId)) {
-                throw new ConflictException("A git diff report entry can only be retrieved if the participation's exercise id matches with the exercise id", ENTITY_NAME,
-                        "exerciseIdsMismatch");
-            }
-            repositoryUri = participation.getVcsRepositoryUri();
+        VcsRepositoryUri repositoryUri = null;
+        if (participationId != null) {
+            Participation participation = participationRepository.findByIdElseThrow(participationId);
+            participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+            var programmingExerciseParticipation = repositoryService.getAsProgrammingExerciseParticipationOfExerciseElseThrow(exerciseId, participation, ENTITY_NAME);
+            repositoryUri = programmingExerciseParticipation.getVcsRepositoryUri();
+        }
+        else if (repositoryType != null) {
+            ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(exerciseId);
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
+            repositoryUri = switch (repositoryType) {
+                case TEMPLATE -> programmingExercise.getTemplateParticipation().getVcsRepositoryUri();
+                case SOLUTION -> programmingExercise.getSolutionParticipation().getVcsRepositoryUri();
+                case TESTS -> programmingExercise.getVcsTestRepositoryUri();
+                default -> throw new BadRequestAlertException("Invalid repository type", ENTITY_NAME, "invalidRepositoryType");
+            };
         }
         else {
-            if (repositoryType.equals(RepositoryType.TEMPLATE)) {
-                participation = this.programmingExerciseParticipationService.findTemplateParticipationByProgrammingExerciseId(exerciseId);
-            }
-            else {
-                // if the repository is TESTS we also want to get the solution participation check to see if the user
-                // has access to the participation, as the TESTS repository doesn't have a participation
-                participation = this.programmingExerciseParticipationService.findSolutionParticipationByProgrammingExerciseId(exerciseId);
-            }
-
-            if (repositoryType.equals(RepositoryType.TESTS)) {
-                repositoryUri = ((ProgrammingExercise) participation.getExercise()).getVcsTestRepositoryUri();
-            }
-            else {
-                repositoryUri = participation.getVcsRepositoryUri();
-            }
+            throw new BadRequestAlertException("Either participationId or repositoryType must be provided", ENTITY_NAME, "missingParameters");
         }
-
-        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
-
         var report = commitHistoryService.generateReportForCommits(repositoryUri, commitHash1, commitHash2);
         return ResponseEntity.ok(new ProgrammingExerciseGitDiffReportDTO(report));
     }
-
 }

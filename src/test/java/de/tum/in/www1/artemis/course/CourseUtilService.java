@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.participation.ParticipationFactory.generate
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -13,6 +14,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -81,6 +83,7 @@ import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.repository.TutorParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.TestResourceUtils;
@@ -785,7 +788,7 @@ public class CourseUtilService {
      * @return The generated course
      */
     public Course addCourseWithExercisesAndSubmissions(String userPrefix, String suffix, int numberOfExercises, int numberOfSubmissionPerExercise, int numberOfAssessments,
-            int numberOfComplaints, boolean typeComplaint, int numberComplaintResponses, String validModel) {
+            int numberOfComplaints, boolean typeComplaint, int numberComplaintResponses, String validModel) throws IOException {
         return addCourseWithExercisesAndSubmissions("short", userPrefix, suffix, numberOfExercises, numberOfSubmissionPerExercise, numberOfAssessments, numberOfComplaints,
                 typeComplaint, numberComplaintResponses, validModel, true);
     }
@@ -811,7 +814,8 @@ public class CourseUtilService {
      * @return The generated course.
      */
     public Course addCourseWithExercisesAndSubmissionsWithAssessmentDueDatesInTheFuture(String shortName, String userPrefix, String suffix, int numberOfExercises,
-            int numberOfSubmissionPerExercise, int numberOfAssessments, int numberOfComplaints, boolean typeComplaint, int numberComplaintResponses, String validModel) {
+            int numberOfSubmissionPerExercise, int numberOfAssessments, int numberOfComplaints, boolean typeComplaint, int numberComplaintResponses, String validModel)
+            throws IOException {
         return addCourseWithExercisesAndSubmissions(shortName, userPrefix, suffix, numberOfExercises, numberOfSubmissionPerExercise, numberOfAssessments, numberOfComplaints,
                 typeComplaint, numberComplaintResponses, validModel, false);
     }
@@ -838,7 +842,8 @@ public class CourseUtilService {
      * @return The generated course.
      */
     public Course addCourseWithExercisesAndSubmissions(String courseShortName, String userPrefix, String suffix, int numberOfExercises, int numberOfSubmissionPerExercise,
-            int numberOfAssessments, int numberOfComplaints, boolean typeComplaint, int numberComplaintResponses, String validModel, boolean assessmentDueDateInThePast) {
+            int numberOfAssessments, int numberOfComplaints, boolean typeComplaint, int numberComplaintResponses, String validModel, boolean assessmentDueDateInThePast)
+            throws IOException {
         Course course = CourseFactory.generateCourse(null, courseShortName, pastTimestamp, futureFutureTimestamp, new HashSet<>(), userPrefix + "student" + suffix,
                 userPrefix + "tutor" + suffix, userPrefix + "editor" + suffix, userPrefix + "instructor" + suffix);
         ZonedDateTime assessmentDueDate;
@@ -852,15 +857,17 @@ public class CourseUtilService {
 
         }
         var tutors = userRepo.getTutors(course).stream().sorted(Comparator.comparing(User::getId)).toList();
+        course = courseRepo.save(course);
+        course.setExercises(new HashSet<>()); // avoid lazy init issue
         for (int i = 0; i < numberOfExercises; i++) {
             var currentUser = tutors.get(i % 4);
 
             if ((i % 3) == 0) {
                 ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(releaseDate, dueDate, assessmentDueDate, DiagramType.ClassDiagram, course);
                 modelingExercise.setTitle("Modeling" + i);
+                modelingExercise.setCourse(course);
+                modelingExercise = exerciseRepo.save(modelingExercise);
                 course.addExercises(modelingExercise);
-                course = courseRepo.save(course);
-                exerciseRepo.save(modelingExercise);
                 for (int j = 1; j <= numberOfSubmissionPerExercise; j++) {
                     StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, userPrefix + "student" + j);
                     ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(validModel, true);
@@ -881,9 +888,9 @@ public class CourseUtilService {
             else if ((i % 3) == 1) {
                 TextExercise textExercise = TextExerciseFactory.generateTextExercise(releaseDate, dueDate, assessmentDueDate, course);
                 textExercise.setTitle("Text" + i);
+                textExercise.setCourse(course);
+                textExercise = exerciseRepo.save(textExercise);
                 course.addExercises(textExercise);
-                course = courseRepo.save(course);
-                exerciseRepo.save(textExercise);
                 for (int j = 1; j <= numberOfSubmissionPerExercise; j++) {
                     TextSubmission submission = ParticipationFactory.generateTextSubmission("submissionText", Language.ENGLISH, true);
                     submission = textExerciseUtilService.saveTextSubmission(textExercise, submission, userPrefix + "student" + j);
@@ -899,12 +906,16 @@ public class CourseUtilService {
             else { // i.e. (i % 3) == 2
                 FileUploadExercise fileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(releaseDate, dueDate, assessmentDueDate, "png,pdf", course);
                 fileUploadExercise.setTitle("FileUpload" + i);
+                fileUploadExercise.setCourse(course);
+                fileUploadExercise = exerciseRepo.save(fileUploadExercise);
                 course.addExercises(fileUploadExercise);
-                course = courseRepo.save(course);
-                exerciseRepo.save(fileUploadExercise);
                 for (int j = 1; j <= numberOfSubmissionPerExercise; j++) {
-                    FileUploadSubmission submission = ParticipationFactory.generateFileUploadSubmissionWithFile(true, "path/to/file.pdf");
-                    fileUploadExerciseUtilService.saveFileUploadSubmission(fileUploadExercise, submission, userPrefix + "student" + j);
+                    FileUploadSubmission submission = ParticipationFactory.generateFileUploadSubmissionWithFile(true, null);
+                    var savedSubmission = fileUploadExerciseUtilService.saveFileUploadSubmission(fileUploadExercise, submission, userPrefix + "student" + j);
+                    var filePath = FileUploadSubmission.buildFilePath(fileUploadExercise.getId(), savedSubmission.getId()).resolve("file.pdf");
+                    FileUtils.write(filePath.toFile(), "test content", Charset.defaultCharset());
+                    savedSubmission.setFilePath(FilePathService.publicPathForActualPath(filePath, submission.getId()).toString());
+                    fileUploadSubmissionRepo.save(savedSubmission);
                     if (numberOfAssessments >= j) {
                         Result result = participationUtilService.generateResultWithScore(submission, currentUser, 3.0);
                         participationUtilService.saveResultInParticipation(submission, result);
@@ -914,7 +925,6 @@ public class CourseUtilService {
                 }
             }
         }
-        course = courseRepo.save(course);
         return course;
     }
 

@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
@@ -31,6 +32,7 @@ import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.OneToOneChatDTO;
 
 @Profile(PROFILE_CORE)
 @RestController
+@RequestMapping("courses/")
 public class OneToOneChatResource extends ConversationManagementResource {
 
     private static final Logger log = LoggerFactory.getLogger(OneToOneChatResource.class);

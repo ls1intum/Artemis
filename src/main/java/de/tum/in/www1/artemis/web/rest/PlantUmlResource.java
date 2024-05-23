@@ -20,10 +20,6 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.PlantUmlService;
 
-/**
- * Created by Josias Montag on 14.12.16.
- */
-
 @Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("plantuml/")
@@ -53,9 +49,7 @@ public class PlantUmlResource {
         final var png = plantUmlService.generatePng(plantuml, useDarkTheme);
         final var responseHeaders = new HttpHeaders();
         responseHeaders.setContentType(MediaType.IMAGE_PNG);
-        if (log.isInfoEnabled()) {
-            log.info("PlantUml.generatePng took {}", formatDurationFrom(start));
-        }
+        log.debug("PlantUml.generatePng took {}", formatDurationFrom(start));
         return new ResponseEntity<>(png, responseHeaders, HttpStatus.OK);
     }
 
@@ -73,9 +67,7 @@ public class PlantUmlResource {
             throws IOException {
         long start = System.nanoTime();
         final var svg = plantUmlService.generateSvg(plantuml, useDarkTheme);
-        if (log.isInfoEnabled()) {
-            log.info("PlantUml.generateSvg took {}", formatDurationFrom(start));
-        }
+        log.debug("PlantUml.generateSvg took {}", formatDurationFrom(start));
         return new ResponseEntity<>(svg, HttpStatus.OK);
     }
 }

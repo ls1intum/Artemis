@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
@@ -37,6 +38,7 @@ import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 
 @Profile(PROFILE_CORE)
 @RestController
+@RequestMapping("courses/")
 public class GroupChatResource extends ConversationManagementResource {
 
     private static final Logger log = LoggerFactory.getLogger(GroupChatResource.class);

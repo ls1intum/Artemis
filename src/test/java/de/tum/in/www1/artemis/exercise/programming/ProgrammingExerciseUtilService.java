@@ -371,7 +371,7 @@ public class ProgrammingExerciseUtilService {
         var course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
         addProgrammingExerciseToCourse(course, enableStaticCodeAnalysis, enableTestwiseCoverageAnalysis, programmingLanguage, title, shortName, null);
-        return courseRepo.findByIdWithExercisesAndLecturesElseThrow(course.getId());
+        return courseRepo.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(course.getId());
     }
 
     /**
@@ -484,7 +484,7 @@ public class ProgrammingExerciseUtilService {
         programmingExercise = addSolutionParticipationForProgrammingExercise(programmingExercise);
         addTemplateParticipationForProgrammingExercise(programmingExercise);
 
-        return courseRepo.findByIdWithExercisesAndLecturesElseThrow(course.getId());
+        return courseRepo.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(course.getId());
     }
 
     /**
@@ -558,7 +558,7 @@ public class ProgrammingExerciseUtilService {
         Course course = addCourseWithOneProgrammingExercise();
         ProgrammingExercise programmingExercise = exerciseUtilService.findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
         addTestCasesToProgrammingExercise(programmingExercise);
-        return courseRepo.findByIdWithExercisesAndLecturesElseThrow(course.getId());
+        return courseRepo.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(course.getId());
     }
 
     /**
@@ -690,8 +690,9 @@ public class ProgrammingExerciseUtilService {
      * @param exercise   The exercise for which to create the submission/participation/result combination.
      * @param submission The submission to use for adding to the exercise/participation/result.
      * @param login      The login of the user used to access or create an exercise participation.
+     * @return the newly created result
      */
-    public void addProgrammingSubmissionWithResult(ProgrammingExercise exercise, ProgrammingSubmission submission, String login) {
+    public Result addProgrammingSubmissionWithResult(ProgrammingExercise exercise, ProgrammingSubmission submission, String login) {
         StudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login);
         submission = programmingSubmissionRepo.save(submission);
         Result result = resultRepo.save(new Result().participation(participation));
@@ -703,6 +704,30 @@ public class ProgrammingExerciseUtilService {
         result = resultRepo.save(result);
         participation.addResult(result);
         studentParticipationRepo.save(participation);
+        return result;
+    }
+
+    /**
+     * Adds a template submission with a result to the given programming exercise.
+     * The method will make sure that all necessary entities are connected.
+     *
+     * @param exerciseId The id of the programming exercise to which the submission should be added.
+     * @return the newly created result
+     */
+    public Result addTemplateSubmissionWithResult(long exerciseId) {
+        var templateParticipation = templateProgrammingExerciseParticipationRepo.findWithEagerResultsAndSubmissionsByProgrammingExerciseIdElseThrow(exerciseId);
+        ProgrammingSubmission submission = new ProgrammingSubmission();
+        submission = submissionRepository.save(submission);
+        Result result = resultRepo.save(new Result().participation(templateParticipation));
+        templateParticipation.addSubmission(submission);
+        submission.setParticipation(templateParticipation);
+        submission.addResult(result);
+        submission = submissionRepository.save(submission);
+        result.setSubmission(submission);
+        result = resultRepo.save(result);
+        templateParticipation.addResult(result);
+        templateProgrammingExerciseParticipationRepo.save(templateParticipation);
+        return result;
     }
 
     /**

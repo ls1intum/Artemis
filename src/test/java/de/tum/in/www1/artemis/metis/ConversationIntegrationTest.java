@@ -211,7 +211,10 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_ONLY);
         List<ConversationDTO> channels = request.getList("/api/courses/" + exampleCourseId + "/conversations", HttpStatus.OK, ConversationDTO.class);
 
-        channels.forEach(conv -> assertThat(conv instanceof ChannelDTO ch && ch.getIsCourseWide()));
+        assertThat(channels).allSatisfy(ch -> {
+            assertThat(ch).isInstanceOf(ChannelDTO.class);
+            assertThat(((ChannelDTO) ch).getIsCourseWide()).isTrue();
+        });
 
         // cleanup
         conversationMessageRepository.deleteById(post.getId());

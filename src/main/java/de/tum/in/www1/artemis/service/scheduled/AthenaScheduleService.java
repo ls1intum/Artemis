@@ -1,17 +1,23 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
+import static de.tum.in.www1.artemis.config.StartupDelayConfig.ATHENA_SCHEDULE_DELAY_SEC;
+
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
 
-import jakarta.annotation.PostConstruct;
 import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -34,23 +40,31 @@ public class AthenaScheduleService {
 
     private final ProfileService profileService;
 
+    private final TaskScheduler taskScheduler;
+
     private final Map<Long, ScheduledFuture<?>> scheduledAthenaTasks = new HashMap<>();
 
     private final AthenaSubmissionSendingService athenaSubmissionSendingService;
 
     public AthenaScheduleService(ExerciseLifecycleService exerciseLifecycleService, ExerciseRepository exerciseRepository, ProfileService profileService,
-            AthenaSubmissionSendingService athenaSubmissionSendingService) {
+            @Qualifier("taskScheduler") TaskScheduler taskScheduler, AthenaSubmissionSendingService athenaSubmissionSendingService) {
         this.exerciseLifecycleService = exerciseLifecycleService;
         this.exerciseRepository = exerciseRepository;
         this.profileService = profileService;
+        this.taskScheduler = taskScheduler;
         this.athenaSubmissionSendingService = athenaSubmissionSendingService;
+    }
+
+    @EventListener(ApplicationReadyEvent.class)
+    public void startup() {
+        // schedule the task after the application has started to avoid delaying the start of the application
+        taskScheduler.schedule(this::scheduleRunningExercisesOnStartup, Instant.now().plusSeconds(ATHENA_SCHEDULE_DELAY_SEC));
     }
 
     /**
      * Schedule Athena tasks for all exercises with future due dates on startup.
      */
-    @PostConstruct
-    public void scheduleRunningExercisesOnStartup() {
+    private void scheduleRunningExercisesOnStartup() {
         if (profileService.isDevActive()) {
             // only execute this on production server, i.e. when the prod profile is active
             // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
