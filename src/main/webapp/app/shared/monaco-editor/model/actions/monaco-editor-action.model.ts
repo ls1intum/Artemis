@@ -25,6 +25,7 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
     }
 
     getTextAtRange(editor: monaco.editor.ICodeEditor, range: monaco.IRange): string | undefined {
-        return editor.getModel()?.getValueInRange(range);
+        // End of line preference is important here. Otherwise, Windows may use CRLF line endings.
+        return editor.getModel()?.getValueInRange(range, monaco.editor.EndOfLinePreference.LF);
     }
 }

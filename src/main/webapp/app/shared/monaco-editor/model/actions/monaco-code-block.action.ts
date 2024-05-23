@@ -1,0 +1,9 @@
+import { MonacoEditorDelimiterAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-delimiter-action.model';
+
+const CODE_BLOCK_OPEN_DELIMITER = '```java\n';
+const CODE_BLOCK_CLOSE_DELIMITER = '\n```';
+export class MonacoCodeBlockAction extends MonacoEditorDelimiterAction {
+    constructor(label: string, translationKey: string) {
+        super('monaco-code-block.action', label, translationKey, undefined, CODE_BLOCK_OPEN_DELIMITER, CODE_BLOCK_CLOSE_DELIMITER);
+    }
+}
