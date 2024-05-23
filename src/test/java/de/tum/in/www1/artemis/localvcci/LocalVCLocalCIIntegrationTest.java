@@ -31,7 +31,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -82,14 +82,15 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
     private String teamRepositorySlug;
 
-    @Autowired
-    private Environment environment;
+    @Value("${artemis.user-management.internal-admin.username}")
+    private String localVCUsername;
+
+    @Value("${artemis.user-management.internal-admin.password}")
+    private String localVCPassword;
 
     @BeforeAll
     void setupAll() {
-        String gitUser = environment.getProperty("artemis.user-management.internal-admin.username");
-        String gitPassword = environment.getProperty("artemis.user-management.internal-admin.password");
-        CredentialsProvider.setDefault(new UsernamePasswordCredentialsProvider(gitUser, gitPassword));
+        CredentialsProvider.setDefault(new UsernamePasswordCredentialsProvider(localVCUsername, localVCPassword));
     }
 
     @AfterAll

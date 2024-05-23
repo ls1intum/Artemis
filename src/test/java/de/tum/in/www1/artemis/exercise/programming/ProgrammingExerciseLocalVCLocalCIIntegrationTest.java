@@ -19,7 +19,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
@@ -43,9 +43,6 @@ import de.tum.in.www1.artemis.util.LocalRepository;
 class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "progexlocalvclocalci";
-
-    @Autowired
-    private Environment environment;
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
@@ -74,11 +71,15 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
 
     LocalRepository assignmentRepository;
 
+    @Value("${artemis.user-management.internal-admin.username}")
+    private String localVCUsername;
+
+    @Value("${artemis.user-management.internal-admin.password}")
+    private String localVCPassword;
+
     @BeforeAll
     void setupAll() {
-        String gitUser = environment.getProperty("artemis.user-management.internal-admin.username");
-        String gitPassword = environment.getProperty("artemis.user-management.internal-admin.password");
-        CredentialsProvider.setDefault(new UsernamePasswordCredentialsProvider(gitUser, gitPassword));
+        CredentialsProvider.setDefault(new UsernamePasswordCredentialsProvider(localVCUsername, localVCPassword));
     }
 
     @AfterAll
