@@ -61,6 +61,7 @@ export class CompetencyMetrics {
     public lectureUnits: { [key: number]: number[] }; // Lecture Unit ID -> Competency IDs
     public progress: { [key: number]: number }; // Competency ID -> progress
     public confidence: { [key: number]: number }; // Competency ID -> confidence
+    public jolValues: { [key: number]: number }; // Competency ID -> JOL value
 }
 
 export class CompetencyInformation {

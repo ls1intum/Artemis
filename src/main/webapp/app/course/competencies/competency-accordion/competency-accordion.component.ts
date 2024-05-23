@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
-import { faFilePdf, faList } from '@fortawesome/free-solid-svg-icons';
+import { faFilePdf, faList, faQuestion } from '@fortawesome/free-solid-svg-icons';
 import { CompetencyProgress, getConfidence, getIcon, getMastery, getProgress } from 'app/entities/competency.model';
 import { Course } from 'app/entities/course.model';
 import { Router } from '@angular/router';
@@ -30,6 +30,9 @@ export class CompetencyAccordionComponent implements OnChanges {
 
     protected readonly faList = faList;
     protected readonly faPdf = faFilePdf;
+    protected readonly faQuestion = faQuestion;
+    protected readonly lectureUnitIcons = lectureUnitIcons;
+    protected readonly lectureUnitTooltips = lectureUnitTooltips;
     protected readonly getIcon = getIcon;
     protected readonly getProgress = getProgress;
     protected readonly getConfidence = getConfidence;
@@ -90,6 +93,19 @@ export class CompetencyAccordionComponent implements OnChanges {
         this.accordionToggle.emit({ opened: this.open, index: this.index });
     }
 
+    get jolRating() {
+        return this.metrics.competencyMetrics?.jolValues?.[this.competency.id];
+    }
+
+    onRatingChange(newRating: number) {
+        if (this.metrics.competencyMetrics) {
+            this.metrics.competencyMetrics.jolValues = {
+                ...this.metrics.competencyMetrics.jolValues,
+                [this.competency.id]: newRating,
+            };
+        }
+    }
+
     getUserProgress(): CompetencyProgress {
         const progress = this.metrics.competencyMetrics?.progress?.[this.competency.id] ?? 0;
         const confidence = this.metrics.competencyMetrics?.confidence?.[this.competency.id] ?? 0;
@@ -97,6 +113,9 @@ export class CompetencyAccordionComponent implements OnChanges {
     }
 
     get progress() {
+        if (this.jolRating === undefined) {
+            return 0;
+        }
         return this.getProgress(this.getUserProgress());
     }
 
@@ -129,10 +148,16 @@ export class CompetencyAccordionComponent implements OnChanges {
     }
 
     get confidence() {
+        if (this.jolRating === undefined) {
+            return 0;
+        }
         return this.getConfidence(this.getUserProgress(), this.competency.masteryThreshold!);
     }
 
     get mastery() {
+        if (this.jolRating === undefined) {
+            return 0;
+        }
         return this.getMastery(this.getUserProgress(), this.competency.masteryThreshold!);
     }
 
@@ -140,7 +165,4 @@ export class CompetencyAccordionComponent implements OnChanges {
         event.stopPropagation();
         this.router.navigate(['/courses', this.course!.id, 'competencies', this.competency.id]);
     }
-
-    protected readonly lectureUnitIcons = lectureUnitIcons;
-    protected readonly lectureUnitTooltips = lectureUnitTooltips;
 }

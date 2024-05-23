@@ -25,7 +25,8 @@
             },
             "judgementOfLearning": {
                 "title": "Wie würdest du dein Verständnis bewerten?",
-                "artemisRating": "Artemis bewertet dein Verständnis als"
+                "artemisRating": "Artemis bewertet dein Verständnis als",
+                "error": "Beim Speichern deiner Bewertung ist ein Fehler aufgetreten."
             }
         }
     }
