@@ -8,8 +8,6 @@ import org.apache.commons.io.IOUtils;
 
 public final class ProgrammingSubmissionConstants {
 
-    public static final String TEST_COMMIT = "a6250b6f03c3ae8fa8fb8fdf6bb1dc1c4cc57bad";
-
     public static final String GITLAB_PUSH_EVENT_REQUEST;
 
     public static final String GITLAB_PUSH_EVENT_REQUEST_WITHOUT_COMMIT;
