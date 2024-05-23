@@ -137,10 +137,10 @@ export class DataTableComponent implements OnInit, OnChanges {
 
     /**
      * @property searchQueryTooShort Whether the entered search term
-     * @property minSearchQueryLength Minimum number of characters before a search is triggered
+     * @property MIN_SEARCH_QUERY_LENGTH Minimum number of characters before a search is triggered
      */
     searchQueryTooShort: boolean;
-    readonly minSearchQueryLength = 3;
+    readonly MIN_SEARCH_QUERY_LENGTH = 3;
 
     // Icons
     faCircleNotch = faCircleNotch;
@@ -378,7 +378,7 @@ export class DataTableComponent implements OnInit, OnChanges {
                     // We only execute the autocomplete for the last keyword in the provided list.
                     const lastSearchWord = searchWords.last();
                     // Don't execute autocomplete for less than two inputted characters.
-                    if (!lastSearchWord || lastSearchWord.length < this.minSearchQueryLength) {
+                    if (!lastSearchWord || lastSearchWord.length < this.MIN_SEARCH_QUERY_LENGTH) {
                         this.searchQueryTooShort = true;
                         return { text, entities: [] };
                     }
