@@ -5,8 +5,6 @@
                 "title": "Kompetenzen",
                 "noData": "Für diesen Kurs sind keine Kompetenzen verfügbar.",
                 "nextObjectives": "Nächste Ziele",
-                "nextExercises": "Nächste Aufgaben",
-                "nextLectureUnits": "Nächste Vorlesungseinheiten",
                 "exercises": "Aufgaben",
                 "lectures": "Vorlesungen",
                 "progress": "Fortschritt: {{ progress }}%",

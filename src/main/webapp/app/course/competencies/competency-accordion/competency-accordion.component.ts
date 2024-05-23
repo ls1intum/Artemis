@@ -1,13 +1,14 @@
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
-import { faFilePdf, faList } from '@fortawesome/free-solid-svg-icons';
+import { faFilePdf, faList, faScroll } from '@fortawesome/free-solid-svg-icons';
 import { CompetencyProgress, getConfidence, getIcon, getMastery, getProgress } from 'app/entities/competency.model';
 import { Course } from 'app/entities/course.model';
 import { Router } from '@angular/router';
 import { ICompetencyAccordionToggleEvent } from 'app/shared/competency/interfaces/competency-accordion-toggle-event.interface';
-import { CompetencyInformation, StudentMetrics } from 'app/entities/student-metrics.model';
+import { CompetencyInformation, LectureUnitInformation, StudentMetrics } from 'app/entities/student-metrics.model';
 import { round } from 'app/shared/util/utils';
 import { Exercise } from 'app/entities/exercise.model';
 import dayjs from 'dayjs/esm';
+import { lectureUnitIcons, lectureUnitTooltips } from 'app/entities/lecture-unit/lectureUnit.model';
 
 @Component({
     selector: 'jhi-competency-accordion',
@@ -25,9 +26,14 @@ export class CompetencyAccordionComponent implements OnChanges {
 
     open = false;
     nextExercises: Exercise[] = [];
+    nextLectureUnits: LectureUnitInformation[] = [];
 
     protected readonly faList = faList;
     protected readonly faPdf = faFilePdf;
+
+    // Delete later
+    faScroll = faScroll;
+
     protected readonly getIcon = getIcon;
     protected readonly getProgress = getProgress;
     protected readonly getConfidence = getConfidence;
@@ -42,6 +48,7 @@ export class CompetencyAccordionComponent implements OnChanges {
         }
         if (changes.metrics) {
             this.setNextExercises();
+            this.setNextLessonUnits();
         }
     }
 
@@ -66,6 +73,20 @@ export class CompetencyAccordionComponent implements OnChanges {
                     studentAssignedTeamIdComputed: exercise.studentAssignedTeamId,
                 }) as unknown as Exercise,
         );
+    }
+
+    setNextLessonUnits() {
+        if (!this.metrics) {
+            this.nextLectureUnits = [];
+        }
+
+        const completedLectureUnits = this.metrics.lectureUnitStudentMetricsDTO?.completed ?? [];
+        const competencyLectureUnits = this.metrics.competencyMetrics?.lectureUnits?.[this.competency.id] ?? [];
+        this.nextLectureUnits = competencyLectureUnits
+            .filter((lectureUnitId) => !completedLectureUnits.includes(lectureUnitId))
+            .flatMap((lectureUnitId) => this.metrics.lectureUnitStudentMetricsDTO?.lectureUnitInformation?.[lectureUnitId] ?? [])
+            .filter((lectureUnit) => dayjs(lectureUnit.releaseDate).isBefore(dayjs()))
+            .sort((a, b) => dayjs(a.releaseDate).diff(dayjs(b.releaseDate)));
     }
 
     toggle() {
@@ -130,4 +151,7 @@ export class CompetencyAccordionComponent implements OnChanges {
         event.stopPropagation();
         this.router.navigate(['/courses', this.course!.id, 'competencies', this.competency.id]);
     }
+
+    protected readonly lectureUnitIcons = lectureUnitIcons;
+    protected readonly lectureUnitTooltips = lectureUnitTooltips;
 }
