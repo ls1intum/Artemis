@@ -47,9 +47,11 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
+import de.tum.in.www1.artemis.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.LectureUnitService;
+import de.tum.in.www1.artemis.service.competency.CompetencyJOLService;
 import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.competency.CompetencyRelationService;
 import de.tum.in.www1.artemis.service.competency.CompetencyService;
@@ -103,11 +105,13 @@ public class CompetencyResource {
 
     private final CompetencyRelationService competencyRelationService;
 
+    private final CompetencyJOLService competencyJOLService;
+
     public CompetencyResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             CompetencyRepository competencyRepository, CompetencyRelationRepository competencyRelationRepository, CompetencyService competencyService,
             CompetencyProgressRepository competencyProgressRepository, CompetencyProgressService competencyProgressService, ExerciseService exerciseService,
             LectureUnitService lectureUnitService, CompetencyRelationService competencyRelationService,
-            Optional<IrisCompetencyGenerationSessionService> irisCompetencyGenerationSessionService) {
+            Optional<IrisCompetencyGenerationSessionService> irisCompetencyGenerationSessionService, CompetencyJOLService competencyJOLService) {
         this.courseRepository = courseRepository;
         this.competencyRelationRepository = competencyRelationRepository;
         this.authorizationCheckService = authorizationCheckService;
@@ -120,6 +124,7 @@ public class CompetencyResource {
         this.lectureUnitService = lectureUnitService;
         this.competencyRelationService = competencyRelationService;
         this.irisCompetencyGenerationSessionService = irisCompetencyGenerationSessionService;
+        this.competencyJOLService = competencyJOLService;
     }
 
     /**
@@ -163,7 +168,7 @@ public class CompetencyResource {
     }
 
     /**
-     * GET /courses/:courseId/competencies : gets all the competencies of a course
+     * GET courses/:courseId/competencies : gets all the competencies of a course
      *
      * @param courseId the id of the course for which the competencies should be fetched
      * @return the ResponseEntity with status 200 (OK) and with body the found competencies
@@ -180,7 +185,7 @@ public class CompetencyResource {
     }
 
     /**
-     * GET /courses/:courseId/competencies/:competencyId : gets the competency with the specified id including its related exercises and lecture units
+     * GET courses/:courseId/competencies/:competencyId : gets the competency with the specified id including its related exercises and lecture units
      * This method also calculates the user progress
      *
      * @param competencyId the id of the competency to retrieve
@@ -210,7 +215,7 @@ public class CompetencyResource {
     }
 
     /**
-     * PUT /courses/:courseId/competencies : Updates an existing competency.
+     * PUT courses/:courseId/competencies : Updates an existing competency.
      *
      * @param courseId   the id of the course to which the competencies belong
      * @param competency the competency to update
@@ -234,7 +239,7 @@ public class CompetencyResource {
     }
 
     /**
-     * POST /courses/:courseId/competencies : creates a new competency.
+     * POST courses/:courseId/competencies : creates a new competency.
      *
      * @param courseId   the id of the course to which the competency should be added
      * @param competency the competency that should be created
@@ -257,7 +262,7 @@ public class CompetencyResource {
     }
 
     /**
-     * POST /courses/:courseId/competencies/bulk : creates a number of new competencies
+     * POST courses/:courseId/competencies/bulk : creates a number of new competencies
      *
      * @param courseId     the id of the course to which the competencies should be added
      * @param competencies the competencies that should be created
@@ -282,7 +287,7 @@ public class CompetencyResource {
     }
 
     /**
-     * POST /courses/:courseId/competencies/import : imports a new competency.
+     * POST courses/:courseId/competencies/import : imports a new competency.
      *
      * @param courseId           the id of the course to which the competency should be imported to
      * @param competencyToImport the competency that should be imported
@@ -308,7 +313,7 @@ public class CompetencyResource {
     }
 
     /**
-     * POST /courses/:courseId/competencies/import/bulk : imports a number of competencies (and optionally their relations) into a course.
+     * POST courses/:courseId/competencies/import/bulk : imports a number of competencies (and optionally their relations) into a course.
      *
      * @param courseId             the id of the course to which the competencies should be imported to
      * @param competenciesToImport the competencies that should be imported
@@ -378,7 +383,7 @@ public class CompetencyResource {
     }
 
     /**
-     * POST /courses/:courseId/competencies/import-standardized : imports a number of standardized competencies (as competencies) into a course.
+     * POST courses/:courseId/competencies/import-standardized : imports a number of standardized competencies (as competencies) into a course.
      *
      * @param courseId              the id of the course to which the competencies should be imported to
      * @param competencyIdsToImport the ids of the standardized competencies that should be imported
@@ -397,7 +402,7 @@ public class CompetencyResource {
     }
 
     /**
-     * DELETE /courses/:courseId/competencies/:competencyId
+     * DELETE courses/:courseId/competencies/:competencyId
      *
      * @param courseId     the id of the course to which the competency belongs
      * @param competencyId the id of the competency to remove
@@ -418,7 +423,7 @@ public class CompetencyResource {
     }
 
     /**
-     * GET /courses/:courseId/competencies/:competencyId/student-progress gets the competency progress for a user
+     * GET courses/:courseId/competencies/:competencyId/student-progress gets the competency progress for a user
      *
      * @param courseId     the id of the course to which the competency belongs
      * @param competencyId the id of the competency for which to get the progress
@@ -447,7 +452,7 @@ public class CompetencyResource {
     }
 
     /**
-     * GET /courses/:courseId/competencies/:competencyId/course-progress gets the competency progress for the whole course
+     * GET courses/:courseId/competencies/:competencyId/course-progress gets the competency progress for the whole course
      *
      * @param courseId     the id of the course to which the competency belongs
      * @param competencyId the id of the competency for which to get the progress
@@ -533,7 +538,7 @@ public class CompetencyResource {
     }
 
     /**
-     * GET /courses/:courseId/prerequisites
+     * GET courses/:courseId/prerequisites
      *
      * @param courseId the id of the course for which the competencies should be fetched
      * @return the ResponseEntity with status 200 (OK) and with body the found competencies
@@ -556,7 +561,7 @@ public class CompetencyResource {
     }
 
     /**
-     * POST /courses/:courseId/prerequisites/:competencyId
+     * POST courses/:courseId/prerequisites/:competencyId
      *
      * @param courseId     the id of the course for which the competency should be a prerequisite
      * @param competencyId the id of the prerequisite (competency) to add
@@ -581,7 +586,7 @@ public class CompetencyResource {
     }
 
     /**
-     * DELETE /courses/:courseId/prerequisites/:competencyId
+     * DELETE courses/:courseId/prerequisites/:competencyId
      *
      * @param courseId     the id of the course for which the competency is a prerequisite
      * @param competencyId the id of the prerequisite (competency) to remove
@@ -642,5 +647,24 @@ public class CompetencyResource {
             throw new BadRequestAlertException("The competency does not belong to the correct course", ENTITY_NAME, "competencyWrongCourse");
         }
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(role, course, null);
+    }
+
+    /**
+     * PUT courses/:courseId/competencies/:competencyId/jol/:jolValue
+     *
+     * @param courseId     the id of the course for which the competency belongs
+     * @param competencyId the id of the competency for which to set the judgement of learning
+     * @param jolValue     the value of the judgement of learning
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @PutMapping("courses/{courseId}/competencies/{competencyId}/jol/{jolValue}")
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<Void> setJudgementOfLearning(@PathVariable long courseId, @PathVariable long competencyId, @PathVariable int jolValue) {
+        log.info("REST request to set judgement of learning for competency: {}", competencyId);
+
+        final var userId = userRepository.getUserIdElseThrow();
+        competencyJOLService.setJudgementOfLearning(competencyId, userId, jolValue);
+
+        return ResponseEntity.ok().build();
     }
 }
