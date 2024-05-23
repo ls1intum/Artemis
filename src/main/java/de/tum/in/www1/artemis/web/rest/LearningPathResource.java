@@ -293,7 +293,7 @@ public class LearningPathResource {
     private void checkLearningPathAccessElseThrow(Course course, LearningPath learningPath, User user) {
         if (authorizationCheckService.isOnlyStudentInCourse(course, user) && !user.getId().equals(learningPath.getUser().getId())
                 && !authorizationCheckService.isAtLeastInstructorInCourse(course, user)) {
-            throw new AccessForbiddenException("You are not allowed to access another users learning path.");
+            throw new AccessForbiddenException("You are not allowed to access another user's learning path.");
         }
     }
 
