@@ -1,8 +1,8 @@
-import { Component, computed, inject, input, output } from '@angular/core';
+import { Component, InputSignal, OutputEmitterRef, Signal, computed, inject, input, output } from '@angular/core';
 import { NgbAccordionModule, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { CommonModule } from '@angular/common';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faCheckCircle } from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
 import { LearningPathService } from '../../learning-path.service';
 import { Observable, catchError, map, of, startWith, switchMap } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -20,16 +20,16 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
     templateUrl: './learning-path-student-nav-overview.component.html',
 })
 export class LearningPathStudentNavOverviewComponent {
-    protected readonly faCheckCircle = faCheckCircle;
+    protected readonly faCheckCircle: IconDefinition = faCheckCircle;
 
-    private readonly learningPathService = inject(LearningPathService);
-    private readonly alertService = inject(AlertService);
+    private readonly learningPathService: LearningPathService = inject(LearningPathService);
+    private readonly alertService: AlertService = inject(AlertService);
 
-    readonly learningPathId = input.required<number>();
+    readonly learningPathId: InputSignal<number> = input.required();
 
-    readonly currentLearningObject = input.required<LearningPathNavigationObjectDto | undefined>();
+    readonly currentLearningObject: InputSignal<LearningPathNavigationObjectDto | undefined> = input.required();
 
-    private readonly navigationOverviewData$ = toObservable(this.learningPathId).pipe(
+    private readonly navigationOverviewData$: Observable<LoadedValue<LearningPathNavigationOverviewDto>> = toObservable(this.learningPathId).pipe(
         switchMap((learningPathId) => this.learningPathService.getLearningPathNavigationOverview(learningPathId)),
         map((response) => ({ isLoading: false, value: response.body })),
         catchError((error: HttpErrorResponse) => {
@@ -37,17 +37,17 @@ export class LearningPathStudentNavOverviewComponent {
             return of({ isLoading: false, error: error });
         }),
         startWith({ isLoading: true }),
-    ) as Observable<LoadedValue<LearningPathNavigationOverviewDto>>;
+    );
 
-    private readonly navigationOverviewData = toSignal(this.navigationOverviewData$, { requireSync: true });
+    private readonly navigationOverviewData: Signal<LoadedValue<LearningPathNavigationOverviewDto>> = toSignal(this.navigationOverviewData$, { requireSync: true });
 
-    readonly isLoading = computed(() => this.navigationOverviewData().isLoading);
+    readonly isLoading: Signal<boolean> = computed(() => this.navigationOverviewData().isLoading);
 
-    readonly learningObjects = computed(() => this.navigationOverviewData().value?.learningObjects ?? []);
+    readonly learningObjects: Signal<LearningPathNavigationObjectDto[]> = computed(() => this.navigationOverviewData().value?.learningObjects ?? []);
 
-    readonly onLearningObjectSelected = output<LearningPathNavigationObjectDto>();
+    readonly onLearningObjectSelected: OutputEmitterRef<LearningPathNavigationObjectDto> = output();
 
-    selectLearningObject(learningObject: LearningPathNavigationObjectDto) {
+    selectLearningObject(learningObject: LearningPathNavigationObjectDto): void {
         if (this.isLearningObjectSelectable(learningObject)) {
             this.onLearningObjectSelected.emit(learningObject);
         }

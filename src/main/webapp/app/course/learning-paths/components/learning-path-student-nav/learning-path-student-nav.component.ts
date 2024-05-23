@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, signal } from '@angular/core';
+import { Component, InputSignal, Signal, WritableSignal, computed, inject, input, signal } from '@angular/core';
 import { LearningPathService } from 'app/course/learning-paths/learning-path.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -7,7 +7,7 @@ import { Observable, catchError, map, of, startWith, switchMap } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { NgbAccordionModule, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faCheckCircle, faChevronDown } from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition, faCheckCircle, faChevronDown } from '@fortawesome/free-solid-svg-icons';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
 import { LearningPathStudentNavOverviewComponent } from 'app/course/learning-paths/components/learning-path-student-nav-overview/learning-path-student-nav-overview.component';
@@ -27,17 +27,17 @@ export type LoadedValue<T> = {
     styleUrl: './learning-path-student-nav.component.scss',
 })
 export class LearningPathStudentNavComponent {
-    protected readonly faChevronDown = faChevronDown;
-    protected readonly faCheckCircle = faCheckCircle;
+    protected readonly faChevronDown: IconDefinition = faChevronDown;
+    protected readonly faCheckCircle: IconDefinition = faCheckCircle;
 
-    private learningPathService = inject(LearningPathService);
-    private alertService = inject(AlertService);
+    private learningPathService: LearningPathService = inject(LearningPathService);
+    private alertService: AlertService = inject(AlertService);
 
-    readonly learningPathId = input.required<number>();
+    readonly learningPathId: InputSignal<number> = input.required<number>();
 
-    private readonly selectedLearningObject = signal<LearningPathNavigationObjectDto | undefined>(undefined);
+    private readonly selectedLearningObject: WritableSignal<LearningPathNavigationObjectDto | undefined> = signal(undefined);
 
-    private readonly navigationData$ = toObservable(this.selectedLearningObject).pipe(
+    private readonly navigationData$: Observable<LoadedValue<LearningPathNavigationDto>> = toObservable(this.selectedLearningObject).pipe(
         switchMap((selectedLearningObject) => this.learningPathService.getLearningPathNavigation(this.learningPathId(), selectedLearningObject?.id, selectedLearningObject?.type)),
         map((response) => ({ isLoading: false, value: response.body })),
         catchError((error: HttpErrorResponse) => {
@@ -45,23 +45,23 @@ export class LearningPathStudentNavComponent {
             return of({ isLoading: false, error: error });
         }),
         startWith({ isLoading: true }),
-    ) as Observable<LoadedValue<LearningPathNavigationDto>>;
+    );
 
-    private readonly navigationData = toSignal(this.navigationData$, { requireSync: true });
+    private readonly navigationData: Signal<LoadedValue<LearningPathNavigationDto>> = toSignal(this.navigationData$, { requireSync: true });
 
-    readonly showNavigationOverview = signal<boolean>(false);
+    readonly showNavigationOverview: WritableSignal<boolean> = signal(false);
 
-    readonly isLoading = computed(() => this.navigationData().isLoading);
+    readonly isLoading: Signal<boolean> = computed(() => this.navigationData().isLoading);
 
-    readonly learningPathProgress = computed(() => this.navigationData().value?.progress ?? 0);
+    readonly learningPathProgress: Signal<number> = computed(() => this.navigationData().value?.progress ?? 0);
 
-    readonly predecessorLearningObject = computed(() => this.navigationData().value?.predecessorLearningObject);
+    readonly predecessorLearningObject: Signal<LearningPathNavigationObjectDto | undefined> = computed(() => this.navigationData().value?.predecessorLearningObject);
 
-    readonly currentLearningObject = computed(() => this.navigationData().value?.currentLearningObject);
+    readonly currentLearningObject: Signal<LearningPathNavigationObjectDto | undefined> = computed(() => this.navigationData().value?.currentLearningObject);
 
-    readonly successorLearningObject = computed(() => this.navigationData().value?.successorLearningObject);
+    readonly successorLearningObject: Signal<LearningPathNavigationObjectDto | undefined> = computed(() => this.navigationData().value?.successorLearningObject);
 
-    readonly isCurrentLearningObjectCompleted = signal<boolean>(false);
+    readonly isCurrentLearningObjectCompleted: WritableSignal<boolean> = signal(false);
 
     selectLearningObject(selectedLearningObject: LearningPathNavigationObjectDto): void {
         this.selectedLearningObject.set(selectedLearningObject);

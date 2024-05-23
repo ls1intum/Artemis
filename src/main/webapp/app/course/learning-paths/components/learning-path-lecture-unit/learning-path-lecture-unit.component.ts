@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, output } from '@angular/core';
+import { Component, InputSignal, OutputEmitterRef, Signal, computed, inject, input, output } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { Observable, catchError, map, of, startWith, switchMap } from 'rxjs';
@@ -19,12 +19,12 @@ import { LectureUnitCompletionEvent } from 'app/overview/course-lectures/course-
 export class LearningPathLectureUnitComponent {
     protected readonly LectureUnitType = LectureUnitType;
 
-    private readonly lectureUnitService = inject(LectureUnitService);
-    private readonly alertService = inject(AlertService);
+    private readonly lectureUnitService: LectureUnitService = inject(LectureUnitService);
+    private readonly alertService: AlertService = inject(AlertService);
 
-    readonly lectureUnitId = input.required<number>();
+    readonly lectureUnitId: InputSignal<number> = input.required<number>();
 
-    private readonly lectureUnitData$ = toObservable(this.lectureUnitId).pipe(
+    private readonly lectureUnitData$: Observable<LoadedValue<LectureUnit>> = toObservable(this.lectureUnitId).pipe(
         switchMap((lectureUnitId) => this.lectureUnitService.getLectureUnitById(lectureUnitId)),
         map((response) => ({ isLoading: false, value: response.body })),
         catchError((error: HttpErrorResponse) => {
@@ -32,17 +32,17 @@ export class LearningPathLectureUnitComponent {
             return of({ isLoading: false, error: error });
         }),
         startWith({ isLoading: true }),
-    ) as Observable<LoadedValue<LectureUnit>>;
+    );
 
-    private readonly lectureUnitData = toSignal(this.lectureUnitData$, { requireSync: true });
+    private readonly lectureUnitData: Signal<LoadedValue<LectureUnit>> = toSignal(this.lectureUnitData$, { requireSync: true });
 
-    readonly isLoading = computed(() => this.lectureUnitData().isLoading);
+    readonly isLoading: Signal<boolean> = computed(() => this.lectureUnitData().isLoading);
 
-    readonly lectureUnit = computed(() => this.lectureUnitData().value);
+    readonly lectureUnit: Signal<LectureUnit | null | undefined> = computed(() => this.lectureUnitData().value);
 
-    readonly onLearningObjectCompleted = output<boolean>();
+    readonly onLearningObjectCompleted: OutputEmitterRef<boolean> = output<boolean>();
 
-    setLearningObjectCompletion(completionEvent: LectureUnitCompletionEvent) {
+    setLearningObjectCompletion(completionEvent: LectureUnitCompletionEvent): void {
         this.lectureUnitService.completeLectureUnit(this.lectureUnit()!.lecture!, completionEvent);
         this.onLearningObjectCompleted.emit(completionEvent.completed);
     }

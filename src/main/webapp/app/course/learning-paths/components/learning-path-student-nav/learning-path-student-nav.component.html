@@ -2,13 +2,13 @@
     <div class="row justify-content-between">
         <div class="col-4">
             <div class="row justify-content-start align-items-center">
-                @if (predecessorLearningObject()) {
+                @if (predecessorLearningObject(); as predecessorLearningObject) {
                     <div class="col-md-auto">
-                        <button id="previous-button" (click)="selectLearningObject(predecessorLearningObject()!)" type="button" class="btn btn-secondary">
+                        <button id="previous-button" (click)="selectLearningObject(predecessorLearningObject)" type="button" class="btn btn-secondary">
                             <span jhiTranslate="artemisApp.learningPath.navigation.previousButton"></span>
                         </button>
                     </div>
-                    <span class="col ps-3 text-truncate text-secondary">{{ predecessorLearningObject()!.name }}</span>
+                    <span class="col ps-3 text-truncate text-secondary">{{ predecessorLearningObject.name }}</span>
                 }
             </div>
         </div>
@@ -33,12 +33,12 @@
         </div>
         <div class="col-4">
             <div class="row justify-content-end align-items-center">
-                @if (successorLearningObject()) {
-                    <span class="col text-end pe-3 text-truncate text-secondary">{{ successorLearningObject()!.name }}</span>
+                @if (successorLearningObject(); as successorLearningObject) {
+                    <span class="col text-end pe-3 text-truncate text-secondary">{{ successorLearningObject.name }}</span>
                     <div class="col-md-auto">
                         <button
                             id="next-button"
-                            (click)="selectLearningObject(successorLearningObject()!)"
+                            (click)="selectLearningObject(successorLearningObject)"
                             [disabled]="!isCurrentLearningObjectCompleted()"
                             type="button"
                             class="btn btn-primary"

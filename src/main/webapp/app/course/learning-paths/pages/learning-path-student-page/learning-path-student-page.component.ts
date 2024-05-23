@@ -1,6 +1,6 @@
 import { Component, Signal, computed, inject, viewChild } from '@angular/core';
 import { LearningPathService } from 'app/course/learning-paths/learning-path.service';
-import { LearningObjectType } from 'app/entities/competency/learning-path.model';
+import { LearningObjectType, LearningPathNavigationObjectDto } from 'app/entities/competency/learning-path.model';
 import { Observable, catchError, map, of, startWith, switchMap } from 'rxjs';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -23,15 +23,15 @@ import { LearningPathExerciseComponent } from 'app/course/learning-paths/compone
 export class LearningPathStudentPageComponent {
     protected readonly LearningObjectType = LearningObjectType;
 
-    private readonly learningPathService = inject(LearningPathService);
-    private readonly alertService = inject(AlertService);
-    private readonly activatedRoute = inject(ActivatedRoute);
+    private readonly learningPathService: LearningPathService = inject(LearningPathService);
+    private readonly alertService: AlertService = inject(AlertService);
+    private readonly activatedRoute: ActivatedRoute = inject(ActivatedRoute);
 
-    private readonly navigation = viewChild(LearningPathStudentNavComponent);
+    private readonly navigation: Signal<LearningPathStudentNavComponent | undefined> = viewChild(LearningPathStudentNavComponent);
 
-    readonly courseId = toSignal(this.activatedRoute.parent!.parent!.params.pipe(map((params) => params.courseId))) as Signal<number>;
+    readonly courseId: Signal<number> = toSignal(this.activatedRoute.parent!.parent!.params.pipe(map((params) => params.courseId))) as Signal<number>;
 
-    private readonly learningPathIdData$ = toObservable(this.courseId).pipe(
+    private readonly learningPathIdData$: Observable<LoadedValue<number>> = toObservable(this.courseId).pipe(
         switchMap((courseId) => this.learningPathService.getLearningPathId(courseId!)),
         map((response) => ({ isLoading: false, value: response.body })),
         catchError((error: HttpErrorResponse) => {
@@ -48,15 +48,15 @@ export class LearningPathStudentPageComponent {
             return of({ isLoading: false, error: error });
         }),
         startWith({ isLoading: true }),
-    ) as Observable<LoadedValue<number>>;
+    );
 
-    private readonly learningPathIdData = toSignal(this.learningPathIdData$, { requireSync: true });
+    private readonly learningPathIdData: Signal<LoadedValue<number>> = toSignal(this.learningPathIdData$, { requireSync: true });
 
-    readonly learningPathId = computed(() => this.learningPathIdData().value);
+    readonly learningPathId: Signal<number | null | undefined> = computed(() => this.learningPathIdData().value);
 
-    readonly currentLearningObject = computed(() => this.navigation()?.currentLearningObject());
+    readonly currentLearningObject: Signal<LearningPathNavigationObjectDto | undefined> = computed(() => this.navigation()?.currentLearningObject());
 
-    setCurrentLearningObjectCompletion(completed: boolean) {
+    setCurrentLearningObjectCompletion(completed: boolean): void {
         this.navigation()?.setCurrentLearningObjectCompletion(completed);
     }
 }
