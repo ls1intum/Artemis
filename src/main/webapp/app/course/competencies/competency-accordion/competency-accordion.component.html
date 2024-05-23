@@ -45,8 +45,23 @@
                     </div>
                 }
             </div>
-            <div class="py-2" style="max-width: 65px">
-                <jhi-competency-rings [confidence]="this.confidence" [progress]="this.progress" [mastery]="this.mastery" [hideTooltip]="false" [playAnimation]="false" />
+            <div
+                class="competency-container py-2 position-relative"
+                [ngbTooltip]="rated ? undefined : ('artemisApp.studentAnalyticsDashboard.competencyAccordion.notRatedTooltip' | artemisTranslate)"
+            >
+                <jhi-competency-rings
+                    [class.muted-competency-rings]="!rated"
+                    [confidence]="this.confidence"
+                    [progress]="this.progress"
+                    [mastery]="this.mastery"
+                    [hideTooltip]="!rated"
+                    [playAnimation]="false"
+                />
+                @if (!rated) {
+                    <div class="position-absolute top-50 start-50 translate-middle">
+                        <fa-icon [icon]="faQuestion" class="question-mark fa-2x" />
+                    </div>
+                }
             </div>
         </div>
     </button>

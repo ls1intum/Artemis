@@ -4,6 +4,7 @@
             "competencyAccordion": {
                 "title": "Competencies",
                 "noData": "No competencies available for this course.",
+                "notRatedTooltip": "You have not yet rated your mastery of this competency, please rate it to see your progress.",
                 "nextObjectives": "Next objectives",
                 "exercises": "Exercises",
                 "lectures": "Lectures",
