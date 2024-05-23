@@ -3,7 +3,7 @@ import { Page } from 'playwright-core';
 
 import { Course } from 'app/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 
 import fileUploadExerciseTemplate from '../../fixtures/exercise/file-upload/template.json';
@@ -29,6 +29,7 @@ import {
     ProgrammingExerciseAssessmentType,
     ProgrammingLanguage,
     QUIZ_EXERCISE_BASE,
+    QuizMode,
     TEXT_EXERCISE_BASE,
     UPLOAD_EXERCISE_BASE,
 } from '../constants';
