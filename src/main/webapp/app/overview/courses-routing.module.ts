@@ -7,6 +7,7 @@ import { Authority } from 'app/shared/constants/authority.constants';
 import { CourseExercisesComponent } from 'app/overview/course-exercises/course-exercises.component';
 import { CourseOverviewComponent } from './course-overview.component';
 import { CourseTutorialGroupsComponent } from './course-tutorial-groups/course-tutorial-groups.component';
+import { CourseDashboardGuard } from 'app/overview/course-dashboard/course-dashboard-guard.service';
 
 const routes: Routes = [
     {
@@ -104,6 +105,7 @@ const routes: Routes = [
                     authorities: [Authority.USER],
                     pageTitle: 'overview.dashboard',
                 },
+                canActivate: [UserRouteAccessService, CourseDashboardGuard],
             },
             {
                 path: 'learning-path',
@@ -168,7 +170,7 @@ const routes: Routes = [
             },
             {
                 path: '',
-                redirectTo: 'exercises',
+                redirectTo: 'dashboard', // dashboard will redirect to exercises if not enabled
                 pathMatch: 'full',
             },
         ],

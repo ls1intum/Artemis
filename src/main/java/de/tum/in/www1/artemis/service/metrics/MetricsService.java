@@ -10,6 +10,7 @@ import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 
 import java.time.ZonedDateTime;
+import java.util.Map.Entry;
 import java.util.function.Predicate;
 import java.util.function.ToDoubleFunction;
 
@@ -80,6 +81,9 @@ public class MetricsService {
 
         final var exerciseIds = exerciseInfoMap.keySet();
 
+        final var categories = exerciseMetricsRepository.findCategoriesByExerciseIds(exerciseIds);
+        final var categoryMap = categories.stream().collect(groupingBy(Entry::getKey, mapping(Entry::getValue, toSet())));
+
         final var averageScore = exerciseMetricsRepository.findAverageScore(exerciseIds);
         final var averageScoreMap = averageScore.stream().collect(toMap(ScoreDTO::exerciseId, ScoreDTO::score));
 
@@ -96,7 +100,11 @@ public class MetricsService {
 
         final var completedExerciseIds = exerciseMetricsRepository.findAllCompletedExerciseIdsForUserByExerciseIds(userId, exerciseIds);
 
-        return new ExerciseStudentMetricsDTO(exerciseInfoMap, averageScoreMap, scoreMap, averageLatestSubmissionMap, latestSubmissionMap, completedExerciseIds);
+        final var teamIds = exerciseMetricsRepository.findTeamIdsForUserByExerciseIds(userId, exerciseIds);
+        final var teamIdMap = teamIds.stream().collect(toMap(MapEntryDTO::key, MapEntryDTO::value));
+
+        return new ExerciseStudentMetricsDTO(exerciseInfoMap, categoryMap, averageScoreMap, scoreMap, averageLatestSubmissionMap, latestSubmissionMap, completedExerciseIds,
+                teamIdMap);
     }
 
     /**
@@ -140,6 +148,9 @@ public class MetricsService {
         final var competencyProgressMap = competencyProgress.stream().collect(toMap(CompetencyProgressDTO::competencyId, CompetencyProgressDTO::progress));
         final var competencyConfidenceMap = competencyProgress.stream().collect(toMap(CompetencyProgressDTO::competencyId, CompetencyProgressDTO::confidence));
 
-        return new CompetencyStudentMetricsDTO(competencyInfoMap, exerciseMap, lectureUnitMap, competencyProgressMap, competencyConfidenceMap);
+        final var competencyJolValues = competencyMetricsRepository.findAllCompetencyJolValuesForUserByCompetencyIds(userId, competencyIds);
+        final var competencyJolValuesMap = competencyJolValues.stream().collect(toMap(MapEntryDTO::key, e -> (int) e.value()));
+
+        return new CompetencyStudentMetricsDTO(competencyInfoMap, exerciseMap, lectureUnitMap, competencyProgressMap, competencyConfidenceMap, competencyJolValuesMap);
     }
 }

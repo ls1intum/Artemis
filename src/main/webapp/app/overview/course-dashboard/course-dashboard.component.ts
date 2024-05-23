@@ -14,6 +14,7 @@ import { ExercisePerformance } from 'app/overview/course-dashboard/course-exerci
 import { ICompetencyAccordionToggleEvent } from 'app/shared/competency/interfaces/competency-accordion-toggle-event.interface';
 import { round } from 'app/shared/util/utils';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-course-dashboard',
@@ -91,12 +92,18 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
                     this.studentMetrics = response.body;
                     if (response.body.exerciseMetrics) {
                         const exerciseMetrics = response.body.exerciseMetrics;
-                        const sortedExerciseIds = Object.values(exerciseMetrics.exerciseInformation)
+
+                        // Sorted exercises that have a due date in the past
+                        let sortedExerciseIds = Object.values(exerciseMetrics.exerciseInformation)
                             .sort((a, b) => (a.dueDate.isBefore(b.dueDate) ? -1 : 1))
+                            .filter((exercise) => exercise.dueDate.isBefore(dayjs()))
                             .map((exercise) => exercise.id);
 
+                        // Limit the number of exercises to the last 10
+                        sortedExerciseIds = sortedExerciseIds.slice(-10);
+
                         this.hasExercises = sortedExerciseIds.length > 0;
-                        this.setOverallPerformance(exerciseMetrics);
+                        this.setOverallPerformance(sortedExerciseIds, exerciseMetrics);
                         this.setExercisePerformance(sortedExerciseIds, exerciseMetrics);
                         this.setExerciseLateness(sortedExerciseIds, exerciseMetrics);
                     }
@@ -121,16 +128,15 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     /**
      * This method sets the overall performance, i.e. the points and max points.
      *
+     * @param {number[]} exerciseIds - An array of relevant exercise IDs
      * @param {ExerciseMetrics} exerciseMetrics - An object containing metrics related to exercises.
      */
-    private setOverallPerformance(exerciseMetrics: ExerciseMetrics) {
-        const points = Object.values(exerciseMetrics.exerciseInformation).reduce(
-            (sum, exercise) => sum + ((exerciseMetrics.score?.[exercise.id] || 0) / 100) * exercise.maxPoints,
-            0,
-        );
+    private setOverallPerformance(exerciseIds: number[], exerciseMetrics: ExerciseMetrics) {
+        const relevantExercises = Object.values(exerciseMetrics.exerciseInformation).filter((exercise) => exerciseIds.includes(exercise.id));
+        const points = relevantExercises.reduce((sum, exercise) => sum + ((exerciseMetrics.score?.[exercise.id] || 0) / 100) * exercise.maxPoints, 0);
         this.points = round(points, 1);
 
-        const maxPoints = Object.values(exerciseMetrics.exerciseInformation).reduce((sum, exercise) => sum + exercise.maxPoints, 0);
+        const maxPoints = relevantExercises.reduce((sum, exercise) => sum + exercise.maxPoints, 0);
         this.maxPoints = round(maxPoints, 1);
     }
 
@@ -173,8 +179,9 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     }
 
     private setCourse(course?: Course) {
+        const shouldLoadMetrics = this.course?.id !== course?.id;
         this.course = course;
-        if (this.course) {
+        if (this.course && shouldLoadMetrics) {
             this.loadMetrics();
         }
     }

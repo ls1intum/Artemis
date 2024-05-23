@@ -71,3 +71,34 @@
         overflow-y: auto;
     }
 }
+
+.lecture-unit-container {
+    flex-wrap: nowrap !important;
+
+    min-height: 50px;
+    min-width: 100%;
+    border: 1px solid var(--overview-blue-border-color);
+    background-color: var(--overview-light-background-color);
+    border-radius: 3px;
+    transition: transform 0.2s linear;
+
+    &:hover {
+        transform: scale(1.012);
+        background-color: var(--hover-slightly-darker-body-bg);
+    }
+}
+
+.competency-container {
+    max-width: 65px;
+    width: 100%;
+}
+
+.muted-competency-rings {
+    --competency-rings-red-bg: var(--body-bg);
+    --competency-rings-green-bg: var(--body-bg);
+    --competency-rings-blue-bg: var(--body-bg);
+}
+
+.question-mark {
+    color: var(--secondary);
+}

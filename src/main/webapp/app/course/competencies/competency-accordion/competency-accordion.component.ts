@@ -1,13 +1,14 @@
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
-import { faFilePdf, faList } from '@fortawesome/free-solid-svg-icons';
+import { faFilePdf, faList, faQuestion } from '@fortawesome/free-solid-svg-icons';
 import { CompetencyProgress, getConfidence, getIcon, getMastery, getProgress } from 'app/entities/competency.model';
 import { Course } from 'app/entities/course.model';
 import { Router } from '@angular/router';
 import { ICompetencyAccordionToggleEvent } from 'app/shared/competency/interfaces/competency-accordion-toggle-event.interface';
-import { CompetencyInformation, StudentMetrics } from 'app/entities/student-metrics.model';
+import { CompetencyInformation, LectureUnitInformation, StudentMetrics } from 'app/entities/student-metrics.model';
 import { round } from 'app/shared/util/utils';
 import { Exercise } from 'app/entities/exercise.model';
 import dayjs from 'dayjs/esm';
+import { lectureUnitIcons, lectureUnitTooltips } from 'app/entities/lecture-unit/lectureUnit.model';
 
 @Component({
     selector: 'jhi-competency-accordion',
@@ -24,11 +25,14 @@ export class CompetencyAccordionComponent implements OnChanges {
     @Output() accordionToggle = new EventEmitter<ICompetencyAccordionToggleEvent>();
 
     open = false;
-
     nextExercises: Exercise[] = [];
+    nextLectureUnits: LectureUnitInformation[] = [];
 
     protected readonly faList = faList;
     protected readonly faPdf = faFilePdf;
+    protected readonly faQuestion = faQuestion;
+    protected readonly lectureUnitIcons = lectureUnitIcons;
+    protected readonly lectureUnitTooltips = lectureUnitTooltips;
     protected readonly getIcon = getIcon;
     protected readonly getProgress = getProgress;
     protected readonly getConfidence = getConfidence;
@@ -43,6 +47,7 @@ export class CompetencyAccordionComponent implements OnChanges {
         }
         if (changes.metrics) {
             this.setNextExercises();
+            this.setNextLessonUnits();
         }
     }
 
@@ -52,14 +57,35 @@ export class CompetencyAccordionComponent implements OnChanges {
         }
 
         const submittedExercises = Object.keys(this.metrics.exerciseMetrics?.latestSubmission ?? {}).map(Number);
-        const competencyExercises = this.metrics.competencyMetrics?.exercises[this.competency.id] ?? [];
+        const competencyExercises = this.metrics.competencyMetrics?.exercises?.[this.competency.id] ?? [];
         const nextExerciseInformations = competencyExercises
             .filter((exerciseId) => !submittedExercises.includes(exerciseId))
-            .flatMap((exerciseId) => this.metrics.exerciseMetrics?.exerciseInformation[exerciseId] ?? [])
+            .flatMap((exerciseId) => this.metrics.exerciseMetrics?.exerciseInformation?.[exerciseId] ?? [])
             .filter((exercise) => exercise.startDate.isBefore(dayjs()) && exercise.dueDate.isAfter(dayjs()))
             .sort((a, b) => a.dueDate.diff(b.dueDate));
 
-        this.nextExercises = nextExerciseInformations as Exercise[]; // TODO: Fix type casting
+        // Workaround to convert ExerciseInformation to Exercise
+        this.nextExercises = nextExerciseInformations.map(
+            (exercise) =>
+                ({
+                    ...exercise,
+                    studentAssignedTeamIdComputed: exercise.studentAssignedTeamId,
+                }) as unknown as Exercise,
+        );
+    }
+
+    setNextLessonUnits() {
+        if (!this.metrics) {
+            this.nextLectureUnits = [];
+        }
+
+        const completedLectureUnits = this.metrics.lectureUnitStudentMetricsDTO?.completed ?? [];
+        const competencyLectureUnits = this.metrics.competencyMetrics?.lectureUnits?.[this.competency.id] ?? [];
+        this.nextLectureUnits = competencyLectureUnits
+            .filter((lectureUnitId) => !completedLectureUnits.includes(lectureUnitId))
+            .flatMap((lectureUnitId) => this.metrics.lectureUnitStudentMetricsDTO?.lectureUnitInformation?.[lectureUnitId] ?? [])
+            .filter((lectureUnit) => dayjs(lectureUnit.releaseDate).isBefore(dayjs()))
+            .sort((a, b) => dayjs(a.releaseDate).diff(dayjs(b.releaseDate)));
     }
 
     toggle() {
@@ -67,52 +93,72 @@ export class CompetencyAccordionComponent implements OnChanges {
         this.accordionToggle.emit({ opened: this.open, index: this.index });
     }
 
+    get jolRating() {
+        return this.metrics.competencyMetrics?.jolValues?.[this.competency.id];
+    }
+
+    onRatingChange(newRating: number) {
+        if (this.metrics.competencyMetrics) {
+            this.metrics.competencyMetrics.jolValues = {
+                ...this.metrics.competencyMetrics.jolValues,
+                [this.competency.id]: newRating,
+            };
+        }
+    }
+
     getUserProgress(): CompetencyProgress {
-        const progress = this.metrics.competencyMetrics?.progress[this.competency.id] ?? 0;
-        const confidence = this.metrics.competencyMetrics?.confidence[this.competency.id] ?? 0;
+        const progress = this.metrics.competencyMetrics?.progress?.[this.competency.id] ?? 0;
+        const confidence = this.metrics.competencyMetrics?.confidence?.[this.competency.id] ?? 0;
         return { progress, confidence } as CompetencyProgress;
     }
 
     get progress() {
+        if (this.jolRating === undefined) {
+            return 0;
+        }
         return this.getProgress(this.getUserProgress());
     }
 
     get lectureUnitsProgress() {
-        if (this.metrics.lectureUnitStudentMetricsDTO) {
-            const competencyLectureUnits = this.metrics.competencyMetrics?.lectureUnits[this.competency.id];
-            const completedLectureUnits = competencyLectureUnits?.filter((lectureUnitId) => this.metrics.lectureUnitStudentMetricsDTO?.completed?.includes(lectureUnitId)).length;
-            if (competencyLectureUnits && completedLectureUnits) {
-                const progress = (completedLectureUnits / competencyLectureUnits.length) * 100;
-                return round(progress, 1);
-            }
-            return 0;
+        if (!this.metrics.lectureUnitStudentMetricsDTO) {
+            return undefined;
         }
-        return 0;
+
+        const competencyLectureUnits = this.metrics.competencyMetrics?.lectureUnits?.[this.competency.id];
+        const completedLectureUnits = competencyLectureUnits?.filter((lectureUnitId) => this.metrics.lectureUnitStudentMetricsDTO?.completed?.includes(lectureUnitId)).length ?? 0;
+        if (!competencyLectureUnits) {
+            return undefined;
+        }
+        const progress = (completedLectureUnits / competencyLectureUnits.length) * 100;
+        return round(progress, 1);
     }
 
     get exercisesProgress() {
-        const competencyExercises = this.metrics.competencyMetrics?.exercises[this.competency.id];
-        const completedExercises = competencyExercises?.filter((exerciseId) => this.metrics.exerciseMetrics?.completed?.includes(exerciseId)).length;
-        if (competencyExercises && completedExercises) {
-            const progress = (completedExercises / competencyExercises.length) * 100;
-            return round(progress, 1);
+        if (!this.metrics.exerciseMetrics) {
+            return undefined;
         }
-        return 0;
+
+        const competencyExercises = this.metrics.competencyMetrics?.exercises?.[this.competency.id];
+        const completedExercises = competencyExercises?.filter((exerciseId) => this.metrics.exerciseMetrics?.completed?.includes(exerciseId)).length ?? 0;
+        if (!competencyExercises) {
+            return undefined;
+        }
+        const progress = (completedExercises / competencyExercises.length) * 100;
+        return round(progress, 1);
     }
 
     get confidence() {
+        if (this.jolRating === undefined) {
+            return 0;
+        }
         return this.getConfidence(this.getUserProgress(), this.competency.masteryThreshold!);
     }
 
     get mastery() {
+        if (this.jolRating === undefined) {
+            return 0;
+        }
         return this.getMastery(this.getUserProgress(), this.competency.masteryThreshold!);
-    }
-
-    get competencyProgress() {
-        return {
-            progress: this.progress,
-            confidence: this.confidence,
-        } as CompetencyProgress;
     }
 
     navigateToCompetencyDetailPage(event: Event) {
