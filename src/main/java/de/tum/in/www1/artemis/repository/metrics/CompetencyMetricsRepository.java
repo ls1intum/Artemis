@@ -78,4 +78,19 @@ public interface CompetencyMetricsRepository extends JpaRepository<Competency, L
             AND c.id IN :competencyIds
             """)
     Set<CompetencyProgressDTO> findAllCompetencyProgressForUserByCompetencyIds(@Param("userId") long userId, @Param("competencyIds") Set<Long> competencyIds);
+
+    /**
+     * Get the competency judgement of learning values for a user in a set of competencies.
+     *
+     * @param userId        the id of the user
+     * @param competencyIds the ids of the competencies
+     * @return the competency judgement of learning values for the user in the competencies
+     */
+    @Query("""
+            SELECT new de.tum.in.www1.artemis.web.rest.dto.metrics.MapEntryDTO(jol.competency.id, jol.value)
+            FROM CompetencyJOL jol
+            WHERE jol.user.id = :userId
+            AND jol.competency.id IN :competencyIds
+            """)
+    Set<MapEntryDTO> findAllCompetencyJolValuesForUserByCompetencyIds(@Param("userId") long userId, @Param("competencyIds") Set<Long> competencyIds);
 }

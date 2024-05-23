@@ -32,7 +32,7 @@ class CompetencyJOLIntegrationTest extends AbstractSpringIntegrationIndependentT
 
     @BeforeEach
     public void setup() {
-        userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
         final var course = courseUtilService.createCourse();
         courseId = course.getId();
         competency = competencyUtilService.createCompetency(course);

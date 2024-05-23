@@ -148,6 +148,9 @@ public class MetricsService {
         final var competencyProgressMap = competencyProgress.stream().collect(toMap(CompetencyProgressDTO::competencyId, CompetencyProgressDTO::progress));
         final var competencyConfidenceMap = competencyProgress.stream().collect(toMap(CompetencyProgressDTO::competencyId, CompetencyProgressDTO::confidence));
 
-        return new CompetencyStudentMetricsDTO(competencyInfoMap, exerciseMap, lectureUnitMap, competencyProgressMap, competencyConfidenceMap);
+        final var competencyJolValues = competencyMetricsRepository.findAllCompetencyJolValuesForUserByCompetencyIds(userId, competencyIds);
+        final var competencyJolValuesMap = competencyJolValues.stream().collect(toMap(MapEntryDTO::key, e -> (int) e.value()));
+
+        return new CompetencyStudentMetricsDTO(competencyInfoMap, exerciseMap, lectureUnitMap, competencyProgressMap, competencyConfidenceMap, competencyJolValuesMap);
     }
 }
