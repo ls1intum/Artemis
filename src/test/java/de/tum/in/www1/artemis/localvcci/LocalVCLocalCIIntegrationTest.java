@@ -86,8 +86,8 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
     @BeforeAll
     void setupAll() {
-        String gitUser = environment.getProperty("artemis.version-control.user");
-        String gitPassword = environment.getProperty("artemis.version-control.password");
+        String gitUser = environment.getProperty("artemis.user-management.internal-admin.username");
+        String gitPassword = environment.getProperty("artemis.user-management.internal-admin.password");
         CredentialsProvider.setDefault(new UsernamePasswordCredentialsProvider(gitUser, gitPassword));
     }
 
