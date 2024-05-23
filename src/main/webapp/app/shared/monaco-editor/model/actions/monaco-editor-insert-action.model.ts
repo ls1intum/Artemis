@@ -14,7 +14,7 @@ export abstract class MonacoEditorInsertAction extends MonacoEditorAction {
         const selectedText = selection ? this.getTextAtRange(editor, selection)?.trim() : undefined;
         const position = editor.getPosition();
         if (selection && selectedText) {
-            this.replaceTextAtRange(editor, selection, selectedText !== this.textToInsert ? this.textToInsert : '');
+            this.replaceTextAtRange(editor, selection, this.textToInsert);
         } else if (position) {
             this.insertTextAtPosition(editor, position, this.textToInsert);
         }
