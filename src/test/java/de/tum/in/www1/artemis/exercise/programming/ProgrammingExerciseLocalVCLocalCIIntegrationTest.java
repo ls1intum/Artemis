@@ -83,7 +83,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
 
     @AfterAll
     void cleanupAll() {
-        CredentialsProvider.setDefault(null);
+        this.gitService.init();
     }
 
     @BeforeEach

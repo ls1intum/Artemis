@@ -99,7 +99,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
     @AfterAll
     void cleanupAll() {
-        CredentialsProvider.setDefault(null);
+        this.gitService.init();
     }
 
     @BeforeEach
