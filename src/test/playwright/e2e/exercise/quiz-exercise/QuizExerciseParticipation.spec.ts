@@ -129,7 +129,7 @@ test.describe('Quiz Exercise Participation', () => {
             await expect(courseOverview.getOpenRunningExerciseButton(quizExercise.id!)).not.toBeVisible();
         });
 
-        test('Instructor release ended exam for practice and student practices', async ({
+        test('Instructor release ended exercise for practice and student practices', async ({
             login,
             navigationBar,
             courseManagement,
