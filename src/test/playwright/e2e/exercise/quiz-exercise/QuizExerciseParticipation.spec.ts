@@ -1,11 +1,12 @@
 import { Course } from 'app/entities/course.model';
-import { QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import multipleChoiceQuizTemplate from '../../../fixtures/exercise/quiz/multiple_choice/template.json';
 import shortAnswerQuizTemplate from '../../../fixtures/exercise/quiz/short_answer/template.json';
 import { admin, instructor, studentOne } from '../../../support/users';
 import { test } from '../../../support/fixtures';
 import { expect } from '@playwright/test';
 import dayjs from 'dayjs';
+import { QuizMode } from '../../../support/constants';
 
 test.describe('Quiz Exercise Participation', () => {
     let course: Course;
