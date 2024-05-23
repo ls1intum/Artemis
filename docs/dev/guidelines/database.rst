@@ -159,8 +159,17 @@ Best Practices
 
 .. _ordered:
 
-  * **Ordered Collection**: When you want to order the collection of objects of the relationship, then always use a ``List``. It is important to note here that there is no inherent order in a database table. One could argue that you can use the ``id`` field for the ordering, but there are edge cases where this can lead to problems. Therefore, for a ordered collection, **always** annotate it with ``@OrderColumn``. An order column indicates to hibernate that we want to order our collection based on a specific column of our data table. By default, the column name it expects is *tablenameS\_order*. For ordered collections, we also recommend that you annotate them with ``CascadeType.ALL`` and ``orphanRemoval = true``. E.g.:
+  * **Ordered Collection without duplicates**: When you want to order the collection of objects of the relationship, while having no duplicates use a ``TreeSet``. A ``TreeSet`` is a sorted set, which means that the elements are ordered using their natural ordering or by a comparator provided at set creation time. E.g.:
 
+       .. code-block:: java
+
+        // IrisSubSettings.java
+        @Column(name = "allowed_models")
+        @Convert(converter = IrisModelListConverter.class)
+        private TreeSet<String> allowedModels = new TreeSet<>();
+
+
+  * **Ordered Collection with duplicates**: When you want to order the collection of (potentially duplicated) objects of the relationship, then always use a ``List``. It is important to note here that there is no inherent order in a database table. One could argue that you can use the ``id`` field for the ordering, but there are edge cases where this can lead to problems. Therefore, for an ordered collection with duplicates, **always** annotate it with ``@OrderColumn``. An order column indicates to Hibernate that we want to order our collection based on a specific column of our data table. By default, the column name it expects is *tablenameS\_order*. For ordered collections, we also recommend that you annotate them with ``cascade = CascadeType.ALL`` and ``orphanRemoval = true``. E.g.:
        .. code-block:: java
 
         //Result.java
