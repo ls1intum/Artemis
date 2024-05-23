@@ -4,6 +4,14 @@ import { ProgrammingExerciseGitDiffEntry } from 'app/entities/hestia/programming
 import { faSpinner, faTableColumns } from '@fortawesome/free-solid-svg-icons';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 
+interface DiffInformation {
+    path: string;
+    entries: ProgrammingExerciseGitDiffEntry[];
+    templateFileContent?: string;
+    solutionFileContent?: string;
+    diffReady: boolean;
+}
+
 @Component({
     selector: 'jhi-git-diff-report',
     templateUrl: './git-diff-report.component.html',
@@ -31,7 +39,7 @@ export class GitDiffReportComponent implements OnInit {
     entriesByPath: Map<string, ProgrammingExerciseGitDiffEntry[]>;
     addedLineCount: number;
     removedLineCount: number;
-    diffsReadyByPath: { [path: string]: boolean } = {};
+    diffInformationForPaths: DiffInformation[] = [];
     allDiffsReady = false;
     nothingToDisplay = false;
     allowSplitView = true;
@@ -108,12 +116,16 @@ export class GitDiffReportComponent implements OnInit {
         });
         this.leftCommit = this.report.leftCommitHash?.substring(0, 10);
         this.rightCommit = this.report.rightCommitHash?.substring(0, 10);
-        this.filePaths.forEach((path) => {
-            if (this.entriesByPath.get(path)?.length) {
-                this.diffsReadyByPath[path] = false;
-            }
-        });
-        this.nothingToDisplay = Object.keys(this.diffsReadyByPath).length === 0;
+        this.diffInformationForPaths = this.filePaths
+            .filter((path) => this.entriesByPath.get(path)?.length)
+            .map((path) => {
+                // entries is not undefined due to the filter
+                const entries = this.entriesByPath.get(path)!;
+                const templateFileContent = this.templateFileContentByPath.get(this.renamedFilePaths[path] || path);
+                const solutionFileContent = this.solutionFileContentByPath.get(path) ?? '';
+                return { path, entries, templateFileContent, solutionFileContent, diffReady: false };
+            });
+        this.nothingToDisplay = Object.keys(this.diffInformationForPaths).length === 0;
     }
 
     /**
@@ -123,7 +135,14 @@ export class GitDiffReportComponent implements OnInit {
      * @param ready Whether the diff is ready to be displayed or not.
      */
     onDiffReady(path: string, ready: boolean) {
-        this.diffsReadyByPath[path] = ready;
-        this.allDiffsReady = Object.values(this.diffsReadyByPath).reduce((a, b) => a && b);
+        const index = this.diffInformationForPaths.findIndex((info) => info.path === path);
+        if (index !== -1) {
+            this.diffInformationForPaths[index].diffReady = ready;
+            this.allDiffsReady = Object.values(this.diffInformationForPaths)
+                .map((info) => info.diffReady)
+                .reduce((a, b) => a && b);
+        } else {
+            console.error('Received diff ready event for unknown path: ' + path);
+        }
     }
 }
