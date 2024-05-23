@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import jakarta.annotation.Nullable;
 
@@ -21,6 +22,7 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Repository;
+import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.iris.message.IrisJsonMessageContent;
@@ -31,7 +33,7 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisBuildLogEntryDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisCompetencyDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisExamDTO;
-import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisExerciseDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisExerciseWithStudentSubmissionsDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisExtendedCourseDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisFeedbackDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisJsonMessageContentDTO;
@@ -39,6 +41,7 @@ import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisMessageCont
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisMessageDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisProgrammingExerciseDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisResultDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisStudentSubmissionDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisSubmissionDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisTextMessageContentDTO;
 import de.tum.in.www1.artemis.service.programming.RepositoryService;
@@ -127,7 +130,7 @@ public class PyrisDTOService {
 
     public PyrisExtendedCourseDTO toPyrisExtendedCourseDTO(Course course) {
         // Convert the Exercise list to PyrisExerciseDTO list
-        List<PyrisExerciseDTO> exercises = course.getExercises().stream().map(this::toPyrisExerciseDTO).toList();
+        List<PyrisExerciseWithStudentSubmissionsDTO> exercises = course.getExercises().stream().map(this::toPyrisExerciseDTO).toList();
 
         // Convert the Exam list to PyrisExamDTO list
         List<PyrisExamDTO> exams = course.getExams().stream().map(this::toPyrisExamDTO).toList();
@@ -139,10 +142,22 @@ public class PyrisDTOService {
                 toPyrisCompetencyDTOList(course.getCompetencies()));
     }
 
-    public PyrisExerciseDTO toPyrisExerciseDTO(Exercise exercise) {
-        return new PyrisExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getExerciseType(), exercise.getMode(), exercise.getMaxPoints(), exercise.getBonusPoints(),
-                exercise.getDifficulty(), toInstant(exercise.getReleaseDate()), toInstant(exercise.getDueDate()), exercise.getIncludedInOverallScore(),
-                Boolean.TRUE.equals(exercise.getPresentationScoreEnabled()));
+    /**
+     * Helper method to convert an Exercise to a PyrisExerciseDTO. It expects an exercise with student participations
+     * of only one student, namely the student that is currently using the Pyris chat.
+     *
+     * @param exercise the exercise to convert
+     * @return the converted PyrisExerciseDTO
+     */
+    public PyrisExerciseWithStudentSubmissionsDTO toPyrisExerciseDTO(Exercise exercise) {
+        var submissionDTOSet = exercise.getStudentParticipations().stream().filter(participation -> !participation.isTestRun())
+                .flatMap(participation -> participation.getSubmissions().stream()).map(submission -> new PyrisStudentSubmissionDTO(submission.getSubmissionDate().toInstant(),
+                        Optional.ofNullable(submission.getLatestResult()).map(Result::getScore).orElse(0D)))
+                .collect(Collectors.toSet());
+
+        return new PyrisExerciseWithStudentSubmissionsDTO(exercise.getId(), exercise.getTitle(), exercise.getExerciseType(), exercise.getMode(), exercise.getMaxPoints(),
+                exercise.getBonusPoints(), exercise.getDifficulty(), toInstant(exercise.getReleaseDate()), toInstant(exercise.getDueDate()), exercise.getIncludedInOverallScore(),
+                Boolean.TRUE.equals(exercise.getPresentationScoreEnabled()), submissionDTOSet);
     }
 
     public PyrisExamDTO toPyrisExamDTO(Exam exam) {

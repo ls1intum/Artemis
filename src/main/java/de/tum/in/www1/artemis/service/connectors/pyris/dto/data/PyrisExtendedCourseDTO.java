@@ -12,5 +12,5 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 public record PyrisExtendedCourseDTO(long id, String name, String description, Instant startTime, Instant endTime, ProgrammingLanguage defaultProgrammingLanguage,
         int maxComplaints, int maxTeamComplaints, int maxComplaintTimeDays, int maxRequestMoreFeedbackTimeDays, Integer maxPoints, Integer presentationScore,
 
-        List<PyrisExerciseDTO> exercises, List<PyrisExamDTO> exams, List<PyrisCompetencyDTO> competencies) {
+        List<PyrisExerciseWithStudentSubmissionsDTO> exercises, List<PyrisExamDTO> exams, List<PyrisCompetencyDTO> competencies) {
 }
