@@ -25,6 +25,7 @@ services:
         env_file:
             - ${ARTEMIS_ENV_FILE:-./artemis/config/prod-multinode.env}
             - ${ARTEMIS_NODE_1_ENV_FILE:-./artemis/config/node1.env}
+            - ./artemis/config/postgres.env
         volumes:
             - ${ARTEMIS_VOLUME_MOUNT:-./.docker-data/artemis-data}:/opt/artemis/data
             - ${ARTEMIS_LEGAL_MOUNT:-./.docker-data/artemis-legal}:/opt/artemis/legal
@@ -53,6 +54,7 @@ services:
         env_file:
             - ${ARTEMIS_ENV_FILE:-./artemis/config/prod-multinode.env}
             - ${ARTEMIS_NODE_2_ENV_FILE:-./artemis/config/node2.env}
+            - ./artemis/config/postgres.env
         volumes:
             - ${ARTEMIS_VOLUME_MOUNT:-./.docker-data/artemis-data}:/opt/artemis/data
             - ${ARTEMIS_LEGAL_MOUNT:-./.docker-data/artemis-legal}:/opt/artemis/legal
@@ -81,6 +83,7 @@ services:
         env_file:
             - ${ARTEMIS_ENV_FILE:-./artemis/config/prod-multinode.env}
             - ${ARTEMIS_NODE_3_ENV_FILE:-./artemis/config/node3.env}
+            - ./artemis/config/postgres.env
         volumes:
             - ${ARTEMIS_VOLUME_MOUNT:-./.docker-data/artemis-data}:/opt/artemis/data
             - ${ARTEMIS_LEGAL_MOUNT:-./.docker-data/artemis-legal}:/opt/artemis/legal
