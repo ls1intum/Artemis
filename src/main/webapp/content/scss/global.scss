@@ -315,6 +315,21 @@ a:hover {
     cursor: pointer;
 }
 
+/* Styles for rotating chevron icons */
+
+.rotate-icon {
+    transition: transform 0.3s ease;
+}
+
+.rotated {
+    transform: rotate(90deg);
+}
+
+.chevron-position {
+    display: inline-block;
+    vertical-align: middle;
+}
+
 /* ==========================================================================
 entity tables helpers
 ========================================================================== */
