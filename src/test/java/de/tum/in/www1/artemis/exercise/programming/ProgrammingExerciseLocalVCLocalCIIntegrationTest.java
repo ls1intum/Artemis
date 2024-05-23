@@ -255,7 +255,10 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
             assertThat(checkoutDirectoryDTO.submissionBuildPlanCheckoutDirectories().solutionCheckoutDirectories()).isNull();
             assertThat(checkoutDirectoryDTO.submissionBuildPlanCheckoutDirectories().testCheckoutDirectory()).isEqualTo("/");
 
-            // TODO
+            // Verify solution build plan checkout directories
+            assertThat(checkoutDirectoryDTO.solutionBuildPlanCheckoutDirectories().exerciseCheckoutDirectory()).isEqualTo(null);
+            assertThat(checkoutDirectoryDTO.solutionBuildPlanCheckoutDirectories().solutionCheckoutDirectories()).isEqualTo(new String[] { "/assignment" });
+            assertThat(checkoutDirectoryDTO.solutionBuildPlanCheckoutDirectories().testCheckoutDirectory()).isEqualTo("/");
         }
 
         @Test
