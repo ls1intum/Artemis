@@ -190,8 +190,8 @@ public class StandardizedCompetencyService {
      * @return the JSON string containing the catalog to export
      */
     public String exportStandardizedCompetencyCatalog() {
-        var knowledgeAreas = getAllForTreeView();
-        var sources = sourceRepository.findAll();
+        List<KnowledgeArea> knowledgeAreas = getAllForTreeView();
+        List<Source> sources = sourceRepository.findAll();
         var catalog = StandardizedCompetencyCatalogDTO.of(knowledgeAreas, sources);
 
         try {
