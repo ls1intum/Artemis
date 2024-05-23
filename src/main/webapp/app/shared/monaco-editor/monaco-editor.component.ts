@@ -53,6 +53,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     @Input()
     textChangedEmitDelay?: number;
 
+    // TODO: This is only necessary due to a bug in the code editor layout. In the future, we can remove this and the corresponding CSS class.
     @Input()
     set shrinkToFit(value: boolean) {
         if (value) {
@@ -60,6 +61,13 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         } else {
             this.renderer.removeClass(this.monacoEditorContainerElement, 'monaco-shrink-to-fit');
         }
+    }
+
+    @Input()
+    set stickyScroll(value: boolean) {
+        this._editor.updateOptions({
+            stickyScroll: { enabled: value },
+        });
     }
 
     @Input()
