@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
-import { faFilePdf, faList, faScroll } from '@fortawesome/free-solid-svg-icons';
+import { faFilePdf, faList } from '@fortawesome/free-solid-svg-icons';
 import { CompetencyProgress, getConfidence, getIcon, getMastery, getProgress } from 'app/entities/competency.model';
 import { Course } from 'app/entities/course.model';
 import { Router } from '@angular/router';
@@ -30,10 +30,6 @@ export class CompetencyAccordionComponent implements OnChanges {
 
     protected readonly faList = faList;
     protected readonly faPdf = faFilePdf;
-
-    // Delete later
-    faScroll = faScroll;
-
     protected readonly getIcon = getIcon;
     protected readonly getProgress = getProgress;
     protected readonly getConfidence = getConfidence;
@@ -138,13 +134,6 @@ export class CompetencyAccordionComponent implements OnChanges {
 
     get mastery() {
         return this.getMastery(this.getUserProgress(), this.competency.masteryThreshold!);
-    }
-
-    get competencyProgress() {
-        return {
-            progress: this.progress,
-            confidence: this.confidence,
-        } as CompetencyProgress;
     }
 
     navigateToCompetencyDetailPage(event: Event) {
