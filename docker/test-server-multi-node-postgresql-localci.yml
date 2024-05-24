@@ -52,7 +52,7 @@ services:
         container_name: artemis-app-node-3
         depends_on:
             <<: *depends-on-base
-            artemis-app-node-3:
+            artemis-app-node-1:
                 condition: service_healthy
         env_file:
             - ${ARTEMIS_ENV_FILE:-./artemis/config/prod-multinode.env}
