@@ -39,7 +39,6 @@ import de.tum.in.www1.artemis.repository.ProgrammingSubmissionTestRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.web.rest.ResultResource;
 
 class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
@@ -65,9 +64,6 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
 
     @Autowired
     private UserUtilService userUtilService;
-
-    @Autowired
-    private ResultResource resultResource;
 
     @Autowired
     private ResultService resultService;
@@ -140,7 +136,6 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
         StudentParticipation participation = participationService.createParticipationWithEmptySubmissionIfNotExisting(programmingExercise, student.orElseThrow(),
                 SubmissionType.EXTERNAL);
 
-        resultResource.getBuildJobIdsForResultsOfParticipation(participation.getId());
         List<Result> results = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(participation.getId());
 
         Map<Long, String> resultBuildJobMap = resultService.getLogsAvailabilityForResults(results);
