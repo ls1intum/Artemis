@@ -10,8 +10,11 @@ import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -25,7 +28,7 @@ import de.tum.in.www1.artemis.service.competency.KnowledgeAreaService;
 import de.tum.in.www1.artemis.service.competency.StandardizedCompetencyService;
 import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreaRequestDTO;
 import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreaResultDTO;
-import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreasForImportDTO;
+import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.StandardizedCompetencyCatalogDTO;
 import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.StandardizedCompetencyRequestDTO;
 import de.tum.in.www1.artemis.web.rest.dto.standardizedCompetency.StandardizedCompetencyResultDTO;
 
@@ -151,18 +154,37 @@ public class AdminStandardizedCompetencyResource {
     }
 
     /**
-     * PUT api/admin/standardized-competencies/import : Imports standardized competencies, knowledge areas and sources
+     * PUT api/admin/standardized-competencies/import : Imports a catalog of standardized competencies, knowledge areas and sources
      *
-     * @param knowledgeAreasForImportDTO the DTO containing knowledge areas (and their competencies) and sources
+     * @param standardizedCompetencyCatalogDTO the DTO containing the standardized competency catalog
      * @return the ResponseEntity with status 200 (OK)
      */
     @PutMapping("standardized-competencies/import")
     @EnforceAdmin
-    public ResponseEntity<Void> importStandardizedCompetencies(@RequestBody @Valid KnowledgeAreasForImportDTO knowledgeAreasForImportDTO) {
-        log.debug("REST request to import standardized competencies from .json");
+    public ResponseEntity<Void> importStandardizedCompetencyCatalog(@RequestBody @Valid StandardizedCompetencyCatalogDTO standardizedCompetencyCatalogDTO) {
+        log.debug("REST request to import standardized competency catalog");
 
-        standardizedCompetencyService.adminImportStandardizedCompetencies(knowledgeAreasForImportDTO);
+        standardizedCompetencyService.importStandardizedCompetencyCatalog(standardizedCompetencyCatalogDTO);
 
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * GET api/admin/standardized-competencies/export : Exports the catalog of standardized competencies, knowledge areas and sources of this Artemis instance
+     *
+     * @return the ResponseEntity with status 200 (OK) and the body containing the JSON string of the standardized competency catalog
+     */
+    @GetMapping("standardized-competencies/export")
+    @EnforceAdmin
+    public ResponseEntity<String> exportStandardizedCompetencyCatalog() {
+        log.debug("REST request to export standardized competency catalog");
+
+        String catalog = standardizedCompetencyService.exportStandardizedCompetencyCatalog();
+
+        HttpHeaders responseHeaders = new HttpHeaders();
+        responseHeaders.setContentType(MediaType.APPLICATION_JSON);
+        responseHeaders.setContentDispositionFormData("attachment", "competencies.json");
+
+        return ResponseEntity.ok().headers(responseHeaders).body(catalog);
     }
 }
