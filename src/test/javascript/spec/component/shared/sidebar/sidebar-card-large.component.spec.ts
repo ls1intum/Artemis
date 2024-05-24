@@ -40,7 +40,7 @@ describe('SidebarCardLargeComponent', () => {
     it('should store route on click', () => {
         jest.spyOn(component, 'emitStoreAndRefresh');
         jest.spyOn(component, 'refreshChildComponent');
-        const element: HTMLElement = fixture.nativeElement.querySelector('#test-sidebar-card');
+        const element: HTMLElement = fixture.nativeElement.querySelector('#test-sidebar-card-large');
         element.click();
         fixture.detectChanges();
         expect(component.emitStoreAndRefresh).toHaveBeenCalledWith(component.sidebarItem.id);
@@ -52,7 +52,7 @@ describe('SidebarCardLargeComponent', () => {
         component.emitStoreAndRefresh = mockFn;
         component.itemSelected = true;
         fixture.detectChanges();
-        const itemElement = fixture.nativeElement.querySelector('#test-sidebar-card');
+        const itemElement = fixture.nativeElement.querySelector('#test-sidebar-card-large');
         itemElement.click();
         await fixture.whenStable();
         expect(mockFn).toHaveBeenCalledWith('testId');
@@ -66,7 +66,7 @@ describe('SidebarCardLargeComponent', () => {
         component.emitStoreAndRefresh = mockFn;
         component.itemSelected = false;
         fixture.detectChanges();
-        const itemElement = fixture.nativeElement.querySelector('#test-sidebar-card');
+        const itemElement = fixture.nativeElement.querySelector('#test-sidebar-card-large');
         itemElement.click();
         await fixture.whenStable();
         expect(mockFn).toHaveBeenCalledWith('testId');
