@@ -33,7 +33,8 @@ type ShownDetail =
     | ProgrammingDiffReportDetail
     | ProgrammingProblemStatementDetail
     | ProgrammingTimelineDetail
-    | ProgrammingBuildStatisticsDetail;
+    | ProgrammingBuildStatisticsDetail
+    | ProgrammingCheckoutDirectoriesDetail;
 
 interface DetailBase {
     type: DetailType;
@@ -134,5 +135,13 @@ interface ProgrammingBuildStatisticsDetail extends DetailBase {
     type: DetailType.ProgrammingBuildStatistics;
     data: {
         buildLogStatistics: BuildLogStatisticsDTO;
+    };
+}
+
+interface ProgrammingCheckoutDirectoriesDetail extends DetailBase {
+    type: DetailType.ProgrammingCheckoutDirectories;
+    data: {
+        exercise: ProgrammingExercise;
+        isLocal: boolean;
     };
 }
