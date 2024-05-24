@@ -7,10 +7,10 @@ import { CheckoutDirectoriesDto } from 'app/entities/checkout-directories-dto';
 
 @Component({
     selector: 'jhi-programming-exercise-build-details',
-    templateUrl: './programming-exercise-build-details.component.html',
+    templateUrl: './programming-exercise-repository-and-build-plan-details.component.html',
     styleUrls: ['../../manage/programming-exercise-form.scss'],
 })
-export class ProgrammingExerciseBuildDetailsComponent implements OnInit, OnChanges, OnDestroy {
+export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implements OnInit, OnChanges, OnDestroy {
     @Input() programmingExercise: ProgrammingExercise;
     @Input() programmingLanguage: ProgrammingLanguage;
     @Input() isLocal: boolean;

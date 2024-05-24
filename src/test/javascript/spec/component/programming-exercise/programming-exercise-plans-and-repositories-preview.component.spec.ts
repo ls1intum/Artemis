@@ -9,11 +9,11 @@ import { Subscription, of } from 'rxjs';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 import { SimpleChanges } from '@angular/core';
 import { ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-build-plan-checkout-directories.component';
-import { ProgrammingExerciseBuildDetailsComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-build-details.component';
+import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-repository-and-build-plan-details.component';
 
 describe('ProgrammingExerciseBuildDetailsComponent', () => {
-    let component: ProgrammingExerciseBuildDetailsComponent;
-    let fixture: ComponentFixture<ProgrammingExerciseBuildDetailsComponent>;
+    let component: ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent;
+    let fixture: ComponentFixture<ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent>;
     let programmingExerciseService: ProgrammingExerciseService;
 
     const CHECKOUT_DIRECTORY_PREVIEW_SUBMISSION_BUILD_PLAN = '#checkout-directory-preview-submission-build-plan';
@@ -44,12 +44,12 @@ describe('ProgrammingExerciseBuildDetailsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [ProgrammingExerciseBuildDetailsComponent, MockComponent(HelpIconComponent), ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent],
+            declarations: [ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent, MockComponent(HelpIconComponent), ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent],
             providers: [{ provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService }],
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(ProgrammingExerciseBuildDetailsComponent);
+                fixture = TestBed.createComponent(ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent);
                 component = fixture.componentInstance;
                 programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
 
