@@ -16,7 +16,7 @@ export class JudgementOfLearningRatingComponent {
     @Input() courseId?: number;
     @Input() competencyId: number;
     @Input() rating?: number;
-    @Input() competencyProgress?: number;
+    @Input() mastery?: number;
 
     @Output() ratingChange = new EventEmitter<number>();
 

@@ -7,6 +7,7 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -42,6 +43,7 @@ import de.tum.in.www1.artemis.repository.CompetencyRelationRepository;
 import de.tum.in.www1.artemis.repository.CompetencyRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.competency.CompetencyJOLRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
@@ -107,11 +109,14 @@ public class CompetencyResource {
 
     private final CompetencyJOLService competencyJOLService;
 
+    private final CompetencyJOLRepository competencyJOLRepository;
+
     public CompetencyResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             CompetencyRepository competencyRepository, CompetencyRelationRepository competencyRelationRepository, CompetencyService competencyService,
             CompetencyProgressRepository competencyProgressRepository, CompetencyProgressService competencyProgressService, ExerciseService exerciseService,
             LectureUnitService lectureUnitService, CompetencyRelationService competencyRelationService,
-            Optional<IrisCompetencyGenerationSessionService> irisCompetencyGenerationSessionService, CompetencyJOLService competencyJOLService) {
+            Optional<IrisCompetencyGenerationSessionService> irisCompetencyGenerationSessionService, CompetencyJOLService competencyJOLService,
+            CompetencyJOLRepository competencyJOLRepository) {
         this.courseRepository = courseRepository;
         this.competencyRelationRepository = competencyRelationRepository;
         this.authorizationCheckService = authorizationCheckService;
@@ -125,6 +130,7 @@ public class CompetencyResource {
         this.competencyRelationService = competencyRelationService;
         this.irisCompetencyGenerationSessionService = irisCompetencyGenerationSessionService;
         this.competencyJOLService = competencyJOLService;
+        this.competencyJOLRepository = competencyJOLRepository;
     }
 
     /**
@@ -611,7 +617,7 @@ public class CompetencyResource {
     }
 
     /**
-     * Generates a list of competencies from a given course description by using IRIS.
+     * POST courses/:courseId/competencies/:competencyId/competencies/generate-from-description : Generates a list of competencies from a given course description by using IRIS.
      *
      * @param courseId          the id of the current course
      * @param courseDescription the text description of the course
@@ -650,7 +656,7 @@ public class CompetencyResource {
     }
 
     /**
-     * PUT courses/:courseId/competencies/:competencyId/jol/:jolValue
+     * PUT courses/:courseId/competencies/:competencyId/jol/:jolValue : Sets the judgement of learning for a competency
      *
      * @param courseId     the id of the course for which the competency belongs
      * @param competencyId the id of the competency for which to set the judgement of learning
@@ -663,8 +669,45 @@ public class CompetencyResource {
         log.info("REST request to set judgement of learning for competency: {}", competencyId);
 
         final var userId = userRepository.getUserIdElseThrow();
+        competencyService.checkIfCompetencyBelongsToCourse(competencyId, courseId);
         competencyJOLService.setJudgementOfLearning(competencyId, userId, jolValue);
 
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * GET courses/:courseId/competencies/:competencyId/jol : Gets the judgement of learning for a competency
+     *
+     * @param courseId     the id of the course for which the competency belongs
+     * @param competencyId the id of the competency for which to set the judgement of learning
+     * @return the ResponseEntity with status 200 (OK) and body the judgement of learning value or null if not set
+     */
+    @GetMapping("courses/{courseId}/competencies/{competencyId}/jol")
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<Integer> getJudgementOfLearningForCompetency(@PathVariable long courseId, @PathVariable long competencyId) {
+        log.info("REST request to get judgement of learning for competency: {}", competencyId);
+
+        final var userId = userRepository.getUserIdElseThrow();
+        competencyService.checkIfCompetencyBelongsToCourse(competencyId, courseId);
+        final var jol = competencyJOLRepository.findValueByCompetencyIdAndUserId(competencyId, userId);
+
+        return ResponseEntity.ok(jol.orElse(null));
+    }
+
+    /**
+     * GET courses/:courseId/competencies/jol : Gets the judgement of learning for all competencies of a course
+     *
+     * @param courseId the id of the course for which the competency belongs
+     * @return the ResponseEntity with status 200 (OK) and body the judgement of learning values for all competencies of the course as a map from competency id to jol value
+     */
+    @GetMapping("courses/{courseId}/competencies/jol")
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<Map<Long, Integer>> getJudgementOfLearningForCourse(@PathVariable long courseId) {
+        log.info("REST request to get judgement of learning for competencies of course: {}", courseId);
+
+        final var userId = userRepository.getUserIdElseThrow();
+        final var jols = competencyJOLService.getJudgementOfLearningForUserByCourseId(userId, courseId);
+
+        return ResponseEntity.ok(jols);
     }
 }

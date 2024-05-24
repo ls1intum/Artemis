@@ -15,6 +15,8 @@ export class CompetencyCardComponent {
     competency: Competency;
     @Input()
     isPrerequisite: boolean;
+    @Input()
+    hideProgress = false;
 
     getIcon = getIcon;
 
