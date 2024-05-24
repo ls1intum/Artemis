@@ -5,13 +5,13 @@ import { Subscription } from 'rxjs';
 import { SidebarEventService } from '../sidebar-event.service';
 import { ActivatedRoute, Router } from '@angular/router';
 @Component({
-    selector: 'jhi-sidebar-card',
-    templateUrl: './sidebar-card.component.html',
-    styleUrls: ['./sidebar-card.component.scss'],
+    selector: 'jhi-large-sidebar-card',
+    templateUrl: './sidebar-card-large.component.html',
+    styleUrls: ['./sidebar-card-large.component.scss'],
 })
-export class SidebarCardComponent {
+export class SidebarCardLargeComponent {
     DifficultyLevel = DifficultyLevel;
-    @Input() sidebarItem: SidebarCardElement;
+    @Input({ required: true }) sidebarItem: SidebarCardElement;
     @Input() sidebarType?: SidebarTypes;
     @Input() itemSelected?: boolean;
 
@@ -28,13 +28,14 @@ export class SidebarCardComponent {
 
     emitStoreLastSelectedItem(itemId: number | string) {
         this.sidebarEventService.emitSidebarCardEvent(itemId);
+        this.forceReload();
     }
 
     forceReload(): void {
         this.router.navigate(['../'], { skipLocationChange: true, relativeTo: this.route }).then(() => {
             this.itemSelected
-                ? this.router.navigate(['../' + this.sidebarItem?.id], { relativeTo: this.route })
-                : this.router.navigate(['./' + this.sidebarItem?.id], { relativeTo: this.route });
+                ? this.router.navigate(['../' + this.sidebarItem.id], { relativeTo: this.route })
+                : this.router.navigate(['./' + this.sidebarItem.id], { relativeTo: this.route });
         });
     }
 }

@@ -126,6 +126,7 @@ export class CourseOverviewService {
             title: lecture.title ?? '',
             id: lecture.id ?? '',
             subtitleLeft: lecture.startDate?.format('MMM DD, YYYY') ?? this.translate.instant('artemisApp.courseOverview.sidebar.noDate'),
+            size: 'M',
         };
         return lectureCardItem;
     }
@@ -133,6 +134,7 @@ export class CourseOverviewService {
         const tutorialGroupCardItem: SidebarCardElement = {
             title: tutorialGroup.title ?? '',
             id: tutorialGroup.id ?? '',
+            size: 'M',
             subtitleLeft: tutorialGroup.nextSession?.start?.format('MMM DD, YYYY') ?? this.translate.instant('artemisApp.courseOverview.sidebar.noUpcomingSession'),
             subtitleRight: this.getUtilization(tutorialGroup),
         };
@@ -160,6 +162,7 @@ export class CourseOverviewService {
             studentParticipation: exercise?.studentParticipations?.length
                 ? this.participationService.getSpecificStudentParticipation(exercise.studentParticipations, false)
                 : undefined,
+            size: 'M',
         };
         return exerciseCardItem;
     }

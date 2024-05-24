@@ -462,8 +462,105 @@
                                 <ul class="list-unstyled">
                                     <li class="list-group-item border-1">
                                         <span>
-                                            <jhi-checklist-check [checkAttribute]="!!exam.publishResultsDate" />
-                                            <span>{{ 'artemisApp.examManagement.checklist.textitems.pulishingdateset' | artemisTranslate }}</span>
+                                            <li class="list-group-item border-1">
+                                                <jhi-checklist-check [checkAttribute]="!!exam.publishResultsDate" />
+                                                <span>{{ 'artemisApp.examManagement.checklist.textitems.pulishingdateset' | artemisTranslate }}</span>
+                                            </li>
+                                            @if (exam.publishResultsDate) {
+                                                <hr />
+                                                <div class="table-responsive">
+                                                    <table class="table table-striped">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>
+                                                                    <span jhiTranslate="artemisApp.examManagement.checklist.textitems.assessmentCheckType"></span>
+                                                                </th>
+                                                                <th>
+                                                                    <span jhiTranslate="artemisApp.examManagement.checklist.textitems.assessmentStatus"></span>
+                                                                </th>
+                                                                <th>
+                                                                    <span jhiTranslate="artemisApp.examManagement.checklist.textitems.assessmentAction"></span>
+                                                                </th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr>
+                                                                <th>
+                                                                    <span jhiTranslate="artemisApp.examManagement.checklist.textitems.checkUnfinishedAssessments"></span>
+                                                                </th>
+                                                                <th>
+                                                                    <jhi-checklist-check [checkAttribute]="!isExamOver || (isExamOver && !existsUnfinishedAssessments)" />
+                                                                </th>
+                                                                <th>
+                                                                    <button
+                                                                        [routerLink]="getExamRoutesByIdentifier('assessment-dashboard')"
+                                                                        class="btn btn-primary"
+                                                                        id="tutor-exam-dashboard-button_table_assessment_check"
+                                                                        [disabled]="!isExamOver || isLoading || (isExamOver && !existsUnfinishedAssessments)"
+                                                                    >
+                                                                        <fa-icon [icon]="faThList" />
+                                                                        <span jhiTranslate="artemisApp.examManagement.assessmentDashboard"></span>
+                                                                    </button>
+                                                                </th>
+                                                            </tr>
+                                                            <tr>
+                                                                <th>
+                                                                    <span jhiTranslate="artemisApp.examManagement.checklist.textitems.checkUnassessedQuizzes"></span>
+                                                                </th>
+                                                                <th>
+                                                                    @if (isEvaluatingQuizExercises) {
+                                                                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                                                    } @else {
+                                                                        <jhi-checklist-check [checkAttribute]="!isExamOver || (isExamOver && !existsUnassessedQuizzes)" />
+                                                                    }
+                                                                </th>
+                                                                <th>
+                                                                    <button
+                                                                        id="evaluateQuizExercisesButton"
+                                                                        class="btn btn-primary mt-1"
+                                                                        (click)="evaluateQuizExercises()"
+                                                                        [disabled]="
+                                                                            !isExamOver || isLoading || (isExamOver && (!existsUnassessedQuizzes || isEvaluatingQuizExercises))
+                                                                        "
+                                                                    >
+                                                                        @if (isEvaluatingQuizExercises) {
+                                                                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                                                        }
+                                                                        <span jhiTranslate="artemisApp.studentExams.evaluateQuizExercises"></span>
+                                                                    </button>
+                                                                </th>
+                                                            </tr>
+                                                            <tr>
+                                                                <th>
+                                                                    <span jhiTranslate="artemisApp.examManagement.checklist.textitems.checkUnsubmittedExercises"></span>
+                                                                </th>
+                                                                <th>
+                                                                    @if (isAssessingUnsubmittedExams) {
+                                                                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                                                    } @else {
+                                                                        <jhi-checklist-check [checkAttribute]="!isExamOver || (isExamOver && !existsUnsubmittedExercises)" />
+                                                                    }
+                                                                </th>
+                                                                <th>
+                                                                    <button
+                                                                        class="btn btn-primary mt-1"
+                                                                        id="assessUnsubmittedExamModelingAndTextParticipationsButton"
+                                                                        (click)="assessUnsubmittedExamModelingAndTextParticipations()"
+                                                                        [disabled]="
+                                                                            !isExamOver || isLoading || (isExamOver && (!existsUnsubmittedExercises || isAssessingUnsubmittedExams))
+                                                                        "
+                                                                    >
+                                                                        @if (isAssessingUnsubmittedExams) {
+                                                                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                                                        }
+                                                                        <span jhiTranslate="artemisApp.studentExams.assessUnsubmittedStudentExams"></span>
+                                                                    </button>
+                                                                </th>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            }
                                         </span>
                                     </li>
                                 </ul>

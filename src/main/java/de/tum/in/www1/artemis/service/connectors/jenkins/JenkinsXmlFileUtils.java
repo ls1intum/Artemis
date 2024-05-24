@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.util;
+package de.tum.in.www1.artemis.service.connectors.jenkins;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -26,9 +26,9 @@ import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-public class XmlFileUtils {
+public class JenkinsXmlFileUtils {
 
-    private static final Logger log = LoggerFactory.getLogger(XmlFileUtils.class);
+    private static final Logger log = LoggerFactory.getLogger(JenkinsXmlFileUtils.class);
 
     public static Document readFromString(String xmlString) {
         return parseDocument(xmlString);
