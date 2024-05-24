@@ -1,5 +1,4 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
-import { getCourseFromExercise } from 'app/entities/exercise.model';
+import { Component, Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
@@ -11,14 +10,12 @@ import { CheckoutDirectoriesDto } from 'app/entities/checkout-directories-dto';
     templateUrl: './programming-exercise-plans-and-repositories-preview.component.html',
     styleUrls: ['../programming-exercise-form.scss'],
 })
-export class ProgrammingExercisePlansAndRepositoriesPreviewComponent implements OnInit, OnChanges, OnDestroy {
-    @Input() programmingExercise: ProgrammingExercise | null;
+export class ProgrammingExercisePlansAndRepositoriesPreviewComponent implements OnChanges, OnDestroy {
+    @Input() programmingExercise: ProgrammingExercise;
     @Input() isLocal: boolean;
     @Input() programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
 
     constructor(private programmingExerciseService: ProgrammingExerciseService) {}
-
-    shortName?: string;
 
     checkoutDirectories?: CheckoutDirectoriesDto;
     auxiliaryRepositoryCheckoutDirectories: string[] = [];
@@ -48,27 +45,7 @@ export class ProgrammingExercisePlansAndRepositoriesPreviewComponent implements 
         return directory.startsWith(ROOT_DIRECTORY_PATH) ? directory : ROOT_DIRECTORY_PATH + directory;
     }
 
-    private updateShortName() {
-        if (!this.programmingExercise) {
-            return;
-        }
-        this.shortName = getCourseFromExercise(this.programmingExercise)?.shortName;
-    }
-
-    ngOnInit() {
-        this.updateShortName();
-
-        if (this.isLocal) {
-            this.updateCheckoutDirectories();
-            this.updateAuxiliaryRepositoryCheckoutDirectories();
-        }
-    }
-
     ngOnChanges(changes: SimpleChanges) {
-        if (changes.programmingExercise) {
-            this.updateShortName();
-        }
-
         if (
             this.isLocal &&
             this.programmingExerciseCreationConfig?.selectedProgrammingLanguage &&

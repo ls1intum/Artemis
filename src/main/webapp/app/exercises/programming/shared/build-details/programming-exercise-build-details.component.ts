@@ -11,16 +11,15 @@ import { CheckoutDirectoriesDto } from 'app/entities/checkout-directories-dto';
     styleUrls: ['../../manage/programming-exercise-form.scss'],
 })
 export class ProgrammingExerciseBuildDetailsComponent {
-    @Input() programmingExercise: ProgrammingExercise | null;
+    @Input() programmingExercise: ProgrammingExercise;
     @Input() checkoutDirectories?: CheckoutDirectoriesDto;
+    @Input() auxiliaryRepositoryCheckoutDirectories: string[];
     @Input() programmingLanguage: ProgrammingLanguage;
     @Input() isLocal: boolean;
 
     constructor(private programmingExerciseService: ProgrammingExerciseService) {}
 
     courseShortName?: string;
-
-    auxiliaryRepositoryCheckoutDirectories: string[] = [];
 
     programmingExerciseServiceSubscription: Subscription;
 
@@ -64,15 +63,11 @@ export class ProgrammingExerciseBuildDetailsComponent {
     }
 
     ngOnChanges(changes: SimpleChanges) {
-        if (changes.programmingExercise) {
-            this.updateShortName();
-        }
-
-        if (this.isLocal && changes.programmingLanguageprogrammingLanguage && changes.programmingLanguage.currentValue !== changes.programmingLanguage.previousValue) {
+        if (this.isLocal && changes.programmingLanguage && changes.programmingLanguage.currentValue !== changes.programmingLanguage.previousValue) {
             this.updateCheckoutDirectories();
         }
 
-        if (this.isLocal && this.programmingExercise?.auxiliaryRepositories) {
+        if (changes.auxiliaryRepositoryCheckoutDirectories) {
             this.updateAuxiliaryRepositoryCheckoutDirectories();
         }
     }
