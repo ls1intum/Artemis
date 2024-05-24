@@ -20,7 +20,6 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCForbiddenException;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -57,11 +56,10 @@ public class SshGitLocationResolverService implements GitLocationResolver {
             repositoryPath = repositoryPath.substring(5);
         }
 
-        String gitCommand = args[0];
-        User user = session.getAttribute(USER_KEY);
-        LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(Paths.get(repositoryPath), localVCBaseUrl);
-        String projectKey = localVCRepositoryUri.getProjectKey();
-        String repositoryTypeOrUserName = localVCRepositoryUri.getRepositoryTypeOrUserName();
+        final var gitCommand = args[0];
+        final var localVCRepositoryUri = new LocalVCRepositoryUri(Paths.get(repositoryPath), localVCBaseUrl);
+        final var projectKey = localVCRepositoryUri.getProjectKey();
+        final var repositoryTypeOrUserName = localVCRepositoryUri.getRepositoryTypeOrUserName();
         ProgrammingExercise exercise;
 
         try {
@@ -72,7 +70,8 @@ public class SshGitLocationResolverService implements GitLocationResolver {
         }
 
         // git-upload-pack means fetch (read operation), git-receive-pack means push (write operation)
-        var repositoryAction = gitCommand.equals("git-upload-pack") ? RepositoryActionType.READ : gitCommand.equals("git-receive-pack") ? RepositoryActionType.WRITE : null;
+        final var repositoryAction = gitCommand.equals("git-upload-pack") ? RepositoryActionType.READ : gitCommand.equals("git-receive-pack") ? RepositoryActionType.WRITE : null;
+        final var user = session.getAttribute(USER_KEY);
         try {
             localVCServletService.authorizeUser(repositoryTypeOrUserName, user, exercise, repositoryAction, localVCRepositoryUri.isPracticeRepository());
         }
@@ -82,7 +81,7 @@ public class SshGitLocationResolverService implements GitLocationResolver {
         }
 
         // we cannot trust unvalidated user input
-        String localRepositoryPath = localVCRepositoryUri.getRelativeRepositoryPath().toString();
+        final var localRepositoryPath = localVCRepositoryUri.getRelativeRepositoryPath().toString();
         try (Repository repo = localVCServletService.resolveRepository(localRepositoryPath)) {
             return repo.getDirectory().toPath();
         }
