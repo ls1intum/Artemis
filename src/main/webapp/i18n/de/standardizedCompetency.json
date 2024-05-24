@@ -25,10 +25,11 @@
                 "title": "Standardisierte Kompetenzen Verwalten",
                 "filter": "Kompetenzen Filtern",
                 "empty": "Es existieren keine Wissensgebiete oder standardisierten Kompetenzen. Du kannst ein neues Wissensgebiet mit dem \"+\" Button erstellen.",
-                "importButton": "Standardisierte Kompetenzen importieren",
+                "importButton": "Kompetenzkatalog importieren",
+                "exportButton": "Kompetenzkatalog exportieren",
                 "expandButtonTooltip": "Alle Wissensgebiete ausklappen",
                 "collapseButtonTooltip": "Alle Wissensgebiete einklappen",
-                "updateTreeError": "Bei der Aktualisierung des Wissensbereichsbaums ist ein Fehler aufgetreten. Bitte lade die Seite neu",
+                "updateTreeError": "Bei der Aktualisierung des Wissensgebietsbaums ist ein Fehler aufgetreten. Bitte lade die Seite neu",
                 "deleteModal": {
                     "question": "Willst du wirklich die standardisierte Kompetenz <strong>{{ title }}</strong> löschen? Du kannst diese Aktion nicht rückgängig machen!",
                     "typeNameToConfirm": "Bitte gib zur Bestätigung den Namen der standardisierten Kompetenz ein."

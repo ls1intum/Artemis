@@ -133,7 +133,7 @@ describe('AdminImportStandardizedCompetenciesComponent', () => {
         const mockRouter = TestBed.inject(Router);
         const navigateSpy = jest.spyOn(mockRouter, 'navigate');
         const competencyService = TestBed.inject(AdminStandardizedCompetencyService);
-        jest.spyOn(competencyService, 'importCompetencies').mockReturnValue(of(new HttpResponse<void>({ status: 200 })));
+        jest.spyOn(competencyService, 'importStandardizedCompetencyCatalog').mockReturnValue(of(new HttpResponse<void>({ status: 200 })));
 
         component.importCompetencies();
 
