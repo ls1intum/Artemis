@@ -164,9 +164,10 @@ describe('ProgrammingExercisePlansAndRepositoriesPreviewComponent', () => {
 
         fixture.detectChanges();
 
+        const OCAML_SOLUTION_CHECKOUT_DIRECTORY_REGEX = RegExp('.*\\/assignment, *\\/solution.*');
         const solutionPreviewElement = fixture.debugElement.nativeElement.querySelector(CHECKOUT_DIRECTORY_PREVIEW_SOLUTION_BUILD_PLAN);
         expect(solutionPreviewElement).toBeTruthy();
-        expect(solutionPreviewElement.textContent).toContain('  /assignment,  /solution ');
+        expect(OCAML_SOLUTION_CHECKOUT_DIRECTORY_REGEX.test(solutionPreviewElement.textContent)).toBeTrue();
     });
 
     it('should update auxiliary repository directories on changes', () => {
