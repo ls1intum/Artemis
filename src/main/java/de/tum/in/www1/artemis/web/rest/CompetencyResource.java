@@ -567,7 +567,8 @@ public class CompetencyResource {
     public ResponseEntity<Competency> addPrerequisite(@PathVariable long competencyId, @PathVariable long courseId) {
         log.info("REST request to add a prerequisite: {}", competencyId);
         var course = courseRepository.findWithEagerCompetenciesByIdElseThrow(courseId);
-        var competency = competencyRepository.findByIdWithConsecutiveCoursesElseThrow(competencyId);
+        // var competency = competencyRepository.findByIdWithConsecutiveCoursesElseThrow(competencyId);
+        var competency = new Competency();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, competency.getCourse(), null);
 
@@ -575,8 +576,8 @@ public class CompetencyResource {
             throw new BadRequestAlertException("The competency of a course can not be a prerequisite to the same course", ENTITY_NAME, "competencyCycle");
         }
 
-        course.addPrerequisite(competency);
-        courseRepository.save(course);
+        // TODO: do notuse competencyId.
+        // TODO: add new logic.
         return ResponseEntity.ok().body(competency);
     }
 
@@ -592,14 +593,18 @@ public class CompetencyResource {
     public ResponseEntity<Void> removePrerequisite(@PathVariable long competencyId, @PathVariable long courseId) {
         log.info("REST request to remove a prerequisite: {}", competencyId);
         var course = courseRepository.findWithEagerCompetenciesByIdElseThrow(courseId);
-        var competency = competencyRepository.findByIdWithConsecutiveCoursesElseThrow(competencyId);
-        if (!competency.getConsecutiveCourses().stream().map(Course::getId).toList().contains(courseId)) {
-            throw new BadRequestAlertException("The competency is not a prerequisite of the given course", ENTITY_NAME, "prerequisiteWrongCourse");
-        }
+        // var competency = competencyRepository.findByIdWithConsecutiveCoursesElseThrow(competencyId);
+        var competency = new Competency();
+        // TODO: replace logic.
+        /*
+         * if (!competency.getConsecutiveCourses().stream().map(Course::getId).toList().contains(courseId)) {
+         * throw new BadRequestAlertException("The competency is not a prerequisite of the given course", ENTITY_NAME, "prerequisiteWrongCourse");
+         * }
+         */
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, competency.getCourse(), null);
 
-        course.removePrerequisite(competency);
+        // TODO: add new logic.
         courseRepository.save(course);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, PREREQUISITE_NAME, competency.getTitle())).build();

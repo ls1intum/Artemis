@@ -6,18 +6,12 @@ import java.util.Set;
 
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
@@ -35,16 +29,6 @@ public class Competency extends AbstractCompetency {
     @ManyToMany(mappedBy = "competencies")
     @JsonIgnoreProperties("competencies")
     private Set<LectureUnit> lectureUnits = new HashSet<>();
-
-    /**
-     * A set of courses for which this competency is a prerequisite for.
-     * TODO: remove this once the prerequisite migration is complete
-     */
-    @ManyToMany
-    @JoinTable(name = "competency_course", joinColumns = @JoinColumn(name = "competency_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "course_id", referencedColumnName = "id"))
-    @JsonIgnoreProperties({ "competencies", "prerequisites" })
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    private Set<Course> consecutiveCourses = new HashSet<>();
 
     public Competency() {
     }
@@ -107,14 +91,6 @@ public class Competency extends AbstractCompetency {
         }
         this.lectureUnits.remove(lectureUnit);
         lectureUnit.getCompetencies().remove(this);
-    }
-
-    public Set<Course> getConsecutiveCourses() {
-        return consecutiveCourses;
-    }
-
-    public void setConsecutiveCourses(Set<Course> consecutiveCourses) {
-        this.consecutiveCourses = consecutiveCourses;
     }
 
     /**

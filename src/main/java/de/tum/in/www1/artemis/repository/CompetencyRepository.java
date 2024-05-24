@@ -81,31 +81,6 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long>, J
             """)
     Optional<Competency> findByIdWithExercisesAndLectureUnitsBidirectional(@Param("competencyId") long competencyId);
 
-    @Query("""
-            SELECT c
-            FROM Competency c
-                LEFT JOIN FETCH c.consecutiveCourses
-            WHERE c.id = :competencyId
-            """)
-    Optional<Competency> findByIdWithConsecutiveCourses(@Param("competencyId") long competencyId);
-
-    @Query("""
-            SELECT pr
-            FROM Competency pr
-                LEFT JOIN pr.consecutiveCourses c
-            WHERE c.id = :courseId
-            ORDER BY pr.title
-            """)
-    Set<Competency> findPrerequisitesByCourseId(@Param("courseId") long courseId);
-
-    @Query("""
-            SELECT COUNT(*)
-            FROM Competency pr
-                LEFT JOIN pr.consecutiveCourses c
-            WHERE c.id = :courseId
-            """)
-    Long countPrerequisitesByCourseId(@Param("courseId") long courseId);
-
     /**
      * Query which fetches all competencies for which the user is editor or instructor in the course and
      * matching the search criteria.
@@ -193,10 +168,6 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long>, J
 
     default Competency findByIdWithExercisesAndLectureUnitsBidirectionalElseThrow(long competencyId) {
         return findByIdWithExercisesAndLectureUnitsBidirectional(competencyId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
-    }
-
-    default Competency findByIdWithConsecutiveCoursesElseThrow(long competencyId) {
-        return findByIdWithConsecutiveCourses(competencyId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
     }
 
     default Competency findByIdElseThrow(long competencyId) {

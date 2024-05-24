@@ -321,7 +321,8 @@ public class CourseService {
         // NOTE: in this call we only want to know if competencies exist in the course, we will load them when the user navigates into them
         course.setNumberOfCompetencies(competencyRepository.countByCourse(course));
         // NOTE: in this call we only want to know if prerequisites exist in the course, we will load them when the user navigates into them
-        course.setNumberOfPrerequisites(competencyRepository.countPrerequisitesByCourseId(course.getId()));
+        // TODO: change this.
+        course.setNumberOfPrerequisites(0L);
         // NOTE: in this call we only want to know if tutorial groups exist in the course, we will load them when the user navigates into them
         course.setNumberOfTutorialGroups(tutorialGroupRepository.countByCourse(course));
         if (authCheckService.isOnlyStudentInCourse(course, user)) {

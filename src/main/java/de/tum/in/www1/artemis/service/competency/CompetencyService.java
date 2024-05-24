@@ -99,7 +99,9 @@ public class CompetencyService {
      * @return A list of prerequisites.
      */
     public Set<Competency> findAllPrerequisitesForCourse(@NotNull Course course) {
-        Set<Competency> prerequisites = competencyRepository.findPrerequisitesByCourseId(course.getId());
+        Set<Competency> prerequisites = Set.of();
+        // TODO: logic
+        // competencyRepository.findPrerequisitesByCourseId(course.getId());
         // Remove all lecture units
         for (Competency prerequisite : prerequisites) {
             prerequisite.setLectureUnits(Collections.emptySet());
