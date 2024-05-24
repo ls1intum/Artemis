@@ -55,6 +55,7 @@ import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { FormsModule } from '@angular/forms';
 import { ExamLiveEventsButtonComponent } from 'app/exam/participate/events/exam-live-events-button.component';
 import { ExamTimerComponent } from 'app/exam/participate/timer/exam-timer.component';
+import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
 
 describe('ExamParticipationComponent', () => {
     const course = { id: 456 } as Course;
@@ -77,6 +78,7 @@ describe('ExamParticipationComponent', () => {
     let alertService: AlertService;
     let artemisServerDateService: ArtemisServerDateService;
     let examParticipationLiveEventsService: ExamParticipationLiveEventsService;
+    let examExerciseUpdateService: ExamExerciseUpdateService;
     let translateService: TranslateService;
     let examManagementService: ExamManagementService;
 
@@ -130,6 +132,7 @@ describe('ExamParticipationComponent', () => {
                 alertService = TestBed.inject(AlertService);
                 artemisServerDateService = TestBed.inject(ArtemisServerDateService);
                 examParticipationLiveEventsService = TestBed.inject(ExamParticipationLiveEventsService);
+                examExerciseUpdateService = TestBed.inject(ExamExerciseUpdateService);
                 translateService = TestBed.inject(TranslateService);
                 examManagementService = TestBed.inject(ExamManagementService);
                 comp.handInEarly = false;
@@ -452,6 +455,20 @@ describe('ExamParticipationComponent', () => {
             comp.initIndividualEndDates(startDate);
             expect(comp.studentExam.workingTime).toBe(42);
             expect(ackSpy).toHaveBeenCalledExactlyOnceWith(event, false);
+        });
+    });
+
+    describe('websocket problem statement update subscription', () => {
+        it('should correctly update exercise', () => {
+            const event = {
+                problemStatement: 'problem statement',
+                exerciseId: 1,
+                exerciseName: 'exercise1',
+            } as any as ExamLiveEvent;
+            jest.spyOn(examParticipationLiveEventsService, 'observeNewEventsAsSystem').mockReturnValue(of(event));
+            jest.spyOn(examExerciseUpdateService, 'updateLiveExamExercise');
+            comp['subscribeToProblemStatementUpdates']();
+            expect(examExerciseUpdateService.updateLiveExamExercise).toHaveBeenCalledExactlyOnceWith(1, 'problem statement');
         });
     });
 

@@ -26,12 +26,6 @@
                 [settingsType]="settingsType"
                 (onChanges)="isDirty = true"
             />
-            <jhi-iris-chat-sub-settings-update
-                [subSettings]="irisSettings?.irisChatSettings"
-                [parentSubSettings]="parentIrisSettings?.irisChatSettings"
-                [rateLimitSettable]="settingsType === GLOBAL"
-                (onChanges)="isDirty = true"
-            />
         </div>
         @if (settingsType !== EXERCISE) {
             <div>
@@ -42,11 +36,6 @@
                     [parentSubSettings]="parentIrisSettings?.irisHestiaSettings"
                     [allIrisModels]="allIrisModels ?? []"
                     [settingsType]="settingsType"
-                    (onChanges)="isDirty = true"
-                />
-                <jhi-iris-hestia-sub-settings-update
-                    [subSettings]="irisSettings?.irisHestiaSettings!"
-                    [parentSubSettings]="parentIrisSettings?.irisHestiaSettings"
                     (onChanges)="isDirty = true"
                 />
             </div>
@@ -60,11 +49,6 @@
                     [parentSubSettings]="parentIrisSettings?.irisCompetencyGenerationSettings"
                     [allIrisModels]="allIrisModels ?? []"
                     [settingsType]="settingsType"
-                    (onChanges)="isDirty = true"
-                />
-                <jhi-iris-competency-generation-sub-settings-update
-                    [subSettings]="irisSettings?.irisCompetencyGenerationSettings!"
-                    [parentSubSettings]="parentIrisSettings?.irisCompetencyGenerationSettings"
                     (onChanges)="isDirty = true"
                 />
             </div>

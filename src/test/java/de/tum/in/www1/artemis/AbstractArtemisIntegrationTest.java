@@ -25,7 +25,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
-import de.tum.in.www1.artemis.exercise.programmingexercise.MockDelegate;
+import de.tum.in.www1.artemis.exercise.programming.MockDelegate;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
 import de.tum.in.www1.artemis.service.TextBlockService;

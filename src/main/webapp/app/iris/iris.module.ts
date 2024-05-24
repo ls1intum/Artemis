@@ -14,14 +14,11 @@ import { IrisCommonSubSettingsUpdateComponent } from './settings/iris-settings-u
 import { IrisCourseSettingsUpdateComponent } from 'app/iris/settings/iris-course-settings-update/iris-course-settings-update.component';
 import { IrisExerciseSettingsUpdateComponent } from 'app/iris/settings/iris-exercise-settings-update/iris-exercise-settings-update.component';
 import { IrisLogoComponent } from './iris-logo/iris-logo.component';
-import { IrisChatSubSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-chat-sub-settings-update/iris-chat-sub-settings-update.component';
-import { IrisHestiaSubSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-hestia-sub-settings-update/iris-hestia-sub-settings-update.component';
 import { IrisGlobalAutoupdateSettingsUpdateComponent } from './settings/iris-settings-update/iris-global-autoupdate-settings-update/iris-global-autoupdate-settings-update.component';
 import { IrisTutorChatbotButtonComponent } from 'app/iris/exercise-chatbot/tutor-chatbot-button.component';
 import { IrisStateStore } from 'app/iris/state-store.service';
 import { IrisChatbotWidgetComponent } from 'app/iris/exercise-chatbot/widget/chatbot-widget.component';
 import { IrisEnabledComponent } from 'app/iris/settings/shared/iris-enabled.component';
-import { IrisCompetencyGenerationSubSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-competency-generation-sub-settings-update/iris-competency-generation-sub-settings-update.component';
 import { IrisLogoButtonComponent } from 'app/iris/iris-logo-button/iris-logo-button.component';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 
@@ -36,9 +33,6 @@ import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.mo
         IrisExerciseSettingsUpdateComponent,
         IrisCommonSubSettingsUpdateComponent,
         IrisLogoComponent,
-        IrisChatSubSettingsUpdateComponent,
-        IrisHestiaSubSettingsUpdateComponent,
-        IrisCompetencyGenerationSubSettingsUpdateComponent,
         IrisGlobalAutoupdateSettingsUpdateComponent,
         IrisEnabledComponent,
         IrisLogoButtonComponent,

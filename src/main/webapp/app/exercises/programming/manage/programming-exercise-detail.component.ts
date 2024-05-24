@@ -48,7 +48,7 @@ import { ProgrammingLanguageFeatureService } from 'app/exercises/programming/sha
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ConsistencyCheckService } from 'app/shared/consistency-check/consistency-check.service';
 import { hasEditableBuildPlan } from 'app/shared/layouts/profiles/profile-info.model';
-import { PROFILE_IRIS, PROFILE_LOCALVC } from 'app/app.constants';
+import { PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LOCALVC } from 'app/app.constants';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
@@ -90,6 +90,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     // Used to hide links to repositories and build plans when the "localvc" profile is active.
     // Also used to hide the buttons to lock and unlock all repositories as that does not do anything in the local VCS.
     localVCEnabled = false;
+    localCIEnabled = false;
     irisEnabled = false;
     irisChatEnabled = false;
 
@@ -195,6 +196,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         this.supportsAuxiliaryRepositories =
                             this.programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage).auxiliaryRepositoriesSupported ?? false;
                         this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
+                        this.localCIEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALCI);
                         this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
                         if (this.irisEnabled) {
                             this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
@@ -373,7 +375,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                             showOpenLink: !this.localVCEnabled,
                         },
                     },
-                !this.localVCEnabled && {
+                !this.localCIEnabled && {
                     type: DetailType.Link,
                     title: 'artemisApp.programmingExercise.templateBuildPlanId',
                     data: {
@@ -381,7 +383,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         text: exercise.templateParticipation?.buildPlanId,
                     },
                 },
-                !this.localVCEnabled && {
+                !this.localCIEnabled && {
                     type: DetailType.Link,
                     title: 'artemisApp.programmingExercise.solutionBuildPlanId',
                     data: {
@@ -534,7 +536,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     title: 'artemisApp.programmingExercise.timeline.complaintOnAutomaticAssessment',
                     data: { boolean: exercise.allowComplaintsForAutomaticAssessments },
                 },
-                { type: DetailType.Boolean, title: 'artemisApp.programmingExercise.timeline.manualFeedbackRequests', data: { boolean: exercise.allowManualFeedbackRequests } },
+                { type: DetailType.Boolean, title: 'artemisApp.programmingExercise.timeline.manualFeedbackRequests', data: { boolean: exercise.allowFeedbackRequests } },
                 { type: DetailType.Boolean, title: 'artemisApp.programmingExercise.showTestNamesToStudents', data: { boolean: exercise.showTestNamesToStudents } },
                 {
                     type: DetailType.Boolean,

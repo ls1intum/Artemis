@@ -12,13 +12,20 @@ import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 
+import com.github.dockerjava.api.command.InfoCmd;
 import com.github.dockerjava.api.command.InspectImageCmd;
 import com.github.dockerjava.api.command.ListContainersCmd;
+import com.github.dockerjava.api.command.StopContainerCmd;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Container;
+import com.github.dockerjava.api.model.Info;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
@@ -32,6 +39,7 @@ import de.tum.in.www1.artemis.service.connectors.localci.buildagent.LocalCIDocke
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildConfig;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
 
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class LocalCIDockerServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     @Autowired
@@ -41,6 +49,7 @@ class LocalCIDockerServiceTest extends AbstractSpringIntegrationLocalCILocalVCTe
     private BuildJobRepository buildJobRepository;
 
     @Autowired
+    @Qualifier("hazelcastInstance")
     private HazelcastInstance hazelcastInstance;
 
     @AfterEach
@@ -49,6 +58,7 @@ class LocalCIDockerServiceTest extends AbstractSpringIntegrationLocalCILocalVCTe
     }
 
     @Test
+    @Order(2)
     void testDeleteOldDockerImages() {
         // Save build job with outdated image to database
         ZonedDateTime buildStartDate = ZonedDateTime.now().minusDays(3);
@@ -70,6 +80,7 @@ class LocalCIDockerServiceTest extends AbstractSpringIntegrationLocalCILocalVCTe
     }
 
     @Test
+    @Order(1)
     void testDeleteOldDockerImages_NoOutdatedImages() {
         // Save build job to database
         ZonedDateTime buildStartDate = ZonedDateTime.now();
@@ -110,6 +121,28 @@ class LocalCIDockerServiceTest extends AbstractSpringIntegrationLocalCILocalVCTe
     }
 
     @Test
+    @Order(3)
+    void testCheckUsableDiskSpaceThenCleanUp() {
+        // Mock dockerClient.infoCmd().exec()
+        InfoCmd infoCmd = mock(InfoCmd.class);
+        Info info = mock(Info.class);
+        doReturn(infoCmd).when(dockerClient).infoCmd();
+        doReturn(info).when(infoCmd).exec();
+        doReturn("/").when(info).getDockerRootDir();
+
+        ZonedDateTime buildStartDate = ZonedDateTime.now();
+
+        IMap<String, ZonedDateTime> dockerImageCleanupInfo = hazelcastInstance.getMap("dockerImageCleanupInfo");
+
+        dockerImageCleanupInfo.put("test-image-name", buildStartDate);
+
+        localCIDockerService.checkUsableDiskSpaceThenCleanUp();
+
+        // Verify that removeImageCmd() was called.
+        verify(dockerClient, times(2)).removeImageCmd("test-image-name");
+    }
+
+    @Test
     void testRemoveStrandedContainers() {
 
         // Mocks
@@ -127,7 +160,7 @@ class LocalCIDockerServiceTest extends AbstractSpringIntegrationLocalCILocalVCTe
         localCIDockerService.cleanUpContainers();
 
         // Verify that removeContainerCmd() was called
-        verify(dockerClient, times(1)).removeContainerCmd(anyString());
+        verify(dockerClient, times(1)).stopContainerCmd(anyString());
 
         // Mock container creation time to be younger than 5 minutes
         doReturn(Instant.now().getEpochSecond()).when(mockContainer).getCreated();
@@ -135,6 +168,19 @@ class LocalCIDockerServiceTest extends AbstractSpringIntegrationLocalCILocalVCTe
         localCIDockerService.cleanUpContainers();
 
         // Verify that removeContainerCmd() was not called a second time
-        verify(dockerClient, times(1)).removeContainerCmd(anyString());
+        verify(dockerClient, times(1)).stopContainerCmd(anyString());
+
+        // Mock container creation time to be older than 5 minutes
+        doReturn(Instant.now().getEpochSecond() - (6 * 60)).when(mockContainer).getCreated();
+
+        // Mock exception when stopping container
+        StopContainerCmd stopContainerCmd = mock(StopContainerCmd.class);
+        doReturn(stopContainerCmd).when(dockerClient).stopContainerCmd(anyString());
+        doThrow(new RuntimeException("Container stopping failed")).when(stopContainerCmd).exec();
+
+        localCIDockerService.cleanUpContainers();
+
+        // Verify that killContainerCmd() was called
+        verify(dockerClient, times(1)).killContainerCmd(anyString());
     }
 }

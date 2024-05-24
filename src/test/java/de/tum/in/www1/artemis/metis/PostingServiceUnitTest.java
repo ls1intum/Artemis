@@ -13,6 +13,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Set;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -40,12 +41,21 @@ class PostingServiceUnitTest {
 
     private Method parseUserMentions;
 
+    private AutoCloseable closeable;
+
     @BeforeEach
     void initTestCase() throws NoSuchMethodException {
-        MockitoAnnotations.openMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
 
         parseUserMentions = PostingService.class.getDeclaredMethod("parseUserMentions", Course.class, String.class);
         parseUserMentions.setAccessible(true);
+    }
+
+    @AfterEach
+    void tearDown() throws Exception {
+        if (closeable != null) {
+            closeable.close();
+        }
     }
 
     @Test

@@ -182,11 +182,13 @@
                 "type": {
                     "examWideAnnouncement": "Exam-Wide Announcement",
                     "workingTimeUpdate": "Working Time Update",
-                    "examAttendanceCheck": "Attendance Check"
+                    "examAttendanceCheck": "Attendance Check",
+                    "problemStatementUpdate": "Problem Statement Update"
                 },
                 "from": "from",
                 "acknowledge": "Acknowledge",
                 "acknowledgeAll": "Acknowledge all",
+                "navigateToExercise": "Navigate to exercise",
                 "messages": {
                     "workingTimeUpdate": {
                         "titleEveryone": "The working time of the exam has been changed.",
@@ -196,6 +198,10 @@
                     },
                     "examAttendanceCheck": {
                         "description": "An exam supervisor has triggered the attendance check for you. Please follow the instructions of the supervisor."
+                    },
+                    "problemStatementUpdate": {
+                        "description": "The problem statement of the exercise '{{ exerciseName }}' was updated. Please open the exercise to see the changes.",
+                        "instructorMessage": "Instructor's message:"
                     }
                 }
             }
@@ -392,6 +398,7 @@
             "evaluateQuizExerciseFailure": "There was an error during the evaluation of the quiz exercises:\n {{message}}",
             "assessUnsubmittedStudentExamsSuccess": "Reviewed all student exams and assessed the unsubmitted or empty modeling and text exercises with 0 points.",
             "assessUnsubmittedStudentExamsFailure": "The exam is not over yet for all students",
+            "assessUnsubmittedStudentExamsIdFailure": "Unsubmitted exams could not be evaluated due to a missing course ID or exam ID",
             "unlockAllRepositoriesSuccess": "Repositories of {{number}} programming exercises were unlocked.",
             "unlockAllRepositoriesFailure": "There was an error during the unlocking of the programming exercises:\n {{message}}",
             "lockAllRepositoriesSuccess": "Repositories of {{number}} programming exercises were locked.",
@@ -676,7 +683,13 @@
                     "exerciseTableSingular": "Exercise",
                     "points": "Points",
                     "numberParticipants": "Participants",
-                    "variants": "Variants"
+                    "variants": "Variants",
+                    "assessmentCheckType": "Check Type",
+                    "assessmentStatus": "Status",
+                    "assessmentAction": "Action",
+                    "checkUnfinishedAssessments": "Unfinished Assessments",
+                    "checkUnassessedQuizzes": "Unassessed Quiz Exercises",
+                    "checkUnsubmittedExercises": "Unsubmitted Exercises"
                 }
             },
             "editWorkingTime": {

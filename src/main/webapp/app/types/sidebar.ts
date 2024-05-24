@@ -3,6 +3,7 @@ import { DifficultyLevel, Exercise } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import dayjs from 'dayjs/esm';
 
+export type SidebarCardSize = 'S' | 'M' | 'L';
 export type TimeGroupCategory = 'past' | 'current' | 'future' | 'noDate';
 export type ExamGroupCategory = 'real' | 'test';
 export type TutorialGroupCategory = 'all' | 'registered' | 'further';
@@ -65,7 +66,7 @@ export interface SidebarCardElement {
     /**
      * Sets the size of SidebarCards
      */
-    size: 'S' | 'M' | 'L' | string;
+    size: SidebarCardSize;
     /**
      * Set for Exercises, shows the colored border on the left side
      */

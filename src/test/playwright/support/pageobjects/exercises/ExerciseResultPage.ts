@@ -26,7 +26,7 @@ export class ExerciseResultPage {
     }
 
     async shouldShowScore(percentage: number) {
-        await Commands.reloadUntilFound(this.page, '#submission-result-graded');
+        await Commands.reloadUntilFound(this.page, this.page.locator('#submission-result-graded'));
         await expect(this.page.locator('.tab-bar-exercise-details').getByText(`${percentage}%`)).toBeVisible();
     }
 

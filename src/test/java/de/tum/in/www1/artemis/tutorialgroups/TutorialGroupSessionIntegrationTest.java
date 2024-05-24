@@ -180,7 +180,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
 
         // when
         request.patchWithResponseBody(getSessionsPathOfTutorialGroup(exampleTutorialGroupId, session.getId()) + "/attendance-count", null, TutorialGroupSession.class,
-                HttpStatus.OK).getId();
+                HttpStatus.OK);
         updatedSession = tutorialGroupSessionRepository.findByIdElseThrow(updatedSessionId);
         assertThat(updatedSession.getAttendanceCount()).isNull();
 

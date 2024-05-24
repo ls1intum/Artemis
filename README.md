@@ -157,7 +157,7 @@ Refer to [Using JHipster in production](http://www.jhipster.tech/production) for
 The following command can automate the deployment to a server. The example shows the deployment to the main Artemis test server (which runs a virtual machine):
 
 ```shell
-./artemis-server-cli deploy username@artemistest.ase.in.tum.de -w build/libs/Artemis-7.0.4.war
+./artemis-server-cli deploy username@artemistest.ase.in.tum.de -w build/libs/Artemis-7.1.0.war
 ```
 
 ## Architecture
@@ -243,11 +243,19 @@ The following universities are actively using Artemis or are currently evaluatin
 
 * **HU Berlin**  
    Main contact person: [Lars Grunske](https://www.informatik.hu-berlin.de/de/Members/lars-grunske)
+
 * **Westsächsische Hochschule Zwickau**  
    Main contact person: [Heiko Baum](https://www.fh-zwickau.de/pti/organisation/fachgruppe-informatik/personen/dr-ing-heiko-baum)
+
 * **Technische Universität Chemnitz**  
+   Main contact person: [Danny Kowerko](https://www.tu-chemnitz.de/informatik/mc/professor.php.en)
+
 * **Universität zu Köln**  
    Main contact person: [Andreas Vogelsang](https://cs.uni-koeln.de/sse/team/prof-dr-andreas-vogelsang)
+* **Technische Universität Dortmund**  
+   Main contact person: [Falk Howar](https://se.cs.tu-dortmund.de)
+* **Universität Bielefeld**  
+   Main contact person: [Daniel Merkle](https://ekvv.uni-bielefeld.de/pers_publ/publ/PersonDetail.jsp?personId=451188465)
 * **Universität Ulm**  
    Main contact person: [Matthias Tichy](https://www.uni-ulm.de/in/sp/team/tichy)
 * **Imperial College London**  

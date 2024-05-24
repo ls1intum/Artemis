@@ -39,16 +39,16 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizPool;
-import de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseFactory;
-import de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseFactory;
-import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseFactory;
-import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseFactory;
-import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
-import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.fileupload.FileUploadExerciseFactory;
+import de.tum.in.www1.artemis.exercise.fileupload.FileUploadExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.modeling.ModelingExerciseFactory;
+import de.tum.in.www1.artemis.exercise.modeling.ModelingExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseFactory;
+import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.quiz.QuizExerciseFactory;
+import de.tum.in.www1.artemis.exercise.quiz.QuizExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.text.TextExerciseFactory;
+import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.post.ConversationFactory;
@@ -63,7 +63,7 @@ import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
-import de.tum.in.www1.artemis.service.QuizPoolService;
+import de.tum.in.www1.artemis.service.quiz.QuizPoolService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
 /**
@@ -1103,4 +1103,17 @@ public class ExamUtilService {
         quizPoolService.save(quizPool);
         return exam;
     }
+
+    /**
+     * Adds exercise to student exam
+     *
+     * @param studentExam student exam to which exercise should be added
+     * @param exercise    exercise which should be added
+     * @return Student exam with added exercise
+     */
+    public StudentExam addExerciseToStudentExam(StudentExam studentExam, Exercise exercise) {
+        studentExam.addExercise(exercise);
+        return studentExamRepository.save(studentExam);
+    }
+
 }

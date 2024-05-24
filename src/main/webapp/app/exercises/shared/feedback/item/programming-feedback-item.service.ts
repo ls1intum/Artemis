@@ -6,6 +6,7 @@ import {
     FEEDBACK_SUGGESTION_IDENTIFIER,
     Feedback,
     FeedbackType,
+    NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER,
     STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER,
     SUBMISSION_POLICY_FEEDBACK_IDENTIFIER,
 } from 'app/entities/feedback.model';
@@ -49,8 +50,10 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
             return this.createScaFeedbackItem(feedback, showTestDetails);
         } else if (Feedback.isFeedbackSuggestion(feedback)) {
             return this.createFeedbackSuggestionItem(feedback, showTestDetails);
-        } else if (feedback.type === FeedbackType.AUTOMATIC) {
+        } else if (feedback.type === FeedbackType.AUTOMATIC && !Feedback.isNonGradedFeedbackSuggestion(feedback)) {
             return this.createAutomaticFeedbackItem(feedback, showTestDetails);
+        } else if (feedback.type === FeedbackType.AUTOMATIC && Feedback.isNonGradedFeedbackSuggestion(feedback)) {
+            return this.createNonGradedFeedbackItem(feedback);
         } else if ((feedback.type === FeedbackType.MANUAL || feedback.type === FeedbackType.MANUAL_UNREFERENCED) && feedback.gradingInstruction) {
             return this.createGradingInstructionFeedbackItem(feedback, showTestDetails);
         } else {
@@ -90,7 +93,10 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
         return {
             type: 'Static Code Analysis',
             name: this.translateService.instant('artemisApp.result.detail.codeIssue.name'),
-            title: this.translateService.instant('artemisApp.result.detail.codeIssue.title', { scaCategory, location: this.getIssueLocation(scaIssue) }),
+            title: this.translateService.instant('artemisApp.result.detail.codeIssue.title', {
+                scaCategory,
+                location: this.getIssueLocation(scaIssue),
+            }),
             text,
             positive: false,
             credits: scaIssue.penalty ? -scaIssue.penalty : feedback.credits,
@@ -140,11 +146,22 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
                     : this.translateService.instant('artemisApp.result.detail.test.failed', { name: feedback.testCase.testName });
             }
         }
-
         return {
             type: 'Test',
             name: this.translateService.instant('artemisApp.result.detail.test.name'),
             title,
+            text: feedback.detailText,
+            positive: feedback.positive,
+            credits: feedback.credits,
+            feedbackReference: feedback,
+        };
+    }
+
+    private createNonGradedFeedbackItem(feedback: Feedback): FeedbackItem {
+        return {
+            type: 'Reviewer',
+            name: this.translateService.instant('artemisApp.result.detail.feedback'),
+            title: feedback.text?.slice(NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER.length),
             text: feedback.detailText,
             positive: feedback.positive,
             credits: feedback.credits,
@@ -196,12 +213,18 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
         const lineText =
             !issue.endLine || issue.startLine === issue.endLine
                 ? this.translateService.instant('artemisApp.result.detail.codeIssue.line', { line: issue.startLine })
-                : this.translateService.instant('artemisApp.result.detail.codeIssue.lines', { from: issue.startLine, to: issue.endLine });
+                : this.translateService.instant('artemisApp.result.detail.codeIssue.lines', {
+                      from: issue.startLine,
+                      to: issue.endLine,
+                  });
         if (issue.startColumn) {
             const columnText =
                 !issue.endColumn || issue.startColumn === issue.endColumn
                     ? this.translateService.instant('artemisApp.result.detail.codeIssue.column', { column: issue.startColumn })
-                    : this.translateService.instant('artemisApp.result.detail.codeIssue.columns', { from: issue.startColumn, to: issue.endColumn });
+                    : this.translateService.instant('artemisApp.result.detail.codeIssue.columns', {
+                          from: issue.startColumn,
+                          to: issue.endColumn,
+                      });
             return `${issue.filePath} ${lineText} ${columnText}`;
         }
         return `${issue.filePath} ${lineText}`;

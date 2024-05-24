@@ -27,8 +27,8 @@ import de.tum.in.www1.artemis.domain.iris.settings.IrisSettings;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettings;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettingsType;
 import de.tum.in.www1.artemis.repository.iris.IrisSettingsRepository;
-import de.tum.in.www1.artemis.service.dto.iris.IrisCombinedSettingsDTO;
 import de.tum.in.www1.artemis.service.iris.IrisDefaultTemplateService;
+import de.tum.in.www1.artemis.service.iris.dto.IrisCombinedSettingsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
@@ -484,9 +484,9 @@ public class IrisSettingsService {
      */
     private boolean isFeatureEnabledInSettings(IrisCombinedSettingsDTO settings, IrisSubSettingsType type) {
         return switch (type) {
-            case CHAT -> settings.irisChatSettings().isEnabled();
-            case HESTIA -> settings.irisHestiaSettings().isEnabled();
-            case COMPETENCY_GENERATION -> settings.irisCompetencyGenerationSettings().isEnabled();
+            case CHAT -> settings.irisChatSettings().enabled();
+            case HESTIA -> settings.irisHestiaSettings().enabled();
+            case COMPETENCY_GENERATION -> settings.irisCompetencyGenerationSettings().enabled();
         };
     }
 }

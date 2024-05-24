@@ -19,7 +19,6 @@ import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
-import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseGitDiffReportService;
 import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
@@ -34,6 +33,7 @@ import de.tum.in.www1.artemis.service.hestia.behavioral.knowledgesource.ExtractC
 import de.tum.in.www1.artemis.service.hestia.behavioral.knowledgesource.FindCommonLines;
 import de.tum.in.www1.artemis.service.hestia.behavioral.knowledgesource.GroupGitDiffAndCoverageEntriesByFilePathAndTestCase;
 import de.tum.in.www1.artemis.service.hestia.behavioral.knowledgesource.InsertFileContents;
+import de.tum.in.www1.artemis.service.programming.RepositoryService;
 
 /**
  * Service for handling Solution Entries of behavioral Test Cases.
@@ -192,7 +192,7 @@ public class BehavioralTestCaseService {
             gitService.resetToOriginHead(solutionRepo);
             gitService.pullIgnoreConflicts(solutionRepo);
 
-            return repositoryService.getFilesWithContent(solutionRepo);
+            return repositoryService.getFilesContentFromWorkingCopy(solutionRepo);
         }
         catch (GitAPIException e) {
             throw new BehavioralSolutionEntryGenerationException("Error while reading solution repository", e);

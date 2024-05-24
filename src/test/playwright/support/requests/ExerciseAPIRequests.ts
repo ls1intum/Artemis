@@ -40,6 +40,18 @@ import { Participation } from 'app/entities/participation/participation.model';
 import { Exam } from 'app/entities/exam.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { TeamAssignmentConfig } from 'app/entities/team-assignment-config.model';
+import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programming-exercise-test-case.model';
+
+type PatchProgrammingExerciseTestVisibilityDto = {
+    id: number;
+    weight: number;
+    bonusPoints: number;
+    bonusMultiplier: number;
+    visibility: Visibility;
+}[];
+
+const MAX_RETRIES: number = 20;
+const RETRY_DELAY: number = 3000;
 
 export class ExerciseAPIRequests {
     private readonly page: Page;
@@ -141,6 +153,37 @@ export class ExerciseAPIRequests {
     }
 
     /**
+     * Retrieves the test cases for passed exercise and adjusts their visibility according.
+     * <br>
+     * Note: test cases are not available before the tests of the solution have completely run through
+     *       -> we need to do retries until the tests have been executed
+     *
+     * @param programmingExercise for which the test cases shall be set to {@link newVisibility}
+     * @param newVisibility that is applied for all found test cases
+     * @param retryNumber
+     */
+    async changeProgrammingExerciseTestVisibility(programmingExercise: ProgrammingExercise, newVisibility: Visibility, retryNumber: number) {
+        if (retryNumber >= MAX_RETRIES) {
+            throw new Error('Could not find test cases (tests for solution might not be finished yet)');
+        }
+
+        const response = await this.page.request.get(`${PROGRAMMING_EXERCISE_BASE}/${programmingExercise.id}/test-cases`);
+        const testCases = (await response.json()) as unknown as ProgrammingExerciseTestCase[];
+
+        if (retryNumber > 0) {
+            console.log(`Could not find test cases yet, retrying... (${retryNumber} / ${MAX_RETRIES})`);
+        }
+
+        await this.page.waitForTimeout(RETRY_DELAY);
+
+        if (testCases.length > 0) {
+            await this.updateProgrammingExerciseTestCaseVisibility(programmingExercise.id!, testCases, newVisibility);
+        } else {
+            await this.changeProgrammingExerciseTestVisibility(programmingExercise, newVisibility, retryNumber + 1);
+        }
+    }
+
+    /**
      * Submits the example submission to the specified repository.
      *
      * @param repositoryId - The repository ID. The repository ID is equal to the participation ID.
@@ -184,10 +227,15 @@ export class ExerciseAPIRequests {
      * @param exerciseId - The ID of the text exercise for which the submission is made.
      * @param text - The text content of the submission.
      */
-    async makeTextExerciseSubmission(exerciseId: number, text: string) {
-        await this.page.request.put(`${EXERCISE_BASE}/${exerciseId}/text-submissions`, {
-            data: { submissionExerciseType: 'text', text },
-        });
+    async makeTextExerciseSubmission(exerciseId: number, text: string, createNewSubmission = true) {
+        const url = `${EXERCISE_BASE}/${exerciseId}/text-submissions`;
+        const data = { submissionExerciseType: 'text', text };
+
+        if (createNewSubmission) {
+            await this.page.request.post(url, { data });
+        } else {
+            await this.page.request.put(url, { data });
+        }
     }
 
     /**
@@ -466,6 +514,26 @@ export class ExerciseAPIRequests {
      */
     async startExerciseParticipation(exerciseId: number) {
         return await this.page.request.post(`${EXERCISE_BASE}/${exerciseId}/participations`);
+    }
+
+    private async updateProgrammingExerciseTestCaseVisibility(
+        programmingExerciseId: number,
+        programmingExerciseTestCases: ProgrammingExerciseTestCase[],
+        newVisibility: Visibility,
+    ) {
+        const updatedTestCaseSettings: PatchProgrammingExerciseTestVisibilityDto = [];
+
+        for (const testCase of programmingExerciseTestCases) {
+            updatedTestCaseSettings.push({
+                id: testCase.id!,
+                weight: testCase.weight!,
+                bonusPoints: testCase.bonusPoints!,
+                bonusMultiplier: testCase.bonusMultiplier!,
+                visibility: newVisibility,
+            });
+        }
+
+        return await this.page.request.patch(`${PROGRAMMING_EXERCISE_BASE}/${programmingExerciseId}/update-test-cases`, { data: updatedTestCaseSettings });
     }
 
     private async updateExercise(exercise: Exercise, type: ExerciseType) {
