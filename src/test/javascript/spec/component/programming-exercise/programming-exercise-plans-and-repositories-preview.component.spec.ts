@@ -154,7 +154,7 @@ describe('ProgrammingExercisePlansAndRepositoriesPreviewComponent', () => {
         expect(component.checkoutDirectories?.solutionBuildPlanCheckoutDirectories?.solutionCheckoutDirectories).toEqual(['/assignment', '/solution']); // was ['/assignment'] before with JAVA as programming language
     });
 
-    it('should not display space between solution checkout directories', () => {
+    it('should comma separate the solution directories', () => {
         component.ngOnChanges({
             programmingExerciseCreationConfig: {
                 previousValue: { selectedProgrammingLanguage: ProgrammingLanguage.JAVA },
@@ -166,7 +166,7 @@ describe('ProgrammingExercisePlansAndRepositoriesPreviewComponent', () => {
 
         const solutionPreviewElement = fixture.debugElement.nativeElement.querySelector(CHECKOUT_DIRECTORY_PREVIEW_SOLUTION_BUILD_PLAN);
         expect(solutionPreviewElement).toBeTruthy();
-        expect(solutionPreviewElement.textContent).toContain('/assignment, /solution');
+        expect(solutionPreviewElement.textContent).toContain('  /assignment,  /solution ');
     });
 
     it('should update auxiliary repository directories on changes', () => {
