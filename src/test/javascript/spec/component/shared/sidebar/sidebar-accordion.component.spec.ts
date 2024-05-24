@@ -8,13 +8,11 @@ import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockModule, MockPipe } from 'ng-mocks';
-import { MockMetisConversationService } from '../../../helpers/mocks/service/mock-metis-conversation.service';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { NgbCollapseModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { RouterModule } from '@angular/router';
 import { AccordionAddOptionsComponent } from 'app/shared/sidebar/accordion-add-options/accordion-add-options.component';
-import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 
 describe('SidebarAccordionComponent', () => {
     let component: SidebarAccordionComponent;
@@ -38,11 +36,9 @@ describe('SidebarAccordionComponent', () => {
     });
 
     beforeEach(() => {
-        const metisConversationService = new MockMetisConversationService();
-
         TestBed.overrideComponent(SidebarAccordionComponent, {
             set: {
-                providers: [{ provide: MetisConversationService, useValue: metisConversationService }],
+                providers: [],
             },
         });
 

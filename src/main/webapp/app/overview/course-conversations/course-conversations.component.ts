@@ -335,16 +335,16 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     getChannelSubType(groupKey: string) {
-        if (groupKey == 'exerciseChannels') {
+        if (groupKey === 'exerciseChannels') {
             return ChannelSubType.EXERCISE;
         }
-        if (groupKey == 'generalChannels') {
+        if (groupKey === 'generalChannels') {
             return ChannelSubType.GENERAL;
         }
-        if (groupKey == 'lectureChannels') {
+        if (groupKey === 'lectureChannels') {
             return ChannelSubType.LECTURE;
         }
-        if (groupKey == 'examChannels') {
+        if (groupKey === 'examChannels') {
             return ChannelSubType.EXAM;
         }
         return ChannelSubType.GENERAL;
