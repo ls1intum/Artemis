@@ -18,7 +18,6 @@ import org.apache.sshd.client.future.ConnectFuture;
 import org.apache.sshd.client.session.ClientSession;
 import org.apache.sshd.server.SshServer;
 import org.apache.sshd.server.session.ServerSession;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
@@ -117,7 +116,7 @@ class LocalVCSshTest extends LocalVCIntegrationTest {
         }
         catch (NullPointerException e) {
             assertThat(e).isInstanceOf(NullPointerException.class);
-            Assertions.fail();
+            assertThat(false).isTrue();
         }
 
     }
