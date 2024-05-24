@@ -50,7 +50,6 @@ describe('AccountInformationComponent', () => {
         accountServiceMock.getAuthenticationState.mockReturnValue(of({ id: 99, sshPublicKey: mockKey } as User));
     });
 
-
     it('should initialize with localVC profile', async () => {
         comp.ngOnInit();
         expect(profileServiceMock.getProfileInfo).toHaveBeenCalled();
