@@ -1,5 +1,5 @@
 import { Component, Input, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
-import { faArrowUpRightFromSquare, faCodeBranch, faExclamationTriangle, faEye } from '@fortawesome/free-solid-svg-icons';
+import { faArrowUpRightFromSquare, faCodeBranch, faCodeCompare, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { isEmpty } from 'lodash-es';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ButtonSize } from 'app/shared/components/button.component';
@@ -63,7 +63,7 @@ export class DetailOverviewListComponent implements OnInit, OnDestroy {
 
     // icons
     faExclamationTriangle = faExclamationTriangle;
-    faEye = faEye;
+    faCodeCompare = faCodeCompare;
     faArrowUpRightFromSquare = faArrowUpRightFromSquare;
     faCodeBranch = faCodeBranch;
 
