@@ -4,6 +4,7 @@
             "title": "Your current courses",
             "recentlyAccessed": "Recently accessed courses",
             "otherCourses": "Other courses",
+            "noCourses": "You aren't enrolled in any courses. Enroll manually or contact your course instructor.",
             "exerciseTitle": "Current active exercise in \"{{ course }}\"",
             "exerciseTitleWithoutDueDate": "Current exercise in \"{{ course }}\":",
             "examTitle": "Current exam in \"{{ course }}\":",

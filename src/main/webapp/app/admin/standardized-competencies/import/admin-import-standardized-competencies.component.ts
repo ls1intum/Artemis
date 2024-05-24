@@ -26,7 +26,6 @@ interface ImportCount {
 @Component({
     selector: 'jhi-admin-import-standardized-competencies',
     templateUrl: './admin-import-standardized-competencies.component.html',
-    styleUrls: ['admin-import-standardized-competencies.component.scss'],
 })
 export class AdminImportStandardizedCompetenciesComponent {
     protected isLoading = false;
@@ -122,7 +121,7 @@ export class AdminImportStandardizedCompetenciesComponent {
 
     importCompetencies() {
         this.isLoading = true;
-        this.adminStandardizedCompetencyService.importCompetencies(this.importData!).subscribe({
+        this.adminStandardizedCompetencyService.importStandardizedCompetencyCatalog(this.importData!).subscribe({
             next: () => {
                 this.isLoading = false;
                 this.alertService.success('artemisApp.standardizedCompetency.manage.import.success');

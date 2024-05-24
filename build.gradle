@@ -339,6 +339,8 @@ dependencies {
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${fasterxml_version}"
     // Support JSON serialization and deserialization of Hibernate (https://hibernate.org) specific data types and properties; especially lazy-loading aspects
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-hibernate6:${fasterxml_version}"
+    // Support XML serialization and deserialization
+    implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:${fasterxml_version}"
 
     implementation "com.hazelcast:hazelcast:${hazelcast_version}"
     implementation "com.hazelcast:hazelcast-spring:${hazelcast_version}"

@@ -31,10 +31,12 @@ export class GitDiffFileComponent implements OnInit {
 
     originalFilePath?: string;
     modifiedFilePath?: string;
+    fileUnchanged = false;
 
     ngOnInit(): void {
         this.determineFilePaths();
         this.monacoDiffEditor.setFileContents(this.originalFileContent, this.originalFilePath, this.modifiedFileContent, this.modifiedFilePath);
+        this.fileUnchanged = this.originalFileContent === this.modifiedFileContent;
     }
 
     /**
