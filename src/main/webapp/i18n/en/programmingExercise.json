@@ -447,9 +447,9 @@
                 "templateBuildPlanTooltip": "The build plan of the template. Runs all tests on the exercise template. Used as a reference in which all tests must fail",
                 "solutionBuildPlanTooltip": "The build plan of the solution. Runs all tests on the exercise solution. Used as a reference in which all tests must succeed",
                 "checkoutDirectoryDuringBuildExecution": "Checkout Directory during build execution",
-                "checkoutDirectoryDuringBuildExecutionTooltip": "Displays the checkout directories for submissions and the exercise template during the build execution. The solution build plan will consider the solution as a submission."
+                "submissionBuildPlan": "Submission build plan",
+                "solutionBuildPlan": "Solution build plan"
             },
-            "solutionCheckoutDirectoryDuringBuildExecutionTooltip": "The solution repository will not be checked out during the submission and exercise template build. The repository will only be checked out during the solution build.",
             "orion": {
                 "openEditor": "Open Editor"
             },

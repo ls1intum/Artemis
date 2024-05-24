@@ -54,12 +54,18 @@
             </div>
         } @else if (checkoutDirectories) {
             <div class="col-auto rounded pt-1 pb-1 preview-box" id="checkout-directory-preview-submission-build-plan">
+                <div>
+                    <span class="font-weight-bold" jhiTranslate="artemisApp.programmingExercise.preview.submissionBuildPlan"></span>
+                </div>
                 <jhi-programming-exercise-build-plan-details
                     [checkoutDirectories]="checkoutDirectories.submissionBuildPlanCheckoutDirectories"
                     [auxiliaryRepositoryCheckoutDirectories]="auxiliaryRepositoryCheckoutDirectories"
                 />
             </div>
             <div class="col-auto rounded pt-1 pb-1 preview-box" id="checkout-directory-preview-solution-build-plan">
+                <div>
+                    <span class="font-weight-bold" jhiTranslate="artemisApp.programmingExercise.preview.solutionBuildPlan"></span>
+                </div>
                 <jhi-programming-exercise-build-plan-details
                     [checkoutDirectories]="checkoutDirectories.solutionBuildPlanCheckoutDirectories"
                     [auxiliaryRepositoryCheckoutDirectories]="auxiliaryRepositoryCheckoutDirectories"
