@@ -14,8 +14,8 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
 import de.tum.in.www1.artemis.service.connectors.pyris.job.CourseChatJob;
+import de.tum.in.www1.artemis.service.connectors.pyris.job.ExerciseChatJob;
 import de.tum.in.www1.artemis.service.connectors.pyris.job.PyrisJob;
-import de.tum.in.www1.artemis.service.connectors.pyris.job.TutorChatJob;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 /**
@@ -56,9 +56,9 @@ public class PyrisJobService {
         jobMap = hazelcastInstance.getMap("pyris-job-map");
     }
 
-    public String addTutorChatJob(Long courseId, Long exerciseId, Long sessionId) {
+    public String addExerciseChatJob(Long courseId, Long exerciseId, Long sessionId) {
         var token = generateJobIdToken();
-        var job = new TutorChatJob(token, courseId, exerciseId, sessionId);
+        var job = new ExerciseChatJob(token, courseId, exerciseId, sessionId);
         jobMap.put(token, job);
         return token;
     }

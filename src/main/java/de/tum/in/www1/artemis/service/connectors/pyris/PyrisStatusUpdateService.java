@@ -7,9 +7,9 @@ import de.tum.in.www1.artemis.service.connectors.pyris.dto.chat.PyrisChatStatusU
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageStateDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.job.CourseChatJob;
-import de.tum.in.www1.artemis.service.connectors.pyris.job.TutorChatJob;
+import de.tum.in.www1.artemis.service.connectors.pyris.job.ExerciseChatJob;
 import de.tum.in.www1.artemis.service.iris.session.IrisCourseChatSessionService;
-import de.tum.in.www1.artemis.service.iris.session.IrisTutorChatSessionService;
+import de.tum.in.www1.artemis.service.iris.session.IrisExerciseChatSessionService;
 
 @Service
 @Profile("iris")
@@ -17,25 +17,25 @@ public class PyrisStatusUpdateService {
 
     private final PyrisJobService pyrisJobService;
 
-    private final IrisTutorChatSessionService irisTutorChatSessionService;
+    private final IrisExerciseChatSessionService irisExerciseChatSessionService;
 
     private final IrisCourseChatSessionService courseChatSessionService;
 
-    public PyrisStatusUpdateService(PyrisJobService pyrisJobService, IrisTutorChatSessionService irisTutorChatSessionService,
+    public PyrisStatusUpdateService(PyrisJobService pyrisJobService, IrisExerciseChatSessionService irisExerciseChatSessionService,
             IrisCourseChatSessionService courseChatSessionService) {
         this.pyrisJobService = pyrisJobService;
-        this.irisTutorChatSessionService = irisTutorChatSessionService;
+        this.irisExerciseChatSessionService = irisExerciseChatSessionService;
         this.courseChatSessionService = courseChatSessionService;
     }
 
     /**
-     * Handles the status update of a tutor chat job and forwards it to {@link IrisTutorChatSessionService#handleStatusUpdate(TutorChatJob, PyrisChatStatusUpdateDTO)}
+     * Handles the status update of a exercise chat job and forwards it to {@link IrisExerciseChatSessionService#handleStatusUpdate(ExerciseChatJob, PyrisChatStatusUpdateDTO)}
      *
      * @param job          the job that is updated
      * @param statusUpdate the status update
      */
-    public void handleStatusUpdate(TutorChatJob job, PyrisChatStatusUpdateDTO statusUpdate) {
-        irisTutorChatSessionService.handleStatusUpdate(job, statusUpdate);
+    public void handleStatusUpdate(ExerciseChatJob job, PyrisChatStatusUpdateDTO statusUpdate) {
+        irisExerciseChatSessionService.handleStatusUpdate(job, statusUpdate);
 
         removeJobIfJobTerminated(statusUpdate, job.jobId());
     }

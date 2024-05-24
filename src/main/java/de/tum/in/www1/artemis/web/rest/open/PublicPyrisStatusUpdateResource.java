@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.service.connectors.pyris.PyrisJobService;
 import de.tum.in.www1.artemis.service.connectors.pyris.PyrisStatusUpdateService;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.chat.PyrisChatStatusUpdateDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.job.CourseChatJob;
-import de.tum.in.www1.artemis.service.connectors.pyris.job.TutorChatJob;
+import de.tum.in.www1.artemis.service.connectors.pyris.job.ExerciseChatJob;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
@@ -41,7 +41,7 @@ public class PublicPyrisStatusUpdateResource {
     }
 
     /**
-     * POST public/pyris/pipelines/tutor-chat/runs/:runId/status : Set the status of a tutor chat job
+     * POST public/pyris/pipelines/exercise-chat/runs/:runId/status : Set the status of a exercise chat job
      * <p>
      * Uses custom token based authentication.
      *
@@ -52,18 +52,18 @@ public class PublicPyrisStatusUpdateResource {
      * @throws AccessForbiddenException if the token is invalid
      * @return a {@link ResponseEntity} with status {@code 200 (OK)}
      */
-    @PostMapping("tutor-chat/runs/{runId}/status")
+    @PostMapping("exercise-chat/runs/{runId}/status")
     @EnforceNothing
     public ResponseEntity<Void> setStatusOfJob(@PathVariable String runId, @RequestBody PyrisChatStatusUpdateDTO statusUpdateDTO, HttpServletRequest request) {
         var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request);
         if (!Objects.equals(job.jobId(), runId)) {
             throw new ConflictException("Run ID in URL does not match run ID in request body", "Job", "runIdMismatch");
         }
-        if (!(job instanceof TutorChatJob tutorChatJob)) {
-            throw new ConflictException("Run ID is not a tutor chat job", "Job", "invalidRunId");
+        if (!(job instanceof ExerciseChatJob exerciseChatJob)) {
+            throw new ConflictException("Run ID is not a exercise chat job", "Job", "invalidRunId");
         }
 
-        pyrisStatusUpdateService.handleStatusUpdate(tutorChatJob, statusUpdateDTO);
+        pyrisStatusUpdateService.handleStatusUpdate(exerciseChatJob, statusUpdateDTO);
 
         return ResponseEntity.ok().build();
     }

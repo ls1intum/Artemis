@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
-import { CourseChatbotComponent } from './course-chatbot.component';
+import { CourseChatbotComponent } from 'app/iris/course-chatbot/course-chatbot.component';
 
 describe('CourseChatbotComponent', () => {
     let component: CourseChatbotComponent;

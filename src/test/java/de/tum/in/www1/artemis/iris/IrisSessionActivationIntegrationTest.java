@@ -15,14 +15,14 @@ import de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender;
 import de.tum.in.www1.artemis.domain.iris.message.IrisTextMessageContent;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
-import de.tum.in.www1.artemis.service.iris.session.IrisTutorChatSessionService;
+import de.tum.in.www1.artemis.service.iris.session.IrisExerciseChatSessionService;
 
 class IrisSessionActivationIntegrationTest extends AbstractIrisIntegrationTest {
 
     private static final String TEST_PREFIX = "irissessionactivationintegration";
 
     @Autowired
-    private IrisTutorChatSessionService irisTutorChatSessionService;
+    private IrisExerciseChatSessionService irisExerciseChatSessionService;
 
     @Autowired
     private IrisMessageService irisMessageService;
@@ -54,7 +54,7 @@ class IrisSessionActivationIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student3", roles = "USER")
     void createMessageUnauthorized() throws Exception {
-        var irisSession = irisTutorChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student3"));
+        var irisSession = irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student3"));
         var messageToSend = irisSession.newMessage();
         messageToSend.addContent(createMockContent());
         request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.FORBIDDEN);
@@ -63,7 +63,7 @@ class IrisSessionActivationIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student4", roles = "USER")
     void getMessagesUnauthorized() throws Exception {
-        var irisSession = irisTutorChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student4"));
+        var irisSession = irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student4"));
         var message1 = irisSession.newMessage();
         message1.addContent(createMockContent(), createMockContent(), createMockContent());
         var message2 = irisSession.newMessage();

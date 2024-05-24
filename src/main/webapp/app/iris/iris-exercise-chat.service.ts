@@ -5,14 +5,14 @@ import { IrisStatusService } from 'app/iris/iris-status.service';
 import { UserService } from 'app/core/user/user.service';
 import { IrisChatService } from 'app/iris/iris-chat-base.service';
 
-const IDENTIFIER = 'tutor-chat/';
+const IDENTIFIER = 'exercise-chat/';
 
 @Injectable({ providedIn: 'root' })
-export class IrisTutorChatService extends IrisChatService {
+export class IrisExerciseChatService extends IrisChatService {
     exerciseId?: number;
 
     /**
-     * Creates an instance of IrisTutorChatService.
+     * Creates an instance of IrisExerciseChatService.
      * @param http The IrisChatHttpService for HTTP operations related to sessions.
      * @param ws The IrisChatWebsocketService for websocket operations
      * @param status The IrisStatusService for handling the status of the service.

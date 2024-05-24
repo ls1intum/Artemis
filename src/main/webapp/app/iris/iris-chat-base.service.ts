@@ -4,7 +4,7 @@ import { IrisAssistantMessage, IrisMessage, IrisSender, IrisUserMessage } from '
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
 import { BehaviorSubject, Observable, Subscription, catchError, map, of, tap, throwError } from 'rxjs';
 import { IrisChatHttpService } from 'app/iris/iris-chat-http.service';
-import { IrisTutorChatSession } from 'app/entities/iris/iris-tutor-chat-session.model';
+import { IrisExerciseChatSession } from 'app/entities/iris/iris-exercise-chat-session.model';
 import { IrisStageDTO } from 'app/entities/iris/iris-stage-dto.model';
 import { IrisWebsocketService } from 'app/iris/iris-websocket.service';
 import { IrisChatWebsocketDTO, IrisChatWebsocketPayloadType } from 'app/entities/iris/iris-chat-websocket-dto.model';
@@ -207,9 +207,9 @@ export abstract class IrisChatService implements OnDestroy {
     /**
      * Retrieves the current session or creates a new one if it doesn't exist.
      */
-    private getCurrentSessionOrCreate(): Observable<IrisTutorChatSession> {
+    private getCurrentSessionOrCreate(): Observable<IrisExerciseChatSession> {
         return this.http.getCurrentSessionOrCreateIfNotExists(this.getSessionCreationIdentifier()).pipe(
-            map((response: HttpResponse<IrisTutorChatSession>) => {
+            map((response: HttpResponse<IrisExerciseChatSession>) => {
                 if (response.body) {
                     return response.body;
                 } else {
@@ -223,9 +223,9 @@ export abstract class IrisChatService implements OnDestroy {
     /**
      * Creates a new session
      */
-    private createNewSession(): Observable<IrisTutorChatSession> {
+    private createNewSession(): Observable<IrisExerciseChatSession> {
         return this.http.createSession(this.getSessionCreationIdentifier()).pipe(
-            map((response: HttpResponse<IrisTutorChatSession>) => {
+            map((response: HttpResponse<IrisExerciseChatSession>) => {
                 if (response.body) {
                     return response.body;
                 } else {

@@ -20,14 +20,14 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisCourseChatSession;
-import de.tum.in.www1.artemis.domain.iris.session.IrisTutorChatSession;
+import de.tum.in.www1.artemis.domain.iris.session.IrisExerciseChatSession;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisPipelineExecutionSettingsDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.chat.PyrisChatPipelineExecutionBaseDataDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.chat.course.PyrisCourseChatPipelineExecutionDTO;
-import de.tum.in.www1.artemis.service.connectors.pyris.dto.chat.tutor.PyrisTutorChatPipelineExecutionDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.chat.tutor.PyrisExerciseChatPipelineExecutionDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisCourseDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisExtendedCourseDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisUserDTO;
@@ -111,11 +111,11 @@ public class PyrisPipelineService {
         }
     }
 
-    public void executeTutorChatPipeline(String variant, Optional<ProgrammingSubmission> latestSubmission, ProgrammingExercise exercise, IrisTutorChatSession session) {
-        executeChatPipeline(variant, session, "tutor-chat",
-                base -> new PyrisTutorChatPipelineExecutionDTO(base, latestSubmission.map(pyrisDTOService::toPyrisSubmissionDTO).orElse(null),
+    public void executeExerciseChatPipeline(String variant, Optional<ProgrammingSubmission> latestSubmission, ProgrammingExercise exercise, IrisExerciseChatSession session) {
+        executeChatPipeline(variant, session, "exercise-chat",
+                base -> new PyrisExerciseChatPipelineExecutionDTO(base, latestSubmission.map(pyrisDTOService::toPyrisSubmissionDTO).orElse(null),
                         pyrisDTOService.toPyrisProgrammingExerciseDTO(exercise), new PyrisCourseDTO(exercise.getCourseViaExerciseGroupOrCourseMember())),
-                () -> pyrisJobService.addTutorChatJob(exercise.getCourseViaExerciseGroupOrCourseMember().getId(), exercise.getId(), session.getId()));
+                () -> pyrisJobService.addExerciseChatJob(exercise.getCourseViaExerciseGroupOrCourseMember().getId(), exercise.getId(), session.getId()));
     }
 
     public void executeCourseChatPipeline(String variant, IrisCourseChatSession session) {

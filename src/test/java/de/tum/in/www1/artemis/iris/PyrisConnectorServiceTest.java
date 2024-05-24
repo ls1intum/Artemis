@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.service.connectors.pyris.PyrisConnectorService;
 import de.tum.in.www1.artemis.service.connectors.pyris.PyrisPipelineService;
 import de.tum.in.www1.artemis.service.iris.exception.IrisForbiddenException;
 import de.tum.in.www1.artemis.service.iris.exception.IrisInternalPyrisErrorException;
-import de.tum.in.www1.artemis.service.iris.session.IrisTutorChatSessionService;
+import de.tum.in.www1.artemis.service.iris.session.IrisExerciseChatSessionService;
 import de.tum.in.www1.artemis.util.IrisUtilTestService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
@@ -40,7 +40,7 @@ class PyrisConnectorServiceTest extends AbstractIrisIntegrationTest {
     private ParticipationUtilService participationUtilService;
 
     @Autowired
-    private IrisTutorChatSessionService irisTutorChatSessionService;
+    private IrisExerciseChatSessionService irisExerciseChatSessionService;
 
     private static Stream<Arguments> irisExceptions() {
         // @formatter:off
@@ -73,12 +73,12 @@ class PyrisConnectorServiceTest extends AbstractIrisIntegrationTest {
         var exerciseParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
         irisUtilTestService.setupStudentParticipation(exerciseParticipation, repository);
 
-        var irisSession = irisTutorChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        var irisSession = irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
 
         irisRequestMockProvider.mockRunError(httpStatus);
 
         ProgrammingExercise finalExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
-        assertThatThrownBy(() -> pyrisPipelineService.executeTutorChatPipeline("default", Optional.empty(), finalExercise, irisSession)).isInstanceOf(exceptionClass);
+        assertThatThrownBy(() -> pyrisPipelineService.executeExerciseChatPipeline("default", Optional.empty(), finalExercise, irisSession)).isInstanceOf(exceptionClass);
     }
 
     @Test

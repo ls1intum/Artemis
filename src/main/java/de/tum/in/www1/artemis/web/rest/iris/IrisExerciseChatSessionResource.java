@@ -14,11 +14,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.iris.session.IrisTutorChatSession;
+import de.tum.in.www1.artemis.domain.iris.session.IrisExerciseChatSession;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettingsType;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.repository.iris.IrisTutorChatSessionRepository;
+import de.tum.in.www1.artemis.repository.iris.IrisExerciseChatSessionRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -29,12 +29,12 @@ import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
 /**
- * REST controller for managing {@link IrisTutorChatSession}.
+ * REST controller for managing {@link IrisExerciseChatSession}.
  */
 @Profile("iris")
 @RestController
-@RequestMapping("api/iris/tutor-chat/")
-public class IrisTutorChatSessionResource {
+@RequestMapping("api/iris/exercise-chat/")
+public class IrisExerciseChatSessionResource {
 
     protected final AuthorizationCheckService authCheckService;
 
@@ -50,12 +50,12 @@ public class IrisTutorChatSessionResource {
 
     protected final ExerciseRepository exerciseRepository;
 
-    private final IrisTutorChatSessionRepository irisTutorChatSessionRepository;
+    private final IrisExerciseChatSessionRepository irisExerciseChatSessionRepository;
 
-    protected IrisTutorChatSessionResource(AuthorizationCheckService authCheckService, IrisTutorChatSessionRepository irisTutorChatSessionRepository, UserRepository userRepository,
-            ExerciseRepository exerciseRepository, IrisSessionService irisSessionService, IrisSettingsService irisSettingsService, PyrisHealthIndicator pyrisHealthIndicator,
-            IrisRateLimitService irisRateLimitService) {
-        this.irisTutorChatSessionRepository = irisTutorChatSessionRepository;
+    protected IrisExerciseChatSessionResource(AuthorizationCheckService authCheckService, IrisExerciseChatSessionRepository irisExerciseChatSessionRepository,
+            UserRepository userRepository, ExerciseRepository exerciseRepository, IrisSessionService irisSessionService, IrisSettingsService irisSettingsService,
+            PyrisHealthIndicator pyrisHealthIndicator, IrisRateLimitService irisRateLimitService) {
+        this.irisExerciseChatSessionRepository = irisExerciseChatSessionRepository;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.irisSessionService = irisSessionService;
@@ -66,14 +66,14 @@ public class IrisTutorChatSessionResource {
     }
 
     /**
-     * GET tutor-chat/{exerciseId}/sessions/current: Retrieve the current iris session for the programming exercise.
+     * GET exercise-chat/{exerciseId}/sessions/current: Retrieve the current iris session for the programming exercise.
      *
      * @param exerciseId of the exercise
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the current iris session for the exercise or {@code 404 (Not Found)} if no session exists
      */
     @PostMapping("{exerciseId}/sessions/current")
     @EnforceAtLeastStudent
-    public ResponseEntity<IrisTutorChatSession> getCurrentSessionOrCreateIfNotExists(@PathVariable Long exerciseId) throws URISyntaxException {
+    public ResponseEntity<IrisExerciseChatSession> getCurrentSessionOrCreateIfNotExists(@PathVariable Long exerciseId) throws URISyntaxException {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         validateExercise(exercise);
 
@@ -81,7 +81,7 @@ public class IrisTutorChatSessionResource {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
 
-        var sessionOptional = irisTutorChatSessionRepository.findLatestByExerciseIdAndUserIdWithMessages(exercise.getId(), user.getId());
+        var sessionOptional = irisExerciseChatSessionRepository.findLatestByExerciseIdAndUserIdWithMessages(exercise.getId(), user.getId());
         if (sessionOptional.isPresent()) {
             var session = sessionOptional.get();
             irisSessionService.checkHasAccessToIrisSession(session, user);
@@ -92,14 +92,14 @@ public class IrisTutorChatSessionResource {
     }
 
     /**
-     * GET tutor-chat/{exerciseId}/sessions: Retrieve all Iris Sessions for the programming exercise
+     * GET exercise-chat/{exerciseId}/sessions: Retrieve all Iris Sessions for the programming exercise
      *
      * @param exerciseId of the exercise
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body a list of the iris sessions for the exercise or {@code 404 (Not Found)} if no session exists
      */
     @GetMapping("{exerciseId}/sessions")
     @EnforceAtLeastStudent
-    public ResponseEntity<List<IrisTutorChatSession>> getAllSessions(@PathVariable Long exerciseId) {
+    public ResponseEntity<List<IrisExerciseChatSession>> getAllSessions(@PathVariable Long exerciseId) {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         ProgrammingExercise programmingExercise = validateExercise(exercise);
 
@@ -107,13 +107,13 @@ public class IrisTutorChatSessionResource {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
 
-        var sessions = irisTutorChatSessionRepository.findByExerciseIdAndUserIdElseThrow(exercise.getId(), user.getId());
+        var sessions = irisExerciseChatSessionRepository.findByExerciseIdAndUserIdElseThrow(exercise.getId(), user.getId());
         sessions.forEach(s -> irisSessionService.checkHasAccessToIrisSession(s, user));
         return ResponseEntity.ok(sessions);
     }
 
     /**
-     * POST tutor-chat/{exerciseId}/session: Create a new iris session for an exercise and user.
+     * POST exercise-chat/{exerciseId}/session: Create a new iris session for an exercise and user.
      * If there already exists an iris session for the exercise and user, a new one is created.
      * Note: The old session including messages is not deleted and can still be retrieved
      *
@@ -122,7 +122,7 @@ public class IrisTutorChatSessionResource {
      */
     @PostMapping("{exerciseId}/sessions")
     @EnforceAtLeastStudent
-    public ResponseEntity<IrisTutorChatSession> createSessionForExercise(@PathVariable Long exerciseId) throws URISyntaxException {
+    public ResponseEntity<IrisExerciseChatSession> createSessionForExercise(@PathVariable Long exerciseId) throws URISyntaxException {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         ProgrammingExercise programmingExercise = validateExercise(exercise);
 
@@ -130,7 +130,7 @@ public class IrisTutorChatSessionResource {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
 
-        var session = irisTutorChatSessionRepository.save(new IrisTutorChatSession(programmingExercise, user));
+        var session = irisExerciseChatSessionRepository.save(new IrisExerciseChatSession(programmingExercise, user));
         var uriString = "/api/iris/sessions/" + session.getId();
 
         return ResponseEntity.created(new URI(uriString)).body(session);

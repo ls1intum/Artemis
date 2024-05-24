@@ -4,10 +4,10 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 
 /**
- * An implementation of a PyrisJob for tutor chat messages.
- * This job is used to reference the details of a tutor chat session when Pyris sends a status update.
+ * An implementation of a PyrisJob for exercise chat messages.
+ * This job is used to reference the details of a exercise chat session when Pyris sends a status update.
  */
-public record TutorChatJob(String jobId, long courseId, long exerciseId, long sessionId) implements PyrisJob {
+public record ExerciseChatJob(String jobId, long courseId, long exerciseId, long sessionId) implements PyrisJob {
 
     @Override
     public boolean canAccess(Course course) {
