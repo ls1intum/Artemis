@@ -434,7 +434,7 @@
                 "title": "Dein Repository ist gesperrt.",
                 "tooltip": "Dein Repository ist gesperrt, weil die Einreichungsfrist abgelaufen ist oder du das Einreichungslimit erreicht hast. Du kannst weiterhin deinen Code einsehen, aber keine Änderungen vornehmen."
             },
-            "buildPlanCheckoutDirectories": "Build-Plan Checkout-Verzeichnisse",
+            "checkoutDirectories": "Checkout-Verzeichnisse",
             "preview": {
                 "label": "Vorschau",
                 "tooltip": "Für jede Programmieraufgabe, werden verschieden Repositories und Build-Pläne erstellt. Links befinden sich deren generierte Namen basierend auf dem Kurznamen der Aufgabe",
