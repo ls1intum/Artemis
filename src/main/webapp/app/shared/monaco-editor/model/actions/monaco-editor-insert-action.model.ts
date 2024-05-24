@@ -19,5 +19,6 @@ export abstract class MonacoEditorInsertAction extends MonacoEditorAction {
         } else if (position) {
             this.insertTextAtPosition(editor, position, this.textToInsert);
         }
+        editor.focus();
     }
 }

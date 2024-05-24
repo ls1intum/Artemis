@@ -35,6 +35,7 @@ export abstract class MonacoEditorDelimiterAction extends MonacoEditorAction {
             // Move cursor to the middle of the delimiters
             editor.setPosition(position.delta(0, this.openDelimiter.length));
         }
+        editor.focus();
     }
 
     isTextSurroundedByDelimiters(text: string): boolean {
