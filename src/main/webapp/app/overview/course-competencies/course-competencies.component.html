@@ -7,7 +7,7 @@
                         <jhi-competency-card
                             [competency]="competency"
                             [courseId]="courseId"
-                            [hideProgress]="competency.id !== undefined && judgementOfLearningMap?.[competency.id] === undefined"
+                            [hideProgress]="judgementOfLearningEnabled && competency.id !== undefined && judgementOfLearningMap?.[competency.id] === undefined"
                         />
                     }
                 </div>

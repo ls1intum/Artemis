@@ -1,21 +1,22 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Competency } from 'app/entities/competency.model';
-import { forkJoin } from 'rxjs';
+import { Subscription, forkJoin } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 
 @Component({
     selector: 'jhi-course-competencies',
     templateUrl: './course-competencies.component.html',
     styleUrls: ['../course-overview.scss'],
 })
-export class CourseCompetenciesComponent implements OnInit {
+export class CourseCompetenciesComponent implements OnInit, OnDestroy {
     @Input()
     courseId: number;
 
@@ -29,7 +30,11 @@ export class CourseCompetenciesComponent implements OnInit {
     faAngleDown = faAngleDown;
     faAngleUp = faAngleUp;
 
+    private dashboardFeatureToggleActiveSubscription: Subscription;
+    dashboardFeatureActive = false;
+
     constructor(
+        private featureToggleService: FeatureToggleService,
         private activatedRoute: ActivatedRoute,
         private alertService: AlertService,
         private courseStorageService: CourseStorageService,
@@ -42,6 +47,16 @@ export class CourseCompetenciesComponent implements OnInit {
         });
 
         this.setCourse(this.courseStorageService.getCourse(this.courseId));
+
+        this.dashboardFeatureToggleActiveSubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.StudentCourseAnalyticsDashboard).subscribe((active) => {
+            this.dashboardFeatureActive = active;
+        });
+    }
+
+    ngOnDestroy(): void {
+        if (this.dashboardFeatureToggleActiveSubscription) {
+            this.dashboardFeatureToggleActiveSubscription.unsubscribe();
+        }
     }
 
     private setCourse(course?: Course) {
@@ -71,6 +86,10 @@ export class CourseCompetenciesComponent implements OnInit {
 
     get countPrerequisites() {
         return this.prerequisites.length;
+    }
+
+    get judgementOfLearningEnabled() {
+        return (this.course?.studentCourseAnalyticsDashboardEnabled ?? false) && this.dashboardFeatureActive;
     }
 
     /**

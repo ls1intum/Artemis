@@ -1,5 +1,5 @@
 import dayjs from 'dayjs/esm';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Competency, CompetencyProgress, getIcon } from 'app/entities/competency.model';
 import { CompetencyService } from 'app/course/competencies/competency.service';
@@ -11,15 +11,19 @@ import { LectureUnitCompletionEvent } from 'app/overview/course-lectures/course-
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { faPencilAlt } from '@fortawesome/free-solid-svg-icons';
-import { forkJoin } from 'rxjs';
+import { Subscription, forkJoin } from 'rxjs';
+import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-course-competencies-details',
     templateUrl: './course-competencies-details.component.html',
     styleUrls: ['../course-overview.scss'],
 })
-export class CourseCompetenciesDetailsComponent implements OnInit {
+export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
     competencyId?: number;
+    course?: Course;
     courseId?: number;
     isLoading = false;
     competency: Competency;
@@ -31,7 +35,12 @@ export class CourseCompetenciesDetailsComponent implements OnInit {
     faPencilAlt = faPencilAlt;
     getIcon = getIcon;
 
+    private dashboardFeatureToggleActiveSubscription: Subscription;
+    dashboardFeatureActive = false;
+
     constructor(
+        private featureToggleService: FeatureToggleService,
+        private courseStorageService: CourseStorageService,
         private alertService: AlertService,
         private activatedRoute: ActivatedRoute,
         private competencyService: CompetencyService,
@@ -45,7 +54,18 @@ export class CourseCompetenciesDetailsComponent implements OnInit {
             if (this.competencyId && this.courseId) {
                 this.loadData();
             }
+            this.course = this.courseStorageService.getCourse(this.courseId);
         });
+
+        this.dashboardFeatureToggleActiveSubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.StudentCourseAnalyticsDashboard).subscribe((active) => {
+            this.dashboardFeatureActive = active;
+        });
+    }
+
+    ngOnDestroy(): void {
+        if (this.dashboardFeatureToggleActiveSubscription) {
+            this.dashboardFeatureToggleActiveSubscription.unsubscribe();
+        }
     }
 
     private loadData() {
@@ -130,6 +150,10 @@ export class CourseCompetenciesDetailsComponent implements OnInit {
 
     get softDueDatePassed(): boolean {
         return dayjs().isAfter(this.competency.softDueDate);
+    }
+
+    get judgementOfLearningEnabled() {
+        return (this.course?.studentCourseAnalyticsDashboardEnabled ?? false) && this.dashboardFeatureActive;
     }
 
     onRatingChange(newRating: number) {
