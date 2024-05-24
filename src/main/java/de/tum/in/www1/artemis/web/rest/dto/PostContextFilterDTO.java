@@ -8,14 +8,14 @@ import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.domain.metis.PostSortCriterion;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PostContextFilter(@NotBlank Long courseId, long[] courseWideChannelIds, Long plagiarismCaseId, Long conversationId, String searchText, Boolean filterToUnresolved,
+public record PostContextFilterDTO(@NotBlank Long courseId, long[] courseWideChannelIds, Long plagiarismCaseId, Long conversationId, String searchText, Boolean filterToUnresolved,
         Boolean filterToOwn, Boolean filterToAnsweredOrReacted, PostSortCriterion postSortCriterion, SortingOrder sortingOrder) {
 
     /*
      * Checks if the Boolean values filterToUnresolved, filterToOwn, and filterToAnsweredOrReacted are null.
      * If they are, it assigns them a default value of false.
      */
-    public PostContextFilter {
+    public PostContextFilterDTO {
         if (filterToUnresolved == null) {
             filterToUnresolved = false;
         }
