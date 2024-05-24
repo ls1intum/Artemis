@@ -235,19 +235,11 @@ public interface ContinuousIntegrationService {
         },
         SOLUTION {
 
-            /**
-             * @param language for which the checkout directory should be retrieved
-             * @return checkoutDirectory for the solution repository for the build execution of the template and student submissions
-             * @throws IllegalArgumentException if the solution is not checked out within the build process for the template or student submission
-             *                                      <p>
-             *                                      Note: if the solution is not checked out during the submission build plan, it will be checked out
-             *                                      in the assignment respective repository during the solution build
-             */
             @Override
             public String forProgrammingLanguage(ProgrammingLanguage language) {
                 return switch (language) {
                     case HASKELL, OCAML -> "solution";
-                    default -> throw new IllegalArgumentException("The solution repository is not checked out during the template or student submission for " + language);
+                    default -> throw new IllegalArgumentException("The solution repository is not checked out during the template/submission build plan for " + language);
                 };
             }
         }

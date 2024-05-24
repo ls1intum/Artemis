@@ -83,10 +83,6 @@ interface ProgrammingIrisEnabledDetail extends DetailBase {
     data: { exercise?: ProgrammingExercise; course?: Course; disabled: boolean; subSettingsType: IrisSubSettingsType };
 }
 
-/**
- * {@link ProgrammingRepositoryButtonsDetail.data.checkoutDirectory} is only needed for localCI, as otherwise the information
- * about the checkout directories will be present in the build plans (for the base repositories exercise, solution, tests)
- */
 interface ProgrammingRepositoryButtonsDetail extends DetailBase {
     type: DetailType.ProgrammingRepositoryButtons;
     data: {
@@ -94,9 +90,6 @@ interface ProgrammingRepositoryButtonsDetail extends DetailBase {
         participation?: TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation;
         showOpenLink?: boolean;
         type: ProgrammingExerciseInstructorRepositoryType;
-        checkoutDirectory?: string;
-        isCheckoutDirectoryForSubmissionAndTemplateBuild?: boolean;
-        isAtLeastEditor?: boolean;
     };
 }
 
