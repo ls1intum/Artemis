@@ -1,20 +1,19 @@
-import { ProgrammingExercisePlansAndRepositoriesPreviewComponent } from 'app/exercises/programming/manage/update/programming-exercise-plans-and-repositories-preview.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
 import { CheckoutDirectoriesDto } from 'app/entities/checkout-directories-dto';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
-import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { MockComponent } from 'ng-mocks';
 import { Subscription, of } from 'rxjs';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 import { SimpleChanges } from '@angular/core';
-import { ProgrammingExerciseBuildPlanDetailsComponent } from 'app/exercises/programming/manage/update/programming-exercise-build-plan-details.component';
+import { ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-build-plan-checkout-directories.component';
+import { ProgrammingExerciseBuildDetailsComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-build-details.component';
 
-describe('ProgrammingExercisePlansAndRepositoriesPreviewComponent', () => {
-    let component: ProgrammingExercisePlansAndRepositoriesPreviewComponent;
-    let fixture: ComponentFixture<ProgrammingExercisePlansAndRepositoriesPreviewComponent>;
+describe('ProgrammingExerciseBuildDetailsComponent', () => {
+    let component: ProgrammingExerciseBuildDetailsComponent;
+    let fixture: ComponentFixture<ProgrammingExerciseBuildDetailsComponent>;
     let programmingExerciseService: ProgrammingExerciseService;
 
     const CHECKOUT_DIRECTORY_PREVIEW_SUBMISSION_BUILD_PLAN = '#checkout-directory-preview-submission-build-plan';
@@ -45,16 +44,16 @@ describe('ProgrammingExercisePlansAndRepositoriesPreviewComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [ProgrammingExercisePlansAndRepositoriesPreviewComponent, MockComponent(HelpIconComponent), ProgrammingExerciseBuildPlanDetailsComponent],
+            declarations: [ProgrammingExerciseBuildDetailsComponent, MockComponent(HelpIconComponent), ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent],
             providers: [{ provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService }],
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(ProgrammingExercisePlansAndRepositoriesPreviewComponent);
+                fixture = TestBed.createComponent(ProgrammingExerciseBuildDetailsComponent);
                 component = fixture.componentInstance;
                 programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
 
-                component.programmingExerciseCreationConfig = { selectedProgrammingLanguage: ProgrammingLanguage.C } as ProgrammingExerciseCreationConfig;
+                component.programmingLanguage = ProgrammingLanguage.C;
                 component.programmingExercise = { id: 1, shortName: 'shortName' } as ProgrammingExercise;
                 component.isLocal = true;
 
@@ -143,9 +142,9 @@ describe('ProgrammingExercisePlansAndRepositoriesPreviewComponent', () => {
         jest.spyOn(programmingExerciseService, 'getCheckoutDirectoriesForProgrammingLanguage');
 
         component.ngOnChanges({
-            programmingExerciseCreationConfig: {
-                previousValue: { selectedProgrammingLanguage: ProgrammingLanguage.JAVA },
-                currentValue: { selectedProgrammingLanguage: ProgrammingLanguage.OCAML },
+            programmingLanguage: {
+                previousValue: ProgrammingLanguage.JAVA,
+                currentValue: ProgrammingLanguage.OCAML,
             },
         } as unknown as SimpleChanges);
 

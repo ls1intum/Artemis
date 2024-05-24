@@ -64,7 +64,7 @@
             </div>
             <jhi-programming-exercise-build-plan-checkout-directories
                 [checkoutDirectories]="checkoutDirectories.submissionBuildPlanCheckoutDirectories"
-                [auxiliaryRepositoryCheckoutDirectories]="auxiliaryRepositoryCheckoutDirectories"
+                [auxiliaryRepositories]="programmingExercise.auxiliaryRepositories ?? []"
             />
         </div>
         <div class="col-auto rounded pt-1 pb-1 preview-box" id="checkout-directory-preview-solution-build-plan">
@@ -73,7 +73,7 @@
             </div>
             <jhi-programming-exercise-build-plan-checkout-directories
                 [checkoutDirectories]="checkoutDirectories.solutionBuildPlanCheckoutDirectories"
-                [auxiliaryRepositoryCheckoutDirectories]="auxiliaryRepositoryCheckoutDirectories"
+                [auxiliaryRepositories]="programmingExercise.auxiliaryRepositories ?? []"
             />
         </div>
     }

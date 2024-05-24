@@ -55,10 +55,10 @@
                     <jhi-help-icon text="artemisApp.programmingExercise.preview.tooltip" />
                 }
             </div>
-            <jhi-programming-exercise-plans-and-repositories-preview
+            <jhi-programming-exercise-build-details
                 [programmingExercise]="programmingExercise"
+                [programmingLanguage]="programmingExerciseCreationConfig.selectedProgrammingLanguage"
                 [isLocal]="isLocal"
-                [programmingExerciseCreationConfig]="programmingExerciseCreationConfig"
             />
             @if (!programmingExerciseCreationConfig.isImportFromExistingExercise && programmingExerciseCreationConfig.auxiliaryRepositoriesSupported) {
                 <div class="form-group">

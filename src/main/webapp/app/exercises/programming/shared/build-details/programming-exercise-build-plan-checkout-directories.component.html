@@ -15,9 +15,9 @@
         <li [style.visibility]="checkoutDirectories.testCheckoutDirectory ? '' : 'hidden'">
             <code> {{ checkoutDirectories.testCheckoutDirectory }} </code>
         </li>
-        @for (auxiliaryRepositoryCheckoutDirectory of auxiliaryRepositoryCheckoutDirectories; track auxiliaryRepositoryCheckoutDirectory) {
+        @for (auxiliaryRepository of auxiliaryRepositories; track auxiliaryRepository) {
             <li>
-                <code>{{ auxiliaryRepositoryCheckoutDirectory }} </code>
+                <code>{{ ROOT_DIRECTORY_PATH }}{{ auxiliaryRepository.checkoutDirectory }} </code>
             </li>
         }
     </ul>
