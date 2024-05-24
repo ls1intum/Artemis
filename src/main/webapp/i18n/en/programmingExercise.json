@@ -445,8 +445,8 @@
                 "solutionRepoTooltip": "The repository which contains the solution to the exercise",
                 "testRepoTooltip": "The repository which contains all tests",
                 "auxiliaryRepoTooltip": "{{description}}",
-                "templateBuildPlanTooltip": "The build plan of the template. Runs all tests on the exercise template. Used as a reference in which all tests must fail. An analogous build plan is used for student submissions.",
-                "solutionBuildPlanTooltip": "The build plan of the solution. Runs all tests on the exercise solution. Used as a reference in which all tests must succeed",
+                "templateBuildPlanTooltip": "The build plan of the template and student submissions. Runs all tests on the exercise template / student submission. The build for the exercise template is used as reference in which all tests must fail.",
+                "solutionBuildPlanTooltip": "The build plan of the solution. Runs all tests on the exercise solution. Used as a reference in which all tests must succeed.",
                 "submissionBuildPlan": "Submission build plan",
                 "solutionBuildPlan": "Solution build plan"
             },
