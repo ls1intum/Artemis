@@ -499,6 +499,10 @@ tasks.register("cleanResources", Delete) {
     delete "build/resources"
 }
 
+tasks.withType(JavaCompile) {
+    options.compilerArgs << '-Xlint:deprecation'
+}
+
 // Taken from here: https://stackoverflow.com/questions/3963708/gradle-how-to-display-test-results-in-the-console-in-real-time
 tasks.withType(Test).configureEach {
     // a collection to track failedTests
