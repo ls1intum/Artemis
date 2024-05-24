@@ -1,13 +1,22 @@
 import * as monaco from 'monaco-editor';
 import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 
 export abstract class MonacoEditorDelimiterAction extends MonacoEditorAction {
     /* Delimiters */
     openDelimiter: string;
     closeDelimiter: string;
 
-    protected constructor(id: string, label: string, translationKey: string, keybindings: number[] | undefined, openDelimiter: string, closeDelimiter: string) {
-        super(id, label, translationKey, keybindings);
+    protected constructor(
+        id: string,
+        label: string,
+        translationKey: string,
+        icon: IconDefinition | undefined,
+        keybindings: number[] | undefined,
+        openDelimiter: string,
+        closeDelimiter: string,
+    ) {
+        super(id, label, translationKey, icon, keybindings);
         this.openDelimiter = openDelimiter;
         this.closeDelimiter = closeDelimiter;
     }

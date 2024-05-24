@@ -4,6 +4,6 @@ import { MonacoEditorInsertAction } from 'app/shared/monaco-editor/model/actions
 const INSERT_TASK_TEXT = '[task][Task Short Description](testCaseName)\n';
 export class MonacoTaskAction extends MonacoEditorInsertAction {
     constructor(label: string, translationKey: string) {
-        super('monaco-task.action', label, translationKey, undefined, INSERT_TASK_TEXT);
+        super('monaco-task.action', label, translationKey, undefined, undefined, INSERT_TASK_TEXT);
     }
 }

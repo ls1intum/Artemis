@@ -1,10 +1,11 @@
 import * as monaco from 'monaco-editor';
 import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
+import { faListUl } from '@fortawesome/free-solid-svg-icons';
 
 const LIST_BULLET = '- ';
 export class MonacoUnorderedListAction extends MonacoEditorAction {
     constructor(label: string, translationKey: string) {
-        super('monaco-unordered-list.action', label, translationKey, undefined);
+        super('monaco-unordered-list.action', label, translationKey, faListUl, undefined);
     }
 
     run(editor: monaco.editor.ICodeEditor): void {

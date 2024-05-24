@@ -1,6 +1,6 @@
 <div #wrapper class="markdown-editor-wrapper" [style.height.%]="100">
     <nav ngbNav #nav="ngbNav" class="nav-tabs" [destroyOnHide]="false" (navChange)="onNavChanged($event)">
-        <!-- if show edit -->
+        <!-- TODO if show edit -->
         <ng-container ngbNavItem="editor_edit">
             <a ngbNavLink class="btn-sm text-normal px-2 py-0 m-0"><span jhiTranslate="entity.action.edit"></span></a>
             <ng-template ngbNavContent>
@@ -14,6 +14,19 @@
                 <!-- TODO preview handling for other exercise types -->
             </ng-template>
         </ng-container>
+        @if (!inPreviewMode) {
+            <ng-container ngbNavItem>
+                <div class="markdown-editor__commands">
+                    <div class="markdown-editor__commands-default">
+                        @for (action of defaultActions; track action) {
+                            <button type="button" class="btn btn-sm py-0" (click)="triggerCommand(action.id)" [ngbTooltip]="action.translationKey | artemisTranslate">
+                                <fa-icon [icon]="action.icon!" />
+                            </button>
+                        }
+                    </div>
+                </div>
+            </ng-container>
+        }
     </nav>
     <div [ngbNavOutlet]="nav"></div>
 </div>

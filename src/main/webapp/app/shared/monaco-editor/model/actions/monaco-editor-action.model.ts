@@ -1,3 +1,4 @@
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import * as monaco from 'monaco-editor';
 
 export abstract class MonacoEditorAction implements monaco.editor.IActionDescriptor {
@@ -7,10 +8,13 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
     translationKey: string;
     keybindings?: number[];
 
-    constructor(id: string, label: string, translationKey: string, keybindings?: number[]) {
+    icon?: IconDefinition;
+
+    constructor(id: string, label: string, translationKey: string, icon?: IconDefinition, keybindings?: number[]) {
         this.id = id;
         this.label = label;
         this.translationKey = translationKey;
+        this.icon = icon;
         this.keybindings = keybindings;
     }
 

@@ -2,6 +2,18 @@ import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, O
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
 import { NgbNavChangeEvent } from '@ng-bootstrap/ng-bootstrap';
+import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
+import { MonacoBoldAction } from 'app/shared/monaco-editor/model/actions/monaco-bold.action';
+import { MonacoItalicAction } from 'app/shared/monaco-editor/model/actions/monaco-italic.action';
+import { MonacoUnderlineAction } from 'app/shared/monaco-editor/model/actions/monaco-underline.action';
+import { MonacoQuoteAction } from 'app/shared/monaco-editor/model/actions/monaco-quote.action';
+import { MonacoCodeAction } from 'app/shared/monaco-editor/model/actions/monaco-code.action';
+import { MonacoCodeBlockAction } from 'app/shared/monaco-editor/model/actions/monaco-code-block.action';
+import { MonacoUrlAction } from 'app/shared/monaco-editor/model/actions/monaco-url.action';
+import { MonacoAttachmentAction } from 'app/shared/monaco-editor/model/actions/monaco-attachment.action';
+import { MonacoUnorderedListAction } from 'app/shared/monaco-editor/model/actions/monaco-unordered-list.action';
+import { MonacoOrderedListAction } from 'app/shared/monaco-editor/model/actions/monaco-ordered-list.action';
+import { MultiOptionCommand } from 'app/shared/markdown-editor/commands/multiOptionCommand';
 
 @Component({
     selector: 'jhi-markdown-editor-monaco',
@@ -25,6 +37,20 @@ export class MarkdownEditorMonacoComponent implements AfterViewInit, OnDestroy {
 
     @Input()
     growToFit = false;
+
+    @Input()
+    defaultActions: MonacoEditorAction[] = [
+        new MonacoBoldAction('Bold', 'todo'),
+        new MonacoItalicAction('Italic', 'todo'),
+        new MonacoUnderlineAction('Underline', 'todo'),
+        new MonacoQuoteAction('Quote', 'todo'),
+        new MonacoCodeAction('Code', 'todo'),
+        new MonacoCodeBlockAction('Code block', 'todo'),
+        new MonacoUrlAction('URL', 'todo'),
+        new MonacoAttachmentAction('Attachment', 'todo'),
+        new MonacoOrderedListAction('Ordered list', 'todo'),
+        new MonacoUnorderedListAction('Unordered list', 'todo'),
+    ];
 
     @Output()
     markdownChange = new EventEmitter<string>();
@@ -62,4 +88,10 @@ export class MarkdownEditorMonacoComponent implements AfterViewInit, OnDestroy {
             this.onPreviewSelect.emit();
         }
     }
+
+    triggerCommand(id: string): void {
+        this.monacoEditor.triggerCommand(id);
+    }
+
+    protected readonly MultiOptionCommand = MultiOptionCommand;
 }

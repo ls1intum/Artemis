@@ -1,5 +1,6 @@
 import * as monaco from 'monaco-editor';
 import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
+import { faHeading } from '@fortawesome/free-solid-svg-icons';
 
 const HEADING_CHARACTER = '#';
 const HEADING_TEXT = 'Heading';
@@ -7,7 +8,7 @@ export class MonacoHeadingAction extends MonacoEditorAction {
     level: number;
 
     constructor(label: string, translationKey: string, level: number) {
-        super(`monaco-heading-${level}.action`, label, translationKey);
+        super(`monaco-heading-${level}.action`, label, translationKey, faHeading);
         this.level = level;
     }
 

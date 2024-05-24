@@ -147,6 +147,14 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this._editor.trigger('MonacoEditorComponent::triggerKeySequence', 'type', { text });
     }
 
+    triggerCommand(id: string, args?: unknown): void {
+        this._editor.trigger('MonacoEditorComponent::triggerCommand', id, args);
+    }
+
+    focus(): void {
+        this._editor.focus();
+    }
+
     getNumberOfLines(): number {
         return this._editor.getModel()?.getLineCount() ?? 0;
     }

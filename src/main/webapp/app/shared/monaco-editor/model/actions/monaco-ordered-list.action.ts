@@ -1,10 +1,11 @@
 import * as monaco from 'monaco-editor';
 import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
+import { faListOl } from '@fortawesome/free-solid-svg-icons';
 
 const NUMBER_REGEX = /^\d+\.\s.*/;
 export class MonacoOrderedListAction extends MonacoEditorAction {
     constructor(label: string, translationKey: string) {
-        super('monaco-ordered-list.action', label, translationKey, undefined);
+        super('monaco-ordered-list.action', label, translationKey, faListOl, undefined);
     }
 
     run(editor: monaco.editor.ICodeEditor): void {
