@@ -1,9 +1,9 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
-import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
+import type { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { Subscription } from 'rxjs';
-import { CheckoutDirectoriesDto } from 'app/entities/checkout-directories-dto';
+import type { CheckoutDirectoriesDto } from 'app/entities/checkout-directories-dto';
 
 @Component({
     selector: 'jhi-programming-exercise-repository-and-build-plan-details',
