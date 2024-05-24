@@ -47,12 +47,12 @@
                 "noUpcomingSession": "Kein Termin"
             },
             "menu": {
-                "exercise": "Aufgabe",
+                "exercises": "Aufgabe",
                 "textExercise": "Textaufgabe",
                 "fileUploadExercise": "Datei-Upload-Aufgabe",
                 "programmingExercise": "Programmieraufgabe",
                 "modelingExercise": "Modellierungsaufgabe",
-                "quizExercise": "Quiz Aufgabe",
+                "quizExercise": "Quizaufgabe",
                 "repository": "Repository",
                 "statistics": "Statistiken",
                 "lectures": "Vorlesungen",

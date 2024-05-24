@@ -46,6 +46,7 @@ const routes: Routes = [
                     authorities: [Authority.USER],
                     pageTitle: 'overview.exercises',
                     hasSidebar: true,
+                    showRefreshButton: true,
                 },
                 canActivate: [UserRouteAccessService],
 
@@ -56,6 +57,7 @@ const routes: Routes = [
                             authorities: [Authority.USER],
                             pageTitle: 'overview.exercises',
                             hasSidebar: true,
+                            showRefreshButton: true,
                         },
                         canActivate: [UserRouteAccessService],
                         loadChildren: () => import('../overview/exercise-details/course-exercise-details.module').then((m) => m.CourseExerciseDetailsModule),
@@ -118,6 +120,7 @@ const routes: Routes = [
                     authorities: [Authority.USER],
                     pageTitle: 'overview.lectures',
                     hasSidebar: true,
+                    showRefreshButton: true,
                 },
                 canActivate: [UserRouteAccessService],
                 children: [
@@ -127,6 +130,7 @@ const routes: Routes = [
                             authorities: [Authority.USER],
                             pageTitle: 'overview.lectures',
                             hasSidebar: true,
+                            showRefreshButton: true,
                         },
                         canActivate: [UserRouteAccessService],
                         loadChildren: () => import('../overview/course-lectures/course-lecture-details.module').then((m) => m.ArtemisCourseLectureDetailsModule),
@@ -139,6 +143,7 @@ const routes: Routes = [
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.statistics',
+                    showRefreshButton: true,
                 },
             },
             {
@@ -146,6 +151,7 @@ const routes: Routes = [
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.competencies',
+                    showRefreshButton: true,
                 },
                 children: [
                     {
@@ -164,6 +170,7 @@ const routes: Routes = [
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.learningPath',
+                    showRefreshButton: true,
                 },
             },
             {
@@ -172,6 +179,7 @@ const routes: Routes = [
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.communication',
+                    showRefreshButton: true,
                 },
             },
             {
@@ -180,6 +188,7 @@ const routes: Routes = [
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.messages',
+                    showRefreshButton: true,
                 },
             },
             {
@@ -189,6 +198,7 @@ const routes: Routes = [
                     authorities: [Authority.USER],
                     pageTitle: 'overview.tutorialGroups',
                     hasSidebar: true,
+                    showRefreshButton: true,
                 },
                 canActivate: [UserRouteAccessService],
                 children: [
@@ -199,6 +209,7 @@ const routes: Routes = [
                             authorities: [Authority.USER],
                             pageTitle: 'overview.tutorialGroups',
                             hasSidebar: true,
+                            showRefreshButton: true,
                         },
                         canActivate: [UserRouteAccessService],
                         loadChildren: () => import('../overview/tutorial-group-details/course-tutorial-group-details.module').then((m) => m.CourseTutorialGroupDetailsModule),
@@ -211,6 +222,7 @@ const routes: Routes = [
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.exams',
+                    showRefreshButton: true,
                 },
             },
             {

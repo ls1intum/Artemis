@@ -39,12 +39,13 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
     ) {}
 
     ngOnInit(): void {
+        // example route looks like: /courses/1/competencies/10
         const courseIdParams$ = this.activatedRoute.parent?.parent?.parent?.params;
         const competencyIdParams$ = this.activatedRoute.params;
         if (courseIdParams$) {
             this.paramsSubscription = combineLatest([courseIdParams$, competencyIdParams$]).subscribe(([courseIdParams, competencyIdParams]) => {
-                this.competencyId = parseInt(competencyIdParams.competencyId, 10);
-                this.courseId = parseInt(courseIdParams.courseId, 10);
+                this.competencyId = Number(competencyIdParams.competencyId);
+                this.courseId = Number(courseIdParams.courseId);
                 if (this.competencyId && this.courseId) {
                     this.loadData();
                 }
