@@ -116,14 +116,14 @@ public class DragAndDropQuestion extends QuizQuestion {
         }
 
         // A drag item can either be a text or a picture, but not both or none
-        for (DragItem dragItem : dragItems) {
+        for (DragItem dragItem : content.getDragItems()) {
             if (StringUtils.isEmpty(dragItem.getText()) == StringUtils.isEmpty(dragItem.getPictureFilePath())) {
                 return false;
             }
         }
 
         // check if at least one correct mapping exists
-        return getCorrectMappings() != null && !getCorrectMappings().isEmpty();
+        return content.getCorrectMappings() != null && !content.getCorrectMappings().isEmpty();
 
         // TODO: (?) Add checks for "is solvable" and "no misleading correct mapping" --> look at the implementation in the client
     }

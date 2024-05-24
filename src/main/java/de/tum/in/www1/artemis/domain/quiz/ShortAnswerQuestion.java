@@ -114,7 +114,7 @@ public class ShortAnswerQuestion extends QuizQuestion {
         }
 
         // check if at least one correct mapping exists and if similarity values are in the allowed range
-        return getCorrectMappings() != null && !getCorrectMappings().isEmpty() && getSimilarityValue() >= 50 && getSimilarityValue() <= 100;
+        return content.getCorrectMappings() != null && !content.getCorrectMappings().isEmpty() && getSimilarityValue() >= 50 && getSimilarityValue() <= 100;
 
         // TODO (?): Add checks for "is solvable" and "no misleading correct mapping" --> look at the implementation in the client
     }
