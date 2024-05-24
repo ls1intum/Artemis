@@ -63,7 +63,6 @@ public class BuildJobGitService extends AbstractGitService {
     }
 
     private void configureSsh() {
-
         final var sshSessionFactoryBuilder = getSshdSessionFactoryBuilder(gitSshPrivateKeyPath, gitSshPrivateKeyPassphrase, gitUrl);
 
         try (final var sshSessionFactory = sshSessionFactoryBuilder.build(new JGitKeyCache())) {

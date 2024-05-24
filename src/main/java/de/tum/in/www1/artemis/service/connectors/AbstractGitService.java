@@ -103,92 +103,13 @@ public abstract class AbstractGitService {
     }
 
     protected static SshdSessionFactoryBuilder getSshdSessionFactoryBuilder(Optional<String> gitSshPrivateKeyPath, Optional<String> gitSshPrivateKeyPassphrase, URL gitUrl) {
-        var credentialsProvider = new CredentialsProvider() {
-
-            @Override
-            public boolean isInteractive() {
-                return false;
-            }
-
-            @Override
-            public boolean supports(CredentialItem... items) {
-                return true;
-            }
-
-            // Note: the following method allows us to store known hosts
-            @Override
-            public boolean get(URIish uri, CredentialItem... items) throws UnsupportedCredentialItem {
-                for (CredentialItem item : items) {
-                    if (item instanceof CredentialItem.YesNoType yesNoItem) {
-                        yesNoItem.setValue(true);
-                    }
-                }
-                return true;
-            }
-        };
+        var credentialsProvider = new CustomCredentialsProvider();
 
         CredentialsProvider.setDefault(credentialsProvider);
 
-        return new SshdSessionFactoryBuilder().setKeyPasswordProvider(keyPasswordProvider -> new KeyPasswordProvider() {
-
-            @Override
-            public char[] getPassphrase(URIish uri, int attempt) {
-                // Example: /Users/artemis/.ssh/artemis/id_rsa contains /Users/artemis/.ssh/artemis
-                if (gitSshPrivateKeyPath.isPresent() && gitSshPrivateKeyPassphrase.isPresent() && uri.getPath().contains(gitSshPrivateKeyPath.get())) {
-                    return gitSshPrivateKeyPassphrase.get().toCharArray();
-                }
-                else {
-                    return null;
-                }
-            }
-
-            @Override
-            public void setAttempts(int maxNumberOfAttempts) {
-            }
-
-            @Override
-            public boolean keyLoaded(URIish uri, int attempt, Exception error) {
-                return false;
-            }
-        }).setConfigStoreFactory((homeDir, configFile, localUserName) -> new SshConfigStore() {
-
-            @Override
-            public HostConfig lookup(String hostName, int port, String userName) {
-                return new HostConfig() {
-
-                    @Override
-                    public String getValue(String key) {
-                        return null;
-                    }
-
-                    @Override
-                    public List<String> getValues(String key) {
-                        return Collections.emptyList();
-                    }
-
-                    @Override
-                    public Map<String, String> getOptions() {
-                        log.debug("getOptions: {}:{}", hostName, port);
-                        if (hostName.equals(gitUrl.getHost())) {
-                            return Collections.singletonMap(SshConstants.STRICT_HOST_KEY_CHECKING, SshConstants.NO);
-                        }
-                        else {
-                            return Collections.emptyMap();
-                        }
-                    }
-
-                    @Override
-                    public Map<String, List<String>> getMultiValuedOptions() {
-                        return Collections.emptyMap();
-                    }
-                };
-            }
-
-            @Override
-            public HostConfig lookupDefault(String hostName, int port, String userName) {
-                return lookup(hostName, port, userName);
-            }
-        }).setSshDirectory(new java.io.File(gitSshPrivateKeyPath.orElseThrow())).setHomeDirectory(new java.io.File(System.getProperty("user.home")));
+        return new SshdSessionFactoryBuilder().setKeyPasswordProvider(keyPasswordProvider -> new CustomKeyPasswordProvider(gitSshPrivateKeyPath, gitSshPrivateKeyPassphrase))
+                .setConfigStoreFactory((homeDir, configFile, localUserName) -> new CustomSshConfigStore(gitUrl))
+                .setSshDirectory(new java.io.File(gitSshPrivateKeyPath.orElseThrow())).setHomeDirectory(new java.io.File(System.getProperty("user.home")));
     }
 
     /**
@@ -223,23 +144,20 @@ public abstract class AbstractGitService {
     @NotNull
     public static Repository linkRepositoryForExistingGit(Path localPath, VcsRepositoryUri remoteRepositoryUri, String defaultBranch, boolean isBare)
             throws IOException, InvalidRefNameException {
-        // Create the JGit repository object
-
         // Open the repository from the filesystem
         FileRepositoryBuilder builder = new FileRepositoryBuilder();
 
         if (isBare) {
             builder.setBare();
+            builder.setGitDir(localPath.toFile());
         }
-        // bare repositories use a different path than checked out ones
-        builder.setGitDir(isBare ? localPath.toFile() : localPath.resolve(".git").toFile()).setInitialBranch(defaultBranch).setMustExist(true).readEnvironment().findGitDir()
-                .setup(); // scan environment GIT_* variables
+        else {
+            builder.setGitDir(localPath.resolve(".git").toFile());
+        }
+        builder.setInitialBranch(defaultBranch).setMustExist(true).readEnvironment().findGitDir().setup(); // scan environment GIT_* variables
 
         try (Repository repository = new Repository(builder, localPath, remoteRepositoryUri)) {
-            // disable auto garbage collection because it can lead to problems (especially with deleting local repositories)
-            // see https://stackoverflow.com/questions/45266021/java-jgit-files-delete-fails-to-delete-a-file-but-file-delete-succeeds
-            // and https://git-scm.com/docs/git-gc for an explanation of the parameter
-            // and https://www.eclipse.org/lists/jgit-dev/msg03734.html
+            // Read JavaDoc for more information
             StoredConfig gitRepoConfig = repository.getConfig();
             gitRepoConfig.setInt(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTO, 0);
             gitRepoConfig.setBoolean(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTODETACH, false);
@@ -333,5 +251,107 @@ public abstract class AbstractGitService {
         repository.closeBeforeDelete();
         FileUtils.deleteDirectory(repoPath.toFile());
         log.debug("Deleted Repository at {}", repoPath);
+    }
+
+    static class CustomCredentialsProvider extends CredentialsProvider {
+
+        @Override
+        public boolean isInteractive() {
+            return false;
+        }
+
+        @Override
+        public boolean supports(CredentialItem... items) {
+            return true;
+        }
+
+        // Note: the following method allows us to store known hosts
+        @Override
+        public boolean get(URIish uri, CredentialItem... items) throws UnsupportedCredentialItem {
+            for (CredentialItem item : items) {
+                if (item instanceof CredentialItem.YesNoType yesNoItem) {
+                    yesNoItem.setValue(true);
+                }
+            }
+            return true;
+        }
+    }
+
+    static class CustomKeyPasswordProvider implements KeyPasswordProvider {
+
+        Optional<String> gitSshPrivateKeyPath;
+
+        Optional<String> gitSshPrivateKeyPassphrase;
+
+        public CustomKeyPasswordProvider(Optional<String> gitSshPrivateKeyPath, Optional<String> gitSshPrivateKeyPassphrase) {
+            this.gitSshPrivateKeyPath = gitSshPrivateKeyPath;
+            this.gitSshPrivateKeyPassphrase = gitSshPrivateKeyPassphrase;
+        }
+
+        @Override
+        public char[] getPassphrase(URIish uri, int attempt) {
+            // Example: /Users/artemis/.ssh/artemis/id_rsa contains /Users/artemis/.ssh/artemis
+            if (gitSshPrivateKeyPath.isPresent() && gitSshPrivateKeyPassphrase.isPresent() && uri.getPath().contains(gitSshPrivateKeyPath.get())) {
+                return gitSshPrivateKeyPassphrase.get().toCharArray();
+            }
+            else {
+                return null;
+            }
+        }
+
+        @Override
+        public void setAttempts(int maxNumberOfAttempts) {
+        }
+
+        @Override
+        public boolean keyLoaded(URIish uri, int attempt, Exception error) {
+            return false;
+        }
+    }
+
+    static class CustomSshConfigStore implements SshConfigStore {
+
+        URL gitUrl;
+
+        public CustomSshConfigStore(URL gitUrl) {
+            this.gitUrl = gitUrl;
+        }
+
+        @Override
+        public HostConfig lookup(String hostName, int port, String userName) {
+            return new HostConfig() {
+
+                @Override
+                public String getValue(String key) {
+                    return null;
+                }
+
+                @Override
+                public List<String> getValues(String key) {
+                    return Collections.emptyList();
+                }
+
+                @Override
+                public Map<String, String> getOptions() {
+                    log.debug("getOptions: {}:{}", hostName, port);
+                    if (hostName.equals(gitUrl.getHost())) {
+                        return Collections.singletonMap(SshConstants.STRICT_HOST_KEY_CHECKING, SshConstants.NO);
+                    }
+                    else {
+                        return Collections.emptyMap();
+                    }
+                }
+
+                @Override
+                public Map<String, List<String>> getMultiValuedOptions() {
+                    return Collections.emptyMap();
+                }
+            };
+        }
+
+        @Override
+        public HostConfig lookupDefault(String hostName, int port, String userName) {
+            return lookup(hostName, port, userName);
+        }
     }
 }
