@@ -8,6 +8,7 @@ import java.nio.file.Paths;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -96,6 +97,12 @@ public class LocalVCServletService {
     @Value("${artemis.version-control.local-vcs-repo-path}")
     private String localVCBasePath;
 
+    @Value("${artemis.version-control.build_agent_git_username}")
+    private String buildAgentGitUsername;
+
+    @Value("${artemis.version-control.build_agent_git_password}")
+    private String buildAgentGitPassword;
+
     /**
      * Name of the header containing the authorization information.
      */
@@ -182,7 +189,17 @@ public class LocalVCServletService {
 
         long timeNanoStart = System.nanoTime();
 
-        User user = authenticateUser(request.getHeader(LocalVCServletService.AUTHORIZATION_HEADER));
+        var authorizationHeader = request.getHeader(LocalVCServletService.AUTHORIZATION_HEADER);
+
+        if (repositoryAction == RepositoryActionType.READ) {
+            var usernamePassword = extractUsernamePassword(authorizationHeader);
+            if (Objects.equals(usernamePassword.username, buildAgentGitUsername) && Objects.equals(usernamePassword.password, buildAgentGitPassword)) {
+                // authentication to the build agent is successful
+                return;
+            }
+        }
+
+        User user = authenticateUser(authorizationHeader);
 
         // Optimization.
         // For each git command (i.e. 'git fetch' or 'git push'), the git client sends three requests.
@@ -210,8 +227,10 @@ public class LocalVCServletService {
         log.debug("Authorizing user {} for repository {} took {}", user.getLogin(), localVCRepositoryUri, TimeLogUtil.formatDurationFrom(timeNanoStart));
     }
 
-    private User authenticateUser(String authorizationHeader) throws LocalVCAuthException {
+    record UsernamePassword(String username, String password) {
+    }
 
+    private UsernamePassword extractUsernamePassword(String authorizationHeader) throws LocalVCAuthException {
         String basicAuthCredentials = checkAuthorizationHeader(authorizationHeader);
         int separatorIndex = basicAuthCredentials.indexOf(":");
 
@@ -221,6 +240,14 @@ public class LocalVCServletService {
 
         String username = basicAuthCredentials.substring(0, separatorIndex);
         String password = basicAuthCredentials.substring(separatorIndex + 1);
+        return new UsernamePassword(username, password);
+    }
+
+    private User authenticateUser(String authorizationHeader) throws LocalVCAuthException {
+
+        var usernamePassword = extractUsernamePassword(authorizationHeader);
+        var username = usernamePassword.username;
+        var password = usernamePassword.password;
 
         try {
             SecurityUtils.checkUsernameAndPasswordValidity(username, password);
