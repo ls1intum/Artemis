@@ -45,23 +45,15 @@
                     </div>
                 }
             </div>
-            <div
-                class="competency-container py-2 position-relative"
-                [ngbTooltip]="this.jolRating === undefined ? undefined : ('artemisApp.studentAnalyticsDashboard.competencyAccordion.notRatedTooltip' | artemisTranslate)"
-            >
+            <div class="competency-rings-container py-2">
                 <jhi-competency-rings
                     [class.muted-competency-rings]="this.jolRating === undefined"
                     [confidence]="this.confidence"
                     [progress]="this.progress"
                     [mastery]="this.mastery"
-                    [hideTooltip]="this.jolRating === undefined"
+                    [hideProgress]="this.jolRating === undefined"
                     [playAnimation]="false"
                 />
-                @if (this.jolRating === undefined) {
-                    <div class="position-absolute top-50 start-50 translate-middle">
-                        <fa-icon [icon]="faQuestion" class="question-mark fa-2x" />
-                    </div>
-                }
             </div>
         </div>
     </button>
@@ -89,7 +81,7 @@
             <jhi-judgement-of-learning-rating
                 [competencyId]="competency.id"
                 [courseId]="course?.id"
-                [competencyProgress]="progress"
+                [mastery]="mastery"
                 [rating]="jolRating"
                 (ratingChange)="onRatingChange($event)"
             />

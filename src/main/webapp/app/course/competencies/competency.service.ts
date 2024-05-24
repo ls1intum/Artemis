@@ -33,6 +33,7 @@ export class CompetencyService {
         private lectureUnitService: LectureUnitService,
         private accountService: AccountService,
     ) {}
+
     getForImport(pageable: CompetencyPageableSearch) {
         const params = this.createCompetencySearchHttpParams(pageable);
         return this.httpClient
@@ -46,6 +47,19 @@ export class CompetencyService {
             tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))),
         );
     }
+
+    /**
+     * Retrieves the judgement of learning (JoL) values for all competencies of a specified course.
+     *
+     * @param courseId the id of the course for which the JoL values should be fetched
+     * @return an Observable of HttpResponse containing a map from competency id to JoL value
+     */
+    getJoLAllForCourse(courseId: number): Observable<HttpResponse<{ [key: number]: number }>> {
+        return this.httpClient
+            .get<{ [key: number]: number }>(`${this.resourceURL}/courses/${courseId}/competencies/jol`, { observe: 'response' })
+            .pipe(map((res: HttpResponse<{ [key: number]: number }>) => res));
+    }
+
     getProgress(competencyId: number, courseId: number, refresh = false) {
         let params = new HttpParams();
         params = params.set('refresh', refresh.toString());
@@ -69,6 +83,19 @@ export class CompetencyService {
                 return res;
             }),
         );
+    }
+
+    /**
+     * Retrieves the judgement of learning (JoL) value for a specific competency in a course.
+     *
+     * @param courseId the id of the course for which the competency belongs
+     * @param competencyId the id of the competency for which to get the JoL value
+     * @return an Observable of HttpResponse containing the JoL value or null if not set
+     */
+    getJoL(courseId: number, competencyId: number): Observable<HttpResponse<number>> {
+        return this.httpClient
+            .get<number>(`${this.resourceURL}/courses/${courseId}/competencies/${competencyId}/jol`, { observe: 'response' })
+            .pipe(map((res: HttpResponse<number>) => res));
     }
 
     create(competency: Competency, courseId: number): Observable<EntityResponseType> {

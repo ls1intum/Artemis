@@ -4,7 +4,6 @@
             "competencyAccordion": {
                 "title": "Kompetenzen",
                 "noData": "Für diesen Kurs sind keine Kompetenzen verfügbar.",
-                "notRatedTooltip": "Du hast dein Verständnis dieser Kompetenz noch nicht bewertet. Bitte bewerte es, um deinen Fortschritt zu sehen.",
                 "nextObjectives": "Nächste Ziele",
                 "exercises": "Aufgaben",
                 "lectures": "Vorlesungen",

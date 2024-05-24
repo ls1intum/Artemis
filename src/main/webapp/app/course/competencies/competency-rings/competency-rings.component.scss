@@ -79,3 +79,13 @@ svg {
         }
     }
 }
+
+.muted-competency-rings {
+    --competency-rings-red-bg: var(--body-bg);
+    --competency-rings-green-bg: var(--body-bg);
+    --competency-rings-blue-bg: var(--body-bg);
+}
+
+.question-mark {
+    color: var(--secondary);
+}

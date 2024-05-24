@@ -111,6 +111,7 @@ export class Course implements BaseEntity {
     public lectures?: Lecture[];
     public competencies?: Competency[];
     public prerequisites?: Competency[];
+    public judgementOfLearningMap?: { [key: number]: number }; // competencyId -> judgement
     public learningPathsEnabled?: boolean;
     public learningPaths?: LearningPath[];
     public exams?: Exam[];

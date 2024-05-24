@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
-import { faFilePdf, faList, faQuestion } from '@fortawesome/free-solid-svg-icons';
+import { faFilePdf, faList } from '@fortawesome/free-solid-svg-icons';
 import { CompetencyProgress, getConfidence, getIcon, getMastery, getProgress } from 'app/entities/competency.model';
 import { Course } from 'app/entities/course.model';
 import { Router } from '@angular/router';
@@ -30,7 +30,6 @@ export class CompetencyAccordionComponent implements OnChanges {
 
     protected readonly faList = faList;
     protected readonly faPdf = faFilePdf;
-    protected readonly faQuestion = faQuestion;
     protected readonly lectureUnitIcons = lectureUnitIcons;
     protected readonly lectureUnitTooltips = lectureUnitTooltips;
     protected readonly getIcon = getIcon;

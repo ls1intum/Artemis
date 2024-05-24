@@ -1,4 +1,5 @@
 import { Component, Input } from '@angular/core';
+import { faQuestion } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-competency-rings',
@@ -11,17 +12,37 @@ export class CompetencyRingsComponent {
     @Input() mastery = 0;
     @Input() playAnimation = true;
     @Input() hideTooltip = false;
+    @Input() hideProgress = false;
+
+    protected readonly faQuestion = faQuestion;
 
     get progressPercentage(): number {
+        if (this.hideProgress) {
+            return 0;
+        }
         return this.percentageRange(this.progress);
     }
 
     get confidencePercentage(): number {
+        if (this.hideProgress) {
+            return 0;
+        }
         return this.percentageRange(this.confidence);
     }
 
     get masteryPercentage(): number {
+        if (this.hideProgress) {
+            return 0;
+        }
         return this.percentageRange(this.mastery);
+    }
+
+    get tooltipText() {
+        if (this.hideProgress) {
+            return 'artemisApp.competency.competencyCard.ringsTooltipHideProgress';
+        } else {
+            return 'artemisApp.competency.competencyCard.ringsTooltip';
+        }
     }
 
     /**
