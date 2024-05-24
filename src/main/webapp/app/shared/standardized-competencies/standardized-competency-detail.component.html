@@ -8,7 +8,7 @@
     <div class="detail-body d-flex flex-column">
         <div class="detail-row">
             <h5 jhiTranslate="artemisApp.standardizedCompetency.model.title"></h5>
-            <p class="mb-0" id="competency-detail-title">{{ competency.title }}</p>
+            <p class="mb-0">{{ competency.title }}</p>
         </div>
         <div class="detail-row">
             <h5 jhiTranslate="artemisApp.standardizedCompetency.model.description"></h5>
@@ -20,8 +20,11 @@
         </div>
         <div class="detail-row">
             <h5 jhiTranslate="artemisApp.standardizedCompetency.model.knowledgeArea"></h5>
-            <p class="mb-0" id="competency-detail-knowledge-area">{{ knowledgeAreaTitle }}</p>
+            <p class="mb-0">{{ knowledgeAreaTitle }}</p>
         </div>
-        <!-- TODO: add source handling in follow-up PR -->
+        <div class="detail-row">
+            <h5 jhiTranslate="artemisApp.standardizedCompetency.model.source"></h5>
+            <p class="mb-0">{{ sourceString }}</p>
+        </div>
     </div>
 </div>

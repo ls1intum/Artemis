@@ -7,7 +7,8 @@
                 "description": "Beschreibung",
                 "taxonomy": "Taxonomie",
                 "knowledgeArea": "Wissensgebiet",
-                "version": "Version"
+                "version": "Version",
+                "source": "Quelle"
             },
             "details": {
                 "title": "Standardisierte Kompetenz (Details)",
