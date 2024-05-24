@@ -96,7 +96,7 @@
                                             <fa-icon [icon]="faICursor" />
                                         }
                                         @if (currentTourStep.userInteractionEvent === UserInteractionEvent.WAIT_FOR_SELECTOR) {
-                                            <fa-icon [spin]="true" [icon]="faCircleNotch" />
+                                            <fa-icon animation="spin" [icon]="faCircleNotch" />
                                         }
                                         @if (currentTourStep.userInteractionEvent === UserInteractionEvent.MODELING && !currentTourStep.modelingTask) {
                                             <fa-icon [icon]="faArrowsAlt" />
@@ -180,7 +180,7 @@
                                     <fa-icon [icon]="faPlayCircle" />
                                 }
                                 @if (guidedTourService.restartIsLoading) {
-                                    <fa-icon class="jhi-btn__loading" [icon]="faCircleNotch" [spin]="true" size="sm" />
+                                    <fa-icon class="jhi-btn__loading" [icon]="faCircleNotch" animation="spin" size="sm" />
                                 }
                                 <span jhiTranslate="global.menu.restartTutorial"></span>
                             </button>

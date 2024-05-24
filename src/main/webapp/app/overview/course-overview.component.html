@@ -137,7 +137,11 @@
                                 </div>
                             }
                             <button class="btn btn-primary btn-md" (click)="loadCourse(true)" [disabled]="refreshingCourse">
-                                <fa-icon [icon]="faSync" [spin]="refreshingCourse" />
+                                @if (refreshingCourse) {
+                                    <fa-icon [icon]="faSync" animation="spin" />
+                                } @else {
+                                    <fa-icon [icon]="faSync" />
+                                }
                                 <span class="d-none d-sm-inline" jhiTranslate="artemisApp.exercise.refresh">Refresh</span>
                             </button>
                         </div>
@@ -151,7 +155,7 @@
                         }
                         <router-outlet (activate)="onSubRouteActivate($event)" (deactivate)="onSubRouteDeactivate()" />
                         <div class="refresh-overlay" [class.active]="refreshingCourse">
-                            <fa-icon size="lg" [icon]="faCircleNotch" [spin]="true" />
+                            <fa-icon size="lg" [icon]="faCircleNotch" animation="spin" />
                         </div>
                     </div>
                 }
