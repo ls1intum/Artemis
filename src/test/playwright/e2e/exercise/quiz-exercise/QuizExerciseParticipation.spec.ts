@@ -95,7 +95,6 @@ test.describe('Quiz Exercise Participation', () => {
             login,
             navigationBar,
             courseManagement,
-            courseManagementExercises,
             quizExerciseOverview,
             courseOverview,
             quizExerciseParticipation,
@@ -103,11 +102,9 @@ test.describe('Quiz Exercise Participation', () => {
             await login(instructor);
             await navigationBar.openCourseManagement();
             await courseManagement.openExercisesOfCourse(course.id!);
-            await courseManagementExercises.getExercise(quizExercise.id!).click();
             const quizBatch = await quizExerciseOverview.addQuizBatch(quizExercise.id!);
             await quizExerciseOverview.startQuizBatch(quizExercise.id!, quizBatch.id!);
             await login(studentOne, '/courses/' + course.id);
-            await courseOverview.getExercise(quizExercise.title!).click();
             await courseOverview.openRunningExercise(quizExercise.id!);
             await quizExerciseParticipation.joinQuizBatch(quizBatch.password!);
             await expect(quizExerciseParticipation.getQuizQuestion(0)).toBeVisible();
@@ -125,7 +122,6 @@ test.describe('Quiz Exercise Participation', () => {
             await courseManagement.openExercisesOfCourse(course.id!);
             await courseManagementExercises.endQuiz(quizExercise);
             await login(studentOne, '/courses/' + course.id);
-            await courseOverview.getExercise(quizExercise.title!).click();
             await expect(courseOverview.getOpenRunningExerciseButton(quizExercise.id!)).not.toBeVisible();
         });
 
@@ -143,7 +139,6 @@ test.describe('Quiz Exercise Participation', () => {
             await courseManagementExercises.endQuiz(quizExercise);
             await courseManagementExercises.getExercise(quizExercise.id!).locator('button', { hasText: 'Release For Practice' }).click();
             await login(studentOne, '/courses/' + course.id);
-            await courseOverview.getExercise(quizExercise.title!).click();
             await courseOverview.practiceExercise();
             await expect(quizExerciseParticipation.getQuizQuestion(0)).toBeVisible();
         });
@@ -165,7 +160,6 @@ test.describe('Quiz Exercise Participation', () => {
 
         test('Student can start a batch in an individual quiz', async ({ login, courseOverview, quizExerciseParticipation }) => {
             await login(studentOne, '/courses/' + course.id);
-            await courseOverview.getExercise(quizExercise.title!).click();
             await courseOverview.openRunningExercise(quizExercise.id!);
             await quizExerciseParticipation.startQuizBatch();
             await expect(quizExerciseParticipation.getQuizQuestion(0)).toBeVisible();
