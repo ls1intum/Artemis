@@ -1,8 +1,11 @@
 package de.tum.in.www1.artemis.service.connectors.pyris.dto.data;
 
+import static de.tum.in.www1.artemis.service.util.ZonedDateTimeUtil.toInstant;
+
 import java.time.Instant;
 import java.util.List;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 
 /**
@@ -13,4 +16,15 @@ public record PyrisExtendedCourseDTO(long id, String name, String description, I
         int maxComplaints, int maxTeamComplaints, int maxComplaintTimeDays, int maxRequestMoreFeedbackTimeDays, Integer maxPoints, Integer presentationScore,
 
         List<PyrisExerciseWithStudentSubmissionsDTO> exercises, List<PyrisExamDTO> exams, List<PyrisCompetencyDTO> competencies) {
+
+    public static PyrisExtendedCourseDTO of(Course course) {
+        List<PyrisExerciseWithStudentSubmissionsDTO> exercises = course.getExercises().stream().map(PyrisExerciseWithStudentSubmissionsDTO::of).toList();
+
+        List<PyrisExamDTO> exams = course.getExams().stream().map(PyrisExamDTO::of).toList();
+        List<PyrisCompetencyDTO> competencies = course.getCompetencies().stream().map(PyrisCompetencyDTO::of).toList();
+
+        return new PyrisExtendedCourseDTO(course.getId(), course.getTitle(), course.getDescription(), toInstant(course.getStartDate()), toInstant(course.getEndDate()),
+                course.getDefaultProgrammingLanguage(), course.getMaxComplaints(), course.getMaxTeamComplaints(), course.getMaxComplaintTimeDays(),
+                course.getMaxRequestMoreFeedbackTimeDays(), course.getMaxPoints(), course.getPresentationScore(), exercises, exams, competencies);
+    }
 }

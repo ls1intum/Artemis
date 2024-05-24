@@ -29,6 +29,7 @@ import de.tum.in.www1.artemis.service.connectors.pyris.dto.chat.PyrisChatPipelin
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.chat.course.PyrisCourseChatPipelineExecutionDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.chat.tutor.PyrisTutorChatPipelineExecutionDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisCourseDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisExtendedCourseDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisUserDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageStateDTO;
@@ -123,7 +124,7 @@ public class PyrisPipelineService {
         executeChatPipeline(variant, session, "course-chat", base -> {
             var fullCourse = loadCourseWithParticipationOfStudent(courseId, studentId);
             var metrics = metricsService.getStudentCourseMetrics(session.getUser().getId(), courseId);
-            return new PyrisCourseChatPipelineExecutionDTO(base, pyrisDTOService.toPyrisExtendedCourseDTO(fullCourse), metrics);
+            return new PyrisCourseChatPipelineExecutionDTO(base, PyrisExtendedCourseDTO.of(fullCourse), metrics);
         }, () -> pyrisJobService.addCourseChatJob(courseId, session.getId()));
     }
 
