@@ -410,7 +410,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     },
                 this.localCIEnabled && {
                     type: DetailType.ProgrammingCheckoutDirectories,
-                    title: 'artemisApp.programmingExercise.buildPlanDetails',
+                    title: 'artemisApp.programmingExercise.buildPlanCheckoutDirectories',
                     data: {
                         exercise: exercise,
                         programmingLanguage: exercise.programmingLanguage,
