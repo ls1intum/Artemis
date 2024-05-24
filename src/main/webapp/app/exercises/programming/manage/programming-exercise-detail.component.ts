@@ -408,15 +408,16 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                             showOpenLink: !this.localVCEnabled,
                         },
                     },
-                this.localCIEnabled && {
-                    type: DetailType.ProgrammingCheckoutDirectories,
-                    title: 'artemisApp.programmingExercise.checkoutDirectories',
-                    data: {
-                        exercise: exercise,
-                        programmingLanguage: exercise.programmingLanguage,
-                        isLocal: true,
+                exercise.isAtLeastEditor &&
+                    this.localCIEnabled && {
+                        type: DetailType.ProgrammingCheckoutDirectories,
+                        title: 'artemisApp.programmingExercise.checkoutDirectories',
+                        data: {
+                            exercise: exercise,
+                            programmingLanguage: exercise.programmingLanguage,
+                            isLocal: true,
+                        },
                     },
-                },
                 !this.localCIEnabled && {
                     type: DetailType.Link,
                     title: 'artemisApp.programmingExercise.templateBuildPlanId',

@@ -445,7 +445,7 @@
                 "solutionRepoTooltip": "Das Repository, welches die Lösung der Aufgabe beinhaltet",
                 "testRepoTooltip": "Das Repository, welches alle Tests beinhaltet",
                 "auxiliaryRepoTooltip": "{{description}}",
-                "templateBuildPlanTooltip": "Der Build-Plan der Vorlage. Lässt alle Tests über die Vorlage der Aufgabe laufen. Dient als Kontrollreferenz, für welche alle Tests fehlschlagen müssen",
+                "templateBuildPlanTooltip": "Der Build-Plan der Vorlage. Lässt alle Tests über die Vorlage der Aufgabe laufen. Dient als Kontrollreferenz, für welche alle Tests fehlschlagen müssen. Für Abgaben von Studierenden wird ein analoger Build Plan verwendet.",
                 "solutionBuildPlanTooltip": "Der Build-Plan der Lösung der Aufgabe. Lässt alle Tests über die Lösung der Aufgabe laufen. Dient als Kontrollreferenz, für welche alle Tests erfolgreich sein müssen",
                 "submissionBuildPlan": "Abgabe Build-Plan",
                 "solutionBuildPlan": "Lösungs Build-Plan"
