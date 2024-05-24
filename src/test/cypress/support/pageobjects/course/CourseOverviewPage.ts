@@ -21,7 +21,7 @@ export class CourseOverviewPage {
     }
 
     getExercise(exerciseTitle: string) {
-        return cy.contains('#test-sidebar-card', exerciseTitle);
+        return cy.contains('#test-sidebar-card-medium', exerciseTitle);
     }
 
     openExerciseOverview(exerciseTitle: string) {
@@ -29,7 +29,7 @@ export class CourseOverviewPage {
     }
 
     getExercises() {
-        return cy.get('#test-sidebar-card');
+        return cy.get('#test-sidebar-card-medium');
     }
 
     openRunningProgrammingExercise(exerciseID: number) {
