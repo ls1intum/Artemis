@@ -26,7 +26,6 @@ interface ImportCount {
 @Component({
     selector: 'jhi-admin-import-standardized-competencies',
     templateUrl: './admin-import-standardized-competencies.component.html',
-    styleUrls: ['admin-import-standardized-competencies.component.scss'],
 })
 export class AdminImportStandardizedCompetenciesComponent {
     protected isLoading = false;
