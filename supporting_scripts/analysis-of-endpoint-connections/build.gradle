@@ -10,9 +10,11 @@ repositories {
     mavenCentral()
 }
 
+evaluationDependsOn(':')
+
 dependencies {
-    implementation 'com.thoughtworks.qdox:qdox:2.0-M9'
-    implementation "org.springframework.boot:spring-boot-starter-web:${spring_boot_version}"
+    implementation rootProject.ext.qDox
+    implementation rootProject.ext.springBootStarterWeb
 }
 
 test {
