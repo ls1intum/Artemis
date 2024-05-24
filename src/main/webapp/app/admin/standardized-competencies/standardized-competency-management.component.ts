@@ -1,8 +1,9 @@
 import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
-import { faChevronRight, faDownLeftAndUpRightToCenter, faEye, faFileImport, faPlus, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
+import { faChevronRight, faDownLeftAndUpRightToCenter, faEye, faFileExport, faFileImport, faPlus, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
 import {
     KnowledgeAreaDTO,
     KnowledgeAreaForTree,
+    Source,
     StandardizedCompetencyDTO,
     convertToKnowledgeAreaForTree,
     convertToStandardizedCompetencyForTree,
@@ -11,7 +12,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { AdminStandardizedCompetencyService } from 'app/admin/standardized-competencies/admin-standardized-competency.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
-import { Subject, map } from 'rxjs';
+import { Subject, forkJoin, map } from 'rxjs';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 import { getIcon } from 'app/entities/competency.model';
@@ -34,6 +35,8 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
     protected selectedCompetency?: StandardizedCompetencyDTO;
     // the knowledge area displayed in the detail component
     protected selectedKnowledgeArea?: KnowledgeAreaDTO;
+    // the list of sources used for the select in the detail component
+    protected sourcesForSelect: Source[] = [];
 
     // observable for the error button
     private dialogErrorSource = new Subject<string>();
@@ -46,6 +49,7 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
     protected readonly faMaximize = faUpRightAndDownLeftFromCenter;
     protected readonly faEye = faEye;
     protected readonly faFileImport = faFileImport;
+    protected readonly faFileExport = faFileExport;
     // Other constants for template
     protected readonly ButtonType = ButtonType;
     protected readonly ButtonSize = ButtonSize;
@@ -63,26 +67,34 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
 
     ngOnInit() {
         this.isLoading = true;
-        this.standardizedCompetencyService
-            .getAllForTreeView()
-            .pipe(map((response) => response.body!))
-            .subscribe({
-                next: (knowledgeAreas) => {
-                    const knowledgeAreasForTree = knowledgeAreas.map((knowledgeArea) => convertToKnowledgeAreaForTree(knowledgeArea));
-                    this.dataSource.data = knowledgeAreasForTree;
-                    this.treeControl.dataNodes = knowledgeAreasForTree;
-                    knowledgeAreasForTree.forEach((knowledgeArea) => {
-                        this.addSelfAndDescendantsToMap(knowledgeArea);
-                        this.addSelfAndDescendantsToSelectArray(knowledgeArea);
-                    });
-                    this.isLoading = false;
-                },
-                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
-            });
+        const getKnowledgeAreasObservable = this.standardizedCompetencyService.getAllForTreeView();
+        const getSourcesObservable = this.standardizedCompetencyService.getSources();
+        forkJoin([getKnowledgeAreasObservable, getSourcesObservable]).subscribe({
+            next: ([knowledgeAreasResponse, sourcesResponse]) => {
+                this.sourcesForSelect = sourcesResponse.body!;
+
+                const knowledgeAreas = knowledgeAreasResponse.body!;
+                const knowledgeAreasForTree = knowledgeAreas.map((knowledgeArea) => convertToKnowledgeAreaForTree(knowledgeArea));
+                this.dataSource.data = knowledgeAreasForTree;
+                this.treeControl.dataNodes = knowledgeAreasForTree;
+                knowledgeAreasForTree.forEach((knowledgeArea) => {
+                    this.addSelfAndDescendantsToMap(knowledgeArea);
+                    this.addSelfAndDescendantsToSelectArray(knowledgeArea);
+                });
+
+                this.isLoading = false;
+            },
+            error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+        });
     }
 
     ngOnDestroy(): void {
         this.dialogErrorSource.unsubscribe();
+    }
+
+    exportStandardizedCompetencyCatalog() {
+        const url = `/api/admin/standardized-competencies/export`;
+        window.open(url, '_blank');
     }
 
     // methods handling the knowledge area detail component
