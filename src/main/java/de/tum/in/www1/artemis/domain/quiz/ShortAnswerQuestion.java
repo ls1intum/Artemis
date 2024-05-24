@@ -69,36 +69,12 @@ public class ShortAnswerQuestion extends QuizQuestion {
         return solutions;
     }
 
-    public ShortAnswerQuestion addSolution(ShortAnswerSolution shortAnswerSolution) {
-        this.solutions.add(shortAnswerSolution);
-        shortAnswerSolution.setQuestion(this);
-        return this;
-    }
-
-    public ShortAnswerQuestion removeSolution(ShortAnswerSolution shortAnswerSolution) {
-        this.solutions.remove(shortAnswerSolution);
-        shortAnswerSolution.setQuestion(null);
-        return this;
-    }
-
     public void setSolutions(List<ShortAnswerSolution> shortAnswerSolutions) {
         this.solutions = shortAnswerSolutions;
     }
 
     public List<ShortAnswerMapping> getCorrectMappings() {
         return correctMappings;
-    }
-
-    public ShortAnswerQuestion addCorrectMapping(ShortAnswerMapping shortAnswerMapping) {
-        this.correctMappings.add(shortAnswerMapping);
-        shortAnswerMapping.setQuestion(this);
-        return this;
-    }
-
-    public ShortAnswerQuestion removeCorrectMapping(ShortAnswerMapping shortAnswerMapping) {
-        this.correctMappings.remove(shortAnswerMapping);
-        shortAnswerMapping.setQuestion(null);
-        return this;
     }
 
     public void setCorrectMappings(List<ShortAnswerMapping> shortAnswerMappings) {

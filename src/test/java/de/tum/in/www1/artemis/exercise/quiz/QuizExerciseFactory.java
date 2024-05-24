@@ -41,6 +41,7 @@ import de.tum.in.www1.artemis.domain.quiz.SubmittedAnswer;
 import de.tum.in.www1.artemis.exercise.ExerciseFactory;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.service.FilePathService;
+import de.tum.in.www1.artemis.service.quiz.QuizIdAssigner;
 
 /**
  * Factory for creating QuizExercises and related objects.
@@ -115,26 +116,31 @@ public class QuizExerciseFactory {
         shortAnswerSpot2.setTempID(generateTempId());
         sa.getSpots().add(shortAnswerSpot1);
         sa.getSpots().add(shortAnswerSpot2);
+        QuizIdAssigner.assignIds(sa.getSpots());
 
         var shortAnswerSolution1 = new ShortAnswerSolution().text("is");
         shortAnswerSolution1.setTempID(generateTempId());
         var shortAnswerSolution2 = new ShortAnswerSolution().text("long");
         shortAnswerSolution2.setTempID(generateTempId());
-        sa.addSolution(shortAnswerSolution1);
+        QuizIdAssigner.assignIds(sa.getSolutions());
+
+        sa.getContent().addSolution(shortAnswerSolution1);
         // also invoke remove once
-        sa.removeSolution(shortAnswerSolution1);
-        sa.addSolution(shortAnswerSolution1);
-        sa.addSolution(shortAnswerSolution2);
+        sa.getContent().removeSolution(shortAnswerSolution1);
+        sa.getContent().addSolution(shortAnswerSolution1);
+        sa.getContent().addSolution(shortAnswerSolution2);
 
         var mapping1 = new ShortAnswerMapping().spot(sa.getSpots().get(0)).solution(sa.getSolutions().get(0));
 
         var mapping2 = new ShortAnswerMapping().spot(sa.getSpots().get(1)).solution(sa.getSolutions().get(1));
-        sa.addCorrectMapping(mapping1);
-        sa.removeCorrectMapping(mapping1);
-        sa.addCorrectMapping(mapping1);
-        sa.addCorrectMapping(mapping2);
+        sa.getContent().addCorrectMapping(mapping1);
+        sa.getContent().removeCorrectMapping(mapping1);
+        sa.getContent().addCorrectMapping(mapping1);
+        sa.getContent().addCorrectMapping(mapping2);
         sa.setExplanation("Explanation");
         sa.setRandomizeOrder(true);
+        QuizIdAssigner.assignIds(sa.getCorrectMappings());
+
         // invoke some util methods
         sa.copyQuestionId();
         return sa;
@@ -159,13 +165,15 @@ public class QuizExerciseFactory {
         dropLocation3.setTempID(generateTempId());
         var dropLocation4 = new DropLocation().posX(40d).posY(40d).height(10d).width(10d);
         dropLocation4.setTempID(generateTempId());
-        dnd.addDropLocation(dropLocation1);
+
+        dnd.getContent().addDropLocation(dropLocation1);
         // also invoke remove once
-        dnd.removeDropLocation(dropLocation1);
-        dnd.addDropLocation(dropLocation1);
-        dnd.addDropLocation(dropLocation2);
-        dnd.addDropLocation(dropLocation3);
-        dnd.addDropLocation(dropLocation4);
+        dnd.getContent().removeDropLocation(dropLocation1);
+        dnd.getContent().addDropLocation(dropLocation1);
+        dnd.getContent().addDropLocation(dropLocation2);
+        dnd.getContent().addDropLocation(dropLocation3);
+        dnd.getContent().addDropLocation(dropLocation4);
+        QuizIdAssigner.assignIds(dnd.getDropLocations());
 
         var dragItem1 = new DragItem().text("D1");
         dragItem1.setTempID(generateTempId());
@@ -175,28 +183,31 @@ public class QuizExerciseFactory {
         dragItem3.setTempID(generateTempId());
         var dragItem4 = new DragItem().pictureFilePath("dragItemImage4.png");
         dragItem4.setTempID(generateTempId());
-        dnd.addDragItem(dragItem1);
+
+        dnd.getContent().addDragItem(dragItem1);
         // also invoke remove once
-        dnd.removeDragItem(dragItem1);
-        dnd.addDragItem(dragItem1);
-        dnd.addDragItem(dragItem2);
-        dnd.addDragItem(dragItem3);
-        dnd.addDragItem(dragItem4);
+        dnd.getContent().removeDragItem(dragItem1);
+        dnd.getContent().addDragItem(dragItem1);
+        dnd.getContent().addDragItem(dragItem2);
+        dnd.getContent().addDragItem(dragItem3);
+        dnd.getContent().addDragItem(dragItem4);
+        QuizIdAssigner.assignIds(dnd.getDragItems());
 
         var mapping1 = new DragAndDropMapping().dragItem(dragItem1).dropLocation(dropLocation1);
 
-        dnd.addCorrectMapping(mapping1);
-        dnd.removeCorrectMapping(mapping1);
-        dnd.addCorrectMapping(mapping1);
+        dnd.getContent().addCorrectMapping(mapping1);
+        dnd.getContent().removeCorrectMapping(mapping1);
+        dnd.getContent().addCorrectMapping(mapping1);
         var mapping2 = new DragAndDropMapping().dragItem(dragItem2).dropLocation(dropLocation2);
-        dnd.addCorrectMapping(mapping2);
+        dnd.getContent().addCorrectMapping(mapping2);
         var mapping3 = new DragAndDropMapping().dragItem(dragItem3).dropLocation(dropLocation3);
-        dnd.addCorrectMapping(mapping3);
+        dnd.getContent().addCorrectMapping(mapping3);
         var mapping4 = new DragAndDropMapping().dragItem(dragItem4).dropLocation(dropLocation4);
-        dnd.addCorrectMapping(mapping4);
+        dnd.getContent().addCorrectMapping(mapping4);
         dnd.setExplanation("Explanation");
         // invoke some util methods
 
+        QuizIdAssigner.assignIds(dnd.getCorrectMappings());
         dnd.copyQuestionId();
 
         return dnd;
@@ -225,7 +236,9 @@ public class QuizExerciseFactory {
         mc.getAnswerOptions().add(new AnswerOption().text("B").hint("H2").explanation("E2").isCorrect(false));
         mc.setExplanation("Explanation");
 
-        mc.copyQuestionId();
+        QuizIdAssigner.assignIds(mc.getAnswerOptions());
+        System.out.println("ID::" + mc.getId());
+
         return mc;
     }
 
@@ -452,14 +465,14 @@ public class QuizExerciseFactory {
         dropLocation4.setTempID(generateTempId());
         var dropLocation5 = new DropLocation().posX(50d).posY(50d).height(10d).width(10d);
         dropLocation5.setTempID(generateTempId());
-        dnd.addDropLocation(dropLocation1);
+        dnd.getContent().addDropLocation(dropLocation1);
         // also invoke remove once
-        dnd.removeDropLocation(dropLocation1);
-        dnd.addDropLocation(dropLocation1);
-        dnd.addDropLocation(dropLocation2);
-        dnd.addDropLocation(dropLocation3);
-        dnd.addDropLocation(dropLocation4);
-        dnd.addDropLocation(dropLocation5);
+        dnd.getContent().removeDropLocation(dropLocation1);
+        dnd.getContent().addDropLocation(dropLocation1);
+        dnd.getContent().addDropLocation(dropLocation2);
+        dnd.getContent().addDropLocation(dropLocation3);
+        dnd.getContent().addDropLocation(dropLocation4);
+        dnd.getContent().addDropLocation(dropLocation5);
 
         var dragItem1 = new DragItem().text("D1");
         dragItem1.setTempID(generateTempId());
@@ -478,28 +491,28 @@ public class QuizExerciseFactory {
         }
         var dragItem5 = new DragItem().pictureFilePath("/api/files/drag-and-drop/drag-items/10/drag_item.jpg");
         dragItem4.setInvalid(true);
-        dnd.addDragItem(dragItem1);
+        dnd.getContent().addDragItem(dragItem1);
         // also invoke remove once
-        dnd.removeDragItem(dragItem1);
-        dnd.addDragItem(dragItem1);
-        dnd.addDragItem(dragItem2);
-        dnd.addDragItem(dragItem3);
-        dnd.addDragItem(dragItem4);
-        dnd.addDragItem(dragItem5);
+        dnd.getContent().removeDragItem(dragItem1);
+        dnd.getContent().addDragItem(dragItem1);
+        dnd.getContent().addDragItem(dragItem2);
+        dnd.getContent().addDragItem(dragItem3);
+        dnd.getContent().addDragItem(dragItem4);
+        dnd.getContent().addDragItem(dragItem5);
 
         var mapping1 = new DragAndDropMapping().dragItem(dragItem1).dropLocation(dropLocation1);
 
-        dnd.addCorrectMapping(mapping1);
-        dnd.removeCorrectMapping(mapping1);
-        dnd.addCorrectMapping(mapping1);
+        dnd.getContent().addCorrectMapping(mapping1);
+        dnd.getContent().removeCorrectMapping(mapping1);
+        dnd.getContent().addCorrectMapping(mapping1);
         var mapping2 = new DragAndDropMapping().dragItem(dragItem2).dropLocation(dropLocation2);
-        dnd.addCorrectMapping(mapping2);
+        dnd.getContent().addCorrectMapping(mapping2);
         var mapping3 = new DragAndDropMapping().dragItem(dragItem3).dropLocation(dropLocation3);
-        dnd.addCorrectMapping(mapping3);
+        dnd.getContent().addCorrectMapping(mapping3);
         var mapping4 = new DragAndDropMapping().dragItem(dragItem4).dropLocation(dropLocation4);
-        dnd.addCorrectMapping(mapping4);
+        dnd.getContent().addCorrectMapping(mapping4);
         var mapping5 = new DragAndDropMapping().dragItem(dragItem5).dropLocation(dropLocation5);
-        dnd.addCorrectMapping(mapping5);
+        dnd.getContent().addCorrectMapping(mapping5);
         dnd.setExplanation("Explanation");
         return dnd;
     }

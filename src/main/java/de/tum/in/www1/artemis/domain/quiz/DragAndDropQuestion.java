@@ -108,39 +108,6 @@ public class DragAndDropQuestion extends QuizQuestion {
         this.content = content;
     }
 
-    public DragAndDropQuestion addDropLocation(DropLocation dropLocation) {
-        this.content.getDropLocations().add(dropLocation);
-        return this;
-    }
-
-    public DragAndDropQuestion removeDropLocation(DropLocation dropLocation) {
-        this.content.getDropLocations().remove(dropLocation);
-        return this;
-    }
-
-    public DragAndDropQuestion addDragItem(DragItem dragItem) {
-        this.dragItems.add(dragItem);
-        return this;
-    }
-
-    public DragAndDropQuestion removeDragItem(DragItem dragItem) {
-        this.dragItems.remove(dragItem);
-        dragItem.setQuestion(null);
-        return this;
-    }
-
-    public DragAndDropQuestion addCorrectMapping(DragAndDropMapping dragAndDropMapping) {
-        this.correctMappings.add(dragAndDropMapping);
-        dragAndDropMapping.setQuestion(this);
-        return this;
-    }
-
-    public DragAndDropQuestion removeCorrectMapping(DragAndDropMapping dragAndDropMapping) {
-        this.correctMappings.remove(dragAndDropMapping);
-        dragAndDropMapping.setQuestion(null);
-        return this;
-    }
-
     @Override
     public Boolean isValid() {
         // check general validity (using superclass)
