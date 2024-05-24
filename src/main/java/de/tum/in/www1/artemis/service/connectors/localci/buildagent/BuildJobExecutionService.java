@@ -450,8 +450,7 @@ public class BuildJobExecutionService {
         try {
             // Clone the assignment repository into a temporary directory
             // TODO: use a random value if commitHash is null
-            Repository repository = buildJobGitService.cloneRepository(repositoryUri,
-                    Paths.get(CHECKED_OUT_REPOS_TEMP_DIR, commitHash, repositoryUri.folderNameForRepositoryUri()));
+            Repository repository = buildJobGitService.cloneRepository(repositoryUri, Path.of(CHECKED_OUT_REPOS_TEMP_DIR, commitHash, repositoryUri.folderNameForRepositoryUri()));
             if (checkout && commitHash != null) {
                 // Checkout the commit hash
                 buildJobGitService.checkoutRepositoryAtCommit(repository, commitHash);

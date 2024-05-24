@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.net.URI;
@@ -108,8 +109,8 @@ public abstract class AbstractGitService {
         CredentialsProvider.setDefault(credentialsProvider);
 
         return new SshdSessionFactoryBuilder().setKeyPasswordProvider(keyPasswordProvider -> new CustomKeyPasswordProvider(gitSshPrivateKeyPath, gitSshPrivateKeyPassphrase))
-                .setConfigStoreFactory((homeDir, configFile, localUserName) -> new CustomSshConfigStore(gitUrl))
-                .setSshDirectory(new java.io.File(gitSshPrivateKeyPath.orElseThrow())).setHomeDirectory(new java.io.File(System.getProperty("user.home")));
+                .setConfigStoreFactory((homeDir, configFile, localUserName) -> new CustomSshConfigStore(gitUrl)).setSshDirectory(new File(gitSshPrivateKeyPath.orElseThrow()))
+                .setHomeDirectory(new java.io.File(System.getProperty("user.home")));
     }
 
     /**

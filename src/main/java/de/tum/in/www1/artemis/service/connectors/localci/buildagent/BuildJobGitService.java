@@ -35,10 +35,6 @@ public class BuildJobGitService extends AbstractGitService {
 
     private static final Logger log = LoggerFactory.getLogger(BuildJobGitService.class);
 
-    public BuildJobGitService() {
-        super();
-    }
-
     /**
      * initialize the GitService, in particular which authentication mechanism should be used
      * Artemis uses the following order for authentication:
@@ -127,9 +123,9 @@ public class BuildJobGitService extends AbstractGitService {
         log.debug("Cloning from {} to {}", gitUriAsString, localPath);
         // make sure the directory to copy into is empty (the operation only executes a delete if the directory exists)
         FileUtils.deleteDirectory(localPath.toFile());
-        Git git = cloneCommand().setURI(gitUriAsString).setDirectory(localPath.toFile()).call();
-        git.close();
-        return getExistingCheckedOutRepositoryByLocalPath(localPath, repoUri, defaultBranch);
+        try (Git git = cloneCommand().setURI(gitUriAsString).setDirectory(localPath.toFile()).call()) {
+            return getExistingCheckedOutRepositoryByLocalPath(localPath, repoUri, defaultBranch);
+        }
     }
 
     /**
