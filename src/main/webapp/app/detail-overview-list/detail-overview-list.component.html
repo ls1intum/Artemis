@@ -102,10 +102,7 @@
                                                 </a>
                                             }
                                             <div class="auxiliaryRepositoryDescription">
-                                                @if (auxiliaryRepository.checkoutDirectory) {
-                                                    <span jhiTranslate="artemisApp.programmingExercise.preview.checkoutDirectoryDuringBuildExecution"></span>:
-                                                    <code>{{ auxiliaryRepository.checkoutDirectory }}</code>
-                                                } @else {
+                                                @if (!auxiliaryRepository.checkoutDirectory) {
                                                     <fa-icon [icon]="faExclamationTriangle" class="text-warning me-1" [ngbTooltip]="noCheckoutDirectorySetTooltip" />
                                                     <span jhiTranslate="artemisApp.programmingExercise.noCheckoutDirectorySet"></span>
                                                 }
