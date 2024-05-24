@@ -142,7 +142,7 @@ export class GitDiffReportComponent implements OnInit {
                 .map((info) => info.diffReady)
                 .reduce((a, b) => a && b);
         } else {
-            console.error('Received diff ready event for unknown path: ' + path);
+            console.error(`Received diff ready event for unknown path: ${path}`);
         }
     }
 }
