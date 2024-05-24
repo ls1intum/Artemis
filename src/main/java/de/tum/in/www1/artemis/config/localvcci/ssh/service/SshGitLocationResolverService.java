@@ -81,7 +81,9 @@ public class SshGitLocationResolverService implements GitLocationResolver {
             throw new AccessDeniedException("User does not have access to this repository", e);
         }
 
-        try (Repository repo = localVCServletService.resolveRepository(repositoryPath)) {
+        // we cannot trust unvalidated user input
+        String localRepositoryPath = localVCRepositoryUri.getRelativeRepositoryPath().toString();
+        try (Repository repo = localVCServletService.resolveRepository(localRepositoryPath)) {
             return repo.getDirectory().toPath();
         }
     }
