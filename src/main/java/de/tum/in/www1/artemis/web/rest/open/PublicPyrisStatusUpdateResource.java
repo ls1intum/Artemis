@@ -41,7 +41,8 @@ public class PublicPyrisStatusUpdateResource {
     }
 
     /**
-     * {@code POST /api/public/pyris/pipelines/tutor-chat/runs/{runId}/status} : Set the status of a tutor chat job.
+     * POST public/pyris/pipelines/tutor-chat/runs/:runId/status : Set the status of a tutor chat job
+     * <p>
      * Uses custom token based authentication.
      *
      * @param runId           the ID of the job
@@ -68,7 +69,8 @@ public class PublicPyrisStatusUpdateResource {
     }
 
     /**
-     * {@code POST /api/public/pyris/pipelines/course-chat/runs/{runId}/status} : Set the status of a course chat job.
+     * POST public/pyris/pipelines/course-chat/runs/:runId/status : Set the status of a course chat job
+     * <p>
      * Uses custom token based authentication.
      *
      * @param runId           the ID of the job
