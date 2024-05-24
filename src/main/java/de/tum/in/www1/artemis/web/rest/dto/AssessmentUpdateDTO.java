@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest.dto;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import jakarta.annotation.Nullable;
@@ -17,13 +16,4 @@ import de.tum.in.www1.artemis.domain.Feedback;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record AssessmentUpdateDTO(List<Feedback> feedbacks, ComplaintResponse complaintResponse, @Nullable String assessmentNote) implements AssessmentUpdate {
-
-    /*
-     * Checks if the feedbacks list is null. If it is, it assigns it a default value of an empty list.
-     */
-    public AssessmentUpdateDTO {
-        if (feedbacks == null) {
-            feedbacks = new ArrayList<>();
-        }
-    }
 }

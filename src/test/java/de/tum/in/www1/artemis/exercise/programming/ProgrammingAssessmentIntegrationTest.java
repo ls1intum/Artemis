@@ -246,7 +246,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
         complaintResponse.getComplaint().setAccepted(false);
         complaintResponse.setResponseText("rejected");
 
-        final var assessmentUpdate = new AssessmentUpdateDTO(new ArrayList<>(), complaintResponse, null);
+        final var assessmentUpdate = new AssessmentUpdateDTO(List.of(new Feedback()), complaintResponse, null);
 
         request.putWithResponseBody("/api/programming-submissions/" + programmingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate, Result.class,
                 HttpStatus.FORBIDDEN);
