@@ -684,7 +684,7 @@ public class CompetencyResource {
      */
     @GetMapping("courses/{courseId}/competencies/{competencyId}/jol")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<Integer> getJudgementOfLearning(@PathVariable long courseId, @PathVariable long competencyId) {
+    public ResponseEntity<Integer> getJudgementOfLearningForCompetency(@PathVariable long courseId, @PathVariable long competencyId) {
         log.info("REST request to get judgement of learning for competency: {}", competencyId);
 
         final var userId = userRepository.getUserIdElseThrow();
@@ -695,14 +695,14 @@ public class CompetencyResource {
     }
 
     /**
-     * GET courses/:courseId/competencies/jol
+     * GET courses/:courseId/competencies/jol : Gets the judgement of learning for all competencies of a course
      *
      * @param courseId the id of the course for which the competency belongs
      * @return the ResponseEntity with status 200 (OK) and body the judgement of learning values for all competencies of the course as a map from competency id to jol value
      */
     @GetMapping("courses/{courseId}/competencies/jol")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<Map<Long, Integer>> getJudgementOfLearning(@PathVariable long courseId) {
+    public ResponseEntity<Map<Long, Integer>> getJudgementOfLearningForCourse(@PathVariable long courseId) {
         log.info("REST request to get judgement of learning for competencies of course: {}", courseId);
 
         final var userId = userRepository.getUserIdElseThrow();

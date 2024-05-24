@@ -12,6 +12,7 @@ import de.tum.in.www1.artemis.domain.competency.CompetencyJOL;
 import de.tum.in.www1.artemis.repository.CompetencyRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.competency.CompetencyJOLRepository;
+import de.tum.in.www1.artemis.repository.competency.JOLValueEntry;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
@@ -89,7 +90,6 @@ public class CompetencyJOLService {
      * @return a map from competency id to judgement of learning value
      */
     public Map<Long, Integer> getJudgementOfLearningForUserByCourseId(long userId, long courseId) {
-        return competencyJOLRepository.findValuesForUserByCourseId(userId, courseId).stream()
-                .collect(toMap(CompetencyJOLRepository.ValueEntry::competencyId, CompetencyJOLRepository.ValueEntry::value));
+        return competencyJOLRepository.findValuesForUserByCourseId(userId, courseId).stream().collect(toMap(JOLValueEntry::competencyId, JOLValueEntry::value));
     }
 }

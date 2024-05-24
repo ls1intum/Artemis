@@ -22,16 +22,19 @@ public interface CompetencyJOLRepository extends JpaRepository<CompetencyJOL, Lo
 
     Optional<CompetencyJOL> findByCompetencyIdAndUserId(long competencyId, long userId);
 
+    @Query("""
+            SELECT c.value
+            FROM CompetencyJOL c
+            WHERE c.competency.id = :competencyId
+                AND c.user.id = :userId
+            """)
     Optional<Integer> findValueByCompetencyIdAndUserId(long competencyId, long userId);
 
     @Query("""
-            SELECT new de.tum.in.www1.artemis.repository.competency.CompetencyJOLRepository.ValueEntry(c.competency.id, c.value)
+            SELECT new de.tum.in.www1.artemis.repository.competency.JOLValueEntry(c.competency.id, c.value)
             FROM CompetencyJOL c
             WHERE c.user.id = :userId
                 AND c.competency.course.id = :courseId
             """)
-    Set<ValueEntry> findValuesForUserByCourseId(@Param("userId") long userId, @Param("courseId") long courseId);
-
-    record ValueEntry(long competencyId, int value) {
-    }
+    Set<JOLValueEntry> findValuesForUserByCourseId(@Param("userId") long userId, @Param("courseId") long courseId);
 }
