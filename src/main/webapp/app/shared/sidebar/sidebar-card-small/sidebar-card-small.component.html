@@ -15,7 +15,9 @@
     <div class="inline-block col-7">
         <jhi-sidebar-card-item [sidebarType]="sidebarType" [sidebarItem]="sidebarItem" />
     </div>
-    <div class="inline-block pb-2">
-        <jhi-conversation-options [conversation]="sidebarItem.conversation!" (onUpdateSidebar)="onUpdateSidebar.emit()" />
-    </div>
+    @if (sidebarItem.conversation) {
+        <div class="inline-block pb-2">
+            <jhi-conversation-options [conversation]="sidebarItem.conversation!" (onUpdateSidebar)="onUpdateSidebar.emit()" />
+        </div>
+    }
 </div>

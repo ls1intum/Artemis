@@ -50,15 +50,15 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     activeConversation?: ConversationDTO = undefined;
     conversationsOfUser: ConversationDTO[] = [];
 
-    conversationSelected: boolean = true;
+    conversationSelected = true;
     sidebarData: SidebarData;
     accordionConversationGroups: AccordionGroups = DEFAULT_CHANNEL_GROUPS;
     sidebarConversations: SidebarCardElement[] = [];
-    isCollapsed: boolean = false;
+    isCollapsed = false;
 
     // set undefined so nothing gets displayed until isCodeOfConductAccepted is loaded
     isCodeOfConductAccepted?: boolean;
-    isCodeOfConductPresented: boolean = false;
+    isCodeOfConductPresented = false;
 
     @ViewChild(CourseWideSearchComponent)
     courseWideSearch: CourseWideSearchComponent;

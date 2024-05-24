@@ -7,7 +7,7 @@ import { SidebarCardDirective } from 'app/shared/sidebar/sidebar-card.directive'
 import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockModule, MockPipe } from 'ng-mocks';
+import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { NgbCollapseModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
@@ -25,7 +25,7 @@ describe('SidebarAccordionComponent', () => {
             declarations: [
                 SidebarAccordionComponent,
                 SidebarCardMediumComponent,
-                AccordionAddOptionsComponent,
+                MockComponent(AccordionAddOptionsComponent),
                 SidebarCardItemComponent,
                 SidebarCardDirective,
                 SearchFilterPipe,
