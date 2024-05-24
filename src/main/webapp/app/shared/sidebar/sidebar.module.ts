@@ -1,7 +1,6 @@
 import { NgModule } from '@angular/core';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSidePanelModule } from 'app/shared/side-panel/side-panel.module';
-import { ArtemisCoursesRoutingModule } from 'app/overview/courses-routing.module';
 import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
 import { ArtemisExerciseButtonsModule } from 'app/overview/exercise-details/exercise-buttons.module';
 import { ArtemisCourseExerciseRowModule } from 'app/overview/course-exercises/course-exercise-row.module';
@@ -22,7 +21,6 @@ import { SidebarCardDirective } from 'app/shared/sidebar/sidebar-card.directive'
         ArtemisSharedModule,
         ArtemisSharedPipesModule,
         ArtemisSidePanelModule,
-        ArtemisCoursesRoutingModule,
         ArtemisSharedCommonModule,
         SubmissionResultStatusModule,
         SidebarCardDirective,
