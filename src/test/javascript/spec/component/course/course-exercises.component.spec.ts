@@ -28,6 +28,7 @@ import { UMLDiagramType } from '@ls1intum/apollon';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
 import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
+import { By } from '@angular/platform-browser';
 
 describe('CourseExercisesComponent', () => {
     let fixture: ComponentFixture<CourseExercisesComponent>;
@@ -128,7 +129,9 @@ describe('CourseExercisesComponent', () => {
     it('should display "Please Select an Exercise" when no exercise is selected', () => {
         component.exerciseSelected = false;
         fixture.detectChanges();
-        expect(fixture.nativeElement.textContent).toContain('Please Select an Exercise');
+        const noExerciseElement = fixture.debugElement.query(By.css('[jhiTranslate$=selectExercise]'));
+        expect(noExerciseElement).toBeTruthy();
+        expect(noExerciseElement.nativeElement.getAttribute('jhiTranslate')).toBe('artemisApp.courseOverview.exerciseDetails.selectExercise');
     });
 
     it('should display the exercise details when an exercise is selected', () => {
