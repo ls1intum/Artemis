@@ -83,6 +83,18 @@ export interface StandardizedCompetencyForTree extends StandardizedCompetencyDTO
     isVisible: boolean;
 }
 
+export function sourceToString(source: Source) {
+    const author = source.author ?? '';
+    const title = source.title ?? '';
+    const uri = source.uri ?? '';
+
+    if (!author) {
+        return `"${title}". ${uri}`;
+    } else {
+        return `${author}. "${title}". ${uri}`;
+    }
+}
+
 export function convertToStandardizedCompetencyForTree(competencyDTO: StandardizedCompetencyDTO, isVisible: boolean) {
     const competencyForTree: StandardizedCompetencyForTree = { ...competencyDTO, isVisible: isVisible };
     return competencyForTree;
