@@ -35,34 +35,4 @@ public class DragAndDropDAO implements Serializable {
     public void setCorrectMappings(List<DragAndDropMapping> dragAndDropMappings) {
         this.correctMappings = dragAndDropMappings;
     }
-
-    public DragAndDropDAO addDropLocation(DropLocation dropLocation) {
-        this.dropLocations.add(dropLocation);
-        return this;
-    }
-
-    public DragAndDropDAO removeDropLocation(DropLocation dropLocation) {
-        this.dropLocations.remove(dropLocation);
-        return this;
-    }
-
-    public DragAndDropDAO addDragItem(DragItem dragItem) {
-        this.dragItems.add(dragItem);
-        return this;
-    }
-
-    public DragAndDropDAO removeDragItem(DragItem dragItem) {
-        this.dragItems.remove(dragItem);
-        return this;
-    }
-
-    public DragAndDropDAO addCorrectMapping(DragAndDropMapping dragAndDropMapping) {
-        this.correctMappings.add(dragAndDropMapping);
-        return this;
-    }
-
-    public DragAndDropDAO removeCorrectMapping(DragAndDropMapping dragAndDropMapping) {
-        this.correctMappings.remove(dragAndDropMapping);
-        return this;
-    }
 }

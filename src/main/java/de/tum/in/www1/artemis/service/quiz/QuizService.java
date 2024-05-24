@@ -184,7 +184,7 @@ public abstract class QuizService<T extends QuizConfiguration> {
         }
 
         for (DragAndDropMapping mapping : mappingsToBeRemoved) {
-            dragAndDropQuestion.getContent().removeCorrectMapping(mapping);
+            dragAndDropQuestion.getContent().getCorrectMappings().remove(mapping);
         }
     }
 
@@ -223,7 +223,7 @@ public abstract class QuizService<T extends QuizConfiguration> {
         }
 
         for (ShortAnswerMapping mapping : mappingsToBeRemoved) {
-            shortAnswerQuestion.getContent().removeCorrectMapping(mapping);
+            shortAnswerQuestion.getContent().getCorrectMappings().remove(mapping);
         }
     }
 

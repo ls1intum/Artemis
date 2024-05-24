@@ -35,24 +35,4 @@ public class ShortAnswerDAO implements Serializable {
     public void setCorrectMappings(List<ShortAnswerMapping> correctMappings) {
         this.correctMappings = correctMappings;
     }
-
-    public ShortAnswerDAO addSolution(ShortAnswerSolution shortAnswerSolution) {
-        this.solutions.add(shortAnswerSolution);
-        return this;
-    }
-
-    public ShortAnswerDAO removeSolution(ShortAnswerSolution shortAnswerSolution) {
-        this.solutions.remove(shortAnswerSolution);
-        return this;
-    }
-
-    public ShortAnswerDAO addCorrectMapping(ShortAnswerMapping shortAnswerMapping) {
-        this.correctMappings.add(shortAnswerMapping);
-        return this;
-    }
-
-    public ShortAnswerDAO removeCorrectMapping(ShortAnswerMapping shortAnswerMapping) {
-        this.correctMappings.remove(shortAnswerMapping);
-        return this;
-    }
 }

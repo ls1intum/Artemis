@@ -362,7 +362,7 @@ public class QuizExerciseUtilService {
         DragAndDropMapping mappingWithImage = new DragAndDropMapping();
         mappingWithImage.setDragItem(dragAndDropQuestion.getDragItems().get(4));
         mappingWithImage.setDropLocation(dragAndDropQuestion.getDropLocations().get(3));
-        dragAndDropQuestion.getContent().addCorrectMapping(dragAndDropMapping);
+        dragAndDropQuestion.getContent().getCorrectMappings().add(dragAndDropMapping);
         studentParticipationRepository.save(studentParticipation);
         quizSubmissionRepository.save(quizSubmission);
         submittedShortAnswer.setSubmission(quizSubmission);
