@@ -1,5 +1,5 @@
 import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
-import { faChevronRight, faDownLeftAndUpRightToCenter, faEye, faFileImport, faPlus, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
+import { faChevronRight, faDownLeftAndUpRightToCenter, faEye, faFileExport, faFileImport, faPlus, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
 import {
     KnowledgeAreaDTO,
     KnowledgeAreaForTree,
@@ -46,6 +46,7 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
     protected readonly faMaximize = faUpRightAndDownLeftFromCenter;
     protected readonly faEye = faEye;
     protected readonly faFileImport = faFileImport;
+    protected readonly faFileExport = faFileExport;
     // Other constants for template
     protected readonly ButtonType = ButtonType;
     protected readonly ButtonSize = ButtonSize;
@@ -83,6 +84,11 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
 
     ngOnDestroy(): void {
         this.dialogErrorSource.unsubscribe();
+    }
+
+    exportStandardizedCompetencyCatalog() {
+        const url = `/api/admin/standardized-competencies/export`;
+        window.open(url, '_blank');
     }
 
     // methods handling the knowledge area detail component

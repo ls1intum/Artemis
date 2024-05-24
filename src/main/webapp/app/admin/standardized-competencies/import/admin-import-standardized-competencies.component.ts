@@ -121,7 +121,7 @@ export class AdminImportStandardizedCompetenciesComponent {
 
     importCompetencies() {
         this.isLoading = true;
-        this.adminStandardizedCompetencyService.importCompetencies(this.importData!).subscribe({
+        this.adminStandardizedCompetencyService.importStandardizedCompetencyCatalog(this.importData!).subscribe({
             next: () => {
                 this.isLoading = false;
                 this.alertService.success('artemisApp.standardizedCompetency.manage.import.success');
