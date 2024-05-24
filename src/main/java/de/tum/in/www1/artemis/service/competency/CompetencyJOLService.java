@@ -1,6 +1,9 @@
 package de.tum.in.www1.artemis.service.competency;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+import static java.util.stream.Collectors.toMap;
+
+import java.util.Map;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -76,5 +79,17 @@ public class CompetencyJOLService {
         jol.setUser(userRepository.findById(userId).orElseThrow());
         jol.setValue(jolValue);
         return jol;
+    }
+
+    /**
+     * Get a users judgement of learning value for all competencies of a course.
+     *
+     * @param userId   the id of the user
+     * @param courseId the id of the course
+     * @return a map from competency id to judgement of learning value
+     */
+    public Map<Long, Integer> getJudgementOfLearningForUserByCourseId(long userId, long courseId) {
+        return competencyJOLRepository.findValuesForUserByCourseId(userId, courseId).stream()
+                .collect(toMap(CompetencyJOLRepository.ValueEntry::competencyId, CompetencyJOLRepository.ValueEntry::value));
     }
 }
