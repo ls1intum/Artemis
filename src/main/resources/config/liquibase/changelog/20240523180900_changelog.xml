@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="20240523180900_1" author="rstief">
+        <addColumn tableName="competency">
+            <column name="discriminator" type="varchar(31)"/>
+        </addColumn>
+        <sql>UPDATE competency SET discriminator = 'COMPETENCY'</sql>
+        <!-- Add NotNullConstraint after the update because otherwise postgres fails -->
+        <addNotNullConstraint tableName="competency" columnName="discriminator" columnDataType="varchar"/>
+    </changeSet>
+    <changeSet id="20240523180900_2_postgres" author="rstief">
+        <preConditions onFail="CONTINUE">
+            <dbms type="postgresql"/>
+        </preConditions>
+        <sql dbms="postgresql" splitStatements="false">
+            DO $$
+                DECLARE max_id BIGINT;
+            BEGIN
+                max_id := (SELECT (MAX(id)) as id FROM competency);
+                INSERT INTO competency (id, description, title, course_id, taxonomy, mastery_threshold, soft_due_date, optional, linked_standardized_competency_id, discriminator)
+                SELECT (max_id + row_number() over ()) as id, description, title, competency_course.course_id AS course_id, taxonomy, mastery_threshold, soft_due_date, optional, linked_standardized_competency_id, 'PREREQUISITE'
+                FROM competency
+                     RIGHT JOIN competency_course ON competency.id = competency_course.competency_id;
+            END $$;
+        </sql>
+    </changeSet>
+    <changeSet id="20240523180900_2_mysql" author="rstief">
+        <preConditions onFail="CONTINUE">
+            <dbms type="mysql"/>
+        </preConditions>
+        <sql dbms="mysql">
+            INSERT INTO competency (id, description, title, course_id, taxonomy, mastery_threshold, soft_due_date, optional, linked_standardized_competency_id, discriminator)
+            SELECT @max_id := @max_id + 1 as id, description, title, competency_course.course_id as course_id, taxonomy, mastery_threshold, soft_due_date, optional, linked_standardized_competency_id, 'PREREQUISITE'
+            FROM competency
+                RIGHT JOIN competency_course on competency.id = competency_course.competency_id, (SELECT @max_id := MAX(id) FROM competency) max_id_table;
+        </sql>
+    </changeSet>
+    <changeSet id="20240523180900_3" author="rstief">
+        <dropTable tableName="competency_course" cascadeConstraints="true" />
+    </changeSet>
+</databaseChangeLog>
