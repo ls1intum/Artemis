@@ -169,10 +169,12 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     /**
-     * load exam information from the exam-participation-cover component
+     * Load exam information from the exam-participation-cover component
+     * This component includes displaying exam itself and end page
      */
     ngOnInit(): void {
         if (!this.exam) {
+            // needed to get neccessary properties from exam-participation-cover component, because all these properties are defined there
             this.examStateSubscription = this.examParticipationService.examState$.subscribe((state) => {
                 this.courseId = state.courseId!;
                 this.examId = state.examId!;
@@ -203,11 +205,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         }
 
         this.examStarted(this.studentExam);
-        this.generateInformationForHtml();
+        this.generateEndTextInformation();
         this.loadGraceEndDate();
     }
 
-    generateInformationForHtml() {
+    generateEndTextInformation() {
         this.formattedGeneralInformation = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.endText);
         this.formattedConfirmationText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.confirmationEndText);
     }

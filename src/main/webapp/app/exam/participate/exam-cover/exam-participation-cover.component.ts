@@ -51,7 +51,7 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
     studentExamId: number;
     loadingExam: boolean;
 
-    liveEventsSubscription?: Subscription;
+    workingTimeUpdateEventsSubscription?: Subscription;
 
     isAtLeastTutor?: boolean;
     isAtLeastInstructor?: boolean;
@@ -81,6 +81,10 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
         private profileService: ProfileService,
     ) {}
 
+    /**
+     * Load exam information from the server
+     * This component includes displaying welcome page, student exam summary and error text in case of not submitting on time
+     */
     ngOnInit(): void {
         this.route.parent?.parent?.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId'], 10);
@@ -148,13 +152,14 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
             this.isTestServer = profileInfo.testServer ?? false;
         });
 
-        this.generateInformationForHtml();
         this.resetConfirmation();
     }
 
-    generateInformationForHtml() {
-        this.formattedGeneralInformation = this.artemisMarkdown.safeHtmlForMarkdown(this.exam?.startText);
-        this.formattedConfirmationText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam?.confirmationStartText);
+    generateStartTextInformation() {
+        if (this.exam) {
+            this.formattedGeneralInformation = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.startText);
+            this.formattedConfirmationText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.confirmationStartText);
+        }
     }
 
     resetConfirmation() {
@@ -166,7 +171,7 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
         if (this.interval) {
             clearInterval(this.interval);
         }
-        this.liveEventsSubscription?.unsubscribe();
+        this.workingTimeUpdateEventsSubscription?.unsubscribe();
     }
 
     /**
@@ -293,6 +298,7 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
         this.examParticipationService.setExamState({ studentExam: this.studentExam });
         this.testExam = this.exam.testExam!;
         this.examParticipationService.setExamState({ testExam: this.testExam });
+        this.generateStartTextInformation();
         if (!this.exam.testExam) {
             this.initIndividualEndDates(this.exam.startDate!);
         }
@@ -325,17 +331,19 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
     }
 
     private subscribeToWorkingTimeUpdates(startDate: dayjs.Dayjs) {
-        if (this.liveEventsSubscription) {
-            this.liveEventsSubscription.unsubscribe();
+        if (this.workingTimeUpdateEventsSubscription) {
+            this.workingTimeUpdateEventsSubscription.unsubscribe();
         }
-        this.liveEventsSubscription = this.liveEventsService.observeNewEventsAsSystem([ExamLiveEventType.WORKING_TIME_UPDATE]).subscribe((event: WorkingTimeUpdateEvent) => {
-            // Create new object to make change detection work, otherwise the date will not update
-            this.studentExam = { ...this.studentExam, workingTime: event.newWorkingTime! };
-            this.examParticipationService.currentlyLoadedStudentExam.next(this.studentExam);
-            this.individualStudentEndDate = dayjs(startDate).add(this.studentExam.workingTime!, 'seconds');
-            this.individualStudentEndDateWithGracePeriod = this.individualStudentEndDate.clone().add(this.exam.gracePeriod!, 'seconds');
-            this.liveEventsService.acknowledgeEvent(event, false);
-        });
+        this.workingTimeUpdateEventsSubscription = this.liveEventsService
+            .observeNewEventsAsSystem([ExamLiveEventType.WORKING_TIME_UPDATE])
+            .subscribe((event: WorkingTimeUpdateEvent) => {
+                // Create new object to make change detection work, otherwise the date will not update
+                this.studentExam = { ...this.studentExam, workingTime: event.newWorkingTime! };
+                this.examParticipationService.currentlyLoadedStudentExam.next(this.studentExam);
+                this.individualStudentEndDate = dayjs(startDate).add(this.studentExam.workingTime!, 'seconds');
+                this.individualStudentEndDateWithGracePeriod = this.individualStudentEndDate.clone().add(this.exam.gracePeriod!, 'seconds');
+                this.liveEventsService.acknowledgeEvent(event, false);
+            });
     }
 
     /**
