@@ -22,7 +22,7 @@ test {
 }
 
 application {
-    mainClass = 'analysisOfEndpointConnections.AnalysisOfEndpointConnections'
+    mainClassName = 'de.tum.cit.endpointanalysis.AnalysisOfEndpointConnections'
 }
 
 run {
