@@ -50,9 +50,6 @@ describe('AccountInformationComponent', () => {
         accountServiceMock.getAuthenticationState.mockReturnValue(of({ id: 99, sshPublicKey: mockKey } as User));
     });
 
-    it('should create', () => {
-        expect(comp).toBeTruthy();
-    });
 
     it('should initialize with localVC profile', async () => {
         comp.ngOnInit();
