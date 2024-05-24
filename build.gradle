@@ -221,7 +221,7 @@ repositories {
 ext["jackson.version"] = fasterxml_version
 ext["junit-jupiter.version"] = junit_version
 
-ext { qDox = "com.thoughtworks.qdox:qdox:2.1.0" }
+ext { qDoxVersionReusable = "com.thoughtworks.qdox:qdox:2.1.0" }
 ext { springBootStarterWeb = "org.springframework.boot:spring-boot-starter-web:${spring_boot_version}" }
 
 dependencies {
@@ -290,7 +290,7 @@ dependencies {
         }
     }
 
-    implementation qDox
+    implementation qDoxVersionReusable
     implementation "io.sentry:sentry-logback:${sentry_version}"
     implementation "io.sentry:sentry-spring-boot-starter-jakarta:${sentry_version}"
 

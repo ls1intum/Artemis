@@ -13,7 +13,7 @@ repositories {
 evaluationDependsOn(':')
 
 dependencies {
-    implementation rootProject.ext.qDox
+    implementation rootProject.ext.qDoxVersionReusable
     implementation rootProject.ext.springBootStarterWeb
 }
 
