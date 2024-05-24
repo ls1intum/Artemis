@@ -56,7 +56,7 @@ import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-setting
 import { Detail } from 'app/detail-overview-list/detail.model';
 import { Competency } from 'app/entities/competency.model';
 import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';
-import { RepositoriesCheckoutDirectoriesDTO } from 'app/entities/repositories-checkout-directories-dto';
+import { CheckoutDirectoriesDto } from 'app/entities/checkout-directories-dto';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -103,7 +103,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     plagiarismCheckSupported = false; // default value
 
-    checkoutDirectories?: RepositoriesCheckoutDirectoriesDTO;
+    checkoutDirectories?: CheckoutDirectoriesDto;
 
     private checkoutDirectoriesSubscription: Subscription;
     private activatedRouteSubscription: Subscription;
@@ -376,9 +376,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         exerciseId: exercise.id,
                         type: 'TEMPLATE',
                         showOpenLink: !this.localVCEnabled,
-                        checkoutDirectory: this.localVCEnabled ? this.checkoutDirectories?.exerciseCheckoutDirectory : undefined,
-                        isCheckoutDirectoryForSubmissionAndTemplateBuild: true,
-                        isAtLeastEditor: exercise.isAtLeastEditor,
                     },
                 },
                 {
@@ -389,9 +386,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         exerciseId: exercise.id,
                         type: 'SOLUTION',
                         showOpenLink: !this.localVCEnabled,
-                        checkoutDirectory: this.localVCEnabled ? this.getSolutionCheckoutDirectory().checkoutDirectory : undefined,
-                        isCheckoutDirectoryForSubmissionAndTemplateBuild: this.getSolutionCheckoutDirectory().isCheckoutDirectoryForSubmissionAndTemplateBuild,
-                        isAtLeastEditor: exercise.isAtLeastEditor,
                     },
                 },
                 {
@@ -402,9 +396,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         exerciseId: exercise.id,
                         type: 'TESTS',
                         showOpenLink: !this.localVCEnabled,
-                        checkoutDirectory: this.localVCEnabled ? this.checkoutDirectories?.testCheckoutDirectory : undefined,
-                        isCheckoutDirectoryForSubmissionAndTemplateBuild: true,
-                        isAtLeastEditor: exercise.isAtLeastEditor,
                     },
                 },
                 this.supportsAuxiliaryRepositories &&
@@ -733,23 +724,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 this.onError(err);
             },
         });
-    }
-
-    private getSolutionCheckoutDirectory(): {
-        checkoutDirectory: string;
-        isCheckoutDirectoryForSubmissionAndTemplateBuild: boolean;
-    } {
-        if (this.checkoutDirectories?.solutionCheckoutDirectory) {
-            return {
-                checkoutDirectory: this.checkoutDirectories.solutionCheckoutDirectory,
-                isCheckoutDirectoryForSubmissionAndTemplateBuild: true,
-            };
-        }
-
-        return {
-            checkoutDirectory: this.checkoutDirectories?.exerciseCheckoutDirectory ?? '',
-            isCheckoutDirectoryForSubmissionAndTemplateBuild: false,
-        };
     }
 
     /**

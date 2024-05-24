@@ -2,7 +2,7 @@ import { ProgrammingExercisePlansAndRepositoriesPreviewComponent } from 'app/exe
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
-import { RepositoriesCheckoutDirectoriesDTO } from 'app/entities/repositories-checkout-directories-dto';
+import { CheckoutDirectoriesDto } from 'app/entities/checkout-directories-dto';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
@@ -10,29 +10,42 @@ import { MockComponent } from 'ng-mocks';
 import { Subscription, of } from 'rxjs';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 import { SimpleChanges } from '@angular/core';
+import { ProgrammingExerciseBuildPlanDetailsComponent } from 'app/exercises/programming/manage/update/programming-exercise-build-plan-details.component';
 
 describe('ProgrammingExercisePlansAndRepositoriesPreviewComponent', () => {
     let component: ProgrammingExercisePlansAndRepositoriesPreviewComponent;
     let fixture: ComponentFixture<ProgrammingExercisePlansAndRepositoriesPreviewComponent>;
     let programmingExerciseService: ProgrammingExerciseService;
 
-    const CHECKOUT_DIRECTORY_PREVIEW = '#checkout-directory-preview';
+    const CHECKOUT_DIRECTORY_PREVIEW_SUBMISSION_BUILD_PLAN = '#checkout-directory-preview-submission-build-plan';
+    const CHECKOUT_DIRECTORY_PREVIEW_SOLUTION_BUILD_PLAN = '#checkout-directory-preview-solution-build-plan';
 
-    const JAVA_CHECKOUT_DIRECTORIES: RepositoriesCheckoutDirectoriesDTO = {
-        exerciseCheckoutDirectory: '/assignment',
-        solutionCheckoutDirectory: '/assignment',
-        testCheckoutDirectory: '', // Empty string should be converted to '/'
+    const JAVA_CHECKOUT_DIRECTORIES: CheckoutDirectoriesDto = {
+        submissionBuildPlanCheckoutDirectories: {
+            exerciseCheckoutDirectory: '/assignment',
+            testCheckoutDirectory: '',
+        },
+        solutionBuildPlanCheckoutDirectories: {
+            solutionCheckoutDirectories: ['/assignment'],
+            testCheckoutDirectory: '',
+        },
     };
 
-    const OCAML_CHECKOUT_DIRECTORIES: RepositoriesCheckoutDirectoriesDTO = {
-        exerciseCheckoutDirectory: '/assignment',
-        solutionCheckoutDirectory: '/solution',
-        testCheckoutDirectory: '/tests',
+    const OCAML_CHECKOUT_DIRECTORIES: CheckoutDirectoriesDto = {
+        submissionBuildPlanCheckoutDirectories: {
+            exerciseCheckoutDirectory: '/assignment',
+            solutionCheckoutDirectories: ['/solution'],
+            testCheckoutDirectory: 'tests',
+        },
+        solutionBuildPlanCheckoutDirectories: {
+            solutionCheckoutDirectories: ['/assignment', '/solution'],
+            testCheckoutDirectory: 'tests',
+        },
     };
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [ProgrammingExercisePlansAndRepositoriesPreviewComponent, MockComponent(HelpIconComponent)],
+            declarations: [ProgrammingExercisePlansAndRepositoriesPreviewComponent, MockComponent(HelpIconComponent), MockComponent(ProgrammingExerciseBuildPlanDetailsComponent)],
             providers: [{ provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService }],
         })
             .compileComponents()
@@ -58,11 +71,10 @@ describe('ProgrammingExercisePlansAndRepositoriesPreviewComponent', () => {
     it('should display checkout directories when they exist', () => {
         fixture.detectChanges();
 
-        const previewElement = fixture.debugElement.nativeElement.querySelector(CHECKOUT_DIRECTORY_PREVIEW);
-        expect(previewElement).toBeTruthy();
-        expect(previewElement.textContent).toContain('/assignment');
-        expect(previewElement.textContent).toContain('/assignment');
-        expect(previewElement.textContent).toContain('/');
+        const previewElementSubmission = fixture.debugElement.nativeElement.querySelector(CHECKOUT_DIRECTORY_PREVIEW_SUBMISSION_BUILD_PLAN);
+        expect(previewElementSubmission).toBeTruthy();
+        expect(previewElementSubmission.textContent).toContain('/assignment');
+        expect(previewElementSubmission.textContent).toContain('/');
     });
 
     it('should send request if localCI is used', () => {
@@ -84,15 +96,19 @@ describe('ProgrammingExercisePlansAndRepositoriesPreviewComponent', () => {
 
     it('should display checkoutDirectory preview if localCI is used', () => {
         fixture.detectChanges();
-        const previewElement = fixture.debugElement.nativeElement.querySelector(CHECKOUT_DIRECTORY_PREVIEW);
-        expect(previewElement).toBeTruthy();
+        const previewElementSubmission = fixture.debugElement.nativeElement.querySelector(CHECKOUT_DIRECTORY_PREVIEW_SUBMISSION_BUILD_PLAN);
+        const previewElementSolution = fixture.debugElement.nativeElement.querySelector(CHECKOUT_DIRECTORY_PREVIEW_SOLUTION_BUILD_PLAN);
+        expect(previewElementSubmission).toBeTruthy();
+        expect(previewElementSolution).toBeTruthy();
     });
 
     it('should NOT display checkoutDirectory preview if localCI is NOT used', () => {
         component.isLocal = false;
         fixture.detectChanges();
-        const previewElement = fixture.debugElement.nativeElement.querySelector(CHECKOUT_DIRECTORY_PREVIEW);
-        expect(previewElement).toBeFalsy();
+        const previewElementSubmission = fixture.debugElement.nativeElement.querySelector(CHECKOUT_DIRECTORY_PREVIEW_SUBMISSION_BUILD_PLAN);
+        const previewElementSolution = fixture.debugElement.nativeElement.querySelector(CHECKOUT_DIRECTORY_PREVIEW_SOLUTION_BUILD_PLAN);
+        expect(previewElementSubmission).toBeFalsy();
+        expect(previewElementSolution).toBeFalsy();
     });
 
     it('should update auxiliary checkout repository directories', () => {
@@ -100,9 +116,12 @@ describe('ProgrammingExercisePlansAndRepositoriesPreviewComponent', () => {
 
         fixture.detectChanges();
 
-        const previewElement = fixture.debugElement.nativeElement.querySelector(CHECKOUT_DIRECTORY_PREVIEW);
-        expect(previewElement).toBeTruthy();
-        expect(previewElement.textContent).toContain('/assignment/sut'); // the slash for the root directory should have been added
+        const previewElementSubmission = fixture.debugElement.nativeElement.querySelector(CHECKOUT_DIRECTORY_PREVIEW_SUBMISSION_BUILD_PLAN);
+        const previewElementSolution = fixture.debugElement.nativeElement.querySelector(CHECKOUT_DIRECTORY_PREVIEW_SOLUTION_BUILD_PLAN);
+        expect(previewElementSubmission).toBeTruthy();
+        expect(previewElementSubmission.textContent).toContain('/assignment/sut'); // the slash for the root directory should have been added
+        expect(previewElementSolution).toBeTruthy();
+        expect(previewElementSolution.textContent).toContain('/assignment/sut');
     });
 
     it('should unsubscribe from programmingExerciseServiceSubscription on destroy', () => {
@@ -127,7 +146,7 @@ describe('ProgrammingExercisePlansAndRepositoriesPreviewComponent', () => {
 
         // assertion to check if ngOnChanges was executed properly and updated the checkout directories
         expect(programmingExerciseService.getCheckoutDirectoriesForProgrammingLanguage).toHaveBeenCalled();
-        expect(component.checkoutDirectories?.solutionCheckoutDirectory).toBe('/solution'); // was '/assignment' before with JAVA as programming language
+        expect(component.checkoutDirectories?.solutionBuildPlanCheckoutDirectories?.solutionCheckoutDirectories).toEqual(['/assignment', '/solution']); // was ['/assignment'] before with JAVA as programming language
     });
 
     it('should update auxiliary repository directories on changes', () => {
@@ -143,7 +162,7 @@ describe('ProgrammingExercisePlansAndRepositoriesPreviewComponent', () => {
 
         fixture.detectChanges();
 
-        const previewElement = fixture.debugElement.nativeElement.querySelector(CHECKOUT_DIRECTORY_PREVIEW);
+        const previewElement = fixture.debugElement.nativeElement.querySelector(CHECKOUT_DIRECTORY_PREVIEW_SUBMISSION_BUILD_PLAN);
         expect(previewElement).toBeTruthy();
         expect(previewElement.textContent).toContain('/assignment/src');
     });

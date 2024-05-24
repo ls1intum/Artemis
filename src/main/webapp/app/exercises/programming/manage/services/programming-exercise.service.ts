@@ -26,7 +26,7 @@ import { Result } from 'app/entities/result.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { PlagiarismResultDTO } from 'app/exercises/shared/plagiarism/types/PlagiarismResultDTO';
 import { ImportOptions } from 'app/types/programming-exercises';
-import { RepositoriesCheckoutDirectoriesDTO } from 'app/entities/repositories-checkout-directories-dto';
+import { CheckoutDirectoriesDto } from 'app/entities/checkout-directories-dto';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -675,8 +675,8 @@ export class ProgrammingExerciseService {
             .pipe(map((res: EntityResponseType) => this.processProgrammingExerciseEntityResponse(res)));
     }
 
-    getCheckoutDirectoriesForProgrammingLanguage(programmingLanguage: ProgrammingLanguage): Observable<RepositoriesCheckoutDirectoriesDTO> {
-        return this.http.get<RepositoriesCheckoutDirectoriesDTO>(`${this.resourceUrl}/repository-checkout-directories`, {
+    getCheckoutDirectoriesForProgrammingLanguage(programmingLanguage: ProgrammingLanguage): Observable<CheckoutDirectoriesDto> {
+        return this.http.get<CheckoutDirectoriesDto>(`${this.resourceUrl}/repository-checkout-directories`, {
             params: {
                 programmingLanguage,
             },

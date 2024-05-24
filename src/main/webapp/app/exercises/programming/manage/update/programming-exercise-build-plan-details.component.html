@@ -1,0 +1,23 @@
+@if (checkoutDirectories) {
+    <div>
+        <span class="font-weight-bold" jhiTranslate="artemisApp.programmingExercise.preview.checkoutDirectoryDuringBuildExecution"></span>
+        <jhi-help-icon text="artemisApp.programmingExercise.preview.checkoutDirectoryDuringBuildExecutionTooltip" />
+    </div>
+    <hr class="pt-0 pb-0 mt-1 mb-1" />
+    <ul>
+        <li [style.visibility]="checkoutDirectories.exerciseCheckoutDirectory ? '' : 'hidden'">
+            <code>{{ checkoutDirectories.exerciseCheckoutDirectory }} </code>
+        </li>
+        <li [style.visibility]="checkoutDirectories.solutionCheckoutDirectories?.length ? '' : 'hidden'">
+            <code> {{ checkoutDirectories.solutionCheckoutDirectories }} </code>
+        </li>
+        <li [style.visibility]="checkoutDirectories.testCheckoutDirectory ? '' : 'hidden'">
+            <code> {{ checkoutDirectories.testCheckoutDirectory }} </code>
+        </li>
+        @for (auxiliaryRepositoryCheckoutDirectory of auxiliaryRepositoryCheckoutDirectories; track auxiliaryRepositoryCheckoutDirectory) {
+            <li>
+                <code>{{ auxiliaryRepositoryCheckoutDirectory }} </code>
+            </li>
+        }
+    </ul>
+}

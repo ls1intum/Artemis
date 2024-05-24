@@ -4,7 +4,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 import { Subscription } from 'rxjs';
-import { RepositoriesCheckoutDirectoriesDTO } from 'app/entities/repositories-checkout-directories-dto';
+import { CheckoutDirectoriesDto } from 'app/entities/checkout-directories-dto';
 
 @Component({
     selector: 'jhi-programming-exercise-plans-and-repositories-preview',
@@ -20,7 +20,7 @@ export class ProgrammingExercisePlansAndRepositoriesPreviewComponent implements 
 
     shortName?: string;
 
-    checkoutDirectories?: RepositoriesCheckoutDirectoriesDTO;
+    checkoutDirectories?: CheckoutDirectoriesDto;
     auxiliaryRepositoryCheckoutDirectories: string[] = [];
 
     programmingExerciseServiceSubscription: Subscription;
