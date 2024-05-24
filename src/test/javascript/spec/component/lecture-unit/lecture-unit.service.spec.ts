@@ -143,4 +143,14 @@ describe('LectureUnitService', () => {
         service.delete(videoUnit.id!, lectureId).subscribe();
         httpMock.expectOne({ method: 'DELETE', url: `api/lectures/${lectureId}/lecture-units/${videoUnit.id!}` });
     }));
+
+    it('should handle empty response body when converting dates from server on response array', fakeAsync(() => {
+        const convertDateFromServerEntitySpy = jest.spyOn(service, 'convertLectureUnitDateFromServer');
+        const emptyResponse = new HttpResponse<LectureUnit[]>({ body: null });
+
+        const result = service.convertLectureUnitResponseArrayDatesFromServer(emptyResponse);
+
+        expect(convertDateFromServerEntitySpy).not.toHaveBeenCalled();
+        expect(result).toBe(emptyResponse);
+    }));
 });
