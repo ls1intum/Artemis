@@ -29,10 +29,9 @@ import de.tum.in.www1.artemis.config.localvcci.ssh.service.SshGitCommandFactoryS
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionTestRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCServletService;
 
 @Profile(PROFILE_LOCALVC)
-class LocalVCSshTest extends LocalVCIntegrationTest {
+class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
 
     final String hostname = "localhost";
 
@@ -40,10 +39,6 @@ class LocalVCSshTest extends LocalVCIntegrationTest {
 
     @Autowired
     ProgrammingSubmissionTestRepository programmingSubmissionRepository;
-
-    SshGitCommandFactoryService sshGitCommandFactoryService;
-
-    LocalVCServletService localVCServletService;
 
     @Autowired
     private UserRepository userRepository;
