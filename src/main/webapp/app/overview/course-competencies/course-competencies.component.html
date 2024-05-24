@@ -4,7 +4,11 @@
             <div class="mt-3 position-relative">
                 <div class="exercise-row-container mb-3">
                     @for (competency of competencies; track identify(i, competency); let i = $index) {
-                        <jhi-competency-card [competency]="competency" [courseId]="courseId" />
+                        <jhi-competency-card
+                            [competency]="competency"
+                            [courseId]="courseId"
+                            [hideProgress]="competency.id !== undefined && judgementOfLearningMap?.[competency.id] === undefined"
+                        />
                     }
                 </div>
             </div>

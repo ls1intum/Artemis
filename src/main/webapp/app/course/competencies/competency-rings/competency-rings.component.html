@@ -1,5 +1,5 @@
 <!-- Adapted from https://www.chilitime.design/2018/09/ActivityRings/ -->
-<div [class.muted-competency-rings]="hideProgress" class="position-relative" [ngbTooltip]="hideTooltip ? undefined : (tooltipText | artemisTranslate)">
+<div [class.muted-competency-rings]="hideProgress" class="position-relative" [ngbTooltip]="hideTooltip ? undefined : (tooltipText | artemisTranslate)" #container>
     <svg viewBox="0 0 35 35" xmlns="http://www.w3.org/2000/svg">
         <g class="ring ring1">
             <circle class="background" cx="50%" cy="50%" r="15.915" stroke-width="3" />
@@ -45,7 +45,7 @@
     </svg>
     @if (this.hideProgress) {
         <div class="position-absolute top-50 start-50 translate-middle">
-            <fa-icon [icon]="faQuestion" class="question-mark fa-2x" />
+            <fa-icon [icon]="faQuestion" class="question-mark" [style]="{ fontSize: container.offsetWidth * 0.6 + 'px' }" />
         </div>
     }
 </div>

@@ -23,6 +23,7 @@ export class CourseCompetenciesComponent implements OnInit {
     course?: Course;
     competencies: Competency[] = [];
     prerequisites: Competency[] = [];
+    judgementOfLearningMap: { [key: number]: number } = {};
 
     isCollapsed = true;
     faAngleDown = faAngleDown;
@@ -49,6 +50,7 @@ export class CourseCompetenciesComponent implements OnInit {
         if (this.course && ((this.course.competencies && this.course.competencies.length > 0) || (this.course.prerequisites && this.course.prerequisites.length > 0))) {
             this.competencies = this.course.competencies || [];
             this.prerequisites = this.course.prerequisites || [];
+            this.judgementOfLearningMap = this.course.judgementOfLearningMap || {};
         } else {
             this.loadData();
         }
@@ -76,14 +78,21 @@ export class CourseCompetenciesComponent implements OnInit {
      */
     loadData() {
         this.isLoading = true;
-        forkJoin([this.competencyService.getAllForCourse(this.courseId), this.competencyService.getAllPrerequisitesForCourse(this.courseId)]).subscribe({
-            next: ([competencies, prerequisites]) => {
+        forkJoin([
+            this.competencyService.getAllForCourse(this.courseId),
+            this.competencyService.getAllPrerequisitesForCourse(this.courseId),
+            this.competencyService.getJoLAllForCourse(this.courseId),
+        ]).subscribe({
+            next: ([competencies, prerequisites, judgementOfLearningMap]) => {
                 this.competencies = competencies.body!;
                 this.prerequisites = prerequisites.body!;
+                this.judgementOfLearningMap = judgementOfLearningMap.body!;
+
                 // Also update the course, so we do not need to fetch again next time
                 if (this.course) {
                     this.course.competencies = this.competencies;
                     this.course.prerequisites = this.prerequisites;
+                    this.course.judgementOfLearningMap = this.judgementOfLearningMap;
                 }
                 this.isLoading = false;
             },

@@ -11,6 +11,7 @@ import { LectureUnitCompletionEvent } from 'app/overview/course-lectures/course-
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { faPencilAlt } from '@fortawesome/free-solid-svg-icons';
+import { forkJoin } from 'rxjs';
 
 @Component({
     selector: 'jhi-course-competencies-details',
@@ -22,6 +23,7 @@ export class CourseCompetenciesDetailsComponent implements OnInit {
     courseId?: number;
     isLoading = false;
     competency: Competency;
+    judgementOfLearning: number | undefined;
     showFireworks = false;
 
     readonly LectureUnitType = LectureUnitType;
@@ -48,9 +50,11 @@ export class CourseCompetenciesDetailsComponent implements OnInit {
 
     private loadData() {
         this.isLoading = true;
-        this.competencyService.findById(this.competencyId!, this.courseId!).subscribe({
-            next: (resp) => {
-                this.competency = resp.body!;
+        forkJoin([this.competencyService.findById(this.competencyId!, this.courseId!), this.competencyService.getJoL(this.courseId!, this.competencyId!)]).subscribe({
+            next: ([competencyResp, judgementOfLearningResp]) => {
+                this.competency = competencyResp.body!;
+                this.judgementOfLearning = judgementOfLearningResp.body ?? undefined;
+
                 if (this.competency && this.competency.exercises) {
                     // Add exercises as lecture units for display
                     this.competency.lectureUnits = this.competency.lectureUnits ?? [];
@@ -126,5 +130,9 @@ export class CourseCompetenciesDetailsComponent implements OnInit {
 
     get softDueDatePassed(): boolean {
         return dayjs().isAfter(this.competency.softDueDate);
+    }
+
+    onRatingChange(newRating: number) {
+        this.judgementOfLearning = newRating;
     }
 }
