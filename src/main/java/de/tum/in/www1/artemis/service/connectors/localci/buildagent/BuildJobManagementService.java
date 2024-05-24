@@ -214,7 +214,9 @@ public class BuildJobManagementService {
         buildLogsMap.appendBuildLogEntry(buildJobId, new BuildLogEntry(ZonedDateTime.now(), msg + "\n" + stackTrace));
         log.error(msg);
 
+        log.info("Getting ID of running container {}", containerName);
         String containerId = buildJobContainerService.getIDOfRunningContainer(containerName);
+        log.info("Stopping unresponsive container with ID {}", containerId);
         if (containerId != null) {
             buildJobContainerService.stopUnresponsiveContainer(containerId);
         }

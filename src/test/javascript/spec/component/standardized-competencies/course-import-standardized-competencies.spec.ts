@@ -18,6 +18,7 @@ import { KnowledgeAreaTreeStubComponent } from './knowledge-area-tree-stub.compo
 import { SortService } from 'app/shared/service/sort.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { Source } from 'app/entities/competency/standardized-competency.model';
 
 describe('CourseImportStandardizedCompetenciesComponent', () => {
     let componentFixture: ComponentFixture<CourseImportStandardizedCompetenciesComponent>;
@@ -91,23 +92,29 @@ describe('CourseImportStandardizedCompetenciesComponent', () => {
                 ],
             },
         ];
+        const sources: Source[] = [{ id: 1 }, { id: 2 }];
 
         const standardizedCompetencyService = TestBed.inject(StandardizedCompetencyService);
         const getForTreeViewSpy = jest.spyOn(standardizedCompetencyService, 'getAllForTreeView').mockReturnValue(of(new HttpResponse({ body: dtoTree })));
+        const getSourcesSpy = jest.spyOn(standardizedCompetencyService, 'getSources').mockReturnValue(of(new HttpResponse({ body: sources })));
 
         componentFixture.detectChanges();
 
         expect(getForTreeViewSpy).toHaveBeenCalled();
+        expect(getSourcesSpy).toHaveBeenCalled();
         expect(component['knowledgeAreaMap'].size).toBe(5);
         expect(component['knowledgeAreasForSelect']).toHaveLength(5);
+        expect(component['sources']).toHaveLength(2);
     });
 
     it('should open details', () => {
-        const competencyToOpen = { id: 2, isVisible: true, selected: true };
+        component['sources'] = [{ id: 1, title: 'title1', author: 'author1' }];
+        const competencyToOpen = { id: 2, isVisible: true, selected: true, sourceId: 1 };
 
         component['openCompetencyDetails'](competencyToOpen);
 
         expect(component['selectedCompetency']).toEqual(competencyToOpen);
+        expect(component['sourceString']).toBeTruthy();
     });
 
     it('should close details', () => {

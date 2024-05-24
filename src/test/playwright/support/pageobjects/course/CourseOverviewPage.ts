@@ -42,7 +42,7 @@ export class CourseOverviewPage {
      * @returns The Locator for the exercise card.
      */
     getExercise(exerciseName: string): Locator {
-        return this.page.locator('#test-sidebar-card').getByText(exerciseName);
+        return this.page.locator('#test-sidebar-card-medium').getByText(exerciseName);
     }
 
     /**
@@ -50,7 +50,7 @@ export class CourseOverviewPage {
      * @returns The Locator for all exercises.
      */
     getExercises(): Locator {
-        return this.page.locator('#test-sidebar-card');
+        return this.page.locator('#test-sidebar-card-medium');
     }
 
     /**

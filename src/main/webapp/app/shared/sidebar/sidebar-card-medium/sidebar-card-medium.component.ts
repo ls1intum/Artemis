@@ -4,14 +4,16 @@ import { SidebarCardElement, SidebarTypes } from 'app/types/sidebar';
 import { Subscription } from 'rxjs';
 import { SidebarEventService } from '../sidebar-event.service';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Location } from '@angular/common';
+
 @Component({
-    selector: 'jhi-sidebar-card',
-    templateUrl: './sidebar-card.component.html',
-    styleUrls: ['./sidebar-card.component.scss'],
+    selector: 'jhi-medium-sidebar-card',
+    templateUrl: './sidebar-card-medium.component.html',
+    styleUrls: ['./sidebar-card-medium.component.scss'],
 })
-export class SidebarCardComponent {
+export class SidebarCardMediumComponent {
     DifficultyLevel = DifficultyLevel;
-    @Input() sidebarItem: SidebarCardElement;
+    @Input({ required: true }) sidebarItem: SidebarCardElement;
     @Input() sidebarType?: SidebarTypes;
     @Input() itemSelected?: boolean;
 
@@ -24,17 +26,19 @@ export class SidebarCardComponent {
         private sidebarEventService: SidebarEventService,
         private router: Router,
         private route: ActivatedRoute,
+        private location: Location,
     ) {}
 
-    emitStoreLastSelectedItem(itemId: number | string) {
+    emitStoreAndRefresh(itemId: number | string) {
         this.sidebarEventService.emitSidebarCardEvent(itemId);
+        this.refreshChildComponent();
     }
 
-    forceReload(): void {
-        this.router.navigate(['../'], { skipLocationChange: true, relativeTo: this.route }).then(() => {
+    refreshChildComponent(): void {
+        this.router.navigate(['../'], { skipLocationChange: true, relativeTo: this.route.firstChild }).then(() => {
             this.itemSelected
-                ? this.router.navigate(['../' + this.sidebarItem?.id], { relativeTo: this.route })
-                : this.router.navigate(['./' + this.sidebarItem?.id], { relativeTo: this.route });
+                ? this.router.navigate(['./' + this.sidebarItem?.id], { relativeTo: this.route })
+                : this.router.navigate([this.location.path(), this.sidebarItem?.id], { replaceUrl: true });
         });
     }
 }

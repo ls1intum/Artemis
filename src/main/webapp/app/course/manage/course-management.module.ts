@@ -53,7 +53,6 @@ import { ArtemisPlagiarismModule } from 'app/exercises/shared/plagiarism/plagiar
 import { ArtemisChartsModule } from 'app/shared/chart/artemis-charts.module';
 import { ImageCropperModule } from 'app/shared/image-cropper/image-cropper.module';
 import { ArtemisFullscreenModule } from 'app/shared/fullscreen/fullscreen.module';
-import { ArtemisCoursesModule } from 'app/overview/courses.module';
 import { ArtemisCourseGroupModule } from 'app/shared/course-group/course-group.module';
 import { CourseGroupMembershipComponent } from './course-group-membership/course-group-membership.component';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
@@ -69,6 +68,7 @@ import { DetailModule } from 'app/detail-overview-list/detail.module';
 import { BuildQueueComponent } from 'app/localci/build-queue/build-queue.component';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
 import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal.component';
+import { HeaderCourseComponent } from 'app/overview/header-course.component';
 
 @NgModule({
     imports: [
@@ -113,7 +113,6 @@ import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-moda
         PieChartModule,
         ArtemisPlagiarismModule,
         ArtemisChartsModule,
-        ArtemisCoursesModule,
         ArtemisCourseGroupModule,
         FeatureToggleModule,
         ExerciseCategoriesModule,
@@ -144,6 +143,8 @@ import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-moda
         CourseManagementTabBarComponent,
         BuildQueueComponent,
         ImageCropperModalComponent,
+        HeaderCourseComponent,
     ],
+    exports: [HeaderCourseComponent],
 })
 export class ArtemisCourseManagementModule {}

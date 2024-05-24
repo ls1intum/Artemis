@@ -16,7 +16,7 @@ import { LegalDocumentLanguage } from 'app/entities/legal-document.model';
     `,
 })
 export class PrivacyComponent implements AfterViewInit, OnInit, OnDestroy {
-    privacyStatement: string;
+    privacyStatement?: string;
     private languageChangeSubscription?: Subscription;
     isAuthenticated: boolean;
 

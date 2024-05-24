@@ -6,6 +6,7 @@ import {
     KnowledgeAreasForImportDTO,
     StandardizedCompetencyForTree,
     convertToKnowledgeAreaForTree,
+    sourceToString,
 } from 'app/entities/competency/standardized-competency.model';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { AlertService } from 'app/core/util/alert.service';
@@ -26,7 +27,6 @@ interface ImportCount {
 @Component({
     selector: 'jhi-admin-import-standardized-competencies',
     templateUrl: './admin-import-standardized-competencies.component.html',
-    styleUrls: ['admin-import-standardized-competencies.component.scss'],
 })
 export class AdminImportStandardizedCompetenciesComponent {
     protected isLoading = false;
@@ -34,6 +34,7 @@ export class AdminImportStandardizedCompetenciesComponent {
     protected selectedCompetency?: StandardizedCompetencyForTree;
     //the title of the knowledge area belonging to the selected competency
     protected knowledgeAreaTitle = '';
+    protected sourceString = '';
     protected importData?: KnowledgeAreasForImportDTO;
     protected importCount?: ImportCount;
     protected dataSource = new MatTreeNestedDataSource<KnowledgeAreaForTree>();
@@ -111,18 +112,21 @@ export class AdminImportStandardizedCompetenciesComponent {
     }
 
     protected openCompetencyDetails(competency: StandardizedCompetencyForTree, knowledgeAreaTitle: string) {
+        const source = this.importData?.sources.find((source) => source.id === competency.sourceId);
+        this.sourceString = source ? sourceToString(source) : '';
         this.knowledgeAreaTitle = knowledgeAreaTitle;
         this.selectedCompetency = competency;
     }
 
     protected closeCompetencyDetails() {
+        this.sourceString = '';
         this.knowledgeAreaTitle = '';
         this.selectedCompetency = undefined;
     }
 
     importCompetencies() {
         this.isLoading = true;
-        this.adminStandardizedCompetencyService.importCompetencies(this.importData!).subscribe({
+        this.adminStandardizedCompetencyService.importStandardizedCompetencyCatalog(this.importData!).subscribe({
             next: () => {
                 this.isLoading = false;
                 this.alertService.success('artemisApp.standardizedCompetency.manage.import.success');
