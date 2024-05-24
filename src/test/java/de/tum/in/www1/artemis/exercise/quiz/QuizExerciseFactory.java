@@ -238,7 +238,6 @@ public class QuizExerciseFactory {
         mc.setExplanation("Explanation");
 
         QuizIdAssigner.assignIds(mc.getAnswerOptions());
-        System.out.println("ID::" + mc.getId());
 
         return mc;
     }
