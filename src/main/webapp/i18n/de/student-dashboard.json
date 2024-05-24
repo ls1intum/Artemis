@@ -48,6 +48,12 @@
             },
             "menu": {
                 "exercises": "Aufgaben",
+                "textExercise": "Textaufgabe",
+                "fileUploadExercise": "Datei-Upload-Aufgabe",
+                "programmingExercise": "Programmieraufgabe",
+                "modelingExercise": "Modellierungsaufgabe",
+                "quizExercise": "Quizaufgabe",
+                "repository": "Repository",
                 "statistics": "Statistiken",
                 "lectures": "Vorlesungen",
                 "competencies": "Kompetenzen",
@@ -58,7 +64,8 @@
                 "testExam": "Testklausur",
                 "communication": "Kommunikation",
                 "messages": "Nachrichten",
-                "plagiarismCases": "Plagiatsfälle"
+                "plagiarismCases": "Plagiatsfälle",
+                "gradingSystem": "Notenschlüssel"
             },
             "exerciseList": {
                 "filter": "Filter ({{ num }})",
@@ -187,6 +194,9 @@
             "competencies": {
                 "noData": "Es sind keine Kompetenzen für diesen Kurs vorhanden."
             },
+            "tutorialGroups": {
+                "selectTutorialGroup": "Bitte wähle eine Übungsgruppe aus."
+            },
             "lectureList": {
                 "lectureGroupHeader": "(Vorlesungen: {{ total }})",
                 "totalLectures": "Vorlesungen insgesamt:",
@@ -203,7 +213,8 @@
                 "notReleased": "Nicht freigegeben",
                 "version": "Version",
                 "isDownloading": "Wird heruntergeladen...",
-                "downloadMergedPdf": "Vollständiges PDF herunterladen"
+                "downloadMergedPdf": "Vollständiges PDF herunterladen",
+                "selectLecture": "Bitte wähle eine Vorlesung aus."
             },
             "exerciseDetails": {
                 "dueDate": "Einreichungsfrist:",
@@ -251,7 +262,8 @@
                 "complaintPossible": "Beschwerde möglich:",
                 "complaintPossibleTooltip": "Nach Erhalt einer Bewertung wirst du {{days}} Tage zum Einreichen einer Beschwerde haben.",
                 "presented": "Präsentiert:",
-                "presentation": "Präsentation:"
+                "presentation": "Präsentation:",
+                "selectExercise": "Bitte wähle eine Aufgabe aus."
             }
         }
     }
