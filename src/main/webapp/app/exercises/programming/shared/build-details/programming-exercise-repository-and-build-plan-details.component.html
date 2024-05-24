@@ -8,18 +8,18 @@
             <ul>
                 <li>
                     <code class="text-white badge bg-primary label-preview">
-                        {{ courseShortName?.toLowerCase() }}{{ programmingExercise?.shortName?.toLowerCase() }} -exercise
+                        {{ courseShortName?.toLowerCase() }}{{ programmingExercise?.shortName?.toLowerCase() }}-exercise
                     </code>
                     <jhi-help-icon text="artemisApp.programmingExercise.preview.templateRepoTooltip" />
                 </li>
                 <li>
                     <code class="text-white badge bg-primary label-preview">
-                        {{ courseShortName?.toLowerCase() }}{{ programmingExercise?.shortName?.toLowerCase() }} -solution
+                        {{ courseShortName?.toLowerCase() }}{{ programmingExercise?.shortName?.toLowerCase() }}-solution
                     </code>
                     <jhi-help-icon text="artemisApp.programmingExercise.preview.solutionRepoTooltip" />
                 </li>
                 <li>
-                    <code class="text-white badge bg-primary label-preview"> {{ courseShortName?.toLowerCase() }}{{ programmingExercise?.shortName?.toLowerCase() }} -tests </code>
+                    <code class="text-white badge bg-primary label-preview"> {{ courseShortName?.toLowerCase() }}{{ programmingExercise?.shortName?.toLowerCase() }}-tests </code>
                     <jhi-help-icon text="artemisApp.programmingExercise.preview.testRepoTooltip" />
                 </li>
                 @if (programmingExercise?.auxiliaryRepositories?.length) {
@@ -28,7 +28,7 @@
                             <div>
                                 <li>
                                     <code class="text-white badge bg-success label-preview">
-                                        {{ courseShortName?.toLowerCase() }}{{ programmingExercise!.shortName?.toLowerCase() }} -{{ auxiliaryRepository.name?.toLowerCase() }}
+                                        {{ courseShortName?.toLowerCase() }}{{ programmingExercise!.shortName?.toLowerCase() }}-{{ auxiliaryRepository.name?.toLowerCase() }}
                                     </code>
                                 </li>
                             </div>
