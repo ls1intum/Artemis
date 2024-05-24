@@ -16,6 +16,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.sshd.client.SshClient;
 import org.apache.sshd.client.future.ConnectFuture;
 import org.apache.sshd.client.session.ClientSession;
+import org.apache.sshd.common.SshException;
 import org.apache.sshd.server.SshServer;
 import org.apache.sshd.server.session.ServerSession;
 import org.junit.jupiter.api.Test;
@@ -65,7 +66,7 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void directlyAuthenticateOverSsh() {
+    void testDirectlyAuthenticateOverSsh() {
 
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
         KeyPair keyPair = setupKeyPairAndAddToUser();
@@ -88,6 +89,36 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
             throw new RuntimeException(e);
         }
         assertThat(session.isAuthenticated()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testAuthenticationFailure() {
+
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        KeyPair keyPair2 = generateKeyPair();
+
+        User user = userRepository.getUser();
+
+        SshClient client = SshClient.setUpDefaultClient();
+        client.start();
+
+        ClientSession session = null;
+        try {
+            ConnectFuture connectFuture = client.connect(user.getName(), hostname, port);
+            connectFuture.await(10, TimeUnit.SECONDS);
+
+            session = connectFuture.getSession();
+            session.addPublicKeyIdentity(keyPair2);
+
+            session.auth().verify(10, TimeUnit.SECONDS);
+        }
+        catch (IOException e) {
+            assertThat(e).isInstanceOf(SshException.class);
+        }
+        assertThat(session).isNotNull();
+        assertThat(session.isAuthenticated()).isFalse();
+
     }
 
     @Test
@@ -127,7 +158,7 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
 
     void clientConnectToArtemisSshServer() {
         var serverSessions = sshServer.getActiveSessions();
-        assertThat(serverSessions.size()).isEqualTo(0);
+        var numberOfSessions = serverSessions.size();
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
         KeyPair keyPair = setupKeyPairAndAddToUser();
         User user = userRepository.getUser();
@@ -150,19 +181,11 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
         }
         serverSessions = sshServer.getActiveSessions();
         assertThat(clientSession.isAuthenticated()).isTrue();
-        assertThat(serverSessions.size()).isEqualTo(1);
+        assertThat(serverSessions.size()).isEqualTo(numberOfSessions + 1);
     }
 
     KeyPair setupKeyPairAndAddToUser() {
-        KeyPairGenerator kpg;
-        try {
-            kpg = KeyPairGenerator.getInstance("RSA");
-        }
-        catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        }
-        kpg.initialize(2048);
-        KeyPair rsaKeyPair = kpg.genKeyPair();
+        KeyPair rsaKeyPair = generateKeyPair();
         PublicKey publicKey = rsaKeyPair.getPublic();
         String publicKeyAsString = Base64.getEncoder().encodeToString(publicKey.getEncoded());
 
@@ -174,5 +197,17 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
 
         assertThat(user.getSshPublicKey()).isEqualTo(publicKeyAsString);
         return rsaKeyPair;
+    }
+
+    KeyPair generateKeyPair() {
+        KeyPairGenerator kpg;
+        try {
+            kpg = KeyPairGenerator.getInstance("RSA");
+        }
+        catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+        kpg.initialize(2048);
+        return kpg.genKeyPair();
     }
 }
