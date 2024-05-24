@@ -131,7 +131,7 @@ describe('ProgrammingExerciseBuildDetailsComponent', () => {
     it('should unsubscribe from programmingExerciseServiceSubscription on destroy', () => {
         const subscription = new Subscription();
         jest.spyOn(subscription, 'unsubscribe');
-        component.programmingExerciseServiceSubscription = subscription;
+        component.checkoutDirectorySubscription = subscription;
 
         component.ngOnDestroy();
 

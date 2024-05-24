@@ -7,19 +7,15 @@
             <hr class="pt-0 pb-0 mt-1 mb-1" />
             <ul>
                 <li>
-                    <code class="text-white badge bg-primary label-preview">
-                        {{ courseShortName?.toLowerCase() }}{{ programmingExercise?.shortName?.toLowerCase() }}-exercise
-                    </code>
+                    <code class="text-white badge bg-primary label-preview text-lowercase"> {{ courseShortName }}{{ programmingExercise?.shortName }}-exercise </code>
                     <jhi-help-icon text="artemisApp.programmingExercise.preview.templateRepoTooltip" />
                 </li>
                 <li>
-                    <code class="text-white badge bg-primary label-preview">
-                        {{ courseShortName?.toLowerCase() }}{{ programmingExercise?.shortName?.toLowerCase() }}-solution
-                    </code>
+                    <code class="text-white badge bg-primary label-preview text-lowercase"> {{ courseShortName }}{{ programmingExercise?.shortName }}-solution </code>
                     <jhi-help-icon text="artemisApp.programmingExercise.preview.solutionRepoTooltip" />
                 </li>
                 <li>
-                    <code class="text-white badge bg-primary label-preview"> {{ courseShortName?.toLowerCase() }}{{ programmingExercise?.shortName?.toLowerCase() }}-tests </code>
+                    <code class="text-white badge bg-primary label-preview text-lowercase"> {{ courseShortName }}{{ programmingExercise?.shortName }}-tests </code>
                     <jhi-help-icon text="artemisApp.programmingExercise.preview.testRepoTooltip" />
                 </li>
                 @if (programmingExercise?.auxiliaryRepositories?.length) {
@@ -27,8 +23,8 @@
                         @for (auxiliaryRepository of programmingExercise!.auxiliaryRepositories; track auxiliaryRepository) {
                             <div>
                                 <li>
-                                    <code class="text-white badge bg-success label-preview">
-                                        {{ courseShortName?.toLowerCase() }}{{ programmingExercise!.shortName?.toLowerCase() }}-{{ auxiliaryRepository.name?.toLowerCase() }}
+                                    <code class="text-white badge bg-success label-preview text-lowercase">
+                                        {{ courseShortName }}{{ programmingExercise!.shortName }}-{{ auxiliaryRepository.name }}
                                     </code>
                                 </li>
                             </div>
@@ -46,13 +42,11 @@
             <hr class="pt-0 pb-0 mt-1 mb-1" />
             <ul>
                 <li>
-                    <code class="text-white badge bg-primary label-preview"> {{ courseShortName?.toUpperCase() }}{{ programmingExercise?.shortName?.toUpperCase() }} -BASE </code>
+                    <code class="text-white badge bg-primary label-preview text-uppercase"> {{ courseShortName }}{{ programmingExercise?.shortName }}-BASE </code>
                     <jhi-help-icon text="artemisApp.programmingExercise.preview.templateBuildPlanTooltip" />
                 </li>
                 <li>
-                    <code class="text-white badge bg-primary label-preview">
-                        {{ courseShortName?.toUpperCase() }}{{ programmingExercise?.shortName?.toUpperCase() }} -SOLUTION
-                    </code>
+                    <code class="text-white badge bg-primary label-preview text-uppercase"> {{ courseShortName }}{{ programmingExercise?.shortName }}-SOLUTION </code>
                     <jhi-help-icon text="artemisApp.programmingExercise.preview.solutionBuildPlanTooltip" />
                 </li>
             </ul>

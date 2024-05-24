@@ -17,7 +17,7 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
 
     constructor(private programmingExerciseService: ProgrammingExerciseService) {}
 
-    programmingExerciseServiceSubscription: Subscription;
+    checkoutDirectorySubscription?: Subscription;
 
     courseShortName?: string;
     checkoutDirectories?: CheckoutDirectoriesDto;
@@ -28,14 +28,18 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
             return;
         }
 
-        this.programmingExerciseServiceSubscription = this.programmingExerciseService
+        if (this.checkoutDirectorySubscription) {
+            this.checkoutDirectorySubscription.unsubscribe();
+        }
+
+        this.checkoutDirectorySubscription = this.programmingExerciseService
             .getCheckoutDirectoriesForProgrammingLanguage(this.programmingLanguage)
             .subscribe((checkoutDirectories) => {
                 this.checkoutDirectories = checkoutDirectories;
             });
     }
 
-    private updateShortName() {
+    private updateCourseShortName() {
         if (!this.programmingExercise) {
             return;
         }
@@ -43,7 +47,7 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
     }
 
     ngOnInit() {
-        this.updateShortName();
+        this.updateCourseShortName();
 
         if (this.isLocal) {
             this.updateCheckoutDirectories();
@@ -57,6 +61,6 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
     }
 
     ngOnDestroy() {
-        this.programmingExerciseServiceSubscription?.unsubscribe();
+        this.checkoutDirectorySubscription?.unsubscribe();
     }
 }

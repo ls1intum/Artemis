@@ -49,11 +49,7 @@
         <div class="form-group">
             <div>
                 <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.preview.label"></label>
-                @if (isLocal) {
-                    <jhi-help-icon text="artemisApp.programmingExercise.preview.tooltipLocalVC" />
-                } @else {
-                    <jhi-help-icon text="artemisApp.programmingExercise.preview.tooltip" />
-                }
+                <jhi-help-icon [text]="isLocal ? 'artemisApp.programmingExercise.preview.tooltipLocalVC' : 'artemisApp.programmingExercise.preview.tooltip'" />
             </div>
             <jhi-programming-exercise-repository-and-build-plan-details
                 [programmingExercise]="programmingExercise"
