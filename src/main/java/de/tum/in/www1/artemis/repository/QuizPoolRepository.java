@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizPool;
 @Repository
 public interface QuizPoolRepository extends JpaRepository<QuizPool, Long> {
 
-    @EntityGraph(attributePaths = { "quizQuestions", "quizQuestions.quizQuestionStatistic" })
+    @EntityGraph(attributePaths = { "exam", "quizQuestions", "quizQuestions.quizQuestionStatistic" })
     @Query("SELECT qe FROM QuizPool qe JOIN qe.exam e WHERE e.id = :examId")
     Optional<QuizPool> findWithEagerQuizQuestionsByExamId(@Param("examId") Long examId);
 
