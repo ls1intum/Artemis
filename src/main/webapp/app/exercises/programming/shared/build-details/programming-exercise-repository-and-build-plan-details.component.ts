@@ -6,13 +6,13 @@ import { Subscription } from 'rxjs';
 import { CheckoutDirectoriesDto } from 'app/entities/checkout-directories-dto';
 
 @Component({
-    selector: 'jhi-programming-exercise-build-details',
+    selector: 'jhi-programming-exercise-repository-and-build-plan-details',
     templateUrl: './programming-exercise-repository-and-build-plan-details.component.html',
     styleUrls: ['../../manage/programming-exercise-form.scss'],
 })
 export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implements OnInit, OnChanges, OnDestroy {
     @Input() programmingExercise: ProgrammingExercise;
-    @Input() programmingLanguage: ProgrammingLanguage;
+    @Input() programmingLanguage?: ProgrammingLanguage;
     @Input() isLocal: boolean;
 
     constructor(private programmingExerciseService: ProgrammingExerciseService) {}
@@ -24,6 +24,10 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
     auxiliaryRepositoryCheckoutDirectories: string[] = [];
 
     private updateCheckoutDirectories() {
+        if (!this.programmingLanguage) {
+            return;
+        }
+
         this.programmingExerciseServiceSubscription = this.programmingExerciseService
             .getCheckoutDirectoriesForProgrammingLanguage(this.programmingLanguage)
             .subscribe((checkoutDirectories) => {

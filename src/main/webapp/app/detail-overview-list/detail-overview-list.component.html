@@ -76,12 +76,6 @@
                                         </a>
                                     }
                                 </div>
-                                @if (isLocalVC && detail.data.isAtLeastEditor) {
-                                    <div>
-                                        <span jhiTranslate="artemisApp.programmingExercise.preview.checkoutDirectoryDuringBuildExecution"></span>:
-                                        <code>{{ detail.data.checkoutDirectory }}</code>
-                                    </div>
-                                }
                             } @else {
                                 <ng-container *ngTemplateOutlet="noData" />
                             }
@@ -290,6 +284,15 @@
                             } @else {
                                 <ng-container *ngTemplateOutlet="noData" />
                             }
+                        </dd>
+                    }
+                    @case (DetailType.ProgrammingCheckoutDirectories) {
+                        <dd id="detail-value-{{ detail.title }}">
+                            <jhi-programming-exercise-repository-and-build-plan-details
+                                [programmingExercise]="detail.data.exercise"
+                                [programmingLanguage]="detail.data.programmingLanguage"
+                                [isLocal]="detail.data.isLocal"
+                            />
                         </dd>
                     }
                 }

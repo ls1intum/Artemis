@@ -2,7 +2,6 @@ import { NgModule } from '@angular/core';
 import { ProgrammingExerciseUpdateComponent } from 'app/exercises/programming/manage/update/programming-exercise-update.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { ProgrammingExercisePlansAndRepositoriesPreviewComponent } from 'app/exercises/programming/manage/update/programming-exercise-plans-and-repositories-preview.component';
 import { ArtemisTeamConfigFormGroupModule } from 'app/exercises/shared/team-config-form-group/team-config-form-group.module';
 import { ArtemisDifficultyPickerModule } from 'app/exercises/shared/difficulty-picker/difficulty-picker.module';
 import { ArtemisPresentationScoreModule } from 'app/exercises/shared/presentation-score/presentation-score.module';
@@ -67,10 +66,9 @@ import { ArtemisProgrammingExerciseBuildDetailsModule } from 'app/exercises/prog
         ProgrammingExerciseLanguageComponent,
         ProgrammingExerciseGradingComponent,
         ProgrammingExerciseProblemComponent,
-        ProgrammingExercisePlansAndRepositoriesPreviewComponent,
         AddAuxiliaryRepositoryButtonComponent,
         RemoveAuxiliaryRepositoryButtonComponent,
     ],
-    exports: [ProgrammingExerciseUpdateComponent, ProgrammingExercisePlansAndRepositoriesPreviewComponent],
+    exports: [ProgrammingExerciseUpdateComponent],
 })
 export class ArtemisProgrammingExerciseUpdateModule {}

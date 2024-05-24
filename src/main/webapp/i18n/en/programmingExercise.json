@@ -434,6 +434,7 @@
                 "title": "Your repository is locked.",
                 "tooltip": "You are outside of the participation timeframe or you reached your submission limit, your repository is locked. You may still read the code but you may not make any changes to it."
             },
+            "buildPlanCheckoutDirectories": "Build plan checkout directories",
             "preview": {
                 "label": "Preview",
                 "tooltip": "For every programming exercise, repositories and build plans will be generated. Here, you can find their generated names based on the short name of the exercise (and course)",
