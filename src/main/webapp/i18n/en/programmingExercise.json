@@ -544,7 +544,7 @@
                 }
             },
             "diffReport": {
-                "button": "Show",
+                "button": "Review Changes",
                 "tooltip": "Shows the detailed git-diff between the template and solution repositories.",
                 "splitView": {
                     "enable": "Enable split view",
@@ -568,7 +568,7 @@
                 },
                 "errorWhileFetchingRepos": "An error occurred while fetching the repositories. Please check your internet connection and reopen the modal.",
                 "404": "Template-Solution-Diff has not been generated yet. Please do a push to the template or solution repository to generate it.",
-                "lineStatLabel": "Lines added/removed between template and solution",
+                "templateSolutionComparison": "Template/Solution Comparison",
                 "lineStatBetweenSubmissionsCurrentSubmissionLabel": "Lines added/removed between the current submission with commit hash <span class=\"font-italic text-info\"> {{ currentCommitHash }} </span>",
                 "lineStatBetweenSubmissionsPreviousSubmissionLabel": " and the previous submission with commit hash <span class=\"font-italic text-info\"> {{ previousCommitHash }} </span>",
                 "lineStatBetweenSubmissionsTemplateLabel": "and the template",
