@@ -157,22 +157,8 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures", "lectures.lectureUnits", "lectures.attachments", "competencies", "prerequisites" })
     Optional<Course> findWithEagerExercisesAndLecturesAndLectureUnitsAndCompetenciesById(long courseId);
 
-    @Query("""
-            SELECT course
-            FROM Course course
-                LEFT JOIN FETCH course.exercises exercises
-                LEFT JOIN FETCH exercises.studentParticipations participations
-                LEFT JOIN FETCH participations.submissions submissions
-                LEFT JOIN FETCH submissions.results results
-                LEFT JOIN FETCH course.lectures lectures
-                LEFT JOIN FETCH lectures.lectureUnits lectureUnits
-                LEFT JOIN FETCH course.competencies
-                LEFT JOIN FETCH course.exams exams
-            WHERE course.id = :courseId
-            AND participations.student.id = :studentId
-            """)
-    Optional<Course> findWithEagerExercisesAndStudentParticipationByIdWithSubmissionsAndLecturesAndLectureUnitsAndCompetenciesAndExamsById(@Param("courseId") long courseId,
-            @Param("studentId") long studentId);
+    @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures", "lectures.lectureUnits", "lectures.attachments", "competencies", "prerequisites", "exams" })
+    Optional<Course> findWithEagerExercisesAndLecturesAndLectureUnitsAndCompetenciesAndExamsById(long courseId);
 
     @Query("""
             SELECT course
