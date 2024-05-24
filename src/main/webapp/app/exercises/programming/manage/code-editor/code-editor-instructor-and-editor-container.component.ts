@@ -42,7 +42,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         location: Location,
         participationService: ParticipationService,
-        translateService: TranslateService,
         route: ActivatedRoute,
         alertService: AlertService,
     ) {
@@ -53,13 +52,5 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         if (this.editableInstructions.markdownEditor && this.editableInstructions.markdownEditor.aceEditorContainer) {
             this.editableInstructions.markdownEditor.aceEditorContainer.getEditor().resize();
         }
-    }
-
-    getSelectedParticipation(): Participation {
-        if (this.selectedRepository !== REPOSITORY.TEST) {
-            return this.selectedParticipation!;
-        }
-        return this.exercise.templateParticipation!
-        return this.selectedRepository !== REPOSITORY.TEST ? this.selectedParticipation! : this.exercise.templateParticipation!;
     }
 }
