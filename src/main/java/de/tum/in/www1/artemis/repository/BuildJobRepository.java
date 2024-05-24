@@ -36,14 +36,16 @@ public interface BuildJobRepository extends JpaRepository<BuildJob, Long>, JpaSp
 
     @Query("""
             SELECT b FROM BuildJob b
-            WHERE (:buildStatus is null or b.buildStatus = :buildStatus)
-            AND (:buildAgentAddress is null or b.buildAgentAddress = :buildAgentAddress)
-            AND (:startDate is null or b.buildStartDate >= :startDate)
-            AND (:endDate is null or b.buildStartDate <= :endDate)
+            WHERE (:buildStatus IS null OR b.buildStatus = :buildStatus)
+            AND (:buildAgentAddress IS null OR b.buildAgentAddress = :buildAgentAddress)
+            AND (:startDate IS null OR b.buildStartDate >= :startDate)
+            AND (:endDate IS null OR b.buildStartDate <= :endDate)
+            AND (:searchTerm IS null OR (str(b.courseId) LIKE %:searchTerm% OR b.repositoryName LIKE %:searchTerm%))
             """)
     @EntityGraph(attributePaths = { "result", "result.participation", "result.participation.exercise", "result.submission" })
     Page<BuildJob> findAllByBuildStatusAndBuildAgentAddressAndBuildStartDateBetween(@Param("buildStatus") BuildStatus buildStatus,
-            @Param("buildAgentAddress") String buildAgentAddress, @Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, Pageable pageable);
+            @Param("buildAgentAddress") String buildAgentAddress, @Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate,
+            @Param("searchTerm") String searchTerm, Pageable pageable);
 
     @Query("""
             SELECT new de.tum.in.www1.artemis.service.connectors.localci.dto.DockerImageBuild(

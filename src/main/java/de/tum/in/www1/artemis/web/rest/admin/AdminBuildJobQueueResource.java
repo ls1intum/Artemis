@@ -1,11 +1,14 @@
 package de.tum.in.www1.artemis.web.rest.admin;
 
+import java.time.Duration;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -181,13 +184,19 @@ public class AdminBuildJobQueueResource {
     @GetMapping("finished-jobs-custom")
     @EnforceAdmin
     public ResponseEntity<List<FinishedBuildJobDTO>> getFinishedBuildJobsCustom(FinishedBuildJobPageableSearchDTO search) {
-        log.debug("REST request to get a page of finished build jobs with build status {}, build agent address {}, start date {} and end date {}", search.buildStatus(),
-                search.buildAgentAddress(), search.startDate(), search.endDate());
+        log.debug("REST request to get a page of finished build jobs with build status {}, build agent address {}, start date {} and end date {}", search.getBuildStatus(),
+                search.getBuildAgentAddress(), search.getStartDate(), search.getEndDate());
 
-        final Page<BuildJob> page = buildJobRepository.findAllByBuildStatusAndBuildAgentAddressAndBuildStartDateBetween(search.buildStatus(), search.buildAgentAddress(),
-                search.startDate(), search.endDate(), PageUtil.createDefaultPageRequest(search.search(), PageUtil.ColumnMapping.BUILD_JOB));
+        final Page<BuildJob> page = buildJobRepository.findAllByBuildStatusAndBuildAgentAddressAndBuildStartDateBetween(search.getBuildStatus(), search.getBuildAgentAddress(),
+                search.getStartDate(), search.getEndDate(), search.getSearchTerm(), PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.BUILD_JOB));
+        List<BuildJob> filteredBuildJobs = page.get().filter(buildJob -> {
+            Duration buildDuration = Duration.between(buildJob.getBuildStartDate(), buildJob.getBuildCompletionDate());
+            return buildDuration.toSeconds() >= search.getBuildDurationLower() && buildDuration.toSeconds() <= search.getBuildDurationUpper();
+        }).collect(Collectors.toList());
 
-        Page<FinishedBuildJobDTO> finishedBuildJobDTOs = FinishedBuildJobDTO.fromBuildJobsPage(page);
+        Page<BuildJob> filteredPage = new PageImpl<>(filteredBuildJobs, page.getPageable(), filteredBuildJobs.size());
+
+        Page<FinishedBuildJobDTO> finishedBuildJobDTOs = FinishedBuildJobDTO.fromBuildJobsPage(filteredPage);
         log.debug("Found {} finished build jobs", finishedBuildJobDTOs.getTotalElements());
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(finishedBuildJobDTOs.getContent(), headers, HttpStatus.OK);
