@@ -7,7 +7,8 @@
                 "description": "Description",
                 "taxonomy": "Taxonomy",
                 "knowledgeArea": "Knowledge Area",
-                "version": "Version"
+                "version": "Version",
+                "source": "Source"
             },
             "details": {
                 "title": "Standardized Competency Details",
