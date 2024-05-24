@@ -4,7 +4,8 @@
     id="test-sidebar-card"
     class="pointer rounded-3 col-12 border-start border-5 highlight-card bg-module padding-small"
     [ngClass]="{
-        'border-primary': isConversationUnread
+        'border-primary': isConversationUnread,
+        'border-module': !isConversationUnread
     }"
     [routerLink]="itemSelected ? '../' : './'"
     [queryParams]="{ conversationId: sidebarItem?.id }"

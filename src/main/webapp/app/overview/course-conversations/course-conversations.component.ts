@@ -3,9 +3,11 @@ import { ConversationDTO } from 'app/entities/metis/conversation/conversation.mo
 import { Post } from 'app/entities/metis/post.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, FormGroup } from '@angular/forms';
-import { Subject, take, takeUntil } from 'rxjs';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { EMPTY, Subject, from, take, takeUntil } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
-import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { ChannelSubType, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { Course } from 'app/entities/course.model';
 import { PageType, SortDirection } from 'app/shared/metis/metis.util';
@@ -15,6 +17,11 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
 import { CourseWideSearchComponent, CourseWideSearchConfig } from 'app/overview/course-conversations/course-wide-search/course-wide-search.component';
 import { AccordionGroups, SidebarCardElement, SidebarData } from 'app/types/sidebar';
 import { CourseOverviewService } from 'app/overview/course-overview.service';
+import { GroupChatCreateDialogComponent } from 'app/overview/course-conversations/dialogs/group-chat-create-dialog/group-chat-create-dialog.component';
+import { defaultFirstLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
+import { UserPublicInfoDTO } from 'app/core/user/user.model';
+import { OneToOneChatCreateDialogComponent } from 'app/overview/course-conversations/dialogs/one-to-one-chat-create-dialog/one-to-one-chat-create-dialog.component';
+import { ChannelsOverviewDialogComponent } from 'app/overview/course-conversations/dialogs/channels-overview-dialog/channels-overview-dialog.component';
 
 const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     favoriteChannels: { entityData: [] },
@@ -25,7 +32,6 @@ const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     groupChats: { entityData: [] },
     directMessages: { entityData: [] },
     hiddenChannels: { entityData: [] },
-    otherChannels: { entityData: [] },
 };
 
 @Component({
@@ -81,6 +87,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         private metisService: MetisService,
         private formBuilder: FormBuilder,
         private courseOverviewService: CourseOverviewService,
+        private modalService: NgbModal,
     ) {}
 
     getAsChannel = getAsChannelDTO;
@@ -249,5 +256,97 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     toggleSidebar() {
         this.isCollapsed = !this.isCollapsed;
         this.courseOverviewService.setSidebarCollapseState('conversation', this.isCollapsed);
+    }
+
+    onAccordionPlusButtonPressed(chatType: string) {
+        if (chatType === 'groupChats') {
+            this.openCreateGroupChatDialog();
+        } else if (chatType === 'directMessages') {
+            this.openCreateOneToOneChatDialog();
+        } else {
+            this.openChannelOverviewDialog(chatType);
+        }
+    }
+
+    openCreateGroupChatDialog() {
+        const modalRef: NgbModalRef = this.modalService.open(GroupChatCreateDialogComponent, defaultFirstLayerDialogOptions);
+        modalRef.componentInstance.course = this.course;
+        modalRef.componentInstance.initialize();
+        from(modalRef.result)
+            .pipe(catchError(() => EMPTY))
+            .subscribe((chatPartners: UserPublicInfoDTO[]) => {
+                this.metisConversationService.createGroupChat(chatPartners?.map((partner) => partner.login!)).subscribe({
+                    complete: () => {
+                        this.metisConversationService.forceRefresh().subscribe({
+                            complete: () => {},
+                        });
+                        this.prepareSidebarData();
+                    },
+                });
+            });
+    }
+
+    openCreateOneToOneChatDialog() {
+        const modalRef: NgbModalRef = this.modalService.open(OneToOneChatCreateDialogComponent, defaultFirstLayerDialogOptions);
+        modalRef.componentInstance.course = this.course;
+        modalRef.componentInstance.initialize();
+        from(modalRef.result)
+            .pipe(catchError(() => EMPTY))
+            .subscribe((chatPartner: UserPublicInfoDTO) => {
+                if (chatPartner?.login) {
+                    this.metisConversationService.createOneToOneChat(chatPartner.login).subscribe({
+                        complete: () => {
+                            this.metisConversationService.forceRefresh().subscribe({
+                                complete: () => {},
+                            });
+                            this.prepareSidebarData();
+                        },
+                    });
+                }
+            });
+    }
+
+    openChannelOverviewDialog(groupKey: string) {
+        const subType = this.getChannelSubType(groupKey);
+        const modalRef: NgbModalRef = this.modalService.open(ChannelsOverviewDialogComponent, defaultFirstLayerDialogOptions);
+        modalRef.componentInstance.course = this.course;
+        modalRef.componentInstance.createChannelFn = subType === ChannelSubType.GENERAL ? this.metisConversationService.createChannel : undefined;
+        modalRef.componentInstance.channelSubType = subType;
+        modalRef.componentInstance.initialize();
+        from(modalRef.result)
+            .pipe(catchError(() => EMPTY))
+            .subscribe((result) => {
+                const [newActiveConversation, isModificationPerformed] = result;
+                if (isModificationPerformed) {
+                    this.metisConversationService.forceRefresh(!newActiveConversation, true).subscribe({
+                        complete: () => {
+                            if (newActiveConversation) {
+                                this.metisConversationService.setActiveConversation(newActiveConversation);
+                            }
+                        },
+                    });
+                } else {
+                    if (newActiveConversation) {
+                        this.metisConversationService.setActiveConversation(newActiveConversation);
+                    }
+                }
+                this.prepareSidebarData();
+            });
+    }
+
+    getChannelSubType(groupKey: string) {
+        if (groupKey == 'exerciseChannels') {
+            return ChannelSubType.EXERCISE;
+        }
+        if (groupKey == 'generalChannels') {
+            return ChannelSubType.GENERAL;
+        }
+        if (groupKey == 'lectureChannels') {
+            return ChannelSubType.LECTURE;
+        }
+        if (groupKey == 'examChannels') {
+            return ChannelSubType.EXAM;
+        }
+        return ChannelSubType.GENERAL;
     }
 }

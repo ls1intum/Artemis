@@ -2,26 +2,18 @@
     <div
         id="test-accordion-item-container-{{ i }}"
         class="pointer"
-        [ngClass]="{ 'd-none': sidebarType !== 'conversation' && !(groupedData[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue)?.length }"
+        [ngClass]="{ 'd-none': !showAddOptions && !(groupedData[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue)?.length }"
     >
         <div id="test-accordion-item-header" class="control-label d-flex align-items-center justify-content-between py-2 bg-module" (click)="toggleGroupCategoryCollapse(groupKey)">
             <div class="my-2">
-                @if (sidebarType !== 'conversation') {
-                    {{ 'artemisApp.courseOverview.sidebar.' + groupKey | artemisTranslate | titlecase }}
-                } @else {
-                    <fa-icon [fixedWidth]="true" [icon]="getIcon(groupKey)" />
-                    {{ 'artemisApp.conversationsLayout.conversationSelectionSideBar.' + groupKey | artemisTranslate }}
+                @if (showLeadingIcon) {
+                    <fa-icon [fixedWidth]="true" [icon]="channelTypeIcon[groupKey]" />
                 }
+                {{ 'artemisApp.courseOverview.sidebar.' + groupKey | artemisTranslate | titlecase }}
                 ({{ (groupedData[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue)?.length }})
             </div>
             <div class="icon-container pe-3">
-                <jhi-accordion-add-options
-                    [hidden]="sidebarType !== 'conversation'"
-                    [groupKey]="groupKey"
-                    [sidebarType]="sidebarType"
-                    [courseId]="courseId!"
-                    (onUpdateSidebar)="onUpdateSidebar.emit()"
-                />
+                <jhi-accordion-add-options [hidden]="!showAddOptions || !showAddOption[groupKey]" [groupKey]="groupKey" />
                 <fa-icon [icon]="faChevronRight" class="rotate-icon chevron-position" [class.rotated]="!collapseState[groupKey]" />
             </div>
         </div>

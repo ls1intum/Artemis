@@ -1,22 +1,5 @@
-@if (sidebarType === 'conversation' && groupKey !== 'favoriteChannels' && groupKey !== 'hiddenChannels') {
-    <div ngbDropdown container="body" class="d-inline-block">
-        @if (groupKey === 'groupChats') {
-            <button id="createGroupChat" class="btn btn-sm btn-outline-secondary sidebar-button" (click)="openCreateGroupChatDialog($event)">
-                <fa-icon [icon]="faPlus" size="sm" />
-            </button>
-        } @else if (groupKey === 'directMessages') {
-            <button id="createDirectMessage" class="btn btn-sm btn-outline-secondary sidebar-button" (click)="openCreateOneToOneChatDialog($event)">
-                <fa-icon [icon]="faPlus" size="sm" />
-            </button>
-        } @else {
-            <button
-                id="channelOverview"
-                class="btn btn-sm btn-outline-secondary sidebar-button"
-                (click)="openChannelOverviewDialog($event)"
-                [hidden]="groupKey === 'directMessages' || groupKey === 'groupChats'"
-            >
-                <fa-icon [icon]="faPlus" size="sm" />
-            </button>
-        }
-    </div>
-}
+<div ngbDropdown container="body" class="d-inline-block">
+    <button id="createGroupChat" class="btn btn-sm btn-outline-secondary sidebar-button" (click)="onPlusPressed($event)">
+        <fa-icon [icon]="faPlus" size="sm" />
+    </button>
+</div>

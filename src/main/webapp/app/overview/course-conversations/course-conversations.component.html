@@ -88,6 +88,7 @@
                     [itemSelected]="conversationSelected"
                     [courseId]="course.id"
                     [sidebarData]="sidebarData"
+                    (onPlusPressed)="onAccordionPlusButtonPressed($event)"
                 />
             </div>
             @if (course && !activeConversation && isCodeOfConductPresented) {

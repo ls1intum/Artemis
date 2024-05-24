@@ -23,6 +23,8 @@
                             [routeParams]="routeParams"
                             [courseId]="courseId"
                             [itemSelected]="itemSelected"
+                            [showAddOptions]="sidebarData.sidebarType === 'conversation'"
+                            [showLeadingIcon]="sidebarData.sidebarType === 'conversation'"
                             (onUpdateSidebar)="onUpdateSidebar.emit()"
                         />
                     } @else {

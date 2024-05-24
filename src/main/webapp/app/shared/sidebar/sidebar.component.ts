@@ -14,6 +14,7 @@ import { SidebarEventService } from './sidebar-event.service';
 export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     @Output() onSelectConversation = new EventEmitter<number>();
     @Output() onUpdateSidebar = new EventEmitter<void>();
+    @Output() onPlusPressed = new EventEmitter<string>();
     @Input() searchFieldEnabled: boolean = true;
     @Input() sidebarData: SidebarData;
     @Input() courseId?: number;
@@ -27,6 +28,7 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     paramSubscription?: Subscription;
     profileSubscription?: Subscription;
     sidebarEventSubscription?: Subscription;
+    sidebarAccordionEventSubscription?: Subscription;
     routeParams: Params;
     isProduction = true;
     isTestServer = false;
@@ -59,6 +61,17 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
                         this.onSelectConversation.emit(+itemId);
                         this.onUpdateSidebar.emit();
                     }
+                }
+            });
+
+        this.sidebarAccordionEventSubscription = this.sidebarEventService
+            .sidebarAccordionPlusClickedEventListener()
+            .pipe(
+                distinctUntilChanged(), // This ensures the function is only called when the actual value changes
+            )
+            .subscribe((groupKey) => {
+                if (groupKey) {
+                    this.onPlusPressed.emit(groupKey);
                 }
             });
     }

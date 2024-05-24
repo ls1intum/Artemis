@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { faBan, faChevronRight, faComment, faComments, faFile, faGraduationCap, faHeart, faList, faMessage } from '@fortawesome/free-solid-svg-icons';
-import { AccordionGroups, ExerciseCollapseState, SidebarCardElement, SidebarTypes } from 'app/types/sidebar';
+import { AccordionGroups, ChannelAccordionShowAdd, ChannelTypeIcons, ExerciseCollapseState, SidebarCardElement, SidebarTypes } from 'app/types/sidebar';
 import { Params } from '@angular/router';
 
 const DEFAULT_EXERCISE_COLLAPSE_STATE: ExerciseCollapseState = {
@@ -8,6 +8,28 @@ const DEFAULT_EXERCISE_COLLAPSE_STATE: ExerciseCollapseState = {
     current: false,
     past: true,
     noDate: true,
+};
+
+const CHANNEL_TYPE_SHOW_ADD_OPTION: ChannelAccordionShowAdd = {
+    generalChannels: true,
+    exerciseChannels: true,
+    examChannels: true,
+    groupChats: true,
+    directMessages: true,
+    favoriteChannels: false,
+    lectureChannels: true,
+    hiddenChannels: false,
+};
+
+const CHANNEL_TYPE_ICON: ChannelTypeIcons = {
+    generalChannels: faMessage,
+    exerciseChannels: faList,
+    examChannels: faGraduationCap,
+    groupChats: faComments,
+    directMessages: faComment,
+    favoriteChannels: faHeart,
+    lectureChannels: faFile,
+    hiddenChannels: faBan,
 };
 
 @Component({
@@ -26,7 +48,11 @@ export class SidebarAccordionComponent implements OnChanges, OnInit {
     @Input() storageId?: string = '';
     @Input() courseId?: number;
     @Input() itemSelected?: boolean;
+    @Input() showLeadingIcon = false;
+    @Input() showAddOptions = false;
 
+    readonly showAddOption = CHANNEL_TYPE_SHOW_ADD_OPTION;
+    readonly channelTypeIcon = CHANNEL_TYPE_ICON;
     collapseState = DEFAULT_EXERCISE_COLLAPSE_STATE;
 
     //icon
@@ -75,19 +101,5 @@ export class SidebarAccordionComponent implements OnChanges, OnInit {
     toggleGroupCategoryCollapse(groupCategoryKey: string) {
         this.collapseState[groupCategoryKey] = !this.collapseState[groupCategoryKey];
         sessionStorage.setItem('sidebar.accordion.collapseState.' + this.storageId + '.byCourse.' + this.courseId, JSON.stringify(this.collapseState));
-    }
-
-    getIcon(groupCategoryKey: string) {
-        const icons = {
-            ['generalChannels']: faMessage,
-            ['exerciseChannels']: faList,
-            ['examChannels']: faGraduationCap,
-            ['groupChats']: faComments,
-            ['directMessages']: faComment,
-            ['favoriteChannels']: faHeart,
-            ['lectureChannels']: faFile,
-            ['hiddenChannels']: faBan,
-        };
-        return icons[groupCategoryKey];
     }
 }

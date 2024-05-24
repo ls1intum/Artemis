@@ -15,7 +15,6 @@ import { NgbCollapseModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap'
 import { RouterModule } from '@angular/router';
 import { AccordionAddOptionsComponent } from 'app/shared/sidebar/accordion-add-options/accordion-add-options.component';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
-import { faBan, faComment, faComments, faFile, faGraduationCap, faHeart, faList, faMessage } from '@fortawesome/free-solid-svg-icons';
 
 describe('SidebarAccordionComponent', () => {
     let component: SidebarAccordionComponent;
@@ -143,23 +142,5 @@ describe('SidebarAccordionComponent', () => {
     it('should expand the group containing the selected item', () => {
         component.expandGroupWithSelectedItem();
         expect(component.collapseState['future']).toBeFalse();
-    });
-
-    it('getIcon should return the correct icon', () => {
-        const icons = {
-            ['generalChannels']: faMessage,
-            ['exerciseChannels']: faList,
-            ['examChannels']: faGraduationCap,
-            ['groupChats']: faComments,
-            ['directMessages']: faComment,
-            ['favoriteChannels']: faHeart,
-            ['lectureChannels']: faFile,
-            ['hiddenChannels']: faBan,
-        };
-
-        for (const [groupCategoryKey, expectedIcon] of Object.entries(icons)) {
-            const actualIcon = component.getIcon(groupCategoryKey);
-            expect(actualIcon).toBe(expectedIcon);
-        }
     });
 });
