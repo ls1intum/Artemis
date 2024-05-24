@@ -4,6 +4,7 @@
             "title": "Your current courses",
             "recentlyAccessed": "Recently accessed courses",
             "otherCourses": "Other courses",
+            "noCourses": "You aren't enrolled in any courses. Enroll manually or contact your course instructor.",
             "exerciseTitle": "Current active exercise in \"{{ course }}\"",
             "exerciseTitleWithoutDueDate": "Current exercise in \"{{ course }}\":",
             "examTitle": "Current exam in \"{{ course }}\":",
@@ -47,6 +48,12 @@
             },
             "menu": {
                 "exercises": "Exercises",
+                "textExercise": "Text Exercise",
+                "fileUploadExercise": "File Upload Exercise",
+                "programmingExercise": "Programming Exercise",
+                "modelingExercise": "Modeling Exercise",
+                "quizExercise": "Quiz Exercise",
+                "repository": "Repository",
                 "statistics": "Statistics",
                 "lectures": "Lectures",
                 "tutorialGroups": "Tutorials",
@@ -57,7 +64,8 @@
                 "testExam": "Test Exam",
                 "communication": "Communication",
                 "messages": "Messages",
-                "plagiarismCases": "Plagiarism Cases"
+                "plagiarismCases": "Plagiarism Cases",
+                "gradingSystem": "Grading System"
             },
             "exerciseList": {
                 "filter": "Filter ({{ num }})",
@@ -188,6 +196,9 @@
             "competencies": {
                 "noData": "No competencies available for this course."
             },
+            "tutorialGroups": {
+                "selectTutorialGroup": "Please select a Tutorial Group."
+            },
             "lectureList": {
                 "lectureGroupHeader": "(Lectures: {{ total }})",
                 "totalLectures": "Total lectures:",
@@ -204,7 +215,8 @@
                 "notReleased": "Not released",
                 "version": "Version",
                 "isDownloading": "Is downloading...",
-                "downloadMergedPdf": "Download Complete PDF"
+                "downloadMergedPdf": "Download Complete PDF",
+                "selectLecture": " Please select a Lecture."
             },
             "exerciseDetails": {
                 "dueDate": "Due date:",
@@ -252,7 +264,8 @@
                 "complaintPossible": "Complaint possible:",
                 "complaintPossibleTooltip": "After receiving an assessment, you will have {{days}} days to file a complaint.",
                 "presented": "Presented:",
-                "presentation": "Presentation:"
+                "presentation": "Presentation:",
+                "selectExercise": "Please select an Exercise."
             }
         }
     }

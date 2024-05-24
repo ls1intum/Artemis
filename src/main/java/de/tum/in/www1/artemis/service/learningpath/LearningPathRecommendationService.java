@@ -18,19 +18,21 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import jakarta.validation.constraints.NotNull;
+
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.LearningObject;
 import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.LearningPath;
 import de.tum.in.www1.artemis.domain.competency.RelationType;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.CompetencyRelationRepository;
-import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.LearningObjectService;
 import de.tum.in.www1.artemis.service.ParticipantScoreService;
 import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
@@ -45,8 +47,6 @@ public class LearningPathRecommendationService {
     private final CompetencyRelationRepository competencyRelationRepository;
 
     private final LearningObjectService learningObjectService;
-
-    private final ExerciseService exerciseService;
 
     private final ParticipantScoreService participantScoreService;
 
@@ -90,10 +90,9 @@ public class LearningPathRecommendationService {
             { 0.50, 0.40, 0.10 }, { 0.39, 0.45, 0.16 }, { 0.28, 0.48, 0.24 }, { 0.20, 0.47, 0.33 }, { 0.13, 0.43, 0.44 }, { 0.08, 0.37, 0.55 }, { 0.04, 0.29, 0.67 }, };
 
     protected LearningPathRecommendationService(CompetencyRelationRepository competencyRelationRepository, LearningObjectService learningObjectService,
-            ExerciseService exerciseService, ParticipantScoreService participantScoreService) {
+            ParticipantScoreService participantScoreService) {
         this.competencyRelationRepository = competencyRelationRepository;
         this.learningObjectService = learningObjectService;
-        this.exerciseService = exerciseService;
         this.participantScoreService = participantScoreService;
     }
 
@@ -546,7 +545,7 @@ public class LearningPathRecommendationService {
      * @param competency                       the competency from which the exercises should be chosen
      */
     private void scheduleExercisesByDistribution(List<LearningObject> recommendedOrder, int[] recommendedExercisesDistribution, LearningPath learningPath, Competency competency) {
-        var exerciseCandidates = competency.getExercises().stream().filter(exercise -> !exerciseService.hasScoredAtLeast(exercise, learningPath.getUser(), SCORE_THRESHOLD))
+        var exerciseCandidates = competency.getExercises().stream().filter(exercise -> !hasScoredAtLeast(exercise, learningPath.getUser(), SCORE_THRESHOLD))
                 .collect(Collectors.toSet());
         final var difficultyMap = generateDifficultyLevelMap(exerciseCandidates);
         final var easyExercises = new HashSet<Exercise>();
@@ -710,5 +709,21 @@ public class LearningPathRecommendationService {
     public record RecommendationState(Map<Long, Competency> competencyIdMap, List<Long> recommendedOrderOfCompetencies, Set<Long> masteredCompetencies,
             Map<Long, Double> competencyMastery, Map<Long, Set<Long>> matchingClusters, Map<Long, Set<Long>> priorCompetencies, Map<Long, Long> extendsCompetencies,
             Map<Long, Long> assumesCompetencies) {
+    }
+
+    /**
+     * Checks if the user has achieved the minimum score.
+     *
+     * @param exercise the exercise that should be checked
+     * @param user     the user for which to check the score
+     * @param minScore the minimum score that should be achieved
+     * @return true if the user achieved the minimum score, false otherwise
+     */
+    private boolean hasScoredAtLeast(@NotNull Exercise exercise, @NotNull User user, double minScore) {
+        final var score = participantScoreService.getStudentAndTeamParticipationScoresAsDoubleStream(user, Set.of(exercise)).max();
+        if (score.isEmpty()) {
+            return false;
+        }
+        return score.getAsDouble() >= minScore;
     }
 }
