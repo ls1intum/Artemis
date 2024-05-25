@@ -460,7 +460,7 @@ public class BuildJobExecutionService {
             return repository.getLocalPath();
         }
         catch (GitAPIException | IOException | URISyntaxException e) {
-            String msg = "Error while cloning repository " + repositoryUri.repositorySlug();
+            String msg = "Error while cloning repository " + repositoryUri.repositorySlug() + " with uri " + repositoryUri;
             buildLogsMap.appendBuildLogEntry(buildJobId, msg);
             throw new LocalCIException(msg, e);
         }
