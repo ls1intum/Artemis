@@ -110,7 +110,7 @@ def get_artifacts_of_the_last_completed_run(headers, branch, run_id):
         logging.error(f"Branch {branch} not found in the repository")
         sys.exit(1)
     else:
-        logging.error(f"Error accessing Github with status code {response.status_code}")
+        logging.error(f"Error accessing GitHub with status code {response.status_code}")
         sys.exit(1)
 
 
