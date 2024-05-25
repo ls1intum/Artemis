@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.config.localvcci.ssh.service;
+package de.tum.in.www1.artemis.service.icl;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALVC;
 
@@ -7,7 +7,7 @@ import org.apache.sshd.git.pack.GitPackCommandFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.config.localvcci.ssh.SshGitCommand;
+import de.tum.in.www1.artemis.config.icl.ssh.SshGitCommand;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCServletService;
 
 @Profile(PROFILE_LOCALVC)
