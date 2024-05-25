@@ -63,7 +63,7 @@
             "scorePercentage": "Score (in %)",
             "scoreWithPoints": "Your score is {{score}}%, {{points}} points",
             "currentScore": "Current Score",
-            "rated": "Rated",
+            "rated": "Graded",
             "assessmentType": "Assessment Type",
             "assessor": "Reviewer",
             "feedbacks": "Feedback",
