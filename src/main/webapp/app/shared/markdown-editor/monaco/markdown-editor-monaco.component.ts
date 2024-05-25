@@ -119,15 +119,16 @@ export class MarkdownEditorMonacoComponent implements AfterViewInit, OnDestroy {
     embedFiles(files: File[]): void {
         files.forEach((file) => {
             this.fileUploaderService.uploadMarkdownFile(file).then(
-                () => {
-                    const extension = file.name.split('.').pop()?.toLocaleLowerCase();
+                (response) => {
+                    const extension = file.name.split('.').last()?.toLocaleLowerCase();
+
                     let actionData: { id: string; payload: unknown };
                     if (extension !== 'pdf') {
                         // Mode: embedded image
-                        actionData = { id: 'monaco-attachment.action', payload: {} };
+                        actionData = { id: 'monaco-attachment.action', payload: { text: file.name, url: response.path } };
                     } else {
                         // For PDFs, just link to the file
-                        actionData = { id: 'monaco-url.action', payload: {} };
+                        actionData = { id: 'monaco-url.action', payload: { text: file.name, url: response.path } };
                     }
                     alert(JSON.stringify(actionData));
                     this.triggerAction(actionData.id, actionData.payload);

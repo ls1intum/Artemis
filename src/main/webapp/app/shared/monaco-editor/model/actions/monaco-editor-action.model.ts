@@ -25,6 +25,14 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
 
     abstract run(editor: monaco.editor.ICodeEditor, args?: unknown): void;
 
+    replaceTextAtCurrentSelection(editor: monaco.editor.ICodeEditor, text: string): void {
+        const selection = editor.getSelection();
+        const selectedText = selection ? this.getTextAtRange(editor, selection)?.trim() : undefined;
+        if (selection && selectedText !== undefined) {
+            this.replaceTextAtRange(editor, selection, text);
+        }
+    }
+
     insertTextAtPosition(editor: monaco.editor.ICodeEditor, position: monaco.IPosition, text: string): void {
         this.replaceTextAtRange(editor, new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column), text);
     }

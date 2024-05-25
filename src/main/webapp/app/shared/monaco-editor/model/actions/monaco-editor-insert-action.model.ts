@@ -11,11 +11,7 @@ export abstract class MonacoEditorInsertAction extends MonacoEditorAction {
     }
 
     run(editor: monaco.editor.ICodeEditor) {
-        const selection = editor.getSelection();
-        const selectedText = selection ? this.getTextAtRange(editor, selection)?.trim() : undefined;
-        if (selection && selectedText !== undefined) {
-            this.replaceTextAtRange(editor, selection, this.textToInsert);
-        }
+        this.replaceTextAtCurrentSelection(editor, this.textToInsert);
         editor.focus();
     }
 }
