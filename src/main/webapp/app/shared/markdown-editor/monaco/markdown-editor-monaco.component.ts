@@ -14,6 +14,10 @@ import { MonacoAttachmentAction } from 'app/shared/monaco-editor/model/actions/m
 import { MonacoUnorderedListAction } from 'app/shared/monaco-editor/model/actions/monaco-unordered-list.action';
 import { MonacoOrderedListAction } from 'app/shared/monaco-editor/model/actions/monaco-ordered-list.action';
 import { MultiOptionCommand } from 'app/shared/markdown-editor/commands/multiOptionCommand';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { v4 as uuid } from 'uuid';
+import { FileUploaderService } from 'app/shared/http/file-uploader.service';
+import { AlertService, AlertType } from 'app/core/util/alert.service';
 
 @Component({
     selector: 'jhi-markdown-editor-monaco',
@@ -36,8 +40,12 @@ export class MarkdownEditorMonacoComponent implements AfterViewInit, OnDestroy {
     minHeightEditor: number = MarkdownEditorHeight.SMALL.valueOf();
 
     @Input()
+    enableFileUpload = true;
+
+    @Input()
     growToFit = false;
 
+    // TODO: Register these actions with the editor!
     @Input()
     defaultActions: MonacoEditorAction[] = [
         new MonacoBoldAction('Bold', 'todo'),
@@ -59,7 +67,16 @@ export class MarkdownEditorMonacoComponent implements AfterViewInit, OnDestroy {
     onPreviewSelect = new EventEmitter();
 
     inPreviewMode = false;
+    uniqueMarkdownEditorId: string;
+    faQuestionCircle = faQuestionCircle;
     resizeObserver?: ResizeObserver;
+
+    constructor(
+        private alertService: AlertService,
+        private fileUploaderService: FileUploaderService,
+    ) {
+        this.uniqueMarkdownEditorId = 'markdown-editor-' + uuid();
+    }
 
     ngAfterViewInit(): void {
         this.monacoEditor.changeModel('markdown-content.custom-md', this._markdown, 'custom-md');
@@ -89,8 +106,41 @@ export class MarkdownEditorMonacoComponent implements AfterViewInit, OnDestroy {
         }
     }
 
-    triggerCommand(id: string): void {
-        this.monacoEditor.triggerCommand(id);
+    triggerAction(id: string, args?: unknown): void {
+        this.monacoEditor.triggerAction(id, args);
+    }
+
+    onFileUpload(event: any): void {
+        if (event.target.files.length >= 1) {
+            this.embedFiles(Array.from(event.target.files));
+        }
+    }
+
+    embedFiles(files: File[]): void {
+        files.forEach((file) => {
+            this.fileUploaderService.uploadMarkdownFile(file).then(
+                () => {
+                    const extension = file.name.split('.').pop()?.toLocaleLowerCase();
+                    let actionData: { id: string; payload: unknown };
+                    if (extension !== 'pdf') {
+                        // Mode: embedded image
+                        actionData = { id: 'monaco-attachment.action', payload: {} };
+                    } else {
+                        // For PDFs, just link to the file
+                        actionData = { id: 'monaco-url.action', payload: {} };
+                    }
+                    alert(JSON.stringify(actionData));
+                    this.triggerAction(actionData.id, actionData.payload);
+                },
+                (error) => {
+                    this.alertService.addAlert({
+                        type: AlertType.DANGER,
+                        message: error.message,
+                        disableTranslation: true,
+                    });
+                },
+            );
+        });
     }
 
     protected readonly MultiOptionCommand = MultiOptionCommand;

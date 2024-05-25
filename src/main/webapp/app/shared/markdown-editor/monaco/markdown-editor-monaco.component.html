@@ -5,6 +5,24 @@
             <a ngbNavLink class="btn-sm text-normal px-2 py-0 m-0"><span jhiTranslate="entity.action.edit"></span></a>
             <ng-template ngbNavContent>
                 <jhi-monaco-editor [shrinkToFit]="false" [stickyScroll]="false" (textChanged)="onTextChanged($event)" />
+                @if (enableFileUpload) {
+                    <input
+                        [id]="'file-upload ' + uniqueMarkdownEditorId"
+                        class="markdown-editor__file-input"
+                        type="file"
+                        accept="image/*"
+                        [multiple]="true"
+                        (change)="onFileUpload($event)"
+                    />
+                    <label [for]="'file-upload ' + uniqueMarkdownEditorId" class="markdown-editor__file-label d-inline">
+                        <div class="row mx-0 align-items-baseline">
+                            <span class="col upload-subtitle">{{ 'artemisApp.markdownEditor.fileUpload' | artemisTranslate }}</span>
+                            <a class="col-auto" href="http://demo.showdownjs.com">
+                                <fa-icon [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.markdownEditor.guide' | artemisTranslate" />
+                            </a>
+                        </div>
+                    </label>
+                }
             </ng-template>
         </ng-container>
         <ng-container ngbNavItem="editor_preview">
@@ -19,7 +37,7 @@
                 <div class="markdown-editor__commands">
                     <div class="markdown-editor__commands-default">
                         @for (action of defaultActions; track action) {
-                            <button type="button" class="btn btn-sm py-0" (click)="triggerCommand(action.id)" [ngbTooltip]="action.translationKey | artemisTranslate">
+                            <button type="button" class="btn btn-sm py-0" (click)="triggerAction(action.id)" [ngbTooltip]="action.translationKey | artemisTranslate">
                                 <fa-icon [icon]="action.icon!" />
                             </button>
                         }
