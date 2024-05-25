@@ -47,7 +47,7 @@
         </div>
     }
 }
-@if (!regularCourses.length && !recentlyAccessedCourses.length) {
+@if (coursesLoaded && !regularCourses.length && !recentlyAccessedCourses.length) {
     <div class="mt-5 mb-5 d-flex flex-column gap-3">
         <h4 class="text-secondary text-center" jhiTranslate="artemisApp.studentDashboard.noCourses"></h4>
         <div class="col-sm-auto d-flex justify-content-center">

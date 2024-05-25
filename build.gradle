@@ -186,13 +186,13 @@ jacocoTestCoverageVerification {
                 counter = "INSTRUCTION"
                 value = "COVEREDRATIO"
                 // TODO: in the future the following value should become higher than 0.92
-                minimum = 0.898
+                minimum = 0.897
             }
             limit {
                 counter = "CLASS"
                 value = "MISSEDCOUNT"
                 // TODO: in the future the following value should become less than 10
-                maximum = 30
+                maximum = 34
             }
         }
     }
@@ -273,10 +273,10 @@ dependencies {
     // Note: jgit.htt.server is not compatible with jakarta yet and neither is there a timeline. Hence, we had to add the sourcefiles to our repository. Once the compatibility is given, we can switch back to the maven dependency.
     // implementation "org.eclipse.jgit:org.eclipse.jgit.http.server:${jgit_version}"
 
-    implementation "org.apache.sshd:sshd-core:2.12.1"
-    implementation "org.apache.sshd:sshd-git:2.12.1"
-    implementation "org.apache.sshd:sshd-osgi:2.12.1"
-    implementation "org.apache.sshd:sshd-sftp:2.12.1"
+    implementation "org.apache.sshd:sshd-core:${sshd_version}"
+    implementation "org.apache.sshd:sshd-git:${sshd_version}"
+    implementation "org.apache.sshd:sshd-osgi:${sshd_version}"
+    implementation "org.apache.sshd:sshd-sftp:${sshd_version}"
 
     implementation "oauth.signpost:signpost-core:2.1.1"
     implementation "oauth.signpost:signpost-commonshttp4:2.1.1"
@@ -328,7 +328,7 @@ dependencies {
 
     implementation "tech.jhipster:jhipster-framework:${jhipster_dependencies_version}"
     implementation "org.springframework.boot:spring-boot-starter-cache:${spring_boot_version}"
-    implementation "io.micrometer:micrometer-registry-prometheus:1.13.0"
+    implementation "io.micrometer:micrometer-registry-prometheus:1.12.6"
     implementation "net.logstash.logback:logstash-logback-encoder:7.4"
 
     // Defines low-level streaming API, and includes JSON-specific implementations

@@ -24,12 +24,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.config.localvcci.ssh.HashUtils;
-import de.tum.in.www1.artemis.config.localvcci.ssh.SshGitCommand;
-import de.tum.in.www1.artemis.config.localvcci.ssh.service.SshGitCommandFactoryService;
+import de.tum.in.www1.artemis.config.icl.ssh.HashUtils;
+import de.tum.in.www1.artemis.config.icl.ssh.SshGitCommand;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionTestRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.icl.SshGitCommandFactoryService;
 
 @Profile(PROFILE_LOCALVC)
 class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
