@@ -58,9 +58,8 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
-        if (this.dashboardFeatureToggleActiveSubscription) {
-            this.dashboardFeatureToggleActiveSubscription.unsubscribe();
-        }
+        this.dashboardFeatureToggleActiveSubscription?.unsubscribe();
+        this.parentParamSubscription?.unsubscribe();
     }
 
     private setCourse(course?: Course) {
@@ -130,9 +129,5 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
      */
     identify(index: number, competency: Competency) {
         return `${index}-${competency.id}`;
-    }
-
-    ngOnDestroy(): void {
-        this.parentParamSubscription?.unsubscribe();
     }
 }
