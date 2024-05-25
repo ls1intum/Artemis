@@ -18,11 +18,15 @@ import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { v4 as uuid } from 'uuid';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
+import { MonacoEditorActionGroup } from 'app/shared/monaco-editor/model/actions/monaco-editor-action-group.model';
+import { MonacoHeadingAction } from 'app/shared/monaco-editor/model/actions/monaco-heading.action';
+import { MonacoFormulaAction } from 'app/shared/monaco-editor/model/actions/monaco-formula.action';
 
+// TODO: Once the old markdown editor is gone, remove the style url.
 @Component({
     selector: 'jhi-markdown-editor-monaco',
     templateUrl: './markdown-editor-monaco.component.html',
-    styleUrl: './markdown-editor-monaco.component.scss',
+    styleUrls: ['./markdown-editor-monaco.component.scss', '../markdown-editor.component.scss'],
 })
 export class MarkdownEditorMonacoComponent implements AfterViewInit, OnDestroy {
     @ViewChild(MonacoEditorComponent, { static: false }) monacoEditor: MonacoEditorComponent;
@@ -58,7 +62,18 @@ export class MarkdownEditorMonacoComponent implements AfterViewInit, OnDestroy {
         new MonacoAttachmentAction('Attachment', 'todo'),
         new MonacoOrderedListAction('Ordered list', 'todo'),
         new MonacoUnorderedListAction('Unordered list', 'todo'),
+        new MonacoFormulaAction('Formula', 'artemisApp.markdownEditor.commands.katex'),
     ];
+
+    @Input()
+    headerActions: MonacoEditorActionGroup<MonacoHeadingAction> = new MonacoEditorActionGroup<MonacoHeadingAction>(
+        'artemisApp.multipleChoiceQuestion.editor.style',
+        [1, 2, 3].map((level) => new MonacoHeadingAction(`Heading ${level}`, `todo`, level)),
+        undefined,
+    );
+
+    @Input()
+    domainActions: MonacoEditorAction[] = [];
 
     @Output()
     markdownChange = new EventEmitter<string>();

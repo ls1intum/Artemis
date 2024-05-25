@@ -19,6 +19,10 @@ import { Result } from 'app/entities/result.model';
 import { faCheckCircle, faCircleNotch, faExclamationTriangle, faGripLines, faSave } from '@fortawesome/free-solid-svg-icons';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
+import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
+import { MonacoFormulaAction } from 'app/shared/monaco-editor/model/actions/monaco-formula.action';
+import { MonacoTaskAction } from 'app/shared/monaco-editor/model/actions/monaco-task.action';
+import { MonacoTestCaseAction } from 'app/shared/monaco-editor/model/actions/monaco-test-case.action';
 
 @Component({
     selector: 'jhi-programming-exercise-editable-instructions',
@@ -37,6 +41,12 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     testCaseCommand = new TestCaseCommand();
     katexCommand = new KatexCommand();
     domainCommands: DomainCommand[] = [this.katexCommand, this.taskCommand, this.testCaseCommand];
+    testCaseAction = new MonacoTestCaseAction('Test case', 'artemisApp.programmingExercise.problemStatement.testCaseCommand');
+    domainActions: MonacoEditorAction[] = [
+        new MonacoFormulaAction('Formula', 'artemisApp.markdownEditor.commands.formula'),
+        new MonacoTaskAction('Task', 'artemisApp.markdownEditor.commands.task'),
+        this.testCaseAction,
+    ];
 
     savingInstructions = false;
     unsavedChangesValue = false;
@@ -209,7 +219,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
                     }),
                     tap((testCaseNames: string[]) => {
                         this.exerciseTestCases = testCaseNames;
-                        this.testCaseCommand.setValues(this.exerciseTestCases.map((value) => ({ value, id: value })));
+                        const cases = this.exerciseTestCases.map((value) => ({ value, id: value }));
+                        this.testCaseCommand.setValues(cases);
+                        this.testCaseAction.possibleValues = cases;
                     }),
                     catchError(() => of()),
                 )
