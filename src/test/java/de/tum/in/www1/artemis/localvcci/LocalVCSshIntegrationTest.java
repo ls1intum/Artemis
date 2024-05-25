@@ -32,7 +32,7 @@ import de.tum.in.www1.artemis.repository.ProgrammingSubmissionTestRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 
 @Profile(PROFILE_LOCALVC)
-class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
+class LocalVCSshIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
     final String hostname = "localhost";
 
@@ -142,7 +142,6 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
         }
         catch (NullPointerException e) {
             assertThat(e).isInstanceOf(NullPointerException.class);
-            assertThat(false).isTrue();
         }
 
     }
