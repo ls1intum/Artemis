@@ -11,10 +11,10 @@ package org.eclipse.jgit.http.server;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.Serial;
 import java.time.Instant;
 import org.eclipse.jgit.internal.storage.file.ObjectDirectory;
 import org.eclipse.jgit.lib.Repository;
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -29,17 +29,20 @@ import static org.eclipse.jgit.util.HttpSupport.HDR_LAST_MODIFIED;
 /** Sends any object from {@code GIT_DIR/objects/??/0 38}, or any pack file. */
 abstract class ObjectFileServlet extends HttpServlet {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     static class Loose extends ObjectFileServlet {
 
+        @Serial
         private static final long serialVersionUID = 1L;
 
         Loose() {
             super("application/x-git-loose-object");
         }
 
-        @Override String etag(FileSender sender) throws IOException {
+        @Override
+        String etag(FileSender sender) {
             Instant lastModified = sender.getLastModified();
             return Long.toHexString(lastModified.getEpochSecond()) + Long.toHexString(lastModified.getNano());
         }
@@ -47,19 +50,22 @@ abstract class ObjectFileServlet extends HttpServlet {
 
     private abstract static class PackData extends ObjectFileServlet {
 
+        @Serial
         private static final long serialVersionUID = 1L;
 
         PackData(String contentType) {
             super(contentType);
         }
 
-        @Override String etag(FileSender sender) throws IOException {
+        @Override
+        String etag(FileSender sender) throws IOException {
             return sender.getTailChecksum();
         }
     }
 
     static class Pack extends PackData {
 
+        @Serial
         private static final long serialVersionUID = 1L;
 
         Pack() {
@@ -69,6 +75,7 @@ abstract class ObjectFileServlet extends HttpServlet {
 
     static class PackIdx extends PackData {
 
+        @Serial
         private static final long serialVersionUID = 1L;
 
         PackIdx() {
@@ -84,11 +91,13 @@ abstract class ObjectFileServlet extends HttpServlet {
 
     abstract String etag(FileSender sender) throws IOException;
 
-    @Override public void doGet(final HttpServletRequest req, final HttpServletResponse rsp) throws IOException {
+    @Override
+    public void doGet(final HttpServletRequest req, final HttpServletResponse rsp) throws IOException {
         serve(req, rsp, true);
     }
 
-    @Override protected void doHead(final HttpServletRequest req, final HttpServletResponse rsp) throws ServletException, IOException {
+    @Override
+    protected void doHead(final HttpServletRequest req, final HttpServletResponse rsp) throws IOException {
         serve(req, rsp, false);
     }
 

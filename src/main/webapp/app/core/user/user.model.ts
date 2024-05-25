@@ -14,6 +14,7 @@ export class User extends Account {
     public visibleRegistrationNumber?: string;
     public password?: string;
     public vcsAccessToken?: string;
+    public sshPublicKey?: string;
 
     constructor(
         id?: number,
@@ -33,6 +34,7 @@ export class User extends Account {
         password?: string,
         imageUrl?: string,
         vcsAccessToken?: string,
+        sshPublicKey?: string,
     ) {
         super(activated, authorities, email, firstName, langKey, lastName, login, imageUrl);
         this.id = id;
@@ -44,6 +46,7 @@ export class User extends Account {
         this.lastNotificationRead = lastNotificationRead;
         this.password = password;
         this.vcsAccessToken = vcsAccessToken;
+        this.sshPublicKey = sshPublicKey;
     }
 }
 /**

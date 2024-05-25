@@ -468,7 +468,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 default:
                     const exercisesMatcher = this.lastRouteUrlSegment?.match(/.+-exercises/);
                     if (exercisesMatcher) {
-                        this.addResolvedTitleAsCrumb(EntityType.EXERCISE, [Number(segment)], currentPath.replace(exercisesMatcher[0], 'exercises'), 'exercises');
+                        this.addResolvedTitleAsCrumb(EntityType.EXERCISE, [Number(segment)], currentPath.replace(`exercises/${exercisesMatcher[0]}`, 'exercises'), 'exercises');
                         return;
                     }
                     break;
@@ -573,7 +573,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
             }
             const exercisesMatcher = segment?.match(/.+-exercises/);
             if (exercisesMatcher) {
-                this.addTranslationAsCrumb(currentPath.replace(exercisesMatcher[0], 'exercises'), 'exercises');
                 return;
             }
         }
@@ -713,7 +712,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     private addExerciseCrumb(exerciseId: number, currentPath: string): void {
         // Add dummy breadcrumb
         const crumb = this.addBreadcrumb('', '', false);
-
+        const isStudentPath = currentPath.startsWith('/courses');
         this.exerciseService.find(exerciseId).subscribe({
             next: (response: HttpResponse<Exercise>) => {
                 // If the response doesn't contain the needed data, remove the breadcrumb as we can not successfully link to it
@@ -721,7 +720,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
                     this.breadcrumbs.splice(this.breadcrumbs.indexOf(crumb), 1);
                 } else {
                     // If all data is there, overwrite the breadcrumb with the correct link
-                    this.setBreadcrumb(currentPath.replace('/exercises/', `/${response.body.type}-exercises/`), response.body.title, false, this.breadcrumbs.indexOf(crumb));
+                    const replaceValue = isStudentPath ? `/exercises/${response.body.type}-exercises/` : `/${response.body.type}-exercises/`;
+                    this.setBreadcrumb(currentPath.replace('/exercises/', replaceValue), response.body.title, false, this.breadcrumbs.indexOf(crumb));
                 }
             },
             // Same as if data isn't available
