@@ -139,8 +139,7 @@ export class GitDiffReportComponent implements OnInit {
         if (index !== -1) {
             this.diffInformationForPaths[index].diffReady = ready;
             this.allDiffsReady = Object.values(this.diffInformationForPaths)
-                .map((info) => info.diffReady)
-                .reduce((a, b) => a && b);
+                .every((info) => info.diffReady);
         } else {
             console.error(`Received diff ready event for unknown path: ${path}`);
         }
