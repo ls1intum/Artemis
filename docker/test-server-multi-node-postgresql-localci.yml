@@ -56,7 +56,7 @@ services:
                 condition: service_healthy
         env_file:
             - ${ARTEMIS_ENV_FILE:-./artemis/config/prod-multinode.env}
-            - ${ARTEMIS_NODE_2_ENV_FILE:-./artemis/config/node3.env}
+            - ${ARTEMIS_NODE_3_ENV_FILE:-./artemis/config/node3.env}
             - ./artemis/config/postgres.env
 
     jhipster-registry:
