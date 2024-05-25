@@ -6,7 +6,7 @@ const HEADING_CHARACTER = '#';
 const HEADING_TEXT = 'Heading';
 export class MonacoHeadingAction extends MonacoEditorAction {
     level: number;
-
+    // TODO: Can the level be passed as an argument to action s.t. the ID is unique?
     constructor(label: string, translationKey: string, level: number) {
         super(`monaco-heading-${level}.action`, label, translationKey, faHeading);
         this.level = level;

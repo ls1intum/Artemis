@@ -4,7 +4,8 @@ import { faBold } from '@fortawesome/free-solid-svg-icons';
 
 const BOLD_DELIMITER = '**';
 export class MonacoBoldAction extends MonacoEditorDelimiterAction {
+    static readonly ID = 'monaco-bold.action';
     constructor(label: string, translationKey: string) {
-        super('monaco-bold.action', label, translationKey, faBold, [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyB], BOLD_DELIMITER, BOLD_DELIMITER);
+        super(MonacoBoldAction.ID, label, translationKey, faBold, [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyB], BOLD_DELIMITER, BOLD_DELIMITER);
     }
 }

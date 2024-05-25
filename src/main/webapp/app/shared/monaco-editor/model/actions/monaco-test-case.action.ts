@@ -9,8 +9,10 @@ interface TestCaseValue {
 export class MonacoTestCaseAction extends MonacoEditorInsertAction {
     possibleValues: TestCaseValue[] = [];
 
+    static readonly ID = 'monaco-test-case.action';
+
     constructor(label: string, translationKey: string) {
-        super('monaco-test-case.action', label, translationKey, undefined, undefined, INSERT_TEST_CASE_TEXT);
+        super(MonacoTestCaseAction.ID, label, translationKey, undefined, undefined, INSERT_TEST_CASE_TEXT);
     }
 
     run(editor: monaco.editor.ICodeEditor, args?: string) {

@@ -4,8 +4,9 @@ import { faListUl } from '@fortawesome/free-solid-svg-icons';
 
 const LIST_BULLET = '- ';
 export class MonacoUnorderedListAction extends MonacoEditorAction {
+    static readonly ID = 'monaco-unordered-list.action';
     constructor(label: string, translationKey: string) {
-        super('monaco-unordered-list.action', label, translationKey, faListUl, undefined);
+        super(MonacoUnorderedListAction.ID, label, translationKey, faListUl, undefined);
     }
 
     run(editor: monaco.editor.ICodeEditor): void {

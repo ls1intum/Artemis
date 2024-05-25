@@ -2,7 +2,8 @@ import { MonacoEditorDelimiterAction } from 'app/shared/monaco-editor/model/acti
 
 const FORMULA_DELIMITER = '$$';
 export class MonacoFormulaAction extends MonacoEditorDelimiterAction {
+    static readonly ID = 'monaco-formula.action';
     constructor(label: string, translationKey: string) {
-        super('monaco-formula.action', label, translationKey, undefined, undefined, FORMULA_DELIMITER, FORMULA_DELIMITER);
+        super(MonacoFormulaAction.ID, label, translationKey, undefined, undefined, FORMULA_DELIMITER, FORMULA_DELIMITER);
     }
 }

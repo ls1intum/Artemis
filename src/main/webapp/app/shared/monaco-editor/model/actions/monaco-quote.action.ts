@@ -4,7 +4,8 @@ import { MonacoEditorInsertAction } from 'app/shared/monaco-editor/model/actions
 // TODO: Special behavior when selecting text.
 const INSERT_QUOTE_TEXT = '> Quote';
 export class MonacoQuoteAction extends MonacoEditorInsertAction {
+    static readonly ID = 'monaco-quote.action';
     constructor(label: string, translationKey: string) {
-        super('monaco-quote.action', label, translationKey, faQuoteLeft, undefined, INSERT_QUOTE_TEXT);
+        super(MonacoQuoteAction.ID, label, translationKey, faQuoteLeft, undefined, INSERT_QUOTE_TEXT);
     }
 }

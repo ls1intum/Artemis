@@ -4,7 +4,8 @@ import { faItalic } from '@fortawesome/free-solid-svg-icons';
 
 const ITALIC_DELIMITER = '*';
 export class MonacoItalicAction extends MonacoEditorDelimiterAction {
+    static readonly ID = 'monaco-italic.action';
     constructor(label: string, translationKey: string) {
-        super('monaco-italic.action', label, translationKey, faItalic, [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyI], ITALIC_DELIMITER, ITALIC_DELIMITER);
+        super(MonacoItalicAction.ID, label, translationKey, faItalic, [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyI], ITALIC_DELIMITER, ITALIC_DELIMITER);
     }
 }

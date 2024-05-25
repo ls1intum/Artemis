@@ -3,7 +3,8 @@ import { MonacoEditorDelimiterAction } from 'app/shared/monaco-editor/model/acti
 
 const CODE_DELIMITER = '`';
 export class MonacoCodeAction extends MonacoEditorDelimiterAction {
+    static readonly ID = 'monaco-code.action';
     constructor(label: string, translationKey: string) {
-        super('monaco-code.action', label, translationKey, faCode, undefined, CODE_DELIMITER, CODE_DELIMITER);
+        super(MonacoCodeAction.ID, label, translationKey, faCode, undefined, CODE_DELIMITER, CODE_DELIMITER);
     }
 }

@@ -4,8 +4,9 @@ import * as monaco from 'monaco-editor';
 
 const INSERT_URL_TEXT = '[](https://)';
 export class MonacoUrlAction extends MonacoEditorInsertAction {
+    static readonly ID = 'monaco-url.action';
     constructor(label: string, translationKey: string) {
-        super('monaco-url.action', label, translationKey, faLink, undefined, INSERT_URL_TEXT);
+        super(MonacoUrlAction.ID, label, translationKey, faLink, undefined, INSERT_URL_TEXT);
     }
 
     run(editor: monaco.editor.ICodeEditor, args?: { text: string; url: string }): void {
