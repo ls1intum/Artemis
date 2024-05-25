@@ -112,6 +112,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     isNavbarCollapsed = false;
     isSidebarCollapsed = false;
     profileSubscription?: Subscription;
+    showRefreshButton: boolean = false;
 
     // Properties to track hidden items for dropdown menu
     dropdownOpen: boolean = false;
@@ -194,7 +195,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
 
     async ngOnInit() {
         this.subscription = this.route.params.subscribe((params) => {
-            this.courseId = parseInt(params.courseId, 10);
+            this.courseId = Number(params.courseId);
         });
         this.profileSubscription = this.profileService.getProfileInfo()?.subscribe((profileInfo) => {
             this.isProduction = profileInfo?.inProduction;
@@ -507,6 +508,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
      */
     onSubRouteActivate(componentRef: any) {
         this.getPageTitle();
+        this.getShowRefreshButton();
         this.messagesRouteLoaded = this.route.snapshot.firstChild?.routeConfig?.path === 'messages';
         this.communicationRouteLoaded = this.route.snapshot.firstChild?.routeConfig?.path === 'discussion';
 
@@ -554,6 +556,11 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     getPageTitle(): void {
         const routePageTitle: string = this.route.snapshot.firstChild?.data?.pageTitle;
         this.pageTitle = routePageTitle?.substring(routePageTitle.indexOf('.') + 1);
+    }
+
+    getShowRefreshButton(): void {
+        const routeShowRefreshButton: boolean = this.route.snapshot.firstChild?.data?.showRefreshButton ?? false;
+        this.showRefreshButton = routeShowRefreshButton;
     }
 
     getHasSidebar(): boolean {

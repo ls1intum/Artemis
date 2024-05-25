@@ -35,24 +35,18 @@ import { IrisModule } from 'app/iris/iris.module';
 const routes: Routes = [
     {
         path: '',
-        pathMatch: 'prefix',
+        component: !isOrion ? CourseExerciseDetailsComponent : OrionCourseExerciseDetailsComponent,
         data: {
             authorities: [Authority.USER],
             pageTitle: 'overview.exercise',
         },
+        pathMatch: 'full',
         canActivate: [UserRouteAccessService],
         children: [
             {
                 path: '',
                 pathMatch: 'full',
-                component: !isOrion ? CourseExerciseDetailsComponent : OrionCourseExerciseDetailsComponent,
-                children: [
-                    {
-                        path: '',
-                        pathMatch: 'full',
-                        loadChildren: () => import('../discussion-section/discussion-section.module').then((m) => m.DiscussionSectionModule),
-                    },
-                ],
+                loadChildren: () => import('../discussion-section/discussion-section.module').then((m) => m.DiscussionSectionModule),
             },
             {
                 pathMatch: 'full',
