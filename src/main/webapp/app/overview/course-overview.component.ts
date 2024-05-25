@@ -64,7 +64,6 @@ import { CourseLecturesComponent } from './course-lectures/course-lectures.compo
 import { facSidebar } from '../../content/icons/icons';
 import { CourseTutorialGroupsComponent } from './course-tutorial-groups/course-tutorial-groups.component';
 import { CoursesForDashboardDTO } from 'app/course/manage/courses-for-dashboard-dto';
-import { CourseForDashboardDTO } from 'app/course/manage/course-for-dashboard-dto';
 
 interface CourseActionItem {
     title: string;
