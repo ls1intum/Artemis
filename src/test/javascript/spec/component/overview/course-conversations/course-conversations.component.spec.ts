@@ -330,6 +330,12 @@ examples.forEach((activeConversation) => {
             expect(fixture.nativeElement.querySelector('.sidebar-collapsed')).not.toBeNull();
         });
 
+        it('onConversationSelected should change active conversation', () => {
+            const setActiveConversationSpy = jest.spyOn(metisConversationService, 'setActiveConversation').mockImplementation();
+            component.onConversationSelected(activeConversation?.id ?? 1);
+            expect(setActiveConversationSpy).toHaveBeenCalled();
+        });
+
         it('getChannelSubType method should return correct SubType', () => {
             expect(component.getChannelSubType('exerciseChannels')).toEqual(ChannelSubType.EXERCISE);
             expect(component.getChannelSubType('examChannels')).toEqual(ChannelSubType.EXAM);
@@ -359,6 +365,8 @@ examples.forEach((activeConversation) => {
             expect(openChannelOverviewDialogSpy).toHaveBeenCalledWith('lectureChannels');
             component.onAccordionPlusButtonPressed('exerciseChannels');
             expect(openChannelOverviewDialogSpy).toHaveBeenCalledWith('exerciseChannels');
+            component.onAccordionPlusButtonPressed('randomInputShouldAddedToGeneralChannels');
+            expect(openChannelOverviewDialogSpy).toHaveBeenCalledWith('generalChannels');
         });
 
         it('should open create group chat dialog when button is pressed', fakeAsync(() => {
