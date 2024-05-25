@@ -199,7 +199,7 @@ spring:
     main:
         allow-bean-definition-overriding: true
         lazy-initialization: false
-        allow-circular-references: true # TODO: we should deactivate this in the future, however currently securityConfiguration has a circular dependency to itself
+        allow-circular-references: false
     task:
         execution:
             thread-name-prefix: artemis-task-
