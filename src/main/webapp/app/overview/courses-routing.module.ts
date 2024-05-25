@@ -10,6 +10,7 @@ import { CourseExamsComponent } from './course-exams/course-exams.component';
 import { CourseTutorialGroupsComponent } from './course-tutorial-groups/course-tutorial-groups.component';
 import { ExamParticipationComponent } from 'app/exam/participate/exam-participation.component';
 import { CourseTutorialGroupDetailComponent } from './tutorial-group-details/course-tutorial-group-detail/course-tutorial-group-detail.component';
+import { ExamParticipationCoverComponent } from 'app/exam/participate/exam-cover/exam-participation-cover.component';
 
 const routes: Routes = [
     {
@@ -227,17 +228,20 @@ const routes: Routes = [
                     hasSidebar: true,
                 },
                 canActivate: [UserRouteAccessService],
-            },
-            {
-                path: 'exams/:examId',
-                component: CourseExamsComponent,
-                data: {
-                    authorities: [Authority.USER],
-                    pageTitle: 'overview.exams',
-                    hasSidebar: true,
-                },
-                canActivate: [UserRouteAccessService],
-                loadChildren: () => import('../exam/participate/exam-cover/exam-participation-cover.module').then((m) => m.ArtemisExamParticipationCoverModule),
+                children: [
+                    {
+                        path: ':examId',
+                        component: ExamParticipationCoverComponent,
+                        data: {
+                            authorities: [Authority.USER],
+                            pageTitle: 'overview.exams',
+                            hasSidebar: true,
+                            showRefreshButton: true,
+                        },
+                        canActivate: [UserRouteAccessService],
+                        loadChildren: () => import('../exam/participate/exam-cover/exam-participation-cover.module').then((m) => m.ArtemisExamParticipationCoverModule),
+                    },
+                ],
             },
             {
                 path: 'exams/:examId/participation',
@@ -245,7 +249,6 @@ const routes: Routes = [
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.exams',
-                    showRefreshButton: true,
                 },
                 canActivate: [UserRouteAccessService],
                 loadChildren: () => import('../exam/participate/exam-participation.module').then((m) => m.ArtemisExamParticipationModule),
