@@ -1,10 +1,10 @@
 @if (checkoutDirectories) {
     <hr class="pt-0 pb-0 mt-1 mb-1" />
     <ul>
-        <li [style.visibility]="checkoutDirectories.exerciseCheckoutDirectory ? '' : 'hidden'">
+        <li [class.invisible]="!checkoutDirectories.exerciseCheckoutDirectory">
             <code>{{ checkoutDirectories.exerciseCheckoutDirectory }} </code>
         </li>
-        <li [style.visibility]="checkoutDirectories.solutionCheckoutDirectories?.length ? '' : 'hidden'">
+        <li [class.invisible]="!checkoutDirectories.solutionCheckoutDirectories?.length">
             @for (directory of checkoutDirectories.solutionCheckoutDirectories; track directory; let index = $index) {
                 <code> {{ directory }}</code>
                 @if (index < checkoutDirectories.solutionCheckoutDirectories!.length - 1) {
@@ -12,7 +12,7 @@
                 }
             }
         </li>
-        <li [style.visibility]="checkoutDirectories.testCheckoutDirectory ? '' : 'hidden'">
+        <li [class.invisible]="!checkoutDirectories.testCheckoutDirectory">
             <code> {{ checkoutDirectories.testCheckoutDirectory }} </code>
         </li>
         @for (auxiliaryRepository of auxiliaryRepositories; track auxiliaryRepository) {

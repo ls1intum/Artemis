@@ -23,29 +23,6 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
     checkoutDirectories?: CheckoutDirectoriesDto;
     auxiliaryRepositoryCheckoutDirectories: string[] = [];
 
-    private updateCheckoutDirectories() {
-        if (!this.programmingLanguage) {
-            return;
-        }
-
-        if (this.checkoutDirectorySubscription) {
-            this.checkoutDirectorySubscription.unsubscribe();
-        }
-
-        this.checkoutDirectorySubscription = this.programmingExerciseService
-            .getCheckoutDirectoriesForProgrammingLanguage(this.programmingLanguage)
-            .subscribe((checkoutDirectories) => {
-                this.checkoutDirectories = checkoutDirectories;
-            });
-    }
-
-    private updateCourseShortName() {
-        if (!this.programmingExercise) {
-            return;
-        }
-        this.courseShortName = getCourseFromExercise(this.programmingExercise)?.shortName;
-    }
-
     ngOnInit() {
         this.updateCourseShortName();
 
@@ -62,5 +39,26 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
 
     ngOnDestroy() {
         this.checkoutDirectorySubscription?.unsubscribe();
+    }
+
+    private updateCheckoutDirectories() {
+        if (!this.programmingLanguage) {
+            return;
+        }
+
+        this.checkoutDirectorySubscription?.unsubscribe(); // might be defined from previous method execution
+
+        this.checkoutDirectorySubscription = this.programmingExerciseService
+            .getCheckoutDirectoriesForProgrammingLanguage(this.programmingLanguage)
+            .subscribe((checkoutDirectories) => {
+                this.checkoutDirectories = checkoutDirectories;
+            });
+    }
+
+    private updateCourseShortName() {
+        if (!this.programmingExercise) {
+            return;
+        }
+        this.courseShortName = getCourseFromExercise(this.programmingExercise)?.shortName;
     }
 }

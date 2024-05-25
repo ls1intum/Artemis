@@ -6,18 +6,43 @@
             </div>
             <hr class="pt-0 pb-0 mt-1 mb-1" />
             <ul>
-                <li>
-                    <code class="text-white badge bg-primary label-preview text-lowercase"> {{ courseShortName }}{{ programmingExercise?.shortName }}-exercise </code>
-                    <jhi-help-icon text="artemisApp.programmingExercise.preview.templateRepoTooltip" />
-                </li>
-                <li>
-                    <code class="text-white badge bg-primary label-preview text-lowercase"> {{ courseShortName }}{{ programmingExercise?.shortName }}-solution </code>
-                    <jhi-help-icon text="artemisApp.programmingExercise.preview.solutionRepoTooltip" />
-                </li>
-                <li>
-                    <code class="text-white badge bg-primary label-preview text-lowercase"> {{ courseShortName }}{{ programmingExercise?.shortName }}-tests </code>
-                    <jhi-help-icon text="artemisApp.programmingExercise.preview.testRepoTooltip" />
-                </li>
+                <ng-template #baseRepositoryBadge let-helpIconText="helpIconText" let-trailingRepoSlug="trailingRepoSlug">
+                    <li>
+                        <code class="text-white badge bg-primary label-preview text-lowercase">
+                            {{ courseShortName }}{{ programmingExercise?.shortName }}{{ trailingRepoSlug }}
+                        </code>
+                        <jhi-help-icon [text]="helpIconText" />
+                    </li>
+                </ng-template>
+
+                <ng-container
+                    *ngTemplateOutlet="
+                        baseRepositoryBadge;
+                        context: {
+                            helpIconText: 'artemisApp.programmingExercise.preview.templateRepoTooltip',
+                            trailingRepoSlug: '-exercise'
+                        }
+                    "
+                />
+                <ng-container
+                    *ngTemplateOutlet="
+                        baseRepositoryBadge;
+                        context: {
+                            helpIconText: 'artemisApp.programmingExercise.preview.solutionRepoTooltip',
+                            trailingRepoSlug: '-solution'
+                        }
+                    "
+                />
+                <ng-container
+                    *ngTemplateOutlet="
+                        baseRepositoryBadge;
+                        context: {
+                            helpIconText: 'artemisApp.programmingExercise.preview.testRepoTooltip',
+                            trailingRepoSlug: '-tests'
+                        }
+                    "
+                />
+
                 @if (programmingExercise?.auxiliaryRepositories?.length) {
                     <div>
                         @for (auxiliaryRepository of programmingExercise!.auxiliaryRepositories; track auxiliaryRepository) {
