@@ -54,6 +54,8 @@ import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { CourseForDashboardDTO } from 'app/course/manage/course-for-dashboard-dto';
+import { CoursesForDashboardDTO } from 'app/course/manage/courses-for-dashboard-dto';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -109,6 +111,11 @@ const course2: Course = {
     numberOfPrerequisites: 1,
     numberOfTutorialGroups: 1,
 };
+const course1Dashboard = { course: course1 } as CourseForDashboardDTO;
+const course2Dashboard = { course: course2 } as CourseForDashboardDTO;
+const coursesInDashboard: CourseForDashboardDTO[] = [course1Dashboard, course2Dashboard];
+const courses: Course[] = [course1, course2];
+const coursesDashboard = { courses: coursesInDashboard } as CoursesForDashboardDTO;
 
 @Component({
     template: '<ng-template #controls><button id="test-button">TestButton</button></ng-template>',
@@ -649,6 +656,33 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('should initialize courses attribute when page is loaded', () => {
+        const findAllForDashboardSpy = jest.spyOn(courseService, 'findAllForDashboard');
+        findAllForDashboardSpy.mockReturnValue(of(new HttpResponse({ body: coursesDashboard, headers: new HttpHeaders() })));
+
+        component.ngOnInit();
+
+        expect(component.courses).toEqual(courses);
         expect(component.courses?.length).toBe(2);
+    });
+
+    it('should set dropdownCourses to true when clicking first time', () => {
+        component.dropdownCourses = false;
+        fixture.detectChanges();
+
+        const clickOnDropdownButton = fixture.nativeElement.querySelector('#courseDropdownButton');
+        clickOnDropdownButton.click();
+
+        expect(component.dropdownCourses).toBeTrue();
+    });
+
+    it('should set dropdownCourses to false when reclicking', () => {
+        component.dropdownCourses = false;
+        fixture.detectChanges();
+
+        const clickOnDropdownButton = fixture.nativeElement.querySelector('#courseDropdownButton');
+        clickOnDropdownButton.click();
+        clickOnDropdownButton.click();
+
+        expect(component.dropdownCourses).toBeFalse();
     });
 });
