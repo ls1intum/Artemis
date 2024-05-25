@@ -1464,14 +1464,14 @@ public class GitService {
         var courseShortName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
         var participation = (ProgrammingExerciseStudentParticipation) repo.getParticipation();
 
-        // The zip filename is either the student login, team short name or some default string.
-        var studentTeamOrDefault = Objects.requireNonNullElse(participation.getParticipantIdentifier(), "student-submission" + repo.getParticipation().getId());
-
         String repoName = FileService.sanitizeFilename(courseShortName + "-" + exercise.getTitle() + "-" + participation.getId());
         if (hideStudentName) {
             repoName += "-student-submission.git";
         }
         else {
+            // The zip filename is either the student login, team short name or some default string.
+            var studentTeamOrDefault = Objects.requireNonNullElse(participation.getParticipantIdentifier(), "student-submission" + repo.getParticipation().getId());
+
             repoName += "-" + studentTeamOrDefault;
         }
         repoName = participation.addPracticePrefixIfTestRun(repoName);
