@@ -4,6 +4,7 @@ import { IrisWebsocketService } from 'app/iris/iris-websocket.service';
 import { IrisStatusService } from 'app/iris/iris-status.service';
 import { UserService } from 'app/core/user/user.service';
 import { IrisChatService } from 'app/iris/iris-chat-base.service';
+import { AccountService } from 'app/core/auth/account.service';
 
 const IDENTIFIER = 'course-chat/';
 
@@ -23,8 +24,9 @@ export class IrisCourseChatService extends IrisChatService {
         public ws: IrisWebsocketService,
         public status: IrisStatusService,
         userService: UserService,
+        accountService: AccountService,
     ) {
-        super(http, ws, status, userService);
+        super(http, ws, status, userService, accountService);
     }
 
     public changeToCourse(courseId?: number) {

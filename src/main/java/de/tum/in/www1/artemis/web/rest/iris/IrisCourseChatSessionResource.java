@@ -2,7 +2,10 @@ package de.tum.in.www1.artemis.web.rest.iris;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +27,7 @@ import de.tum.in.www1.artemis.service.connectors.pyris.PyrisHealthIndicator;
 import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;
 import de.tum.in.www1.artemis.service.iris.IrisSessionService;
 import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 /**
  * REST controller for managing {@link IrisCourseChatSession}.
@@ -80,11 +84,16 @@ public class IrisCourseChatSessionResource {
         var sessionOptional = irisCourseChatSessionRepository.findLatestByCourseIdAndUserIdWithMessages(course.getId(), user.getId());
         if (sessionOptional.isPresent()) {
             var session = sessionOptional.get();
-            irisSessionService.checkHasAccessToIrisSession(session, user);
-            return ResponseEntity.ok(session);
+
+            // if session is of today we can continue it; otherwise create a new one
+            if (session.getCreationDate().withZoneSameInstant(ZoneId.systemDefault()).toLocalDate().isEqual(LocalDate.now(ZoneId.systemDefault()))) {
+                irisSessionService.checkHasAccessToIrisSession(session, user);
+                return ResponseEntity.ok(session);
+            }
         }
 
-        return createSessionForCourse(courseId);
+        // create a new session with an initial message from Iris
+        return createSessionForCourseInternal(courseId, true);
     }
 
     /**
@@ -118,14 +127,27 @@ public class IrisCourseChatSessionResource {
     @PostMapping("{courseId}/sessions")
     @EnforceAtLeastStudent
     public ResponseEntity<IrisCourseChatSession> createSessionForCourse(@PathVariable Long courseId) throws URISyntaxException {
+        return createSessionForCourseInternal(courseId, false);
+    }
+
+    private ResponseEntity<IrisCourseChatSession> createSessionForCourseInternal(Long courseId, boolean sendInitialMessage) throws URISyntaxException {
         var course = courseRepository.findByIdElseThrow(courseId);
 
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.CHAT, course);
         var user = userRepository.getUserWithGroupsAndAuthorities();
+        if (user.getIrisAcceptedTimestamp() == null) {
+            throw new AccessForbiddenException("The user has not accepted the Iris privacy policy yet.");
+        }
+
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
         var session = irisCourseChatSessionRepository.save(new IrisCourseChatSession(course, user));
         var uriString = "/api/iris/sessions/" + session.getId();
+
+        if (sendInitialMessage) {
+            // Run async to allow the session to be returned immediately
+            CompletableFuture.runAsync(() -> irisSessionService.requestMessageFromIris(session));
+        }
 
         return ResponseEntity.created(new URI(uriString)).body(session);
     }

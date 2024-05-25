@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.service.iris.session.IrisExerciseChatSessionServic
 import de.tum.in.www1.artemis.service.iris.session.IrisHestiaSessionService;
 import de.tum.in.www1.artemis.service.iris.session.IrisRateLimitedFeatureInterface;
 import de.tum.in.www1.artemis.service.iris.session.IrisSubFeatureInterface;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 /**
  * Service for managing Iris sessions.
@@ -64,10 +65,14 @@ public class IrisSessionService {
      *
      * @param session The session to check
      * @param user    The user to check
+     * @throws AccessForbiddenException If the user has not accepted the Iris privacy policy yet
      */
     public void checkHasAccessToIrisSession(IrisSession session, User user) {
         if (user == null) {
             user = userRepository.getUserWithGroupsAndAuthorities();
+        }
+        if (user.getIrisAcceptedTimestamp() == null) {
+            throw new AccessForbiddenException("The user has not accepted the Iris privacy policy yet.");
         }
         var wrapper = getIrisSessionSubService(session);
         wrapper.irisSubFeatureInterface.checkHasAccessTo(user, wrapper.irisSession);

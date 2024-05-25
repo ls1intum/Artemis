@@ -13,6 +13,7 @@ import { IrisTextMessageContent } from 'app/entities/iris/iris-content-type.mode
 import { IrisRateLimitInformation } from 'app/entities/iris/iris-ratelimit-info.model';
 import { IrisSession } from 'app/entities/iris/iris-session.model';
 import { UserService } from 'app/core/user/user.service';
+import { AccountService } from 'app/core/auth/account.service';
 
 /**
  * The IrisSessionService is responsible for managing Iris sessions and retrieving their associated messages.
@@ -28,6 +29,8 @@ export abstract class IrisChatService implements OnDestroy {
     rateLimitInfo?: IrisRateLimitInformation;
     rateLimitSubscription: Subscription;
 
+    hasJustAcceptedIris = false;
+
     /**
      * Creates an instance of IrisChatService.
      * @param http The IrisChatHttpService for HTTP operations related to sessions.
@@ -39,6 +42,7 @@ export abstract class IrisChatService implements OnDestroy {
         public ws: IrisWebsocketService,
         public status: IrisStatusService,
         private userService: UserService,
+        private accountService: AccountService,
     ) {
         this.rateLimitSubscription = this.status.currentRatelimitInfo().subscribe((info) => (this.rateLimitInfo = info));
     }
@@ -48,8 +52,9 @@ export abstract class IrisChatService implements OnDestroy {
     }
 
     protected start() {
-        this.getCurrentSessionOrCreate().subscribe(this.handleNewSession());
-        this.messages.subscribe(console.log);
+        if (this.accountService.userIdentity?.irisAccepted || this.hasJustAcceptedIris) {
+            this.getCurrentSessionOrCreate().subscribe(this.handleNewSession());
+        }
     }
 
     /**
@@ -136,6 +141,7 @@ export abstract class IrisChatService implements OnDestroy {
 
     public setUserAccepted(): void {
         this.userService.acceptIris().subscribe(() => {
+            this.hasJustAcceptedIris = true;
             this.initAfterAccept();
         });
     }
