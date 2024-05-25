@@ -208,7 +208,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         });
         this.getCollapseStateFromStorage();
         this.course = this.courseStorageService.getCourse(this.courseId);
-        this.getCourses();
+        this.getRecentlyAccessedCourses();
         this.isNotManagementView = !this.router.url.startsWith('/course-management');
         // Notify the course access storage service that the course has been accessed
         this.courseAccessStorageService.onCourseAccessed(this.courseId);
