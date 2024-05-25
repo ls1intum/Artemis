@@ -4,6 +4,7 @@ import getpass
 import os
 import logging
 from tqdm.auto import tqdm
+from tqdm.contrib.logging import logging_redirect_tqdm
 import requests
 import git
 from bs4 import BeautifulSoup
@@ -295,15 +296,16 @@ def main(argv):
     client_coverage_zip_bytes = download_and_extract_zip(get_coverage_artifact_for_key(artifacts, client_tests_key), headers, client_tests_key)
     server_coverage_zip_bytes = download_and_extract_zip(get_coverage_artifact_for_key(artifacts, server_tests_key), headers, server_tests_key)
 
-    client_cov = [
-        get_client_line_coverage(client_coverage_zip_bytes, file_name, change_type)
-        for file_name, change_type in tqdm(client_file_changes.items(), desc="Building client coverage", unit="files")
-    ] if client_coverage_zip_bytes is not None else None
+    with logging_redirect_tqdm():
+        client_cov = [
+            get_client_line_coverage(client_coverage_zip_bytes, file_name, change_type)
+            for file_name, change_type in tqdm(client_file_changes.items(), desc="Building client coverage", unit="files")
+        ] if client_coverage_zip_bytes is not None else None
 
-    server_cov = [
-        get_server_line_coverage(server_coverage_zip_bytes, file_name, change_type)
-        for file_name, change_type in tqdm(server_file_changes.items(), desc="Building server coverage", unit="files")
-    ] if server_coverage_zip_bytes is not None else None
+        server_cov = [
+            get_server_line_coverage(server_coverage_zip_bytes, file_name, change_type)
+            for file_name, change_type in tqdm(server_file_changes.items(), desc="Building server coverage", unit="files")
+        ] if server_coverage_zip_bytes is not None else None
 
     client_table = coverage_to_table(client_cov)
     server_table = coverage_to_table(server_cov)
