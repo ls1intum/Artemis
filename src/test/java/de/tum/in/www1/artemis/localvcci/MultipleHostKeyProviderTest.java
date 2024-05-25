@@ -8,7 +8,7 @@ import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Profile;
 
-import de.tum.in.www1.artemis.config.localvcci.ssh.MultipleHostKeyProvider;
+import de.tum.in.www1.artemis.config.icl.ssh.MultipleHostKeyProvider;
 
 @Profile(PROFILE_LOCALVC)
 class MultipleHostKeyProviderTest extends LocalVCIntegrationTest {
