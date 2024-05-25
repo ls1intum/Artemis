@@ -43,7 +43,7 @@ export class GitDiffReportComponent implements OnInit {
     allDiffsReady = false;
     nothingToDisplay = false;
     allowSplitView = true;
-    renamedFilePaths: { [before: string]: string } = {};
+    renamedFilePaths: { [before: string]: string | undefined } = {};
 
     faSpinner = faSpinner;
     faTableColumns = faTableColumns;
@@ -121,8 +121,8 @@ export class GitDiffReportComponent implements OnInit {
             .map((path) => {
                 // entries is not undefined due to the filter
                 const entries = this.entriesByPath.get(path)!;
-                const templateFileContent = this.templateFileContentByPath.get(this.renamedFilePaths[path] || path);
-                const solutionFileContent = this.solutionFileContentByPath.get(path) ?? '';
+                const templateFileContent = this.templateFileContentByPath.get(this.renamedFilePaths[path] ?? path);
+                const solutionFileContent = this.solutionFileContentByPath.get(path);
                 return { path, entries, templateFileContent, solutionFileContent, diffReady: false };
             });
         this.nothingToDisplay = this.diffInformationForPaths.length === 0;
@@ -138,8 +138,7 @@ export class GitDiffReportComponent implements OnInit {
         const index = this.diffInformationForPaths.findIndex((info) => info.path === path);
         if (index !== -1) {
             this.diffInformationForPaths[index].diffReady = ready;
-            this.allDiffsReady = Object.values(this.diffInformationForPaths)
-                .every((info) => info.diffReady);
+            this.allDiffsReady = Object.values(this.diffInformationForPaths).every((info) => info.diffReady);
         } else {
             console.error(`Received diff ready event for unknown path: ${path}`);
         }
