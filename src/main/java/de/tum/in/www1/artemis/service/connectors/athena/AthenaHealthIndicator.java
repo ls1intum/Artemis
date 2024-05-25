@@ -63,14 +63,13 @@ public class AthenaHealthIndicator implements HealthIndicator {
      */
     @Override
     public Health health() {
+        var additionalInfo = new HashMap<String, Object>();
+        additionalInfo.put(ATHENA_URL_KEY, athenaUrl);
         ConnectorHealth health;
         try {
             final var response = shortTimeoutRestTemplate.getForObject(athenaUrl + "/health", JsonNode.class);
             final var athenaStatus = response != null ? response.get(ATHENA_STATUS_KEY).asText() : null;
-            var isUp = "ok".equals(athenaStatus);
-            health = new ConnectorHealth(isUp);
-            var additionalInfo = new HashMap<String, Object>();
-            additionalInfo.put(ATHENA_URL_KEY, athenaUrl);
+
             if (athenaStatus != null) {
                 additionalInfo.put(ATHENA_ASSESSMENT_MODULE_MANAGER_KEY, athenaStatus);
                 additionalInfo.putAll(getAdditionalInfoForModules(response));
@@ -78,11 +77,10 @@ public class AthenaHealthIndicator implements HealthIndicator {
             else {
                 additionalInfo.put(ATHENA_ASSESSMENT_MODULE_MANAGER_KEY, "not available");
             }
-            health.setAdditionalInfo(additionalInfo);
+            health = new ConnectorHealth("ok".equals(athenaStatus), additionalInfo);
         }
-        catch (Exception e) {
-            health = new ConnectorHealth(e);
-            health.setAdditionalInfo(Map.of(ATHENA_URL_KEY, athenaUrl));
+        catch (Exception ex) {
+            health = new ConnectorHealth(false, additionalInfo, ex);
         }
 
         return health.asActuatorHealth();

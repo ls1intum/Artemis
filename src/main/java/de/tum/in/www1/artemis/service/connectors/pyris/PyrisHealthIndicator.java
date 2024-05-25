@@ -35,11 +35,10 @@ public class PyrisHealthIndicator implements HealthIndicator {
         try {
             PyrisHealthStatusDTO[] status = restTemplate.getForObject(irisUrl + "/api/v1/health/", PyrisHealthStatusDTO[].class);
             var isUp = status != null;
-            health = new ConnectorHealth(isUp);
+            health = new ConnectorHealth(isUp, null, null);
         }
         catch (Exception e) {
-            health = new ConnectorHealth(e);
-            health.setUp(false);
+            health = new ConnectorHealth(false, null, e);
         }
 
         return health.asActuatorHealth();

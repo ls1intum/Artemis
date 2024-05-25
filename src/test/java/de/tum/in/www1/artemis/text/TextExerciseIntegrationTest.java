@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.text;
 import static de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus.CONFIRMED;
 import static de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus.DENIED;
 import static de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus.NONE;
+import static de.tum.in.www1.artemis.util.TestResourceUtils.HalfSecond;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
@@ -472,7 +473,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
             final var withIndividualDueDate = participations.stream().filter(participation -> participation.getIndividualDueDate() != null).toList();
             assertThat(withIndividualDueDate).hasSize(1);
-            assertThat(withIndividualDueDate.get(0).getIndividualDueDate()).isEqualToIgnoringNanos(individualDueDate);
+            assertThat(withIndividualDueDate.get(0).getIndividualDueDate()).isCloseTo(individualDueDate, HalfSecond());
         }
     }
 

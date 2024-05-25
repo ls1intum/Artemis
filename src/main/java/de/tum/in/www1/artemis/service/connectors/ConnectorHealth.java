@@ -4,25 +4,14 @@ import java.util.Map;
 
 import org.springframework.boot.actuate.health.Health;
 
-public class ConnectorHealth {
-
-    private boolean isUp;
-
-    private Map<String, Object> additionalInfo;
-
-    private Exception exception;
-
-    public ConnectorHealth(boolean isUp) {
-        this.isUp = isUp;
-    }
+public record ConnectorHealth(boolean isUp, Map<String, Object> additionalInfo, Exception exception) {
 
     public ConnectorHealth(boolean isUp, Map<String, Object> additionalInfo) {
-        this.isUp = isUp;
-        this.additionalInfo = additionalInfo;
+        this(isUp, additionalInfo, null);
     }
 
     public ConnectorHealth(Exception exception) {
-        this.exception = exception;
+        this(false, null, exception);
     }
 
     /**
@@ -41,29 +30,5 @@ public class ConnectorHealth {
         }
 
         return health.build();
-    }
-
-    public boolean isUp() {
-        return isUp;
-    }
-
-    public void setUp(boolean up) {
-        isUp = up;
-    }
-
-    public Map<String, Object> getAdditionalInfo() {
-        return additionalInfo;
-    }
-
-    public void setAdditionalInfo(Map<String, Object> additionalInfo) {
-        this.additionalInfo = additionalInfo;
-    }
-
-    public Exception getException() {
-        return exception;
-    }
-
-    public void setException(Exception exception) {
-        this.exception = exception;
     }
 }
