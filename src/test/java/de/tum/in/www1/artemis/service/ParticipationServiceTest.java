@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
@@ -14,6 +15,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
@@ -117,6 +119,19 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
         ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) participation.findLatestSubmission().orElseThrow();
         assertThat(programmingSubmission.getType()).isEqualTo(SubmissionType.EXTERNAL);
         assertThat(programmingSubmission.getResults()).isNullOrEmpty(); // results are not added in the invoked method above
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetBuildJobIdsForResultsOfParticipation() throws Exception {
+        Optional<User> student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student1");
+        participationUtilService.mockCreationOfExerciseParticipation(false, null, programmingExercise, uriService, versionControlService, continuousIntegrationService);
+
+        StudentParticipation participation = participationService.createParticipationWithEmptySubmissionIfNotExisting(programmingExercise, student.orElseThrow(),
+                SubmissionType.EXTERNAL);
+
+        var resultMap = request.get("/api/participations/" + participation.getId() + "/results/build-job-ids", HttpStatus.OK, Map.class);
+        assertThat(resultMap).size().isEqualTo(0);
     }
 
     @Test
