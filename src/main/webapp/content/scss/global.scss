@@ -266,7 +266,7 @@ Generic styles
 }
 
 // Should be used with a width restriction of your choice.
-.text-truncate-4-lines {
+.popover-text-truncate-4-lines > .popover-body {
     overflow: hidden;
     text-overflow: ellipsis;
     // Show only the first four lines (limiting height with something else than lines is not possible).
