@@ -247,7 +247,7 @@ def main(argv):
         formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument(
-        "--token", help="Github Token with todo permissions(optional, will be prompted if not provided)",
+        "--token", help="GitHub Token with \"Public Repository Access\" permissions (optional, will be prompted if not provided)",
         **environ_or_required("TOKEN", required=False)
     )
     parser.add_argument(
