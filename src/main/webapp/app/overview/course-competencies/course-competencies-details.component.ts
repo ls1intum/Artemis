@@ -11,7 +11,7 @@ import { LectureUnitCompletionEvent } from 'app/overview/course-lectures/course-
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { faPencilAlt } from '@fortawesome/free-solid-svg-icons';
-import { Subscription, forkJoin } from 'rxjs';
+import { Subscription, combineLatest, forkJoin } from 'rxjs';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { Course } from 'app/entities/course.model';
@@ -29,6 +29,7 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
     competency: Competency;
     judgementOfLearning: number | undefined;
     showFireworks = false;
+    paramsSubscription: Subscription;
 
     readonly LectureUnitType = LectureUnitType;
 
@@ -48,14 +49,19 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
     ) {}
 
     ngOnInit(): void {
-        this.activatedRoute.params.subscribe((params) => {
-            this.competencyId = +params['competencyId'];
-            this.courseId = +params['courseId'];
-            if (this.competencyId && this.courseId) {
-                this.loadData();
-            }
-            this.course = this.courseStorageService.getCourse(this.courseId);
-        });
+        // example route looks like: /courses/1/competencies/10
+        const courseIdParams$ = this.activatedRoute.parent?.parent?.parent?.params;
+        const competencyIdParams$ = this.activatedRoute.params;
+        if (courseIdParams$) {
+            this.paramsSubscription = combineLatest([courseIdParams$, competencyIdParams$]).subscribe(([courseIdParams, competencyIdParams]) => {
+                this.competencyId = Number(competencyIdParams.competencyId);
+                this.courseId = Number(courseIdParams.courseId);
+                if (this.competencyId && this.courseId) {
+                    this.loadData();
+                }
+                this.course = this.courseStorageService.getCourse(this.courseId);
+            });
+        }
 
         this.dashboardFeatureToggleActiveSubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.StudentCourseAnalyticsDashboard).subscribe((active) => {
             this.dashboardFeatureActive = active;
@@ -63,9 +69,8 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
-        if (this.dashboardFeatureToggleActiveSubscription) {
-            this.dashboardFeatureToggleActiveSubscription.unsubscribe();
-        }
+        this.dashboardFeatureToggleActiveSubscription?.unsubscribe();
+        this.paramsSubscription?.unsubscribe();
     }
 
     private loadData() {
