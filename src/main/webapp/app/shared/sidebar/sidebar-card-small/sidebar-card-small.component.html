@@ -1,7 +1,7 @@
 <!-- Explicitly implemented query parameters for the messages module as a workaround, since routing in the messages module
  operates differently over the MetisConversations service, it will get adjusted in a followup PR -->
 <div
-    id="test-sidebar-card"
+    id="test-sidebar-card-small"
     class="pointer rounded-3 col-12 border-start border-5 highlight-card bg-module padding-small"
     [ngClass]="{
         'border-primary': isConversationUnread,
@@ -9,7 +9,7 @@
     }"
     [routerLink]="itemSelected ? '../' : './'"
     [queryParams]="{ conversationId: sidebarItem?.id }"
-    (click)="emitStoreLastSelectedItem(sidebarItem.id)"
+    (click)="emitStoreAndRefresh(sidebarItem.id)"
     [routerLinkActive]="'bg-selected border-selected'"
 >
     <div class="inline-block col-7">
