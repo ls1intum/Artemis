@@ -246,9 +246,7 @@ public class LocalVCService extends AbstractVersionControlService {
 
     @Override
     public ConnectorHealth health() {
-        ConnectorHealth health = new ConnectorHealth(true);
-        health.setAdditionalInfo(Map.of("url", localVCBaseUrl));
-        return health;
+        return new ConnectorHealth(true, Map.of("url", localVCBaseUrl));
     }
 
     /**

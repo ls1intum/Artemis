@@ -103,14 +103,6 @@ management:
                   - loggers
                   - prometheus
                   - threaddump
-    endpoint:
-        health:
-            show-details: when_authorized
-            roles: 'ROLE_ADMIN'
-            probes:
-                enabled: true
-        jhimetrics:
-            enabled: true
     info:
         git:
             mode: full
@@ -131,13 +123,6 @@ management:
             export:
                 enabled: true
                 step: 60
-    metrics:
-        enable:
-            http: true
-            jvm: true
-            logback: true
-            process: true
-            system: true
         distribution:
             percentiles-histogram:
                 all: true
