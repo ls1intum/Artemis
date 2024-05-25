@@ -10,11 +10,10 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import jakarta.annotation.PostConstruct;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -96,7 +95,7 @@ public class ParticipationTeamWebsocketService {
     /**
      * Initialize relevant data from hazelcast
      */
-    @PostConstruct
+    @EventListener(ApplicationReadyEvent.class)
     public void init() {
         // participationId-username -> timestamp
         this.lastTypingTracker = hazelcastInstance.getMap("lastTypingTracker");
@@ -307,11 +306,16 @@ public class ParticipationTeamWebsocketService {
      * @param sessionId id of the sessions which is unsubscribing
      */
     public void unsubscribe(String sessionId) {
-        Optional.ofNullable(destinationTracker.get(sessionId)).ifPresent(destination -> {
-            Long participationId = getParticipationIdFromDestination(destination);
-            sendOnlineTeamStudents(participationId, sessionId);
-            destinationTracker.remove(sessionId);
-        });
+        if (hazelcastInstance.getLifecycleService().isRunning()) {
+            Optional.ofNullable(destinationTracker.get(sessionId)).ifPresent(destination -> {
+                Long participationId = getParticipationIdFromDestination(destination);
+                sendOnlineTeamStudents(participationId, sessionId);
+                // check if Hazelcast is still active, before invoking this
+                if (hazelcastInstance.getLifecycleService().isRunning()) {
+                    destinationTracker.remove(sessionId);
+                }
+            });
+        }
     }
 
     /**

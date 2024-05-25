@@ -17,13 +17,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
-import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -94,7 +95,7 @@ public class SharedQueueProcessingService {
     /**
      * Initialize relevant data from hazelcast
      */
-    @PostConstruct
+    @EventListener(ApplicationReadyEvent.class)
     public void init() {
         this.buildAgentInformation = this.hazelcastInstance.getMap("buildAgentInformation");
         this.processingJobs = this.hazelcastInstance.getMap("processingJobs");
@@ -105,7 +106,9 @@ public class SharedQueueProcessingService {
 
     @PreDestroy
     public void removeListener() {
-        this.queue.removeItemListener(this.listenerId);
+        if (hazelcastInstance.getLifecycleService().isRunning()) {
+            this.queue.removeItemListener(this.listenerId);
+        }
     }
 
     /**
@@ -133,7 +136,7 @@ public class SharedQueueProcessingService {
      * This is a backup mechanism in case the build queue is not empty, no new build jobs are entering the queue and the
      * node otherwise stopped checking for build jobs in the queue.
      */
-    @Scheduled(fixedRate = 10000)
+    @Scheduled(fixedRate = 10000, initialDelay = 5000)
     public void checkForBuildJobs() {
         checkAvailabilityAndProcessNextBuild();
     }
@@ -143,7 +146,7 @@ public class SharedQueueProcessingService {
      * If so, process the next build job.
      */
     private void checkAvailabilityAndProcessNextBuild() {
-        if (noDataMemberInClusterAvailable(hazelcastInstance)) {
+        if (noDataMemberInClusterAvailable(hazelcastInstance) || queue == null) {
             log.debug("There are only lite member in the cluster. Not processing build jobs.");
             return;
         }

@@ -7,13 +7,14 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
 
-import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import com.hazelcast.collection.IQueue;
@@ -90,7 +91,7 @@ public class LocalCIResultProcessingService {
     /**
      * Initializes the result queue, build agent information map and the locks.
      */
-    @PostConstruct
+    @EventListener(ApplicationReadyEvent.class)
     public void init() {
         this.resultQueue = this.hazelcastInstance.getQueue("buildResultQueue");
         this.buildAgentInformation = this.hazelcastInstance.getMap("buildAgentInformation");
@@ -99,7 +100,9 @@ public class LocalCIResultProcessingService {
 
     @PreDestroy
     public void removeListener() {
-        this.resultQueue.removeItemListener(this.listenerId);
+        if (hazelcastInstance.getLifecycleService().isRunning()) {
+            this.resultQueue.removeItemListener(this.listenerId);
+        }
     }
 
     /**
