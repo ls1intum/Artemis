@@ -69,3 +69,7 @@ management:
     metrics:
         enable:
             all: false
+
+eureka:
+   client:
+        enabled: true

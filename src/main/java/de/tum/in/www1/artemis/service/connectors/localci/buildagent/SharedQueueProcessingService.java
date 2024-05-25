@@ -117,6 +117,10 @@ public class SharedQueueProcessingService {
      */
     @Scheduled(initialDelay = 60000, fixedRate = 60000) // 1 minute initial delay, 1 minute fixed rate
     public void updateBuildAgentInformation() {
+        if (noDataMemberInClusterAvailable(hazelcastInstance)) {
+            log.debug("There are only lite member in the cluster. Not updating build agent information.");
+            return;
+        }
         // Remove build agent information of offline nodes
         removeOfflineNodes();
 
@@ -142,7 +146,7 @@ public class SharedQueueProcessingService {
      * If so, process the next build job.
      */
     private void checkAvailabilityAndProcessNextBuild() {
-        if (hazelcastInstance.getCluster().getMembers().stream().allMatch(Member::isLiteMember)) {
+        if (noDataMemberInClusterAvailable(hazelcastInstance)) {
             log.debug("There are only lite member in the cluster. Not processing build jobs.");
             return;
         }
@@ -183,6 +187,10 @@ public class SharedQueueProcessingService {
         finally {
             instanceLock.unlock();
         }
+    }
+
+    private static boolean noDataMemberInClusterAvailable(HazelcastInstance hazelcastInstance) {
+        return hazelcastInstance.getCluster().getMembers().stream().allMatch(Member::isLiteMember);
     }
 
     private BuildJobQueueItem addToProcessingJobs() {
