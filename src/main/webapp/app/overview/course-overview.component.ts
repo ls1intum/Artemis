@@ -243,6 +243,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         }
     }
 
+    /** Listen click event whether on outside of the menu or one of the items in the menu to close the dropdownCourses menu */
     @HostListener('document: click', ['$event'])
     onClickCloseDropdownCourses() {
         if (this.dropdownCourses) {
@@ -295,6 +296,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         }
     }
 
+    /** initialize courses attribute by retreiving recently accessed courses from the server */
     getCourses() {
         this.courseService.findAllForDashboard().subscribe({
             next: (res: HttpResponse<CoursesForDashboardDTO>) => {
@@ -313,6 +315,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         });
     }
 
+    /** Navigate to a new Course */
     switchCourse(course: Course) {
         this.router.navigate(['courses', course.id]).then(() => {
             window.location.reload();
