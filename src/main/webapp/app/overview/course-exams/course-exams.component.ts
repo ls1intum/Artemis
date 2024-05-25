@@ -26,7 +26,6 @@ const DEFAULT_UNIT_GROUPS: AccordionGroups = {
 export class CourseExamsComponent implements OnInit, OnDestroy {
     courseId: number;
     public course?: Course;
-    private paramSubscription?: Subscription;
     private parentParamSubscription?: Subscription;
     private courseUpdatesSubscription?: Subscription;
     private studentExamTestExamUpdateSubscription?: Subscription;
@@ -63,7 +62,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         this.isCollapsed = this.courseOverviewService.getSidebarCollapseStateFromStorage('exam');
         this.parentParamSubscription = this.route.parent!.params.subscribe((params) => {
-            this.courseId = parseInt(params['courseId'], 10);
+            this.courseId = Number(params.courseId);
         });
 
         this.course = this.courseStorageService.getCourse(this.courseId);
@@ -88,19 +87,21 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
             this.prepareSidebarData();
         }
 
+        // If no exam is selected navigate to the last selected or upcoming Exam
+        this.navigateToExam();
+    }
+
+    navigateToExam() {
         const upcomingExam = this.courseOverviewService.getUpcomingExam([...this.realExamsOfCourse, ...this.testExamsOfCourse]);
         const lastSelectedExam = this.getLastSelectedExam();
-        this.paramSubscription = this.route.params.subscribe((params) => {
-            const examId = parseInt(params.examId, 10);
-            //If no exam is selected, navigate to the lastSelectedExam or upcoming exam
-            if (!examId && lastSelectedExam) {
-                this.router.navigate([lastSelectedExam], { relativeTo: this.route, replaceUrl: true });
-            } else if (!examId && upcomingExam) {
-                this.router.navigate([upcomingExam.id], { relativeTo: this.route, replaceUrl: true });
-            } else {
-                this.examSelected = examId ? true : false;
-            }
-        });
+        const examId = this.route.firstChild?.snapshot.params.examId;
+        if (!examId && lastSelectedExam) {
+            this.router.navigate([lastSelectedExam], { relativeTo: this.route, replaceUrl: true });
+        } else if (!examId && upcomingExam) {
+            this.router.navigate([upcomingExam.id], { relativeTo: this.route, replaceUrl: true });
+        } else {
+            this.examSelected = examId ? true : false;
+        }
     }
 
     private updateExams(): void {
@@ -124,9 +125,6 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
         }
         if (this.courseUpdatesSubscription) {
             this.courseUpdatesSubscription.unsubscribe();
-        }
-        if (this.paramSubscription) {
-            this.paramSubscription.unsubscribe();
         }
         this.studentExamTestExamUpdateSubscription?.unsubscribe();
     }
@@ -229,5 +227,12 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
 
         this.accordionExamGroups = this.groupExamsByRealOrTest(this.sortedRealExams, this.sortedTestExams);
         this.updateSidebarData();
+    }
+
+    onSubRouteDeactivate() {
+        if (this.route.firstChild) {
+            return;
+        }
+        this.navigateToExam();
     }
 }

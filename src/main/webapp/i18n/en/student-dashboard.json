@@ -204,6 +204,9 @@
             "tutorialGroups": {
                 "selectTutorialGroup": "Please select a Tutorial Group."
             },
+            "exams": {
+                "selectExam": "Please select an Exam."
+            },
             "lectureList": {
                 "lectureGroupHeader": "(Lectures: {{ total }})",
                 "totalLectures": "Total lectures:",

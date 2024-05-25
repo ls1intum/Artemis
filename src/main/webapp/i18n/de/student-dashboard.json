@@ -202,6 +202,9 @@
             "tutorialGroups": {
                 "selectTutorialGroup": "Bitte wähle eine Übungsgruppe aus."
             },
+            "exams": {
+                "selectExam": "Bitte wähle eine Klausur aus."
+            },
             "lectureList": {
                 "lectureGroupHeader": "(Vorlesungen: {{ total }})",
                 "totalLectures": "Vorlesungen insgesamt:",
