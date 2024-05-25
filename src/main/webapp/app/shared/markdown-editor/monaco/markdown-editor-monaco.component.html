@@ -4,7 +4,7 @@
         <ng-container ngbNavItem="editor_edit">
             <a ngbNavLink class="btn-sm text-normal px-2 py-0 m-0"><span jhiTranslate="entity.action.edit"></span></a>
             <ng-template ngbNavContent>
-                <jhi-monaco-editor [shrinkToFit]="false" [stickyScroll]="false" (textChanged)="onTextChanged($event)" />
+                <jhi-monaco-editor [shrinkToFit]="false" [stickyScroll]="false" (textChanged)="onTextChanged($event)" (drop)="onFileDrop($event)" />
                 @if (enableFileUpload) {
                     <input
                         [id]="'file-upload ' + uniqueMarkdownEditorId"

@@ -116,6 +116,13 @@ export class MarkdownEditorMonacoComponent implements AfterViewInit, OnDestroy {
         }
     }
 
+    onFileDrop(event: DragEvent): void {
+        event.preventDefault();
+        if (event.dataTransfer?.files.length) {
+            this.embedFiles(Array.from(event.dataTransfer.files));
+        }
+    }
+
     embedFiles(files: File[]): void {
         files.forEach((file) => {
             this.fileUploaderService.uploadMarkdownFile(file).then(
@@ -130,7 +137,6 @@ export class MarkdownEditorMonacoComponent implements AfterViewInit, OnDestroy {
                         // For PDFs, just link to the file
                         actionData = { id: 'monaco-url.action', payload: { text: file.name, url: response.path } };
                     }
-                    alert(JSON.stringify(actionData));
                     this.triggerAction(actionData.id, actionData.payload);
                 },
                 (error) => {
