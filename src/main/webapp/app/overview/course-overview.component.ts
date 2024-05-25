@@ -297,7 +297,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     }
 
     /** initialize courses attribute by retreiving recently accessed courses from the server */
-    getCourses() {
+    getRecentlyAccessedCourses() {
         this.courseService.findAllForDashboard().subscribe({
             next: (res: HttpResponse<CoursesForDashboardDTO>) => {
                 if (res.body) {
