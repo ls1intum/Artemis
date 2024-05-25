@@ -31,6 +31,7 @@ import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.TestCaseDTO
 import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.TestCaseDetailMessageDTO;
 import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.TestResultsDTO;
 import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.TestSuiteDTO;
+import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisIssue;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 import de.tum.in.www1.artemis.util.TestConstants;
 
@@ -311,10 +312,7 @@ public class ProgrammingExerciseFactory {
      * @return The generated static code analysis report DTO.
      */
     private static StaticCodeAnalysisReportDTO generateStaticCodeAnalysisReport(StaticCodeAnalysisTool tool) {
-        var report = new StaticCodeAnalysisReportDTO();
-        report.setTool(tool);
-        report.setIssues(List.of(generateStaticCodeAnalysisIssue(tool)));
-        return report;
+        return new StaticCodeAnalysisReportDTO(tool, List.of(generateStaticCodeAnalysisIssue(tool)));
     }
 
     /**
@@ -323,7 +321,7 @@ public class ProgrammingExerciseFactory {
      * @param tool The static code analysis tool used to set the category of the issue.
      * @return The created static code analysis issue.
      */
-    private static StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue generateStaticCodeAnalysisIssue(StaticCodeAnalysisTool tool) {
+    private static StaticCodeAnalysisIssue generateStaticCodeAnalysisIssue(StaticCodeAnalysisTool tool) {
         // Use a category which is not invisible in the default configuration
         String category = switch (tool) {
             case SPOTBUGS -> "BAD_PRACTICE";
@@ -334,18 +332,17 @@ public class ProgrammingExerciseFactory {
             case GCC -> "Memory";
         };
 
-        var issue = new StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue();
-        issue.setFilePath(Constants.STUDENT_WORKING_DIRECTORY + "/www/packagename/Class1.java");
-        issue.setStartLine(1);
-        issue.setEndLine(2);
-        issue.setStartColumn(1);
-        issue.setEndColumn(10);
-        issue.setRule("Rule");
-        issue.setCategory(category);
-        issue.setMessage("Message");
-        issue.setPriority("Priority");
-
-        return issue;
+        return new StaticCodeAnalysisIssue(Constants.STUDENT_WORKING_DIRECTORY + "/www/packagename/Class1.java", // filePath
+                1, // startLine
+                2, // endLine
+                1, // startColumn
+                10, // endColumn
+                "Rule", // rule
+                category, // category
+                "Message", // message
+                "Priority", // priority
+                null // penalty - assuming there is no penalty or it's not applicable here
+        );
     }
 
     /**

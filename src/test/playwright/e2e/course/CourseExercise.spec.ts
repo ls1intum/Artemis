@@ -26,9 +26,10 @@ test.describe('Course exercise', () => {
 
         test('Filters exercises based on title', async ({ page, courseOverview }) => {
             await page.goto(`/courses/${course.id}/exercises`);
-            await expect(courseOverview.getExercise(exercise1.title!)).toBeVisible();
-            await expect(courseOverview.getExercise(exercise2.title!)).toBeVisible();
-            await expect(courseOverview.getExercise(exercise3.title!)).toBeVisible();
+            // All quiz exercises should be hidden initially, as the default accordion status is collapsed when there is no due date.
+            await expect(courseOverview.getExercise(exercise1.title!)).toBeHidden();
+            await expect(courseOverview.getExercise(exercise2.title!)).toBeHidden();
+            await expect(courseOverview.getExercise(exercise3.title!)).toBeHidden();
             await courseOverview.search('Course Exercise Quiz');
             await expect(courseOverview.getExercise(exercise1.title!)).toBeVisible();
             await expect(courseOverview.getExercise(exercise2.title!)).toBeVisible();

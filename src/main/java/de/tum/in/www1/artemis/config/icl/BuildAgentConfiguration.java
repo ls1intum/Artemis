@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.config.localvcci;
+package de.tum.in.www1.artemis.config.icl;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
 
@@ -10,8 +10,6 @@ import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-
-import javax.xml.stream.XMLInputFactory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,11 +36,11 @@ import de.tum.in.www1.artemis.exception.LocalCIException;
  */
 @Configuration
 @Profile(PROFILE_BUILDAGENT)
-public class LocalCIConfiguration {
+public class BuildAgentConfiguration {
 
     private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
 
-    private static final Logger log = LoggerFactory.getLogger(LocalCIConfiguration.class);
+    private static final Logger log = LoggerFactory.getLogger(BuildAgentConfiguration.class);
 
     @Value("${artemis.continuous-integration.docker-connection-uri}")
     String dockerConnectionUri;
@@ -53,7 +51,7 @@ public class LocalCIConfiguration {
     @Value("${artemis.continuous-integration.specify-concurrent-builds:false}")
     boolean specifyConcurrentBuilds;
 
-    public LocalCIConfiguration(ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
+    public BuildAgentConfiguration(ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
     }
 
@@ -143,17 +141,6 @@ public class LocalCIConfiguration {
         return new ThreadPoolExecutor(threadPoolSize, threadPoolSize, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(1), customThreadFactory, customRejectedExecutionHandler);
     }
 
-    /**
-     * Creates an XMLInputFactory that is used to parse the test results during execution of the local CI build jobs.
-     *
-     * @return The XMLInputFactory bean.
-     */
-    @Bean
-    public XMLInputFactory localCIXMLInputFactory() {
-        return XMLInputFactory.newInstance();
-    }
-
-    // TODO: the Artemis server should start even if docker is not running. Also, pulling the image should be done after the start has finished or only on demand
     /**
      * Creates a Docker client that is used to communicate with the Docker daemon.
      *
