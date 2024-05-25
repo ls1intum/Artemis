@@ -60,6 +60,7 @@ import { ProgrammingExerciseOverviewPage } from './pageobjects/exercises/program
 import { RepositoryPage } from './pageobjects/exercises/programming/RepositoryPage';
 import { ExamGradingPage } from './pageobjects/exam/ExamGradingPage';
 import { ExamScoresPage } from './pageobjects/exam/ExamScoresPage';
+import { ProgrammingExerciseParticipationsPage } from './pageobjects/exercises/programming/ProgrammingExerciseParticipationsPage';
 import { ExamResultsPage } from './pageobjects/exam/ExamResultsPage';
 import { ExerciseTeamsPage } from './pageobjects/exercises/ExerciseTeamsPage';
 
@@ -113,6 +114,7 @@ export type ArtemisPageObjects = {
     programmingExerciseEditor: OnlineEditorPage;
     programmingExerciseFeedback: ProgrammingExerciseFeedbackPage;
     programmingExerciseOverview: ProgrammingExerciseOverviewPage;
+    programmingExerciseParticipations: ProgrammingExerciseParticipationsPage;
     programmingExerciseRepository: RepositoryPage;
     programmingExercisesScaConfig: CodeAnalysisGradingPage;
     programmingExerciseScaFeedback: ScaFeedbackModal;
@@ -286,6 +288,9 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     },
     programmingExerciseOverview: async ({ page, courseList, courseOverview }, use) => {
         await use(new ProgrammingExerciseOverviewPage(page, courseList, courseOverview));
+    },
+    programmingExerciseParticipations: async ({ page }, use) => {
+        await use(new ProgrammingExerciseParticipationsPage(page));
     },
     programmingExerciseRepository: async ({ page }, use) => {
         await use(new RepositoryPage(page));
