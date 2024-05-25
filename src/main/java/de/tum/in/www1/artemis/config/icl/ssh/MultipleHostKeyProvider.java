@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.config.localvcci.ssh;
+package de.tum.in.www1.artemis.config.icl.ssh;
 
 import java.io.IOException;
 import java.io.OutputStream;
