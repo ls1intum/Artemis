@@ -243,7 +243,7 @@ def coverage_to_table(covs):
 
 def main(argv):
     parser = argparse.ArgumentParser(
-        description="Generate code coverage report for changed files in a Github Workflow build.",
+        description="Generate code coverage report for changed files in a GitHub Workflow build.",
         formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument(
