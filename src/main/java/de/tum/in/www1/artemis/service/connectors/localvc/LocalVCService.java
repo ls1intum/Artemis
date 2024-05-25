@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.localvc;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALVC;
+
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
@@ -48,7 +50,7 @@ import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlRepositoryPer
  * Implementation of VersionControlService for the local VC server.
  */
 @Service
-@Profile("localvc")
+@Profile(PROFILE_LOCALVC)
 public class LocalVCService extends AbstractVersionControlService {
 
     private static final Logger log = LoggerFactory.getLogger(LocalVCService.class);
@@ -56,8 +58,12 @@ public class LocalVCService extends AbstractVersionControlService {
     @Value("${artemis.version-control.url}")
     private URL localVCBaseUrl;
 
+    private static String localVCBasePath;
+
     @Value("${artemis.version-control.local-vcs-repo-path}")
-    private String localVCBasePath;
+    public void setLocalVCBasePath(String localVCBasePath) {
+        LocalVCService.localVCBasePath = localVCBasePath;
+    }
 
     public LocalVCService(UriService uriService, GitService gitService, ProgrammingExerciseStudentParticipationRepository studentParticipationRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository) {
@@ -168,8 +174,19 @@ public class LocalVCService extends AbstractVersionControlService {
      * @return the name of the default branch, e.g. 'main'
      * @throws LocalVCInternalException if the default branch cannot be determined
      */
-    public String getDefaultBranchOfRepository(LocalVCRepositoryUri localVCRepositoryUri) {
+    public static String getDefaultBranchOfRepository(LocalVCRepositoryUri localVCRepositoryUri) {
         String localRepositoryPath = localVCRepositoryUri.getLocalRepositoryPath(localVCBasePath).toString();
+        return getDefaultBranchOfRepository(localRepositoryPath);
+    }
+
+    /**
+     * Get the default branch of the repository given the Local VC repository URI
+     *
+     * @param localRepositoryPath The path of the local repository to get the default branch for.
+     * @return the name of the default branch, e.g. 'main'
+     * @throws LocalVCInternalException if the default branch cannot be determined
+     */
+    public static String getDefaultBranchOfRepository(String localRepositoryPath) {
         Map<String, Ref> remoteRepositoryRefs;
         try {
             remoteRepositoryRefs = Git.lsRemoteRepository().setRemote(localRepositoryPath).callAsMap();
