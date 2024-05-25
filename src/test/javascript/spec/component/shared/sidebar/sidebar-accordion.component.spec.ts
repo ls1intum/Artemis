@@ -36,12 +36,6 @@ describe('SidebarAccordionComponent', () => {
     });
 
     beforeEach(() => {
-        TestBed.overrideComponent(SidebarAccordionComponent, {
-            set: {
-                providers: [],
-            },
-        });
-
         fixture = TestBed.createComponent(SidebarAccordionComponent);
         component = fixture.componentInstance;
         debugElement = fixture.debugElement;
