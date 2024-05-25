@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.config;
 
-import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
@@ -22,7 +21,7 @@ import org.springframework.context.annotation.Profile;
  * It provides the RestTemplateTransportClientFactories and RestTemplateDiscoveryClientOptionalArgs that would normally not be instantiated
  * when Jersey is found by Eureka.
  */
-@Profile({ PROFILE_CORE, PROFILE_BUILDAGENT })
+@Profile(PROFILE_CORE)
 @Configuration
 public class EurekaClientRestTemplateConfiguration {
 

@@ -1,7 +1,6 @@
-package de.tum.in.www1.artemis.config.localvcci.ssh.service;
+package de.tum.in.www1.artemis.config.icl.ssh.service;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALVC;
-import static de.tum.in.www1.artemis.config.localvcci.ssh.SshConstants.USER_KEY;
 
 import java.io.IOException;
 import java.net.URL;
@@ -19,6 +18,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.config.icl.ssh.SshConstants;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCForbiddenException;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
@@ -71,7 +71,7 @@ public class SshGitLocationResolverService implements GitLocationResolver {
 
         // git-upload-pack means fetch (read operation), git-receive-pack means push (write operation)
         final var repositoryAction = gitCommand.equals("git-upload-pack") ? RepositoryActionType.READ : gitCommand.equals("git-receive-pack") ? RepositoryActionType.WRITE : null;
-        final var user = session.getAttribute(USER_KEY);
+        final var user = session.getAttribute(SshConstants.USER_KEY);
         try {
             localVCServletService.authorizeUser(repositoryTypeOrUserName, user, exercise, repositoryAction, localVCRepositoryUri.isPracticeRepository());
         }

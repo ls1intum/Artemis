@@ -56,3 +56,16 @@ spring:
 server:
     port: 8080
     url: https://artemislocal.cit.tum.de
+
+# at the moment metrics are disabled for build agents
+management:
+    endpoint:
+        health:
+            show-details: never
+        probes:
+            enabled: false
+    jhimetrics:
+        enabled: false
+    metrics:
+        enable:
+            all: false

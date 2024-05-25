@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.config.localvcci.service;
+package de.tum.in.www1.artemis.config.icl;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALVC;
 

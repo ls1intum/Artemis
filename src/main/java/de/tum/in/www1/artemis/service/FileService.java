@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
-import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import java.io.BufferedReader;
@@ -69,7 +68,7 @@ import de.tum.in.www1.artemis.service.util.CommonsMultipartFile;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
-@Profile({ PROFILE_CORE, PROFILE_BUILDAGENT })
+@Profile(PROFILE_BUILDAGENT)
 @Service
 public class FileService implements DisposableBean {
 

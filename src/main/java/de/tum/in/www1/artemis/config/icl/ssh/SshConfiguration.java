@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.config.localvcci.ssh;
+package de.tum.in.www1.artemis.config.icl.ssh;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALVC;
 
@@ -18,9 +18,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
-import de.tum.in.www1.artemis.config.localvcci.ssh.service.GitPublickeyAuthenticatorService;
-import de.tum.in.www1.artemis.config.localvcci.ssh.service.SshGitCommandFactoryService;
-import de.tum.in.www1.artemis.config.localvcci.ssh.service.SshGitLocationResolverService;
+import de.tum.in.www1.artemis.config.icl.ssh.service.GitPublickeyAuthenticatorService;
+import de.tum.in.www1.artemis.config.icl.ssh.service.SshGitCommandFactoryService;
+import de.tum.in.www1.artemis.config.icl.ssh.service.SshGitLocationResolverService;
 
 @Profile(PROFILE_LOCALVC)
 @Configuration

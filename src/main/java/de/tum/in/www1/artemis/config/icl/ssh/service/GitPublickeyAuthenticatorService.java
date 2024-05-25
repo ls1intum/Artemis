@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.config.localvcci.ssh.service;
+package de.tum.in.www1.artemis.config.icl.ssh.service;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALVC;
 
@@ -11,8 +11,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.config.localvcci.ssh.HashUtils;
-import de.tum.in.www1.artemis.config.localvcci.ssh.SshConstants;
+import de.tum.in.www1.artemis.config.icl.ssh.HashUtils;
+import de.tum.in.www1.artemis.config.icl.ssh.SshConstants;
 import de.tum.in.www1.artemis.repository.UserRepository;
 
 @Profile(PROFILE_LOCALVC)

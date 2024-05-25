@@ -37,8 +37,8 @@ import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.exception.LocalCIException;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobQueueItem;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildResult;
 import de.tum.in.www1.artemis.service.connectors.localci.scaparser.ReportParser;
 import de.tum.in.www1.artemis.service.connectors.localci.scaparser.exception.UnsupportedToolException;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUri;
@@ -60,18 +60,18 @@ public class BuildJobExecutionService {
 
     private final BuildJobGitService buildJobGitService;
 
-    private final LocalCIDockerService localCIDockerService;
+    private final BuildAgentDockerService buildAgentDockerService;
 
     private final BuildLogsMap buildLogsMap;
 
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
 
-    public BuildJobExecutionService(BuildJobContainerService buildJobContainerService, BuildJobGitService buildJobGitService, LocalCIDockerService localCIDockerService,
+    public BuildJobExecutionService(BuildJobContainerService buildJobContainerService, BuildJobGitService buildJobGitService, BuildAgentDockerService buildAgentDockerService,
             BuildLogsMap buildLogsMap) {
         this.buildJobContainerService = buildJobContainerService;
         this.buildJobGitService = buildJobGitService;
-        this.localCIDockerService = localCIDockerService;
+        this.buildAgentDockerService = buildAgentDockerService;
         this.buildLogsMap = buildLogsMap;
     }
 
@@ -91,10 +91,10 @@ public class BuildJobExecutionService {
      *
      * @param buildJob      The build job object containing details necessary for executing the build.
      * @param containerName The name of the Docker container that will be prepared and used for the build job.
-     * @return The result of the build job as a {@link LocalCIBuildResult}.
+     * @return The result of the build job as a {@link BuildResult}.
      * @throws LocalCIException If any error occurs during the preparation or execution of the build job.
      */
-    public LocalCIBuildResult runBuildJob(LocalCIBuildJobQueueItem buildJob, String containerName) {
+    public BuildResult runBuildJob(BuildJobQueueItem buildJob, String containerName) {
 
         String msg = "~~~~~~~~~~~~~~~~~~~~ Start Build Job " + buildJob.id() + " ~~~~~~~~~~~~~~~~~~~~";
         log.debug(msg);
@@ -102,7 +102,7 @@ public class BuildJobExecutionService {
 
         // Check if the Docker image is available. If not, pull it.
         try {
-            localCIDockerService.pullDockerImage(buildJob, buildLogsMap);
+            buildAgentDockerService.pullDockerImage(buildJob, buildLogsMap);
         }
         catch (LocalCIException e) {
             msg = "Could not pull Docker image " + buildJob.buildConfig().dockerImage();
@@ -219,11 +219,11 @@ public class BuildJobExecutionService {
      * @param auxiliaryRepositoriesPaths Array of paths for the auxiliary repositories.
      * @param assignmentRepoCommitHash   Commit hash for the assignment repository used to fetch the specific state of the repository.
      * @param testRepoCommitHash         Commit hash for the test repository used similarly.
-     * @return A {@link LocalCIBuildResult} object representing the outcome of the build job.
+     * @return A {@link BuildResult} object representing the outcome of the build job.
      * @throws LocalCIException If errors occur during the build process or if the test results cannot be parsed successfully.
      */
     // TODO: This method has too many params, we should reduce the number an rather pass an object (record)
-    private LocalCIBuildResult runScriptAndParseResults(LocalCIBuildJobQueueItem buildJob, String containerName, String containerId, VcsRepositoryUri assignmentRepositoryUri,
+    private BuildResult runScriptAndParseResults(BuildJobQueueItem buildJob, String containerName, String containerId, VcsRepositoryUri assignmentRepositoryUri,
             VcsRepositoryUri testRepositoryUri, VcsRepositoryUri solutionRepositoryUri, VcsRepositoryUri[] auxiliaryRepositoriesUris, Path assignmentRepositoryPath,
             Path testsRepositoryPath, Path solutionRepositoryPath, Path[] auxiliaryRepositoriesPaths, @Nullable String assignmentRepoCommitHash,
             @Nullable String testRepoCommitHash) {
@@ -295,7 +295,7 @@ public class BuildJobExecutionService {
             }
         }
 
-        LocalCIBuildResult buildResult;
+        BuildResult buildResult;
         try {
             buildResult = parseTestResults(testResultsTarInputStream, buildJob.buildConfig().branch(), assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate,
                     buildJob.id());
@@ -317,11 +317,11 @@ public class BuildJobExecutionService {
 
     // --- Helper methods ----
 
-    private LocalCIBuildResult parseTestResults(TarArchiveInputStream testResultsTarInputStream, String assignmentRepoBranchName, String assignmentRepoCommitHash,
+    private BuildResult parseTestResults(TarArchiveInputStream testResultsTarInputStream, String assignmentRepoBranchName, String assignmentRepoCommitHash,
             String testsRepoCommitHash, ZonedDateTime buildCompletedDate, String buildJobId) throws IOException {
 
-        List<LocalCIBuildResult.LocalCITestJobDTO> failedTests = new ArrayList<>();
-        List<LocalCIBuildResult.LocalCITestJobDTO> successfulTests = new ArrayList<>();
+        List<BuildResult.LocalCITestJobDTO> failedTests = new ArrayList<>();
+        List<BuildResult.LocalCITestJobDTO> successfulTests = new ArrayList<>();
         List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports = new ArrayList<>();
 
         TarArchiveEntry tarEntry;
@@ -410,22 +410,22 @@ public class BuildJobExecutionService {
     }
 
     /**
-     * Constructs a {@link LocalCIBuildResult} that indicates a failed build from the given parameters. The lists of failed and successful tests are both empty which will be
+     * Constructs a {@link BuildResult} that indicates a failed build from the given parameters. The lists of failed and successful tests are both empty which will be
      * interpreted as a failed build by Artemis.
      *
      * @param assignmentRepoBranchName The name of the branch of the assignment repository that was checked out for the build.
      * @param assignmentRepoCommitHash The commit hash of the assignment repository that was checked out for the build.
      * @param testsRepoCommitHash      The commit hash of the tests repository that was checked out for the build.
      * @param buildRunDate             The date when the build was completed.
-     * @return a {@link LocalCIBuildResult} that indicates a failed build
+     * @return a {@link BuildResult} that indicates a failed build
      */
-    private LocalCIBuildResult constructFailedBuildResult(String assignmentRepoBranchName, @Nullable String assignmentRepoCommitHash, @Nullable String testsRepoCommitHash,
+    private BuildResult constructFailedBuildResult(String assignmentRepoBranchName, @Nullable String assignmentRepoCommitHash, @Nullable String testsRepoCommitHash,
             ZonedDateTime buildRunDate) {
         return constructBuildResult(List.of(), List.of(), assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, false, buildRunDate, List.of());
     }
 
     /**
-     * Constructs a {@link LocalCIBuildResult} from the given parameters.
+     * Constructs a {@link BuildResult} from the given parameters.
      *
      * @param failedTests               The list of failed tests.
      * @param successfulTests           The list of successful tests.
@@ -435,15 +435,14 @@ public class BuildJobExecutionService {
      * @param isBuildSuccessful         Whether the build was successful or not.
      * @param buildRunDate              The date when the build was completed.
      * @param staticCodeAnalysisReports The static code analysis reports
-     * @return a {@link LocalCIBuildResult}
+     * @return a {@link BuildResult}
      */
-    private LocalCIBuildResult constructBuildResult(List<LocalCIBuildResult.LocalCITestJobDTO> failedTests, List<LocalCIBuildResult.LocalCITestJobDTO> successfulTests,
-            String assignmentRepoBranchName, String assignmentRepoCommitHash, String testsRepoCommitHash, boolean isBuildSuccessful, ZonedDateTime buildRunDate,
+    private BuildResult constructBuildResult(List<BuildResult.LocalCITestJobDTO> failedTests, List<BuildResult.LocalCITestJobDTO> successfulTests, String assignmentRepoBranchName,
+            String assignmentRepoCommitHash, String testsRepoCommitHash, boolean isBuildSuccessful, ZonedDateTime buildRunDate,
             List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports) {
-        LocalCIBuildResult.LocalCIJobDTO job = new LocalCIBuildResult.LocalCIJobDTO(failedTests, successfulTests);
+        BuildResult.LocalCIJobDTO job = new BuildResult.LocalCIJobDTO(failedTests, successfulTests);
 
-        return new LocalCIBuildResult(assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, isBuildSuccessful, buildRunDate, List.of(job),
-                staticCodeAnalysisReports);
+        return new BuildResult(assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, isBuildSuccessful, buildRunDate, List.of(job), staticCodeAnalysisReports);
     }
 
     private Path cloneRepository(VcsRepositoryUri repositoryUri, @Nullable String commitHash, boolean checkout, String buildJobId) {
