@@ -258,7 +258,7 @@ def main(argv):
         "--base-branch-name", default="origin/develop", help="Name of the Git base branch (default: origin/develop)"
     )
     parser.add_argument(
-        "--build-id", default=None, help="Build ID of the Github run id"
+        "--build-id", default=None, help="Build ID of the GitHub run id"
     )
     parser.add_argument(
         "--verbose", action="store_true", help="Enable verbose logging"
