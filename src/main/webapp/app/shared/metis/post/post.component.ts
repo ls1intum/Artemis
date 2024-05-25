@@ -42,6 +42,9 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     faBullhorn = faBullhorn;
     faCheckSquare = faCheckSquare;
 
+    // Hover state
+    isHovered: boolean = false;
+
     constructor(
         private metisService: MetisService,
         protected changeDetector: ChangeDetectorRef,

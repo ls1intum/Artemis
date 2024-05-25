@@ -1,0 +1,17 @@
+<div class="d-flex align-items-center container bs-body-bg">
+    <div class="col-auto p-0">
+        <button class="reaction-button" (click)="addOrRemoveReaction(thumbsUpId)">
+            <jhi-emoji [emoji]="thumbsUpId" />
+        </button>
+    </div>
+    <div class="col-auto p-0">
+        <button class="reaction-button" (click)="addOrRemoveReaction(checkmarkId)">
+            <jhi-emoji [emoji]="checkmarkId" />
+        </button>
+    </div>
+    <div class="col-auto p-0">
+        <button class="reaction-button" (click)="addOrRemoveReaction(recycleId)">
+            <jhi-emoji [emoji]="recycleId" />
+        </button>
+    </div>
+</div>

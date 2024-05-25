@@ -1,4 +1,4 @@
-<div class="d-flex align-items-center">
+<div class="d-flex justify-content-between align-items-center" (mouseenter)="isHovered = true" (mouseleave)="isHovered = false">
     <jhi-post-header
         [previewMode]="previewMode"
         [readOnlyMode]="readOnlyMode"
@@ -9,13 +9,11 @@
         (isModalOpen)="displayInlineInput = true"
         [lastReadDate]="lastReadDate"
     />
-    <div class="resolution-indicator ps-3">
-        @if (posting.resolved) {
-            <fa-icon [icon]="faCheckSquare" iconSize="xs" class="col-auto pe-0 resolved" [ngbTooltip]="'artemisApp.metis.post.postMarkedAsResolvedTooltip' | artemisTranslate" />
-        }
-    </div>
+    @if (isHovered) {
+        <jhi-quick-reaction-bar [readOnlyMode]="readOnlyMode" />
+    }
 </div>
-<div class="row align-items-center">
+<div class="row align-items-center" (mouseenter)="isHovered = true" (mouseleave)="isHovered = false">
     <div class="col">
         <div class="mb-1">
             @if (showAnnouncementIcon) {

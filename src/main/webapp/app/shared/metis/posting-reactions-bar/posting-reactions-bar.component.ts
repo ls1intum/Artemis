@@ -9,6 +9,9 @@ const PIN_EMOJI_ID = 'pushpin';
 const ARCHIVE_EMOJI_ID = 'open_file_folder';
 const SPEECH_BALLOON_ID = 'speech_balloon';
 const HEAVY_MULTIPLICATION_ID = 'heavy_multiplication_x';
+const THUMBS_UP_ID = 'thumbsup';
+const RECYCLE_ID = 'recycle';
+const CHECKMARK_ID = 'white_check_mark';
 
 const SPEECH_BALLOON_UNICODE = '1F4AC';
 const ARCHIVE_EMOJI_UNICODE = '1F4C2';
@@ -46,6 +49,9 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
     archiveEmojiId: string = ARCHIVE_EMOJI_ID;
     speechBalloonId: string = SPEECH_BALLOON_ID;
     closeCrossId: string = HEAVY_MULTIPLICATION_ID;
+    thumbsUpId: string = THUMBS_UP_ID;
+    recycleId: string = RECYCLE_ID;
+    checkmarkId: string = CHECKMARK_ID;
 
     @Input() posting: T;
     @Input() isThreadSidebar: boolean;
@@ -147,6 +153,7 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
      * @param emojiId emojiId representing the reaction to be added/removed
      */
     addOrRemoveReaction(emojiId: string): void {
+        console.log(emojiId);
         const existingReactionIdx = this.posting.reactions
             ? this.posting.reactions.findIndex((reaction) => reaction.user?.id === this.metisService.getUser().id && reaction.emojiId === emojiId)
             : -1;

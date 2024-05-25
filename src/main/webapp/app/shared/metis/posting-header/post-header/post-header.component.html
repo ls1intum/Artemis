@@ -1,4 +1,4 @@
-<div class="row justify-content-between my-1">
+<div class="my-1">
     <div class="col-auto pe-0">
         <span class="posting-header header-author-date">
             @if (posting.author) {
@@ -37,6 +37,14 @@
         }
         @if (!!isCourseMessagesPage && (!lastReadDate || (lastReadDate && posting.creationDate && posting.creationDate.isAfter(lastReadDate))) && !isAuthorOfPosting) {
             <span class="badge bg-secondary hideAfter5Seconds">{{ 'global.generic.new' | artemisTranslate }}</span>
+        }
+        @if (posting.resolved) {
+            <fa-icon
+                [icon]="faCheckSquare"
+                iconSize="xs"
+                class="ps-1 col-auto pe-0 resolved"
+                [ngbTooltip]="'artemisApp.metis.post.postMarkedAsResolvedTooltip' | artemisTranslate"
+            />
         }
     </div>
 </div>
