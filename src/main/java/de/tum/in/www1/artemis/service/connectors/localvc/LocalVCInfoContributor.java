@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.localvc;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALVC;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -15,7 +17,7 @@ import org.springframework.stereotype.Component;
 import de.tum.in.www1.artemis.config.Constants;
 
 @Component
-@Profile("localvc")
+@Profile(PROFILE_LOCALVC)
 public class LocalVCInfoContributor implements InfoContributor {
 
     private static final Logger log = LoggerFactory.getLogger(LocalVCInfoContributor.class);
