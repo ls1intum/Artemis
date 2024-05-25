@@ -273,6 +273,11 @@ dependencies {
     // Note: jgit.htt.server is not compatible with jakarta yet and neither is there a timeline. Hence, we had to add the sourcefiles to our repository. Once the compatibility is given, we can switch back to the maven dependency.
     // implementation "org.eclipse.jgit:org.eclipse.jgit.http.server:${jgit_version}"
 
+    implementation "org.apache.sshd:sshd-core:2.12.1"
+    implementation "org.apache.sshd:sshd-git:2.12.1"
+    implementation "org.apache.sshd:sshd-osgi:2.12.1"
+    implementation "org.apache.sshd:sshd-sftp:2.12.1"
+
     implementation "oauth.signpost:signpost-core:2.1.1"
     implementation "oauth.signpost:signpost-commonshttp4:2.1.1"
 
