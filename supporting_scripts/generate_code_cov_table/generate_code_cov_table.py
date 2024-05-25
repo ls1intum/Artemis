@@ -272,7 +272,7 @@ def main(argv):
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
     if args.token is None:
-        args.token = getpass.getpass("Please enter your Github token: ")
+        args.token = getpass.getpass("Please enter your GitHub token: ")
     if args.branch_name is None:
         args.branch_name = get_branch_name()
         logging.info(f"Using current branch: {args.branch_name}")
