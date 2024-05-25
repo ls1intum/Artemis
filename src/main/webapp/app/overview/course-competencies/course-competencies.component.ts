@@ -24,6 +24,7 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
     course?: Course;
     competencies: Competency[] = [];
     prerequisites: Competency[] = [];
+    parentParamSubscription: Subscription;
     judgementOfLearningMap: { [key: number]: number } = {};
 
     isCollapsed = true;
@@ -42,9 +43,12 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
     ) {}
 
     ngOnInit(): void {
-        this.activatedRoute.parent?.parent?.params.subscribe((params) => {
-            this.courseId = parseInt(params['courseId'], 10);
-        });
+        const courseIdParams$ = this.activatedRoute.parent?.parent?.parent?.params;
+        if (courseIdParams$) {
+            this.parentParamSubscription = courseIdParams$.subscribe((params) => {
+                this.courseId = Number(params.courseId);
+            });
+        }
 
         this.setCourse(this.courseStorageService.getCourse(this.courseId));
 
@@ -126,5 +130,9 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
      */
     identify(index: number, competency: Competency) {
         return `${index}-${competency.id}`;
+    }
+
+    ngOnDestroy(): void {
+        this.parentParamSubscription?.unsubscribe();
     }
 }
