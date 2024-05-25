@@ -303,9 +303,9 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             next: (res: HttpResponse<CoursesForDashboardDTO>) => {
                 if (res.body) {
                     const courses: Course[] = [];
-                    res.body.courses.forEach((courseDto: CourseForDashboardDTO) => {
+                    for (const courseDto of res.body.courses) {
                         courses.push(courseDto.course);
-                    });
+                    }
                     this.courses = courses.sort((a, b) => (a.title ?? '').localeCompare(b.title ?? ''));
                     if (this.courses.length > 3) {
                         const lastAccessedCourseIds = this.courseAccessStorageService.getLastAccessedCourses();
