@@ -38,7 +38,9 @@ public class LocalVCInfoContributor implements InfoContributor {
         builder.withDetail(Constants.VERSION_CONTROL_NAME, "Local VC");
 
         // Show the access token in case it is available in the clone URL
-        builder.withDetail(Constants.INFO_VERSION_CONTROL_ACCESS_TOKEN_DETAIL, true);
+        // TODO: only activate this when access tokens are available and make sure this does not lead to issues
+        // with the account.service.ts and its check if the access token is required
+        builder.withDetail(Constants.INFO_VERSION_CONTROL_ACCESS_TOKEN_DETAIL, false);
 
         // Store ssh url template
         try {
