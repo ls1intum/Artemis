@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.config.icl.ssh.service;
+package de.tum.in.www1.artemis.service.icl;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALVC;
 

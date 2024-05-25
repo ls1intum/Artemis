@@ -18,9 +18,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
-import de.tum.in.www1.artemis.config.icl.ssh.service.GitPublickeyAuthenticatorService;
-import de.tum.in.www1.artemis.config.icl.ssh.service.SshGitCommandFactoryService;
-import de.tum.in.www1.artemis.config.icl.ssh.service.SshGitLocationResolverService;
+import de.tum.in.www1.artemis.service.icl.GitPublickeyAuthenticatorService;
+import de.tum.in.www1.artemis.service.icl.SshGitCommandFactoryService;
+import de.tum.in.www1.artemis.service.icl.SshGitLocationResolverService;
 
 @Profile(PROFILE_LOCALVC)
 @Configuration

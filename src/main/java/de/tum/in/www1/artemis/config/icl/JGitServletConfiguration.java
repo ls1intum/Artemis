@@ -10,6 +10,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
+import de.tum.in.www1.artemis.service.icl.ArtemisGitServletService;
+
 /**
  * Configuration of the JGit Servlet that handles fetch and push requests for local Version Control.
  */
