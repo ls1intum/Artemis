@@ -118,7 +118,6 @@
         "@angular/cli": "17.3.7",
         "@angular/compiler-cli": "17.3.9",
         "@angular/language-service": "17.3.9",
-        "@playwright/test": "^1.44.1",
         "@sentry/types": "7.114.0",
         "@types/crypto-js": "4.2.2",
         "@types/d3-shape": "3.1.6",
