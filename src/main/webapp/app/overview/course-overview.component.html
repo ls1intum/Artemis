@@ -13,6 +13,27 @@
                     <!-- NavItems -->
                     <div>
                         <div class="d-flex p-3 align-items-center text-decoration-none" [title]="course?.title">
+                            <div id="container">
+                                <div id="courseDropdownButton" (click)="dropdownCourses = true">
+                                    <fa-icon [icon]="faChevronDown" />
+                                    <div id="dropdownCourses" [ngClass]="{ active: dropdownCourses }">
+                                        <ul>
+                                            @for (course of courses; track course) {
+                                                <li>
+                                                    <a (click)="switchCourse(course); dropdownCourses = false">
+                                                        @if (course.courseIcon) {
+                                                            <span>
+                                                                <jhi-secured-image [src]="course.courseIcon" />
+                                                            </span>
+                                                        }
+                                                        {{ course?.title }}</a
+                                                    >
+                                                </li>
+                                            }
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
                             @if (course && course.courseIcon) {
                                 <div>
                                     <jhi-secured-image [src]="course.courseIcon" />

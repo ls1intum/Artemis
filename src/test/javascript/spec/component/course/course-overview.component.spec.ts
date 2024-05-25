@@ -647,4 +647,8 @@ describe('CourseOverviewComponent', () => {
 
         expect(component.dropdownOpen).toBeTrue();
     });
+
+    it('should initialize courses attribute when page is loaded', () => {
+        expect(component.courses?.length).toBe(2);
+    });
 });

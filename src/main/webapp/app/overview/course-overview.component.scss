@@ -253,3 +253,55 @@ jhi-secured-image {
         max-height: 91px; // To avoid cut offs in the dropdown menu content
     }
 }
+
+#container {
+    display: flex;
+    position: absolute;
+    #courseDropdownButton {
+        cursor: pointer;
+        position: relative;
+        padding-top: 30px;
+        padding-left: 20px;
+        padding-right: 30px;
+        top: 10px;
+        right: 10px;
+        #dropdownCourses {
+            display: none;
+            position: absolute;
+            width: 200px;
+            overflow: auto;
+            background-color: var(--dropdown-bg);
+            border-radius: 10px;
+            top: 100%;
+            left: 0;
+            border: 1px solid var(--border-color);
+            z-index: 9999;
+            ul {
+                list-style: none;
+                margin: 0px;
+                display: flex;
+                flex-direction: column;
+                padding: 0px;
+            }
+            li {
+                padding: 0; /* Adjust padding */
+                border-bottom: 1px solid #ccc; /* Add border bottom */
+                &:last-child {
+                    border-bottom: none; /* Remove border for last item */
+                }
+            }
+            a {
+                text-decoration: none;
+                color: var(--bs-body-color);
+                padding: 15px 20px;
+                display: block;
+                &:hover {
+                    color: var(--link-item-color);
+                }
+            }
+        }
+        #dropdownCourses.active {
+            display: block;
+        }
+    }
+}

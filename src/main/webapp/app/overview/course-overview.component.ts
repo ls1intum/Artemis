@@ -29,6 +29,7 @@ import {
     IconDefinition,
     faChalkboardUser,
     faChartBar,
+    faChevronDown,
     faChevronRight,
     faCircleNotch,
     faClipboard,
@@ -62,6 +63,8 @@ import { CourseExercisesComponent } from './course-exercises/course-exercises.co
 import { CourseLecturesComponent } from './course-lectures/course-lectures.component';
 import { facSidebar } from '../../content/icons/icons';
 import { CourseTutorialGroupsComponent } from './course-tutorial-groups/course-tutorial-groups.component';
+import { CoursesForDashboardDTO } from 'app/course/manage/courses-for-dashboard-dto';
+import { CourseForDashboardDTO } from 'app/course/manage/course-for-dashboard-dto';
 
 interface CourseActionItem {
     title: string;
@@ -94,6 +97,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     private courseId: number;
     private subscription: Subscription;
     course?: Course;
+    courses?: Course[];
     refreshingCourse = false;
     private teamAssignmentUpdateListener: Subscription;
     private quizExercisesChannel: string;
@@ -114,11 +118,13 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
 
     // Properties to track hidden items for dropdown menu
     dropdownOpen: boolean = false;
+    dropdownCourses: boolean = false;
     anyItemHidden: boolean = false;
     hiddenItems: SidebarItem[] = [];
     thresholdsForEachSidebarItem: number[] = [];
     dropdownOffset: number;
     dropdownClickNumber: number = 0;
+    dropdownCoursesClickNumber: number = 0;
     readonly WINDOW_OFFSET: number = 300;
     readonly ITEM_HEIGHT: number = 38;
     readonly BREADCRUMB_AND_NAVBAR_HEIGHT: number = 88;
@@ -163,6 +169,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     faNetworkWired = faNetworkWired;
     faChalkboardUser = faChalkboardUser;
     faChevronRight = faChevronRight;
+    faChevronDown = faChevronDown;
     faListCheck = faListCheck;
     faDoorOpen = faDoorOpen;
     facSidebar = facSidebar;
@@ -201,6 +208,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         });
         this.getCollapseStateFromStorage();
         this.course = this.courseStorageService.getCourse(this.courseId);
+        this.getCourses();
         this.isNotManagementView = !this.router.url.startsWith('/course-management');
         // Notify the course access storage service that the course has been accessed
         this.courseAccessStorageService.onCourseAccessed(this.courseId);
@@ -217,6 +225,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     @HostListener('window: resize', ['$event'])
     onResize() {
         this.dropdownOpen = false;
+        this.dropdownCourses = false;
         this.dropdownClickNumber = 0;
         this.updateVisibility(window.innerHeight);
         this.updateMenuPosition();
@@ -230,6 +239,17 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             if (this.dropdownClickNumber === 2) {
                 this.dropdownOpen = false;
                 this.dropdownClickNumber = 0;
+            }
+        }
+    }
+
+    @HostListener('document: click', ['$event'])
+    onClickCloseDropdownCourses() {
+        if (this.dropdownCourses) {
+            this.dropdownCoursesClickNumber += 1;
+            if (this.dropdownCoursesClickNumber === 2) {
+                this.dropdownCourses = false;
+                this.dropdownCoursesClickNumber = 0;
             }
         }
     }
@@ -273,6 +293,30 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         if (!this.dropdownOpen) {
             this.dropdownClickNumber = 0;
         }
+    }
+
+    getCourses() {
+        this.courseService.findAllForDashboard().subscribe({
+            next: (res: HttpResponse<CoursesForDashboardDTO>) => {
+                if (res.body) {
+                    const courses: Course[] = [];
+                    res.body.courses.forEach((courseDto: CourseForDashboardDTO) => {
+                        courses.push(courseDto.course);
+                    });
+                    this.courses = courses.sort((a, b) => (a.title ?? '').localeCompare(b.title ?? ''));
+                    if (this.courses.length > 3) {
+                        const lastAccessedCourseIds = this.courseAccessStorageService.getLastAccessedCourses();
+                        this.courses = this.courses.filter((course) => lastAccessedCourseIds.includes(course.id!));
+                    }
+                }
+            },
+        });
+    }
+
+    switchCourse(course: Course) {
+        this.router.navigate(['courses', course.id]).then(() => {
+            window.location.reload();
+        });
     }
 
     getCourseActionItems(): CourseActionItem[] {
@@ -751,4 +795,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.isNavbarCollapsed = !this.isNavbarCollapsed;
         localStorage.setItem('navbar.collapseState', JSON.stringify(this.isNavbarCollapsed));
     }
+
+    protected readonly String = String;
 }
