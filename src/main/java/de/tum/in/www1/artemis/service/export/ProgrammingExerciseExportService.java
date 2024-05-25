@@ -457,7 +457,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         var blankExportOptions = new RepositoryExportOptionsDTO();
         Path outputDirectory = fileService.getTemporaryUniquePathWithoutPathCreation(repoDownloadClonePath, 5);
         try {
-            Path zipFile = createZipForRepositoryWithParticipation(programmingExercise, participation, blankExportOptions, outputDirectory, outputDirectory);
+            Path zipFile = getRepositoryWithParticipation(programmingExercise, participation, blankExportOptions, outputDirectory, outputDirectory, true);
             if (zipFile != null) {
                 return Optional.of(zipFile.toFile());
             }
