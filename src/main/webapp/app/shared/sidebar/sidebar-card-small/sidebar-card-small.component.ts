@@ -26,7 +26,7 @@ export class SidebarCardSmallComponent {
     emitStoreAndRefresh(itemId: number | string) {
         this.sidebarEventService.emitSidebarCardEvent(itemId);
         if (this.sidebarType !== 'conversation') {
-        this.refreshChildComponent();
+            this.refreshChildComponent();
         }
     }
 
@@ -39,10 +39,6 @@ export class SidebarCardSmallComponent {
     }
 
     get isConversationUnread(): boolean {
-        if (!this.sidebarItem.conversation) {
-            return false;
-        } else {
-            return !!this.sidebarItem.conversation.unreadMessagesCount && this.sidebarItem.conversation.unreadMessagesCount > 0;
-        }
+        return !!this.sidebarItem.conversation?.unreadMessagesCount && this.sidebarItem.conversation.unreadMessagesCount > 0;
     }
 }
