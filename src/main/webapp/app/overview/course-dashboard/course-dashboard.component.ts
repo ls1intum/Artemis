@@ -15,6 +15,8 @@ import { ICompetencyAccordionToggleEvent } from 'app/shared/competency/interface
 import { round } from 'app/shared/util/utils';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import dayjs from 'dayjs/esm';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { PROFILE_IRIS } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-course-dashboard',
@@ -55,13 +57,18 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
         private router: Router,
         private courseDashboardService: CourseDashboardService,
         private irisSettingsService: IrisSettingsService,
+        private profileService: ProfileService,
     ) {}
 
     ngOnInit(): void {
         this.paramSubscription = this.route.parent?.parent?.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId'], 10);
-            this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
-                this.irisEnabled = !!settings?.irisChatSettings?.enabled;
+            this.profileService.getProfileInfo().subscribe((profileInfo) => {
+                if (profileInfo?.activeProfiles.includes(PROFILE_IRIS)) {
+                    this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
+                        this.irisEnabled = !!settings?.irisChatSettings?.enabled;
+                    });
+                }
             });
         });
         this.setCourse(this.courseStorageService.getCourse(this.courseId));
