@@ -12,8 +12,8 @@ import de.tum.in.www1.artemis.web.rest.dto.ResultDTO;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record BuildJobQueueItem(String id, String name, String buildAgentAddress, long participationId, long courseId, long exerciseId, int retryCount, int priority,
-        BuildStatus status, RepositoryInfo repositoryInfo, JobTimingInfo jobTimingInfo, BuildConfig buildConfig, ResultDTO submissionResult) implements Serializable {
+public record BuildJobItem(String id, String name, String buildAgentAddress, long participationId, long courseId, long exerciseId, int retryCount, int priority, BuildStatus status,
+        RepositoryInfo repositoryInfo, JobTimingInfo jobTimingInfo, BuildConfig buildConfig, ResultDTO submissionResult) implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -25,7 +25,7 @@ public record BuildJobQueueItem(String id, String name, String buildAgentAddress
      * @param buildCompletionDate The date when the build job was completed
      * @param status              The status/result of the build job
      */
-    public BuildJobQueueItem(BuildJobQueueItem queueItem, ZonedDateTime buildCompletionDate, BuildStatus status) {
+    public BuildJobItem(BuildJobItem queueItem, ZonedDateTime buildCompletionDate, BuildStatus status) {
         this(queueItem.id(), queueItem.name(), queueItem.buildAgentAddress(), queueItem.participationId(), queueItem.courseId(), queueItem.exerciseId(), queueItem.retryCount(),
                 queueItem.priority(), status, queueItem.repositoryInfo(),
                 new JobTimingInfo(queueItem.jobTimingInfo.submissionDate(), queueItem.jobTimingInfo.buildStartDate(), buildCompletionDate), queueItem.buildConfig(), null);
@@ -37,13 +37,13 @@ public record BuildJobQueueItem(String id, String name, String buildAgentAddress
      * @param queueItem              The queued build job
      * @param hazelcastMemberAddress The address of the hazelcast member that is processing the build job
      */
-    public BuildJobQueueItem(BuildJobQueueItem queueItem, String hazelcastMemberAddress) {
+    public BuildJobItem(BuildJobItem queueItem, String hazelcastMemberAddress) {
         this(queueItem.id(), queueItem.name(), hazelcastMemberAddress, queueItem.participationId(), queueItem.courseId(), queueItem.exerciseId(), queueItem.retryCount(),
                 queueItem.priority(), null, queueItem.repositoryInfo(), new JobTimingInfo(queueItem.jobTimingInfo.submissionDate(), ZonedDateTime.now(), null),
                 queueItem.buildConfig(), null);
     }
 
-    public BuildJobQueueItem(BuildJobQueueItem queueItem, ResultDTO submissionResult) {
+    public BuildJobItem(BuildJobItem queueItem, ResultDTO submissionResult) {
         this(queueItem.id(), queueItem.name(), queueItem.buildAgentAddress(), queueItem.participationId(), queueItem.courseId(), queueItem.exerciseId(), queueItem.retryCount(),
                 queueItem.priority(), queueItem.status(), queueItem.repositoryInfo(), queueItem.jobTimingInfo(), queueItem.buildConfig(), submissionResult);
     }

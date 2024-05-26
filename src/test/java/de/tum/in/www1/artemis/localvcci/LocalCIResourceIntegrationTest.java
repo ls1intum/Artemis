@@ -31,9 +31,9 @@ import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.connectors.localci.buildagent.SharedQueueProcessingService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildAgentInformation;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildConfig;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobQueueItem;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobItem;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobItemReference;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.JobTimingInfo;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobItemReference;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.RepositoryInfo;
 import de.tum.in.www1.artemis.service.dto.FinishedBuildJobDTO;
 import de.tum.in.www1.artemis.util.PageableSearchUtilService;
@@ -41,9 +41,9 @@ import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.PageableSearchDTO;
 
 class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
-    protected BuildJobQueueItem job1;
+    protected BuildJobItem job1;
 
-    protected BuildJobQueueItem job2;
+    protected BuildJobItem job2;
 
     protected BuildAgentInformation agent1;
 
@@ -60,11 +60,11 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
     @Autowired
     private BuildLogEntryService buildLogEntryService;
 
-    protected IQueue<LocalCIBuildJobItemReference> queuedJobs;
+    protected IQueue<BuildJobItemReference> queuedJobs;
 
-    protected IMap<Long, BuildJobQueueItem> buildJobItemMap;
+    protected IMap<Long, BuildJobItem> buildJobItemMap;
 
-    protected IMap<Long, BuildJobQueueItem> processingJobs;
+    protected IMap<Long, BuildJobItem> processingJobs;
 
     protected IMap<String, BuildAgentInformation> buildAgentInformation;
 
@@ -86,13 +86,13 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
         BuildConfig buildConfig = new BuildConfig("echo 'test'", "test", "test", "test", "test", "test", null, null, false, false, false, null);
         RepositoryInfo repositoryInfo = new RepositoryInfo("test", null, RepositoryType.USER, "test", "test", "test", null, null);
 
-        job1 = new BuildJobQueueItem("1", "job1", "address1", 1, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo, buildConfig, null);
-        job2 = new BuildJobQueueItem("2", "job2", "address1", 2, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo, buildConfig, null);
+        job1 = new BuildJobItem("1", "job1", "address1", 1, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo, buildConfig, null);
+        job2 = new BuildJobItem("2", "job2", "address1", 2, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo, buildConfig, null);
         String memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
         agent1 = new BuildAgentInformation(memberAddress, 1, 0, new ArrayList<>(List.of(job1)), false, new ArrayList<>(List.of(job2)));
-        BuildJobQueueItem finishedJobQueueItem1 = new BuildJobQueueItem("3", "job3", "address1", 3, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo,
+        BuildJobItem finishedJobQueueItem1 = new BuildJobItem("3", "job3", "address1", 3, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo,
                 buildConfig, null);
-        BuildJobQueueItem finishedJobQueueItem2 = new BuildJobQueueItem("4", "job4", "address1", 4, course.getId() + 1, 1, 1, 1, BuildStatus.FAILED, repositoryInfo, jobTimingInfo,
+        BuildJobItem finishedJobQueueItem2 = new BuildJobItem("4", "job4", "address1", 4, course.getId() + 1, 1, 1, 1, BuildStatus.FAILED, repositoryInfo, jobTimingInfo,
                 buildConfig, null);
         var result1 = new Result().successful(true).rated(true).score(100D).assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now());
         var result2 = new Result().successful(false).rated(true).score(0D).assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now());
@@ -129,7 +129,7 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
         var retrievedJobs = request.get("/api/admin/queued-jobs", HttpStatus.OK, List.class);
         assertThat(retrievedJobs).isEmpty();
         // Adding a lot of jobs as they get processed very quickly due to mocking
-        queuedJobs.addAll(List.of(new LocalCIBuildJobItemReference(job1), new LocalCIBuildJobItemReference(job2)));
+        queuedJobs.addAll(List.of(new BuildJobItemReference(job1), new BuildJobItemReference(job2)));
         buildJobItemMap.put(job1.participationId(), job1);
         buildJobItemMap.put(job2.participationId(), job2);
         var retrievedJobs1 = request.get("/api/admin/queued-jobs", HttpStatus.OK, List.class);
@@ -155,7 +155,7 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
         var retrievedJobs = request.get("/api/courses/" + course.getId() + "/queued-jobs", HttpStatus.OK, List.class);
         assertThat(retrievedJobs).isEmpty();
         // Adding a lot of jobs as they get processed very quickly due to mocking
-        queuedJobs.addAll(List.of(new LocalCIBuildJobItemReference(job1), new LocalCIBuildJobItemReference(job2)));
+        queuedJobs.addAll(List.of(new BuildJobItemReference(job1), new BuildJobItemReference(job2)));
         buildJobItemMap.put(job1.participationId(), job1);
         buildJobItemMap.put(job2.participationId(), job2);
         var retrievedJobs1 = request.get("/api/courses/" + course.getId() + "/queued-jobs", HttpStatus.OK, List.class);
@@ -198,7 +198,7 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testCancelProcessingBuildJob() throws Exception {
-        BuildJobQueueItem buildJob = processingJobs.get(Long.valueOf(job1.id()));
+        BuildJobItem buildJob = processingJobs.get(Long.valueOf(job1.id()));
         request.delete("/api/admin/cancel-job/" + buildJob.id(), HttpStatus.NO_CONTENT);
     }
 
@@ -206,7 +206,7 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testCancelQueuedBuildJob() throws Exception {
         buildJobItemMap.put(job1.participationId(), job1);
-        queuedJobs.put(new LocalCIBuildJobItemReference(job1));
+        queuedJobs.put(new BuildJobItemReference(job1));
         request.delete("/api/admin/cancel-job/" + job1.id(), HttpStatus.NO_CONTENT);
     }
 
@@ -225,7 +225,7 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCancelBuildJobForCourse() throws Exception {
-        BuildJobQueueItem buildJob = processingJobs.get(Long.valueOf(job1.id()));
+        BuildJobItem buildJob = processingJobs.get(Long.valueOf(job1.id()));
         request.delete("/api/courses/" + course.getId() + "/cancel-job/" + buildJob.id(), HttpStatus.NO_CONTENT);
     }
 
@@ -233,9 +233,9 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCancelAllQueuedBuildJobsForCourse() throws Exception {
         buildJobItemMap.put(job1.participationId(), job1);
-        queuedJobs.put(new LocalCIBuildJobItemReference(job1));
+        queuedJobs.put(new BuildJobItemReference(job1));
         buildJobItemMap.put(job2.participationId(), job2);
-        queuedJobs.put(new LocalCIBuildJobItemReference(job2));
+        queuedJobs.put(new BuildJobItemReference(job2));
         request.delete("/api/courses/" + course.getId() + "/cancel-all-queued-jobs", HttpStatus.NO_CONTENT);
     }
 

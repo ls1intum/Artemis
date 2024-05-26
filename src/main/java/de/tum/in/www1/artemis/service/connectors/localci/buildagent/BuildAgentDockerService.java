@@ -39,7 +39,7 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
 import de.tum.in.www1.artemis.exception.LocalCIException;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobQueueItem;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobItem;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 
 /**
@@ -204,7 +204,7 @@ public class BuildAgentDockerService {
      * @param buildLogsMap a map for appending log entries related to the build process, facilitating real-time logging for end users.
      * @throws LocalCIException if the image pull is interrupted or fails due to other exceptions.
      */
-    public void pullDockerImage(BuildJobQueueItem buildJob, BuildLogsMap buildLogsMap) {
+    public void pullDockerImage(BuildJobItem buildJob, BuildLogsMap buildLogsMap) {
         final String imageName = buildJob.buildConfig().dockerImage();
         try {
             // First check if the image is already available
@@ -267,7 +267,7 @@ public class BuildAgentDockerService {
      * @param buildJob             the build job that includes the configuration with the name of the Docker image
      * @param buildLogsMap         a map for appending log entries related to the build process
      */
-    private void checkImageArchitecture(String imageName, InspectImageResponse inspectImageResponse, BuildJobQueueItem buildJob, BuildLogsMap buildLogsMap) {
+    private void checkImageArchitecture(String imageName, InspectImageResponse inspectImageResponse, BuildJobItem buildJob, BuildLogsMap buildLogsMap) {
         if (!imageArchitecture.equals(inspectImageResponse.getArch())) {
             var msg = "Docker image " + imageName + " is not compatible with the current architecture. Needed 'linux/" + imageArchitecture + "', but got '"
                     + inspectImageResponse.getArch() + "'";

@@ -38,10 +38,10 @@ import de.tum.in.www1.artemis.domain.BuildLogEntry;
 import de.tum.in.www1.artemis.domain.enumeration.BuildStatus;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildAgentInformation;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobQueueItem;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobItem;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobItemReference;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildResult;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.JobTimingInfo;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobItemReference;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.ResultQueueItem;
 
 /**
@@ -68,16 +68,16 @@ public class SharedQueueProcessingService {
      */
     private FencedLock sharedLock;
 
-    private IQueue<LocalCIBuildJobItemReference> queue;
+    private IQueue<BuildJobItemReference> queue;
 
-    private IMap<Long, BuildJobQueueItem> buildJobItemMap;
+    private IMap<Long, BuildJobItem> buildJobItemMap;
 
     private IQueue<ResultQueueItem> resultQueue;
 
     /**
      * Map of build jobs currently being processed across all nodes
      */
-    private IMap<String, BuildJobQueueItem> processingJobs;
+    private IMap<String, BuildJobItem> processingJobs;
 
     private IMap<String, BuildAgentInformation> buildAgentInformation;
 
@@ -176,7 +176,7 @@ public class SharedQueueProcessingService {
                 return;
             }
 
-            BuildJobQueueItem buildJob;
+            BuildJobItem buildJob;
 
             // Lock the queue to prevent multiple nodes from processing the same build job
             sharedLock.lock();
@@ -202,17 +202,17 @@ public class SharedQueueProcessingService {
         return hazelcastInstance.getCluster().getMembers().stream().allMatch(Member::isLiteMember);
     }
 
-    private BuildJobQueueItem addToProcessingJobs() {
-        LocalCIBuildJobItemReference buildJobReference = queue.poll();
+    private BuildJobItem addToProcessingJobs() {
+        BuildJobItemReference buildJobReference = queue.poll();
         if (buildJobReference != null) {
-            BuildJobQueueItem buildJob = buildJobItemMap.remove(buildJobReference.participationId());
+            BuildJobItem buildJob = buildJobItemMap.remove(buildJobReference.participationId());
             if (buildJob == null) {
                 return null;
             }
 
             String hazelcastMemberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
 
-            BuildJobQueueItem processingJob = new BuildJobQueueItem(buildJob, hazelcastMemberAddress);
+            BuildJobItem processingJob = new BuildJobItem(buildJob, hazelcastMemberAddress);
 
             processingJobs.put(processingJob.id(), processingJob);
             localProcessingJobs.incrementAndGet();
@@ -227,7 +227,7 @@ public class SharedQueueProcessingService {
         updateLocalBuildAgentInformationWithRecentJob(null);
     }
 
-    private void updateLocalBuildAgentInformationWithRecentJob(BuildJobQueueItem recentBuildJob) {
+    private void updateLocalBuildAgentInformationWithRecentJob(BuildJobItem recentBuildJob) {
         String memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
         try {
             buildAgentInformation.lock(memberAddress);
@@ -245,14 +245,14 @@ public class SharedQueueProcessingService {
         }
     }
 
-    private BuildAgentInformation getUpdatedLocalBuildAgentInformation(BuildJobQueueItem recentBuildJob) {
+    private BuildAgentInformation getUpdatedLocalBuildAgentInformation(BuildJobItem recentBuildJob) {
         String memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
-        List<BuildJobQueueItem> processingJobsOfMember = getProcessingJobsOfNode(memberAddress);
+        List<BuildJobItem> processingJobsOfMember = getProcessingJobsOfNode(memberAddress);
         int numberOfCurrentBuildJobs = processingJobsOfMember.size();
         int maxNumberOfConcurrentBuilds = localCIBuildExecutorService.getMaximumPoolSize();
         boolean active = numberOfCurrentBuildJobs > 0;
         BuildAgentInformation agent = buildAgentInformation.get(memberAddress);
-        List<BuildJobQueueItem> recentBuildJobs;
+        List<BuildJobItem> recentBuildJobs;
         if (agent != null) {
             recentBuildJobs = agent.recentBuildJobs();
         }
@@ -270,7 +270,7 @@ public class SharedQueueProcessingService {
         return new BuildAgentInformation(memberAddress, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember, active, recentBuildJobs);
     }
 
-    private List<BuildJobQueueItem> getProcessingJobsOfNode(String memberAddress) {
+    private List<BuildJobItem> getProcessingJobsOfNode(String memberAddress) {
         return processingJobs.values().stream().filter(job -> Objects.equals(job.buildAgentAddress(), memberAddress)).toList();
     }
 
@@ -287,7 +287,7 @@ public class SharedQueueProcessingService {
      * Process a build job by submitting it to the local CI executor service.
      * On completion, check for next job.
      */
-    private void processBuild(BuildJobQueueItem buildJob) {
+    private void processBuild(BuildJobItem buildJob) {
         // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
         // Therefore, a mock auth object has to be created.
         SecurityUtils.setAuthorizationObject();
@@ -303,7 +303,7 @@ public class SharedQueueProcessingService {
 
             JobTimingInfo jobTimingInfo = new JobTimingInfo(buildJob.jobTimingInfo().submissionDate(), buildJob.jobTimingInfo().buildStartDate(), ZonedDateTime.now());
 
-            BuildJobQueueItem finishedJob = new BuildJobQueueItem(buildJob.id(), buildJob.name(), buildJob.buildAgentAddress(), buildJob.participationId(), buildJob.courseId(),
+            BuildJobItem finishedJob = new BuildJobItem(buildJob.id(), buildJob.name(), buildJob.buildAgentAddress(), buildJob.participationId(), buildJob.courseId(),
                     buildJob.exerciseId(), buildJob.retryCount(), buildJob.priority(), BuildStatus.SUCCESSFUL, buildJob.repositoryInfo(), jobTimingInfo, buildJob.buildConfig(),
                     null);
 
@@ -325,7 +325,7 @@ public class SharedQueueProcessingService {
         futureResult.exceptionally(ex -> {
             ZonedDateTime completionDate = ZonedDateTime.now();
 
-            BuildJobQueueItem job;
+            BuildJobItem job;
             BuildStatus status;
 
             if (!(ex.getCause() instanceof CancellationException) || !ex.getMessage().equals("Build job with id " + buildJob.id() + " was cancelled.")) {
@@ -336,7 +336,7 @@ public class SharedQueueProcessingService {
                 status = BuildStatus.CANCELLED;
             }
 
-            job = new BuildJobQueueItem(buildJob, completionDate, status);
+            job = new BuildJobItem(buildJob, completionDate, status);
 
             List<BuildLogEntry> buildLogs = buildLogsMap.getBuildLogs(buildJob.id());
             buildLogsMap.removeBuildLogs(buildJob.id());
@@ -366,16 +366,16 @@ public class SharedQueueProcessingService {
         return localProcessingJobs.get() < localCIBuildExecutorService.getMaximumPoolSize();
     }
 
-    public class QueuedBuildJobItemListener implements ItemListener<LocalCIBuildJobItemReference> {
+    public class QueuedBuildJobItemListener implements ItemListener<BuildJobItemReference> {
 
         @Override
-        public void itemAdded(ItemEvent<LocalCIBuildJobItemReference> event) {
+        public void itemAdded(ItemEvent<BuildJobItemReference> event) {
             log.debug("CIBuildJobQueueItem added to queue: {}", event.getItem());
             checkAvailabilityAndProcessNextBuild();
         }
 
         @Override
-        public void itemRemoved(ItemEvent<LocalCIBuildJobItemReference> event) {
+        public void itemRemoved(ItemEvent<BuildJobItemReference> event) {
             log.debug("CIBuildJobQueueItem removed from queue: {}", event.getItem());
         }
     }

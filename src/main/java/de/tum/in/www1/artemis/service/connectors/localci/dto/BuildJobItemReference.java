@@ -15,7 +15,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record LocalCIBuildJobItemReference(String id, long participationId, long courseId, int priority, ZonedDateTime submissionDate) implements Serializable {
+public record BuildJobItemReference(String id, long participationId, long courseId, int priority, ZonedDateTime submissionDate) implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -26,7 +26,7 @@ public record LocalCIBuildJobItemReference(String id, long participationId, long
      * @param buildJobItem the build job item
      */
 
-    public LocalCIBuildJobItemReference(LocalCIBuildJobQueueItem buildJobItem) {
+    public BuildJobItemReference(BuildJobItem buildJobItem) {
         this(buildJobItem.id(), buildJobItem.participationId(), buildJobItem.courseId(), buildJobItem.priority(), buildJobItem.jobTimingInfo().submissionDate());
     }
 }

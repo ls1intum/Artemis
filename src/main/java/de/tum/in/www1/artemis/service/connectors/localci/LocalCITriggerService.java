@@ -38,9 +38,9 @@ import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildConfig;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobQueueItem;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobItem;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobItemReference;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.JobTimingInfo;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobItemReference;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.RepositoryInfo;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
@@ -72,11 +72,11 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private final GitService gitService;
 
-    private IQueue<LocalCIBuildJobItemReference> queue;
+    private IQueue<BuildJobItemReference> queue;
 
     private IMap<String, ZonedDateTime> dockerImageCleanupInfo;
 
-    private IMap<Long, LocalCIBuildJobQueueItem> buildJobItemMap;
+    private IMap<Long, BuildJobItem> buildJobItemMap;
 
     public LocalCITriggerService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, AeolusTemplateService aeolusTemplateService,
             ProgrammingLanguageConfiguration programmingLanguageConfiguration, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
@@ -159,12 +159,12 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         BuildConfig buildConfig = getBuildConfig(participation, commitHashToBuild, assignmentCommitHash, testCommitHash);
 
-        BuildJobQueueItem buildJobQueueItem = new BuildJobQueueItem(buildJobId, participation.getBuildPlanId(), null, participation.getId(), courseId, programmingExercise.getId(),
-                0, priority, null, repositoryInfo, jobTimingInfo, buildConfig, null);
+        BuildJobItem buildJobItem = new BuildJobItem(buildJobId, participation.getBuildPlanId(), null, participation.getId(), courseId, programmingExercise.getId(), 0, priority,
+                null, repositoryInfo, jobTimingInfo, buildConfig, null);
 
-        LocalCIBuildJobItemReference buildJobItemReference = new LocalCIBuildJobItemReference(buildJobQueueItem);
+        BuildJobItemReference buildJobItemReference = new BuildJobItemReference(buildJobItem);
 
-        buildJobItemMap.put(participation.getId(), buildJobQueueItem);
+        buildJobItemMap.put(participation.getId(), buildJobItem);
         queue.add(buildJobItemReference);
         log.info("Added build job {} to the queue", buildJobId);
 

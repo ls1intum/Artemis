@@ -36,9 +36,9 @@ import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService.BuildStatus;
 import de.tum.in.www1.artemis.service.connectors.localci.buildagent.SharedQueueProcessingService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildConfig;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobQueueItem;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobItem;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobItemReference;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.JobTimingInfo;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobItemReference;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.RepositoryInfo;
 
 class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
@@ -66,11 +66,11 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
     @Autowired
     private HazelcastInstance hazelcastInstance;
 
-    protected IQueue<LocalCIBuildJobItemReference> queuedJobs;
+    protected IQueue<BuildJobItemReference> queuedJobs;
 
-    protected IMap<Long, LocalCIBuildJobQueueItem> buildJobItemIMap;
+    protected IMap<Long, BuildJobItem> buildJobItemIMap;
 
-    protected IMap<String, BuildJobQueueItem> processingJobs;
+    protected IMap<String, BuildJobItem> processingJobs;
 
     @BeforeEach
     void setUp() {
@@ -104,12 +104,12 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         BuildConfig buildConfig = new BuildConfig("echo 'test'", "test", "test", "test", "test", "test", null, null, false, false, false, null);
         RepositoryInfo repositoryInfo = new RepositoryInfo("test", null, RepositoryType.USER, "test", "test", "test", null, null);
 
-        BuildJobQueueItem job1 = new BuildJobQueueItem("1", "job1", "address1", participation.getId(), course.getId(), 1, 1, 1,
+        BuildJobItem job1 = new BuildJobItem("1", "job1", "address1", participation.getId(), course.getId(), 1, 1, 1,
                 de.tum.in.www1.artemis.domain.enumeration.BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo, buildConfig, null);
-        BuildJobQueueItem job2 = new BuildJobQueueItem("2", "job2", "address1", participation.getId(), course.getId(), 1, 1, 1,
+        BuildJobItem job2 = new BuildJobItem("2", "job2", "address1", participation.getId(), course.getId(), 1, 1, 1,
                 de.tum.in.www1.artemis.domain.enumeration.BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo, buildConfig, null);
 
-        LocalCIBuildJobItemReference job1Reference = new LocalCIBuildJobItemReference(job1);
+        BuildJobItemReference job1Reference = new BuildJobItemReference(job1);
 
         queuedJobs = hazelcastInstance.getQueue("buildJobQueue");
         buildJobItemIMap = hazelcastInstance.getMap("buildJobItemMap");

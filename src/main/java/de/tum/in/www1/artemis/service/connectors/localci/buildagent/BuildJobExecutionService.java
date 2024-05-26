@@ -37,7 +37,7 @@ import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.exception.LocalCIException;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobQueueItem;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobItem;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildResult;
 import de.tum.in.www1.artemis.service.connectors.localci.scaparser.ReportParser;
 import de.tum.in.www1.artemis.service.connectors.localci.scaparser.exception.UnsupportedToolException;
@@ -94,7 +94,7 @@ public class BuildJobExecutionService {
      * @return The result of the build job as a {@link BuildResult}.
      * @throws LocalCIException If any error occurs during the preparation or execution of the build job.
      */
-    public BuildResult runBuildJob(BuildJobQueueItem buildJob, String containerName) {
+    public BuildResult runBuildJob(BuildJobItem buildJob, String containerName) {
 
         String msg = "~~~~~~~~~~~~~~~~~~~~ Start Build Job " + buildJob.id() + " ~~~~~~~~~~~~~~~~~~~~";
         log.debug(msg);
@@ -223,7 +223,7 @@ public class BuildJobExecutionService {
      * @throws LocalCIException If errors occur during the build process or if the test results cannot be parsed successfully.
      */
     // TODO: This method has too many params, we should reduce the number an rather pass an object (record)
-    private BuildResult runScriptAndParseResults(BuildJobQueueItem buildJob, String containerName, String containerId, VcsRepositoryUri assignmentRepositoryUri,
+    private BuildResult runScriptAndParseResults(BuildJobItem buildJob, String containerName, String containerId, VcsRepositoryUri assignmentRepositoryUri,
             VcsRepositoryUri testRepositoryUri, VcsRepositoryUri solutionRepositoryUri, VcsRepositoryUri[] auxiliaryRepositoriesUris, Path assignmentRepositoryPath,
             Path testsRepositoryPath, Path solutionRepositoryPath, Path[] auxiliaryRepositoriesPaths, @Nullable String assignmentRepoCommitHash,
             @Nullable String testRepoCommitHash) {

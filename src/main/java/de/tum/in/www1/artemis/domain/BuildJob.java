@@ -15,7 +15,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.enumeration.BuildStatus;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobQueueItem;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobItem;
 
 @Entity
 @Table(name = "build_job")
@@ -80,7 +80,7 @@ public class BuildJob extends DomainObject {
     public BuildJob() {
     }
 
-    public BuildJob(BuildJobQueueItem queueItem, BuildStatus buildStatus, Result result) {
+    public BuildJob(BuildJobItem queueItem, BuildStatus buildStatus, Result result) {
         this.buildJobId = queueItem.id();
         this.name = queueItem.name();
         this.exerciseId = queueItem.exerciseId();
