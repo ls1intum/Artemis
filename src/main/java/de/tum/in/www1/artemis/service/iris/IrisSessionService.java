@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.iris;
 
+import jakarta.annotation.Nullable;
 import jakarta.ws.rs.BadRequestException;
 
 import org.springframework.context.annotation.Profile;
@@ -67,7 +68,7 @@ public class IrisSessionService {
      * @param user    The user to check
      * @throws AccessForbiddenException If the user has not accepted the Iris privacy policy yet
      */
-    public void checkHasAccessToIrisSession(IrisSession session, User user) {
+    public void checkHasAccessToIrisSession(IrisSession session, @Nullable User user) {
         if (user == null) {
             user = userRepository.getUserWithGroupsAndAuthorities();
         }
