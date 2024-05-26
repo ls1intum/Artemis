@@ -8,13 +8,13 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildResult;
 
 class TestResultXmlParserTest {
 
-    private final List<LocalCIBuildResult.LocalCITestJobDTO> failedTests = new ArrayList<>();
+    private final List<BuildResult.LocalCITestJobDTO> failedTests = new ArrayList<>();
 
-    private final List<LocalCIBuildResult.LocalCITestJobDTO> successfulTests = new ArrayList<>();
+    private final List<BuildResult.LocalCITestJobDTO> successfulTests = new ArrayList<>();
 
     @Test
     void testParseResultXmlInnerText() throws IOException {
