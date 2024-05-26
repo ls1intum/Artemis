@@ -4,7 +4,7 @@ import { IrisAssistantMessage, IrisMessage, IrisSender, IrisUserMessage } from '
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
 import { BehaviorSubject, Observable, Subscription, catchError, map, of, tap, throwError } from 'rxjs';
 import { IrisChatHttpService } from 'app/iris/iris-chat-http.service';
-import { IrisTutorChatSession } from 'app/entities/iris/iris-tutor-chat-session.model';
+import { IrisExerciseChatSession } from 'app/entities/iris/iris-exercise-chat-session.model';
 import { IrisStageDTO } from 'app/entities/iris/iris-stage-dto.model';
 import { IrisWebsocketService } from 'app/iris/iris-websocket.service';
 import { IrisChatWebsocketDTO, IrisChatWebsocketPayloadType } from 'app/entities/iris/iris-chat-websocket-dto.model';
@@ -13,6 +13,7 @@ import { IrisTextMessageContent } from 'app/entities/iris/iris-content-type.mode
 import { IrisRateLimitInformation } from 'app/entities/iris/iris-ratelimit-info.model';
 import { IrisSession } from 'app/entities/iris/iris-session.model';
 import { UserService } from 'app/core/user/user.service';
+import { AccountService } from 'app/core/auth/account.service';
 
 /**
  * The IrisSessionService is responsible for managing Iris sessions and retrieving their associated messages.
@@ -28,8 +29,10 @@ export abstract class IrisChatService implements OnDestroy {
     rateLimitInfo?: IrisRateLimitInformation;
     rateLimitSubscription: Subscription;
 
+    hasJustAcceptedIris = false;
+
     /**
-     * Creates an instance of IrisSessionService.
+     * Creates an instance of IrisChatService.
      * @param http The IrisChatHttpService for HTTP operations related to sessions.
      * @param ws The IrisChatWebsocketService for websocket operations
      * @param status The IrisStatusService for handling the status of the service.
@@ -39,6 +42,7 @@ export abstract class IrisChatService implements OnDestroy {
         public ws: IrisWebsocketService,
         public status: IrisStatusService,
         private userService: UserService,
+        private accountService: AccountService,
     ) {
         this.rateLimitSubscription = this.status.currentRatelimitInfo().subscribe((info) => (this.rateLimitInfo = info));
     }
@@ -48,8 +52,9 @@ export abstract class IrisChatService implements OnDestroy {
     }
 
     protected start() {
-        this.getCurrentSessionOrCreate().subscribe(this.handleNewSession());
-        this.messages.subscribe(console.log);
+        if (this.accountService.userIdentity?.irisAccepted || this.hasJustAcceptedIris) {
+            this.getCurrentSessionOrCreate().subscribe(this.handleNewSession());
+        }
     }
 
     /**
@@ -136,6 +141,7 @@ export abstract class IrisChatService implements OnDestroy {
 
     public setUserAccepted(): void {
         this.userService.acceptIris().subscribe(() => {
+            this.hasJustAcceptedIris = true;
             this.initAfterAccept();
         });
     }
@@ -207,9 +213,9 @@ export abstract class IrisChatService implements OnDestroy {
     /**
      * Retrieves the current session or creates a new one if it doesn't exist.
      */
-    private getCurrentSessionOrCreate(): Observable<IrisTutorChatSession> {
+    private getCurrentSessionOrCreate(): Observable<IrisExerciseChatSession> {
         return this.http.getCurrentSessionOrCreateIfNotExists(this.getSessionCreationIdentifier()).pipe(
-            map((response: HttpResponse<IrisTutorChatSession>) => {
+            map((response: HttpResponse<IrisExerciseChatSession>) => {
                 if (response.body) {
                     return response.body;
                 } else {
@@ -223,9 +229,9 @@ export abstract class IrisChatService implements OnDestroy {
     /**
      * Creates a new session
      */
-    private createNewSession(): Observable<IrisTutorChatSession> {
+    private createNewSession(): Observable<IrisExerciseChatSession> {
         return this.http.createSession(this.getSessionCreationIdentifier()).pipe(
-            map((response: HttpResponse<IrisTutorChatSession>) => {
+            map((response: HttpResponse<IrisExerciseChatSession>) => {
                 if (response.body) {
                     return response.body;
                 } else {

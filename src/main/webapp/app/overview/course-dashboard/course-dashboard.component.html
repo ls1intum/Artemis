@@ -1,4 +1,9 @@
-<div class="row justify-content-center m-4 gap-4">
+@if (irisEnabled) {
+    <div class="chat-container">
+        <jhi-course-chatbot [courseId]="courseId" />
+    </div>
+}
+<div class="stats-container">
     @if (isLoading) {
         <div class="d-flex justify-content-center">
             <div class="spinner-border" role="status">

@@ -15,12 +15,12 @@ import { ActivatedRoute } from '@angular/router';
 import { IrisStateStore } from 'app/iris/state-store.service';
 import { ActiveConversationMessageLoadedAction, NumNewMessagesResetAction, SessionReceivedAction } from 'app/iris/state-store.model';
 import { mockServerMessage } from './../../../helpers/sample/iris-sample-data';
-import { IrisTutorChatbotButtonComponent } from 'app/iris/exercise-chatbot/tutor-chatbot-button.component';
+import { IrisExerciseChatbotButtonComponent } from 'app/iris/exercise-chatbot/exercise-chatbot-button.component';
 import { IrisLogoComponent } from 'app/iris/iris-logo/iris-logo.component';
 
-describe('TutorChatbotButtonComponent', () => {
-    let component: IrisTutorChatbotButtonComponent;
-    let fixture: ComponentFixture<IrisTutorChatbotButtonComponent>;
+describe('ExerciseChatbotButtonComponent', () => {
+    let component: IrisExerciseChatbotButtonComponent;
+    let fixture: ComponentFixture<IrisExerciseChatbotButtonComponent>;
     let sessionService: IrisChatSessionService;
     let stateStore: IrisStateStore;
     let mockDialog: MatDialog;
@@ -55,7 +55,7 @@ describe('TutorChatbotButtonComponent', () => {
 
         await TestBed.configureTestingModule({
             imports: [FormsModule, FontAwesomeModule, HttpClientTestingModule],
-            declarations: [IrisTutorChatbotButtonComponent, MockComponent(IrisLogoComponent), MockPipe(ArtemisTranslatePipe)],
+            declarations: [IrisExerciseChatbotButtonComponent, MockComponent(IrisLogoComponent), MockPipe(ArtemisTranslatePipe)],
             providers: [
                 IrisHttpChatSessionService,
                 IrisStateStore,
@@ -67,7 +67,7 @@ describe('TutorChatbotButtonComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(IrisTutorChatbotButtonComponent);
+                fixture = TestBed.createComponent(IrisExerciseChatbotButtonComponent);
                 component = fixture.componentInstance;
                 fixture.detectChanges();
                 sessionService = fixture.debugElement.injector.get(IrisChatSessionService);

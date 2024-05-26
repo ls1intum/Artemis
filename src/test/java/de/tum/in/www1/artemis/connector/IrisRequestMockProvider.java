@@ -31,7 +31,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisErrorResponseDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisHealthStatusDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisModelDTO;
-import de.tum.in.www1.artemis.service.connectors.pyris.dto.tutorChat.PyrisTutorChatPipelineExecutionDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.chat.tutor.PyrisExerciseChatPipelineExecutionDTO;
 
 @Component
 @Profile("iris")
@@ -80,17 +80,17 @@ public class IrisRequestMockProvider {
         }
     }
 
-    public void mockRunResponse(Consumer<PyrisTutorChatPipelineExecutionDTO> responseConsumer) {
-        mockServer.expect(ExpectedCount.once(), requestTo(pipelinesApiURL + "/tutor-chat/default/run")).andExpect(method(HttpMethod.POST)).andRespond(request -> {
+    public void mockRunResponse(Consumer<PyrisExerciseChatPipelineExecutionDTO> responseConsumer) {
+        mockServer.expect(ExpectedCount.once(), requestTo(pipelinesApiURL + "/exercise-chat/default/run")).andExpect(method(HttpMethod.POST)).andRespond(request -> {
             var mockRequest = (MockClientHttpRequest) request;
-            var dto = mapper.readValue(mockRequest.getBodyAsString(), PyrisTutorChatPipelineExecutionDTO.class);
+            var dto = mapper.readValue(mockRequest.getBodyAsString(), PyrisExerciseChatPipelineExecutionDTO.class);
             responseConsumer.accept(dto);
             return MockRestResponseCreators.withRawStatus(HttpStatus.ACCEPTED.value()).createResponse(request);
         });
     }
 
     public void mockRunError(int httpStatus) {
-        mockServer.expect(ExpectedCount.once(), requestTo(pipelinesApiURL + "/tutor-chat/default/run")).andExpect(method(HttpMethod.POST))
+        mockServer.expect(ExpectedCount.once(), requestTo(pipelinesApiURL + "/exercise-chat/default/run")).andExpect(method(HttpMethod.POST))
                 .andRespond(withStatus(HttpStatus.valueOf(httpStatus)));
     }
 

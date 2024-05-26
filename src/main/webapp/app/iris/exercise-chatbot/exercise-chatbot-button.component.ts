@@ -3,17 +3,17 @@ import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Overlay } from '@angular/cdk/overlay';
 import { ActivatedRoute } from '@angular/router';
 import { IrisChatbotWidgetComponent } from 'app/iris/exercise-chatbot/widget/chatbot-widget.component';
-import { IrisTutorChatService } from 'app/iris/iris-tutor-chat.service';
+import { IrisExerciseChatService } from 'app/iris/iris-exercise-chat.service';
 import { Subscription } from 'rxjs';
 import { faChevronDown, faCircle } from '@fortawesome/free-solid-svg-icons';
 import { IrisLogoLookDirection, IrisLogoSize } from 'app/iris/iris-logo/iris-logo.component';
 
 @Component({
-    selector: 'jhi-tutor-chatbot-button',
-    templateUrl: './tutor-chatbot-button.component.html',
-    styleUrls: ['./tutor-chatbot-button.component.scss'],
+    selector: 'jhi-exercise-chatbot-button',
+    templateUrl: './exercise-chatbot-button.component.html',
+    styleUrls: ['./exercise-chatbot-button.component.scss'],
 })
-export class IrisTutorChatbotButtonComponent implements OnInit, OnDestroy {
+export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
     dialogRef: MatDialogRef<IrisChatbotWidgetComponent> | null = null;
     chatOpen = false;
     hasNewMessages = false;
@@ -30,7 +30,7 @@ export class IrisTutorChatbotButtonComponent implements OnInit, OnDestroy {
     constructor(
         public dialog: MatDialog,
         protected overlay: Overlay,
-        protected readonly chatService: IrisTutorChatService,
+        protected readonly chatService: IrisExerciseChatService,
         private route: ActivatedRoute,
     ) {}
 

@@ -55,10 +55,12 @@ public record IrisWebsocketDTO(IrisWebsocketMessageType type, IrisMessage messag
 
     @Override
     public boolean equals(Object o) {
-        if (this == o)
+        if (this == o) {
             return true;
-        if (o == null || getClass() != o.getClass())
+        }
+        if (o == null || getClass() != o.getClass()) {
             return false;
+        }
         IrisWebsocketDTO that = (IrisWebsocketDTO) o;
         return type == that.type && Objects.equals(message, that.message) && Objects.equals(rateLimitInfo, that.rateLimitInfo) && Objects.equals(stages, that.stages);
     }

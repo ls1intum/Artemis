@@ -28,7 +28,7 @@ public interface CompetencyJOLRepository extends JpaRepository<CompetencyJOL, Lo
             WHERE c.competency.id = :competencyId
                 AND c.user.id = :userId
             """)
-    Optional<Integer> findValueByCompetencyIdAndUserId(long competencyId, long userId);
+    Optional<Integer> findValueByCompetencyIdAndUserId(@Param("competencyId") long competencyId, @Param("userId") long userId);
 
     @Query("""
             SELECT new de.tum.in.www1.artemis.repository.competency.JOLValueEntry(c.competency.id, c.value)

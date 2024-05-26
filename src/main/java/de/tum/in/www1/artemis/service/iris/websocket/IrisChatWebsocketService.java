@@ -7,8 +7,8 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
+import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
-import de.tum.in.www1.artemis.domain.iris.session.IrisTutorChatSession;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageDTO;
 import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;
@@ -25,8 +25,8 @@ public class IrisChatWebsocketService extends IrisWebsocketService {
     }
 
     private User checkSessionTypeAndGetUser(IrisSession irisSession) {
-        if (!(irisSession instanceof IrisTutorChatSession chatSession)) {
-            throw new UnsupportedOperationException("Only IrisChatSession is supported");
+        if (!(irisSession instanceof IrisChatSession chatSession)) {
+            throw new UnsupportedOperationException("Only IrisChatSessions are supported");
         }
         return chatSession.getUser();
     }

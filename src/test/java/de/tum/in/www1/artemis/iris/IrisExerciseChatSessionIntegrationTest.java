@@ -12,17 +12,17 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.iris.session.IrisExerciseChatSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
-import de.tum.in.www1.artemis.domain.iris.session.IrisTutorChatSession;
-import de.tum.in.www1.artemis.repository.iris.IrisTutorChatSessionRepository;
+import de.tum.in.www1.artemis.repository.iris.IrisExerciseChatSessionRepository;
 import de.tum.in.www1.artemis.web.rest.iris.IrisResource;
 
-class IrisTutorChatSessionIntegrationTest extends AbstractIrisIntegrationTest {
+class IrisExerciseChatSessionIntegrationTest extends AbstractIrisIntegrationTest {
 
     private static final String TEST_PREFIX = "irischatsessionintegration";
 
     @Autowired
-    private IrisTutorChatSessionRepository irisTutorChatSessionRepository;
+    private IrisExerciseChatSessionRepository irisExerciseChatSessionRepository;
 
     private ProgrammingExercise exercise;
 
@@ -40,8 +40,9 @@ class IrisTutorChatSessionIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void createSession() throws Exception {
-        var irisSession = request.postWithResponseBody("/api/iris/programming-exercises/" + exercise.getId() + "/sessions", null, IrisTutorChatSession.class, HttpStatus.CREATED);
-        var actualIrisSession = irisTutorChatSessionRepository.findByIdElseThrow(irisSession.getId());
+        var irisSession = request.postWithResponseBody("/api/iris/programming-exercises/" + exercise.getId() + "/sessions", null, IrisExerciseChatSession.class,
+                HttpStatus.CREATED);
+        var actualIrisSession = irisExerciseChatSessionRepository.findByIdElseThrow(irisSession.getId());
         assertThat(actualIrisSession.getUser()).isEqualTo(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         assertThat(exercise).isEqualTo(actualIrisSession.getExercise());
     }

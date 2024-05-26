@@ -7,6 +7,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * DTO for exercise student metrics.
+ * <p>
+ * Note: When updating this class, make sure to also update Pyris.
  *
  * @param exerciseInformation     the information about the exercises
  * @param categories              the categories of the exercises

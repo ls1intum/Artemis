@@ -19,7 +19,7 @@
         }
     </div>
     <div class="progress-bar">
-        @for (stage of stages; track stage.name) {
+        @for (stage of stages; track $index) {
             <div
                 class="part"
                 [style.flex-grow]="stage.weight"

@@ -1,7 +1,9 @@
 package de.tum.in.www1.artemis.service.util;
 
+import java.time.Instant;
 import java.time.ZonedDateTime;
 
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
 public class ZonedDateTimeUtil {
@@ -25,5 +27,19 @@ public class ZonedDateTimeUtil {
      */
     public static double toRelativeTime(@NotNull ZonedDateTime origin, @NotNull ZonedDateTime unit, @NotNull ZonedDateTime target) {
         return 100.0 * (target.toEpochSecond() - origin.toEpochSecond()) / (unit.toEpochSecond() - origin.toEpochSecond());
+    }
+
+    /**
+     * Convert a ZonedDateTime object to an Instant object.
+     *
+     * @param zonedDateTime the ZonedDateTime object to convert
+     * @return the Instant object
+     */
+    @Nullable
+    public static Instant toInstant(@Nullable ZonedDateTime zonedDateTime) {
+        if (zonedDateTime == null) {
+            return null;
+        }
+        return zonedDateTime.toInstant();
     }
 }

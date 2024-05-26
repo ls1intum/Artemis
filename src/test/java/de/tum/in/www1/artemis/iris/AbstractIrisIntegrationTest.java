@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.connector.IrisRequestMockProvider;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.iris.IrisTemplate;
-import de.tum.in.www1.artemis.domain.iris.session.IrisTutorChatSession;
+import de.tum.in.www1.artemis.domain.iris.session.IrisExerciseChatSession;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettings;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
@@ -126,7 +126,7 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
      * @param session  The chat session
      * @param matchers Argument matchers which describe the messages that should have been sent
      */
-    protected void verifyWebsocketActivityWasExactly(IrisTutorChatSession session, ArgumentMatcher<?>... matchers) {
+    protected void verifyWebsocketActivityWasExactly(IrisExerciseChatSession session, ArgumentMatcher<?>... matchers) {
         var userLogin = session.getUser().getLogin();
         var topicSuffix = "sessions/" + session.getId();
         for (ArgumentMatcher<?> callDescriptor : matchers) {
