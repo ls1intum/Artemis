@@ -37,12 +37,21 @@ Playwright tests rely on the Playwright Node.js library, Playwright browser exte
     ``ADMIN_PASSWORD`` match your Artemis admin user credentials. If you want to create users for the tests, set
     ``CREATE_USERS`` to ``true``.
 
-3. Setup Playwright package and its browser extensions:
+3. Configure test users
 
-    Run ``npm run playwright:setup`` to install the Playwright package, its browser extensions and create corresponding
-    users if creating users is enabled in configuration.
+     Playwright tests require users with different roles to simulate concurrent user interactions. You can configure
+     user ids and check their corresponding user roles in ``src/test/playwright/support/users.ts`` file. Usernames are
+     defined automatically by replacing the ``USERID`` part in ` ``PLAYWRIGHT_USERNAME_TEMPLATE`` with corresponding
+     user id. If users with such usernames do not exist, set ``CREATE_USERS`` to ``true`` on the ``playwright.env``
+     file for users to be created on setup stage. If there exist users with the same name(s) but different user role(s),
+     change user ids to different values to ensure new users are created with roles as defined in configuration.
 
-4. Open Playwright UI
+4. Setup Playwright package and its browser extensions:
+
+    Run ``npm run playwright:setup`` to install Playwright browser binaries, set up the environment to ensure Playwright
+    can locate these binaries and create test users if creating users is enabled in configuration.
+
+5. Open Playwright UI
 
     Run ``npm run playwright:open`` to open the Playwright UI. This is a graphical interface that allows you to run
     individual tests, test files or test suites.
@@ -52,9 +61,16 @@ Playwright tests rely on the Playwright Node.js library, Playwright browser exte
 Test parallelization
 --------------------
 
-Playwright tests are configured to run in fully parallel mode by default. It means all tests in all files are executed
-in parallel. This is achieved by using Playwright's built-in parallelization feature. Test execution tasks are divided
-among working processes. Each process runs a separate browser instance and executes a subset of tests. The number of
-worker processes can be adjusted from ``playwright.config.js`` file. To make tests run sequentially, set the
-``workers`` option to ``1``.
+Running tests in parallel may speed up test execution. Playwright tests are configured to run in fully parallel mode
+by default. It means all tests in all files are executed in parallel. This is achieved by Playwright's built-in
+parallelization feature. Test execution tasks are divided among worker processes. Each process runs a separate browser
+instance and executes a subset of tests. The number of worker processes can be adjusted in ``playwright.config.js``
+file.
 
+.. warning ::
+    Using more worker processes divides the available computing resources, giving each worker fewer resources. If you
+    use too many workers, it can lead to resource contention, slowing down individual test execution and potentially
+    causing timeouts.
+
+To make tests run sequentially, set the ``workers`` option to ``1``. If you want tests in a single file to run
+sequentially and only test files to run in parallel, set the ``fullyParallel`` option to ``false``.
