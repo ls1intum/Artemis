@@ -13,6 +13,7 @@ import jakarta.annotation.PostConstruct;
 import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
+import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.InvalidRefNameException;
@@ -54,10 +55,6 @@ public class BuildJobGitService extends AbstractGitService {
         if (useSsh()) {
             log.info("BuildJobGitService will use ssh keys as authentication method to interact with remote git repositories");
             configureSsh();
-        }
-        else {
-            log.info("BuildJobGitService will use username + password as authentication method to interact with remote git repositories");
-            CredentialsProvider.setDefault(new UsernamePasswordCredentialsProvider(buildAgentGitUsername, buildAgentGitPassword));
         }
     }
 
@@ -126,8 +123,20 @@ public class BuildJobGitService extends AbstractGitService {
         log.debug("Cloning from {} to {}", gitUriAsString, localPath);
         // make sure the directory to copy into is empty (the operation only executes a delete if the directory exists)
         FileUtils.deleteDirectory(localPath.toFile());
-        try (Git git = cloneCommand().setURI(gitUriAsString).setDirectory(localPath.toFile()).call()) {
+        Git git = null;
+        try {
+            CloneCommand cloneCommand = cloneCommand().setURI(gitUriAsString).setDirectory(localPath.toFile());
+            if (!useSsh()) {
+                CredentialsProvider credentialsProvider = new UsernamePasswordCredentialsProvider(buildAgentGitUsername, buildAgentGitPassword);
+                cloneCommand.setCredentialsProvider(credentialsProvider);
+            }
+            git = cloneCommand.call();
             return getExistingCheckedOutRepositoryByLocalPath(localPath, repoUri, defaultBranch);
+        }
+        finally {
+            if (git != null) {
+                git.close();
+            }
         }
     }
 
