@@ -34,8 +34,7 @@ Playwright tests rely on the Playwright Node.js library, Playwright browser exte
         EXERCISE_REPO_DIRECTORY=test-exercise-repos
 
     Make sure ``BASE_URL`` matches your Artemis client URL and ``ADMIN_USERNAME`` and
-    ``ADMIN_PASSWORD`` match your Artemis admin user credentials. If you want to create users for the tests, set
-    ``CREATE_USERS`` to ``true``.
+    ``ADMIN_PASSWORD`` match your Artemis admin user credentials.
 
 3. Configure test users
 
