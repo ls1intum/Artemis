@@ -75,6 +75,7 @@ export class AdditionalData {
 }
 
 // Exercise
+// Copied from src\main\webapp\app\entities\exercise.model.ts
 export type Exercise = {
     title?: string;
     type?: ExerciseType;
@@ -84,6 +85,7 @@ export type Exercise = {
 };
 
 // ExerciseMode
+// Copied from src\main\webapp\app\entities\exercise.model.ts
 export enum ExerciseMode {
     INDIVIDUAL = 'INDIVIDUAL',
     TEAM = 'TEAM',

@@ -25,7 +25,7 @@ export class CourseOverviewPage {
      * @param exerciseId The ID of the exercise to start.
      */
     async startExercise(exerciseId: number) {
-        await this.page.locator('#start-exercise-' + exerciseId).click();
+        await this.getStartExerciseButton(exerciseId).click();
     }
 
     /**
@@ -67,6 +67,23 @@ export class CourseOverviewPage {
      */
     getOpenRunningExerciseButton(exerciseId: number) {
         return this.page.locator('#open-exercise-' + exerciseId);
+    }
+    /**
+     * Retrieves the Locator for the start exercise button by its ID.
+     * @param exerciseId The ID of the exercise.
+     * @returns The Locator for the start exercise button.
+     */
+    getStartExerciseButton(exerciseId: number) {
+        return this.page.locator('#start-exercise-' + exerciseId);
+    }
+
+    /**
+     * Opens an exercise given its name.
+     * @param exerciseName The title of the exercise to open.
+     */
+    async openExercise(exerciseName: string) {
+        await this.page.locator('jhi-course-exercise-details').waitFor({ state: 'visible' });
+        await this.getExercise(exerciseName).click();
     }
 
     /**

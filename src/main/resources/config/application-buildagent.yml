@@ -8,8 +8,8 @@ artemis:
     repo-download-clone-path: ./repos-download
     version-control:
         url: http://localhost:8000  # TODO: is this really needed for build agents?
-        user: "demo"                    # not needed for build agents / TODO: remove this requirement in GitService
-        password: "demo"                # not needed for build agents / TODO: remove this requirement in GitService
+        user: artemis_admin # Required for https access to localvc
+        password: artemis_admin # Required for https access to localvc. You can otherwise use a token, or ssh key
     continuous-integration:
         docker-connection-uri: unix:///var/run/docker.sock
         specify-concurrent-builds: false
@@ -56,3 +56,20 @@ spring:
 server:
     port: 8080
     url: https://artemislocal.cit.tum.de
+
+# at the moment metrics are disabled for build agents
+management:
+    endpoint:
+        health:
+            show-details: never
+        probes:
+            enabled: false
+    jhimetrics:
+        enabled: false
+    metrics:
+        enable:
+            all: false
+
+eureka:
+   client:
+        enabled: true

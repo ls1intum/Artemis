@@ -20,7 +20,7 @@ import { ExamDetailsPage } from './pageobjects/exam/ExamDetailsPage';
 import { ExamManagementPage } from './pageobjects/exam/ExamManagementPage';
 import { ExamExerciseGroupCreationPage } from './pageobjects/exam/ExamExerciseGroupCreationPage';
 import { ExamNavigationBar } from './pageobjects/exam/ExamNavigationBar';
-import { ExamParticipation } from './pageobjects/exam/ExamParticipation';
+import { ExamParticipationPage } from './pageobjects/exam/ExamParticipationPage';
 import { ExamStartEndPage } from './pageobjects/exam/ExamStartEndPage';
 import { CoursesPage } from './pageobjects/course/CoursesPage';
 import { ExamAssessmentPage } from './pageobjects/assessment/ExamAssessmentPage';
@@ -60,10 +60,13 @@ import { ProgrammingExerciseOverviewPage } from './pageobjects/exercises/program
 import { RepositoryPage } from './pageobjects/exercises/programming/RepositoryPage';
 import { ExamGradingPage } from './pageobjects/exam/ExamGradingPage';
 import { ExamScoresPage } from './pageobjects/exam/ExamScoresPage';
+import { ProgrammingExerciseParticipationsPage } from './pageobjects/exercises/programming/ProgrammingExerciseParticipationsPage';
 import { ExamResultsPage } from './pageobjects/exam/ExamResultsPage';
 import { ExerciseTeamsPage } from './pageobjects/exercises/ExerciseTeamsPage';
 import { QuizExerciseOverviewPage } from './pageobjects/exercises/quiz/QuizExerciseOverviewPage';
 import { QuizExerciseParticipationPage } from './pageobjects/exercises/quiz/QuizExerciseParticipationPage';
+import { ModalDialogBox } from './pageobjects/exam/ModalDialogBox';
+import { ExamParticipationActions } from './pageobjects/exam/ExamParticipationActions';
 
 /*
  * Define custom types for fixtures
@@ -99,11 +102,13 @@ export type ArtemisPageObjects = {
     examGrading: ExamGradingPage;
     examNavigation: ExamNavigationBar;
     examManagement: ExamManagementPage;
-    examParticipation: ExamParticipation;
+    examParticipation: ExamParticipationPage;
+    examParticipationActions: ExamParticipationActions;
     examResultsPage: ExamResultsPage;
     examScores: ExamScoresPage;
     examStartEnd: ExamStartEndPage;
     examTestRun: ExamTestRunPage;
+    modalDialog: ModalDialogBox;
     studentExamManagement: StudentExamManagementPage;
     fileUploadExerciseCreation: FileUploadExerciseCreationPage;
     fileUploadExerciseEditor: FileUploadEditorPage;
@@ -115,6 +120,7 @@ export type ArtemisPageObjects = {
     programmingExerciseEditor: OnlineEditorPage;
     programmingExerciseFeedback: ProgrammingExerciseFeedbackPage;
     programmingExerciseOverview: ProgrammingExerciseOverviewPage;
+    programmingExerciseParticipations: ProgrammingExerciseParticipationsPage;
     programmingExerciseRepository: RepositoryPage;
     programmingExercisesScaConfig: CodeAnalysisGradingPage;
     programmingExerciseScaFeedback: ScaFeedbackModal;
@@ -233,7 +239,7 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
         use,
     ) => {
         await use(
-            new ExamParticipation(
+            new ExamParticipationPage(
                 courseList,
                 courseOverview,
                 examNavigation,
@@ -246,6 +252,9 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
             ),
         );
     },
+    examParticipationActions: async ({ page }, use) => {
+        await use(new ExamParticipationActions(page));
+    },
     examResultsPage: async ({ page }, use) => {
         await use(new ExamResultsPage(page));
     },
@@ -255,8 +264,12 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     examStartEnd: async ({ page }, use) => {
         await use(new ExamStartEndPage(page));
     },
+
     examTestRun: async ({ page, examStartEnd }, use) => {
         await use(new ExamTestRunPage(page, examStartEnd));
+    },
+    modalDialog: async ({ page }, use) => {
+        await use(new ModalDialogBox(page));
     },
     studentExamManagement: async ({ page }, use) => {
         await use(new StudentExamManagementPage(page));
@@ -290,6 +303,9 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     },
     programmingExerciseOverview: async ({ page, courseList, courseOverview }, use) => {
         await use(new ProgrammingExerciseOverviewPage(page, courseList, courseOverview));
+    },
+    programmingExerciseParticipations: async ({ page }, use) => {
+        await use(new ProgrammingExerciseParticipationsPage(page));
     },
     programmingExerciseRepository: async ({ page }, use) => {
         await use(new RepositoryPage(page));
