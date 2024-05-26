@@ -3,6 +3,7 @@ import * as fs from 'fs';
 
 // Get the file names from the command line arguments
 const fileNames = process.argv.slice(2);
+fileNames.push("src/main/webapp/app/course/tutorial-groups/services/tutorial-group-free-period.service.ts")
 
 let restCalls: Array<{method: string, url: string, line: number, filePath: string}> = [];
 
@@ -53,4 +54,4 @@ fileNames.forEach(fileName => {
 });
 
 // Write the restCalls array to a JSON file
-fs.writeFileSync('restCalls.json', JSON.stringify(restCalls, null, 2));
+fs.writeFileSync('supporting_scripts/analysis-of-endpoint-connections/restCalls.json', JSON.stringify(restCalls, null, 2));
