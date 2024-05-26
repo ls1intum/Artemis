@@ -7,6 +7,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
@@ -14,6 +16,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisExerciseWithStudentSubmissionsDTO(long id, String title, ExerciseType type, ExerciseMode mode, double maxPoints, double bonusPoints,
         DifficultyLevel difficultyLevel, Instant releaseDate, Instant dueDate, IncludedInOverallScore inclusionMode, boolean presentationScoreEnabled,
         Set<PyrisStudentSubmissionDTO> submissions) {

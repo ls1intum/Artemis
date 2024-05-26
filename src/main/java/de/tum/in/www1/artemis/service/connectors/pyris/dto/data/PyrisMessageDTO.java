@@ -6,11 +6,14 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.in.www1.artemis.domain.iris.message.IrisJsonMessageContent;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender;
 import de.tum.in.www1.artemis.domain.iris.message.IrisTextMessageContent;
 
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisMessageDTO(Instant sentAt, IrisMessageSender sender, List<PyrisMessageContentDTO> contents) {
 
     public static PyrisMessageDTO of(IrisMessage message) {

@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.service.connectors.pyris.job;
 
 import java.io.Serializable;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
@@ -11,6 +13,7 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
  * This is used to reference the details of a job when Pyris sends a status update.
  * As it is stored within Hazelcast, it must be serializable.
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public interface PyrisJob extends Serializable {
 
     long serialVersionUID = 1L;

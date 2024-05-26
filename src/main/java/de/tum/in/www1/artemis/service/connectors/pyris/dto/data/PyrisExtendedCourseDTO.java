@@ -5,6 +5,8 @@ import static de.tum.in.www1.artemis.service.util.ZonedDateTimeUtil.toInstant;
 import java.time.Instant;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 
@@ -12,6 +14,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
  * An extended course DTO for Pyris so it can better answer
  * questions regarding the course organization and content.
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisExtendedCourseDTO(long id, String name, String description, Instant startTime, Instant endTime, ProgrammingLanguage defaultProgrammingLanguage,
         int maxComplaints, int maxTeamComplaints, int maxComplaintTimeDays, int maxRequestMoreFeedbackTimeDays, Integer maxPoints, Integer presentationScore,
 

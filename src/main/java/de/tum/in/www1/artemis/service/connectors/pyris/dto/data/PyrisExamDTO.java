@@ -4,8 +4,11 @@ import static de.tum.in.www1.artemis.service.util.ZonedDateTimeUtil.toInstant;
 
 import java.time.Instant;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.in.www1.artemis.domain.exam.Exam;
 
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisExamDTO(long id, String title, boolean isTextExam, Instant startDate, Instant endDate, Instant publishResultsDate, Instant examStudentReviewStart,
         Instant examStudentReviewEnd
 
