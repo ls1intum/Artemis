@@ -58,8 +58,10 @@ import org.eclipse.jgit.lib.RefUpdate;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.filter.CommitTimeRevFilter;
 import org.eclipse.jgit.revwalk.filter.RevFilter;
+import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.RemoteConfig;
 import org.eclipse.jgit.transport.URIish;
+import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.eclipse.jgit.transport.sshd.JGitKeyCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -135,18 +137,18 @@ public class GitService extends AbstractGitService {
      */
     @PostConstruct
     public void init() {
-        // if (useSsh()) {
-        // log.info("GitService will use ssh keys as authentication method to interact with remote git repositories");
-        // configureSsh();
-        // }
-        // else if (gitToken.isPresent()) {
-        // log.info("GitService will use username + token as authentication method to interact with remote git repositories");
-        // CredentialsProvider.setDefault(new UsernamePasswordCredentialsProvider(gitUser, gitToken.get()));
-        // }
-        // else {
-        // log.info("GitService will use username + password as authentication method to interact with remote git repositories");
-        // CredentialsProvider.setDefault(new UsernamePasswordCredentialsProvider(gitUser, gitPassword));
-        // }
+        if (useSsh()) {
+            log.info("GitService will use ssh keys as authentication method to interact with remote git repositories");
+            configureSsh();
+        }
+        else if (gitToken.isPresent()) {
+            log.info("GitService will use username + token as authentication method to interact with remote git repositories");
+            CredentialsProvider.setDefault(new UsernamePasswordCredentialsProvider(gitUser, gitToken.get()));
+        }
+        else {
+            log.info("GitService will use username + password as authentication method to interact with remote git repositories");
+            CredentialsProvider.setDefault(new UsernamePasswordCredentialsProvider(gitUser, gitPassword));
+        }
     }
 
     private void configureSsh() {
