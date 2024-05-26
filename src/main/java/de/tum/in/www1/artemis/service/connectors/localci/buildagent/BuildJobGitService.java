@@ -21,6 +21,7 @@ import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.eclipse.jgit.transport.sshd.JGitKeyCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -35,8 +36,14 @@ public class BuildJobGitService extends AbstractGitService {
 
     private static final Logger log = LoggerFactory.getLogger(BuildJobGitService.class);
 
+    @Value("${artemis.version-control.build-agent-git-username}")
+    private String buildAgentGitUsername;
+
+    @Value("${artemis.version-control.build-agent-git-password}")
+    private String buildAgentGitPassword;
+
     /**
-     * initialize the GitService, in particular which authentication mechanism should be used
+     * initialize the BuildJobGitService, in particular which authentication mechanism should be used
      * Artemis uses the following order for authentication:
      * 1. ssh key (if available)
      * 2. username + personal access token (if available)
@@ -48,13 +55,9 @@ public class BuildJobGitService extends AbstractGitService {
             log.info("BuildJobGitService will use ssh keys as authentication method to interact with remote git repositories");
             configureSsh();
         }
-        else if (gitToken.isPresent()) {
-            log.info("BuildJobGitService will use username + token as authentication method to interact with remote git repositories");
-            CredentialsProvider.setDefault(new UsernamePasswordCredentialsProvider(gitUser, gitToken.get()));
-        }
         else {
             log.info("BuildJobGitService will use username + password as authentication method to interact with remote git repositories");
-            CredentialsProvider.setDefault(new UsernamePasswordCredentialsProvider(gitUser, gitPassword));
+            CredentialsProvider.setDefault(new UsernamePasswordCredentialsProvider(buildAgentGitUsername, buildAgentGitPassword));
         }
     }
 
