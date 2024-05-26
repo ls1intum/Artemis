@@ -30,6 +30,7 @@ import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilServic
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
+import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisIssue;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 
 class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractSpringIntegrationIndependentTest {
@@ -379,17 +380,7 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractSpringInteg
     @NotNull
     private static StaticCodeAnalysisReportDTO createStaticCodeAnalysisReportDTO() {
         final String longText = "0".repeat(Constants.FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH * 2);
-
-        final var scaIssue = new StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue();
-        scaIssue.setCategory("scaCategory");
-        scaIssue.setMessage(longText);
-        scaIssue.setStartColumn(0);
-        scaIssue.setEndColumn(123);
-        scaIssue.setFilePath("some/long/file/Path.java");
-
-        final StaticCodeAnalysisReportDTO scaReport = new StaticCodeAnalysisReportDTO();
-        scaReport.setTool(StaticCodeAnalysisTool.CHECKSTYLE);
-        scaReport.setIssues(List.of(scaIssue));
-        return scaReport;
+        final StaticCodeAnalysisIssue scaIssue = new StaticCodeAnalysisIssue("some/long/file/Path.java", null, null, 0, 123, "RuleName", "scaCategory", longText, null, null);
+        return new StaticCodeAnalysisReportDTO(StaticCodeAnalysisTool.CHECKSTYLE, List.of(scaIssue));
     }
 }

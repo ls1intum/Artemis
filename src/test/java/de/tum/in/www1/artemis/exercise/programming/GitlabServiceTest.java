@@ -101,7 +101,7 @@ class GitlabServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
     void testHealthOk() throws URISyntaxException, JsonProcessingException {
         gitlabRequestMockProvider.mockHealth("ok", HttpStatus.OK);
         var health = versionControlService.health();
-        assertThat(health.getAdditionalInfo()).containsEntry("url", gitlabServerUrl);
+        assertThat(health.additionalInfo()).containsEntry("url", gitlabServerUrl);
         assertThat(health.isUp()).isTrue();
     }
 
@@ -110,7 +110,7 @@ class GitlabServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
     void testHealthNotOk() throws URISyntaxException, JsonProcessingException {
         gitlabRequestMockProvider.mockHealth("notok", HttpStatus.OK);
         var health = versionControlService.health();
-        assertThat(health.getAdditionalInfo()).containsEntry("url", gitlabServerUrl).containsEntry("status", "notok");
+        assertThat(health.additionalInfo()).containsEntry("url", gitlabServerUrl).containsEntry("status", "notok");
         assertThat(health.isUp()).isFalse();
     }
 
@@ -120,7 +120,7 @@ class GitlabServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         gitlabRequestMockProvider.mockHealth("ok", HttpStatus.INTERNAL_SERVER_ERROR);
         var health = versionControlService.health();
         assertThat(health.isUp()).isFalse();
-        assertThat(health.getException()).isNotNull();
+        assertThat(health.exception()).isNotNull();
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")

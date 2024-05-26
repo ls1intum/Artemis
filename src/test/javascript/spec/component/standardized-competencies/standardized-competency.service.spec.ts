@@ -1,7 +1,7 @@
 import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { KnowledgeArea, KnowledgeAreaDTO, StandardizedCompetency } from 'app/entities/competency/standardized-competency.model';
+import { KnowledgeArea, KnowledgeAreaDTO, Source, StandardizedCompetency } from 'app/entities/competency/standardized-competency.model';
 import { take } from 'rxjs';
 import { CompetencyTaxonomy } from 'app/entities/competency.model';
 import { StandardizedCompetencyService } from 'app/shared/standardized-competencies/standardized-competency.service';
@@ -106,5 +106,25 @@ describe('StandardizedCompetencyService', () => {
         tick();
 
         expect(actualResult.body).toEqual(expectedResult);
+    }));
+
+    it('should get sources', fakeAsync(() => {
+        let actualSources = new HttpResponse<Source[]>();
+        const expectedSources: Source[] = [
+            { id: 1, title: 'source1' },
+            { id: 2, title: 'source2' },
+        ];
+        const returnedFromService = [...expectedSources];
+
+        standardizedCompetencyService
+            .getSources()
+            .pipe(take(1))
+            .subscribe((resp) => (actualSources = resp));
+
+        const req = httpTestingController.expectOne({ method: 'GET' });
+        req.flush(returnedFromService);
+        tick();
+
+        expect(actualSources.body).toEqual(expectedSources);
     }));
 });

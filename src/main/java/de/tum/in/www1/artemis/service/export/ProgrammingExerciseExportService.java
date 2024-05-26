@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.service.export;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService.RepositoryCheckoutPath;
-import static de.tum.in.www1.artemis.service.util.XmlFileUtils.getDocumentBuilderFactory;
+import static de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsXmlFileUtils.getDocumentBuilderFactory;
 
 import java.io.File;
 import java.io.IOException;

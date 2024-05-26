@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.websocket.localci;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALCI;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -11,8 +13,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildAgentInformation;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildAgentInformation;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobQueueItem;
 
 /**
  * This service sends out websocket messages for the local continuous integration system.
@@ -20,7 +22,7 @@ import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueu
  * It is also used to send build agent information to the client.
  */
 @Service
-@Profile("localci")
+@Profile(PROFILE_LOCALCI)
 public class LocalCIWebsocketMessagingService {
 
     private static final Logger log = LoggerFactory.getLogger(LocalCIWebsocketMessagingService.class);
@@ -45,7 +47,7 @@ public class LocalCIWebsocketMessagingService {
      * @param buildJobQueue the queued build jobs
      */
 
-    public void sendQueuedBuildJobsForCourse(long courseId, List<LocalCIBuildJobQueueItem> buildJobQueue) {
+    public void sendQueuedBuildJobsForCourse(long courseId, List<BuildJobQueueItem> buildJobQueue) {
         String channel = "/topic/courses/" + courseId + "/queued-jobs";
         log.debug("Sending message on topic {}: {}", channel, buildJobQueue);
         websocketMessagingService.sendMessage(channel, buildJobQueue);
@@ -57,7 +59,7 @@ public class LocalCIWebsocketMessagingService {
      * @param courseId         the id of the course for which to send the running build jobs
      * @param buildJobsRunning the running build jobs
      */
-    public void sendRunningBuildJobsForCourse(long courseId, List<LocalCIBuildJobQueueItem> buildJobsRunning) {
+    public void sendRunningBuildJobsForCourse(long courseId, List<BuildJobQueueItem> buildJobsRunning) {
         String channel = "/topic/courses/" + courseId + "/running-jobs";
         log.debug("Sending message on topic {}: {}", channel, buildJobsRunning);
         websocketMessagingService.sendMessage(channel, buildJobsRunning);
@@ -68,7 +70,7 @@ public class LocalCIWebsocketMessagingService {
      *
      * @param buildJobQueue the queued build jobs
      */
-    public void sendQueuedBuildJobs(List<LocalCIBuildJobQueueItem> buildJobQueue) {
+    public void sendQueuedBuildJobs(List<BuildJobQueueItem> buildJobQueue) {
         String channel = "/topic/admin/queued-jobs";
         log.debug("Sending message on topic {}: {}", channel, buildJobQueue);
         websocketMessagingService.sendMessage(channel, buildJobQueue);
@@ -79,7 +81,7 @@ public class LocalCIWebsocketMessagingService {
      *
      * @param buildJobQueue the running build jobs
      */
-    public void sendRunningBuildJobs(List<LocalCIBuildJobQueueItem> buildJobQueue) {
+    public void sendRunningBuildJobs(List<BuildJobQueueItem> buildJobQueue) {
         String channel = "/topic/admin/running-jobs";
         log.debug("Sending message on topic {}: {}", channel, buildJobQueue);
         websocketMessagingService.sendMessage(channel, buildJobQueue);
@@ -90,14 +92,14 @@ public class LocalCIWebsocketMessagingService {
      *
      * @param buildAgentInfo the build agent information
      */
-    public void sendBuildAgentSummary(List<LocalCIBuildAgentInformation> buildAgentInfo) {
+    public void sendBuildAgentSummary(List<BuildAgentInformation> buildAgentInfo) {
         String channel = "/topic/admin/build-agents";
         log.debug("Sending message on topic {}: {}", channel, buildAgentInfo);
         // TODO: convert into a proper DTO and strip unnecessary information, e.g. build config, because it's not shown in the client and contains too much information
         websocketMessagingService.sendMessage(channel, buildAgentInfo);
     }
 
-    public void sendBuildAgentDetails(LocalCIBuildAgentInformation buildAgentDetails) {
+    public void sendBuildAgentDetails(BuildAgentInformation buildAgentDetails) {
         String channel = "/topic/admin/build-agent/" + buildAgentDetails.name();
         log.debug("Sending message on topic {}: {}", channel, buildAgentDetails);
         websocketMessagingService.sendMessage(channel, buildAgentDetails);
