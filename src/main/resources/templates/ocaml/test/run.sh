@@ -69,8 +69,8 @@ if ! timeout -s SIGTERM $BUILD_TIMEOUT checker/checker.exe; then
     echo "Unable to build submission, please ensure that your code builds and matches the provided interface" >&2
     exit 0
 fi
-# build the sudent submission
-# don't reference the tests or solution, so that we can show the build output to the sudent and not leak test / solution code
+# build the student submission
+# don't reference the tests or solution, so that we can show the build output to the student and not leak test / solution code
 if ! timeout -s SIGTERM $BUILD_TIMEOUT dune build --force assignment; then
     echo "Unable to build submission, please ensure that your code builds and matches the provided interface" >&2
     exit 0
