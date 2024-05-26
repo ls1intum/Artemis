@@ -8,7 +8,6 @@ import {
     OnDestroy,
     OnInit,
     QueryList,
-    Renderer2,
     TemplateRef,
     ViewChild,
     ViewChildren,
@@ -66,6 +65,8 @@ import { CourseLecturesComponent } from './course-lectures/course-lectures.compo
 import { facSidebar } from '../../content/icons/icons';
 import { CourseTutorialGroupsComponent } from './course-tutorial-groups/course-tutorial-groups.component';
 import { CoursesForDashboardDTO } from 'app/course/manage/courses-for-dashboard-dto';
+import { sortCourses } from 'app/shared/util/course.util';
+import { BreakpointObserver } from '@angular/cdk/layout';
 
 interface CourseActionItem {
     title: string;
@@ -121,6 +122,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     // Properties to track hidden items for dropdown menu
     dropdownOpen: boolean = false;
     dropdownCourses: boolean = false;
+    isScreenSmall = false;
     anyItemHidden: boolean = false;
     hiddenItems: SidebarItem[] = [];
     thresholdsForEachSidebarItem: number[] = [];
@@ -129,6 +131,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     readonly WINDOW_OFFSET: number = 300;
     readonly ITEM_HEIGHT: number = 38;
     readonly BREADCRUMB_AND_NAVBAR_HEIGHT: number = 88;
+    readonly MIN_DISPLAYED_COURSES: number = 4;
 
     private conversationServiceInstantiated = false;
     private checkedForUnreadMessages = false;
@@ -199,7 +202,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         private courseAccessStorageService: CourseAccessStorageService,
         private profileService: ProfileService,
         private modalService: NgbModal,
-        private renderer: Renderer2,
+        private breakpointObserver: BreakpointObserver,
     ) {}
 
     async ngOnInit() {
@@ -209,6 +212,9 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.profileSubscription = this.profileService.getProfileInfo()?.subscribe((profileInfo) => {
             this.isProduction = profileInfo?.inProduction;
             this.isTestServer = profileInfo.testServer ?? false;
+        });
+        this.breakpointObserver.observe(['(max-width: 960px)']).subscribe((result) => {
+            this.isScreenSmall = result.matches;
         });
         this.getCollapseStateFromStorage();
         this.course = this.courseStorageService.getCourse(this.courseId);
@@ -306,15 +312,14 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.courseService.findAllForDashboard().subscribe({
             next: (res: HttpResponse<CoursesForDashboardDTO>) => {
                 if (res.body) {
-                    const courses: Course[] = [];
-                    for (const courseDto of res.body.courses) {
-                        courses.push(courseDto.course);
-                    }
-                    this.courses = courses.sort((a, b) => (a.title ?? '').localeCompare(b.title ?? ''));
-                    if (this.courses.length > 3) {
+                    const { courses: courseDtos } = res.body;
+                    const courses = courseDtos.map((courseDto) => courseDto.course);
+                    this.courses = sortCourses(courses);
+                    if (this.courses.length > this.MIN_DISPLAYED_COURSES) {
                         const lastAccessedCourseIds = this.courseAccessStorageService.getLastAccessedCourses();
                         this.courses = this.courses.filter((course) => lastAccessedCourseIds.includes(course.id!));
                     }
+                    this.courses = this.courses.filter((course) => course.id !== this.courseId);
                 }
             },
         });
@@ -322,8 +327,8 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
 
     /** Navigate to a new Course */
     switchCourse(course: Course) {
-        this.router.navigate(['courses', course.id]).then(() => {
-            window.location.reload();
+        this.router.navigateByUrl('/', { skipLocationChange: true }).then(() => {
+            this.router.navigate(['courses', course.id]);
         });
     }
 
@@ -809,6 +814,4 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.isNavbarCollapsed = !this.isNavbarCollapsed;
         localStorage.setItem('navbar.collapseState', JSON.stringify(this.isNavbarCollapsed));
     }
-
-    protected readonly String = String;
 }

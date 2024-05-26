@@ -18,18 +18,18 @@
                                     <jhi-secured-image id="courseIcon" [src]="course.courseIcon" />
                                 </div>
                             } @else {
-                                <div id="courseCircle" class="course-circle d-flex align-items-center justify-content-center">
+                                <div class="course-circle d-flex align-items-center justify-content-center">
                                     <span class="fs-4">{{ course?.title | slice: 0 : 1 }}</span>
                                 </div>
                             }
-                            @if (!isNavbarCollapsed) {
-                                <div id="test-course-title" class="h6 mb-0 fw-bold text-body auto-collapse">{{ course?.title }}</div>
+                            @if (!isNavbarCollapsed || !isScreenSmall) {
+                                {{ course?.title }}
                             }
                             <div id="courseDropdownButton" class="d-inline-flex position-relative m-2">
-                                <fa-icon [icon]="faChevronDown" />
+                                <fa-icon [icon]="faChevronRight" class="rotate-icon chevron-position" [class.rotated]="dropdownCourses" />
                             </div>
                         </div>
-                        <div id="dropdownCourses" [ngStyle]="{ width: isNavbarCollapsed ? '58px' : '210px' }" [ngClass]="{ active: dropdownCourses }">
+                        <div id="dropdownCourses" [ngStyle]="{ width: isNavbarCollapsed || isScreenSmall ? '58px' : '210px' }" [ngClass]="{ active: dropdownCourses }">
                             <ul>
                                 @for (course of courses; track course) {
                                     <li>
@@ -43,7 +43,7 @@
                                                     <span class="fs-4" style="margin-left: 1px">{{ course?.title | slice: 0 : 1 }}</span>
                                                 </div>
                                             }
-                                            @if (!isNavbarCollapsed) {
+                                            @if (!isNavbarCollapsed || anyItemHidden) {
                                                 {{ course?.title }}
                                             }
                                         </a>

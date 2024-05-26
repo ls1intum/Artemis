@@ -264,8 +264,8 @@ jhi-secured-image {
     background-color: var(--dropdown-bg);
     border: 1px solid var(--border-color);
     left: 5px;
-    border-radius: 10px;
-    z-index: 100;
+    border-radius: 4px;
+    z-index: 1000000;
     ul {
         list-style: none;
         margin: 0;
