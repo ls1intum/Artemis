@@ -41,11 +41,11 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
 
     sortedRealExams?: Exam[];
     sortedTestExams?: Exam[];
-    examSelected: boolean = true;
+    examSelected = true;
     accordionExamGroups: AccordionGroups = DEFAULT_UNIT_GROUPS;
     sidebarData: SidebarData;
     sidebarExams: SidebarCardElement[] = [];
-    isCollapsed: boolean = false;
+    isCollapsed = false;
 
     constructor(
         private route: ActivatedRoute,
@@ -61,7 +61,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
      */
     ngOnInit(): void {
         this.isCollapsed = this.courseOverviewService.getSidebarCollapseStateFromStorage('exam');
-        this.parentParamSubscription = this.route.parent!.params.subscribe((params) => {
+        this.parentParamSubscription = this.route.parent?.params.subscribe((params) => {
             this.courseId = Number(params.courseId);
         });
 
