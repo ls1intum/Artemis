@@ -19,6 +19,7 @@ test.describe('Exam management', () => {
             await login(admin);
             course = await courseManagementAPIRequests.createCourse({ customizeGroups: true });
             await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
+            await courseManagementAPIRequests.addInstructorToCourse(course, instructor);
             exam = await examAPIRequests.createExam({ course, title: 'Exam ' + generateUUID() });
         });
 
@@ -150,6 +151,7 @@ test.describe('Exam management', () => {
             await Commands.login(page, admin);
             course = await courseManagementAPIRequests.createCourse({ customizeGroups: true });
             await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
+            await courseManagementAPIRequests.addInstructorToCourse(course, instructor);
             exam = await examAPIRequests.createExam({ course, title: 'Exam ' + generateUUID() });
             const exerciseGroup = await examAPIRequests.addExerciseGroupForExam(exam);
             await exerciseAPIRequests.createTextExercise({ exerciseGroup });
