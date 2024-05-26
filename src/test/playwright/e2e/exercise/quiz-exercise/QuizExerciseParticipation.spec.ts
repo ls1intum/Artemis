@@ -67,7 +67,7 @@ test.describe('Quiz Exercise Participation', () => {
         });
 
         test('Student can participate in scheduled quiz when working time arrives', async ({ page, login, courseOverview, quizExerciseParticipation }) => {
-            await login(studentOne, '/courses/' + course.id);
+            await login(studentOne, `/courses/${course.id}`);
             await courseOverview.openRunningExercise(quizExercise.id!);
             await page.waitForTimeout(timeUntilQuizStartInSeconds * 1000);
             await expect(quizExerciseParticipation.getWaitingForStartAlert()).not.toBeVisible();
@@ -138,7 +138,7 @@ test.describe('Quiz Exercise Participation', () => {
             await courseManagement.openExercisesOfCourse(course.id!);
             await courseManagementExercises.endQuiz(quizExercise);
             await courseManagementExercises.getExercise(quizExercise.id!).locator('button', { hasText: 'Release For Practice' }).click();
-            await login(studentOne, '/courses/' + course.id);
+            await login(studentOne, `/courses/${course.id}`);
             await courseOverview.practiceExercise();
             await expect(quizExerciseParticipation.getQuizQuestion(0)).toBeVisible();
         });

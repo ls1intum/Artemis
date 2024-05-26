@@ -66,7 +66,7 @@ export class CourseOverviewPage {
      * @returns The Locator for the button opening running exercise.
      */
     getOpenRunningExerciseButton(exerciseId: number) {
-        return this.page.locator('#open-exercise-' + exerciseId);
+        return this.page.locator(`#open-exercise-${exerciseId}`);
     }
     /**
      * Retrieves the Locator for the start exercise button by its ID.
@@ -74,7 +74,7 @@ export class CourseOverviewPage {
      * @returns The Locator for the start exercise button.
      */
     getStartExerciseButton(exerciseId: number) {
-        return this.page.locator('#start-exercise-' + exerciseId);
+        return this.page.locator(`#start-exercise-${exerciseId}`);
     }
 
     /**
