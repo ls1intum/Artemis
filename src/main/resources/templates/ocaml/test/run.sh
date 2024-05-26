@@ -52,7 +52,7 @@ cp_code solution
 echo 'include Assignment' > solution/solution.ml
 cp_code assignment
 
-# select if tests are run by generated source code as studen toplevel code may run before the tests and be able to spoof a runtime signal
+# select if tests are run by generated source code as student toplevel code may run before the tests and be able to spoof a runtime signal
 echo "let runHidden = $RUN_HIDDEN" > test/runHidden.ml
 
 # shellcheck disable=SC2046
