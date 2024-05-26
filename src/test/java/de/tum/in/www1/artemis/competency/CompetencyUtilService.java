@@ -11,12 +11,14 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
+import de.tum.in.www1.artemis.domain.competency.Prerequisite;
 import de.tum.in.www1.artemis.domain.competency.RelationType;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.CompetencyRelationRepository;
 import de.tum.in.www1.artemis.repository.CompetencyRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitRepository;
+import de.tum.in.www1.artemis.repository.PrerequisiteRepository;
 
 /**
  * Service responsible for initializing the database with specific testdata related to competencies for use in integration tests.
@@ -35,6 +37,9 @@ public class CompetencyUtilService {
 
     @Autowired
     private CompetencyRelationRepository competencyRelationRepository;
+
+    @Autowired
+    private PrerequisiteRepository prerequisiteRepository;
 
     /**
      * Creates and saves a Competency for the given Course.
@@ -167,5 +172,19 @@ public class CompetencyUtilService {
     public Competency updateMasteryThreshold(@NotNull Competency competency, int masteryThreshold) {
         competency.setMasteryThreshold(masteryThreshold);
         return competencyRepo.save(competency);
+    }
+
+    /**
+     * Creates and saves a Prerequisite competency for the given Course.
+     *
+     * @param course The Course the Prerequisite belongs to
+     * @return The created Prerequisite
+     */
+    public Prerequisite createPrerequisite(Course course) {
+        Prerequisite prerequisite = new Prerequisite();
+        prerequisite.setTitle("Example Competency");
+        prerequisite.setDescription("Magna pars studiorum, prodita quaerimus.");
+        prerequisite.setCourse(course);
+        return prerequisiteRepository.save(prerequisite);
     }
 }

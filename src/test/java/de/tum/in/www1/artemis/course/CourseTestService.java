@@ -80,6 +80,7 @@ import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.Competency;
+import de.tum.in.www1.artemis.domain.competency.Prerequisite;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
@@ -678,8 +679,8 @@ public class CourseTestService {
         course.setCompetencies(competencies);
         course = courseRepo.save(course);
 
-        Set<Competency> prerequisites = new HashSet<>();
-        prerequisites.add(competencyUtilService.createCompetency(courseUtilService.createCourse()));
+        Set<Prerequisite> prerequisites = new HashSet<>();
+        prerequisites.add(competencyUtilService.createPrerequisite(courseUtilService.createCourse()));
         course.setPrerequisites(prerequisites);
         course = courseRepo.save(course);
 

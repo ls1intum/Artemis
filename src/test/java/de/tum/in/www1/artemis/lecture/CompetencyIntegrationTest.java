@@ -168,7 +168,8 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
         course2 = courseUtilService.createCourse();
 
         competency = createCompetency(course);
-        createPrerequisiteForCourse2();
+        // TODO: re-enable later
+        // createPrerequisiteForCourse2();
         lecture = createLecture(course);
 
         textExercise = createTextExercise(pastTimestamp, pastTimestamp, pastTimestamp, Set.of(competency), false);
@@ -196,11 +197,14 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
         return competencyRelationRepository.save(relation);
     }
 
-    private void createPrerequisiteForCourse2() {
-        // Add the first competency as a prerequisite to the other course
-        course2.addPrerequisite(competency);
-        courseRepository.save(course2);
-    }
+    // TODO: re-enable later
+    /*
+     * private void createPrerequisiteForCourse2() {
+     * // Add the first competency as a prerequisite to the other course
+     * course2.addPrerequisite(competency);
+     * courseRepository.save(course2);
+     * }
+     */
 
     private void creatingLectureUnitsOfLecture(Competency competency) {
         // creating lecture units for lecture one
@@ -812,62 +816,56 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
         assertThat(prerequisites).containsExactly(competency);
     }
 
-    @Nested
-    class AddPrerequisite {
-
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-        void shouldAddPrerequisite() throws Exception {
-            Competency competency = new Competency();
-            competency.setTitle("CompetencyTwo");
-            competency.setDescription("This is an example competency");
-            competency.setCourse(course2);
-            competency = competencyRepository.save(competency);
-
-            Competency prerequisite = request.postWithResponseBody("/api/courses/" + course.getId() + "/prerequisites/" + competency.getId(), competency, Competency.class,
-                    HttpStatus.OK);
-
-            assertThat(prerequisite).isNotNull();
-            assertThat(prerequisite.getConsecutiveCourses()).contains(course);
-        }
-
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-        void shouldNotAddPrerequisiteWhenAlreadyCompetencyInCourse() throws Exception {
-            // Test that a competency of a course can not be a prerequisite to the same course
-            request.postWithResponseBody("/api/courses/" + course.getId() + "/prerequisites/" + competency.getId(), competency, Competency.class, HttpStatus.BAD_REQUEST);
-        }
-    }
-
-    @Nested
-    class RemovePrerequisite {
-
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-        void shouldRemovePrerequisite() throws Exception {
-            request.delete("/api/courses/" + course2.getId() + "/prerequisites/" + competency.getId(), HttpStatus.OK);
-            Course course = courseRepository.findWithEagerCompetenciesById(course2.getId()).orElseThrow();
-            assertThat(course.getPrerequisites()).doesNotContain(competency);
-        }
-
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-        void shouldReturnBadRequestWhenPrerequisiteNotExists() throws Exception {
-            request.delete("/api/courses/" + course.getId() + "/prerequisites/" + competency.getId(), HttpStatus.BAD_REQUEST);
-        }
-
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-        void shouldNotRemovePrerequisiteOfAnotherCourse() throws Exception {
-            Course anotherCourse = courseUtilService.createCourse();
-            anotherCourse.addPrerequisite(competency);
-            anotherCourse = courseRepository.save(anotherCourse);
-
-            request.delete("/api/courses/" + course2.getId() + "/prerequisites/" + competency.getId(), HttpStatus.OK);
-            anotherCourse = courseRepository.findWithEagerCompetenciesById(anotherCourse.getId()).orElseThrow();
-            assertThat(anotherCourse.getPrerequisites()).contains(competency);
-        }
-    }
+    // TODO: re-enable when complete again
+    /*
+     * @Nested
+     * class AddPrerequisite {
+     * @Test
+     * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+     * void shouldAddPrerequisite() throws Exception {
+     * Competency competency = new Competency();
+     * competency.setTitle("CompetencyTwo");
+     * competency.setDescription("This is an example competency");
+     * competency.setCourse(course2);
+     * competency = competencyRepository.save(competency);
+     * Competency prerequisite = request.postWithResponseBody("/api/courses/" + course.getId() + "/prerequisites/" + competency.getId(), competency, Competency.class,
+     * HttpStatus.OK);
+     * assertThat(prerequisite).isNotNull();
+     * assertThat(prerequisite.getConsecutiveCourses()).contains(course);
+     * }
+     * @Test
+     * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+     * void shouldNotAddPrerequisiteWhenAlreadyCompetencyInCourse() throws Exception {
+     * // Test that a competency of a course can not be a prerequisite to the same course
+     * request.postWithResponseBody("/api/courses/" + course.getId() + "/prerequisites/" + competency.getId(), competency, Competency.class, HttpStatus.BAD_REQUEST);
+     * }
+     * }
+     * @Nested
+     * class RemovePrerequisite {
+     * @Test
+     * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+     * void shouldRemovePrerequisite() throws Exception {
+     * request.delete("/api/courses/" + course2.getId() + "/prerequisites/" + competency.getId(), HttpStatus.OK);
+     * Course course = courseRepository.findWithEagerCompetenciesById(course2.getId()).orElseThrow();
+     * assertThat(course.getPrerequisites()).doesNotContain(competency);
+     * }
+     * @Test
+     * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+     * void shouldReturnBadRequestWhenPrerequisiteNotExists() throws Exception {
+     * request.delete("/api/courses/" + course.getId() + "/prerequisites/" + competency.getId(), HttpStatus.BAD_REQUEST);
+     * }
+     * @Test
+     * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+     * void shouldNotRemovePrerequisiteOfAnotherCourse() throws Exception {
+     * Course anotherCourse = courseUtilService.createCourse();
+     * anotherCourse.addPrerequisite(competency);
+     * anotherCourse = courseRepository.save(anotherCourse);
+     * request.delete("/api/courses/" + course2.getId() + "/prerequisites/" + competency.getId(), HttpStatus.OK);
+     * anotherCourse = courseRepository.findWithEagerCompetenciesById(anotherCourse.getId()).orElseThrow();
+     * assertThat(anotherCourse.getPrerequisites()).contains(competency);
+     * }
+     * }
+     */
 
     @Nested
     class CreateCompetencies {

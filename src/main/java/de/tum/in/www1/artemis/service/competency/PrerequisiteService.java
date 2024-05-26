@@ -2,12 +2,19 @@ package de.tum.in.www1.artemis.service.competency;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.competency.CourseCompetency;
 import de.tum.in.www1.artemis.domain.competency.Prerequisite;
+import de.tum.in.www1.artemis.repository.CourseCompetencyRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.PrerequisiteRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.dto.competency.PrerequisiteRequestDTO;
 
 /**
@@ -21,9 +28,19 @@ public class PrerequisiteService {
 
     private final CourseRepository courseRepository;
 
-    public PrerequisiteService(PrerequisiteRepository prerequisiteRepository, CourseRepository courseRepository) {
+    private final CourseCompetencyRepository courseCompetencyRepository;
+
+    private final UserRepository userRepository;
+
+    private final AuthorizationCheckService authorizationCheckService;
+
+    public PrerequisiteService(PrerequisiteRepository prerequisiteRepository, CourseRepository courseRepository, CourseCompetencyRepository courseCompetencyRepository,
+            UserRepository userRepository, AuthorizationCheckService authorizationCheckService) {
         this.prerequisiteRepository = prerequisiteRepository;
         this.courseRepository = courseRepository;
+        this.courseCompetencyRepository = courseCompetencyRepository;
+        this.userRepository = userRepository;
+        this.authorizationCheckService = authorizationCheckService;
     }
 
     /**
@@ -72,5 +89,44 @@ public class PrerequisiteService {
     public void deletePrerequisite(long prerequisiteId, long courseId) {
         prerequisiteRepository.findByIdAndCourseIdElseThrow(prerequisiteId, courseId);
         prerequisiteRepository.deleteById(prerequisiteId);
+    }
+
+    /**
+     * Imports the courseCompetencies with the given ids as prerequisites into a course
+     *
+     * @param courseId            the course to import into
+     * @param courseCompetencyIds the ids of the courseCompetencies to import
+     * @return The list of imported prerequisites
+     */
+    public List<Prerequisite> importPrerequisites(long courseId, List<Long> courseCompetencyIds) {
+        var course = courseRepository.findByIdElseThrow(courseId);
+        var user = userRepository.getUser();
+        List<CourseCompetency> courseCompetenciesToImport;
+        if (authorizationCheckService.isAdmin(user)) {
+            courseCompetenciesToImport = courseCompetencyRepository.findAllByIdElseThrow(courseCompetencyIds);
+        }
+        else {
+            courseCompetenciesToImport = courseCompetencyRepository.findAllByIdAndUserIsAtLeastEditorInCourseElseThrow(courseCompetencyIds, user.getGroups());
+        }
+
+        var prerequisitesToImport = new ArrayList<Prerequisite>();
+        for (var competency : courseCompetenciesToImport) {
+            var prerequisiteToImport = new Prerequisite();
+            prerequisiteToImport.setTitle(competency.getTitle());
+            prerequisiteToImport.setDescription(competency.getDescription());
+            prerequisiteToImport.setTaxonomy(competency.getTaxonomy());
+            prerequisiteToImport.setOptional(competency.isOptional());
+            prerequisiteToImport.setMasteryThreshold(competency.getMasteryThreshold());
+            // do not set due date
+            prerequisiteToImport.setLinkedCourseCompetency(competency);
+            prerequisiteToImport.setCourse(course);
+
+            prerequisitesToImport.add(prerequisiteToImport);
+        }
+
+        // TODO: link to learning paths once we support them for prerequisites.
+        // TODO: import relations once we support them for prerequisites.
+
+        return prerequisiteRepository.saveAll(prerequisitesToImport);
     }
 }

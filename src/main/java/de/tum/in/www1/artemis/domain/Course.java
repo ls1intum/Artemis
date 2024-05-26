@@ -246,7 +246,6 @@ public class Course extends DomainObject {
     @JsonIgnoreProperties("course")
     private Set<Organization> organizations = new HashSet<>();
 
-    @ManyToMany
     @OneToMany(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("course")
     @OrderBy("title")

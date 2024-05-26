@@ -62,8 +62,6 @@ import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyImportResponseDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyRelationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyWithTailRelationDTO;
-import de.tum.in.www1.artemis.web.rest.dto.competency.PrerequisiteRequestDTO;
-import de.tum.in.www1.artemis.web.rest.dto.competency.PrerequisiteResponseDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.CompetencyPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -80,8 +78,6 @@ public class CompetencyResource {
     private static final Logger log = LoggerFactory.getLogger(CompetencyResource.class);
 
     private static final String ENTITY_NAME = "competency";
-
-    private static final String PREREQUISITE_NAME = "prerequisite";
 
     private final CourseRepository courseRepository;
 
@@ -107,10 +103,6 @@ public class CompetencyResource {
 
     private final CompetencyRelationService competencyRelationService;
 
-    private final PrerequisiteService prerequisiteService;
-
-    private final PrerequisiteRepository prerequisiteRepository;
-
     public CompetencyResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             CompetencyRepository competencyRepository, CompetencyRelationRepository competencyRelationRepository, CompetencyService competencyService,
             CompetencyProgressRepository competencyProgressRepository, CompetencyProgressService competencyProgressService, ExerciseService exerciseService,
@@ -129,8 +121,6 @@ public class CompetencyResource {
         this.lectureUnitService = lectureUnitService;
         this.competencyRelationService = competencyRelationService;
         this.irisCompetencyGenerationSessionService = irisCompetencyGenerationSessionService;
-        this.prerequisiteService = prerequisiteService;
-        this.prerequisiteRepository = prerequisiteRepository;
     }
 
     /**
@@ -535,113 +525,6 @@ public class CompetencyResource {
 
         return ResponseEntity.ok().build();
     }
-
-    // Prerequisite Endpoints
-
-    /**
-     * GET /courses/:courseId/prerequisites
-     *
-     * @param courseId the id of the course for which the competencies should be fetched
-     * @return the ResponseEntity with status 200 (OK) and with body the found competencies
-     */
-    @GetMapping("courses/{courseId}/prerequisites")
-    @EnforceAtLeastStudent
-    public ResponseEntity<List<PrerequisiteResponseDTO>> getPrerequisites(@PathVariable long courseId) {
-        log.debug("REST request to get prerequisites for course with id: {}", courseId);
-        Course course = courseRepository.findByIdElseThrow(courseId);
-
-        // Allow any student to see the prerequisites if the course is open to self-enrollment
-        if (!course.isEnrollmentEnabled()) {
-            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
-        }
-
-        var prerequisites = prerequisiteRepository.findByCourseIdOrderByTitle(courseId);
-
-        return ResponseEntity.ok(prerequisites.stream().map(PrerequisiteResponseDTO::of).toList());
-    }
-
-    /**
-     * POST /courses/:courseId/prerequisites : creates a new prerequisite competency.
-     *
-     * @param courseId     the id of the course to which the competency should be added
-     * @param prerequisite the prerequisite that should be created
-     * @return the ResponseEntity with status 201 (Created) and with body the new prerequisite
-     * @throws URISyntaxException if the Location URI syntax is incorrect
-     */
-    @PostMapping("courses/{courseId}/prerequisites")
-    @EnforceAtLeastEditorInCourse
-    public ResponseEntity<PrerequisiteResponseDTO> createPrerequisite(@PathVariable long courseId, @RequestBody PrerequisiteRequestDTO prerequisite) throws URISyntaxException {
-        log.debug("REST request to create Prerequisite : {}", prerequisite);
-
-        final var savedPrerequisite = prerequisiteService.createPrerequisite(prerequisite, courseId);
-        final var uri = new URI("/api/courses/" + courseId + "/prerequisites/" + savedPrerequisite.getId());
-
-        return ResponseEntity.created(uri).body(PrerequisiteResponseDTO.of(savedPrerequisite));
-    }
-
-    /**
-     * PUT /courses/:courseId/prerequisites/:prerequisiteId : updates an existing prerequisite
-     *
-     * @param courseId           the id of the course to which the prerequisite belongs
-     * @param prerequisiteId     the id of the prerequisite to update
-     * @param prerequisiteValues the new prerequisite values
-     * @return the ResponseEntity with status 200 (OK)
-     */
-    @PutMapping("courses/{courseId}/prerequisites/{prerequisiteId}")
-    @EnforceAtLeastEditorInCourse
-    public ResponseEntity<PrerequisiteResponseDTO> updatePrerequisite(@PathVariable long courseId, @PathVariable long prerequisiteId,
-            @RequestBody PrerequisiteRequestDTO prerequisiteValues) throws URISyntaxException {
-        log.info("REST request to update Prerequisite with id : {}", prerequisiteId);
-
-        final var savedPrerequisite = prerequisiteService.updatePrerequisite(prerequisiteValues, prerequisiteId, courseId);
-
-        return ResponseEntity.ok(PrerequisiteResponseDTO.of(savedPrerequisite));
-    }
-
-    /**
-     * DELETE /courses/:courseId/prerequisites/:prerequisiteId : deletes an existing prerequisite
-     *
-     * @param courseId       the id of the course to which the prerequisite belongs
-     * @param prerequisiteId the id of the prerequisite to remove
-     * @return the ResponseEntity with status 200 (OK)
-     */
-    @DeleteMapping("courses/{courseId}/prerequisites/{prerequisiteId}")
-    @EnforceAtLeastEditorInCourse
-    public ResponseEntity<Void> deletePrerequisite(@PathVariable long prerequisiteId, @PathVariable long courseId) {
-        log.info("REST request to delete Prerequisite with id : {}", prerequisiteId);
-
-        prerequisiteService.deletePrerequisite(prerequisiteId, courseId);
-
-        // TODO: add notification on the client-side.
-        return ResponseEntity.ok().build();
-    }
-
-    // TODO: re-add prerequisite import.
-    /**
-     * POST /courses/:courseId/prerequisites/:competencyId
-     *
-     * @param courseId     the id of the course for which the competency should be a prerequisite
-     * @param competencyId the id of the prerequisite (competency) to add
-     * @return the ResponseEntity with status 200 (OK)
-     */
-    /*
-     * @PostMapping("courses/{courseId}/prerequisites/{competencyId}")
-     * @EnforceAtLeastInstructorInCourse
-     * public ResponseEntity<Competency> addPrerequisite(@PathVariable long competencyId, @PathVariable long courseId) {
-     * log.info("REST request to add a prerequisite: {}", competencyId);
-     * var course = courseRepository.findWithEagerCompetenciesByIdElseThrow(courseId);
-     * // var competency = competencyRepository.findByIdWithConsecutiveCoursesElseThrow(competencyId);
-     * var competency = new Competency();
-     * authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-     * authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, competency.getCourse(), null);
-     * if (competency.getCourse().getId().equals(courseId)) {
-     * throw new BadRequestAlertException("The competency of a course can not be a prerequisite to the same course", ENTITY_NAME, "competencyCycle");
-     * }
-     * // TODO: do notuse competencyId.
-     * // TODO: add new logic.
-     * return ResponseEntity.ok().body(competency);
-     * }
-     */
 
     /**
      * Generates a list of competencies from a given course description by using IRIS.

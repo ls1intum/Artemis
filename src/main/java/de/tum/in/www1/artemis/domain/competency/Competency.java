@@ -18,14 +18,14 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 
 @Entity
 @DiscriminatorValue("COMPETENCY")
-public class Competency extends AbstractCompetency {
+public class Competency extends CourseCompetency {
 
-    // TODO: move to AbstractCompetency
+    // TODO: move to CourseCompetency in next step of refactoring
     @ManyToMany(mappedBy = "competencies")
     @JsonIgnoreProperties({ "competencies", "course" })
     private Set<Exercise> exercises = new HashSet<>();
 
-    // TODO: move to AbstractCompetency
+    // TODO: move to CourseCompetency in next step of refactoring
     @ManyToMany(mappedBy = "competencies")
     @JsonIgnoreProperties("competencies")
     private Set<LectureUnit> lectureUnits = new HashSet<>();
