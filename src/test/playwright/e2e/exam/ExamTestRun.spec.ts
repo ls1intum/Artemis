@@ -23,6 +23,7 @@ test.describe('Exam test run', () => {
     test.beforeEach('Create course', async ({ login, examExerciseGroupCreation, courseManagementAPIRequests, examAPIRequests }) => {
         await login(admin);
         course = await courseManagementAPIRequests.createCourse({ customizeGroups: true });
+        await courseManagementAPIRequests.addInstructorToCourse(course, instructor);
         const examConfig = {
             course,
             title: examTitle,
