@@ -63,7 +63,6 @@ import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyImportResponseDT
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyRelationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyWithTailRelationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.CompetencyPageableSearchDTO;
-import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -134,20 +133,6 @@ public class CompetencyResource {
     public ResponseEntity<String> getCompetencyTitle(@PathVariable long competencyId) {
         final var title = competencyRepository.getCompetencyTitle(competencyId);
         return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
-    }
-
-    // TODO (followup): this is only used for prerequisite import -> the prerequisite import to also use the new competency import.
-    /**
-     * Search for all competencies by title and course title. The result is pageable.
-     *
-     * @param search The pageable search containing the page size, page number and query string
-     * @return The desired page, sorted and matching the given query
-     */
-    @GetMapping("competencies")
-    @EnforceAtLeastEditor
-    public ResponseEntity<SearchResultPageDTO<Competency>> getAllCompetenciesOnPage(SearchTermPageableSearchDTO<String> search) {
-        final var user = userRepository.getUserWithGroupsAndAuthorities();
-        return ResponseEntity.ok(competencyService.getAllOnPageWithSize(search, user));
     }
 
     /**

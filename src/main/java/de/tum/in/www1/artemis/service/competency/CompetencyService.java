@@ -10,8 +10,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.validation.constraints.NotNull;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -40,7 +38,6 @@ import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyRelationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyWithTailRelationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.CompetencyPageableSearchDTO;
-import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 
@@ -90,43 +87,6 @@ public class CompetencyService {
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
         this.standardizedCompetencyRepository = standardizedCompetencyRepository;
         this.courseRepository = courseRepository;
-    }
-
-    /**
-     * Get all prerequisites for a course. Lecture units are removed.
-     *
-     * @param course The course for which the prerequisites should be retrieved.
-     * @return A list of prerequisites.
-     */
-    public Set<Competency> findAllPrerequisitesForCourse(@NotNull Course course) {
-        Set<Competency> prerequisites = Set.of();
-        // TODO: logic
-        // competencyRepository.findPrerequisitesByCourseId(course.getId());
-        // Remove all lecture units
-        for (Competency prerequisite : prerequisites) {
-            prerequisite.setLectureUnits(Collections.emptySet());
-        }
-        return prerequisites;
-    }
-
-    /**
-     * Search for all competencies fitting a {@link SearchTermPageableSearchDTO search query}. The result is paged.
-     *
-     * @param search The search query defining the search term and the size of the returned page
-     * @param user   The user for whom to the competencies
-     * @return A wrapper object containing a list of all found competencies and the total number of pages
-     */
-    public SearchResultPageDTO<Competency> getAllOnPageWithSize(final SearchTermPageableSearchDTO<String> search, final User user) {
-        final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.COMPETENCY);
-        final var searchTerm = search.getSearchTerm();
-        final Page<Competency> competencyPage;
-        if (authCheckService.isAdmin(user)) {
-            competencyPage = competencyRepository.findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(searchTerm, searchTerm, pageable);
-        }
-        else {
-            competencyPage = competencyRepository.findByTitleInLectureOrCourseAndUserHasAccessToCourse(searchTerm, searchTerm, user.getGroups(), pageable);
-        }
-        return new SearchResultPageDTO<>(competencyPage.getContent(), competencyPage.getTotalPages());
     }
 
     /**

@@ -86,25 +86,6 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long>, J
      * matching the search criteria.
      *
      * @param partialTitle       competency title search term
-     * @param partialCourseTitle course title search term
-     * @param groups             user groups
-     * @param pageable           Pageable
-     * @return Page with search results
-     */
-    @Query("""
-            SELECT c
-            FROM Competency c
-            WHERE (c.course.instructorGroupName IN :groups OR c.course.editorGroupName IN :groups)
-                AND (c.title LIKE %:partialTitle% OR c.course.title LIKE %:partialCourseTitle%)
-            """)
-    Page<Competency> findByTitleInLectureOrCourseAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle, @Param("partialCourseTitle") String partialCourseTitle,
-            @Param("groups") Set<String> groups, Pageable pageable);
-
-    /**
-     * Query which fetches all competencies for which the user is editor or instructor in the course and
-     * matching the search criteria.
-     *
-     * @param partialTitle       competency title search term
      * @param partialDescription competency description search term
      * @param partialCourseTitle course title search term
      * @param semester           semester search term
@@ -158,9 +139,6 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long>, J
             """)
     @Cacheable(cacheNames = "competencyTitle", key = "#competencyId", unless = "#result == null")
     String getCompetencyTitle(@Param("competencyId") long competencyId);
-
-    @SuppressWarnings("PMD.MethodNamingConventions")
-    Page<Competency> findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(String partialTitle, String partialCourseTitle, Pageable pageable);
 
     default Competency findByIdWithLectureUnitsAndCompletionsElseThrow(long competencyId) {
         return findByIdWithLectureUnitsAndCompletions(competencyId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));

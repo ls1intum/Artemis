@@ -10,17 +10,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 public interface PrerequisiteRepository extends JpaRepository<Prerequisite, Long> {
 
-    // TODO: needed -> if yes we need to add linkedCompetency to prerequisite -> Would it make sense to also add to competency?
-    /*
-     * @Query("""
-     * SELECT c
-     * FROM Competency c
-     * LEFT JOIN FETCH c.consecutiveCourses
-     * WHERE c.id = :competencyId
-     * """)
-     * Optional<Competency> findByIdWithConsecutiveCourses(@Param("competencyId") long competencyId);
-     */
-
     List<Prerequisite> findByCourseIdOrderByTitle(long courseId);
 
     Long countByCourseId(long courseId);
