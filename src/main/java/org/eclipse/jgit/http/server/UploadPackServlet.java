@@ -9,6 +9,7 @@
 package org.eclipse.jgit.http.server;
 
 import java.io.IOException;
+import java.io.Serial;
 import java.text.MessageFormat;
 import java.util.List;
 import org.eclipse.jgit.annotations.Nullable;
@@ -50,6 +51,7 @@ import static org.eclipse.jgit.util.HttpSupport.HDR_USER_AGENT;
 /** Server side implementation of smart fetch over HTTP. */
 class UploadPackServlet extends HttpServlet {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     static class InfoRefs extends SmartServiceInfoRefs {
@@ -61,38 +63,35 @@ class UploadPackServlet extends HttpServlet {
             this.uploadPackFactory = uploadPackFactory;
         }
 
-        @Override protected void begin(HttpServletRequest req, Repository db) throws IOException, ServiceNotEnabledException, ServiceNotAuthorizedException {
-            UploadPack up = uploadPackFactory.create(req, db);
-            InternalHttpServerGlue.setPeerUserAgent(up, req.getHeader(HDR_USER_AGENT));
-            req.setAttribute(ATTRIBUTE_HANDLER, up);
+        @Override
+        protected void begin(HttpServletRequest request, Repository repository) throws IOException, ServiceNotEnabledException, ServiceNotAuthorizedException {
+            UploadPack up = uploadPackFactory.create(request, repository);
+            InternalHttpServerGlue.setPeerUserAgent(up, request.getHeader(HDR_USER_AGENT));
+            request.setAttribute(ATTRIBUTE_HANDLER, up);
         }
 
-        @Override protected void advertise(HttpServletRequest req, PacketLineOutRefAdvertiser pck) throws IOException, ServiceNotEnabledException, ServiceNotAuthorizedException {
-            UploadPack up = (UploadPack) req.getAttribute(ATTRIBUTE_HANDLER);
+        @Override
+        protected void advertise(HttpServletRequest request, PacketLineOutRefAdvertiser advertiser) throws IOException {
+            UploadPack up = (UploadPack) request.getAttribute(ATTRIBUTE_HANDLER);
             try {
                 up.setBiDirectionalPipe(false);
-                up.sendAdvertisedRefs(pck);
+                up.sendAdvertisedRefs(advertiser);
             }
             finally {
-                // TODO(jonathantanmy): Move responsibility for closing the
-                // RevWalk to UploadPack, either by making it AutoCloseable
-                // or by making sendAdvertisedRefs clean up after itself.
                 up.getRevWalk().close();
             }
         }
 
-        @Override protected void respond(HttpServletRequest req, PacketLineOut pckOut, String serviceName)
+        @Override
+        protected void respond(HttpServletRequest request, PacketLineOut pckOut, String serviceName)
             throws IOException, ServiceNotEnabledException, ServiceNotAuthorizedException {
-            UploadPack up = (UploadPack) req.getAttribute(ATTRIBUTE_HANDLER);
+            UploadPack uploadPack = (UploadPack) request.getAttribute(ATTRIBUTE_HANDLER);
             try {
-                up.setBiDirectionalPipe(false);
-                up.sendAdvertisedRefs(new PacketLineOutRefAdvertiser(pckOut), serviceName);
+                uploadPack.setBiDirectionalPipe(false);
+                uploadPack.sendAdvertisedRefs(new PacketLineOutRefAdvertiser(pckOut), serviceName);
             }
             finally {
-                // TODO(jonathantanmy): Move responsibility for closing the
-                // RevWalk to UploadPack, either by making it AutoCloseable
-                // or by making sendAdvertisedRefs clean up after itself.
-                up.getRevWalk().close();
+                uploadPack.getRevWalk().close();
             }
         }
     }
@@ -105,36 +104,39 @@ class UploadPackServlet extends HttpServlet {
             this.uploadPackFactory = uploadPackFactory;
         }
 
-        @Override public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
-            HttpServletRequest req = (HttpServletRequest) request;
-            HttpServletResponse rsp = (HttpServletResponse) response;
-            UploadPack rp;
+        @Override
+        public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
+            HttpServletRequest httpRequest = (HttpServletRequest) request;
+            HttpServletResponse httpResponse = (HttpServletResponse) response;
+            UploadPack uploadPack;
             try {
-                rp = uploadPackFactory.create(req, getRepository(req));
+                uploadPack = uploadPackFactory.create(httpRequest, getRepository(httpRequest));
             }
             catch (ServiceNotAuthorizedException e) {
-                rsp.sendError(SC_UNAUTHORIZED, e.getMessage());
+                httpResponse.sendError(SC_UNAUTHORIZED, e.getMessage());
                 return;
             }
             catch (ServiceNotEnabledException e) {
-                sendError(req, rsp, SC_FORBIDDEN, e.getMessage());
+                sendError(httpRequest, httpResponse, SC_FORBIDDEN, e.getMessage());
                 return;
             }
 
             try {
-                req.setAttribute(ATTRIBUTE_HANDLER, rp);
-                chain.doFilter(req, rsp);
+                httpRequest.setAttribute(ATTRIBUTE_HANDLER, uploadPack);
+                chain.doFilter(httpRequest, httpResponse);
             }
             finally {
-                req.removeAttribute(ATTRIBUTE_HANDLER);
+                httpRequest.removeAttribute(ATTRIBUTE_HANDLER);
             }
         }
 
-        @Override public void init(FilterConfig filterConfig) throws ServletException {
+        @Override
+        public void init(FilterConfig filterConfig) throws ServletException {
             // Nothing.
         }
 
-        @Override public void destroy() {
+        @Override
+        public void destroy() {
             // Nothing.
         }
     }
@@ -145,38 +147,36 @@ class UploadPackServlet extends HttpServlet {
         this.handler = handler != null ? handler : this::defaultUploadPackHandler;
     }
 
-    @Override public void doPost(HttpServletRequest req, HttpServletResponse rsp) throws IOException {
-        if (!UPLOAD_PACK_REQUEST_TYPE.equals(req.getContentType())) {
-            rsp.sendError(SC_UNSUPPORTED_MEDIA_TYPE);
+    @Override
+    public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        if (!UPLOAD_PACK_REQUEST_TYPE.equals(request.getContentType())) {
+            response.sendError(SC_UNSUPPORTED_MEDIA_TYPE);
             return;
         }
 
-        UploadPackRunnable r = () -> {
-            upload(req, rsp);
-        };
-
-        handler.upload(req, rsp, r);
+        handler.upload(request, response, () -> upload(request, response));
     }
 
-    private void upload(HttpServletRequest req, HttpServletResponse rsp) throws IOException {
+    private void upload(HttpServletRequest request, HttpServletResponse response) throws IOException {
         // to be explicitly closed by caller
-        @SuppressWarnings("resource") SmartOutputStream out = new SmartOutputStream(req, rsp, false) {
+        SmartOutputStream out = new SmartOutputStream(request, response, false) {
 
-            @Override public void flush() throws IOException {
+            @Override
+            public void flush() throws IOException {
                 doFlush();
             }
         };
         Repository repo = null;
-        try (UploadPack up = (UploadPack) req.getAttribute(ATTRIBUTE_HANDLER)) {
+        try (UploadPack up = (UploadPack) request.getAttribute(ATTRIBUTE_HANDLER)) {
             up.setBiDirectionalPipe(false);
-            rsp.setContentType(UPLOAD_PACK_RESULT_TYPE);
+            response.setContentType(UPLOAD_PACK_RESULT_TYPE);
             repo = up.getRepository();
-            up.uploadWithExceptionPropagation(getInputStream(req), out, null);
+            up.uploadWithExceptionPropagation(getInputStream(request), out, null);
             out.close();
         }
         catch (ServiceMayNotContinueException e) {
             if (e.isOutput()) {
-                consumeRequestBody(req);
+                consumeRequestBody(request);
                 out.close();
             }
             throw e;
@@ -184,31 +184,31 @@ class UploadPackServlet extends HttpServlet {
         catch (UploadPackInternalServerErrorException e) {
             // Special case exception, error message was sent to client.
             log(repo, e.getCause());
-            consumeRequestBody(req);
+            consumeRequestBody(request);
             out.close();
         }
     }
 
-    private void defaultUploadPackHandler(HttpServletRequest req, HttpServletResponse rsp, UploadPackRunnable r) throws IOException {
+    private void defaultUploadPackHandler(HttpServletRequest request, HttpServletResponse response, UploadPackRunnable runnable) throws IOException {
         try {
-            r.upload();
+            runnable.upload();
         }
         catch (ServiceMayNotContinueException e) {
-            if (!e.isOutput() && !rsp.isCommitted()) {
-                rsp.reset();
-                sendError(req, rsp, e.getStatusCode(), e.getMessage());
+            if (!e.isOutput() && !response.isCommitted()) {
+                response.reset();
+                sendError(request, response, e.getStatusCode(), e.getMessage());
             }
         }
         catch (Throwable e) {
-            UploadPack up = (UploadPack) req.getAttribute(ATTRIBUTE_HANDLER);
+            UploadPack up = (UploadPack) request.getAttribute(ATTRIBUTE_HANDLER);
             log(up.getRepository(), e);
-            if (!rsp.isCommitted()) {
-                rsp.reset();
+            if (!response.isCommitted()) {
+                response.reset();
                 String msg = null;
                 if (e instanceof PackProtocolException || e instanceof ServiceNotEnabledException) {
                     msg = e.getMessage();
                 }
-                sendError(req, rsp, statusCodeForThrowable(e), msg);
+                sendError(request, response, statusCodeForThrowable(e), msg);
             }
         }
     }
