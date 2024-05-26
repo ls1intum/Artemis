@@ -91,6 +91,7 @@ services:
       - '54321:54321'
     volumes:
       - ./nginx/artemis-upstream-multi-node.conf:/etc/nginx/includes/artemis-upstream.conf:ro
+      - ./nginx/artemis-ssh-upstream-multi-node.conf:/etc/nginx/includes/artemis-ssh-upstream.conf:ro
       - ./nginx/artemis-nginx-cypress.conf:/etc/nginx/conf.d/artemis-nginx-cypress.conf:ro
       - type: bind
         source: ${NGINX_PROXY_SSL_CERTIFICATE_PATH:-../src/test/cypress/certs/artemis-nginx+4.pem}
