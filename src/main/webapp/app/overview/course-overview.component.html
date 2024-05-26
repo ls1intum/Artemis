@@ -22,8 +22,8 @@
                                     <span class="fs-4">{{ course?.title | slice: 0 : 1 }}</span>
                                 </div>
                             }
-                            @if (!isNavbarCollapsed || !isScreenSmall) {
-                                {{ course?.title }}
+                            @if (!isNavbarCollapsed) {
+                                <div id="test-course-title" class="h6 mb-0 fw-bold text-body auto-collapse">{{ course?.title }}</div>
                             }
                             <div id="courseDropdownButton" class="d-inline-flex position-relative m-2">
                                 <fa-icon [icon]="faChevronRight" class="rotate-icon chevron-position" [class.rotated]="dropdownCourses" />
@@ -43,7 +43,7 @@
                                                     <span class="fs-4" style="margin-left: 1px">{{ course?.title | slice: 0 : 1 }}</span>
                                                 </div>
                                             }
-                                            @if (!isNavbarCollapsed || anyItemHidden) {
+                                            @if (!isNavbarCollapsed || !isScreenSmall) {
                                                 {{ course?.title }}
                                             }
                                         </a>
