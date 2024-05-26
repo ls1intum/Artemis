@@ -263,7 +263,6 @@ jhi-secured-image {
     position: absolute;
     background-color: var(--dropdown-bg);
     border: 1px solid var(--border-color);
-    left: 5px;
     border-radius: 4px;
     z-index: 1000000;
     ul {
@@ -289,7 +288,7 @@ jhi-secured-image {
             color: var(--link-item-color);
         }
         span {
-            margin-left: -12px; /* Add margin to the right of the icon */
+            margin-left: -5px; /* Add margin to the right of the icon */
         }
     }
 }

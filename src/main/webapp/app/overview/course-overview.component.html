@@ -29,7 +29,7 @@
                                 <fa-icon [icon]="faChevronRight" class="rotate-icon chevron-position" [class.rotated]="dropdownCourses" />
                             </div>
                         </div>
-                        <div id="dropdownCourses" [ngStyle]="{ width: isNavbarCollapsed || isScreenSmall ? '58px' : '210px' }" [ngClass]="{ active: dropdownCourses }">
+                        <div id="dropdownCourses" [ngStyle]="{ width: isNavbarCollapsed || isScreenSmall ? '64px' : '220px' }" [ngClass]="{ active: dropdownCourses }">
                             <ul>
                                 @for (course of courses; track course) {
                                     <li>
@@ -39,7 +39,7 @@
                                                     <jhi-secured-image [src]="course.courseIcon" />
                                                 </span>
                                             } @else {
-                                                <div class="course-circle d-flex align-items-center justify-content-center" style="margin-left: -12px">
+                                                <div class="course-circle d-flex align-items-center justify-content-center" style="margin-left: -5px">
                                                     <span class="fs-4" style="margin-left: 1px">{{ course?.title | slice: 0 : 1 }}</span>
                                                 </div>
                                             }
