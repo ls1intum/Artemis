@@ -6,11 +6,11 @@
 
         @if (tutorialGroupSelected) {
             <div class="vw-100 module-bg rounded-3">
-                <router-outlet />
+                <router-outlet (deactivate)="onSubRouteDeactivate()" />
             </div>
         } @else {
-            <div class="vw-100 module-bg rounded-3 px-3 d-flex justify-content-between">
-                <div class="col-12 text-center my-auto">Please Select a Tutorial Group.</div>
+            <div class="vw-100 module-bg rounded-3 p-3 d-flex justify-content-between">
+                <div class="col-12 text-center my-auto" jhiTranslate="artemisApp.courseOverview.tutorialGroups.selectTutorialGroup"></div>
             </div>
         }
     }

@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
 import static de.tum.in.www1.artemis.config.Constants.LOCALCI_WORKING_DIRECTORY;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALCI;
 
 import java.util.List;
 
@@ -15,7 +16,7 @@ import de.tum.in.www1.artemis.service.connectors.aeolus.ScriptAction;
 import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
 
 @Service
-@Profile("localci")
+@Profile(PROFILE_LOCALCI)
 public class LocalCIBuildConfigurationService {
 
     private final AeolusTemplateService aeolusTemplateService;

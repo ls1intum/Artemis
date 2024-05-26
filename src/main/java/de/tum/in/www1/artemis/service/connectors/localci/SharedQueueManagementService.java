@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALCI;
 import static java.util.stream.Collectors.toSet;
 
 import java.time.ZonedDateTime;
@@ -26,16 +27,16 @@ import com.hazelcast.topic.ITopic;
 
 import de.tum.in.www1.artemis.repository.BuildJobRepository;
 import de.tum.in.www1.artemis.service.ProfileService;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildAgentInformation;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobQueueItem;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.DockerImageBuild;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildAgentInformation;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobItemReference;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
 
 /**
  * Includes methods for managing and retrieving the shared build job queue and build agent information. Also contains methods for cancelling build jobs.
  */
 @Service
-@Profile("localci")
+@Profile(PROFILE_LOCALCI)
 public class SharedQueueManagementService {
 
     private static final Logger log = LoggerFactory.getLogger(SharedQueueManagementService.class);
@@ -46,16 +47,16 @@ public class SharedQueueManagementService {
 
     private IQueue<LocalCIBuildJobItemReference> queue;
 
-    private IMap<Long, LocalCIBuildJobQueueItem> buildJobItemMap;
+    private IMap<Long, BuildJobQueueItem> buildJobItemMap;
 
     private final ProfileService profileService;
 
     /**
      * Map of build jobs currently being processed across all nodes
      */
-    private IMap<String, LocalCIBuildJobQueueItem> processingJobs;
+    private IMap<String, BuildJobQueueItem> processingJobs;
 
-    private IMap<String, LocalCIBuildAgentInformation> buildAgentInformation;
+    private IMap<String, BuildAgentInformation> buildAgentInformation;
 
     private IMap<String, ZonedDateTime> dockerImageCleanupInfo;
 
@@ -103,37 +104,37 @@ public class SharedQueueManagementService {
         }
     }
 
-    public List<LocalCIBuildJobQueueItem> getQueuedJobs() {
+    public List<BuildJobQueueItem> getQueuedJobs() {
         return buildJobItemMap.values().stream().filter(Objects::nonNull).toList();
     }
 
-    public List<LocalCIBuildJobQueueItem> getProcessingJobs() {
+    public List<BuildJobQueueItem> getProcessingJobs() {
         return processingJobs.values().stream().toList();
     }
 
-    public List<LocalCIBuildJobQueueItem> getQueuedJobsForCourse(long courseId) {
+    public List<BuildJobQueueItem> getQueuedJobsForCourse(long courseId) {
         Set<Long> participationIds = queue.stream().filter(job -> job.courseId() == courseId).map(LocalCIBuildJobItemReference::participationId).collect(toSet());
         return buildJobItemMap.getAll(participationIds).values().stream().filter(Objects::nonNull).toList();
     }
 
-    public List<LocalCIBuildJobQueueItem> getProcessingJobsForCourse(long courseId) {
+    public List<BuildJobQueueItem> getProcessingJobsForCourse(long courseId) {
         return processingJobs.values().stream().filter(job -> job.courseId() == courseId).toList();
     }
 
-    public List<LocalCIBuildJobQueueItem> getQueuedJobsForParticipation(long participationId) {
+    public List<BuildJobQueueItem> getQueuedJobsForParticipation(long participationId) {
         return Stream.of(buildJobItemMap.get(participationId)).filter(Objects::nonNull).toList();
     }
 
-    public List<LocalCIBuildJobQueueItem> getProcessingJobsForParticipation(long participationId) {
+    public List<BuildJobQueueItem> getProcessingJobsForParticipation(long participationId) {
         return processingJobs.values().stream().filter(job -> job.participationId() == participationId).toList();
     }
 
-    public List<LocalCIBuildAgentInformation> getBuildAgentInformation() {
+    public List<BuildAgentInformation> getBuildAgentInformation() {
         return buildAgentInformation.values().stream().toList();
     }
 
-    public List<LocalCIBuildAgentInformation> getBuildAgentInformationWithoutRecentBuildJobs() {
-        return buildAgentInformation.values().stream().map(agent -> new LocalCIBuildAgentInformation(agent.name(), agent.maxNumberOfConcurrentBuildJobs(),
+    public List<BuildAgentInformation> getBuildAgentInformationWithoutRecentBuildJobs() {
+        return buildAgentInformation.values().stream().map(agent -> new BuildAgentInformation(agent.name(), agent.maxNumberOfConcurrentBuildJobs(),
                 agent.numberOfCurrentBuildJobs(), agent.runningBuildJobs(), agent.status(), null)).toList();
     }
 
@@ -159,7 +160,7 @@ public class SharedQueueManagementService {
             }
             else {
                 // Cancel build job if it is currently being processed
-                LocalCIBuildJobQueueItem buildJob = processingJobs.remove(buildJobId);
+                BuildJobQueueItem buildJob = processingJobs.remove(buildJobId);
                 if (buildJob != null) {
                     triggerBuildJobCancellation(buildJobId);
                 }
@@ -202,7 +203,7 @@ public class SharedQueueManagementService {
     public void cancelAllRunningBuildJobs() {
         sharedLock.lock();
         try {
-            for (LocalCIBuildJobQueueItem buildJob : processingJobs.values()) {
+            for (BuildJobQueueItem buildJob : processingJobs.values()) {
                 cancelBuildJob(buildJob.id());
             }
         }
@@ -256,7 +257,7 @@ public class SharedQueueManagementService {
      * @param courseId id of the course
      */
     public void cancelAllRunningBuildJobsForCourse(long courseId) {
-        for (LocalCIBuildJobQueueItem buildJob : processingJobs.values()) {
+        for (BuildJobQueueItem buildJob : processingJobs.values()) {
             if (buildJob.courseId() == courseId) {
                 cancelBuildJob(buildJob.id());
             }
@@ -280,7 +281,7 @@ public class SharedQueueManagementService {
             queue.removeAll(toRemove);
             buildJobItemMap.delete(participationId);
 
-            for (LocalCIBuildJobQueueItem runningJob : processingJobs.values()) {
+            for (BuildJobQueueItem runningJob : processingJobs.values()) {
                 if (runningJob.participationId() == participationId) {
                     cancelBuildJob(runningJob.id());
                 }

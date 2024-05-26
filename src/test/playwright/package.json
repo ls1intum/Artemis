@@ -4,15 +4,17 @@
     "private": true,
     "license": "MIT",
     "devDependencies": {
-        "@playwright/test": "1.40.0",
-        "dayjs": "1.11.10",
-        "dotenv": "16.3.1",
-        "simple-git": "3.22.0",
+        "@playwright/test": "1.44.1",
+        "dayjs": "1.11.11",
+        "dotenv": "16.4.5",
+        "npm-check-updates": "16.14.20",
+        "simple-git": "3.24.0",
         "uuid": "9.0.1"
     },
     "scripts": {
         "playwright:test": "playwright test e2e",
         "playwright:open": "playwright test e2e --ui",
-        "playwright:setup": "npx playwright install --with-deps chromium && playwright test init"
+        "playwright:setup": "npx playwright install --with-deps chromium && playwright test init",
+        "update": "ncu -i --format group"
     }
 }

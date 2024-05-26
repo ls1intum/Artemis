@@ -36,9 +36,9 @@ import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService.BuildStatus;
 import de.tum.in.www1.artemis.service.connectors.localci.buildagent.SharedQueueProcessingService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildConfig;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobQueueItem;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.JobTimingInfo;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobItemReference;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.RepositoryInfo;
 
 class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
@@ -70,7 +70,7 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     protected IMap<Long, LocalCIBuildJobQueueItem> buildJobItemIMap;
 
-    protected IMap<String, LocalCIBuildJobQueueItem> processingJobs;
+    protected IMap<String, BuildJobQueueItem> processingJobs;
 
     @BeforeEach
     void setUp() {
@@ -104,9 +104,9 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         BuildConfig buildConfig = new BuildConfig("echo 'test'", "test", "test", "test", "test", "test", null, null, false, false, false, null);
         RepositoryInfo repositoryInfo = new RepositoryInfo("test", null, RepositoryType.USER, "test", "test", "test", null, null);
 
-        LocalCIBuildJobQueueItem job1 = new LocalCIBuildJobQueueItem("1", "job1", "address1", participation.getId(), course.getId(), 1, 1, 1,
+        BuildJobQueueItem job1 = new BuildJobQueueItem("1", "job1", "address1", participation.getId(), course.getId(), 1, 1, 1,
                 de.tum.in.www1.artemis.domain.enumeration.BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo, buildConfig, null);
-        LocalCIBuildJobQueueItem job2 = new LocalCIBuildJobQueueItem("2", "job2", "address1", participation.getId(), course.getId(), 1, 1, 1,
+        BuildJobQueueItem job2 = new BuildJobQueueItem("2", "job2", "address1", participation.getId(), course.getId(), 1, 1, 1,
                 de.tum.in.www1.artemis.domain.enumeration.BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo, buildConfig, null);
 
         LocalCIBuildJobItemReference job1Reference = new LocalCIBuildJobItemReference(job1);
