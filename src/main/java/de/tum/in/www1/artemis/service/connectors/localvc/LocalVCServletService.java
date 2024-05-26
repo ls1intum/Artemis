@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.localvc;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALVC;
+
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
@@ -63,7 +65,7 @@ import de.tum.in.www1.artemis.web.rest.repository.RepositoryActionType;
  * It is used by the ArtemisGitServletService, the LocalVCFetchFilter, and the LocalVCPushFilter.
  */
 @Service
-@Profile("localvc")
+@Profile(PROFILE_LOCALVC)
 // TODO: we should rename this because its used in the context of https and ssh git operations
 public class LocalVCServletService {
 
