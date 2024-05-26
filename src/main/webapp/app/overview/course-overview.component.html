@@ -9,70 +9,47 @@
                 opened="true"
                 mode="side"
             >
-                @if (!isNavbarCollapsed) {
-                    <div id="container">
-                        <div id="courseDropdownButton" (click)="dropdownCourses = true">
-                            <fa-icon [icon]="faChevronDown" />
-                            <div id="dropdownCourses" [ngClass]="{ active: dropdownCourses }">
-                                <ul>
-                                    @for (course of courses; track course) {
-                                        <li>
-                                            <a (click)="switchCourse(course); dropdownCourses = false">
-                                                @if (course.courseIcon) {
-                                                    <span>
-                                                        <jhi-secured-image [src]="course.courseIcon" />
-                                                    </span>
-                                                }
-                                                {{ course?.title }}</a
-                                            >
-                                        </li>
-                                    }
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                } @else {
-                    <div id="containerCollapsed">
-                        <div id="courseDropdownButtonCollapsed" (click)="dropdownCourses = true">
-                            <fa-icon [icon]="faChevronDown" />
-                            <div id="dropdownCoursesCollapsed" [ngClass]="{ active: dropdownCourses }">
-                                <ul>
-                                    @for (course of courses; track course) {
-                                        <li>
-                                            <a (click)="switchCourse(course); dropdownCourses = false">
-                                                @if (course.courseIcon) {
-                                                    <span>
-                                                        <jhi-secured-image [src]="course.courseIcon" />
-                                                    </span>
-                                                } @else {
-                                                    <div class="course-circle d-flex align-items-center justify-content-center" style="margin-left: -12px">
-                                                        <span class="fs-4" style="margin-left: 1px">{{ course?.title | slice: 0 : 1 }}</span>
-                                                    </div>
-                                                }
-                                            </a>
-                                        </li>
-                                    }
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                }
                 <div class="sidebar-container d-flex h-100 justify-content-between flex-column" [ngClass]="{ collapsed: isNavbarCollapsed }">
                     <!-- NavItems -->
                     <div>
-                        <div class="d-flex p-3 align-items-center text-decoration-none" [title]="course?.title">
+                        <div id="container" class="d-flex p-3 align-items-center text-decoration-none" [title]="course?.title">
                             @if (course && course.courseIcon) {
                                 <div>
-                                    <jhi-secured-image [src]="course.courseIcon" />
+                                    <jhi-secured-image id="courseIcon" [src]="course.courseIcon" (click)="dropdownCourses = true" />
                                 </div>
                             } @else {
-                                <div class="course-circle d-flex align-items-center justify-content-center">
+                                <div id="courseCircle" class="course-circle d-flex align-items-center justify-content-center" (click)="dropdownCourses = true">
                                     <span class="fs-4">{{ course?.title | slice: 0 : 1 }}</span>
                                 </div>
                             }
                             @if (!isNavbarCollapsed) {
-                                <div id="test-course-title" class="h6 mb-0 fw-bold text-body auto-collapse">{{ course?.title }}</div>
+                                <div id="test-course-title" class="h6 mb-0 fw-bold text-body auto-collapse" (click)="dropdownCourses = true">{{ course?.title }}</div>
                             }
+                            <div id="courseDropdownButton" (click)="dropdownCourses = true" class="d-inline-flex position-relative">
+                                <fa-icon [icon]="faChevronDown" />
+                            </div>
+                        </div>
+                        <div id="dropdownCourses" [ngStyle]="{ width: isNavbarCollapsed ? '58px' : '210px' }" [ngClass]="{ active: dropdownCourses }">
+                            <ul>
+                                @for (course of courses; track course) {
+                                    <li>
+                                        <a (click)="switchCourse(course); dropdownCourses = false">
+                                            @if (course.courseIcon) {
+                                                <span>
+                                                    <jhi-secured-image [src]="course.courseIcon" />
+                                                </span>
+                                            } @else {
+                                                <div class="course-circle d-flex align-items-center justify-content-center" style="margin-left: -12px">
+                                                    <span class="fs-4" style="margin-left: 1px">{{ course?.title | slice: 0 : 1 }}</span>
+                                                </div>
+                                            }
+                                            @if (!isNavbarCollapsed && !isSidebarCollapsed) {
+                                                {{ course?.title }}
+                                            }
+                                        </a>
+                                    </li>
+                                }
+                            </ul>
                         </div>
                         <hr class="mt-0" />
                         <ul class="navbar-nav justify-content-end flex-grow-1 text-decoration-none">

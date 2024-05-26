@@ -255,111 +255,56 @@ jhi-secured-image {
 }
 
 #container {
-    display: flex;
-    position: absolute;
+    #courseIcon {
+        cursor: pointer;
+    }
+    #courseCircle {
+        cursor: pointer;
+    }
+    #test-course-title {
+        cursor: pointer;
+    }
     #courseDropdownButton {
         cursor: pointer;
-        position: relative;
-        padding-top: 30px;
-        padding-left: 20px;
-        padding-right: 160px;
-        top: 18px;
-        left: 6px;
-        #dropdownCourses {
-            display: none;
-            position: absolute;
-            width: 210px;
-            overflow: auto;
-            background-color: var(--dropdown-bg);
-            border-radius: 10px;
-            top: 100%;
-            left: 0;
-            border: 1px solid var(--border-color);
-            z-index: 9999;
-            ul {
-                list-style: none;
-                margin: 0px;
-                display: flex;
-                flex-direction: column;
-                padding: 0px;
-            }
-            li {
-                padding: 0;
-                border-bottom: 1px solid #ccc;
-                &:last-child {
-                    border-bottom: none;
-                }
-            }
-            a {
-                text-decoration: none;
-                color: var(--bs-body-color);
-                padding: 15px 20px;
-                display: flex;
-                &:hover {
-                    color: var(--link-item-color);
-                }
-                span {
-                    margin-left: -12px; /* Add margin to the right of the icon */
-                }
-            }
+    }
+}
+
+#dropdownCourses {
+    display: none;
+    position: absolute;
+    background-color: var(--dropdown-bg);
+    border: 1px solid var(--border-color);
+    left: 5px;
+    border-radius: 10px;
+    z-index: 100;
+    ul {
+        list-style: none;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        padding: 0;
+    }
+    li {
+        padding: 0;
+        border-bottom: 1px solid #ccc;
+        &:last-child {
+            border-bottom: none;
         }
-        #dropdownCourses.active {
-            display: block;
+    }
+    a {
+        text-decoration: none;
+        color: var(--bs-body-color);
+        padding: 15px 20px;
+        display: flex;
+        &:hover {
+            color: var(--link-item-color);
+        }
+        span {
+            margin-left: -12px; /* Add margin to the right of the icon */
         }
     }
 }
 
-#containerCollapsed {
-    display: flex;
-    position: absolute;
-    #courseDropdownButtonCollapsed {
-        cursor: pointer;
-        position: relative;
-        padding-top: 30px;
-        padding-left: 20px;
-        padding-right: 5px;
-        top: 18px;
-        left: 6px;
-        #dropdownCoursesCollapsed {
-            display: none;
-            position: absolute;
-            width: 58px;
-            overflow: auto;
-            background-color: var(--dropdown-bg);
-            border-radius: 10px;
-            top: 100%;
-            left: 0;
-            border: 1px solid var(--border-color);
-            z-index: 9999;
-            ul {
-                list-style: none;
-                margin: 0px;
-                display: flex;
-                flex-direction: column;
-                padding: 0px;
-            }
-            li {
-                padding: 0;
-                border-bottom: 1px solid #ccc;
-                &:last-child {
-                    border-bottom: none;
-                }
-            }
-            a {
-                text-decoration: none;
-                color: var(--bs-body-color);
-                padding: 15px 20px;
-                display: flex;
-                &:hover {
-                    color: var(--link-item-color);
-                }
-                span {
-                    margin-left: -12px; /* Add margin to the right of the icon */
-                }
-            }
-        }
-        #dropdownCoursesCollapsed.active {
-            display: block;
-        }
-    }
+#dropdownCourses.active {
+    display: block;
 }
