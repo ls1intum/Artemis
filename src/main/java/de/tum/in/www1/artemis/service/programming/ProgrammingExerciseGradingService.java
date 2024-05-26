@@ -30,8 +30,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
-import com.google.common.base.Strings;
-
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -231,7 +229,7 @@ public class ProgrammingExerciseGradingService {
             if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
                 participationDefaultBranch = versionControlService.orElseThrow().getOrRetrieveBranchOfStudentParticipation(studentParticipation);
             }
-            if (Strings.isNullOrEmpty(participationDefaultBranch)) {
+            if (StringUtils.isEmpty(participationDefaultBranch)) {
                 participationDefaultBranch = versionControlService.orElseThrow().getOrRetrieveBranchOfExercise(participation.getProgrammingExercise());
             }
 

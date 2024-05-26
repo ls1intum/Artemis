@@ -103,14 +103,6 @@ management:
                   - loggers
                   - prometheus
                   - threaddump
-    endpoint:
-        health:
-            show-details: when_authorized
-            roles: 'ROLE_ADMIN'
-            probes:
-                enabled: true
-        jhimetrics:
-            enabled: true
     info:
         git:
             mode: full
@@ -131,13 +123,6 @@ management:
             export:
                 enabled: true
                 step: 60
-    metrics:
-        enable:
-            http: true
-            jvm: true
-            logback: true
-            process: true
-            system: true
         distribution:
             percentiles-histogram:
                 all: true
@@ -199,7 +184,7 @@ spring:
     main:
         allow-bean-definition-overriding: true
         lazy-initialization: false
-        allow-circular-references: true # TODO: we should deactivate this in the future, however currently securityConfiguration has a circular dependency to itself
+        allow-circular-references: false
     task:
         execution:
             thread-name-prefix: artemis-task-
