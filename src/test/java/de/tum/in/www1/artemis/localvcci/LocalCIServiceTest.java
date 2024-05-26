@@ -37,8 +37,8 @@ import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService
 import de.tum.in.www1.artemis.service.connectors.localci.buildagent.SharedQueueProcessingService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildConfig;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.JobTimingInfo;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobItem;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobItemReference;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.RepositoryInfo;
 
 class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
@@ -68,9 +68,9 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     protected IQueue<LocalCIBuildJobItemReference> queuedJobs;
 
-    protected IMap<Long, LocalCIBuildJobItem> buildJobItemIMap;
+    protected IMap<Long, LocalCIBuildJobQueueItem> buildJobItemIMap;
 
-    protected IMap<String, LocalCIBuildJobItem> processingJobs;
+    protected IMap<String, LocalCIBuildJobQueueItem> processingJobs;
 
     @BeforeEach
     void setUp() {
@@ -104,9 +104,9 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         BuildConfig buildConfig = new BuildConfig("echo 'test'", "test", "test", "test", "test", "test", null, null, false, false, false, null);
         RepositoryInfo repositoryInfo = new RepositoryInfo("test", null, RepositoryType.USER, "test", "test", "test", null, null);
 
-        LocalCIBuildJobItem job1 = new LocalCIBuildJobItem("1", "job1", "address1", participation.getId(), course.getId(), 1, 1, 1,
+        LocalCIBuildJobQueueItem job1 = new LocalCIBuildJobQueueItem("1", "job1", "address1", participation.getId(), course.getId(), 1, 1, 1,
                 de.tum.in.www1.artemis.domain.enumeration.BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo, buildConfig, null);
-        LocalCIBuildJobItem job2 = new LocalCIBuildJobItem("2", "job2", "address1", participation.getId(), course.getId(), 1, 1, 1,
+        LocalCIBuildJobQueueItem job2 = new LocalCIBuildJobQueueItem("2", "job2", "address1", participation.getId(), course.getId(), 1, 1, 1,
                 de.tum.in.www1.artemis.domain.enumeration.BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo, buildConfig, null);
 
         LocalCIBuildJobItemReference job1Reference = new LocalCIBuildJobItemReference(job1);

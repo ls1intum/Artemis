@@ -34,7 +34,7 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildAgentInformation;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobItem;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.ResultQueueItem;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
@@ -117,7 +117,7 @@ public class LocalCIResultProcessingService {
         }
         log.info("Processing build job result");
 
-        LocalCIBuildJobItem buildJob = resultQueueItem.buildJobQueueItem();
+        LocalCIBuildJobQueueItem buildJob = resultQueueItem.buildJobQueueItem();
         LocalCIBuildResult buildResult = resultQueueItem.buildResult();
         List<BuildLogEntry> buildLogs = resultQueueItem.buildLogs();
         Throwable ex = resultQueueItem.exception();
@@ -206,15 +206,15 @@ public class LocalCIResultProcessingService {
      * @param buildJob the build job
      * @param result   the result of the build job
      */
-    private void addResultToBuildAgentsRecentBuildJobs(LocalCIBuildJobItem buildJob, Result result) {
+    private void addResultToBuildAgentsRecentBuildJobs(LocalCIBuildJobQueueItem buildJob, Result result) {
         try {
             buildAgentInformation.lock(buildJob.buildAgentAddress());
             LocalCIBuildAgentInformation buildAgent = buildAgentInformation.get(buildJob.buildAgentAddress());
             if (buildAgent != null) {
-                List<LocalCIBuildJobItem> recentBuildJobs = buildAgent.recentBuildJobs();
+                List<LocalCIBuildJobQueueItem> recentBuildJobs = buildAgent.recentBuildJobs();
                 for (int i = 0; i < recentBuildJobs.size(); i++) {
                     if (recentBuildJobs.get(i).id().equals(buildJob.id())) {
-                        recentBuildJobs.set(i, new LocalCIBuildJobItem(buildJob, ResultDTO.of(result)));
+                        recentBuildJobs.set(i, new LocalCIBuildJobQueueItem(buildJob, ResultDTO.of(result)));
                         break;
                     }
                 }
@@ -236,7 +236,7 @@ public class LocalCIResultProcessingService {
      *
      * @return the saved the build job
      */
-    public BuildJob saveFinishedBuildJob(LocalCIBuildJobItem queueItem, BuildStatus buildStatus, Result result) {
+    public BuildJob saveFinishedBuildJob(LocalCIBuildJobQueueItem queueItem, BuildStatus buildStatus, Result result) {
         try {
             BuildJob buildJob = new BuildJob(queueItem, buildStatus, result);
             return buildJobRepository.save(buildJob);
@@ -267,7 +267,7 @@ public class LocalCIResultProcessingService {
      * @param buildJob the build job to check
      * @return true if the build job is a solution build of a test or auxiliary push, false otherwise
      */
-    private boolean isSolutionBuildOfTestOrAuxPush(LocalCIBuildJobItem buildJob) {
+    private boolean isSolutionBuildOfTestOrAuxPush(LocalCIBuildJobQueueItem buildJob) {
         return buildJob.repositoryInfo().repositoryType() == RepositoryType.SOLUTION
                 && (buildJob.repositoryInfo().triggeredByPushTo() == RepositoryType.TESTS || buildJob.repositoryInfo().triggeredByPushTo() == RepositoryType.AUXILIARY);
     }

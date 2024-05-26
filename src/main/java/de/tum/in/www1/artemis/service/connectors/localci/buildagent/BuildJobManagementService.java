@@ -33,7 +33,7 @@ import com.hazelcast.topic.ITopic;
 
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
 import de.tum.in.www1.artemis.exception.LocalCIException;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobItem;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
 
 /**
@@ -117,7 +117,7 @@ public class BuildJobManagementService {
      * @return A future that will be completed with the build result.
      * @throws LocalCIException If the build job could not be submitted to the executor service.
      */
-    public CompletableFuture<LocalCIBuildResult> executeBuildJob(LocalCIBuildJobItem buildJobItem) throws LocalCIException {
+    public CompletableFuture<LocalCIBuildResult> executeBuildJob(LocalCIBuildJobQueueItem buildJobItem) throws LocalCIException {
 
         // Prepare the Docker container name before submitting the build job to the executor service, so we can remove the container if something goes wrong.
         String containerName = buildContainerPrefix + buildJobItem.id();

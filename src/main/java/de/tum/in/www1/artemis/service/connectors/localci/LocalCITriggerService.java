@@ -38,8 +38,8 @@ import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildConfig;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.JobTimingInfo;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobItem;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobItemReference;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.RepositoryInfo;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
@@ -75,7 +75,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private IMap<String, ZonedDateTime> dockerImageCleanupInfo;
 
-    private IMap<Long, LocalCIBuildJobItem> buildJobItemMap;
+    private IMap<Long, LocalCIBuildJobQueueItem> buildJobItemMap;
 
     public LocalCITriggerService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, AeolusTemplateService aeolusTemplateService,
             ProgrammingLanguageConfiguration programmingLanguageConfiguration, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
@@ -158,7 +158,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         BuildConfig buildConfig = getBuildConfig(participation, commitHashToBuild, assignmentCommitHash, testCommitHash);
 
-        LocalCIBuildJobItem buildJobQueueItem = new LocalCIBuildJobItem(buildJobId, participation.getBuildPlanId(), null, participation.getId(), courseId,
+        LocalCIBuildJobQueueItem buildJobQueueItem = new LocalCIBuildJobQueueItem(buildJobId, participation.getBuildPlanId(), null, participation.getId(), courseId,
                 programmingExercise.getId(), 0, priority, null, repositoryInfo, jobTimingInfo, buildConfig, null);
 
         LocalCIBuildJobItemReference buildJobItemReference = new LocalCIBuildJobItemReference(buildJobQueueItem);

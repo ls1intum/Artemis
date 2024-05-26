@@ -26,7 +26,7 @@ public record LocalCIBuildJobItemReference(String id, long participationId, long
      * @param buildJobItem the build job item
      */
 
-    public LocalCIBuildJobItemReference(LocalCIBuildJobItem buildJobItem) {
+    public LocalCIBuildJobItemReference(LocalCIBuildJobQueueItem buildJobItem) {
         this(buildJobItem.id(), buildJobItem.participationId(), buildJobItem.courseId(), buildJobItem.priority(), buildJobItem.jobTimingInfo().submissionDate());
     }
 }

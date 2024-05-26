@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.repository.BuildJobRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 import de.tum.in.www1.artemis.service.connectors.localci.SharedQueueManagementService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildAgentInformation;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobItem;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
 import de.tum.in.www1.artemis.service.dto.FinishedBuildJobDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
@@ -51,9 +51,9 @@ public class AdminBuildJobQueueResource {
      */
     @GetMapping("queued-jobs")
     @EnforceAdmin
-    public ResponseEntity<List<LocalCIBuildJobItem>> getQueuedBuildJobs() {
+    public ResponseEntity<List<LocalCIBuildJobQueueItem>> getQueuedBuildJobs() {
         log.debug("REST request to get the queued build jobs");
-        List<LocalCIBuildJobItem> buildJobQueue = localCIBuildJobQueueService.getQueuedJobs();
+        List<LocalCIBuildJobQueueItem> buildJobQueue = localCIBuildJobQueueService.getQueuedJobs();
         return ResponseEntity.ok(buildJobQueue);
     }
 
@@ -64,9 +64,9 @@ public class AdminBuildJobQueueResource {
      */
     @GetMapping("running-jobs")
     @EnforceAdmin
-    public ResponseEntity<List<LocalCIBuildJobItem>> getRunningBuildJobs() {
+    public ResponseEntity<List<LocalCIBuildJobQueueItem>> getRunningBuildJobs() {
         log.debug("REST request to get the running build jobs");
-        List<LocalCIBuildJobItem> runningBuildJobs = localCIBuildJobQueueService.getProcessingJobs();
+        List<LocalCIBuildJobQueueItem> runningBuildJobs = localCIBuildJobQueueService.getProcessingJobs();
         return ResponseEntity.ok(runningBuildJobs);
     }
 

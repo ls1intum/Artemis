@@ -9,8 +9,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record LocalCIBuildAgentInformation(String name, int maxNumberOfConcurrentBuildJobs, int numberOfCurrentBuildJobs, List<LocalCIBuildJobItem> runningBuildJobs,
-        boolean status, List<LocalCIBuildJobItem> recentBuildJobs) implements Serializable {
+public record LocalCIBuildAgentInformation(String name, int maxNumberOfConcurrentBuildJobs, int numberOfCurrentBuildJobs, List<LocalCIBuildJobQueueItem> runningBuildJobs,
+        boolean status, List<LocalCIBuildJobQueueItem> recentBuildJobs) implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -21,7 +21,7 @@ public record LocalCIBuildAgentInformation(String name, int maxNumberOfConcurren
      * @param agentInformation The agent information
      * @param recentBuildJobs  The list of recent build jobs
      */
-    public LocalCIBuildAgentInformation(LocalCIBuildAgentInformation agentInformation, List<LocalCIBuildJobItem> recentBuildJobs) {
+    public LocalCIBuildAgentInformation(LocalCIBuildAgentInformation agentInformation, List<LocalCIBuildJobQueueItem> recentBuildJobs) {
         this(agentInformation.name(), agentInformation.maxNumberOfConcurrentBuildJobs(), agentInformation.numberOfCurrentBuildJobs(), agentInformation.runningBuildJobs,
                 agentInformation.status(), recentBuildJobs);
     }
