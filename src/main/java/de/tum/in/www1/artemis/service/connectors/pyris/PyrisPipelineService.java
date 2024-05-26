@@ -111,6 +111,14 @@ public class PyrisPipelineService {
         }
     }
 
+    /**
+     * Execute the exercise chat pipeline for the given session.
+     *
+     * @param variant          the variant of the pipeline
+     * @param latestSubmission the latest submission of the student
+     * @param exercise         the programming exercise
+     * @param session          the chat session
+     */
     public void executeExerciseChatPipeline(String variant, Optional<ProgrammingSubmission> latestSubmission, ProgrammingExercise exercise, IrisExerciseChatSession session) {
         executeChatPipeline(variant, session, "exercise-chat",
                 base -> new PyrisExerciseChatPipelineExecutionDTO(base, latestSubmission.map(pyrisDTOService::toPyrisSubmissionDTO).orElse(null),
@@ -118,6 +126,12 @@ public class PyrisPipelineService {
                 () -> pyrisJobService.addExerciseChatJob(exercise.getCourseViaExerciseGroupOrCourseMember().getId(), exercise.getId(), session.getId()));
     }
 
+    /**
+     * Execute the course chat pipeline for the given session.
+     *
+     * @param variant the variant of the pipeline
+     * @param session the chat session
+     */
     public void executeCourseChatPipeline(String variant, IrisCourseChatSession session) {
         var courseId = session.getCourse().getId();
         var studentId = session.getUser().getId();

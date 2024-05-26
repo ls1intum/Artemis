@@ -38,7 +38,7 @@ public interface ExerciseMetricsRepository extends JpaRepository<Exercise, Long>
     Set<ExerciseInformationDTO> findAllExerciseInformationByCourseId(@Param("courseId") long courseId);
 
     @Query("""
-            SELECT e.id as key, c as value
+            SELECT e.id AS key, c AS value
             FROM Exercise e
             LEFT JOIN e.categories c
             """)

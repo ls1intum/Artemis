@@ -22,8 +22,8 @@ public interface IrisCourseChatSessionRepository extends JpaRepository<IrisCours
     /**
      * Finds a list of {@link IrisCourseChatSession} based on the exercise and user IDs.
      *
-     * @param exerciseId The ID of the exercise.
-     * @param userId     The ID of the user.
+     * @param courseId The ID of the course.
+     * @param userId   The ID of the user.
      * @return A list of chat sessions sorted by creation date in descending order.
      */
     @Query("""

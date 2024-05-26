@@ -21,6 +21,12 @@ public record PyrisExerciseWithStudentSubmissionsDTO(long id, String title, Exer
         DifficultyLevel difficultyLevel, Instant releaseDate, Instant dueDate, IncludedInOverallScore inclusionMode, boolean presentationScoreEnabled,
         Set<PyrisStudentSubmissionDTO> submissions) {
 
+    /**
+     * Convert an exercise to a PyrisExerciseWithStudentSubmissionsDTO.
+     *
+     * @param exercise The exercise to convert.
+     * @return The converted exercise.
+     */
     public static PyrisExerciseWithStudentSubmissionsDTO of(Exercise exercise) {
         var submissionDTOSet = exercise.getStudentParticipations().stream().filter(participation -> !participation.isTestRun())
                 .flatMap(participation -> participation.getSubmissions().stream()).map(submission -> new PyrisStudentSubmissionDTO(submission.getSubmissionDate().toInstant(),

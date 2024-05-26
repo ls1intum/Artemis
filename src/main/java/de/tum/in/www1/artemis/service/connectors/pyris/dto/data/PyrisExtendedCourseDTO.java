@@ -20,6 +20,12 @@ public record PyrisExtendedCourseDTO(long id, String name, String description, I
 
         List<PyrisExerciseWithStudentSubmissionsDTO> exercises, List<PyrisExamDTO> exams, List<PyrisCompetencyDTO> competencies) {
 
+    /**
+     * Convert a course to a PyrisExtendedCourseDTO.
+     *
+     * @param course The course to convert.
+     * @return The converted course.
+     */
     public static PyrisExtendedCourseDTO of(Course course) {
         List<PyrisExerciseWithStudentSubmissionsDTO> exercises = course.getExercises().stream().map(PyrisExerciseWithStudentSubmissionsDTO::of).toList();
 
