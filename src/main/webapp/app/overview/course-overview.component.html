@@ -12,20 +12,20 @@
                 <div class="sidebar-container d-flex h-100 justify-content-between flex-column" [ngClass]="{ collapsed: isNavbarCollapsed }">
                     <!-- NavItems -->
                     <div>
-                        <div id="container" class="d-flex p-3 align-items-center text-decoration-none" [title]="course?.title">
+                        <div #container id="container" class="d-flex p-3 align-items-center text-decoration-none" [title]="course?.title" (click)="onContainerClick()">
                             @if (course && course.courseIcon) {
                                 <div>
-                                    <jhi-secured-image id="courseIcon" [src]="course.courseIcon" (click)="dropdownCourses = true" />
+                                    <jhi-secured-image id="courseIcon" [src]="course.courseIcon" />
                                 </div>
                             } @else {
-                                <div id="courseCircle" class="course-circle d-flex align-items-center justify-content-center" (click)="dropdownCourses = true">
+                                <div id="courseCircle" class="course-circle d-flex align-items-center justify-content-center">
                                     <span class="fs-4">{{ course?.title | slice: 0 : 1 }}</span>
                                 </div>
                             }
                             @if (!isNavbarCollapsed) {
-                                <div id="test-course-title" class="h6 mb-0 fw-bold text-body auto-collapse" (click)="dropdownCourses = true">{{ course?.title }}</div>
+                                <div id="test-course-title" class="h6 mb-0 fw-bold text-body auto-collapse">{{ course?.title }}</div>
                             }
-                            <div id="courseDropdownButton" (click)="dropdownCourses = true" class="d-inline-flex position-relative">
+                            <div id="courseDropdownButton" class="d-inline-flex position-relative m-2">
                                 <fa-icon [icon]="faChevronDown" />
                             </div>
                         </div>
@@ -43,7 +43,7 @@
                                                     <span class="fs-4" style="margin-left: 1px">{{ course?.title | slice: 0 : 1 }}</span>
                                                 </div>
                                             }
-                                            @if (!isNavbarCollapsed && !isSidebarCollapsed) {
+                                            @if (!isNavbarCollapsed) {
                                                 {{ course?.title }}
                                             }
                                         </a>

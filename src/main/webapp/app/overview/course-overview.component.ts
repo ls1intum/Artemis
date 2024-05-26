@@ -2,11 +2,13 @@ import {
     AfterViewInit,
     ChangeDetectorRef,
     Component,
+    ElementRef,
     EmbeddedViewRef,
     HostListener,
     OnDestroy,
     OnInit,
     QueryList,
+    Renderer2,
     TemplateRef,
     ViewChild,
     ViewChildren,
@@ -124,7 +126,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     thresholdsForEachSidebarItem: number[] = [];
     dropdownOffset: number;
     dropdownClickNumber: number = 0;
-    dropdownCoursesClickNumber: number = 0;
     readonly WINDOW_OFFSET: number = 300;
     readonly ITEM_HEIGHT: number = 38;
     readonly BREADCRUMB_AND_NAVBAR_HEIGHT: number = 88;
@@ -150,6 +151,8 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     @ViewChild('controlsViewContainer', { read: ViewContainerRef }) controlsViewContainer: ViewContainerRef;
     // Using a list query to be able to listen for changes (late mount); need both as this only returns native nodes
     @ViewChildren('controlsViewContainer') controlsViewContainerAsList: QueryList<ViewContainerRef>;
+
+    @ViewChild('container') container: ElementRef;
 
     // Icons
     faTimes = faTimes;
@@ -196,6 +199,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         private courseAccessStorageService: CourseAccessStorageService,
         private profileService: ProfileService,
         private modalService: NgbModal,
+        private renderer: Renderer2,
     ) {}
 
     async ngOnInit() {
@@ -243,15 +247,16 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         }
     }
 
-    /** Listen click event whether on outside of the menu or one of the items in the menu to close the dropdownCourses menu */
-    @HostListener('document: click', ['$event'])
-    onClickCloseDropdownCourses() {
-        if (this.dropdownCourses) {
-            this.dropdownCoursesClickNumber += 1;
-            if (this.dropdownCoursesClickNumber === 2) {
-                this.dropdownCourses = false;
-                this.dropdownCoursesClickNumber = 0;
-            }
+    onContainerClick() {
+        this.dropdownCourses = !this.dropdownCourses;
+    }
+
+    /** Listen click event whether on outside of the container to close the dropdown menu */
+    @HostListener('document:click', ['$event'])
+    onCloseDropdownClick(event: MouseEvent) {
+        const clickedInsideContainer = this.container.nativeElement.contains(event.target);
+        if (this.dropdownCourses && !clickedInsideContainer) {
+            this.dropdownCourses = false;
         }
     }
 
