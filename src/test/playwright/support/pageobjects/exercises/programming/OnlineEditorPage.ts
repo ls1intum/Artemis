@@ -53,7 +53,8 @@ export class OnlineEditorPage {
     }
 
     private findFile(exerciseID: number, name: string) {
-        return this.findFileBrowser(exerciseID).locator('#file-browser-file', { hasText: name });
+        const filenameElement = this.page.locator('.list-group-item__fileName').getByText(name, { exact: true });
+        return this.findFileBrowser(exerciseID).locator('#file-browser-file', { has: filenameElement });
     }
 
     async openFileWithName(exerciseID: number, name: string) {
