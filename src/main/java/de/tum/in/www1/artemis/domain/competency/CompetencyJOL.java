@@ -9,8 +9,6 @@ import jakarta.persistence.Table;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.User;
 
@@ -21,7 +19,6 @@ public class CompetencyJOL extends DomainObject {
 
     @ManyToOne
     @JoinColumn(name = "competency_id")
-    @JsonIgnoreProperties({ "competencyJOLs" })
     private Competency competency;
 
     @ManyToOne
