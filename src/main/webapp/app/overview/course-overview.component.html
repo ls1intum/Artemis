@@ -12,24 +12,23 @@
                 <div class="sidebar-container d-flex h-100 justify-content-between flex-column" [ngClass]="{ collapsed: isNavbarCollapsed }">
                     <!-- NavItems -->
                     <div>
-                        <div #container id="container" class="d-flex p-3 align-items-center text-decoration-none" [title]="course?.title" (click)="onContainerClick()">
-                            @if (course && course.courseIcon) {
-                                <div>
-                                    <jhi-secured-image id="courseIcon" [src]="course.courseIcon" />
-                                </div>
-                            } @else {
-                                <div class="course-circle d-flex align-items-center justify-content-center">
-                                    <span class="fs-4">{{ course?.title | slice: 0 : 1 }}</span>
-                                </div>
-                            }
+                        <div #container id="container" class="d-flex p-3 align-items-center text-decoration-none" [title]="course?.title">
+                            <div ngbDropdown class="d-inline-block">
+                                @if (course && course.courseIcon) {
+                                    <div>
+                                        <jhi-secured-image id="courseIcon" [src]="course.courseIcon" (click)="onIconClick()" />
+                                    </div>
+                                } @else {
+                                    <div id="courseIconCustom" class="course-circle d-flex align-items-center justify-content-center" (click)="onIconClick()">
+                                        <span class="fs-4">{{ course?.title | slice: 0 : 1 }}</span>
+                                    </div>
+                                }
+                            </div>
                             @if (!isNavbarCollapsed) {
                                 <div id="test-course-title" class="h6 mb-0 fw-bold text-body auto-collapse">{{ course?.title }}</div>
                             }
-                            <div id="courseDropdownButton" class="d-inline-flex position-relative m-2">
-                                <fa-icon [icon]="faChevronRight" class="rotate-icon chevron-position" [class.rotated]="dropdownCourses" />
-                            </div>
                         </div>
-                        <div id="dropdownCourses" [ngStyle]="{ width: isNavbarCollapsed || isScreenSmall ? '64px' : '220px' }" [ngClass]="{ active: dropdownCourses }">
+                        <div id="dropdownCourses" [hidden]="!dropdownCourses" [ngStyle]="{ width: isNavbarCollapsed ? '64px' : '220px' }" [ngClass]="{ active: dropdownCourses }">
                             <ul>
                                 @for (course of courses; track course) {
                                     <li>
@@ -43,8 +42,8 @@
                                                     <span class="fs-4" style="margin-left: 1px">{{ course?.title | slice: 0 : 1 }}</span>
                                                 </div>
                                             }
-                                            @if (!isNavbarCollapsed && !isScreenSmall) {
-                                                {{ course?.title }}
+                                            @if (!isNavbarCollapsed) {
+                                                <div class="h6 mb-0 text-body auto-collapse">{{ course?.title }}</div>
                                             }
                                         </a>
                                     </li>

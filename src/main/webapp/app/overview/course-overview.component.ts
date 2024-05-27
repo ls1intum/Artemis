@@ -66,7 +66,6 @@ import { facSidebar } from '../../content/icons/icons';
 import { CourseTutorialGroupsComponent } from './course-tutorial-groups/course-tutorial-groups.component';
 import { CoursesForDashboardDTO } from 'app/course/manage/courses-for-dashboard-dto';
 import { sortCourses } from 'app/shared/util/course.util';
-import { BreakpointObserver } from '@angular/cdk/layout';
 
 interface CourseActionItem {
     title: string;
@@ -122,7 +121,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     // Properties to track hidden items for dropdown menu
     dropdownOpen: boolean = false;
     dropdownCourses: boolean = false;
-    isScreenSmall = false;
     anyItemHidden: boolean = false;
     hiddenItems: SidebarItem[] = [];
     thresholdsForEachSidebarItem: number[] = [];
@@ -202,7 +200,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         private courseAccessStorageService: CourseAccessStorageService,
         private profileService: ProfileService,
         private modalService: NgbModal,
-        private breakpointObserver: BreakpointObserver,
     ) {}
 
     async ngOnInit() {
@@ -212,9 +209,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.profileSubscription = this.profileService.getProfileInfo()?.subscribe((profileInfo) => {
             this.isProduction = profileInfo?.inProduction;
             this.isTestServer = profileInfo.testServer ?? false;
-        });
-        this.breakpointObserver.observe(['(max-width: 960px)']).subscribe((result) => {
-            this.isScreenSmall = result.matches;
         });
         this.getCollapseStateFromStorage();
         this.course = this.courseStorageService.getCourse(this.courseId);
@@ -253,7 +247,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         }
     }
 
-    onContainerClick() {
+    onIconClick() {
         this.dropdownCourses = !this.dropdownCourses;
     }
 
