@@ -14,7 +14,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Repository interface for managing {@link IrisCourseChatSession} entities.
- * Extends Spring Data JPA's {@link JpaRepository}.
  * Provides custom queries for finding chat sessions based on different criteria.
  */
 public interface IrisCourseChatSessionRepository extends JpaRepository<IrisCourseChatSession, Long> {
@@ -33,7 +32,7 @@ public interface IrisCourseChatSessionRepository extends JpaRepository<IrisCours
                 AND s.user.id = :userId
             ORDER BY s.creationDate DESC
             """)
-    List<IrisCourseChatSession> findByCourseIdAndUserId(@Param("courseId") Long courseId, @Param("userId") Long userId);
+    List<IrisCourseChatSession> findByCourseIdAndUserId(@Param("courseId") long courseId, @Param("userId") long userId);
 
     @Query("""
                 SELECT s
@@ -44,7 +43,7 @@ public interface IrisCourseChatSessionRepository extends JpaRepository<IrisCours
                 ORDER BY s.creationDate DESC
                 LIMIT 1
             """)
-    Optional<IrisCourseChatSession> findLatestByCourseIdAndUserIdWithMessages(@Param("courseId") Long courseId, @Param("userId") Long userId);
+    Optional<IrisCourseChatSession> findLatestByCourseIdAndUserIdWithMessages(@Param("courseId") long courseId, @Param("userId") long userId);
 
     /**
      * Finds a list of chat sessions or throws an exception if none are found.
@@ -73,18 +72,5 @@ public interface IrisCourseChatSessionRepository extends JpaRepository<IrisCours
     @NotNull
     default IrisCourseChatSession findByIdElseThrow(long sessionId) throws EntityNotFoundException {
         return findById(sessionId).orElseThrow(() -> new EntityNotFoundException("Iris Chat Session", sessionId));
-    }
-
-    /**
-     * Finds the latest chat session by course and user ID or throws an exception if not found.
-     *
-     * @param courseid The ID of the course.
-     * @param userId   The ID of the user.
-     * @return The latest chat session.
-     * @throws EntityNotFoundException if no session is found.
-     */
-    @NotNull
-    default IrisCourseChatSession findLatestByCourseIdAndUserIdWithMessagesElseThrow(long courseid, long userId) throws EntityNotFoundException {
-        return this.findLatestByCourseIdAndUserIdWithMessages(courseid, userId).orElseThrow(() -> new EntityNotFoundException("Iris Chat Session"));
     }
 }
