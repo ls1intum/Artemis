@@ -70,6 +70,7 @@ import de.tum.in.www1.artemis.repository.GradingScaleRepository;
 import de.tum.in.www1.artemis.repository.GroupNotificationRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.ParticipantScoreRepository;
+import de.tum.in.www1.artemis.repository.PrerequisiteRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.RatingRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
@@ -145,6 +146,8 @@ public class CourseService {
 
     private final CompetencyRepository competencyRepository;
 
+    private final PrerequisiteRepository prerequisiteRepository;
+
     private final GradingScaleRepository gradingScaleRepository;
 
     private final StatisticsRepository statisticsRepository;
@@ -198,7 +201,8 @@ public class CourseService {
             ParticipantScoreRepository participantScoreRepository, PresentationPointsCalculationService presentationPointsCalculationService,
             TutorialGroupRepository tutorialGroupRepository, PlagiarismCaseRepository plagiarismCaseRepository, ConversationRepository conversationRepository,
             LearningPathService learningPathService, Optional<IrisSettingsService> irisSettingsService, LectureRepository lectureRepository,
-            TutorialGroupNotificationRepository tutorialGroupNotificationRepository, TutorialGroupChannelManagementService tutorialGroupChannelManagementService) {
+            TutorialGroupNotificationRepository tutorialGroupNotificationRepository, TutorialGroupChannelManagementService tutorialGroupChannelManagementService,
+            PrerequisiteRepository prerequisiteRepository) {
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
@@ -236,6 +240,7 @@ public class CourseService {
         this.lectureRepository = lectureRepository;
         this.tutorialGroupNotificationRepository = tutorialGroupNotificationRepository;
         this.tutorialGroupChannelManagementService = tutorialGroupChannelManagementService;
+        this.prerequisiteRepository = prerequisiteRepository;
     }
 
     /**
@@ -321,8 +326,7 @@ public class CourseService {
         // NOTE: in this call we only want to know if competencies exist in the course, we will load them when the user navigates into them
         course.setNumberOfCompetencies(competencyRepository.countByCourse(course));
         // NOTE: in this call we only want to know if prerequisites exist in the course, we will load them when the user navigates into them
-        // TODO: change this.
-        course.setNumberOfPrerequisites(0L);
+        course.setNumberOfPrerequisites(prerequisiteRepository.countByCourse(course));
         // NOTE: in this call we only want to know if tutorial groups exist in the course, we will load them when the user navigates into them
         course.setNumberOfTutorialGroups(tutorialGroupRepository.countByCourse(course));
         if (authCheckService.isOnlyStudentInCourse(course, user)) {

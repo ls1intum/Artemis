@@ -26,9 +26,9 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import de.tum.in.www1.artemis.domain.Course;
 
-// TODO: javadoc for this.
+// TODO: javadoc for this?
 @Entity
-@Table(name = "competency")
+@Table(name = "course_competency")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)

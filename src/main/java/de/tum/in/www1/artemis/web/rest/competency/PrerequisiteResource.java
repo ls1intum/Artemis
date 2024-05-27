@@ -108,7 +108,7 @@ public class PrerequisiteResource {
     @PutMapping("courses/{courseId}/competencies/prerequisites/{prerequisiteId}")
     @EnforceAtLeastEditorInCourse
     public ResponseEntity<PrerequisiteResponseDTO> updatePrerequisite(@PathVariable long courseId, @PathVariable long prerequisiteId,
-            @RequestBody PrerequisiteRequestDTO prerequisiteValues) throws URISyntaxException {
+            @RequestBody PrerequisiteRequestDTO prerequisiteValues) {
         log.info("REST request to update Prerequisite with id : {}", prerequisiteId);
 
         final var savedPrerequisite = prerequisiteService.updatePrerequisite(prerequisiteValues, prerequisiteId, courseId);
@@ -142,7 +142,7 @@ public class PrerequisiteResource {
      * @return the ResponseEntity with status 201 (Created) and with body containing the imported prerequisites
      * @throws URISyntaxException if the location URI syntax is incorrect
      */
-    @PostMapping("courses/{courseId}/prerequisites/import")
+    @PostMapping("courses/{courseId}/competencies/prerequisites/import")
     @EnforceAtLeastEditorInCourse
     public ResponseEntity<List<PrerequisiteResponseDTO>> importPrerequisites(@PathVariable long courseId, @RequestBody List<Long> courseCompetencyIds) throws URISyntaxException {
         log.info("REST request to import courseCompetencies with ids {} as prerequisites", courseCompetencyIds);

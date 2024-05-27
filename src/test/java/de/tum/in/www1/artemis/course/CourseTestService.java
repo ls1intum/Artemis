@@ -62,6 +62,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.assessment.ComplaintUtilService;
 import de.tum.in.www1.artemis.competency.CompetencyUtilService;
+import de.tum.in.www1.artemis.competency.PrerequisiteUtilService;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Complaint;
 import de.tum.in.www1.artemis.domain.ComplaintResponse;
@@ -271,6 +272,9 @@ public class CourseTestService {
 
     @Autowired
     private CompetencyUtilService competencyUtilService;
+
+    @Autowired
+    private PrerequisiteUtilService prerequisiteUtilService;
 
     @Autowired
     private LectureUtilService lectureUtilService;
@@ -680,7 +684,7 @@ public class CourseTestService {
         course = courseRepo.save(course);
 
         Set<Prerequisite> prerequisites = new HashSet<>();
-        prerequisites.add(competencyUtilService.createPrerequisite(courseUtilService.createCourse()));
+        prerequisites.add(prerequisiteUtilService.createPrerequisite(courseUtilService.createCourse()));
         course.setPrerequisites(prerequisites);
         course = courseRepo.save(course);
 

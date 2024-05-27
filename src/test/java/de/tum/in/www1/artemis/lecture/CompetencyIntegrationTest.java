@@ -50,7 +50,6 @@ import de.tum.in.www1.artemis.exercise.text.TextExerciseFactory;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.repository.CompetencyRelationRepository;
 import de.tum.in.www1.artemis.repository.CompetencyRepository;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseUnitRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
@@ -73,9 +72,6 @@ import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyWithTailRelation
 class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "competencyintegrationtest";
-
-    @Autowired
-    private CourseRepository courseRepository;
 
     @Autowired
     private LectureRepository lectureRepository;
@@ -168,8 +164,6 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
         course2 = courseUtilService.createCourse();
 
         competency = createCompetency(course);
-        // TODO: re-enable later
-        // createPrerequisiteForCourse2();
         lecture = createLecture(course);
 
         textExercise = createTextExercise(pastTimestamp, pastTimestamp, pastTimestamp, Set.of(competency), false);
@@ -196,15 +190,6 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
         relation.setType(type);
         return competencyRelationRepository.save(relation);
     }
-
-    // TODO: re-enable later
-    /*
-     * private void createPrerequisiteForCourse2() {
-     * // Add the first competency as a prerequisite to the other course
-     * course2.addPrerequisite(competency);
-     * courseRepository.save(course2);
-     * }
-     */
 
     private void creatingLectureUnitsOfLecture(Competency competency) {
         // creating lecture units for lecture one
@@ -303,9 +288,6 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
             // import
             request.post("/api/courses/" + course.getId() + "/competencies/import-all/1", null, HttpStatus.FORBIDDEN);
             request.post("/api/courses/" + course.getId() + "/competencies/import", competency, HttpStatus.FORBIDDEN);
-            // prerequisites
-            request.post("/api/courses/" + course.getId() + "/prerequisites/1", null, HttpStatus.FORBIDDEN);
-            request.delete("/api/courses/" + course.getId() + "/prerequisites/1", HttpStatus.FORBIDDEN);
             // relations
             request.post("/api/courses/" + course.getId() + "/competencies/relations", new CompetencyRelation(), HttpStatus.FORBIDDEN);
             request.getSet("/api/courses/" + course.getId() + "/competencies/relations", HttpStatus.FORBIDDEN, CompetencyRelationDTO.class);
@@ -808,64 +790,6 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
             assertThat(result.getResultsOnPage()).hasSize(1);
         }
     }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void getPrerequisitesShouldReturnPrerequisites() throws Exception {
-        List<Competency> prerequisites = request.getList("/api/courses/" + course2.getId() + "/prerequisites", HttpStatus.OK, Competency.class);
-        assertThat(prerequisites).containsExactly(competency);
-    }
-
-    // TODO: re-enable when complete again
-    /*
-     * @Nested
-     * class AddPrerequisite {
-     * @Test
-     * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-     * void shouldAddPrerequisite() throws Exception {
-     * Competency competency = new Competency();
-     * competency.setTitle("CompetencyTwo");
-     * competency.setDescription("This is an example competency");
-     * competency.setCourse(course2);
-     * competency = competencyRepository.save(competency);
-     * Competency prerequisite = request.postWithResponseBody("/api/courses/" + course.getId() + "/prerequisites/" + competency.getId(), competency, Competency.class,
-     * HttpStatus.OK);
-     * assertThat(prerequisite).isNotNull();
-     * assertThat(prerequisite.getConsecutiveCourses()).contains(course);
-     * }
-     * @Test
-     * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-     * void shouldNotAddPrerequisiteWhenAlreadyCompetencyInCourse() throws Exception {
-     * // Test that a competency of a course can not be a prerequisite to the same course
-     * request.postWithResponseBody("/api/courses/" + course.getId() + "/prerequisites/" + competency.getId(), competency, Competency.class, HttpStatus.BAD_REQUEST);
-     * }
-     * }
-     * @Nested
-     * class RemovePrerequisite {
-     * @Test
-     * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-     * void shouldRemovePrerequisite() throws Exception {
-     * request.delete("/api/courses/" + course2.getId() + "/prerequisites/" + competency.getId(), HttpStatus.OK);
-     * Course course = courseRepository.findWithEagerCompetenciesById(course2.getId()).orElseThrow();
-     * assertThat(course.getPrerequisites()).doesNotContain(competency);
-     * }
-     * @Test
-     * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-     * void shouldReturnBadRequestWhenPrerequisiteNotExists() throws Exception {
-     * request.delete("/api/courses/" + course.getId() + "/prerequisites/" + competency.getId(), HttpStatus.BAD_REQUEST);
-     * }
-     * @Test
-     * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-     * void shouldNotRemovePrerequisiteOfAnotherCourse() throws Exception {
-     * Course anotherCourse = courseUtilService.createCourse();
-     * anotherCourse.addPrerequisite(competency);
-     * anotherCourse = courseRepository.save(anotherCourse);
-     * request.delete("/api/courses/" + course2.getId() + "/prerequisites/" + competency.getId(), HttpStatus.OK);
-     * anotherCourse = courseRepository.findWithEagerCompetenciesById(anotherCourse.getId()).orElseThrow();
-     * assertThat(anotherCourse.getPrerequisites()).contains(competency);
-     * }
-     * }
-     */
 
     @Nested
     class CreateCompetencies {

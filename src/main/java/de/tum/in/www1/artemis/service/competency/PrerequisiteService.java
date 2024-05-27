@@ -99,8 +99,9 @@ public class PrerequisiteService {
      * @return The list of imported prerequisites
      */
     public List<Prerequisite> importPrerequisites(long courseId, List<Long> courseCompetencyIds) {
+        // TODO: check that we do not import any from the same course.
         var course = courseRepository.findByIdElseThrow(courseId);
-        var user = userRepository.getUser();
+        var user = userRepository.getUserWithGroupsAndAuthorities();
         List<CourseCompetency> courseCompetenciesToImport;
         if (authorizationCheckService.isAdmin(user)) {
             courseCompetenciesToImport = courseCompetencyRepository.findAllByIdElseThrow(courseCompetencyIds);
