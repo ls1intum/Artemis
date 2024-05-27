@@ -37,7 +37,9 @@ class TestResultXmlParser {
             }
 
             for (TestSuite suite : suites.testsuites()) {
-                processTestSuite(suite, failedTests, successfulTests);
+                if (suite.testCases() != null) {
+                    processTestSuite(suite, failedTests, successfulTests);
+                }
             }
         }
     }
