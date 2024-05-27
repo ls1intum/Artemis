@@ -88,7 +88,7 @@ public interface CompetencyMetricsRepository extends JpaRepository<Competency, L
      */
     @Query("""
             SELECT new de.tum.in.www1.artemis.web.rest.dto.metrics.MapEntryLongLong(jol.competency.id, jol.value)
-            FROM CompetencyJOL jol
+            FROM CompetencyJol jol
             WHERE jol.user.id = :userId
             AND jol.competency.id IN :competencyIds
             """)
