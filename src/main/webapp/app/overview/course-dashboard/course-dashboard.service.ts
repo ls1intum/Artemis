@@ -20,7 +20,7 @@ export class CourseDashboardService {
                     if (response.body.exerciseMetrics && response.body.exerciseMetrics.exerciseInformation) {
                         response.body.exerciseMetrics.exerciseInformation = this.convertToExerciseInformation(
                             response.body.exerciseMetrics.exerciseInformation,
-                            response.body.exerciseMetrics.categories,
+                            response.body.exerciseMetrics?.categories ?? {},
                             response.body.exerciseMetrics.teamId,
                         );
                     }
