@@ -68,7 +68,6 @@ export class IrisSettingsService {
      * @param settings the settings to set
      */
     setGlobalSettings(settings: IrisGlobalSettings): Observable<HttpResponse<IrisGlobalSettings>> {
-        console.log('Sending IrisSettings:', settings); // Log the request payload
         return this.http.put<IrisGlobalSettings>(`${this.resourceUrl}/admin/iris/global-iris-settings`, settings, { observe: 'response' });
     }
 

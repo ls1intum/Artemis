@@ -57,6 +57,14 @@ public class PyrisJobService {
         jobMap = hazelcastInstance.getMap("pyris-job-map");
     }
 
+    /**
+     * Adds a new job to the job map for a tutor chat session.
+     *
+     * @param courseId   the ID of the course associated with the job
+     * @param exerciseId the ID of the exercise associated with the job
+     * @param sessionId  the ID of the session associated with the job
+     * @return a unique token identifying the created job
+     */
     public String addJob(Long courseId, Long exerciseId, Long sessionId) {
         var token = generateJobIdToken();
         var job = new TutorChatJob(token, courseId, exerciseId, sessionId);
@@ -64,6 +72,11 @@ public class PyrisJobService {
         return token;
     }
 
+    /**
+     * Adds a new ingestion webhook job to the job map with a timeout.
+     *
+     * @return a unique token identifying the created webhook job
+     */
     public String addIngestionWebhookJob() {
         var token = generateJobIdToken();
         var job = new IngestionWebhookJob(token);
