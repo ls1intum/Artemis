@@ -23,7 +23,15 @@ export const mockServerMessage = {
     sentAt: dayjs(),
 } as IrisAssistantMessage;
 
+export const mockServerMessage2 = {
+    sender: IrisSender.LLM,
+    id: 4,
+    content: [mockMessageContent],
+    sentAt: dayjs(),
+} as IrisAssistantMessage;
+
 export const mockClientMessage = {
+    id: 2,
     sender: IrisSender.USER,
     content: [mockMessageContent],
     sentAt: dayjs(),
@@ -31,7 +39,7 @@ export const mockClientMessage = {
 
 export const mockWebsocketServerMessage = {
     type: IrisChatWebsocketPayloadType.MESSAGE,
-    message: mockServerMessage,
+    message: mockServerMessage2,
     stages: [],
 } as IrisChatWebsocketDTO;
 
@@ -62,10 +70,11 @@ export const mockConversationWithNoMessages = {
     messages: [],
 } as IrisSession;
 
-export function mockServerMessageWithContent(content: string): IrisUserMessage {
+export function mockUserMessageWithContent(content: string): IrisUserMessage {
     return {
         sender: IrisSender.USER,
-        id: 2,
+        id: 3,
         content: [{ textContent: content } as IrisTextMessageContent],
+        sentAt: dayjs(),
     } as IrisUserMessage;
 }
