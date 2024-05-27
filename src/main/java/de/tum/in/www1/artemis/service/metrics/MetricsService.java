@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.web.rest.dto.metrics.ExerciseInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.ExerciseStudentMetricsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.LectureUnitInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.LectureUnitStudentMetricsDTO;
-import de.tum.in.www1.artemis.web.rest.dto.metrics.MapEntryDTO;
+import de.tum.in.www1.artemis.web.rest.dto.metrics.MapEntryLongLong;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.ResourceTimestampDTO;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.ScoreDTO;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.StudentMetricsDTO;
@@ -101,7 +101,7 @@ public class MetricsService {
         final var completedExerciseIds = exerciseMetricsRepository.findAllCompletedExerciseIdsForUserByExerciseIds(userId, exerciseIds);
 
         final var teamIds = exerciseMetricsRepository.findTeamIdsForUserByExerciseIds(userId, exerciseIds);
-        final var teamIdMap = teamIds.stream().collect(toMap(MapEntryDTO::key, MapEntryDTO::value));
+        final var teamIdMap = teamIds.stream().collect(toMap(MapEntryLongLong::key, MapEntryLongLong::value));
 
         return new ExerciseStudentMetricsDTO(exerciseInfoMap, categoryMap, averageScoreMap, scoreMap, averageLatestSubmissionMap, latestSubmissionMap, completedExerciseIds,
                 teamIdMap);
@@ -139,17 +139,17 @@ public class MetricsService {
         final var competencyIds = competencyInfoMap.keySet();
 
         final var competencyExerciseMapEntries = competencyMetricsRepository.findAllExerciseIdsByCompetencyIds(competencyIds);
-        final var exerciseMap = competencyExerciseMapEntries.stream().collect(groupingBy(MapEntryDTO::key, mapping(MapEntryDTO::value, toSet())));
+        final var exerciseMap = competencyExerciseMapEntries.stream().collect(groupingBy(MapEntryLongLong::key, mapping(MapEntryLongLong::value, toSet())));
 
         final var competencyLectureUnitMapEntries = competencyMetricsRepository.findAllLectureUnitIdsByCompetencyIds(competencyIds);
-        final var lectureUnitMap = competencyLectureUnitMapEntries.stream().collect(groupingBy(MapEntryDTO::key, mapping(MapEntryDTO::value, toSet())));
+        final var lectureUnitMap = competencyLectureUnitMapEntries.stream().collect(groupingBy(MapEntryLongLong::key, mapping(MapEntryLongLong::value, toSet())));
 
         final var competencyProgress = competencyMetricsRepository.findAllCompetencyProgressForUserByCompetencyIds(userId, competencyIds);
         final var competencyProgressMap = competencyProgress.stream().collect(toMap(CompetencyProgressDTO::competencyId, CompetencyProgressDTO::progress));
         final var competencyConfidenceMap = competencyProgress.stream().collect(toMap(CompetencyProgressDTO::competencyId, CompetencyProgressDTO::confidence));
 
         final var competencyJolValues = competencyMetricsRepository.findAllCompetencyJolValuesForUserByCompetencyIds(userId, competencyIds);
-        final var competencyJolValuesMap = competencyJolValues.stream().collect(toMap(MapEntryDTO::key, e -> (int) e.value()));
+        final var competencyJolValuesMap = competencyJolValues.stream().collect(toMap(MapEntryLongLong::key, e -> (int) e.value()));
 
         return new CompetencyStudentMetricsDTO(competencyInfoMap, exerciseMap, lectureUnitMap, competencyProgressMap, competencyConfidenceMap, competencyJolValuesMap);
     }

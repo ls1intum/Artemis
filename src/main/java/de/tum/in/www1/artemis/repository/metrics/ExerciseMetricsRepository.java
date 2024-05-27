@@ -13,7 +13,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.ExerciseInformationDTO;
-import de.tum.in.www1.artemis.web.rest.dto.metrics.MapEntryDTO;
+import de.tum.in.www1.artemis.web.rest.dto.metrics.MapEntryLongLong;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.ResourceTimestampDTO;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.ScoreDTO;
 
@@ -145,7 +145,7 @@ public interface ExerciseMetricsRepository extends JpaRepository<Exercise, Long>
      * @return MapEntryDTO with exercise id and team id
      */
     @Query("""
-            SELECT new de.tum.in.www1.artemis.web.rest.dto.metrics.MapEntryDTO(e.id, t.id)
+            SELECT new de.tum.in.www1.artemis.web.rest.dto.metrics.MapEntryLongLong(e.id, t.id)
             FROM Exercise e
             LEFT JOIN e.teams t
             LEFT JOIN t.students u
@@ -153,5 +153,5 @@ public interface ExerciseMetricsRepository extends JpaRepository<Exercise, Long>
                 AND e.id IN :exerciseIds
                 AND u.id = :userId
             """)
-    Set<MapEntryDTO> findTeamIdsForUserByExerciseIds(@Param("userId") long userId, @Param("exerciseIds") Set<Long> exerciseIds);
+    Set<MapEntryLongLong> findTeamIdsForUserByExerciseIds(@Param("userId") long userId, @Param("exerciseIds") Set<Long> exerciseIds);
 }

@@ -21,7 +21,7 @@
                 "yourLatenessLabel": "Deine Verspätung",
                 "averageLatenessLabel": "Durchschnittliche Verspätung",
                 "xAxisLabel": "Aufgaben",
-                "yAxisLabel": "Relative Verspätung (%)"
+                "yAxisLabel": "Relative Fristnähe (%)"
             },
             "judgementOfLearning": {
                 "title": "Wie würdest du dein Verständnis bewerten?",

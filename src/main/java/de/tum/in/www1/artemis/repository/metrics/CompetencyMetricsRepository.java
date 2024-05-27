@@ -13,7 +13,7 @@ import org.springframework.stereotype.Repository;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.CompetencyInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.CompetencyProgressDTO;
-import de.tum.in.www1.artemis.web.rest.dto.metrics.MapEntryDTO;
+import de.tum.in.www1.artemis.web.rest.dto.metrics.MapEntryLongLong;
 
 /**
  * Spring Data JPA repository to fetch competency related metrics.
@@ -42,12 +42,12 @@ public interface CompetencyMetricsRepository extends JpaRepository<Competency, L
      * @return the exercise ids for all exercises that are associated with the competencies
      */
     @Query("""
-            SELECT new de.tum.in.www1.artemis.web.rest.dto.metrics.MapEntryDTO(c.id, e.id)
+            SELECT new de.tum.in.www1.artemis.web.rest.dto.metrics.MapEntryLongLong(c.id, e.id)
             FROM Exercise e
             JOIN e.competencies c
             WHERE c.id IN :competencyIds
             """)
-    Set<MapEntryDTO> findAllExerciseIdsByCompetencyIds(@Param("competencyIds") Set<Long> competencyIds);
+    Set<MapEntryLongLong> findAllExerciseIdsByCompetencyIds(@Param("competencyIds") Set<Long> competencyIds);
 
     /**
      * Get the lecture unit ids for all lecture units that are associated with a set of competencies.
@@ -56,12 +56,12 @@ public interface CompetencyMetricsRepository extends JpaRepository<Competency, L
      * @return the lecture unit ids for all lecture units that are associated with the competencies
      */
     @Query("""
-            SELECT new de.tum.in.www1.artemis.web.rest.dto.metrics.MapEntryDTO(c.id, lu.id)
+            SELECT new de.tum.in.www1.artemis.web.rest.dto.metrics.MapEntryLongLong(c.id, lu.id)
             FROM LectureUnit lu
             JOIN lu.competencies c
             WHERE c.id IN :competencyIds
             """)
-    Set<MapEntryDTO> findAllLectureUnitIdsByCompetencyIds(@Param("competencyIds") Set<Long> competencyIds);
+    Set<MapEntryLongLong> findAllLectureUnitIdsByCompetencyIds(@Param("competencyIds") Set<Long> competencyIds);
 
     /**
      * Get the competency progress for a user in a set of competencies.
@@ -87,10 +87,10 @@ public interface CompetencyMetricsRepository extends JpaRepository<Competency, L
      * @return the competency judgement of learning values for the user in the competencies
      */
     @Query("""
-            SELECT new de.tum.in.www1.artemis.web.rest.dto.metrics.MapEntryDTO(jol.competency.id, jol.value)
+            SELECT new de.tum.in.www1.artemis.web.rest.dto.metrics.MapEntryLongLong(jol.competency.id, jol.value)
             FROM CompetencyJOL jol
             WHERE jol.user.id = :userId
             AND jol.competency.id IN :competencyIds
             """)
-    Set<MapEntryDTO> findAllCompetencyJolValuesForUserByCompetencyIds(@Param("userId") long userId, @Param("competencyIds") Set<Long> competencyIds);
+    Set<MapEntryLongLong> findAllCompetencyJolValuesForUserByCompetencyIds(@Param("userId") long userId, @Param("competencyIds") Set<Long> competencyIds);
 }
