@@ -58,8 +58,6 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     faThumbsDown = faThumbsDown;
     faRedo = faRedo;
 
-    protected readonly IrisSender = IrisSender;
-
     // State variables
     messagesSubscription: Subscription;
     stagesSubscription: Subscription;
@@ -99,6 +97,13 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     @ViewChild('scrollArrow') scrollArrow!: ElementRef;
     @ViewChild('messageTextarea') messageTextarea: ElementRef<HTMLTextAreaElement>;
     @ViewChild('acceptButton') acceptButton: ElementRef<HTMLButtonElement>;
+
+    // Types
+    protected readonly IrisLogoSize = IrisLogoSize;
+    protected readonly IrisMessageContentType = IrisMessageContentType;
+    protected readonly IrisAssistantMessage = IrisAssistantMessage;
+    protected readonly IrisTextMessageContent = IrisTextMessageContent;
+    protected readonly IrisSender = IrisSender;
 
     constructor(
         protected accountService: AccountService,
@@ -363,10 +368,4 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
         const scrollTop = messagesElement.scrollTop;
         this.isScrolledToBottom = scrollTop < 50;
     }
-
-    protected readonly IrisLogoSize = IrisLogoSize;
-    protected readonly IrisMessageContentType = IrisMessageContentType;
-    protected readonly IrisAssistantMessage = IrisAssistantMessage;
-    protected readonly IrisTextMessageContent = IrisTextMessageContent;
-    protected readonly JSON = JSON;
 }
