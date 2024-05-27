@@ -66,7 +66,7 @@
                     "tooltip": "Wenn aktiviert, werden die spezifischen globalen Iris Einstellungen automatisch aktualisiert, wenn eine neue Version von Artemis neue Iris Einstellungen bereitstellt.",
                     "chatLabel": "Auto Update der Chat Einstellungen",
                     "hestiaLabel": "Auto Update der Hestia Einstellungen",
-                    "lectureIngestionLabel": "Auto Update der Volesungen Erfassung Einstellungen",
+                    "lectureIngestionLabel": "Auto Update der Vorlesungen Erfassung Einstellungen",
                     "competencyGenerationLabel": "Auto Update der Kompetenzgenerierung Einstellungen"
                 }
             },

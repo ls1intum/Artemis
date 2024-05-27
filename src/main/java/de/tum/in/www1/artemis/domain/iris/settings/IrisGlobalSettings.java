@@ -86,7 +86,7 @@ public class IrisGlobalSettings extends IrisSettings {
     }
 
     public void setEnableAutoUpdateLectureIngestion(boolean enableAutoUpdateLectureIngestion) {
-        this.enableAutoUpdateLectureIngestion = enableAutoUpdateChat;
+        this.enableAutoUpdateLectureIngestion = enableAutoUpdateLectureIngestion;
     }
 
     public boolean isEnableAutoUpdateHestia() {
