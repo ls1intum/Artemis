@@ -86,11 +86,11 @@ public class LectureResource {
 
     private final ChannelRepository channelRepository;
 
-    private final PyrisWebhookService webhookService;
+    private final Optional<PyrisWebhookService> pyrisWebhookService;
 
     public LectureResource(LectureRepository lectureRepository, LectureService lectureService, LectureImportService lectureImportService, CourseRepository courseRepository,
             UserRepository userRepository, AuthorizationCheckService authCheckService, ExerciseService exerciseService, ChannelService channelService,
-            ChannelRepository channelRepository, PyrisWebhookService webhookService) {
+            ChannelRepository channelRepository, Optional<PyrisWebhookService> pyrisWebhookService) {
         this.lectureRepository = lectureRepository;
         this.lectureService = lectureService;
         this.lectureImportService = lectureImportService;
@@ -100,7 +100,7 @@ public class LectureResource {
         this.exerciseService = exerciseService;
         this.channelService = channelService;
         this.channelRepository = channelRepository;
-        this.webhookService = webhookService;
+        this.pyrisWebhookService = pyrisWebhookService;
     }
 
     /**
@@ -172,7 +172,7 @@ public class LectureResource {
      * @param courseId         the courseId of the course for which all lectures should be returned
      * @return the ResponseEntity with status 200 (OK) and the list of lectures in body
      */
-    @GetMapping(value = "/courses/{courseId}/lectures")
+    @GetMapping(value = "courses/{courseId}/lectures")
     @EnforceAtLeastEditor
     public ResponseEntity<Set<Lecture>> getLecturesForCourse(@PathVariable Long courseId, @RequestParam(required = false, defaultValue = "false") boolean withLectureUnits) {
         log.debug("REST request to get all Lectures for the course with id : {}", courseId);
@@ -395,6 +395,6 @@ public class LectureResource {
     private void helpExecuteIngestionPipeline(Lecture lecture) {
         List<AttachmentUnit> attachmentUnitList = lecture.getLectureUnits().stream().filter(lectureUnit -> lectureUnit.getType().equals("attachment"))
                 .map(lectureUnit -> (AttachmentUnit) lectureUnit).collect(Collectors.toCollection(ArrayList::new));
-        webhookService.executeLectureIngestionPipeline(true, attachmentUnitList);
+        pyrisWebhookService.ifPresent(service -> service.executeLectureIngestionPipeline(true, attachmentUnitList));
     }
 }
