@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.config.localvcci;
+package de.tum.in.www1.artemis.config.icl;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
 
@@ -36,11 +36,11 @@ import de.tum.in.www1.artemis.exception.LocalCIException;
  */
 @Configuration
 @Profile(PROFILE_BUILDAGENT)
-public class LocalCIConfiguration {
+public class BuildAgentConfiguration {
 
     private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
 
-    private static final Logger log = LoggerFactory.getLogger(LocalCIConfiguration.class);
+    private static final Logger log = LoggerFactory.getLogger(BuildAgentConfiguration.class);
 
     @Value("${artemis.continuous-integration.docker-connection-uri}")
     String dockerConnectionUri;
@@ -51,7 +51,7 @@ public class LocalCIConfiguration {
     @Value("${artemis.continuous-integration.specify-concurrent-builds:false}")
     boolean specifyConcurrentBuilds;
 
-    public LocalCIConfiguration(ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
+    public BuildAgentConfiguration(ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
     }
 
