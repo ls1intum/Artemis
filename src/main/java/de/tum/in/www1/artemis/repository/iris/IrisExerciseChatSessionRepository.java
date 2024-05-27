@@ -74,17 +74,4 @@ public interface IrisExerciseChatSessionRepository extends JpaRepository<IrisExe
     default IrisExerciseChatSession findByIdElseThrow(long sessionId) throws EntityNotFoundException {
         return findById(sessionId).orElseThrow(() -> new EntityNotFoundException("Iris Chat Session", sessionId));
     }
-
-    /**
-     * Finds the latest chat session by exercise and user ID or throws an exception if not found.
-     *
-     * @param exerciseId The ID of the exercise.
-     * @param userId     The ID of the user.
-     * @return The latest chat session.
-     * @throws EntityNotFoundException if no session is found.
-     */
-    @NotNull
-    default IrisExerciseChatSession findLatestByExerciseIdAndUserIdWithMessagesElseThrow(long exerciseId, long userId) throws EntityNotFoundException {
-        return this.findLatestByExerciseIdAndUserIdWithMessages(exerciseId, userId).orElseThrow(() -> new EntityNotFoundException("Iris Chat Session"));
-    }
 }

@@ -7,14 +7,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender;
 import de.tum.in.www1.artemis.domain.iris.message.IrisTextMessageContent;
 import de.tum.in.www1.artemis.domain.iris.session.IrisCourseChatSession;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettingsType;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -25,7 +23,6 @@ import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;
 import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
 import de.tum.in.www1.artemis.service.iris.websocket.IrisChatWebsocketService;
-import de.tum.in.www1.artemis.service.metrics.MetricsService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 /**
@@ -51,13 +48,9 @@ public class IrisCourseChatSessionService implements IrisChatBasedFeatureInterfa
 
     private final PyrisPipelineService pyrisPipelineService;
 
-    private final CourseRepository courseRepository;
-
-    private final MetricsService metricsService;
-
     public IrisCourseChatSessionService(IrisMessageService irisMessageService, IrisSettingsService irisSettingsService, IrisChatWebsocketService irisChatWebsocketService,
             AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository, IrisRateLimitService rateLimitService,
-            PyrisPipelineService pyrisPipelineService, CourseRepository courseRepository, MetricsService metricsService) {
+            PyrisPipelineService pyrisPipelineService) {
         this.irisMessageService = irisMessageService;
         this.irisSettingsService = irisSettingsService;
         this.irisChatWebsocketService = irisChatWebsocketService;
@@ -65,20 +58,6 @@ public class IrisCourseChatSessionService implements IrisChatBasedFeatureInterfa
         this.irisSessionRepository = irisSessionRepository;
         this.rateLimitService = rateLimitService;
         this.pyrisPipelineService = pyrisPipelineService;
-        this.courseRepository = courseRepository;
-        this.metricsService = metricsService;
-    }
-
-    /**
-     * Creates a new Iris session for the given exercise and user.
-     *
-     * @param course The course the session belongs to
-     * @param user   The user the session belongs to
-     * @return The created session
-     */
-
-    public IrisCourseChatSession createChatSessionForCourse(Course course, User user) {
-        return irisSessionRepository.save(new IrisCourseChatSession(course, user));
     }
 
     /**

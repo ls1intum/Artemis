@@ -36,6 +36,14 @@ public class CompetencyJolService {
         this.userRepository = userRepository;
     }
 
+    /**
+     * Check if a judgement of learning value is valid.
+     * <p>
+     * A judgement of learning value is valid if it is an integer between 1 and 5.
+     *
+     * @param jolValue the judgement of learning value
+     * @return true if the value is valid, false otherwise
+     */
     private static boolean isJolValueValid(int jolValue) {
         return 1 <= jolValue && jolValue <= 5;
     }
