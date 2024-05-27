@@ -121,7 +121,7 @@ public class IrisExerciseChatSessionResource {
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the new iris session for the exercise
      */
     @PostMapping("{exerciseId}/sessions")
-    @EnforceAtLeastStudent
+    @EnforceAtLeastStudentInExercise
     public ResponseEntity<IrisExerciseChatSession> createSessionForExercise(@PathVariable Long exerciseId) throws URISyntaxException {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         ProgrammingExercise programmingExercise = validateExercise(exercise);
