@@ -2,4 +2,8 @@
     .sidebar-button {
         border-width: 0;
     }
+
+    .dropdown-toggle::after {
+        content: none;
+    }
 }
