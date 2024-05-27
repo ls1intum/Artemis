@@ -103,7 +103,7 @@ if your test suite should be able to run on the student submissions.
 That is maybe okay or even desired for a beginner course,
 but for advanced courses this is a downside,
 because without making their own decision about the structure of their source code,
-the students cannot collect experience in this import aspect of programming through your exercises.
+the students cannot collect experience in this important aspect of programming through your exercises.
 
 To be able to include the structural aspect of programming in your Programming Exercises,
 without losing the ability to test submissions automatically, you can use DejaGnu.
