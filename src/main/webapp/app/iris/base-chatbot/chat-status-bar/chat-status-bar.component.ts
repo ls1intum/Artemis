@@ -24,6 +24,8 @@ export class ChatStatusBarComponent implements OnChanges {
     constructor() {}
 
     ngOnChanges() {
+        // Lower case state for scss classes, avoid function calling in template
+        this.stages?.forEach((stage) => (stage.lowerCaseState = stage.state?.toLowerCase()));
         const firstUnfinished = this.stages?.find((stage) => !this.isStageFinished(stage));
         if (firstUnfinished) {
             clearTimeout(this.openTimeout);

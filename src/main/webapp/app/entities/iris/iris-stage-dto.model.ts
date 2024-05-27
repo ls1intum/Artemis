@@ -3,6 +3,8 @@ export class IrisStageDTO {
     weight: number;
     state: IrisStageStateDTO;
     message: string;
+
+    lowerCaseState?: string;
 }
 
 export enum IrisStageStateDTO {
