@@ -10,6 +10,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -37,7 +38,7 @@ public class ResourceLoaderService {
 
     private static final Logger log = LoggerFactory.getLogger(ResourceLoaderService.class);
 
-    private static final String ALL_FILES_GLOB = "**" + File.separator + "*.*";
+    private static final String ALL_PATHS_ANT_PATTERN = "**";
 
     @Value("${artemis.template-path:#{null}}")
     private Optional<Path> templateFileSystemPath;
@@ -84,20 +85,20 @@ public class ResourceLoaderService {
     /**
      * Recursively loads the resources from the specified directory.
      * <p>
-     * Only relative paths are allowed.
+     * Only relative paths are allowed. Does not return directories.
      *
      * @param basePath A relative path pattern to a resource.
      * @return The resources located by the specified pathPattern.
      */
     @NotNull
     public Resource[] getResources(final Path basePath) {
-        return getResources(basePath, ALL_FILES_GLOB);
+        return getResources(basePath, ALL_PATHS_ANT_PATTERN);
     }
 
     /**
      * Loads the resources from the specified path pattern.
      * <p>
-     * Only relative paths are allowed.
+     * Only relative paths are allowed. Does not return directories.
      * <p>
      * Examples for path patterns: {@code *.sh}, {@code base/**}. Use forward slashes to separate path parts.
      *
@@ -115,7 +116,7 @@ public class ResourceLoaderService {
         if (isOverrideAllowed(basePath)) {
             final String resourceLocation = getFileResourceLocation(basePath, pattern);
             try {
-                resources = resourceLoader.getResources(resourceLocation);
+                resources = getFileResources(resourceLocation);
             }
             catch (IOException e) {
                 log.debug("Could not load resources '{}' from filesystem.", resourceLocation, e);
@@ -126,7 +127,7 @@ public class ResourceLoaderService {
         if (resources == null || resources.length == 0) {
             final String resourceLocation = getClassPathResourceLocation(basePath, pattern);
             try {
-                resources = resourceLoader.getResources(resourceLocation);
+                resources = getFileResources(resourceLocation);
             }
             catch (IOException e) {
                 log.debug("Could not load resources '{}' from classpath.", resourceLocation, e);
@@ -134,6 +135,19 @@ public class ResourceLoaderService {
         }
 
         return Objects.requireNonNullElseGet(resources, () -> new Resource[0]);
+    }
+
+    private Resource[] getFileResources(final String resourceLocation) throws IOException {
+        final var fileAndDirectoryResources = resourceLoader.getResources(resourceLocation);
+
+        return Arrays.stream(fileAndDirectoryResources).filter(r -> {
+            try {
+                return r.getFile().isFile();
+            }
+            catch (IOException e) {
+                return false;
+            }
+        }).toArray(Resource[]::new);
     }
 
     private void checkValidPathElseThrow(final Path path) {
