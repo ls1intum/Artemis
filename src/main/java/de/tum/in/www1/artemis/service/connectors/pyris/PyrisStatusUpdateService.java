@@ -37,7 +37,7 @@ public class PyrisStatusUpdateService {
     public void handleStatusUpdate(ExerciseChatJob job, PyrisChatStatusUpdateDTO statusUpdate) {
         irisExerciseChatSessionService.handleStatusUpdate(job, statusUpdate);
 
-        removeJobIfJobTerminated(statusUpdate, job.jobId());
+        removeJobIfTerminated(statusUpdate, job.jobId());
     }
 
     /**
@@ -50,10 +50,10 @@ public class PyrisStatusUpdateService {
     public void handleStatusUpdate(CourseChatJob job, PyrisChatStatusUpdateDTO statusUpdate) {
         courseChatSessionService.handleStatusUpdate(job, statusUpdate);
 
-        removeJobIfJobTerminated(statusUpdate, job.jobId());
+        removeJobIfTerminated(statusUpdate, job.jobId());
     }
 
-    private void removeJobIfJobTerminated(PyrisChatStatusUpdateDTO statusUpdate, String job) {
+    private void removeJobIfTerminated(PyrisChatStatusUpdateDTO statusUpdate, String job) {
         var isDone = statusUpdate.stages().stream().map(PyrisStageDTO::state).allMatch(PyrisStageStateDTO::isTerminal);
         if (isDone) {
             pyrisJobService.removeJob(job);
