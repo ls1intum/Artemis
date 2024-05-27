@@ -103,8 +103,6 @@ public class EndpointInformation {
             result = this.requestMapping.replace("\"", "");
         }
         result += this.URI.replace("\"", "");
-        // Replace arguments with placeholder
-        result = result.replaceAll("\\{.*?\\}", ":param:");
         return result;
     }
 
