@@ -5,7 +5,7 @@ export enum IrisSubSettingsType {
     CHAT = 'chat',
     HESTIA = 'hestia',
     COMPETENCY_GENERATION = 'competency-generation',
-    LECTURE_INGESTIION = 'ingestion',
+    LECTURE_INGESTION = 'ingestion',
 }
 
 export abstract class IrisSubSettings implements BaseEntity {
