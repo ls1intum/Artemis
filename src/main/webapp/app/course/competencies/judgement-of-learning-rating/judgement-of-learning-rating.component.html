@@ -5,7 +5,7 @@
     <star-rating
         checkedColor="var(--yellow)"
         uncheckedColor="var(--gray-500)"
-        [value]="rating || 0"
+        [value]="rating ?? 0"
         [size]="'24'"
         [readOnly]="rating !== undefined"
         [totalStars]="5"

@@ -51,6 +51,7 @@
     from {
         opacity: 0;
     }
+
     to {
         opacity: 1;
     }
@@ -74,7 +75,6 @@
 
 .lecture-unit-container {
     flex-wrap: nowrap !important;
-
     min-height: 50px;
     min-width: 100%;
     border: 1px solid var(--overview-blue-border-color);
