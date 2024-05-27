@@ -130,7 +130,6 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
                 this.isSaving = false;
                 this.isDirty = false;
                 this.irisSettings = response.body ?? new IrisGlobalSettings();
-                console.log(response.body);
                 this.fillEmptyIrisSubSettings();
                 this.originalIrisSettings = cloneDeep(this.irisSettings);
                 this.alertService.success('artemisApp.iris.settings.success');
