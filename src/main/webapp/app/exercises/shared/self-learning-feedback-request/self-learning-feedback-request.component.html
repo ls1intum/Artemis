@@ -9,8 +9,10 @@
             />
         }
         <span class="text-danger guided-tour result" id="self-learning-feedback-failed">
-            <span [ngbTooltip]="'artemisApp.result.resultString.automaticAIFeedbackFailedTooltip' | artemisTranslate">
-                {{ 'artemisApp.result.resultString.automaticAIFeedbackFailed' | artemisTranslate }}
+            <span
+                [ngbTooltip]="'artemisApp.result.resultString.automaticAIFeedbackFailedTooltip' | artemisTranslate"
+                jhiTranslate="artemisApp.result.resultString.automaticAIFeedbackFailed"
+            >
             </span>
         </span>
     }
@@ -24,9 +26,10 @@
             />
         }
         <span class="text-secondary guided-tour result" id="self-learning-feedback-loading">
-            <span [ngbTooltip]="'artemisApp.result.resultString.automaticAIFeedbackInProgressTooltip' | artemisTranslate">
-                {{ 'artemisApp.result.resultString.automaticAIFeedbackInProgress' | artemisTranslate }}
-            </span>
+            <span
+                [ngbTooltip]="'artemisApp.result.resultString.automaticAIFeedbackInProgressTooltip' | artemisTranslate"
+                jhiTranslate="artemisApp.result.resultString.automaticAIFeedbackInProgress"
+            ></span>
         </span>
     }
     @if (this.timedOut) {
@@ -39,8 +42,10 @@
             />
         }
         <span class="text-secondary guided-tour result" id="self-learning-feedback-timed-out">
-            <span [ngbTooltip]="'artemisApp.result.resultString.automaticAIFeedbackTimedOutTooltip' | artemisTranslate">
-                {{ 'artemisApp.result.resultString.automaticAIFeedbackTimedOut' | artemisTranslate }}
+            <span
+                [ngbTooltip]="'artemisApp.result.resultString.automaticAIFeedbackTimedOutTooltip' | artemisTranslate"
+                jhiTranslate="artemisApp.result.resultString.automaticAIFeedbackTimedOut"
+            >
             </span>
         </span>
     }

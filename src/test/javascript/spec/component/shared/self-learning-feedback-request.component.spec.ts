@@ -63,8 +63,8 @@ describe('SelfLearningFeedbackRequestComponent', () => {
             comp.selfLearningFeedbackRequest.successful = false;
             fixture.detectChanges();
             const icon = fixture.nativeElement.querySelector('.result-score-icon');
-            const message = fixture.nativeElement.querySelector('#self-learning-feedback-failed');
-            expect(message.textContent).toContain('artemisApp.result.resultString.automaticAIFeedbackFailed');
+            const message = fixture.nativeElement.querySelector('#self-learning-feedback-failed span');
+            expect(message.getAttribute('jhiTranslate')).toContain('artemisApp.result.resultString.automaticAIFeedbackFailed');
             expect(icon).toBeTruthy();
         });
 
@@ -72,18 +72,18 @@ describe('SelfLearningFeedbackRequestComponent', () => {
             comp.selfLearningFeedbackRequest.responseDateTime = undefined;
             fixture.detectChanges();
             const icon = fixture.nativeElement.querySelector('.result-score-icon');
-            const message = fixture.nativeElement.querySelector('#self-learning-feedback-loading');
+            const message = fixture.nativeElement.querySelector('#self-learning-feedback-loading span');
             expect(icon).toBeTruthy();
-            expect(message.textContent).toContain('automaticAIFeedbackInProgress');
+            expect(message.getAttribute('jhiTranslate')).toContain('automaticAIFeedbackInProgress');
         });
 
         it('should display timed out message if timed out', () => {
             comp.timedOut = true;
             fixture.detectChanges();
             const icon = fixture.nativeElement.querySelector('.result-score-icon');
-            const message = fixture.nativeElement.querySelector('#self-learning-feedback-timed-out');
+            const message = fixture.nativeElement.querySelector('#self-learning-feedback-timed-out span');
             expect(icon).toBeTruthy();
-            expect(message.textContent).toContain('automaticAIFeedbackTimedOut');
+            expect(message.getAttribute('jhiTranslate')).toContain('automaticAIFeedbackTimedOut');
         });
     });
 });

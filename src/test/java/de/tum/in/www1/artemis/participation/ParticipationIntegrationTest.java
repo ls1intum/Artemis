@@ -610,12 +610,12 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         verify(programmingMessagingService, timeout(2000).times(2)).notifyUserAboutNewRequest(selfLearningFeedbackRequestArgumentCaptor.capture(), any());
 
-        SelfLearningFeedbackRequestDTO invokedObject = selfLearningFeedbackRequestArgumentCaptor.getAllValues().get(1);
-        assertThat(invokedObject).isNotNull();
-        assertThat(invokedObject.id()).isNotNull();
-        assertThat(invokedObject.successful()).isTrue();
-        assertThat(invokedObject.responseDateTime()).isNotNull();
-        assertThat(invokedObject.result()).isNotNull();
+        SelfLearningFeedbackRequestDTO invokedFeedbackRequest = selfLearningFeedbackRequestArgumentCaptor.getAllValues().get(1);
+        assertThat(invokedFeedbackRequest).isNotNull();
+        assertThat(invokedFeedbackRequest.id()).isNotNull();
+        assertThat(invokedFeedbackRequest.successful()).isTrue();
+        assertThat(invokedFeedbackRequest.responseDateTime()).isNotNull();
+        assertThat(invokedFeedbackRequest.result()).isNotNull();
 
         localRepo.resetLocalRepo();
     }
@@ -656,12 +656,12 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         verify(programmingMessagingService, timeout(2000).times(2)).notifyUserAboutNewRequest(selfLearningFeedbackRequestArgumentCaptor.capture(), any());
 
-        SelfLearningFeedbackRequestDTO invokedObject = selfLearningFeedbackRequestArgumentCaptor.getAllValues().get(1);
-        assertThat(invokedObject).isNotNull();
-        assertThat(invokedObject.id()).isNotNull();
-        assertThat(invokedObject.successful()).isFalse();
-        assertThat(invokedObject.responseDateTime()).isNull();
-        assertThat(invokedObject.result()).isNull();
+        SelfLearningFeedbackRequestDTO invokedFeedbackRequest = selfLearningFeedbackRequestArgumentCaptor.getAllValues().get(1);
+        assertThat(invokedFeedbackRequest).isNotNull();
+        assertThat(invokedFeedbackRequest.id()).isNotNull();
+        assertThat(invokedFeedbackRequest.successful()).isFalse();
+        assertThat(invokedFeedbackRequest.responseDateTime()).isNull();
+        assertThat(invokedFeedbackRequest.result()).isNull();
 
         localRepo.resetLocalRepo();
     }

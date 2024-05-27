@@ -54,7 +54,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
     let modalService: NgbModal;
     let themeService: ThemeService;
 
-    let subscribeForLatestResultOfParticipationStub: jest.SpyInstance;
+    let subscribeForLatestResultsOfParticipationStub: jest.SpyInstance;
     let getFileStub: jest.SpyInstance;
     let openModalStub: jest.SpyInstance;
     let getLatestResultWithFeedbacks: jest.SpyInstance;
@@ -97,7 +97,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 modalService = debugElement.injector.get(NgbModal);
                 themeService = debugElement.injector.get(ThemeService);
 
-                subscribeForLatestResultOfParticipationStub = jest.spyOn(participationWebsocketService, 'subscribeForLatestResultsOfParticipation');
+                subscribeForLatestResultsOfParticipationStub = jest.spyOn(participationWebsocketService, 'subscribeForLatestResultsOfParticipation');
                 openModalStub = jest.spyOn(modalService, 'open');
                 getFileStub = jest.spyOn(repositoryFileService, 'get');
                 getLatestResultWithFeedbacks = jest.spyOn(programmingExerciseParticipationService, 'getLatestResultWithFeedback');
@@ -123,7 +123,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         const participation: Participation = { id: 2, results: [result] };
         const oldSubscription = new Subscription();
         const getTestCasesSpy = jest.spyOn(programmingExerciseGradingService, 'getTestCases');
-        subscribeForLatestResultOfParticipationStub.mockReturnValue(of());
+        subscribeForLatestResultsOfParticipationStub.mockReturnValue(of());
         comp.exercise = exercise;
         comp.participation = participation;
         comp.participationSubscription = oldSubscription;
@@ -132,8 +132,8 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         fixture.detectChanges();
 
         expect(getTestCasesSpy).toHaveBeenCalledOnce();
-        expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledOnce();
-        expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledWith(participation.id, true, exercise.id);
+        expect(subscribeForLatestResultsOfParticipationStub).toHaveBeenCalledOnce();
+        expect(subscribeForLatestResultsOfParticipationStub).toHaveBeenCalledWith(participation.id, true, exercise.id);
         expect(comp.participationSubscription).not.toEqual(oldSubscription);
         expect(comp.isInitial).toBeTrue();
     });

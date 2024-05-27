@@ -294,6 +294,7 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
                 .flatMap((participation) => participation.selfLearningFeedbackRequests ?? [])
                 .map((selfLearningFeedbackRequest) => Object.assign(new SelfLearningFeedbackRequest(), selfLearningFeedbackRequest))
                 .sort(this.selfLearningFeedbackSortFunction);
+            // object assigns are used here to be able to use instanceof operator of typescript, as parsed responses from the server have no prototype
             this.sortedHistoryEntries = this.mergeAndSortHistoryLists(sortedResults, sortedSelfLearningRequests);
         }
     }

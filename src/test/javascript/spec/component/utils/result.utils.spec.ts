@@ -116,6 +116,11 @@ describe('ResultUtils', () => {
             templateStatus: ResultTemplateStatus.HAS_RESULT,
             expected: faTimesCircle,
         },
+        {
+            result: { feedbacks: [], assessmentType: AssessmentType.AUTOMATIC_ATHENA },
+            templateStatus: ResultTemplateStatus.HAS_RESULT,
+            expected: faCheckCircle,
+        },
     ])('should correctly determine result icon', ({ result, templateStatus, expected }) => {
         expect(getResultIconClass(result, templateStatus!)).toBe(expected);
     });
