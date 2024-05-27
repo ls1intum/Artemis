@@ -4,9 +4,10 @@ import static de.tum.in.www1.artemis.config.Constants.CHECKED_OUT_REPOS_TEMP_DIR
 import static de.tum.in.www1.artemis.config.Constants.LOCALCI_RESULTS_DIRECTORY;
 import static de.tum.in.www1.artemis.config.Constants.LOCALCI_WORKING_DIRECTORY;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
+import static de.tum.in.www1.artemis.service.connectors.localci.buildagent.TestResultXmlParser.processTestResultFile;
 
 import java.io.IOException;
-import java.io.StringReader;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -15,9 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamReader;
+import jakarta.annotation.Nullable;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
@@ -29,27 +28,22 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.w3c.dom.Document;
 
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
 
-import de.tum.in.www1.artemis.config.localvcci.LocalCIConfiguration;
 import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.exception.LocalCIException;
-import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobQueueItem;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildResult;
+import de.tum.in.www1.artemis.service.connectors.localci.scaparser.ReportParser;
 import de.tum.in.www1.artemis.service.connectors.localci.scaparser.exception.UnsupportedToolException;
-import de.tum.in.www1.artemis.service.connectors.localci.scaparser.strategy.ParserPolicy;
-import de.tum.in.www1.artemis.service.connectors.localci.scaparser.strategy.ParserStrategy;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUri;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
-import de.tum.in.www1.artemis.service.util.XmlFileUtils;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -64,26 +58,20 @@ public class BuildJobExecutionService {
 
     private final BuildJobContainerService buildJobContainerService;
 
-    /**
-     * Instead of creating a new XMLInputFactory for every build job, it is created once and provided as a Bean (see {@link LocalCIConfiguration#localCIXMLInputFactory()}).
-     */
-    private final XMLInputFactory localCIXMLInputFactory;
+    private final BuildJobGitService buildJobGitService;
 
-    private final GitService gitService;
-
-    private final LocalCIDockerService localCIDockerService;
+    private final BuildAgentDockerService buildAgentDockerService;
 
     private final BuildLogsMap buildLogsMap;
 
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
 
-    public BuildJobExecutionService(BuildJobContainerService buildJobContainerService, XMLInputFactory localCIXMLInputFactory, GitService gitService,
-            LocalCIDockerService localCIDockerService, BuildLogsMap buildLogsMap) {
+    public BuildJobExecutionService(BuildJobContainerService buildJobContainerService, BuildJobGitService buildJobGitService, BuildAgentDockerService buildAgentDockerService,
+            BuildLogsMap buildLogsMap) {
         this.buildJobContainerService = buildJobContainerService;
-        this.localCIXMLInputFactory = localCIXMLInputFactory;
-        this.gitService = gitService;
-        this.localCIDockerService = localCIDockerService;
+        this.buildJobGitService = buildJobGitService;
+        this.buildAgentDockerService = buildAgentDockerService;
         this.buildLogsMap = buildLogsMap;
     }
 
@@ -103,10 +91,10 @@ public class BuildJobExecutionService {
      *
      * @param buildJob      The build job object containing details necessary for executing the build.
      * @param containerName The name of the Docker container that will be prepared and used for the build job.
-     * @return The result of the build job as a {@link LocalCIBuildResult}.
+     * @return The result of the build job as a {@link BuildResult}.
      * @throws LocalCIException If any error occurs during the preparation or execution of the build job.
      */
-    public LocalCIBuildResult runBuildJob(LocalCIBuildJobQueueItem buildJob, String containerName) {
+    public BuildResult runBuildJob(BuildJobQueueItem buildJob, String containerName) {
 
         String msg = "~~~~~~~~~~~~~~~~~~~~ Start Build Job " + buildJob.id() + " ~~~~~~~~~~~~~~~~~~~~";
         log.debug(msg);
@@ -114,7 +102,7 @@ public class BuildJobExecutionService {
 
         // Check if the Docker image is available. If not, pull it.
         try {
-            localCIDockerService.pullDockerImage(buildJob, buildLogsMap);
+            buildAgentDockerService.pullDockerImage(buildJob, buildLogsMap);
         }
         catch (LocalCIException e) {
             msg = "Could not pull Docker image " + buildJob.buildConfig().dockerImage();
@@ -133,7 +121,10 @@ public class BuildJobExecutionService {
         String assignmentCommitHash = buildJob.buildConfig().assignmentCommitHash();
         if (assignmentCommitHash == null) {
             try {
-                assignmentCommitHash = gitService.getLastCommitHash(assignmentRepoUri).getName();
+                var commitObjectId = buildJobGitService.getLastCommitHash(assignmentRepoUri);
+                if (commitObjectId != null) {
+                    assignmentCommitHash = commitObjectId.getName();
+                }
             }
             catch (EntityNotFoundException e) {
                 msg = "Could not find last commit hash for assignment repository " + assignmentRepoUri.repositorySlug();
@@ -144,7 +135,10 @@ public class BuildJobExecutionService {
         String testCommitHash = buildJob.buildConfig().testCommitHash();
         if (testCommitHash == null) {
             try {
-                testCommitHash = gitService.getLastCommitHash(testsRepoUri).getName();
+                var commitObjectId = buildJobGitService.getLastCommitHash(testsRepoUri);
+                if (commitObjectId != null) {
+                    testCommitHash = commitObjectId.getName();
+                }
             }
             catch (EntityNotFoundException e) {
                 msg = "Could not find last commit hash for test repository " + testsRepoUri.repositorySlug();
@@ -225,13 +219,14 @@ public class BuildJobExecutionService {
      * @param auxiliaryRepositoriesPaths Array of paths for the auxiliary repositories.
      * @param assignmentRepoCommitHash   Commit hash for the assignment repository used to fetch the specific state of the repository.
      * @param testRepoCommitHash         Commit hash for the test repository used similarly.
-     * @return A {@link LocalCIBuildResult} object representing the outcome of the build job.
+     * @return A {@link BuildResult} object representing the outcome of the build job.
      * @throws LocalCIException If errors occur during the build process or if the test results cannot be parsed successfully.
      */
     // TODO: This method has too many params, we should reduce the number an rather pass an object (record)
-    private LocalCIBuildResult runScriptAndParseResults(LocalCIBuildJobQueueItem buildJob, String containerName, String containerId, VcsRepositoryUri assignmentRepositoryUri,
+    private BuildResult runScriptAndParseResults(BuildJobQueueItem buildJob, String containerName, String containerId, VcsRepositoryUri assignmentRepositoryUri,
             VcsRepositoryUri testRepositoryUri, VcsRepositoryUri solutionRepositoryUri, VcsRepositoryUri[] auxiliaryRepositoriesUris, Path assignmentRepositoryPath,
-            Path testsRepositoryPath, Path solutionRepositoryPath, Path[] auxiliaryRepositoriesPaths, String assignmentRepoCommitHash, String testRepoCommitHash) {
+            Path testsRepositoryPath, Path solutionRepositoryPath, Path[] auxiliaryRepositoriesPaths, @Nullable String assignmentRepoCommitHash,
+            @Nullable String testRepoCommitHash) {
 
         long timeNanoStart = System.nanoTime();
 
@@ -300,13 +295,13 @@ public class BuildJobExecutionService {
             }
         }
 
-        LocalCIBuildResult buildResult;
+        BuildResult buildResult;
         try {
             buildResult = parseTestResults(testResultsTarInputStream, buildJob.buildConfig().branch(), assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate,
                     buildJob.id());
             buildResult.setBuildLogEntries(buildLogsMap.getBuildLogs(buildJob.id()));
         }
-        catch (IOException | XMLStreamException | IllegalStateException e) {
+        catch (IOException | IllegalStateException e) {
             msg = "Error while parsing test results";
             buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
             throw new LocalCIException(msg, e);
@@ -322,11 +317,11 @@ public class BuildJobExecutionService {
 
     // --- Helper methods ----
 
-    private LocalCIBuildResult parseTestResults(TarArchiveInputStream testResultsTarInputStream, String assignmentRepoBranchName, String assignmentRepoCommitHash,
-            String testsRepoCommitHash, ZonedDateTime buildCompletedDate, String buildJobId) throws IOException, XMLStreamException {
+    private BuildResult parseTestResults(TarArchiveInputStream testResultsTarInputStream, String assignmentRepoBranchName, String assignmentRepoCommitHash,
+            String testsRepoCommitHash, ZonedDateTime buildCompletedDate, String buildJobId) throws IOException {
 
-        List<LocalCIBuildResult.LocalCITestJobDTO> failedTests = new ArrayList<>();
-        List<LocalCIBuildResult.LocalCITestJobDTO> successfulTests = new ArrayList<>();
+        List<BuildResult.LocalCITestJobDTO> failedTests = new ArrayList<>();
+        List<BuildResult.LocalCITestJobDTO> successfulTests = new ArrayList<>();
         List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports = new ArrayList<>();
 
         TarArchiveEntry tarEntry;
@@ -348,7 +343,8 @@ public class BuildJobExecutionService {
                 }
                 else {
                     // ugly workaround because in swift result files \n\t breaks the parsing
-                    processTestResultFile(xmlString.replace("\n\t", ""), failedTests, successfulTests);
+                    var testResultFileString = xmlString.replace("\n\t", "");
+                    processTestResultFile(testResultFileString, failedTests, successfulTests);
                 }
             }
             catch (IllegalStateException e) {
@@ -399,12 +395,8 @@ public class BuildJobExecutionService {
      * @param staticCodeAnalysisReports the list of static code analysis reports
      */
     private void processStaticCodeAnalysisReportFile(String fileName, String xmlString, List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports, String buildJobId) {
-        Document document = XmlFileUtils.readFromString(xmlString);
-        document.setDocumentURI(fileName);
         try {
-            ParserPolicy parserPolicy = new ParserPolicy();
-            ParserStrategy parserStrategy = parserPolicy.configure(document);
-            staticCodeAnalysisReports.add(parserStrategy.parse(document));
+            staticCodeAnalysisReports.add(ReportParser.getReport(xmlString, fileName));
         }
         catch (UnsupportedToolException e) {
             String msg = "Failed to parse static code analysis report for " + fileName;
@@ -418,122 +410,22 @@ public class BuildJobExecutionService {
     }
 
     /**
-     * Processes a test result file and adds the failed and successful tests to the corresponding lists.
-     *
-     * @param testResultFileString The string that represents the test results XML file.
-     * @param failedTests          The list of failed tests.
-     * @param successfulTests      The list of successful tests.
-     * @throws XMLStreamException    if the XML stream reader cannot be created or there is an error while parsing the XML file
-     * @throws IllegalStateException if the first start element of the XML file is not a "testsuite" node
-     */
-    private void processTestResultFile(String testResultFileString, List<LocalCIBuildResult.LocalCITestJobDTO> failedTests,
-            List<LocalCIBuildResult.LocalCITestJobDTO> successfulTests) throws XMLStreamException {
-        // Create an XML stream reader for the string that represents the test results XML file.
-        XMLStreamReader xmlStreamReader = localCIXMLInputFactory.createXMLStreamReader(new StringReader(testResultFileString));
-
-        // Move to the first start element.
-        forwardToNextStartElement(xmlStreamReader);
-
-        if ("testsuites".equals(xmlStreamReader.getLocalName())) {
-            xmlStreamReader.next();
-            forwardToNextStartElement(xmlStreamReader);
-        }
-
-        // Check if the start element is the "testsuite" node.
-        if (!("testsuite".equals(xmlStreamReader.getLocalName()))) {
-            throw new IllegalStateException("Expected testsuite element, but got " + xmlStreamReader.getLocalName());
-        }
-
-        // Go through all testcase nodes.
-        while (xmlStreamReader.hasNext()) {
-            xmlStreamReader.next();
-
-            if (!xmlStreamReader.isStartElement() || !("testcase".equals(xmlStreamReader.getLocalName()))) {
-                continue;
-            }
-
-            // Now we are at the start of a "testcase" node.
-            processTestCaseNode(xmlStreamReader, failedTests, successfulTests);
-        }
-
-        // Close the XML stream reader.
-        xmlStreamReader.close();
-    }
-
-    private void processTestCaseNode(XMLStreamReader xmlStreamReader, List<LocalCIBuildResult.LocalCITestJobDTO> failedTests,
-            List<LocalCIBuildResult.LocalCITestJobDTO> successfulTests) throws XMLStreamException {
-        // Extract the name attribute from the "testcase" node. This is the name of the test case.
-        String name = xmlStreamReader.getAttributeValue(null, "name");
-
-        // Check if there is a failure node inside the testcase node.
-        // Call next() until there is an end element (no failure node exists inside the testcase node) or a start element (failure node exists inside the
-        // testcase node).
-        do {
-            xmlStreamReader.next();
-        }
-        while (!(xmlStreamReader.isEndElement() || xmlStreamReader.isStartElement()));
-        if (xmlStreamReader.isStartElement() && ("failure".equals(xmlStreamReader.getLocalName()) || "error".equals(xmlStreamReader.getLocalName()))) {
-            // Extract the message attribute from the "failure" node.
-            String error = xmlStreamReader.getAttributeValue(null, "message");
-
-            if (error == null && xmlStreamReader.hasNext()) {
-                error = readTestMessageFromJUnitReport(xmlStreamReader);
-            }
-
-            // Add the failed test to the list of failed tests.
-            List<String> errors = error != null ? List.of(error) : List.of();
-            failedTests.add(new LocalCIBuildResult.LocalCITestJobDTO(name, errors));
-        }
-        else if (!"skipped".equals(xmlStreamReader.getLocalName())) {
-            // Add the successful test to the list of successful tests.
-            successfulTests.add(new LocalCIBuildResult.LocalCITestJobDTO(name, List.of()));
-        }
-    }
-
-    private String readTestMessageFromJUnitReport(XMLStreamReader xmlStreamReader) throws XMLStreamException {
-        // Read the error message from the child element if there is no message attribute,
-        xmlStreamReader.next();
-        if (xmlStreamReader.isCharacters()) {
-            StringBuilder stringBuilder = new StringBuilder(xmlStreamReader.getText());
-            // The report can contain multiple character elements,
-            // all of them must be combined to one feedback message
-            while (xmlStreamReader.hasNext() && xmlStreamReader.isCharacters()) {
-                xmlStreamReader.next();
-                if (xmlStreamReader.isCharacters()) {
-                    stringBuilder.append(xmlStreamReader.getText());
-                }
-            }
-            return stringBuilder.toString();
-        }
-        else if (!xmlStreamReader.isEndElement()) {
-            return xmlStreamReader.getText();
-        }
-        return null;
-    }
-
-    private void forwardToNextStartElement(XMLStreamReader xmlStreamReader) throws XMLStreamException {
-        while (xmlStreamReader.hasNext() && !xmlStreamReader.isStartElement()) {
-            xmlStreamReader.next();
-        }
-    }
-
-    /**
-     * Constructs a {@link LocalCIBuildResult} that indicates a failed build from the given parameters. The lists of failed and successful tests are both empty which will be
+     * Constructs a {@link BuildResult} that indicates a failed build from the given parameters. The lists of failed and successful tests are both empty which will be
      * interpreted as a failed build by Artemis.
      *
      * @param assignmentRepoBranchName The name of the branch of the assignment repository that was checked out for the build.
      * @param assignmentRepoCommitHash The commit hash of the assignment repository that was checked out for the build.
      * @param testsRepoCommitHash      The commit hash of the tests repository that was checked out for the build.
      * @param buildRunDate             The date when the build was completed.
-     * @return a {@link LocalCIBuildResult} that indicates a failed build
+     * @return a {@link BuildResult} that indicates a failed build
      */
-    private LocalCIBuildResult constructFailedBuildResult(String assignmentRepoBranchName, String assignmentRepoCommitHash, String testsRepoCommitHash,
+    private BuildResult constructFailedBuildResult(String assignmentRepoBranchName, @Nullable String assignmentRepoCommitHash, @Nullable String testsRepoCommitHash,
             ZonedDateTime buildRunDate) {
         return constructBuildResult(List.of(), List.of(), assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, false, buildRunDate, List.of());
     }
 
     /**
-     * Constructs a {@link LocalCIBuildResult} from the given parameters.
+     * Constructs a {@link BuildResult} from the given parameters.
      *
      * @param failedTests               The list of failed tests.
      * @param successfulTests           The list of successful tests.
@@ -543,46 +435,49 @@ public class BuildJobExecutionService {
      * @param isBuildSuccessful         Whether the build was successful or not.
      * @param buildRunDate              The date when the build was completed.
      * @param staticCodeAnalysisReports The static code analysis reports
-     * @return a {@link LocalCIBuildResult}
+     * @return a {@link BuildResult}
      */
-    private LocalCIBuildResult constructBuildResult(List<LocalCIBuildResult.LocalCITestJobDTO> failedTests, List<LocalCIBuildResult.LocalCITestJobDTO> successfulTests,
-            String assignmentRepoBranchName, String assignmentRepoCommitHash, String testsRepoCommitHash, boolean isBuildSuccessful, ZonedDateTime buildRunDate,
+    private BuildResult constructBuildResult(List<BuildResult.LocalCITestJobDTO> failedTests, List<BuildResult.LocalCITestJobDTO> successfulTests, String assignmentRepoBranchName,
+            String assignmentRepoCommitHash, String testsRepoCommitHash, boolean isBuildSuccessful, ZonedDateTime buildRunDate,
             List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports) {
-        LocalCIBuildResult.LocalCIJobDTO job = new LocalCIBuildResult.LocalCIJobDTO(failedTests, successfulTests);
+        BuildResult.LocalCIJobDTO job = new BuildResult.LocalCIJobDTO(failedTests, successfulTests);
 
-        return new LocalCIBuildResult(assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, isBuildSuccessful, buildRunDate, List.of(job),
-                staticCodeAnalysisReports);
+        return new BuildResult(assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, isBuildSuccessful, buildRunDate, List.of(job), staticCodeAnalysisReports);
     }
 
-    private Path cloneRepository(VcsRepositoryUri repositoryUri, String commitHash, boolean checkout, String buildJobId) {
+    private Path cloneRepository(VcsRepositoryUri repositoryUri, @Nullable String commitHash, boolean checkout, String buildJobId) {
         try {
             // Clone the assignment repository into a temporary directory
-            Repository repository = gitService.getOrCheckoutRepository(repositoryUri, Paths.get(CHECKED_OUT_REPOS_TEMP_DIR, commitHash, repositoryUri.folderNameForRepositoryUri()),
-                    false);
-            if (checkout) {
+            // TODO: use a random value if commitHash is null
+            Repository repository = buildJobGitService.cloneRepository(repositoryUri, Path.of(CHECKED_OUT_REPOS_TEMP_DIR, commitHash, repositoryUri.folderNameForRepositoryUri()));
+            if (checkout && commitHash != null) {
                 // Checkout the commit hash
-                gitService.checkoutRepositoryAtCommit(repository, commitHash);
+                buildJobGitService.checkoutRepositoryAtCommit(repository, commitHash);
             }
+            // if repository is not closed, it causes weird IO issues when trying to delete the repository later on
+            // java.io.IOException: Unable to delete file: ...\.git\objects\pack\...
+            repository.closeBeforeDelete();
             return repository.getLocalPath();
         }
-        catch (GitAPIException e) {
-            String msg = "Error while cloning repository " + repositoryUri.repositorySlug();
+        catch (GitAPIException | IOException | URISyntaxException e) {
+            String msg = "Error while cloning repository " + repositoryUri.repositorySlug() + " with uri " + repositoryUri;
             buildLogsMap.appendBuildLogEntry(buildJobId, msg);
             throw new LocalCIException(msg, e);
         }
     }
 
-    private void deleteCloneRepo(VcsRepositoryUri repositoryUri, String commitHash, String buildJobId) {
+    private void deleteCloneRepo(VcsRepositoryUri repositoryUri, @Nullable String commitHash, String buildJobId) {
         String msg;
         try {
-            Repository repository = gitService.getExistingCheckedOutRepositoryByLocalPath(
+            // TODO: handle the case when commitHash is null
+            Repository repository = buildJobGitService.getExistingCheckedOutRepositoryByLocalPath(
                     Paths.get(CHECKED_OUT_REPOS_TEMP_DIR, commitHash, repositoryUri.folderNameForRepositoryUri()), repositoryUri, defaultBranch);
             if (repository == null) {
                 msg = "Repository with commit hash " + commitHash + " not found";
                 buildLogsMap.appendBuildLogEntry(buildJobId, msg);
                 throw new EntityNotFoundException(msg);
             }
-            gitService.deleteLocalRepository(repository);
+            buildJobGitService.deleteLocalRepository(repository);
         }
         catch (EntityNotFoundException e) {
             msg = "Error while checking out repository";

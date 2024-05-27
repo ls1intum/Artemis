@@ -47,7 +47,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.connectors.localci.SharedQueueManagementService;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildAgentInformation;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildAgentInformation;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MultiGauge;
@@ -301,7 +301,7 @@ public class MetricsBean {
 
     private static int extractMaxConcurrentBuilds(Optional<SharedQueueManagementService> sharedQueueManagementService) {
         return sharedQueueManagementService.map(queueManagementService -> queueManagementService.getBuildAgentInformation().stream()
-                .map(LocalCIBuildAgentInformation::maxNumberOfConcurrentBuildJobs).reduce(0, Integer::sum)).orElse(0);
+                .map(BuildAgentInformation::maxNumberOfConcurrentBuildJobs).reduce(0, Integer::sum)).orElse(0);
     }
 
     private void registerWebsocketMetrics() {
