@@ -32,6 +32,7 @@ import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
 import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
 import de.tum.in.www1.artemis.domain.competency.LearningPath;
+import de.tum.in.www1.artemis.domain.competency.RelationType;
 import de.tum.in.www1.artemis.domain.lecture.TextUnit;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
@@ -144,6 +145,14 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
         // set threshold to 60, 70, and 80 respectively
         for (int i = 0; i < competencies.length; i++) {
             competencies[i] = competencyUtilService.updateMasteryThreshold(competencies[i], 60 + i * 10);
+        }
+
+        for (int i = 1; i < competencies.length; i++) {
+            var relation = new CompetencyRelation();
+            relation.setHeadCompetency(competencies[i - 1]);
+            relation.setTailCompetency(competencies[i]);
+            relation.setType(RelationType.EXTENDS);
+            competencyRelationRepository.save(relation);
         }
 
         TextExercise textExercise = textExerciseUtilService.createIndividualTextExercise(course, past(1), future(1), future(2));
