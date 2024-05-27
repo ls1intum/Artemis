@@ -633,25 +633,22 @@ describe('NavbarComponent', () => {
     });
 
     describe('Special student route breadcrumb cases', () => {
-        it.each(['programming-exercises', 'modeling-exercises', 'text-exercises'])(
-            'should replace exercise types in URI with just "exercise" on backlinking breadcrumbs',
-            (exType: string) => {
-                const testUrl = `/courses/1/${exType}/2`;
-                router.setUrl(testUrl);
+        it.each(['programming-exercises', 'modeling-exercises', 'text-exercises'])('should not show exercise types in URI on backlinking breadcrumbs', (exType: string) => {
+            const testUrl = `/courses/1/exercises/${exType}/2`;
+            router.setUrl(testUrl);
 
-                fixture.detectChanges();
+            fixture.detectChanges();
 
-                expect(entityTitleServiceStub).toHaveBeenCalledTimes(2);
-                expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.COURSE, [1]);
-                expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.EXERCISE, [2]);
+            expect(entityTitleServiceStub).toHaveBeenCalledTimes(2);
+            expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.COURSE, [1]);
+            expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.EXERCISE, [2]);
 
-                expect(component.breadcrumbs).toHaveLength(4);
-                expect(component.breadcrumbs[0]).toMatchObject({ uri: '/courses/', label: 'artemisApp.course.home.title' });
-                expect(component.breadcrumbs[1]).toMatchObject({ uri: '/courses/1/', label: 'Test Course' });
-                expect(component.breadcrumbs[2]).toMatchObject({ uri: '/courses/1/exercises/', label: 'artemisApp.courseOverview.menu.exercises' });
-                expect(component.breadcrumbs[3]).toMatchObject({ uri: '/courses/1/exercises/2/', label: 'Test Exercise' });
-            },
-        );
+            expect(component.breadcrumbs).toHaveLength(4);
+            expect(component.breadcrumbs[0]).toMatchObject({ uri: '/courses/', label: 'artemisApp.course.home.title' });
+            expect(component.breadcrumbs[1]).toMatchObject({ uri: '/courses/1/', label: 'Test Course' });
+            expect(component.breadcrumbs[2]).toMatchObject({ uri: '/courses/1/exercises/', label: 'artemisApp.courseOverview.menu.exercises' });
+            expect(component.breadcrumbs[3]).toMatchObject({ uri: '/courses/1/exercises/2/', label: 'Test Exercise' });
+        });
     });
 
     it.each([

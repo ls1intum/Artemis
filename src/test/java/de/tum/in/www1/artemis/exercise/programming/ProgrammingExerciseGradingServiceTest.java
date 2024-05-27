@@ -1012,13 +1012,15 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
                 createStudentExam(programmingExercise, student5);
             }
             // Build Failed
-            var result5 = new Result().participation(participation5) //
-                    .feedbacks(List.of()) //
-                    .score(0D) //
-                    .rated(true) //
-                    .successful(false) //
-                    .completionDate(ZonedDateTime.now()) //
+            // @formatter:off
+            var result5 = new Result().participation(participation5)
+                    .feedbacks(List.of())
+                    .score(0D)
+                    .rated(true)
+                    .successful(false)
+                    .completionDate(ZonedDateTime.now())
                     .assessmentType(AssessmentType.AUTOMATIC);
+            // @formatter:on
             gradingService.calculateScoreForResult(result5, programmingExercise, true);
             result5 = resultRepository.save(result5);
             participation5.setResults(Set.of(result5));

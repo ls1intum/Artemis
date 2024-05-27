@@ -49,5 +49,30 @@
                 <dd>{{ currentUser.createdDate | artemisDate }}</dd>
             </div>
         }
+        @if (localVCEnabled) {
+            <div class="list-group-item">
+                <dt>
+                    <!--Local Version Control SSH Key-->
+                    <div class="row pb-1">
+                        <div class="col">
+                            {{ 'artemisApp.userSettings.accountInformationPage.sshKey' | artemisTranslate }}
+                        </div>
+                        <div class="col col-auto text-right">
+                            <div class="btn-group" role="group" aria-label="Actions">
+                                <button class="btn btn-sm btn-warning" (click)="editSshKey = !editSshKey">
+                                    <fa-icon [icon]="faEdit" />
+                                </button>
+                                <button class="btn btn-sm btn-success" (click)="saveSshKey()" [disabled]="!editSshKey">
+                                    <fa-icon [icon]="faSave" />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </dt>
+                <dd>
+                    <textarea class="form-control" rows="5" [readonly]="!editSshKey" [(ngModel)]="sshKey"></textarea>
+                </dd>
+            </div>
+        }
     </div>
 }

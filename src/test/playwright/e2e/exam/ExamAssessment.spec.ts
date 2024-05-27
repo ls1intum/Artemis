@@ -10,7 +10,7 @@ import { Exam } from 'app/entities/exam.model';
 import { Commands } from '../../support/commands';
 import { ExamAPIRequests } from '../../support/requests/ExamAPIRequests';
 import { ExamExerciseGroupCreationPage } from '../../support/pageobjects/exam/ExamExerciseGroupCreationPage';
-import { ExamParticipation } from '../../support/pageobjects/exam/ExamParticipation';
+import { ExamParticipationPage } from '../../support/pageobjects/exam/ExamParticipationPage';
 import { ExamNavigationBar } from '../../support/pageobjects/exam/ExamNavigationBar';
 import { ExamStartEndPage } from '../../support/pageobjects/exam/ExamStartEndPage';
 import { ExamManagementPage } from '../../support/pageobjects/exam/ExamManagementPage';
@@ -307,7 +307,7 @@ export async function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType
     const textExerciseEditor = new TextEditorPage(page);
     const examNavigation = new ExamNavigationBar(page);
     const examStartEnd = new ExamStartEndPage(page);
-    const examParticipation = new ExamParticipation(
+    const examParticipation = new ExamParticipationPage(
         courseList,
         courseOverview,
         examNavigation,
@@ -359,7 +359,7 @@ async function makeExamSubmission(
     exam: Exam,
     exercise: Exercise,
     page: Page,
-    examParticipation: ExamParticipation,
+    examParticipation: ExamParticipationPage,
     examNavigation: ExamNavigationBar,
     examStartEnd: ExamStartEndPage,
 ) {
