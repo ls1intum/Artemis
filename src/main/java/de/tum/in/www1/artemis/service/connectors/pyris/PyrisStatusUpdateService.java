@@ -53,6 +53,16 @@ public class PyrisStatusUpdateService {
         removeJobIfTerminated(statusUpdate, job.jobId());
     }
 
+    /**
+     * Removes the job from the job service if the status update indicates that the job is terminated.
+     * This is the case if all stages are in a terminal state.
+     * <p>
+     *
+     * @see PyrisStageStateDTO#isTerminal()
+     *
+     * @param statusUpdate the status update
+     * @param job          the job to remove
+     */
     private void removeJobIfTerminated(PyrisChatStatusUpdateDTO statusUpdate, String job) {
         var isDone = statusUpdate.stages().stream().map(PyrisStageDTO::state).allMatch(PyrisStageStateDTO::isTerminal);
         if (isDone) {
