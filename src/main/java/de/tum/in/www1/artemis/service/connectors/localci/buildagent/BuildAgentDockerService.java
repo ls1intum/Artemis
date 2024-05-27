@@ -39,7 +39,7 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
 import de.tum.in.www1.artemis.exception.LocalCIException;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobQueueItem;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 
 /**
@@ -47,11 +47,11 @@ import de.tum.in.www1.artemis.service.util.TimeLogUtil;
  */
 @Service
 @Profile(PROFILE_BUILDAGENT)
-public class LocalCIDockerService {
+public class BuildAgentDockerService {
 
     private final ReentrantLock lock = new ReentrantLock();
 
-    private static final Logger log = LoggerFactory.getLogger(LocalCIDockerService.class);
+    private static final Logger log = LoggerFactory.getLogger(BuildAgentDockerService.class);
 
     private final DockerClient dockerClient;
 
@@ -88,8 +88,8 @@ public class LocalCIDockerService {
     @Value("${artemis.continuous-integration.image-architecture:amd64}")
     private String imageArchitecture;
 
-    public LocalCIDockerService(DockerClient dockerClient, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, BuildJobContainerService buildJobContainerService,
-            @Qualifier("taskScheduler") TaskScheduler taskScheduler) {
+    public BuildAgentDockerService(DockerClient dockerClient, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance,
+            BuildJobContainerService buildJobContainerService, @Qualifier("taskScheduler") TaskScheduler taskScheduler) {
         this.dockerClient = dockerClient;
         this.hazelcastInstance = hazelcastInstance;
         this.buildJobContainerService = buildJobContainerService;
@@ -204,7 +204,7 @@ public class LocalCIDockerService {
      * @param buildLogsMap a map for appending log entries related to the build process, facilitating real-time logging for end users.
      * @throws LocalCIException if the image pull is interrupted or fails due to other exceptions.
      */
-    public void pullDockerImage(LocalCIBuildJobQueueItem buildJob, BuildLogsMap buildLogsMap) {
+    public void pullDockerImage(BuildJobQueueItem buildJob, BuildLogsMap buildLogsMap) {
         final String imageName = buildJob.buildConfig().dockerImage();
         try {
             // First check if the image is already available
@@ -267,7 +267,7 @@ public class LocalCIDockerService {
      * @param buildJob             the build job that includes the configuration with the name of the Docker image
      * @param buildLogsMap         a map for appending log entries related to the build process
      */
-    private void checkImageArchitecture(String imageName, InspectImageResponse inspectImageResponse, LocalCIBuildJobQueueItem buildJob, BuildLogsMap buildLogsMap) {
+    private void checkImageArchitecture(String imageName, InspectImageResponse inspectImageResponse, BuildJobQueueItem buildJob, BuildLogsMap buildLogsMap) {
         if (!imageArchitecture.equals(inspectImageResponse.getArch())) {
             var msg = "Docker image " + imageName + " is not compatible with the current architecture. Needed 'linux/" + imageArchitecture + "', but got '"
                     + inspectImageResponse.getArch() + "'";
@@ -323,7 +323,7 @@ public class LocalCIDockerService {
 
     /**
      * Checks for available disk space and triggers the cleanup of old Docker images if the available space falls below
-     * {@link LocalCIDockerService#imageCleanupDiskSpaceThresholdMb}.
+     * {@link BuildAgentDockerService#imageCleanupDiskSpaceThresholdMb}.
      *
      * @implNote - We use the Docker root directory to check disk space availability. This is in case the Docker images are stored on a separate partition.
      *           - We need to iterate over the map entries since don't remove the oldest image from the map.

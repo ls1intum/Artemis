@@ -35,6 +35,7 @@ $discussion-section-card-min-width: 360px;
             align-items: center;
             background-color: var(--artemis-dark);
             cursor: pointer;
+            border-radius: 1em 1em 0 0;
 
             .card-title {
                 display: flex;
