@@ -17,7 +17,6 @@ import { Participation, ParticipationType } from 'app/entities/participation/par
 import dayjs from 'dayjs/esm';
 import { ResultWithPointsPerGradingCriterion } from 'app/entities/result-with-points-per-grading-criterion.model';
 import { TestCaseResult } from 'app/entities/test-case-result.model';
-import { SelfLearningFeedbackRequest } from 'app/entities/self-learning-feedback-request.model';
 
 /**
  * Enumeration object representing the possible options that
@@ -104,7 +103,7 @@ export const getUnreferencedFeedback = (feedbacks: Feedback[] | undefined): Feed
     return feedbacks ? feedbacks.filter((feedbackElement) => !feedbackElement.reference && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED) : undefined;
 };
 
-export function isAthenaResultAndProcessed(result: SelfLearningFeedbackRequest | undefined) {
+export function isAthenaResultAndProcessed(result: Result | undefined) {
     return result && Result.isAthenaAIResult(result);
 }
 
@@ -173,6 +172,8 @@ export const evaluateTemplateStatus = (
     if (isProgrammingOrQuiz(participation)) {
         if (isBuilding) {
             return ResultTemplateStatus.IS_BUILDING;
+        } else if (isAthenaResultAndProcessed(result)) {
+            return ResultTemplateStatus.HAS_RESULT;
         } else if (initializedResultWithScore(result)) {
             return ResultTemplateStatus.HAS_RESULT;
         } else {
@@ -207,6 +208,10 @@ export const isOnlyCompilationTested = (result: Result | undefined, templateStat
 export const getTextColorClass = (result: Result | undefined, templateStatus: ResultTemplateStatus) => {
     if (!result) {
         return 'text-secondary';
+    }
+
+    if (isAthenaResultAndProcessed(result)) {
+        return 'text-success';
     }
 
     if (templateStatus === ResultTemplateStatus.LATE) {
@@ -247,6 +252,10 @@ export const getTextColorClass = (result: Result | undefined, templateStatus: Re
 export const getResultIconClass = (result: Result | undefined, templateStatus: ResultTemplateStatus): IconProp => {
     if (!result) {
         return faQuestionCircle;
+    }
+
+    if (isAthenaResultAndProcessed(result)) {
+        return faCheckCircle;
     }
 
     if (isBuildFailedAndResultIsAutomatic(result)) {

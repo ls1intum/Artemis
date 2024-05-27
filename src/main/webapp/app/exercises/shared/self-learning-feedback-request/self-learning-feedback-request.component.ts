@@ -39,7 +39,6 @@ export class SelfLearningFeedbackRequestComponent implements OnInit, OnDestroy {
 
                 if (this.resultUpdateSubscription) {
                     clearTimeout(this.resultUpdateSubscription);
-                    this.resultUpdateSubscription = undefined;
                 }
             }, dueTime);
         }

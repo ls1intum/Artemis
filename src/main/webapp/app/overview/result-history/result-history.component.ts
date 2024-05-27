@@ -29,18 +29,22 @@ export class ResultHistoryComponent implements OnChanges {
     ngOnChanges(): void {
         this.showPreviousDivider = this.entries.length > MAX_RESULT_HISTORY_LENGTH;
 
-        if (this.entries.length <= MAX_RESULT_HISTORY_LENGTH) {
-            this.displayedEntries = this.entries;
-        } else {
-            this.displayedEntries = this.entries.slice(this.entries.length - MAX_RESULT_HISTORY_LENGTH);
+        // finished self-learning feedback requests are filtered out
+        // thus they are not counted
+        const filteredEntities = this.entries.filter(
+            (entry) => Result.isResult(entry) || (SelfLearningFeedbackRequest.isSelfLearningFeedbackRequest(entry) && !SelfLearningFeedbackRequest.isCompletedAndSuccessful(entry)),
+        );
 
+        if (filteredEntities.length <= MAX_RESULT_HISTORY_LENGTH) {
+            this.displayedEntries = filteredEntities;
+        } else {
+            this.displayedEntries = filteredEntities.slice(filteredEntities.length - MAX_RESULT_HISTORY_LENGTH);
+
+            const lastRatedShownResult = this.displayedEntries.filter((entry) => Result.isResult(entry) && entry.rated).last() as Result | undefined;
             const lastRatedResult = this.entries.filter((entry) => Result.isResult(entry) && entry.rated).last() as Result | undefined;
-            const firstEntry = this.displayedEntries.first();
-            if (Result.isResult(firstEntry)) {
-                if (!firstEntry.rated && lastRatedResult) {
-                    this.displayedEntries[0] = lastRatedResult;
-                    this.movedLastRatedResult = true;
-                }
+            if (!lastRatedShownResult && lastRatedResult) {
+                this.displayedEntries[0] = lastRatedResult;
+                this.movedLastRatedResult = true;
             }
         }
     }

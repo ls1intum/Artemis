@@ -100,16 +100,16 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
 
     /**
      * Notify all self-learning-feedback subscribers with the newest information provided.
-     * @param selfLearnigFeedback
+     * @param selfLearningFeedback
      */
-    private notifySelfLearningFeedbackSubscribers = (selfLearnigFeedback: SelfLearningFeedbackRequest) => {
-        selfLearnigFeedback.requestDateTime = convertDateFromServer(selfLearnigFeedback.requestDateTime);
-        selfLearnigFeedback.responseDateTime = convertDateFromServer(selfLearnigFeedback.responseDateTime);
-        const selfLearnigFeedbackObservable = this.selfLearningFeedbackObservables.get(selfLearnigFeedback.participation!.id!);
-        if (!selfLearnigFeedbackObservable) {
-            this.selfLearningFeedbackObservables.set(selfLearnigFeedback.participation!.id!, new BehaviorSubject(selfLearnigFeedback));
+    private notifySelfLearningFeedbackSubscribers = (selfLearningFeedback: SelfLearningFeedbackRequest) => {
+        selfLearningFeedback.requestDateTime = convertDateFromServer(selfLearningFeedback.requestDateTime);
+        selfLearningFeedback.responseDateTime = convertDateFromServer(selfLearningFeedback.responseDateTime);
+        const selfLearningFeedbackObservable = this.selfLearningFeedbackObservables.get(selfLearningFeedback.participation!.id!);
+        if (!selfLearningFeedbackObservable) {
+            this.selfLearningFeedbackObservables.set(selfLearningFeedback.participation!.id!, new BehaviorSubject(selfLearningFeedback));
         } else {
-            selfLearnigFeedbackObservable.next(selfLearnigFeedback);
+            selfLearningFeedbackObservable.next(selfLearningFeedback);
         }
     };
 
@@ -148,6 +148,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
 
             if (selfLearningFeedback.result) {
                 this.notifyResultSubscribers(selfLearningFeedback.result);
+                this.addResultToParticipation(selfLearningFeedback.result);
             }
 
             return of(this.cachedParticipations.get(selfLearningFeedback.participation!.id!));

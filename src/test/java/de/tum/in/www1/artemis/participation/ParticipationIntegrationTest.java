@@ -48,7 +48,6 @@ import de.tum.in.www1.artemis.domain.FileUploadExercise;
 import de.tum.in.www1.artemis.domain.GradingScale;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.SelfLearningFeedbackRequest;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.TextExercise;
@@ -96,6 +95,7 @@ import de.tum.in.www1.artemis.service.quiz.QuizBatchService;
 import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.LocalRepository;
+import de.tum.in.www1.artemis.web.rest.dto.SelfLearningFeedbackRequestDTO;
 
 class ParticipationIntegrationTest extends AbstractAthenaTest {
 
@@ -165,7 +165,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     private ExamRepository examRepository;
 
     @Captor
-    private ArgumentCaptor<SelfLearningFeedbackRequest> selfLearningFeedbackRequestArgumentCaptor;
+    private ArgumentCaptor<SelfLearningFeedbackRequestDTO> selfLearningFeedbackRequestArgumentCaptor;
 
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
@@ -610,12 +610,12 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         verify(programmingMessagingService, timeout(2000).times(2)).notifyUserAboutNewRequest(selfLearningFeedbackRequestArgumentCaptor.capture(), any());
 
-        SelfLearningFeedbackRequest invokedObject = selfLearningFeedbackRequestArgumentCaptor.getAllValues().get(0);
+        SelfLearningFeedbackRequestDTO invokedObject = selfLearningFeedbackRequestArgumentCaptor.getAllValues().get(1);
         assertThat(invokedObject).isNotNull();
-        assertThat(invokedObject.getId()).isNotNull();
-        assertThat(invokedObject.isSuccessful()).isTrue();
-        assertThat(invokedObject.getResponseDateTime()).isNotNull();
-        assertThat(invokedObject.getResult()).isNotNull();
+        assertThat(invokedObject.id()).isNotNull();
+        assertThat(invokedObject.successful()).isTrue();
+        assertThat(invokedObject.responseDateTime()).isNotNull();
+        assertThat(invokedObject.result()).isNotNull();
 
         localRepo.resetLocalRepo();
     }
@@ -656,12 +656,12 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         verify(programmingMessagingService, timeout(2000).times(2)).notifyUserAboutNewRequest(selfLearningFeedbackRequestArgumentCaptor.capture(), any());
 
-        SelfLearningFeedbackRequest invokedObject = selfLearningFeedbackRequestArgumentCaptor.getAllValues().get(0);
+        SelfLearningFeedbackRequestDTO invokedObject = selfLearningFeedbackRequestArgumentCaptor.getAllValues().get(1);
         assertThat(invokedObject).isNotNull();
-        assertThat(invokedObject.getId()).isNotNull();
-        assertThat(invokedObject.isSuccessful()).isFalse();
-        assertThat(invokedObject.getResponseDateTime()).isNull();
-        assertThat(invokedObject.getResult()).isNull();
+        assertThat(invokedObject.id()).isNotNull();
+        assertThat(invokedObject.successful()).isFalse();
+        assertThat(invokedObject.responseDateTime()).isNull();
+        assertThat(invokedObject.result()).isNull();
 
         localRepo.resetLocalRepo();
     }

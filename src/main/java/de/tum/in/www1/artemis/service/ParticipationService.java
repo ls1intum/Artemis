@@ -687,11 +687,10 @@ public class ParticipationService {
     public List<StudentParticipation> findByExerciseAndStudentIdWithEagerResultsAndSubmissions(Exercise exercise, Long studentId) {
         if (exercise.isTeamMode()) {
             Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), studentId);
-            return optionalTeam
-                    .map(team -> studentParticipationRepository.findByExerciseIdAndTeamIdWithEagerResultsAndLegalSubmissionsAndTeamStudents(exercise.getId(), team.getId()))
-                    .orElse(List.of());
+            return optionalTeam.map(team -> studentParticipationRepository
+                    .findByExerciseIdAndTeamIdWithEagerResultsAndLegalSubmissionsAndTeamStudentsAndSelfLearningFeedback(exercise.getId(), team.getId())).orElse(List.of());
         }
-        return studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerResultsAndSubmissions(exercise.getId(), studentId);
+        return studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerResultsAndSubmissionsAndSelfLearningFeedback(exercise.getId(), studentId);
     }
 
     /**

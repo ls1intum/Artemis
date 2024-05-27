@@ -425,7 +425,8 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             WHERE p.exercise.id = :exerciseId
                 AND p.student.id = :studentId
              """)
-    List<StudentParticipation> findByExerciseIdAndStudentIdWithEagerResultsAndSubmissions(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
+    List<StudentParticipation> findByExerciseIdAndStudentIdWithEagerResultsAndSubmissionsAndSelfLearningFeedback(@Param("exerciseId") long exerciseId,
+            @Param("studentId") long studentId);
 
     @Query("""
             SELECT DISTINCT p
@@ -461,7 +462,8 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 AND (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
                 AND (rs.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR rs.type IS NULL)
             """)
-    List<StudentParticipation> findByExerciseIdAndTeamIdWithEagerResultsAndLegalSubmissionsAndTeamStudents(@Param("exerciseId") long exerciseId, @Param("teamId") long teamId);
+    List<StudentParticipation> findByExerciseIdAndTeamIdWithEagerResultsAndLegalSubmissionsAndTeamStudentsAndSelfLearningFeedback(@Param("exerciseId") long exerciseId,
+            @Param("teamId") long teamId);
 
     @Query("""
             SELECT DISTINCT p

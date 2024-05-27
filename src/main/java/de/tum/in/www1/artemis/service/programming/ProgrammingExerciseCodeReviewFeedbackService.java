@@ -29,6 +29,7 @@ import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.SubmissionService;
 import de.tum.in.www1.artemis.service.connectors.athena.AthenaFeedbackSuggestionsService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
+import de.tum.in.www1.artemis.web.rest.dto.SelfLearningFeedbackRequestDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
@@ -130,7 +131,7 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
 
         try {
             setIndividualDueDateAndLockRepository(participation, programmingExercise, false);
-            this.programmingMessagingService.notifyUserAboutNewRequest(newRequest, participation);
+            this.programmingMessagingService.notifyUserAboutNewRequest(SelfLearningFeedbackRequestDTO.of(newRequest), participation);
 
             log.debug("Submission id: {}", submission.getId());
 
@@ -168,20 +169,20 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
             automaticResult.setRated(false);
             automaticResult.setCompletionDate(ZonedDateTime.now());
 
-            this.resultService.storeFeedbackInResult(automaticResult, feedbacks, true);
+            automaticResult = this.resultService.storeFeedbackInResult(automaticResult, feedbacks, true);
 
             newRequest.setSuccessful(true);
             newRequest.setResult(automaticResult);
             newRequest.setResponseDateTime(ZonedDateTime.now());
             newRequest = this.selfLearningFeedbackRequestRepository.save(newRequest);
 
-            this.programmingMessagingService.notifyUserAboutNewRequest(newRequest, participation);
+            this.programmingMessagingService.notifyUserAboutNewRequest(SelfLearningFeedbackRequestDTO.of(newRequest, feedbacks), participation);
         }
         catch (Exception e) {
             log.error("Could not generate feedback", e);
             newRequest.setSuccessful(false);
             newRequest = this.selfLearningFeedbackRequestRepository.save(newRequest);
-            this.programmingMessagingService.notifyUserAboutNewRequest(newRequest, participation);
+            this.programmingMessagingService.notifyUserAboutNewRequest(SelfLearningFeedbackRequestDTO.of(newRequest), participation);
         }
         finally {
             unlockRepository(participation, programmingExercise);
@@ -232,14 +233,7 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
 
         List<Result> athenaResults = participation.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA).toList();
 
-        long countOfAthenaResultsInProcessOrSuccessful = athenaResults.stream().filter(result -> result.isSuccessful() == null || result.isSuccessful() == Boolean.TRUE).count();
-
-        long countOfSuccessfulRequests = athenaResults.stream().filter(result -> result.isSuccessful() == Boolean.TRUE).count();
-
-        if (countOfAthenaResultsInProcessOrSuccessful >= 3) {
-            throw new BadRequestAlertException("Cannot send additional AI feedback requests now. Try again later!", "participation", "preconditions not met");
-        }
-        if (countOfSuccessfulRequests >= 3) {
+        if (athenaResults.size() >= 3) {
             throw new BadRequestAlertException("Maximum number of AI feedback requests reached.", "participation", "preconditions not met");
         }
     }

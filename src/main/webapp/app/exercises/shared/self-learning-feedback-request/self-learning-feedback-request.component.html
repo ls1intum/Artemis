@@ -14,7 +14,7 @@
             </span>
         </span>
     }
-    @if (this.selfLearningFeedbackRequest.responseDateTime === undefined && this.selfLearningFeedbackRequest.successful === undefined) {
+    @if (!this.timedOut && this.selfLearningFeedbackRequest.responseDateTime === undefined && this.selfLearningFeedbackRequest.successful === undefined) {
         @if (showIcon) {
             <fa-icon
                 class="result-score-icon"

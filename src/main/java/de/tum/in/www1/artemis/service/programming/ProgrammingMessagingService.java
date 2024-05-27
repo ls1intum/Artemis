@@ -19,7 +19,6 @@ import de.tum.in.www1.artemis.domain.BuildRunState;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.SelfLearningFeedbackRequest;
 import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
@@ -29,6 +28,7 @@ import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiNewResultService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
+import de.tum.in.www1.artemis.web.rest.dto.SelfLearningFeedbackRequestDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionDTO;
 import de.tum.in.www1.artemis.web.websocket.ResultWebsocketService;
 import de.tum.in.www1.artemis.web.websocket.SelfLearningFeedbackWebsocketService;
@@ -179,9 +179,8 @@ public class ProgrammingMessagingService {
         }
     }
 
-    public void notifyUserAboutNewRequest(SelfLearningFeedbackRequest request, ProgrammingExerciseParticipation participation) {
-        log.debug("Send self-learning-feedback request to client over websocket. Request: {}, Submission: {}, Participation: {}", request, request.getSubmission(),
-                request.getParticipation());
+    public void notifyUserAboutNewRequest(SelfLearningFeedbackRequestDTO request, ProgrammingExerciseParticipation participation) {
+        log.debug("Send self-learning-feedback request to client over websocket. Request: {}, Participation: {}", request, participation);
 
         selfLearningFeedbackWebsocketService.broadcastNewSelfLearningRequest((StudentParticipation) participation, request);
     }

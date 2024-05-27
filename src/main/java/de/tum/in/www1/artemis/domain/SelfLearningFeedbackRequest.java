@@ -17,6 +17,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonIncludeProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 
@@ -35,7 +36,7 @@ public class SelfLearningFeedbackRequest extends DomainObject {
 
     @ManyToOne
     @JsonView(QuizView.Before.class)
-    @JsonIgnoreProperties({ "results", "submissions" })
+    @JsonIgnoreProperties({ "results", "submissions", "selfLearningFeedbackRequests" })
     private Participation participation;
 
     @Column(name = "request_datetime")
@@ -51,6 +52,8 @@ public class SelfLearningFeedbackRequest extends DomainObject {
     private Boolean successful;
 
     @OneToOne
+    @JsonIgnoreProperties({ "submission", "participation" })
+    @JsonIncludeProperties({ "participation.id" })
     private Result result;
 
     @ManyToOne(fetch = FetchType.LAZY)

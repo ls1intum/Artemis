@@ -326,12 +326,17 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     }
 
     private mergeAndSortHistoryLists(sortedResults: Result[], selfLearningFeedbackRequests: SelfLearningFeedbackRequest[]): (Result | SelfLearningFeedbackRequest)[] {
+        console.log('start');
+        console.log(sortedResults);
+        console.log(selfLearningFeedbackRequests);
         let i = 0,
             j = 0;
         const sortedMergedLists: (Result | SelfLearningFeedbackRequest)[] = [];
 
-        while (i < sortedResults.length && j < SelfLearningFeedbackRequest.length) {
-            if (sortedResults[i].completionDate! < selfLearningFeedbackRequests[j].requestDateTime!) {
+        while (i < sortedResults.length && j < selfLearningFeedbackRequests.length) {
+            const currentResultDate = dayjs(sortedResults[i].completionDate!).valueOf();
+            const currentSelfLearningFeedbackRequestDate = dayjs(selfLearningFeedbackRequests[j].requestDateTime!).valueOf();
+            if (currentResultDate < currentSelfLearningFeedbackRequestDate) {
                 sortedMergedLists.push(sortedResults[i++]);
             } else {
                 sortedMergedLists.push(selfLearningFeedbackRequests[j++]);
@@ -345,6 +350,9 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
         while (j < selfLearningFeedbackRequests.length) {
             sortedMergedLists.push(selfLearningFeedbackRequests[j++]);
         }
+
+        console.log(sortedMergedLists);
+        console.log('end');
 
         return sortedMergedLists;
     }
