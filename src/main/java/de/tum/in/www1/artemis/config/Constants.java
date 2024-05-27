@@ -19,7 +19,7 @@ public final class Constants {
 
     public static final int PASSWORD_MIN_LENGTH = 8;
 
-    public static final int PASSWORD_MAX_LENGTH = 50;
+    public static final int PASSWORD_MAX_LENGTH = 100;
 
     public static int COMPLAINT_LOCK_DURATION_IN_MINUTES = 24 * 60; // 24h; Same as in artemisApp.locks.acquired
 

@@ -55,6 +55,16 @@ test.describe('Programming Exercise Management', () => {
     test.describe('Programming exercise team creation', () => {
         let exercise: ProgrammingExercise;
 
+        test.beforeEach('Add course participants', async ({ login, courseManagementAPIRequests }) => {
+            await login(admin);
+            await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
+            await courseManagementAPIRequests.addStudentToCourse(course, studentTwo);
+            await courseManagementAPIRequests.addStudentToCourse(course, studentThree);
+            await courseManagementAPIRequests.addStudentToCourse(course, studentFour);
+            await courseManagementAPIRequests.addTutorToCourse(course, tutor);
+            await courseManagementAPIRequests.addInstructorToCourse(course, instructor);
+        });
+
         test.beforeEach('Setup team programming exercise', async ({ login, exerciseAPIRequests }) => {
             await login(admin);
             const teamAssignmentConfig = { minTeamSize: 2, maxTeamSize: 3 };

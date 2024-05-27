@@ -38,7 +38,12 @@
             </jhi-knowledge-area-tree>
             @if (selectedCompetency) {
                 <div style="background-color: var(--overview-light-background-color)" class="card d-flex flex-grow-1 w-100 h-100 p-3 ms-1">
-                    <jhi-standardized-competency-detail [competency]="selectedCompetency" [knowledgeAreaTitle]="knowledgeAreaTitle" (onClose)="closeCompetencyDetails()" />
+                    <jhi-standardized-competency-detail
+                        [competency]="selectedCompetency"
+                        [knowledgeAreaTitle]="knowledgeAreaTitle"
+                        [sourceString]="sourceString"
+                        (onClose)="closeCompetencyDetails()"
+                    />
                 </div>
             }
         </div>
