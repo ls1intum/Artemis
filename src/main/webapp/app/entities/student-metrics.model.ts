@@ -11,20 +11,20 @@ export class StudentMetrics {
 }
 
 export class ExerciseMetrics {
-    public exerciseInformation: { [key: number]: ExerciseInformation };
-    public categories: { [key: number]: (string | null)[] };
-    public teamId: { [key: number]: number };
+    public exerciseInformation?: { [key: number]: ExerciseInformation };
+    public categories?: { [key: number]: (string | null)[] };
+    public teamId?: { [key: number]: number };
 
     // Performance metrics
-    public score: { [key: number]: number };
-    public averageScore: { [key: number]: number };
+    public score?: { [key: number]: number };
+    public averageScore?: { [key: number]: number };
 
     // Lateness metrics (relative to start and due date, 0 = on time, 100 = late)
-    public latestSubmission: { [key: number]: number };
-    public averageLatestSubmission: { [key: number]: number };
+    public latestSubmission?: { [key: number]: number };
+    public averageLatestSubmission?: { [key: number]: number };
 
     // Completed exercises
-    public completed: number[];
+    public completed?: number[];
 }
 
 export class ExerciseInformation {
@@ -56,12 +56,12 @@ export class LectureUnitInformation {
 }
 
 export class CompetencyMetrics {
-    public competencyInformation: { [key: number]: CompetencyInformation };
-    public exercises: { [key: number]: number[] }; // Exercise ID -> Competency IDs
-    public lectureUnits: { [key: number]: number[] }; // Lecture Unit ID -> Competency IDs
-    public progress: { [key: number]: number }; // Competency ID -> progress
-    public confidence: { [key: number]: number }; // Competency ID -> confidence
-    public jolValues: { [key: number]: number }; // Competency ID -> JOL value
+    public competencyInformation?: { [key: number]: CompetencyInformation };
+    public exercises?: { [key: number]: number[] }; // Exercise ID -> Competency IDs
+    public lectureUnits?: { [key: number]: number[] }; // Lecture Unit ID -> Competency IDs
+    public progress?: { [key: number]: number }; // Competency ID -> progress
+    public confidence?: { [key: number]: number }; // Competency ID -> confidence
+    public jolValues?: { [key: number]: number }; // Competency ID -> JOL value
 }
 
 export class CompetencyInformation {

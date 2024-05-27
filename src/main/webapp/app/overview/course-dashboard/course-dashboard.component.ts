@@ -101,7 +101,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
                         const exerciseMetrics = response.body.exerciseMetrics;
 
                         // Sorted exercises that have a due date in the past
-                        let sortedExerciseIds = Object.values(exerciseMetrics.exerciseInformation)
+                        let sortedExerciseIds = Object.values(exerciseMetrics?.exerciseInformation ?? {})
                             .sort((a, b) => (a.dueDate.isBefore(b.dueDate) ? -1 : 1))
                             .filter((exercise) => exercise.dueDate.isBefore(dayjs()))
                             .map((exercise) => exercise.id);
@@ -115,7 +115,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
                         this.setExerciseLateness(sortedExerciseIds, exerciseMetrics);
                     }
                     if (response.body.competencyMetrics) {
-                        this.competencies = Object.values(response.body.competencyMetrics.competencyInformation).sort((a, b) => {
+                        this.competencies = Object.values(response.body.competencyMetrics?.competencyInformation ?? {}).sort((a, b) => {
                             const aDate = a.softDueDate ? new Date(a.softDueDate).getTime() : 0;
                             const bDate = b.softDueDate ? new Date(b.softDueDate).getTime() : 0;
                             return aDate - bDate;
@@ -139,7 +139,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
      * @param {ExerciseMetrics} exerciseMetrics - An object containing metrics related to exercises.
      */
     private setOverallPerformance(exerciseIds: number[], exerciseMetrics: ExerciseMetrics) {
-        const relevantExercises = Object.values(exerciseMetrics.exerciseInformation).filter((exercise) => exerciseIds.includes(exercise.id));
+        const relevantExercises = Object.values(exerciseMetrics?.exerciseInformation ?? {}).filter((exercise) => exerciseIds.includes(exercise.id));
         const points = relevantExercises.reduce((sum, exercise) => sum + ((exerciseMetrics.score?.[exercise.id] || 0) / 100) * exercise.maxPoints, 0);
         this.points = round(points, 1);
 
@@ -154,15 +154,19 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
      * @param {ExerciseMetrics} exerciseMetrics - An object containing metrics related to exercises.
      */
     private setExercisePerformance(sortedExerciseIds: number[], exerciseMetrics: ExerciseMetrics) {
-        this.exercisePerformance = sortedExerciseIds.map((exerciseId) => {
-            const exerciseInformation = exerciseMetrics.exerciseInformation[exerciseId];
-            return {
-                exerciseId: exerciseId,
-                title: exerciseInformation.title,
-                shortName: exerciseInformation.shortName,
-                score: exerciseMetrics.score?.[exerciseId],
-                averageScore: exerciseMetrics.averageScore?.[exerciseId],
-            };
+        this.exercisePerformance = sortedExerciseIds.flatMap((exerciseId) => {
+            const exerciseInformation = exerciseMetrics?.exerciseInformation?.[exerciseId];
+            return exerciseInformation
+                ? [
+                      {
+                          exerciseId: exerciseId,
+                          title: exerciseInformation.title,
+                          shortName: exerciseInformation.shortName,
+                          score: exerciseMetrics.score?.[exerciseId],
+                          averageScore: exerciseMetrics.averageScore?.[exerciseId],
+                      },
+                  ]
+                : [];
         });
     }
 
@@ -173,15 +177,19 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
      * @param {ExerciseMetrics} exerciseMetrics - An object containing metrics related to exercises.
      */
     private setExerciseLateness(sortedExerciseIds: number[], exerciseMetrics: ExerciseMetrics) {
-        this.exerciseLateness = sortedExerciseIds.map((exerciseId) => {
-            const exerciseInformation = exerciseMetrics.exerciseInformation[exerciseId];
-            return {
-                exerciseId: exerciseId,
-                title: exerciseInformation.title,
-                shortName: exerciseInformation.shortName,
-                relativeLatestSubmission: exerciseMetrics.latestSubmission?.[exerciseId],
-                relativeAverageLatestSubmission: exerciseMetrics.averageLatestSubmission?.[exerciseId],
-            };
+        this.exerciseLateness = sortedExerciseIds.flatMap((exerciseId) => {
+            const exerciseInformation = exerciseMetrics?.exerciseInformation?.[exerciseId];
+            return exerciseInformation
+                ? [
+                      {
+                          exerciseId: exerciseId,
+                          title: exerciseInformation.title,
+                          shortName: exerciseInformation.shortName,
+                          relativeLatestSubmission: exerciseMetrics.latestSubmission?.[exerciseId],
+                          relativeAverageLatestSubmission: exerciseMetrics.averageLatestSubmission?.[exerciseId],
+                      },
+                  ]
+                : [];
         });
     }
 
