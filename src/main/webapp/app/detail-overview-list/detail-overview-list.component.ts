@@ -2,7 +2,7 @@ import { Component, Input, OnDestroy, OnInit, ViewEncapsulation } from '@angular
 import { faArrowUpRightFromSquare, faCodeBranch, faCodeCompare, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { isEmpty } from 'lodash-es';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { ButtonSize } from 'app/shared/components/button.component';
+import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { GitDiffReportModalComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report-modal.component';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
@@ -66,6 +66,8 @@ export class DetailOverviewListComponent implements OnInit, OnDestroy {
     faCodeCompare = faCodeCompare;
     faArrowUpRightFromSquare = faArrowUpRightFromSquare;
     faCodeBranch = faCodeBranch;
+
+    WARNING = ButtonType.WARNING;
 
     profileSub: Subscription;
     isLocalVC = false;
