@@ -151,7 +151,7 @@ public class PyrisPipelineService {
      * @param studentId the id of the student
      */
     private Course loadCourseWithParticipationOfStudent(long courseId, long studentId) {
-        Course course = courseRepository.findWithEagerExercisesAndLecturesAndLectureUnitsAndCompetenciesAndExamsById(courseId).orElseThrow();
+        Course course = courseRepository.findWithEagerExercisesAndLecturesAndAttachmentsAndLectureUnitsAndCompetenciesAndExamsById(courseId).orElseThrow();
         List<StudentParticipation> participations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(studentId,
                 course.getExercises());
 

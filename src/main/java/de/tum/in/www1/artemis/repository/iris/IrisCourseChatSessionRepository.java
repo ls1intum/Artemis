@@ -14,7 +14,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Repository interface for managing {@link IrisCourseChatSession} entities.
- * Provides custom queries for finding chat sessions based on different criteria.
  */
 public interface IrisCourseChatSessionRepository extends JpaRepository<IrisCourseChatSession, Long> {
 

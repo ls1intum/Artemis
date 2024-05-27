@@ -1,11 +1,13 @@
 package de.tum.in.www1.artemis.domain.iris.session;
 
+import jakarta.persistence.Entity;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MappedSuperclass;
 
 import de.tum.in.www1.artemis.domain.User;
 
 @MappedSuperclass
+@Entity
 public abstract class IrisChatSession extends IrisSession {
 
     @ManyToOne
