@@ -171,7 +171,9 @@
                                     [removedLineCount]="detail.data.removedLineCount"
                                     ngbTooltip="{{ 'artemisApp.programmingExercise.diffReport.lineStatTooltipDetailPage' | artemisTranslate }}"
                                 />
-                                @if (detail.data.addedLineCount > 0 || detail.data.removedLineCount > 0) {
+                            </div>
+                            @if (detail.data.addedLineCount > 0 || detail.data.removedLineCount > 0) {
+                                <div class="mt-1">
                                     <jhi-button
                                         [featureToggle]="FeatureToggle.ProgrammingExercises"
                                         [isLoading]="detail.data.isLoadingDiffReport ?? false"
@@ -180,10 +182,10 @@
                                         [title]="'artemisApp.programmingExercise.diffReport.button'"
                                         [tooltip]="'artemisApp.programmingExercise.diffReport.tooltip'"
                                         (onClick)="showGitDiff(detail.data.gitDiffReport)"
-                                        class="ms-2"
+                                        [btnType]="ButtonType.WARNING"
                                     />
-                                }
-                            </div>
+                                </div>
+                            }
                         </dd>
                     }
                     @case (DetailType.ProgrammingProblemStatement) {
