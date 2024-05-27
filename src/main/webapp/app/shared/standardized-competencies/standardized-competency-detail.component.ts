@@ -11,6 +11,7 @@ export class StandardizedCompetencyDetailComponent {
     // values for the knowledge area select
     @Input({ required: true }) competency: StandardizedCompetencyDTO;
     @Input() knowledgeAreaTitle = '';
+    @Input() sourceString = '';
 
     @Output() onClose = new EventEmitter<void>();
 

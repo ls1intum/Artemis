@@ -33,8 +33,8 @@ import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.participation.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.localvcci.LocalCITestConfiguration;
 import de.tum.in.www1.artemis.localvcci.LocalVCLocalCITestService;
+import de.tum.in.www1.artemis.localvcci.TestBuildAgentConfiguration;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
@@ -42,7 +42,9 @@ import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipatio
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.service.connectors.localci.LocalCIService;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCService;
+import de.tum.in.www1.artemis.service.exam.ExamLiveEventsService;
 import de.tum.in.www1.artemis.service.ldap.LdapUserService;
+import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingMessagingService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
@@ -61,7 +63,7 @@ import de.tum.in.www1.artemis.user.UserUtilService;
         "artemis.continuous-integration.asynchronous=false", "artemis.continuous-integration.build.images.java.default=dummy-docker-image",
         "artemis.continuous-integration.image-cleanup.enabled=true", "artemis.continuous-integration.image-cleanup.disk-space-threshold-mb=1000000000",
         "spring.liquibase.enabled=true" })
-@ContextConfiguration(classes = LocalCITestConfiguration.class)
+@ContextConfiguration(classes = TestBuildAgentConfiguration.class)
 public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends AbstractArtemisIntegrationTest {
 
     @Autowired
@@ -95,7 +97,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     protected UserUtilService userUtilService;
 
     /**
-     * This is the mock(DockerClient.class) provided by the {@link LocalCITestConfiguration}.
+     * This is the mock(DockerClient.class) provided by the {@link TestBuildAgentConfiguration}.
      * Subclasses can use this to dynamically mock methods of the DockerClient.
      */
     @Autowired
@@ -106,6 +108,12 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
 
     @SpyBean
     protected ProgrammingMessagingService programmingMessagingService;
+
+    @SpyBean
+    protected ExamLiveEventsService examLiveEventsService;
+
+    @SpyBean
+    protected GroupNotificationScheduleService groupNotificationScheduleService;
 
     @Value("${artemis.version-control.url}")
     protected URL localVCBaseUrl;
@@ -148,7 +156,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     /**
      * Note: Mocking requests to the VC and CI server is not necessary for local VC and local CI.
      * The VC system is part of the application context and can thus be called directly.
-     * For the CI system, all communication with the DockerClient is mocked (see {@link LocalCITestConfiguration}).
+     * For the CI system, all communication with the DockerClient is mocked (see {@link TestBuildAgentConfiguration}).
      */
 
     @Override

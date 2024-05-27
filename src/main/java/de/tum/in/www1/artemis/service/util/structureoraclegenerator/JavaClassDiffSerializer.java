@@ -2,8 +2,9 @@ package de.tum.in.www1.artemis.service.util.structureoraclegenerator;
 
 import java.util.HashSet;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.thoughtworks.qdox.model.JavaAnnotatedElement;
 import com.thoughtworks.qdox.model.JavaAnnotation;
 import com.thoughtworks.qdox.model.JavaClass;
@@ -18,6 +19,8 @@ import com.thoughtworks.qdox.model.JavaMethod;
 class JavaClassDiffSerializer {
 
     private final JavaClassDiff javaClassDiff;
+
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     JavaClassDiffSerializer(JavaClassDiff javaClassDiff) {
         this.javaClassDiff = javaClassDiff;
@@ -36,41 +39,44 @@ class JavaClassDiffSerializer {
      *
      * @return The JSON object consisting of JSON objects representation for the wanted hierarchy properties of a type defined in the types diff.
      */
-    JsonObject serializeClassProperties() {
-        JsonObject classJSON = new JsonObject();
+    ObjectNode serializeClassProperties() {
+        ObjectNode classJSON = mapper.createObjectNode();
 
-        classJSON.addProperty("name", javaClassDiff.getName());
-        classJSON.addProperty("package", javaClassDiff.getPackageName());
+        // Directly setting values based on class properties
+        classJSON.put("name", javaClassDiff.getName());
+        classJSON.put("package", javaClassDiff.getPackageName());
+        classJSON.put("isInterface", javaClassDiff.isInterfaceDifferent);
+        classJSON.put("isEnum", javaClassDiff.isEnumDifferent);
+        classJSON.put("isAbstract", javaClassDiff.isAbstractDifferent);
 
-        if (javaClassDiff.isInterfaceDifferent) {
-            classJSON.addProperty("isInterface", true);
-        }
-        if (javaClassDiff.isEnumDifferent) {
-            classJSON.addProperty("isEnum", true);
-        }
-        if (javaClassDiff.isAbstractDifferent) {
-            classJSON.addProperty("isAbstract", true);
-        }
+        // Adding superclass name if present
         if (!javaClassDiff.superClassNameDiff.isEmpty()) {
-            classJSON.addProperty("superclass", javaClassDiff.superClassNameDiff);
+            classJSON.put("superclass", javaClassDiff.superClassNameDiff);
         }
+
+        // Serializing interfaces
         if (!javaClassDiff.superInterfacesDiff.isEmpty()) {
-            JsonArray superInterfaces = new JsonArray();
-
-            for (JavaClass superInterface : javaClassDiff.superInterfacesDiff) {
-                superInterfaces.add(superInterface.getSimpleName());
-            }
-            classJSON.add("interfaces", superInterfaces);
+            classJSON.set("interfaces", serializeSuperInterfaces(javaClassDiff.superInterfacesDiff));
         }
+
+        // Serializing annotations
         if (!javaClassDiff.annotationsDiff.isEmpty()) {
-            JsonArray annotations = new JsonArray();
-
-            for (JavaAnnotation annotation : javaClassDiff.annotationsDiff) {
-                annotations.add(annotation.getType().getSimpleName());
-            }
-            classJSON.add("annotations", annotations);
+            classJSON.set("annotations", serializeAnnotations(javaClassDiff.annotationsDiff));
         }
+
         return classJSON;
+    }
+
+    private ArrayNode serializeSuperInterfaces(Iterable<JavaClass> superInterfaces) {
+        ArrayNode superInterfacesNode = mapper.createArrayNode();
+        superInterfaces.forEach(superInterface -> superInterfacesNode.add(superInterface.getSimpleName()));
+        return superInterfacesNode;
+    }
+
+    private ArrayNode serializeAnnotations(Iterable<JavaAnnotation> annotations) {
+        ArrayNode annotationsNode = mapper.createArrayNode();
+        annotations.forEach(annotation -> annotationsNode.add(annotation.getType().getSimpleName()));
+        return annotationsNode;
     }
 
     /**
@@ -79,19 +85,19 @@ class JavaClassDiffSerializer {
      *
      * @return The JSON array consisting of JSON objects representation for each attribute defined in the classes diff.
      */
-    JsonArray serializeAttributes() {
-        JsonArray attributesJSON = new JsonArray();
+    ArrayNode serializeAttributes() {
+        ArrayNode attributesJSON = mapper.createArrayNode();
 
-        for (JavaField attribute : javaClassDiff.attributesDiff) {
-            if (isElementToIgnore(attribute)) {
-                continue;
-            }
-            JsonObject attributeJSON = SerializerUtil.createJsonObject(attribute.getName(), new HashSet<>(attribute.getModifiers()), attribute, attribute.getAnnotations());
-            attributeJSON.addProperty("type", attribute.getType().getValue());
-            attributesJSON.add(attributeJSON);
-        }
+        javaClassDiff.attributesDiff.stream().filter(attribute -> !JavaClassDiffSerializer.isElementToIgnore(attribute))
+                .forEach(attribute -> attributesJSON.add(createAttributeJson(attribute)));
 
         return attributesJSON;
+    }
+
+    private ObjectNode createAttributeJson(JavaField attribute) {
+        ObjectNode attributeJSON = SerializerUtil.createJsonObject(attribute.getName(), new HashSet<>(attribute.getModifiers()), attribute, attribute.getAnnotations());
+        attributeJSON.put("type", attribute.getType().getValue());
+        return attributeJSON;
     }
 
     /**
@@ -99,14 +105,10 @@ class JavaClassDiffSerializer {
      *
      * @return The JSON array consisting of JSON objects representation for each enum defined in the classes diff.
      */
-    JsonArray serializeEnums() {
-        JsonArray enumsJSON = new JsonArray();
+    ArrayNode serializeEnums() {
+        ArrayNode enumsJSON = mapper.createArrayNode();
 
-        for (JavaField javaEnum : javaClassDiff.enumsDiff) {
-            if (!isElementToIgnore(javaEnum)) {
-                enumsJSON.add(javaEnum.getName());
-            }
-        }
+        javaClassDiff.enumsDiff.stream().filter(enumField -> !isElementToIgnore(enumField)).forEach(enumField -> enumsJSON.add(enumField.getName()));
 
         return enumsJSON;
     }
@@ -117,27 +119,24 @@ class JavaClassDiffSerializer {
      *
      * @return The JSON array consisting of JSON objects representation for each constructor defined in the classes diff.
      */
-    JsonArray serializeConstructors() {
-        JsonArray constructorsJSON = new JsonArray();
+    ArrayNode serializeConstructors() {
+        ArrayNode constructorsJSON = mapper.createArrayNode();
 
-        for (JavaConstructor constructor : javaClassDiff.constructorsDiff) {
-            if (isElementToIgnore(constructor)) {
-                continue;
-            }
-            JsonObject constructorJSON = new JsonObject();
+        javaClassDiff.constructorsDiff.stream().filter(constructor -> !isElementToIgnore(constructor))
+                .forEach(constructor -> constructorsJSON.add(serializeConstructor(constructor)));
 
-            if (!constructor.getModifiers().isEmpty()) {
-                constructorJSON.add("modifiers", SerializerUtil.serializeModifiers(new HashSet<>(constructor.getModifiers()), constructor));
-            }
-            if (!constructor.getParameters().isEmpty()) {
-                constructorJSON.add("parameters", SerializerUtil.serializeParameters(constructor.getParameters()));
-            }
-            if (!constructor.getAnnotations().isEmpty()) {
-                constructorJSON.add("annotations", SerializerUtil.serializeAnnotations(constructor.getAnnotations()));
-            }
-            constructorsJSON.add(constructorJSON);
-        }
         return constructorsJSON;
+    }
+
+    private ObjectNode serializeConstructor(JavaConstructor constructor) {
+        ObjectNode constructorJSON = mapper.createObjectNode();
+
+        // No need to check for isEmpty before adding; let the serializer utility methods decide how to handle empty collections
+        constructorJSON.set("modifiers", SerializerUtil.serializeModifiers(new HashSet<>(constructor.getModifiers()), constructor));
+        constructorJSON.set("parameters", SerializerUtil.serializeParameters(constructor.getParameters()));
+        constructorJSON.set("annotations", SerializerUtil.serializeAnnotations(constructor.getAnnotations()));
+
+        return constructorJSON;
     }
 
     /**
@@ -146,21 +145,22 @@ class JavaClassDiffSerializer {
      *
      * @return The JSON array consisting of JSON objects representation for each method defined in the types diff.
      */
-    JsonArray serializeMethods() {
-        JsonArray methodsJSON = new JsonArray();
+    ArrayNode serializeMethods() {
+        ArrayNode methodsJSON = mapper.createArrayNode();
 
-        for (JavaMethod method : javaClassDiff.methodsDiff) {
-            if (isElementToIgnore(method)) {
-                continue;
-            }
-            JsonObject methodJSON = SerializerUtil.createJsonObject(method.getName(), new HashSet<>(method.getModifiers()), method, method.getAnnotations());
-            if (!method.getParameters().isEmpty()) {
-                methodJSON.add("parameters", SerializerUtil.serializeParameters(method.getParameters()));
-            }
-            methodJSON.addProperty("returnType", method.getReturnType().getValue());
-            methodsJSON.add(methodJSON);
-        }
+        javaClassDiff.methodsDiff.stream().filter(method -> !isElementToIgnore(method)).forEach(method -> methodsJSON.add(createMethodJson(method)));
+
         return methodsJSON;
+    }
+
+    private ObjectNode createMethodJson(JavaMethod method) {
+        ObjectNode methodJSON = SerializerUtil.createJsonObject(method.getName(), new HashSet<>(method.getModifiers()), method, method.getAnnotations());
+
+        // No need to check for isEmpty before adding; let the serializer utility methods decide how to handle empty collections
+        methodJSON.set("parameters", SerializerUtil.serializeParameters(method.getParameters()));
+        methodJSON.put("returnType", method.getReturnType().getValue());
+
+        return methodJSON;
     }
 
     public static boolean isElementToIgnore(JavaAnnotatedElement element) {
