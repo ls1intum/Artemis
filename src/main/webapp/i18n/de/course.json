@@ -87,7 +87,7 @@
             },
             "dashboard": {
                 "label": "Übersichtsseite zur Kursanalyse für Studierende aktiviert",
-                "tooltip": "Aktiviert die Übersichtsseite zur Kursanalyse für Studierende, Tutoren und Dozenten. Die Übersichtsseite ermöglicht es den Nutzern, ihren Fortschritt und ihre Leistung im Kurs zu verfolgen."
+                "tooltip": "Aktiviert die Übersichtsseite zur Kursanalyse für Studierende, Tutor:innen und Lehrende. Die Übersichtsseite ermöglicht es den Nutzern, ihren Fortschritt und ihre Leistung im Kurs zu verfolgen."
             },
             "restrictedAthenaModulesAccess": {
                 "label": "Zugriff auf geschützte Athena-Module aktiviert",
