@@ -17,7 +17,6 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisExtendedCourseDTO(long id, String name, String description, Instant startTime, Instant endTime, ProgrammingLanguage defaultProgrammingLanguage,
         int maxComplaints, int maxTeamComplaints, int maxComplaintTimeDays, int maxRequestMoreFeedbackTimeDays, Integer maxPoints, Integer presentationScore,
-
         List<PyrisExerciseWithStudentSubmissionsDTO> exercises, List<PyrisExamDTO> exams, List<PyrisCompetencyDTO> competencies) {
 
     /**

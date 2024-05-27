@@ -36,13 +36,13 @@ public interface IrisExerciseChatSessionRepository extends JpaRepository<IrisExe
     List<IrisExerciseChatSession> findByExerciseIdAndUserId(@Param("exerciseId") Long exerciseId, @Param("userId") Long userId);
 
     @Query("""
-                SELECT s
-                FROM IrisExerciseChatSession s
-                LEFT JOIN FETCH s.messages
-                WHERE s.exercise.id = :exerciseId
-                    AND s.user.id = :userId
-                ORDER BY s.creationDate DESC
-                LIMIT 1
+            SELECT s
+            FROM IrisExerciseChatSession s
+            LEFT JOIN FETCH s.messages
+            WHERE s.exercise.id = :exerciseId
+                AND s.user.id = :userId
+            ORDER BY s.creationDate DESC
+            LIMIT 1
             """)
     Optional<IrisExerciseChatSession> findLatestByExerciseIdAndUserIdWithMessages(@Param("exerciseId") Long exerciseId, @Param("userId") Long userId);
 
@@ -58,7 +58,7 @@ public interface IrisExerciseChatSessionRepository extends JpaRepository<IrisExe
     default List<IrisExerciseChatSession> findByExerciseIdAndUserIdElseThrow(long exerciseId, long userId) throws EntityNotFoundException {
         var result = findByExerciseIdAndUserId(exerciseId, userId);
         if (result.isEmpty()) {
-            throw new EntityNotFoundException("Iris Chat Session");
+            throw new EntityNotFoundException("Iris Exercise Chat Session");
         }
         return result;
     }

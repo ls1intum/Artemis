@@ -57,7 +57,7 @@ public interface IrisCourseChatSessionRepository extends JpaRepository<IrisCours
     default List<IrisCourseChatSession> findByExerciseIdAndUserIdElseThrow(long courseId, long userId) throws EntityNotFoundException {
         var result = findByCourseIdAndUserId(courseId, userId);
         if (result.isEmpty()) {
-            throw new EntityNotFoundException("Iris Chat Session");
+            throw new EntityNotFoundException("Iris Course Chat Session");
         }
         return result;
     }
