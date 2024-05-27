@@ -42,13 +42,13 @@ class IrisSessionActivationIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void createSessionUnauthorized() throws Exception {
-        request.post("/api/iris/programming-exercises/" + exercise.getId() + "/sessions", null, HttpStatus.FORBIDDEN);
+        request.post(tutorChatUrl(exercise.getId()), null, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void getCurrentSessionUnauthorized() throws Exception {
-        request.get("/api/iris/programming-exercises/" + exercise.getId() + "/sessions", HttpStatus.FORBIDDEN, IrisSession.class);
+        request.get(tutorChatUrl(exercise.getId()), HttpStatus.FORBIDDEN, IrisSession.class);
     }
 
     @Test
@@ -79,5 +79,9 @@ class IrisSessionActivationIntegrationTest extends AbstractIrisIntegrationTest {
         var content = new IrisTextMessageContent("Not relevant for the test cases");
         content.setId(ThreadLocalRandom.current().nextLong());
         return content;
+    }
+
+    private static String tutorChatUrl(long sessionId) {
+        return "/api/iris/tutor-chat/" + sessionId + "/sessions";
     }
 }

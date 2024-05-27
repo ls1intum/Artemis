@@ -71,9 +71,16 @@ public class PyrisPipelineService {
         irisChatWebsocketService.sendStatusUpdate(session, List.of(preparingRequestStageInProgress, executingPipelineStageNotStarted));
 
         try {
-            var executionDTO = new PyrisTutorChatPipelineExecutionDTO(latestSubmission.map(pyrisDTOService::toPyrisDTO).orElse(null), pyrisDTOService.toPyrisDTO(exercise),
-                    new PyrisCourseDTO(exercise.getCourseViaExerciseGroupOrCourseMember()), pyrisDTOService.toPyrisDTO(session.getMessages()), new PyrisUserDTO(session.getUser()),
-                    settingsDTO, List.of(preparingRequestStageDone));
+            // @formatter:off
+            var executionDTO = new PyrisTutorChatPipelineExecutionDTO(
+                    latestSubmission.map(pyrisDTOService::toPyrisDTO).orElse(null),
+                    pyrisDTOService.toPyrisDTO(exercise),
+                    new PyrisCourseDTO(exercise.getCourseViaExerciseGroupOrCourseMember()),
+                    pyrisDTOService.toPyrisDTO(session.getMessages()),
+                    new PyrisUserDTO(session.getUser()),
+                    settingsDTO, List.of(preparingRequestStageDone)
+            );
+            // @formatter:on
 
             irisChatWebsocketService.sendStatusUpdate(session, List.of(preparingRequestStageDone, executingPipelineStageInProgress));
 
