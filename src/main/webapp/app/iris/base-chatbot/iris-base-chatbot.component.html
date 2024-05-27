@@ -43,16 +43,16 @@
 <ng-template #clearConfirmModal let-modal>
     <div class="modal-header">
         <h4 class="modal-title">
-            <span>{{ 'artemisApp.exerciseChatbot.clearSession.title' | artemisTranslate }}</span>
+            <span jhiTranslate="artemisApp.exerciseChatbot.clearSession.title"></span>
         </h4>
         <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
     </div>
     <div class="modal-body">
-        <p>{{ 'artemisApp.exerciseChatbot.clearSession.text' | artemisTranslate }}</p>
+        <p jhiTranslate="artemisApp.exerciseChatbot.clearSession.text"></p>
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-danger" (click)="modal.close('confirm')">
-            <span>{{ 'artemisApp.exerciseChatbot.clearSession.submit' | artemisTranslate }}</span>
+            <span jhiTranslate="artemisApp.exerciseChatbot.clearSession.submit"></span>
         </button>
     </div>
 </ng-template>

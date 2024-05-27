@@ -58,7 +58,7 @@
         </div>
     </button>
     <div [class.competency-accordion-body-open]="open" [class.competency-accordion-body-closed]="!open" class="competency-accordion-body">
-        @if (course && (nextLectureUnits.length > 0 ||  nextExercises.length > 0)) {
+        @if (course && (nextLectureUnits.length > 0 || nextExercises.length > 0)) {
             <h5 class="fw-medium fs-4 mt-1" jhiTranslate="artemisApp.studentAnalyticsDashboard.competencyAccordion.nextObjectives"></h5>
         }
         @if (course && nextLectureUnits.length > 0) {
