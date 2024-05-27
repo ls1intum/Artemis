@@ -141,23 +141,24 @@ public class SecurityConfiguration {
     }
 
     /**
-     * Configures the {@link SecurityFilterChain} for the application's security, specifying how requests should be secured.
+     * Configures the {@link SecurityFilterChain} for the application, specifying security settings for HTTP requests.
      * <p>
-     * Through a fluent API, this method configures {@link HttpSecurity} to establish security constraints on HTTP requests.
-     * Among the configurations, it disables CSRF protection (as this might be handled client-side or deemed unnecessary),
-     * sets up CORS filtering, and customizes exception handling for authentication and access denial. It also defines a
-     * content security policy, frame options, and other header settings for enhanced security. Session management is set
-     * to stateless to support RESTful and SPA-oriented architectures.
-     * </p>
-     * <p>
-     * Specific access rules for various endpoints are declared, allowing for fine-grained control over who can access
-     * what resources, with certain paths being publicly accessible and others requiring specific roles. Additionally,
-     * custom security configurations may be added, such as support for LTI if active.
+     * This method uses a fluent API to configure {@link HttpSecurity} by:
+     * <ul>
+     * <li>Disabling CSRF protection, as it might be handled client-side or deemed unnecessary for stateless APIs.</li>
+     * <li>Setting up CORS filtering.</li>
+     * <li>Customizing exception handling for authentication and access denial.</li>
+     * <li>Defining content security policy, frame options, and other security headers.</li>
+     * <li>Configuring session management to be stateless, suitable for RESTful and SPA-oriented architectures.</li>
+     * <li>Specifying access rules for various endpoints, allowing fine-grained control over access based on roles.</li>
+     * <li>Adding custom security configurations, such as LTI support if enabled.</li>
+     * </ul>
      * </p>
      *
-     * @param http The {@link HttpSecurity} to configure.
+     * @param http                   The {@link HttpSecurity} object to configure security settings for HTTP requests.
+     * @param securityProblemSupport The {@link SecurityProblemSupport} instance to handle authentication entry points and access denied responses.
      * @return The configured {@link SecurityFilterChain}.
-     * @throws Exception If an error occurs during the configuration.
+     * @throws Exception If an error occurs during the configuration process.
      */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, SecurityProblemSupport securityProblemSupport) throws Exception {
@@ -216,8 +217,8 @@ public class SecurityConfiguration {
             )
             // Applies additional configurations defined in a custom security configurer adapter.
             .with(securityConfigurerAdapter(), configurer -> configurer.configure(http));
-            // Enable HTTP Basic authentication so that people can authenticate using username and password against the server's REST API
-            // FIXME: This breaks LocalCI buildagents
+            // FIXME: Enable HTTP Basic authentication so that people can authenticate using username and password against the server's REST API
+            //  PROBLEM: This currently would break LocalVC cloning via http based on the LocalVCServletService
             //.httpBasic(Customizer.withDefaults());
         // @formatter:on
 

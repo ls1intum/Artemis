@@ -32,7 +32,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "7.1.0"
+version = "7.1.2"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -241,7 +241,7 @@ dependencies {
         exclude module: "jaxb-api"
     }
 
-    implementation "org.gitlab4j:gitlab4j-api:6.0.0-rc.4"
+    implementation "org.gitlab4j:gitlab4j-api:6.0.0-rc.5"
 
     implementation "de.jplag:jplag:${jplag_version}"
     implementation "de.jplag:java:${jplag_version}"
@@ -270,16 +270,15 @@ dependencies {
     // https://search.maven.org/artifact/org.eclipse.jgit/org.eclipse.jgit
     implementation "org.eclipse.jgit:org.eclipse.jgit:${jgit_version}"
     implementation "org.eclipse.jgit:org.eclipse.jgit.ssh.apache:${jgit_version}"
-    // Note: jgit.htt.server is not compatible with jakarta yet and neither is there a timeline. Hence, we had to add the sourcefiles to our repository. Once the compatibility is given, we can switch back to the maven dependency.
+    // Note: jgit.htt.server is not compatible with jakarta yet and neither is there a timeline. Hence, we had to add the source files to our repository.
+    // Once the compatibility is given, we can switch back to the maven dependency.
     // implementation "org.eclipse.jgit:org.eclipse.jgit.http.server:${jgit_version}"
 
+    // apache ssh enabled the ssh git operations in LocalVC together with JGit
     implementation "org.apache.sshd:sshd-core:${sshd_version}"
     implementation "org.apache.sshd:sshd-git:${sshd_version}"
     implementation "org.apache.sshd:sshd-osgi:${sshd_version}"
     implementation "org.apache.sshd:sshd-sftp:${sshd_version}"
-
-    implementation "oauth.signpost:signpost-core:2.1.1"
-    implementation "oauth.signpost:signpost-commonshttp4:2.1.1"
 
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
     implementation "net.sourceforge.plantuml:plantuml:1.2024.4"
@@ -420,13 +419,12 @@ dependencies {
     implementation "io.springfox:springfox-bean-validators:3.0.0"
     implementation "com.mysql:mysql-connector-j:8.4.0"
     implementation "org.postgresql:postgresql:42.7.3"
-    implementation "com.h2database:h2:2.2.224"
 
     implementation "org.zalando:problem-spring-web:0.29.1"
     implementation "org.zalando:jackson-datatype-problem:0.27.1"
-    implementation "com.ibm.icu:icu4j:75.1"
+    implementation "com.ibm.icu:icu4j-charset:75.1"
     implementation "com.github.seancfoley:ipaddress:5.5.0"
-    implementation "org.apache.maven:maven-model:3.9.6"
+    implementation "org.apache.maven:maven-model:3.9.7"
     implementation "org.apache.pdfbox:pdfbox:3.0.2"
     implementation "org.apache.commons:commons-csv:1.11.0"
     implementation "org.commonmark:commonmark:0.22.0"
@@ -487,6 +485,7 @@ dependencies {
         }
     }
     testImplementation "io.github.classgraph:classgraph:4.8.172"
+    testImplementation "com.h2database:h2:2.2.224"
 
     // Lightweight JSON library needed for the internals of the MockRestServiceServer
     testImplementation "org.json:json:20240303"
