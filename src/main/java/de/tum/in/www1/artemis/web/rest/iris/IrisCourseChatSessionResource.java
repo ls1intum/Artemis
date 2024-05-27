@@ -20,9 +20,7 @@ import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettingsType;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisCourseChatSessionRepository;
-import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.in.www1.artemis.service.connectors.pyris.PyrisHealthIndicator;
 import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;
 import de.tum.in.www1.artemis.service.iris.IrisSessionService;
@@ -36,8 +34,6 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 @RestController
 @RequestMapping("api/iris/course-chat/")
 public class IrisCourseChatSessionResource {
-
-    protected final AuthorizationCheckService authCheckService;
 
     protected final UserRepository userRepository;
 
@@ -53,11 +49,9 @@ public class IrisCourseChatSessionResource {
 
     private final IrisCourseChatSessionRepository irisCourseChatSessionRepository;
 
-    protected IrisCourseChatSessionResource(AuthorizationCheckService authCheckService, IrisCourseChatSessionRepository irisCourseChatSessionRepository,
-            UserRepository userRepository, CourseRepository courseRepository, IrisSessionService irisSessionService, IrisSettingsService irisSettingsService,
-            PyrisHealthIndicator pyrisHealthIndicator, IrisRateLimitService irisRateLimitService) {
+    protected IrisCourseChatSessionResource(IrisCourseChatSessionRepository irisCourseChatSessionRepository, UserRepository userRepository, CourseRepository courseRepository,
+            IrisSessionService irisSessionService, IrisSettingsService irisSettingsService, PyrisHealthIndicator pyrisHealthIndicator, IrisRateLimitService irisRateLimitService) {
         this.irisCourseChatSessionRepository = irisCourseChatSessionRepository;
-        this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.irisSessionService = irisSessionService;
         this.irisSettingsService = irisSettingsService;
@@ -73,13 +67,12 @@ public class IrisCourseChatSessionResource {
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the current iris session for the course or {@code 404 (Not Found)} if no session exists
      */
     @PostMapping("{courseId}/sessions/current")
-    @EnforceAtLeastStudent
+    @EnforceAtLeastStudentInCourse
     public ResponseEntity<IrisCourseChatSession> getCurrentSessionOrCreateIfNotExists(@PathVariable Long courseId) throws URISyntaxException {
         var course = courseRepository.findByIdElseThrow(courseId);
 
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.CHAT, course);
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
         var sessionOptional = irisCourseChatSessionRepository.findLatestByCourseIdAndUserIdWithMessages(course.getId(), user.getId());
         if (sessionOptional.isPresent()) {
@@ -103,13 +96,12 @@ public class IrisCourseChatSessionResource {
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body a list of the iris sessions for the course or {@code 404 (Not Found)} if no session exists
      */
     @GetMapping("{courseId}/sessions")
-    @EnforceAtLeastStudent
+    @EnforceAtLeastStudentInCourse
     public ResponseEntity<List<IrisCourseChatSession>> getAllSessions(@PathVariable Long courseId) {
         var course = courseRepository.findByIdElseThrow(courseId);
 
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.CHAT, course);
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
         var sessions = irisCourseChatSessionRepository.findByExerciseIdAndUserIdElseThrow(course.getId(), user.getId());
         sessions.forEach(s -> irisSessionService.checkHasAccessToIrisSession(s, user));
@@ -125,7 +117,7 @@ public class IrisCourseChatSessionResource {
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the new iris session for the course
      */
     @PostMapping("{courseId}/sessions")
-    @EnforceAtLeastStudent
+    @EnforceAtLeastStudentInCourse
     public ResponseEntity<IrisCourseChatSession> createSessionForCourse(@PathVariable Long courseId) throws URISyntaxException {
         return createSessionForCourseInternal(courseId, false);
     }
@@ -138,8 +130,6 @@ public class IrisCourseChatSessionResource {
         if (user.getIrisAcceptedTimestamp() == null) {
             throw new AccessForbiddenException("The user has not accepted the Iris privacy policy yet.");
         }
-
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
         var session = irisCourseChatSessionRepository.save(new IrisCourseChatSession(course, user));
         var uriString = "/api/iris/sessions/" + session.getId();
