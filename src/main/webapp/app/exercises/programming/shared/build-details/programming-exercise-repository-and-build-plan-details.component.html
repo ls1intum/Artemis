@@ -6,39 +6,33 @@
             </div>
             <hr class="pt-0 pb-0 mt-1 mb-1" />
             <ul>
-                <ng-template #baseRepositoryBadge let-helpIconText="helpIconText" let-trailingRepoSlug="trailingRepoSlug">
-                    <li>
-                        <code class="text-white badge bg-primary label-preview text-lowercase">
-                            {{ courseShortName }}{{ programmingExercise?.shortName }}{{ trailingRepoSlug }}
-                        </code>
-                        <jhi-help-icon [text]="helpIconText" />
-                    </li>
-                </ng-template>
-
                 <ng-container
                     *ngTemplateOutlet="
-                        baseRepositoryBadge;
+                        repositoryBadge;
                         context: {
                             helpIconText: 'artemisApp.programmingExercise.preview.templateRepoTooltip',
-                            trailingRepoSlug: '-exercise'
+                            trailingRepoSlug: '-exercise',
+                            customBootstrapClasses: 'bg-primary text-lowercase'
                         }
                     "
                 />
                 <ng-container
                     *ngTemplateOutlet="
-                        baseRepositoryBadge;
+                        repositoryBadge;
                         context: {
                             helpIconText: 'artemisApp.programmingExercise.preview.solutionRepoTooltip',
-                            trailingRepoSlug: '-solution'
+                            trailingRepoSlug: '-solution',
+                            customBootstrapClasses: 'bg-primary text-lowercase'
                         }
                     "
                 />
                 <ng-container
                     *ngTemplateOutlet="
-                        baseRepositoryBadge;
+                        repositoryBadge;
                         context: {
                             helpIconText: 'artemisApp.programmingExercise.preview.testRepoTooltip',
-                            trailingRepoSlug: '-tests'
+                            trailingRepoSlug: '-tests',
+                            customBootstrapClasses: 'bg-primary text-lowercase'
                         }
                     "
                 />
@@ -46,13 +40,16 @@
                 @if (programmingExercise?.auxiliaryRepositories?.length) {
                     <div>
                         @for (auxiliaryRepository of programmingExercise!.auxiliaryRepositories; track auxiliaryRepository) {
-                            <div>
-                                <li>
-                                    <code class="text-white badge bg-success label-preview text-lowercase">
-                                        {{ courseShortName }}{{ programmingExercise!.shortName }}-{{ auxiliaryRepository.name }}
-                                    </code>
-                                </li>
-                            </div>
+                            <ng-container
+                                *ngTemplateOutlet="
+                                    repositoryBadge;
+                                    context: {
+                                        helpIconText: 'artemisApp.programmingExercise.preview.testRepoTooltip',
+                                        trailingRepoSlug: '-' + auxiliaryRepository.name,
+                                        customBootstrapClasses: 'bg-success text-lowercase'
+                                    }
+                                "
+                            />
                         }
                     </div>
                 }
@@ -66,9 +63,19 @@
             </div>
             <hr class="pt-0 pb-0 mt-1 mb-1" />
             <ul>
+                <ng-container
+                    *ngTemplateOutlet="
+                        repositoryBadge;
+                        context: {
+                            helpIconText: 'artemisApp.programmingExercise.preview.testRepoTooltip',
+                            trailingRepoSlug: '-BASE',
+                            customBootstrapClasses: 'bg-primary text-uppercase'
+                        }
+                    "
+                />
                 <li>
-                    <code class="text-white badge bg-primary label-preview text-uppercase"> {{ courseShortName }}{{ programmingExercise?.shortName }}-BASE </code>
                     <jhi-help-icon text="artemisApp.programmingExercise.preview.templateBuildPlanTooltip" />
+                    <code class="text-white badge label-preview"> {{ courseShortName }}{{ programmingExercise?.shortName }}-BASE </code>
                 </li>
                 <li>
                     <code class="text-white badge bg-primary label-preview text-uppercase"> {{ courseShortName }}{{ programmingExercise?.shortName }}-SOLUTION </code>
@@ -99,3 +106,10 @@
         </div>
     }
 </div>
+
+<ng-template #repositoryBadge let-helpIconText="helpIconText" let-trailingRepoSlug="trailingRepoSlug" let-customBootstrapClasses="customBootstrapClasses">
+    <li>
+        <code [class]="'text-white badge label-preview ' + customBootstrapClasses"> {{ courseShortName }}{{ programmingExercise?.shortName }}{{ trailingRepoSlug }} </code>
+        <jhi-help-icon [text]="helpIconText" />
+    </li>
+</ng-template>
