@@ -5,8 +5,8 @@ Set up Playwright locally
 -------------------------
 
 To run the tests locally, developers need to set up Playwright on their machine.
-End-to-end tests test entire workflows; therefore, they require the whole Artemis setup - database, client, and server to be running. 
-Playwright tests rely on the Playwright Node.js library, Playwright browser extensions, and some helper packages.
+End-to-end tests test entire workflows; therefore, they require the whole Artemis setup - database, client, and server to be running.
+Playwright tests rely on the Playwright Node.js library, Playwright browser binaries, and some helper packages.
 
 1. Install dependencies:
 
@@ -44,7 +44,7 @@ Playwright tests rely on the Playwright Node.js library, Playwright browser exte
      file for users to be created on setup stage. If users with the same name(s) but different user role(s) exist,
      change user IDs to different values ensuring new users are created with roles as defined in configuration.
 
-4. Setup Playwright package and its browser extensions:
+4. Setup Playwright package and its browser binaries:
 
     Run ``npm run playwright:setup`` to install Playwright browser binaries, set up the environment to ensure Playwright
     can locate these binaries and create test users (if creating users is enabled in configuration).
