@@ -13,6 +13,6 @@ public record CourseChatJob(String jobId, long courseId, long sessionId) impleme
 
     @Override
     public boolean canAccess(Course course) {
-        return course.getId().equals(courseId);
+        return courseId == course.getId();
     }
 }

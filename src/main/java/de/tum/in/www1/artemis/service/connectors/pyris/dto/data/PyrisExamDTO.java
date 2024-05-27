@@ -10,9 +10,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisExamDTO(long id, String title, boolean isTextExam, Instant startDate, Instant endDate, Instant publishResultsDate, Instant examStudentReviewStart,
-        Instant examStudentReviewEnd
-
-) {
+        Instant examStudentReviewEnd) {
 
     public static PyrisExamDTO of(Exam exam) {
         return new PyrisExamDTO(exam.getId(), exam.getTitle(), exam.isTestExam(), toInstant(exam.getStartDate()), toInstant(exam.getEndDate()),

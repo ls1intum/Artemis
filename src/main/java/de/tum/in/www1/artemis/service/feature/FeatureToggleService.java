@@ -46,7 +46,7 @@ public class FeatureToggleService {
 
         // Features that are neither enabled nor disabled should be enabled by default
         // This ensures that all features (except the Science API) are enabled once the system starts up
-        // Standardized Competencies are also disabled by default until the feature is ready
+        // Standardized Competencies and the Student Course Analytics Dashboard are also disabled by default until the feature is ready
         for (Feature feature : Feature.values()) {
             if (!features.containsKey(feature) && feature != Feature.Science && feature != Feature.StandardizedCompetencies && feature != Feature.StudentCourseAnalyticsDashboard) {
                 features.put(feature, true);
