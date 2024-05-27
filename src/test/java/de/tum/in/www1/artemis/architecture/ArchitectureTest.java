@@ -32,7 +32,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -264,8 +263,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
             @Override
             public boolean test(JavaClass javaClass) {
-                return javaClass.getAllFields().stream().map(field -> field.getRawType().reflect())
-                        .anyMatch(field -> field.equals(List.class) || field.equals(Set.class) || field.equals(Map.class) || field.equals(Collection.class));
+                return javaClass.getAllFields().stream().map(field -> field.getRawType().reflect()).anyMatch(Collection.class::isAssignableFrom);
             }
         };
     }
