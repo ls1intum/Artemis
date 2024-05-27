@@ -3,10 +3,10 @@ import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Overlay } from '@angular/cdk/overlay';
 import { ActivatedRoute } from '@angular/router';
 import { IrisChatbotWidgetComponent } from 'app/iris/exercise-chatbot/widget/chatbot-widget.component';
-import { IrisExerciseChatService } from 'app/iris/iris-exercise-chat.service';
 import { Subscription } from 'rxjs';
 import { faChevronDown, faCircle } from '@fortawesome/free-solid-svg-icons';
 import { IrisLogoLookDirection, IrisLogoSize } from 'app/iris/iris-logo/iris-logo.component';
+import { ChatServiceMode, IrisChatService } from 'app/iris/iris-chat.service';
 
 @Component({
     selector: 'jhi-exercise-chatbot-button',
@@ -30,7 +30,7 @@ export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
     constructor(
         public dialog: MatDialog,
         protected overlay: Overlay,
-        protected readonly chatService: IrisExerciseChatService,
+        protected readonly chatService: IrisChatService,
         private route: ActivatedRoute,
     ) {}
 
@@ -38,7 +38,7 @@ export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
         // Subscribes to route params and gets the exerciseId from the route
         this.paramsSubscription = this.route.params.subscribe((params) => {
             const exerciseId = parseInt(params['exerciseId'], 10);
-            this.chatService.changeToExercise(exerciseId);
+            this.chatService.switchTo(ChatServiceMode.TUTOR, exerciseId);
         });
 
         // Subscribes to check for new messages

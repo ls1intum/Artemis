@@ -13,7 +13,7 @@ import { IrisStatusService } from 'app/iris/iris-status.service';
 import { IrisMessageContentType, IrisTextMessageContent } from 'app/entities/iris/iris-content-type.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { animate, group, style, transition, trigger } from '@angular/animations';
-import { IrisChatService } from 'app/iris/iris-chat-base.service';
+import { IrisChatService } from 'app/iris/iris-chat.service';
 
 @Component({
     selector: 'jhi-iris-base-chatbot',
@@ -87,8 +87,6 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     resendAnimationActive: boolean;
     public ButtonType = ButtonType;
 
-    @Input() chatService: IrisChatService;
-
     @Input() fullSize: boolean | undefined;
     @Input() showCloseButton: boolean = false;
     @Output() fullSizeToggle = new EventEmitter<void>();
@@ -105,6 +103,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
         protected modalService: NgbModal,
         protected translateService: TranslateService,
         protected statusService: IrisStatusService,
+        protected chatService: IrisChatService,
     ) {}
 
     ngOnInit() {

@@ -7,11 +7,11 @@
             <fa-icon [icon]="faCircleInfo" class="info-button" />
         </a>
     </div>
-    <div>
-        @if (rateLimitInfo.rateLimit >= 0) {
+    <div class="d-flex gap-2">
+        @if (rateLimitInfo.rateLimit > 0) {
             <div class="toolbox">
                 <span class="rate-limit" [ngbTooltip]="'artemisApp.exerciseChatbot.rateLimitTooltip' | artemisTranslate: { hours: rateLimitInfo.rateLimitTimeframeHours }">
-                    {{ rateLimitInfo.currentMessageCount }}/{{ rateLimitInfo.rateLimit }}
+                    {{ rateLimitInfo.currentMessageCount }} / {{ rateLimitInfo.rateLimit }}
                 </span>
             </div>
         }
