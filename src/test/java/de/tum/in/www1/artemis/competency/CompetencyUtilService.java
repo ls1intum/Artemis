@@ -11,7 +11,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.Competency;
-import de.tum.in.www1.artemis.domain.competency.CompetencyJOL;
+import de.tum.in.www1.artemis.domain.competency.CompetencyJol;
 import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
 import de.tum.in.www1.artemis.domain.competency.RelationType;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.repository.CompetencyRelationRepository;
 import de.tum.in.www1.artemis.repository.CompetencyRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitRepository;
-import de.tum.in.www1.artemis.repository.competency.CompetencyJOLRepository;
+import de.tum.in.www1.artemis.repository.competency.CompetencyJolRepository;
 
 /**
  * Service responsible for initializing the database with specific test data related to competencies for use in integration tests.
@@ -40,7 +40,7 @@ public class CompetencyUtilService {
     private CompetencyRelationRepository competencyRelationRepository;
 
     @Autowired
-    private CompetencyJOLRepository competencyJOLRepository;
+    private CompetencyJolRepository competencyJOLRepository;
 
     /**
      * Creates and saves a Competency for the given Course.
@@ -183,8 +183,8 @@ public class CompetencyUtilService {
      * @param value      The value of the CompetencyJOL
      * @return The persisted CompetencyJOL
      */
-    public CompetencyJOL createJOL(Competency competency, User user, int value) {
-        CompetencyJOL jol = new CompetencyJOL();
+    public CompetencyJol createJOL(Competency competency, User user, int value) {
+        CompetencyJol jol = new CompetencyJol();
         jol.setCompetency(competency);
         jol.setUser(user);
         jol.setValue(value);

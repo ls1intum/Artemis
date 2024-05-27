@@ -15,7 +15,7 @@ import de.tum.in.www1.artemis.domain.User;
 @Entity
 @Table(name = "competency_jol")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-public class CompetencyJOL extends DomainObject {
+public class CompetencyJol extends DomainObject {
 
     @ManyToOne
     @JoinColumn(name = "competency_id")

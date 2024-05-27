@@ -15,9 +15,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.Competency;
-import de.tum.in.www1.artemis.repository.competency.CompetencyJOLRepository;
+import de.tum.in.www1.artemis.repository.competency.CompetencyJolRepository;
 
-class CompetencyJOLIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class CompetencyJolIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "competencyjolintegrationtest";
 
@@ -25,7 +25,7 @@ class CompetencyJOLIntegrationTest extends AbstractSpringIntegrationIndependentT
     private CompetencyUtilService competencyUtilService;
 
     @Autowired
-    private CompetencyJOLRepository competencyJOLRepository;
+    private CompetencyJolRepository competencyJOLRepository;
 
     private final Competency[] competency = new Competency[3];
 

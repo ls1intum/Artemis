@@ -8,30 +8,30 @@ import java.util.Map;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.competency.CompetencyJOL;
+import de.tum.in.www1.artemis.domain.competency.CompetencyJol;
 import de.tum.in.www1.artemis.repository.CompetencyRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.repository.competency.CompetencyJOLRepository;
-import de.tum.in.www1.artemis.repository.competency.JOLValueEntry;
+import de.tum.in.www1.artemis.repository.competency.CompetencyJolRepository;
+import de.tum.in.www1.artemis.repository.competency.JolValueEntry;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
- * Service Implementation for managing CompetencyJOL.
+ * Service Implementation for managing CompetencyJol.
  */
 @Profile(PROFILE_CORE)
 @Service
-public class CompetencyJOLService {
+public class CompetencyJolService {
 
-    private final String ENTITY_NAME = "CompetencyJOL";
+    private final String ENTITY_NAME = "CompetencyJol";
 
-    private final CompetencyJOLRepository competencyJOLRepository;
+    private final CompetencyJolRepository competencyJolRepository;
 
     private final CompetencyRepository competencyRepository;
 
     private final UserRepository userRepository;
 
-    public CompetencyJOLService(CompetencyJOLRepository competencyJOLRepository, CompetencyRepository competencyRepository, UserRepository userRepository) {
-        this.competencyJOLRepository = competencyJOLRepository;
+    public CompetencyJolService(CompetencyJolRepository competencyJolRepository, CompetencyRepository competencyRepository, UserRepository userRepository) {
+        this.competencyJolRepository = competencyJolRepository;
         this.competencyRepository = competencyRepository;
         this.userRepository = userRepository;
     }
@@ -52,18 +52,18 @@ public class CompetencyJOLService {
             throw new BadRequestAlertException("Invalid judgement of learning value", ENTITY_NAME, "invalidJolValue");
         }
 
-        final var competencyJOL = competencyJOLRepository.findByCompetencyIdAndUserId(competencyId, userId);
+        final var competencyJol = competencyJolRepository.findByCompetencyIdAndUserId(competencyId, userId);
 
         // If the competencyJOL already exists, update the value
-        if (competencyJOL.isPresent()) {
-            competencyJOL.get().setValue(jolValue);
-            competencyJOLRepository.save(competencyJOL.get());
+        if (competencyJol.isPresent()) {
+            competencyJol.get().setValue(jolValue);
+            competencyJolRepository.save(competencyJol.get());
             return;
         }
 
         // If the competencyJOL does not exist, create a new one
-        final var jol = createCompetencyJOL(competencyId, userId, jolValue);
-        competencyJOLRepository.save(jol);
+        final var jol = createCompetencyJol(competencyId, userId, jolValue);
+        competencyJolRepository.save(jol);
     }
 
     /**
@@ -72,10 +72,10 @@ public class CompetencyJOLService {
      * @param competencyId the id of the competency
      * @param userId       the id of the user
      * @param jolValue     the judgement of learning value
-     * @return the created CompetencyJOL (not persisted)
+     * @return the created CompetencyJol (not persisted)
      */
-    public CompetencyJOL createCompetencyJOL(long competencyId, long userId, int jolValue) {
-        final var jol = new CompetencyJOL();
+    public CompetencyJol createCompetencyJol(long competencyId, long userId, int jolValue) {
+        final var jol = new CompetencyJol();
         jol.setCompetency(competencyRepository.findById(competencyId).orElseThrow());
         jol.setUser(userRepository.findById(userId).orElseThrow());
         jol.setValue(jolValue);
@@ -90,6 +90,6 @@ public class CompetencyJOLService {
      * @return a map from competency id to judgement of learning value
      */
     public Map<Long, Integer> getJudgementOfLearningForUserByCourseId(long userId, long courseId) {
-        return competencyJOLRepository.findValuesForUserByCourseId(userId, courseId).stream().collect(toMap(JOLValueEntry::competencyId, JOLValueEntry::value));
+        return competencyJolRepository.findJolValuesForUserByCourseId(userId, courseId).stream().collect(toMap(JolValueEntry::competencyId, JolValueEntry::value));
     }
 }

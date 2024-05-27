@@ -81,7 +81,7 @@ public class Competency extends BaseCompetency {
     private StandardizedCompetency linkedStandardizedCompetency;
 
     @OneToMany(mappedBy = "competency", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<CompetencyJOL> competencyJOLs = new HashSet<>();
+    private Set<CompetencyJol> competencyJols = new HashSet<>();
 
     public Competency() {
     }

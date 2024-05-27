@@ -11,30 +11,30 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.in.www1.artemis.domain.competency.CompetencyJOL;
+import de.tum.in.www1.artemis.domain.competency.CompetencyJol;
 
 /**
- * Spring Data JPA repository for the {@link CompetencyJOL} entity.
+ * Spring Data JPA repository for the {@link CompetencyJol} entity.
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface CompetencyJOLRepository extends JpaRepository<CompetencyJOL, Long> {
+public interface CompetencyJolRepository extends JpaRepository<CompetencyJol, Long> {
 
-    Optional<CompetencyJOL> findByCompetencyIdAndUserId(long competencyId, long userId);
+    Optional<CompetencyJol> findByCompetencyIdAndUserId(long competencyId, long userId);
 
     @Query("""
             SELECT c.value
-            FROM CompetencyJOL c
+            FROM CompetencyJol c
             WHERE c.competency.id = :competencyId
                 AND c.user.id = :userId
             """)
-    Optional<Integer> findValueByCompetencyIdAndUserId(@Param("competencyId") long competencyId, @Param("userId") long userId);
+    Optional<Integer> findJolValueByCompetencyIdAndUserId(@Param("competencyId") long competencyId, @Param("userId") long userId);
 
     @Query("""
-            SELECT new de.tum.in.www1.artemis.repository.competency.JOLValueEntry(c.competency.id, c.value)
-            FROM CompetencyJOL c
+            SELECT new de.tum.in.www1.artemis.repository.competency.JolValueEntry(c.competency.id, c.value)
+            FROM CompetencyJol c
             WHERE c.user.id = :userId
                 AND c.competency.course.id = :courseId
             """)
-    Set<JOLValueEntry> findValuesForUserByCourseId(@Param("userId") long userId, @Param("courseId") long courseId);
+    Set<JolValueEntry> findJolValuesForUserByCourseId(@Param("userId") long userId, @Param("courseId") long courseId);
 }

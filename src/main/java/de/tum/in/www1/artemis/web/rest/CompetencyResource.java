@@ -43,7 +43,7 @@ import de.tum.in.www1.artemis.repository.CompetencyRelationRepository;
 import de.tum.in.www1.artemis.repository.CompetencyRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.repository.competency.CompetencyJOLRepository;
+import de.tum.in.www1.artemis.repository.competency.CompetencyJolRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
@@ -53,7 +53,7 @@ import de.tum.in.www1.artemis.security.annotations.enforceRoleInCourse.EnforceAt
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.LectureUnitService;
-import de.tum.in.www1.artemis.service.competency.CompetencyJOLService;
+import de.tum.in.www1.artemis.service.competency.CompetencyJolService;
 import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.competency.CompetencyRelationService;
 import de.tum.in.www1.artemis.service.competency.CompetencyService;
@@ -107,16 +107,16 @@ public class CompetencyResource {
 
     private final CompetencyRelationService competencyRelationService;
 
-    private final CompetencyJOLService competencyJOLService;
+    private final CompetencyJolService competencyJolService;
 
-    private final CompetencyJOLRepository competencyJOLRepository;
+    private final CompetencyJolRepository competencyJolRepository;
 
     public CompetencyResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             CompetencyRepository competencyRepository, CompetencyRelationRepository competencyRelationRepository, CompetencyService competencyService,
             CompetencyProgressRepository competencyProgressRepository, CompetencyProgressService competencyProgressService, ExerciseService exerciseService,
             LectureUnitService lectureUnitService, CompetencyRelationService competencyRelationService,
-            Optional<IrisCompetencyGenerationSessionService> irisCompetencyGenerationSessionService, CompetencyJOLService competencyJOLService,
-            CompetencyJOLRepository competencyJOLRepository) {
+            Optional<IrisCompetencyGenerationSessionService> irisCompetencyGenerationSessionService, CompetencyJolService competencyJolService,
+            CompetencyJolRepository competencyJolRepository) {
         this.courseRepository = courseRepository;
         this.competencyRelationRepository = competencyRelationRepository;
         this.authorizationCheckService = authorizationCheckService;
@@ -129,8 +129,8 @@ public class CompetencyResource {
         this.lectureUnitService = lectureUnitService;
         this.competencyRelationService = competencyRelationService;
         this.irisCompetencyGenerationSessionService = irisCompetencyGenerationSessionService;
-        this.competencyJOLService = competencyJOLService;
-        this.competencyJOLRepository = competencyJOLRepository;
+        this.competencyJolService = competencyJolService;
+        this.competencyJolRepository = competencyJolRepository;
     }
 
     /**
@@ -670,7 +670,7 @@ public class CompetencyResource {
 
         final var userId = userRepository.getUserIdElseThrow();
         competencyService.checkIfCompetencyBelongsToCourse(competencyId, courseId);
-        competencyJOLService.setJudgementOfLearning(competencyId, userId, jolValue);
+        competencyJolService.setJudgementOfLearning(competencyId, userId, jolValue);
 
         return ResponseEntity.ok().build();
     }
@@ -689,7 +689,7 @@ public class CompetencyResource {
 
         final var userId = userRepository.getUserIdElseThrow();
         competencyService.checkIfCompetencyBelongsToCourse(competencyId, courseId);
-        final var jol = competencyJOLRepository.findValueByCompetencyIdAndUserId(competencyId, userId);
+        final var jol = competencyJolRepository.findJolValueByCompetencyIdAndUserId(competencyId, userId);
 
         return ResponseEntity.ok(jol.orElse(null));
     }
@@ -706,7 +706,7 @@ public class CompetencyResource {
         log.info("REST request to get judgement of learning for competencies of course: {}", courseId);
 
         final var userId = userRepository.getUserIdElseThrow();
-        final var jols = competencyJOLService.getJudgementOfLearningForUserByCourseId(userId, courseId);
+        final var jols = competencyJolService.getJudgementOfLearningForUserByCourseId(userId, courseId);
 
         return ResponseEntity.ok(jols);
     }
