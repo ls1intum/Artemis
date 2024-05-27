@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.repository;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -71,6 +72,9 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
      * @return list including feedback entries which are associated with the grading instructions
      */
     default List<Feedback> findFeedbackByExerciseGradingCriteria(Set<GradingCriterion> gradingCriteria) {
+        if (gradingCriteria.isEmpty()) {
+            return Collections.emptyList();
+        }
         List<Long> gradingInstructionsIds = gradingCriteria.stream().flatMap(gradingCriterion -> gradingCriterion.getStructuredGradingInstructions().stream())
                 .map(GradingInstruction::getId).toList();
         return findFeedbackByGradingInstructionIds(gradingInstructionsIds);
@@ -84,6 +88,9 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
      * @return true if any grading criteria gets used in any feedback
      */
     default boolean hasFeedbackByExerciseGradingCriteria(Set<GradingCriterion> gradingCriteria) {
+        if (gradingCriteria.isEmpty()) {
+            return false;
+        }
         List<Long> gradingInstructionsIds = gradingCriteria.stream().flatMap(gradingCriterion -> gradingCriterion.getStructuredGradingInstructions().stream())
                 .map(GradingInstruction::getId).toList();
         return hasFeedbackFromGradingInstructionIds(gradingInstructionsIds);
