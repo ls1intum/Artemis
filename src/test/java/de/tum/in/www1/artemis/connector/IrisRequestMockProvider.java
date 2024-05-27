@@ -27,10 +27,9 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisHealthStatusDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisModelDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.tutorChat.PyrisTutorChatPipelineExecutionDTO;
-import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;
-import de.tum.in.www1.artemis.web.rest.iris.IrisResource;
 
 @Component
 @Profile("iris")
@@ -114,10 +113,12 @@ public class IrisRequestMockProvider {
 
     public void mockStatusResponse(boolean active) throws JsonProcessingException {
         // @formatter:off
-        var irisStatusDTO = new IrisResource.IrisStatusDTO(
-                active,
-                new IrisRateLimitService.IrisRateLimitInformation(1, 5, 24)
-        );
+        PyrisHealthStatusDTO[] irisStatusDTO = null;
+        if (active) {
+           irisStatusDTO = new PyrisHealthStatusDTO[] {
+                new PyrisHealthStatusDTO("model", PyrisHealthStatusDTO.ModelStatus.UP)
+           };
+        }
 
         shortTimeoutMockServer
                 .expect(ExpectedCount.once(), requestTo(healthApiURL.toString()))
