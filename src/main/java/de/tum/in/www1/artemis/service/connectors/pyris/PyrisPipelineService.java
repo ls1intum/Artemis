@@ -145,6 +145,13 @@ public class PyrisPipelineService {
 
     /**
      * Execute the exercise chat pipeline for the given session.
+     * It provides specific data for the exercise chat pipeline, including:
+     * - The latest submission of the student
+     * - The programming exercise
+     * - The course the exercise is part of
+     * <p>
+     *
+     * @see PyrisPipelineService#executeChatPipeline for more details on the pipeline execution process.
      *
      * @param variant          the variant of the pipeline
      * @param latestSubmission the latest submission of the student
@@ -160,6 +167,12 @@ public class PyrisPipelineService {
 
     /**
      * Execute the course chat pipeline for the given session.
+     * It provides specific data for the course chat pipeline, including:
+     * - The full course with the participation of the student
+     * - The metrics of the student in the course
+     * <p>
+     *
+     * @see PyrisPipelineService#executeChatPipeline for more details on the pipeline execution process.
      *
      * @param variant the variant of the pipeline
      * @param session the chat session
