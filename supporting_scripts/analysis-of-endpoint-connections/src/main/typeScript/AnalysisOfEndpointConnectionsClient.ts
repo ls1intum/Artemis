@@ -13,8 +13,18 @@ fileNames.forEach(fileName => {
     // Load the TypeScript file
         const sourceFile = ts.createSourceFile(fileName, require('fs').readFileSync(fileName).toString(), ts.ScriptTarget.ES2015, true);
 
+        // Store class property definitions
+        const classProperties: { [key: string]: string } = {};
+
         // This function will be called for each node in the AST
         function visit(node: ts.Node) {
+            // Check if the node is a property declaration
+            if (ts.isPropertyDeclaration(node) && node.initializer && ts.isStringLiteral(node.initializer)) {
+                const name = node.name.getText();
+                const value = node.initializer.getText().slice(1, -1); // Remove the quotes
+                classProperties[name] = value;
+            }
+
             // Check if the node is a call expression
             if (ts.isCallExpression(node)) {
                 const expression = node.expression;
@@ -24,8 +34,14 @@ fileNames.forEach(fileName => {
                     // Check if the property name is one of the httpClient methods
                     if (['get', 'post', 'put', 'delete'].includes(name)) {
                         console.log(`Found REST call: ${name}`);
+                        let url = '';
                         if (node.arguments.length > 0) {
-                            console.log(`with URL: ${node.arguments[0].getText()}`);
+                            url = node.arguments[0].getText();
+                            // Replace class properties in the URL
+                            for (const prop in classProperties) {
+                                url = url.replace(new RegExp(`\\$\\{this.${prop}\\}`, 'g'), classProperties[prop]);
+                            }
+                            console.log(`with URL: ${url}`);
                         } else {
                             console.log('No arguments provided for this REST call');
                         }
@@ -35,7 +51,7 @@ fileNames.forEach(fileName => {
 
                         let restCall = {
                             method: name,
-                            url: node.arguments.length > 0 ? node.arguments[0].getText() : 'No arguments provided for this REST call',
+                            url: url.length > 0 ? url : 'No arguments provided for this REST call',
                             line: sourceFile.getLineAndCharacterOfPosition(node.getStart()).line + 1,
                             filePath: fileName
                         };

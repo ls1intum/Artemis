@@ -2,11 +2,9 @@ package analysisOfEndpointConnections;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.thoughtworks.qdox.model.JavaAnnotation;
-import com.thoughtworks.qdox.model.JavaClass;
 import java.util.List;
 
-public class EnpointInformation {
+public class EndpointInformation {
     @JsonProperty
     private String requestMapping;
 
@@ -17,7 +15,7 @@ public class EnpointInformation {
     private String httpMethodAnnotation;
 
     @JsonProperty
-    private String path;
+    private String URI;
 
     @JsonProperty
     private String className;
@@ -28,11 +26,15 @@ public class EnpointInformation {
     @JsonProperty
     private List<String> otherAnnotations;
 
-    public EnpointInformation(String requestMapping, String endpoint, String httpMethodAnnotation, String path, String className, int line, List<String> otherAnnotations) {
+    public EndpointInformation() {
+
+    }
+
+    public EndpointInformation(String requestMapping, String endpoint, String httpMethodAnnotation, String URI, String className, int line, List<String> otherAnnotations) {
         this.requestMapping = requestMapping;
         this.endpoint = endpoint;
         this.httpMethodAnnotation = httpMethodAnnotation;
-        this.path = path;
+        this.URI = URI;
         this.className = className;
         this.line = line;
         this.otherAnnotations = otherAnnotations;
@@ -70,12 +72,12 @@ public class EnpointInformation {
         this.httpMethodAnnotation = httpMethodAnnotation;
     }
 
-    public String getPath() {
-        return path;
+    public String getURI() {
+        return URI;
     }
 
-    public void setPath(String path) {
-        this.path = path;
+    public void setURI(String URI) {
+        this.URI = URI;
     }
 
     public String getClassName() {
@@ -92,5 +94,34 @@ public class EnpointInformation {
 
     public void setLine(int line) {
         this.line = line;
+    }
+
+    public String buildCompleteEndpointURI() {
+        String result = "";
+
+        if (this.requestMapping != null && !this.requestMapping.isEmpty()) {
+            result = this.requestMapping.replace("\"", "");
+        }
+        result += this.URI.replace("\"", "");
+        // Replace arguments with placeholder
+        result = result.replaceAll("\\{.*?\\}", ":param:");
+        return result;
+    }
+
+    String buildComparableEndpointUri() {
+        // Replace arguments with placeholder
+        return this.buildCompleteEndpointURI().replaceAll("\\{.*?\\}", ":param:");
+    }
+
+    @JsonIgnore
+    public String getHttpMethod() {
+        return switch (this.httpMethodAnnotation) {
+            case "GetMapping" -> "get";
+            case "PostMapping" -> "post";
+            case "PutMapping" -> "put";
+            case "DeleteMapping" -> "delete";
+            case "PatchMapping" -> "patch";
+            default -> "No HTTP method annotation found";
+        };
     }
 }
