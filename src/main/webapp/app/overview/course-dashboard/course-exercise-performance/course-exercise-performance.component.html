@@ -1,0 +1,62 @@
+<div>
+    <div class="d-flex flex-wrap justify-content-between align-items-baseline gap-2">
+        <div class="d-flex gap-2 align-items-baseline">
+            <h4 jhiTranslate="artemisApp.courseStudentDashboard.exercisePerformance.title"></h4>
+            <jhi-help-icon text="artemisApp.courseStudentDashboard.exercisePerformance.info" />
+        </div>
+        @if (isDataAvailable) {
+            <!-- Legend-->
+            <div class="d-flex gap-3">
+                <div class="d-flex align-items-center gap-1">
+                    <span class="tooltip-label-color" [style.background-color]="YOUR_GRAPH_COLOR"></span>
+                    <span jhiTranslate="artemisApp.courseStudentDashboard.exercisePerformance.yourScoreLabel"></span>
+                </div>
+                <div class="d-flex align-items-center gap-1">
+                    <span class="tooltip-label-color" [style.background-color]="AVERAGE_GRAPH_COLOR"></span>
+                    <span jhiTranslate="artemisApp.courseStudentDashboard.exercisePerformance.averageScoreLabel"></span>
+                </div>
+            </div>
+        }
+    </div>
+    @if (isDataAvailable) {
+        <div #containerRef class="mt-2 justify-content-center">
+            <ngx-charts-line-chart
+                [view]="[containerRef.offsetWidth, 200]"
+                [results]="ngxData"
+                [scheme]="ngxColor"
+                [legend]="false"
+                [maxXAxisTickLength]="8"
+                [xAxis]="true"
+                [xAxisLabel]="'artemisApp.courseStudentDashboard.exercisePerformance.xAxisLabel' | artemisTranslate"
+                [showXAxisLabel]="true"
+                [yAxis]="true"
+                [yAxisLabel]="'artemisApp.courseStudentDashboard.exercisePerformance.yAxisLabel' | artemisTranslate"
+                [showYAxisLabel]="true"
+                [yScaleMin]="0"
+                [yScaleMax]="yScaleMax"
+            >
+                <ng-template #tooltipTemplate let-model="model">
+                    <div class="d-flex flex-column align-items-start py-2">
+                        <b class="mb-1">{{ model.extra.title }}</b>
+                        {{ model.series }}: {{ round(model.value, 1) }}%
+                    </div>
+                </ng-template>
+                <ng-template #seriesTooltipTemplate let-model="model">
+                    @if (!model.isEmpty) {
+                        <div class="d-flex flex-column align-items-start py-2">
+                            <b class="mb-1">{{ model[0].extra.title }}</b>
+                            @for (entry of model; track entry) {
+                                <div class="d-flex align-items-center gap-1">
+                                    <span class="tooltip-label-color" [style.background-color]="entry.color"></span>
+                                    {{ entry.series }}: {{ round(entry.value, 1) }}%
+                                </div>
+                            }
+                        </div>
+                    }
+                </ng-template>
+            </ngx-charts-line-chart>
+        </div>
+    } @else {
+        <div class="mt-2" jhiTranslate="artemisApp.courseStudentDashboard.exercisePerformance.noData"></div>
+    }
+</div>

@@ -12,13 +12,12 @@ import java.util.stream.Collectors;
 
 import jakarta.validation.constraints.NotNull;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
-
-import com.google.common.base.Strings;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
@@ -41,6 +40,7 @@ import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyRelationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyWithTailRelationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.CompetencyPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 
@@ -52,6 +52,8 @@ import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 public class CompetencyService {
 
     private static final Logger log = LoggerFactory.getLogger(CompetencyService.class);
+
+    private static final String ENTITY_NAME = "Competency";
 
     private final CompetencyRepository competencyRepository;
 
@@ -136,10 +138,10 @@ public class CompetencyService {
      */
     public SearchResultPageDTO<Competency> getOnPageWithSizeForImport(final CompetencyPageableSearchDTO search, final User user) {
         final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.COMPETENCY);
-        final String title = Strings.isNullOrEmpty(search.getTitle()) ? null : search.getTitle();
-        final String description = Strings.isNullOrEmpty(search.getDescription()) ? null : search.getDescription();
-        final String courseTitle = Strings.isNullOrEmpty(search.getCourseTitle()) ? null : search.getCourseTitle();
-        final String semester = Strings.isNullOrEmpty(search.getSemester()) ? null : search.getSemester();
+        final String title = StringUtils.isEmpty(search.getTitle()) ? null : search.getTitle();
+        final String description = StringUtils.isEmpty(search.getDescription()) ? null : search.getDescription();
+        final String courseTitle = StringUtils.isEmpty(search.getCourseTitle()) ? null : search.getCourseTitle();
+        final String semester = StringUtils.isEmpty(search.getSemester()) ? null : search.getSemester();
 
         final Page<Competency> competencyPage;
         if (authCheckService.isAdmin(user)) {
@@ -552,5 +554,18 @@ public class CompetencyService {
             }
         }
         return graph.hasCycle();
+    }
+
+    /**
+     * Checks if the competency is part of the course
+     *
+     * @param competencyId The id of the competency
+     * @param courseId     The id of the course
+     * @throws BadRequestAlertException if the competency does not belong to the course
+     */
+    public void checkIfCompetencyBelongsToCourse(long competencyId, long courseId) {
+        if (!competencyRepository.existsByIdAndCourseId(competencyId, courseId)) {
+            throw new BadRequestAlertException("The competency does not belong to the course", ENTITY_NAME, "competencyWrongCourse");
+        }
     }
 }

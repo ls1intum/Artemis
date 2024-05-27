@@ -1,5 +1,5 @@
 import dayjs from 'dayjs/esm';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Competency, CompetencyProgress, getIcon } from 'app/entities/competency.model';
 import { CompetencyService } from 'app/course/competencies/competency.service';
@@ -11,25 +11,37 @@ import { LectureUnitCompletionEvent } from 'app/overview/course-lectures/course-
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { faPencilAlt } from '@fortawesome/free-solid-svg-icons';
+import { Subscription, combineLatest, forkJoin } from 'rxjs';
+import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-course-competencies-details',
     templateUrl: './course-competencies-details.component.html',
     styleUrls: ['../course-overview.scss'],
 })
-export class CourseCompetenciesDetailsComponent implements OnInit {
+export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
     competencyId?: number;
+    course?: Course;
     courseId?: number;
     isLoading = false;
     competency: Competency;
+    judgementOfLearning: number | undefined;
     showFireworks = false;
+    paramsSubscription: Subscription;
 
     readonly LectureUnitType = LectureUnitType;
 
     faPencilAlt = faPencilAlt;
     getIcon = getIcon;
 
+    private dashboardFeatureToggleActiveSubscription: Subscription;
+    dashboardFeatureActive = false;
+
     constructor(
+        private featureToggleService: FeatureToggleService,
+        private courseStorageService: CourseStorageService,
         private alertService: AlertService,
         private activatedRoute: ActivatedRoute,
         private competencyService: CompetencyService,
@@ -37,20 +49,37 @@ export class CourseCompetenciesDetailsComponent implements OnInit {
     ) {}
 
     ngOnInit(): void {
-        this.activatedRoute.params.subscribe((params) => {
-            this.competencyId = +params['competencyId'];
-            this.courseId = +params['courseId'];
-            if (this.competencyId && this.courseId) {
-                this.loadData();
-            }
+        // example route looks like: /courses/1/competencies/10
+        const courseIdParams$ = this.activatedRoute.parent?.parent?.parent?.params;
+        const competencyIdParams$ = this.activatedRoute.params;
+        if (courseIdParams$) {
+            this.paramsSubscription = combineLatest([courseIdParams$, competencyIdParams$]).subscribe(([courseIdParams, competencyIdParams]) => {
+                this.competencyId = Number(competencyIdParams.competencyId);
+                this.courseId = Number(courseIdParams.courseId);
+                if (this.competencyId && this.courseId) {
+                    this.loadData();
+                }
+                this.course = this.courseStorageService.getCourse(this.courseId);
+            });
+        }
+
+        this.dashboardFeatureToggleActiveSubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.StudentCourseAnalyticsDashboard).subscribe((active) => {
+            this.dashboardFeatureActive = active;
         });
+    }
+
+    ngOnDestroy(): void {
+        this.dashboardFeatureToggleActiveSubscription?.unsubscribe();
+        this.paramsSubscription?.unsubscribe();
     }
 
     private loadData() {
         this.isLoading = true;
-        this.competencyService.findById(this.competencyId!, this.courseId!).subscribe({
-            next: (resp) => {
-                this.competency = resp.body!;
+        forkJoin([this.competencyService.findById(this.competencyId!, this.courseId!), this.competencyService.getJoL(this.courseId!, this.competencyId!)]).subscribe({
+            next: ([competencyResp, judgementOfLearningResp]) => {
+                this.competency = competencyResp.body!;
+                this.judgementOfLearning = judgementOfLearningResp.body ?? undefined;
+
                 if (this.competency && this.competency.exercises) {
                     // Add exercises as lecture units for display
                     this.competency.lectureUnits = this.competency.lectureUnits ?? [];
@@ -126,5 +155,13 @@ export class CourseCompetenciesDetailsComponent implements OnInit {
 
     get softDueDatePassed(): boolean {
         return dayjs().isAfter(this.competency.softDueDate);
+    }
+
+    get judgementOfLearningEnabled() {
+        return (this.course?.studentCourseAnalyticsDashboardEnabled ?? false) && this.dashboardFeatureActive;
+    }
+
+    onRatingChange(newRating: number) {
+        this.judgementOfLearning = newRating;
     }
 }

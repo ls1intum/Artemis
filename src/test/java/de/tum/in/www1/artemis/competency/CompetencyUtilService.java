@@ -9,7 +9,9 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.Competency;
+import de.tum.in.www1.artemis.domain.competency.CompetencyJol;
 import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
 import de.tum.in.www1.artemis.domain.competency.RelationType;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
@@ -17,9 +19,10 @@ import de.tum.in.www1.artemis.repository.CompetencyRelationRepository;
 import de.tum.in.www1.artemis.repository.CompetencyRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitRepository;
+import de.tum.in.www1.artemis.repository.competency.CompetencyJolRepository;
 
 /**
- * Service responsible for initializing the database with specific testdata related to competencies for use in integration tests.
+ * Service responsible for initializing the database with specific test data related to competencies for use in integration tests.
  */
 @Service
 public class CompetencyUtilService {
@@ -35,6 +38,9 @@ public class CompetencyUtilService {
 
     @Autowired
     private CompetencyRelationRepository competencyRelationRepository;
+
+    @Autowired
+    private CompetencyJolRepository competencyJOLRepository;
 
     /**
      * Creates and saves a Competency for the given Course.
@@ -167,5 +173,21 @@ public class CompetencyUtilService {
     public Competency updateMasteryThreshold(@NotNull Competency competency, int masteryThreshold) {
         competency.setMasteryThreshold(masteryThreshold);
         return competencyRepo.save(competency);
+    }
+
+    /**
+     * Creates and saves a CompetencyJOL for the given Competency and User.
+     *
+     * @param competency The Competency the CompetencyJOL belongs to
+     * @param user       The User the CompetencyJOL belongs to
+     * @param value      The value of the CompetencyJOL
+     * @return The persisted CompetencyJOL
+     */
+    public CompetencyJol createJOL(Competency competency, User user, int value) {
+        CompetencyJol jol = new CompetencyJol();
+        jol.setCompetency(competency);
+        jol.setUser(user);
+        jol.setValue(value);
+        return competencyJOLRepository.save(jol);
     }
 }

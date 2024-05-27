@@ -519,6 +519,16 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     @Transactional // ok because of modifying query
     @Query("""
             UPDATE User user
+            SET user.sshPublicKeyHash = :sshPublicKeyHash,
+                user.sshPublicKey = :sshPublicKey
+            WHERE user.id = :userId
+            """)
+    void updateUserSshPublicKeyHash(@Param("userId") long userId, @Param("sshPublicKeyHash") String sshPublicKeyHash, @Param("sshPublicKey") String sshPublicKey);
+
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE User user
             SET user.irisAccepted = :acceptDatetime
             WHERE user.id = :userId
             """)
@@ -607,6 +617,30 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
         String currentUserLogin = getCurrentUserLogin();
         Optional<User> user = findOneByLogin(currentUserLogin);
         return unwrapOptionalUser(user, currentUserLogin);
+    }
+
+    /**
+     * Finds user id by login
+     *
+     * @param login the login of the user to search
+     * @return optional of the user id if it exists, empty otherwise
+     */
+    @Query("""
+            SELECT u.id
+            FROM User u
+            WHERE u.login = :login
+            """)
+    Optional<Long> findIdByLogin(@Param("login") String login);
+
+    /**
+     * Get the user id of the currently logged-in user
+     *
+     * @return the user id of the currently logged-in user
+     */
+    default long getUserIdElseThrow() {
+        String currentUserLogin = getCurrentUserLogin();
+        Optional<Long> userId = findIdByLogin(currentUserLogin);
+        return userId.orElseThrow(() -> new EntityNotFoundException("User: " + currentUserLogin));
     }
 
     /**
@@ -876,6 +910,8 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     default User findByIdElseThrow(long userId) throws EntityNotFoundException {
         return findById(userId).orElseThrow(() -> new EntityNotFoundException("User", userId));
     }
+
+    Optional<User> findBySshPublicKeyHash(String keyString);
 
     /**
      * Finds all users which a non-null VCS access token that expires before some given date.

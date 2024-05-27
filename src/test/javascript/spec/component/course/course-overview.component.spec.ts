@@ -1,4 +1,3 @@
-import { HeaderCourseComponent } from 'app/overview/header-course.component';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { EMPTY, Observable, Subject, of, throwError } from 'rxjs';
@@ -172,7 +171,6 @@ describe('CourseOverviewComponent', () => {
                 MockComponent(CourseRegistrationComponent),
                 MockComponent(CourseCardComponent),
                 MockComponent(SecuredImageComponent),
-                MockComponent(HeaderCourseComponent),
             ],
             providers: [
                 MockProvider(CourseManagementService),
@@ -256,6 +254,15 @@ describe('CourseOverviewComponent', () => {
         expect(notifyAboutCourseAccessStub).toHaveBeenCalledExactlyOnceWith(course1.id);
         expect(getUpdateVisibility).toHaveBeenCalledOnce();
         expect(getUpdateMenuPosition).toHaveBeenCalledOnce();
+    });
+
+    it('should create sidebar item for student course analytics dashboard if the feature is active', () => {
+        component.course = { id: 123, lectures: [], exams: [], studentCourseAnalyticsDashboardEnabled: true };
+        const sidebarItems = component.getSidebarItems();
+        expect(sidebarItems.length).toBeGreaterThan(0);
+        expect(sidebarItems[0].title).toContain('Dashboard');
+        expect(sidebarItems[1].title).toContain('Exercises');
+        expect(sidebarItems[2].title).toContain('Lectures');
     });
 
     it('should create sidebar items with default items', () => {

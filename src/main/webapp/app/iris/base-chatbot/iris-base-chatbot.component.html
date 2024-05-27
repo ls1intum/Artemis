@@ -16,22 +16,27 @@
             </div>
         }
         <div class="toolbox">
-            @if (this.messages.length > 1) {
+            @if (this.messages.length >= 1) {
                 <button id="clear-chat-button" (click)="onClearSession(clearConfirmModal)" class="header-icon">
                     <fa-icon [icon]="faTrash" />
                 </button>
             }
 
-            <button (click)="fullSizeToggle.next()" class="header-icon">
-                @if (fullSize === false) {
-                    <fa-icon [icon]="faExpand" />
-                } @else {
-                    <fa-icon [icon]="faCompress" />
-                }
-            </button>
-            <button (click)="closeChat()" class="header-icon">
-                <fa-icon [icon]="faXmark" />
-            </button>
+            @if (fullSize !== undefined) {
+                <button (click)="fullSizeToggle.next()" class="header-icon">
+                    @if (!fullSize) {
+                        <fa-icon [icon]="faExpand" />
+                    } @else {
+                        <fa-icon [icon]="faCompress" />
+                    }
+                </button>
+            }
+
+            @if (showCloseButton) {
+                <button (click)="closeChat()" class="header-icon">
+                    <fa-icon [icon]="faXmark" />
+                </button>
+            }
         </div>
     </div>
 </div>

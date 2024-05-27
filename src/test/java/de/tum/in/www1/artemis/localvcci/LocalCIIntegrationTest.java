@@ -28,12 +28,18 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.transport.CredentialsProvider;
+import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -60,6 +66,7 @@ import de.tum.in.www1.artemis.service.connectors.localci.dto.ResultBuildJob;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCServletService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
     @Autowired
@@ -79,6 +86,22 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     private LocalRepository testsRepository;
 
     private String commitHash;
+
+    @Value("${artemis.user-management.internal-admin.username}")
+    private String localVCUsername;
+
+    @Value("${artemis.user-management.internal-admin.password}")
+    private String localVCPassword;
+
+    @BeforeAll
+    void setupAll() {
+        CredentialsProvider.setDefault(new UsernamePasswordCredentialsProvider(localVCUsername, localVCPassword));
+    }
+
+    @AfterAll
+    void cleanupAll() {
+        this.gitService.init();
+    }
 
     @BeforeEach
     void initRepositories() throws Exception {

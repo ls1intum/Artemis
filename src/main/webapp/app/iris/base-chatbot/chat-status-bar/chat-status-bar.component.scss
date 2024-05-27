@@ -1,11 +1,13 @@
 .chat-status-bar {
     transition: all 0.3s;
+    opacity: 0;
     overflow: hidden;
     background: var(--iris-client-chat-background);
     border-top: 0 solid var(--border-color);
 
     &.open {
         border-top-width: 1px;
+        opacity: 1;
 
         .progress-bar .part {
             opacity: 1;

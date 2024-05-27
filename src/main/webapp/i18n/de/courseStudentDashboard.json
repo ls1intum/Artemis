@@ -1,0 +1,33 @@
+{
+    "artemisApp": {
+        "courseStudentDashboard": {
+            "noMetrics": "Es sind keine Metriken für diesen Kurs verfügbar.",
+            "overallPerformance": {
+                "title": "Gesamtleistung"
+            },
+            "exercisePerformance": {
+                "title": "Übungsleistungen",
+                "info": "Leistung wird als Prozentsatz der Punkte gemessen, die du in einer Aufgabe erreicht hast.",
+                "noData": "Es sind noch keine Ergebnisse für dich in diesem Kurs verfügbar.",
+                "yourScoreLabel": "Dein Ergebnis",
+                "averageScoreLabel": "Durchschnittsergebnis",
+                "xAxisLabel": "Aufgaben",
+                "yAxisLabel": "Ergebnis (%)"
+            },
+            "exerciseLateness": {
+                "title": "Übungsverspätungen",
+                "info": "Relative Verspätung bezieht sich auf den Prozentsatz der Arbeitszeit, die vergangen ist.",
+                "noData": "Du hast noch keine Aufgaben in diesem Kurs eingereicht.",
+                "yourLatenessLabel": "Deine Verspätung",
+                "averageLatenessLabel": "Durchschnittliche Verspätung",
+                "xAxisLabel": "Aufgaben",
+                "yAxisLabel": "Relative Fristnähe (%)"
+            },
+            "judgementOfLearning": {
+                "title": "Wie würdest du dein Verständnis bewerten?",
+                "artemisRating": "Artemis bewertet dein Verständnis als",
+                "error": "Beim Speichern deiner Bewertung ist ein Fehler aufgetreten."
+            }
+        }
+    }
+}

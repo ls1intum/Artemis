@@ -10,6 +10,7 @@ import { AdminStandardizedCompetencyService } from 'app/admin/standardized-compe
 import {
     KnowledgeAreaDTO,
     KnowledgeAreaForTree,
+    Source,
     StandardizedCompetencyDTO,
     StandardizedCompetencyForTree,
     convertToKnowledgeAreaForTree,
@@ -33,6 +34,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
     let component: StandardizedCompetencyManagementComponent;
     let competencyService: StandardizedCompetencyService;
     let getForTreeViewSpy: jest.SpyInstance;
+    let getSourcesSpy: jest.SpyInstance;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -54,6 +56,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
                 component = componentFixture.componentInstance;
                 competencyService = TestBed.inject(StandardizedCompetencyService);
                 getForTreeViewSpy = jest.spyOn(competencyService, 'getAllForTreeView').mockReturnValue(of(new HttpResponse({ body: [{ id: 1 }] })));
+                getSourcesSpy = jest.spyOn(competencyService, 'getSources').mockReturnValue(of(new HttpResponse({ body: [{ id: 1 }] })));
             });
     });
 
@@ -88,12 +91,15 @@ describe('StandardizedCompetencyManagementComponent', () => {
             },
         ];
         getForTreeViewSpy.mockReturnValue(of(new HttpResponse({ body: tree })));
+        const sources: Source[] = [{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }];
+        getSourcesSpy.mockReturnValue(of(new HttpResponse({ body: sources })));
         componentFixture.detectChanges();
 
         expect(getForTreeViewSpy).toHaveBeenCalled();
         expect(component['knowledgeAreaMap'].size).toBe(7);
         expect(component['knowledgeAreasForSelect']).toHaveLength(7);
         expect(component['dataSource'].data).toHaveLength(3);
+        expect(component['sourcesForSelect']).toHaveLength(4);
     });
 
     it('should open cancel modal', () => {

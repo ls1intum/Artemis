@@ -1,0 +1,58 @@
+@if (irisEnabled) {
+    <div class="chat-container">
+        <jhi-course-chatbot [courseId]="courseId" />
+    </div>
+}
+<div class="stats-container">
+    @if (isLoading) {
+        <div class="d-flex justify-content-center">
+            <div class="spinner-border" role="status">
+                <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
+            </div>
+        </div>
+    } @else {
+        @if (hasExercises) {
+            @if (points > 0 || maxPoints > 0) {
+                <div class="d-sm-flex gap-3 align-items-baseline">
+                    <h4 jhiTranslate="artemisApp.courseStudentDashboard.overallPerformance.title"></h4>
+                    <div class="flex-grow-1">
+                        <ngb-progressbar type="success overflow-visible" [value]="points" [max]="maxPoints" height="1.75rem">
+                            <span class="fs-5 mx-2">{{ points }} / {{ maxPoints }} ({{ round((points / maxPoints) * 1000) / 10 }}%)</span>
+                        </ngb-progressbar>
+                    </div>
+                </div>
+            }
+            <jhi-course-exercise-performance [exercisePerformance]="exercisePerformance || []" />
+            <jhi-course-exercise-lateness [exerciseLateness]="exerciseLateness || []" />
+        } @else {
+            <div jhiTranslate="artemisApp.courseStudentDashboard.noMetrics"></div>
+        }
+        @if (hasCompetencies) {
+            <div class="competency-accordion-container justify-content-center align-items-center w-100">
+                <h3 jhiTranslate="artemisApp.studentAnalyticsDashboard.competencyAccordion.title"></h3>
+                <div class="competencies d-flex flex-column gap-2">
+                    @if (studentMetrics) {
+                        @for (competency of competencies; track competency.id; let i = $index) {
+                            <jhi-competency-accordion
+                                #competencyAccordionElement
+                                [course]="course"
+                                [competency]="competency"
+                                [metrics]="studentMetrics"
+                                [index]="i"
+                                [openedIndex]="openedAccordionIndex"
+                                (accordionToggle)="handleToggle($event)"
+                            />
+                        }
+                    }
+                </div>
+            </div>
+        } @else {
+            <div jhiTranslate="artemisApp.studentAnalyticsDashboard.competencyAccordion.noData"></div>
+        }
+        @if (learningPathsEnabled) {
+            <div class="competency-accordion-container row justify-content-center w-100" [jhiFeatureToggleHide]="FeatureToggle.LearningPaths">
+                <button class="btn btn-primary mt-2" (click)="navigateToLearningPaths()" jhiTranslate="artemisApp.studentAnalyticsDashboard.button.showLearningPath"></button>
+            </div>
+        }
+    }
+</div>

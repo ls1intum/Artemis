@@ -1,6 +1,6 @@
 <div class="container" (mouseenter)="toggleScrollLock(true)" (mouseleave)="toggleScrollLock(false)">
     <!-- chat box -->
     <div class="chat-widget">
-        <jhi-iris-base-chatbot [chatService]="irisChatService" [fullSize]="fullSize" (fullSizeToggle)="toggleFullSize()" (closeClicked)="closeChat()" />
+        <jhi-iris-base-chatbot [chatService]="irisChatService" [fullSize]="fullSize" [showCloseButton]="true" (fullSizeToggle)="toggleFullSize()" (closeClicked)="closeChat()" />
     </div>
 </div>
