@@ -8,6 +8,7 @@ import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
@@ -37,7 +38,7 @@ public class PyrisHealthIndicator implements HealthIndicator {
             var isUp = status != null;
             health = new ConnectorHealth(isUp, null, null);
         }
-        catch (Exception e) {
+        catch (RestClientException e) {
             health = new ConnectorHealth(false, null, e);
         }
 
