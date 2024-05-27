@@ -678,7 +678,7 @@ public class ExerciseService {
     public void checkExerciseIfStructuredGradingInstructionFeedbackUsed(Set<GradingCriterion> gradingCriteria, Exercise exercise) {
         boolean hasFeedbackFromStructuredGradingInstructionUsed = feedbackRepository.hasFeedbackByExerciseGradingCriteria(gradingCriteria);
 
-        if (!hasFeedbackFromStructuredGradingInstructionUsed) {
+        if (hasFeedbackFromStructuredGradingInstructionUsed) {
             exercise.setGradingInstructionFeedbackUsed(true);
         }
     }
