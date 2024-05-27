@@ -31,8 +31,13 @@ export class ChatStatusBarComponent implements OnChanges {
             clearTimeout(this.openTimeout);
             clearTimeout(this.styleTimeout);
             this.open = true;
+            // Only update style tag if the active stage changed; otherwise the animations are reset on each change
             if (firstUnfinished.name !== this.activeStage?.name) {
                 this.style = undefined;
+                // Use a timeout to let the bar of this stage autofill until 5% in 500ms (using scss)
+                // This makes it more clear that the stage has started
+                // After that, change it to 90% to let it slowly fill up using css transition
+                // Stopping at 90% makes it more clear that the stage is not yet finished
                 this.styleTimeout = setTimeout(() => (this.style = 'transform: scaleX(0.9)'), 500);
             }
             this.activeStage = firstUnfinished;
