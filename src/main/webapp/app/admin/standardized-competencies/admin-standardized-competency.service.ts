@@ -34,7 +34,11 @@ export class AdminStandardizedCompetencyService {
         return this.httpClient.delete<void>(`${this.resourceURL}/knowledge-areas/${knowledgeAreaId}`, { observe: 'response' });
     }
 
-    importCompetencies(dto: KnowledgeAreasForImportDTO) {
+    importStandardizedCompetencyCatalog(dto: KnowledgeAreasForImportDTO) {
         return this.httpClient.put<void>(`${this.resourceURL}/import`, dto, { observe: 'response' });
+    }
+
+    exportStandardizedCompetencyCatalog() {
+        return this.httpClient.get<string>(`${this.resourceURL}/export`, { observe: 'response' });
     }
 }

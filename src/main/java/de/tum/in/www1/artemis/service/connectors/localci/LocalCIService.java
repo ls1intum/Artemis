@@ -1,6 +1,9 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALCI;
+
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -31,7 +34,7 @@ import de.tum.in.www1.artemis.service.connectors.ci.CIPermission;
  * needed and thus contain an empty implementation.
  */
 @Service
-@Profile("localci")
+@Profile(PROFILE_LOCALCI)
 public class LocalCIService extends AbstractContinuousIntegrationService {
 
     private static final Logger log = LoggerFactory.getLogger(LocalCIService.class);
@@ -42,11 +45,14 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final SharedQueueManagementService sharedQueueManagementService;
+
     public LocalCIService(BuildScriptProviderService buildScriptProviderService, AeolusTemplateService aeolusTemplateService,
-            ProgrammingExerciseRepository programmingExerciseRepository) {
+            ProgrammingExerciseRepository programmingExerciseRepository, SharedQueueManagementService sharedQueueManagementService) {
         this.buildScriptProviderService = buildScriptProviderService;
         this.aeolusTemplateService = aeolusTemplateService;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.sharedQueueManagementService = sharedQueueManagementService;
     }
 
     @Override
@@ -107,8 +113,15 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
      */
     @Override
     public BuildStatus getBuildStatus(ProgrammingExerciseParticipation participation) {
-        // TODO: Retrieve the correct status from the database once the table is implemented.
-        return BuildStatus.INACTIVE;
+        if (!sharedQueueManagementService.getQueuedJobsForParticipation(participation.getId()).isEmpty()) {
+            return BuildStatus.QUEUED;
+        }
+        else if (!sharedQueueManagementService.getProcessingJobsForParticipation(participation.getId()).isEmpty()) {
+            return BuildStatus.BUILDING;
+        }
+        else {
+            return BuildStatus.INACTIVE;
+        }
     }
 
     @Override
@@ -162,7 +175,7 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
 
     @Override
     public ConnectorHealth health() {
-        return new ConnectorHealth(true);
+        return new ConnectorHealth(true, Map.of("buildAgents", sharedQueueManagementService.getBuildAgentInformation()));
     }
 
     @Override

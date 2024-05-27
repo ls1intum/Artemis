@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
@@ -35,6 +36,7 @@ import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.BuildLogEntryRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionTestRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
@@ -62,6 +64,12 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
 
     @Autowired
     private UserUtilService userUtilService;
+
+    @Autowired
+    private ResultService resultService;
+
+    @Autowired
+    private ResultRepository resultRepository;
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
@@ -119,22 +127,43 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
         assertThat(programmingSubmission.getResults()).isNullOrEmpty(); // results are not added in the invoked method above
     }
 
-    // @Test
-    // @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    // void testStartExercise_newParticipation() {
-    // Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-    // Exercise modelling = course.getExercises().iterator().next();
-    // Participant participant = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-    // ZonedDateTime initializationDate = ZonedDateTime.now().minusHours(5);
-    //
-    // StudentParticipation studentParticipationReceived = participationService.startExercise(modelling, participant, true);
-    //
-    // assertThat(studentParticipationReceived.getExercise()).isEqualTo(modelling);
-    // assertThat(studentParticipationReceived.getStudent()).isPresent();
-    // assertThat(studentParticipationReceived.getStudent().get()).isEqualTo(participant);
-    // assertThat(studentParticipationReceived.getInitializationDate()).isEqualTo(initializationDate);
-    // assertThat(studentParticipationReceived.getInitializationState()).isEqualTo(InitializationState.INITIALIZED);
-    // }
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetBuildJobsForResultsOfParticipation() throws Exception {
+        Optional<User> student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student1");
+        participationUtilService.mockCreationOfExerciseParticipation(false, null, programmingExercise, uriService, versionControlService, continuousIntegrationService);
+
+        StudentParticipation participation = participationService.createParticipationWithEmptySubmissionIfNotExisting(programmingExercise, student.orElseThrow(),
+                SubmissionType.EXTERNAL);
+
+        List<Result> results = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(participation.getId());
+
+        Map<Long, String> resultBuildJobMap = resultService.getLogsAvailabilityForResults(results);
+        assertThat(resultBuildJobMap).hasSize(0);
+        assertThat(participation).isNotNull();
+        assertThat(participation.getSubmissions()).hasSize(1);
+        assertThat(participation.getStudent()).contains(student.get());
+        ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) participation.findLatestSubmission().orElseThrow();
+        assertThat(programmingSubmission.getType()).isEqualTo(SubmissionType.EXTERNAL);
+        assertThat(programmingSubmission.getResults()).isNullOrEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testStartExerciseWithInitializationDate_newParticipation() {
+        Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
+        Exercise modelling = course.getExercises().iterator().next();
+        Participant participant = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        ZonedDateTime initializationDate = ZonedDateTime.now().minusHours(5);
+
+        StudentParticipation studentParticipationReceived = participationService.startExerciseWithInitializationDate(modelling, participant, true, initializationDate);
+
+        assertThat(studentParticipationReceived.getExercise()).isEqualTo(modelling);
+        assertThat(studentParticipationReceived.getStudent()).isPresent();
+        assertThat(studentParticipationReceived.getStudent().get()).isEqualTo(participant);
+        assertThat(studentParticipationReceived.getInitializationDate()).isEqualTo(initializationDate);
+        assertThat(studentParticipationReceived.getInitializationState()).isEqualTo(InitializationState.INITIALIZED);
+    }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")

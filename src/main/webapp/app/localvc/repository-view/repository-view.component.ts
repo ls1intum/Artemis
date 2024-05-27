@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Observable, Subscription } from 'rxjs';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -13,8 +13,8 @@ import { ProgrammingExerciseParticipationService } from 'app/exercises/programmi
 import { Result } from 'app/entities/result.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { faClockRotateLeft } from '@fortawesome/free-solid-svg-icons';
-import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { Router } from '@angular/router';
+import { ProgrammingExerciseInstructorRepositoryType, ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
+import { ButtonSize } from 'app/shared/components/button.component';
 
 @Component({
     selector: 'jhi-repository-view',
@@ -25,6 +25,7 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
 
     PROGRAMMING = ExerciseType.PROGRAMMING;
     protected readonly FeatureToggle = FeatureToggle;
+    protected readonly ButtonSize = ButtonSize;
 
     readonly getCourseFromExercise = getCourseFromExercise;
 
@@ -38,6 +39,7 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
     showEditorInstructions = true;
     routeCommitHistory: string;
     repositoryUri: string;
+    repositoryType: ProgrammingExerciseInstructorRepositoryType | 'USER';
 
     result: Result;
 
@@ -79,11 +81,11 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
             this.participationCouldNotBeFetched = false;
             const exerciseId = Number(params['exerciseId']);
             const participationId = Number(params['participationId']);
-            if (participationId) {
+            this.repositoryType = participationId ? 'USER' : params['repositoryType'];
+            if (this.repositoryType === 'USER') {
                 this.loadStudentParticipation(participationId);
             } else {
-                const repositoryType = params['repositoryType'];
-                this.loadDifferentParticipation(repositoryType, exerciseId);
+                this.loadDifferentParticipation(this.repositoryType, exerciseId);
             }
         });
     }
@@ -92,10 +94,10 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
      * Load the template, solution or test participation. Set the domain and repositoryUri accordingly.
      * If the participation can't be fetched, set the error state. The test repository does not have a participation.
      * Only the domain is set.
-     * @param repositoryType
-     * @param exerciseId
+     * @param repositoryType The instructor repository type.
+     * @param exerciseId The id of the exercise
      */
-    private loadDifferentParticipation(repositoryType: string, exerciseId: number) {
+    private loadDifferentParticipation(repositoryType: ProgrammingExerciseInstructorRepositoryType, exerciseId: number) {
         this.differentParticipationSub = this.programmingExerciseService
             .findWithTemplateAndSolutionParticipationAndLatestResults(exerciseId)
             .pipe(

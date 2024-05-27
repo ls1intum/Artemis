@@ -31,6 +31,7 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import jakarta.validation.constraints.NotNull;
 
+import org.apache.commons.lang3.StringUtils;
 import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -41,7 +42,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
-import com.google.common.base.Strings;
 
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
@@ -372,7 +372,7 @@ public class Result extends DomainObject implements Comparable<Result> {
      * Compares the given feedback texts (existingText and newText) and checks if the text has changed.
      */
     private boolean feedbackTextHasChanged(String existingText, String newText) {
-        if (Strings.isNullOrEmpty(existingText) && Strings.isNullOrEmpty(newText)) {
+        if (StringUtils.isEmpty(existingText) && StringUtils.isEmpty(newText)) {
             return false;
         }
         return !Objects.equals(existingText, newText);
@@ -617,6 +617,16 @@ public class Result extends DomainObject implements Comparable<Result> {
     @JsonIgnore
     public boolean isAutomatic() {
         return AssessmentType.AUTOMATIC == assessmentType;
+    }
+
+    /**
+     * Checks whether the result is an automatic Athena result: AUTOMATIC_ATHENA
+     *
+     * @return true if the result is an automatic AI Athena result
+     */
+    @JsonIgnore
+    public boolean isAthenaAutomatic() {
+        return AssessmentType.AUTOMATIC_ATHENA == assessmentType;
     }
 
     @Override

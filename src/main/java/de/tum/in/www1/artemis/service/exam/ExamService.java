@@ -1130,6 +1130,10 @@ public class ExamService {
             examChecklistDTO.setNumberOfExamsSubmitted(numberOfStudentExamsSubmitted);
         }
         examChecklistDTO.setNumberOfTotalParticipationsForAssessment(totalNumberOfParticipationsForAssessment);
+        boolean existsUnassessedQuizzes = submissionRepository.existsUnassessedQuizzesByExamId(exam.getId());
+        examChecklistDTO.setExistsUnassessedQuizzes(existsUnassessedQuizzes);
+        boolean existsUnsubmittedExercises = submissionRepository.existsUnsubmittedExercisesByExamId(exam.getId());
+        examChecklistDTO.setExistsUnsubmittedExercises(existsUnsubmittedExercises);
         return examChecklistDTO;
     }
 
