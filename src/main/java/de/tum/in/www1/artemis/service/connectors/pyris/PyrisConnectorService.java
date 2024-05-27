@@ -80,8 +80,8 @@ public class PyrisConnectorService {
         }
     }
 
-    void executeWebhook(String variant, PyrisWebhookLectureIngestionExecutionDTO executionDTO) {
-        var endpoint = "/api/v1/webhooks/" + variant;
+    void executeLectureWebhook(String variant, PyrisWebhookLectureIngestionExecutionDTO executionDTO) {
+        var endpoint = "/api/v1/webhooks/lectures/" + variant;
         try {
             restTemplate.postForEntity(pyrisUrl + endpoint, objectMapper.valueToTree(executionDTO), Void.class);
         }

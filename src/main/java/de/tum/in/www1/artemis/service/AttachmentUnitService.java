@@ -77,7 +77,7 @@ public class AttachmentUnitService {
         savedAttachmentUnit.setAttachment(savedAttachment);
         evictCache(file, savedAttachmentUnit);
         if (savedAttachment.getAttachmentType() == AttachmentType.FILE) {
-            pyrisWebhookService.ifPresent(service -> service.executeIngestionPipeline(true, List.of(savedAttachmentUnit)));
+            pyrisWebhookService.ifPresent(service -> service.executeLectureIngestionPipeline(true, List.of(savedAttachmentUnit)));
 
         }
         return savedAttachmentUnit;
@@ -127,7 +127,7 @@ public class AttachmentUnitService {
             if (Objects.equals(FilenameUtils.getExtension(updateFile.getOriginalFilename()), "pdf")) {
                 slideSplitterService.splitAttachmentUnitIntoSingleSlides(savedAttachmentUnit);
             }
-            pyrisWebhookService.ifPresent(service -> service.executeIngestionPipeline(true, List.of(savedAttachmentUnit)));
+            pyrisWebhookService.ifPresent(service -> service.executeLectureIngestionPipeline(true, List.of(savedAttachmentUnit)));
         }
 
         return savedAttachmentUnit;

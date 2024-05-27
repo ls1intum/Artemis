@@ -149,7 +149,7 @@ public class IrisChatSessionService implements IrisChatBasedFeatureInterface<Iri
         if (participations.isEmpty()) {
             return Optional.empty();
         }
-        return participations.get(participations.size() - 1).getSubmissions().stream().max(Submission::compareTo)
+        return participations.getLast().getSubmissions().stream().max(Submission::compareTo)
                 .flatMap(sub -> programmingSubmissionRepository.findWithEagerResultsAndFeedbacksAndBuildLogsById(sub.getId()));
     }
 

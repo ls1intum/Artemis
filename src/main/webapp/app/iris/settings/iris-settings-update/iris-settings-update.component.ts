@@ -1,5 +1,5 @@
 import { Component, DoCheck, Input, OnInit } from '@angular/core';
-import { IrisSettings, IrisSettingsType } from 'app/entities/iris/settings/iris-settings.model';
+import { IrisGlobalSettings, IrisSettings, IrisSettingsType } from 'app/entities/iris/settings/iris-settings.model';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -9,7 +9,12 @@ import { faRotate, faSave } from '@fortawesome/free-solid-svg-icons';
 import { IrisModel } from 'app/entities/iris/settings/iris-model';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { cloneDeep, isEqual } from 'lodash-es';
-import { IrisChatSubSettings, IrisCompetencyGenerationSubSettings, IrisHestiaSubSettings } from 'app/entities/iris/settings/iris-sub-settings.model';
+import {
+    IrisChatSubSettings,
+    IrisCompetencyGenerationSubSettings,
+    IrisHestiaSubSettings,
+    IrisLectureIngestionSubSettings,
+} from 'app/entities/iris/settings/iris-sub-settings.model';
 import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
@@ -88,7 +93,6 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
                 this.alertService.error('artemisApp.iris.settings.error.noSettings');
             }
             this.irisSettings = settings;
-            this.lectureChat = this.irisSettings?.irisChatSettings?.lectureChat ?? false;
             this.fillEmptyIrisSubSettings();
             this.originalIrisSettings = cloneDeep(settings);
             this.isDirty = false;
@@ -108,6 +112,9 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
         if (!this.irisSettings.irisChatSettings) {
             this.irisSettings.irisChatSettings = new IrisChatSubSettings();
         }
+        if (!this.irisSettings.irisLectureIngestionSettings) {
+            this.irisSettings.irisLectureIngestionSettings = new IrisLectureIngestionSubSettings();
+        }
         if (!this.irisSettings.irisHestiaSettings) {
             this.irisSettings.irisHestiaSettings = new IrisHestiaSubSettings();
         }
@@ -117,20 +124,25 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
     }
 
     saveIrisSettings(): void {
-        this.syncLectureChatIngestion();
         this.isSaving = true;
         this.saveIrisSettingsObservable().subscribe(
             (response) => {
                 this.isSaving = false;
                 this.isDirty = false;
-                this.irisSettings = response.body ?? undefined;
+                this.irisSettings = response.body ?? new IrisGlobalSettings();
+                console.log(response.body);
                 this.fillEmptyIrisSubSettings();
                 this.originalIrisSettings = cloneDeep(this.irisSettings);
                 this.alertService.success('artemisApp.iris.settings.success');
             },
-            () => {
+            (error) => {
                 this.isSaving = false;
-                this.alertService.error('artemisApp.iris.settings.error.save');
+                console.error('Error saving iris settings', error); // Log the entire error response
+                if (error.status === 400 && error.error && error.error.message) {
+                    this.alertService.error(error.error.message); // Display specific error message
+                } else {
+                    this.alertService.error('artemisApp.iris.settings.error.save');
+                }
             },
         );
     }
@@ -166,12 +178,6 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
                 return this.irisSettingsService.getUncombinedCourseSettings(this.courseId!);
             case IrisSettingsType.EXERCISE:
                 return this.irisSettingsService.getUncombinedProgrammingExerciseSettings(this.exerciseId!);
-        }
-    }
-
-    private syncLectureChatIngestion() {
-        if (this.irisSettings?.irisChatSettings) {
-            this.irisSettings.irisChatSettings.lectureChat = this.lectureChat;
         }
     }
 }

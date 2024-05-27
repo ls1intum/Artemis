@@ -387,9 +387,14 @@ public class LectureResource {
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, lectureId.toString())).build();
     }
 
+    /**
+     * This method calls the executeLectureIngestionPipeline function with the needed parameters in the right format
+     *
+     * @param lecture the lecture to be updated
+     */
     private void helpExecuteIngestionPipeline(Lecture lecture) {
         List<AttachmentUnit> attachmentUnitList = lecture.getLectureUnits().stream().filter(lectureUnit -> lectureUnit.getType().equals("attachment"))
                 .map(lectureUnit -> (AttachmentUnit) lectureUnit).collect(Collectors.toCollection(ArrayList::new));
-        webhookService.executeIngestionPipeline(true, attachmentUnitList);
+        webhookService.executeLectureIngestionPipeline(true, attachmentUnitList);
     }
 }

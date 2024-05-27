@@ -96,4 +96,5 @@ class PyrisConnectorServiceTest extends AbstractIrisIntegrationTest {
 
         assertThatThrownBy(() -> pyrisConnectorService.getOfferedModels()).isInstanceOf(PyrisConnectorException.class);
     }
+
 }

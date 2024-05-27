@@ -44,8 +44,8 @@ public class PyrisWebhookService {
         this.irisSettingsService = irisSettingsService;
     }
 
-    private boolean lectureChatEnabled(Course course) {
-        return Boolean.TRUE.equals(irisSettingsService.getRawIrisSettingsFor(course).getIrisChatSettings().getLectureChat());
+    private boolean lectureIngestionEnabled(Course course) {
+        return Boolean.TRUE.equals(irisSettingsService.getRawIrisSettingsFor(course).getIrisLectureIngestionSettings().isEnabled());
     }
 
     private String attachmentToBase64(AttachmentUnit attachmentUnit) {
@@ -87,24 +87,26 @@ public class PyrisWebhookService {
     }
 
     /**
-     * Executes the tutor chat pipeline for the given session
+     * Exeßcutes the tutor chat pipeline for the given session
      *
      * @param shouldUpdate    True if the lecture is updated, False if the lecture is erased
      * @param attachmentUnits The attachmentUnit that got Updated / erased
      */
-    public void executeIngestionPipeline(Boolean shouldUpdate, List<AttachmentUnit> attachmentUnits) {
-        if (lectureChatEnabled(attachmentUnits.getFirst().getLecture().getCourse())) {
+    public void executeLectureIngestionPipeline(Boolean shouldUpdate, List<AttachmentUnit> attachmentUnits) {
+        if (lectureIngestionEnabled(attachmentUnits.getFirst().getLecture().getCourse())) {
             var jobToken = pyrisJobService.addIngestionWebhookJob();
             var settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, List.of(), artemisBaseUrl);
             List<PyrisLectureUnitWebhookDTO> toUpdateAttachmentUnits = new ArrayList<>();
             for (AttachmentUnit attachmentUnit : attachmentUnits) {
-                if (attachmentUnit.getAttachment().getAttachmentType() == AttachmentType.FILE)
+                if (attachmentUnit.getAttachment().getAttachmentType() == AttachmentType.FILE) {
                     toUpdateAttachmentUnits.add(processAttachments(shouldUpdate, attachmentUnit));
+                }
             }
             if (!toUpdateAttachmentUnits.isEmpty()) {
                 PyrisWebhookLectureIngestionExecutionDTO executionDTO = new PyrisWebhookLectureIngestionExecutionDTO(toUpdateAttachmentUnits, settingsDTO, List.of());
-                pyrisConnectorService.executeWebhook("lectures", executionDTO);
+                pyrisConnectorService.executeLectureWebhook("fullIngestion", executionDTO);
             }
         }
+
     }
 }

@@ -21,6 +21,7 @@
                 },
                 "subSettings": {
                     "chatSettings": "Chat Einstellungen",
+                    "lectureIngestionSettings": "Vorlesung Erfassung Einstellungen",
                     "hestiaSettings": "Hestia Einstellungen",
                     "competencyGenerationSettings": "Kompetenzgenerierung Einstellungen",
                     "enabled-disabled": "Aktiviert/Deaktiviert",
@@ -52,10 +53,6 @@
                     "disabled": {
                         "course": "IRIS ist in den Kurs-IRIS-Einstellungen deaktiviert",
                         "global": "IRIS ist in den globalen IRIS-Einstellungen deaktiviert"
-                    },
-                    "lectureChat": {
-                        "title": "Lecture chat Einstellungen",
-                        "lectureChatIngestion": "Lecture Ingestion"
                     }
                 },
                 "title": {
@@ -69,6 +66,7 @@
                     "tooltip": "Wenn aktiviert, werden die spezifischen globalen Iris Einstellungen automatisch aktualisiert, wenn eine neue Version von Artemis neue Iris Einstellungen bereitstellt.",
                     "chatLabel": "Auto Update der Chat Einstellungen",
                     "hestiaLabel": "Auto Update der Hestia Einstellungen",
+                    "lectureIngestionLabel": "Auto Update der Volesungen Erfassung Einstellungen",
                     "competencyGenerationLabel": "Auto Update der Kompetenzgenerierung Einstellungen"
                 }
             },

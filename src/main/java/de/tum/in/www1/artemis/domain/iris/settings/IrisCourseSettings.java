@@ -25,6 +25,10 @@ public class IrisCourseSettings extends IrisSettings {
     private Course course;
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @JoinColumn(name = "iris_lecture_ingestion_settings_id")
+    private IrisLectureIngestionSubSettings irisLectureIngestionSettings;
+
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JoinColumn(name = "iris_chat_settings_id")
     private IrisChatSubSettings irisChatSettings;
 
@@ -47,6 +51,16 @@ public class IrisCourseSettings extends IrisSettings {
 
     public void setCourse(Course course) {
         this.course = course;
+    }
+
+    @Override
+    public IrisLectureIngestionSubSettings getIrisLectureIngestionSettings() {
+        return irisLectureIngestionSettings;
+    }
+
+    @Override
+    public void setIrisLectureIngestionSettings(IrisLectureIngestionSubSettings irisLectureIngestionSettings) {
+        this.irisLectureIngestionSettings = irisLectureIngestionSettings;
     }
 
     @Override

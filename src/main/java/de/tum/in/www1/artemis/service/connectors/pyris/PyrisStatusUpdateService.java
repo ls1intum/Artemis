@@ -51,7 +51,6 @@ public class PyrisStatusUpdateService {
      * @param statusUpdate the status update
      */
     public void handleStatusUpdate(PyrisJob job, PyrisLectureIngestionStatusUpdateDTO statusUpdate) {
-
         log.info("Ingestion job status updated with result: {}", statusUpdate.result());
         var isDone = statusUpdate.stages().stream().map(PyrisStageDTO::state)
                 .allMatch(state -> state == PyrisStageStateDTO.DONE || state == PyrisStageStateDTO.ERROR || state == PyrisStageStateDTO.SKIPPED);
