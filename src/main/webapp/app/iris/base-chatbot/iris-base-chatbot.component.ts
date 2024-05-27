@@ -308,7 +308,8 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     adjustTextareaRows() {
         const textarea: HTMLTextAreaElement = this.messageTextarea.nativeElement;
         textarea.style.height = 'auto'; // Reset the height to auto
-        const lineHeight = parseInt(getComputedStyle(textarea).lineHeight, 10) + 4;
+        const bufferForSpaceBetweenLines = 4;
+        const lineHeight = parseInt(getComputedStyle(textarea).lineHeight, 10) + bufferForSpaceBetweenLines;
         const maxRows = 3;
         const maxHeight = lineHeight * maxRows;
 
