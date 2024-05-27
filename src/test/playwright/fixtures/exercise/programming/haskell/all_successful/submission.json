@@ -7,5 +7,5 @@
         }
     ],
     "expectedResult": "100%",
-    "sourceDirectory": "solution/src/"
+    "sourceDirectory": "src/"
 }

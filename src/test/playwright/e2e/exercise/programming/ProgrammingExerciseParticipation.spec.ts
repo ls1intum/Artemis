@@ -108,9 +108,6 @@ test.describe('Programming exercise participation', () => {
                     await programmingExerciseOverview.openCodeEditor(exercise.id!);
                     await programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, submission, async () => {
                         const resultScore = await programmingExerciseEditor.getResultScore();
-                        if ((await resultScore.innerText()) !== submission.expectedResult) {
-                            await resultScore.click();
-                        }
                         await expect(resultScore.getByText(submission.expectedResult)).toBeVisible();
                     });
                 });

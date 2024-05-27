@@ -31,6 +31,6 @@
         }
     ],
     "expectedResult": "100%",
-    "packageName": "kotlintest",
-    "sourceDirectory": "src/kotlintest/"
+    "packageName": "test",
+    "sourceDirectory": "src/test/"
 }

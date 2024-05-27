@@ -79,6 +79,7 @@ export class OnlineEditorPage {
     }
 
     async createFileInFolder(exerciseID: number, fileName: string, folderPath?: string) {
+        // Find approopriate folder
         await getExercise(this.page, exerciseID).locator('#file-browser-folder-create-file').last().click();
         await this.page.waitForTimeout(500);
         await this.createFile(exerciseID, fileName, folderPath);
@@ -134,16 +135,28 @@ export class OnlineEditorPage {
  * A class which encapsulates a programming exercise submission taken from the k6 resources.
  *
  * @param files An array of containers, which contain the file path of the changed file as well as its name.
+ * @param deleteFiles An array of file names which should be deleted before the submission.
+ * @param expectedResult The expected result of the submission.
+ * @param sourceDirectory The optional source directory in which the files should be placed.
+ * If not set, the files will be placed in the root directory.
  */
 export class ProgrammingExerciseSubmission {
     deleteFiles: string[];
     files: ProgrammingExerciseFile[];
     expectedResult: string;
-    packageName?: string;
     sourceDirectory?: string;
 }
 
+/**
+ * A class which encapsulates a programming exercise file.
+ *
+ * @param name The name of the file.
+ * @param directory The optional directory in which the file should be placed.
+ * If not set, the file will be placed in the root directory.
+ * @param fixturePath The path to the fixture file.
+ */
 class ProgrammingExerciseFile {
     name: string;
+    directory?: string;
     fixturePath: string;
 }
