@@ -116,16 +116,16 @@
     @if (!messages?.length) {
         <div class="empty-chat-message">
             <jhi-iris-logo [size]="IrisLogoSize.SMALL" />
-            <h3>How can I help you today?</h3>
+            <h3 jhiTranslate="artemisApp.iris.chat.helpOffer"></h3>
         </div>
     }
     <jhi-chat-status-bar [stages]="stages" />
     @if (!userAccepted) {
         <div class="p-chat">
-            <div class="message-text">{{ 'artemisApp.exerciseChatbot.popUpMessage' | artemisTranslate }}</div>
+            <div class="message-text" jhiTranslate="artemisApp.exerciseChatbot.popUpMessage"></div>
             <div class="button-container">
-                <button type="button" class="btn btn-primary" #acceptButton (click)="acceptPermission()">{{ 'artemisApp.exerciseChatbot.accept' | artemisTranslate }}</button>
-                <button type="button" class="btn btn-secondary" (click)="closeChat()">{{ 'artemisApp.exerciseChatbot.decline' | artemisTranslate }}</button>
+                <button type="button" class="btn btn-primary" #acceptButton (click)="acceptPermission()" jhiTranslate="artemisApp.exerciseChatbot.accept"></button>
+                <button type="button" class="btn btn-secondary" (click)="closeChat()" jhiTranslate="artemisApp.exerciseChatbot.decline"></button>
             </div>
         </div>
     }
