@@ -10,6 +10,8 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.Submission;
@@ -44,6 +46,7 @@ public class AthenaFeedbackSendingService {
         this.athenaDTOConverterService = athenaDTOConverterService;
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private record RequestDTO(ExerciseDTO exercise, SubmissionDTO submission, List<FeedbackDTO> feedbacks) {
     }
 

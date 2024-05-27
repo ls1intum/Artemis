@@ -12,6 +12,7 @@ import static com.tngtech.archunit.core.domain.JavaClass.Predicates.simpleName;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.simpleNameContaining;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.type;
 import static com.tngtech.archunit.core.domain.JavaCodeUnit.Predicates.constructor;
+import static com.tngtech.archunit.core.domain.properties.HasName.Predicates.nameContaining;
 import static com.tngtech.archunit.core.domain.properties.HasName.Predicates.nameMatching;
 import static com.tngtech.archunit.core.domain.properties.HasOwner.Predicates.With.owner;
 import static com.tngtech.archunit.lang.SimpleConditionEvent.violated;
@@ -30,6 +31,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.lang.reflect.Method;
 import java.nio.file.Files;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -244,6 +247,27 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 .because("we want to be able to exclude these classes from application startup by specifying profiles");
 
         rule.check(productionClasses);
+    }
+
+    @Test
+    void dtosWithCollectionsHaveJsonAnnotation() {
+        var DTOs = allClasses.that(nameContaining("DTO"));
+        var DTOsWithCollections = DTOs.that(haveACollectionField());
+
+        ArchRule rule = classes().should().beAnnotatedWith(JsonInclude.class).because("empty collections should not be part of the json");
+
+        rule.check(DTOsWithCollections);
+    }
+
+    private DescribedPredicate<JavaClass> haveACollectionField() {
+        return new DescribedPredicate<>("have a field that is a collection") {
+
+            @Override
+            public boolean test(JavaClass javaClass) {
+                return javaClass.getAllFields().stream().map(field -> field.getRawType().reflect())
+                        .anyMatch(field -> field.equals(List.class) || field.equals(Set.class) || field.equals(Map.class) || field.equals(Collection.class));
+            }
+        };
     }
 
     @Test

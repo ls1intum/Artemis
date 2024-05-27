@@ -6,12 +6,15 @@ import java.util.List;
 
 import jakarta.validation.constraints.NotNull;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.service.dto.GradingCriterionDTO;
 
 /**
  * A DTO representing a ProgrammingExercise, for transferring data to Athena
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ProgrammingExerciseDTO(long id, String title, double maxPoints, double bonusPoints, String gradingInstructions, List<GradingCriterionDTO> gradingCriteria,
         String problemStatement, String programmingLanguage, String solutionRepositoryUri, String templateRepositoryUri, String testsRepositoryUri) implements ExerciseDTO {
 

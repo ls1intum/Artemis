@@ -15,6 +15,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.exception.NetworkingException;
@@ -53,6 +55,7 @@ public class AthenaSubmissionSendingService {
         this.athenaDTOConverterService = athenaDTOConverterService;
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private record RequestDTO(ExerciseDTO exercise, List<SubmissionDTO> submissions) {
     }
 

@@ -12,6 +12,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -35,6 +36,7 @@ public class AthenaSubmissionSelectionService {
 
     private final AthenaDTOConverterService athenaDTOConverterService;
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private record RequestDTO(ExerciseDTO exercise, List<Long> submissionIds// Athena just needs submission IDs => quicker request, because less data is sent
     ) {
     }

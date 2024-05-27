@@ -156,6 +156,7 @@ public class BuildResult extends AbstractBuildResultNotificationDTO implements S
      * @param failedTests     list of failed tests.
      * @param successfulTests list of successful tests.
      */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record LocalCIJobDTO(List<LocalCITestJobDTO> failedTests, List<LocalCITestJobDTO> successfulTests) implements BuildJobDTOInterface, Serializable {
 
         @Override
@@ -175,6 +176,7 @@ public class BuildResult extends AbstractBuildResultNotificationDTO implements S
      * @param name   name of the test case.
      * @param errors list of error messages.
      */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record LocalCITestJobDTO(String name, List<String> errors) implements TestCaseDTOInterface, Serializable {
 
         @Override
