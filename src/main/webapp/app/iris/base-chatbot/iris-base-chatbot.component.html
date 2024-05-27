@@ -65,7 +65,7 @@
                     @for (content of message.content; track content) {
                         <div>
                             @if (message.sender === IrisSender.USER) {
-                                <div style="display: flex; justify-content: end; align-items: center">
+                                <div class="d-flex justify-content-end align-items-center">
                                     @if (content.type === IrisMessageContentType.TEXT) {
                                         <pre>
                                                 <span

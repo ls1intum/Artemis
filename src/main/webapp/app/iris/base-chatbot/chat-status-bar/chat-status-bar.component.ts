@@ -21,6 +21,9 @@ export class ChatStatusBarComponent implements OnChanges {
     faArrowsRotate = faArrowsRotate;
     faCircleXmark = faCircleXmark;
 
+    protected readonly JSON = JSON;
+    protected readonly IrisStageStateDTO = IrisStageStateDTO;
+
     constructor() {}
 
     ngOnChanges() {
@@ -45,18 +48,17 @@ export class ChatStatusBarComponent implements OnChanges {
             this.displayedSubText = firstUnfinished.message || undefined;
         } else {
             this.activeStage = undefined;
-            this.openTimeout = setTimeout(() => {
-                this.open = false;
-                this.displayedText = undefined;
-                this.displayedSubText = undefined;
-            }, 5000);
+            if (this.open) {
+                this.openTimeout = setTimeout(() => {
+                    this.open = false;
+                    this.displayedText = undefined;
+                    this.displayedSubText = undefined;
+                }, 5000);
+            }
         }
     }
 
     isStageFinished(stage: IrisStageDTO) {
         return stage.state === 'DONE' || stage.state === 'SKIPPED';
     }
-
-    protected readonly JSON = JSON;
-    protected readonly IrisStageStateDTO = IrisStageStateDTO;
 }
