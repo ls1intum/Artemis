@@ -69,7 +69,7 @@ public class ResourceLoaderService {
 
         // Try to load from filesystem if override is allowed for path
         if (isOverrideAllowed(path)) {
-            final String resourceLocation = getFileResourceLocation(path);
+            final String resourceLocation = getFileSystemResourceLocation(path);
             resource = resourceLoader.getResource(resourceLocation);
         }
 
@@ -91,8 +91,8 @@ public class ResourceLoaderService {
      * @return The resources located by the specified pathPattern.
      */
     @NotNull
-    public Resource[] getResources(final Path basePath) {
-        return getResources(basePath, ALL_PATHS_ANT_PATTERN);
+    public Resource[] getFileResources(final Path basePath) {
+        return getFileResources(basePath, ALL_PATHS_ANT_PATTERN);
     }
 
     /**
@@ -107,14 +107,14 @@ public class ResourceLoaderService {
      * @return The resources located by the specified pathPattern.
      */
     @NotNull
-    public Resource[] getResources(final Path basePath, final String pattern) {
+    public Resource[] getFileResources(final Path basePath, final String pattern) {
         checkValidPathElseThrow(basePath);
 
         Resource[] resources = null;
 
         // Try to load from filesystem if override is allowed for pathPattern
         if (isOverrideAllowed(basePath)) {
-            final String resourceLocation = getFileResourceLocation(basePath, pattern);
+            final String resourceLocation = getFileSystemResourceLocation(basePath, pattern);
             try {
                 resources = getFileResources(resourceLocation);
             }
@@ -156,11 +156,11 @@ public class ResourceLoaderService {
         }
     }
 
-    private String getFileResourceLocation(final Path resourcePath) {
+    private String getFileSystemResourceLocation(final Path resourcePath) {
         return "file:" + resolveResourcePath(resourcePath).toString();
     }
 
-    private String getFileResourceLocation(final Path resourcePath, final String pathPattern) {
+    private String getFileSystemResourceLocation(final Path resourcePath, final String pathPattern) {
         final String systemPathPattern = File.separator + adaptPathPatternToSystem(pathPattern);
         return "file:" + resolveResourcePath(resourcePath).toString() + systemPathPattern;
     }

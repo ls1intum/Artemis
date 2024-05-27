@@ -58,7 +58,7 @@ class ResourceLoaderServiceTest extends AbstractSpringIntegrationIndependentTest
     @Test
     void testShouldNotAllowAbsolutePathsMultipleResources() {
         final Path path = publicPath.toAbsolutePath();
-        assertThatIllegalArgumentException().isThrownBy(() -> resourceLoaderService.getResources(path));
+        assertThatIllegalArgumentException().isThrownBy(() -> resourceLoaderService.getFileResources(path));
     }
 
     @Test
@@ -92,7 +92,7 @@ class ResourceLoaderServiceTest extends AbstractSpringIntegrationIndependentTest
         final String content = "filesystem";
         setupJavaFiles(content);
 
-        Resource[] resources = resourceLoaderService.getResources(jenkinsFilesystemPaths.get(0).getParent(), pathPattern);
+        Resource[] resources = resourceLoaderService.getFileResources(jenkinsFilesystemPaths.get(0).getParent(), pathPattern);
         assertThat(resources).hasSize(2);
 
         for (final Resource resource : resources) {
@@ -109,7 +109,7 @@ class ResourceLoaderServiceTest extends AbstractSpringIntegrationIndependentTest
             FileUtils.writeStringToFile(publicFile.toFile(), content, Charset.defaultCharset());
         }
 
-        Resource[] resources = resourceLoaderService.getResources(Path.of("public"), pathPattern);
+        Resource[] resources = resourceLoaderService.getFileResources(Path.of("public"), pathPattern);
         assertThat(resources).hasSize(1);
 
         assertThat(resources[0].getFile()).hasContent("classpath");
@@ -117,7 +117,7 @@ class ResourceLoaderServiceTest extends AbstractSpringIntegrationIndependentTest
 
     @Test
     void testLoadNonExistingResources() {
-        Resource[] resources = resourceLoaderService.getResources(Path.of("non", "existing"), "*");
+        Resource[] resources = resourceLoaderService.getFileResources(Path.of("non", "existing"), "*");
         assertThat(resources).isNotNull().isEmpty();
     }
 

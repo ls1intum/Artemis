@@ -387,7 +387,7 @@ class FileServiceTest extends AbstractSpringIntegrationIndependentTest {
         final Path sourceFile = overridableBasePath.resolve("Makefile.file");
         FileUtils.writeStringToFile(sourceFile.toFile(), "content", Charset.defaultCharset());
 
-        final Resource[] resources = resourceLoaderService.getResources(overridableBasePath);
+        final Resource[] resources = resourceLoaderService.getFileResources(overridableBasePath);
         assertThat(resources).isNotEmpty();
 
         fileService.copyResources(resources, Path.of("templates"), targetDir, true);
@@ -401,7 +401,7 @@ class FileServiceTest extends AbstractSpringIntegrationIndependentTest {
         final Path sourceDirectory = overridableBasePath.resolve("package.xcworkspace");
         Files.createDirectories(sourceDirectory);
 
-        final Resource[] resources = resourceLoaderService.getResources(overridableBasePath);
+        final Resource[] resources = resourceLoaderService.getFileResources(overridableBasePath);
         assertThat(resources).isNotEmpty();
 
         fileService.copyResources(resources, Path.of("templates"), targetDir, true);
