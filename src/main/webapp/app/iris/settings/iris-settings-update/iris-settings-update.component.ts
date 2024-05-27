@@ -1,5 +1,5 @@
 import { Component, DoCheck, Input, OnInit } from '@angular/core';
-import { IrisGlobalSettings, IrisSettings, IrisSettingsType } from 'app/entities/iris/settings/iris-settings.model';
+import { IrisSettings, IrisSettingsType } from 'app/entities/iris/settings/iris-settings.model';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -129,7 +129,7 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
             (response) => {
                 this.isSaving = false;
                 this.isDirty = false;
-                this.irisSettings = response.body ?? new IrisGlobalSettings();
+                this.irisSettings = response.body ?? undefined;
                 this.fillEmptyIrisSubSettings();
                 this.originalIrisSettings = cloneDeep(this.irisSettings);
                 this.alertService.success('artemisApp.iris.settings.success');
