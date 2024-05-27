@@ -249,12 +249,16 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationIndep
         FileUploadSubmission fileUploadSubmission = ParticipationFactory.generateFileUploadSubmission(true);
         fileUploadSubmission = fileUploadExerciseUtilService.addFileUploadSubmission(afterReleaseFileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1");
 
-        FileUploadAssessmentDTO body = new FileUploadAssessmentDTO(new ArrayList<>(), "text");
+        List<Feedback> feedbacks = ParticipationFactory.generateFeedback();
+        FileUploadAssessmentDTO body = new FileUploadAssessmentDTO(feedbacks, "text");
         Result result = request.putWithResponseBody(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/feedback", body, Result.class, HttpStatus.OK);
 
         assertThat(result).as("saved result found").isNotNull();
         assertThat(result.isRated()).isNull();
         assertThat(((StudentParticipation) result.getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
+        assertThat(result.getFeedbacks()).hasSize(3);
+        assertThat(result.getFeedbacks().get(0).getCredits()).isEqualTo(feedbacks.get(0).getCredits());
+        assertThat(result.getFeedbacks().get(1).getCredits()).isEqualTo(feedbacks.get(1).getCredits());
     }
 
     @Test

@@ -263,7 +263,8 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
             @Override
             public boolean test(JavaClass javaClass) {
-                return javaClass.getAllFields().stream().map(field -> field.getRawType().reflect()).anyMatch(Collection.class::isAssignableFrom);
+                return javaClass.getAllFields().stream().map(field -> field.getRawType().reflect())
+                        .anyMatch(type -> Collection.class.isAssignableFrom(type) || Map.class.isAssignableFrom(type));
             }
         };
     }

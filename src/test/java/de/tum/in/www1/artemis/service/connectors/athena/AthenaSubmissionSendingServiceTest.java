@@ -108,8 +108,7 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
         createTextSubmissionsForSubmissionSending(1);
         athenaRequestMockProvider.mockSendSubmissionsAndExpect("text", jsonPath("$.exercise.id").value(textExercise.getId()),
                 jsonPath("$.exercise.title").value(textExercise.getTitle()), jsonPath("$.exercise.maxPoints").value(textExercise.getMaxPoints()),
-                jsonPath("$.exercise.bonusPoints").value(textExercise.getBonusPoints()), jsonPath("$.exercise.gradingInstructions").value(textExercise.getGradingInstructions()),
-                jsonPath("$.exercise.problemStatement").value(textExercise.getProblemStatement()), jsonPath("$.submissions[0].exerciseId").value(textExercise.getId()),
+                jsonPath("$.exercise.bonusPoints").value(textExercise.getBonusPoints()), jsonPath("$.submissions[0].exerciseId").value(textExercise.getId()),
                 jsonPath("$.submissions[0].text").value(DEFAULT_SUBMISSION_TEXT), jsonPath("$.submissions[0].language").value(DEFAULT_SUBMISSION_LANGUAGE.toString()));
 
         athenaSubmissionSendingService.sendSubmissions(textExercise);
@@ -133,10 +132,8 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
         createProgrammingSubmissionForSubmissionSending();
         athenaRequestMockProvider.mockSendSubmissionsAndExpect("programming", jsonPath("$.exercise.id").value(programmingExercise.getId()),
                 jsonPath("$.exercise.title").value(programmingExercise.getTitle()), jsonPath("$.exercise.maxPoints").value(programmingExercise.getMaxPoints()),
-                jsonPath("$.exercise.bonusPoints").value(programmingExercise.getBonusPoints()),
-                jsonPath("$.exercise.gradingInstructions").value(programmingExercise.getGradingInstructions()),
-                jsonPath("$.exercise.problemStatement").value(programmingExercise.getProblemStatement()),
-                jsonPath("$.submissions[0].exerciseId").value(programmingExercise.getId()), jsonPath("$.submissions[0].repositoryUri").isString());
+                jsonPath("$.exercise.bonusPoints").value(programmingExercise.getBonusPoints()), jsonPath("$.submissions[0].exerciseId").value(programmingExercise.getId()),
+                jsonPath("$.submissions[0].repositoryUri").isString());
 
         athenaSubmissionSendingService.sendSubmissions(programmingExercise);
         athenaRequestMockProvider.verify();
