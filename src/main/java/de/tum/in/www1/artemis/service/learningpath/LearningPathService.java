@@ -286,6 +286,12 @@ public class LearningPathService {
         }
     }
 
+    /**
+     * Generates the graph of competencies with the student's progress for the given learning path.
+     *
+     * @param learningPath the learning path for which the graph should be generated
+     * @return dto containing the competencies and relations of the learning path
+     */
     public LearningPathCompetencyGraphDTO generateLearningPathCompetencyGraph(@NotNull LearningPath learningPath) {
         Set<CompetencyProgress> progresses = competencyProgressRepository.findAllByUserIdAndLearningPathId(learningPath.getUser().getId(), learningPath.getId());
         Set<CompetencyProgressDTO> progressDTOs = progresses.stream().map(CompetencyProgressDTO::of).collect(Collectors.toSet());
