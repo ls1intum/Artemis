@@ -158,18 +158,18 @@ async function makeGitSubmission(
     commitMessage: string,
     deleteFiles: boolean = true,
 ) {
-    const sourcePath = submission.sourcePath ?? '';
+    const sourceDirectory = submission.sourceDirectory ?? '';
 
     if (deleteFiles) {
         for (const fileName of submission.deleteFiles) {
-            const filePath = `./${sourcePath}${fileName}`;
+            const filePath = `./${sourceDirectory}${fileName}`;
             await exerciseRepo.rm(filePath);
         }
     }
 
     for (const file of submission.files) {
-        const filePath = `./${sourcePath}${file.name}`;
-        const sourceCode = await Fixtures.get(file.path);
+        const filePath = `./${file.directory ?? sourceDirectory}${file.name}`;
+        const sourceCode = await Fixtures.get(file.fixturePath);
         await createFileWithContent(`./test-exercise-repos/${exerciseRepoName}/${filePath}`, sourceCode!);
         await exerciseRepo.add(`./${filePath}`);
     }

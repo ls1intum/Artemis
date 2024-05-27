@@ -3,9 +3,9 @@
     "files": [
         {
             "name": "Exercise.hs",
-            "path": "exercise/programming/haskell/all_successful/Exercise.txt"
+            "fixturePath": "exercise/programming/haskell/all_successful/Exercise.txt"
         }
     ],
     "expectedResult": "100%",
-    "sourcePath": "src/"
+    "sourceDirectory": "solution/src/"
 }

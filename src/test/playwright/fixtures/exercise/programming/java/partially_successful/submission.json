@@ -3,18 +3,18 @@
     "files": [
         {
             "name": "BubbleSort.java",
-            "path": "exercise/programming/java/all_successful/BubbleSort.txt"
+            "fixturePath": "exercise/programming/java/all_successful/BubbleSort.txt"
         },
         {
             "name": "MergeSort.java",
-            "path": "exercise/programming/java/all_successful/MergeSort.txt"
+            "fixturePath": "exercise/programming/java/all_successful/MergeSort.txt"
         },
         {
             "name": "SortStrategy.java",
-            "path": "exercise/programming/java/all_successful/SortStrategy.txt"
+            "fixturePath": "exercise/programming/java/all_successful/SortStrategy.txt"
         }
     ],
     "expectedResult": "46.2%",
     "packageName": "de.test",
-    "sourcePath": "src/de/test/"
+    "sourceDirectory": "src/de/test/"
 }

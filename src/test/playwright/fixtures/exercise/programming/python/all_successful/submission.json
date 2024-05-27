@@ -3,19 +3,19 @@
     "files": [
         {
             "name": "context.py",
-            "path": "exercise/programming/python/all_successful/context.txt"
+            "fixturePath": "exercise/programming/python/all_successful/context.txt"
         },
         {
             "name": "policy.py",
-            "path": "exercise/programming/python/all_successful/policy.txt"
+            "fixturePath": "exercise/programming/python/all_successful/policy.txt"
         },
         {
             "name": "sort_strategy.py",
-            "path": "exercise/programming/python/all_successful/sort_strategy.txt"
+            "fixturePath": "exercise/programming/python/all_successful/sort_strategy.txt"
         },
         {
             "name": "sorting_algorithms.py",
-            "path": "exercise/programming/python/all_successful/sorting_algorithms.txt"
+            "fixturePath": "exercise/programming/python/all_successful/sorting_algorithms.txt"
         }
     ],
     "expectedResult": "100%"

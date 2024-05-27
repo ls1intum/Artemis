@@ -3,10 +3,10 @@
     "files": [
         {
             "name": "BubbleSort.java",
-            "path": "exercise/programming/java/build_error/BubbleSort.txt"
+            "fixturePath": "exercise/programming/java/build_error/BubbleSort.txt"
         }
     ],
     "expectedResult": "0%",
     "packageName": "de.test",
-    "sourcePath": "src/de/test/"
+    "sourceDirectory": "src/de/test/"
 }

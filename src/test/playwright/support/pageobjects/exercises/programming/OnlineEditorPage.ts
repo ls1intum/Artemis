@@ -20,12 +20,12 @@ export class OnlineEditorPage {
 
     async typeSubmission(exerciseID: number, submission: ProgrammingExerciseSubmission) {
         for (const newFile of submission.files) {
-            if (submission.sourcePath) {
-                await this.createFileInSourceFolder(exerciseID, newFile.name, submission.sourcePath);
+            if (newFile.directory || submission.sourceDirectory) {
+                await this.createFileInFolder(exerciseID, newFile.name, newFile.directory ?? submission.sourceDirectory);
             } else {
                 await this.createFileInRootFolder(exerciseID, newFile.name);
             }
-            const fileContent = await Fixtures.get(newFile.path);
+            const fileContent = await Fixtures.get(newFile.fixturePath);
             const editorElement = this.findEditorTextField(exerciseID);
             await editorElement.click();
             await editorElement.evaluate(
@@ -78,14 +78,14 @@ export class OnlineEditorPage {
         await this.createFile(exerciseID, fileName);
     }
 
-    async createFileInSourceFolder(exerciseID: number, fileName: string, sourcePath?: string) {
+    async createFileInFolder(exerciseID: number, fileName: string, folderPath?: string) {
         await getExercise(this.page, exerciseID).locator('#file-browser-folder-create-file').last().click();
         await this.page.waitForTimeout(500);
-        await this.createFile(exerciseID, fileName, sourcePath);
+        await this.createFile(exerciseID, fileName, folderPath);
     }
 
-    private async createFile(exerciseID: number, fileName: string, filePath?: string) {
-        const responsePromise = this.page.waitForResponse(`${BASE_API}/repository/*/file?file=${filePath ?? ''}${fileName}`);
+    private async createFile(exerciseID: number, fileName: string, folderPath?: string) {
+        const responsePromise = this.page.waitForResponse(`${BASE_API}/repository/*/file?file=${folderPath ?? ''}${fileName}`);
         await getExercise(this.page, exerciseID).locator('#file-browser-create-node').pressSequentially(fileName);
         await this.page.waitForTimeout(500);
         await getExercise(this.page, exerciseID).locator('#file-browser-create-node').press('Enter');
@@ -140,10 +140,10 @@ export class ProgrammingExerciseSubmission {
     files: ProgrammingExerciseFile[];
     expectedResult: string;
     packageName?: string;
-    sourcePath?: string;
+    sourceDirectory?: string;
 }
 
 class ProgrammingExerciseFile {
     name: string;
-    path: string;
+    fixturePath: string;
 }
