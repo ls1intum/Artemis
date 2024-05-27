@@ -327,9 +327,6 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     }
 
     private mergeAndSortHistoryLists(sortedResults: Result[], selfLearningFeedbackRequests: SelfLearningFeedbackRequest[]): (Result | SelfLearningFeedbackRequest)[] {
-        console.log('start');
-        console.log(sortedResults);
-        console.log(selfLearningFeedbackRequests);
         let i = 0,
             j = 0;
         const sortedMergedLists: (Result | SelfLearningFeedbackRequest)[] = [];
@@ -351,9 +348,6 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
         while (j < selfLearningFeedbackRequests.length) {
             sortedMergedLists.push(selfLearningFeedbackRequests[j++]);
         }
-
-        console.log(sortedMergedLists);
-        console.log('end');
 
         return sortedMergedLists;
     }

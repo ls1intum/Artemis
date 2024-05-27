@@ -328,7 +328,7 @@ describe('ResultComponent', () => {
             comp.result = { ...mockResult, score: 90, assessmentType: AssessmentType.AUTOMATIC_ATHENA };
             jest.spyOn(Result, 'isAthenaAIResult').mockReturnValue(true);
 
-            comp.evaluate();
+            comp.ngOnInit();
 
             expect(comp.templateStatus).toEqual(ResultTemplateStatus.HAS_RESULT);
             expect(comp.resultTooltip).toContain('artemisApp.result.resultString.automaticAIFeedbackSuccessfulTooltip');
