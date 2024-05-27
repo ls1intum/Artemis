@@ -1,6 +1,6 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { faQuestionCircle, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
-import { SelfLearningFeedbackRequest } from 'app/entities/self-learning-feedback-request.model';
+import type { SelfLearningFeedbackRequest } from 'app/entities/self-learning-feedback-request.model';
 import dayjs from 'dayjs/esm';
 import { getSelfLearningFeedbackTextColorClass, getSelfLearningIconClass } from 'app/exercises/shared/self-learning-feedback-request/self-learning-feedback-request.utils';
 
@@ -17,7 +17,7 @@ export class SelfLearningFeedbackRequestComponent implements OnInit, OnDestroy {
     @Input() selfLearningFeedbackRequest: SelfLearningFeedbackRequest;
     @Input() showIcon = true;
 
-    timedOut: boolean = false;
+    timedOut = false;
 
     private resultUpdateSubscription?: ReturnType<typeof setTimeout>;
 
@@ -27,8 +27,6 @@ export class SelfLearningFeedbackRequestComponent implements OnInit, OnDestroy {
 
     protected readonly getSelfLearningFeedbackTextColorClass = getSelfLearningFeedbackTextColorClass;
     protected readonly getSelfLearningIconClass = getSelfLearningIconClass;
-
-    constructor() {}
 
     ngOnInit() {
         if (!this.selfLearningFeedbackRequest.responseDateTime && this.selfLearningFeedbackRequest.successful === undefined) {

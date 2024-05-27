@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { SelfLearningFeedbackRequest } from 'app/entities/self-learning-feedback-request.model';
+import type { SelfLearningFeedbackRequest } from 'app/entities/self-learning-feedback-request.model';
 import dayjs from 'dayjs/esm';
 import { SelfLearningFeedbackRequestComponent } from 'app/exercises/shared/self-learning-feedback-request/self-learning-feedback-request.component';
 import { NgbTooltipMocksModule } from '../../helpers/mocks/directive/ngbTooltipMocks.module';

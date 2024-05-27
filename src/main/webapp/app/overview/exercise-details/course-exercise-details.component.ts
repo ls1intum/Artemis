@@ -192,7 +192,9 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
             this.participationUpdateListener.unsubscribe();
             if (this.studentParticipations) {
                 this.studentParticipations.forEach((participation) => {
-                    this.participationWebsocketService.unsubscribeForLatestUpdatesOfParticipation(participation.id!, this.exercise!);
+                    if (participation.id && this.exercise) {
+                        this.participationWebsocketService.unsubscribeForLatestUpdatesOfParticipation(participation.id, this.exercise);
+                    }
                 });
             }
         }
