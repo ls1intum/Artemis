@@ -29,7 +29,7 @@ public record PyrisExerciseWithStudentSubmissionsDTO(long id, String title, Exer
      */
     public static PyrisExerciseWithStudentSubmissionsDTO of(Exercise exercise) {
         var submissionDTOSet = exercise.getStudentParticipations().stream().filter(participation -> !participation.isTestRun())
-                .flatMap(participation -> participation.getSubmissions().stream()).map(submission -> new PyrisStudentSubmissionDTO(submission.getSubmissionDate().toInstant(),
+                .flatMap(participation -> participation.getSubmissions().stream()).map(submission -> new PyrisStudentSubmissionDTO(toInstant(submission.getSubmissionDate()),
                         Optional.ofNullable(submission.getLatestResult()).map(Result::getScore).orElse(0D)))
                 .collect(Collectors.toSet());
 
