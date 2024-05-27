@@ -69,7 +69,7 @@ export class DetailOverviewListComponent implements OnInit, OnDestroy {
 
     WARNING = ButtonType.WARNING;
 
-    profileSub: Subscription;
+    profileSubscription: Subscription;
     isLocalVC = false;
 
     constructor(
@@ -86,7 +86,7 @@ export class DetailOverviewListComponent implements OnInit, OnDestroy {
                 translationKey: section.headline,
             };
         });
-        this.profileSub = this.profileService.getProfileInfo().subscribe((profileInfo) => {
+        this.profileSubscription = this.profileService.getProfileInfo().subscribe((profileInfo) => {
             this.isLocalVC = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
         });
         this.headlinesRecord = this.headlines.reduce((previousValue, currentValue) => {
@@ -114,6 +114,6 @@ export class DetailOverviewListComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
-        this.profileSub?.unsubscribe();
+        this.profileSubscription?.unsubscribe();
     }
 }
