@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.service.dto.TestCaseDTOInterface;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO implements Serializable {
+public class BuildResult extends AbstractBuildResultNotificationDTO implements Serializable {
 
     private final String assignmentRepoBranchName;
 
@@ -44,7 +44,7 @@ public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO imple
 
     private boolean hasLogs = false;
 
-    public LocalCIBuildResult(String assignmentRepoBranchName, String assignmentRepoCommitHash, String testsRepoCommitHash, boolean isBuildSuccessful, ZonedDateTime buildRunDate,
+    public BuildResult(String assignmentRepoBranchName, String assignmentRepoCommitHash, String testsRepoCommitHash, boolean isBuildSuccessful, ZonedDateTime buildRunDate,
             List<LocalCIJobDTO> jobs, List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports) {
         this.assignmentRepoBranchName = assignmentRepoBranchName;
         this.assignmentRepoCommitHash = assignmentRepoCommitHash;
@@ -55,7 +55,7 @@ public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO imple
         this.staticCodeAnalysisReports = staticCodeAnalysisReports;
     }
 
-    public LocalCIBuildResult(String assignmentRepoBranchName, String assignmentRepoCommitHash, String testsRepoCommitHash, boolean isBuildSuccessful) {
+    public BuildResult(String assignmentRepoBranchName, String assignmentRepoCommitHash, String testsRepoCommitHash, boolean isBuildSuccessful) {
         this.assignmentRepoBranchName = assignmentRepoBranchName;
         this.assignmentRepoCommitHash = assignmentRepoCommitHash;
         this.testsRepoCommitHash = testsRepoCommitHash;

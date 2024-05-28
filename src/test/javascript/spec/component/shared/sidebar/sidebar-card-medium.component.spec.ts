@@ -40,55 +40,55 @@ describe('SidebarCardMediumComponent', () => {
 
     it('should have success border class for easy difficulty', () => {
         (component.sidebarItem.difficulty = DifficultyLevel.EASY), fixture.detectChanges();
-        const element: HTMLElement = fixture.nativeElement.querySelector('#test-sidebar-card');
+        const element: HTMLElement = fixture.nativeElement.querySelector('#test-sidebar-card-medium');
         const classes = element.className;
         expect(classes).toContain('border-success');
     });
 
     it('should have success border class for medium difficulty', () => {
         (component.sidebarItem.difficulty = DifficultyLevel.MEDIUM), fixture.detectChanges();
-        const element: HTMLElement = fixture.nativeElement.querySelector('#test-sidebar-card');
+        const element: HTMLElement = fixture.nativeElement.querySelector('#test-sidebar-card-medium');
         const classes = element.className;
         expect(classes).toContain('border-warning');
     });
 
     it('should have success border class for hard difficulty', () => {
         (component.sidebarItem.difficulty = DifficultyLevel.HARD), fixture.detectChanges();
-        const element: HTMLElement = fixture.nativeElement.querySelector('#test-sidebar-card');
+        const element: HTMLElement = fixture.nativeElement.querySelector('#test-sidebar-card-medium');
         const classes = element.className;
         expect(classes).toContain('border-danger');
     });
 
     it('should store route on click', () => {
-        jest.spyOn(component, 'emitStoreLastSelectedItem');
-        jest.spyOn(component, 'forceReload');
-        const element: HTMLElement = fixture.nativeElement.querySelector('#test-sidebar-card');
+        jest.spyOn(component, 'emitStoreAndRefresh');
+        jest.spyOn(component, 'refreshChildComponent');
+        const element: HTMLElement = fixture.nativeElement.querySelector('#test-sidebar-card-medium');
         element.click();
         fixture.detectChanges();
-        expect(component.emitStoreLastSelectedItem).toHaveBeenCalledWith(component.sidebarItem.id);
-        expect(component.forceReload).toHaveBeenCalled();
+        expect(component.emitStoreAndRefresh).toHaveBeenCalledWith(component.sidebarItem.id);
+        expect(component.refreshChildComponent).toHaveBeenCalled();
     });
 
     it('should navigate to the item URL on click', async () => {
         const mockFn = jest.fn();
-        component.emitStoreLastSelectedItem = mockFn;
+        component.emitStoreAndRefresh = mockFn;
         component.itemSelected = true;
         fixture.detectChanges();
-        const itemElement = fixture.nativeElement.querySelector('#test-sidebar-card');
+        const itemElement = fixture.nativeElement.querySelector('#test-sidebar-card-medium');
         itemElement.click();
         await fixture.whenStable();
         expect(mockFn).toHaveBeenCalledWith('testId');
         expect(router.navigateByUrl).toHaveBeenCalled();
         const navigationArray = router.navigateByUrl.mock.calls[0][0];
-        expect(navigationArray).toBe('../testId');
+        expect(navigationArray).toBe('./testId');
     });
 
     it('should navigate to the when no item was selected before', async () => {
         const mockFn = jest.fn();
-        component.emitStoreLastSelectedItem = mockFn;
+        component.emitStoreAndRefresh = mockFn;
         component.itemSelected = false;
         fixture.detectChanges();
-        const itemElement = fixture.nativeElement.querySelector('#test-sidebar-card');
+        const itemElement = fixture.nativeElement.querySelector('#test-sidebar-card-medium');
         itemElement.click();
         await fixture.whenStable();
         expect(mockFn).toHaveBeenCalledWith('testId');
