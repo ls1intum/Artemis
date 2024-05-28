@@ -132,7 +132,7 @@
         <jhi-programming-exercise-editable-instructions
             editorSidebar
             [(exercise)]="exercise"
-            [(participation)]="selectedRepository != REPOSITORY.TEST ? selectedParticipation! : exercise.templateParticipation!"
+            [(participation)]="selectedParticipation!"
             [templateParticipation]="exercise.templateParticipation!"
             [enableResize]="false"
             class="instructions-wrapper__content card-body p-0"
