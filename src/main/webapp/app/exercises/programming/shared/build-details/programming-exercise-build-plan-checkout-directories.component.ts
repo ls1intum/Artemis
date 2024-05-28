@@ -12,5 +12,5 @@ export class ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent {
     @Input() checkoutDirectories?: BuildPlanCheckoutDirectoriesDTO;
     @Input() auxiliaryRepositories: AuxiliaryRepository[];
 
-    ROOT_DIRECTORY_PATH: string = '/';
+    ROOT_DIRECTORY_PATH = '/';
 }
