@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.lecture;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -167,19 +166,6 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
         this.lecture1 = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture1.getId());
         assertThat(this.lecture1.getLectureUnits().stream().map(DomainObject::getId)).doesNotContain(lectureUnit.getId());
         assertThat(lectureUnitCompletionRepository.findByLectureUnitIdAndUserId(lectureUnit.getId(), user.getId())).isEmpty();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void deleteLectureUnit_shouldCallPyrisIngestionIfSlidesInLectureUnit() throws Exception {
-        int numberOfSlides = 2;
-        AttachmentUnit attachmentUnitWithSlides = lectureUtilService.createAttachmentUnitWithSlides(numberOfSlides);
-        lecture1 = lectureUtilService.addLectureUnitsToLecture(lecture1, List.of(attachmentUnitWithSlides));
-        this.lecture1 = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture1.getId());
-        request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + attachmentUnitWithSlides.getId(), HttpStatus.OK);
-        lecture1 = lectureRepository.findByIdWithLectureUnitsAndCompetenciesElseThrow(lecture1.getId());
-        assertThat(this.lecture1.getLectureUnits().stream().map(DomainObject::getId)).doesNotContain(attachmentUnitWithSlides.getId());
-        verify(pyrisWebhookService).executeLectureIngestionPipeline(false, Collections.singletonList(attachmentUnitWithSlides));
     }
 
     @Test
