@@ -113,7 +113,7 @@ const course2: Course = {
 const course1Dashboard = { course: course1 } as CourseForDashboardDTO;
 const course2Dashboard = { course: course2 } as CourseForDashboardDTO;
 const coursesInDashboard: CourseForDashboardDTO[] = [course1Dashboard, course2Dashboard];
-const courses: Course[] = [course1, course2];
+const courses: Course[] = [course2];
 const coursesDashboard = { courses: coursesInDashboard } as CoursesForDashboardDTO;
 
 @Component({
@@ -660,14 +660,14 @@ describe('CourseOverviewComponent', () => {
         component.ngOnInit();
 
         expect(component.courses).toEqual(courses);
-        expect(component.courses?.length).toBe(2);
+        expect(component.courses?.length).toBe(1);
     });
 
     it('should set dropdownCourses to true when clicking first time', () => {
         component.dropdownCourses = false;
         fixture.detectChanges();
 
-        const clickOnDropdownButton = fixture.nativeElement.querySelector('#courseDropdownButton');
+        const clickOnDropdownButton = fixture.nativeElement.querySelector('#courseIconCustom');
         clickOnDropdownButton.click();
 
         expect(component.dropdownCourses).toBeTrue();
@@ -677,7 +677,7 @@ describe('CourseOverviewComponent', () => {
         component.dropdownCourses = false;
         fixture.detectChanges();
 
-        const clickOnDropdownButton = fixture.nativeElement.querySelector('#courseDropdownButton');
+        const clickOnDropdownButton = fixture.nativeElement.querySelector('#courseIconCustom');
         clickOnDropdownButton.click();
         clickOnDropdownButton.click();
 
