@@ -105,7 +105,7 @@ but for advanced courses this is a downside,
 because without making their own decision about the structure of their source code,
 the students cannot collect experience in this important aspect of programming through your exercises.
 
-To be able to include the structural aspect of programming in your Programming Exercises,
+To be able to include the structural aspect of programming in your programming exercises,
 without losing the ability to test submissions automatically, you can use DejaGnu.
 It allows you to write blackbox tests for command line interfaces of applications.
 The tests are written in Expect Script, an extension to the Tcl scripting language.
