@@ -165,7 +165,6 @@ jhi-secured-image {
         border-radius: 50%;
         height: 36px;
         width: auto;
-        margin-right: 0.75rem;
     }
 }
 
@@ -197,7 +196,11 @@ jhi-secured-image {
     background-color: var(--course-image-bg);
     border-radius: 50%;
     display: inline-block;
-    margin-right: 0.75rem;
+    color: var(--bs-body-color);
+}
+
+.course-title {
+    margin-left: 0.75rem;
 }
 
 .max-width-collapsed {
@@ -287,14 +290,16 @@ jhi-secured-image {
     a {
         text-decoration: none;
         color: var(--bs-body-color);
-        padding: 15px 20px;
+        padding: 1rem;
         display: flex;
         &:hover {
             background-color: var(--sidebar-card-selected-bg);
             color: var(--primary);
         }
-        span {
-            margin-left: -5px; /* Add margin to the right of the icon */
+    }
+    jhi-secured-image {
+        img {
+            margin-right: 0 !important;
         }
     }
 }
