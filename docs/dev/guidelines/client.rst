@@ -35,7 +35,7 @@ Some general aspects:
 2. Components
 =============
 
-In our project, we promote the creation of standalone components instead of using Angular Modules. A standalone component is a self-contained unit that encapsulates its own logic, view, and styles. It doesn't directly depend on its parent or child components and can be reused in different parts of the application.
+In our project, we promote the creation of standalone components instead of using Angular modules. A standalone component is a self-contained unit that encapsulates its own logic, view, and styles. It doesn't directly depend on its parent or child components and can be reused in different parts of the application.
 For existing components that are not standalone, we should aim to migrate them step by step. This migration process should be done gradually and carefully, to avoid introducing bugs. It's recommended to thoroughly test the component after each change to ensure it still works as expected.
 Standalone components can be generated with the Angular CLI using ``ng g c <component-name> --standalone``.
 
