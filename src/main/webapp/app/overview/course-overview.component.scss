@@ -84,6 +84,8 @@ $menu-width-open: 220px;
         .mat-drawer-content {
             width: 100vw;
             margin-left: 0px !important;
+            overflow: auto;
+            //height: 100vh;
         }
     }
 

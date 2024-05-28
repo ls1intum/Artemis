@@ -328,7 +328,7 @@
 </nav>
 <jhi-system-notification />
 <div class="breadcrumb-container">
-    @if (!isExamActive && breadcrumbs && breadcrumbs.length > 0) {
+    @if (!isExamStarted && !isExamActive && breadcrumbs && breadcrumbs.length > 0) {
         <div>
             <ol class="breadcrumb">
                 @for (breadcrumb of breadcrumbs; track breadcrumb; let i = $index) {

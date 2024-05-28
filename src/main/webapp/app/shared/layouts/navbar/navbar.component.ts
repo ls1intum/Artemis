@@ -96,6 +96,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     ltiEnabled: boolean;
     standardizedCompetenciesEnabled = false;
     agentName?: string;
+    isExamStarted = false;
 
     courseTitle?: string;
     exerciseTitle?: string;
@@ -240,6 +241,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.examParticipationService.currentlyLoadedStudentExam.subscribe((studentExam) => {
             this.studentExam = studentExam;
             this.checkExamActive();
+        });
+        this.examParticipationService.examIsStarted$.subscribe((isStarted) => {
+            this.isExamStarted = isStarted;
         });
 
         this.buildBreadcrumbs(this.router.url);
