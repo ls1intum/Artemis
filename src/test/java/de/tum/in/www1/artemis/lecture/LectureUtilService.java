@@ -244,10 +244,10 @@ public class LectureUtilService {
      */
     public AttachmentUnit createAttachmentUnitWithSlides(int numberOfSlides) {
         ZonedDateTime started = ZonedDateTime.now().minusDays(5);
-        Attachment attachmentOfAttachmentUnit = LectureFactory.generateAttachment(started);
         AttachmentUnit attachmentUnit = new AttachmentUnit();
         attachmentUnit.setDescription("Lorem Ipsum");
         attachmentUnit = attachmentUnitRepository.save(attachmentUnit);
+        Attachment attachmentOfAttachmentUnit = LectureFactory.generateAttachmentWithFile(started, attachmentUnit.getId(), true);
         attachmentOfAttachmentUnit.setAttachmentUnit(attachmentUnit);
         attachmentOfAttachmentUnit = attachmentRepository.save(attachmentOfAttachmentUnit);
         attachmentUnit.setAttachment(attachmentOfAttachmentUnit);

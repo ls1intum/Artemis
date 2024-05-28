@@ -1,6 +1,9 @@
 package de.tum.in.www1.artemis.lecture;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -13,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -36,6 +40,7 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
+import de.tum.in.www1.artemis.service.connectors.pyris.PyrisWebhookService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.PageableSearchUtilService;
 
@@ -82,6 +87,9 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private ConversationUtilService conversationUtilService;
+
+    @Mock
+    private PyrisWebhookService pyrisWebhookService;
 
     @BeforeEach
     void initTestCase() throws Exception {
@@ -456,5 +464,14 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Channel channel = channelRepository.findChannelByLectureId(lecture.getId());
         assertThat(channel).isNotNull();
         assertThat(channel.getName()).isEqualTo("lecture-" + lecture.getTitle().toLowerCase().replaceAll("[-\\s]+", "-")); // default name of imported lecture channel
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testImportCallPyrisIngestionWebhook() throws Exception {
+        Course course2 = courseUtilService.addEmptyCourse();
+        courseUtilService.enableMessagingForCourse(course2);
+        request.postWithResponseBody("/api/lectures/import/" + lecture1.getId() + "?courseId=" + course2.getId(), null, Lecture.class, HttpStatus.CREATED);
+        verify(pyrisWebhookService).executeLectureIngestionPipeline(anyBoolean(), anyList());
     }
 }
