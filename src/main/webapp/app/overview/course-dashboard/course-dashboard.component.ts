@@ -28,6 +28,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     exerciseId: number;
     points: number = 0;
     maxPoints: number = 0;
+    progress: number = 0;
     isLoading = false;
     hasExercises = false;
     hasCompetencies = false;
@@ -145,6 +146,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
 
         const maxPoints = relevantExercises.reduce((sum, exercise) => sum + exercise.maxPoints, 0);
         this.maxPoints = round(maxPoints, 1);
+        this.progress = round((points / maxPoints) * 100, 1);
     }
 
     /**
@@ -203,10 +205,6 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
 
     handleToggle(event: CompetencyAccordionToggleEvent) {
         this.openedAccordionIndex = event.opened ? event.index : undefined;
-    }
-
-    get learningPathsEnabled() {
-        return this.course?.learningPathsEnabled || false;
     }
 
     navigateToLearningPaths() {
