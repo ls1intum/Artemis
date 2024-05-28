@@ -123,7 +123,6 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
         athenaRequestMockProvider.mockSendFeedbackAndExpect("text", jsonPath("$.exercise.id").value(textExercise.getId()),
                 jsonPath("$.submission.id").value(textSubmission.getId()), jsonPath("$.submission.exerciseId").value(textExercise.getId()),
                 jsonPath("$.feedbacks[0].id").value(textFeedback.getId()), jsonPath("$.feedbacks[0].exerciseId").value(textExercise.getId()),
-                jsonPath("$.feedbacks[0].title").value(textFeedback.getText()), jsonPath("$.feedbacks[0].description").value(textFeedback.getDetailText()),
                 jsonPath("$.feedbacks[0].credits").value(textFeedback.getCredits()), jsonPath("$.feedbacks[0].credits").value(textFeedback.getCredits()),
                 jsonPath("$.feedbacks[0].indexStart").value(textBlock.getStartIndex()), jsonPath("$.feedbacks[0].indexEnd").value(textBlock.getEndIndex()));
 
@@ -164,8 +163,7 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
                 jsonPath("$.exercise.gradingCriteria[0].structuredGradingInstructions[0].feedback").value("Well done!"),
                 jsonPath("$.exercise.gradingCriteria[0].structuredGradingInstructions[0].usageCount").value(1), jsonPath("$.submission.id").value(textSubmission.getId()),
                 jsonPath("$.submission.exerciseId").value(textExercise.getId()), jsonPath("$.feedbacks[0].id").value(textFeedback.getId()),
-                jsonPath("$.feedbacks[0].exerciseId").value(textExercise.getId()), jsonPath("$.feedbacks[0].title").value(textFeedback.getText()),
-                jsonPath("$.feedbacks[0].description").value(textFeedback.getDetailText()), jsonPath("$.feedbacks[0].credits").value(textFeedback.getCredits()),
+                jsonPath("$.feedbacks[0].exerciseId").value(textExercise.getId()), jsonPath("$.feedbacks[0].credits").value(textFeedback.getCredits()),
                 jsonPath("$.feedbacks[0].credits").value(textFeedback.getCredits()), jsonPath("$.feedbacks[0].indexStart").value(textBlock.getStartIndex()),
                 jsonPath("$.feedbacks[0].indexEnd").value(textBlock.getEndIndex()), jsonPath("$.feedbacks[0].structuredGradingInstructionId").value(101));
 
@@ -178,7 +176,6 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
         athenaRequestMockProvider.mockSendFeedbackAndExpect("programming", jsonPath("$.exercise.id").value(programmingExercise.getId()),
                 jsonPath("$.submission.id").value(programmingSubmission.getId()), jsonPath("$.submission.exerciseId").value(programmingExercise.getId()),
                 jsonPath("$.feedbacks[0].id").value(programmingFeedback.getId()), jsonPath("$.feedbacks[0].exerciseId").value(programmingExercise.getId()),
-                jsonPath("$.feedbacks[0].title").value(programmingFeedback.getText()), jsonPath("$.feedbacks[0].description").value(programmingFeedback.getDetailText()),
                 jsonPath("$.feedbacks[0].credits").value(programmingFeedback.getCredits()), jsonPath("$.feedbacks[0].credits").value(programmingFeedback.getCredits()),
                 jsonPath("$.feedbacks[0].lineStart").value(12), jsonPath("$.feedbacks[0].lineEnd").value(12));
 
