@@ -85,6 +85,15 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
         if (this.repositoryLink.includes('exams')) {
             this.repositoryLink += `/exercises/${this.exercise.id}`;
         }
+        if (this.repositoryLink.includes('dashboard')) {
+            const parts = this.repositoryLink.split('/');
+            this.repositoryLink = [...parts.slice(0, parts.indexOf('dashboard')), 'exercises', this.exercise.id].join('/');
+        }
+        if (this.repositoryLink.includes('lectures')) {
+            const parts = this.repositoryLink.split('/');
+            this.repositoryLink = [...parts.slice(0, parts.indexOf('lectures')), 'exercises', this.exercise.id].join('/');
+        }
+
         if (this.exercise.type === ExerciseType.QUIZ) {
             const quizExercise = this.exercise as QuizExercise;
             this.uninitializedQuiz = ArtemisQuizService.isUninitialized(quizExercise);
@@ -104,6 +113,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
         }
 
         this.beforeDueDate = !this.exercise.dueDate || dayjs().isBefore(this.exercise.dueDate);
+        console.log(this.repositoryLink);
     }
 
     /**
