@@ -12,6 +12,11 @@
     transition: 0.2s;
 }
 
+.competency-accordion-header,
+.competency-accordion-body {
+    margin: 0;
+}
+
 .competency-accordion-header.closed {
     border-radius: 3px;
 }
@@ -55,11 +60,6 @@
     to {
         opacity: 1;
     }
-}
-
-.competency-accordion-header,
-.competency-accordion-body {
-    margin: 0;
 }
 
 .competency-accordion-header .row > div,
