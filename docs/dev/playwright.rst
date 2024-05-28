@@ -10,12 +10,12 @@ Playwright tests rely on the Playwright Node.js library, Playwright browser bina
 
 1. Install dependencies:
 
-    First navigate to the Playwright folder using ``cd src/test/playwright``. Then run ``npm install``.
+    First, navigate to the Playwright folder using ``cd src/test/playwright``. Then, run ``npm install``.
 
 2. Customize Playwright configuration:
 
     We need to configure Playwright to match our local Artemis setup and user settings. All configurations are stored in
-    the ``playwright.env`` file. Default configuration for ICL setup looks as follows:
+    the ``playwright.env`` file. The default configuration for an ICL setup looks as follows:
 
     .. code-block:: text
 
@@ -41,8 +41,8 @@ Playwright tests rely on the Playwright Node.js library, Playwright browser bina
      user IDs and check their corresponding user roles in the ``src/test/playwright/support/users.ts`` file. Usernames are
      defined automatically by replacing the ``USERID`` part in ` ``PLAYWRIGHT_USERNAME_TEMPLATE`` with corresponding
      user ID. If users with such usernames do not exist, set ``CREATE_USERS`` to ``true`` on the ``playwright.env``
-     file for users to be created on setup stage. If users with the same name(s) but different user role(s) exist,
-     change user IDs to different values ensuring new users are created with roles as defined in configuration.
+     file for users to be created during the setup stage. If users with the same usernames but different user roles already exist,
+     change the user IDs to different values to ensure that new users are created with roles as defined in the configuration.
 
 4. Setup Playwright package and its browser binaries:
 
