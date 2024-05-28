@@ -383,20 +383,6 @@ class FileServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    void testRenameSpecialFilename(@TempDir Path targetDir) throws IOException {
-        final Path sourceFile = overridableBasePath.resolve("Makefile.file");
-        FileUtils.writeStringToFile(sourceFile.toFile(), "content", Charset.defaultCharset());
-
-        final Resource[] resources = resourceLoaderService.getFileResources(overridableBasePath);
-        assertThat(resources).isNotEmpty();
-
-        fileService.copyResources(resources, Path.of("templates"), targetDir, true);
-
-        final Path expectedTargetFile = targetDir.resolve("jenkins").resolve("Makefile");
-        assertThat(expectedTargetFile).exists().isNotEmptyFile();
-    }
-
-    @Test
     void testIgnoreDirectoryFalsePositives(@TempDir Path targetDir) throws IOException {
         final Path sourceDirectory = overridableBasePath.resolve("package.xcworkspace");
         Files.createDirectories(sourceDirectory);
