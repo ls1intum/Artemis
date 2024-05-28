@@ -170,11 +170,22 @@ public class ProgrammingExerciseParticipationService {
 
         Optional<ProgrammingExerciseStudentParticipation> participationOptional;
 
-        if (withSubmissions) {
-            participationOptional = studentParticipationRepository.findWithSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), username, isTestRun);
+        if (exercise.isExamExercise() && exercise.getExerciseGroup().getExam().isTestExam()) {
+            if (withSubmissions) {
+                participationOptional = studentParticipationRepository.findLatestWithSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), username, isTestRun);
+            }
+            else {
+                // TODO Michal Kawka without submissions
+                participationOptional = studentParticipationRepository.findLatestWithSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), username, isTestRun);
+            }
         }
         else {
-            participationOptional = studentParticipationRepository.findByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), username, isTestRun);
+            if (withSubmissions) {
+                participationOptional = studentParticipationRepository.findWithSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), username, isTestRun);
+            }
+            else {
+                participationOptional = studentParticipationRepository.findByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), username, isTestRun);
+            }
         }
 
         if (participationOptional.isEmpty()) {
