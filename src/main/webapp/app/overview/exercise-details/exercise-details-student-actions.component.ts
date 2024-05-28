@@ -113,7 +113,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
         }
 
         this.beforeDueDate = !this.exercise.dueDate || dayjs().isBefore(this.exercise.dueDate);
-        console.log(this.repositoryLink);
     }
 
     /**
