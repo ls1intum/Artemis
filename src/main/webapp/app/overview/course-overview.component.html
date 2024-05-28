@@ -138,7 +138,7 @@
                             }
                             @if (showRefreshButton) {
                                 <button class="btn btn-primary btn-md ms-3" (click)="loadCourse(true)" [disabled]="refreshingCourse">
-                                    <fa-icon [icon]="faSync" [spin]="refreshingCourse" />
+                                    <fa-icon [icon]="faSync" [animation]="refreshingCourse ? 'spin' : undefined" />
                                     <span class="d-none d-sm-inline" jhiTranslate="artemisApp.exercise.refresh">Refresh</span>
                                 </button>
                             }
