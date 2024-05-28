@@ -2,7 +2,7 @@ import dayjs from 'dayjs/esm';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { IrisAssistantMessage, IrisSender, IrisUserMessage } from 'app/entities/iris/iris-message.model';
-import { IrisTextMessageContent } from 'app/entities/iris/iris-content-type.model';
+import { IrisMessageContentType, IrisTextMessageContent } from 'app/entities/iris/iris-content-type.model';
 import { IrisSession } from 'app/entities/iris/iris-session.model';
 import { IrisChatWebsocketDTO, IrisChatWebsocketPayloadType } from 'app/entities/iris/iris-chat-websocket-dto.model';
 import { IrisStageStateDTO } from 'app/entities/iris/iris-stage-dto.model';
@@ -11,6 +11,7 @@ const map = new Map<string, any>();
 map.set('model', 'gpt-4');
 
 export const mockMessageContent = {
+    type: IrisMessageContentType.TEXT,
     textContent: 'Hello, world!',
 } as IrisTextMessageContent;
 
