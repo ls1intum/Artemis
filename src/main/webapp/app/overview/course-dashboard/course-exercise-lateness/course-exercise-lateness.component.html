@@ -8,11 +8,11 @@
             <!-- Legend-->
             <div class="d-flex gap-3">
                 <div class="d-flex align-items-center gap-1">
-                    <span class="tooltip-label-color" [style.background-color]="YOUR_GRAPH_COLOR"></span>
+                    <span class="tooltip-label" [style.background-color]="YOUR_GRAPH_COLOR"></span>
                     <span jhiTranslate="artemisApp.courseStudentDashboard.exerciseLateness.yourLatenessLabel"></span>
                 </div>
                 <div class="d-flex align-items-center gap-1">
-                    <span class="tooltip-label-color" [style.background-color]="AVERAGE_GRAPH_COLOR"></span>
+                    <span class="tooltip-label" [style.background-color]="AVERAGE_GRAPH_COLOR"></span>
                     <span jhiTranslate="artemisApp.courseStudentDashboard.exerciseLateness.averageLatenessLabel"></span>
                 </div>
             </div>
@@ -47,7 +47,7 @@
                             <b class="mb-1">{{ model[0].extra.title }}</b>
                             @for (entry of model; track entry) {
                                 <div class="d-flex align-items-center gap-1">
-                                    <span class="tooltip-label-color" [style.background-color]="entry.color"></span>
+                                    <span class="tooltip-label" [style.background-color]="entry.color"></span>
                                     {{ entry.series }}: {{ round(entry.value, 1) }}%
                                 </div>
                             }
