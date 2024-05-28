@@ -20,17 +20,23 @@ export interface CompetencyAccordionToggleEvent {
     styleUrl: './competency-accordion.component.scss',
 })
 export class CompetencyAccordionComponent implements OnChanges {
-    @Input() course?: Course;
+    @Input() course: Course | undefined;
     @Input() competency: CompetencyInformation;
     @Input() metrics: StudentMetrics;
     @Input() index: number;
-    @Input() openedIndex?: number;
+    @Input() openedIndex: number | undefined;
 
     @Output() accordionToggle = new EventEmitter<CompetencyAccordionToggleEvent>();
 
     open = false;
     nextExercises: Exercise[] = [];
     nextLectureUnits: LectureUnitInformation[] = [];
+    exercisesProgress?: number;
+    lectureUnitsProgress?: number;
+    confidence: number = 0;
+    mastery: number = 0;
+    progress: number = 0;
+    jolRating?: number;
 
     protected readonly faList = faList;
     protected readonly faPdf = faFilePdf;
@@ -51,6 +57,7 @@ export class CompetencyAccordionComponent implements OnChanges {
         if (changes.metrics) {
             this.setNextExercises();
             this.setNextLessonUnits();
+            this.calculateProgressValues();
         }
     }
 
@@ -91,52 +98,23 @@ export class CompetencyAccordionComponent implements OnChanges {
             .sort((a, b) => dayjs(a.releaseDate).diff(dayjs(b.releaseDate)));
     }
 
-    toggle() {
-        this.open = !this.open;
-        this.accordionToggle.emit({ opened: this.open, index: this.index });
-    }
-
-    get jolRating() {
-        return this.metrics.competencyMetrics?.jolValues?.[this.competency.id];
-    }
-
-    onRatingChange(newRating: number) {
-        if (this.metrics.competencyMetrics) {
-            this.metrics.competencyMetrics.jolValues = {
-                ...this.metrics.competencyMetrics.jolValues,
-                [this.competency.id]: newRating,
-            };
+    calculateProgressValues() {
+        this.jolRating = this.metrics.competencyMetrics?.jolValues?.[this.competency.id];
+        this.exercisesProgress = this.calculateExercisesProgress();
+        this.lectureUnitsProgress = this.calculateLectureUnitsProgress();
+        const userProgress = this.getUserProgress();
+        if (this.jolRating !== undefined) {
+            this.progress = this.getProgress(userProgress);
+            this.confidence = this.getConfidence(userProgress, this.competency.masteryThreshold!);
+            this.mastery = this.getMastery(userProgress, this.competency.masteryThreshold!);
+        } else {
+            this.progress = 0;
+            this.confidence = 0;
+            this.mastery = 0;
         }
     }
 
-    getUserProgress(): CompetencyProgress {
-        const progress = this.metrics.competencyMetrics?.progress?.[this.competency.id] ?? 0;
-        const confidence = this.metrics.competencyMetrics?.confidence?.[this.competency.id] ?? 0;
-        return { progress, confidence };
-    }
-
-    get progress() {
-        if (this.jolRating === undefined) {
-            return 0;
-        }
-        return this.getProgress(this.getUserProgress());
-    }
-
-    get lectureUnitsProgress() {
-        if (!this.metrics.lectureUnitStudentMetricsDTO) {
-            return undefined;
-        }
-
-        const competencyLectureUnits = this.metrics.competencyMetrics?.lectureUnits?.[this.competency.id];
-        const completedLectureUnits = competencyLectureUnits?.filter((lectureUnitId) => this.metrics.lectureUnitStudentMetricsDTO?.completed?.includes(lectureUnitId)).length ?? 0;
-        if (!competencyLectureUnits) {
-            return undefined;
-        }
-        const progress = (completedLectureUnits / competencyLectureUnits.length) * 100;
-        return round(progress, 1);
-    }
-
-    get exercisesProgress() {
+    calculateExercisesProgress(): number | undefined {
         if (!this.metrics.exerciseMetrics) {
             return undefined;
         }
@@ -150,18 +128,38 @@ export class CompetencyAccordionComponent implements OnChanges {
         return round(progress, 1);
     }
 
-    get confidence() {
-        if (this.jolRating === undefined) {
-            return 0;
+    calculateLectureUnitsProgress(): number | undefined {
+        if (!this.metrics.lectureUnitStudentMetricsDTO) {
+            return undefined;
         }
-        return this.getConfidence(this.getUserProgress(), this.competency.masteryThreshold!);
+
+        const competencyLectureUnits = this.metrics.competencyMetrics?.lectureUnits?.[this.competency.id];
+        const completedLectureUnits = competencyLectureUnits?.filter((lectureUnitId) => this.metrics.lectureUnitStudentMetricsDTO?.completed?.includes(lectureUnitId)).length ?? 0;
+        if (!competencyLectureUnits) {
+            return undefined;
+        }
+        const progress = (completedLectureUnits / competencyLectureUnits.length) * 100;
+        return round(progress, 1);
     }
 
-    get mastery() {
-        if (this.jolRating === undefined) {
-            return 0;
+    getUserProgress(): CompetencyProgress {
+        const progress = this.metrics.competencyMetrics?.progress?.[this.competency.id] ?? 0;
+        const confidence = this.metrics.competencyMetrics?.confidence?.[this.competency.id] ?? 0;
+        return { progress, confidence };
+    }
+
+    toggle() {
+        this.open = !this.open;
+        this.accordionToggle.emit({ opened: this.open, index: this.index });
+    }
+
+    onRatingChange(newRating: number) {
+        if (this.metrics.competencyMetrics) {
+            this.metrics.competencyMetrics.jolValues = {
+                ...this.metrics.competencyMetrics.jolValues,
+                [this.competency.id]: newRating,
+            };
         }
-        return this.getMastery(this.getUserProgress(), this.competency.masteryThreshold!);
     }
 
     navigateToCompetencyDetailPage(event: Event) {
