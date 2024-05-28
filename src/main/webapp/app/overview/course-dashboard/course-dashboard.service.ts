@@ -57,6 +57,8 @@ export class CourseDashboardService {
                     categories: exerciseCategories,
                     difficulty: exercise.difficulty,
                     studentAssignedTeamId: teamId ? teamId?.[key] : undefined,
+                    allowOnlineEditor: exercise.allowOnlineEditor,
+                    allowOfflineIde: exercise.allowOfflineIde,
                 };
                 return acc;
             },

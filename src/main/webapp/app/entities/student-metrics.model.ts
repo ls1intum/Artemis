@@ -40,6 +40,8 @@ export class ExerciseInformation {
     public categories?: ExerciseCategory[];
     public difficulty?: DifficultyLevel;
     public studentAssignedTeamId?: number;
+    public allowOnlineEditor?: boolean;
+    public allowOfflineIde?: boolean;
 }
 
 export class LectureUnitStudentMetricsDTO {
