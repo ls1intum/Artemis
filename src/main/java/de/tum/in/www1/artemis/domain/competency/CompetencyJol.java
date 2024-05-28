@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.domain.competency;
 
+import java.time.ZonedDateTime;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
@@ -23,15 +25,18 @@ import de.tum.in.www1.artemis.domain.User;
 public class CompetencyJol extends DomainObject {
 
     @ManyToOne
-    @JoinColumn(name = "competency_id")
+    @JoinColumn(name = "competency_id", nullable = false)
     private Competency competency;
 
     @ManyToOne
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     @Column(name = "jol_value")
-    private Integer value;
+    private short value = 0;
+
+    @Column(name = "judgement_time", nullable = false)
+    private ZonedDateTime judgementTime;
 
     public Competency getCompetency() {
         return this.competency;
@@ -49,11 +54,19 @@ public class CompetencyJol extends DomainObject {
         this.user = user;
     }
 
-    public Integer getValue() {
+    public short getValue() {
         return this.value;
     }
 
-    public void setValue(Integer value) {
+    public void setValue(short value) {
         this.value = value;
+    }
+
+    public ZonedDateTime getJudgementTime() {
+        return this.judgementTime;
+    }
+
+    public void setJudgementTime(ZonedDateTime judgementTime) {
+        this.judgementTime = judgementTime;
     }
 }

@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.competency;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static java.util.stream.Collectors.toMap;
 
+import java.time.ZonedDateTime;
 import java.util.Map;
 
 import org.springframework.context.annotation.Profile;
@@ -55,49 +56,41 @@ public class CompetencyJolService {
      * @param userId       the id of the user
      * @param jolValue     the judgement of learning value
      */
-    public void setJudgementOfLearning(long competencyId, long userId, int jolValue) {
+    public void setJudgementOfLearning(long competencyId, long userId, short jolValue) {
         if (!isJolValueValid(jolValue)) {
             throw new BadRequestAlertException("Invalid judgement of learning value", ENTITY_NAME, "invalidJolValue");
         }
 
-        final var competencyJol = competencyJolRepository.findByCompetencyIdAndUserId(competencyId, userId);
-
-        // If the competencyJOL already exists, update the value
-        if (competencyJol.isPresent()) {
-            competencyJol.get().setValue(jolValue);
-            competencyJolRepository.save(competencyJol.get());
-            return;
-        }
-
-        // If the competencyJOL does not exist, create a new one
-        final var jol = createCompetencyJol(competencyId, userId, jolValue);
+        final var jol = createCompetencyJol(competencyId, userId, jolValue, ZonedDateTime.now());
         competencyJolRepository.save(jol);
     }
 
     /**
      * Create a new CompetencyJOL.
      *
-     * @param competencyId the id of the competency
-     * @param userId       the id of the user
-     * @param jolValue     the judgement of learning value
+     * @param competencyId  the id of the competency
+     * @param userId        the id of the user
+     * @param jolValue      the judgement of learning value
+     * @param judgementTime the time of the judgement
      * @return the created CompetencyJol (not persisted)
      */
-    public CompetencyJol createCompetencyJol(long competencyId, long userId, int jolValue) {
+    public CompetencyJol createCompetencyJol(long competencyId, long userId, short jolValue, ZonedDateTime judgementTime) {
         final var jol = new CompetencyJol();
         jol.setCompetency(competencyRepository.findById(competencyId).orElseThrow());
         jol.setUser(userRepository.findById(userId).orElseThrow());
         jol.setValue(jolValue);
+        jol.setJudgementTime(judgementTime);
         return jol;
     }
 
     /**
-     * Get a users judgement of learning value for all competencies of a course.
+     * Get a users latest judgement of learning value for all competencies of a course.
      *
      * @param userId   the id of the user
      * @param courseId the id of the course
      * @return a map from competency id to judgement of learning value
      */
-    public Map<Long, Integer> getJudgementOfLearningForUserByCourseId(long userId, long courseId) {
-        return competencyJolRepository.findJolValuesForUserByCourseId(userId, courseId).stream().collect(toMap(JolValueEntry::competencyId, JolValueEntry::value));
+    public Map<Long, Short> getLatestJudgementOfLearningForUserByCourseId(long userId, long courseId) {
+        return competencyJolRepository.findLatestJolValuesForUserByCourseId(userId, courseId).stream().collect(toMap(JolValueEntry::competencyId, JolValueEntry::value));
     }
 }

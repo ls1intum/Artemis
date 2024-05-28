@@ -7,9 +7,16 @@
             <column autoIncrement="true" name="id" type="bigint">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="competency_jolPK"/>
             </column>
-            <column name="competency_id" type="bigint"/>
-            <column name="user_id" type="bigint"/>
-            <column name="jol_value" type="int"/>
+            <column name="competency_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="user_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="jol_value" type="tinyint" defaultValue="0" />
+            <column name="judgement_time" type="datetime(3)">
+                <constraints nullable="false"/>
+            </column>
         </createTable>
         <addForeignKeyConstraint baseColumnNames="competency_id"
                                  baseTableName="competency_jol"
@@ -21,6 +28,5 @@
                                     constraintName="FK_competency_jol_user"
                                     referencedColumnNames="id"
                                     referencedTableName="jhi_user"/>
-        <addUniqueConstraint tableName="competency_jol" columnNames="competency_id, user_id"/>
     </changeSet>
 </databaseChangeLog>

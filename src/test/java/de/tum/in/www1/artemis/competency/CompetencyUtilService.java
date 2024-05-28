@@ -183,11 +183,12 @@ public class CompetencyUtilService {
      * @param value      The value of the CompetencyJOL
      * @return The persisted CompetencyJOL
      */
-    public CompetencyJol createJOL(Competency competency, User user, int value) {
+    public CompetencyJol createJOL(Competency competency, User user, short value, ZonedDateTime judgementTime) {
         CompetencyJol jol = new CompetencyJol();
         jol.setCompetency(competency);
         jol.setUser(user);
         jol.setValue(value);
+        jol.setJudgementTime(judgementTime);
         return competencyJOLRepository.save(jol);
     }
 }
