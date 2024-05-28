@@ -12,7 +12,8 @@
                         context: {
                             helpIconText: 'artemisApp.programmingExercise.preview.templateRepoTooltip',
                             trailingRepoSlug: '-exercise',
-                            customBootstrapClasses: 'bg-primary text-lowercase'
+                            isBuildPlan: false,
+                            isAuxRepo: false
                         }
                     "
                 />
@@ -22,7 +23,8 @@
                         context: {
                             helpIconText: 'artemisApp.programmingExercise.preview.solutionRepoTooltip',
                             trailingRepoSlug: '-solution',
-                            customBootstrapClasses: 'bg-primary text-lowercase'
+                            isBuildPlan: false,
+                            isAuxRepo: false
                         }
                     "
                 />
@@ -32,7 +34,8 @@
                         context: {
                             helpIconText: 'artemisApp.programmingExercise.preview.testRepoTooltip',
                             trailingRepoSlug: '-tests',
-                            customBootstrapClasses: 'bg-primary text-lowercase'
+                            isBuildPlan: false,
+                            isAuxRepo: false
                         }
                     "
                 />
@@ -44,9 +47,9 @@
                                 *ngTemplateOutlet="
                                     repositoryBadge;
                                     context: {
-                                        helpIconText: 'artemisApp.programmingExercise.preview.testRepoTooltip',
                                         trailingRepoSlug: '-' + auxiliaryRepository.name,
-                                        customBootstrapClasses: 'bg-success text-lowercase'
+                                        isBuildPlan: false,
+                                        isAuxRepo: true
                                     }
                                 "
                             />
@@ -69,7 +72,8 @@
                         context: {
                             helpIconText: 'artemisApp.programmingExercise.preview.templateBuildPlanTooltip',
                             trailingRepoSlug: '-BASE',
-                            customBootstrapClasses: 'bg-primary text-uppercase'
+                            isBuildPlan: true,
+                            isAuxRepo: false
                         }
                     "
                 />
@@ -79,7 +83,8 @@
                         context: {
                             helpIconText: 'artemisApp.programmingExercise.preview.solutionBuildPlanTooltip',
                             trailingRepoSlug: '-SOLUTION',
-                            customBootstrapClasses: 'bg-primary text-uppercase'
+                            isBuildPlan: true,
+                            isAuxRepo: false
                         }
                     "
                 />
@@ -109,9 +114,13 @@
     }
 </div>
 
-<ng-template #repositoryBadge let-helpIconText="helpIconText" let-trailingRepoSlug="trailingRepoSlug" let-customBootstrapClasses="customBootstrapClasses">
+<ng-template #repositoryBadge let-helpIconText="helpIconText" let-trailingRepoSlug="trailingRepoSlug" let-isBuildPlan="isBuildPlan" let-isAuxRepo="isAuxRepo">
     <li>
-        <code [class]="'text-white badge label-preview ' + customBootstrapClasses"> {{ courseShortName }}{{ programmingExercise?.shortName }}{{ trailingRepoSlug }} </code>
-        <jhi-help-icon [text]="helpIconText" />
+        <code [class]="'text-white badge label-preview ' + (isBuildPlan ? ' text-uppercase' : 'text-lowercase') + (isAuxRepo ? ' bg-success' : ' bg-primary')">
+            {{ courseShortName }}{{ programmingExercise?.shortName }}{{ trailingRepoSlug }}
+        </code>
+        @if (helpIconText) {
+            <jhi-help-icon [text]="helpIconText" />
+        }
     </li>
 </ng-template>
