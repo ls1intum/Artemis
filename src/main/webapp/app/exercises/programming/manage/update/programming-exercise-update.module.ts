@@ -30,7 +30,8 @@ import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-edito
 import { ProgrammingExerciseCustomBuildPlanComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-custom-build-plan.component';
 import { ProgrammingExerciseDockerImageComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-docker-image/programming-exercise-docker-image.component';
 import { FormsModule } from 'app/forms/forms.module';
-import { ArtemisProgrammingExerciseBuildDetailsModule } from 'app/exercises/programming/shared/build-details/build-details.module';
+import { ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-build-plan-checkout-directories.component';
+import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-repository-and-build-plan-details.component';
 
 @NgModule({
     imports: [
@@ -54,7 +55,8 @@ import { ArtemisProgrammingExerciseBuildDetailsModule } from 'app/exercises/prog
         ExerciseUpdatePlagiarismModule,
         AceEditorModule,
         FormsModule,
-        ArtemisProgrammingExerciseBuildDetailsModule,
+        ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent,
+        ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent,
     ],
     declarations: [
         ProgrammingExerciseUpdateComponent,

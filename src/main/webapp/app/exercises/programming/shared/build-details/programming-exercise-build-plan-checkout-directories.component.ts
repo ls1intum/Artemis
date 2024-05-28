@@ -6,6 +6,7 @@ import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary
     selector: 'jhi-programming-exercise-build-plan-checkout-directories',
     templateUrl: './programming-exercise-build-plan-checkout-directories.component.html',
     styleUrls: ['../../manage/programming-exercise-form.scss'],
+    standalone: true,
 })
 export class ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent {
     @Input() checkoutDirectories?: BuildPlanCheckoutDirectoriesDTO;

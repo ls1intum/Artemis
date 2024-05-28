@@ -4,11 +4,16 @@ import type { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/prog
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { Subscription } from 'rxjs';
 import type { CheckoutDirectoriesDto } from 'app/entities/checkout-directories-dto';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-build-plan-checkout-directories.component';
 
 @Component({
     selector: 'jhi-programming-exercise-repository-and-build-plan-details',
     templateUrl: './programming-exercise-repository-and-build-plan-details.component.html',
     styleUrls: ['../../manage/programming-exercise-form.scss'],
+    standalone: true,
+    imports: [ArtemisSharedComponentModule, ArtemisSharedCommonModule, ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent],
 })
 export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implements OnInit, OnChanges, OnDestroy {
     @Input() programmingExercise: ProgrammingExercise;
