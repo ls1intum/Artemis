@@ -550,7 +550,7 @@
                     "tooltip": "In der getrennten Ansicht werden beide Versionen jeder geänderten Datei nebeneinander angezeigt. Beachte, dass die getrennte Ansicht nur dann angezeigt wird, wenn dein Browserfenster breit genug ist."
                 },
                 "tooltipBetweenSubmissions": "Zeigt den detaillierten Git-Diff zwischen der aktuellen und der vorherigen Abgabe.",
-                "title": "Template-Lösungs-Diff",
+                "title": "Vergleich von Template und Lösung",
                 "titleForSubmissions": "Abgaben-Diff",
                 "emptyRepository": "Leeres Repository",
                 "template": "Vorlage",
@@ -566,7 +566,6 @@
                 },
                 "errorWhileFetchingRepos": "Fehler beim Abrufen der Repositories. Bitte überprüfe deine Internetverbindung und öffne das Popup erneut.",
                 "404": "Template-Lösungs-Diff wurde noch nicht generiert. Bitte pusche etwas in die Template- oder Lösungs-Repositories, um ihn zu erstellen.",
-                "templateSolutionComparison": "Vergleich von Template und Lösung",
                 "lineStatBetweenSubmissionsCurrentSubmissionLabel": "Zeilen, die zwischen der aktuellen Abgabe mit Commit-Hash <span class=\"font-italic text-info\"> {{ currentCommitHash }} </span>",
                 "lineStatBetweenSubmissionsPreviousSubmissionLabel": "und der vorherigen Abgabe mit Commit-Hash <span class=\"font-italic text-info\"> {{ previousCommitHash }} </span> hinzugefügt/entfernt wurden",
                 "lineStatBetweenSubmissionsTemplateLabel": "und der Vorlage hinzugefügt/entfernt wurden",
