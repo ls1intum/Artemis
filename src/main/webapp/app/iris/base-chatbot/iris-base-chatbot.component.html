@@ -147,28 +147,12 @@
                 (input)="onInput()"
                 (paste)="onPaste()"
                 type="text"
-                [disabled]="
-                    this.isLoading ||
-                    !this.active ||
-                    (this.rateLimitInfo?.rateLimit && this.rateLimitInfo?.currentMessageCount === this.rateLimitInfo?.rateLimit) ||
-                    this.hasActiveStage
-                "
+                [disabled]="checkIfDisabled()"
                 (keydown)="handleKey($event)"
                 placeholder="{{ 'artemisApp.exerciseChatbot.inputMessage' | artemisTranslate }}"
                 #messageTextarea
             ></textarea>
-            <jhi-button
-                id="irisSendButton"
-                (onClick)="onSend()"
-                [btnType]="ButtonType.SUCCESS_OUTLINE"
-                [icon]="faPaperPlane"
-                [disabled]="
-                    this.isLoading ||
-                    !this.active ||
-                    (this.rateLimitInfo?.rateLimit && this.rateLimitInfo?.currentMessageCount === this.rateLimitInfo?.rateLimit) ||
-                    this.hasActiveStage
-                "
-            />
+            <jhi-button id="irisSendButton" (onClick)="onSend()" [btnType]="ButtonType.SUCCESS_OUTLINE" [icon]="faPaperPlane" [disabled]="checkIfDisabled()" />
             <span class="disclaimer-message">{{ 'artemisApp.exerciseChatbot.disclaimer' | artemisTranslate }}</span>
         </div>
     }

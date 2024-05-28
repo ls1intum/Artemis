@@ -362,6 +362,15 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
         this.isScrolledToBottom = scrollTop < 50;
     }
 
+    /**
+     * Checks if sending a message is allowed.
+     */
+    checkIfDisabled() {
+        return (
+            this.isLoading || !this.active || (this.rateLimitInfo?.rateLimit && this.rateLimitInfo?.currentMessageCount === this.rateLimitInfo?.rateLimit) || this.hasActiveStage
+        );
+    }
+
     protected readonly IrisLogoSize = IrisLogoSize;
     protected readonly IrisMessageContentType = IrisMessageContentType;
     protected readonly IrisAssistantMessage = IrisAssistantMessage;
