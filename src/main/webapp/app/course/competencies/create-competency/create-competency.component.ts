@@ -18,7 +18,7 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
 })
 export class CreateCompetencyComponent implements OnInit {
     readonly documentationType: DocumentationType = 'Competencies';
-    competencyToCreate: Competency = new Competency();
+    competencyToCreate: Competency = {};
     isLoading: boolean;
     courseId: number;
     lecturesWithLectureUnits: Lecture[] = [];
@@ -32,7 +32,7 @@ export class CreateCompetencyComponent implements OnInit {
     ) {}
 
     ngOnInit(): void {
-        this.competencyToCreate = new Competency();
+        this.competencyToCreate = {};
         this.isLoading = true;
         this.activatedRoute
             .parent!.parent!.paramMap.pipe(

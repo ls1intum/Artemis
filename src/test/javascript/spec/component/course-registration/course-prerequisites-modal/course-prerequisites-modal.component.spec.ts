@@ -50,7 +50,7 @@ describe('CoursePrerequisitesModal', () => {
 
     it('should load prerequisites and display a card for each of them', () => {
         const prerequisitesOfCourseResponse: HttpResponse<Competency[]> = new HttpResponse({
-            body: [new Competency(), new Competency()],
+            body: [{}, {}],
             status: 200,
         });
 

@@ -79,7 +79,7 @@ describe('CreateCompetency', () => {
         };
 
         const response: HttpResponse<Competency> = new HttpResponse({
-            body: new Competency(),
+            body: {},
             status: 201,
         });
 
@@ -92,7 +92,7 @@ describe('CreateCompetency', () => {
         competencyForm.formSubmitted.emit(formData);
 
         return createCompetencyComponentFixture.whenStable().then(() => {
-            const competency = new Competency();
+            const competency: Competency = {};
             competency.title = formData.title;
             competency.description = formData.description;
             competency.optional = formData.optional;

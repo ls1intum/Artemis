@@ -37,24 +37,29 @@ export enum CompetencyValidators {
     DESCRIPTION_MAX = 10000,
 }
 
-export const DEFAULT_MASTERY_THRESHOLD = 50;
+export const DEFAULT_MASTERY_THRESHOLD = 100;
 
-export class Competency implements BaseEntity {
-    public id?: number;
-    public title?: string;
-    public description?: string;
-    public softDueDate?: dayjs.Dayjs;
-    public taxonomy?: CompetencyTaxonomy;
-    public masteryThreshold?: number;
-    public optional?: boolean;
-    public course?: Course;
-    public exercises?: Exercise[];
-    public lectureUnits?: LectureUnit[];
-    public userProgress?: CompetencyProgress[];
-    public courseProgress?: CourseCompetencyProgress;
-    public linkedStandardizedCompetency?: StandardizedCompetency;
+export interface BaseCompetency extends BaseEntity {
+    title?: string;
+    description?: string;
+    taxonomy?: CompetencyTaxonomy;
+}
 
-    constructor() {}
+export interface CourseCompetency extends BaseCompetency {
+    softDueDate?: dayjs.Dayjs;
+    masteryThreshold?: number;
+    optional?: boolean;
+    course?: Course;
+    linkedStandardizedCompetency?: StandardizedCompetency;
+    linkedCourseCompetency?: CourseCompetency;
+}
+
+export interface Competency extends CourseCompetency {
+    exercises?: Exercise[];
+    lectureUnits?: LectureUnit[];
+    userProgress?: CompetencyProgress[];
+    courseProgress?: CourseCompetencyProgress;
+    linkedStandardizedCompetency?: StandardizedCompetency;
 }
 
 export interface CompetencyImportResponseDTO extends BaseEntity {

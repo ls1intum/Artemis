@@ -87,7 +87,7 @@ describe('CourseCompetencies', () => {
 
     it('should load progress for each competency in a given course', () => {
         const courseStorageService = TestBed.inject(CourseStorageService);
-        const competency = new Competency();
+        const competency: Competency = {};
         competency.userProgress = [{ progress: 70, confidence: 45 } as CompetencyProgress];
         const textUnit = new TextUnit();
         competency.id = 1;
@@ -114,7 +114,7 @@ describe('CourseCompetencies', () => {
     });
 
     it('should load prerequisites and competencies (with associated progress) and display a card for each of them', () => {
-        const competency = new Competency();
+        const competency: Competency = {};
         const textUnit = new TextUnit();
         competency.id = 1;
         competency.description = 'test';
@@ -122,11 +122,11 @@ describe('CourseCompetencies', () => {
         competency.userProgress = [{ progress: 70, confidence: 45 } as CompetencyProgress];
 
         const prerequisitesOfCourseResponse: HttpResponse<Competency[]> = new HttpResponse({
-            body: [new Competency()],
+            body: [{}],
             status: 200,
         });
         const competenciesOfCourseResponse: HttpResponse<Competency[]> = new HttpResponse({
-            body: [competency, new Competency()],
+            body: [competency, {}],
             status: 200,
         });
 

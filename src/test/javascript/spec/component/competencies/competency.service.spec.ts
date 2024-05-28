@@ -140,7 +140,7 @@ describe('CompetencyService', () => {
         const returnedFromService = { ...defaultCompetencies.first(), id: 0 };
         const expected = { ...returnedFromService };
         competencyService
-            .create(new Competency(), 1)
+            .create({}, 1)
             .pipe(take(1))
             .subscribe((resp) => (expectedResultCompetency = resp));
 

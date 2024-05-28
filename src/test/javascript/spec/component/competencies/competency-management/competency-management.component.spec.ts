@@ -82,7 +82,7 @@ describe('CompetencyManagementComponent', () => {
                 competencyService = TestBed.inject(CompetencyService);
                 modalService = fixture.debugElement.injector.get(NgbModal);
 
-                const competency = new Competency();
+                const competency: Competency = {};
                 const textUnit = new TextUnit();
                 competency.id = 1;
                 competency.description = 'test';
