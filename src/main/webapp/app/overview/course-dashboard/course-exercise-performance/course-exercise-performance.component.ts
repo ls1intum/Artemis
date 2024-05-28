@@ -105,6 +105,7 @@ export class CourseExercisePerformanceComponent implements OnInit, OnChanges, On
             },
         ];
 
+        // Round the maximum score up to the next multiple of 10
         const maxScore = Math.max(...this.ngxData.flatMap((data) => data.series.map((series) => series.value)));
         this.yScaleMax = Math.max(100, Math.ceil(maxScore / 10) * 10);
     }
