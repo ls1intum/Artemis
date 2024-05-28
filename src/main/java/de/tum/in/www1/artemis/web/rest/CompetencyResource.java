@@ -665,7 +665,7 @@ public class CompetencyResource {
      */
     @PutMapping("courses/{courseId}/competencies/{competencyId}/jol/{jolValue}")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<Void> setJudgementOfLearning(@PathVariable long courseId, @PathVariable long competencyId, @PathVariable int jolValue) {
+    public ResponseEntity<Void> setJudgementOfLearning(@PathVariable long courseId, @PathVariable long competencyId, @PathVariable short jolValue) {
         log.debug("REST request to set judgement of learning for competency: {}", competencyId);
 
         final var userId = userRepository.getUserIdElseThrow();
@@ -684,12 +684,12 @@ public class CompetencyResource {
      */
     @GetMapping("courses/{courseId}/competencies/{competencyId}/jol")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<Integer> getJudgementOfLearningForCompetency(@PathVariable long courseId, @PathVariable long competencyId) {
+    public ResponseEntity<Short> getLatestJudgementOfLearningForCompetency(@PathVariable long courseId, @PathVariable long competencyId) {
         log.debug("REST request to get judgement of learning for competency: {}", competencyId);
 
         final var userId = userRepository.getUserIdElseThrow();
         competencyService.checkIfCompetencyBelongsToCourse(competencyId, courseId);
-        final var jol = competencyJolRepository.findJolValueByCompetencyIdAndUserId(competencyId, userId);
+        final var jol = competencyJolRepository.findLatestJolValueByCompetencyIdAndUserId(competencyId, userId);
 
         return ResponseEntity.ok(jol.orElse(null));
     }
@@ -702,11 +702,11 @@ public class CompetencyResource {
      */
     @GetMapping("courses/{courseId}/competencies/jol")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<Map<Long, Integer>> getJudgementOfLearningForCourse(@PathVariable long courseId) {
+    public ResponseEntity<Map<Long, Short>> getLatestJudgementOfLearningForCourse(@PathVariable long courseId) {
         log.debug("REST request to get judgement of learning for competencies of course: {}", courseId);
 
         final var userId = userRepository.getUserIdElseThrow();
-        final var jols = competencyJolService.getJudgementOfLearningForUserByCourseId(userId, courseId);
+        final var jols = competencyJolService.getLatestJudgementOfLearningForUserByCourseId(userId, courseId);
 
         return ResponseEntity.ok(jols);
     }
