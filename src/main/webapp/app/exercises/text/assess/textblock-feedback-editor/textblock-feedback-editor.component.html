@@ -1,11 +1,13 @@
 <div>
     @if (Feedback.isFeedbackSuggestion(feedback)) {
-        <jhi-feedback-suggestion-badge [feedback]="feedback" [useDefaultText]="true" />
+        <jhi-feedback-suggestion-badge [feedback]="feedback" [useDefaultText]="true"/>
     }
     @if (!readOnly) {
         <div class="close">
             @if (canDismiss) {
-                <fa-icon [icon]="faTimes" [ngbTooltip]="'artemisApp.textAssessment.feedbackEditor.dismissFeedback' | artemisTranslate" (click)="dismiss()" />
+                <fa-icon [icon]="faTimes"
+                         [ngbTooltip]="'artemisApp.textAssessment.feedbackEditor.dismissFeedback' | artemisTranslate"
+                         (click)="dismiss()"/>
             } @else {
                 <jhi-confirm-icon
                     [initialIcon]="faTimes"
@@ -19,11 +21,13 @@
     }
     <div class="row">
         <div class="form-group col-md-10 m-0">
-            <label class="d-inline" jhiTranslate="artemisApp.assessment.detail.feedbackWithColon" for="detailText-{{ textBlock.id }}"></label>
+            <label class="d-inline" jhiTranslate="artemisApp.assessment.detail.feedbackWithColon"
+                   for="detailText-{{ textBlock.id }}"></label>
             @if (feedback.gradingInstruction!) {
                 <div class="d-inline">
                     <span class="fw-bold">{{ feedback.gradingInstruction!.feedback }}</span>
-                    <fa-icon [icon]="faQuestionCircle" class="text-secondary" [ngbTooltip]="'artemisApp.assessment.feedbackHint' | artemisTranslate" />
+                    <fa-icon [icon]="faQuestionCircle" class="text-secondary"
+                             [ngbTooltip]="'artemisApp.assessment.feedbackHint' | artemisTranslate"/>
                 </div>
             }
         </div>
@@ -32,7 +36,7 @@
         </div>
         @if (feedback.gradingInstruction!) {
             <div class="form-group col-md-1 m-0">
-                <jhi-grading-instruction-link-icon [feedback]="feedback" />
+                <jhi-grading-instruction-link-icon [feedback]="feedback"/>
             </div>
         }
     </div>
@@ -45,19 +49,26 @@
                         <!--if there is only one criterion, dropdown-menu contains its instructions-->
                         @if (criteria.length === 1) {
                             <ul ngbDropdownMenu>
-                                <jhi-textblock-feedback-dropdown [criterion]="criteria[0]" [feedback]="feedback" (didChange)="didChange()" />
+                                <jhi-textblock-feedback-dropdown [criterion]="criteria[0]" [feedback]="feedback"
+                                                                 (didChange)="didChange()"/>
                             </ul>
                         } @else {
                             <ul class="dropdown-menu" ngbDropdownMenu>
                                 @for (criterion of criteria; track criterion) {
                                     <li>
                                         @if (criterion.title) {
-                                            <a class="dropdown-item"> {{ criterion.title }}&nbsp;<fa-icon class="float-end" [icon]="faAngleRight" /> </a>
+                                            <a class="dropdown-item"> {{ criterion.title }}&nbsp;<fa-icon
+                                                class="float-end" [icon]="faAngleRight"/>
+                                            </a>
                                         } @else {
-                                            <a class="dropdown-item">(No title) <fa-icon class="float-end" [icon]="faAngleRight" /></a>
+                                            <a class="dropdown-item">(No title)
+                                                <fa-icon class="float-end" [icon]="faAngleRight"/>
+                                            </a>
                                         }
                                         <ul class="dropdown-menu dropdown-submenu">
-                                            <jhi-textblock-feedback-dropdown [criterion]="criterion" [feedback]="feedback" (didChange)="didChange()" />
+                                            <jhi-textblock-feedback-dropdown [criterion]="criterion"
+                                                                             [feedback]="feedback"
+                                                                             (didChange)="didChange()"/>
                                         </ul>
                                     </li>
                                 }
@@ -108,10 +119,12 @@
     @if (feedback.correctionStatus !== undefined) {
         <div>
             @if (feedback.correctionStatus === 'CORRECT') {
-                <span class="text-success">{{ 'artemisApp.exampleSubmission.feedback.' + feedback.correctionStatus! | artemisTranslate }} </span>
+                <span
+                    class="text-success">{{ 'artemisApp.exampleSubmission.feedback.' + feedback.correctionStatus! | artemisTranslate }} </span>
             }
             @if (feedback.correctionStatus !== 'CORRECT') {
-                <span class="text-danger">{{ 'artemisApp.exampleSubmission.feedback.' + feedback.correctionStatus! | artemisTranslate }} </span>
+                <span
+                    class="text-danger">{{ 'artemisApp.exampleSubmission.feedback.' + feedback.correctionStatus! | artemisTranslate }} </span>
             }
             <!-- :warning: emoji was rendered as a black-white glyph, hence the solution with the fa-icon -->
             @if (feedback.correctionStatus !== 'CORRECT') {
@@ -120,5 +133,5 @@
         </div>
     }
     <!-- correction round label-->
-    <jhi-assessment-correction-round-badge [feedback]="feedback" [highlightDifferences]="highlightDifferences" />
+    <jhi-assessment-correction-round-badge [feedback]="feedback" [highlightDifferences]="highlightDifferences"/>
 </div>
