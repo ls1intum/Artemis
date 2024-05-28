@@ -11,12 +11,12 @@ import { CourseDashboardService } from 'app/overview/course-dashboard/course-das
 import { CompetencyInformation, ExerciseMetrics, StudentMetrics } from 'app/entities/student-metrics.model';
 import { ExerciseLateness } from 'app/overview/course-dashboard/course-exercise-lateness/course-exercise-lateness.component';
 import { ExercisePerformance } from 'app/overview/course-dashboard/course-exercise-performance/course-exercise-performance.component';
-import { ICompetencyAccordionToggleEvent } from 'app/shared/competency/interfaces/competency-accordion-toggle-event.interface';
 import { round } from 'app/shared/util/utils';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import dayjs from 'dayjs/esm';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_IRIS } from 'app/app.constants';
+import { CompetencyAccordionToggleEvent } from 'app/course/competencies/competency-accordion/competency-accordion.component';
 
 @Component({
     selector: 'jhi-course-dashboard',
@@ -201,7 +201,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
         }
     }
 
-    handleToggle(event: ICompetencyAccordionToggleEvent) {
+    handleToggle(event: CompetencyAccordionToggleEvent) {
         this.openedAccordionIndex = event.opened ? event.index : undefined;
     }
 

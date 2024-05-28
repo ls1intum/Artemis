@@ -3,12 +3,16 @@ import { faFilePdf, faList } from '@fortawesome/free-solid-svg-icons';
 import { CompetencyProgress, getConfidence, getIcon, getMastery, getProgress } from 'app/entities/competency.model';
 import { Course } from 'app/entities/course.model';
 import { Router } from '@angular/router';
-import { ICompetencyAccordionToggleEvent } from 'app/shared/competency/interfaces/competency-accordion-toggle-event.interface';
 import { CompetencyInformation, LectureUnitInformation, StudentMetrics } from 'app/entities/student-metrics.model';
 import { round } from 'app/shared/util/utils';
 import { Exercise } from 'app/entities/exercise.model';
 import dayjs from 'dayjs/esm';
 import { lectureUnitIcons, lectureUnitTooltips } from 'app/entities/lecture-unit/lectureUnit.model';
+
+export interface CompetencyAccordionToggleEvent {
+    opened: boolean;
+    index: number;
+}
 
 @Component({
     selector: 'jhi-competency-accordion',
@@ -22,7 +26,7 @@ export class CompetencyAccordionComponent implements OnChanges {
     @Input() index: number;
     @Input() openedIndex?: number;
 
-    @Output() accordionToggle = new EventEmitter<ICompetencyAccordionToggleEvent>();
+    @Output() accordionToggle = new EventEmitter<CompetencyAccordionToggleEvent>();
 
     open = false;
     nextExercises: Exercise[] = [];
