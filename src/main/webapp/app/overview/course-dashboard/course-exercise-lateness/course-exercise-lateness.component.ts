@@ -1,9 +1,10 @@
-import { Component, Input, OnChanges, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { GraphColors } from 'app/entities/statistics.model';
 import { NgxChartsMultiSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { round } from 'app/shared/util/utils';
+import { Subscription } from 'rxjs';
 
 export interface ExerciseLateness {
     exerciseId: number;
@@ -21,7 +22,7 @@ const AVERAGE_GRAPH_COLOR = GraphColors.YELLOW;
     templateUrl: './course-exercise-lateness.component.html',
     styleUrls: ['./course-exercise-lateness.component.scss'],
 })
-export class CourseExerciseLatenessComponent implements OnInit, OnChanges {
+export class CourseExerciseLatenessComponent implements OnInit, OnChanges, OnDestroy {
     @Input() exerciseLateness: ExerciseLateness[] = [];
 
     yourLatenessLabel: string;
@@ -36,19 +37,25 @@ export class CourseExerciseLatenessComponent implements OnInit, OnChanges {
     };
     yScaleMax = 100;
 
+    private translateServiceSubscription: Subscription;
+
     protected readonly round = round;
     protected readonly Math = Math;
     protected readonly YOUR_GRAPH_COLOR = YOUR_GRAPH_COLOR;
     protected readonly AVERAGE_GRAPH_COLOR = AVERAGE_GRAPH_COLOR;
 
     constructor(private translateService: TranslateService) {
-        this.translateService.onLangChange.subscribe(() => {
+        this.translateServiceSubscription = this.translateService.onLangChange.subscribe(() => {
             this.setupChart();
         });
     }
 
     ngOnInit(): void {
         this.setupChart();
+    }
+
+    ngOnDestroy(): void {
+        this.translateServiceSubscription.unsubscribe();
     }
 
     ngOnChanges(): void {
@@ -99,6 +106,7 @@ export class CourseExerciseLatenessComponent implements OnInit, OnChanges {
             },
         ];
 
+        // Round the maximum score up to the next multiple of 10
         const maxRelativeTime = Math.max(...this.ngxData.flatMap((data) => data.series.map((series) => series.value)));
         this.yScaleMax = Math.max(100, Math.ceil(maxRelativeTime / 10) * 10);
     }
