@@ -38,8 +38,6 @@ export class CourseExercisePerformanceComponent implements OnInit, OnChanges, On
 
     private translateServiceSubscription: Subscription;
 
-    protected readonly round = round;
-    protected readonly Math = Math;
     protected readonly YOUR_GRAPH_COLOR = YOUR_GRAPH_COLOR;
     protected readonly AVERAGE_GRAPH_COLOR = AVERAGE_GRAPH_COLOR;
 
@@ -84,7 +82,7 @@ export class CourseExercisePerformanceComponent implements OnInit, OnChanges, On
                 series: this.exercisePerformance.map((performance) => {
                     return {
                         name: performance.shortName?.toUpperCase() || performance.title,
-                        value: performance.score || 0, // If the score is undefined, set it to 0
+                        value: round(performance.score || 0, 1), // If the score is undefined, set it to 0
                         extra: {
                             title: performance.title,
                         },
@@ -96,7 +94,7 @@ export class CourseExercisePerformanceComponent implements OnInit, OnChanges, On
                 series: this.exercisePerformance.map((performance) => {
                     return {
                         name: performance.shortName?.toUpperCase() || performance.title,
-                        value: performance.averageScore || 0,
+                        value: round(performance.averageScore || 0, 1),
                         extra: {
                             title: performance.title,
                         },

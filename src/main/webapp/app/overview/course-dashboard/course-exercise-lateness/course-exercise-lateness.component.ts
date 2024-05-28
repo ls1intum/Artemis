@@ -39,8 +39,6 @@ export class CourseExerciseLatenessComponent implements OnInit, OnChanges, OnDes
 
     private translateServiceSubscription: Subscription;
 
-    protected readonly round = round;
-    protected readonly Math = Math;
     protected readonly YOUR_GRAPH_COLOR = YOUR_GRAPH_COLOR;
     protected readonly AVERAGE_GRAPH_COLOR = AVERAGE_GRAPH_COLOR;
 
@@ -85,7 +83,7 @@ export class CourseExerciseLatenessComponent implements OnInit, OnChanges, OnDes
                 series: this.exerciseLateness.map((lateness) => {
                     return {
                         name: lateness.shortName?.toUpperCase() || lateness.title,
-                        value: lateness.relativeLatestSubmission || 100, // If there is no data, we assume the submission is late
+                        value: round(lateness.relativeLatestSubmission || 100, 1), // If there is no data, we assume the submission is late
                         extra: {
                             title: lateness.title,
                         },
@@ -97,7 +95,7 @@ export class CourseExerciseLatenessComponent implements OnInit, OnChanges, OnDes
                 series: this.exerciseLateness.map((lateness) => {
                     return {
                         name: lateness.shortName?.toUpperCase() || lateness.title,
-                        value: lateness.relativeAverageLatestSubmission || 100,
+                        value: round(lateness.relativeAverageLatestSubmission || 100, 1),
                         extra: {
                             title: lateness.title,
                         },

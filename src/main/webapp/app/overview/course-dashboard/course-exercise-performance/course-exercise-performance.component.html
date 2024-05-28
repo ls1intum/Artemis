@@ -38,7 +38,7 @@
                 <ng-template #tooltipTemplate let-model="model">
                     <div class="d-flex flex-column align-items-start py-2">
                         <b class="mb-1">{{ model.extra.title }}</b>
-                        {{ model.series }}: {{ round(model.value, 1) }}%
+                        {{ model.series }}: {{ model.value }}%
                     </div>
                 </ng-template>
                 <ng-template #seriesTooltipTemplate let-model="model">
@@ -48,7 +48,7 @@
                             @for (entry of model; track entry) {
                                 <div class="d-flex align-items-center gap-1">
                                     <span class="tooltip-label-color" [style.background-color]="entry.color"></span>
-                                    {{ entry.series }}: {{ round(entry.value, 1) }}%
+                                    {{ entry.series }}: {{ entry.value }}%
                                 </div>
                             }
                         </div>
