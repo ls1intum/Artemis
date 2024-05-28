@@ -23,6 +23,8 @@ import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
  * @param difficulty             the difficulty level of the exercise
  * @param exerciseMode           the mode of the exercise
  * @param type                   the type of the exercise
+ * @param allowOnlineEditor      whether the online editor is allowed for the programming exercise, null for non-programming exercises
+ * @param allowOfflineIde        whether the offline IDE is allowed for the programming exercise, null for non-programming exercises
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExerciseInformationDTO(long id, String shortName, String title, ZonedDateTime start, ZonedDateTime due, Double maxPoints,
