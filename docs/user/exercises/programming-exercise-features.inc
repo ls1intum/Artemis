@@ -98,9 +98,9 @@ Java DejaGnu: Blackbox Testing
 The classical testing frameworks, like JUnit for example, allows writing whitebox tests.
 This enforces many assumptions about the structure of the source code under test,
 like the class and method names and even the exact method signatures.
-This implies for a Programming Exercise you have to specify all the structural aspect
+This implies for a programming exercise that you have to specify all the structural aspects
 if your test suite should be able to run on the student submissions.
-That is maybe okay or even desired for a beginner course,
+That maybe is okay or even desired for a beginner course,
 but for advanced courses this is a downside,
 because without making their own decision about the structure of their source code,
 the students cannot collect experience in this important aspect of programming through your exercises.
@@ -123,13 +123,12 @@ An assessment of the quality of the students source code structures can be made 
 
 For the usage of DejaGnu consult the `offical documentation <https://www.gnu.org/software/dejagnu/manual/index.html>`_
 and take a look at the example of the template.
-There are variables in upper and Snake case (e.g., ``MAIN_CLASS``) in the template,
-which are get replaced by the build plan.
-For example the build plan searches for the Java class with the main method and replace ``MAIN_CLASS`` with it.
+The variables in screaming snake case in ``config/default.exp`` (e.g. ``MAIN_CLASS``) will be replaced to actual values in a previous build plan step.
+For example, the build plan searches for the Java class with the main method and replaces ``MAIN_CLASS`` accordingly.
 The best documentation of `Expect <https://core.tcl-lang.org/expect/>`_
 can be found in the `Book Exploring Expect <https://books.google.com.sg/books?id=t8C4pEDQ8s0C&printsec=frontcover#v=onepage&q&f=false>`_.
 However, for easy starting the basic setup of DejaGnu (file default.exp) can usually be overtaken in large
 parts from the template's example.
 
-With the exercise type Java DejaGnu it is quite easy to reuse existing exercises of the
+With this exercise type it is quite easy to reuse existing exercises of the
 `Praktomat <https://github.com/KITPraktomatTeam/Praktomat>`_ autograder system with the Artemis platform.
