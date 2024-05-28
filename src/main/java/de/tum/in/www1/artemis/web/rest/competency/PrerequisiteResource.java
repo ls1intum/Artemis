@@ -38,8 +38,6 @@ public class PrerequisiteResource {
 
     private static final Logger log = LoggerFactory.getLogger(CompetencyResource.class);
 
-    private static final String ENTITY_NAME = "prerequisite";
-
     private final PrerequisiteService prerequisiteService;
 
     private final PrerequisiteRepository prerequisiteRepository;

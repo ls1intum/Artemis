@@ -21,6 +21,7 @@ import de.tum.in.www1.artemis.domain.competency.Prerequisite;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.PrerequisiteRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
+import de.tum.in.www1.artemis.web.rest.dto.competency.PrerequisiteRequestDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.PrerequisiteResponseDTO;
 
 public class PrerequisiteIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -127,6 +128,28 @@ public class PrerequisiteIntegrationTest extends AbstractSpringIntegrationIndepe
     }
 
     @Nested
+    class UpdatePrerequisite {
+
+        private static String url(long courseId, long prerequisiteId) {
+            return PrerequisiteIntegrationTest.baseUrl(courseId) + "/" + prerequisiteId;
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+        void shouldUpdatePrerequisite() throws Exception {
+            var existingPrerequisite = prerequisiteUtilService.createPrerequisite(course);
+            var updateDTO = new PrerequisiteRequestDTO("new title", "new description", CompetencyTaxonomy.ANALYZE, null, 1, true);
+
+            var updatedPrerequisite = request.putWithResponseBody(url(course.getId(), existingPrerequisite.getId()), updateDTO, PrerequisiteResponseDTO.class, HttpStatus.OK);
+
+            assertThat(updatedPrerequisite).usingRecursiveComparison().comparingOnlyFields("title", "description", "taxonomy", "softDueDate", "masteryThreshold", "optional")
+                    .isEqualTo(updateDTO);
+            assertThat(updatedPrerequisite.id()).isEqualTo(existingPrerequisite.getId());
+        }
+
+    }
+
+    @Nested
     class DeletePrerequisite {
 
         private static String url(long courseId, long prerequisiteId) {
@@ -179,6 +202,17 @@ public class PrerequisiteIntegrationTest extends AbstractSpringIntegrationIndepe
 
             assertThat(actualPrerequisites).usingRecursiveFieldByFieldElementComparatorIgnoringFields("id").containsAll(expectedPrerequisites);
             assertThat(actualPrerequisites).hasSameSizeAs(expectedPrerequisites);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+        void shouldReturnBadRequestWhenImportingFromSameCourse() throws Exception {
+            var prerequisites = prerequisiteUtilService.createPrerequisites(course, 4);
+            // one of the competencies is in the same course we import into (course2)
+            prerequisites.add(prerequisiteUtilService.createPrerequisite(course2));
+            var prerequisiteIds = prerequisites.stream().map(DomainObject::getId).toList();
+
+            request.post(url(course2.getId()), prerequisiteIds, HttpStatus.BAD_REQUEST);
         }
 
     }

@@ -4,6 +4,9 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+
+import jakarta.ws.rs.BadRequestException;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -74,6 +77,7 @@ public class PrerequisiteService {
         existingPrerequisite.setTitle(prerequisiteValues.title());
         existingPrerequisite.setDescription(prerequisiteValues.description());
         existingPrerequisite.setTaxonomy(prerequisiteValues.taxonomy());
+        existingPrerequisite.setSoftDueDate(prerequisiteValues.softDueDate());
         existingPrerequisite.setMasteryThreshold(prerequisiteValues.masteryThreshold());
         existingPrerequisite.setOptional(prerequisiteValues.optional());
 
@@ -99,7 +103,6 @@ public class PrerequisiteService {
      * @return The list of imported prerequisites
      */
     public List<Prerequisite> importPrerequisites(long courseId, List<Long> courseCompetencyIds) {
-        // TODO: check that we do not import any from the same course.
         var course = courseRepository.findByIdElseThrow(courseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         List<CourseCompetency> courseCompetenciesToImport;
@@ -107,7 +110,13 @@ public class PrerequisiteService {
             courseCompetenciesToImport = courseCompetencyRepository.findAllByIdElseThrow(courseCompetencyIds);
         }
         else {
+            // only allow the user to import from courses where they are at least editor
             courseCompetenciesToImport = courseCompetencyRepository.findAllByIdAndUserIsAtLeastEditorInCourseElseThrow(courseCompetencyIds, user.getGroups());
+        }
+
+        var courseIds = courseCompetenciesToImport.stream().map(c -> c.getCourse().getId()).collect(Collectors.toSet());
+        if (courseIds.contains(course.getId())) {
+            throw new BadRequestException("You may not import a competency as prerequisite into the same course!");
         }
 
         var prerequisitesToImport = new ArrayList<Prerequisite>();
