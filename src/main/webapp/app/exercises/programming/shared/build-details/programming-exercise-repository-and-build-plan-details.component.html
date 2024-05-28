@@ -67,20 +67,22 @@
                     *ngTemplateOutlet="
                         repositoryBadge;
                         context: {
-                            helpIconText: 'artemisApp.programmingExercise.preview.testRepoTooltip',
+                            helpIconText: 'artemisApp.programmingExercise.preview.templateBuildPlanTooltip',
                             trailingRepoSlug: '-BASE',
                             customBootstrapClasses: 'bg-primary text-uppercase'
                         }
                     "
                 />
-                <li>
-                    <jhi-help-icon text="artemisApp.programmingExercise.preview.templateBuildPlanTooltip" />
-                    <code class="text-white badge label-preview"> {{ courseShortName }}{{ programmingExercise?.shortName }}-BASE </code>
-                </li>
-                <li>
-                    <code class="text-white badge bg-primary label-preview text-uppercase"> {{ courseShortName }}{{ programmingExercise?.shortName }}-SOLUTION </code>
-                    <jhi-help-icon text="artemisApp.programmingExercise.preview.solutionBuildPlanTooltip" />
-                </li>
+                <ng-container
+                    *ngTemplateOutlet="
+                        repositoryBadge;
+                        context: {
+                            helpIconText: 'artemisApp.programmingExercise.preview.solutionBuildPlanTooltip',
+                            trailingRepoSlug: '-SOLUTION',
+                            customBootstrapClasses: 'bg-primary text-uppercase'
+                        }
+                    "
+                />
             </ul>
         </div>
     } @else if (checkoutDirectories) {
