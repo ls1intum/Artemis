@@ -112,7 +112,7 @@ The tests are written in Expect Script, an extension to the Tcl scripting langua
 Expect is a traditional Unix utility for automatic interactions with programs that expose a text terminal
 interface in a robust way.
 The test script starts the program to test as own process (possibly several times) and interactively controls
-it by textual inputs via pipelining.
+it by textual inputs via the standard input.
 The script then reads the respective outputs and can make 'assertions' (e.g. exact or regex matching) on them.
 Based on the obtained output it can also decide on the next inputs, thereby simulating how a user might interact with the program.
 Thus, for the exercises you only have to specify the syntax of the command line interface
