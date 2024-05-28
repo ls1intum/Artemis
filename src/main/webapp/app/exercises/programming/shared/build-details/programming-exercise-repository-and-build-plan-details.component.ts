@@ -33,8 +33,8 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
     }
 
     ngOnChanges(changes: SimpleChanges) {
-        const isProgrammingLanguageUpdated = changes.programmingLanguage?.currentValue !== changes.programmingLanguage.previousValue;
-        const isCheckoutSolutionRepositoryUpdated = changes.checkoutSolutionRepository?.currentValue !== changes.checkoutSolutionRepository.previousValue;
+        const isProgrammingLanguageUpdated = changes.programmingLanguage?.currentValue !== changes.programmingLanguage?.previousValue;
+        const isCheckoutSolutionRepositoryUpdated = changes.checkoutSolutionRepository?.currentValue !== changes.checkoutSolutionRepository?.previousValue;
         if (this.isLocal && (isProgrammingLanguageUpdated || isCheckoutSolutionRepositoryUpdated)) {
             this.updateCheckoutDirectories();
         }
