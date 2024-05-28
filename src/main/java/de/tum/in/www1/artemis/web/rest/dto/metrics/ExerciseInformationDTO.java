@@ -45,9 +45,9 @@ public record ExerciseInformationDTO(long id, String shortName, String title, Zo
 
         Boolean allowOnlineEditor = null;
         Boolean allowOfflineIde = null;
-        if (exercise instanceof ProgrammingExercise) {
-            allowOnlineEditor = ((ProgrammingExercise) exercise).isAllowOnlineEditor();
-            allowOfflineIde = ((ProgrammingExercise) exercise).isAllowOfflineIde();
+        if (exercise instanceof ProgrammingExercise programmingExercise) {
+            allowOnlineEditor = programmingExercise.isAllowOnlineEditor();
+            allowOfflineIde = programmingExercise.isAllowOfflineIde();
         }
 
         return new ExerciseInformationDTO(exercise.getId(), exercise.getShortName(), exercise.getTitle(), startDate, exercise.getDueDate(), exercise.getMaxPoints(),
