@@ -126,7 +126,7 @@ and take a look at the example of the template.
 The variables in screaming snake case in ``config/default.exp`` (e.g. ``MAIN_CLASS``) will be replaced to actual values in a previous build plan step.
 For example, the build plan searches for the Java class with the main method and replaces ``MAIN_CLASS`` accordingly.
 The best documentation of `Expect <https://core.tcl-lang.org/expect/>`_
-can be found in the `Book Exploring Expect <https://books.google.com.sg/books?id=t8C4pEDQ8s0C&printsec=frontcover#v=onepage&q&f=false>`_.
+can be found in the book `Exploring Expect <https://books.google.com.sg/books?id=t8C4pEDQ8s0C>`_.
 However, for easy starting the basic setup of DejaGnu (file default.exp) can usually be overtaken in large
 parts from the template's example.
 
