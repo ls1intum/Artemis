@@ -101,14 +101,14 @@ public class BuildJobExecutionService {
         buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
 
         // Check if the Docker image is available. If not, pull it.
-        try {
-            buildAgentDockerService.pullDockerImage(buildJob, buildLogsMap);
-        }
-        catch (LocalCIException e) {
-            msg = "Could not pull Docker image " + buildJob.buildConfig().dockerImage();
-            buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
-            throw new LocalCIException(msg, e);
-        }
+        // try {
+        // buildAgentDockerService.pullDockerImage(buildJob, buildLogsMap);
+        // }
+        // catch (LocalCIException e) {
+        // msg = "Could not pull Docker image " + buildJob.buildConfig().dockerImage();
+        // buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
+        // throw new LocalCIException(msg, e);
+        // }
 
         boolean isPushToTestOrAuxRepository = buildJob.repositoryInfo().triggeredByPushTo() == RepositoryType.TESTS
                 || buildJob.repositoryInfo().triggeredByPushTo() == RepositoryType.AUXILIARY;

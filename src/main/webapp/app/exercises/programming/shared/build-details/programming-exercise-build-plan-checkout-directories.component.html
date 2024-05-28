@@ -4,13 +4,8 @@
         <li [class.invisible]="!checkoutDirectories.exerciseCheckoutDirectory">
             <code>{{ checkoutDirectories.exerciseCheckoutDirectory }} </code>
         </li>
-        <li [class.invisible]="!checkoutDirectories.solutionCheckoutDirectories?.length">
-            @for (directory of checkoutDirectories.solutionCheckoutDirectories; track directory; let index = $index) {
-                <code> {{ directory }}</code>
-                @if (index < checkoutDirectories.solutionCheckoutDirectories!.length - 1) {
-                    <span>,</span>
-                }
-            }
+        <li [class.invisible]="!checkoutDirectories.solutionCheckoutDirectory">
+            <code>{{ checkoutDirectories.solutionCheckoutDirectory }} </code>
         </li>
         <li [class.invisible]="!checkoutDirectories.testCheckoutDirectory">
             <code> {{ checkoutDirectories.testCheckoutDirectory }} </code>

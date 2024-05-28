@@ -1,5 +1,5 @@
 export class BuildPlanCheckoutDirectoriesDTO {
     exerciseCheckoutDirectory?: string;
-    solutionCheckoutDirectories?: string[];
+    solutionCheckoutDirectory?: string;
     testCheckoutDirectory: string;
 }

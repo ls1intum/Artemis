@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -240,19 +239,19 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
         exerciseCheckoutDirectory = startPathWithRootDirectory(exerciseCheckoutDirectory);
         testCheckoutDirectory = startPathWithRootDirectory(testCheckoutDirectory);
 
-        String[] solutionCheckoutDirectories = null;
+        String solutionCheckoutDirectory = null;
 
         if (checkoutSolution) {
             try {
                 String solutionCheckoutDirectoryPath = ContinuousIntegrationService.RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(programmingLanguage);
-                solutionCheckoutDirectories = new String[] { startPathWithRootDirectory(solutionCheckoutDirectoryPath) };
+                solutionCheckoutDirectory = startPathWithRootDirectory(solutionCheckoutDirectoryPath);
             }
             catch (IllegalArgumentException exception) {
                 // not checked out during template & submission build
             }
         }
 
-        return new BuildPlanCheckoutDirectoriesDTO(exerciseCheckoutDirectory, solutionCheckoutDirectories, testCheckoutDirectory);
+        return new BuildPlanCheckoutDirectoriesDTO(exerciseCheckoutDirectory, solutionCheckoutDirectory, testCheckoutDirectory);
     }
 
     private String startPathWithRootDirectory(String checkoutDirectoryPath) {
@@ -265,12 +264,9 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
     }
 
     private BuildPlanCheckoutDirectoriesDTO getSolutionBuildPlanCheckoutDirectories(BuildPlanCheckoutDirectoriesDTO submissionBuildPlanCheckoutDirectories) {
-        String[] solutionCheckoutDirectories = new String[] { submissionBuildPlanCheckoutDirectories.exerciseCheckoutDirectory() };
-        if (submissionBuildPlanCheckoutDirectories.solutionCheckoutDirectories() != null && submissionBuildPlanCheckoutDirectories.solutionCheckoutDirectories().length > 0) {
-            solutionCheckoutDirectories = ArrayUtils.addAll(solutionCheckoutDirectories, submissionBuildPlanCheckoutDirectories.solutionCheckoutDirectories());
-        }
+        String solutionCheckoutDirectory = submissionBuildPlanCheckoutDirectories.exerciseCheckoutDirectory();
         String testCheckoutDirectory = submissionBuildPlanCheckoutDirectories.testCheckoutDirectory();
 
-        return new BuildPlanCheckoutDirectoriesDTO(null, solutionCheckoutDirectories, testCheckoutDirectory);
+        return new BuildPlanCheckoutDirectoriesDTO(null, solutionCheckoutDirectory, testCheckoutDirectory);
     }
 }

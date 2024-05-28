@@ -25,7 +25,7 @@ describe('ProgrammingExerciseBuildDetailsComponent', () => {
             testCheckoutDirectory: '',
         },
         solutionBuildPlanCheckoutDirectories: {
-            solutionCheckoutDirectories: ['/assignment'],
+            solutionCheckoutDirectory: '/assignment',
             testCheckoutDirectory: '',
         },
     };
@@ -33,11 +33,11 @@ describe('ProgrammingExerciseBuildDetailsComponent', () => {
     const OCAML_CHECKOUT_DIRECTORIES: CheckoutDirectoriesDto = {
         submissionBuildPlanCheckoutDirectories: {
             exerciseCheckoutDirectory: '/assignment',
-            solutionCheckoutDirectories: ['/solution'],
+            solutionCheckoutDirectory: '/solution',
             testCheckoutDirectory: 'tests',
         },
         solutionBuildPlanCheckoutDirectories: {
-            solutionCheckoutDirectories: ['/assignment', '/solution'],
+            solutionCheckoutDirectory: '/assignment',
             testCheckoutDirectory: 'tests',
         },
     };
@@ -150,23 +150,7 @@ describe('ProgrammingExerciseBuildDetailsComponent', () => {
 
         // assertion to check if ngOnChanges was executed properly and updated the checkout directories
         expect(programmingExerciseService.getCheckoutDirectoriesForProgrammingLanguage).toHaveBeenCalled();
-        expect(component.checkoutDirectories?.solutionBuildPlanCheckoutDirectories?.solutionCheckoutDirectories).toEqual(['/assignment', '/solution']); // was ['/assignment'] before with JAVA as programming language
-    });
-
-    it('should comma separate the solution directories', () => {
-        component.ngOnChanges({
-            programmingExerciseCreationConfig: {
-                previousValue: { selectedProgrammingLanguage: ProgrammingLanguage.JAVA },
-                currentValue: { selectedProgrammingLanguage: ProgrammingLanguage.OCAML },
-            },
-        } as unknown as SimpleChanges);
-
-        fixture.detectChanges();
-
-        const OCAML_SOLUTION_CHECKOUT_DIRECTORY_REGEX = RegExp('.*\\/assignment, *\\/solution.*');
-        const solutionPreviewElement = fixture.debugElement.nativeElement.querySelector(CHECKOUT_DIRECTORY_PREVIEW_SOLUTION_BUILD_PLAN);
-        expect(solutionPreviewElement).toBeTruthy();
-        expect(OCAML_SOLUTION_CHECKOUT_DIRECTORY_REGEX.test(solutionPreviewElement.textContent)).toBeTrue();
+        expect(component.checkoutDirectories?.submissionBuildPlanCheckoutDirectories?.solutionCheckoutDirectory).toBe('/solution'); // was null before with JAVA as programming language
     });
 
     it('should update auxiliary repository directories on changes', () => {

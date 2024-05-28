@@ -182,12 +182,12 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
             // Verify submission build plan checkout directories
             assertThat(checkoutDirectories.submissionBuildPlanCheckoutDirectories().exerciseCheckoutDirectory()).isEqualTo("/assignment");
-            assertThat(checkoutDirectories.submissionBuildPlanCheckoutDirectories().solutionCheckoutDirectories()).isNull();
+            assertThat(checkoutDirectories.submissionBuildPlanCheckoutDirectories().solutionCheckoutDirectory()).isNull();
             assertThat(checkoutDirectories.submissionBuildPlanCheckoutDirectories().testCheckoutDirectory()).isEqualTo("/");
 
             // Verify solution build plan checkout directories
             assertThat(checkoutDirectories.solutionBuildPlanCheckoutDirectories().exerciseCheckoutDirectory()).isEqualTo(null);
-            assertThat(checkoutDirectories.solutionBuildPlanCheckoutDirectories().solutionCheckoutDirectories()).isEqualTo(new String[] { "/assignment" });
+            assertThat(checkoutDirectories.solutionBuildPlanCheckoutDirectories().solutionCheckoutDirectory()).isEqualTo("/assignment");
             assertThat(checkoutDirectories.solutionBuildPlanCheckoutDirectories().testCheckoutDirectory()).isEqualTo("/");
         }
 
@@ -197,12 +197,12 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
             // Verify submission build plan checkout directories
             assertThat(checkoutDirectories.submissionBuildPlanCheckoutDirectories().exerciseCheckoutDirectory()).isEqualTo("/assignment");
-            assertThat(checkoutDirectories.submissionBuildPlanCheckoutDirectories().solutionCheckoutDirectories()).isEqualTo(new String[] { "/solution" });
+            assertThat(checkoutDirectories.submissionBuildPlanCheckoutDirectories().solutionCheckoutDirectory()).isEqualTo("/solution");
             assertThat(checkoutDirectories.submissionBuildPlanCheckoutDirectories().testCheckoutDirectory()).isEqualTo("/tests");
 
             // Verify solution build plan checkout directories
             assertThat(checkoutDirectories.solutionBuildPlanCheckoutDirectories().exerciseCheckoutDirectory()).isNull();
-            assertThat(checkoutDirectories.solutionBuildPlanCheckoutDirectories().solutionCheckoutDirectories()).isEqualTo(new String[] { "/assignment", "/solution" });
+            assertThat(checkoutDirectories.solutionBuildPlanCheckoutDirectories().solutionCheckoutDirectory()).isEqualTo("/assignment");
             assertThat(checkoutDirectories.solutionBuildPlanCheckoutDirectories().testCheckoutDirectory()).isEqualTo("/tests");
         }
 
@@ -212,12 +212,12 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
             // Verify submission build plan checkout directories
             assertThat(checkoutDirectories.submissionBuildPlanCheckoutDirectories().exerciseCheckoutDirectory()).isEqualTo("/assignment");
-            assertThat(checkoutDirectories.submissionBuildPlanCheckoutDirectories().solutionCheckoutDirectories()).isNull();
+            assertThat(checkoutDirectories.submissionBuildPlanCheckoutDirectories().solutionCheckoutDirectory()).isNull();
             assertThat(checkoutDirectories.submissionBuildPlanCheckoutDirectories().testCheckoutDirectory()).isEqualTo("/tests");
 
             // Verify solution build plan checkout directories
             assertThat(checkoutDirectories.solutionBuildPlanCheckoutDirectories().exerciseCheckoutDirectory()).isNull();
-            assertThat(checkoutDirectories.solutionBuildPlanCheckoutDirectories().solutionCheckoutDirectories()).isEqualTo(new String[] { "/assignment" });
+            assertThat(checkoutDirectories.solutionBuildPlanCheckoutDirectories().solutionCheckoutDirectory()).isEqualTo("/assignment");
             assertThat(checkoutDirectories.solutionBuildPlanCheckoutDirectories().testCheckoutDirectory()).isEqualTo("/tests");
         }
     }
