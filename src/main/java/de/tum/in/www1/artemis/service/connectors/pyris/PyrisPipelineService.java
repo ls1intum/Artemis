@@ -35,7 +35,7 @@ import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageStateDTO;
 import de.tum.in.www1.artemis.service.iris.exception.IrisException;
 import de.tum.in.www1.artemis.service.iris.websocket.IrisChatWebsocketService;
-import de.tum.in.www1.artemis.service.metrics.MetricsService;
+import de.tum.in.www1.artemis.service.metrics.LearningMetricsService;
 
 /**
  * Service responsible for executing the various Pyris pipelines in a type-safe manner.
@@ -59,20 +59,20 @@ public class PyrisPipelineService {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
-    private final MetricsService metricsService;
+    private final LearningMetricsService learningMetricsService;
 
     @Value("${server.url}")
     private String artemisBaseUrl;
 
     public PyrisPipelineService(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, PyrisDTOService pyrisDTOService,
-            IrisChatWebsocketService irisChatWebsocketService, CourseRepository courseRepository, MetricsService metricsService,
+            IrisChatWebsocketService irisChatWebsocketService, CourseRepository courseRepository, LearningMetricsService learningMetricsService,
             StudentParticipationRepository studentParticipationRepository) {
         this.pyrisConnectorService = pyrisConnectorService;
         this.pyrisJobService = pyrisJobService;
         this.pyrisDTOService = pyrisDTOService;
         this.irisChatWebsocketService = irisChatWebsocketService;
         this.courseRepository = courseRepository;
-        this.metricsService = metricsService;
+        this.learningMetricsService = learningMetricsService;
         this.studentParticipationRepository = studentParticipationRepository;
     }
 
@@ -182,7 +182,7 @@ public class PyrisPipelineService {
         var studentId = session.getUser().getId();
         executeChatPipeline(variant, session, "course-chat", base -> {
             var fullCourse = loadCourseWithParticipationOfStudent(courseId, studentId);
-            var metrics = metricsService.getStudentCourseMetrics(session.getUser().getId(), courseId);
+            var metrics = learningMetricsService.getStudentCourseMetrics(session.getUser().getId(), courseId);
             return new PyrisCourseChatPipelineExecutionDTO(base, PyrisExtendedCourseDTO.of(fullCourse), metrics);
         }, () -> pyrisJobService.addCourseChatJob(courseId, session.getId()));
     }

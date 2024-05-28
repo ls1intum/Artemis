@@ -666,7 +666,7 @@ public class CompetencyResource {
     @PutMapping("courses/{courseId}/competencies/{competencyId}/jol/{jolValue}")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<Void> setJudgementOfLearning(@PathVariable long courseId, @PathVariable long competencyId, @PathVariable int jolValue) {
-        log.info("REST request to set judgement of learning for competency: {}", competencyId);
+        log.debug("REST request to set judgement of learning for competency: {}", competencyId);
 
         final var userId = userRepository.getUserIdElseThrow();
         competencyService.checkIfCompetencyBelongsToCourse(competencyId, courseId);
@@ -685,7 +685,7 @@ public class CompetencyResource {
     @GetMapping("courses/{courseId}/competencies/{competencyId}/jol")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<Integer> getJudgementOfLearningForCompetency(@PathVariable long courseId, @PathVariable long competencyId) {
-        log.info("REST request to get judgement of learning for competency: {}", competencyId);
+        log.debug("REST request to get judgement of learning for competency: {}", competencyId);
 
         final var userId = userRepository.getUserIdElseThrow();
         competencyService.checkIfCompetencyBelongsToCourse(competencyId, courseId);
@@ -703,7 +703,7 @@ public class CompetencyResource {
     @GetMapping("courses/{courseId}/competencies/jol")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<Map<Long, Integer>> getJudgementOfLearningForCourse(@PathVariable long courseId) {
-        log.info("REST request to get judgement of learning for competencies of course: {}", courseId);
+        log.debug("REST request to get judgement of learning for competencies of course: {}", courseId);
 
         final var userId = userRepository.getUserIdElseThrow();
         final var jols = competencyJolService.getJudgementOfLearningForUserByCourseId(userId, courseId);

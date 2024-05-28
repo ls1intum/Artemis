@@ -37,7 +37,7 @@ import de.tum.in.www1.artemis.web.rest.dto.metrics.StudentMetricsDTO;
  */
 @Profile(PROFILE_CORE)
 @Service
-public class MetricsService {
+public class LearningMetricsService {
 
     private final ExerciseMetricsRepository exerciseMetricsRepository;
 
@@ -45,7 +45,7 @@ public class MetricsService {
 
     private final CompetencyMetricsRepository competencyMetricsRepository;
 
-    public MetricsService(ExerciseMetricsRepository exerciseMetricsRepository, LectureUnitMetricsRepository lectureUnitMetricsRepository,
+    public LearningMetricsService(ExerciseMetricsRepository exerciseMetricsRepository, LectureUnitMetricsRepository lectureUnitMetricsRepository,
             CompetencyMetricsRepository competencyMetricsRepository) {
         this.exerciseMetricsRepository = exerciseMetricsRepository;
         this.lectureUnitMetricsRepository = lectureUnitMetricsRepository;

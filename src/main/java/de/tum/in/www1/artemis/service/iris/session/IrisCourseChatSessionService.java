@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.service.iris.websocket.IrisChatWebsocketService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 /**
- * Service to handle the chat subsystem of Iris.
+ * Service to handle the course chat subsystem of Iris.
  */
 @Service
 @Profile("iris")
