@@ -98,6 +98,7 @@ services:
         restart: always
         volumes:
             - ./nginx/artemis-upstream-multi-node.conf:/etc/nginx/includes/artemis-upstream.conf:ro
+            - ./nginx/artemis-ssh-upstream-multi-node.conf:/etc/nginx/includes/artemis-ssh-upstream.conf:ro
             - type: bind
               source: ${NGINX_PROXY_SSL_CERTIFICATE_PATH:-../src/test/cypress/certs/artemis-nginx+4.pem}
               target: "/certs/fullchain.pem"

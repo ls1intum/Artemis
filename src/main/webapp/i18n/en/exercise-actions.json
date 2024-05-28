@@ -17,8 +17,8 @@
             "resumeExercisePractice": "Resume practice in exercise",
             "resumeExerciseError": "Error trying to resume the exercise",
             "openCodeEditor": "Open code editor",
-            "openPracticeCodeEditor": "Open practice code editor",
-            "openGradedCodeEditor": "Open graded code editor",
+            "openPracticeCodeEditor": "Open code editor for practice",
+            "openGradedCodeEditor": "Open code editor",
             "choseGradedMode": "Graded participation chosen",
             "openModelingEditor": "Open modeling editor",
             "importIntoIDE": "Open in your IDE",
@@ -46,7 +46,7 @@
             },
             "practiceModeTooltip": "The practice mode allows you to keep working on the exercise after the submission due date for self-practice. This will not affect your grading! Artemis will setup a separate repository for you to clone.",
             "cloneRepository": "Clone Repository",
-            "cloneRatedRepository": "Clone your rated repository for this exercise:",
+            "cloneRatedRepository": "Clone your repository for this exercise:",
             "clonePracticeRepository": "Clone your practice repository for this exercise:",
             "cloneExerciseRepository": "Clone a repository for this exercise",
             "repositoryPassword": "Your Password is:",
@@ -61,7 +61,7 @@
             "copiedUrl": "Copied URL",
             "uploadFile": "Upload a file",
             "viewTeam": "Team",
-            "sshKeyTip": "To use ssh, you need to add an ssh-key to your account {link:here}.",
+            "sshKeyTip": "To use ssh, you need to add an ssh key to your account {link:here}.",
             "startExerciseBeforeStartDate": "You cannot participate before the start date of the exercise.",
             "deleteMultipleExercisesQuestion": "Are you sure you want to delete the selected exercises?"
         }
