@@ -60,8 +60,8 @@ export class CompetencyAccordionComponent implements OnChanges {
         const nextExerciseInformations = competencyExercises
             .filter((exerciseId) => !submittedExercises.includes(exerciseId))
             .flatMap((exerciseId) => this.metrics.exerciseMetrics?.exerciseInformation?.[exerciseId] ?? [])
-            .filter((exercise) => exercise.startDate.isBefore(dayjs()) && exercise.dueDate.isAfter(dayjs()))
-            .sort((a, b) => a.dueDate.diff(b.dueDate));
+            .filter((exercise) => exercise.startDate.isBefore(dayjs()) && (!exercise.dueDate || exercise.dueDate.isAfter(dayjs())))
+            .sort((a, b) => (a.dueDate ?? a.startDate).diff(b.dueDate));
 
         // Workaround to convert ExerciseInformation to Exercise
         this.nextExercises = nextExerciseInformations.map(

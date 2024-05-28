@@ -102,8 +102,8 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
 
                         // Sorted exercises that have a due date in the past
                         let sortedExerciseIds = Object.values(exerciseMetrics?.exerciseInformation ?? {})
-                            .sort((a, b) => (a.dueDate.isBefore(b.dueDate) ? -1 : 1))
-                            .filter((exercise) => exercise.dueDate.isBefore(dayjs()))
+                            .sort((a, b) => ((a?.dueDate ?? a.startDate).isBefore(b.dueDate) ? -1 : 1))
+                            .filter((exercise) => exercise.dueDate && exercise.dueDate.isBefore(dayjs()))
                             .map((exercise) => exercise.id);
 
                         // Limit the number of exercises to the last 10

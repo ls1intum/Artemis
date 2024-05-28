@@ -49,7 +49,7 @@ export class CourseDashboardService {
                     title: exercise.title,
                     shortName: exercise.shortName,
                     startDate: dayjs(exercise.start),
-                    dueDate: dayjs(exercise.due),
+                    dueDate: exercise.due ? dayjs(exercise.due) : undefined,
                     maxPoints: exercise.maxPoints,
                     type: this.mapToExerciseType(exercise.type),
                     includedInOverallScore: exercise.includedInOverallScore,

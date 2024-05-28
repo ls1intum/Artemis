@@ -32,7 +32,7 @@ export class ExerciseInformation {
     public title: string;
     public shortName?: string;
     public startDate: dayjs.Dayjs;
-    public dueDate: dayjs.Dayjs;
+    public dueDate?: dayjs.Dayjs;
     public maxPoints: number;
     public type: ExerciseType;
     public includedInOverallScore?: IncludedInOverallScore;
