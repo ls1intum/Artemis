@@ -40,7 +40,7 @@ public interface ExerciseMetricsRepository extends JpaRepository<Exercise, Long>
     @Query("""
             SELECT e.id AS key, c AS value
             FROM Exercise e
-            LEFT JOIN e.categories c
+                LEFT JOIN e.categories c
             """)
     Set<Entry<Long, String>> findCategoriesByExerciseIds(@Param("exerciseIds") Set<Long> exerciseIds);
 
@@ -129,9 +129,9 @@ public interface ExerciseMetricsRepository extends JpaRepository<Exercise, Long>
     @Query("""
             SELECT e.id
             FROM Exercise e
-            LEFT JOIN e.studentParticipations p
-            LEFT JOIN e.teams t
-            LEFT JOIN t.students u
+                LEFT JOIN e.studentParticipations p
+                LEFT JOIN e.teams t
+                LEFT JOIN t.students u
             WHERE e.id IN :exerciseIds
                 AND (p.student.id = :userId OR u.id = :userId)
             """)
@@ -147,8 +147,8 @@ public interface ExerciseMetricsRepository extends JpaRepository<Exercise, Long>
     @Query("""
             SELECT new de.tum.in.www1.artemis.web.rest.dto.metrics.MapEntryLongLong(e.id, t.id)
             FROM Exercise e
-            LEFT JOIN e.teams t
-            LEFT JOIN t.students u
+                LEFT JOIN e.teams t
+                LEFT JOIN t.students u
             WHERE e.mode = de.tum.in.www1.artemis.domain.enumeration.ExerciseMode.TEAM
                 AND e.id IN :exerciseIds
                 AND u.id = :userId
