@@ -156,7 +156,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
         Participant participant = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         ZonedDateTime initializationDate = ZonedDateTime.now().minusHours(5);
 
-        StudentParticipation studentParticipationReceived = participationService.startExerciseWithInitializationDate(modelling, participant, true, initializationDate);
+        StudentParticipation studentParticipationReceived = participationService.startExercise(modelling, participant, true);
 
         assertThat(studentParticipationReceived.getExercise()).isEqualTo(modelling);
         assertThat(studentParticipationReceived.getStudent()).isPresent();
