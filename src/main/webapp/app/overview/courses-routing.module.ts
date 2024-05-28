@@ -9,7 +9,7 @@ import { CourseOverviewComponent } from './course-overview.component';
 import { CourseExamsComponent } from './course-exams/course-exams.component';
 import { CourseTutorialGroupsComponent } from './course-tutorial-groups/course-tutorial-groups.component';
 import { CourseTutorialGroupDetailComponent } from './tutorial-group-details/course-tutorial-group-detail/course-tutorial-group-detail.component';
-import { ExamParticipationCoverComponent } from 'app/exam/participate/exam-cover/exam-participation-cover.component';
+import { ExamParticipationComponent } from 'app/exam/participate/exam-participation.component';
 
 const routes: Routes = [
     {
@@ -230,16 +230,18 @@ const routes: Routes = [
                 canActivate: [UserRouteAccessService],
                 children: [
                     {
+                        path: '',
+                        loadChildren: () => import('../overview/course-exams/course-exams.module').then((m) => m.CourseExamsModule),
+                    },
+                    {
                         path: ':examId',
-                        component: ExamParticipationCoverComponent,
+                        component: ExamParticipationComponent,
                         data: {
                             authorities: [Authority.USER],
                             pageTitle: 'overview.exams',
-                            hasSidebar: true,
-                            showRefreshButton: true,
                         },
                         canActivate: [UserRouteAccessService],
-                        loadChildren: () => import('../exam/participate/exam-cover/exam-participation-cover.module').then((m) => m.ArtemisExamParticipationCoverModule),
+                        loadChildren: () => import('../exam/participate/exam-participation.module').then((m) => m.ArtemisExamParticipationModule),
                     },
                 ],
             },

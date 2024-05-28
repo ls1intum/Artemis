@@ -18,27 +18,14 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 
 export type ButtonTooltipType = 'submitted' | 'submittedSubmissionLimitReached' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted';
 
-export interface ExamState {
-    courseId?: number;
-    examId?: number;
-    testRunId?: number;
-    studentExamId?: number;
-    exam?: Exam;
-    testExam?: boolean;
-    studentExam?: StudentExam;
-    exercises?: Exercise[];
-    accountName?: string;
-    testRun?: boolean;
-}
-
 @Injectable({ providedIn: 'root' })
 export class ExamParticipationService {
     public currentlyLoadedStudentExam = new Subject<StudentExam>();
 
-    private examExerciseIds: number[];
+    private examIsStartedSubject = new BehaviorSubject<boolean>(false);
+    examIsStarted$ = this.examIsStartedSubject.asObservable();
 
-    private examStateSource = new BehaviorSubject<ExamState>({});
-    examState$ = this.examStateSource.asObservable();
+    private examExerciseIds: number[];
 
     public getResourceURL(courseId: number, examId: number): string {
         return `api/courses/${courseId}/exams/${examId}`;
@@ -355,9 +342,11 @@ export class ExamParticipationService {
         this.examExerciseIds = examExerciseIds;
     }
 
-    // To update the exam state
-    public setExamState(newState: Partial<ExamState>) {
-        const currentState = this.examStateSource.value;
-        this.examStateSource.next({ ...currentState, ...newState });
+    startExam() {
+        this.examIsStartedSubject.next(true);
+    }
+
+    resetExam() {
+        this.examIsStartedSubject.next(false);
     }
 }

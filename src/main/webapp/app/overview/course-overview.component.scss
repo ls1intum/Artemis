@@ -80,6 +80,13 @@ $menu-width-open: 220px;
         }
     }
 
+    &.exam-is-active {
+        .mat-drawer-content {
+            width: 100vw;
+            margin-left: 0px !important;
+        }
+    }
+
     @media screen and (max-width: 960px) {
         .mat-drawer {
             width: $menu-width-closed;

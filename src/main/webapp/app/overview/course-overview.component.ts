@@ -63,6 +63,7 @@ import { CourseLecturesComponent } from './course-lectures/course-lectures.compo
 import { facSidebar } from '../../content/icons/icons';
 import { CourseExamsComponent } from './course-exams/course-exams.component';
 import { CourseTutorialGroupsComponent } from './course-tutorial-groups/course-tutorial-groups.component';
+import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 
 interface CourseActionItem {
     title: string;
@@ -113,6 +114,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     isSidebarCollapsed = false;
     profileSubscription?: Subscription;
     showRefreshButton: boolean = false;
+    isExamStarted = false;
 
     // Properties to track hidden items for dropdown menu
     dropdownOpen: boolean = false;
@@ -191,6 +193,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         private courseAccessStorageService: CourseAccessStorageService,
         private profileService: ProfileService,
         private modalService: NgbModal,
+        private examParticipationService: ExamParticipationService,
     ) {}
 
     async ngOnInit() {
@@ -200,6 +203,9 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.profileSubscription = this.profileService.getProfileInfo()?.subscribe((profileInfo) => {
             this.isProduction = profileInfo?.inProduction;
             this.isTestServer = profileInfo.testServer ?? false;
+        });
+        this.examParticipationService.examIsStarted$.subscribe((isStarted) => {
+            this.isExamStarted = isStarted;
         });
         this.getCollapseStateFromStorage();
         this.course = this.courseStorageService.getCourse(this.courseId);

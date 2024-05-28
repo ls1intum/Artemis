@@ -46,6 +46,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     sidebarData: SidebarData;
     sidebarExams: SidebarCardElement[] = [];
     isCollapsed = false;
+    isExamStarted = false;
 
     constructor(
         private route: ActivatedRoute,
@@ -64,7 +65,9 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
         this.parentParamSubscription = this.route.parent?.params.subscribe((params) => {
             this.courseId = Number(params.courseId);
         });
-
+        this.examParticipationService.examIsStarted$.subscribe((isStarted) => {
+            this.isExamStarted = isStarted;
+        });
         this.course = this.courseStorageService.getCourse(this.courseId);
         this.prepareSidebarData();
 

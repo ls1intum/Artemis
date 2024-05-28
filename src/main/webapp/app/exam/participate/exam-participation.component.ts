@@ -25,16 +25,17 @@ import { AlertService } from 'app/core/util/alert.service';
 import dayjs from 'dayjs/esm';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { cloneDeep } from 'lodash-es';
+import { Course } from 'app/entities/course.model';
 import { captureException } from '@sentry/angular-ivy';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ExamPage } from 'app/entities/exam-page.model';
 import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-import { faArrowLeft, faCheckCircle, faGraduationCap, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { SafeHtml } from '@angular/platform-browser';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import {
     ExamLiveEventType,
     ExamParticipationLiveEventsService,
@@ -48,7 +49,7 @@ type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 @Component({
     selector: 'jhi-exam-participation',
     templateUrl: './exam-participation.component.html',
-    styleUrls: ['./exam-participation.scss', '../../overview/course-overview.scss'],
+    styleUrls: ['./exam-participation.scss'],
 })
 export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     @ViewChildren(ExamSubmissionComponent)
@@ -62,9 +63,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
     courseId: number;
     examId: number;
-    testRunId?: number;
-    testExam: boolean;
-    testRun?: boolean;
+    testRunId: number;
+    testExam = false;
     studentExamId: number;
     testStartTime?: dayjs.Dayjs;
 
@@ -98,25 +98,12 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     websocketSubscription?: Subscription;
     workingTimeUpdateEventsSubscription?: Subscription;
     problemStatementUpdateEventsSubscription?: Subscription;
-    examStateSubscription?: Subscription;
-    subscription?: Subscription;
 
     // Icons
     faCheckCircle = faCheckCircle;
-    faArrowLeft = faArrowLeft;
-    faSpinner = faSpinner;
-
-    endEnabled: boolean;
-    confirmed = false;
-    accountName = '';
-    enteredName = '';
-    formattedGeneralInformation?: SafeHtml;
-    formattedConfirmationText?: SafeHtml;
-    graceEndDate: dayjs.Dayjs;
-    criticalTime = dayjs.duration(30, 'seconds');
 
     isProgrammingExercise() {
-        return !this.activeExamPage.isOverviewPage && this.activeExamPage.exercise?.type === ExerciseType.PROGRAMMING;
+        return !this.activeExamPage.isOverviewPage && this.activeExamPage.exercise!.type === ExerciseType.PROGRAMMING;
     }
 
     isProgrammingExerciseWithCodeEditor(): boolean {
@@ -137,6 +124,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
     private programmingSubmissionSubscriptions: Subscription[] = [];
 
+    loadingExam: boolean;
     isAtLeastTutor?: boolean;
     isAtLeastInstructor?: boolean;
 
@@ -147,9 +135,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
     constructor(
         private websocketService: JhiWebsocketService,
-        private router: Router,
         private route: ActivatedRoute,
-        private artemisMarkdown: ArtemisMarkdownService,
+        private router: Router,
         private examParticipationService: ExamParticipationService,
         private modelingSubmissionService: ModelingSubmissionService,
         private programmingSubmissionService: ProgrammingSubmissionService,
@@ -159,6 +146,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         private alertService: AlertService,
         private courseExerciseService: CourseExerciseService,
         private liveEventsService: ExamParticipationLiveEventsService,
+        private courseService: CourseManagementService,
+        private courseStorageService: CourseStorageService,
         private examExerciseUpdateService: ExamExerciseUpdateService,
         private examManagementService: ExamManagementService,
     ) {
@@ -169,59 +158,63 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     /**
-     * Load exam information from the exam-participation-cover component
-     * This component includes displaying exam itself and end page
+     * loads the exam from the server and initializes the view
      */
     ngOnInit(): void {
-        if (!this.exam) {
-            // needed to get neccessary properties from exam-participation-cover component, because all these properties are defined there
-            this.examStateSubscription = this.examParticipationService.examState$.subscribe((state) => {
-                this.courseId = state.courseId!;
-                this.examId = state.examId!;
-                this.testRunId = state.testRunId!;
-                this.studentExamId = state.studentExamId!;
-
-                this.exam = state.exam!;
-                this.studentExam = state.studentExam!;
-                this.studentExam.exercises = state.exercises!;
-                this.testExam = state.testExam!;
-
-                this.accountName = state.accountName!;
-
-                this.testRun = state.testRun;
-            });
-        }
+        this.route.parent?.parent?.params.subscribe((params) => {
+            this.courseId = parseInt(params['courseId'], 10);
+        });
+        this.route.params.subscribe((params) => {
+            this.examId = parseInt(params['examId'], 10);
+            this.testRunId = parseInt(params['testRunId'], 10);
+            // As a student can have multiple test exams, the studentExamId is passed as a parameter.
+            if (params['studentExamId']) {
+                // If a new StudentExam should be created, the keyword start is used (and no StudentExam exists)
+                this.testExam = true;
+                if (params['studentExamId'] !== 'start') {
+                    this.studentExamId = parseInt(params['studentExamId'], 10);
+                }
+            }
+            this.loadingExam = true;
+            if (this.testRunId) {
+                this.examParticipationService.loadTestRunWithExercisesForConduction(this.courseId, this.examId, this.testRunId).subscribe({
+                    next: (studentExam) => {
+                        this.studentExam = studentExam;
+                        this.studentExam.exam!.course = new Course();
+                        this.studentExam.exam!.course.id = this.courseId;
+                        this.exam = studentExam.exam!;
+                        this.testExam = this.exam.testExam!;
+                        this.loadingExam = false;
+                    },
+                    error: () => (this.loadingExam = false),
+                });
+            } else {
+                this.examParticipationService.getOwnStudentExam(this.courseId, this.examId).subscribe({
+                    next: (studentExam) => {
+                        this.handleStudentExam(studentExam);
+                    },
+                    error: () => {
+                        this.handleNoStudentExam();
+                    },
+                });
+            }
+        });
 
         // listen to connect / disconnect events
         this.websocketSubscription = this.websocketService.connectionState.subscribe((status) => {
             this.connected = status.connected;
         });
-
-        // Needed in case of page reload to navigate back to the exam start page
-        if (!this.examId || !this.courseId) {
-            this.courseId = parseInt(this.route.snapshot.parent?.parent?.params['courseId'], 10);
-            this.examId = parseInt(this.route.snapshot.params['examId'], 10);
-            this.testRunId = parseInt(this.route.snapshot.params['testRunId'], 10);
-        }
-
-        this.examStarted(this.studentExam);
-        this.generateEndTextInformation();
-        this.loadGraceEndDate();
     }
 
-    generateEndTextInformation() {
-        this.formattedGeneralInformation = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.endText);
-        this.formattedConfirmationText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.confirmationEndText);
-    }
-
-    loadGraceEndDate() {
-        if (this.testRun) {
-            this.graceEndDate = dayjs(this.testStartTime!).add(this.studentExam.workingTime!, 'seconds').add(this.exam.gracePeriod!, 'seconds');
-        } else if (this.testExam) {
-            this.graceEndDate = dayjs(this.studentExam.startedDate!).add(this.studentExam.workingTime!, 'seconds').add(this.exam.gracePeriod!, 'seconds');
-        } else {
-            this.graceEndDate = dayjs(this.exam.startDate).add(this.studentExam.workingTime!, 'seconds').add(this.exam.gracePeriod!, 'seconds');
-        }
+    loadAndDisplaySummary() {
+        this.examParticipationService.loadStudentExamWithExercisesForSummary(this.courseId, this.examId, this.studentExam.id!).subscribe({
+            next: (studentExamWithExercises: StudentExam) => {
+                this.studentExam = studentExamWithExercises;
+                this.showExamSummary = true;
+                this.loadingExam = false;
+            },
+            error: () => (this.loadingExam = false),
+        });
     }
 
     canDeactivate() {
@@ -241,16 +234,16 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     get activePageIndex(): number {
-        if (!this.activeExamPage || this.activeExamPage.isOverviewPage || !this.studentExam.exercises) {
+        if (!this.activeExamPage || this.activeExamPage.isOverviewPage) {
             return -1;
         }
-        return this.studentExam.exercises!.findIndex((examExercise) => examExercise.id === this.activeExamPage.exercise?.id);
+        return this.studentExam.exercises!.findIndex((examExercise) => examExercise.id === this.activeExamPage.exercise!.id);
     }
 
     get activePageComponent(): ExamPageComponent | undefined {
         // we have to find the current component based on the activeExercise because the queryList might not be full yet (e.g. only 2 of 5 components initialized)
         return this.currentPageComponents.find(
-            (submissionComponent) => !this.activeExamPage.isOverviewPage && (submissionComponent as ExamSubmissionComponent).getExerciseId() === this.activeExamPage.exercise?.id,
+            (submissionComponent) => !this.activeExamPage.isOverviewPage && (submissionComponent as ExamSubmissionComponent).getExerciseId() === this.activeExamPage.exercise!.id,
         );
     }
 
@@ -263,6 +256,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             studentExam.workingTime = this.studentExam?.workingTime ?? studentExam.workingTime;
             this.studentExam = studentExam;
 
+            this.examParticipationService.startExam();
             // provide exam-participation.service with exerciseId information (e.g. needed for exam notifications)
             const exercises: Exercise[] = this.studentExam.exercises!;
             const exerciseIds = exercises.map((exercise) => exercise.id).filter(Number) as number[];
@@ -270,7 +264,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             // set endDate with workingTime
             if (!!this.testRunId || this.testExam) {
                 this.testStartTime = studentExam.startedDate ? dayjs(studentExam.startedDate) : dayjs();
-                this.initIndividualEndDates(this.testStartTime!);
+                this.initIndividualEndDates(this.testStartTime);
             } else {
                 this.individualStudentEndDate = dayjs(this.exam.startDate).add(this.studentExam.workingTime!, 'seconds');
             }
@@ -349,9 +343,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     onExamEndConfirmed() {
         // temporary lock the submit button in order to protect against spam
         this.handInPossible = false;
-        //this.examParticipationService.setExamState({ handInPossible: false });
         this.submitInProgress = true;
-        //this.examParticipationService.setExamState({ submitInProgress: true });
         if (this.autoSaveInterval) {
             window.clearInterval(this.autoSaveInterval);
         }
@@ -368,6 +360,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             )
             .subscribe({
                 next: () => {
+                    if (this.testExam) {
+                        // If we have a test exam, we reload the summary from the server right away
+                        this.loadAndDisplaySummary();
+                    }
                     this.submitInProgress = false;
 
                     // As we don't get the student exam from the server, we need to set the submitted flag and the submission date manually
@@ -378,18 +374,16 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     this.examParticipationService.currentlyLoadedStudentExam.next(this.studentExam);
 
                     if (this.testRunId) {
+                        // If this is a test run, forward the user directly to the exam summary
                         this.router.navigate(['course-management', this.courseId, 'exams', this.examId, 'test-runs', this.testRunId, 'summary']);
                     }
+
                     this.examSummaryButtonTimer = setInterval(() => {
                         this.examSummaryButtonSecondsLeft -= 1;
                         if (this.examSummaryButtonSecondsLeft === 0) {
                             clearInterval(this.examSummaryButtonTimer);
                         }
                     }, 1000);
-
-                    if (this.testExam) {
-                        this.router.navigate(['courses', this.courseId, 'exams', this.examId]);
-                    }
                 },
                 error: (error: Error) => {
                     // Explicitly check whether the error was caused by the submission not being in-time or already present, in this case, set hand in not possible
@@ -448,14 +442,13 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * Called when a user wants to hand in early or decides to continue.
      */
     toggleHandInEarly() {
-        this.attendanceChecked = this.exam?.testExam || !this.exam?.examWithAttendanceCheck;
         // no need to fetch attendance check status from the server if it is a test exam or an exam without attendance check or when clicking continue
         if (this.exam.testExam || !this.exam.examWithAttendanceCheck || this.handInEarly) {
             this.handleHandInEarly();
         } else {
             this.examManagementService.isAttendanceChecked(this.courseId, this.examId).subscribe((res) => {
                 if (res.body) {
-                    this.attendanceChecked = this.exam?.testExam || !this.exam?.examWithAttendanceCheck || res.body;
+                    this.attendanceChecked = res.body;
                 }
                 this.handleHandInEarly();
             });
@@ -473,7 +466,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 captureException(error);
             }
         } else if (this.studentExam?.exercises && this.activeExamPage) {
-            const index = this.studentExam.exercises.findIndex((exercise) => !this.activeExamPage.isOverviewPage && exercise.id === this.activeExamPage.exercise?.id);
+            const index = this.studentExam.exercises.findIndex((exercise) => !this.activeExamPage.isOverviewPage && exercise.id === this.activeExamPage.exercise!.id);
             this.exerciseIndex = index ? index : 0;
 
             // Reset the visited pages array so ngOnInit will be called for only the active page
@@ -537,9 +530,54 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.websocketSubscription?.unsubscribe();
         this.workingTimeUpdateEventsSubscription?.unsubscribe();
         this.problemStatementUpdateEventsSubscription?.unsubscribe();
-        this.examStateSubscription?.unsubscribe();
-        this.subscription?.unsubscribe();
+        this.examParticipationService.resetExam();
         window.clearInterval(this.autoSaveInterval);
+    }
+
+    handleStudentExam(studentExam: StudentExam) {
+        this.studentExam = studentExam;
+        this.exam = studentExam.exam!;
+        this.testExam = this.exam.testExam!;
+        if (!this.exam.testExam) {
+            this.initIndividualEndDates(this.exam.startDate!);
+        }
+
+        // only show the summary if the student was able to submit on time.
+        if (this.isOver() && this.studentExam.submitted) {
+            this.loadAndDisplaySummary();
+        } else {
+            // Directly start the exam when we continue from a failed save
+            if (this.examParticipationService.lastSaveFailed(this.courseId, this.examId)) {
+                this.examParticipationService.loadStudentExamWithExercisesForConductionFromLocalStorage(this.courseId, this.examId).subscribe((localExam: StudentExam) => {
+                    // Keep the working time from the server
+                    localExam.workingTime = this.studentExam.workingTime ?? localExam.workingTime;
+
+                    this.studentExam = localExam;
+                    this.loadingExam = false;
+                    this.examStarted(this.studentExam);
+                });
+            } else {
+                this.loadingExam = false;
+            }
+        }
+    }
+
+    /**
+     * Handles the case when there is no student exam. Here we have to check if the user is at least tutor to show the redirect to the exam management page.
+     * This check is not done in the normal case due to performance reasons of 2000 students sending additional requests
+     */
+    handleNoStudentExam() {
+        const course = this.courseStorageService.getCourse(this.courseId);
+        if (!course) {
+            this.courseService.find(this.courseId).subscribe((courseResponse) => {
+                this.isAtLeastTutor = courseResponse.body?.isAtLeastTutor;
+                this.isAtLeastInstructor = courseResponse.body?.isAtLeastInstructor;
+            });
+        } else {
+            this.isAtLeastTutor = course.isAtLeastTutor;
+            this.isAtLeastInstructor = course.isAtLeastInstructor;
+        }
+        this.loadingExam = false;
     }
 
     /**
@@ -848,41 +886,5 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     }
                 }
             });
-    }
-
-    /**
-     * Returns whether the student failed to submit on time. In this case the end page is adapted.
-     */
-    get studentFailedToSubmit(): boolean {
-        if (this.testRun) {
-            return false;
-        }
-        let individualStudentEndDate;
-        if (this.exam?.testExam) {
-            if (!this.studentExam.submitted && this.studentExam.started && this.studentExam.startedDate) {
-                individualStudentEndDate = dayjs(this.studentExam.startedDate).add(this.studentExam.workingTime!, 'seconds');
-            } else {
-                return false;
-            }
-        } else {
-            individualStudentEndDate = dayjs(this.exam?.startDate).add(this.studentExam.workingTime!, 'seconds');
-        }
-        return individualStudentEndDate.add(this.exam?.gracePeriod!, 'seconds').isBefore(this.serverDateService.now()) && !this.studentExam.submitted;
-    }
-
-    updateConfirmation() {
-        this.endEnabled = this.confirmed;
-    }
-
-    get nameIsCorrect(): boolean {
-        return this.enteredName.trim() === this.accountName.trim();
-    }
-
-    get inserted(): boolean {
-        return this.enteredName.trim() !== '';
-    }
-
-    get endButtonEnabled(): boolean {
-        return this.nameIsCorrect && this.confirmed && this.exam && this.handInPossible;
     }
 }
