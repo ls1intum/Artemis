@@ -306,6 +306,17 @@ public final class Constants {
     public static final String PROFILE_LTI = "lti";
 
     /**
+     * The name of the Spring profile used for Theia as an external online IDE.
+     */
+    public static final String PROFILE_THEIA = "theia";
+
+    /**
+     * The InfoContributor's detail key for the Theia Portal URL
+     */
+
+    public static final String THEIA_PORTAL_URL = "theiaPortalURL";
+
+    /**
      * Size of an unsigned tinyInt in SQL, that is used in the database
      */
     public static final int SIZE_OF_UNSIGNED_TINYINT = 255;
