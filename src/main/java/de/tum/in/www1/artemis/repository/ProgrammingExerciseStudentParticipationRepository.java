@@ -162,6 +162,18 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
                 LEFT JOIN FETCH participation.submissions
             WHERE participation.exercise.id = :exerciseId
                 AND participation.student.login = :username
+                AND participation.testRun = :testRun
+                AND participation.id = (SELECT MAX(p2.id) FROM StudentParticipation p2 WHERE p2.exercise.id = :exerciseId AND p2.student.login = :username)
+            """)
+    Optional<ProgrammingExerciseStudentParticipation> findLatestWithSubmissionsByExerciseIdAndStudentLoginAndTestRun(@Param("exerciseId") long exerciseId,
+            @Param("username") String username, @Param("testRun") boolean testRun);
+
+    @Query("""
+            SELECT participation
+            FROM ProgrammingExerciseStudentParticipation participation
+                LEFT JOIN FETCH participation.submissions
+            WHERE participation.exercise.id = :exerciseId
+                AND participation.student.login = :username
             ORDER BY participation.testRun ASC
             """)
     List<ProgrammingExerciseStudentParticipation> findAllWithSubmissionsByExerciseIdAndStudentLogin(@Param("exerciseId") long exerciseId, @Param("username") String username);
