@@ -12,20 +12,27 @@ import de.tum.in.www1.artemis.domain.competency.Prerequisite;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PrerequisiteResponseDTO(long id, String title, String description, CompetencyTaxonomy taxonomy, ZonedDateTime softDueDate, int masteryThreshold, boolean optional,
-        SourceCourseDTO sourceCourseDTO) {
+        LinkedCourseCompetencyDTO linkedCourseCompetencyDTO) {
 
+    /**
+     * Converts a Prerequisite to a PrerequisiteResponseDTO (and its linked CourseCompetency to a LinkedCourseCompetencyDTO)
+     *
+     * @param prerequisite the Prerequisite to convert
+     * @return the PrerequisiteResponseDTO
+     */
     public static PrerequisiteResponseDTO of(Prerequisite prerequisite) {
-        SourceCourseDTO sourceCourseDTO = null;
-        if (prerequisite.getLinkedCourseCompetency() != null && prerequisite.getLinkedCourseCompetency().getCourse() != null) {
-            var course = prerequisite.getLinkedCourseCompetency().getCourse();
-            sourceCourseDTO = new SourceCourseDTO(course.getId(), course.getTitle());
+        LinkedCourseCompetencyDTO linkedCourseCompetencyDTO = null;
+        var linkedCompetency = prerequisite.getLinkedCourseCompetency();
+        if (linkedCompetency != null && linkedCompetency.getCourse() != null) {
+            var course = linkedCompetency.getCourse();
+            linkedCourseCompetencyDTO = new LinkedCourseCompetencyDTO(linkedCompetency.getId(), course.getId(), course.getTitle(), course.getSemester());
         }
 
         return new PrerequisiteResponseDTO(prerequisite.getId(), prerequisite.getTitle(), prerequisite.getDescription(), prerequisite.getTaxonomy(), prerequisite.getSoftDueDate(),
-                prerequisite.getMasteryThreshold(), prerequisite.isOptional(), sourceCourseDTO);
+                prerequisite.getMasteryThreshold(), prerequisite.isOptional(), linkedCourseCompetencyDTO);
     }
 
-    private record SourceCourseDTO(long id, String title) {
+    private record LinkedCourseCompetencyDTO(long id, long courseId, String courseTitle, String semester) {
 
     }
 }

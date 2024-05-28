@@ -19,7 +19,7 @@
                     @if (!isCollapsed) {
                         <div>
                             @for (prerequisite of prerequisites; track identify(i, prerequisite); let i = $index) {
-                                <jhi-competency-card [competency]="prerequisite" [courseId]="courseId" [isPrerequisite]="true" />
+                                <jhi-competency-card [competency]="prerequisite" [courseId]="prerequisite.linked" [isPrerequisite]="true" />
                             }
                         </div>
                     }

@@ -50,7 +50,6 @@ export interface CourseCompetency extends BaseCompetency {
     masteryThreshold?: number;
     optional?: boolean;
     course?: Course;
-    linkedStandardizedCompetency?: StandardizedCompetency;
     linkedCourseCompetency?: CourseCompetency;
 }
 

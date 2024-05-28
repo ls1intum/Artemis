@@ -141,12 +141,10 @@
     <div class="d-flex flex-wrap mt-4">
         <h2 jhiTranslate="artemisApp.competency.prerequisite.title"></h2>
         <div class="ms-auto text-truncate justify-content-end">
-            <button id="prerequisiteImportButton" class="btn btn-primary" (click)="openPrerequisiteSelectionModal()">
-                <fa-icon [icon]="faPlus" />
-                <span jhiTranslate="artemisApp.competency.prerequisite.select"></span>
-            </button>
+            <!-- TODO: add new prerequisite import button -->
         </div>
     </div>
+    <!-- TODO: new table will be added when create/edit will be added -->
     <div class="container-fluid overflow-auto">
         @if (prerequisites.length) {
             <table class="table table-striped">
@@ -183,13 +181,16 @@
                                 </div>
                             </td>
                             <td class="col">
-                                @if (prerequisite.course) {
+                                @if (prerequisite.linkedCourseCompetency?.course) {
                                     <div>
-                                        <a [routerLink]="['/course-management', prerequisite.course.id, 'competency-management']">{{ prerequisite.course.title }}</a>
+                                        <a [routerLink]="['/course-management', prerequisite.linkedCourseCompetency.course.id, 'competency-management']">{{
+                                            prerequisite.linkedCourseCompetency.course.title
+                                        }}</a>
                                     </div>
                                 }
                             </td>
                             <td class="col text-end">
+                                <!-- TODO: replace with real delete button -->
                                 <button class="btn btn-secondary btn-sm" (click)="removePrerequisite(prerequisite.id!)">
                                     <fa-icon [icon]="faTrash" />
                                     {{ 'entity.action.remove' | artemisTranslate }}

@@ -123,6 +123,7 @@ export class CompetencyService {
     }
 
     //prerequisites
+    //TODO: duplicated, move in a follow-up
 
     getAllPrerequisitesForCourse(courseId: number): Observable<EntityArrayResponseType> {
         return this.httpClient

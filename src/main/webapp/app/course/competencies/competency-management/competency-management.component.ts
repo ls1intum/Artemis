@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { AlertService } from 'app/core/util/alert.service';
@@ -17,7 +17,6 @@ import { onError } from 'app/shared/util/global.utils';
 import { Subject, Subscription, forkJoin } from 'rxjs';
 import { faFileImport, faPencilAlt, faPlus, faRobot, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { PrerequisiteImportComponent } from 'app/course/competencies/competency-management/prerequisite-import.component';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { CompetencyImportCourseComponent, ImportAllFromCourseResult } from 'app/course/competencies/competency-management/competency-import-course.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -26,6 +25,8 @@ import { PROFILE_IRIS } from 'app/app.constants';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 import { TranslateService } from '@ngx-translate/core';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { Prerequisite } from 'app/entities/prerequisite.model';
+import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
 
 @Component({
     selector: 'jhi-competency-management',
@@ -41,7 +42,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     private standardizedCompetencySubscription: Subscription;
 
     competencies: Competency[] = [];
-    prerequisites: Competency[] = [];
+    prerequisites: Prerequisite[] = [];
     relations: CompetencyRelation[] = [];
 
     // Icons
@@ -51,20 +52,20 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     protected readonly faPencilAlt = faPencilAlt;
     protected readonly faRobot = faRobot;
 
-    //other constants
+    // other constants
     readonly getIcon = getIcon;
     readonly documentationType: DocumentationType = 'Competencies';
 
-    constructor(
-        private activatedRoute: ActivatedRoute,
-        private competencyService: CompetencyService,
-        private alertService: AlertService,
-        private modalService: NgbModal,
-        private profileService: ProfileService,
-        private irisSettingsService: IrisSettingsService,
-        private translateService: TranslateService,
-        private featureToggleService: FeatureToggleService,
-    ) {}
+    // Injected services
+    private activatedRoute: ActivatedRoute = inject(ActivatedRoute);
+    private competencyService: CompetencyService = inject(CompetencyService);
+    private prerequisiteService: PrerequisiteService = inject(PrerequisiteService);
+    private alertService: AlertService = inject(AlertService);
+    private modalService: NgbModal = inject(NgbModal);
+    private profileService: ProfileService = inject(ProfileService);
+    private irisSettingsService: IrisSettingsService = inject(IrisSettingsService);
+    private translateService: TranslateService = inject(TranslateService);
+    private featureToggleService: FeatureToggleService = inject(FeatureToggleService);
 
     ngOnInit(): void {
         this.activatedRoute.parent!.params.subscribe((params) => {
@@ -105,12 +106,12 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     /**
      * Remove a prerequisite from the course
      *
-     * @param competencyId the id of the prerequisite
+     * @param prerequisiteId the id of the prerequisite
      */
-    removePrerequisite(competencyId: number) {
-        this.competencyService.removePrerequisite(competencyId, this.courseId).subscribe({
+    removePrerequisite(prerequisiteId: number) {
+        this.prerequisiteService.removePrerequisite(prerequisiteId, this.courseId).subscribe({
             next: () => {
-                const index = this.prerequisites.findIndex((prerequisite) => prerequisite.id === competencyId);
+                const index = this.prerequisites.findIndex((prerequisite) => prerequisite.id === prerequisiteId);
                 this.prerequisites.splice(index, 1);
             },
             error: (error: HttpErrorResponse) => onError(this.alertService, error),
@@ -138,15 +139,12 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
      */
     loadData() {
         this.isLoading = true;
-        this.competencyService
-            .getAllPrerequisitesForCourse(this.courseId)
-            .pipe(map((response: HttpResponse<Competency[]>) => response.body!))
-            .subscribe({
-                next: (competencies) => {
-                    this.prerequisites = competencies;
-                },
-                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
-            });
+        this.prerequisiteService.getAllPrerequisitesForCourse(this.courseId).subscribe({
+            next: (prerequisites) => {
+                this.prerequisites = prerequisites;
+            },
+            error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+        });
         this.competencyService
             .getAllForCourse(this.courseId)
             .pipe(
@@ -178,28 +176,6 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });
-    }
-
-    /**
-     * Opens a modal for adding a prerequisite to the current course.
-     */
-    openPrerequisiteSelectionModal() {
-        const modalRef = this.modalService.open(PrerequisiteImportComponent, { size: 'lg', backdrop: 'static' });
-        modalRef.componentInstance.disabledIds = this.competencies.concat(this.prerequisites).map((competency) => competency.id);
-        modalRef.result.then((result: Competency) => {
-            this.competencyService
-                .addPrerequisite(result.id!, this.courseId)
-                .pipe(
-                    filter((res: HttpResponse<Competency>) => res.ok),
-                    map((res: HttpResponse<Competency>) => res.body),
-                )
-                .subscribe({
-                    next: (res: Competency) => {
-                        this.prerequisites.push(res);
-                    },
-                    error: (res: HttpErrorResponse) => onError(this.alertService, res),
-                });
-        });
     }
 
     /**

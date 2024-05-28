@@ -9,6 +9,7 @@ import { Subscription, forkJoin } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
 
 @Component({
     selector: 'jhi-course-competencies',
@@ -34,6 +35,7 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
         private alertService: AlertService,
         private courseStorageService: CourseStorageService,
         private competencyService: CompetencyService,
+        private prerequisiteService: PrerequisiteService,
     ) {}
 
     ngOnInit(): void {
@@ -80,10 +82,10 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
      */
     loadData() {
         this.isLoading = true;
-        forkJoin([this.competencyService.getAllForCourse(this.courseId), this.competencyService.getAllPrerequisitesForCourse(this.courseId)]).subscribe({
+        forkJoin([this.competencyService.getAllForCourse(this.courseId), this.prerequisiteService.getAllPrerequisitesForCourse(this.courseId)]).subscribe({
             next: ([competencies, prerequisites]) => {
                 this.competencies = competencies.body!;
-                this.prerequisites = prerequisites.body!;
+                this.prerequisites = prerequisites;
                 // Also update the course, so we do not need to fetch again next time
                 if (this.course) {
                     this.course.competencies = this.competencies;

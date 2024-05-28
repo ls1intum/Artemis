@@ -1,9 +1,9 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { CompetencyService } from 'app/course/competencies/competency.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { finalize } from 'rxjs/operators';
 import { Competency } from 'app/entities/competency.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
 
 @Component({
     selector: 'jhi-course-prerequisites-modal',
@@ -20,7 +20,7 @@ export class CoursePrerequisitesModalComponent implements OnInit {
     constructor(
         private alertService: AlertService,
         private activeModal: NgbActiveModal,
-        private competencyService: CompetencyService,
+        private prerequisiteService: PrerequisiteService,
     ) {}
 
     ngOnInit(): void {
@@ -35,7 +35,7 @@ export class CoursePrerequisitesModalComponent implements OnInit {
      */
     loadData() {
         this.isLoading = true;
-        this.competencyService
+        this.prerequisiteService
             .getAllPrerequisitesForCourse(this.courseId)
             .pipe(
                 finalize(() => {
@@ -44,7 +44,7 @@ export class CoursePrerequisitesModalComponent implements OnInit {
             )
             .subscribe({
                 next: (prerequisites) => {
-                    this.prerequisites = prerequisites.body!;
+                    this.prerequisites = prerequisites;
                 },
                 error: (error: string) => {
                     this.alertService.error(error);
