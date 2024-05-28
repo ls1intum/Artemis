@@ -41,13 +41,13 @@ import de.tum.in.www1.artemis.domain.DomainObject;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class IrisSettings extends DomainObject {
 
-    public abstract IrisLectureIngestionSubSettings getIrisLectureIngestionSettings();
-
-    public abstract void setIrisLectureIngestionSettings(IrisLectureIngestionSubSettings irisLectureIngestionSettings);
-
     public abstract IrisChatSubSettings getIrisChatSettings();
 
     public abstract void setIrisChatSettings(IrisChatSubSettings irisChatSettings);
+
+    public abstract IrisLectureIngestionSubSettings getIrisLectureIngestionSettings();
+
+    public abstract void setIrisLectureIngestionSettings(IrisLectureIngestionSubSettings irisLectureIngestionSettings);
 
     public abstract IrisHestiaSubSettings getIrisHestiaSettings();
 

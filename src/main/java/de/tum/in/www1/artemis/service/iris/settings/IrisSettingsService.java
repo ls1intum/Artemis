@@ -398,7 +398,7 @@ public class IrisSettingsService {
         settingsList.add(irisSettingsRepository.findCourseSettings(course.getId()).orElse(null));
 
         return new IrisCombinedSettingsDTO(irisSubSettingsService.combineChatSettings(settingsList, minimal),
-                irisSubSettingsService.combineLectureIngestionSubSettings(settingsList, false), irisSubSettingsService.combineHestiaSettings(settingsList, minimal),
+                irisSubSettingsService.combineLectureIngestionSubSettings(settingsList, minimal), irisSubSettingsService.combineHestiaSettings(settingsList, minimal),
                 irisSubSettingsService.combineCompetencyGenerationSettings(settingsList, minimal));
     }
 
@@ -433,6 +433,7 @@ public class IrisSettingsService {
     public IrisCourseSettings getDefaultSettingsFor(Course course) {
         var settings = new IrisCourseSettings();
         settings.setCourse(course);
+        settings.setIrisLectureIngestionSettings(new IrisLectureIngestionSubSettings());
         settings.setIrisChatSettings(new IrisChatSubSettings());
         settings.setIrisHestiaSettings(new IrisHestiaSubSettings());
         settings.setIrisCompetencyGenerationSettings(new IrisCompetencyGenerationSubSettings());
