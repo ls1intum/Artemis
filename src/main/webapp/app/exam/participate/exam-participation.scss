@@ -46,7 +46,7 @@
     }
 }
 .exam-navigation-sticky {
-    //position: sticky;
-    top: var(--header-height);
+    position: sticky;
+    top: 0;
     z-index: 1010;
 }
