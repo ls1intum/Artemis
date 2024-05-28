@@ -159,9 +159,10 @@ public class PyrisPipelineService {
      * @param session          the chat session
      */
     public void executeExerciseChatPipeline(String variant, Optional<ProgrammingSubmission> latestSubmission, ProgrammingExercise exercise, IrisExerciseChatSession session) {
-        executeChatPipeline(variant, session, "exercise-chat",
-                base -> new PyrisExerciseChatPipelineExecutionDTO(base, latestSubmission.map(pyrisDTOService::toPyrisSubmissionDTO).orElse(null),
-                        pyrisDTOService.toPyrisProgrammingExerciseDTO(exercise), new PyrisCourseDTO(exercise.getCourseViaExerciseGroupOrCourseMember())),
+        executeChatPipeline(variant, session, "tutor-chat", // TODO: Rename this to 'exercise-chat' with next breaking Pyris version
+                base -> new PyrisExerciseChatPipelineExecutionDTO(base.chatHistory(), base.user(), base.settings(), base.initialStages(),
+                        latestSubmission.map(pyrisDTOService::toPyrisSubmissionDTO).orElse(null), pyrisDTOService.toPyrisProgrammingExerciseDTO(exercise),
+                        new PyrisCourseDTO(exercise.getCourseViaExerciseGroupOrCourseMember())),
                 () -> pyrisJobService.addExerciseChatJob(exercise.getCourseViaExerciseGroupOrCourseMember().getId(), exercise.getId(), session.getId()));
     }
 
@@ -183,7 +184,7 @@ public class PyrisPipelineService {
         executeChatPipeline(variant, session, "course-chat", base -> {
             var fullCourse = loadCourseWithParticipationOfStudent(courseId, studentId);
             var metrics = learningMetricsService.getStudentCourseMetrics(session.getUser().getId(), courseId);
-            return new PyrisCourseChatPipelineExecutionDTO(base, PyrisExtendedCourseDTO.of(fullCourse), metrics);
+            return new PyrisCourseChatPipelineExecutionDTO(base.chatHistory(), base.user(), base.settings(), base.initialStages(), PyrisExtendedCourseDTO.of(fullCourse), metrics);
         }, () -> pyrisJobService.addCourseChatJob(courseId, session.getId()));
     }
 
