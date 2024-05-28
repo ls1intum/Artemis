@@ -40,7 +40,7 @@ import de.tum.in.www1.artemis.service.connectors.pyris.PyrisWebhookService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitInformationDTO;
 
-public class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
+class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
 
     private static final String TEST_PREFIX = "pyrislectureingestiontest";
 
