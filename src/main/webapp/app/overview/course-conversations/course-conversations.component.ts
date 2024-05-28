@@ -37,7 +37,7 @@ const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
 @Component({
     selector: 'jhi-course-conversations',
     templateUrl: './course-conversations.component.html',
-    styleUrls: ['./course-conversations.component.scss'],
+    styleUrls: ['../course-overview.scss', './course-conversations.component.scss'],
     encapsulation: ViewEncapsulation.None,
     providers: [MetisService],
 })
@@ -273,7 +273,10 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.initialize();
         from(modalRef.result)
-            .pipe(catchError(() => EMPTY))
+            .pipe(
+                catchError(() => EMPTY),
+                takeUntil(this.ngUnsubscribe),
+            )
             .subscribe((chatPartners: UserPublicInfoDTO[]) => {
                 this.metisConversationService.createGroupChat(chatPartners?.map((partner) => partner.login!)).subscribe({
                     complete: () => {
@@ -291,7 +294,10 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.initialize();
         from(modalRef.result)
-            .pipe(catchError(() => EMPTY))
+            .pipe(
+                catchError(() => EMPTY),
+                takeUntil(this.ngUnsubscribe),
+            )
             .subscribe((chatPartner: UserPublicInfoDTO) => {
                 if (chatPartner?.login) {
                     this.metisConversationService.createOneToOneChat(chatPartner.login).subscribe({
@@ -314,7 +320,10 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         modalRef.componentInstance.channelSubType = subType;
         modalRef.componentInstance.initialize();
         from(modalRef.result)
-            .pipe(catchError(() => EMPTY))
+            .pipe(
+                catchError(() => EMPTY),
+                takeUntil(this.ngUnsubscribe),
+            )
             .subscribe((result) => {
                 const [newActiveConversation, isModificationPerformed] = result;
                 if (isModificationPerformed) {

@@ -14,61 +14,63 @@
         <jhi-documentation-button [type]="documentationType" class="information-button" />
     </div>
     @if (formGroup && isCodeOfConductAccepted) {
-        <form [formGroup]="formGroup">
-            <!-- filter and sort controls -->
-            <div class="row mx-1 my-2 justify-content-start">
-                <!-- sort dropdown -->
-                <div class="col-12 col-sm-5 col-md-auto order-lg-2" style="margin-left: 80px">
-                    <div class="row align-items-baseline justify-content-center">
-                        <div class="col-auto p-0">{{ 'artemisApp.metis.overview.sortedByDate' | artemisTranslate }}</div>
-                        <div class="col-auto p-0 clickable" role="button" (click)="onChangeSortDir()">
-                            <fa-icon
-                                [icon]="sortingOrder === SortDirection.ASCENDING ? faLongArrowAltUp : faLongArrowAltDown"
-                                [ngbTooltip]="
-                                    sortingOrder === SortDirection.ASCENDING
-                                        ? ('artemisApp.metis.overview.sortAscending' | artemisTranslate)
-                                        : ('artemisApp.metis.overview.sortDescending' | artemisTranslate)
-                                "
-                            />
+        <div class="my-1">
+            <form [formGroup]="formGroup">
+                <!-- filter and sort controls -->
+                <div class="row mx-1 justify-content-start">
+                    <!-- sort dropdown -->
+                    <div class="col-12 col-sm-5 col-md-auto order-lg-2" style="margin-left: 80px">
+                        <div class="row align-items-baseline justify-content-center">
+                            <div class="col-auto p-0">{{ 'artemisApp.metis.overview.sortedByDate' | artemisTranslate }}</div>
+                            <div class="col-auto p-0 clickable" role="button" (click)="onChangeSortDir()">
+                                <fa-icon
+                                    [icon]="sortingOrder === SortDirection.ASCENDING ? faLongArrowAltUp : faLongArrowAltDown"
+                                    [ngbTooltip]="
+                                        sortingOrder === SortDirection.ASCENDING
+                                            ? ('artemisApp.metis.overview.sortAscending' | artemisTranslate)
+                                            : ('artemisApp.metis.overview.sortDescending' | artemisTranslate)
+                                    "
+                                />
+                            </div>
+                        </div>
+                    </div>
+                    <!-- attribute filter -->
+                    <div class="col-12 col-md-auto order-lg-1 d-flex align-items-center">
+                        <div class="row selection-prefix justify-content-center">
+                            <div class="col-auto p-0">
+                                <fa-icon [icon]="faFilter" />
+                            </div>
+                            <div class="col-auto p-0 ps-2">
+                                <input
+                                    class="form-check-input"
+                                    type="checkbox"
+                                    formControlName="filterToUnresolved"
+                                    name="filterToUnresolved"
+                                    id="filterToUnresolved"
+                                    (change)="onSelectContext()"
+                                />
+                                <label for="filterToUnresolved" class="p-0">{{ 'artemisApp.metis.overview.filterToUnresolved' | artemisTranslate }}</label>
+                            </div>
+                            <div class="col-auto p-0 ps-2">
+                                <input class="form-check-input" type="checkbox" formControlName="filterToOwn" name="filterToOwn" id="filterToOwn" (change)="onSelectContext()" />
+                                <label for="filterToOwn" class="p-0">{{ 'artemisApp.metis.overview.filterToOwn' | artemisTranslate }}</label>
+                            </div>
+                            <div class="col-auto p-0 ps-2">
+                                <input
+                                    class="form-check-input"
+                                    type="checkbox"
+                                    formControlName="filterToAnsweredOrReacted"
+                                    name="filterToAnsweredOrReacted"
+                                    id="filterToAnsweredOrReacted"
+                                    (change)="onSelectContext()"
+                                />
+                                <label for="filterToAnsweredOrReacted" class="p-0">{{ 'artemisApp.metis.overview.filterToAnsweredOrReacted' | artemisTranslate }}</label>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <!-- attribute filter -->
-                <div class="col-12 col-md-auto order-lg-1 d-flex align-items-center">
-                    <div class="row selection-prefix justify-content-center">
-                        <div class="col-auto p-0">
-                            <fa-icon [icon]="faFilter" />
-                        </div>
-                        <div class="col-auto p-0 ps-2">
-                            <input
-                                class="form-check-input"
-                                type="checkbox"
-                                formControlName="filterToUnresolved"
-                                name="filterToUnresolved"
-                                id="filterToUnresolved"
-                                (change)="onSelectContext()"
-                            />
-                            <label for="filterToUnresolved" class="p-0">{{ 'artemisApp.metis.overview.filterToUnresolved' | artemisTranslate }}</label>
-                        </div>
-                        <div class="col-auto p-0 ps-2">
-                            <input class="form-check-input" type="checkbox" formControlName="filterToOwn" name="filterToOwn" id="filterToOwn" (change)="onSelectContext()" />
-                            <label for="filterToOwn" class="p-0">{{ 'artemisApp.metis.overview.filterToOwn' | artemisTranslate }}</label>
-                        </div>
-                        <div class="col-auto p-0 ps-2">
-                            <input
-                                class="form-check-input"
-                                type="checkbox"
-                                formControlName="filterToAnsweredOrReacted"
-                                name="filterToAnsweredOrReacted"
-                                id="filterToAnsweredOrReacted"
-                                (change)="onSelectContext()"
-                            />
-                            <label for="filterToAnsweredOrReacted" class="p-0">{{ 'artemisApp.metis.overview.filterToAnsweredOrReacted' | artemisTranslate }}</label>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </form>
+            </form>
+        </div>
     }
     <!-- only display after isCodeOfConductAccepted is loaded and set to false -->
     @if (course && isCodeOfConductAccepted === false) {

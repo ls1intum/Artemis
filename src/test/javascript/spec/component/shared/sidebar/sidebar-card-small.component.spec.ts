@@ -67,6 +67,11 @@ describe('SidebarCardSmallComponent', () => {
         expect(component.emitStoreAndRefresh).toHaveBeenCalledWith(component.sidebarItem.id);
     });
 
+    /*
+   Next 2 tests explicitly adjusted for the messages module as a workaround, since routing in the messages module
+   operates differently over the MetisConversations service, it will get adjusted in a followup PR
+   */
+
     it('should navigate to the item URL on click', async () => {
         const mockFn = jest.fn();
         component.emitStoreAndRefresh = mockFn;
@@ -78,7 +83,7 @@ describe('SidebarCardSmallComponent', () => {
         expect(mockFn).toHaveBeenCalledWith('testId');
         expect(router.navigateByUrl).toHaveBeenCalled();
         const navigationArray = router.navigateByUrl.mock.calls[0][0];
-        expect(navigationArray).toBe('../');
+        expect(navigationArray).toBe('../messages');
     });
 
     it('should navigate to the when no item was selected before', async () => {
@@ -92,6 +97,6 @@ describe('SidebarCardSmallComponent', () => {
         expect(mockFn).toHaveBeenCalledWith('testId');
         expect(router.navigateByUrl).toHaveBeenCalled();
         const navigationArray = router.navigateByUrl.mock.calls[0][0];
-        expect(navigationArray).toBe('./');
+        expect(navigationArray).toBe('./messages');
     });
 });

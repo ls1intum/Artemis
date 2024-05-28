@@ -37,8 +37,4 @@ export class SidebarCardSmallComponent {
                 : this.router.navigate([this.location.path(), this.sidebarItem?.id], { replaceUrl: true });
         });
     }
-
-    get isConversationUnread(): boolean {
-        return !!this.sidebarItem.conversation?.unreadMessagesCount && this.sidebarItem.conversation.unreadMessagesCount > 0;
-    }
 }
