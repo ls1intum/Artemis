@@ -29,6 +29,13 @@ export enum ButtonSize {
     LARGE = 'btn-lg',
 }
 
+export enum TooltipPlacement {
+    TOP = 'top',
+    BOTTOM = 'bottom',
+    LEFT = 'left',
+    RIGHT = 'right',
+}
+
 /**
  * A generic button component that has a disabled & loading state.
  * The only event output is the click.
@@ -47,6 +54,7 @@ export class ButtonComponent {
     // Translation placeholders, will be translated in the component.
     @Input() title: string;
     @Input() tooltip: string;
+    @Input() tooltipPlacement: TooltipPlacement = TooltipPlacement.TOP;
 
     @Input() disabled = false;
     @Input() isLoading = false;
@@ -58,5 +66,5 @@ export class ButtonComponent {
     @Output() onClick = new EventEmitter<MouseEvent>();
 
     // Icons
-    faCircleNotch = faCircleNotch;
+    readonly faCircleNotch = faCircleNotch;
 }
