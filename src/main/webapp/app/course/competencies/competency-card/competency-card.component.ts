@@ -10,7 +10,7 @@ import { Competency, CompetencyProgress, getIcon } from 'app/entities/competency
 })
 export class CompetencyCardComponent {
     @Input()
-    courseId?: number;
+    courseId: number | undefined;
     @Input()
     competency: Competency;
     @Input()
