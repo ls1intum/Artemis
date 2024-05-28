@@ -21,6 +21,7 @@ import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { MonacoEditorActionGroup } from 'app/shared/monaco-editor/model/actions/monaco-editor-action-group.model';
 import { MonacoHeadingAction } from 'app/shared/monaco-editor/model/actions/monaco-heading.action';
 import { MonacoFormulaAction } from 'app/shared/monaco-editor/model/actions/monaco-formula.action';
+import { MonacoFullscreenAction } from 'app/shared/monaco-editor/model/actions/monaco-fullscreen.action';
 
 // TODO: Once the old markdown editor is gone, remove the style url.
 @Component({
@@ -63,6 +64,7 @@ export class MarkdownEditorMonacoComponent implements AfterViewInit, OnDestroy {
         new MonacoOrderedListAction('Ordered list', 'todo'),
         new MonacoUnorderedListAction('Unordered list', 'todo'),
         new MonacoFormulaAction('Formula', 'artemisApp.markdownEditor.commands.katex'),
+        new MonacoFullscreenAction('Fullscreen', 'todo'),
     ];
 
     @Input()
@@ -100,6 +102,9 @@ export class MarkdownEditorMonacoComponent implements AfterViewInit, OnDestroy {
             this.monacoEditor.layout();
         });
         this.resizeObserver.observe(this.wrapper.nativeElement);
+        [this.defaultActions, this.headerActions.actions, this.domainActions].flat().forEach((action) => {
+            this.monacoEditor.registerAction(action);
+        });
     }
 
     ngOnDestroy(): void {

@@ -7,20 +7,7 @@ import { MonacoEditorLineWidget } from 'app/shared/monaco-editor/model/monaco-ed
 import { MonacoEditorBuildAnnotation, MonacoEditorBuildAnnotationType } from 'app/shared/monaco-editor/model/monaco-editor-build-annotation.model';
 import { MonacoEditorGlyphMarginHoverButton } from 'app/shared/monaco-editor/model/monaco-editor-glyph-margin-hover-button.model';
 import { MonacoEditorLineHighlight } from 'app/shared/monaco-editor/model/monaco-editor-line-highlight.model';
-import { MonacoBoldAction } from './model/actions/monaco-bold.action';
-import { MonacoItalicAction } from 'app/shared/monaco-editor/model/actions/monaco-italic.action';
-import { MonacoUnderlineAction } from 'app/shared/monaco-editor/model/actions/monaco-underline.action';
-import { MonacoCodeAction } from 'app/shared/monaco-editor/model/actions/monaco-code.action';
-import { MonacoCodeBlockAction } from 'app/shared/monaco-editor/model/actions/monaco-code-block.action';
-import { MonacoUrlAction } from 'app/shared/monaco-editor/model/actions/monaco-url.action';
-import { MonacoAttachmentAction } from 'app/shared/monaco-editor/model/actions/monaco-attachment.action';
-import { MonacoQuoteAction } from 'app/shared/monaco-editor/model/actions/monaco-quote.action';
-import { MonacoFormulaAction } from 'app/shared/monaco-editor/model/actions/monaco-formula.action';
-import { MonacoTaskAction } from 'app/shared/monaco-editor/model/actions/monaco-task.action';
-import { MonacoUnorderedListAction } from 'app/shared/monaco-editor/model/actions/monaco-unordered-list.action';
-import { MonacoOrderedListAction } from 'app/shared/monaco-editor/model/actions/monaco-ordered-list.action';
-import { MonacoHeadingAction } from 'app/shared/monaco-editor/model/actions/monaco-heading.action';
-import { MonacoTestCaseAction } from 'app/shared/monaco-editor/model/actions/monaco-test-case.action';
+import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
 
 type EditorPosition = { row: number; column: number };
 @Component({
@@ -62,24 +49,6 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             wordWrap: 'on', // TODO make this a setting
         });
         renderer.appendChild(elementRef.nativeElement, this.monacoEditorContainerElement);
-        // TODO: Remove
-        this._editor.addAction(new MonacoBoldAction('Bold', 'todo'));
-        this._editor.addAction(new MonacoItalicAction('Italic', 'todo'));
-        this._editor.addAction(new MonacoUnderlineAction('Underline', 'todo'));
-        this._editor.addAction(new MonacoCodeAction('Code', 'todo'));
-        this._editor.addAction(new MonacoCodeBlockAction('Code Block', 'todo'));
-        this._editor.addAction(new MonacoUrlAction('Insert URL', 'todo'));
-        this._editor.addAction(new MonacoAttachmentAction('Insert Attachment', 'todo'));
-        this._editor.addAction(new MonacoQuoteAction('Quote', 'todo'));
-        this._editor.addAction(new MonacoFormulaAction('Formula', 'todo'));
-        const tC = new MonacoTaskAction('Task', 'todo');
-        this._editor.addAction(tC);
-        this._editor.addAction(new MonacoUnorderedListAction('Unordered List', 'todo'));
-        this._editor.addAction(new MonacoOrderedListAction('Ordered List', 'todo'));
-        [1, 2, 3].forEach((level) => {
-            this._editor.addAction(new MonacoHeadingAction('Heading ' + level, 'todo', level));
-        });
-        this._editor.addAction(new MonacoTestCaseAction('Test Case', 'todo'));
     }
 
     @Input()
@@ -339,5 +308,9 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
 
     getLineHighlights(): MonacoEditorLineHighlight[] {
         return this.lineHighlights;
+    }
+
+    registerAction(action: MonacoEditorAction): void {
+        this._editor.addAction(action);
     }
 }
