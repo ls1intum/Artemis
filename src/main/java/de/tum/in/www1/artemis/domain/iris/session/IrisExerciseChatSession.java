@@ -15,7 +15,7 @@ import de.tum.in.www1.artemis.domain.User;
  * This is used for students receiving tutor assistance from Iris while working on an exercise.
  */
 @Entity
-@DiscriminatorValue("CHAT") // Legacy. Should ideally be "EXERCISE_CHAT"
+@DiscriminatorValue("CHAT") // TODO: Legacy. Should ideally be "EXERCISE_CHAT"
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class IrisExerciseChatSession extends IrisChatSession {
 

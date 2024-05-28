@@ -20,12 +20,7 @@
     </div>
     <div class="progress-bar">
         @for (stage of stages; track $index) {
-            <div
-                class="part"
-                [style.flex-grow]="stage.weight"
-                [style]="stage.state === IrisStageStateDTO.IN_PROGRESS ? style : undefined"
-                [ngClass]="stage.state.toLowerCase()"
-            ></div>
+            <div class="part" [style.flex-grow]="stage.weight" [style]="stage.state === IrisStageStateDTO.IN_PROGRESS ? style : undefined" [ngClass]="stage.lowerCaseState"></div>
         }
     </div>
 </div>

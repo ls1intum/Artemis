@@ -76,26 +76,58 @@ public class PyrisPipelineService {
         this.studentParticipationRepository = studentParticipationRepository;
     }
 
+    /**
+     * Executes a chat pipeline for a given chat session subtype.
+     * This method prepares the execution data, executes the specified pipeline, and handles the state updates.
+     * <p>
+     * The general idea of this being generic is that the pipeline execution is the same for all chat sessions,
+     * but the specific data required for the pipeline execution is different for each session / pipeline type.
+     * Therefore, the specific data is provided by a function that accepts the basic chat data and returns the more specific data.
+     *
+     * @param variant              the variant of the pipeline
+     * @param session              the active chat session, must inherit from {@link IrisChatSession}
+     * @param pipelineName         the name of the pipeline to be executed
+     * @param executionDtoSupplier a function that accepts basic chat data and returns an execution DTO specific to the pipeline being executed
+     * @param jobTokenSupplier     a supplier that provides a unique job token for tracking the pipeline execution
+     * @param <T>                  the type of the chat session
+     * @param <U>                  the type of the execution DTO
+     */
     private <T extends IrisChatSession, U> void executeChatPipeline(String variant, T session, String pipelineName,
             Function<PyrisChatPipelineExecutionBaseDataDTO, U> executionDtoSupplier, Supplier<String> jobTokenSupplier) {
+
+        // Retrieve the unique job token for this pipeline execution
         var jobToken = jobTokenSupplier.get();
+
+        // Set up initial pipeline execution settings with the server base URL
         var settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, List.of(), artemisBaseUrl);
 
+        // Define the preparation stages of pipeline execution with their initial states
+        // There will be more stages added in Pyris later
         var preparingRequestStageInProgress = new PyrisStageDTO("Preparing", 10, PyrisStageStateDTO.IN_PROGRESS, null);
         var preparingRequestStageDone = new PyrisStageDTO("Preparing", 10, PyrisStageStateDTO.DONE, null);
         var executingPipelineStageNotStarted = new PyrisStageDTO("Executing pipeline", 30, PyrisStageStateDTO.NOT_STARTED, null);
-        var executingPipelineStageInProgress = new PyrisStageDTO("Executing pipeline", 30, PyrisStageStateDTO.IN_PROGRESS, null);
+
+        // Send initial status update indicating that the preparation stage is in progress
         irisChatWebsocketService.sendStatusUpdate(session, List.of(preparingRequestStageInProgress, executingPipelineStageNotStarted));
 
         try {
+            // Prepare the base execution data for the pipeline.
+            // It is shared among chat pipelines and included as field "base" in the specific execution DTOs.
             var base = new PyrisChatPipelineExecutionBaseDataDTO(pyrisDTOService.toPyrisMessageDTOList(session.getMessages()), new PyrisUserDTO(session.getUser()), settingsDTO,
-                    List.of(preparingRequestStageDone));
+                    List.of(preparingRequestStageDone) // The initial stage is done when the request arrives at Pyris
+            );
 
+            // Prepare the specific execution data for the pipeline
+            // This is implementation-specific and includes additional data required for the pipeline
+            // Implementations must deliver the base data, too
             U executionDTO = executionDtoSupplier.apply(base);
 
+            // Send a status update that preparation is done and pipeline execution is starting
+            var executingPipelineStageInProgress = new PyrisStageDTO("Executing pipeline", 30, PyrisStageStateDTO.IN_PROGRESS, null);
             irisChatWebsocketService.sendStatusUpdate(session, List.of(preparingRequestStageDone, executingPipelineStageInProgress));
 
             try {
+                // Execute the pipeline using the connector service
                 pyrisConnectorService.executePipeline(pipelineName, variant, executionDTO);
             }
             catch (PyrisConnectorException | IrisException e) {
@@ -113,6 +145,13 @@ public class PyrisPipelineService {
 
     /**
      * Execute the exercise chat pipeline for the given session.
+     * It provides specific data for the exercise chat pipeline, including:
+     * - The latest submission of the student
+     * - The programming exercise
+     * - The course the exercise is part of
+     * <p>
+     *
+     * @see PyrisPipelineService#executeChatPipeline for more details on the pipeline execution process.
      *
      * @param variant          the variant of the pipeline
      * @param latestSubmission the latest submission of the student
@@ -128,6 +167,12 @@ public class PyrisPipelineService {
 
     /**
      * Execute the course chat pipeline for the given session.
+     * It provides specific data for the course chat pipeline, including:
+     * - The full course with the participation of the student
+     * - The metrics of the student in the course
+     * <p>
+     *
+     * @see PyrisPipelineService#executeChatPipeline for more details on the pipeline execution process.
      *
      * @param variant the variant of the pipeline
      * @param session the chat session
@@ -151,7 +196,7 @@ public class PyrisPipelineService {
      * @param studentId the id of the student
      */
     private Course loadCourseWithParticipationOfStudent(long courseId, long studentId) {
-        Course course = courseRepository.findWithEagerExercisesAndLecturesAndLectureUnitsAndCompetenciesAndExamsById(courseId).orElseThrow();
+        Course course = courseRepository.findWithEagerExercisesAndLecturesAndAttachmentsAndLectureUnitsAndCompetenciesAndExamsById(courseId).orElseThrow();
         List<StudentParticipation> participations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(studentId,
                 course.getExercises());
 

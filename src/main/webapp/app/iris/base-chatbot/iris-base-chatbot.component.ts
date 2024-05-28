@@ -13,7 +13,7 @@ import { IrisStatusService } from 'app/iris/iris-status.service';
 import { IrisMessageContentType, IrisTextMessageContent } from 'app/entities/iris/iris-content-type.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { animate, group, style, transition, trigger } from '@angular/animations';
-import { IrisChatService } from 'app/iris/iris-chat-base.service';
+import { IrisChatService } from 'app/iris/iris-chat.service';
 
 @Component({
     selector: 'jhi-iris-base-chatbot',
@@ -58,8 +58,6 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     faThumbsDown = faThumbsDown;
     faRedo = faRedo;
 
-    protected readonly IrisSender = IrisSender;
-
     // State variables
     messagesSubscription: Subscription;
     stagesSubscription: Subscription;
@@ -87,8 +85,6 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     resendAnimationActive: boolean;
     public ButtonType = ButtonType;
 
-    @Input() chatService: IrisChatService;
-
     @Input() fullSize: boolean | undefined;
     @Input() showCloseButton: boolean = false;
     @Output() fullSizeToggle = new EventEmitter<void>();
@@ -100,11 +96,19 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     @ViewChild('messageTextarea') messageTextarea: ElementRef<HTMLTextAreaElement>;
     @ViewChild('acceptButton') acceptButton: ElementRef<HTMLButtonElement>;
 
+    // Types
+    protected readonly IrisLogoSize = IrisLogoSize;
+    protected readonly IrisMessageContentType = IrisMessageContentType;
+    protected readonly IrisAssistantMessage = IrisAssistantMessage;
+    protected readonly IrisTextMessageContent = IrisTextMessageContent;
+    protected readonly IrisSender = IrisSender;
+
     constructor(
         protected accountService: AccountService,
         protected modalService: NgbModal,
         protected translateService: TranslateService,
         protected statusService: IrisStatusService,
+        protected chatService: IrisChatService,
     ) {}
 
     ngOnInit() {
@@ -308,7 +312,8 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     adjustTextareaRows() {
         const textarea: HTMLTextAreaElement = this.messageTextarea.nativeElement;
         textarea.style.height = 'auto'; // Reset the height to auto
-        const lineHeight = parseInt(getComputedStyle(textarea).lineHeight, 10) + 4;
+        const bufferForSpaceBetweenLines = 4;
+        const lineHeight = parseInt(getComputedStyle(textarea).lineHeight, 10) + bufferForSpaceBetweenLines;
         const maxRows = 3;
         const maxHeight = lineHeight * maxRows;
 
@@ -362,10 +367,4 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
         const scrollTop = messagesElement.scrollTop;
         this.isScrolledToBottom = scrollTop < 50;
     }
-
-    protected readonly IrisLogoSize = IrisLogoSize;
-    protected readonly IrisMessageContentType = IrisMessageContentType;
-    protected readonly IrisAssistantMessage = IrisAssistantMessage;
-    protected readonly IrisTextMessageContent = IrisTextMessageContent;
-    protected readonly JSON = JSON;
 }

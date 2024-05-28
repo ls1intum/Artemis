@@ -7,11 +7,11 @@
             <fa-icon [icon]="faCircleInfo" class="info-button" />
         </a>
     </div>
-    <div>
-        @if (rateLimitInfo.rateLimit >= 0) {
+    <div class="d-flex gap-2">
+        @if (rateLimitInfo.rateLimit > 0) {
             <div class="toolbox">
                 <span class="rate-limit" [ngbTooltip]="'artemisApp.exerciseChatbot.rateLimitTooltip' | artemisTranslate: { hours: rateLimitInfo.rateLimitTimeframeHours }">
-                    {{ rateLimitInfo.currentMessageCount }}/{{ rateLimitInfo.rateLimit }}
+                    {{ rateLimitInfo.currentMessageCount }} / {{ rateLimitInfo.rateLimit }}
                 </span>
             </div>
         }
@@ -65,7 +65,7 @@
                     @for (content of message.content; track content) {
                         <div>
                             @if (message.sender === IrisSender.USER) {
-                                <div style="display: flex; justify-content: end; align-items: center">
+                                <div class="d-flex justify-content-end align-items-center">
                                     @if (content.type === IrisMessageContentType.TEXT) {
                                         <pre>
                                                 <span
@@ -116,16 +116,16 @@
     @if (!messages?.length) {
         <div class="empty-chat-message">
             <jhi-iris-logo [size]="IrisLogoSize.SMALL" />
-            <h3>How can I help you today?</h3>
+            <h3 jhiTranslate="artemisApp.iris.chat.helpOffer"></h3>
         </div>
     }
     <jhi-chat-status-bar [stages]="stages" />
     @if (!userAccepted) {
         <div class="p-chat">
-            <div class="message-text">{{ 'artemisApp.exerciseChatbot.popUpMessage' | artemisTranslate }}</div>
+            <div class="message-text" jhiTranslate="artemisApp.exerciseChatbot.popUpMessage"></div>
             <div class="button-container">
-                <button type="button" class="btn btn-primary" #acceptButton (click)="acceptPermission()">{{ 'artemisApp.exerciseChatbot.accept' | artemisTranslate }}</button>
-                <button type="button" class="btn btn-secondary" (click)="closeChat()">{{ 'artemisApp.exerciseChatbot.decline' | artemisTranslate }}</button>
+                <button type="button" class="btn btn-primary" #acceptButton (click)="acceptPermission()" jhiTranslate="artemisApp.exerciseChatbot.accept"></button>
+                <button type="button" class="btn btn-secondary" (click)="closeChat()" jhiTranslate="artemisApp.exerciseChatbot.decline"></button>
             </div>
         </div>
     }

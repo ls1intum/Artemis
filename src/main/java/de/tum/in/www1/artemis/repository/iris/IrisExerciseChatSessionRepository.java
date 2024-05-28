@@ -1,10 +1,10 @@
 package de.tum.in.www1.artemis.repository.iris;
 
 import java.util.List;
-import java.util.Optional;
 
 import jakarta.validation.constraints.NotNull;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -42,9 +42,8 @@ public interface IrisExerciseChatSessionRepository extends JpaRepository<IrisExe
             WHERE s.exercise.id = :exerciseId
                 AND s.user.id = :userId
             ORDER BY s.creationDate DESC
-            LIMIT 1
             """)
-    Optional<IrisExerciseChatSession> findLatestByExerciseIdAndUserIdWithMessages(@Param("exerciseId") Long exerciseId, @Param("userId") Long userId);
+    List<IrisExerciseChatSession> findLatestByExerciseIdAndUserIdWithMessages(@Param("exerciseId") Long exerciseId, @Param("userId") Long userId, Pageable pageable);
 
     /**
      * Finds a list of chat sessions or throws an exception if none are found.

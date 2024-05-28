@@ -43,10 +43,6 @@
     }
 }
 
-.client {
-    position: relative;
-}
-
 .chat-header {
     display: flex;
     font-weight: bold;
@@ -73,11 +69,7 @@
 }
 
 .rate-limit {
-    padding-right: 6px;
-    margin-right: 3px;
-    border-right-color: var(--secondary);
-    border-right-style: solid;
-    border-right-width: 2px;
+    padding: 3px 5px;
 }
 
 .info-button {
@@ -229,32 +221,6 @@ pre {
     }
 }
 
-@keyframes blink {
-    0% {
-        opacity: 1;
-    }
-
-    50% {
-        opacity: 0;
-    }
-
-    100% {
-        opacity: 1;
-    }
-}
-
-.blinking-dots {
-    animation: blink 1s infinite;
-}
-
-.unread-message {
-    display: flex;
-    justify-content: center;
-    color: var(--gray-600);
-    padding-top: 8px;
-    padding-bottom: 8px;
-}
-
 .p-chat {
     background-color: var(--iris-client-chat-background);
     color: var(--bs-body-color);
@@ -320,10 +286,6 @@ pre {
     color: var(--secondary);
 }
 
-.execute-button {
-    text-align: right;
-}
-
 #irisSendButton {
     margin-bottom: auto;
 }
@@ -336,52 +298,6 @@ pre {
     z-index: 9999 !important;
 }
 
-.step-title {
-    margin: auto 0 auto 10px;
-}
-
-.step-component {
-    display: flex;
-    justify-content: space-between;
-}
-
-.step-status {
-    font-size: 0.6rem;
-}
-
-.detail-btn {
-    border: 1px solid;
-    color: var(--bs-body-color);
-    font-size: 0.7rem;
-    background-color: transparent;
-    white-space: nowrap;
-    padding: 5px;
-    border-radius: var(--bs-border-radius-lg);
-    width: 80px;
-    min-width: 80px;
-}
-
-.show-details {
-    border: 1px solid transparent;
-    border-radius: var(--bs-border-radius-lg);
-    padding: 15px;
-    margin: 10px;
-}
-.hide-details {
-    border: 1px solid transparent;
-    border-top-left-radius: 15px;
-    border-top-right-radius: 15px;
-    padding: 15px;
-    margin: 0 10px;
-}
-.step-detail {
-    border: 1px solid var(--bs-body-color);
-    background-color: var(--iris-client-chat-background);
-    border-bottom-left-radius: 15px;
-    border-bottom-right-radius: 15px;
-    padding: 0 15px;
-    margin: 0 10px 10px;
-}
 cdk-global-scrollblock {
     position: fixed;
     width: 100%;

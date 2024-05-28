@@ -15,7 +15,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.iris.session.IrisExerciseChatSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.repository.iris.IrisExerciseChatSessionRepository;
-import de.tum.in.www1.artemis.web.rest.iris.IrisResource;
+import de.tum.in.www1.artemis.web.rest.iris.IrisStatusDTO;
 
 class IrisExerciseChatSessionIntegrationTest extends AbstractIrisIntegrationTest {
 
@@ -90,7 +90,7 @@ class IrisExerciseChatSessionIntegrationTest extends AbstractIrisIntegrationTest
         var previousPreferredModel = settings.getIrisChatSettings().getPreferredModel();
         settings.getIrisChatSettings().setPreferredModel("TEST_MODEL_UP");
         irisSettingsService.saveIrisSettings(settings);
-        assertThat(request.get("/api/iris/sessions/" + irisSession.getId() + "/active", HttpStatus.OK, IrisResource.IrisStatusDTO.class).active()).isTrue();
+        assertThat(request.get("/api/iris/sessions/" + irisSession.getId() + "/active", HttpStatus.OK, IrisStatusDTO.class).active()).isTrue();
 
         settings.getIrisChatSettings().setPreferredModel(previousPreferredModel);
         irisSettingsService.saveIrisSettings(settings);

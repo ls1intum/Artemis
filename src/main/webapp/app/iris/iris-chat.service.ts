@@ -15,11 +15,16 @@ import { IrisSession } from 'app/entities/iris/iris-session.model';
 import { UserService } from 'app/core/user/user.service';
 import { AccountService } from 'app/core/auth/account.service';
 
+export enum ChatServiceMode {
+    EXERCISE = 'exercise-chat',
+    COURSE = 'course-chat',
+}
+
 /**
  * The IrisSessionService is responsible for managing Iris sessions and retrieving their associated messages.
  */
-@Injectable()
-export abstract class IrisChatService implements OnDestroy {
+@Injectable({ providedIn: 'root' })
+export class IrisChatService implements OnDestroy {
     sessionId?: number;
     messages: BehaviorSubject<IrisMessage[]> = new BehaviorSubject([]);
     numNewMessages: BehaviorSubject<number> = new BehaviorSubject(0);
@@ -29,6 +34,8 @@ export abstract class IrisChatService implements OnDestroy {
     rateLimitInfo?: IrisRateLimitInformation;
     rateLimitSubscription: Subscription;
 
+    private sessionCreationIdentifier?: string;
+
     hasJustAcceptedIris = false;
 
     /**
@@ -36,6 +43,8 @@ export abstract class IrisChatService implements OnDestroy {
      * @param http The IrisChatHttpService for HTTP operations related to sessions.
      * @param ws The IrisChatWebsocketService for websocket operations
      * @param status The IrisStatusService for handling the status of the service.
+     * @param userService The UserService for handling user operations.
+     * @param accountService The AccountService for handling account operations.
      */
     protected constructor(
         public http: IrisChatHttpService,
@@ -142,11 +151,9 @@ export abstract class IrisChatService implements OnDestroy {
     public setUserAccepted(): void {
         this.userService.acceptIris().subscribe(() => {
             this.hasJustAcceptedIris = true;
-            this.initAfterAccept();
+            this.closeAndStart();
         });
     }
-
-    protected abstract initAfterAccept(): void;
 
     private replaceMessage(message: IrisMessage): boolean {
         const messages = [...this.messages.getValue()];
@@ -214,7 +221,10 @@ export abstract class IrisChatService implements OnDestroy {
      * Retrieves the current session or creates a new one if it doesn't exist.
      */
     private getCurrentSessionOrCreate(): Observable<IrisExerciseChatSession> {
-        return this.http.getCurrentSessionOrCreateIfNotExists(this.getSessionCreationIdentifier()).pipe(
+        if (!this.sessionCreationIdentifier) {
+            throw new Error('Session creation identifier not set');
+        }
+        return this.http.getCurrentSessionOrCreateIfNotExists(this.sessionCreationIdentifier).pipe(
             map((response: HttpResponse<IrisExerciseChatSession>) => {
                 if (response.body) {
                     return response.body;
@@ -230,7 +240,10 @@ export abstract class IrisChatService implements OnDestroy {
      * Creates a new session
      */
     private createNewSession(): Observable<IrisExerciseChatSession> {
-        return this.http.createSession(this.getSessionCreationIdentifier()).pipe(
+        if (!this.sessionCreationIdentifier) {
+            throw new Error('Session creation identifier not set');
+        }
+        return this.http.createSession(this.sessionCreationIdentifier).pipe(
             map((response: HttpResponse<IrisExerciseChatSession>) => {
                 if (response.body) {
                     return response.body;
@@ -242,7 +255,21 @@ export abstract class IrisChatService implements OnDestroy {
         );
     }
 
-    protected abstract getSessionCreationIdentifier(): string;
+    switchTo(mode: ChatServiceMode, id?: number): void {
+        const newIdentifier = mode && id ? mode + '/' + id : undefined;
+        const isDifferent = this.sessionCreationIdentifier !== newIdentifier;
+        this.sessionCreationIdentifier = newIdentifier;
+        if (isDifferent) {
+            this.closeAndStart();
+        }
+    }
+
+    private closeAndStart() {
+        this.close();
+        if (this.sessionCreationIdentifier) {
+            this.start();
+        }
+    }
 
     public currentMessages(): Observable<IrisMessage[]> {
         return this.messages.asObservable();

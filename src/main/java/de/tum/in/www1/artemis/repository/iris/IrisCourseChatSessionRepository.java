@@ -1,10 +1,10 @@
 package de.tum.in.www1.artemis.repository.iris;
 
 import java.util.List;
-import java.util.Optional;
 
 import jakarta.validation.constraints.NotNull;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,7 +14,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Repository interface for managing {@link IrisCourseChatSession} entities.
- * Provides custom queries for finding chat sessions based on different criteria.
  */
 public interface IrisCourseChatSessionRepository extends JpaRepository<IrisCourseChatSession, Long> {
 
@@ -41,9 +40,8 @@ public interface IrisCourseChatSessionRepository extends JpaRepository<IrisCours
                 WHERE s.course.id = :courseId
                     AND s.user.id = :userId
                 ORDER BY s.creationDate DESC
-                LIMIT 1
             """)
-    Optional<IrisCourseChatSession> findLatestByCourseIdAndUserIdWithMessages(@Param("courseId") long courseId, @Param("userId") long userId);
+    List<IrisCourseChatSession> findLatestByCourseIdAndUserIdWithMessages(@Param("courseId") long courseId, @Param("userId") long userId, Pageable pageable);
 
     /**
      * Finds a list of chat sessions or throws an exception if none are found.
