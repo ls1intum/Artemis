@@ -112,7 +112,7 @@ export class CompetencyAccordionComponent implements OnChanges {
     getUserProgress(): CompetencyProgress {
         const progress = this.metrics.competencyMetrics?.progress?.[this.competency.id] ?? 0;
         const confidence = this.metrics.competencyMetrics?.confidence?.[this.competency.id] ?? 0;
-        return { progress, confidence } as CompetencyProgress;
+        return { progress, confidence };
     }
 
     get progress() {
