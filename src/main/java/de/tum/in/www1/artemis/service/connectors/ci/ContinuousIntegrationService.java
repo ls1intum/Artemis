@@ -261,6 +261,7 @@ public interface ContinuousIntegrationService {
      * Get the checkout directories for the template and submission build plan for a given programming language.
      *
      * @param programmingLanguage for which the checkout directories should be retrieved
+     * @param checkoutSolution    whether the checkout solution repository shall be checked out during the template and submission build plan
      * @return the paths of the checkout directories for the default repositories (exercise, solution, tests) for the
      *         template and submission build plan
      */
