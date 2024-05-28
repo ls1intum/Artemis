@@ -216,7 +216,7 @@
         "weak-napi": "2.0.2"
     },
     "engines": {
-        "node": ">=20.10.0"
+        "node": ">=20.11.1"
     },
     "scripts": {
         "postinstall": "husky",
