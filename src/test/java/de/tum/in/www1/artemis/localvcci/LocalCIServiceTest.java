@@ -178,7 +178,7 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
         @Test
         void getCheckoutDirectoriesForJava() {
-            CheckoutDirectoriesDTO checkoutDirectories = continuousIntegrationService.getCheckoutDirectories(ProgrammingLanguage.JAVA);
+            CheckoutDirectoriesDTO checkoutDirectories = continuousIntegrationService.getCheckoutDirectories(ProgrammingLanguage.JAVA, true);
 
             // Verify submission build plan checkout directories
             assertThat(checkoutDirectories.submissionBuildPlanCheckoutDirectories().exerciseCheckoutDirectory()).isEqualTo("/assignment");
@@ -193,7 +193,7 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
         @Test
         void getCheckoutDirectoriesForOcaml() {
-            CheckoutDirectoriesDTO checkoutDirectories = continuousIntegrationService.getCheckoutDirectories(ProgrammingLanguage.OCAML);
+            CheckoutDirectoriesDTO checkoutDirectories = continuousIntegrationService.getCheckoutDirectories(ProgrammingLanguage.OCAML, true);
 
             // Verify submission build plan checkout directories
             assertThat(checkoutDirectories.submissionBuildPlanCheckoutDirectories().exerciseCheckoutDirectory()).isEqualTo("/assignment");
@@ -201,8 +201,23 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
             assertThat(checkoutDirectories.submissionBuildPlanCheckoutDirectories().testCheckoutDirectory()).isEqualTo("/tests");
 
             // Verify solution build plan checkout directories
-            assertThat(checkoutDirectories.solutionBuildPlanCheckoutDirectories().exerciseCheckoutDirectory()).isEqualTo(null);
+            assertThat(checkoutDirectories.solutionBuildPlanCheckoutDirectories().exerciseCheckoutDirectory()).isNull();
             assertThat(checkoutDirectories.solutionBuildPlanCheckoutDirectories().solutionCheckoutDirectories()).isEqualTo(new String[] { "/assignment", "/solution" });
+            assertThat(checkoutDirectories.solutionBuildPlanCheckoutDirectories().testCheckoutDirectory()).isEqualTo("/tests");
+        }
+
+        @Test
+        void getCheckoutDirectoriesForOcamlWithoutCheckingOutSolution() {
+            CheckoutDirectoriesDTO checkoutDirectories = continuousIntegrationService.getCheckoutDirectories(ProgrammingLanguage.OCAML, false);
+
+            // Verify submission build plan checkout directories
+            assertThat(checkoutDirectories.submissionBuildPlanCheckoutDirectories().exerciseCheckoutDirectory()).isEqualTo("/assignment");
+            assertThat(checkoutDirectories.submissionBuildPlanCheckoutDirectories().solutionCheckoutDirectories()).isNull();
+            assertThat(checkoutDirectories.submissionBuildPlanCheckoutDirectories().testCheckoutDirectory()).isEqualTo("/tests");
+
+            // Verify solution build plan checkout directories
+            assertThat(checkoutDirectories.solutionBuildPlanCheckoutDirectories().exerciseCheckoutDirectory()).isNull();
+            assertThat(checkoutDirectories.solutionBuildPlanCheckoutDirectories().solutionCheckoutDirectories()).isEqualTo(new String[] { "/assignment" });
             assertThat(checkoutDirectories.solutionBuildPlanCheckoutDirectories().testCheckoutDirectory()).isEqualTo("/tests");
         }
     }

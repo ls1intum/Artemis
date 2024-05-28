@@ -223,14 +223,14 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public CheckoutDirectoriesDTO getCheckoutDirectories(ProgrammingLanguage programmingLanguage) {
-        BuildPlanCheckoutDirectoriesDTO submissionBuildPlanCheckoutDirectories = getSubmissionBuildPlanCheckoutDirectories(programmingLanguage);
+    public CheckoutDirectoriesDTO getCheckoutDirectories(ProgrammingLanguage programmingLanguage, boolean checkoutSolution) {
+        BuildPlanCheckoutDirectoriesDTO submissionBuildPlanCheckoutDirectories = getSubmissionBuildPlanCheckoutDirectories(programmingLanguage, checkoutSolution);
         BuildPlanCheckoutDirectoriesDTO solutionBuildPlanCheckoutDirectories = getSolutionBuildPlanCheckoutDirectories(submissionBuildPlanCheckoutDirectories);
 
         return new CheckoutDirectoriesDTO(submissionBuildPlanCheckoutDirectories, solutionBuildPlanCheckoutDirectories);
     }
 
-    private BuildPlanCheckoutDirectoriesDTO getSubmissionBuildPlanCheckoutDirectories(ProgrammingLanguage programmingLanguage) {
+    private BuildPlanCheckoutDirectoriesDTO getSubmissionBuildPlanCheckoutDirectories(ProgrammingLanguage programmingLanguage, boolean checkoutSolution) {
         String exerciseCheckoutDirectory = ContinuousIntegrationService.RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage);
         String testCheckoutDirectory = ContinuousIntegrationService.RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage);
 
@@ -238,12 +238,15 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
         testCheckoutDirectory = startPathWithRootDirectory(testCheckoutDirectory);
 
         String[] solutionCheckoutDirectories = null;
-        try {
-            String solutionCheckoutDirectoryPath = ContinuousIntegrationService.RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(programmingLanguage);
-            solutionCheckoutDirectories = new String[] { startPathWithRootDirectory(solutionCheckoutDirectoryPath) };
-        }
-        catch (IllegalArgumentException exception) {
-            // not checked out during template & submission build
+
+        if (checkoutSolution) {
+            try {
+                String solutionCheckoutDirectoryPath = ContinuousIntegrationService.RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(programmingLanguage);
+                solutionCheckoutDirectories = new String[] { startPathWithRootDirectory(solutionCheckoutDirectoryPath) };
+            }
+            catch (IllegalArgumentException exception) {
+                // not checked out during template & submission build
+            }
         }
 
         return new BuildPlanCheckoutDirectoriesDTO(exerciseCheckoutDirectory, solutionCheckoutDirectories, testCheckoutDirectory);

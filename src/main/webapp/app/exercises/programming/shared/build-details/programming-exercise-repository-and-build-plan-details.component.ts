@@ -14,6 +14,7 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
     @Input() programmingExercise: ProgrammingExercise;
     @Input() programmingLanguage?: ProgrammingLanguage;
     @Input() isLocal: boolean;
+    @Input() checkoutSolutionRepository?: boolean = true;
 
     constructor(private programmingExerciseService: ProgrammingExerciseService) {}
 
@@ -32,7 +33,9 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
     }
 
     ngOnChanges(changes: SimpleChanges) {
-        if (this.isLocal && changes.programmingLanguage && changes.programmingLanguage.currentValue !== changes.programmingLanguage.previousValue) {
+        const isProgrammingLanguageUpdated = changes.programmingLanguage?.currentValue !== changes.programmingLanguage.previousValue;
+        const isCheckoutSolutionRepositoryUpdated = changes.checkoutSolutionRepository?.currentValue !== changes.checkoutSolutionRepository.previousValue;
+        if (this.isLocal && (isProgrammingLanguageUpdated || isCheckoutSolutionRepositoryUpdated)) {
             this.updateCheckoutDirectories();
         }
     }
@@ -48,8 +51,9 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
 
         this.checkoutDirectorySubscription?.unsubscribe(); // might be defined from previous method execution
 
+        const CHECKOUT_SOLUTION_REPOSITORY_DEFAULT = true;
         this.checkoutDirectorySubscription = this.programmingExerciseService
-            .getCheckoutDirectoriesForProgrammingLanguage(this.programmingLanguage)
+            .getCheckoutDirectoriesForProgrammingLanguage(this.programmingLanguage, this.checkoutSolutionRepository ?? CHECKOUT_SOLUTION_REPOSITORY_DEFAULT)
             .subscribe((checkoutDirectories) => {
                 this.checkoutDirectories = checkoutDirectories;
             });

@@ -675,10 +675,11 @@ export class ProgrammingExerciseService {
             .pipe(map((res: EntityResponseType) => this.processProgrammingExerciseEntityResponse(res)));
     }
 
-    getCheckoutDirectoriesForProgrammingLanguage(programmingLanguage: ProgrammingLanguage): Observable<CheckoutDirectoriesDto> {
+    getCheckoutDirectoriesForProgrammingLanguage(programmingLanguage: ProgrammingLanguage, checkoutSolution: boolean): Observable<CheckoutDirectoriesDto> {
         return this.http.get<CheckoutDirectoriesDto>(`${this.resourceUrl}/repository-checkout-directories`, {
             params: {
                 programmingLanguage,
+                checkoutSolution: checkoutSolution,
             },
         });
     }

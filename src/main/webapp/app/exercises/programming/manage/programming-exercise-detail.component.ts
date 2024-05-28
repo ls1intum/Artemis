@@ -56,7 +56,6 @@ import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-setting
 import { Detail } from 'app/detail-overview-list/detail.model';
 import { Competency } from 'app/entities/competency.model';
 import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';
-import { CheckoutDirectoriesDto } from 'app/entities/checkout-directories-dto';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -103,9 +102,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     plagiarismCheckSupported = false; // default value
 
-    checkoutDirectories?: CheckoutDirectoriesDto;
-
-    private checkoutDirectoriesSubscription: Subscription;
     private activatedRouteSubscription: Subscription;
     private templateAndSolutionParticipationSubscription: Subscription;
     private profileInfoSubscription: Subscription;
@@ -250,14 +246,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     this.exerciseDetailSections = this.getExerciseDetails();
                 });
 
-            if (programmingExercise.isAtLeastEditor && this.programmingExercise.programmingLanguage) {
-                this.checkoutDirectoriesSubscription = this.programmingExerciseService
-                    .getCheckoutDirectoriesForProgrammingLanguage(this.programmingExercise.programmingLanguage)
-                    .subscribe((checkoutDirectories) => {
-                        this.checkoutDirectories = checkoutDirectories;
-                    });
-            }
-
             this.exerciseStatisticsSubscription = this.statisticsService.getExerciseStatistics(exerciseId!).subscribe((statistics: ExerciseManagementStatisticsDto) => {
                 this.doughnutStats = statistics;
             });
@@ -266,7 +254,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     ngOnDestroy(): void {
         this.dialogErrorSource.unsubscribe();
-        this.checkoutDirectoriesSubscription?.unsubscribe();
         this.activatedRouteSubscription?.unsubscribe();
         this.templateAndSolutionParticipationSubscription?.unsubscribe();
         this.profileInfoSubscription?.unsubscribe();

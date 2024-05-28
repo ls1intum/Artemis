@@ -888,10 +888,11 @@ public class ProgrammingExerciseResource {
     @GetMapping("programming-exercises/repository-checkout-directories")
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<CheckoutDirectoriesDTO> getRepositoryCheckoutDirectories(@RequestParam(value = "programmingLanguage") ProgrammingLanguage programmingLanguage) {
+    public ResponseEntity<CheckoutDirectoriesDTO> getRepositoryCheckoutDirectories(@RequestParam(value = "programmingLanguage") ProgrammingLanguage programmingLanguage,
+            @RequestParam(value = "checkoutSolution", defaultValue = "true") boolean checkoutSolution) {
         log.debug("REST request to get checkout directories for programming language: {}", programmingLanguage);
 
-        CheckoutDirectoriesDTO repositoriesCheckoutDirectoryDTO = continuousIntegrationService.orElseThrow().getCheckoutDirectories(programmingLanguage);
+        CheckoutDirectoriesDTO repositoriesCheckoutDirectoryDTO = continuousIntegrationService.orElseThrow().getCheckoutDirectories(programmingLanguage, checkoutSolution);
         return ResponseEntity.ok(repositoriesCheckoutDirectoryDTO);
     }
 }

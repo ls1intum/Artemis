@@ -264,5 +264,5 @@ public interface ContinuousIntegrationService {
      * @return the paths of the checkout directories for the default repositories (exercise, solution, tests) for the
      *         template and submission build plan
      */
-    CheckoutDirectoriesDTO getCheckoutDirectories(ProgrammingLanguage programmingLanguage);
+    CheckoutDirectoriesDTO getCheckoutDirectories(ProgrammingLanguage programmingLanguage, boolean checkoutSolution);
 }
