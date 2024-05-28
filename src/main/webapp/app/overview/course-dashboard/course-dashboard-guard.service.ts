@@ -1,9 +1,10 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, Router } from '@angular/router';
 
-import { first, lastValueFrom, of, switchMap } from 'rxjs';
+import { Observable, first, lastValueFrom, map, of, switchMap } from 'rxjs';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 
 @Injectable({
     providedIn: 'root',
@@ -12,6 +13,7 @@ export class CourseDashboardGuard implements CanActivate {
     constructor(
         private featureToggleService: FeatureToggleService,
         private courseStorageService: CourseStorageService,
+        private courseManagementService: CourseManagementService,
         private router: Router,
     ) {}
 
@@ -23,22 +25,39 @@ export class CourseDashboardGuard implements CanActivate {
         return lastValueFrom(
             this.featureToggleService.getFeatureToggleActive(FeatureToggle.StudentCourseAnalyticsDashboard).pipe(
                 first(),
-                switchMap((isActive) => {
+                switchMap((isActive): Observable<boolean> => {
                     const courseId = route.parent?.paramMap.get('courseId');
                     if (!courseId) {
                         return of(false);
                     }
 
-                    if (isActive) {
-                        // Check if course has dashboard enabled
-                        const course = this.courseStorageService.getCourse(parseInt(courseId, 10));
-                        if (course && course.studentCourseAnalyticsDashboardEnabled) {
-                            return of(true);
+                    const handleReturn = (value: boolean) => {
+                        if (!value) {
+                            this.router.navigate([`/courses/${courseId}/exercises`]);
                         }
+                        return value;
+                    };
+
+                    if (!isActive) {
+                        return of(handleReturn(false));
                     }
 
-                    this.router.navigate([`/courses/${courseId}/exercises`]);
-                    return of(false);
+                    // Check if course has dashboard enabled
+                    const course = this.courseStorageService.getCourse(parseInt(courseId, 10));
+                    if (course) {
+                        return of(handleReturn(course?.studentCourseAnalyticsDashboardEnabled ?? false));
+                    }
+
+                    // If course is not in storage, fetch it from the server
+                    return this.courseManagementService.find(parseInt(courseId, 10)).pipe(
+                        map((res) => {
+                            if (res.body) {
+                                // Store course in cache
+                                this.courseStorageService.updateCourse(res.body);
+                            }
+                            return handleReturn(res.body?.studentCourseAnalyticsDashboardEnabled ?? false);
+                        }),
+                    );
                 }),
             ),
         );
