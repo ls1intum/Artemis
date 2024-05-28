@@ -12,7 +12,7 @@ import static com.tngtech.archunit.core.domain.JavaClass.Predicates.simpleName;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.simpleNameContaining;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.type;
 import static com.tngtech.archunit.core.domain.JavaCodeUnit.Predicates.constructor;
-import static com.tngtech.archunit.core.domain.properties.HasName.Predicates.nameContaining;
+import static com.tngtech.archunit.core.domain.properties.HasName.Predicates.nameEndingWith;
 import static com.tngtech.archunit.core.domain.properties.HasName.Predicates.nameMatching;
 import static com.tngtech.archunit.core.domain.properties.HasOwner.Predicates.With.owner;
 import static com.tngtech.archunit.lang.SimpleConditionEvent.violated;
@@ -31,7 +31,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.lang.reflect.Method;
 import java.nio.file.Files;
-import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -249,22 +248,24 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     @Test
-    void dtosWithCollectionsHaveJsonAnnotation() {
-        var DTOs = allClasses.that(nameContaining("DTO"));
-        var DTOsWithCollections = DTOs.that(haveACollectionField());
+    void dtosWithNullableFieldsHaveJsonAnnotation() {
+        var DTOs = allClasses.that(nameEndingWith("DTO"));
+        var DTOsWithCollections = DTOs.that(haveANullableField());
 
-        ArchRule rule = classes().should().beAnnotatedWith(JsonInclude.class).because("empty collections should not be part of the json");
+        ArchRule rule = classes().should().beAnnotatedWith(JsonInclude.class).because("null values and empty collections should not be part of the json");
 
         rule.check(DTOsWithCollections);
     }
 
-    private DescribedPredicate<JavaClass> haveACollectionField() {
+    private DescribedPredicate<JavaClass> haveANullableField() {
+        Set<Class<?>> baseTypes = Set.of(byte.class, short.class, int.class, long.class, float.class, double.class, char.class, boolean.class);
+
         return new DescribedPredicate<>("have a field that is a collection") {
 
             @Override
             public boolean test(JavaClass javaClass) {
-                return javaClass.getAllFields().stream().map(field -> field.getRawType().reflect())
-                        .anyMatch(type -> Collection.class.isAssignableFrom(type) || Map.class.isAssignableFrom(type));
+                // The values in an enum are also considered its fields
+                return !javaClass.isEnum() && javaClass.getAllFields().stream().map(field -> field.getRawType().reflect()).anyMatch(type -> !baseTypes.contains(type));
             }
         };
     }

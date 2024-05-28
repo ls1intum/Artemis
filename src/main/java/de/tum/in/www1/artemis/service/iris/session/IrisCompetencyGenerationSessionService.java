@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -102,12 +103,9 @@ public class IrisCompetencyGenerationSessionService implements IrisButtonBasedFe
         irisMessageService.saveMessage(userMessage, session, IrisMessageSender.USER);
     }
 
-    // @formatter:off
-    record CompetencyGenerationDTO(
-            String courseDescription,
-            CompetencyTaxonomy[] taxonomyOptions
-    ) {}
-    // @formatter:on
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    record CompetencyGenerationDTO(String courseDescription, CompetencyTaxonomy[] taxonomyOptions) {
+    }
 
     @Override
     public List<Competency> executeRequest(IrisCompetencyGenerationSession session) {

@@ -50,6 +50,7 @@ public class AthenaFeedbackSendingService {
     private record RequestDTO(ExerciseDTO exercise, SubmissionDTO submission, List<FeedbackDTO> feedbacks) {
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private record ResponseDTO(String data) {
     }
 

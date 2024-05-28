@@ -59,6 +59,7 @@ public class AthenaSubmissionSendingService {
     private record RequestDTO(ExerciseDTO exercise, List<SubmissionDTO> submissions) {
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private record ResponseDTO(String data) {
     }
 

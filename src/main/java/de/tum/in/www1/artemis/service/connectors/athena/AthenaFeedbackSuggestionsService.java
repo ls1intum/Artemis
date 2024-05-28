@@ -62,6 +62,7 @@ public class AthenaFeedbackSuggestionsService {
         this.athenaModuleService = athenaModuleService;
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private record RequestDTO(ExerciseDTO exercise, SubmissionDTO submission, boolean isGraded) {
     }
 

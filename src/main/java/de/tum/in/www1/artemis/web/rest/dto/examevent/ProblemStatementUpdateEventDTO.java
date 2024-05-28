@@ -2,9 +2,12 @@ package de.tum.in.www1.artemis.web.rest.dto.examevent;
 
 import java.util.Objects;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 /**
  * A DTO for the {@link de.tum.in.www1.artemis.domain.exam.event.ProblemStatementUpdateEvent} entity.
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ProblemStatementUpdateEventDTO extends ExamLiveEventDTO {
 
     private String text;

@@ -2,11 +2,14 @@ package de.tum.in.www1.artemis.service.dto.athena;
 
 import jakarta.validation.constraints.NotNull;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 
 /**
  * A DTO representing a ModelingSubmission, for transferring data to Athena
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ModelingSubmissionDTO(long id, long exerciseId, String model) implements SubmissionDTO {
 
     /**

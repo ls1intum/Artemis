@@ -4,11 +4,14 @@ import static de.tum.in.www1.artemis.config.Constants.ATHENA_PROGRAMMING_EXERCIS
 
 import jakarta.validation.constraints.NotNull;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 
 /**
  * A DTO representing a ProgrammingSubmission, for transferring data to Athena
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ProgrammingSubmissionDTO(long id, long exerciseId, String repositoryUri) implements SubmissionDTO {
 
     /**
