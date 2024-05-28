@@ -13,7 +13,7 @@ export class ExerciseResultPage {
     }
 
     shouldShowScore(percentage: number) {
-        cy.reloadUntilFound('#submission-result-graded');
+        cy.reloadUntilFound('jhi-course-exercise-details #submission-result-graded');
         cy.contains('.tab-bar-exercise-details', `${percentage}%`).should('be.visible');
     }
 

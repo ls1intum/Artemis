@@ -22,10 +22,16 @@ import javax.naming.ldap.LdapName;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.transport.CredentialsProvider;
+import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -51,6 +57,7 @@ import de.tum.in.www1.artemis.util.LocalRepository;
  * This class contains integration tests for the base repositories (template, solution, tests) and the different types of assignment repositories (student assignment, teaching
  * assistant assignment, instructor assignment).
  */
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
     @Autowired
@@ -74,6 +81,22 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
     private String teamShortName;
 
     private String teamRepositorySlug;
+
+    @Value("${artemis.user-management.internal-admin.username}")
+    private String localVCUsername;
+
+    @Value("${artemis.user-management.internal-admin.password}")
+    private String localVCPassword;
+
+    @BeforeAll
+    void setupAll() {
+        CredentialsProvider.setDefault(new UsernamePasswordCredentialsProvider(localVCUsername, localVCPassword));
+    }
+
+    @AfterAll
+    void cleanupAll() {
+        this.gitService.init();
+    }
 
     @BeforeEach
     void initRepositories() throws GitAPIException, IOException, URISyntaxException, InvalidNameException {
@@ -747,7 +770,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
         localVCLocalCITestService.testPushSuccessful(instructorExamTestRunRepository.localGit, instructor1Login, projectKey1, repositorySlug);
 
-        localVCLocalCITestService.testLatestSubmission(instructorTestRunParticipation.getId(), commitHash, 1, false);
+        localVCLocalCITestService.testLatestSubmission(instructorTestRunParticipation.getId(), commitHash, 1, false, false, 0, 20);
 
         await().until(() -> {
             Optional<BuildJob> buildJobOptional = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(instructorTestRunParticipation.getId());

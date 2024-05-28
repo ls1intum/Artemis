@@ -191,7 +191,7 @@ public class CacheConfiguration {
         config.getSerializationConfig().addSerializerConfig(createPathSerializerConfig());
 
         if (registration == null) {
-            log.info("No discovery service is set up, Hazelcast cannot create a cluster.");
+            log.info("No discovery service is set up, Hazelcast cannot create a multi-node cluster.");
             hazelcastBindOnlyOnInterface("127.0.0.1", config);
         }
         else {

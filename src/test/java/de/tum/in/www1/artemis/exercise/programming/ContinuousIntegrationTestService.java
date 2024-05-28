@@ -160,23 +160,23 @@ public class ContinuousIntegrationTestService {
     public void testHealthRunning() throws Exception {
         mockDelegate.mockHealthInCiService(true, HttpStatus.OK);
         var health = continuousIntegrationService.health();
-        assertThat(health.getAdditionalInfo()).containsEntry("url", ciServerUrl);
+        assertThat(health.additionalInfo()).containsEntry("url", ciServerUrl);
         assertThat(health.isUp()).isTrue();
     }
 
     public void testHealthNotRunning() throws Exception {
         mockDelegate.mockHealthInCiService(false, HttpStatus.OK);
         var health = continuousIntegrationService.health();
-        assertThat(health.getAdditionalInfo()).containsEntry("url", ciServerUrl);
+        assertThat(health.additionalInfo()).containsEntry("url", ciServerUrl);
         assertThat(health.isUp()).isFalse();
     }
 
     public void testHealthException() throws Exception {
         mockDelegate.mockHealthInCiService(false, HttpStatus.INTERNAL_SERVER_ERROR);
         var health = continuousIntegrationService.health();
-        assertThat(health.getAdditionalInfo()).containsEntry("url", ciServerUrl);
+        assertThat(health.additionalInfo()).containsEntry("url", ciServerUrl);
         assertThat(health.isUp()).isFalse();
-        assertThat(health.getException()).isNotNull();
+        assertThat(health.exception()).isNotNull();
     }
 
     public void testConfigureBuildPlan() throws Exception {

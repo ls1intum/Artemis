@@ -233,15 +233,14 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
 
     @Override
     public ConnectorHealth health() {
+        Map<String, Object> additionalInfo = Map.of("url", serverUrl);
         try {
             // Note: we simply check if the login page is reachable
             shortTimeoutRestTemplate.getForObject(serverUrl + "/login", String.class);
-            return new ConnectorHealth(true, Map.of("url", serverUrl));
+            return new ConnectorHealth(true, additionalInfo);
         }
         catch (Exception emAll) {
-            var health = new ConnectorHealth(false, Map.of("url", serverUrl));
-            health.setException(new JenkinsException("Jenkins Server is down!"));
-            return health;
+            return new ConnectorHealth(false, additionalInfo, new JenkinsException("Jenkins Server is down!"));
         }
     }
 

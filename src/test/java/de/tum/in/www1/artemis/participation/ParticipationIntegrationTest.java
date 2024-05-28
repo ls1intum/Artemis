@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.participation;
 
 import static de.tum.in.www1.artemis.connector.AthenaRequestMockProvider.ATHENA_MODULE_PROGRAMMING_TEST;
+import static de.tum.in.www1.artemis.util.TestResourceUtils.HalfSecond;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.any;
@@ -1031,7 +1032,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
                 StudentParticipation.class, HttpStatus.OK);
 
         assertThat(response).hasSize(1);
-        assertThat(response.get(0).getIndividualDueDate()).isEqualToIgnoringNanos(submission.getParticipation().getIndividualDueDate());
+        assertThat(response.get(0).getIndividualDueDate()).isCloseTo(submission.getParticipation().getIndividualDueDate(), HalfSecond());
 
         verify(programmingExerciseScheduleService, never()).updateScheduling(any());
     }
@@ -1058,7 +1059,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
                 StudentParticipation.class, HttpStatus.OK);
 
         assertThat(response).hasSize(1);
-        assertThat(response.get(0).getIndividualDueDate()).isEqualToIgnoringNanos(participation.getIndividualDueDate());
+        assertThat(response.get(0).getIndividualDueDate()).isCloseTo(participation.getIndividualDueDate(), HalfSecond());
 
         verify(programmingExerciseScheduleService).updateScheduling(exercise);
         verify(programmingExerciseParticipationService).unlockStudentRepositoryAndParticipation(participation);
