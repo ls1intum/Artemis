@@ -159,6 +159,7 @@ export class CompetencyAccordionComponent implements OnChanges {
                 ...this.metrics.competencyMetrics.jolValues,
                 [this.competency.id]: newRating,
             };
+            this.calculateProgressValues();
         }
     }
 
