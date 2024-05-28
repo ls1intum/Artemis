@@ -11,9 +11,7 @@
                         repositoryBadge;
                         context: {
                             helpIconText: 'artemisApp.programmingExercise.preview.templateRepoTooltip',
-                            trailingRepoSlug: '-exercise',
-                            isBuildPlan: false,
-                            isAuxRepo: false
+                            trailingRepoSlug: '-exercise'
                         }
                     "
                 />
@@ -22,9 +20,7 @@
                         repositoryBadge;
                         context: {
                             helpIconText: 'artemisApp.programmingExercise.preview.solutionRepoTooltip',
-                            trailingRepoSlug: '-solution',
-                            isBuildPlan: false,
-                            isAuxRepo: false
+                            trailingRepoSlug: '-solution'
                         }
                     "
                 />
@@ -33,28 +29,23 @@
                         repositoryBadge;
                         context: {
                             helpIconText: 'artemisApp.programmingExercise.preview.testRepoTooltip',
-                            trailingRepoSlug: '-tests',
-                            isBuildPlan: false,
-                            isAuxRepo: false
+                            trailingRepoSlug: '-tests'
                         }
                     "
                 />
 
                 @if (programmingExercise?.auxiliaryRepositories?.length) {
-                    <div>
-                        @for (auxiliaryRepository of programmingExercise!.auxiliaryRepositories; track auxiliaryRepository) {
-                            <ng-container
-                                *ngTemplateOutlet="
-                                    repositoryBadge;
-                                    context: {
-                                        trailingRepoSlug: '-' + auxiliaryRepository.name,
-                                        isBuildPlan: false,
-                                        isAuxRepo: true
-                                    }
-                                "
-                            />
-                        }
-                    </div>
+                    @for (auxiliaryRepository of programmingExercise!.auxiliaryRepositories; track auxiliaryRepository) {
+                        <ng-container
+                            *ngTemplateOutlet="
+                                repositoryBadge;
+                                context: {
+                                    trailingRepoSlug: '-' + auxiliaryRepository.name,
+                                    isAuxRepo: true
+                                }
+                            "
+                        />
+                    }
                 }
             </ul>
         </div>
@@ -72,8 +63,7 @@
                         context: {
                             helpIconText: 'artemisApp.programmingExercise.preview.templateBuildPlanTooltip',
                             trailingRepoSlug: '-BASE',
-                            isBuildPlan: true,
-                            isAuxRepo: false
+                            isBuildPlan: true
                         }
                     "
                 />
@@ -83,8 +73,7 @@
                         context: {
                             helpIconText: 'artemisApp.programmingExercise.preview.solutionBuildPlanTooltip',
                             trailingRepoSlug: '-SOLUTION',
-                            isBuildPlan: true,
-                            isAuxRepo: false
+                            isBuildPlan: true
                         }
                     "
                 />
