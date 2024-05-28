@@ -72,7 +72,7 @@ export class CompetencyAccordionComponent implements OnChanges {
             (exercise) =>
                 ({
                     ...exercise,
-                    studentAssignedTeamIdComputed: exercise.studentAssignedTeamId,
+                    studentAssignedTeamIdComputed: exercise.studentAssignedTeamId !== undefined,
                 }) as unknown as Exercise,
         );
     }
