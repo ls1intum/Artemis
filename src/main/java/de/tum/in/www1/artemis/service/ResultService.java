@@ -325,7 +325,7 @@ public class ResultService {
         boolean shouldResultsBePublished = exam.resultsPublished();
         if (!shouldResultsBePublished && exam.isTestExam() && participation instanceof StudentParticipation studentParticipation) {
             var participant = studentParticipation.getParticipant();
-            var studentExamOptional = studentExamRepository.findByExamIdAndUserId(exam.getId(), participant.getId());
+            var studentExamOptional = studentExamRepository.findLatestByExamIdAndUserId(exam.getId(), participant.getId());
             if (studentExamOptional.isPresent()) {
                 shouldResultsBePublished = studentExamOptional.get().areResultsPublishedYet();
             }
