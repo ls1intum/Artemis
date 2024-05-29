@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.assessment;
 
-import java.util.ArrayList;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -153,6 +151,6 @@ public class ComplaintUtilService {
         ComplaintResponse complaintResponse = createInitialEmptyResponse(tutorLogin, complaint);
         complaintResponse.getComplaint().setAccepted(false);
         complaintResponse.setResponseText("rejected");
-        return new AssessmentUpdateDTO(new ArrayList<>(), complaintResponse, null);
+        return new AssessmentUpdateDTO(null, complaintResponse, null);
     }
 }

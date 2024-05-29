@@ -93,7 +93,7 @@ public class AssessmentService {
      * @return the updated Result
      */
     public Result updateAssessmentAfterComplaint(Result originalResult, Exercise exercise, AssessmentUpdateBaseDTO assessmentUpdate) {
-        if (assessmentUpdate.feedbacks() == null || assessmentUpdate.complaintResponse() == null) {
+        if (assessmentUpdate.complaintResponse() == null) {
             throw new BadRequestAlertException("Feedbacks and complaint response must not be null.", "AssessmentUpdate", "notnull");
         }
         // Save the complaint response
