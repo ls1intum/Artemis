@@ -135,7 +135,9 @@
             </div>
         }
         @if (showExamSummary) {
-            <jhi-exam-participation-summary [studentExam]="studentExam" />
+            <div class="px-3 scrollable-content content-height-dev">
+                <jhi-exam-participation-summary [studentExam]="studentExam" />
+            </div>
         }
     }
 }
