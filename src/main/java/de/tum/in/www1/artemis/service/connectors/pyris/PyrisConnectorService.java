@@ -65,7 +65,7 @@ public class PyrisConnectorService {
         }
     }
 
-    void executePipeline(String feature, String variant, Object executionDTO) {
+    public void executePipeline(String feature, String variant, Object executionDTO) {
         var endpoint = "/api/v1/pipelines/" + feature + "/" + variant + "/run";
         try {
             restTemplate.postForEntity(pyrisUrl + endpoint, objectMapper.valueToTree(executionDTO), Void.class);

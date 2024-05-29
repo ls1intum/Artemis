@@ -1,20 +1,21 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
-import { mockClientMessage, mockConversation, mockServerMessage } from '../../helpers/sample/iris-sample-data';
-import { IrisHttpChatMessageService } from 'app/iris/http-chat-message.service';
+import { irisExercise, mockClientMessage, mockConversation, mockServerMessage } from '../../helpers/sample/iris-sample-data';
 import { IrisUserMessage } from 'app/entities/iris/iris-message.model';
+import { IrisChatHttpService } from 'app/iris/iris-chat-http.service';
+import { ChatServiceMode } from 'app/iris/iris-chat.service';
 
-describe('Iris Http Chat Message Service', () => {
-    let service: IrisHttpChatMessageService;
+describe('Iris Chat Http Service', () => {
+    let service: IrisChatHttpService;
     let httpMock: HttpTestingController;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
-            providers: [IrisHttpChatMessageService],
+            providers: [IrisChatHttpService],
         });
-        service = TestBed.inject(IrisHttpChatMessageService);
+        service = TestBed.inject(IrisChatHttpService);
         httpMock = TestBed.inject(HttpTestingController);
     });
 
@@ -50,7 +51,7 @@ describe('Iris Http Chat Message Service', () => {
         }));
 
         it('should return all messages for a session', fakeAsync(() => {
-            const returnedFromService = [mockClientMessage, mockServerMessage];
+            const returnedFromService = [mockServerMessage, mockClientMessage];
             const expected = returnedFromService;
             service
                 .getMessages(mockConversation.id)
@@ -69,6 +70,29 @@ describe('Iris Http Chat Message Service', () => {
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp.body).toEqual(expected));
             const req = httpMock.expectOne({ method: 'PUT' });
+            req.flush(returnedFromService);
+            tick();
+        }));
+
+        it('should create a session', fakeAsync(() => {
+            const returnedFromService = { id: '1' };
+            service
+                .createSession(ChatServiceMode.COURSE + '/' + 1)
+                .pipe(take(1))
+                .subscribe((resp) => expect(resp.body).toEqual(returnedFromService));
+            const req = httpMock.expectOne({ method: 'POST' });
+            req.flush(returnedFromService, { status: 201, statusText: 'Created' });
+            tick();
+        }));
+
+        it('should return current session', fakeAsync(() => {
+            const returnedFromService = mockConversation;
+            const expected = returnedFromService;
+            service
+                .getCurrentSessionOrCreateIfNotExists(ChatServiceMode.EXERCISE + '/' + irisExercise.id!)
+                .pipe(take(1))
+                .subscribe((resp) => expect(resp.body).toEqual(expected));
+            const req = httpMock.expectOne({ method: 'POST' });
             req.flush(returnedFromService);
             tick();
         }));
