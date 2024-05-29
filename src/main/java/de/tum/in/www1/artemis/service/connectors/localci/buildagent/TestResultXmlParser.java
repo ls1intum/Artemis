@@ -9,7 +9,7 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlText;
 
-import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildResult;
 
 class TestResultXmlParser {
 
@@ -23,8 +23,8 @@ class TestResultXmlParser {
      * @param successfulTests      A list of successful tests. This list will be populated by the method.
      * @throws IOException If an I/O error occurs while reading the test result file.
      */
-    static void processTestResultFile(String testResultFileString, List<LocalCIBuildResult.LocalCITestJobDTO> failedTests,
-            List<LocalCIBuildResult.LocalCITestJobDTO> successfulTests) throws IOException {
+    static void processTestResultFile(String testResultFileString, List<BuildResult.LocalCITestJobDTO> failedTests, List<BuildResult.LocalCITestJobDTO> successfulTests)
+            throws IOException {
         TestSuite testSuite = mapper.readValue(testResultFileString, TestSuite.class);
 
         if (testSuite.testCases() != null) {
@@ -42,14 +42,14 @@ class TestResultXmlParser {
         }
     }
 
-    private static void processTestSuite(TestSuite testSuite, List<LocalCIBuildResult.LocalCITestJobDTO> failedTests, List<LocalCIBuildResult.LocalCITestJobDTO> successfulTests) {
+    private static void processTestSuite(TestSuite testSuite, List<BuildResult.LocalCITestJobDTO> failedTests, List<BuildResult.LocalCITestJobDTO> successfulTests) {
         for (TestCase testCase : testSuite.testCases()) {
             Failure failure = testCase.extractFailure();
             if (failure != null) {
-                failedTests.add(new LocalCIBuildResult.LocalCITestJobDTO(testCase.name(), List.of(failure.extractMessage())));
+                failedTests.add(new BuildResult.LocalCITestJobDTO(testCase.name(), List.of(failure.extractMessage())));
             }
             else {
-                successfulTests.add(new LocalCIBuildResult.LocalCITestJobDTO(testCase.name(), List.of()));
+                successfulTests.add(new BuildResult.LocalCITestJobDTO(testCase.name(), List.of()));
             }
         }
     }
