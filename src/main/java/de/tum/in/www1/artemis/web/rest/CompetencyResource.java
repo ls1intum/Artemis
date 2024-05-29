@@ -62,6 +62,7 @@ import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.CourseCompetencyProgressDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyImportResponseDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyJolDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyRelationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyWithTailRelationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.CompetencyPageableSearchDTO;
@@ -684,14 +685,14 @@ public class CompetencyResource {
      */
     @GetMapping("courses/{courseId}/competencies/{competencyId}/jol")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<Short> getLatestJudgementOfLearningForCompetency(@PathVariable long courseId, @PathVariable long competencyId) {
+    public ResponseEntity<CompetencyJolDTO> getLatestJudgementOfLearningForCompetency(@PathVariable long courseId, @PathVariable long competencyId) {
         log.debug("REST request to get judgement of learning for competency: {}", competencyId);
 
         final var userId = userRepository.getUserIdElseThrow();
         competencyService.checkIfCompetencyBelongsToCourse(competencyId, courseId);
-        final var jol = competencyJolRepository.findLatestJolValueByCompetencyIdAndUserId(competencyId, userId);
+        final var jol = competencyJolRepository.findLatestByCompetencyIdAndUserId(competencyId, userId);
 
-        return ResponseEntity.ok(jol.orElse(null));
+        return ResponseEntity.ok(jol.map(CompetencyJolDTO::of).orElse(null));
     }
 
     /**
@@ -702,7 +703,7 @@ public class CompetencyResource {
      */
     @GetMapping("courses/{courseId}/competencies/jol")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<Map<Long, Short>> getLatestJudgementOfLearningForCourse(@PathVariable long courseId) {
+    public ResponseEntity<Map<Long, CompetencyJolDTO>> getLatestJudgementOfLearningForCourse(@PathVariable long courseId) {
         log.debug("REST request to get judgement of learning for competencies of course: {}", courseId);
 
         final var userId = userRepository.getUserIdElseThrow();

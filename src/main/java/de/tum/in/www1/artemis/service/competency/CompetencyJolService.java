@@ -5,6 +5,7 @@ import static java.util.stream.Collectors.toMap;
 
 import java.time.ZonedDateTime;
 import java.util.Map;
+import java.util.function.Function;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -13,7 +14,7 @@ import de.tum.in.www1.artemis.domain.competency.CompetencyJol;
 import de.tum.in.www1.artemis.repository.CompetencyRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.competency.CompetencyJolRepository;
-import de.tum.in.www1.artemis.repository.competency.JolValueEntry;
+import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyJolDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
@@ -84,13 +85,13 @@ public class CompetencyJolService {
     }
 
     /**
-     * Get a users latest judgement of learning value for all competencies of a course.
+     * Get a users latest judgement of learning for all competencies of a course.
      *
      * @param userId   the id of the user
      * @param courseId the id of the course
-     * @return a map from competency id to judgement of learning value
+     * @return a map from competency id to judgement of learning
      */
-    public Map<Long, Short> getLatestJudgementOfLearningForUserByCourseId(long userId, long courseId) {
-        return competencyJolRepository.findLatestJolValuesForUserByCourseId(userId, courseId).stream().collect(toMap(JolValueEntry::competencyId, JolValueEntry::value));
+    public Map<Long, CompetencyJolDTO> getLatestJudgementOfLearningForUserByCourseId(long userId, long courseId) {
+        return competencyJolRepository.findLatestJolValuesForUserByCourseId(userId, courseId).stream().collect(toMap(CompetencyJolDTO::competencyId, Function.identity()));
     }
 }
