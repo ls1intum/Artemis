@@ -34,16 +34,16 @@ import de.tum.in.www1.artemis.domain.BuildJob;
 import de.tum.in.www1.artemis.domain.enumeration.BuildStatus;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.repository.BuildJobRepository;
+import de.tum.in.www1.artemis.service.connectors.localci.buildagent.BuildAgentDockerService;
 import de.tum.in.www1.artemis.service.connectors.localci.buildagent.BuildLogsMap;
-import de.tum.in.www1.artemis.service.connectors.localci.buildagent.LocalCIDockerService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildConfig;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobQueueItem;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class LocalCIDockerServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
+class BuildAgentDockerServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     @Autowired
-    private LocalCIDockerService localCIDockerService;
+    private BuildAgentDockerService buildAgentDockerService;
 
     @Autowired
     private BuildJobRepository buildJobRepository;
@@ -73,7 +73,7 @@ class LocalCIDockerServiceTest extends AbstractSpringIntegrationLocalCILocalVCTe
 
         buildJobRepository.save(buildJob);
 
-        localCIDockerService.deleteOldDockerImages();
+        buildAgentDockerService.deleteOldDockerImages();
 
         // Verify that removeImageCmd() was called.
         verify(dockerClient, times(1)).removeImageCmd(anyString());
@@ -91,7 +91,7 @@ class LocalCIDockerServiceTest extends AbstractSpringIntegrationLocalCILocalVCTe
 
         buildJobRepository.save(buildJob);
 
-        localCIDockerService.deleteOldDockerImages();
+        buildAgentDockerService.deleteOldDockerImages();
 
         // Verify that removeImageCmd() was not called.
         verify(dockerClient, times(0)).removeImageCmd(anyString());
@@ -104,10 +104,10 @@ class LocalCIDockerServiceTest extends AbstractSpringIntegrationLocalCILocalVCTe
         doReturn(inspectImageCmd).when(dockerClient).inspectImageCmd(anyString());
         doThrow(new NotFoundException("")).when(inspectImageCmd).exec();
         BuildConfig buildConfig = new BuildConfig("echo 'test'", "test-image-name", "test", "test", "test", "test", null, null, false, false, false, null);
-        var build = new LocalCIBuildJobQueueItem("1", "job1", "address1", 1, 1, 1, 1, 1, BuildStatus.SUCCESSFUL, null, null, buildConfig, null);
+        var build = new BuildJobQueueItem("1", "job1", "address1", 1, 1, 1, 1, 1, BuildStatus.SUCCESSFUL, null, null, buildConfig, null);
         // Pull image
         try {
-            localCIDockerService.pullDockerImage(build, new BuildLogsMap());
+            buildAgentDockerService.pullDockerImage(build, new BuildLogsMap());
         }
         catch (LocalCIException e) {
             // Expected exception
@@ -136,7 +136,7 @@ class LocalCIDockerServiceTest extends AbstractSpringIntegrationLocalCILocalVCTe
 
         dockerImageCleanupInfo.put("test-image-name", buildStartDate);
 
-        localCIDockerService.checkUsableDiskSpaceThenCleanUp();
+        buildAgentDockerService.checkUsableDiskSpaceThenCleanUp();
 
         // Verify that removeImageCmd() was called.
         verify(dockerClient, times(2)).removeImageCmd("test-image-name");
@@ -157,7 +157,7 @@ class LocalCIDockerServiceTest extends AbstractSpringIntegrationLocalCILocalVCTe
         doReturn(Instant.now().getEpochSecond() - (6 * 60)).when(mockContainer).getCreated();
         doReturn("dummy-container-id").when(mockContainer).getId();
 
-        localCIDockerService.cleanUpContainers();
+        buildAgentDockerService.cleanUpContainers();
 
         // Verify that removeContainerCmd() was called
         verify(dockerClient, times(1)).stopContainerCmd(anyString());
@@ -165,7 +165,7 @@ class LocalCIDockerServiceTest extends AbstractSpringIntegrationLocalCILocalVCTe
         // Mock container creation time to be younger than 5 minutes
         doReturn(Instant.now().getEpochSecond()).when(mockContainer).getCreated();
 
-        localCIDockerService.cleanUpContainers();
+        buildAgentDockerService.cleanUpContainers();
 
         // Verify that removeContainerCmd() was not called a second time
         verify(dockerClient, times(1)).stopContainerCmd(anyString());
@@ -178,7 +178,7 @@ class LocalCIDockerServiceTest extends AbstractSpringIntegrationLocalCILocalVCTe
         doReturn(stopContainerCmd).when(dockerClient).stopContainerCmd(anyString());
         doThrow(new RuntimeException("Container stopping failed")).when(stopContainerCmd).exec();
 
-        localCIDockerService.cleanUpContainers();
+        buildAgentDockerService.cleanUpContainers();
 
         // Verify that killContainerCmd() was called
         verify(dockerClient, times(1)).killContainerCmd(anyString());
