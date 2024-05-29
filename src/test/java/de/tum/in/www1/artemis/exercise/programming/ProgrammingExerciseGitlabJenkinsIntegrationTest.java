@@ -578,6 +578,28 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
         verify(fileService, times(3)).scheduleDirectoryPathForRecursiveDeletion(any(Path.class), eq(5L));
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testExportStudentRepository_asStudent_authorized() throws Exception {
+        programmingExerciseTestService.exportStudentRepository(true);
+        // Two invocations: one for the repository directory; one for the output.
+        verify(fileService, times(2)).scheduleDirectoryPathForRecursiveDeletion(any(Path.class), eq(5L));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void testExportStudentRepository_asStudent_unauthorized() throws Exception {
+        // The repository does not belong to this student.
+        programmingExerciseTestService.exportStudentRepository(false);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testExportStudentRepository_asTutor() throws Exception {
+        programmingExerciseTestService.exportStudentRepository(true);
+        verify(fileService, times(2)).scheduleDirectoryPathForRecursiveDeletion(any(Path.class), eq(5L));
+    }
+
     // TODO: add startProgrammingExerciseStudentSubmissionFailedWithBuildlog & copyRepository_testConflictError
 
     @Test

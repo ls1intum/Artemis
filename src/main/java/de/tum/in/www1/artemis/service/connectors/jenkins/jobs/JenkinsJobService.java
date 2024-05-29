@@ -17,7 +17,7 @@ import com.offbytwo.jenkins.model.FolderJob;
 import com.offbytwo.jenkins.model.JobWithDetails;
 
 import de.tum.in.www1.artemis.exception.JenkinsException;
-import de.tum.in.www1.artemis.service.util.XmlFileUtils;
+import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsXmlFileUtils;
 
 @Service
 @Profile("jenkins")
@@ -101,7 +101,7 @@ public class JenkinsJobService {
             xmlString = xmlString.replace("*/master", "**");
             xmlString = xmlString.replace("*/main", "**");
 
-            return XmlFileUtils.readFromString(xmlString);
+            return JenkinsXmlFileUtils.readFromString(xmlString);
         }
         catch (IOException e) {
             log.error(e.getMessage(), e);
@@ -122,7 +122,7 @@ public class JenkinsJobService {
         }
 
         String folderXml = jenkinsServer.getJobXml(folderName);
-        return XmlFileUtils.readFromString(folderXml);
+        return JenkinsXmlFileUtils.readFromString(folderXml);
     }
 
     /**
@@ -145,7 +145,7 @@ public class JenkinsJobService {
                 return;
             }
 
-            String configString = XmlFileUtils.writeToString(jobConfig);
+            String configString = JenkinsXmlFileUtils.writeToString(jobConfig);
             jenkinsServer.createJob(folder, jobName, configString, useCrumb);
         }
         catch (IOException | TransformerException e) {
@@ -171,7 +171,7 @@ public class JenkinsJobService {
         var folder = jenkinsServer.getFolderJob(job);
 
         String jobXml = jenkinsServer.getJobXml(folder.orElse(null), jobName);
-        return XmlFileUtils.readFromString(jobXml);
+        return JenkinsXmlFileUtils.readFromString(jobXml);
     }
 
     /**
@@ -184,7 +184,7 @@ public class JenkinsJobService {
      */
     public void updateJob(String folderName, String jobName, Document jobConfig) throws IOException {
         try {
-            String configString = XmlFileUtils.writeToString(jobConfig);
+            String configString = JenkinsXmlFileUtils.writeToString(jobConfig);
 
             if (folderName != null && !folderName.isEmpty()) {
                 var job = jenkinsServer.getJob(folderName);
@@ -209,7 +209,7 @@ public class JenkinsJobService {
      */
     public void updateFolderJob(String folderName, Document folderConfig) throws IOException {
         try {
-            String configString = XmlFileUtils.writeToString(folderConfig);
+            String configString = JenkinsXmlFileUtils.writeToString(folderConfig);
             jenkinsServer.updateJob(folderName, configString, useCrumb);
         }
         catch (TransformerException e) {

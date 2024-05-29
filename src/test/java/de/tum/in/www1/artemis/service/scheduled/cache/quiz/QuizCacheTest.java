@@ -19,6 +19,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -48,6 +49,7 @@ class QuizCacheTest extends AbstractSpringIntegrationIndependentTest {
     private static final String TEST_PREFIX = "quizcachetest";
 
     @Autowired
+    @Qualifier("hazelcastInstance")
     private HazelcastInstance hazelcastInstance;
 
     @Autowired

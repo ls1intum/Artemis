@@ -10,6 +10,9 @@ import { Observable, Subject, Subscription } from 'rxjs';
 import { AthenaService } from 'app/assessment/athena.service';
 import { ProgrammingExerciseTestScheduleDatePickerComponent } from 'app/exercises/programming/shared/lifecycle/programming-exercise-test-schedule-date-picker.component';
 import { every } from 'lodash-es';
+import { ActivatedRoute } from '@angular/router';
+import { tap } from 'rxjs/operators';
+import { ImportOptions } from 'app/types/programming-exercises';
 
 @Component({
     selector: 'jhi-programming-exercise-lifecycle',
@@ -20,6 +23,7 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
     @Input() exercise: ProgrammingExercise;
     @Input() isExamMode: boolean;
     @Input() readOnly: boolean;
+    @Input() importOptions?: ImportOptions;
 
     @ViewChildren(ProgrammingExerciseTestScheduleDatePickerComponent) datePickerComponents: QueryList<ProgrammingExerciseTestScheduleDatePickerComponent>;
 
@@ -40,10 +44,14 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
 
     isAthenaEnabled$: Observable<boolean> | undefined;
 
+    isImport: boolean = false;
+    private urlSubscription: Subscription;
+
     constructor(
         private translateService: TranslateService,
         private exerciseService: ExerciseService,
         private athenaService: AthenaService,
+        private activatedRoute: ActivatedRoute,
     ) {}
 
     /**
@@ -54,6 +62,23 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
             this.exercise.assessmentType = AssessmentType.AUTOMATIC;
         }
         this.isAthenaEnabled$ = this.athenaService.isEnabled();
+
+        this.updateIsImportBasedOnUrl();
+    }
+
+    private updateIsImportBasedOnUrl() {
+        let isImportFromExistingExercise = false;
+        this.urlSubscription = this.activatedRoute.url
+            .pipe(
+                tap((segments) => {
+                    isImportFromExistingExercise = segments.some((segment) => segment.path === 'import');
+                    // currently not supported for imports from files, issue https://github.com/ls1intum/Artemis/issues/8562 should be fixed first
+                    // isImportFromFile = segments.some((segment) => segment.path === 'import-from-file');
+                }),
+            )
+            .subscribe(() => {
+                this.isImport = isImportFromExistingExercise;
+            });
     }
 
     ngAfterViewInit() {
@@ -78,6 +103,7 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
     ngOnDestroy() {
         this.datePickerChildrenSubscription?.unsubscribe();
         this.unsubscribeDateFieldSubscriptions();
+        this.urlSubscription?.unsubscribe();
     }
 
     calculateFormStatus() {
@@ -100,9 +126,15 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
         }
     }
 
-    toggleManualFeedbackRequests() {
-        this.exercise.allowManualFeedbackRequests = !this.exercise.allowManualFeedbackRequests;
-        if (this.exercise.allowManualFeedbackRequests) {
+    toggleSetTestCaseVisibilityToAfterDueDate() {
+        if (this.importOptions) {
+            this.importOptions.setTestCaseVisibilityToAfterDueDate = !this.importOptions.setTestCaseVisibilityToAfterDueDate;
+        }
+    }
+
+    toggleFeedbackRequests() {
+        this.exercise.allowFeedbackRequests = !this.exercise.allowFeedbackRequests;
+        if (this.exercise.allowFeedbackRequests) {
             this.exercise.assessmentDueDate = undefined;
             this.exercise.buildAndTestStudentSubmissionsAfterDueDate = undefined;
         }
@@ -122,7 +154,7 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
         } else {
             this.exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
             this.exercise.allowComplaintsForAutomaticAssessments = false;
-            this.exercise.allowManualFeedbackRequests = false;
+            this.exercise.allowFeedbackRequests = false;
         }
     }
 

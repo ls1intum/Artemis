@@ -32,14 +32,15 @@ artemis:
         course-registration:
             allowed-username-pattern: .*
     version-control:
-        user: fake-username-vc
-        password: fake-password
+        user: fake-username-vc # The git user. This is required for build agents
+        password: fake-password # The git password. This is required for build agents
         url: https://version-control.fake.fake
         token: fake-token
         health-api-token: fake-token
         ssh-template-clone-url: ssh://git@version-control.fake.fake:1111/
         ssh-keys-url-path: /plugins/servlet/ssh/account/keys
         default-branch: main
+        local-vcs-repo-path: ./test-local-vcs-repos
     continuous-integration:
         user: fake-username-ci
         password: fake-password

@@ -78,4 +78,13 @@ export class StudentExamService {
         });
         return studentExamsResponse;
     }
+
+    /**
+     * Get longest working time for the exam.
+     * @param courseId The course id.
+     * @param examId The exam id.
+     */
+    getLongestWorkingTimeForExam(courseId: number, examId: number): Observable<number> {
+        return this.http.get<number>(`${this.resourceUrl}/${courseId}/exams/${examId}/longest-working-time`);
+    }
 }

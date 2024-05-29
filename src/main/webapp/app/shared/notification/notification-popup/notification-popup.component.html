@@ -2,31 +2,20 @@
     @for (notification of notifications; track notification; let i = $index) {
         <div (click)="removeNotification(i); navigateToTarget(notification)">
             <div class="icon-container d-flex flex-column justify-content-center p-4">
-                @if (notification.title === LiveExamExerciseUpdateNotificationTitleHtmlConst) {
-                    <div>
-                        <fa-icon [icon]="faExclamationTriangle" />
-                    </div>
+                @if (notification.title === QuizNotificationTitleHtmlConst) {
+                    <fa-icon [icon]="faCheckDouble" />
                 } @else {
-                    @if (notification.title === QuizNotificationTitleHtmlConst) {
-                        <fa-icon [icon]="faCheckDouble" />
-                    } @else {
-                        <fa-icon [icon]="faMessage" class="text-info" />
-                    }
+                    <fa-icon [icon]="faMessage" class="text-info" />
                 }
             </div>
             <div class="pe-4 py-3">
                 <button class="m-0 px-1 py-0" (click)="removeNotification(i)">
                     <fa-icon [icon]="faTimes" />
                 </button>
-                @if (notification.title === LiveExamExerciseUpdateNotificationTitleHtmlConst) {
-                    <div>
-                        <h5 class="pe-4">{{ 'artemisApp.notification.liveExamExerciseUpdateNotification' | artemisTranslate }}</h5>
-                    </div>
-                } @else {
-                    <h5 class="pe-4">
-                        {{ getNotificationTitleTranslation(notification) }}
-                    </h5>
-                }
+                <h5 class="pe-4">
+                    {{ getNotificationTitleTranslation(notification) }}
+                </h5>
+
                 <div class="text-break">
                     {{ getNotificationTextTranslation(notification) }}
                 </div>

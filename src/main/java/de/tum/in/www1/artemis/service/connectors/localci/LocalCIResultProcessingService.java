@@ -1,14 +1,18 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALCI;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
 
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -32,9 +36,9 @@ import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildAgentInformation;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildAgentInformation;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobQueueItem;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildResult;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.ResultQueueItem;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingMessagingService;
@@ -43,7 +47,7 @@ import de.tum.in.www1.artemis.web.rest.dto.ResultDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWebsocketError;
 
-@Profile("localci")
+@Profile(PROFILE_LOCALCI)
 @Service
 public class LocalCIResultProcessingService {
 
@@ -67,13 +71,13 @@ public class LocalCIResultProcessingService {
 
     private IQueue<ResultQueueItem> resultQueue;
 
-    private IMap<String, LocalCIBuildAgentInformation> buildAgentInformation;
+    private IMap<String, BuildAgentInformation> buildAgentInformation;
 
     private FencedLock resultQueueLock;
 
     private UUID listenerId;
 
-    public LocalCIResultProcessingService(HazelcastInstance hazelcastInstance, ProgrammingExerciseGradingService programmingExerciseGradingService,
+    public LocalCIResultProcessingService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, ProgrammingExerciseGradingService programmingExerciseGradingService,
             ProgrammingMessagingService programmingMessagingService, BuildJobRepository buildJobRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             ParticipationRepository participationRepository, ProgrammingTriggerService programmingTriggerService, BuildLogEntryService buildLogEntryService) {
         this.hazelcastInstance = hazelcastInstance;
@@ -97,6 +101,7 @@ public class LocalCIResultProcessingService {
         this.listenerId = resultQueue.addItemListener(new ResultQueueListener(), true);
     }
 
+    @PreDestroy
     public void removeListener() {
         this.resultQueue.removeItemListener(this.listenerId);
     }
@@ -116,8 +121,8 @@ public class LocalCIResultProcessingService {
         }
         log.info("Processing build job result");
 
-        LocalCIBuildJobQueueItem buildJob = resultQueueItem.buildJobQueueItem();
-        LocalCIBuildResult buildResult = resultQueueItem.buildResult();
+        BuildJobQueueItem buildJob = resultQueueItem.buildJobQueueItem();
+        BuildResult buildResult = resultQueueItem.buildResult();
         List<BuildLogEntry> buildLogs = resultQueueItem.buildLogs();
         Throwable ex = resultQueueItem.exception();
 
@@ -205,19 +210,19 @@ public class LocalCIResultProcessingService {
      * @param buildJob the build job
      * @param result   the result of the build job
      */
-    private void addResultToBuildAgentsRecentBuildJobs(LocalCIBuildJobQueueItem buildJob, Result result) {
+    private void addResultToBuildAgentsRecentBuildJobs(BuildJobQueueItem buildJob, Result result) {
         try {
             buildAgentInformation.lock(buildJob.buildAgentAddress());
-            LocalCIBuildAgentInformation buildAgent = buildAgentInformation.get(buildJob.buildAgentAddress());
+            BuildAgentInformation buildAgent = buildAgentInformation.get(buildJob.buildAgentAddress());
             if (buildAgent != null) {
-                List<LocalCIBuildJobQueueItem> recentBuildJobs = buildAgent.recentBuildJobs();
+                List<BuildJobQueueItem> recentBuildJobs = buildAgent.recentBuildJobs();
                 for (int i = 0; i < recentBuildJobs.size(); i++) {
                     if (recentBuildJobs.get(i).id().equals(buildJob.id())) {
-                        recentBuildJobs.set(i, new LocalCIBuildJobQueueItem(buildJob, ResultDTO.of(result)));
+                        recentBuildJobs.set(i, new BuildJobQueueItem(buildJob, ResultDTO.of(result)));
                         break;
                     }
                 }
-                buildAgentInformation.put(buildJob.buildAgentAddress(), new LocalCIBuildAgentInformation(buildAgent, recentBuildJobs));
+                buildAgentInformation.put(buildJob.buildAgentAddress(), new BuildAgentInformation(buildAgent, recentBuildJobs));
             }
         }
         finally {
@@ -235,7 +240,7 @@ public class LocalCIResultProcessingService {
      *
      * @return the saved the build job
      */
-    public BuildJob saveFinishedBuildJob(LocalCIBuildJobQueueItem queueItem, BuildStatus buildStatus, Result result) {
+    public BuildJob saveFinishedBuildJob(BuildJobQueueItem queueItem, BuildStatus buildStatus, Result result) {
         try {
             BuildJob buildJob = new BuildJob(queueItem, buildStatus, result);
             return buildJobRepository.save(buildJob);
@@ -266,7 +271,7 @@ public class LocalCIResultProcessingService {
      * @param buildJob the build job to check
      * @return true if the build job is a solution build of a test or auxiliary push, false otherwise
      */
-    private boolean isSolutionBuildOfTestOrAuxPush(LocalCIBuildJobQueueItem buildJob) {
+    private boolean isSolutionBuildOfTestOrAuxPush(BuildJobQueueItem buildJob) {
         return buildJob.repositoryInfo().repositoryType() == RepositoryType.SOLUTION
                 && (buildJob.repositoryInfo().triggeredByPushTo() == RepositoryType.TESTS || buildJob.repositoryInfo().triggeredByPushTo() == RepositoryType.AUXILIARY);
     }

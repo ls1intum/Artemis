@@ -39,22 +39,28 @@
                     <div>
                         <div class="d-flex justify-content-between align-items-start">
                             <h4>
-                                @if (!exercise?.maxPoints) {
+                                @if (result.assessmentType === AssessmentType.AUTOMATIC_ATHENA) {
                                     <span>
-                                        {{ 'artemisApp.result.score' | artemisTranslate: { score: roundValueSpecifiedByCourseSettings(result.score, course) } }}
+                                        {{ 'artemisApp.result.resultString.automaticAIFeedbackSuccessfulTooltip' | artemisTranslate }}
                                     </span>
                                 } @else {
-                                    @if (exercise && exercise.maxPoints) {
+                                    @if (!exercise?.maxPoints) {
                                         <span>
-                                            {{
-                                                'artemisApp.result.scoreWithPoints'
-                                                    | artemisTranslate
-                                                        : {
-                                                              score: roundValueSpecifiedByCourseSettings(result.score ?? 0, course),
-                                                              points: roundValueSpecifiedByCourseSettings(((result.score ?? 0) * exercise.maxPoints) / 100, course)
-                                                          }
-                                            }}
+                                            {{ 'artemisApp.result.score' | artemisTranslate: { score: roundValueSpecifiedByCourseSettings(result.score, course) } }}
                                         </span>
+                                    } @else {
+                                        @if (exercise && exercise.maxPoints) {
+                                            <span>
+                                                {{
+                                                    'artemisApp.result.scoreWithPoints'
+                                                        | artemisTranslate
+                                                            : {
+                                                                  score: roundValueSpecifiedByCourseSettings(result.score ?? 0, course),
+                                                                  points: roundValueSpecifiedByCourseSettings(((result.score ?? 0) * exercise.maxPoints) / 100, course)
+                                                              }
+                                                }}
+                                            </span>
+                                        }
                                     }
                                 }
                             </h4>
@@ -84,7 +90,7 @@
                     </div>
                 }
 
-                @if (showScoreChart && result.participation?.exercise) {
+                @if (result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA && showScoreChart && result.participation?.exercise) {
                     <div class="result-score-chart">
                         <div id="feedback-chart" #containerRef class="chart-space">
                             <ngx-charts-bar-horizontal-stacked
