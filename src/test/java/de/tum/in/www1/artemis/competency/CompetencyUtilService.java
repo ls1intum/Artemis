@@ -178,17 +178,22 @@ public class CompetencyUtilService {
     /**
      * Creates and saves a CompetencyJOL for the given Competency and User.
      *
-     * @param competency The Competency the CompetencyJOL belongs to
-     * @param user       The User the CompetencyJOL belongs to
-     * @param value      The value of the CompetencyJOL
+     * @param competency    The Competency the CompetencyJOL belongs to
+     * @param user          The User the CompetencyJOL belongs to
+     * @param value         The value of the CompetencyJOL
+     * @param judgementTime The time of the judgement
+     * @param progress      The progress of the CompetencyJOL
+     * @param confidence    The confidence of the CompetencyJOL
      * @return The persisted CompetencyJOL
      */
-    public CompetencyJol createJOL(Competency competency, User user, short value, ZonedDateTime judgementTime) {
+    public CompetencyJol createJOL(Competency competency, User user, short value, ZonedDateTime judgementTime, Double progress, Double confidence) {
         CompetencyJol jol = new CompetencyJol();
         jol.setCompetency(competency);
         jol.setUser(user);
         jol.setValue(value);
         jol.setJudgementTime(judgementTime);
+        jol.setCompetencyProgress(progress);
+        jol.setCompetencyConfidence(confidence);
         return competencyJOLRepository.save(jol);
     }
 }

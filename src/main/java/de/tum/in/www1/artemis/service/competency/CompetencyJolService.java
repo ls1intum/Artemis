@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.competency.CompetencyJol;
+import de.tum.in.www1.artemis.repository.CompetencyProgressRepository;
 import de.tum.in.www1.artemis.repository.CompetencyRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.competency.CompetencyJolRepository;
@@ -30,11 +31,15 @@ public class CompetencyJolService {
 
     private final CompetencyRepository competencyRepository;
 
+    private final CompetencyProgressRepository competencyProgressRepository;
+
     private final UserRepository userRepository;
 
-    public CompetencyJolService(CompetencyJolRepository competencyJolRepository, CompetencyRepository competencyRepository, UserRepository userRepository) {
+    public CompetencyJolService(CompetencyJolRepository competencyJolRepository, CompetencyRepository competencyRepository,
+            CompetencyProgressRepository competencyProgressRepository, UserRepository userRepository) {
         this.competencyJolRepository = competencyJolRepository;
         this.competencyRepository = competencyRepository;
+        this.competencyProgressRepository = competencyProgressRepository;
         this.userRepository = userRepository;
     }
 
@@ -81,6 +86,9 @@ public class CompetencyJolService {
         jol.setUser(userRepository.findById(userId).orElseThrow());
         jol.setValue(jolValue);
         jol.setJudgementTime(judgementTime);
+        final var progress = competencyProgressRepository.findByCompetencyIdAndUserId(competencyId, userId).orElseThrow();
+        jol.setCompetencyProgress(progress.getProgress());
+        jol.setCompetencyConfidence(progress.getConfidence());
         return jol;
     }
 

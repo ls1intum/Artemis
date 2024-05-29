@@ -32,6 +32,8 @@
             <column name="judgement_time" type="datetime(3)">
                 <constraints nullable="false"/>
             </column>
+            <column name="competency_progress" type="double"/>
+            <column name="competency_confidence" type="double"/>
         </createTable>
         <addForeignKeyConstraint baseColumnNames="competency_id"
                                  baseTableName="competency_jol"
