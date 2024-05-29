@@ -6,12 +6,14 @@
 
 services:
     artemis-app-node-1:
+        &artemis-app-base
         container_name: artemis-app-node-1
         extends:
             file: ./artemis.yml
             service: artemis-app
         image: ghcr.io/ls1intum/artemis:${ARTEMIS_DOCKER_TAG:-latest}
         depends_on:
+            &depends-on-base
             postgres:
                 condition: service_healthy
             jhipster-registry:
@@ -25,6 +27,7 @@ services:
         env_file:
             - ${ARTEMIS_ENV_FILE:-./artemis/config/prod-multinode.env}
             - ${ARTEMIS_NODE_1_ENV_FILE:-./artemis/config/node1.env}
+            - ./artemis/config/postgres.env
         volumes:
             - ${ARTEMIS_VOLUME_MOUNT:-./.docker-data/artemis-data}:/opt/artemis/data
             - ${ARTEMIS_LEGAL_MOUNT:-./.docker-data/artemis-legal}:/opt/artemis/legal
@@ -32,60 +35,29 @@ services:
             - /var/run/docker.sock:/var/run/docker.sock
 
     artemis-app-node-2:
+        <<: *artemis-app-base
         container_name: artemis-app-node-2
-        extends:
-            file: ./artemis.yml
-            service: artemis-app
-        image: ghcr.io/ls1intum/artemis:${ARTEMIS_DOCKER_TAG:-latest}
         depends_on:
-            postgres:
-                condition: service_healthy
-            jhipster-registry:
-                condition: service_healthy
-            activemq-broker:
-                condition: service_healthy
-            artemis-app-node-1:
-                condition: service_healthy
-        pull_policy: always
-        restart: always
-        group_add:
-            - ${DOCKER_GROUP_ID:-0}
+          <<: *depends-on-base
+          artemis-app-node-1:
+              condition: service_healthy
         env_file:
             - ${ARTEMIS_ENV_FILE:-./artemis/config/prod-multinode.env}
             - ${ARTEMIS_NODE_2_ENV_FILE:-./artemis/config/node2.env}
-        volumes:
-            - ${ARTEMIS_VOLUME_MOUNT:-./.docker-data/artemis-data}:/opt/artemis/data
-            - ${ARTEMIS_LEGAL_MOUNT:-./.docker-data/artemis-legal}:/opt/artemis/legal
-            - ${ARTEMIS_DATA_EXPORT_MOUNT:-./.docker-data/artemis-data-exports}:/opt/artemis/data-exports
-            - /var/run/docker.sock:/var/run/docker.sock
+            - ./artemis/config/postgres.env
+
 
     artemis-app-node-3:
+        <<: *artemis-app-base
         container_name: artemis-app-node-3
-        extends:
-            file: ./artemis.yml
-            service: artemis-app
-        image: ghcr.io/ls1intum/artemis:${ARTEMIS_DOCKER_TAG:-latest}
         depends_on:
-            postgres:
-                condition: service_healthy
-            jhipster-registry:
-                condition: service_healthy
-            activemq-broker:
-                condition: service_healthy
+            <<: *depends-on-base
             artemis-app-node-1:
                 condition: service_healthy
-        pull_policy: always
-        restart: always
-        group_add:
-            - ${DOCKER_GROUP_ID:-0}
         env_file:
             - ${ARTEMIS_ENV_FILE:-./artemis/config/prod-multinode.env}
             - ${ARTEMIS_NODE_3_ENV_FILE:-./artemis/config/node3.env}
-        volumes:
-            - ${ARTEMIS_VOLUME_MOUNT:-./.docker-data/artemis-data}:/opt/artemis/data
-            - ${ARTEMIS_LEGAL_MOUNT:-./.docker-data/artemis-legal}:/opt/artemis/legal
-            - ${ARTEMIS_DATA_EXPORT_MOUNT:-./.docker-data/artemis-data-exports}:/opt/artemis/data-exports
-            - /var/run/docker.sock:/var/run/docker.sock
+            - ./artemis/config/postgres.env
 
     jhipster-registry:
         extends:

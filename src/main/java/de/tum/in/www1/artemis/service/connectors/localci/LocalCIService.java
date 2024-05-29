@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.connectors.localci;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALCI;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -174,7 +175,7 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
 
     @Override
     public ConnectorHealth health() {
-        return new ConnectorHealth(true);
+        return new ConnectorHealth(true, Map.of("buildAgents", sharedQueueManagementService.getBuildAgentInformation()));
     }
 
     @Override
