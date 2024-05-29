@@ -110,7 +110,7 @@ describe('ExerciseChatbotButtonComponent', () => {
         fixture.whenStable();
         tick();
 
-        expect(spy).toHaveBeenCalledExactlyOnceWith(ChatServiceMode.TUTOR, mockExerciseId);
+        expect(spy).toHaveBeenCalledExactlyOnceWith(ChatServiceMode.EXERCISE, mockExerciseId);
     }));
 
     it('should close the dialog when destroying the object', () => {
@@ -128,7 +128,7 @@ describe('ExerciseChatbotButtonComponent', () => {
         // given
         jest.spyOn(chatHttpServiceMock, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(123)));
         jest.spyOn(wsServiceMock, 'subscribeToSession').mockReturnValueOnce(of(mockWebsocketServerMessage));
-        chatService.switchTo(ChatServiceMode.TUTOR, 123);
+        chatService.switchTo(ChatServiceMode.EXERCISE, 123);
 
         // when
         fixture.detectChanges();
@@ -143,7 +143,7 @@ describe('ExerciseChatbotButtonComponent', () => {
         // given
         jest.spyOn(chatHttpServiceMock, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(123)));
         jest.spyOn(wsServiceMock, 'subscribeToSession').mockReturnValueOnce(of(mockWebsocketServerMessage));
-        chatService.switchTo(ChatServiceMode.TUTOR, 123);
+        chatService.switchTo(ChatServiceMode.EXERCISE, 123);
         component.openChat();
 
         // when

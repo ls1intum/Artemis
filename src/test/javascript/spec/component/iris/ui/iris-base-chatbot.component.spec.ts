@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { IrisBaseChatbotComponent } from 'app/iris/base-chatbot/iris-base-chatbot.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ChatStatusBarComponent } from 'app/iris/base-chatbot/chat-status-bar/chat-status-bar.component';
@@ -33,6 +33,7 @@ import { By } from '@angular/platform-browser';
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { IrisMessage, IrisUserMessage } from 'app/entities/iris/iris-message.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('IrisBaseChatbotComponent', () => {
     let component: IrisBaseChatbotComponent;
@@ -65,6 +66,7 @@ describe('IrisBaseChatbotComponent', () => {
                 IrisBaseChatbotComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(HtmlForMarkdownPipe),
+                MockDirective(TranslateDirective),
                 MockComponent(ChatStatusBarComponent),
                 MockComponent(IrisLogoComponent),
                 MockComponent(ButtonComponent),
@@ -376,7 +378,6 @@ describe('IrisBaseChatbotComponent', () => {
         fixture.detectChanges();
         const sendButton = fixture.debugElement.query(By.css('#irisSendButton')).componentInstance;
 
-        expect(component.checkIfDisabled()).toBeTruthy();
         expect(sendButton.disabled).toBeTruthy();
     });
     it('should not render submit button if userAccepted is false', () => {
@@ -396,7 +397,6 @@ describe('IrisBaseChatbotComponent', () => {
         fixture.detectChanges();
         const sendButton = fixture.debugElement.query(By.css('#irisSendButton')).componentInstance;
 
-        expect(component.checkIfDisabled()).toBeFalsy();
         expect(sendButton.disabled).toBeFalsy();
     });
 
@@ -407,7 +407,6 @@ describe('IrisBaseChatbotComponent', () => {
         fixture.detectChanges();
         const sendButton = fixture.debugElement.query(By.css('#irisSendButton')).componentInstance;
 
-        expect(component.checkIfDisabled()).toBeFalsy();
         expect(sendButton.disabled).toBeFalsy();
     });
 
