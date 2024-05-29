@@ -207,10 +207,8 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         this.websocketSubscription = this.jhiWebsocketService.connectionState.subscribe((status) => {
             if (status.connected && this.disconnected) {
                 // if the disconnect happened during the live quiz and there are unsaved changes, we trigger a selection changed event to save the submission on the server
-                if (this.unsavedChanges) {
-                    // TODO: A reconnect should trigger an autosave.
-                    this.onSelectionChanged();
-                }
+                // TODO: This changes the timer. Maybe we don't want that?
+                this.onAutoSave();
                 // if the quiz was not yet started, we might have missed the quiz start => refresh
                 if (this.quizBatch && !this.quizBatch.started) {
                     this.refreshQuiz(true);
