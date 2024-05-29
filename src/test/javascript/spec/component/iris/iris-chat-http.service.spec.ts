@@ -51,7 +51,7 @@ describe('Iris Chat Http Service', () => {
         }));
 
         it('should return all messages for a session', fakeAsync(() => {
-            const returnedFromService = [mockClientMessage, mockServerMessage];
+            const returnedFromService = [mockServerMessage, mockClientMessage];
             const expected = returnedFromService;
             service
                 .getMessages(mockConversation.id)
