@@ -68,7 +68,7 @@ import de.tum.in.www1.artemis.service.util.ExamExerciseStartPreparationStatus;
 import de.tum.in.www1.artemis.service.util.HttpRequestUtils;
 import de.tum.in.www1.artemis.web.rest.dto.StudentExamWithGradeDTO;
 import de.tum.in.www1.artemis.web.rest.dto.examevent.ExamAttendanceCheckEventDTO;
-import de.tum.in.www1.artemis.web.rest.dto.examevent.ExamLiveEvent;
+import de.tum.in.www1.artemis.web.rest.dto.examevent.ExamLiveEventBaseDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
@@ -557,7 +557,7 @@ public class StudentExamResource {
      */
     @GetMapping("courses/{courseId}/exams/{examId}/student-exams/live-events")
     @EnforceAtLeastStudent
-    public ResponseEntity<List<ExamLiveEvent>> getExamLiveEvents(@PathVariable Long courseId, @PathVariable Long examId) {
+    public ResponseEntity<List<ExamLiveEventBaseDTO>> getExamLiveEvents(@PathVariable Long courseId, @PathVariable Long examId) {
         long start = System.currentTimeMillis();
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get the exam live events for exam {} by user {}", examId, currentUser.getLogin());
@@ -571,7 +571,7 @@ public class StudentExamResource {
 
         studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, currentUser, studentExam.isTestRun(), false);
 
-        List<ExamLiveEvent> examLiveEvents = examLiveEventRepository.findAllByStudentExamIdOrGlobalByExamId(examId, studentExam.getId()).stream()
+        List<ExamLiveEventBaseDTO> examLiveEvents = examLiveEventRepository.findAllByStudentExamIdOrGlobalByExamId(examId, studentExam.getId()).stream()
                 .map(de.tum.in.www1.artemis.domain.exam.event.ExamLiveEvent::asDTO).toList();
 
         log.debug("getExamLiveEvents done in {}ms for user {}", System.currentTimeMillis() - start, currentUser.getLogin());

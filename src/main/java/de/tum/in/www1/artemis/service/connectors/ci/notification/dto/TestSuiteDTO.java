@@ -10,7 +10,7 @@ import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.Nulls;
 
 import de.tum.in.www1.artemis.service.dto.BuildJobDTOInterface;
-import de.tum.in.www1.artemis.service.dto.TestCase;
+import de.tum.in.www1.artemis.service.dto.TestCaseBaseDTO;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -19,13 +19,13 @@ public record TestSuiteDTO(String name, double time, int errors, int skipped, in
 
     @Override
     @JsonIgnore
-    public List<? extends TestCase> getFailedTests() {
+    public List<? extends TestCaseBaseDTO> getFailedTests() {
         return testCases.stream().filter(testCase -> !testCase.isSuccessful()).toList();
     }
 
     @Override
     @JsonIgnore
-    public List<? extends TestCase> getSuccessfulTests() {
+    public List<? extends TestCaseBaseDTO> getSuccessfulTests() {
         return testCases.stream().filter(TestCaseDTO::isSuccessful).toList();
     }
 }

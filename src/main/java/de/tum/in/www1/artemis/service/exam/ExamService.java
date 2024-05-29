@@ -1121,9 +1121,7 @@ public class ExamService {
         boolean existsUnsubmittedExercises = submissionRepository.existsUnsubmittedExercisesByExamId(exam.getId());
 
         // For non-instructors, consider what limited information they should receive and adjust accordingly
-        return new ExamChecklistDTO(null, null, totalNumberOfAssessmentsFinished, totalNumberOfParticipationsForAssessment, null, null, null, null, null, existsUnassessedQuizzes,
-                existsUnsubmittedExercises);
-
+        return new ExamChecklistDTO(totalNumberOfAssessmentsFinished, totalNumberOfParticipationsForAssessment, existsUnassessedQuizzes, existsUnsubmittedExercises);
     }
 
     /**

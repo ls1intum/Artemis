@@ -15,8 +15,9 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.exception.NetworkingException;
-import de.tum.in.www1.artemis.service.dto.athena.Exercise;
+import de.tum.in.www1.artemis.service.dto.athena.ExerciseBaseDTO;
 
 /**
  * Service for selecting the "best" submission to assess right now using Athena, e.g. by the highest information gain.
@@ -37,7 +38,7 @@ public class AthenaSubmissionSelectionService {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     // Athena just needs submission IDs => quicker request, because less data is sent
-    private record RequestDTO(Exercise exercise, List<Long> submissionIds) {
+    private record RequestDTO(ExerciseBaseDTO exercise, List<Long> submissionIds) {
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -65,7 +66,7 @@ public class AthenaSubmissionSelectionService {
      * @return a submission ID suggested by the Athena submission selector (e.g. chosen by the highest information gain)
      * @throws IllegalArgumentException if exercise isn't automatically assessable
      */
-    public Optional<Long> getProposedSubmissionId(de.tum.in.www1.artemis.domain.Exercise exercise, List<Long> submissionIds) {
+    public Optional<Long> getProposedSubmissionId(Exercise exercise, List<Long> submissionIds) {
         if (!exercise.areFeedbackSuggestionsEnabled()) {
             throw new IllegalArgumentException("The Exercise does not have feedback suggestions enabled.");
         }

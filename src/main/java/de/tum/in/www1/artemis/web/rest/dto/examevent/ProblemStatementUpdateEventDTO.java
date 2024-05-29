@@ -9,6 +9,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ProblemStatementUpdateEventDTO(Long id, String createdBy, Instant createdDate, String text, String problemStatement, long exerciseId, String exerciseName)
-        implements ExamLiveEvent {
+        implements ExamLiveEventBaseDTO {
 
 }

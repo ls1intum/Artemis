@@ -8,7 +8,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record GitLabPersonalAccessTokenRequestDTO(@JsonProperty String name, @JsonProperty("user_id") Long userId, @JsonProperty("scopes") String[] scopes,
-        @JsonProperty("expires_at") Date expiresAt) {
+public record GitLabPersonalAccessTokenRequestDTO(String name, @JsonProperty("user_id") Long userId, String[] scopes, @JsonProperty("expires_at") Date expiresAt) {
 
 }

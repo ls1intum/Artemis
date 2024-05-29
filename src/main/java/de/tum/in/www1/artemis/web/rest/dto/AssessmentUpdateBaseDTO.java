@@ -10,7 +10,7 @@ import de.tum.in.www1.artemis.domain.ComplaintResponse;
 import de.tum.in.www1.artemis.domain.Feedback;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public interface AssessmentUpdate {
+public interface AssessmentUpdateBaseDTO {
 
     List<Feedback> feedbacks();
 

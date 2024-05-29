@@ -19,7 +19,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
     @JsonSubTypes.Type(value = ProblemStatementUpdateEventDTO.class, name = "problemStatementUpdate"),
 })
 // @formatter:on
-public interface ExamLiveEvent {
+public interface ExamLiveEventBaseDTO {
 
     Long id();
 

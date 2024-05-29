@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service.connectors.gitlab.dto;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -16,10 +15,6 @@ public record GitLabPushNotificationDTO(@JsonProperty("object_kind") String trig
         @JsonProperty("user_name") String userFullName, @JsonProperty("user_username") String username, @JsonProperty("user_email") String userMail,
         @JsonProperty("project_id") int projectId, GitLabProjectDTO project, List<GitLabCommitDTO> commits, @JsonProperty("total_commits_count") int totalCommitsCount,
         GitLabRepositoryDTO repository) {
-
-    public GitLabPushNotificationDTO {
-        commits = (commits != null) ? commits : new ArrayList<>();
-    }
 
     public static GitLabPushNotificationDTO convert(Object someNotification) {
         return new ObjectMapper().registerModule(new JavaTimeModule()).convertValue(someNotification, GitLabPushNotificationDTO.class);

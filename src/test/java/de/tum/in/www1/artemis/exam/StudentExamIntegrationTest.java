@@ -134,7 +134,7 @@ import de.tum.in.www1.artemis.util.ExamPrepareExercisesTestUtil;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.web.rest.dto.StudentExamWithGradeDTO;
 import de.tum.in.www1.artemis.web.rest.dto.examevent.ExamAttendanceCheckEventDTO;
-import de.tum.in.www1.artemis.web.rest.dto.examevent.ExamLiveEvent;
+import de.tum.in.www1.artemis.web.rest.dto.examevent.ExamLiveEventBaseDTO;
 import de.tum.in.www1.artemis.web.rest.dto.examevent.ExamWideAnnouncementEventDTO;
 import de.tum.in.www1.artemis.web.rest.dto.examevent.WorkingTimeUpdateEventDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -860,9 +860,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         assertThat(capturedEvent.oldWorkingTime()).isEqualTo(oldWorkingTime);
     }
 
-    private ExamLiveEvent captureExamLiveEventForId(Long studentExamOrExamId, boolean examWide) {
+    private ExamLiveEventBaseDTO captureExamLiveEventForId(Long studentExamOrExamId, boolean examWide) {
         // Create an ArgumentCaptor for the WebSocket message
-        ArgumentCaptor<ExamLiveEvent> websocketEventCaptor = ArgumentCaptor.forClass(ExamLiveEvent.class);
+        ArgumentCaptor<ExamLiveEventBaseDTO> websocketEventCaptor = ArgumentCaptor.forClass(ExamLiveEventBaseDTO.class);
 
         // Verify that the sendMessage method was called with the expected WebSocket event
         var expectedTopic = examWide ? "/topic/exam-participation/exam/" + studentExamOrExamId + "/events"

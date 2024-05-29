@@ -30,7 +30,7 @@ import de.tum.in.www1.artemis.service.connectors.lti.LtiNewResultService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingAssessmentService;
-import de.tum.in.www1.artemis.web.rest.dto.AssessmentUpdate;
+import de.tum.in.www1.artemis.web.rest.dto.AssessmentUpdateBaseDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.websocket.ResultWebsocketService;
@@ -92,7 +92,7 @@ public class AssessmentService {
      * @param assessmentUpdate the assessment update containing a ComplaintResponse and the updated Feedback list
      * @return the updated Result
      */
-    public Result updateAssessmentAfterComplaint(Result originalResult, Exercise exercise, AssessmentUpdate assessmentUpdate) {
+    public Result updateAssessmentAfterComplaint(Result originalResult, Exercise exercise, AssessmentUpdateBaseDTO assessmentUpdate) {
         if (assessmentUpdate.feedbacks() == null || assessmentUpdate.complaintResponse() == null) {
             throw new BadRequestAlertException("Feedbacks and complaint response must not be null.", "AssessmentUpdate", "notnull");
         }

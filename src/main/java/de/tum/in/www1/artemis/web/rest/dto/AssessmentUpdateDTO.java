@@ -15,5 +15,5 @@ import de.tum.in.www1.artemis.domain.Feedback;
  * @param assessmentNote    the assessment note
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record AssessmentUpdateDTO(List<Feedback> feedbacks, ComplaintResponse complaintResponse, @Nullable String assessmentNote) implements AssessmentUpdate {
+public record AssessmentUpdateDTO(List<Feedback> feedbacks, ComplaintResponse complaintResponse, @Nullable String assessmentNote) implements AssessmentUpdateBaseDTO {
 }

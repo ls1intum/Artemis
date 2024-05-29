@@ -17,10 +17,12 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.exception.NetworkingException;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
-import de.tum.in.www1.artemis.service.dto.athena.Exercise;
-import de.tum.in.www1.artemis.service.dto.athena.Submission;
+import de.tum.in.www1.artemis.service.dto.athena.ExerciseBaseDTO;
+import de.tum.in.www1.artemis.service.dto.athena.SubmissionBaseDTO;
 
 /**
  * Service for sending submissions to the Athena service for further processing
@@ -54,7 +56,7 @@ public class AthenaSubmissionSendingService {
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    private record RequestDTO(Exercise exercise, List<Submission> submissions) {
+    private record RequestDTO(ExerciseBaseDTO exercise, List<SubmissionBaseDTO> submissions) {
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -66,7 +68,7 @@ public class AthenaSubmissionSendingService {
      *
      * @param exercise the exercise the automatic assessments should be calculated for
      */
-    public void sendSubmissions(de.tum.in.www1.artemis.domain.Exercise exercise) {
+    public void sendSubmissions(Exercise exercise) {
         sendSubmissions(exercise, 1);
     }
 
@@ -76,7 +78,7 @@ public class AthenaSubmissionSendingService {
      * @param exercise   the exercise the automatic assessments should be calculated for
      * @param maxRetries number of retries before the request will be canceled
      */
-    public void sendSubmissions(de.tum.in.www1.artemis.domain.Exercise exercise, int maxRetries) {
+    public void sendSubmissions(Exercise exercise, int maxRetries) {
         if (!exercise.areFeedbackSuggestionsEnabled()) {
             throw new IllegalArgumentException("The Exercise does not have feedback suggestions enabled.");
         }
@@ -86,7 +88,7 @@ public class AthenaSubmissionSendingService {
         // Find all submissions for exercise (later we will support others)
         Pageable pageRequest = PageRequest.of(0, SUBMISSIONS_PER_REQUEST);
         while (true) {
-            Page<de.tum.in.www1.artemis.domain.Submission> submissions = submissionRepository.findLatestSubmittedSubmissionsByExerciseId(exercise.getId(), pageRequest);
+            Page<Submission> submissions = submissionRepository.findLatestSubmittedSubmissionsByExerciseId(exercise.getId(), pageRequest);
             sendSubmissions(exercise, submissions.toSet(), maxRetries);
             if (submissions.isLast()) {
                 break;
@@ -102,8 +104,8 @@ public class AthenaSubmissionSendingService {
      * @param submissions the submissions to send
      * @param maxRetries  number of retries before the request will be canceled
      */
-    public void sendSubmissions(de.tum.in.www1.artemis.domain.Exercise exercise, Set<de.tum.in.www1.artemis.domain.Submission> submissions, int maxRetries) {
-        Set<de.tum.in.www1.artemis.domain.Submission> filteredSubmissions = new HashSet<>(submissions);
+    public void sendSubmissions(Exercise exercise, Set<Submission> submissions, int maxRetries) {
+        Set<Submission> filteredSubmissions = new HashSet<>(submissions);
 
         // filter submissions with an open participation (because of individual due dates)
         filteredSubmissions.removeIf(submission -> {

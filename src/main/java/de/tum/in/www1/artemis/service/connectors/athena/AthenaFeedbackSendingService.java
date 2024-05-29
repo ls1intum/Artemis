@@ -13,9 +13,9 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.exception.NetworkingException;
-import de.tum.in.www1.artemis.service.dto.athena.Exercise;
+import de.tum.in.www1.artemis.service.dto.athena.ExerciseBaseDTO;
 import de.tum.in.www1.artemis.service.dto.athena.Feedback;
-import de.tum.in.www1.artemis.service.dto.athena.Submission;
+import de.tum.in.www1.artemis.service.dto.athena.SubmissionBaseDTO;
 
 /**
  * Service for publishing feedback to the Athena service for further processing
@@ -44,7 +44,7 @@ public class AthenaFeedbackSendingService {
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    private record RequestDTO(Exercise exercise, Submission submission, List<Feedback> feedbacks) {
+    private record RequestDTO(ExerciseBaseDTO exercise, SubmissionBaseDTO submission, List<Feedback> feedbacks) {
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)

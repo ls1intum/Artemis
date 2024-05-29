@@ -17,7 +17,13 @@ public record ExamChecklistDTO(@Nullable Long numberOfGeneratedStudentExams, @Nu
         @Nullable Long numberOfExamsStarted, Long numberOfAllComplaints, Long numberOfAllComplaintsDone, @Nullable Boolean allExamExercisesAllStudentsPrepared,
         Boolean existsUnassessedQuizzes, Boolean existsUnsubmittedExercises) {
 
-    /*
+    public ExamChecklistDTO(@Nullable Long[] numberOfTotalExamAssessmentsFinishedByCorrectionRound, Long numberOfTotalParticipationsForAssessment, Boolean existsUnassessedQuizzes,
+            Boolean existsUnsubmittedExercises) {
+        this(null, null, numberOfTotalExamAssessmentsFinishedByCorrectionRound, numberOfTotalParticipationsForAssessment, null, null, null, null, null, existsUnassessedQuizzes,
+                existsUnsubmittedExercises);
+    }
+
+    /**
      * Checks if the Boolean values are null. If they are, it assigns them a default value of false.
      */
     public ExamChecklistDTO {

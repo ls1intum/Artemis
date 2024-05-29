@@ -79,8 +79,7 @@ public class TeamService {
         ));
 
         // Annotate to which team the user is already assigned to for the given exercise (null if not assigned)
-        return users.stream().map(user -> new TeamSearchUserDTO(user.getId(), user.getLogin(), user.getName(), user.getFirstName(), user.getLastName(), user.getEmail(),
-                userIdToTeamIdMap.get(user.getId()))).toList();
+        return users.stream().map(user -> TeamSearchUserDTO.of(user, userIdToTeamIdMap.get(user.getId()))).toList();
     }
 
     /**

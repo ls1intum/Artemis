@@ -333,7 +333,7 @@ public class GitLabService extends AbstractVersionControlService {
         final var gitLabCommitHash = details.newHash();
         // Here we search for the commit details for the given commit hash
         // Technically these details should always be present but as this could change, we handle the edge case
-        final var firstMatchingCommit = details.commits().stream().filter(com -> gitLabCommitHash.equals(com.hash())).findFirst();
+        final var firstMatchingCommit = Optional.ofNullable(details.commits()).flatMap(commits -> commits.stream().filter(com -> gitLabCommitHash.equals(com.hash())).findFirst());
         if (firstMatchingCommit.isPresent()) {
             // Fill commit with commit details
             final var gitLabCommit = firstMatchingCommit.get();
