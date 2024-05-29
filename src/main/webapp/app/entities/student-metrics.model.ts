@@ -71,7 +71,7 @@ export class CompetencyInformation {
     public title: string;
     public description: string;
     public taxonomy: CompetencyTaxonomy;
-    public softDueDate?: string;
+    public softDueDate?: dayjs.Dayjs;
     public optional: boolean;
     public masteryThreshold: number;
 }
