@@ -6,6 +6,7 @@ import { IrisMessageContentType, IrisTextMessageContent } from 'app/entities/iri
 import { IrisSession } from 'app/entities/iris/iris-session.model';
 import { IrisChatWebsocketDTO, IrisChatWebsocketPayloadType } from 'app/entities/iris/iris-chat-websocket-dto.model';
 import { IrisStageStateDTO } from 'app/entities/iris/iris-stage-dto.model';
+import { HttpResponse } from '@angular/common/http';
 
 const map = new Map<string, any>();
 map.set('model', 'gpt-4');
@@ -71,6 +72,18 @@ export const mockConversationWithNoMessages = {
     messages: [],
 } as IrisSession;
 
+export const mockServerSessionHttpResponse = {
+    body: mockConversation,
+} as HttpResponse<IrisSession>;
+
+export const mockServerSessionHttpResponseWithEmptyConversation = {
+    body: { ...mockConversationWithNoMessages, id: 123 },
+} as HttpResponse<IrisSession>;
+
+/**
+ * Mocks a user message with the given content.
+ * @param content - the content of the message
+ */
 export function mockUserMessageWithContent(content: string): IrisUserMessage {
     return {
         sender: IrisSender.USER,
@@ -78,4 +91,20 @@ export function mockUserMessageWithContent(content: string): IrisUserMessage {
         content: [{ textContent: content } as IrisTextMessageContent],
         sentAt: dayjs(),
     } as IrisUserMessage;
+}
+
+/**
+ * Mocks a server response with a conversation and an id.
+ * @param id - the id of the conversation
+ * @param empty - if true, the conversation will have no messages, defaults to false
+ */
+export function mockServerSessionHttpResponseWithId(id: number, empty: boolean = false): HttpResponse<IrisSession> {
+    if (empty) {
+        return {
+            body: { ...mockConversationWithNoMessages, id },
+        } as HttpResponse<IrisSession>;
+    }
+    return {
+        body: { ...mockConversation, id },
+    } as HttpResponse<IrisSession>;
 }

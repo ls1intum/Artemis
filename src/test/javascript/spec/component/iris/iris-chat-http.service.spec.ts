@@ -4,6 +4,7 @@ import { take } from 'rxjs/operators';
 import { irisExercise, mockClientMessage, mockConversation, mockServerMessage } from '../../helpers/sample/iris-sample-data';
 import { IrisUserMessage } from 'app/entities/iris/iris-message.model';
 import { IrisChatHttpService } from 'app/iris/iris-chat-http.service';
+import { ChatServiceMode } from 'app/iris/iris-chat.service';
 
 describe('Iris Chat Http Service', () => {
     let service: IrisChatHttpService;
@@ -76,7 +77,7 @@ describe('Iris Chat Http Service', () => {
         it('should create a session', fakeAsync(() => {
             const returnedFromService = { id: '1' };
             service
-                .createSession(1)
+                .createSession(ChatServiceMode.COURSE + '/' + 1)
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp.body).toEqual(returnedFromService));
             const req = httpMock.expectOne({ method: 'POST' });
@@ -88,7 +89,7 @@ describe('Iris Chat Http Service', () => {
             const returnedFromService = mockConversation;
             const expected = returnedFromService;
             service
-                .getCurrentSessionOrCreateIfNotExists(irisExercise.id!)
+                .getCurrentSessionOrCreateIfNotExists(ChatServiceMode.TUTOR + '/' + irisExercise.id!)
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp.body).toEqual(expected));
             const req = httpMock.expectOne({ method: 'POST' });

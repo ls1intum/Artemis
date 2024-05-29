@@ -7,7 +7,7 @@ import { IrisStatusService } from 'app/iris/iris-status.service';
 import { UserService } from 'app/core/user/user.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockProvider } from 'ng-mocks';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
 import dayjs from 'dayjs/esm';
 import {
@@ -16,10 +16,14 @@ import {
     mockConversationWithNoMessages,
     mockServerMessage,
     mockServerMessage2,
+    mockServerSessionHttpResponse,
+    mockServerSessionHttpResponseWithEmptyConversation,
+    mockServerSessionHttpResponseWithId,
     mockUserMessageWithContent,
     mockWebsocketServerMessage,
     mockWebsocketStatusMessage,
 } from '../../helpers/sample/iris-sample-data';
+import { IrisMessage, IrisUserMessage } from 'app/entities/iris/iris-message.model';
 
 describe('IrisChatService', () => {
     let service: IrisChatService;
@@ -57,31 +61,29 @@ describe('IrisChatService', () => {
     });
 
     it('should change to an course chat and start new session', fakeAsync(() => {
-        const mockSession = { body: { id: id, messages: [] } };
-        const httpStub = jest.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockSession));
+        const httpStub = jest.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithEmptyConversation));
         const wsStub = jest.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
         service.switchTo(ChatServiceMode.COURSE, id);
 
-        expect(httpStub).toHaveBeenCalledWith('course-chat/' + id);
+        expect(httpStub).toHaveBeenCalledWith(ChatServiceMode.COURSE + '/' + id);
         expect(wsStub).toHaveBeenCalledWith(id);
     }));
 
     it('should change to tutor chat and start new session', fakeAsync(() => {
-        const mockSession = { body: { id: id, messages: [] } };
-        const httpStub = jest.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockSession));
+        const httpStub = jest.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithEmptyConversation));
         const wsStub = jest.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
         service.switchTo(ChatServiceMode.TUTOR, id);
 
-        expect(httpStub).toHaveBeenCalledWith('tutor-chat/' + id);
+        expect(httpStub).toHaveBeenCalledWith(ChatServiceMode.TUTOR + '/' + id);
         expect(wsStub).toHaveBeenCalledWith(id);
     }));
 
     it('should send a message', fakeAsync(() => {
         const message = 'test message';
-        jest.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of({ body: { ...mockConversation, id: id } }));
+        jest.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
         jest.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
         const createdMessage = mockUserMessageWithContent(message);
-        const stub = jest.spyOn(httpService, 'createMessage').mockReturnValueOnce(of({ body: createdMessage }));
+        const stub = jest.spyOn(httpService, 'createMessage').mockReturnValueOnce(of({ body: createdMessage } as HttpResponse<IrisUserMessage>));
         service.switchTo(ChatServiceMode.COURSE, id);
         service.sendMessage(message).subscribe();
 
@@ -95,11 +97,11 @@ describe('IrisChatService', () => {
 
     it('should handle error when sending a message', fakeAsync(() => {
         const message = 'test message';
-        jest.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of({ body: { ...mockConversation, id: id } }));
+        jest.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
         jest.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of(mockWebsocketStatusMessage));
         const stub = jest.spyOn(httpService, 'createMessage').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
 
-        service.switchTo(ChatServiceMode.COURSE, 123);
+        service.switchTo(ChatServiceMode.COURSE, id);
         service.sendMessage(message).subscribe();
 
         expect(stub).toHaveBeenCalledWith(id, expect.anything());
@@ -110,10 +112,10 @@ describe('IrisChatService', () => {
     }));
 
     it('should load existing messages on session creation', fakeAsync(() => {
-        jest.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of({ body: { ...mockConversation } }));
-        jest.spyOn(httpService, 'createSession').mockReturnValueOnce(of({ body: { ...mockConversationWithNoMessages, id: 2 } }));
+        jest.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
+        jest.spyOn(httpService, 'createSession').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(2)));
         jest.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
-        service.switchTo(ChatServiceMode.COURSE, 123);
+        service.switchTo(ChatServiceMode.COURSE, id);
         service.currentMessages().subscribe((messages) => {
             expect(messages).toHaveLength(mockConversation.messages!.length);
         });
@@ -121,10 +123,10 @@ describe('IrisChatService', () => {
     }));
 
     it('should clear chat', fakeAsync(() => {
-        jest.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of({ body: { ...mockConversation } }));
-        jest.spyOn(httpService, 'createSession').mockReturnValueOnce(of({ body: { ...mockConversationWithNoMessages, id: 2 } }));
+        jest.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
+        jest.spyOn(httpService, 'createSession').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(2, true)));
         jest.spyOn(wsMock, 'subscribeToSession').mockReturnValue(of());
-        service.switchTo(ChatServiceMode.COURSE, 123);
+        service.switchTo(ChatServiceMode.COURSE, id);
         service.clearChat();
         service.currentMessages().subscribe((messages) => {
             expect(messages).toHaveLength(mockConversationWithNoMessages.messages!.length);
@@ -133,10 +135,10 @@ describe('IrisChatService', () => {
     }));
 
     it('should rate a message', fakeAsync(() => {
-        jest.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of({ body: { ...mockConversation, id: id } }));
+        jest.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
         jest.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
-        jest.spyOn(httpService, 'rateMessage').mockReturnValueOnce(of({}));
-        service.switchTo(ChatServiceMode.COURSE, 123);
+        jest.spyOn(httpService, 'rateMessage').mockReturnValueOnce(of({} as HttpResponse<IrisMessage>));
+        service.switchTo(ChatServiceMode.COURSE, id);
         const message = mockServerMessage;
         service.rateMessage(message, true).subscribe();
 
@@ -145,14 +147,14 @@ describe('IrisChatService', () => {
     }));
 
     it('should resend a message', fakeAsync(() => {
-        jest.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of({ body: { ...mockConversation } }));
+        jest.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
         jest.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
 
         const message = mockUserMessageWithContent('resend message');
         message.id = mockClientMessage.id;
-        jest.spyOn(httpService, 'resendMessage').mockReturnValueOnce(of({ body: message }));
+        jest.spyOn(httpService, 'resendMessage').mockReturnValueOnce(of({ body: message } as HttpResponse<IrisMessage>));
 
-        service.switchTo(ChatServiceMode.COURSE, 123);
+        service.switchTo(ChatServiceMode.COURSE, id);
         service.resendMessage(message).subscribe();
 
         expect(httpService.resendMessage).toHaveBeenCalledWith(mockConversation.id, message);
@@ -165,11 +167,11 @@ describe('IrisChatService', () => {
 
     it('should handle error when rate limited', fakeAsync(() => {
         const message = 'test message';
-        jest.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of({ body: { ...mockConversation, id: id } }));
+        jest.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
         jest.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of(mockWebsocketStatusMessage));
         const stub = jest.spyOn(httpService, 'createMessage').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 429 })));
 
-        service.switchTo(ChatServiceMode.COURSE, 123);
+        service.switchTo(ChatServiceMode.COURSE, id);
         service.sendMessage(message).subscribe();
 
         expect(stub).toHaveBeenCalledWith(id, expect.anything());
@@ -181,11 +183,11 @@ describe('IrisChatService', () => {
 
     it('should handle error when iris is disabled', fakeAsync(() => {
         const message = 'test message';
-        jest.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of({ body: { ...mockConversation, id: id } }));
+        jest.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
         jest.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of(mockWebsocketStatusMessage));
         const stub = jest.spyOn(httpService, 'createMessage').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
 
-        service.switchTo(ChatServiceMode.COURSE, 123);
+        service.switchTo(ChatServiceMode.COURSE, id);
         service.sendMessage(message).subscribe();
 
         expect(stub).toHaveBeenCalledWith(id, expect.anything());
@@ -196,7 +198,7 @@ describe('IrisChatService', () => {
     }));
 
     it('should handle websocket status message', fakeAsync(() => {
-        jest.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of({ body: { ...mockConversation, id: id } }));
+        jest.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
         jest.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of(mockWebsocketStatusMessage));
         service.switchTo(ChatServiceMode.TUTOR, id);
 
@@ -207,7 +209,7 @@ describe('IrisChatService', () => {
     }));
 
     it('should handle websocket message', fakeAsync(() => {
-        jest.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of({ body: { ...mockConversation, id: id } }));
+        jest.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
         jest.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of(mockWebsocketServerMessage));
         const message = mockServerMessage2;
         service.switchTo(ChatServiceMode.TUTOR, id);
