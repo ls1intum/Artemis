@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -27,7 +26,6 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.competency.PrerequisiteService;
-import de.tum.in.www1.artemis.web.rest.dto.competency.PrerequisiteRequestDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.PrerequisiteResponseDTO;
 
 /**
@@ -76,44 +74,6 @@ public class PrerequisiteResource {
         var prerequisites = prerequisiteRepository.findByCourseIdOrderById(courseId);
 
         return ResponseEntity.ok(prerequisites.stream().map(PrerequisiteResponseDTO::of).toList());
-    }
-
-    /**
-     * POST /courses/:courseId/prerequisites : creates a new prerequisite competency.
-     *
-     * @param courseId     the id of the course to which the competency should be added
-     * @param prerequisite the prerequisite that should be created
-     * @return the ResponseEntity with status 201 (Created) and with body the new prerequisite
-     * @throws URISyntaxException if the Location URI syntax is incorrect
-     */
-    @PostMapping("courses/{courseId}/competencies/prerequisites")
-    @EnforceAtLeastEditorInCourse
-    public ResponseEntity<PrerequisiteResponseDTO> createPrerequisite(@PathVariable long courseId, @RequestBody PrerequisiteRequestDTO prerequisite) throws URISyntaxException {
-        log.debug("REST request to create Prerequisite : {}", prerequisite);
-
-        final var savedPrerequisite = prerequisiteService.createPrerequisite(prerequisite, courseId);
-        final var uri = new URI("/api/courses/" + courseId + "/prerequisites/" + savedPrerequisite.getId());
-
-        return ResponseEntity.created(uri).body(PrerequisiteResponseDTO.of(savedPrerequisite));
-    }
-
-    /**
-     * PUT /courses/:courseId/prerequisites/:prerequisiteId : updates an existing prerequisite
-     *
-     * @param courseId           the id of the course to which the prerequisite belongs
-     * @param prerequisiteId     the id of the prerequisite to update
-     * @param prerequisiteValues the new prerequisite values
-     * @return the ResponseEntity with status 200 (OK)
-     */
-    @PutMapping("courses/{courseId}/competencies/prerequisites/{prerequisiteId}")
-    @EnforceAtLeastEditorInCourse
-    public ResponseEntity<PrerequisiteResponseDTO> updatePrerequisite(@PathVariable long courseId, @PathVariable long prerequisiteId,
-            @RequestBody PrerequisiteRequestDTO prerequisiteValues) {
-        log.info("REST request to update Prerequisite with id : {}", prerequisiteId);
-
-        final var savedPrerequisite = prerequisiteService.updatePrerequisite(prerequisiteValues, prerequisiteId, courseId);
-
-        return ResponseEntity.ok(PrerequisiteResponseDTO.of(savedPrerequisite));
     }
 
     /**
