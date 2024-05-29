@@ -14,6 +14,7 @@ import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -90,10 +91,19 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
         userUtilService.createAndSaveUser(TEST_PREFIX + "instructor42");
 
         int numberOfSlides = 2;
-        this.attachmentUnitWithSlides = lectureUtilService.createAttachmentUnitWithSlides(numberOfSlides);
+        this.attachmentUnitWithSlides = lectureUtilService.createAttachmentUnitWithSlidesAndFile(numberOfSlides);
         lecture1 = lectureUtilService.addLectureUnitsToLecture(lecture1, List.of(attachmentUnitWithSlides));
         this.lecture1 = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture1.getId());
         slideRepository.deleteAll();
+    }
+
+    @AfterEach
+    void cleanUp() {
+        // Clean up the database and reset the state to avoid test interference
+        slideRepository.deleteAll();
+        attachmentUnitRepository.deleteAll();
+        lectureRepository.deleteAll();
+        courseRepository.deleteAll();
     }
 
     @Test

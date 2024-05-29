@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.domain.iris.settings.IrisCompetencyGenerationSubSe
 import de.tum.in.www1.artemis.domain.iris.settings.IrisCourseSettings;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisExerciseSettings;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisHestiaSubSettings;
+import de.tum.in.www1.artemis.domain.iris.settings.IrisLectureIngestionSubSettings;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSettings;
 import de.tum.in.www1.artemis.iris.AbstractIrisIntegrationTest;
 import de.tum.in.www1.artemis.repository.iris.IrisSettingsRepository;
@@ -111,6 +112,7 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
         assertThat(updatedSettings).isNotNull().isEqualTo(loadedSettings2);
         // Ids of settings should not have changed
         assertThat(updatedSettings.getId()).isEqualTo(loadedSettings1.getId());
+        assertThat(updatedSettings.getIrisLectureIngestionSettings().getId()).isEqualTo(loadedSettings1.getIrisLectureIngestionSettings().getId());
         assertThat(updatedSettings.getIrisChatSettings().getId()).isEqualTo(loadedSettings1.getIrisChatSettings().getId());
         assertThat(updatedSettings.getIrisHestiaSettings().getId()).isEqualTo(loadedSettings1.getIrisHestiaSettings().getId());
         assertThat(updatedSettings.getIrisCompetencyGenerationSettings().getId()).isEqualTo(loadedSettings1.getIrisCompetencyGenerationSettings().getId());
@@ -128,6 +130,8 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
         var chatSubSettingsId = loadedSettings1.getIrisChatSettings().getId();
         var hestiaSubSettingsId = loadedSettings1.getIrisHestiaSettings().getId();
         var competencyGenerationSubSettingsId = loadedSettings1.getIrisCompetencyGenerationSettings().getId();
+        var lectureIngestionSubSettingsId = loadedSettings1.getIrisLectureIngestionSettings().getId();
+        loadedSettings1.setIrisLectureIngestionSettings(null);
         loadedSettings1.setIrisChatSettings(null);
         loadedSettings1.setIrisHestiaSettings(null);
         loadedSettings1.setIrisCompetencyGenerationSettings(null);
@@ -138,6 +142,7 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
         assertThat(updatedSettings).isNotNull().usingRecursiveComparison().ignoringFields("course").isEqualTo(loadedSettings1);
         assertThat(updatedSettings).isNotNull().usingRecursiveComparison().ignoringFields("course").isEqualTo(loadedSettings2);
         // Original subsettings should not exist anymore
+        assertThat(irisSubSettingsRepository.findById(lectureIngestionSubSettingsId)).isEmpty();
         assertThat(irisSubSettingsRepository.findById(chatSubSettingsId)).isEmpty();
         assertThat(irisSubSettingsRepository.findById(hestiaSubSettingsId)).isEmpty();
         assertThat(irisSubSettingsRepository.findById(competencyGenerationSubSettingsId)).isEmpty();
@@ -166,12 +171,17 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
         courseSettings.getIrisCompetencyGenerationSettings().setTemplate(createDummyTemplate());
         courseSettings.getIrisCompetencyGenerationSettings().setPreferredModel(null);
 
+        courseSettings.setIrisLectureIngestionSettings(new IrisLectureIngestionSubSettings());
+        courseSettings.getIrisLectureIngestionSettings().setEnabled(true);
+
         var updatedSettings = request.putWithResponseBody("/api/courses/" + course.getId() + "/raw-iris-settings", courseSettings, IrisSettings.class, HttpStatus.OK);
         var loadedSettings1 = request.get("/api/courses/" + course.getId() + "/raw-iris-settings", HttpStatus.OK, IrisSettings.class);
 
         assertThat(updatedSettings).usingRecursiveComparison().ignoringFields("course").isEqualTo(loadedSettings1);
-        assertThat(loadedSettings1).usingRecursiveComparison().ignoringFields("id", "course", "irisChatSettings.id", "irisChatSettings.template.id", "irisHestiaSettings.id",
-                "irisHestiaSettings.template.id", "irisCompetencyGenerationSettings.id", "irisCompetencyGenerationSettings.template.id").isEqualTo(courseSettings);
+        assertThat(loadedSettings1)
+                .usingRecursiveComparison().ignoringFields("id", "course", "irisChatSettings.id", "irisChatSettings.template.id", "irisLectureIngestionSettings.id",
+                        "irisHestiaSettings.id", "irisHestiaSettings.template.id", "irisCompetencyGenerationSettings.id", "irisCompetencyGenerationSettings.template.id")
+                .isEqualTo(courseSettings);
     }
 
     @Test
