@@ -16,7 +16,7 @@ import { UserService } from 'app/core/user/user.service';
 import { AccountService } from 'app/core/auth/account.service';
 
 export enum ChatServiceMode {
-    TUTOR = 'tutor-chat',
+    EXERCISE = 'exercise-chat',
     COURSE = 'course-chat',
 }
 

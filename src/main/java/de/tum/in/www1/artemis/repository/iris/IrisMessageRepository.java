@@ -34,7 +34,7 @@ public interface IrisMessageRepository extends JpaRepository<IrisMessage, Long> 
     @Query("""
             SELECT COUNT(DISTINCT m)
             FROM IrisMessage m
-                JOIN TREAT (m.session AS IrisExerciseChatSession) s
+                JOIN TREAT (m.session AS IrisChatSession) s
             WHERE s.user.id = :userId
                 AND m.sender = de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender.LLM
                 AND m.sentAt BETWEEN :start AND :end

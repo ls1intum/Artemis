@@ -120,7 +120,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     Optional<User> findOneWithGroupsAuthoritiesAndGuidedTourSettingsByLogin(String login);
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "guidedTourSettings", "irisAccepted" })
-    Optional<User> findOneWithGroupsAuthoritiesAndGuidedTourSettingsAndIrisAcceptedTimestampByLogin(String login);
+    Optional<User> findOneWithGroupsAndAuthoritiesAndGuidedTourSettingsAndIrisAcceptedTimestampByLogin(String login);
 
     @EntityGraph(type = LOAD, attributePaths = { "learningPaths" })
     Optional<User> findOneWithLearningPathsByLogin(String login);

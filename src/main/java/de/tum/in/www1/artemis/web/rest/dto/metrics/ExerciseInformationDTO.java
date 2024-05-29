@@ -5,6 +5,7 @@ import java.time.ZonedDateTime;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
@@ -22,10 +23,13 @@ import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
  * @param difficulty             the difficulty level of the exercise
  * @param exerciseMode           the mode of the exercise
  * @param type                   the type of the exercise
+ * @param allowOnlineEditor      whether the online editor is allowed for the programming exercise, null for non-programming exercises
+ * @param allowOfflineIde        whether the offline IDE is allowed for the programming exercise, null for non-programming exercises
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExerciseInformationDTO(long id, String shortName, String title, ZonedDateTime start, ZonedDateTime due, Double maxPoints,
-        IncludedInOverallScore includedInOverallScore, DifficultyLevel difficulty, ExerciseMode exerciseMode, Class<? extends Exercise> type) {
+        IncludedInOverallScore includedInOverallScore, DifficultyLevel difficulty, ExerciseMode exerciseMode, Class<? extends Exercise> type, Boolean allowOnlineEditor,
+        Boolean allowOfflineIde) {
 
     /**
      * Create a new ExerciseInformationDTO from an exercise.
@@ -38,8 +42,16 @@ public record ExerciseInformationDTO(long id, String shortName, String title, Zo
         if (startDate == null) {
             startDate = exercise.getReleaseDate();
         }
+
+        Boolean allowOnlineEditor = null;
+        Boolean allowOfflineIde = null;
+        if (exercise instanceof ProgrammingExercise programmingExercise) {
+            allowOnlineEditor = programmingExercise.isAllowOnlineEditor();
+            allowOfflineIde = programmingExercise.isAllowOfflineIde();
+        }
+
         return new ExerciseInformationDTO(exercise.getId(), exercise.getShortName(), exercise.getTitle(), startDate, exercise.getDueDate(), exercise.getMaxPoints(),
-                exercise.getIncludedInOverallScore(), exercise.getDifficulty(), exercise.getMode(), exercise.getClass());
+                exercise.getIncludedInOverallScore(), exercise.getDifficulty(), exercise.getMode(), exercise.getClass(), allowOnlineEditor, allowOfflineIde);
     }
 
     @Override

@@ -7,9 +7,13 @@
     border: none;
     text-align: left;
     outline: none;
-    font-size: 15px;
     border-radius: 3px 3px 0 0;
     transition: 0.2s;
+}
+
+.competency-accordion-header,
+.competency-accordion-body {
+    margin: 0;
 }
 
 .competency-accordion-header.closed {
@@ -55,11 +59,6 @@
     to {
         opacity: 1;
     }
-}
-
-.competency-accordion-header,
-.competency-accordion-body {
-    margin: 0;
 }
 
 .competency-accordion-header .row > div,

@@ -158,7 +158,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     Optional<Course> findWithEagerExercisesAndLecturesAndLectureUnitsAndCompetenciesById(long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures", "lectures.lectureUnits", "lectures.attachments", "competencies", "prerequisites", "exams" })
-    Optional<Course> findWithEagerExercisesAndLecturesAndLectureUnitsAndCompetenciesAndExamsById(long courseId);
+    Optional<Course> findWithEagerExercisesAndLecturesAndAttachmentsAndLectureUnitsAndCompetenciesAndExamsById(long courseId);
 
     @Query("""
             SELECT course

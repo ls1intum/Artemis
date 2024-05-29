@@ -12,6 +12,11 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.User;
 
+/**
+ * An entity to store a students Judgement of Learning (JOL) value for a competency.
+ * <p>
+ * A JOL value is a students self-assessment of their own learning progress for a competency with value 1 to 5
+ */
 @Entity
 @Table(name = "competency_jol")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)

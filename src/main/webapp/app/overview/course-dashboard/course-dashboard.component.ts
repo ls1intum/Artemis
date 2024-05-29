@@ -11,12 +11,12 @@ import { CourseDashboardService } from 'app/overview/course-dashboard/course-das
 import { CompetencyInformation, ExerciseMetrics, StudentMetrics } from 'app/entities/student-metrics.model';
 import { ExerciseLateness } from 'app/overview/course-dashboard/course-exercise-lateness/course-exercise-lateness.component';
 import { ExercisePerformance } from 'app/overview/course-dashboard/course-exercise-performance/course-exercise-performance.component';
-import { ICompetencyAccordionToggleEvent } from 'app/shared/competency/interfaces/competency-accordion-toggle-event.interface';
 import { round } from 'app/shared/util/utils';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import dayjs from 'dayjs/esm';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_IRIS } from 'app/app.constants';
+import { CompetencyAccordionToggleEvent } from 'app/course/competencies/competency-accordion/competency-accordion.component';
 
 @Component({
     selector: 'jhi-course-dashboard',
@@ -28,6 +28,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     exerciseId: number;
     points: number = 0;
     maxPoints: number = 0;
+    progress: number = 0;
     isLoading = false;
     hasExercises = false;
     hasCompetencies = false;
@@ -102,8 +103,8 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
 
                         // Sorted exercises that have a due date in the past
                         let sortedExerciseIds = Object.values(exerciseMetrics?.exerciseInformation ?? {})
-                            .sort((a, b) => (a.dueDate.isBefore(b.dueDate) ? -1 : 1))
-                            .filter((exercise) => exercise.dueDate.isBefore(dayjs()))
+                            .sort((a, b) => ((a?.dueDate ?? a.startDate).isBefore(b.dueDate) ? -1 : 1))
+                            .filter((exercise) => exercise.dueDate && exercise.dueDate.isBefore(dayjs()))
                             .map((exercise) => exercise.id);
 
                         // Limit the number of exercises to the last 10
@@ -145,6 +146,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
 
         const maxPoints = relevantExercises.reduce((sum, exercise) => sum + exercise.maxPoints, 0);
         this.maxPoints = round(maxPoints, 1);
+        this.progress = round((points / maxPoints) * 100, 1);
     }
 
     /**
@@ -201,12 +203,8 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
         }
     }
 
-    handleToggle(event: ICompetencyAccordionToggleEvent) {
+    handleToggle(event: CompetencyAccordionToggleEvent) {
         this.openedAccordionIndex = event.opened ? event.index : undefined;
-    }
-
-    get learningPathsEnabled() {
-        return this.course?.learningPathsEnabled || false;
     }
 
     navigateToLearningPaths() {

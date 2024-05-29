@@ -58,8 +58,6 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     faThumbsDown = faThumbsDown;
     faRedo = faRedo;
 
-    protected readonly IrisSender = IrisSender;
-
     // State variables
     messagesSubscription: Subscription;
     stagesSubscription: Subscription;
@@ -97,6 +95,13 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     @ViewChild('scrollArrow') scrollArrow!: ElementRef;
     @ViewChild('messageTextarea') messageTextarea: ElementRef<HTMLTextAreaElement>;
     @ViewChild('acceptButton') acceptButton: ElementRef<HTMLButtonElement>;
+
+    // Types
+    protected readonly IrisLogoSize = IrisLogoSize;
+    protected readonly IrisMessageContentType = IrisMessageContentType;
+    protected readonly IrisAssistantMessage = IrisAssistantMessage;
+    protected readonly IrisTextMessageContent = IrisTextMessageContent;
+    protected readonly IrisSender = IrisSender;
 
     constructor(
         protected accountService: AccountService,
@@ -307,7 +312,8 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     adjustTextareaRows() {
         const textarea: HTMLTextAreaElement = this.messageTextarea.nativeElement;
         textarea.style.height = 'auto'; // Reset the height to auto
-        const lineHeight = parseInt(getComputedStyle(textarea).lineHeight, 10) + 4;
+        const bufferForSpaceBetweenLines = 4;
+        const lineHeight = parseInt(getComputedStyle(textarea).lineHeight, 10) + bufferForSpaceBetweenLines;
         const maxRows = 3;
         const maxHeight = lineHeight * maxRows;
 
@@ -361,19 +367,4 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
         const scrollTop = messagesElement.scrollTop;
         this.isScrolledToBottom = scrollTop < 50;
     }
-
-    /**
-     * Checks if sending a message is allowed.
-     */
-    checkIfDisabled() {
-        return (
-            this.isLoading || !this.active || (this.rateLimitInfo?.rateLimit && this.rateLimitInfo?.currentMessageCount === this.rateLimitInfo?.rateLimit) || this.hasActiveStage
-        );
-    }
-
-    protected readonly IrisLogoSize = IrisLogoSize;
-    protected readonly IrisMessageContentType = IrisMessageContentType;
-    protected readonly IrisAssistantMessage = IrisAssistantMessage;
-    protected readonly IrisTextMessageContent = IrisTextMessageContent;
-    protected readonly JSON = JSON;
 }

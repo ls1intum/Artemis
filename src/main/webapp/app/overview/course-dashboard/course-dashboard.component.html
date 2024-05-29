@@ -17,7 +17,7 @@
                     <h4 jhiTranslate="artemisApp.courseStudentDashboard.overallPerformance.title"></h4>
                     <div class="flex-grow-1">
                         <ngb-progressbar type="success overflow-visible" [value]="points" [max]="maxPoints" height="1.75rem">
-                            <span class="fs-5 mx-2">{{ points }} / {{ maxPoints }} ({{ round((points / maxPoints) * 1000) / 10 }}%)</span>
+                            <span class="fs-5 mx-2">{{ points }} / {{ maxPoints }} ({{ progress }}%)</span>
                         </ngb-progressbar>
                     </div>
                 </div>
@@ -49,7 +49,7 @@
         } @else {
             <div jhiTranslate="artemisApp.studentAnalyticsDashboard.competencyAccordion.noData"></div>
         }
-        @if (learningPathsEnabled) {
+        @if (this.course?.learningPathsEnabled || false) {
             <div class="competency-accordion-container row justify-content-center w-100" [jhiFeatureToggleHide]="FeatureToggle.LearningPaths">
                 <button class="btn btn-primary mt-2" (click)="navigateToLearningPaths()" jhiTranslate="artemisApp.studentAnalyticsDashboard.button.showLearningPath"></button>
             </div>

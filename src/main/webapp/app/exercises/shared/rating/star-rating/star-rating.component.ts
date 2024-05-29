@@ -249,7 +249,7 @@ export class StarRatingComponent {
             }
 
             const newSize = this.size.match(/\d+/)![0];
-            const halfSize = parseInt(newSize, 10) * (1 - (this.value - Math.floor(this.value)));
+            const halfSize = Number(newSize) * (1 - (this.value - Math.floor(this.value)));
 
             this.stars.forEach((star: HTMLElement) => {
                 star.style.setProperty(StarRatingComponent.VAR_SIZE, this.size);

@@ -71,6 +71,7 @@
             &.in_progress {
                 background-color: var(--warning);
                 transition: transform 10s linear;
+                transform: scaleX(0.05);
             }
             &.skipped {
                 transform: scaleX(1);

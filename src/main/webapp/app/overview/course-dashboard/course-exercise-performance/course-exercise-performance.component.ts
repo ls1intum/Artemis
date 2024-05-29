@@ -1,9 +1,10 @@
-import { Component, Input, OnChanges, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { GraphColors } from 'app/entities/statistics.model';
 import { NgxChartsMultiSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { round } from 'app/shared/util/utils';
+import { Subscription } from 'rxjs';
 
 export interface ExercisePerformance {
     exerciseId: number;
@@ -21,7 +22,7 @@ const AVERAGE_GRAPH_COLOR = GraphColors.YELLOW;
     templateUrl: './course-exercise-performance.component.html',
     styleUrls: ['./course-exercise-performance.component.scss'],
 })
-export class CourseExercisePerformanceComponent implements OnInit, OnChanges {
+export class CourseExercisePerformanceComponent implements OnInit, OnChanges, OnDestroy {
     @Input() exercisePerformance: ExercisePerformance[] = [];
 
     yourScoreLabel: string;
@@ -35,19 +36,23 @@ export class CourseExercisePerformanceComponent implements OnInit, OnChanges {
     };
     yScaleMax = 100;
 
-    protected readonly round = round;
-    protected readonly Math = Math;
+    private translateServiceSubscription: Subscription;
+
     protected readonly YOUR_GRAPH_COLOR = YOUR_GRAPH_COLOR;
     protected readonly AVERAGE_GRAPH_COLOR = AVERAGE_GRAPH_COLOR;
 
     constructor(private translateService: TranslateService) {
-        this.translateService.onLangChange.subscribe(() => {
+        this.translateServiceSubscription = this.translateService.onLangChange.subscribe(() => {
             this.setupChart();
         });
     }
 
     ngOnInit(): void {
         this.setupChart();
+    }
+
+    ngOnDestroy(): void {
+        this.translateServiceSubscription.unsubscribe();
     }
 
     ngOnChanges(): void {
@@ -77,7 +82,7 @@ export class CourseExercisePerformanceComponent implements OnInit, OnChanges {
                 series: this.exercisePerformance.map((performance) => {
                     return {
                         name: performance.shortName?.toUpperCase() || performance.title,
-                        value: performance.score || 0, // If the score is undefined, set it to 0
+                        value: round(performance.score || 0, 1), // If the score is undefined, set it to 0
                         extra: {
                             title: performance.title,
                         },
@@ -89,7 +94,7 @@ export class CourseExercisePerformanceComponent implements OnInit, OnChanges {
                 series: this.exercisePerformance.map((performance) => {
                     return {
                         name: performance.shortName?.toUpperCase() || performance.title,
-                        value: performance.averageScore || 0,
+                        value: round(performance.averageScore || 0, 1),
                         extra: {
                             title: performance.title,
                         },
@@ -98,6 +103,7 @@ export class CourseExercisePerformanceComponent implements OnInit, OnChanges {
             },
         ];
 
+        // Round the maximum score up to the next multiple of 10
         const maxScore = Math.max(...this.ngxData.flatMap((data) => data.series.map((series) => series.value)));
         this.yScaleMax = Math.max(100, Math.ceil(maxScore / 10) * 10);
     }

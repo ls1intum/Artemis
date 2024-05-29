@@ -32,7 +32,7 @@ export class ExerciseInformation {
     public title: string;
     public shortName?: string;
     public startDate: dayjs.Dayjs;
-    public dueDate: dayjs.Dayjs;
+    public dueDate?: dayjs.Dayjs;
     public maxPoints: number;
     public type: ExerciseType;
     public includedInOverallScore?: IncludedInOverallScore;
@@ -40,6 +40,8 @@ export class ExerciseInformation {
     public categories?: ExerciseCategory[];
     public difficulty?: DifficultyLevel;
     public studentAssignedTeamId?: number;
+    public allowOnlineEditor?: boolean;
+    public allowOfflineIde?: boolean;
 }
 
 export class LectureUnitStudentMetricsDTO {

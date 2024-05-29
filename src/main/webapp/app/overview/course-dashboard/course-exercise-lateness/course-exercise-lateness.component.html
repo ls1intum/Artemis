@@ -8,11 +8,11 @@
             <!-- Legend-->
             <div class="d-flex gap-3">
                 <div class="d-flex align-items-center gap-1">
-                    <span class="tooltip-label-color" [style.background-color]="YOUR_GRAPH_COLOR"></span>
+                    <span class="tooltip-label" [style.background-color]="YOUR_GRAPH_COLOR"></span>
                     <span jhiTranslate="artemisApp.courseStudentDashboard.exerciseLateness.yourLatenessLabel"></span>
                 </div>
                 <div class="d-flex align-items-center gap-1">
-                    <span class="tooltip-label-color" [style.background-color]="AVERAGE_GRAPH_COLOR"></span>
+                    <span class="tooltip-label" [style.background-color]="AVERAGE_GRAPH_COLOR"></span>
                     <span jhiTranslate="artemisApp.courseStudentDashboard.exerciseLateness.averageLatenessLabel"></span>
                 </div>
             </div>
@@ -25,7 +25,7 @@
                 [results]="ngxData"
                 [scheme]="ngxColor"
                 [legend]="false"
-                [maxXAxisTickLength]="8"
+                [maxXAxisTickLength]="6"
                 [xAxis]="true"
                 [xAxisLabel]="'artemisApp.courseStudentDashboard.exerciseLateness.xAxisLabel' | artemisTranslate"
                 [showXAxisLabel]="true"
@@ -38,7 +38,7 @@
                 <ng-template #tooltipTemplate let-model="model">
                     <div class="d-flex flex-column align-items-start py-2">
                         <b class="mb-1">{{ model.extra.title }}</b>
-                        {{ model.series }}: {{ round(model.value, 1) }}%
+                        {{ model.series }}: {{ model.value }}%
                     </div>
                 </ng-template>
                 <ng-template #seriesTooltipTemplate let-model="model">
@@ -47,8 +47,8 @@
                             <b class="mb-1">{{ model[0].extra.title }}</b>
                             @for (entry of model; track entry) {
                                 <div class="d-flex align-items-center gap-1">
-                                    <span class="tooltip-label-color" [style.background-color]="entry.color"></span>
-                                    {{ entry.series }}: {{ round(entry.value, 1) }}%
+                                    <span class="tooltip-label" [style.background-color]="entry.color"></span>
+                                    {{ entry.series }}: {{ entry.value }}%
                                 </div>
                             }
                         </div>

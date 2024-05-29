@@ -141,19 +141,14 @@ public class IrisSessionService {
      */
     @SuppressWarnings("unchecked")
     private <S extends IrisSession> IrisSubFeatureWrapper<S> getIrisSessionSubService(S session) {
-        if (session instanceof IrisExerciseChatSession chatSession) {
-            return (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisExerciseChatSessionService, chatSession);
-        }
-        if (session instanceof IrisCourseChatSession courseChatSession) {
-            return (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisCourseChatSessionService, courseChatSession);
-        }
-        if (session instanceof IrisHestiaSession hestiaSession) {
-            return (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisHestiaSessionService, hestiaSession);
-        }
-        if (session instanceof IrisCompetencyGenerationSession irisCompetencyGenerationSession) {
-            return (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisCompetencyGenerationSessionService, irisCompetencyGenerationSession);
-        }
-        throw new BadRequestException("Unknown Iris session type " + session.getClass().getSimpleName());
+        return switch (session) {
+            case IrisExerciseChatSession chatSession -> (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisExerciseChatSessionService, chatSession);
+            case IrisCourseChatSession courseChatSession -> (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisCourseChatSessionService, courseChatSession);
+            case IrisHestiaSession hestiaSession -> (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisHestiaSessionService, hestiaSession);
+            case IrisCompetencyGenerationSession irisCompetencyGenerationSession ->
+                (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisCompetencyGenerationSessionService, irisCompetencyGenerationSession);
+            case null, default -> throw new BadRequestException("Unknown Iris session type " + session.getClass().getSimpleName());
+        };
     }
 
     private record IrisSubFeatureWrapper<S extends IrisSession>(IrisSubFeatureInterface<S> irisSubFeatureInterface, S irisSession) {
