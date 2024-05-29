@@ -139,8 +139,8 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
         this.isTeamAvailable = !!(this.exercise.teamMode && this.exercise.studentAssignedTeamIdComputed && this.exercise.studentAssignedTeamId);
     }
 
-    getOnlineIDEURL() {
-        return this.theiaPortalURL;
+    startOnlineIDE() {
+        window.open(this.theiaPortalURL, '_blank');
     }
 
     receiveNewParticipation(newParticipation: StudentParticipation) {
