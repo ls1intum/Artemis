@@ -2,21 +2,25 @@ import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monac
 
 import * as monaco from 'monaco-editor';
 import { faCompress } from '@fortawesome/free-solid-svg-icons';
-import { ElementRef } from '@angular/core';
+import { enterFullscreen, exitFullscreen, isFullScreen } from 'app/shared/util/fullscreen.util';
 
 export class MonacoFullscreenAction extends MonacoEditorAction {
     static readonly ID = 'monaco-fullscreen.action';
+
+    element?: HTMLElement;
 
     constructor(label: string, translationKey: string) {
         super(MonacoFullscreenAction.ID, label, translationKey, faCompress);
     }
 
-    run(editor: monaco.editor.ICodeEditor, element?: ElementRef): void {
-        const elementNode: HTMLElement = element?.nativeElement ?? editor.getContainerDomNode();
-        if (document.fullscreenElement) {
-            document.exitFullscreen().then(() => editor.layout());
-        } else {
-            elementNode.requestFullscreen().then(() => editor.layout());
+    run(editor: monaco.editor.ICodeEditor): void {
+        const element = this.element ?? editor.getDomNode();
+        if (isFullScreen()) {
+            exitFullscreen();
+            editor.layout();
+        } else if (element) {
+            enterFullscreen(element);
+            editor.layout();
         }
     }
 }
