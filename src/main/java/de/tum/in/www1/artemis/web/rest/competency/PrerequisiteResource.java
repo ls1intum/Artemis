@@ -130,7 +130,6 @@ public class PrerequisiteResource {
 
         prerequisiteService.deletePrerequisite(prerequisiteId, courseId);
 
-        // TODO: add notification on the client-side.
         return ResponseEntity.ok().build();
     }
 

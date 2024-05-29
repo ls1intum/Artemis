@@ -5,7 +5,6 @@ import java.time.ZonedDateTime;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 
-// TODO: javadco
 @Entity
 @DiscriminatorValue("PREREQUISITE")
 public class Prerequisite extends CourseCompetency {
