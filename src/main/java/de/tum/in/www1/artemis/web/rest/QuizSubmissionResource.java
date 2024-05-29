@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.Result;
@@ -87,6 +88,7 @@ public class QuizSubmissionResource {
     }
 
     /**
+     * TODO: Decide if we want to use this endpoint for both submit and save. If so, we may want to use PUT instead of POST
      * POST /exercises/:exerciseId/submissions/live : Submit a new quizSubmission for live mode.
      *
      * @param exerciseId     the id of the exercise for which to init a participation
@@ -95,13 +97,16 @@ public class QuizSubmissionResource {
      */
     @PostMapping("exercises/{exerciseId}/submissions/live")
     @EnforceAtLeastStudent
-    public ResponseEntity<QuizSubmission> submitForLiveMode(@PathVariable Long exerciseId, @Valid @RequestBody QuizSubmission quizSubmission) {
-        log.debug("REST request to submit QuizSubmission for live mode : {}", quizSubmission);
+    public ResponseEntity<QuizSubmission> saveOrSubmitForLiveMode(@PathVariable Long exerciseId, @Valid @RequestBody QuizSubmission quizSubmission,
+            @RequestParam(name = "submit") boolean submit) {
+        log.debug("REST request to save or submit QuizSubmission for live mode : {}", quizSubmission);
         String userLogin = SecurityUtils.getCurrentUserLogin().orElseThrow();
         try {
-            // we set the submitted flag to true on the server side
-            quizSubmission.setSubmitted(true);
-            QuizSubmission updatedQuizSubmission = quizSubmissionService.saveSubmissionForLiveMode(exerciseId, quizSubmission, userLogin, true);
+            // we set the submitted flag on the server side
+            // TODO: For saving, there is a small change compared to QuizSubmissionWebsocketService::saveSubmission. The submitted flag is set here, but not in the websocket
+            // service.
+            quizSubmission.setSubmitted(submit);
+            QuizSubmission updatedQuizSubmission = quizSubmissionService.saveSubmissionForLiveMode(exerciseId, quizSubmission, userLogin, submit);
             return ResponseEntity.ok(updatedQuizSubmission);
         }
         catch (QuizSubmissionException e) {

@@ -42,7 +42,7 @@ public class QuizSubmissionWebsocketService {
      * @param principal      refers to the user who initiated the request
      */
     @MessageMapping("topic/quizExercise/{exerciseId}/submission")
-    public void saveSubmission(@DestinationVariable Long exerciseId, @Valid @Payload QuizSubmission quizSubmission, Principal principal) {
+    public void saveSubmission(@DestinationVariable Long exerciseId, @Valid @Payload QuizSubmission quizSubmission, Principal principal) { // TODO: Deprecate?
         // Without this, custom jpa repository methods don't work in websocket channel.
         SecurityUtils.setAuthorizationObject();
         try {
