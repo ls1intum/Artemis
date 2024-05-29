@@ -95,7 +95,7 @@ We encourage instructors to contribute improvements to the existing ``templates`
 Java DejaGnu: Blackbox Testing
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The classical testing frameworks, like JUnit for example, allows writing whitebox tests.
+The classical testing frameworks, like JUnit for example, allow writing whitebox tests.
 This enforces many assumptions about the structure of the source code under test,
 like the class and method names and even the exact method signatures.
 This implies for a programming exercise that you have to specify all the structural aspects
