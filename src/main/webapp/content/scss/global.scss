@@ -261,6 +261,25 @@ Generic styles
     width: 60% !important;
 }
 
+.max-vw-30 {
+    max-width: 30vw !important;
+}
+
+// Should be used with a width restriction of your choice.
+.popover-text-truncate-4-lines > .popover-body {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    // Show only the first four lines (limiting height with something else than lines is not possible).
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    line-clamp: 4;
+    -webkit-box-orient: vertical;
+    // Add a margin at the bottom and solve problem in Chromium-based browsers,
+    // that an additional line after the ellipsis end is shown.
+    margin-bottom: 1em;
+    padding-bottom: 0;
+}
+
 .mt-n3 {
     margin-top: -1rem;
 }
