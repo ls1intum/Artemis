@@ -1,7 +1,7 @@
 import dayjs from 'dayjs/esm';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { Competency, CompetencyProgress, getIcon } from 'app/entities/competency.model';
+import { Competency, CompetencyJol, CompetencyProgress, getIcon } from 'app/entities/competency.model';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -28,6 +28,7 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
     isLoading = false;
     competency: Competency;
     judgementOfLearning: number | undefined;
+    promptForJolRating = false;
     showFireworks = false;
     paramsSubscription: Subscription;
 
@@ -75,10 +76,12 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
 
     private loadData() {
         this.isLoading = true;
-        forkJoin([this.competencyService.findById(this.competencyId!, this.courseId!), this.competencyService.getJoL(this.courseId!, this.competencyId!)]).subscribe({
+        forkJoin([this.competencyService.getAllForCourse(this.courseId!), this.competencyService.getJoL(this.courseId!, this.competencyId!)]).subscribe({
             next: ([competencyResp, judgementOfLearningResp]) => {
-                this.competency = competencyResp.body!;
+                const competencies = competencyResp.body!;
+                this.competency = competencies.find((c) => c.id === this.competencyId)!;
                 this.judgementOfLearning = judgementOfLearningResp.body ?? undefined;
+                this.promptForJolRating = CompetencyJol.shouldPromptForJol(this.competency, this.competency.userProgress?.first(), competencies);
 
                 if (this.competency && this.competency.exercises) {
                     // Add exercises as lecture units for display

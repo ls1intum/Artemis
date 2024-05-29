@@ -107,12 +107,11 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
             this.competencyService.getJoLAllForCourse(this.courseId),
         ]).subscribe({
             next: ([competencies, prerequisites, judgementOfLearningMap]) => {
-                console.log(competencies);
                 this.competencies = competencies.body!;
                 this.prerequisites = prerequisites.body!;
                 this.judgementOfLearningMap = judgementOfLearningMap.body!;
                 this.promptForJolRatingMap = Object.fromEntries(
-                    this.competencies.map((competency) => [competency.id, CompetencyJol.shouldPromptForJol(competency, competency.userProgress?.last(), this.competencies)]),
+                    this.competencies.map((competency) => [competency.id, CompetencyJol.shouldPromptForJol(competency, competency.userProgress?.first(), this.competencies)]),
                 );
 
                 // Also update the course, so we do not need to fetch again next time

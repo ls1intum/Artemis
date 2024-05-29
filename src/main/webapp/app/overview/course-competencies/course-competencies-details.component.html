@@ -80,7 +80,7 @@
                         [progress]="progress"
                         [confidence]="confidence"
                         [mastery]="mastery"
-                        [hideProgress]="judgementOfLearningEnabled && judgementOfLearning === undefined"
+                        [hideProgress]="judgementOfLearningEnabled && promptForJolRating && judgementOfLearning === undefined"
                     />
                 </div>
                 @if (!judgementOfLearningEnabled || judgementOfLearning !== undefined) {
@@ -101,7 +101,7 @@
                         </div>
                     </jhi-side-panel>
                 }
-                @if (judgementOfLearningEnabled && competency.id !== undefined) {
+                @if (judgementOfLearningEnabled && promptForJolRating && competency.id !== undefined) {
                     <div class="mt-3">
                         <jhi-judgement-of-learning-rating
                             [competencyId]="competency.id"

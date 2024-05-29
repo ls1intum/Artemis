@@ -88,7 +88,7 @@ export class CompetencyJol {
 
         // Calculate the average progress of all previous competencies
         const totalPreviousProgress = previousCompetencies.reduce((sum, c) => {
-            const progress = c.userProgress?.slice(-1)?.[0].progress ?? 0;
+            const progress = c.userProgress?.first()?.progress ?? 0;
             return sum + progress;
         }, 0);
         const avgPreviousProgress = totalPreviousProgress / previousCompetencies.length;
