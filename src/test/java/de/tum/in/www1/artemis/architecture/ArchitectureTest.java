@@ -212,10 +212,20 @@ class ArchitectureTest extends AbstractArchitectureTest {
         var result = dtoRecordRule.evaluate(allClasses);
         log.info("Current number of DTO classes: {}", result.getFailureReport().getDetails().size());
         log.info("Current DTO classes: {}", result.getFailureReport().getDetails());
-        // TODO: reduce the following number to 0
-        assertThat(result.getFailureReport().getDetails()).hasSizeLessThanOrEqualTo(34);
+        // TODO: reduce the following number to 0, if the current number is less, decrease it
+        assertThat(result.getFailureReport().getDetails()).hasSize(26);
 
-        // TODO: make sure all classes in a package that ends to dto are also named DTO to be included in the rule above
+        var dtoPackageRule = classes().that().resideInAPackage("..dto").should().haveSimpleNameEndingWith("DTO");
+        result = dtoPackageRule.evaluate(allClasses);
+        log.info("Current number of DTOs that do not end with \"DTO\": {}", result.getFailureReport().getDetails().size());
+        log.info("Current DTOs that do not end with \"DTO\": {}", result.getFailureReport().getDetails());
+        // TODO: reduce the following number to 0, if the current number is less, decrease it
+        assertThat(result.getFailureReport().getDetails()).hasSize(34);
+    }
+
+    @Test
+    void foo() {
+
     }
 
     @Test

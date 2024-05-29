@@ -339,6 +339,7 @@ public class TutorialGroupSessionResource {
     /**
      * DTO used because we want to interpret the dates in the time zone of the tutorial groups configuration
      */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record TutorialGroupSessionDTO(@NotNull LocalDate date, @NotNull LocalTime startTime, @NotNull LocalTime endTime, @Size(min = 1, max = 2000) String location) {
 
         public void validityCheck() {
