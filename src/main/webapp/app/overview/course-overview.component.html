@@ -12,7 +12,7 @@
                 <div class="sidebar-container d-flex h-100 justify-content-between flex-column" [ngClass]="{ collapsed: isNavbarCollapsed }">
                     <!-- NavItems -->
                     <div>
-                        <div #container id="container" class="d-flex p-3 align-items-center justify-content-center text-decoration-none" [title]="course?.title">
+                        <div #container id="container" class="d-flex p-3 align-items-center text-decoration-none" [title]="course?.title">
                             <div ngbDropdown class="d-inline-block">
                                 @if (course && course.courseIcon) {
                                     <div class="d-flex align-items-center justify-content-center">

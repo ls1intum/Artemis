@@ -117,6 +117,7 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
 
         // Notify the course access storage service that the course has been accessed
         this.courseAccessStorageService.onCourseAccessed(courseId);
+        this.courseAccessStorageService.onCourseAccessedDropdown(courseId);
     }
 
     /**

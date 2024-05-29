@@ -129,7 +129,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     readonly WINDOW_OFFSET: number = 300;
     readonly ITEM_HEIGHT: number = 38;
     readonly BREADCRUMB_AND_NAVBAR_HEIGHT: number = 88;
-    readonly MIN_DISPLAYED_COURSES: number = 4;
+    readonly MIN_DISPLAYED_COURSES: number = 6;
 
     private conversationServiceInstantiated = false;
     private checkedForUnreadMessages = false;
@@ -216,6 +216,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.isNotManagementView = !this.router.url.startsWith('/course-management');
         // Notify the course access storage service that the course has been accessed
         this.courseAccessStorageService.onCourseAccessed(this.courseId);
+        this.courseAccessStorageService.onCourseAccessedDropdown(this.courseId);
 
         await firstValueFrom(this.loadCourse());
         await this.initAfterCourseLoad();
@@ -309,8 +310,8 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
                     const { courses: courseDtos } = res.body;
                     const courses = courseDtos.map((courseDto) => courseDto.course);
                     this.courses = sortCourses(courses);
-                    if (this.courses.length > this.MIN_DISPLAYED_COURSES) {
-                        const lastAccessedCourseIds = this.courseAccessStorageService.getLastAccessedCourses();
+                    if (this.courses.length > 6) {
+                        const lastAccessedCourseIds = this.courseAccessStorageService.getLastAccessedCoursesDropdown();
                         this.courses = this.courses.filter((course) => lastAccessedCourseIds.includes(course.id!));
                     }
                     this.courses = this.courses.filter((course) => course.id !== this.courseId);
