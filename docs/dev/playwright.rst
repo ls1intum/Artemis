@@ -10,7 +10,17 @@ Playwright tests rely on the Playwright Node.js library, Playwright browser bina
 
 1. Install dependencies:
 
-    First, navigate to the Playwright folder using ``cd src/test/playwright``. Then, run ``npm install``.
+    First, navigate to the Playwright folder:
+
+    .. code-block:: bash
+
+        cd src/test/playwright
+
+    Then install the dependencies:
+
+    .. code-block:: bash
+
+        npm install
 
 2. Customize Playwright configuration:
 
@@ -39,21 +49,51 @@ Playwright tests rely on the Playwright Node.js library, Playwright browser bina
 
      Playwright tests require users with different roles to simulate concurrent user interactions. You can configure
      user IDs and check their corresponding user roles in the ``src/test/playwright/support/users.ts`` file. Usernames are
-     defined automatically by replacing the ``USERID`` part in ` ``PLAYWRIGHT_USERNAME_TEMPLATE`` with corresponding
+     defined automatically by replacing the ``USERID`` part in ``PLAYWRIGHT_USERNAME_TEMPLATE`` with corresponding
      user ID. If users with such usernames do not exist, set ``CREATE_USERS`` to ``true`` on the ``playwright.env``
      file for users to be created during the setup stage. If users with the same usernames but different user roles already exist,
      change the user IDs to different values to ensure that new users are created with roles as defined in the configuration.
 
 4. Setup Playwright package and its browser binaries:
 
-    Run ``npm run playwright:setup`` to install Playwright browser binaries, set up the environment to ensure Playwright
-    can locate these binaries and create test users (if creating users is enabled in configuration).
+    Install Playwright browser binaries, set up the environment to ensure Playwright can locate these binaries and
+    create test users (if creating users is enabled in configuration) with following command:
+
+    .. code-block:: bash
+
+        npm run playwright:setup
 
 5. Open Playwright UI
 
-   Run ``npm run playwright:open`` to open the Playwright UI. This graphical interface allows you to run individual tests, test files, or test suites.
-    Another way to run tests is to use the command ``npm run playwright:run``. This command runs all tests in command
-    line.
+    To open the Playwright UI, run:
+
+    .. code-block:: bash
+
+        npm run playwright:open
+
+    This opens a graphical interface that allows you to run individual tests, test files, or test suites while observing
+    the test execution in a browser window.
+
+    Another way to run tests is through command line. To run all tests in command line, use:
+
+    .. code-block:: bash
+
+        npm run playwright:test
+
+    To run a specific test file, use:
+
+    .. code-block:: bash
+
+        npx playwright test <path_to_test_file>
+
+    If you want to run a specific test suite or a single test, add ``-g`` flag to the previous command followed by the
+    test suite name or test name.
+    For example, you can run the test suite "`Course creation`" located in the file ``CourseManagement.spec.ts`` using
+    the command:
+
+    .. code-block:: bash
+
+        npx playwright test src/test/playwright/tests/CourseManagement.spec.ts -g "Course creation"
 
 Test parallelization
 --------------------
@@ -69,5 +109,6 @@ file.
     use too many workers, it can lead to resource contention, slowing down individual test execution and potentially
     causing timeouts.
 
-To run tests sequentially, set the ``workers`` option to ``1``. If you want tests in a single file to run
-sequentially and only test files to run in parallel, set the ``fullyParallel`` option to ``false``.
+
+To run tests sequentially (one after another), set the ``workers`` option to ``1``. To run tests within each file
+sequentially while running test files in parallel, set the ``fullyParallel`` option to ``false``.
