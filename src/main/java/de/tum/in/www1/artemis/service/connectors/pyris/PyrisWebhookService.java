@@ -60,25 +60,32 @@ public class PyrisWebhookService {
         }
     }
 
-    private PyrisLectureUnitWebhookDTO processAttachments(Boolean shouldUpdate, AttachmentUnit attachmentUnit) {
+    private PyrisLectureUnitWebhookDTO processAttachmentForUpdate(AttachmentUnit attachmentUnit) {
         try {
-            if (shouldUpdate) {
-                int lectureUnitId = attachmentUnit.hashCode();
-                String lectureUnitName = attachmentUnit.getName();
-                int lectureId = attachmentUnit.getLecture().hashCode();
-                String lectureTitle = attachmentUnit.getLecture().getTitle();
-                int courseId = attachmentUnit.getLecture().getCourse().hashCode();
-                String courseTitle = attachmentUnit.getLecture().getCourse().getTitle();
-                String courseDescription = attachmentUnit.getLecture().getCourse().getDescription() == null ? "" : attachmentUnit.getLecture().getCourse().getDescription();
-                String base64EncodedPdf = attachmentToBase64(attachmentUnit);
-                return new PyrisLectureUnitWebhookDTO(true, base64EncodedPdf, lectureUnitId, lectureUnitName, lectureId, lectureTitle, courseId, courseTitle, courseDescription);
-            }
-            else {
-                int lectureUnitId = attachmentUnit.hashCode();
-                int lectureId = attachmentUnit.getLecture().hashCode();
-                int courseId = attachmentUnit.getLecture().getCourse().hashCode();
-                return new PyrisLectureUnitWebhookDTO(false, "", lectureUnitId, "", lectureId, "", courseId, "", "");
-            }
+            int lectureUnitId = attachmentUnit.hashCode();
+            String lectureUnitName = attachmentUnit.getName();
+            int lectureId = attachmentUnit.getLecture().hashCode();
+            String lectureTitle = attachmentUnit.getLecture().getTitle();
+            int courseId = attachmentUnit.getLecture().getCourse().hashCode();
+            String courseTitle = attachmentUnit.getLecture().getCourse().getTitle();
+            String courseDescription = attachmentUnit.getLecture().getCourse().getDescription() == null ? "" : attachmentUnit.getLecture().getCourse().getDescription();
+            String base64EncodedPdf = attachmentToBase64(attachmentUnit);
+            return new PyrisLectureUnitWebhookDTO(true, base64EncodedPdf, lectureUnitId, lectureUnitName, lectureId, lectureTitle, courseId, courseTitle, courseDescription);
+
+        }
+        catch (Exception e) {
+            log.error("Failed to process attachment for unit: {}", attachmentUnit.getName(), e);
+            return null;
+        }
+    }
+
+    private PyrisLectureUnitWebhookDTO processAttachmentForDeletion(AttachmentUnit attachmentUnit) {
+        try {
+            int lectureUnitId = attachmentUnit.hashCode();
+            int lectureId = attachmentUnit.getLecture().hashCode();
+            int courseId = attachmentUnit.getLecture().getCourse().hashCode();
+            return new PyrisLectureUnitWebhookDTO(false, "", lectureUnitId, "", lectureId, "", courseId, "", "");
+
         }
         catch (Exception e) {
             log.error("Failed to process attachment for unit: {}", attachmentUnit.getName(), e);
@@ -99,7 +106,12 @@ public class PyrisWebhookService {
             List<PyrisLectureUnitWebhookDTO> toUpdateAttachmentUnits = new ArrayList<>();
             for (AttachmentUnit attachmentUnit : attachmentUnits) {
                 if (attachmentUnit.getAttachment().getAttachmentType() == AttachmentType.FILE) {
-                    toUpdateAttachmentUnits.add(processAttachments(shouldUpdate, attachmentUnit));
+                    if (shouldUpdate) {
+                        toUpdateAttachmentUnits.add(processAttachmentForUpdate(attachmentUnit));
+                    }
+                    else {
+                        toUpdateAttachmentUnits.add(processAttachmentForDeletion(attachmentUnit));
+                    }
                 }
             }
             if (!toUpdateAttachmentUnits.isEmpty()) {
