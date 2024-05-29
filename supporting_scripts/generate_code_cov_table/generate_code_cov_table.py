@@ -4,6 +4,7 @@ import getpass
 import os
 import logging
 from tqdm.auto import tqdm
+from tqdm.contrib.logging import logging_redirect_tqdm
 import requests
 import git
 from bs4 import BeautifulSoup
@@ -41,7 +42,7 @@ def download_and_extract_zip(url, headers, key):
         response = requests.get(url, headers=headers, stream=True)
         response.raise_for_status()
         total_size = int(response.headers.get('content-length', 0))
-    except requests.RequestException as e:
+    except requests.RequestException:
         logging.error(f"Failed to process ZIP file from {url}. The content might not be a valid ZIP format or is corrupted.")
         return None
 
@@ -110,7 +111,7 @@ def get_artifacts_of_the_last_completed_run(headers, branch, run_id):
         logging.error(f"Branch {branch} not found in the repository")
         sys.exit(1)
     else:
-        logging.error(f"Error accessing Github with status code {response.status_code}")
+        logging.error(f"Error accessing GitHub with status code {response.status_code}")
         sys.exit(1)
 
 
@@ -243,11 +244,11 @@ def coverage_to_table(covs):
 
 def main(argv):
     parser = argparse.ArgumentParser(
-        description="Generate code coverage report for changed files in a Github Workflow build.",
+        description="Generate code coverage report for changed files in a GitHub Workflow build.",
         formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument(
-        "--token", help="Github Token with todo permissions(optional, will be prompted if not provided)",
+        "--token", help="GitHub Token with \"Public Repository Access\" permissions (optional, will be prompted if not provided)",
         **environ_or_required("TOKEN", required=False)
     )
     parser.add_argument(
@@ -258,7 +259,7 @@ def main(argv):
         "--base-branch-name", default="origin/develop", help="Name of the Git base branch (default: origin/develop)"
     )
     parser.add_argument(
-        "--build-id", default=None, help="Build ID of the Github run id"
+        "--build-id", default=None, help="Build ID of the GitHub run id"
     )
     parser.add_argument(
         "--verbose", action="store_true", help="Enable verbose logging"
@@ -272,10 +273,13 @@ def main(argv):
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
     if args.token is None:
-        args.token = getpass.getpass("Please enter your Github token: ")
+        args.token = getpass.getpass("Please enter your GitHub token: ")
     if args.branch_name is None:
         args.branch_name = get_branch_name()
         logging.info(f"Using current branch: {args.branch_name}")
+    if args.base_branch_name is None:
+        args.base_branch_name = 'origin/develop'
+        logging.info(f"Base branch set to: {args.base_branch_name}")
     if args.build_id is None:
         logging.info("Using latest build ID")
 
@@ -292,15 +296,16 @@ def main(argv):
     client_coverage_zip_bytes = download_and_extract_zip(get_coverage_artifact_for_key(artifacts, client_tests_key), headers, client_tests_key)
     server_coverage_zip_bytes = download_and_extract_zip(get_coverage_artifact_for_key(artifacts, server_tests_key), headers, server_tests_key)
 
-    client_cov = [
-        get_client_line_coverage(client_coverage_zip_bytes, file_name, change_type)
-        for file_name, change_type in tqdm(client_file_changes.items(), desc="Building client coverage", unit="files")
-    ] if client_coverage_zip_bytes is not None else None
+    with logging_redirect_tqdm():
+        client_cov = [
+            get_client_line_coverage(client_coverage_zip_bytes, file_name, change_type)
+            for file_name, change_type in tqdm(client_file_changes.items(), desc="Building client coverage", unit="files")
+        ] if client_coverage_zip_bytes is not None else None
 
-    server_cov = [
-        get_server_line_coverage(server_coverage_zip_bytes, file_name, change_type)
-        for file_name, change_type in tqdm(server_file_changes.items(), desc="Building server coverage", unit="files")
-    ] if server_coverage_zip_bytes is not None else None
+        server_cov = [
+            get_server_line_coverage(server_coverage_zip_bytes, file_name, change_type)
+            for file_name, change_type in tqdm(server_file_changes.items(), desc="Building server coverage", unit="files")
+        ] if server_coverage_zip_bytes is not None else None
 
     client_table = coverage_to_table(client_cov)
     server_table = coverage_to_table(server_cov)
