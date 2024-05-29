@@ -6,11 +6,11 @@ import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifi
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -541,20 +541,15 @@ public class ExerciseService {
      */
     public List<CourseManagementOverviewExerciseStatisticsDTO> getStatisticsForCourseManagementOverview(Long courseId, Integer amountOfStudentsInCourse) {
         // We only display the latest five past exercises in the client, only calculate statistics for those
-        var pastExercises = exerciseRepository.getPastExercisesForCourseManagementOverview(courseId, ZonedDateTime.now());
-        pastExercises.sort((exerciseA, exerciseB) -> {
-            var dueDateA = exerciseA.getAssessmentDueDate() != null ? exerciseA.getAssessmentDueDate() : exerciseA.getDueDate();
-            var dueDateB = exerciseB.getAssessmentDueDate() != null ? exerciseB.getAssessmentDueDate() : exerciseB.getDueDate();
-            if (Objects.equals(dueDateA, dueDateB)) {
-                return 0;
-            }
+        List<Exercise> pastExercises = exerciseRepository.getPastExercisesForCourseManagementOverview(courseId, ZonedDateTime.now());
 
-            return dueDateA.isBefore(dueDateB) ? 1 : -1;
-        });
-        var fivePastExercises = pastExercises.stream().limit(5).toList();
+        Comparator<Exercise> exerciseDateComparator = Comparator.comparing(
+                exercise -> exercise.getAssessmentDueDate() != null ? exercise.getAssessmentDueDate() : exercise.getDueDate(), Comparator.nullsLast(Comparator.naturalOrder()));
+
+        List<Exercise> lastFivePastExercises = pastExercises.stream().sorted(exerciseDateComparator.reversed()).limit(5).toList();
 
         // Calculate the average score for all five exercises at once
-        var averageScore = participantScoreRepository.findAverageScoreForExercises(fivePastExercises);
+        var averageScore = participantScoreRepository.findAverageScoreForExercises(lastFivePastExercises);
         Map<Long, Double> averageScoreById = new HashMap<>();
         for (var element : averageScore) {
             averageScoreById.put((Long) element.get("exerciseId"), (Double) element.get("averageScore"));
@@ -562,7 +557,7 @@ public class ExerciseService {
 
         // Fill statistics for all exercises potentially displayed on the client
         var exercisesForManagementOverview = exerciseRepository.getActiveExercisesForCourseManagementOverview(courseId, ZonedDateTime.now());
-        exercisesForManagementOverview.addAll(fivePastExercises);
+        exercisesForManagementOverview.addAll(lastFivePastExercises);
         return generateCourseManagementDTOs(exercisesForManagementOverview, amountOfStudentsInCourse, averageScoreById);
     }
 
